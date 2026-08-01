@@ -1,7 +1,7 @@
-function partagerPage() {
+function partagerPage(texte = "Accès à cette ressource STIP") {
   const data = {
     title: document.title,
-    text: "Accès au CERMEP",
+    text: texte,
     url: window.location.href
   };
 
