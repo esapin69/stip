@@ -1,5 +1,76 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#143d7a"><title>Mon quotidien — STIP</title><link rel="stylesheet" href="assets/style.css"></head><body>
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#143d7a">
+<title>Planning Jour — STIP</title>
+<link rel="stylesheet" href="assets/style.css">
+<style>
+.planning-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding:22px 0 64px}
+.planning-card{appearance:none;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;position:relative;min-height:225px;border:1px solid var(--border);border-radius:24px;padding:26px;background:var(--card);box-shadow:var(--shadow)}
+.planning-card:first-child{background:linear-gradient(135deg,#143d7a,#2465a8);color:#fff;border:0}.planning-card .icon{font-size:2rem}.planning-card h2{margin:26px 0 9px;font-size:1.38rem}.planning-card p{margin:0;max-width:390px;line-height:1.55;color:var(--muted)}.planning-card:first-child p{color:rgba(255,255,255,.82)}
+.arrow{position:absolute;right:22px;bottom:20px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--primary-soft);color:var(--primary);font-size:1.2rem}.planning-card:first-child .arrow{background:rgba(255,255,255,.15);color:#fff}
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:flex-end;justify-content:center;padding:16px;background:rgba(10,25,48,.48);backdrop-filter:blur(5px)}.modal.open{display:flex}.panel{width:min(590px,100%);max-height:min(82vh,760px);overflow:auto;border-radius:26px 26px 20px 20px;padding:25px;background:#fff;box-shadow:0 22px 70px rgba(8,26,48,.3)}
+.panel-head{display:flex;align-items:start;justify-content:space-between;gap:18px}.panel h2{margin:0;font-size:1.5rem}.panel-sub{margin:6px 0 20px;color:var(--muted);line-height:1.45}.close{appearance:none;border:0;border-radius:50%;width:40px;height:40px;flex:none;background:#edf2f8;color:var(--primary);font-size:1.15rem;cursor:pointer}
+.choice-list{display:grid;gap:11px}.choice{appearance:none;width:100%;display:flex;align-items:center;gap:14px;text-align:left;font:inherit;border:1px solid var(--border);border-radius:17px;padding:15px;background:#fff;color:var(--text);cursor:pointer}.choice:hover,.choice:focus-visible{border-color:#7aa7d2;background:#f4f8fc}.choice strong{display:block}.choice small{display:block;margin-top:3px;color:var(--muted)}.choice .go{margin-left:auto;color:var(--primary);font-weight:800}
+.search{width:100%;margin:0 0 14px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:#f8fafc;font:inherit;color:var(--text);outline:none}.search:focus{border-color:#6d9bc8;box-shadow:0 0 0 3px rgba(36,101,168,.12)}
+.agent-list{display:grid;gap:8px;max-height:46vh;overflow:auto}.status-box{padding:20px;text-align:center;color:var(--muted);line-height:1.5}.step-back{appearance:none;border:0;background:none;color:var(--primary);font:inherit;font-weight:750;padding:0 0 13px;cursor:pointer}.hidden{display:none!important}
+@media(max-width:720px){.planning-grid{grid-template-columns:1fr}.planning-card{min-height:200px}.modal{padding:0;align-items:flex-end}.panel{border-radius:25px 25px 0 0;padding-bottom:max(24px,env(safe-area-inset-bottom))}}
+</style>
+</head>
+<body>
 <header><div class="container header-inner"><a class="brand" href="index.html">STIP</a><a class="small-link" href="index.html">← Accueil</a></div></header>
-<main class="container"><section class="page-head"><span class="badge">Planning et organisation</span><h1>Mon quotidien</h1><p>Les outils utilisés au quotidien restent indépendants : ils peuvent évoluer sans casser le portail.</p></section>
-<section class="grid"><a class="card" href="https://planning.esapin.com"><div class="icon">📅</div><h2>Planning</h2><p>Ouvrir le planning et ses outils d’organisation.</p></a><div class="card"><div class="icon">＋</div><h2>À compléter progressivement</h2><p>Les autres outils quotidiens seront ajoutés ici lorsqu’ils seront prêts et validés.</p></div></section></main>
-<footer><div class="container">STIP — Information utile, simplifiée</div></footer></body></html>
+<main class="container">
+  <section class="page-head"><span class="badge">Équipe Jour uniquement</span><h1>Planning Jour</h1><p>Consulte le planning officiel ou retrouve directement ton PDF individuel prêt à imprimer.</p></section>
+  <section class="planning-grid" aria-label="Accès au planning Jour">
+    <button class="planning-card" type="button" data-open="official"><div class="icon">📅</div><h2>Planning officiel — Jour</h2><p>Choisir le mois et ouvrir le document officiel de l’équipe Jour.</p><span class="arrow">→</span></button>
+    <button class="planning-card" type="button" data-open="personal"><div class="icon">🖨️</div><h2>PDF individuel à imprimer</h2><p>Choisir son nom, puis le mois du planning personnel.</p><span class="arrow">→</span></button>
+  </section>
+</main>
+<footer><div class="container">STIP — Information utile, simplifiée</div></footer>
+
+<div class="modal" id="officialModal" role="dialog" aria-modal="true" aria-labelledby="officialTitle">
+  <div class="panel"><div class="panel-head"><div><h2 id="officialTitle">Planning officiel — Jour</h2><p class="panel-sub">Choisis le mois à consulter.</p></div><button class="close" type="button" aria-label="Fermer">✕</button></div><div class="choice-list" id="officialMonths"></div></div>
+</div>
+
+<div class="modal" id="personalModal" role="dialog" aria-modal="true" aria-labelledby="personalTitle">
+  <div class="panel">
+    <div class="panel-head"><div><h2 id="personalTitle">PDF individuel — Jour</h2><p class="panel-sub" id="personalSubtitle">Choisis ton nom.</p></div><button class="close" type="button" aria-label="Fermer">✕</button></div>
+    <section id="agentStep"><input class="search" id="agentSearch" type="search" placeholder="Rechercher mon nom" autocomplete="off"><div class="agent-list" id="agentList"><div class="status-box">Chargement des agents…</div></div></section>
+    <section class="hidden" id="monthStep"><button class="step-back" id="backAgents" type="button">← Changer d’agent</button><div class="choice-list" id="personalMonths"></div></section>
+  </div>
+</div>
+
+<script>
+const PASSERELLE="https://script.google.com/macros/s/AKfycbwrhifE-4wl-YvKOjJI8HZ_g_ota7tajTKLY3jvLKEF9AvSPjIbVpqcSkSRcl5OdWV9/exec";
+const OFFICIAL_DAY={
+  "01.2026":"https://drive.google.com/file/d/11-uvt93i8gz5UNio9llYzyQCv0Np9cJ1/view","02.2026":"https://drive.google.com/file/d/1jIKLsS8RHAklpqmIL38subJaERuC9Pb-/view","03.2026":"https://drive.google.com/file/d/1ONglofX0WzOTWe73EU1bq8qwhOFGU64s/view","04.2026":"https://drive.google.com/file/d/1Twe6VZOTQMn9SK59Y55PUeVik3cesw2F/view","05.2026":"https://drive.google.com/file/d/10m7iyIkecXkq429bCiIXatuzf7a6PXfX/view","06.2026":"https://drive.google.com/file/d/1Q3-299eK3ZsG12ekiy16C8um1lg3PI3t/view","07.2026":"https://drive.google.com/file/d/166YDQ_zk6W0Du7LtFhBcBj1LCwREwM8Q/view","08.2026":"https://drive.google.com/file/d/1RC40GIH5p-HUmQHjogu5tH_9OB9T8L3s/view","09.2026":"https://drive.google.com/file/d/1Ktttvrf1Q0S640mRLhw-ai6hLrgz9ytq/view","10.2026":"https://drive.google.com/file/d/1AEGC3FNApbJP8Cef8j58WA_8cPRyEZ0-/view","11.2026":"https://drive.google.com/file/d/1YGL7FDAOzpEOybmRxLl8_FHRmvWt1JXI/view","12.2026":"https://drive.google.com/file/d/1wVHL780pLKFG0bTkE3E9OJK1C2ybxH0a/view"
+};
+const MONTHS=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+let agents=[],selectedAgent=null,loaded=false;
+const $=id=>document.getElementById(id);
+function keyFor(monthIndex,year){return String(monthIndex+1).padStart(2,"0")+"."+year}
+function labelFor(key){const [m,y]=key.split(".");return MONTHS[Number(m)-1]+" "+y}
+function relevantKeys(){const now=new Date(),m=now.getMonth(),y=now.getFullYear(),out=[];if(now.getDate()<=4){const d=new Date(y,m-1,1);out.push(keyFor(d.getMonth(),d.getFullYear()))}out.push(keyFor(m,y));const n=new Date(y,m+1,1),nk=keyFor(n.getMonth(),n.getFullYear());if(OFFICIAL_DAY[nk])out.push(nk);return [...new Set(out)].filter(k=>OFFICIAL_DAY[k])}
+function monthButton(key,fn){const b=document.createElement("button");b.type="button";b.className="choice";b.innerHTML='<span>📄</span><span><strong>'+labelFor(key)+'</strong><small>Ouvrir le PDF</small></span><span class="go">→</span>';b.addEventListener("click",fn);return b}
+function renderOfficial(){const box=$("officialMonths");box.innerHTML="";relevantKeys().forEach(k=>box.appendChild(monthButton(k,()=>location.href=OFFICIAL_DAY[k])))}
+function openModal(which){const el=$(which+"Modal");el.classList.add("open");document.body.style.overflow="hidden";if(which==="personal"){showAgents();if(!loaded)loadAgents();setTimeout(()=>$("agentSearch").focus(),100)}}
+function closeModal(el){el.classList.remove("open");document.body.style.overflow=""}
+document.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>openModal(b.dataset.open)));
+document.querySelectorAll(".modal").forEach(m=>{m.querySelector(".close").addEventListener("click",()=>closeModal(m));m.addEventListener("click",e=>{if(e.target===m)closeModal(m)})});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")document.querySelectorAll(".modal.open").forEach(closeModal)});
+function normalize(v){return String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase().trim()}
+function normalizeAgent(a){return{key:a.agent||a.key||"",name:a.nom||a.nomComplet||a.nom_complet||a.fullName||String(a.agent||a.key||"").replace(/_/g," "),type:normalize(a.type_planning||a.type||a.equipe||"")}}
+function dayAgents(list){const normalized=list.map(normalizeAgent).filter(a=>a.key&&a.name);const explicit=normalized.filter(a=>!a.type||a.type==="JOUR"||a.type==="DAY");return explicit.length?explicit:normalized}
+async function loadAgents(){loaded=true;try{const r=await fetch(PASSERELLE+"?mode=list&t="+Date.now(),{cache:"no-store"});if(!r.ok)throw new Error("HTTP "+r.status);const data=await r.json();if(!data||data.ok===false||!Array.isArray(data.agents))throw new Error("Liste indisponible");agents=dayAgents(data.agents).sort((a,b)=>a.name.localeCompare(b.name,"fr"));renderAgents();const saved=localStorage.getItem("stipPlanningJourAgent");if(saved){const found=agents.find(a=>a.key===saved);if(found)chooseAgent(found)}}catch(e){$("agentList").innerHTML='<div class="status-box">Impossible de charger les agents pour le moment.</div>'}}
+function renderAgents(){const q=normalize($("agentSearch").value),box=$("agentList");box.innerHTML="";const shown=agents.filter(a=>!q||normalize(a.name).includes(q)||normalize(a.key).includes(q));if(!shown.length){box.innerHTML='<div class="status-box">Aucun agent trouvé.</div>';return}shown.forEach(a=>{const b=document.createElement("button");b.type="button";b.className="choice";b.innerHTML='<span>👤</span><span><strong>'+escapeHtml(a.name)+'</strong><small>Planning individuel Jour</small></span><span class="go">→</span>';b.addEventListener("click",()=>chooseAgent(a));box.appendChild(b)})}
+function escapeHtml(v){const d=document.createElement("div");d.textContent=v;return d.innerHTML}
+function chooseAgent(a){selectedAgent=a;localStorage.setItem("stipPlanningJourAgent",a.key);$("agentStep").classList.add("hidden");$("monthStep").classList.remove("hidden");$("personalSubtitle").textContent="Planning de "+a.name+" — choisis le mois.";renderPersonalMonths()}
+function showAgents(){$("monthStep").classList.add("hidden");$("agentStep").classList.remove("hidden");$("personalSubtitle").textContent="Choisis ton nom."}
+function renderPersonalMonths(){const box=$("personalMonths");box.innerHTML="";relevantKeys().forEach(k=>box.appendChild(monthButton(k,()=>openPersonalPdf(k))))}
+async function openPersonalPdf(key){if(!selectedAgent)return;const box=$("personalMonths");box.innerHTML='<div class="status-box">Recherche du PDF '+labelFor(key)+'…</div>';try{const url=new URL(PASSERELLE);url.searchParams.set("mode","pdf_agent");url.searchParams.set("agent",selectedAgent.key);url.searchParams.set("mois",key);url.searchParams.set("t",Date.now());const r=await fetch(url,{cache:"no-store"});if(!r.ok)throw new Error();const data=await r.json();if(!data||data.ok===false||!data.lien_pdf)throw new Error();location.href=data.lien_pdf}catch(e){alert("PDF indisponible pour "+labelFor(key)+". Le planning est peut-être encore en préparation.");renderPersonalMonths()}}
+$("agentSearch").addEventListener("input",renderAgents);$("backAgents").addEventListener("click",showAgents);renderOfficial();
+</script>
+</body>
+</html>
