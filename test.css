@@ -57,6 +57,7 @@ body[data-wallpaper="midnight"] .shape-two{background:radial-gradient(circle at 
 .battery{position:relative;width:20px;height:10px;border:1.5px solid currentColor;border-radius:3px}
 .battery::after{content:"";position:absolute;right:-3px;top:2px;width:2px;height:4px;border-radius:0 2px 2px 0;background:currentColor}
 .battery i{position:absolute;inset:1.5px 3px 1.5px 1.5px;border-radius:1px;background:currentColor}
+.phone-screen.app-active .status-bar{color:#173946;text-shadow:none}
 
 .home-screen{position:absolute;z-index:2;inset:0;overflow-y:auto;padding:53px 14px 23px;scrollbar-width:none;transition:transform .44s cubic-bezier(.2,.8,.2,1),filter .3s ease,opacity .3s ease}
 .home-screen::-webkit-scrollbar,.app-view-body::-webkit-scrollbar{display:none}
