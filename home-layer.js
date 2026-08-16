@@ -394,8 +394,7 @@
 
   function enableLocalPreview() {
     const preview = new URLSearchParams(location.search).get('phonePreview') === '1';
-    const reviewHost = location.hostname === 'raw.githack.com';
-    if (!preview || (!reviewHost && !['localhost', '127.0.0.1', 'terminal.local'].includes(location.hostname))) return;
+    if (!preview || !['localhost', '127.0.0.1', 'terminal.local'].includes(location.hostname)) return;
 
     login.classList.add('hidden');
     app.classList.remove('hidden');
