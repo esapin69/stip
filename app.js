@@ -2,6 +2,7 @@
   'use strict';
   const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access';
   const STORAGE='stip_session_v1';
+  const PLANNING_BASE='https://planning.esapin.com';
   const loginView=document.getElementById('loginView');
   const appView=document.getElementById('appView');
   const loginForm=document.getElementById('loginForm');
@@ -11,8 +12,9 @@
   const welcomeText=document.getElementById('welcomeText');
   const moduleGrid=document.getElementById('moduleGrid');
   const emptyPermissions=document.getElementById('emptyPermissions');
+  const planningActions=document.getElementById('planningActions');
   const modules=[
-    {key:'planning',num:'01',title:'Planning',small:'Jour · Nuit · Chefs',target:'planning'},
+    {key:'planning',num:'01',title:'Planning',small:'Officiel · personnel · impression · équipe',target:'planning'},
     {key:'equipe_contacts',num:'02',title:'Équipe & contacts',small:'Agents · services · numéros utiles',target:'equipe'},
     {key:'procedures',num:'03',title:'Procédures',small:'Consignes et fiches pratiques',target:'procedures'},
     {key:'reperes',num:'04',title:'Repères',small:'Sites · secteurs · informations terrain',target:'reperes'},
@@ -32,13 +34,36 @@
     if(text)message(text,'error');else message('');
     setTimeout(()=>accessCode.focus(),50);
   }
+  function planningType(agent){
+    const e=String(agent.equipe||agent.type_planning||'').toLowerCase();
+    if(e.includes('nuit'))return'nuit';
+    if(e.includes('chef'))return'chef';
+    return'jour';
+  }
+  function agentKey(agent){
+    return String(agent.source_key||agent.agent_key||'').trim().toUpperCase();
+  }
+  function renderPlanningActions(agent){
+    if(!planningActions)return;
+    const key=agentKey(agent);
+    const type=planningType(agent);
+    const encoded=encodeURIComponent(key);
+    const actions=[
+      {icon:'▦',title:'Planning officiel',small:'Voir le planning collectif de mon équipe',href:`${PLANNING_BASE}/mois.html?type=${type}`},
+      {icon:'◎',title:'Planning perso',small:'Voir mon planning individuel',href:key?`${PLANNING_BASE}/apercu.html?type=agent&agent=${encoded}`:`${PLANNING_BASE}/`},
+      {icon:'▣',title:'Imprimer mon planning',small:'Ouvrir la version prévue pour impression',href:key?`${PLANNING_BASE}/mois.html?type=agent&agent=${encoded}`:`${PLANNING_BASE}/`},
+      {icon:'♟',title:'Esprit d’équipe',small:'Vue collective, formations et stagiaires',href:`${PLANNING_BASE}/esprit-equipe.html`}
+    ];
+    planningActions.innerHTML=actions.map(a=>`<a class="planning-link" href="${a.href}"><span class="icon">${a.icon}</span><span><strong>${a.title}</strong><small>${a.small}</small></span><span class="arrow">›</span></a>`).join('');
+  }
   function renderSession(data){
     loginView.classList.add('hidden');appView.classList.remove('hidden');
     const agent=data.agent||{};
-    const name=agent.nom||agent.prenom||'Agent';
+    const name=agent.prenom||agent.nom||'Agent';
     welcomeText.textContent=`Connecté : ${name}`;
     moduleGrid.innerHTML='';
-    document.querySelectorAll('#appView .panel[id]').forEach(p=>p.classList.add('hidden'));
+    document.querySelectorAll('#appView .document-section[id]').forEach(p=>p.classList.add('hidden'));
+    renderPlanningActions(agent);
     const allowed=modules.filter(m=>data.permissions?.[m.key]);
     emptyPermissions.classList.toggle('hidden',allowed.length>0);
     for(const m of allowed){
