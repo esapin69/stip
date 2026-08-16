@@ -1,67 +1,63 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="robots" content="noindex,nofollow">
-  <title>STIP — Portail équipe</title>
-  <link rel="stylesheet" href="styles.css?v=20260816-2230">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b2239">
+<meta name="robots" content="noindex,nofollow">
+<title>STIP — Portail équipe</title>
+<link rel="stylesheet" href="styles.css?v=20260816-2315">
 </head>
 <body>
-  <main class="shell">
-    <section id="loginView" class="login-view">
-      <div class="login-card document-card">
-        <div class="doc-header compact-header">
-          <div class="hcl-mark"><strong>HCL</strong><small>Hospices Civils<br>de Lyon</small></div>
-          <div class="doc-title"><span>G H</span><strong>STIP — PORTAIL ÉQUIPE</strong></div>
-          <div class="doc-meta">Accès sécurisé</div>
-        </div>
-        <div class="login-body">
-          <div class="section-number">1</div>
-          <div>
-            <h1>Connexion</h1>
-            <p class="lead">Entre ton code personnel à 6 chiffres.</p>
-            <form id="loginForm" class="code-form">
-              <input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code personnel à 6 chiffres" required>
-              <button type="submit">Accéder au portail</button>
-            </form>
-            <p id="loginMessage" class="message"></p>
-          </div>
-        </div>
+<main class="app-shell">
+  <section id="loginView" class="login-screen">
+    <div class="login-brand"><span class="brand-mark">STIP</span><span>Portail équipe · GHE</span></div>
+    <div class="login-card">
+      <p class="kicker">ACCÈS PERSONNEL</p>
+      <h1>Bienvenue</h1>
+      <p>Entre ton code à 6 chiffres. STIP ouvre ensuite uniquement les outils qui te sont autorisés.</p>
+      <form id="loginForm" class="code-form">
+        <input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code à 6 chiffres" required>
+        <button type="submit">Entrer dans STIP</button>
+      </form>
+      <p id="loginMessage" class="message"></p>
+    </div>
+  </section>
+
+  <section id="appView" class="hidden">
+    <header class="topbar">
+      <button class="brand-button" id="homeBtn" type="button"><span class="brand-mark">STIP</span><span>Portail équipe</span></button>
+      <div class="user-chip"><span id="welcomeText">Connecté</span><button id="logoutBtn" type="button">Déconnexion</button></div>
+    </header>
+
+    <section id="homeView" class="view">
+      <div class="hero">
+        <p class="kicker">GHE · OUTILS DU QUOTIDIEN</p>
+        <h1 id="heroName">STIP</h1>
+        <p>Tout ce dont tu as besoin, sans chercher dans plusieurs sites.</p>
       </div>
+      <div id="moduleGrid" class="module-grid"></div>
+      <div id="emptyPermissions" class="empty hidden">Aucun module n’est actuellement autorisé pour ce code.</div>
     </section>
 
-    <section id="appView" class="hidden">
-      <header class="doc-header main-header">
-        <div class="hcl-mark"><strong>HCL</strong><small>Hospices Civils<br>de Lyon</small></div>
-        <div class="doc-title"><span>G H</span><strong>STIP — PORTAIL ÉQUIPE</strong></div>
-        <div class="doc-meta"><span id="welcomeText">Accès personnalisé</span><button id="logoutBtn" class="text-button">Déconnexion</button></div>
-      </header>
-
-      <section class="intro-line">
-        <div class="section-number">1</div>
-        <div><h1>Accès équipe</h1><p>Les rubriques affichées correspondent à tes autorisations actuelles.</p></div>
-      </section>
-
-      <section id="moduleGrid" class="grid" aria-label="Accès autorisés"></section>
-      <section id="emptyPermissions" class="document-section hidden"><h2>Aucun accès actif</h2><p>Ton code est valide, mais aucun module n’est actuellement autorisé.</p></section>
-
-      <section class="document-section hidden" id="planning">
-        <div class="section-heading"><span>2</span><h2>Planning</h2></div>
-        <p class="section-intro">Les quatre accès utiles du planning sont regroupés ici.</p>
-        <div class="planning-actions" id="planningActions"></div>
-      </section>
-
-      <section class="document-section hidden" id="equipe"><div class="section-heading"><span>3</span><h2>Équipe & contacts</h2></div><p>Agents, services et numéros utiles.</p></section>
-      <section class="document-section hidden" id="procedures"><div class="section-heading"><span>4</span><h2>Procédures</h2></div><p>Les procédures validées apparaîtront ici.</p></section>
-      <section class="document-section hidden" id="reperes"><div class="section-heading"><span>5</span><h2>Repères</h2></div><p>Sites, secteurs et informations terrain.</p></section>
-      <section class="document-section hidden" id="arrivants"><div class="section-heading"><span>6</span><h2>Nouveaux arrivants</h2></div><p>Les essentiels d’intégration apparaîtront ici.</p></section>
-      <section class="document-section hidden" id="outils"><div class="section-heading"><span>7</span><h2>Outils équipe</h2></div><p>Les outils utiles au quotidien apparaîtront ici.</p></section>
-
-      <footer class="official-footer">Interface inspirée de la présentation documentaire HCL · Usage interne équipe STIP</footer>
+    <section id="planningView" class="view hidden">
+      <div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker">PLANNING</p><h2>Mon espace planning</h2></div></div>
+      <div class="planning-menu">
+        <button class="feature-card" data-planning="official"><span class="feature-icon">▦</span><span><strong>Planning officiel</strong><small>Planning collectif de mon équipe, directement depuis Supabase.</small></span></button>
+        <button class="feature-card" data-planning="personal"><span class="feature-icon">◎</span><span><strong>Planning perso</strong><small>Mes journées, mes codes et mes abonnements agenda.</small></span></button>
+        <button class="feature-card" data-planning="print"><span class="feature-icon">▣</span><span><strong>Imprimer mon planning</strong><small>Version claire prête à imprimer ou enregistrer en PDF.</small></span></button>
+        <button class="feature-card" data-planning="spirit"><span class="feature-icon">♟</span><span><strong>Esprit d’équipe</strong><small>Qui travaille, formations, stagiaires et informations du jour.</small></span></button>
+        <button class="feature-card accent-card" data-planning="change"><span class="feature-icon">⇄</span><span><strong>Demande de changement</strong><small>Préparer et envoyer une demande de changement ou d’échange.</small></span></button>
+      </div>
+      <section id="planningWorkspace" class="workspace hidden"></section>
     </section>
-  </main>
-  <script src="app.js?v=20260816-2230"></script>
+
+    <section id="genericView" class="view hidden">
+      <div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker" id="genericKicker">STIP</p><h2 id="genericTitle">Module</h2></div></div>
+      <div class="empty" id="genericBody">Ce module sera alimenté depuis Admin GHE.</div>
+    </section>
+  </section>
+</main>
+<script src="app.js?v=20260816-2315"></script>
 </body>
 </html>
