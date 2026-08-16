@@ -1,0 +1,25 @@
+.module-card[data-stip-test]{
+  overflow:hidden;
+  color:#fff;
+  border-color:#175f74;
+  background:
+    radial-gradient(circle at 88% 12%,rgba(92,224,183,.42),transparent 32%),
+    linear-gradient(145deg,#0b6076,#143b66 66%,#2e2867);
+  box-shadow:0 14px 30px rgba(15,71,92,.18);
+}
+
+.module-card[data-stip-test]::before{
+  content:"";
+  position:absolute;
+  right:-34px;
+  top:-39px;
+  width:116px;
+  height:116px;
+  border:14px solid rgba(255,255,255,.10);
+  border-radius:50%;
+}
+
+.module-card[data-stip-test] .num{color:#8ef0d2}
+.module-card[data-stip-test] strong{color:#fff}
+.module-card[data-stip-test] small{color:rgba(255,255,255,.72)}
+.module-card[data-stip-test]:hover{border-color:#59d4bf;box-shadow:0 17px 34px rgba(15,71,92,.25)}
