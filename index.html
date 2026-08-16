@@ -1,30 +1,68 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f4c81">
-<title>STIP — Portail</title>
-<style>
-:root{--blue:#0f4c81;--blue2:#1769aa;--ink:#102033;--muted:#617083;--bg:#f4f7fb;--card:#fff;--line:#dce5ef;--accent:#e8f3fb}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#edf5fb 0,#f7f9fc 260px,#f4f7fb 100%);color:var(--ink)}a{text-decoration:none;color:inherit}.wrap{width:min(1080px,calc(100% - 28px));margin:auto}.top{padding:max(18px,env(safe-area-inset-top)) 0 14px}.bar{display:flex;align-items:center;justify-content:space-between}.logo{display:flex;gap:12px;align-items:center}.logo-mark{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 9px 24px rgba(15,76,129,.24)}.logo-text strong{display:block;font-size:1.08rem}.logo-text span{font-size:.8rem;color:var(--muted)}.status{font-size:.78rem;font-weight:700;color:#31705c;background:#e9f7f0;border:1px solid #ccebdd;border-radius:999px;padding:8px 10px}.hero{padding:44px 0 24px}.eyebrow{display:inline-flex;gap:8px;align-items:center;color:var(--blue);font-weight:800;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase}.hero h1{font-size:clamp(2.25rem,8vw,4.7rem);line-height:.98;letter-spacing:-.045em;margin:13px 0 18px;max-width:850px}.hero p{font-size:clamp(1rem,2vw,1.18rem);line-height:1.65;color:var(--muted);max-width:670px;margin:0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:18px;margin:34px 0 15px}.section-head h2{margin:0;font-size:1.15rem}.section-head p{margin:0;color:var(--muted);font-size:.9rem}.tiles{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;padding-bottom:56px}.tile{position:relative;overflow:hidden;background:var(--card);border:1px solid rgba(159,178,198,.35);border-radius:24px;padding:24px;min-height:190px;box-shadow:0 14px 40px rgba(25,53,84,.08);transition:.2s transform,.2s box-shadow}.tile:hover{transform:translateY(-2px);box-shadow:0 18px 44px rgba(25,53,84,.12)}.tile-main{grid-column:span 8;background:linear-gradient(135deg,#0f4c81 0,#1769aa 60%,#3b8fc4 100%);color:#fff;min-height:250px}.tile-info{grid-column:span 4}.tile-icon{font-size:1.9rem;margin-bottom:28px}.tile h3{font-size:1.45rem;margin:0 0 8px}.tile p{margin:0;line-height:1.5;color:var(--muted);max-width:460px}.tile-main p{color:rgba(255,255,255,.82)}.tile-arrow{position:absolute;right:22px;bottom:20px;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.16);font-size:1.3rem}.tile-info .tile-arrow{background:var(--accent);color:var(--blue)}.mini{display:inline-flex;gap:7px;align-items:center;margin-bottom:36px;background:rgba(255,255,255,.14);padding:7px 10px;border-radius:999px;font-size:.78rem;font-weight:700}.note{border-top:1px solid var(--line);padding:20px 0 max(24px,env(safe-area-inset-bottom));font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;gap:12px}
-.tile-secondary{grid-column:span 6;min-height:215px}
-@media(max-width:720px){.hero{padding-top:34px}.tiles{grid-template-columns:1fr}.tile,.tile-main,.tile-info,.tile-secondary{grid-column:auto}.tile-main{min-height:230px}.status{display:none}.section-head{align-items:start;flex-direction:column;gap:4px}}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#071426">
+  <title>STIP — Portail équipe</title>
+  <link rel="stylesheet" href="styles.css?v=20260816-1">
 </head>
 <body>
-<header class="top"><div class="wrap bar"><div class="logo"><div class="logo-mark">S</div><div class="logo-text"><strong>STIP</strong><span>Portail de ressources</span></div></div><div class="status">Projet en construction</div></div></header>
-<main>
-<section class="wrap hero"><div class="eyebrow">Accès rapide aux ressources</div><h1>Tout ce qui aide sur le terrain, au même endroit.</h1><p>Un portail simple pour retrouver les informations pratiques du STIP. Chaque rubrique peut être ouverte et partagée directement.</p></section>
-<section class="wrap">
-<div class="section-head"><div><h2>Que veux-tu faire ?</h2><p>Une entrée simple selon le besoin du moment.</p></div></div>
-<div class="tiles">
-<a class="tile tile-main" href="quotidien.html"><div class="mini">Planning équipe Jour</div><div class="tile-icon">📅</div><h3>Planning Jour</h3><p>Ouvrir le planning officiel ou retrouver un PDF individuel prêt à imprimer.</p><div class="tile-arrow">→</div></a>
-<a class="tile tile-info" href="nouvel-arrivant.html"><div class="mini">Page partageable</div><div class="tile-icon">👋</div><h3>Je suis nouvel arrivant</h3><p>Ouvrir le guide d’accueil et accéder aux premiers repères utiles.</p><div class="tile-arrow">→</div></a>
-<a class="tile tile-secondary" href="informations.html"><div class="mini">Repères et procédures</div><div class="tile-icon">🔎</div><h3>Je cherche une information</h3><p>Trouver un lieu, un parcours, une procédure ou une information pratique.</p><div class="tile-arrow">→</div></a>
-<a class="tile tile-secondary" href="remontee.html"><div class="mini">Terrain → équipe</div><div class="tile-icon">↗</div><h3>Je fais remonter une information</h3><p>Signaler une erreur, une information dépassée ou proposer une amélioration.</p><div class="tile-arrow">→</div></a>
-</div>
-</section>
-</main>
-<footer><div class="wrap note"><span>STIP</span><span>Portail interne de ressources</span></div></footer>
-</body></html>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">STIP · ÉQUIPE</p>
+        <h1>Portail équipe</h1>
+        <p class="lead">Un accès unique aux informations et outils utiles du service.</p>
+      </div>
+      <span class="badge">Nouvelle version</span>
+    </header>
+
+    <section class="grid" aria-label="Accès rapides">
+      <a class="card primary" href="#planning">
+        <span class="num">01</span>
+        <strong>Planning</strong>
+        <small>Jour · Nuit · Chefs</small>
+      </a>
+      <a class="card" href="#equipe">
+        <span class="num">02</span>
+        <strong>Équipe & contacts</strong>
+        <small>Agents · services · numéros utiles</small>
+      </a>
+      <a class="card" href="#procedures">
+        <span class="num">03</span>
+        <strong>Procédures</strong>
+        <small>Consignes et fiches pratiques</small>
+      </a>
+      <a class="card" href="#reperes">
+        <span class="num">04</span>
+        <strong>Repères</strong>
+        <small>Sites · secteurs · informations terrain</small>
+      </a>
+      <a class="card" href="#arrivants">
+        <span class="num">05</span>
+        <strong>Nouveaux arrivants</strong>
+        <small>Les essentiels pour démarrer</small>
+      </a>
+      <a class="card" href="#outils">
+        <span class="num">06</span>
+        <strong>Outils équipe</strong>
+        <small>Accès rapides et services utiles</small>
+      </a>
+    </section>
+
+    <section class="panel" id="planning">
+      <div class="panel-head"><p class="eyebrow">PLANNING</p><span class="state">Préparation</span></div>
+      <h2>Planning STIP</h2>
+      <p>Cette zone sera reliée à la nouvelle base Supabase validée depuis le back-office.</p>
+    </section>
+
+    <section class="panel compact" id="equipe"><h2>Équipe & contacts</h2><p>Base propre prête à recevoir les contacts utiles.</p></section>
+    <section class="panel compact" id="procedures"><h2>Procédures</h2><p>Les procédures seront ajoutées uniquement après validation de leur contenu.</p></section>
+    <section class="panel compact" id="reperes"><h2>Repères</h2><p>Les informations terrain seront regroupées ici sans reprendre les anciennes pages.</p></section>
+    <section class="panel compact" id="arrivants"><h2>Nouveaux arrivants</h2><p>Une entrée simple et lisible pour les informations essentielles.</p></section>
+    <section class="panel compact" id="outils"><h2>Outils équipe</h2><p>Cette zone accueillera les accessoires utiles au quotidien.</p></section>
+  </main>
+  <script src="app.js?v=20260816-1"></script>
+</body>
+</html>
