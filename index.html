@@ -4,65 +4,46 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#071426">
+  <meta name="robots" content="noindex,nofollow">
   <title>STIP — Portail équipe</title>
-  <link rel="stylesheet" href="styles.css?v=20260816-1">
+  <link rel="stylesheet" href="styles.css?v=20260816-2200">
 </head>
 <body>
   <main class="shell">
-    <header class="hero">
-      <div>
-        <p class="eyebrow">STIP · ÉQUIPE</p>
-        <h1>Portail équipe</h1>
-        <p class="lead">Un accès unique aux informations et outils utiles du service.</p>
+    <section id="loginView" class="login-view">
+      <div class="login-card">
+        <p class="eyebrow">STIP · ACCÈS ÉQUIPE</p>
+        <h1>Connexion</h1>
+        <p class="lead">Entre ton code personnel à 6 chiffres.</p>
+        <form id="loginForm" class="code-form">
+          <input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code personnel à 6 chiffres" required>
+          <button type="submit">Accéder au portail</button>
+        </form>
+        <p id="loginMessage" class="message"></p>
       </div>
-      <span class="badge">Nouvelle version</span>
-    </header>
-
-    <section class="grid" aria-label="Accès rapides">
-      <a class="card primary" href="#planning">
-        <span class="num">01</span>
-        <strong>Planning</strong>
-        <small>Jour · Nuit · Chefs</small>
-      </a>
-      <a class="card" href="#equipe">
-        <span class="num">02</span>
-        <strong>Équipe & contacts</strong>
-        <small>Agents · services · numéros utiles</small>
-      </a>
-      <a class="card" href="#procedures">
-        <span class="num">03</span>
-        <strong>Procédures</strong>
-        <small>Consignes et fiches pratiques</small>
-      </a>
-      <a class="card" href="#reperes">
-        <span class="num">04</span>
-        <strong>Repères</strong>
-        <small>Sites · secteurs · informations terrain</small>
-      </a>
-      <a class="card" href="#arrivants">
-        <span class="num">05</span>
-        <strong>Nouveaux arrivants</strong>
-        <small>Les essentiels pour démarrer</small>
-      </a>
-      <a class="card" href="#outils">
-        <span class="num">06</span>
-        <strong>Outils équipe</strong>
-        <small>Accès rapides et services utiles</small>
-      </a>
     </section>
 
-    <section class="panel" id="planning">
-      <div class="panel-head"><p class="eyebrow">PLANNING</p><span class="state">Préparation</span></div>
-      <h2>Planning STIP</h2>
-      <p>Cette zone sera reliée à la nouvelle base Supabase validée depuis le back-office.</p>
-    </section>
+    <section id="appView" class="hidden">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">STIP · ÉQUIPE</p>
+          <h1>Portail équipe</h1>
+          <p class="lead" id="welcomeText">Accès personnalisé.</p>
+        </div>
+        <button id="logoutBtn" class="ghost">Déconnexion</button>
+      </header>
 
-    <section class="panel compact" id="equipe"><h2>Équipe & contacts</h2><p>Base propre prête à recevoir les contacts utiles.</p></section>
-    <section class="panel compact" id="procedures"><h2>Procédures</h2><p>Les procédures seront ajoutées uniquement après validation de leur contenu.</p></section>
-    <section class="panel compact" id="reperes"><h2>Repères</h2><p>Les informations terrain seront regroupées ici sans reprendre les anciennes pages.</p></section>
-    <section class="panel compact" id="arrivants"><h2>Nouveaux arrivants</h2><p>Une entrée simple et lisible pour les informations essentielles.</p></section>
-    <section class="panel compact" id="outils"><h2>Outils équipe</h2><p>Cette zone accueillera les accessoires utiles au quotidien.</p></section>
+      <section id="moduleGrid" class="grid" aria-label="Accès autorisés"></section>
+      <section id="emptyPermissions" class="panel hidden"><h2>Aucun accès actif</h2><p>Ton code est valide, mais aucun module n’est actuellement autorisé.</p></section>
+
+      <section class="panel hidden" id="planning"><div class="panel-head"><p class="eyebrow">PLANNING</p><span class="state">À brancher</span></div><h2>Planning STIP</h2><p>Cette zone sera branchée ensuite sur la base Planning Supabase validée.</p></section>
+      <section class="panel compact hidden" id="equipe"><h2>Équipe & contacts</h2><p>Module prêt à recevoir les contacts et services autorisés.</p></section>
+      <section class="panel compact hidden" id="procedures"><h2>Procédures</h2><p>Les procédures validées apparaîtront ici.</p></section>
+      <section class="panel compact hidden" id="reperes"><h2>Repères</h2><p>Les informations terrain validées apparaîtront ici.</p></section>
+      <section class="panel compact hidden" id="arrivants"><h2>Nouveaux arrivants</h2><p>Les essentiels d’intégration apparaîtront ici.</p></section>
+      <section class="panel compact hidden" id="outils"><h2>Outils équipe</h2><p>Les outils utiles au quotidien apparaîtront ici.</p></section>
+    </section>
   </main>
-  <script src="app.js?v=20260816-1"></script>
+  <script src="app.js?v=20260816-2200"></script>
 </body>
 </html>
