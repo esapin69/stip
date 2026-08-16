@@ -1,87 +1,50 @@
 (() => {
-  'use strict';
-  const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access';
-  const STORAGE='stip_session_v1';
-  const PLANNING_BASE='https://planning.esapin.com';
-  const loginView=document.getElementById('loginView');
-  const appView=document.getElementById('appView');
-  const loginForm=document.getElementById('loginForm');
-  const accessCode=document.getElementById('accessCode');
-  const loginMessage=document.getElementById('loginMessage');
-  const logoutBtn=document.getElementById('logoutBtn');
-  const welcomeText=document.getElementById('welcomeText');
-  const moduleGrid=document.getElementById('moduleGrid');
-  const emptyPermissions=document.getElementById('emptyPermissions');
-  const planningActions=document.getElementById('planningActions');
-  const modules=[
-    {key:'planning',num:'01',title:'Planning',small:'Officiel · personnel · impression · équipe',target:'planning'},
-    {key:'equipe_contacts',num:'02',title:'Équipe & contacts',small:'Agents · services · numéros utiles',target:'equipe'},
-    {key:'procedures',num:'03',title:'Procédures',small:'Consignes et fiches pratiques',target:'procedures'},
-    {key:'reperes',num:'04',title:'Repères',small:'Sites · secteurs · informations terrain',target:'reperes'},
-    {key:'nouveaux_arrivants',num:'05',title:'Nouveaux arrivants',small:'Les essentiels pour démarrer',target:'arrivants'},
-    {key:'outils_equipe',num:'06',title:'Outils équipe',small:'Accès rapides et services utiles',target:'outils'}
-  ];
-  function message(text='',kind=''){loginMessage.textContent=text;loginMessage.className=`message ${kind}`.trim()}
-  async function api(action,body={},token=''){
-    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json',...(token?{'X-STIP-Session':token}:{})},body:JSON.stringify({action,...body})});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);
-    return j;
-  }
-  function currentToken(){return localStorage.getItem(STORAGE)||''}
-  function showLogin(text=''){
-    appView.classList.add('hidden');loginView.classList.remove('hidden');
-    if(text)message(text,'error');else message('');
-    setTimeout(()=>accessCode.focus(),50);
-  }
-  function planningType(agent){
-    const e=String(agent.equipe||agent.type_planning||'').toLowerCase();
-    if(e.includes('nuit'))return'nuit';
-    if(e.includes('chef'))return'chef';
-    return'jour';
-  }
-  function agentKey(agent){
-    return String(agent.source_key||agent.agent_key||'').trim().toUpperCase();
-  }
-  function renderPlanningActions(agent){
-    if(!planningActions)return;
-    const key=agentKey(agent);
-    const type=planningType(agent);
-    const encoded=encodeURIComponent(key);
-    const actions=[
-      {icon:'▦',title:'Planning officiel',small:'Voir le planning collectif de mon équipe',href:`${PLANNING_BASE}/mois.html?type=${type}`},
-      {icon:'◎',title:'Planning perso',small:'Voir mon planning individuel',href:key?`${PLANNING_BASE}/apercu.html?type=agent&agent=${encoded}`:`${PLANNING_BASE}/`},
-      {icon:'▣',title:'Imprimer mon planning',small:'Ouvrir la version prévue pour impression',href:key?`${PLANNING_BASE}/mois.html?type=agent&agent=${encoded}`:`${PLANNING_BASE}/`},
-      {icon:'♟',title:'Esprit d’équipe',small:'Vue collective, formations et stagiaires',href:`${PLANNING_BASE}/esprit-equipe.html`}
-    ];
-    planningActions.innerHTML=actions.map(a=>`<a class="planning-link" href="${a.href}"><span class="icon">${a.icon}</span><span><strong>${a.title}</strong><small>${a.small}</small></span><span class="arrow">›</span></a>`).join('');
-  }
-  function renderSession(data){
-    loginView.classList.add('hidden');appView.classList.remove('hidden');
-    const agent=data.agent||{};
-    const name=agent.prenom||agent.nom||'Agent';
-    welcomeText.textContent=`Connecté : ${name}`;
-    moduleGrid.innerHTML='';
-    document.querySelectorAll('#appView .document-section[id]').forEach(p=>p.classList.add('hidden'));
-    renderPlanningActions(agent);
-    const allowed=modules.filter(m=>data.permissions?.[m.key]);
-    emptyPermissions.classList.toggle('hidden',allowed.length>0);
-    for(const m of allowed){
-      const a=document.createElement('a');a.className=`card${m.key==='planning'?' primary':''}`;a.href=`#${m.target}`;
-      a.innerHTML=`<span class="num">${m.num}</span><strong>${m.title}</strong><small>${m.small}</small>`;
-      a.addEventListener('click',()=>document.getElementById(m.target)?.classList.remove('hidden'));
-      moduleGrid.appendChild(a);
-    }
-  }
-  loginForm.addEventListener('submit',async e=>{
-    e.preventDefault();const code=accessCode.value.replace(/\D/g,'').slice(0,6);accessCode.value=code;
-    if(code.length!==6)return message('Le code doit contenir 6 chiffres.','error');
-    message('Connexion…');
-    try{const data=await api('login',{code});localStorage.setItem(STORAGE,data.session_token);accessCode.value='';message('');renderSession(data)}
-    catch(err){message(err.message||'Connexion impossible.','error')}
-  });
-  accessCode.addEventListener('input',()=>{accessCode.value=accessCode.value.replace(/\D/g,'').slice(0,6)});
-  logoutBtn.addEventListener('click',async()=>{const token=currentToken();try{if(token)await api('logout',{},token)}catch{}localStorage.removeItem(STORAGE);showLogin()});
-  async function refreshSession(){const token=currentToken();if(!token)return;try{renderSession(await api('me',{},token))}catch{localStorage.removeItem(STORAGE);showLogin('Ton accès a été modifié ou ta session a expiré.')}}
-  (async()=>{const token=currentToken();if(!token)return showLogin();try{renderSession(await api('me',{},token));setInterval(refreshSession,300000)}catch{localStorage.removeItem(STORAGE);showLogin('Session expirée. Entre de nouveau ton code.')}})();
+'use strict';
+const ACCESS_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access';
+const DATA_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data';
+const CAL_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-calendar';
+const STORAGE='stip_session_v1';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText'),heroName=$('#heroName'),moduleGrid=$('#moduleGrid'),emptyPermissions=$('#emptyPermissions'),planningWorkspace=$('#planningWorkspace');
+let sessionData=null, bootstrap=null, allAgents=[];
+const modules=[
+ {key:'planning',num:'01',title:'Planning',small:'Officiel · perso · équipe · changements',view:'planningView'},
+ {key:'equipe_contacts',num:'02',title:'Équipe & contacts',small:'Agents · services · numéros utiles',generic:'Équipe & contacts'},
+ {key:'procedures',num:'03',title:'Procédures',small:'Consignes et fiches pratiques',generic:'Procédures'},
+ {key:'reperes',num:'04',title:'Repères',small:'Sites · secteurs · informations terrain',generic:'Repères'},
+ {key:'nouveaux_arrivants',num:'05',title:'Nouveaux arrivants',small:'Les essentiels pour démarrer',generic:'Nouveaux arrivants'},
+ {key:'outils_equipe',num:'06',title:'Outils équipe',small:'Accès rapides et services utiles',generic:'Outils équipe'}
+];
+function token(){return localStorage.getItem(STORAGE)||''}
+function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
+async function call(url,action,body={}){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token()},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);return j}
+async function access(action,body={}){const headers={'Content-Type':'application/json'};if(token())headers['X-STIP-Session']=token();const r=await fetch(ACCESS_API,{method:'POST',headers,body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);return j}
+async function data(action,body={}){return call(DATA_API,action,body)}
+async function calendar(kind){const r=await fetch(CAL_API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token()},body:JSON.stringify({kind})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||'Flux calendrier indisponible');return j}
+function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
+function showLogin(text=''){appView.classList.add('hidden');loginView.classList.remove('hidden');if(text)msg(text,'error');else msg('');setTimeout(()=>accessCode.focus(),60)}
+function personName(a){return String(a?.prenom||a?.nom||'Agent').replace(/_/g,' ').trim()}
+function renderSession(d){sessionData=d;loginView.classList.add('hidden');appView.classList.remove('hidden');const a=d.agent||{};welcomeText.textContent=personName(a);heroName.textContent=personName(a);moduleGrid.innerHTML='';const allowed=modules.filter(m=>d.permissions?.[m.key]);emptyPermissions.classList.toggle('hidden',allowed.length>0);for(const m of allowed){const b=document.createElement('button');b.className=`module-card${m.key==='planning'?' primary':''}`;b.innerHTML=`<span class="num">${m.num}</span><strong>${m.title}</strong><small>${m.small}</small>`;b.onclick=()=>m.view?showOnly(m.view):showGeneric(m.generic);moduleGrid.appendChild(b)}showOnly('homeView')}
+function showGeneric(title){$('#genericTitle').textContent=title;$('#genericKicker').textContent='STIP';$('#genericBody').textContent='Ce module sera alimenté depuis Admin GHE sans dépendre de l’ancien site.';showOnly('genericView')}
+function fmtDate(v){const d=new Date(v+'T12:00:00');return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'})}
+function monthKey(v){return String(v).slice(0,7)}
+function monthLabel(k){const [y,m]=k.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}
+function codeChip(c){return `<span class="shift-chip">${escapeHtml(c||'—')}</span>`}
+function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function workspace(title,sub=''){planningWorkspace.classList.remove('hidden');planningWorkspace.innerHTML=`<div class="workspace-head"><div><h3>${escapeHtml(title)}</h3><p class="sub">${escapeHtml(sub)}</p></div></div><div id="workBody"><div class="info-box">Chargement…</div></div>`;planningWorkspace.scrollIntoView({behavior:'smooth',block:'start'})}
+function renderMonthToolbar(items,onChange){const months=[...new Set(items.map(x=>monthKey(x.date)))].sort();const today=new Date().toISOString().slice(0,7);let selected=months.includes(today)?today:(months.find(m=>m>=today)||months.at(-1)||'');const html=`<div class="toolbar">${months.map(m=>`<button class="pill-btn ${m===selected?'active':''}" data-month="${m}">${escapeHtml(monthLabel(m))}</button>`).join('')}</div><div id="monthContent"></div>`;return{html,selected,wire(){$$('[data-month]').forEach(b=>b.onclick=()=>{$$('[data-month]').forEach(x=>x.classList.remove('active'));b.classList.add('active');selected=b.dataset.month;onChange(selected)})}}}
+async function ensureBootstrap(){if(bootstrap)return bootstrap;bootstrap=await data('bootstrap');return bootstrap}
+function personalRows(items,month){return items.filter(x=>monthKey(x.date)===month).map(x=>`<div class="day-row"><div class="day-date">${escapeHtml(fmtDate(x.date))}<small>${escapeHtml(x.date)}</small></div><div>${codeChip(x.code)}${x.observation?`<div class="agent-line"><small>${escapeHtml(x.observation)}</small></div>`:''}</div></div>`).join('')||'<div class="empty">Aucune donnée pour ce mois.</div>'}
+async function openPersonal(print=false){workspace(print?'Imprimer mon planning':'Planning perso',print?'Vue personnelle prête pour impression.':'Ton planning est lu directement dans Supabase.');try{const r=await data('personal'), items=r.items||[];const body=$('#workBody');const tb=renderMonthToolbar(items,m=>$('#monthContent').innerHTML=personalRows(items,m));body.innerHTML=`${print?'<div class="print-only"><h2>Planning personnel STIP</h2></div>':''}${tb.html}${print?'<div class="sub-actions"><button class="action-box" id="printNow">Imprimer / PDF</button></div>':`<div class="sub-actions"><button class="action-box" id="iosPersonal">Ajouter sur iPhone / iPad</button><button class="action-box secondary" id="androidPersonal">Android / Google Agenda</button></div>`}`;tb.wire();$('#monthContent').innerHTML=personalRows(items,tb.selected);if(print){$('#printNow').onclick=()=>window.print()}else{$('#iosPersonal').onclick=()=>subscribe('personal','ios');$('#androidPersonal').onclick=()=>subscribe('personal','android')}}catch(e){$('#workBody').innerHTML=`<div class="error-text">${escapeHtml(e.message)}</div>`}}
+async function openOfficial(){workspace('Planning officiel','Planning collectif de ton équipe. Plus de PDF Drive : les données viennent directement de la base.');try{const r=await data('official'),items=r.items||[],body=$('#workBody');const render=m=>{const rows=items.filter(x=>monthKey(x.date)===m),byDate={};for(const x of rows)(byDate[x.date]??=[]).push(x);$('#monthContent').innerHTML=Object.entries(byDate).map(([date,list])=>`<div class="day-row"><div class="day-date">${escapeHtml(fmtDate(date))}<small>${escapeHtml(date)}</small></div><div>${list.map(x=>`<div class="agent-line">${codeChip(x.code)} <strong>${escapeHtml(x.agents?.nom||x.agent_source_key||'Agent')}</strong>${x.observation?`<small>${escapeHtml(x.observation)}</small>`:''}</div>`).join('')}</div></div>`).join('')||'<div class="empty">Aucune donnée pour ce mois.</div>'};const tb=renderMonthToolbar(items,render);body.innerHTML=`<div class="info-box">Équipe détectée automatiquement : <strong>${escapeHtml(r.team||'')}</strong></div>${tb.html}`;tb.wire();render(tb.selected)}catch(e){$('#workBody').innerHTML=`<div class="error-text">${escapeHtml(e.message)}</div>`}}
+function spiritRows(r){const by={};for(const x of r.planning||[])(by[x.date]??=[]).push(x);return Object.entries(by).map(([date,list])=>{const groups={};for(const x of list)(groups[x.code]??=[]).push(x.agents?.nom||'Agent');const formation=(r.formations||[]).filter(x=>String(x.date_debut).slice(0,10)===date);const stag=(r.stagiaires||[]).filter(x=>date>=x.date_debut&&date<=x.date_fin);return `<div class="spirit-day"><h4>${escapeHtml(fmtDate(date))}</h4>${Object.entries(groups).map(([c,n])=>`<div class="agent-line">${codeChip(c)} <strong>${escapeHtml(n.join(', '))}</strong></div>`).join('')}${formation.map(x=>`<div class="notice">Formation : ${escapeHtml(x.intitule)} ${escapeHtml(x.horaire||'')} ${escapeHtml(x.lieu||'')}</div>`).join('')}${stag.map(x=>`<div class="notice">Stagiaire : ${escapeHtml([x.prenom,x.nom].filter(Boolean).join(' '))} ${escapeHtml(x.horaires||'')} ${x.referent?'· Référent '+escapeHtml(x.referent):''}</div>`).join('')}</div>`}).join('')||'<div class="empty">Aucune information à afficher actuellement.</div>'}
+async function openSpirit(){workspace('Esprit d’équipe','Même logique utile que l’ancien site, reconstruite directement depuis Supabase.');try{const r=await data('spirit');$('#workBody').innerHTML=`<div class="sub-actions"><button class="action-box" id="iosTeam">Ajouter Esprit d’équipe sur iPhone / iPad</button><button class="action-box secondary" id="androidTeam">Android / Google Agenda</button></div><div class="info-box">L’abonnement crée un événement par jour. Sa description est reconstruite depuis les mêmes données que cette page et se met à jour lorsque le flux calendrier est relu.</div><div class="calendar-list">${spiritRows(r)}</div>`;$('#iosTeam').onclick=()=>subscribe('team','ios');$('#androidTeam').onclick=()=>subscribe('team','android')}catch(e){$('#workBody').innerHTML=`<div class="error-text">${escapeHtml(e.message)}</div>`}}
+async function subscribe(kind,platform){try{const r=await calendar(kind);if(platform==='ios'){window.location.href=r.webcal_url;return}planningWorkspace.insertAdjacentHTML('beforeend',`<div class="info-box" id="calendarHelp"><strong>Android / Google Agenda</strong><br>Copie ce lien permanent puis, dans Google Agenda sur le Web : Autres agendas → + → À partir de l’URL.<br><br><input id="calendarUrl" value="${escapeHtml(r.https_url)}" readonly style="width:100%;padding:10px;border:1px solid var(--line);border-radius:10px"><br><br><button class="primary-btn" id="copyCalendar">Copier le lien</button></div>`);$('#copyCalendar').onclick=async()=>{await navigator.clipboard.writeText(r.https_url);$('#copyCalendar').textContent='Lien copié'}}catch(e){alert(e.message)} }
+async function openChange(){workspace('Demande de changement','Une demande native STIP, liée directement à ton identité et à ton planning.');try{const [b,a,h]=await Promise.all([ensureBootstrap(),data('agents'),data('change_history')]);allAgents=a.items||[];const personal=b.personal||[];const options=allAgents.filter(x=>x.id!==b.agent.id).map(x=>`<option value="${x.id}">${escapeHtml(x.nom||x.source_key)}</option>`).join('');const dates=personal.filter(x=>x.date>=new Date().toISOString().slice(0,10)).slice(0,120).map(x=>`<option value="${x.date}" data-code="${escapeHtml(x.code||'')}">${escapeHtml(fmtDate(x.date))} · ${escapeHtml(x.code||'')}</option>`).join('');$('#workBody').innerHTML=`<form id="changeForm" class="form-grid"><label>Type<select id="requestType"><option value="change">Changement</option><option value="exchange">Échange avec un agent</option><option value="other">Autre demande</option></select></label><label>Jour concerné<select id="requestDate"><option value="">Choisir…</option>${dates}</select></label><label>Mon code actuel<input id="requestCode" readonly></label><label>Code souhaité<input id="desiredCode" placeholder="Ex. J4, RH, S…"></label><label class="wide">Agent avec qui échanger (facultatif)<select id="targetAgent"><option value="">Aucun</option>${options}</select></label><label class="wide">Message<textarea id="requestMessage" placeholder="Précision utile pour la demande"></textarea></label><div class="wide"><button class="primary-btn" type="submit">Envoyer la demande</button></div><p id="changeMsg" class="wide"></p></form><h3 style="margin-top:24px">Mes dernières demandes</h3><div>${(h.items||[]).map(x=>`<div class="agent-line"><strong>${escapeHtml(x.date_from||'Sans date')} · ${escapeHtml(x.request_type)}</strong><small>${escapeHtml(x.status)}</small></div>`).join('')||'<div class="empty">Aucune demande envoyée.</div>'}</div>`;$('#requestDate').onchange=e=>{$('#requestCode').value=e.target.selectedOptions[0]?.dataset.code||''};$('#changeForm').onsubmit=async e=>{e.preventDefault();const m=$('#changeMsg');m.textContent='Envoi…';try{await data('change_submit',{request_type:$('#requestType').value,date_from:$('#requestDate').value,requester_code:$('#requestCode').value,desired_code:$('#desiredCode').value,target_agent_id:$('#targetAgent').value||null,message:$('#requestMessage').value});m.className='wide success';m.textContent='Demande enregistrée dans STIP.'}catch(err){m.className='wide error-text';m.textContent=err.message}}}catch(e){$('#workBody').innerHTML=`<div class="error-text">${escapeHtml(e.message)}</div>`}}
+function planningAction(k){if(k==='official')openOfficial();if(k==='personal')openPersonal(false);if(k==='print')openPersonal(true);if(k==='spirit')openSpirit();if(k==='change')openChange()}
+loginForm.addEventListener('submit',async e=>{e.preventDefault();const code=accessCode.value.replace(/\D/g,'').slice(0,6);accessCode.value=code;if(code.length!==6)return msg('Le code doit contenir 6 chiffres.','error');msg('Connexion…');try{const d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);accessCode.value='';msg('');bootstrap=null;renderSession(d)}catch(err){msg(err.message||'Connexion impossible.','error')}})
+accessCode.addEventListener('input',()=>accessCode.value=accessCode.value.replace(/\D/g,'').slice(0,6));
+logoutBtn.onclick=async()=>{try{if(token())await access('logout')}catch{}localStorage.removeItem(STORAGE);sessionData=null;bootstrap=null;showLogin()};
+$('#homeBtn').onclick=()=>showOnly('homeView');$$('[data-home]').forEach(b=>b.onclick=()=>showOnly('homeView'));$$('[data-planning]').forEach(b=>b.onclick=()=>planningAction(b.dataset.planning));
+(async()=>{if(!token())return showLogin();try{renderSession(await access('me'));setInterval(async()=>{try{sessionData=await access('me')}catch{localStorage.removeItem(STORAGE);showLogin('Session expirée. Entre de nouveau ton code.')}},300000)}catch{localStorage.removeItem(STORAGE);showLogin('Session expirée. Entre de nouveau ton code.')}})();
 })();
