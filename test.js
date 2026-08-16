@@ -283,6 +283,7 @@
     panelBody.innerHTML = panelTemplate(key);
     wirePanelInteractions(key);
     home.classList.add('panel-open');
+    document.getElementById('phoneScreen').classList.add('app-active');
     appView.classList.add('open');
     appView.setAttribute('aria-hidden', 'false');
     panelBody.scrollTop = 0;
@@ -294,6 +295,7 @@
     appView.classList.remove('open');
     appView.setAttribute('aria-hidden', 'true');
     home.classList.remove('panel-open');
+    document.getElementById('phoneScreen').classList.remove('app-active');
     window.setTimeout(() => { if (!appView.classList.contains('open')) panelBody.replaceChildren(); }, 470);
   }
 
