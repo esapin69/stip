@@ -25,7 +25,19 @@ function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document
 function showLogin(text=''){appView.classList.add('hidden');loginView.classList.remove('hidden');if(text)msg(text,'error');else msg('');setTimeout(()=>accessCode.focus(),60)}
 function personName(a){return String(a?.prenom||a?.nom||'Agent').replace(/_/g,' ').trim()}
 function renderSession(d){sessionData=d;loginView.classList.add('hidden');appView.classList.remove('hidden');const a=d.agent||{};welcomeText.textContent=personName(a);heroName.textContent=personName(a);moduleGrid.innerHTML='';const allowed=modules.filter(m=>d.permissions?.[m.key]);emptyPermissions.classList.toggle('hidden',allowed.length>0);for(const m of allowed){const b=document.createElement('button');b.className=`module-card${m.key==='planning'?' primary':''}`;b.innerHTML=`<span class="num">${m.num}</span><strong>${m.title}</strong><small>${m.small}</small>`;b.onclick=()=>m.view?showOnly(m.view):showGeneric(m.generic);moduleGrid.appendChild(b)}showOnly('homeView')}
-function showGeneric(title){$('#genericTitle').textContent=title;$('#genericKicker').textContent='STIP';$('#genericBody').textContent='Ce module sera alimenté depuis Admin GHE sans dépendre de l’ancien site.';showOnly('genericView')}
+function showGeneric(title){
+  const body=$('#genericBody');
+  $('#genericTitle').textContent=title;
+  $('#genericKicker').textContent='STIP';
+  if(title==='Nouveaux arrivants'){
+    body.className='workspace';
+    body.innerHTML='<div class="info-box"><strong>Ton parcours d’intégration est déjà prêt.</strong><br>Retrouve les repères, les attendus, les contacts et les étapes de suivi au même endroit.</div><div class="sub-actions"><a class="action-box" href="https://nouvel-agent.esapin.com/" target="_blank" rel="noopener noreferrer">Ouvrir mon parcours d’intégration</a><a class="action-box secondary" href="https://nouvel-agent.esapin.com/suivi.html" target="_blank" rel="noopener noreferrer">Accéder directement à mon suivi</a></div>';
+  }else{
+    body.className='empty';
+    body.textContent='Ce module sera alimenté depuis Admin GHE sans dépendre de l’ancien site.';
+  }
+  showOnly('genericView')
+}
 function fmtDate(v){const d=new Date(v+'T12:00:00');return d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'short'})}
 function monthKey(v){return String(v).slice(0,7)}
 function monthLabel(k){const [y,m]=k.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}
