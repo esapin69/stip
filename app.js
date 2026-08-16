@@ -57,5 +57,6 @@
   });
   accessCode.addEventListener('input',()=>{accessCode.value=accessCode.value.replace(/\D/g,'').slice(0,6)});
   logoutBtn.addEventListener('click',async()=>{const token=currentToken();try{if(token)await api('logout',{},token)}catch{}localStorage.removeItem(STORAGE);showLogin()});
-  (async()=>{const token=currentToken();if(!token)return showLogin();try{renderSession(await api('me',{},token))}catch{localStorage.removeItem(STORAGE);showLogin('Session expirée. Entre de nouveau ton code.')}})();
+  async function refreshSession(){const token=currentToken();if(!token)return;try{renderSession(await api('me',{},token))}catch{localStorage.removeItem(STORAGE);showLogin('Ton accès a été modifié ou ta session a expiré.')}}
+  (async()=>{const token=currentToken();if(!token)return showLogin();try{renderSession(await api('me',{},token));setInterval(refreshSession,300000)}catch{localStorage.removeItem(STORAGE);showLogin('Session expirée. Entre de nouveau ton code.')}})();
 })();
