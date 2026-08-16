@@ -3,45 +3,65 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#071426">
+  <meta name="theme-color" content="#ffffff">
   <meta name="robots" content="noindex,nofollow">
   <title>STIP — Portail équipe</title>
-  <link rel="stylesheet" href="styles.css?v=20260816-2201">
+  <link rel="stylesheet" href="styles.css?v=20260816-2230">
 </head>
 <body>
   <main class="shell">
     <section id="loginView" class="login-view">
-      <div class="login-card">
-        <p class="eyebrow">STIP · ACCÈS ÉQUIPE</p>
-        <h1>Connexion</h1>
-        <p class="lead">Entre ton code personnel à 6 chiffres.</p>
-        <form id="loginForm" class="code-form">
-          <input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code personnel à 6 chiffres" required>
-          <button type="submit">Accéder au portail</button>
-        </form>
-        <p id="loginMessage" class="message"></p>
+      <div class="login-card document-card">
+        <div class="doc-header compact-header">
+          <div class="hcl-mark"><strong>HCL</strong><small>Hospices Civils<br>de Lyon</small></div>
+          <div class="doc-title"><span>G H</span><strong>STIP — PORTAIL ÉQUIPE</strong></div>
+          <div class="doc-meta">Accès sécurisé</div>
+        </div>
+        <div class="login-body">
+          <div class="section-number">1</div>
+          <div>
+            <h1>Connexion</h1>
+            <p class="lead">Entre ton code personnel à 6 chiffres.</p>
+            <form id="loginForm" class="code-form">
+              <input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code personnel à 6 chiffres" required>
+              <button type="submit">Accéder au portail</button>
+            </form>
+            <p id="loginMessage" class="message"></p>
+          </div>
+        </div>
       </div>
     </section>
 
     <section id="appView" class="hidden">
-      <header class="hero">
-        <div>
-          <p class="eyebrow">STIP · ÉQUIPE</p>
-          <h1>Portail équipe</h1>
-          <p class="lead" id="welcomeText">Accès personnalisé.</p>
-        </div>
-        <button id="logoutBtn" class="ghost">Déconnexion</button>
+      <header class="doc-header main-header">
+        <div class="hcl-mark"><strong>HCL</strong><small>Hospices Civils<br>de Lyon</small></div>
+        <div class="doc-title"><span>G H</span><strong>STIP — PORTAIL ÉQUIPE</strong></div>
+        <div class="doc-meta"><span id="welcomeText">Accès personnalisé</span><button id="logoutBtn" class="text-button">Déconnexion</button></div>
       </header>
+
+      <section class="intro-line">
+        <div class="section-number">1</div>
+        <div><h1>Accès équipe</h1><p>Les rubriques affichées correspondent à tes autorisations actuelles.</p></div>
+      </section>
+
       <section id="moduleGrid" class="grid" aria-label="Accès autorisés"></section>
-      <section id="emptyPermissions" class="panel hidden"><h2>Aucun accès actif</h2><p>Ton code est valide, mais aucun module n’est actuellement autorisé.</p></section>
-      <section class="panel hidden" id="planning"><div class="panel-head"><p class="eyebrow">PLANNING</p><span class="state">À brancher</span></div><h2>Planning STIP</h2><p>Cette zone sera branchée ensuite sur la base Planning Supabase validée.</p></section>
-      <section class="panel compact hidden" id="equipe"><h2>Équipe & contacts</h2><p>Module prêt à recevoir les contacts et services autorisés.</p></section>
-      <section class="panel compact hidden" id="procedures"><h2>Procédures</h2><p>Les procédures validées apparaîtront ici.</p></section>
-      <section class="panel compact hidden" id="reperes"><h2>Repères</h2><p>Les informations terrain validées apparaîtront ici.</p></section>
-      <section class="panel compact hidden" id="arrivants"><h2>Nouveaux arrivants</h2><p>Les essentiels d’intégration apparaîtront ici.</p></section>
-      <section class="panel compact hidden" id="outils"><h2>Outils équipe</h2><p>Les outils utiles au quotidien apparaîtront ici.</p></section>
+      <section id="emptyPermissions" class="document-section hidden"><h2>Aucun accès actif</h2><p>Ton code est valide, mais aucun module n’est actuellement autorisé.</p></section>
+
+      <section class="document-section hidden" id="planning">
+        <div class="section-heading"><span>2</span><h2>Planning</h2></div>
+        <p class="section-intro">Les quatre accès utiles du planning sont regroupés ici.</p>
+        <div class="planning-actions" id="planningActions"></div>
+      </section>
+
+      <section class="document-section hidden" id="equipe"><div class="section-heading"><span>3</span><h2>Équipe & contacts</h2></div><p>Agents, services et numéros utiles.</p></section>
+      <section class="document-section hidden" id="procedures"><div class="section-heading"><span>4</span><h2>Procédures</h2></div><p>Les procédures validées apparaîtront ici.</p></section>
+      <section class="document-section hidden" id="reperes"><div class="section-heading"><span>5</span><h2>Repères</h2></div><p>Sites, secteurs et informations terrain.</p></section>
+      <section class="document-section hidden" id="arrivants"><div class="section-heading"><span>6</span><h2>Nouveaux arrivants</h2></div><p>Les essentiels d’intégration apparaîtront ici.</p></section>
+      <section class="document-section hidden" id="outils"><div class="section-heading"><span>7</span><h2>Outils équipe</h2></div><p>Les outils utiles au quotidien apparaîtront ici.</p></section>
+
+      <footer class="official-footer">Interface inspirée de la présentation documentaire HCL · Usage interne équipe STIP</footer>
     </section>
   </main>
-  <script src="app.js?v=20260816-2201"></script>
+  <script src="app.js?v=20260816-2230"></script>
 </body>
 </html>
