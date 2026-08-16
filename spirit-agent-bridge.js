@@ -1,0 +1,9 @@
+(() => {
+'use strict';
+const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-planning';
+const STORAGE='stip_session_v1';
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function modal(){const m=document.getElementById('steModal');if(!m)return null;m.querySelector('.ste-modal-panel')?.classList.add('wide');m.classList.add('open');document.body.classList.add('ste-modal-open');return m}
+async function open(key,name){const m=modal();if(!m)return;const body=m.querySelector('#steModalBody');body.innerHTML=`<p class="ste-kicker">PLANNING AGENT</p><h2>${esc(name||'Agent')}</h2><div class="ste-loader">Chargement de toutes les dates à venir…</div>`;try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORAGE)||''},body:JSON.stringify({source_key:key})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);const today=new Date().toISOString().slice(0,10),items=(j.items||[]).filter(x=>x.date>=today),visual=window.STIPPlanningVisual?.render;body.innerHTML=`<div class="ste-agent-modal-head"><p class="ste-kicker">PLANNING AGENT</p><h2>${esc([j.contact?.prenom,j.contact?.nom].filter(Boolean).join(' ')||j.contact?.nom||name||'Agent')}</h2><span>${items.length} date${items.length>1?'s':''} à venir</span></div>${visual?visual({contact:j.contact||j.agent,items,media:j.media||{}}):'<div class="ste-error">Moteur visuel indisponible.</div>'}`}catch(e){body.innerHTML=`<div class="ste-error">${esc(e.message)}</div>`}}
+document.addEventListener('click',e=>{const b=e.target.closest('.ste-agent-name[data-plan-agent]');if(!b)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();open(b.dataset.planAgent,b.textContent.trim())},true);
+})();
