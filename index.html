@@ -1,42 +1,9 @@
 <!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#f7fbfc">
-<meta name="robots" content="noindex,nofollow">
-<title>STIP — Portail équipe</title>
-<link rel="stylesheet" href="styles.css?v=20260817-0115">
-<link rel="stylesheet" href="test-entry.css?v=20260817-1">
-</head>
-<body>
-<main class="app-shell">
-  <section id="loginView" class="login-screen">
-    <div class="login-brand"><span class="brand-mark">STIP</span><span>Portail équipe · GHE</span></div>
-    <div class="login-card"><p class="kicker">ACCÈS PERSONNEL</p><h1>Bienvenue</h1><p>Entre ton code à 6 chiffres. STIP ouvre ensuite uniquement les outils qui te sont autorisés.</p><form id="loginForm" class="code-form"><input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code à 6 chiffres" required><button type="submit">Entrer dans STIP</button></form><p id="loginMessage" class="message"></p></div>
-  </section>
-  <section id="appView" class="hidden">
-    <header class="topbar"><button class="brand-button" id="homeBtn" type="button"><span class="brand-mark">STIP</span><span>Portail équipe</span></button><div class="user-chip"><span id="welcomeText">Connecté</span><button id="logoutBtn" type="button">Déconnexion</button></div></header>
-    <section id="homeView" class="view"><div class="hero"><p class="kicker">GHE · OUTILS DU QUOTIDIEN</p><h1 id="heroName">STIP</h1><p>Tout ce dont tu as besoin, sans chercher dans plusieurs sites.</p></div><div id="moduleGrid" class="module-grid"></div><div id="emptyPermissions" class="empty hidden">Aucun module n’est actuellement autorisé pour ce code.</div></section>
-    <section id="planningView" class="view hidden">
-      <div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker">PLANNING</p><h2>Mon espace planning</h2></div></div>
-      <div class="planning-menu">
-        <button class="feature-card" data-planning="personal"><span class="feature-icon">◎</span><span><strong>Planning individuel</strong><small>Mon planning, lisible immédiatement.</small></span></button>
-        <button class="feature-card" data-planning="print"><span class="feature-icon">▣</span><span><strong>Imprimer mon planning</strong><small>La même vue, prête à imprimer ou enregistrer en PDF.</small></span></button>
-        <button class="feature-card" data-planning="spirit"><span class="feature-icon">♟</span><span><strong>Esprit d’équipe</strong><small>Voir rapidement qui travaille et à quel horaire.</small></span></button>
-        <button class="feature-card accent-card" data-planning="change"><span class="feature-icon">⇄</span><span><strong>Demande de changement</strong><small>Je choisis un jour et STIP me montre directement les possibilités utiles.</small></span></button>
-      </div>
-      <section id="planningWorkspace" class="workspace hidden"></section>
-    </section>
-    <section id="genericView" class="view hidden"><div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker" id="genericKicker">STIP</p><h2 id="genericTitle">Module</h2></div></div><div class="empty" id="genericBody">Ce module sera alimenté depuis Admin GHE.</div></section>
-  </section>
-</main>
-<script src="app.js?v=20260817-new-arrivals-1"></script>
-<script src="planning-visual.js?v=20260819-0111"></script>
-<script src="spirit-team.js?v=20260817-0148"></script>
-<script src="spirit-agent-bridge.js?v=20260817-0202"></script>
-<script src="contacts.js?v=20260817-0115"></script>
-<script src="test-entry.js?v=20260817-1"></script>
-<script src="planning-upgrade.js?v=20260819-0111"></script>
-</body>
-</html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7fbfc"><meta name="robots" content="noindex,nofollow"><title>STIP — Portail équipe</title><link rel="stylesheet" href="styles.css?v=20260817-0115"><link rel="stylesheet" href="test-entry.css?v=20260817-1"></head><body><main class="app-shell">
+<section id="loginView" class="login-screen"><div class="login-brand"><span class="brand-mark">STIP</span><span>Portail équipe · GHE</span></div><div class="login-card"><p class="kicker">ACCÈS PERSONNEL</p><h1>Bienvenue</h1><p>Entre ton code à 6 chiffres. STIP ouvre ensuite uniquement les outils qui te sont autorisés.</p><form id="loginForm" class="code-form"><input id="accessCode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" aria-label="Code à 6 chiffres" required><button type="submit">Entrer dans STIP</button></form><p id="loginMessage" class="message"></p></div></section>
+<section id="appView" class="hidden"><header class="topbar"><button class="brand-button" id="homeBtn" type="button"><span class="brand-mark">STIP</span><span>Portail équipe</span></button><div class="user-chip"><span id="welcomeText">Connecté</span><button id="logoutBtn" type="button">Déconnexion</button></div></header>
+<section id="homeView" class="view"><div class="hero"><p class="kicker">GHE · OUTILS DU QUOTIDIEN</p><h1 id="heroName">STIP</h1><p>Tout ce dont tu as besoin, sans chercher dans plusieurs sites.</p></div><div id="moduleGrid" class="module-grid"></div><div id="emptyPermissions" class="empty hidden">Aucun module n’est actuellement autorisé pour ce code.</div></section>
+<section id="planningView" class="view hidden"><div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker">PLANNING</p><h2>Mon espace planning</h2></div></div><div class="planning-menu"><button class="feature-card" data-planning="personal"><span class="feature-icon">◎</span><span><strong>Planning individuel</strong><small>Mon planning, lisible immédiatement.</small></span></button><button class="feature-card" data-planning="print"><span class="feature-icon">▣</span><span><strong>Imprimer mon planning</strong><small>Créer mon planning A4 paysage.</small></span></button><button class="feature-card" data-planning="spirit"><span class="feature-icon">♟</span><span><strong>Esprit d’équipe</strong><small>Voir rapidement qui travaille et à quel horaire.</small></span></button><button class="feature-card accent-card" data-planning="change"><span class="feature-icon">⇄</span><span><strong>Demande de changement</strong><small>Choisir un jour et voir les possibilités utiles.</small></span></button></div></section>
+<section id="planningDetailView" class="view hidden"><div class="view-head"><button class="back-btn" id="planningBack" type="button">← Planning</button><div><p class="kicker" id="planningDetailKicker">STIP · PLANNING</p><h2 id="planningDetailTitle">Mon planning</h2></div></div><section id="planningWorkspace" class="workspace"></section></section>
+<section id="genericView" class="view hidden"><div class="view-head"><button class="back-btn" data-home type="button">← Accueil</button><div><p class="kicker" id="genericKicker">STIP</p><h2 id="genericTitle">Module</h2></div></div><div class="empty" id="genericBody">Ce module sera alimenté depuis Admin GHE.</div></section></section></main>
+<script src="app.js?v=20260817-new-arrivals-1"></script><script src="planning-visual.js?v=20260819-0136"></script><script src="spirit-team.js?v=20260819-0136"></script><script src="spirit-agent-bridge.js?v=20260817-0202"></script><script src="contacts.js?v=20260817-0115"></script><script src="test-entry.js?v=20260817-1"></script><script src="planning-upgrade.js?v=20260819-0136"></script><script>document.addEventListener('click',function(e){const b=e.target.closest('[data-planning]');if(!b)return;document.getElementById('planningView')?.classList.add('hidden');document.getElementById('planningDetailView')?.classList.remove('hidden');const names={personal:'Planning individuel',print:'Imprimer mon planning',spirit:'Esprit d’équipe',change:'Demande de changement'};document.getElementById('planningDetailTitle').textContent=names[b.dataset.planning]||'Planning';window.scrollTo({top:0,behavior:'smooth'})},true);document.getElementById('planningBack').onclick=function(){document.getElementById('planningDetailView').classList.add('hidden');document.getElementById('planningView').classList.remove('hidden');document.getElementById('planningWorkspace').innerHTML='';window.scrollTo({top:0,behavior:'smooth'})};</script></body></html>
