@@ -9,9 +9,9 @@
   const STORAGE = 'stip_session_v1';
   let checking = false;
 
-  async function canSeeTest() {
+  async function permissions() {
     const token = localStorage.getItem(STORAGE) || '';
-    if (!token) return false;
+    if (!token) return {};
     try {
       const r = await fetch(ACCESS_API, {
         method: 'POST',
@@ -22,41 +22,58 @@
         body: JSON.stringify({ action: 'me' })
       });
       const j = await r.json().catch(() => ({}));
-      return !!(r.ok && !j.error && j.permissions?.test);
+      return r.ok && !j.error ? (j.permissions || {}) : {};
     } catch {
-      return false;
+      return {};
     }
   }
 
-  async function syncTestCard() {
+  function addCard(selector, attrs, html, href) {
+    if (grid.querySelector(selector)) return;
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'module-card';
+    Object.entries(attrs).forEach(([key, value]) => card.dataset[key] = value);
+    card.innerHTML = html;
+    card.addEventListener('click', () => { window.location.href = href; });
+    grid.appendChild(card);
+    empty?.classList.add('hidden');
+  }
+
+  async function syncExtraCards() {
     if (checking) return;
     checking = true;
     try {
-      const existing = grid.querySelector('[data-stip-test]');
-      const allowed = await canSeeTest();
-      if (!allowed) {
-        existing?.remove();
-        return;
+      const p = await permissions();
+
+      const suivi = grid.querySelector('[data-stip-suivi]');
+      if (p.responsable) {
+        addCard(
+          '[data-stip-suivi]',
+          { stipSuivi: '1' },
+          '<span class="num">08</span><strong>Suivi des agents</strong><small>Intégration · évaluations · situations · documents</small>',
+          'suivi.html'
+        );
+      } else {
+        suivi?.remove();
       }
-      if (existing) return;
 
-      const card = document.createElement('button');
-      card.type = 'button';
-      card.className = 'module-card';
-      card.dataset.stipTest = '1';
-      card.setAttribute('aria-label', 'Ouvrir le prototype fictif Test');
-      card.innerHTML = '<span class="num">07 · LAB</span><strong>Test</strong><small>Explorer une nouvelle façon d’utiliser STIP.</small>';
-      card.addEventListener('click', () => {
-        window.location.href = 'test.html';
-      });
-
-      grid.appendChild(card);
-      empty?.classList.add('hidden');
+      const test = grid.querySelector('[data-stip-test]');
+      if (p.test) {
+        addCard(
+          '[data-stip-test]',
+          { stipTest: '1' },
+          '<span class="num">07 · LAB</span><strong>Test</strong><small>Explorer une nouvelle façon d’utiliser STIP.</small>',
+          'test.html'
+        );
+      } else {
+        test?.remove();
+      }
     } finally {
       checking = false;
     }
   }
 
-  new MutationObserver(syncTestCard).observe(grid, { childList: true });
-  syncTestCard();
+  new MutationObserver(syncExtraCards).observe(grid, { childList: true });
+  syncExtraCards();
 })();
