@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const PDF_API = 'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-planning-pdf';
+  const PDF_API = 'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-pdf';
   const STORAGE_KEY = 'stip_session_v1';
   let running = false;
 
@@ -26,14 +26,13 @@
     running = true;
     const oldText = button.textContent;
     button.disabled = true;
-    button.textContent = 'Préparation du PDF…';
+    button.textContent = 'Création du PDF…';
 
-    // Ouvert pendant le clic utilisateur pour éviter le blocage des pop-ups sur iPhone/iPad.
     const pdfWindow = window.open('', '_blank');
     if (pdfWindow) {
       try {
         pdfWindow.document.title = 'Planning PDF';
-        pdfWindow.document.body.innerHTML = '<p style="font-family:system-ui;padding:24px">Préparation du planning PDF…</p>';
+        pdfWindow.document.body.innerHTML = '<p style="font-family:system-ui;padding:24px">Création du planning PDF à partir du planning STIP actuel…</p>';
       } catch (_) {}
     }
 
@@ -46,28 +45,32 @@
         },
         body: JSON.stringify({ month })
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.error || !result.url) {
+
+      if (!response.ok) {
+        const result = await response.json().catch(() => ({}));
         throw new Error(result.error || `PDF indisponible (${response.status})`);
       }
 
-      if (pdfWindow) pdfWindow.location.replace(result.url);
-      else window.location.href = result.url;
+      const blob = await response.blob();
+      if (!blob.type.includes('pdf')) throw new Error('Le moteur n’a pas retourné un PDF valide.');
+      const url = URL.createObjectURL(blob);
+
+      if (pdfWindow) pdfWindow.location.replace(url);
+      else window.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
     } catch (error) {
       if (pdfWindow) pdfWindow.close();
       alert(error instanceof Error ? error.message : 'Impossible de créer le PDF.');
     } finally {
       running = false;
       button.disabled = false;
-      button.textContent = oldText || 'Imprimer / PDF';
+      button.textContent = oldText || 'Créer le PDF';
     }
   }
 
   document.addEventListener('click', (event) => {
     const button = event.target.closest?.('#printNow');
     if (!button) return;
-
-    // Intercepte l’ancien window.print() sans modifier app.js.
     event.preventDefault();
     event.stopImmediatePropagation();
     openPlanningPdf(button);
