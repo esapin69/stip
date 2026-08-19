@@ -46,16 +46,16 @@
     try {
       const p = await permissions();
 
-      const suivi = grid.querySelector('[data-stip-suivi]');
+      const responsable = grid.querySelector('[data-stip-responsable]');
       if (p.responsable) {
         addCard(
-          '[data-stip-suivi]',
-          { stipSuivi: '1' },
-          '<span class="num">08</span><strong>Suivi des agents</strong><small>Intégration · évaluations · situations · documents</small>',
-          'suivi.html'
+          '[data-stip-responsable]',
+          { stipResponsable: '1' },
+          '<span class="num">08</span><strong>Responsable</strong><small>Ouvrir le site Responsable actuel.</small>',
+          'https://responsable.esapin.com/'
         );
       } else {
-        suivi?.remove();
+        responsable?.remove();
       }
 
       const test = grid.querySelector('[data-stip-test]');
