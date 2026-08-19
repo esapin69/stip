@@ -1,0 +1,109 @@
+@media(max-width:900px){
+ .criterion{grid-template-columns:1fr}
+ .criterion-label{margin-bottom:8px}
+ .signature-title{display:grid}
+}
+@media(max-width:700px){
+ .actions,.details,.steps,.stage-list{grid-template-columns:1fr}.hero,.panel{padding:22px}.shell{padding-top:20px}
+ .brand{font-size:18px}.searchbox{display:grid}.agent-head{display:block}
+ .context-card{display:block}.context-card .btn{margin-top:14px;width:100%}
+ .selected-agent{display:block}.selected-agent .btn{width:100%;margin:12px 0 0}
+ .evaluation-title-row{display:block}.evaluation-title-row .btn{width:100%;margin-top:14px}.form-grid.three{grid-template-columns:1fr}
+ .form-grid.two{grid-template-columns:1fr}.evaluation-form-panel .form{padding:14px}.form-heading{padding:20px}
+ .identity-sheet,.decision-sheet{padding:17px}
+ .agent-summary{display:grid}
+ .rating-assist{padding:16px}
+ .previous-evaluation-reference{grid-template-columns:1fr}
+ .previous-evaluation-reference>small{text-align:center}
+ .evaluation-section legend{padding:13px 14px;font-size:16px}
+ .criteria-table{padding:0 14px}
+ .criterion{padding:14px 0}
+ .criterion-label{margin-bottom:9px;font-size:14px}
+ .level-options{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+ .level-options span{min-height:54px;padding:8px 5px;font-size:11px}
+ .level-options label:hover span{transform:none}
+ .section-observation{padding:15px 14px 16px}
+ .decision-meta{grid-template-columns:1fr}
+ .signature-grid{grid-template-columns:1fr}
+ .signature-title{min-height:0;display:flex}
+ .keep-agent span{min-width:0}
+ .btnrow{display:grid;grid-template-columns:1fr}.btnrow .btn{width:100%;min-width:0}
+}
+@media(max-width:520px){
+ .previous-evaluation-btn{justify-content:flex-start}
+ .level-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .level-options span{min-height:50px;font-size:12px}
+}
+.evaluation-page{
+ --eval-accent:#087f9f;
+ --eval-accent-strong:#066d89;
+ --eval-surface:#fff;
+ --eval-surface-soft:#f5f9fb;
+ --eval-border:#ccdde4;
+ min-height:100vh;
+ background:radial-gradient(circle at 8% 0,rgba(20,173,211,.08),transparent 28rem),#edf3f6;
+ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+ -webkit-text-size-adjust:100%
+}
+.evaluation-page .top{min-height:72px;padding-inline:clamp(18px,4vw,58px);background:rgba(255,255,255,.96);backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(31,67,82,.04)}
+.evaluation-page .brand{letter-spacing:-.35px}
+.evaluation-page .home{padding:10px 12px;border-radius:10px;transition:background .15s,color .15s}
+.evaluation-page .home:hover,.evaluation-page .home:focus-visible{background:#eaf7fa;color:var(--eval-accent-strong)}
+.evaluation-page .shell{width:min(1120px,calc(100% - 32px));padding:clamp(22px,3.5vw,42px) 0 calc(72px + env(safe-area-inset-bottom))}
+.evaluation-page .back{display:inline-flex;align-items:center;min-height:42px;margin-bottom:18px}
+.evaluation-page .panel,.evaluation-page .context-card{border-color:var(--eval-border);border-radius:18px;box-shadow:0 10px 32px rgba(23,52,65,.055)}
+.evaluation-page .evaluation-form-panel{padding:0;overflow:hidden}
+.evaluation-page .form-heading{align-items:center;padding:27px 30px;background:linear-gradient(135deg,#fff 0%,#f7fbfc 100%)}
+.evaluation-page .form-heading h2{font-size:clamp(26px,3vw,34px);letter-spacing:-.5px}
+.evaluation-page .evaluation-form-panel .form{padding:clamp(18px,2.8vw,30px);gap:24px;background:#f2f7f9}
+.evaluation-page .identity-sheet,.evaluation-page .decision-sheet,.evaluation-page .rating-assist,.evaluation-page .evaluation-section{border-color:var(--eval-border);border-radius:18px;box-shadow:0 8px 24px rgba(24,52,64,.045)}
+.evaluation-page .identity-sheet,.evaluation-page .decision-sheet{padding:clamp(19px,2.6vw,28px)}
+.evaluation-page .identity-sheet h3,.evaluation-page .decision-heading h3{margin:5px 0 18px;font-size:clamp(23px,2.5vw,29px);letter-spacing:-.35px}
+.evaluation-page .section-number{letter-spacing:1.35px}
+.evaluation-page .agent-summary{min-width:0;min-height:56px;padding:14px 16px;margin-bottom:20px;border:1px solid #cce8ef;border-left:5px solid var(--eval-accent);background:#edf9fc}
+.evaluation-page .agent-summary strong,.evaluation-page .agent-summary span{min-width:0;overflow-wrap:anywhere}
+.evaluation-page .form-grid{column-gap:22px;row-gap:18px}
+.evaluation-page .form-grid>label,.evaluation-page .decision-meta>*,.evaluation-page .signature-grid>*,.evaluation-page .previous-evaluation-reference>*{min-width:0;min-inline-size:0}
+.evaluation-page .form-grid>label{font-size:15px;color:#263640}
+.evaluation-page .form-grid input,.evaluation-page .form-grid textarea,.evaluation-page .form-grid select,.evaluation-page .signature-date input{display:block;width:100%;max-width:100%;min-width:0;min-inline-size:0;max-inline-size:100%;min-height:54px;padding:13px 15px;border:1px solid #afc3cc;border-radius:12px;background:#fbfdfe;font-size:16px;line-height:1.25}
+.evaluation-page .form-grid select{padding-right:42px;white-space:nowrap;text-overflow:ellipsis}
+.evaluation-page input[type="date"]{min-width:0;min-inline-size:0;text-align:left}
+.evaluation-page input[type="date"]::-webkit-date-and-time-value{min-width:0;text-align:left}
+.evaluation-page input:focus,.evaluation-page textarea:focus,.evaluation-page select:focus{outline:0;border-color:var(--eval-accent);box-shadow:0 0 0 3px rgba(20,173,211,.2)}
+.evaluation-page .rating-assist{padding:17px 18px}
+.evaluation-page .previous-evaluation-reference{grid-template-columns:minmax(280px,430px) minmax(0,1fr);gap:18px}
+.evaluation-page .previous-evaluation-reference>small{font-size:13px;line-height:1.4}
+.evaluation-page .previous-evaluation-btn{justify-content:flex-start;min-height:60px;border-radius:13px;background:#f6f9fa}
+.evaluation-page .previous-evaluation-btn:disabled{opacity:1;color:#75858d;background:#f6f8f9;border-style:dashed}
+.evaluation-page .previous-evaluation-btn:disabled .previous-eye{color:#6faebf;background:#fff}
+.evaluation-page .previous-evaluation-btn strong{font-size:15px}
+.evaluation-page .previous-evaluation-btn small{font-size:12px}
+.evaluation-page .evaluation-section{min-inline-size:0}
+.evaluation-page .evaluation-section legend{float:none;max-width:100%;min-width:0;margin:0;padding:16px 20px;background:linear-gradient(90deg,#eaf7fa,#f7fbfc);font-size:18px}
+.evaluation-page .evaluation-section legend strong{min-width:0;overflow-wrap:anywhere}
+.evaluation-page .criteria-table{padding:2px 20px}
+.evaluation-page .criterion{grid-template-columns:minmax(240px,1.05fr) minmax(0,2.35fr);gap:18px;padding:15px 0}
+.evaluation-page .criterion-label{font-size:15px;line-height:1.35}
+.evaluation-page .level-options{gap:9px}
+.evaluation-page .level-options span{min-height:50px;padding:8px;border-radius:11px;font-size:12.5px;line-height:1.2;overflow-wrap:normal;word-break:normal;hyphens:auto}
+.evaluation-page .not-evaluable-option span{background:#fff3dc;border-color:#c57600;color:#684000}
+.evaluation-page .section-observation{padding:18px 20px 20px;background:#f7fafb}
+.evaluation-page .section-observation textarea,.evaluation-page .general-observations textarea{min-width:0;border-radius:12px;border-color:#afc3cc;font-size:16px}
+.evaluation-page .decision-sheet{gap:20px}
+.evaluation-page .decision-meta{padding:18px;border-radius:14px;background:#f5f9fa}
+.evaluation-page .keep-agent span{min-height:50px;display:grid;place-items:center;border-radius:11px}
+.evaluation-page .signature-grid{gap:15px}
+.evaluation-page .signature-grid>div{padding:15px;border-radius:14px;background:#f6fafb}
+.evaluation-page .signature-pad canvas{height:145px;border-radius:10px}
+.evaluation-page .signature-clear{min-height:42px;padding-inline:14px;border-radius:9px}
+.evaluation-page .final-warning{border-radius:15px}
+.evaluation-page .btn{min-height:50px;border-radius:11px;transition:transform .12s,background .12s,box-shadow .12s}
+.evaluation-page .btn:not(:disabled):hover{transform:translateY(-1px)}
+.evaluation-page .btn:focus-visible{outline:3px solid rgba(20,173,211,.28);outline-offset:2px}
+@media(max-width:1100px){.evaluation-page .criterion{grid-template-columns:1fr;gap:10px}.evaluation-page .criterion-label{margin-bottom:0}.evaluation-page .level-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:860px){.evaluation-page .administrative-grid{grid-template-columns:1fr}.evaluation-page .previous-evaluation-reference{grid-template-columns:1fr;gap:10px}.evaluation-page .previous-evaluation-reference>small{text-align:left}.evaluation-page .decision-meta{grid-template-columns:1fr}.evaluation-page .signature-grid{grid-template-columns:1fr}.evaluation-page .signature-title{min-height:0;display:flex}}
+@media(max-width:700px){.evaluation-page .shell{width:min(100% - 20px,1120px);padding-top:18px}.evaluation-page .top{min-height:64px;padding-inline:14px}.evaluation-page .brand{font-size:17px}.evaluation-page .home{font-size:13px;padding:9px}.evaluation-page .panel,.evaluation-page .context-card{border-radius:15px}.evaluation-page .evaluation-form-panel{padding:0}.evaluation-page .form-heading{display:flex;padding:19px 17px}.evaluation-page .form-heading>div{min-width:0}.evaluation-page .form-heading .btn{width:auto;min-width:96px;margin:0}.evaluation-page .evaluation-form-panel .form{padding:12px;gap:16px}.evaluation-page .identity-sheet,.evaluation-page .decision-sheet{padding:17px}.evaluation-page .rating-assist{padding:13px}.evaluation-page .agent-summary{align-items:start;padding:13px}.evaluation-page .evaluation-section legend{padding:14px 15px;font-size:16px}.evaluation-page .criteria-table{padding:2px 14px}.evaluation-page .criterion{padding:15px 0}.evaluation-page .level-options{gap:8px}.evaluation-page .level-options span{min-height:54px;padding:8px 5px;font-size:11.5px}.evaluation-page .section-observation{padding:16px 14px 17px}}
+@media(max-width:520px){.evaluation-page .shell{width:100%;padding-inline:8px}.evaluation-page .context-card,.evaluation-page #listPanel{margin-inline:2px}.evaluation-page .form-heading{align-items:flex-start}.evaluation-page .form-heading h2{font-size:25px}.evaluation-page .official-note{font-size:12px}.evaluation-page .form-heading .btn{min-width:82px;padding-inline:12px;font-size:15px}.evaluation-page .identity-sheet,.evaluation-page .decision-sheet{padding:15px}.evaluation-page .agent-summary{gap:5px}.evaluation-page .level-options{grid-template-columns:repeat(2,minmax(0,1fr))}.evaluation-page .level-options span{min-height:52px;font-size:12.5px}.evaluation-page .btnrow{position:relative}}
+html.auth-pending body{visibility:hidden}
+html.auth-error body{visibility:visible}
+.auth-controls{display:flex;align-items:center;gap:10px;margin-left:auto}
