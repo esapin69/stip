@@ -40,10 +40,17 @@
     empty?.classList.add('hidden');
   }
 
+  function removeNewArrivalsCard() {
+    [...grid.querySelectorAll('.module-card')].forEach(card => {
+      if (card.querySelector('strong')?.textContent.trim() === 'Nouveaux arrivants') card.remove();
+    });
+  }
+
   async function syncExtraCards() {
     if (checking) return;
     checking = true;
     try {
+      removeNewArrivalsCard();
       const p = await permissions();
 
       const responsable = grid.querySelector('[data-stip-responsable]');
