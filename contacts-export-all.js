@@ -9,6 +9,24 @@ function personName(p){return ['Ghe',ghe(p.ghe),String(p.prenom||'').trim().toUp
 function personCard(p){const label=esc(personName(p)||p.alias||'Contact GHE');return ['BEGIN:VCARD','VERSION:3.0',`N:${label};;;;`,`FN:${label}`,`SORT-STRING:${label}`,p.role_metier?`TITLE:${esc(p.role_metier)}`:'',p.telephone?`TEL;TYPE=CELL:${digits(p.telephone)}`:'',p.email_pro?`EMAIL;TYPE=WORK:${esc(p.email_pro)}`:'',p.ghe?`ORG:GHE;${esc(p.ghe)}`:'','END:VCARD'].filter(Boolean).join('\r\n')}
 function serviceCard(s){const label=esc(['Ghe',ghe(s.site),String(s.service||'Service').trim()].filter(Boolean).join(' • '));const note=[s.poste_interne?`Poste / DECT : ${s.poste_interne}`:'',s.remarque||''].filter(Boolean).join(' · ');return ['BEGIN:VCARD','VERSION:3.0',`N:${label};;;;`,`FN:${label}`,`SORT-STRING:${label}`,s.telephone_externe?`TEL;TYPE=WORK:${digits(s.telephone_externe)}`:'',s.email?`EMAIL;TYPE=WORK:${esc(s.email)}`:'',note?`NOTE:${esc(note)}`:'','END:VCARD'].filter(Boolean).join('\r\n')}
 function download(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(u);a.remove()},10000)}
-async function run(button){const strong=button.querySelector('strong'),original='Partager tous les contacts';try{button.disabled=true;if(strong)strong.textContent='Création du fichier…';const {people,services}=await loadAll();const cards=[...people.filter(p=>p.nom||p.prenom||p.telephone||p.email_pro).map(personCard),...services.filter(s=>s.service||s.telephone_externe||s.email||s.poste_interne).map(serviceCard)];if(!cards.length)throw Error('Annuaire vide');const stamp='2026-08-20-0915';const name=`TEST-GHE-NOMS-${stamp}.vcf`;const blob=new Blob([cards.join('\r\n')+'\r\n'],{type:'text/x-vcard'});if(/Android/i.test(navigator.userAgent||'')){download(blob,name);if(strong)strong.textContent='NOUVEAU VCF téléchargé';return}const file=new File([blob],name,{type:'text/vcard'});if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){await navigator.share({files:[file],title:'Annuaire GHE complet'});return}download(blob,name);if(strong)strong.textContent='Fichier téléchargé'}catch(e){if(e?.name!=='AbortError'&&strong)strong.textContent='Export impossible';console.error(e)}finally{button.disabled=false;setTimeout(()=>{if(strong)strong.textContent=original},3000)}}
+async function nativeShare(content,name){
+  if(!navigator.share)return false;
+  const candidates=[
+    new File([content],name,{type:'text/vcard'}),
+    new File([content],name,{type:'text/x-vcard'}),
+    new File([content],name,{type:'application/octet-stream'})
+  ];
+  for(const file of candidates){
+    try{
+      if(navigator.canShare&&!navigator.canShare({files:[file]}))continue;
+      await navigator.share({title:'Annuaire GHE',text:'Contacts GHE',files:[file]});
+      return true;
+    }catch(e){
+      if(e?.name==='AbortError')throw e;
+    }
+  }
+  return false;
+}
+async function run(button){const strong=button.querySelector('strong'),original='Partager tous les contacts';try{button.disabled=true;if(strong)strong.textContent='Préparation du partage…';const {people,services}=await loadAll();const cards=[...people.filter(p=>p.nom||p.prenom||p.telephone||p.email_pro).map(personCard),...services.filter(s=>s.service||s.telephone_externe||s.email||s.poste_interne).map(serviceCard)];if(!cards.length)throw Error('Annuaire vide');const name='Annuaire-GHE-complet.vcf',content=cards.join('\r\n')+'\r\n';const shared=await nativeShare(content,name);if(shared){if(strong)strong.textContent='Choisis Messages';return}const blob=new Blob([content],{type:'text/vcard'});download(blob,name);if(strong)strong.textContent='Android refuse le partage — fichier téléchargé'}catch(e){if(e?.name!=='AbortError'&&strong)strong.textContent='Partage impossible';console.error(e)}finally{button.disabled=false;setTimeout(()=>{if(strong)strong.textContent=original},3500)}}
 document.addEventListener('click',e=>{const b=e.target.closest('#shareAllContacts');if(!b)return;e.preventDefault();e.stopImmediatePropagation();run(b)},true);
 })();
