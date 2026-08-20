@@ -20,31 +20,38 @@
     const notes=[s.poste_interne?`Poste / DECT : ${s.poste_interne}`:'',s.remarque||''].filter(Boolean).join(' · ');
     return ['BEGIN:VCARD','VERSION:3.0',`N:${name};;;;`,`FN:${name}`,`ORG:GHE${s.site?';'+clean(s.site):''}`,s.telephone_externe?`TEL;TYPE=WORK,VOICE:${digits(s.telephone_externe)}`:'',s.email?`EMAIL;TYPE=WORK:${clean(s.email)}`:'',notes?`NOTE:${clean(notes)}`:'','END:VCARD'].filter(Boolean).join('\r\n');
   }
+  function download(file){
+    const url=URL.createObjectURL(file),a=document.createElement('a');
+    a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},3000);
+  }
   async function exportAll(button){
     const strong=button.querySelector('strong');
-    const original=strong?.textContent||'Partager tous les contacts';
+    const original='Partager tous les contacts';
     try{
       button.disabled=true;if(strong)strong.textContent='Préparation de tout l’annuaire…';
       const {people,services}=await loadAll();
       const cards=[...people.filter(p=>p.nom||p.prenom||p.telephone||p.email_pro).map(personCard),...services.filter(s=>s.service||s.telephone_externe||s.email||s.poste_interne).map(serviceCard)];
       if(!cards.length)throw new Error('Annuaire vide');
-      const file=new File([cards.join('\r\n')+'\r\n'],'Annuaire-GHE-complet.vcf',{type:'text/vcard;charset=utf-8'});
-      if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-        await navigator.share({title:'Annuaire GHE complet',text:'Agents, chefs, cadres, administration et services',files:[file]});
-      }else{
-        const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-        if(strong)strong.textContent='Annuaire complet téléchargé';
+      const file=new File([cards.join('\r\n')+'\r\n'],'Annuaire-GHE-complet.vcf',{type:'text/vcard'});
+      let shared=false;
+      if(navigator.share){
+        try{
+          if(!navigator.canShare||navigator.canShare({files:[file]})){
+            await navigator.share({files:[file],title:'Annuaire GHE complet'});shared=true;
+          }
+        }catch(e){if(e?.name==='AbortError')return;}
       }
+      if(!shared){download(file);if(strong)strong.textContent='Fichier VCF téléchargé';}
     }catch(e){
-      if(e?.name!=='AbortError'&&strong)strong.textContent='Partage impossible';
+      if(strong)strong.textContent='Téléchargement impossible';
+      console.error('Export annuaire VCF',e);
     }finally{
-      button.disabled=false;setTimeout(()=>{if(strong)strong.textContent=original},1500);
+      button.disabled=false;setTimeout(()=>{if(strong)strong.textContent=original},2200);
     }
   }
   document.addEventListener('click',e=>{
-    const button=e.target.closest('#shareAllContacts');
-    if(!button)return;
-    e.preventDefault();e.stopImmediatePropagation();
-    exportAll(button);
+    const button=e.target.closest('#shareAllContacts');if(!button)return;
+    e.preventDefault();e.stopImmediatePropagation();exportAll(button);
   },true);
 })();
