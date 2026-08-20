@@ -12,7 +12,7 @@ function route(){return location.hash.replace(/^#\/?/,'')||'home'}
 function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden');window.scrollTo({top:0,behavior:'auto'})}
 function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
 async function access(action,body={}){const headers={'Content-Type':'application/json'};if(token())headers['X-STIP-Session']=token();const r=await fetch(ACCESS_API,{method:'POST',headers,body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);return j}
-function personName(a){return String(a?.prenom||a?.nom||'Agent').replace(/_/g,' ').trim()}
+function personName(a){return window.STIPName?.format?.(a)||String(a?.prenom||a?.nom||'Agent').trim()}
 function showLogin(text=''){appView.classList.add('hidden');loginView.classList.remove('hidden');if(text)msg(text,'error');else msg('');setTimeout(()=>accessCode?.focus(),40)}
 function generic(title,html=''){const body=$('#genericBody');$('#genericTitle').textContent=title;$('#genericKicker').textContent='STIP';body.className=html?'workspace':'empty';body.innerHTML=html||'Ce module sera alimenté depuis Admin GHE.';showOnly('genericView')}
 function planningHeader(kind){const names={personal:['MON PLANNING','Mes prochains jours'],spirit:['MON ÉQUIPE','Qui travaille ?'],change:['RECHERCHE RAPIDE','Trouver un horaire'],finder:['RECHERCHE RAPIDE','Trouver un horaire']};const n=names[kind]||['MES HORAIRES','Planning'];$('#planningDetailKicker').textContent=n[0];$('#planningDetailTitle').textContent=n[1];showOnly('planningDetailView')}
