@@ -8,7 +8,7 @@ function choice(kind,icon,title,small,cls){return `<button class="cal-choice ${c
 function modal(){
   close();
   overlay=document.createElement('div');overlay.className='cal-overlay';
-  overlay.innerHTML=`<div class="cal-sheet"><div class="cal-grab"></div><header><div><small>STIP</small><h2>Calendriers</h2></div><button data-cal-close aria-label="Fermer">×</button></header><p class="cal-intro">Choisis les calendriers que tu veux ajouter à ton téléphone. Tu t’abonnes une seule fois : les changements sont ensuite récupérés automatiquement.</p><div class="cal-grid">${choice('personal','▦','Mon planning','Mes shifts et horaires personnels','personal')}${choice('team','👥','Esprit d’équipe','Présents et répartition de mon équipe','team')}${choice('formations','🎓','Formations','Formations prévues et informations utiles','formations')}${choice('stagiaires','🧑‍🎓','Stagiaires','Périodes, horaires et référents','stagiaires')}</div><div class="cal-status" aria-live="polite"></div><p class="cal-foot">La fréquence exacte de mise à jour dépend de l’application calendrier utilisée sur le téléphone.</p></div>`;
+  overlay.innerHTML=`<div class="cal-sheet"><div class="cal-grab"></div><header><div><small>STIP</small><h2>Import au calendrier</h2></div><button data-cal-close aria-label="Fermer">×</button></header><p class="cal-intro">Choisis ce que tu veux ajouter à ton calendrier. Tu t’abonnes une seule fois : les changements sont ensuite récupérés automatiquement.</p><div class="cal-grid">${choice('personal','▦','Mon planning','Mes shifts et horaires personnels','personal')}${choice('team','👥','Esprit d’équipe','Présents et répartition de mon équipe','team')}${choice('formations','🎓','Formations','Formations prévues et informations utiles','formations')}${choice('stagiaires','🧑‍🎓','Stagiaires','Périodes, horaires et référents','stagiaires')}</div><div class="cal-status" aria-live="polite"></div><p class="cal-foot">La fréquence exacte de mise à jour dépend de l’application calendrier utilisée sur le téléphone.</p></div>`;
   document.body.appendChild(overlay);
   overlay.onclick=e=>{if(e.target===overlay||e.target.closest('[data-cal-close]')){close();return}const b=e.target.closest('[data-cal-kind]');if(b)subscribe(b.dataset.calKind,b)}
 }
@@ -26,7 +26,7 @@ function addHome(){
   const old=grid.querySelector('[data-cal-hub]');
   if(!allowed()){old?.remove();return}
   if(old)return;
-  const b=document.createElement('button');b.className='cp-tool cp-door cp-calendar';b.dataset.calHub='1';b.innerHTML='<span class="cp-tool-icon">▦</span><span class="cp-tool-copy"><strong>Calendriers</strong><small>Planning · Équipe · Formations · Stagiaires</small></span><b>›</b>';b.onclick=modal;grid.appendChild(b)
+  const b=document.createElement('button');b.className='cp-tool cp-door cp-calendar';b.dataset.calHub='1';b.innerHTML='<span class="cp-tool-icon">▦</span><span class="cp-tool-copy"><strong>Import au calendrier</strong><small>Planning · Équipe · Formations · Stagiaires</small></span><b>›</b>';b.onclick=modal;grid.appendChild(b)
 }
 function removePlanningButtons(){document.querySelectorAll('#planningView [data-cal-hub],#planningView .cal-context').forEach(x=>x.remove())}
 function scan(){addHome();removePlanningButtons()}
