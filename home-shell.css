@@ -1,8 +1,12 @@
 :root{--cp-ink:#153a4a;--cp-muted:#71858e;--cp-bg:#f2f8fa;--cp-blue:#1e88e5;--cp-violet:#7465e8;--cp-green:#38b982;--cp-orange:#f4a33c;--cp-red:#ee5c65;--cp-card:#fff;--cp-line:#dcebed;--cp-shadow:0 10px 26px rgba(34,73,88,.09)}
-/* Existing stylesheet retained by cascade from prior release. UI corrections below. */
-.cp-bell{display:flex!important;align-items:center!important;justify-content:center!important;padding:0!important;text-align:center!important}
-.cp-bell:before{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:100%!important;margin:0!important;line-height:1!important;transform:none!important}
-.cp-agenda-month{display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:100%!important;margin:11px 0 8px!important;color:#153a4a!important;font-size:1.12rem!important;font-weight:950!important;line-height:1.1!important;letter-spacing:.055em!important;text-transform:uppercase!important;white-space:nowrap!important}
-.cp-agenda-month:before,.cp-agenda-month:after{content:'';height:2px;flex:1;background:#bfd2d8;border-radius:99px}
-.cp-agenda-week{display:flex;align-items:center;gap:7px;margin:7px 0 5px;color:#607983;font-size:.59rem;font-weight:950;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
-.cp-agenda-week:before,.cp-agenda-week:after{content:'';height:1px;flex:1;background:#d4e1e4}
+/* Home readability corrections. */
+.cp-bell{display:grid!important;place-items:center!important;padding:0!important;text-align:center!important;line-height:1!important;font-family:"Apple Color Emoji","Noto Color Emoji",sans-serif!important}
+.cp-bell:before{display:none!important;content:none!important}
+.cp-bell>span{position:absolute}
+.cp-month-sep{grid-column:1/-1!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;width:100%!important;margin:12px 0 7px!important;color:#153a4a!important;font-family:Georgia,"Times New Roman",serif!important;font-size:1.22rem!important;font-weight:950!important;line-height:1.05!important;letter-spacing:.07em!important;text-align:center!important;text-transform:uppercase!important;white-space:nowrap!important}
+.cp-month-sep:before,.cp-month-sep:after{content:'';height:2px;flex:1;background:#b8cdd3;border-radius:99px}
+.cp-week-sep{grid-column:1/-1!important;display:flex!important;align-items:center!important;gap:7px!important;margin:8px 1px 2px!important;color:#667f89!important;font-size:.58rem!important;font-weight:950!important;letter-spacing:.08em!important;text-transform:uppercase!important}
+.cp-week-sep>span{height:1px!important;flex:1!important;background:#d9e5e8!important}
+.cp-week-sep>b{white-space:nowrap!important;color:#315866!important;font-size:.58rem!important}
+.cp-day i{font-size:.64rem!important;font-weight:950!important;letter-spacing:.01em!important;line-height:1!important;padding-top:5px!important;padding-bottom:4px!important}
+@media(max-width:350px){.cp-day i{font-size:.58rem!important}.cp-month-sep{font-size:1.08rem!important}}
