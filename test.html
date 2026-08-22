@@ -1,3 +1,32 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1"><meta name="theme-color" content="#f7fbfc"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="robots" content="noindex,nofollow"><title>STIP — Test réel</title><link rel="stylesheet" href="test.css?v=20260819-real3"><link rel="stylesheet" href="stip-ui.css?v=20260821-system2"></head>
-<body><header class="test-bar"><a class="back" href="index.html">‹ <strong>STIP</strong></a><span class="test-badge">TEST RÉEL</span></header><main class="shell"><section class="wallpaper"><section class="home" id="home"><div class="hero-row"><div><span class="eyebrow">ESPACE PERSONNEL</span><h1 id="hello">Bonjour</h1><p id="connectionState">Connexion aux données STIP…</p></div></div><section class="widget widget-main" id="todayWidget"><div class="date-tile"><strong id="todayDay">—</strong><span id="todayMonth">—</span></div><div class="widget-copy"><small>AUJOURD’HUI</small><strong id="todayTitle">Chargement…</strong><span id="todaySub">Connexion aux données réelles.</span></div><span class="chev">›</span></section><section class="mini-widgets"><button class="mini-widget" data-open="personal"><small>PROCHAIN SERVICE</small><strong id="nextShift">—</strong><span id="nextShiftDate">Recherche…</span></button><button class="mini-widget" data-open="team"><small>ÉQUIPE</small><strong id="teamCount">—</strong><span id="teamLabel">Aujourd’hui</span></button></section><div class="apps-title"><span>Mes applications</span></div><div class="apps" id="apps"></div><div class="pager"><span class="dot active"></span><span class="dot"></span></div><div class="dock" id="dock"></div></section><section class="panel" id="panel" aria-hidden="true"><header class="panel-head"><button id="panelBack">‹</button><div><small id="panelKicker">STIP</small><h2 id="panelTitle">Application</h2></div><button id="panelRefresh">↻</button></header><div class="panel-body" id="panelBody"></div></section><div class="toast" id="toast"></div></section></main><div hidden aria-hidden="true"><button id="editBtn" type="button"></button><button id="doneBtn" type="button"></button><button id="paletteBtn" type="button"></button><section id="wallpaperSheet"><button data-close-sheet type="button"></button></section><div id="backdrop"></div></div><script src="print-entry.js?v=20260819-1"></script><script src="test.js?v=20260821-system1"></script></body></html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1">
+<meta name="theme-color" content="#f3f7f8">
+<meta name="robots" content="noindex,nofollow">
+<title>STIP — Nouveau planning</title>
+<link rel="stylesheet" href="test.css?v=20260823-planning1">
+</head>
+<body>
+<header class="test-bar"><a class="back" href="index.html">‹ STIP</a><span>TEST PLANNING</span></header>
+<main class="page">
+<section class="planning-card" id="planningCard">
+  <div class="top-zone">
+    <div class="identity-rail">
+      <div class="year" id="yearLabel">2026</div>
+      <div class="avatar-wrap"><img id="avatar" alt=""><div id="avatarFallback" class="avatar-fallback">ST</div></div>
+    </div>
+    <div class="month-zone">
+      <button class="nav prev" id="prevMonth" type="button" aria-label="Mois précédent">‹</button>
+      <div class="month-window" id="monthWindow"><div class="month-track" id="monthTrack"></div></div>
+      <button class="nav next" id="nextMonth" type="button" aria-label="Mois suivant">›</button>
+    </div>
+  </div>
+  <div class="calendar" id="calendar"></div>
+</section>
+<div class="state" id="state">Connexion aux données STIP…</div>
+</main>
+<script src="test.js?v=20260823-planning1"></script>
+</body>
+</html>
