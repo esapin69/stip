@@ -1,6 +1,8 @@
 (()=>{'use strict';
 function permissions(){return window.STIPBootCache?.permissions||window.STIPSession?.permissions||{}}
 function apply(){const ok=!!permissions().responsable;document.documentElement.classList.toggle('stip-calendar-no-responsable',!ok)}
+const nativeFetch=window.fetch.bind(window);
+window.fetch=async function(input,init){const res=await nativeFetch(input,init);try{const url=typeof input==='string'?input:(input&&input.url)||'',method=String(init?.method||'GET').toUpperCase();if(method==='POST'&&url.includes('/functions/v1/stip-calendar')){const req=JSON.parse(String(init?.body||'{}'));if(req.kind==='personal'&&res.ok){const j=await res.clone().json(),name=String(j.calendar_name||'Mon planning').trim(),tag='calendar_name='+encodeURIComponent(name)+'&name_version=3',add=u=>u+(String(u).includes('?')?'&':'?')+tag;j.https_url=add(j.https_url);j.webcal_url=add(j.webcal_url);return new Response(JSON.stringify(j),{status:res.status,statusText:res.statusText,headers:{'Content-Type':'application/json'}})}}}catch(e){console.warn('STIP calendar name refresh',e)}return res};
 window.addEventListener('stip:session-ready',apply);window.addEventListener('stip:boot-updated',apply);window.addEventListener('stip:session-ended',()=>document.documentElement.classList.add('stip-calendar-no-responsable'));apply();
 const st=document.createElement('style');st.textContent=`.stip-calendar-no-responsable .cal-choice.formations,.stip-calendar-no-responsable .cal-choice.stagiaires{display:none!important}`;document.head.appendChild(st);
 })();
