@@ -1,0 +1,15 @@
+(()=>{'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+function apply(){const page=$('.ph-agent-page'),agenda=$('.ph-agent-agenda',page);if(!page||!agenda||agenda.dataset.compactReady==='1')return;agenda.dataset.compactReady='1';const days=$$('.ph-agent-day',agenda);if(!days.length)return;
+  const wrap=document.createElement('section');wrap.className='ph-agent-week-card';
+  const title=document.createElement('div');title.className='ph-agent-week-title';title.innerHTML='<span>À VENIR</span><strong>7 prochains jours</strong>';
+  const grid=document.createElement('div');grid.className='ph-agent-week-grid';
+  days.forEach((day,i)=>{day.dataset.agendaIndex=String(i);if(i>=7)day.hidden=true;grid.appendChild(day)});
+  const more=document.createElement('button');more.type='button';more.className='ph-agent-more';more.textContent=days.length>7?'Voir la suite':'';if(days.length<=7)more.hidden=true;
+  more.addEventListener('click',()=>{const expanded=more.dataset.open==='1';days.forEach((d,i)=>d.hidden=!expanded&&i>=7);more.dataset.open=expanded?'0':'1';more.textContent=expanded?'Voir la suite':'Réduire';});
+  wrap.append(title,grid,more);agenda.replaceWith(wrap);
+}
+document.addEventListener('click',e=>{if(e.target.closest?.('[data-ph-agent]'))setTimeout(apply,0)});
+const s=document.createElement('style');s.textContent=`.ph-agent-page{max-width:560px;margin:0 auto}.ph-agent-profile{margin-bottom:2px!important}.ph-agent-week-card{border:1px solid #dfe9eb;border-radius:18px;background:#fff;padding:10px;box-shadow:0 8px 20px rgba(18,72,88,.06)}.ph-agent-week-title{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 2px 9px}.ph-agent-week-title span{font-size:.58rem;font-weight:950;letter-spacing:.11em;color:#6c8189}.ph-agent-week-title strong{font-size:.82rem;color:#0d4257}.ph-agent-week-grid{display:grid;grid-template-columns:1fr;gap:6px}.ph-agent-day{min-height:60px!important;border-radius:12px!important;grid-template-columns:54px minmax(0,1fr)!important;box-shadow:none!important}.ph-agent-day>div:first-child{padding:5px 3px!important}.ph-agent-day small{font-size:.46rem!important}.ph-agent-day strong{font-size:1.35rem!important}.ph-agent-shift{min-width:0;padding:2px 6px!important}.ph-agent-shift img{display:block!important;max-height:52px!important;max-width:78px!important;width:auto!important;height:auto!important;object-fit:contain!important;margin:auto!important}.ph-agent-more{width:100%;min-height:38px;margin-top:8px;border:0;border-radius:11px;background:#eef6f7;color:#0d4257;font-weight:900;font-size:.72rem}.ph-agent-more[hidden]{display:none!important}@media(max-width:430px){.ph-agent-page{max-width:100%}.ph-agent-week-card{padding:8px}.ph-agent-week-grid{grid-template-columns:1fr}.ph-agent-day{min-height:58px!important;grid-template-columns:52px minmax(0,1fr)!important}.ph-agent-shift img{max-height:50px!important;max-width:74px!important}}`;
+document.head.appendChild(s);
+})();
