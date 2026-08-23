@@ -1,5 +1,4 @@
 (()=>{'use strict';
-function add(){const nav=document.querySelector('.resp-apps');if(!nav||nav.querySelector('[data-resp-agenda]'))return;const b=document.createElement('button');b.className='resp-app';b.type='button';b.dataset.respAgenda='1';b.innerHTML=`<span class="resp-icon agenda"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg></span><span class="resp-label">Agenda agents</span>`;b.addEventListener('click',()=>location.href='responsable-agenda.html');nav.appendChild(b);nav.classList.add('has-agenda')}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',add);else add();
-const st=document.createElement('style');st.textContent=`.resp-icon.agenda{background:linear-gradient(145deg,#f0a34b,#d77a1e)}.resp-apps.has-agenda{grid-template-columns:repeat(2,minmax(0,1fr))}@media(min-width:700px){.resp-apps.has-agenda{grid-template-columns:repeat(4,minmax(0,1fr))}.resp-apps.has-agenda .resp-app{gap:6px}.resp-apps.has-agenda .resp-icon{width:40px;height:40px;flex-basis:40px}.resp-apps.has-agenda .resp-label{font-size:.61rem}}`;document.head.appendChild(st);
+function wire(){const b=document.querySelector('[data-resp-agenda]');if(!b)return;b.addEventListener('click',()=>location.href='responsable-agenda.html')}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire);else wire();
 })();
