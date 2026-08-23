@@ -1,41 +1,10 @@
-<!DOCTYPE html>
-<html lang="fr" class="auth-pending">
+<!doctype html>
+<html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; script-src-attr 'none'; worker-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'none'">
-  <title>Évaluations</title>
-  <link rel="stylesheet" href="responsable-style-1.css"><link rel="stylesheet" href="responsable-style-2.css"><link rel="stylesheet" href="responsable-style-3.css"><link rel="stylesheet" href="responsable-evaluations-terrain.css"><link rel="stylesheet" href="stip-ui.css?v=20260821-system2">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Évaluation</title>
 </head>
-<body class="evaluation-page">
-<header class="top"><div class="brand"><b>STIP</b> · ÉVALUATIONS</div><a class="home" href="responsable-evaluation-agents.html">Changer d’agent</a></header>
-<main class="shell">
-  <a class="back" href="responsable-evaluation-agents.html">← Retour au choix de l’agent</a>
-  <div id="contextStatus" class="status show warn">Chargement de l’agent…</div>
-  <section class="context-card"><div><div class="kicker">Agent sélectionné</div><div class="context-name" data-agent-name>Chargement…</div><p data-agent-meta></p></div><a class="btn light" href="responsable-evaluation-agents.html">Changer d’agent</a></section>
-  <section class="panel" id="listPanel">
-    <div class="evaluation-title-row"><div><div class="kicker">Suivi terrain et historique officiel</div><h1 class="page-title">Évaluations</h1><p class="official-note">Notez uniquement ce que vous avez réellement observé. Les autres critères restent sur « Non observé ».</p></div><button class="btn cyan" id="newBtn" type="button">Ajouter une observation</button></div>
-    <div id="listStatus" class="status"></div><div id="evaluationList" class="evaluation-list"></div>
-  </section>
-  <section class="panel evaluation-form-panel" id="formPanel" hidden>
-    <div class="evaluation-title-row form-heading"><div><div class="kicker" id="formKicker">Nouvelle observation</div><h2 id="formTitle">Suivi terrain</h2><p class="official-note">Vous pouvez mettre l’évaluation en attente ou l’envoyer directement pour signature. L’enregistrement nécessaire se fait automatiquement.</p></div><button class="btn light" id="closeBtn" type="button">Fermer</button></div>
-    <div id="validatedView" class="validated-view" hidden>
-      <div class="validated-check" aria-hidden="true">✓</div><div class="validated-content"><div class="kicker">Version protégée</div><h3>Document officiel créé</h3><p>Cette version est validée et n’est plus modifiable. Vous pouvez ouvrir le PDF, revenir au choix de l’agent ou préparer une nouvelle version.</p><div class="validated-meta" id="validatedMeta"></div><div class="validated-actions"><a class="btn cyan" id="validatedPdfBtn" href="#" target="_blank" rel="noopener">Ouvrir le PDF officiel</a><button class="btn light" id="validatedNewVersionBtn" type="button">Créer une nouvelle version</button><a class="btn light" href="responsable-evaluation-agents.html">Changer d’agent</a></div></div>
-    </div>
-    <form id="evaluationForm" class="form">
-      <input type="hidden" name="id_evaluation">
-      <section class="identity-sheet" aria-labelledby="identityTitle"><div class="section-number">Informations administratives</div><h3 id="identityTitle">Agent évalué</h3><div class="agent-summary"><strong data-agent-name>Agent sélectionné</strong><span data-agent-meta></span></div><div class="form-grid two administrative-grid"><label>Grade *<input name="grade" type="text" required autocomplete="organization-title" placeholder="Grade de l’agent"></label><label>Service *<input name="service" type="text" required value="STIP"></label><label>Date de l’évaluation *<input name="date_evaluation" type="date" required></label><label>Responsable évaluateur *<input name="evaluateur" id="evaluatorSelect" type="text" readonly required placeholder="Chargement du responsable…"></label></div></section>
-      <section class="rating-assist" aria-label="Comparaison avec la dernière évaluation"><div class="previous-evaluation-reference" id="previousEvaluationReference"><button class="previous-evaluation-btn" id="previousEvaluationBtn" type="button" aria-describedby="previousEvaluationHint" aria-pressed="false" disabled><span class="previous-eye" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.75"></circle></svg></span><span><strong id="previousEvaluationLabel">Afficher la dernière évaluation</strong><small id="previousEvaluationAction">Recherche en cours…</small></span></button><small id="previousEvaluationHint">Recherche de la dernière évaluation validée…</small></div></section>
-      <div id="criteria"></div>
-      <section class="decision-sheet"><div class="decision-heading"><div class="section-number">Conclusion</div><h3>Finaliser l’évaluation</h3><p>Le PDF officiel ne pourra être créé qu’après la signature de l’agent et du responsable.</p></div><label class="general-observations">Observations générales<textarea name="observations_generales" placeholder="Synthèse de l’évaluation"></textarea></label><div class="decision-meta"><fieldset class="keep-agent"><legend>Aimeriez-vous garder cet agent ? *</legend><label><input type="radio" name="garder_agent" value="OUI" required><span>Oui</span></label><label><input type="radio" name="garder_agent" value="NON" required><span>Non</span></label></fieldset><div class="signature-date"><label>Fait à Lyon, le *<input name="lyon_le" type="date" required></label></div></div><div class="signature-grid" role="group" aria-label="Signatures du document officiel"><div class="signature-pad" data-signature="agent"><div class="signature-title"><strong>Agent</strong><span class="required-badge">Obligatoire</span></div><canvas>Zone de signature de l’agent</canvas><button type="button" class="signature-clear">Effacer</button></div><div class="signature-pad" data-signature="responsable"><div class="signature-title"><strong>Responsable</strong><span class="required-badge">Obligatoire</span></div><canvas>Zone de signature du responsable</canvas><button type="button" class="signature-clear">Effacer</button></div><div class="signature-pad" data-signature="direction"><div class="signature-title"><strong>Direction ou chef de service</strong><span>Optionnelle</span></div><canvas>Zone de signature de la direction</canvas><button type="button" class="signature-clear">Effacer</button></div></div><p class="signature-help">L’agent peut signer directement ici ou depuis la demande reçue dans STIP.</p></section>
-      <div id="formStatus" class="status" role="status" aria-live="assertive"></div><a class="btn cyan evaluation-pdf" id="pdfBtn" href="#" target="_blank" rel="noopener" hidden>Ouvrir le PDF officiel</a>
-      <div class="final-warning" id="finalConfirmation" hidden><label class="confirm-line"><input type="checkbox" id="confirmFinal" checked><span><strong>Évaluation relue</strong></span></label></div>
-      <div class="btnrow"><button class="btn light" id="saveBtn" type="submit">Mettre en attente</button><button class="btn cyan" id="finalizeBtn" type="button">Générer le PDF officiel</button></div>
-    </form>
-  </section>
-</main>
-<script src="name-format.js?v=20260820-global2"></script><script src="responsable-base.js"></script><script src="responsable-evaluations.js"></script><script src="responsable-evaluation-completion.js"></script><script src="responsable-evaluation-signature-identities.js"></script><script src="responsable-evaluation-external-signature.js"></script><script src="responsable-evaluation-simplify.js?v=20260821-1"></script>
-</body></html>
+<body></body>
+</html>
