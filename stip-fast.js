@@ -17,8 +17,10 @@ window.addEventListener('storage',e=>{if(e.key==='stip_session_v1')clear()});
 /* Prépare les lectures Responsable pendant que l'utilisateur regarde déjà l'accueil. */
 let warmed=false;function warmResponsable(detail){if(warmed||!detail?.permissions?.responsable||!sessionKey())return;warmed=true;const headers={'Content-Type':'application/json','X-STIP-Session':sessionKey()},jobs=[['https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions','manager_list'],['https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-change','responsable_list']];const run=()=>jobs.forEach(([url,action])=>window.fetch(url,{method:'POST',headers,body:JSON.stringify({action})}).catch(()=>{}));'requestIdleCallback'in window?requestIdleCallback(run,{timeout:1200}):setTimeout(run,500)}
 window.addEventListener('stip:boot-updated',e=>warmResponsable(e.detail));
+/* Le bouton Mon agenda ouvrait le même parcours que Planning perso : on garde un seul accès. */
+function dedupeAgenda(root=document){root.querySelectorAll?.('.hc-app[data-app="calendar"]').forEach(n=>n.remove())}
 /* Les images métier hors premier écran sont décodées sans bloquer le rendu. */
-function tune(root=document){root.querySelectorAll?.('img').forEach(img=>{try{img.decoding='async';if(img.matches('.ph-shift-img,.hc-day img,.ra-avatar img,.ro-week img'))img.loading='lazy'}catch{}})}
+function tune(root=document){root.querySelectorAll?.('img').forEach(img=>{try{img.decoding='async';if(img.matches('.ph-shift-img,.hc-day img,.ra-avatar img,.ro-week img'))img.loading='lazy'}catch{}});dedupeAgenda(root)}
 new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType===1){if(n.tagName==='IMG')tune(n.parentElement||document);else tune(n)}}))).observe(document.documentElement,{subtree:true,childList:true});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>tune());else tune();
 })();
