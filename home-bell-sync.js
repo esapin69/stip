@@ -1,0 +1,8 @@
+(()=>{'use strict';
+const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions',STORE='stip_session_v1';
+function setBadge(count){const bell=document.getElementById('cpBell');if(!bell)return;let b=bell.querySelector(':scope > span');if(count>0){if(!b){b=document.createElement('span');bell.appendChild(b)}b.textContent=count>99?'99+':String(count)}else b?.remove()}
+function visible(data){const pending=new Set((data.actions||[]).filter(a=>a.status==='pending'&&!a.completed_at&&!a.cancelled_at).map(a=>String(a.id)));return(data.notifications||[]).filter(n=>!n.action_id||pending.has(String(n.action_id)))}
+async function refresh(){const token=localStorage.getItem(STORE)||'';if(!token)return;try{const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'home'})}),j=await r.json().catch(()=>({}));if(r.ok&&!j.error)setBadge(visible(j).length)}catch{}}
+const body=document.getElementById('hsPanelBody');if(body)new MutationObserver(()=>{const live=document.querySelectorAll('#hsPanelBody .nl-card').length,empty=document.querySelector('#hsPanelBody .nl-empty');if(live||empty)setBadge(live)}).observe(body,{childList:true,subtree:true});
+window.addEventListener('stip:boot-updated',()=>setTimeout(refresh,120));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});document.addEventListener('click',e=>{if(e.target.closest?.('[data-nl-ok],[data-nl-proposal],#nlAccept,#nlDecline,#nlRefresh'))setTimeout(refresh,650)},true);setInterval(()=>{if(!document.hidden)refresh()},60000);setTimeout(refresh,700);
+})();
