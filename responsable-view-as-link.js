@@ -1,0 +1,1 @@
+(()=>{'use strict';document.addEventListener('click',e=>{const b=e.target.closest?.('[data-agent]');if(!b||!document.querySelector('#respPanel.ra-native-panel'))return;e.preventDefault();e.stopImmediatePropagation();const id=String(b.dataset.agent||'');if(!id)return;location.href=`index.html?view_agent=${encodeURIComponent(id)}&readonly=1&from=responsable`},true)})();
