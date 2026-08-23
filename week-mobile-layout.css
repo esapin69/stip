@@ -23,15 +23,4 @@
   .cp-profile-main>small{font-size:.82rem!important;line-height:1.35!important}
   .cp-profile-details span{font-size:.96rem!important;font-weight:900!important;line-height:1.15!important;padding:11px 12px!important}
   .cp-profile-details b{font-size:.62rem!important;margin-bottom:4px!important}
-
-  #homeView .hc-days{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:6px!important;row-gap:0!important}
-  #homeView .hc-week-sep,#homeView .hc-month{grid-column:1/-1!important}
-  #homeView .hc-day.d1,#homeView .hc-day.d2,#homeView .hc-day.d3,#homeView .hc-day.d4,#homeView .hc-day.d5{grid-column:1/-1!important;width:100%!important;margin:4px 0!important}
-  #homeView .hc-day.d6{grid-column:1!important;width:100%!important;margin:4px 0!important}
-  #homeView .hc-day.d7{grid-column:2!important;width:100%!important;margin:4px 0!important}
-  #homeView .hc-day.d6,#homeView .hc-day.d7{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:24px 34px 54px!important;min-height:112px!important}
-  #homeView .hc-day.d6>i,#homeView .hc-day.d7>i{grid-column:1!important;grid-row:1!important}
-  #homeView .hc-day.d6>b,#homeView .hc-day.d7>b{grid-column:1!important;grid-row:2!important;place-self:center!important}
-  #homeView .hc-day.d6>span,#homeView .hc-day.d7>span{grid-column:1!important;grid-row:3!important;place-self:stretch!important;display:grid!important;place-items:center!important;min-width:0!important}
-  #homeView .hc-day.d6 img,#homeView .hc-day.d7 img{max-width:50px!important;max-height:50px!important}
 }
