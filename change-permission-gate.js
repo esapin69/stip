@@ -4,5 +4,5 @@ function apply(){const root=document.querySelector('#phContent .cw');if(!root||!
 function schedule(){requestAnimationFrame(apply)}
 new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
 window.addEventListener('stip:session-ready',schedule);window.addEventListener('stip:route',schedule);window.addEventListener('stip:lazy-ready',schedule);
-document.addEventListener('click',e=>{if(!denied())return;if(e.target.closest?.('[data-cw-date],[data-cw-shift],[data-cw-agent],#cwNoOne')){e.preventDefault();e.stopImmediatePropagation()}},true);
+document.addEventListener('click',e=>{if(!denied())return;if(e.target.closest?.('#planningView .ph-day-cell,[data-cw-date],[data-cw-shift],[data-cw-agent],#cwNoOne')){e.preventDefault();e.stopImmediatePropagation()}},true);
 const st=document.createElement('style');st.textContent=`.cw-receive-only>.cw-title,.cw-receive-only>.cw-card:nth-of-type(1),.cw-receive-only>.cw-card:nth-of-type(2),.cw-receive-only>.cw-card:nth-of-type(3){display:none!important}.cw-permission-note{display:grid;gap:4px;padding:13px 14px;border:1px solid #f1d6a8;border-radius:15px;background:#fff8eb;color:#6f4f18}.cw-permission-note b{font-size:.78rem}.cw-permission-note span{font-size:.69rem;line-height:1.4;color:#80683e}`;document.head.appendChild(st);schedule()})();
