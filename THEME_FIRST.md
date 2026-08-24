@@ -4,7 +4,7 @@
 
 La priorité actuelle du projet est le thème STIP. Toute nouvelle page ou refonte visuelle doit se brancher sur `stip-theme.css` et suivre cette règle : **le thème possède le visuel ; la page possède seulement sa structure et sa logique métier.**
 
-Branche de travail prioritaire : `theme/stip-master`.
+Source active de production : `main`. La branche `theme/stip-master` a servi à la consolidation et ne doit plus devenir une seconde source de vérité.
 
 ## Règle obligatoire avant toute modification visuelle
 
@@ -12,7 +12,7 @@ Avant de modifier une page :
 
 1. Lire `stip-theme.css`.
 2. Réutiliser les variables et composants du thème existants.
-3. Si un composant visuel manque, l'ajouter d'abord au thème, puis l'utiliser dans la page.
+3. Si un composant visuel manque, l'ajouter d'abord au thème ou à un composant commun, puis l'utiliser dans la page.
 4. Quand une ancienne règle CSS locale contredit le thème, la supprimer ou la fusionner ; ne pas créer un second système visuel local.
 5. Ne jamais modifier le moteur métier uniquement pour résoudre un problème visuel.
 
@@ -41,7 +41,7 @@ Principes :
 
 Ordre de responsabilité :
 
-`stip-theme.css` → composants communs → pages métier → données/moteurs.
+`stip-theme.css` → composants communs (`stip-shell.css`, `stip-loading.css`) → pages métier → données/moteurs.
 
 Les pages ne doivent pas redéfinir : couleurs de marque, rayons, ombres, espaces standards, tailles de titres principales, états verrouillés, loaders, surfaces standards ou règles mobiles communes.
 
@@ -66,9 +66,9 @@ Un sujet peut apparaître dans plusieurs espaces uniquement s'il produit réelle
 
 ## Règle pour les autres discussions / branches
 
-Toute discussion qui travaille sur une page STIP doit considérer `stip-theme.css` comme référence visuelle prioritaire. Elle peut travailler sur sa logique métier séparément, mais avant finalisation elle doit :
+Toute discussion qui travaille sur une page STIP doit considérer `main` et son `stip-theme.css` comme références prioritaires. Elle peut travailler sur sa logique métier séparément, mais avant finalisation elle doit :
 
-- reprendre la dernière version du thème ;
+- reprendre la dernière version de `main` ;
 - brancher la page sur le thème ;
 - supprimer les couches visuelles contradictoires qu'elle remplace ;
 - vérifier qu'elle n'introduit pas un nouveau langage visuel local.
