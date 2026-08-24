@@ -1,0 +1,8 @@
+(()=>{'use strict';
+const denied=()=>window.STIPSession?.permissions?.day_exchange===false;
+function apply(){const root=document.querySelector('#phContent .cw');if(!root||!denied())return;root.classList.add('cw-receive-only');if(!root.querySelector('.cw-permission-note')){const note=document.createElement('section');note.className='cw-permission-note';note.innerHTML='<b>Réception uniquement</b><span>Tu ne peux pas initier de demande de changement. Les propositions reçues restent disponibles et tu peux toujours les accepter ou les refuser.</span>';const inbox=root.querySelector('.cw-inbox')?.closest('.cw-card');root.insertBefore(note,inbox||root.firstChild)}}
+function schedule(){requestAnimationFrame(apply)}
+new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});
+window.addEventListener('stip:session-ready',schedule);window.addEventListener('stip:route',schedule);window.addEventListener('stip:lazy-ready',schedule);
+document.addEventListener('click',e=>{if(!denied())return;if(e.target.closest?.('[data-cw-date],[data-cw-shift],[data-cw-agent],#cwNoOne')){e.preventDefault();e.stopImmediatePropagation()}},true);
+const st=document.createElement('style');st.textContent=`.cw-receive-only>.cw-title,.cw-receive-only>.cw-card:nth-of-type(1),.cw-receive-only>.cw-card:nth-of-type(2),.cw-receive-only>.cw-card:nth-of-type(3){display:none!important}.cw-permission-note{display:grid;gap:4px;padding:13px 14px;border:1px solid #f1d6a8;border-radius:15px;background:#fff8eb;color:#6f4f18}.cw-permission-note b{font-size:.78rem}.cw-permission-note span{font-size:.69rem;line-height:1.4;color:#80683e}`;document.head.appendChild(st);schedule()})();
