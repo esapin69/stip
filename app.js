@@ -2,7 +2,7 @@
 'use strict';
 const ACCESS_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',STORAGE='stip_session_v1',$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText'),moduleGrid=$('#moduleGrid'),emptyPermissions=$('#emptyPermissions');let session=null,restoring=false,panelGuard=false;
-const modules=[{key:'planning',title:'Planning perso',route:'planning/personal'},{key:'equipe_contacts',title:'Contacts',route:'contacts/directory'},{key:'responsable',title:'Responsable',href:'responsable.html'},{key:'nouveaux_arrivants',title:'Nouvel agent',href:'https://esapin69.github.io/Ghe-interne/'},{key:'admin',title:'Admin',href:'https://admin-ghe.esapin.com/'}];
+const modules=[{key:'cadre_dashboard',title:'Aujourd’hui & demain',href:'cadre.html'},{key:'planning',title:'Planning perso',route:'planning/personal'},{key:'equipe_contacts',title:'Contacts',route:'contacts/directory'},{key:'responsable',title:'Responsable',href:'responsable.html'},{key:'nouveaux_arrivants',title:'Nouvel agent',href:'https://esapin69.github.io/Ghe-interne/'},{key:'admin',title:'Admin',href:'https://admin-ghe.esapin.com/'}];
 function token(){return localStorage.getItem(STORAGE)||''}
 function route(){return location.hash.replace(/^#\/?/,'')||'home'}
 function clean(next){return String(next||'home').replace(/^\/+|\/+$/g,'')||'home'}
