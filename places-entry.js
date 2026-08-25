@@ -1,0 +1,21 @@
+(()=>{
+'use strict';
+const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>';
+function open(e){e?.preventDefault?.();e?.stopPropagation?.();location.href='places.html'}
+function injectHome(){
+  if(!window.STIPSession&&!window.STIPBootCache)return;
+  const box=document.querySelector('#homeView .hc-apps');
+  if(box&&!box.querySelector('[data-stip-places]')){
+    const b=document.createElement('button');b.type='button';b.className='hc-app places';b.dataset.stipPlaces='1';b.setAttribute('aria-label','Connaître les lieux');b.innerHTML=`<span>${icon}</span><strong>Connaître les lieux</strong>`;b.onclick=open;box.appendChild(b)
+  }
+  const grid=document.querySelector('#moduleGrid');
+  if(grid&&!document.querySelector('#homeView [data-stip-places-fallback]')&&!box){
+    const b=document.createElement('button');b.type='button';b.className='module-card';b.dataset.stipPlacesFallback='1';b.innerHTML='<strong>Connaître les lieux</strong>';b.onclick=open;grid.appendChild(b)
+  }
+}
+let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;injectHome()})}
+new MutationObserver(queue).observe(document.body,{childList:true,subtree:true});
+['stip:session-ready','stip:boot-updated'].forEach(n=>window.addEventListener(n,queue));
+document.addEventListener('pointerdown',e=>{if(e.target.closest?.('[data-stip-places]')){const l=document.createElement('link');l.rel='prefetch';l.href='places.html';document.head.appendChild(l)}},{passive:true,capture:true});
+queue();
+})();
