@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-cadre',ACCESS='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',TOKEN='stip_session_v1',$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],token=()=>localStorage.getItem(TOKEN)||'';
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ymd=d=>new Intl.DateTimeFormat('en-CA',{year:'numeric',month:'2-digit',day:'2-digit',timeZone:'Europe/Paris'}).format(d),fmtDate=d=>new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Paris'}).format(new Date(d+'T12:00:00+02:00'));
 async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token()},body:JSON.stringify(body),cache:'no-store'}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);return j}
 function dayTitle(date){const now=new Date(),t=ymd(now),tm=new Date(now);tm.setDate(tm.getDate()+1);return date===t?'Aujourd’hui':date===ymd(tm)?'Demain':'Date future'}
