@@ -1,5 +1,1 @@
-.route-documentation{margin-top:12px;border:1px solid #cfe2e7;border-radius:16px;background:#f5fbfc;padding:12px 13px;color:var(--stip-ink-2)}
-.route-documentation .route-doc-kicker{display:block;margin-bottom:5px;color:var(--stip-accent);font-size:.56rem;font-weight:950;letter-spacing:.09em}
-.route-documentation strong{display:block;color:var(--stip-ink);font-size:.76rem;font-weight:950}
-.route-documentation p{margin:7px 0 0;font-size:.7rem;line-height:1.45}
-.route-documentation small{display:block;margin-top:8px;padding-top:8px;border-top:1px solid var(--stip-line-soft);color:var(--stip-muted);font-size:.58rem;font-weight:750;line-height:1.35}
+.route-provenance{margin-top:7px;padding-top:7px;border-top:1px solid var(--stip-line-soft);color:var(--stip-muted);font-size:.58rem;font-weight:750;line-height:1.35}
