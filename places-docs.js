@@ -1,40 +1,41 @@
 (()=>{
 'use strict';
-const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places';
-const STORE='stip_session_v1';
-let routes=new Map(),loading=null;
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const dateFr=v=>{if(!v)return'';const d=new Date(`${v}T12:00:00`);return Number.isNaN(d.getTime())?String(v):new Intl.DateTimeFormat('fr-FR').format(d)};
-async function load(){
-  if(routes.size)return routes;
-  if(loading)return loading;
-  loading=(async()=>{
-    const token=localStorage.getItem(STORE)||'';
-    if(!token)return routes;
-    const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'bootstrap'})});
-    const j=await r.json().catch(()=>({}));
-    if(!r.ok||j.error)return routes;
-    routes=new Map((j.routes||[]).map(x=>[x.id,x]));
-    return routes;
-  })().finally(()=>{loading=null});
-  return loading;
-}
-function block(r){
-  const source=[r.source_kind,r.source_date?dateFr(r.source_date):'',r.source_ref].filter(Boolean).join(' · ');
-  return `<aside class="route-documentation" data-route-doc="${esc(r.id)}"><span class="route-doc-kicker">PROCÉDURE ADAPTÉE AU CIRCUIT</span><strong>${esc(r.source_kind||'Documentation opérationnelle')}</strong>${r.notes?`<p>${esc(r.notes)}</p>`:''}${source?`<small>Source · ${esc(source)}</small>`:''}</aside>`;
-}
-async function enhance(){
-  await load();
-  document.querySelectorAll('.route-card button[data-route]').forEach(btn=>{
-    const id=btn.dataset.route,r=routes.get(id),card=btn.closest('.route-card');
-    if(!r||!card||!r.notes)return;
-    const expanded=!!card.querySelector('.route-steps');
-    const old=card.querySelector('[data-route-doc]');
-    if(!expanded){old?.remove();return}
-    if(!old)card.insertAdjacentHTML('beforeend',block(r));
+const PROCEDURES={
+  route_b14_cermep:{
+    provenance:'Procédure STIP validée · 27/07/2026',
+    sourceAliases:{'Source · Procedure_acces_CERMEP_visuel_plus_utile_v2':'Source · Procédure STIP CERMEP · 27/07/2026'},
+    steps:{
+      1:'Accès STIP recommandé : entrer par B14 et rejoindre le hall principal. Éviter le passage routier extérieur pour le brancardage.',
+      5:'Sonner et attendre l’ouverture par un personnel habilité. Ne jamais forcer la porte. Sans réponse, contacter le CERMEP ou la sécurité.',
+      6:'Continuer dans le couloir technique, franchir la porte verte et refermer les portes sécurisées après passage.'
+    }
+  }
+};
+function adaptSources(){
+  const aliases=Object.values(PROCEDURES).flatMap(p=>Object.entries(p.sourceAliases||{}));
+  document.querySelectorAll('.place-hero-card .place-chip').forEach(chip=>{
+    const hit=aliases.find(([from])=>chip.textContent.trim()===from);
+    if(hit)chip.textContent=hit[1];
   });
 }
-let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance().catch(console.error)})}
+function adaptRoute(card,routeId){
+  const cfg=PROCEDURES[routeId];if(!cfg)return;
+  const steps=card.querySelector('.route-steps');
+  const old=card.querySelector('.route-documentation');old?.remove();
+  if(!steps)return;
+  steps.querySelectorAll('.route-step').forEach(row=>{
+    const n=Number(row.querySelector('b')?.textContent||0),text=cfg.steps?.[n];
+    if(text){const span=row.querySelector('span');if(span)span.textContent=text;}
+  });
+  if(cfg.provenance&&!card.querySelector('[data-route-provenance]')){
+    steps.insertAdjacentHTML('afterend',`<div class="route-provenance" data-route-provenance>${cfg.provenance}</div>`);
+  }
+}
+function enhance(){
+  adaptSources();
+  document.querySelectorAll('.route-card button[data-route]').forEach(btn=>adaptRoute(btn.closest('.route-card'),btn.dataset.route));
+}
+let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;enhance()})}
 new MutationObserver(queue).observe(document.getElementById('placesContent')||document.body,{childList:true,subtree:true});
 queue();
 })();
