@@ -1,0 +1,14 @@
+/* Extension du volet « Visiter les lieux ».
+   Le socle visuel historique reste dans places.css pour éviter toute dérive du moteur de recherche. */
+.places-visit-entry{width:100%;border:1px solid var(--stip-line);border-radius:20px;background:#fff;color:var(--stip-ink);box-shadow:var(--stip-shadow);padding:13px 14px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:11px;align-items:center;text-align:left}
+.places-visit-entry-icon{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--stip-accent-soft);color:var(--stip-accent);font-size:1.1rem;font-weight:950}
+.places-visit-entry small{display:block;color:var(--stip-accent);font-size:.56rem;font-weight:950;letter-spacing:.09em}
+.places-visit-entry strong{display:block;margin-top:2px;font-size:.92rem;font-weight:950;line-height:1.15}
+.places-visit-entry em{display:block;margin-top:3px;color:var(--stip-muted);font-size:.68rem;line-height:1.25;font-style:normal;font-weight:700}
+.places-visit-entry b{color:var(--stip-accent);font-size:1.25rem}
+.places-visit-intro{border:1px solid var(--stip-line);border-radius:22px;background:linear-gradient(180deg,#fff,#f9fcfd);box-shadow:var(--stip-shadow);padding:16px}
+.places-visit-intro span{display:block;color:var(--stip-accent);font-size:.57rem;font-weight:950;letter-spacing:.1em}
+.places-visit-intro h2{margin:5px 0 0;font-size:1.3rem;line-height:1;font-weight:950;letter-spacing:-.025em}
+.places-visit-intro p{margin:8px 0 0;color:var(--stip-muted);font-size:.75rem;line-height:1.45}
+.places-visit-grid .place-primary{box-shadow:var(--stip-shadow-soft)}
+@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:14px}}
