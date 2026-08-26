@@ -3,6 +3,8 @@
 const PROCEDURES={
   route_b14_cermep:{
     provenance:'Procédure STIP validée · 27/07/2026',
+    guideUrl:'https://docs.google.com/document/d/1Rj4F0PB-VovtIo0qHvQj7Y3XZT31sun7/edit?usp=drivesdk',
+    guideLabel:'Ouvrir le guide CERMEP',
     sourceAliases:{'Source · Procedure_acces_CERMEP_visuel_plus_utile_v2':'Source · Procédure STIP CERMEP · 27/07/2026'},
     steps:{
       1:'Accès STIP recommandé : entrer par B14 et rejoindre le hall principal. Éviter le passage routier extérieur pour le brancardage.',
@@ -27,8 +29,12 @@ function adaptRoute(card,routeId){
     const n=Number(row.querySelector('b')?.textContent||0),text=cfg.steps?.[n];
     if(text){const span=row.querySelector('span');if(span)span.textContent=text;}
   });
+  if(cfg.guideUrl&&!card.querySelector('[data-route-guide]')){
+    steps.insertAdjacentHTML('afterend',`<a class="route-guide-link" data-route-guide href="${cfg.guideUrl}" target="_blank" rel="noopener noreferrer">${cfg.guideLabel||'Ouvrir le guide'}</a>`);
+  }
   if(cfg.provenance&&!card.querySelector('[data-route-provenance]')){
-    steps.insertAdjacentHTML('afterend',`<div class="route-provenance" data-route-provenance>${cfg.provenance}</div>`);
+    const guide=card.querySelector('[data-route-guide]');
+    (guide||steps).insertAdjacentHTML('afterend',`<div class="route-provenance" data-route-provenance>${cfg.provenance}</div>`);
   }
 }
 function enhance(){
