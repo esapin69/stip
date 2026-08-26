@@ -10,7 +10,8 @@
   <link rel="icon" type="image/png" sizes="64x64" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-64.png">
   <link rel="apple-touch-icon" sizes="180x180" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png">
   <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3">
-  <link rel="stylesheet" href="places.css?v=20260825-places1">
+  <link rel="stylesheet" href="places.css?v=20260826-visual1">
+  <link rel="stylesheet" href="places-visit.css?v=20260826-visit1">
 </head>
 <body>
   <main class="places-shell" id="placesApp">
@@ -24,9 +25,9 @@
     </header>
 
     <section class="places-hero">
-      <span class="stip-kicker">VISITE GUIDÉE DU GHE</span>
-      <h1>Trouver un lieu</h1>
-      <p>Service, unité, étage, bâtiment, examen, entrée, ascenseur ou repère terrain.</p>
+      <span id="placesKicker" class="stip-kicker">VISITE GUIDÉE DU GHE</span>
+      <h1 id="placesHeroTitle">Trouver un lieu</h1>
+      <p id="placesHeroText">Service, unité, étage, bâtiment, examen, entrée, ascenseur ou repère terrain.</p>
       <label class="places-search-wrap" for="placesSearch">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
         <input id="placesSearch" type="search" autocomplete="off" enterkeyhint="search" placeholder="Ex. 301, POP, med nuc, néonat…" aria-label="Rechercher un lieu">
@@ -38,6 +39,6 @@
     <section id="placesContent" class="places-content" aria-live="polite"></section>
   </main>
 
-  <script src="places.js?v=20260825-places1"></script>
+  <script src="places.js?v=20260826-visit1"></script>
 </body>
 </html>
