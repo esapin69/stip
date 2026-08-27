@@ -110,7 +110,7 @@ function enhanceCermepGuide(card){
   if(!/cermep/i.test(context))return;
   const steps=card.querySelector('.route-steps');
   const overview=card.querySelector('[data-route-overview]');
-  (overview||steps).insertAdjacentHTML('afterend',`<div class="route-source-actions"><button type="button" data-source-open data-source-ref="Procédure STIP CERMEP · 27/07/2026" data-source-summary="Itinéraire opérationnel rattaché au trajet affiché." data-source-kind="Document officiel interne" data-source-kind-class="internal" data-source-url="${CERMEP_DOCS_URL}" data-source-url-label="Ouvrir les documents officiels CERMEP"><span>Document officiel</span><strong>Voir la procédure CERMEP</strong><b>›</b></button></div>`);
+  (overview||steps).insertAdjacentHTML('afterend',`<div class="route-source-actions" data-route-guide><button type="button" data-source-open data-source-ref="Procédure STIP CERMEP · 27/07/2026" data-source-summary="Itinéraire opérationnel rattaché au trajet affiché." data-source-kind="Document officiel interne" data-source-kind-class="internal" data-source-url="${CERMEP_DOCS_URL}" data-source-url-label="Ouvrir les documents officiels CERMEP"><span>Document officiel</span><strong>Voir la procédure CERMEP</strong><b>›</b></button></div>`);
 }
 function enhanceRoutes(){
   document.querySelectorAll('.route-card').forEach(card=>{
