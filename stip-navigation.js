@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+if(window.STIPNav?.version)return;
 const SAME_ORIGIN=()=>{
   try{return !document.referrer||new URL(document.referrer).origin===location.origin}catch{return true}
 };
@@ -15,8 +16,6 @@ function back(to=fallback()){
   if(canBack()){history.back();return true}
   location.href=to;return false
 }
-// Connaître les lieux : chaque ouverture de trajet doit devenir une vraie étape
-// d'historique, sinon le bouton Retour du navigateur saute hors de l'application.
 document.addEventListener('click',e=>{
   if(!location.pathname.toLowerCase().endsWith('places.html'))return;
   const route=e.target.closest?.('[data-route]');
@@ -29,11 +28,9 @@ document.addEventListener('click',e=>{
   e.stopImmediatePropagation();
   location.hash=target;
 },true);
-// Règle commune pour les boutons "retour" des pages autonomes.
 document.addEventListener('click',e=>{
   const b=e.target.closest?.('[data-stip-back],#backBtn,#placesBack');
   if(!b)return;
-  // Dans la recherche des lieux, le premier retour efface volontairement la recherche.
   if(b.id==='placesBack'){
     const q=document.querySelector('#placesSearch');
     if(q&&q.value)return;
@@ -42,5 +39,5 @@ document.addEventListener('click',e=>{
   e.stopImmediatePropagation();
   back(b.dataset?.backFallback||fallback());
 },true);
-window.STIPNav={back,canBack};
+window.STIPNav={version:1,back,canBack};
 })();
