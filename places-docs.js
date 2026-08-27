@@ -4,8 +4,8 @@ const STACK_KEY='stip_places_waypoint_stack_v1';
 const PROCEDURES={
   route_b14_cermep:{
     provenance:'Procédure STIP validée · 27/07/2026',
-    guideUrl:'https://docs.google.com/document/d/1Rj4F0PB-VovtIo0qHvQj7Y3XZT31sun7/edit?usp=drivesdk',
-    guideLabel:'Ouvrir le guide CERMEP',
+    guideUrl:'https://drive.google.com/drive/folders/1hNPM7Jy7LdbyTlYA5Uk72ukvXItgbPG3',
+    guideLabel:'Ouvrir les documents officiels CERMEP',
     destination:{placeId:'cermep',label:'CERMEP'},
     sourceAliases:{'Source · Procedure_acces_CERMEP_visuel_plus_utile_v2':'Source · Procédure STIP CERMEP · 27/07/2026'},
     steps:{
