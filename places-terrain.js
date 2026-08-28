@@ -35,6 +35,20 @@ function routeState(){const h=location.hash.replace(/^#\/?/,'');if(h==='visit')r
 function currentPlaceId(){const r=routeState();return r.kind==='place'?r.id:''}
 function mapById(){return new Map((data?.places||[]).map(p=>[p.id,p]))}
 function isRouteCue(p){return !!p&&(['landmark','walkway'].includes(p.place_type)||(data?.tags||[]).some(t=>t.place_id===p.id&&t.tag==='navigation:landmark_only'))}
+function siblingExams(p){if(!p?.parent_id)return[];return (data?.places||[]).filter(x=>x.parent_id===p.parent_id&&x.place_type==='exam').sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))}
+function examRow(p){return `<button class="place-row exam-choice-row" type="button" data-place="${esc(p.id)}"><div class="place-row-main"><span class="exam-choice-label">EXAMEN</span><strong>${esc(p.display_name)}</strong>${p.summary?`<p>${esc(p.summary)}</p>`:''}</div><span class="place-next">›</span></button>`}
+function enhanceExamSemantics(){
+  const id=currentPlaceId();if(!id||!data)return;
+  const map=mapById(),p=map.get(id),hero=content.querySelector('.place-hero-card');if(!p||!hero)return;
+  const kicker=hero.querySelector('.place-kicker');
+  if(p.place_type==='exam'&&kicker)kicker.textContent='EXAMEN';
+  if(p.place_type==='reception'&&kicker)kicker.textContent='ACCUEIL / REPÈRE';
+  const exams=siblingExams(p);
+  if(p.place_type!=='reception'||!exams.length||content.querySelector('[data-exam-choices]'))return;
+  const sec=document.createElement('section');sec.className='places-section exam-choice-section';sec.dataset.examChoices='1';
+  sec.innerHTML=`<header class="places-section-head"><h2>Examens de ce secteur</h2><small>${exams.length} examen${exams.length>1?'s':''}</small></header><div class="places-list">${exams.map(examRow).join('')}</div>`;
+  hero.insertAdjacentElement('afterend',sec);
+}
 function directionHead(text=''){
   const m=String(text).trim().match(/^(à gauche|a gauche|sur la gauche|à droite|a droite|sur la droite|tout droit|en face)\b/i);
   if(!m)return'';
@@ -135,7 +149,7 @@ function enhanceLandmark(){
   paragraphs.slice(1).forEach(x=>x.remove());
   if(r.direction){const callout=document.createElement('div');callout.className='landmark-route-instruction';callout.innerHTML=`<b>À faire</b><span>${esc(r.direction)}</span>`;hero.append(callout)}
 }
-function enhanceReadability(){enhanceLandmark();enhanceRouteCueRows();enhanceRelationLists();enhanceGenericLists()}
+function enhanceReadability(){enhanceExamSemantics();enhanceLandmark();enhanceRouteCueRows();enhanceRelationLists();enhanceGenericLists()}
 function decorate(){
   scheduled=false;if(!data)return;
   const state=routeState();
