@@ -5,8 +5,9 @@ const LEVEL='level';
 const q=s=>document.querySelector(s);
 const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function hospitalId(){const m=location.hash.match(/^#\/?place\/(.+)$/);return m?decodeURIComponent(m[1]):''}
-function visitMode(){return sessionStorage.getItem('stip_places_visit_mode')==='1'||location.hash==='#visit'}
-function markVisit(){if(location.hash==='#visit')sessionStorage.setItem('stip_places_visit_mode','1')}
+function visitHash(){return /^#\/?visit$/.test(location.hash)}
+function visitMode(){return sessionStorage.getItem('stip_places_visit_mode')==='1'||visitHash()}
+function markVisit(){if(visitHash())sessionStorage.setItem('stip_places_visit_mode','1')}
 function clearVisit(){if(!location.hash.includes('place/'))sessionStorage.removeItem('stip_places_visit_mode')}
 function getRows(){return [...document.querySelectorAll('#placesContent .place-row[data-place]')]}
 function classify(row){const meta=norm(row.textContent);const id=row.dataset.place||'';if(/ascenseur/.test(meta)||/elev|asc_/.test(id))return'elevator';if(/étage|niveau|rez-de-|rez de |rdc|rdj/.test(meta)||/_(rdc|rdj|l\d+|tm)$/.test(id))return'level';return'other'}
