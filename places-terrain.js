@@ -30,23 +30,29 @@ function fragmentCard(f){
   return `<details class="terrain-card"><summary><span><strong>${esc(f.label)}</strong><small>${chip(visibilityLabel(f.visibility),f.visibility)}${chip(evidenceLabel(f.evidence_status),'evidence')}</small></span><b>＋</b></summary><div class="terrain-card-body">${steps.length?`<ol>${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}${f.notes?`<p>${esc(f.notes)}</p>`:''}${operational.map(n=>`<p class="terrain-operational">${esc(n)}</p>`).join('')}${restricted.map(n=>`<p class="terrain-restricted">${esc(n)}</p>`).join('')}</div></details>`;
 }
 function constraintCard(c){return `<article class="terrain-constraint ${esc(c.visibility)}"><div>${chip(visibilityLabel(c.visibility),c.visibility)}${chip(evidenceLabel(c.evidence_status),'evidence')}</div><p>${esc(c.rule)}</p></article>`}
-function currentPlaceId(){const m=location.hash.match(/^#\/?place\/(.+)$/);return m?decodeURIComponent(m[1]):''}
+function routeState(){const h=location.hash.replace(/^#\/?/,'');if(h==='visit')return{kind:'visit',id:''};const m=h.match(/^(place|route)\/(.+)$/);return m?{kind:m[1],id:decodeURIComponent(m[2])}:{kind:'home',id:''}}
 function decorate(){
   scheduled=false;if(!data)return;
-  content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());
-  const placeId=currentPlaceId();
-  if(placeId){
-    const relevant=(data.constraints||[]).filter(c=>Array.isArray(c.scope)&&c.scope.includes(placeId));
+  const state=routeState();
+  if(state.kind==='place'){
+    const relevant=(data.constraints||[]).filter(c=>Array.isArray(c.scope)&&c.scope.includes(state.id));
+    const signature=`constraints:${state.id}:${relevant.map(x=>x.id).join(',')}`;
+    if(content.querySelector(`[data-terrain-added="constraints"][data-signature="${CSS.escape(signature)}"]`))return;
+    content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());
     if(relevant.length){
-      const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='constraints';
+      const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='constraints';section.dataset.signature=signature;
       section.innerHTML=`<header class="places-section-head"><h2>À savoir sur ce lieu</h2><small>${relevant.length} règle${relevant.length>1?'s':''}</small></header><div class="terrain-constraints">${relevant.map(constraintCard).join('')}</div>`;
       const detail=content.querySelector('.place-detail');(detail||content).append(section);
     }
     return;
   }
+  if(state.kind!=='home'&&state.kind!=='visit'){content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());return}
   const fragments=data.route_fragments||[];
+  const signature=`fragments:${state.kind}:${fragments.map(x=>x.id).join(',')}`;
+  if(content.querySelector(`[data-terrain-added="fragments"][data-signature="${CSS.escape(signature)}"]`))return;
+  content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());
   if(fragments.length&&content.querySelector('.places-section,.places-visit-intro')){
-    const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='fragments';
+    const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='fragments';section.dataset.signature=signature;
     section.innerHTML=`<header class="places-section-head"><h2>Parcours terrain</h2><small>${fragments.length} parcours vérifié${fragments.length>1?'s':''}</small></header><div class="terrain-list">${fragments.map(fragmentCard).join('')}</div>`;
     content.append(section);
   }
