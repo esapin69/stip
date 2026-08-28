@@ -6,7 +6,6 @@ const content=document.querySelector('#placesContent');
 if(!content)return;
 let data=null,byId=new Map(),relations=[],routes=[],steps=new Map(),scheduled=false;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function currentPlaceId(){const m=location.hash.match(/^#\/?place\/(.+)$/);return m?decodeURIComponent(m[1]):''}
 function buildingName(p){return p?.building_code==='HLP'?'Louis Pradel':p?.building_code==='PW'?'Pierre Wertheimer':p?.building_code==='HFME'?'HFME':p?.building_code||''}
 function whereLabel(p){return [buildingName(p),p?.level?`niveau ${p.level}`:''].filter(Boolean).join(' · ')||'GHE'}
@@ -35,14 +34,14 @@ function bestIncoming(id,seen=new Set()){
   return list[0]||null;
 }
 function buildChain(p){
-  const chain=[p],rels=[];let cur=p;const seen=new Set([p.id]);
+  const chain=[p];let cur=p;const seen=new Set([p.id]);
   for(let i=0;i<5;i++){
     const r=bestIncoming(cur.id,seen);if(!r)break;
     const prev=byId.get(r.from_place_id);if(!prev)break;
-    chain.unshift(prev);rels.unshift(r);seen.add(prev.id);cur=prev;
+    chain.unshift(prev);seen.add(prev.id);cur=prev;
     if(['entrance','hall','elevator','elevator_group','landmark','walkway'].includes(prev.place_type)&&chain.length>=3)break;
   }
-  return{chain,rels};
+  return chain;
 }
 function immediateArrival(p){
   const candidates=relations.filter(r=>r.to_place_id===p.id&&byId.has(r.from_place_id));
@@ -54,14 +53,14 @@ function routeHint(p){
   if(!found)return'';const ss=steps.get(found.id)||[];if(ss.length)return ss.slice(0,3).map(x=>x.instruction).join(' → ');return found.label||'';
 }
 function pathHtml(p){
-  const {chain}=buildChain(p);
+  const chain=buildChain(p);
   if(chain.length>1)return chain.map((x,i)=>`${i?'<span class="orient-arrow">→</span>':''}${placeButton(x)}`).join('');
   const hint=routeHint(p);if(hint)return `<span class="orient-text">${esc(hint)}</span>`;
   return '<span class="orient-missing">À compléter — chemin précis non documenté</span>';
 }
 function arrivalHtml(p){
   const a=immediateArrival(p);
-  if(a){const text=a.r.direction||a.r.label||cue({r:a.r,p:p,reverse:false});return `${placeButton(a.from)}<span class="orient-arrival-text">${esc(text)}${esc(evidenceSuffix(a.r.evidence_status))}</span>`}
+  if(a){const text=a.r.direction||a.r.label||'Repère relié';return `${placeButton(a.from)}<span class="orient-arrival-text">${esc(text)}${esc(evidenceSuffix(a.r.evidence_status))}</span>`}
   const parent=p.parent_id?byId.get(p.parent_id):null;
   if(parent)return `${placeButton(parent)}<span class="orient-arrival-text">Dans ce secteur — orientation fine à compléter</span>`;
   return '<span class="orient-missing">À compléter — aucun repère d’arrivée précis</span>';
@@ -79,10 +78,11 @@ function nearbyHtml(p){
 function sectorLabel(p){const parent=p.parent_id?byId.get(p.parent_id):null;if(!parent)return'';if(parent.place_type==='level'||parent.place_type==='hospital')return'';return parent.display_name||''}
 function card(p){
   const sector=sectorLabel(p);
-  return `<section class="place-orientation" data-se-reperer="1"><header><div><small>SE REPÉRER</small><h3>${esc(whereLabel(p))}</h3>${sector?`<p>${esc(sector)}</p>`:''}</div><span class="orient-pin">⌖</span></header><div class="orient-line"><b>Depuis</b><div>${arrivalHtml(p)}</div></div><div class="orient-line orient-path-line"><b>Chemin</b><div class="orient-path">${pathHtml(p)}</div></div><div class="orient-line orient-near-line"><b>À proximité</b><div>${nearbyHtml(p)}</div></div></section>`;
+  return `<section class="place-orientation" data-se-reperer="1" data-place-id="${esc(p.id)}"><header><div><small>SE REPÉRER</small><h3>${esc(whereLabel(p))}</h3>${sector?`<p>${esc(sector)}</p>`:''}</div><span class="orient-pin">⌖</span></header><div class="orient-line"><b>Depuis</b><div>${arrivalHtml(p)}</div></div><div class="orient-line orient-path-line"><b>Chemin</b><div class="orient-path">${pathHtml(p)}</div></div><div class="orient-line orient-near-line"><b>À proximité</b><div>${nearbyHtml(p)}</div></div></section>`;
 }
 function render(){
-  scheduled=false;if(!data)return;const id=currentPlaceId(),hero=content.querySelector('.place-hero-card');content.querySelector('[data-se-reperer]')?.remove();if(!id||!hero)return;const p=byId.get(id);if(!p)return;hero.insertAdjacentHTML('afterend',card(p));
+  scheduled=false;if(!data)return;const id=currentPlaceId(),hero=content.querySelector('.place-hero-card'),old=content.querySelector('[data-se-reperer]');
+  if(!id||!hero){old?.remove();return}if(old?.dataset.placeId===id)return;old?.remove();const p=byId.get(id);if(!p)return;hero.insertAdjacentHTML('afterend',card(p));
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(render)}
 async function load(){
