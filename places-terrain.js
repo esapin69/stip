@@ -34,6 +34,7 @@ function constraintCard(c){return `<article class="terrain-constraint ${esc(c.vi
 function routeState(){const h=location.hash.replace(/^#\/?/,'');if(h==='visit')return{kind:'visit',id:''};const m=h.match(/^(place|route)\/(.+)$/);return m?{kind:m[1],id:decodeURIComponent(m[2])}:{kind:'home',id:''}}
 function currentPlaceId(){const r=routeState();return r.kind==='place'?r.id:''}
 function mapById(){return new Map((data?.places||[]).map(p=>[p.id,p]))}
+function isRouteCue(p){return !!p&&(['landmark','walkway'].includes(p.place_type)||(data?.tags||[]).some(t=>t.place_id===p.id&&t.tag==='navigation:landmark_only'))}
 function directionHead(text=''){
   const m=String(text).trim().match(/^(à gauche|a gauche|sur la gauche|à droite|a droite|sur la droite|tout droit|en face)\b/i);
   if(!m)return'';
@@ -96,25 +97,45 @@ function enhanceGenericLists(){
     box.append(ul);p.replaceWith(box);
   }
 }
+function enhanceRouteCueRows(){
+  if(!data)return;
+  const map=mapById();
+  for(const row of content.querySelectorAll('.place-row[data-place]')){
+    const p=map.get(row.dataset.place||'');
+    if(!isRouteCue(p))continue;
+    row.classList.add('route-cue-row');
+    row.setAttribute('aria-label',`Repère de trajet : ${p.display_name}`);
+    const main=row.querySelector('.place-row-main');
+    if(main&&!main.querySelector('.route-cue-label')){
+      const tag=document.createElement('span');tag.className='route-cue-label';tag.textContent=p.place_type==='walkway'?'LIAISON / CHEMIN':'REPÈRE VISUEL';main.prepend(tag);
+    }
+  }
+}
+function routeTarget(id,map){
+  const allowed=new Set(['route_next','route_branch','connects_to','accesses','exit_near','arrives_near']);
+  return (data?.relations||[])
+    .filter(r=>r.from_place_id===id&&allowed.has(r.relation_type)&&map.has(r.to_place_id))
+    .sort((a,b)=>{
+      const score=t=>t==='route_next'?100:t==='route_branch'?90:t==='connects_to'?80:t==='accesses'?70:60;
+      return score(b.relation_type)-score(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0);
+    })[0]||null;
+}
 function enhanceLandmark(){
   const id=currentPlaceId();if(!id||!data)return;
   const map=mapById(),p=map.get(id),hero=content.querySelector('.place-hero-card');
-  if(!p||!hero||p.place_type!=='landmark')return;
-  const landmarkOnly=(data.tags||[]).some(t=>t.place_id===id&&t.tag==='navigation:landmark_only');
-  if(!landmarkOnly)return;
-  const routes=(data.relations||[]).filter(r=>r.from_place_id===id&&r.relation_type==='route_next'&&map.has(r.to_place_id)).sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
-  const r=routes[0],target=r?map.get(r.to_place_id):null;if(!target)return;
+  if(!p||!hero||!isRouteCue(p))return;
+  const r=routeTarget(id,map),target=r?map.get(r.to_place_id):null;if(!target)return;
   const signature=`${id}:${target.id}`;if(hero.dataset.landmarkGuide===signature)return;hero.dataset.landmarkGuide=signature;
   const kicker=hero.querySelector('.place-kicker'),h2=hero.querySelector('h2');
   if(kicker)kicker.textContent='VISITE · VERS';
   if(h2)h2.textContent=target.display_name;
-  const subtitle=document.createElement('div');subtitle.className='landmark-route-subtitle';subtitle.innerHTML=`<span>REPÈRE VISUEL</span><strong>${esc(p.display_name)}</strong>`;h2?.insertAdjacentElement('afterend',subtitle);
+  const subtitle=document.createElement('div');subtitle.className='landmark-route-subtitle';subtitle.innerHTML=`<span>${p.place_type==='walkway'?'LIAISON / CHEMIN':'REPÈRE VISUEL'}</span><strong>${esc(p.display_name)}</strong>`;h2?.insertAdjacentElement('afterend',subtitle);
   const paragraphs=[...hero.querySelectorAll(':scope > p')];
   if(paragraphs[0])paragraphs[0].textContent=`${p.display_name} sert à te repérer sur le chemin vers ${target.display_name}.`;
   paragraphs.slice(1).forEach(x=>x.remove());
   if(r.direction){const callout=document.createElement('div');callout.className='landmark-route-instruction';callout.innerHTML=`<b>À faire</b><span>${esc(r.direction)}</span>`;hero.append(callout)}
 }
-function enhanceReadability(){enhanceLandmark();enhanceRelationLists();enhanceGenericLists()}
+function enhanceReadability(){enhanceLandmark();enhanceRouteCueRows();enhanceRelationLists();enhanceGenericLists()}
 function decorate(){
   scheduled=false;if(!data)return;
   const state=routeState();
