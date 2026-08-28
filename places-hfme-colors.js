@@ -11,19 +11,17 @@ const rels=()=>Array.isArray(window.__STIP_PLACE_RELATIONS)?window.__STIP_PLACE_
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function currentPlaceId(){const m=location.hash.match(/^#\/?place\/(.+)$/);return m?decodeURIComponent(m[1]):''}
 function elevatorInfo(id){return ELEVATORS[id]||null}
-function accessesFor(placeId){
-  // Le bâtiment HFME lui-même n'a pas de couleur d'accès : les couleurs n'ont de sens
-  // qu'au niveau d'un ascenseur ou d'un lieu/service réellement desservi.
+function referencesFor(placeId){
   if(placeId==='hfme')return[];
   const own=elevatorInfo(placeId);if(own)return[own];
   const out=[],seen=new Set();
   for(const r of rels()){
-    if(r.to_place_id!==placeId||r.relation_type!=='serves')continue;
+    if(r.to_place_id!==placeId||r.relation_type!=='visitor_reference')continue;
     const info=elevatorInfo(r.from_place_id);if(info&&!seen.has(info.key)){seen.add(info.key);out.push(info)}
   }
   return out.sort((a,b)=>ORDER.indexOf(a.key)-ORDER.indexOf(b.key));
 }
-function badgeHtml(items){if(!items.length)return'';return `<div class="hfme-access-badges" aria-label="Ascenseurs HFME">${items.map(x=>`<span class="hfme-access-badge hfme-${x.key}" title="Ascenseur ${esc(x.label.toLowerCase())}">${esc(x.label)}</span>`).join('')}</div>`}
+function badgeHtml(items){if(!items.length)return'';return `<div class="hfme-access-badges" aria-label="Repères visiteurs HFME">${items.map(x=>`<span class="hfme-access-badge hfme-${x.key}" title="Repère visiteurs — ascenseur ${esc(x.label.toLowerCase())}">${esc(x.label)}</span>`).join('')}</div>`}
 function accentValue(items){
   if(!items.length)return'';
   if(items.length===1)return items[0].hex;
@@ -31,7 +29,7 @@ function accentValue(items){
 }
 function decorate(el,placeId){
   if(!el||el.dataset.hfmeColorDone==='1')return;
-  const items=accessesFor(placeId);if(!items.length)return;
+  const items=referencesFor(placeId);if(!items.length)return;
   el.dataset.hfmeColorDone='1';el.classList.add('hfme-colorized');
   const accent=accentValue(items);if(accent)el.style.setProperty('--hfme-accent',accent);
   const target=el.matches('.place-hero-card')?el.querySelector('.place-meta')||el:el.querySelector('.place-row-main')||el.querySelector('span:last-child')||el;
@@ -42,7 +40,7 @@ function legend(){
   const id=currentPlaceId();if(!(id==='hfme'||id.startsWith('hfme_')))return;
   const content=document.querySelector('#placesContent');if(!content||content.querySelector('.hfme-color-legend'))return;
   const hero=content.querySelector('.place-hero-card');if(!hero)return;
-  const box=document.createElement('section');box.className='hfme-color-legend';box.innerHTML=`<header><h3>Code couleur HFME</h3><small>La couleur indique l'ascenseur associé au lieu, pas une direction dans le hall</small></header><div class="hfme-color-list">${badgeHtml(Object.values(ELEVATORS)).replace(/^<div class="hfme-access-badges"[^>]*>|<\/div>$/g,'')}</div>`;
+  const box=document.createElement('section');box.className='hfme-color-legend';box.innerHTML=`<header><div><span class="stip-kicker">REPÈRES VISITEURS</span><h3>Code couleur HFME</h3></div><small>Ces couleurs servent à se situer. Elles ne désignent jamais l’ascenseur à prendre pour un professionnel.</small></header><div class="hfme-color-list">${badgeHtml(Object.values(ELEVATORS)).replace(/^<div class="hfme-access-badges"[^>]*>|<\/div>$/g,'')}</div>`;
   hero.after(box);
 }
 function run(){
