@@ -30,6 +30,15 @@ function cue(x){
   if(t==='arrives_near')return (x.reverse?'Point d’arrivée':'Arrive près de')+evidenceSuffix(x.r.evidence_status);
   return (x.r.label||'Relié')+evidenceSuffix(x.r.evidence_status);
 }
+function elevatorArrivals(p){
+  const out=[],seen=new Set();
+  for(const r of relations){
+    if(r.to_place_id!==p.id||r.relation_type!=='serves'||!byId.has(r.from_place_id))continue;
+    const e=byId.get(r.from_place_id);if(!e||e.place_type!=='elevator'||seen.has(e.id))continue;
+    seen.add(e.id);out.push({r,p:e});
+  }
+  return out.sort((a,b)=>(Number(a.r.sort_order)||0)-(Number(b.r.sort_order)||0)||String(a.p.display_name).localeCompare(String(b.p.display_name),'fr'));
+}
 function bestIncoming(id,seen=new Set()){
   const list=relations.filter(r=>r.to_place_id===id&&byId.has(r.from_place_id)&&!seen.has(r.from_place_id));
   list.sort((a,b)=>routePriority(b.relation_type)-routePriority(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
@@ -55,12 +64,23 @@ function routeHint(p){
   if(!found)return'';const ss=steps.get(found.id)||[];if(ss.length)return ss.slice(0,3).map(x=>x.instruction).join(' → ');return found.label||'';
 }
 function pathHtml(p){
+  const hasSpatialIncoming=relations.some(r=>r.to_place_id===p.id&&byId.has(r.from_place_id)&&r.relation_type!=='serves'&&routePriority(r.relation_type)>60);
+  const elevators=elevatorArrivals(p);
+  if(!hasSpatialIncoming&&elevators.length){
+    const names=elevators.map(x=>x.p.display_name).join(elevators.length>2?', ':elevators.length===2?' ou ':'');
+    return `<span class="orient-text">Accès indiqué par ${esc(names)}. Le chemin précis après la sortie reste à compléter.</span>`;
+  }
   const chain=buildChain(p);
   if(chain.length>1)return chain.map((x,i)=>`${i?'<span class="orient-arrow">→</span>':''}${placeButton(x)}`).join('');
   const hint=routeHint(p);if(hint)return `<span class="orient-text">${esc(hint)}</span>`;
   return '<span class="orient-missing">À compléter — chemin précis non documenté</span>';
 }
 function arrivalHtml(p){
+  const elevators=elevatorArrivals(p);
+  if(elevators.length){
+    const buttons=elevators.map(x=>placeButton(x.p,x.r.label||'Accès indiqué')).join('');
+    return `<div class="orient-near-grid">${buttons}</div><span class="orient-arrival-text">${elevators.length>1?'Plusieurs ascenseurs sont indiqués sur la signalétique ; aucun n’est choisi arbitrairement.':'Ascenseur indiqué sur la signalétique.'}</span>`;
+  }
   const a=immediateArrival(p);
   if(a){const text=a.r.direction||a.r.label||'Repère relié';return `${placeButton(a.from)}<span class="orient-arrival-text">${esc(text)}${esc(evidenceSuffix(a.r.evidence_status))}</span>`}
   const parent=p.parent_id?byId.get(p.parent_id):null;
