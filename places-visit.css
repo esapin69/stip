@@ -21,5 +21,10 @@
 .visit-continue-list .place-row{flex:0 0 min(74vw,250px);min-height:94px;scroll-snap-align:start;align-items:start;padding:12px 13px}
 .visit-continue-list .place-row strong{font-size:.84rem}
 .visit-continue-list .place-row .place-next{align-self:center}
-@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}}
-@media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}}
+.visit-floor-stack{display:grid;gap:10px}.visit-floor-card{overflow:hidden;border:1px solid var(--stip-line);border-radius:20px;background:#fff;box-shadow:var(--stip-shadow-soft)}
+.visit-floor-open,.visit-service-link{width:100%;border:0;background:#fff;color:var(--stip-ink);text-align:left;cursor:pointer}
+.visit-floor-open{min-height:58px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+.visit-floor-open span{min-width:0}.visit-floor-open strong{display:block;font-size:1rem;line-height:1.15;font-weight:950}.visit-floor-open small{display:block;margin-top:3px;color:var(--stip-muted);font-size:.65rem;font-weight:750}.visit-floor-open b,.visit-service-link>b{color:var(--stip-accent);font-size:1.15rem}
+.visit-floor-services{display:grid;border-top:1px solid var(--stip-line)}.visit-service-link{min-height:48px;padding:9px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;border-top:1px solid rgba(19,73,84,.08)}.visit-service-link:first-child{border-top:0}.visit-service-link span{min-width:0}.visit-service-link small{display:block;margin-bottom:2px;color:var(--stip-muted-2);font-size:.54rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase}.visit-service-link strong{display:block;font-size:.82rem;line-height:1.25;font-weight:900}.visit-service-link:active,.visit-floor-open:active{background:#f2f9fa}
+@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-open{padding:11px 12px}.visit-service-link{padding:9px 12px;min-height:46px}}
+@media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}.visit-floor-services{grid-template-columns:1fr 1fr}.visit-service-link:nth-child(2){border-top:0}.visit-service-link:nth-child(even){border-left:1px solid rgba(19,73,84,.08)}}
