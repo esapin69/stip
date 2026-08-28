@@ -11,11 +11,12 @@ function buildingName(p){return p?.building_code==='HLP'?'Louis Pradel':p?.build
 function whereLabel(p){return [buildingName(p),p?.level?`niveau ${p.level}`:''].filter(Boolean).join(' · ')||'GHE'}
 function evidenceSuffix(v){return v==='confirmed_old'?' · ancien repère':v==='to_confirm'?' · à confirmer':''}
 function placeButton(p,label=''){return `<button type="button" class="orient-place" data-place="${esc(p.id)}"><strong>${esc(p.display_name)}</strong>${label?`<span>${esc(label)}</span>`:''}</button>`}
-function routePriority(t){return({route_next:100,route_branch:98,exit_near:96,arrives_near:94,signposted_to:90,opposite_side_landmark:86,connects_to:82,accesses:78,signposted_near:76,near:72,adjacent:70,passes_near:68,serves:60,located_in:45,contains:20}[t]||40)}
+function routePriority(t){return({route_next:100,route_branch:98,exit_near:96,arrives_near:94,signposted_to:90,opposite_side_landmark:86,connects_to:82,accesses:78,signposted_near:76,near:72,adjacent:70,passes_near:68,serves:60,located_in:45,visitor_reference:35,contains:20}[t]||40)}
 function related(id){const out=[];for(const r of relations){if(r.from_place_id===id&&byId.has(r.to_place_id))out.push({r,p:byId.get(r.to_place_id),reverse:false});else if(r.to_place_id===id&&byId.has(r.from_place_id))out.push({r,p:byId.get(r.from_place_id),reverse:true})}return out}
 function directionIsLocal(t){return['route_next','route_branch','exit_near','opposite_side_landmark','connects_to'].includes(t)}
 function cue(x){
   const t=x.r.relation_type,d=x.r.direction?.trim();
+  if(t==='visitor_reference')return 'Repère visiteurs uniquement'+evidenceSuffix(x.r.evidence_status);
   if(!x.reverse&&d&&directionIsLocal(t))return d+evidenceSuffix(x.r.evidence_status);
   if(t==='route_next')return (x.reverse?'Juste avant':'Juste après')+evidenceSuffix(x.r.evidence_status);
   if(t==='route_branch')return (x.reverse?'Branche depuis ce repère':'Branche depuis ici')+evidenceSuffix(x.r.evidence_status);
@@ -34,13 +35,13 @@ function elevatorArrivals(p){
   const out=[],seen=new Set();
   for(const r of relations){
     if(r.to_place_id!==p.id||r.relation_type!=='serves'||!byId.has(r.from_place_id))continue;
-    const e=byId.get(r.from_place_id);if(!e||e.place_type!=='elevator'||seen.has(e.id))continue;
+    const e=byId.get(r.from_place_id);if(!e||!['elevator','elevator_group'].includes(e.place_type)||seen.has(e.id))continue;
     seen.add(e.id);out.push({r,p:e});
   }
   return out.sort((a,b)=>(Number(a.r.sort_order)||0)-(Number(b.r.sort_order)||0)||String(a.p.display_name).localeCompare(String(b.p.display_name),'fr'));
 }
 function bestIncoming(id,seen=new Set()){
-  const list=relations.filter(r=>r.to_place_id===id&&byId.has(r.from_place_id)&&!seen.has(r.from_place_id));
+  const list=relations.filter(r=>r.relation_type!=='visitor_reference'&&r.to_place_id===id&&byId.has(r.from_place_id)&&!seen.has(r.from_place_id));
   list.sort((a,b)=>routePriority(b.relation_type)-routePriority(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
   return list[0]||null;
 }
@@ -55,7 +56,7 @@ function buildChain(p){
   return chain;
 }
 function immediateArrival(p){
-  const candidates=relations.filter(r=>r.to_place_id===p.id&&byId.has(r.from_place_id));
+  const candidates=relations.filter(r=>r.relation_type!=='visitor_reference'&&r.to_place_id===p.id&&byId.has(r.from_place_id));
   candidates.sort((a,b)=>{const ad=(a.direction||a.label)?1:0,bd=(b.direction||b.label)?1:0;return bd-ad||routePriority(b.relation_type)-routePriority(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)});
   const r=candidates[0];if(!r)return null;return{r,from:byId.get(r.from_place_id)};
 }
@@ -64,7 +65,7 @@ function routeHint(p){
   if(!found)return'';const ss=steps.get(found.id)||[];if(ss.length)return ss.slice(0,3).map(x=>x.instruction).join(' → ');return found.label||'';
 }
 function pathHtml(p){
-  const hasSpatialIncoming=relations.some(r=>r.to_place_id===p.id&&byId.has(r.from_place_id)&&r.relation_type!=='serves'&&routePriority(r.relation_type)>60);
+  const hasSpatialIncoming=relations.some(r=>r.to_place_id===p.id&&r.relation_type!=='visitor_reference'&&byId.has(r.from_place_id)&&r.relation_type!=='serves'&&routePriority(r.relation_type)>60);
   const elevators=elevatorArrivals(p);
   if(!hasSpatialIncoming&&elevators.length){
     const names=elevators.map(x=>x.p.display_name).join(elevators.length>2?', ':elevators.length===2?' ou ':'');
@@ -79,7 +80,7 @@ function arrivalHtml(p){
   const elevators=elevatorArrivals(p);
   if(elevators.length){
     const buttons=elevators.map(x=>placeButton(x.p,x.r.label||'Accès indiqué')).join('');
-    return `<div class="orient-near-grid">${buttons}</div><span class="orient-arrival-text">${elevators.length>1?'Plusieurs ascenseurs sont indiqués sur la signalétique ; aucun n’est choisi arbitrairement.':'Ascenseur indiqué sur la signalétique.'}</span>`;
+    return `<div class="orient-near-grid">${buttons}</div><span class="orient-arrival-text">${elevators.length>1?'Plusieurs ascenseurs sont indiqués ; aucun n’est choisi arbitrairement.':'Ascenseur indiqué.'}</span>`;
   }
   const a=immediateArrival(p);
   if(a){const text=a.r.direction||a.r.label||'Repère relié';return `${placeButton(a.from)}<span class="orient-arrival-text">${esc(text)}${esc(evidenceSuffix(a.r.evidence_status))}</span>`}
@@ -113,7 +114,7 @@ async function load(){
   if(r.status===401&&token){localStorage.removeItem(STORE);r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bootstrap_public'})})}
   const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);
   data=j;byId=new Map((j.places||[]).map(p=>[p.id,p]));relations=j.relations||[];routes=j.routes||[];steps=new Map();for(const s of j.route_steps||[]){const a=steps.get(s.route_id)||[];a.push(s);steps.set(s.route_id,a)}for(const a of steps.values())a.sort((x,y)=>x.step_no-y.step_no);
-  window.__STIP_PLACE_RELATIONS=relations;window.dispatchEvent(new CustomEvent('stip:place-relations-ready'));schedule();
+  window.__STIP_PLACE_DATA=j;window.__STIP_PLACE_RELATIONS=relations;window.dispatchEvent(new CustomEvent('stip:place-data-ready'));window.dispatchEvent(new CustomEvent('stip:place-relations-ready'));schedule();
 }
 new MutationObserver(schedule).observe(content,{childList:true,subtree:true});window.addEventListener('hashchange',()=>setTimeout(schedule,60));
 load().catch(e=>console.error('Se repérer STIP',e));
