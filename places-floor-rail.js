@@ -12,8 +12,9 @@ function maps(){const byId=new Map((data?.places||[]).map(p=>[p.id,p])),byParent
 function usage(id,tags){if(tags.get(id)?.has('elevator:professional'))return'professional';if(tags.get(id)?.has('elevator:visitor_reference'))return'visitor_reference';return'unknown'}
 function ancestors(p,byId){const out=[];let cur=p,guard=0;while(cur&&guard++<12){out.push(cur);cur=cur.parent_id?byId.get(cur.parent_id):null}return out}
 function currentLevel(p,byId){return ancestors(p,byId).find(x=>x.place_type==='level')||null}
+function hospitalFor(p,byId){return ancestors(p,byId).find(x=>['hospital','building'].includes(x.place_type))||null}
 function levelsFor(p){if(!p?.building_code)return[];const seen=new Set(),out=[];for(const x of data?.places||[]){if(x.place_type!=='level'||x.building_code!==p.building_code)continue;const key=String(x.level||x.display_name||x.id);if(seen.has(key))continue;seen.add(key);out.push(x)}return out.sort((a,b)=>floorRank(a.level)-floorRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0))}
-function effectiveStops(elevator,byId,byParent){const ids=[elevator.id];if(elevator.place_type==='elevator_group')for(const c of byParent.get(elevator.id)||[])if(['elevator','elevator_group'].includes(c.place_type)&&usage(c.id,maps().tags)==='professional')ids.push(c.id);const merged=new Map();for(const s of data?.elevator_stops||[]){if(!ids.includes(s.elevator_id)||!s.is_served)continue;const old=merged.get(s.stop_label);if(!old||(!old.linked_place_id&&s.linked_place_id))merged.set(s.stop_label,s)}return[...merged.values()].sort((a,b)=>(Number(a.sort_order)||floorRank(a.stop_label))-(Number(b.sort_order)||floorRank(b.stop_label)))}
+function effectiveStops(elevator,byId,byParent){const ids=[elevator.id];const {tags}=maps();if(elevator.place_type==='elevator_group')for(const c of byParent.get(elevator.id)||[])if(['elevator','elevator_group'].includes(c.place_type)&&usage(c.id,tags)==='professional')ids.push(c.id);const merged=new Map();for(const s of data?.elevator_stops||[]){if(!ids.includes(s.elevator_id)||!s.is_served)continue;const old=merged.get(s.stop_label);if(!old||(!old.linked_place_id&&s.linked_place_id))merged.set(s.stop_label,s)}return[...merged.values()].sort((a,b)=>(Number(a.sort_order)||floorRank(a.stop_label))-(Number(b.sort_order)||floorRank(b.stop_label)))}
 function arrival(){try{return JSON.parse(sessionStorage.getItem(ARRIVAL)||'null')}catch{return null}}
 function candidateFor(p,byId,byParent,tags){
   if(!p)return null;
@@ -39,6 +40,12 @@ function render(){scheduled=false;if(!data)return;const id=currentPlaceId();if(!
   if(elevator){const stops=effectiveStops(elevator,byId,byParent);marker='PRO';label=`${elevator.display_name} — étages desservis`;if(stops.length){buttons=elevatorButtons(stops,active);signature=`e:${elevator.id}:${active?.id||''}:${stops.map(s=>`${s.stop_label}:${s.linked_place_id||''}`).join('|')}`}else if(active){buttons=genericButtons([active],active);signature=`e:${elevator.id}:${active.id}:unknown`}}
   if(!buttons){const levels=levelsFor(p);if(levels.length<2){content.querySelector('[data-floor-quick-rail]')?.remove();return}buttons=genericButtons(levels,active);signature=`g:${p.building_code}:${active?.id||''}:${levels.map(x=>x.id).join('|')}`}
   const old=content.querySelector('[data-floor-quick-rail]');if(old?.dataset.signature===signature)return;old?.remove();const rail=document.createElement('nav');rail.className=`floor-quick-rail${elevator?' elevator-context':''}`;rail.dataset.floorQuickRail='1';rail.dataset.signature=signature;rail.setAttribute('aria-label',label);rail.title=label;rail.innerHTML=`<span class="floor-quick-mark" aria-hidden="true">${esc(marker)}</span>${buttons}`;content.appendChild(rail)}
+content.addEventListener('click',e=>{
+  const b=e.target.closest?.('.floor-quick-btn.active[data-place]');if(!b||!data)return;
+  const {byId}=maps(),p=byId.get(currentPlaceId());if(!p||p.place_type!=='level'||b.dataset.place!==p.id)return;
+  const hospital=hospitalFor(p,byId);if(!hospital)return;
+  e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();sessionStorage.removeItem(ARRIVAL);location.hash=`#/place/${encodeURIComponent(hospital.id)}`;
+},true);
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(render)}
 function use(d){data=d||window.__STIP_PLACE_DATA||data;schedule()}
 window.addEventListener('stip:place-data-ready',()=>use(window.__STIP_PLACE_DATA));window.addEventListener('stip:place-relations-ready',schedule);window.addEventListener('hashchange',()=>setTimeout(schedule,40));new MutationObserver(schedule).observe(content,{childList:true,subtree:true});setTimeout(()=>use(window.__STIP_PLACE_DATA),250);
