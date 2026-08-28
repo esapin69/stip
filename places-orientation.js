@@ -11,12 +11,14 @@ function buildingName(p){return p?.building_code==='HLP'?'Louis Pradel':p?.build
 function whereLabel(p){return [buildingName(p),p?.level?`niveau ${p.level}`:''].filter(Boolean).join(' · ')||'GHE'}
 function evidenceSuffix(v){return v==='confirmed_old'?' · ancien repère':v==='to_confirm'?' · à confirmer':''}
 function placeButton(p,label=''){return `<button type="button" class="orient-place" data-place="${esc(p.id)}"><strong>${esc(p.display_name)}</strong>${label?`<span>${esc(label)}</span>`:''}</button>`}
-function routePriority(t){return({route_next:100,exit_near:96,arrives_near:94,signposted_to:90,opposite_side_landmark:86,connects_to:82,accesses:78,signposted_near:76,near:72,adjacent:70,passes_near:68,serves:60,located_in:45,contains:20}[t]||40)}
+function routePriority(t){return({route_next:100,route_branch:98,exit_near:96,arrives_near:94,signposted_to:90,opposite_side_landmark:86,connects_to:82,accesses:78,signposted_near:76,near:72,adjacent:70,passes_near:68,serves:60,located_in:45,contains:20}[t]||40)}
 function related(id){const out=[];for(const r of relations){if(r.from_place_id===id&&byId.has(r.to_place_id))out.push({r,p:byId.get(r.to_place_id),reverse:false});else if(r.to_place_id===id&&byId.has(r.from_place_id))out.push({r,p:byId.get(r.from_place_id),reverse:true})}return out}
+function directionIsLocal(t){return['route_next','route_branch','exit_near','opposite_side_landmark','connects_to'].includes(t)}
 function cue(x){
-  const d=x.r.direction?.trim();if(d)return d+evidenceSuffix(x.r.evidence_status);
-  const t=x.r.relation_type;
+  const t=x.r.relation_type,d=x.r.direction?.trim();
+  if(!x.reverse&&d&&directionIsLocal(t))return d+evidenceSuffix(x.r.evidence_status);
   if(t==='route_next')return (x.reverse?'Juste avant':'Juste après')+evidenceSuffix(x.r.evidence_status);
+  if(t==='route_branch')return (x.reverse?'Branche depuis ce repère':'Branche depuis ici')+evidenceSuffix(x.r.evidence_status);
   if(t==='opposite_side_landmark')return 'En face / côté opposé'+evidenceSuffix(x.r.evidence_status);
   if(t==='adjacent')return 'Juste à côté'+evidenceSuffix(x.r.evidence_status);
   if(t==='near'||t==='signposted_near')return 'À proximité'+evidenceSuffix(x.r.evidence_status);
@@ -35,11 +37,11 @@ function bestIncoming(id,seen=new Set()){
 }
 function buildChain(p){
   const chain=[p];let cur=p;const seen=new Set([p.id]);
-  for(let i=0;i<5;i++){
+  for(let i=0;i<6;i++){
     const r=bestIncoming(cur.id,seen);if(!r)break;
     const prev=byId.get(r.from_place_id);if(!prev)break;
     chain.unshift(prev);seen.add(prev.id);cur=prev;
-    if(['entrance','hall','elevator','elevator_group','landmark','walkway'].includes(prev.place_type)&&chain.length>=3)break;
+    if(['entrance','hall','elevator','elevator_group','landmark','walkway'].includes(prev.place_type)&&chain.length>=4)break;
   }
   return chain;
 }
@@ -90,7 +92,8 @@ async function load(){
   let r=await fetch(API,{method:'POST',cache:'no-store',headers,body:JSON.stringify({action})});
   if(r.status===401&&token){localStorage.removeItem(STORE);r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'bootstrap_public'})})}
   const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw new Error(j.error||`Erreur ${r.status}`);
-  data=j;byId=new Map((j.places||[]).map(p=>[p.id,p]));relations=j.relations||[];routes=j.routes||[];steps=new Map();for(const s of j.route_steps||[]){const a=steps.get(s.route_id)||[];a.push(s);steps.set(s.route_id,a)}for(const a of steps.values())a.sort((x,y)=>x.step_no-y.step_no);schedule();
+  data=j;byId=new Map((j.places||[]).map(p=>[p.id,p]));relations=j.relations||[];routes=j.routes||[];steps=new Map();for(const s of j.route_steps||[]){const a=steps.get(s.route_id)||[];a.push(s);steps.set(s.route_id,a)}for(const a of steps.values())a.sort((x,y)=>x.step_no-y.step_no);
+  window.__STIP_PLACE_RELATIONS=relations;window.dispatchEvent(new CustomEvent('stip:place-relations-ready'));schedule();
 }
 new MutationObserver(schedule).observe(content,{childList:true,subtree:true});window.addEventListener('hashchange',()=>setTimeout(schedule,60));
 load().catch(e=>console.error('Se repérer STIP',e));
