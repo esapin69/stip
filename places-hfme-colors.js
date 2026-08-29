@@ -3,7 +3,7 @@
 const content=document.querySelector('#placesContent');
 if(!content)return;
 let data=null,scheduled=false;
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 function currentPlaceId(){const m=location.hash.match(/^#\/?place\/(.+)$/);return m?decodeURIComponent(m[1]):''}
 function floorRank(p){
@@ -18,6 +18,19 @@ function parentIds(id){return id==='lp'||id==='hlp'?new Set(['lp','hlp']):new Se
 const DEST_TYPES=new Set(['service','unit','exam','block']);
 function isDestination(p){return !!p&&DEST_TYPES.has(p.place_type)}
 function labelFor(p){return p?.place_type==='exam'?'Examen':p?.place_type==='unit'?'Unité':p?.place_type==='block'?'Bloc':'Service'}
+function semanticLabel(p){
+  if(!p)return'';
+  if(p.place_type==='service')return'SERVICE';
+  if(p.place_type==='unit')return'UNITÉ';
+  if(p.place_type==='exam')return'EXAMEN';
+  if(p.place_type==='block')return'BLOC';
+  if(p.place_type==='entrance')return'ENTRÉE / REPÈRE';
+  if(p.place_type==='reception')return'ACCUEIL / REPÈRE';
+  if(['elevator','elevator_group'].includes(p.place_type))return'ASCENSEUR / REPÈRE';
+  if(p.place_type==='level')return'NIVEAU';
+  if(['hospital','building'].includes(p.place_type))return'HÔPITAL';
+  return'REPÈRE';
+}
 function childrenMap(places){const m=new Map();for(const p of places){if(!p.parent_id)continue;const a=m.get(p.parent_id)||[];a.push(p);m.set(p.parent_id,a)}return m}
 function destinationsForLevel(level,places){
   const byParent=childrenMap(places),out=[],seen=new Set();
@@ -43,11 +56,14 @@ function hospitalOverview(){
   const start=content.querySelector('.visit-hospital-start'),hero=content.querySelector('.place-hero-card');
   if(start)start.after(section);else if(hero)hero.after(section);else content.prepend(section);
 }
+function enforceCurrentType(){
+  if(!data)return;const id=currentPlaceId();if(!id)return;const p=(data.places||[]).find(x=>x.id===id),hero=content.querySelector('.place-hero-card'),kicker=hero?.querySelector('.place-kicker');if(!p||!kicker)return;kicker.textContent=semanticLabel(p);
+}
 function keepElevatorHigh(){
   const hero=content.querySelector('.place-hero-card'),lift=content.querySelector('[data-pro-elevator]');
   if(hero&&lift&&hero.nextElementSibling!==lift)hero.after(lift);
 }
-function run(){scheduled=false;hospitalOverview();keepElevatorHigh()}
+function run(){scheduled=false;hospitalOverview();enforceCurrentType();keepElevatorHigh()}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(run)}
 window.addEventListener('stip:place-data-ready',()=>{data=window.__STIP_PLACE_DATA||data;schedule()});
 window.addEventListener('hashchange',()=>setTimeout(schedule,60));
