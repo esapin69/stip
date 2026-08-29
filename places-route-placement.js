@@ -4,7 +4,28 @@ function currentPlaceId(){
   const m=location.hash.match(/#\/place\/([^/?#]+)/);
   return m?decodeURIComponent(m[1]):'';
 }
+const LABELS={
+  self_ghe:'SELF',
+  radiotherapy:'RT',
+  cermep:'CER',
+  idee:'IDÉE'
+};
+function addMissingCodes(){
+  document.querySelectorAll('[data-place]').forEach(card=>{
+    const id=card.getAttribute('data-place');
+    const label=LABELS[id];
+    if(!label)return;
+    const line=card.querySelector('.home-titleline');
+    if(line&&!line.querySelector('.home-code')){
+      const code=document.createElement('span');
+      code.className='home-code';
+      code.textContent=label;
+      line.prepend(code);
+    }
+  });
+}
 function tidy(){
+  addMissingCodes();
   if(currentPlaceId()!=='hlp')return;
   document.querySelectorAll('.route-card').forEach(card=>{
     const title=card.querySelector('h3')?.textContent?.trim()||'';
