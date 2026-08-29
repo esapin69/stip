@@ -40,7 +40,7 @@ function destinationsForLevel(level,places){
 }
 function floorCard(level,places){
   const services=destinationsForLevel(level,places);
-  return `<article class="visit-floor-card" data-floor-card="${esc(level.id)}"><button type="button" class="visit-floor-open" data-place="${esc(level.id)}"><span><strong>${esc(level.display_name)}</strong><small>${services.length?`${services.length} accès direct${services.length>1?'s':''}`:'Ouvrir cet étage'}</small></span><b>›</b></button>${services.length?`<div class="visit-floor-services">${services.map(p=>`<button type="button" class="visit-service-link" data-place="${esc(p.id)}"><span><small>${esc(labelFor(p))}</small><strong>${esc(p.display_name)}</strong></span><b>›</b></button>`).join('')}</div>`:''}</article>`;
+  return `<section class="visit-floor-card visit-floor-simple" data-floor-card="${esc(level.id)}"><header class="visit-floor-title"><strong>${esc(level.display_name)}</strong></header>${services.length?`<div class="visit-floor-services">${services.map(p=>`<button type="button" class="visit-service-link" data-place="${esc(p.id)}"><span><small>${esc(labelFor(p))}</small><strong>${esc(p.display_name)}</strong></span><b>›</b></button>`).join('')}</div>`:`<div class="visit-floor-empty">Aucun service documenté.</div>`}</section>`;
 }
 function hospitalOverview(){
   if(!data)return;
@@ -52,18 +52,26 @@ function hospitalOverview(){
   const signature=levels.map(x=>`${x.id}:${destinationsForLevel(x,data.places||[]).map(p=>p.id).join(',')}`).join('|');if(old?.dataset.signature===signature)return;
   old?.remove();content.querySelectorAll('.visit-hfme-fallback').forEach(x=>x.remove());
   const section=document.createElement('section');section.className='places-section visit-hospital-levels-fast';section.dataset.fastFloorOverview='1';section.dataset.signature=signature;
-  section.innerHTML=`<header class="places-section-head"><h2>Étages</h2><small>Touche directement le service ou l’examen recherché</small></header><div class="visit-floor-stack">${levels.map(l=>floorCard(l,data.places||[])).join('')}</div>`;
+  section.innerHTML=`<header class="places-section-head"><h2>Services par étage</h2><small>1 bouton = 1 destination</small></header><div class="visit-floor-stack">${levels.map(l=>floorCard(l,data.places||[])).join('')}</div>`;
   const start=content.querySelector('.visit-hospital-start'),hero=content.querySelector('.place-hero-card');
   if(start)start.after(section);else if(hero)hero.after(section);else content.prepend(section);
 }
 function enforceCurrentType(){
   if(!data)return;const id=currentPlaceId();if(!id)return;const p=(data.places||[]).find(x=>x.id===id),hero=content.querySelector('.place-hero-card'),kicker=hero?.querySelector('.place-kicker');if(!p||!kicker)return;kicker.textContent=semanticLabel(p);
 }
+function neutralizeReferenceRows(){
+  if(!data)return;const byId=new Map((data.places||[]).map(p=>[p.id,p]));
+  for(const row of content.querySelectorAll('.place-row[data-place]')){
+    const p=byId.get(row.dataset.place||'');if(!p||isDestination(p))continue;
+    row.classList.add('place-reference-row');row.removeAttribute('data-place');row.removeAttribute('type');row.setAttribute('aria-disabled','true');row.setAttribute('tabindex','-1');
+    const next=row.querySelector('.place-next');if(next)next.remove();
+  }
+}
 function keepElevatorHigh(){
   const hero=content.querySelector('.place-hero-card'),lift=content.querySelector('[data-pro-elevator]');
   if(hero&&lift&&hero.nextElementSibling!==lift)hero.after(lift);
 }
-function run(){scheduled=false;hospitalOverview();enforceCurrentType();keepElevatorHigh()}
+function run(){scheduled=false;hospitalOverview();enforceCurrentType();neutralizeReferenceRows();keepElevatorHigh()}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(run)}
 window.addEventListener('stip:place-data-ready',()=>{data=window.__STIP_PLACE_DATA||data;schedule()});
 window.addEventListener('hashchange',()=>setTimeout(schedule,60));
