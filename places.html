@@ -7,53 +7,32 @@
   <meta name="color-scheme" content="light only">
   <meta name="robots" content="noindex,nofollow">
   <title>Connaître les lieux</title>
-  <link rel="icon" type="image/png" sizes="64x64" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-64.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png">
   <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3">
-  <link rel="stylesheet" href="places.css?v=20260829-usage2">
-  <link rel="stylesheet" href="places-orientation.css?v=20260829-glance1">
-  <link rel="stylesheet" href="places-visit.css?v=20260829-levelhierarchy1">
-  <link rel="stylesheet" href="places-docs.css?v=20260827-visual1">
-  <link rel="stylesheet" href="places-terrain.css?v=20260829-usage2">
-  <link rel="stylesheet" href="places-pro-elevator.css?v=20260829-prolift2">
-  <link rel="stylesheet" href="places-floor-rail.css?v=20260829-floorrail6">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:#f6fbfc;color:#123b4b;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom))}
+    header{height:54px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
+    header a{width:44px;height:44px;display:grid;place-items:center;border:1px solid #dbe8eb;border-radius:14px;background:#fff;color:#123b4b;text-decoration:none;font-size:1.9rem;line-height:1}
+    header strong{text-align:center;font-size:.92rem}
+    section{margin-top:42px;padding:22px;border:1px solid #dbe8eb;border-radius:24px;background:#fff}
+    small{font-size:.65rem;font-weight:900;letter-spacing:.12em;color:#168da4}
+    h1{margin:8px 0 10px;font-size:2rem;line-height:1;letter-spacing:-.04em}
+    p{margin:0;color:#70848b;font-size:.86rem;line-height:1.5}
+  </style>
 </head>
 <body>
-  <main class="places-shell" id="placesApp">
-    <header class="places-topbar">
-      <button id="placesBack" class="places-back" type="button" aria-label="Retour">‹</button>
-      <button id="placesHome" class="places-brand" type="button" aria-label="Accueil de Connaître les lieux">
-        <span class="places-brand-mark">GHE</span>
-        <span>Connaître les lieux</span>
-      </button>
-      <span aria-hidden="true"></span>
+  <main>
+    <header>
+      <a href="./" aria-label="Retour au portail">‹</a>
+      <strong>GHE · Connaître les lieux</strong>
+      <span></span>
     </header>
-
-    <section class="places-hero">
-      <span id="placesKicker" class="stip-kicker">CONNAÎTRE LES LIEUX</span>
-      <h1 id="placesHeroTitle">Trouver un service</h1>
-      <p id="placesHeroText">Tape un service, une unité, un examen ou le nom d’un lieu.</p>
-      <label class="places-search-wrap" for="placesSearch">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
-        <input id="placesSearch" type="search" autocomplete="off" enterkeyhint="search" placeholder="Ex. cardiopédiatrie, scanner, POP…" aria-label="Rechercher un service ou un lieu">
-        <button id="placesClear" type="button" aria-label="Effacer la recherche">×</button>
-      </label>
+    <section>
+      <small>RECONSTRUCTION</small>
+      <h1>Connaître les lieux</h1>
+      <p>Base sauvegardée. Reconstruction propre, étape par étape.</p>
     </section>
-
-    <section id="placesStatus" class="places-status" aria-live="polite">Chargement…</section>
-    <section id="placesContent" class="places-content" aria-live="polite"></section>
   </main>
-
-  <script src="places.js?v=20260829-usage2"></script>
-  <script src="places-orientation.js?v=20260829-usage2"></script>
-  <script src="places-pro-elevator.js?v=20260829-prolift3"></script>
-  <script src="places-hfme-colors.js?v=20260829-affordance1"></script>
-  <script src="places-visit-navigation.js?v=20260829-glance1"></script>
-  <script src="places-elevator-stops.js?v=20260829-compact1"></script>
-  <script src="places-docs.js?v=20260827-visual1"></script>
-  <script src="places-route-placement.js?v=20260827-1"></script>
-  <script src="places-terrain.js?v=20260829-usage2"></script>
-  <script src="places-floor-rail.js?v=20260829-floorrail6"></script>
-  <script src="stip-navigation.js?v=20260828-nav1"></script>
 </body>
 </html>
