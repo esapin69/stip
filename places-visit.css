@@ -32,8 +32,11 @@
 .visit-floor-empty{padding:12px 14px;color:var(--stip-muted);font-size:.72rem;font-weight:750}
 .place-reference-row{cursor:default!important;box-shadow:none!important;background:#f8fbfb!important;border-style:dashed!important;opacity:1!important}.place-reference-row .place-row-main>strong{color:var(--stip-ink-2)}
 
-/* Louis Pradel 1er–9e : lecture immédiate gauche / droite. */
+/* Louis Pradel 1er–9e : lecture immédiate gauche / droite depuis un repère explicite. */
 .visit-floor-split{overflow:visible}
+.visit-side-origin{margin:9px 10px 0;padding:9px 11px;border-radius:13px;background:var(--stip-accent-soft);color:var(--stip-ink);text-align:center}
+.visit-side-origin strong{display:block;font-size:.7rem;line-height:1.15;font-weight:950;text-transform:uppercase;letter-spacing:.045em}
+.visit-side-origin span{display:block;margin-top:2px;color:var(--stip-muted);font-size:.58rem;line-height:1.2;font-weight:750}
 .visit-floor-side-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px;background:#f7fbfc}
 .visit-floor-side{min-width:0;overflow:hidden;border:1px solid rgba(19,73,84,.11);border-radius:15px;background:#fff}
 .visit-floor-side>header{min-height:52px;padding:9px 10px 8px;background:#f4f9fa;border-bottom:1px solid rgba(19,73,84,.08)}
@@ -53,8 +56,9 @@
 .hlp-side-level>.places-section-head{padding:2px 2px 9px}
 .hlp-side-level>.places-section-head h2{font-size:1rem}
 .hlp-side-level>.places-section-head small{font-size:.61rem}
+.hlp-side-level .visit-side-origin{margin:0 0 8px}
 .hlp-side-level .visit-floor-side-grid{padding:0;background:transparent}
 .hlp-side-level .visit-side-unknown{margin:9px 0 0}
 
-@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-title{padding:12px 12px 9px}.visit-service-link{padding:10px 12px;min-height:50px}.visit-floor-side-grid{gap:7px;padding:8px}.visit-floor-side>header{padding:8px;min-height:50px}.visit-floor-side .visit-service-link{padding:9px 8px;min-height:56px}.visit-floor-side .visit-service-link strong{font-size:.71rem}.visit-floor-side .visit-service-link small{font-size:.46rem}}
+@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-title{padding:12px 12px 9px}.visit-service-link{padding:10px 12px;min-height:50px}.visit-side-origin{margin:8px 8px 0;padding:8px 9px}.visit-floor-side-grid{gap:7px;padding:8px}.visit-floor-side>header{padding:8px;min-height:50px}.visit-floor-side .visit-service-link{padding:9px 8px;min-height:56px}.visit-floor-side .visit-service-link strong{font-size:.71rem}.visit-floor-side .visit-service-link small{font-size:.46rem}}
 @media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}.visit-floor-simple .visit-floor-services{grid-template-columns:1fr 1fr}.visit-floor-simple .visit-service-link:nth-child(2){border-top:0}.visit-floor-simple .visit-service-link:nth-child(even){border-left:1px solid rgba(19,73,84,.08)}.visit-floor-side-grid{gap:12px;padding:12px}.visit-floor-side .visit-service-link strong{font-size:.82rem}}
