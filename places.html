@@ -9,46 +9,143 @@
   <title>Visiter les lieux</title>
   <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3">
   <style>
-    :root{--bg:#eef5f6;--panel:#fff;--ink:#123b4b;--muted:#617982;--line:#cfdee2;--accent:#117f93;--accent-soft:#dff1f4;--primary:#0e5969;--primary-dark:#0a4553;--arrow:#0b6f82}
-    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{min-height:100vh}a{-webkit-tap-highlight-color:transparent}main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}[hidden]{display:none!important}
-    .topbar{height:58px;display:grid;grid-template-columns:46px 1fr 46px;align-items:center;gap:8px}.back{width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);text-decoration:none;font-size:1.8rem}.topbar strong{text-align:center;font-size:.9rem}
-    .hero{padding:32px 2px 18px}.eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--accent);font-size:.68rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.eyebrow:before{content:"";width:22px;height:3px;border-radius:99px;background:var(--accent)}h1{margin:0;font-size:2.2rem;line-height:.98;letter-spacing:-.045em}.hero p{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:.92rem;line-height:1.45}
-    .search-wrap{position:relative;margin:4px 0 32px}.search-box{display:grid;grid-template-columns:54px minmax(0,1fr) 46px;align-items:center;min-height:66px;border:3px solid var(--primary);border-radius:18px;background:#fff;box-shadow:0 13px 30px rgba(10,69,83,.16);overflow:hidden}.search-icon{align-self:stretch;display:grid;place-items:center;background:var(--primary);color:#fff;font-size:1.65rem;font-weight:900}.search-box input{width:100%;height:100%;border:0;outline:0;background:#fff;color:var(--ink);font:inherit;font-size:1.02rem;font-weight:800;padding:0 12px}.search-box input::placeholder{color:#718890;font-weight:700}.search-clear{display:none;width:34px;height:34px;border:0;border-radius:10px;background:var(--primary);color:#fff;font-size:1.25rem}.search-clear.show{display:grid;place-items:center}.search-help{margin:9px 4px 0;color:#617982;font-size:.73rem;font-weight:750}.search-results{display:none;margin-top:10px;border:2px solid #9fcbd3;border-radius:16px;background:#fff;box-shadow:0 16px 36px rgba(10,69,83,.18);overflow:hidden}.search-results.show{display:block}.search-status{padding:14px 16px;color:var(--muted);font-size:.82rem;font-weight:700}.search-result{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid #dce9ec;color:var(--ink);text-decoration:none;background:#fff}.search-result:first-child{border-top:0}.search-result strong{display:block;font-size:.94rem}.search-result small{display:block;margin-top:4px;color:var(--muted);font-size:.73rem;line-height:1.3;font-weight:650}.result-type{white-space:nowrap;padding:5px 8px;border-radius:9px;background:#dff1f4;color:var(--primary);font-size:.65rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
-    .group{margin-top:26px}.group-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:0 2px 10px}.group-title{margin:0;color:#58727b;font-size:.7rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.group-note{color:#8aa0a7;font-size:.7rem;font-weight:700}.primary-list,.destination-list{display:grid;gap:9px}.destination{display:grid;grid-template-columns:minmax(0,1fr) 52px;min-height:74px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel);color:var(--ink);text-decoration:none}.destination-main{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:14px;padding:12px 15px}.destination-code{display:grid;place-items:center;min-height:44px;padding:6px 7px;border-right:1px solid var(--line);color:var(--accent);font-size:.78rem;font-weight:950;letter-spacing:.05em;text-align:center}.destination-copy strong{display:block;font-size:.98rem;line-height:1.2;font-weight:880}.destination-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.77rem;line-height:1.32;font-weight:620}.destination-arrow{display:grid;place-items:center;background:#f1f7f8;border-left:1px solid var(--line);color:var(--arrow);font-size:1.5rem;font-weight:700}.destination.primary{min-height:88px;border-color:var(--primary);background:var(--primary);color:#fff}.destination.primary .destination-main{grid-template-columns:92px minmax(0,1fr)}.destination.primary .destination-code{min-height:54px;border-color:rgba(255,255,255,.28);color:#bfe8ee;font-size:.93rem}.destination.primary .destination-copy strong{font-size:1.16rem;color:#fff}.destination.primary .destination-copy span{color:#d6ecef;font-size:.8rem}.destination.primary .destination-arrow{border-color:rgba(255,255,255,.18);background:var(--primary-dark);color:#fff}.destination[data-kind="place"] .destination-code{font-size:.7rem}.parking{margin-top:8px}
-    .detail-view{padding-top:20px}.detail-back{display:inline-flex;align-items:center;gap:8px;margin:6px 0 18px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--primary);font-size:.82rem;font-weight:850;text-decoration:none}.detail-hero{padding:22px 20px;border-radius:14px;background:var(--primary);color:#fff;box-shadow:0 12px 28px rgba(10,69,83,.15)}.detail-type{display:block;margin-bottom:8px;color:#bfe8ee;font-size:.68rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}.detail-hero h1{font-size:2.15rem;letter-spacing:-.04em}.detail-official{font-size:1rem!important;font-weight:850!important;color:#fff!important;margin-top:8px!important}.detail-meta{color:#bfe8ee!important}.detail-hero p{margin:9px 0 0;color:#d6ecef;font-size:.86rem;line-height:1.45;font-weight:650}.breadcrumb{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 0;color:#6c838b;font-size:.74rem;font-weight:700}.breadcrumb a{color:var(--accent);text-decoration:none}
-    .address-card{margin-top:14px;padding:15px 16px;border:2px solid #b7d8de;border-radius:13px;background:#fff;box-shadow:0 8px 22px rgba(10,69,83,.08)}.address-label{display:block;color:#6b838b;font-size:.66rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase}.address-card strong{display:block;margin-top:5px;color:var(--ink);font-size:.94rem;line-height:1.3}.address-note{margin:6px 0 0;color:#6b8188;font-size:.72rem;line-height:1.35;font-weight:650}.nav-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;min-height:44px;padding:0 15px;border-radius:11px;background:var(--primary);color:#fff;text-decoration:none;font-size:.82rem;font-weight:900;box-shadow:0 7px 18px rgba(10,69,83,.16)}
-    .detail-section{margin-top:26px}.detail-list{display:grid;gap:8px}.detail-row{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:stretch;min-height:68px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);text-decoration:none;overflow:hidden}.detail-row-main{padding:13px 15px}.detail-row strong{display:block;font-size:.96rem;line-height:1.22}.detail-row small{display:block;margin-top:5px;color:var(--muted);font-size:.75rem;line-height:1.3;font-weight:650}.detail-row b{display:grid;place-items:center;background:#f1f7f8;border-left:1px solid var(--line);color:var(--arrow);font-size:1.35rem}.empty{margin-top:22px;padding:16px;border:1px dashed #b7cdd2;border-radius:12px;background:#f8fbfc;color:#667f88;font-size:.82rem;line-height:1.45;font-weight:650}.loading{padding:50px 10px;text-align:center;color:#71868d;font-size:.9rem;font-weight:700}
-    @media(min-width:700px){.primary-list{grid-template-columns:repeat(3,minmax(0,1fr))}.destination.primary{grid-template-columns:minmax(0,1fr) 44px;min-height:128px}.destination.primary .destination-main{grid-template-columns:1fr;align-content:center;gap:8px;padding:18px}.destination.primary .destination-code{display:block;min-height:0;padding:0 0 8px;border-right:0;border-bottom:1px solid rgba(255,255,255,.25);text-align:left}}
-    @media(max-width:430px){main{padding-left:12px;padding-right:12px}h1{font-size:2.05rem}.destination{grid-template-columns:minmax(0,1fr) 48px}.destination-main{grid-template-columns:66px minmax(0,1fr);gap:11px;padding:11px 12px}.destination.primary .destination-main{grid-template-columns:78px minmax(0,1fr)}.destination-code{font-size:.72rem}.destination-copy strong{font-size:.94rem}.search-box{grid-template-columns:50px minmax(0,1fr) 42px;min-height:62px}.search-box input{font-size:.95rem;padding:0 9px}}
+    :root{
+      --bg:#eef5f6;--panel:#fff;--ink:#123b4b;--muted:#617982;--line:#c9d9de;
+      --accent:#0b8799;--accent2:#087486;--soft:#e5f4f6;--primary:#0e5969;
+      --primary-dark:#093f4d;--arrow:#075f70;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100vh}a{-webkit-tap-highlight-color:transparent}
+    main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(42px + env(safe-area-inset-bottom))}
+    [hidden]{display:none!important}
+
+    .topbar{height:58px;display:grid;grid-template-columns:46px 1fr 46px;align-items:center;gap:8px}
+    .back{width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--line);border-radius:13px;background:#fff;color:var(--ink);text-decoration:none;font-size:1.8rem;line-height:1;box-shadow:0 4px 12px rgba(18,59,75,.05)}
+    .topbar strong{text-align:center;font-size:.9rem}
+
+    .hero{padding:32px 2px 18px}
+    .eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--accent);font-size:.68rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
+    .eyebrow:before{content:"";width:22px;height:3px;border-radius:99px;background:var(--accent)}
+    h1{margin:0;font-size:2.2rem;line-height:.98;letter-spacing:-.045em}
+    .hero p{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:.92rem;line-height:1.45}
+
+    .search-wrap{position:relative;margin:4px 0 32px}
+    .search-box{display:grid;grid-template-columns:54px minmax(0,1fr) 46px;align-items:center;min-height:66px;border:3px solid var(--primary);border-radius:18px;background:#fff;box-shadow:0 13px 30px rgba(10,69,83,.17);overflow:hidden}
+    .search-icon{align-self:stretch;display:grid;place-items:center;background:var(--primary);color:#fff}
+    .search-icon svg{width:25px;height:25px}
+    .search-box input{width:100%;height:100%;border:0;outline:0;background:#fff;color:var(--ink);font:inherit;font-size:1.02rem;font-weight:800;padding:0 12px}
+    .search-box input::placeholder{color:#647e87;font-weight:760}
+    .search-clear{display:none;width:34px;height:34px;border:0;border-radius:10px;background:var(--primary);color:#fff;font-size:1.25rem}
+    .search-clear.show{display:grid;place-items:center}
+    .search-help{margin:9px 4px 0;color:#526f79;font-size:.73rem;font-weight:790}
+    .search-results{display:none;margin-top:10px;border:2px solid #91c3cc;border-radius:16px;background:#fff;box-shadow:0 16px 36px rgba(10,69,83,.18);overflow:hidden}
+    .search-results.show{display:block}
+    .search-status{padding:14px 16px;color:var(--muted);font-size:.82rem;font-weight:700}
+    .search-result{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid #dce9ec;color:var(--ink);text-decoration:none;background:#fff}
+    .search-result:first-child{border-top:0}.search-result strong{display:block;font-size:.94rem}.search-result small{display:block;margin-top:4px;color:var(--muted);font-size:.73rem;line-height:1.3;font-weight:680}
+    .result-type{white-space:nowrap;padding:5px 8px;border-radius:9px;background:var(--soft);color:var(--primary);font-size:.65rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+
+    .group{margin-top:26px}.group-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 2px 10px}.group-title{margin:0;color:#4f6c76;font-size:.72rem;font-weight:950;letter-spacing:.12em;text-transform:uppercase}.group-note{color:#80969e;font-size:.7rem;font-weight:750}
+    .primary-list{display:grid;gap:9px}
+    .destination.primary{display:grid;grid-template-columns:minmax(0,1fr) 52px;min-height:88px;border:1px solid var(--primary);border-radius:11px;overflow:hidden;background:var(--primary);color:#fff;text-decoration:none}
+    .destination.primary .destination-main{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;gap:14px;padding:13px 15px}
+    .destination.primary .destination-code{display:grid;place-items:center;min-height:54px;padding:6px 7px;border-right:1px solid rgba(255,255,255,.28);color:#c2edf2;font-size:.93rem;font-weight:950;letter-spacing:.05em;text-align:center}
+    .destination.primary .destination-copy strong{display:block;font-size:1.16rem;line-height:1.2;color:#fff}
+    .destination.primary .destination-copy span{display:block;margin-top:4px;color:#d8eef1;font-size:.8rem;line-height:1.32;font-weight:680}
+    .destination.primary .destination-arrow{display:grid;place-items:center;border-left:1px solid rgba(255,255,255,.18);background:var(--primary-dark);color:#fff}
+    .destination.primary .destination-arrow svg{width:25px;height:25px}
+
+    .way-list,.detail-list{display:grid;gap:10px}
+    .way-card{display:grid;grid-template-columns:92px minmax(0,1fr) 62px;align-items:stretch;min-height:82px;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);text-decoration:none;overflow:hidden;box-shadow:0 7px 18px rgba(18,59,75,.065)}
+    .way-badge{margin:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border-radius:11px;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#fff;text-align:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+    .way-badge strong{max-width:70px;padding:0 4px;font-size:.78rem;line-height:1.04;font-weight:950;letter-spacing:.035em;overflow-wrap:anywhere}
+    .way-badge svg{width:18px;height:18px;opacity:.94;stroke-width:2.1}
+    .way-copy{align-self:center;min-width:0;padding:13px 12px 13px 2px}
+    .way-copy strong{display:block;color:#103c4d;font-size:1rem;line-height:1.18;font-weight:900}
+    .way-copy span{display:block;margin-top:5px;color:#58727c;font-size:.78rem;line-height:1.32;font-weight:720}
+    .way-arrow{display:grid;place-items:center;border-left:1px solid #d9e5e8;background:#f8fbfc}
+    .way-arrow span{width:42px;height:42px;display:grid;place-items:center;border:1px solid #cbdde1;border-radius:12px;background:#fff;color:var(--arrow);box-shadow:0 3px 9px rgba(18,59,75,.05)}
+    .way-arrow svg{width:23px;height:23px;stroke-width:2.7}
+    .way-card:active{transform:translateY(1px)}
+
+    .detail-view{padding-top:20px}
+    .detail-back{display:inline-flex;align-items:center;gap:8px;margin:6px 0 18px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--primary);font-size:.82rem;font-weight:850;text-decoration:none}
+    .detail-hero{padding:22px 20px;border-radius:14px;background:var(--primary);color:#fff;box-shadow:0 12px 28px rgba(10,69,83,.15)}
+    .detail-type{display:block;margin-bottom:8px;color:#bfe8ee;font-size:.68rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .detail-hero h1{font-size:2.15rem;letter-spacing:-.04em}.detail-official{font-size:1rem!important;font-weight:850!important;color:#fff!important;margin-top:8px!important}.detail-meta{color:#bfe8ee!important}
+    .detail-hero p{margin:9px 0 0;color:#d6ecef;font-size:.86rem;line-height:1.45;font-weight:650}
+    .breadcrumb{display:flex;flex-wrap:wrap;gap:6px;margin:14px 2px 0;color:#6c838b;font-size:.74rem;font-weight:700}.breadcrumb a{color:var(--accent);text-decoration:none}
+    .address-card{margin-top:14px;padding:15px 16px;border:2px solid #b7d8de;border-radius:13px;background:#fff;box-shadow:0 8px 22px rgba(10,69,83,.08)}
+    .address-label{display:block;color:#5f7a83;font-size:.66rem;font-weight:950;letter-spacing:.1em;text-transform:uppercase}.address-card strong{display:block;margin-top:5px;color:var(--ink);font-size:.94rem;line-height:1.3}.address-note{margin:6px 0 0;color:#657e86;font-size:.72rem;line-height:1.35;font-weight:680}
+    .nav-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;min-height:44px;padding:0 15px;border-radius:11px;background:var(--primary);color:#fff;text-decoration:none;font-size:.82rem;font-weight:900;box-shadow:0 7px 18px rgba(10,69,83,.16)}
+    .detail-section{margin-top:26px}.empty{margin-top:22px;padding:16px;border:1px dashed #b7cdd2;border-radius:12px;background:#f8fbfc;color:#667f88;font-size:.82rem;line-height:1.45;font-weight:650}.loading{padding:50px 10px;text-align:center;color:#71868d;font-size:.9rem;font-weight:700}.parking{margin-top:18px}
+
+    @media(min-width:700px){
+      .primary-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .destination.primary{grid-template-columns:minmax(0,1fr) 44px;min-height:128px}
+      .destination.primary .destination-main{grid-template-columns:1fr;align-content:center;gap:8px;padding:18px}
+      .destination.primary .destination-code{display:block;min-height:0;padding:0 0 8px;border-right:0;border-bottom:1px solid rgba(255,255,255,.25);text-align:left}
+    }
+    @media(max-width:430px){
+      main{padding-left:12px;padding-right:12px}h1{font-size:2.05rem}
+      .destination.primary{grid-template-columns:minmax(0,1fr) 48px}.destination.primary .destination-main{grid-template-columns:78px minmax(0,1fr)}
+      .search-box{grid-template-columns:50px minmax(0,1fr) 42px;min-height:62px}.search-box input{font-size:.95rem;padding:0 9px}
+      .way-card{grid-template-columns:78px minmax(0,1fr) 54px;min-height:78px}.way-badge{margin:9px 8px}.way-badge strong{font-size:.72rem}.way-copy{padding-right:8px}.way-copy strong{font-size:.95rem}.way-copy span{font-size:.75rem}.way-arrow span{width:38px;height:38px;border-radius:11px}
+    }
   </style>
 </head>
 <body>
 <main>
   <header class="topbar"><a id="pageBack" class="back" href="./" aria-label="Retour">‹</a><strong>GHE · Visiter les lieux</strong><span></span></header>
+
   <div id="homeView">
     <section class="hero"><div class="eyebrow">Orientation GHE</div><h1>Visiter les lieux</h1><p>Choisis le bâtiment ou le lieu que tu veux rejoindre. Le nom courant reste toujours visible avec l’intitulé complet.</p></section>
-    <section class="search-wrap" aria-label="Recherche d’un lieu"><div class="search-box"><span class="search-icon">⌕</span><input id="placeSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Service, unité, examen, bâtiment, chambre…"><button id="placeSearchClear" class="search-clear" type="button">×</button></div><div class="search-help">Ex. 301, POP, médecine nucléaire, néonat, IRM, cardiologie…</div><div id="placeSearchResults" class="search-results" aria-live="polite"></div></section>
-    <section class="group"><div class="group-head"><h2 class="group-title">Bâtiments principaux</h2><span class="group-note">3 repères majeurs</span></div><div class="primary-list">
-      <a class="destination primary" href="#/place/hlp"><span class="destination-main"><span class="destination-code">CARDIO</span><span class="destination-copy"><strong>Cardio</strong><span>Hôpital Louis Pradel</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination primary" href="#/place/pw"><span class="destination-main"><span class="destination-code">NEURO</span><span class="destination-copy"><strong>Neuro</strong><span>Hôpital Pierre Wertheimer</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination primary" href="#/place/hfme"><span class="destination-main"><span class="destination-code">HFME</span><span class="destination-copy"><strong>HFME</strong><span>Hôpital Femme Mère Enfant</span></span></span><span class="destination-arrow">›</span></a>
-    </div></section>
-    <section class="group"><div class="group-head"><h2 class="group-title">Autres destinations</h2></div><div class="destination-list">
-      <a class="destination" href="#/place/a1"><span class="destination-main"><span class="destination-code">A1</span><span class="destination-copy"><strong>Bâtiment A1</strong><span>Administration du GHE · consultations pédiatriques · L’Escale</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/a3"><span class="destination-main"><span class="destination-code">A3</span><span class="destination-copy"><strong>Centre de Biologie et de Pathologie Est (CBPE)</strong><span>Centre de prélèvements</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/a4"><span class="destination-main"><span class="destination-code">A4</span><span class="destination-copy"><strong>Plateforme d’Oncologie Pluridisciplinaire (POP)</strong><span>Bâtiment A4 · SEP / neuro-inflammation</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/b14"><span class="destination-main"><span class="destination-code">B14</span><span class="destination-copy"><strong>Centre de médecine nucléaire</strong><span>Imagerie nucléaire · thérapie métabolique</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/self_ghe"><span class="destination-main"><span class="destination-code">SELF</span><span class="destination-copy"><strong>Self du GHE</strong><span>Restaurant du personnel</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/radiotherapy"><span class="destination-main"><span class="destination-code">RADIO</span><span class="destination-copy"><strong>Radiothérapie</strong><span>Centre de radiothérapie et neuro-radiochirurgie</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/cermep"><span class="destination-main"><span class="destination-code">CERMEP</span><span class="destination-copy"><strong>CERMEP</strong><span>Imagerie du vivant</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/idee"><span class="destination-main"><span class="destination-code">IDÉE</span><span class="destination-copy"><strong>Institut des Épilepsies IDÉE</strong><span>Recherche · formation · accompagnement</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/mortuary"><span class="destination-main"><span class="destination-code">FUNÉ</span><span class="destination-copy"><strong>Service mortuaire</strong><span>Nom courant : « Funé »</span></span></span><span class="destination-arrow">›</span></a>
-      <a class="destination" href="#/place/petit_monde"><span class="destination-main"><span class="destination-code">MPM</span><span class="destination-copy"><strong>Maison du Petit Monde</strong><span>Hébergement des patients et accompagnants</span></span></span><span class="destination-arrow">›</span></a>
-    </div></section>
-    <section class="group parking"><div class="group-head"><h2 class="group-title">Stationnement</h2></div><a class="destination" href="#/parkings"><span class="destination-main"><span class="destination-code">P</span><span class="destination-copy"><strong>Parkings du GHE</strong><span>P1 à P10 · parking HFME niveau -1</span></span></span><span class="destination-arrow">›</span></a></section>
+
+    <section class="search-wrap" aria-label="Recherche d’un lieu">
+      <div class="search-box">
+        <span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="6.5" stroke-width="2.2"/><path d="m16 16 4 4" stroke-width="2.2" stroke-linecap="round"/></svg></span>
+        <input id="placeSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Service, unité, examen, bâtiment, chambre…" aria-label="Rechercher un lieu ou un service">
+        <button id="placeSearchClear" class="search-clear" type="button" aria-label="Effacer">×</button>
+      </div>
+      <div class="search-help">Ex. 301, POP, médecine nucléaire, néonat, IRM, cardiologie…</div>
+      <div id="placeSearchResults" class="search-results" aria-live="polite"></div>
+    </section>
+
+    <section class="group">
+      <div class="group-head"><h2 class="group-title">Bâtiments principaux</h2><span class="group-note">3 repères majeurs</span></div>
+      <div class="primary-list">
+        <a class="destination primary" href="#/place/hlp"><span class="destination-main"><span class="destination-code">CARDIO</span><span class="destination-copy"><strong>Cardio</strong><span>Hôpital Louis Pradel</span></span></span><span class="destination-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+        <a class="destination primary" href="#/place/pw"><span class="destination-main"><span class="destination-code">NEURO</span><span class="destination-copy"><strong>Neuro</strong><span>Hôpital Pierre Wertheimer</span></span></span><span class="destination-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+        <a class="destination primary" href="#/place/hfme"><span class="destination-main"><span class="destination-code">HFME</span><span class="destination-copy"><strong>HFME</strong><span>Hôpital Femme Mère Enfant</span></span></span><span class="destination-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></span></a>
+      </div>
+    </section>
+
+    <section class="group">
+      <div class="group-head"><h2 class="group-title">Autres destinations</h2></div>
+      <div class="way-list">
+        <a class="way-card" href="#/place/a1">__CARD_A1__</a>
+        <a class="way-card" href="#/place/a3">__CARD_A3__</a>
+        <a class="way-card" href="#/place/a4">__CARD_A4__</a>
+        <a class="way-card" href="#/place/b14">__CARD_B14__</a>
+        <a class="way-card" href="#/place/self_ghe">__CARD_SELF__</a>
+        <a class="way-card" href="#/place/radiotherapy">__CARD_RADIO__</a>
+        <a class="way-card" href="#/place/cermep">__CARD_CERMEP__</a>
+        <a class="way-card" href="#/place/idee">__CARD_IDEE__</a>
+        <a class="way-card" href="#/place/mortuary">__CARD_MORT__</a>
+        <a class="way-card" href="#/place/petit_monde">__CARD_MPM__</a>
+      </div>
+    </section>
+
+    <section class="group parking">
+      <div class="group-head"><h2 class="group-title">Stationnement</h2></div>
+      <div class="way-list"><a class="way-card" href="#/parkings">__CARD_PARK__</a></div>
+    </section>
   </div>
+
   <section id="detailView" class="detail-view" hidden aria-live="polite"></section>
 </main>
+
 <script>
 (()=>{
 'use strict';
@@ -62,6 +159,35 @@ const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLo
 const rx=v=>String(v??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const cap=v=>{const s=String(v??'');return s?s.charAt(0).toUpperCase()+s.slice(1):s};
 const sortPlaces=(a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr');
+const chevron='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 5 7 7-7 7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const icons={
+ building:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 21V4h10v17M9 8h2M9 12h2M9 16h2M15 9h4v12M3 21h18" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ level:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 18h5v-4h5v-4h6M17 6l3 4-4 1" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ service:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-width="2.4"/></svg>',
+ exam:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="7"/><path d="M8 12h8M12 8v8" stroke-linecap="round"/></svg>',
+ parking:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 19V5h5a4 4 0 0 1 0 8H7M7 13h5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ food:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 4v7M4 4v4c0 2 1 3 3 3s3-1 3-3V4M7 11v9M16 4v16M16 4c3 2 4 5 4 8h-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m4 11 8-7 8 7v9H4zM9 20v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+ research:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10" cy="10" r="5"/><path d="m14 14 5 5M8 10h4M10 8v4" stroke-linecap="round"/></svg>',
+ mortuary:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v16M7 8h10" stroke-linecap="round" stroke-width="2"/></svg>'
+};
+function iconFor(kind){return icons[kind]||icons.service}
+function staticCard(code,title,sub,kind='building'){return `<span class="way-badge"><strong>${esc(code)}</strong>${iconFor(kind)}</span><span class="way-copy"><strong>${esc(title)}</strong><span>${esc(sub)}</span></span><span class="way-arrow" aria-hidden="true"><span>${chevron}</span></span>`}
+const staticCards={
+ '__CARD_A1__':staticCard('A1','Bâtiment A1','Administration du GHE · consultations pédiatriques · L’Escale'),
+ '__CARD_A3__':staticCard('A3','Centre de Biologie et de Pathologie Est (CBPE)','Centre de prélèvements'),
+ '__CARD_A4__':staticCard('A4','Plateforme d’Oncologie Pluridisciplinaire (POP)','Bâtiment A4 · SEP / neuro-inflammation'),
+ '__CARD_B14__':staticCard('B14','Centre de médecine nucléaire','Imagerie nucléaire · thérapie métabolique','exam'),
+ '__CARD_SELF__':staticCard('SELF','Self du GHE','Restaurant du personnel','food'),
+ '__CARD_RADIO__':staticCard('RADIO','Radiothérapie','Centre de radiothérapie et neuro-radiochirurgie','exam'),
+ '__CARD_CERMEP__':staticCard('CERMEP','CERMEP','Imagerie du vivant','research'),
+ '__CARD_IDEE__':staticCard('IDÉE','Institut des Épilepsies IDÉE','Recherche · formation · accompagnement','research'),
+ '__CARD_MORT__':staticCard('FUNÉ','Service mortuaire','Nom courant : « Funé »','mortuary'),
+ '__CARD_MPM__':staticCard('MPM','Maison du Petit Monde','Hébergement des patients et accompagnants','home'),
+ '__CARD_PARK__':staticCard('P','Parkings du GHE','P1 à P10 · parking HFME niveau -1','parking')
+};
+document.querySelectorAll('.way-card').forEach(a=>{const key=a.textContent.trim();if(staticCards[key])a.innerHTML=staticCards[key]});
+
 function publicTitle(p){if(['hlp','lp'].includes(p?.id))return'Cardio';if(p?.id==='pw')return'Neuro';if(p?.id==='hfme')return'HFME';return p?.display_name||p?.official_name||''}
 function cleanTitle(p){if(!p)return'';if(['hlp','lp','pw','hfme'].includes(p.id))return publicTitle(p);let title=p.display_name||p.official_name||'';if(p.place_type==='level'&&p.parent_id){const parent=byId.get(p.parent_id),prefixes=[parent?.display_name,parent?.official_name,publicTitle(parent),String(parent?.display_name||'').replace(/^Hôpital\s+/i,''),String(parent?.official_name||'').replace(/^Hôpital\s+/i,'')].filter(Boolean).sort((a,b)=>b.length-a.length);for(const pre of prefixes){const next=title.replace(new RegExp('^'+rx(pre)+'\\s*[—–-]\\s*','i'),'');if(next!==title){title=next;break}}}return cap(title)}
 function officialLine(p){if(!p||p.place_type==='level')return'';const title=cleanTitle(p),official=p.official_name||p.display_name||'';return norm(title)!==norm(official)?official:''}
@@ -73,7 +199,10 @@ function meta(p){if(p.place_type==='level'){const parent=byId.get(p.parent_id);r
 async function search(q){const n=norm(q);clear.classList.toggle('show',!!n);if(!n){results.classList.remove('show');results.innerHTML='';return}results.classList.add('show');if(!data){results.innerHTML='<div class="search-status">Chargement des lieux…</div>';try{await loadData()}catch(e){results.innerHTML='<div class="search-status">Recherche indisponible pour le moment.</div>';return}}if(n.length<2&&!/^\d+$/.test(n)){results.innerHTML='<div class="search-status">Tape encore une lettre.</div>';return}const found=index.map(x=>({x,s:score(x,q)})).filter(v=>v.s>0).sort((a,b)=>b.s-a.s||sortPlaces(a.x.p,b.x.p)).slice(0,14).map(v=>v.x.p);if(!found.length){results.innerHTML='<div class="search-status">Aucun résultat. Essaie un service, un examen, un numéro, un bâtiment ou un repère.</div>';return}results.innerHTML=found.map(p=>`<a class="search-result" href="#/place/${encodeURIComponent(p.id)}"><span><strong>${esc(cleanTitle(p))}</strong><small>${esc(meta(p)||'GHE')}</small></span><span class="result-type">${esc(typeLabels[p.place_type]||'Lieu')}</span></a>`).join('')}
 function parentChain(p){const out=[];let cur=p,guard=0;while(cur&&guard++<12){out.unshift(cur);cur=cur.parent_id?byId.get(cur.parent_id):null}return out}
 function breadcrumbHtml(p){if(!p||p.parent_id==='ghe'||p.id==='ghe')return'';const chain=parentChain(p).filter(x=>x.id!=='ghe');return `<nav class="breadcrumb">${chain.map((x,i)=>i===chain.length-1?`<span>${esc(cleanTitle(x))}</span>`:`<a href="#/place/${encodeURIComponent(x.id)}">${esc(cleanTitle(x))}</a><span>›</span>`).join('')}</nav>`}
-function rowHtml(p){let sub='';if(p.place_type==='level')sub=p.summary||'';else if(['service','unit','exam','block'].includes(p.place_type))sub=[p.level&&`Niveau ${p.level}`,p.summary].filter(Boolean).join(' · ');else sub=p.summary||'';return `<a class="detail-row" href="#/place/${encodeURIComponent(p.id)}"><span class="detail-row-main"><strong>${esc(cleanTitle(p))}</strong>${sub?`<small>${esc(sub)}</small>`:''}</span><b>›</b></a>`}
+function acronym(text){const words=norm(text).split(' ').filter(w=>w.length>2&&!['centre','service','unite','hopital','niveau','etage','consultation','consultations'].includes(w));return words.slice(0,4).map(w=>w[0]).join('').toUpperCase()||'LIEU'}
+function shortLabel(p){if(p.place_type==='level')return String(p.level||cleanTitle(p)).replace(/^niveau\s*/i,'').toUpperCase();if(p.place_type==='parking')return p.building_code||'P';const aa=(aliases.get(p.id)||[]).map(x=>String(x).trim()).filter(x=>x.length>=2&&x.length<=10).sort((a,b)=>a.length-b.length);const best=aa.find(x=>/[A-Z0-9]{2}/.test(x)||!x.includes(' '));if(best)return best.toUpperCase();if(p.building_code&&p.building_code!=='GHE'&&p.building_code.length<=10)return p.building_code.toUpperCase();return acronym(cleanTitle(p))}
+function iconKind(p){if(p.place_type==='level')return'level';if(p.place_type==='parking')return'parking';if(p.place_type==='building'||p.place_type==='hospital')return'building';if(p.place_type==='exam')return'exam';return'service'}
+function rowHtml(p){let sub='';if(p.place_type==='level')sub=p.summary||'Voir les services et secteurs';else if(['service','unit','exam','block'].includes(p.place_type))sub=[p.level&&`Niveau ${p.level}`,p.summary].filter(Boolean).join(' · ');else sub=p.summary||'';return `<a class="way-card" href="#/place/${encodeURIComponent(p.id)}"><span class="way-badge"><strong>${esc(shortLabel(p))}</strong>${iconFor(iconKind(p))}</span><span class="way-copy"><strong>${esc(cleanTitle(p))}</strong>${sub?`<span>${esc(sub)}</span>`:''}</span><span class="way-arrow" aria-hidden="true"><span>${chevron}</span></span></a>`}
 function navHtml(p){const address=tagValue(p.id,'address:'),gps=tagValue(p.id,'gps:'),nav=tagValue(p.id,'nav:'),quality=tagValue(p.id,'nav_quality:');if(!address&&!gps&&!nav)return'';const destination=gps||nav||address,note=quality==='campus'?'Adresse officielle du campus. La destination nommée est envoyée au GPS ; le point d’entrée exact sera affiné seulement quand il est validé.':'';return `<div class="address-card"><span class="address-label">Adresse / GPS</span>${address?`<strong>${esc(address)}</strong>`:''}${note?`<p class="address-note">${esc(note)}</p>`:''}<a class="nav-btn" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}" target="_blank" rel="noopener">↗ Emmène-moi</a></div>`}
 function sectionHtml(title,items){return items.length?`<section class="detail-section"><div class="group-head"><h2 class="group-title">${esc(title)}</h2></div><div class="detail-list">${items.map(rowHtml).join('')}</div></section>`:''}
 function renderPlace(id){const p=byId.get(id);if(!p){detail.innerHTML='<div class="empty">Ce lieu n’est pas disponible dans le référentiel.</div>';return}const kids=(children.get(id)||[]).filter(x=>usefulTypes.has(x.place_type)),levels=kids.filter(x=>x.place_type==='level'),destinations=kids.filter(x=>['service','unit','exam','block'].includes(x.place_type)),other=kids.filter(x=>!['level','service','unit','exam','block'].includes(x.place_type)),loc=[p.building_code,p.level&&`niveau ${p.level}`].filter(Boolean).join(' · '),official=officialLine(p),isContainer=['hospital','building'].includes(p.place_type),isLevel=p.place_type==='level';let sections='';if(isContainer){sections=levels.length?sectionHtml('Étages',levels):sectionHtml('Services et unités',destinations)}else if(isLevel){sections=sectionHtml('Services, unités et examens',destinations)+sectionHtml('Autres secteurs',other)}else{sections=sectionHtml('À l’intérieur',kids)}detail.innerHTML=`<a class="detail-back" href="#">‹ Retour à Visiter les lieux</a><article class="detail-hero"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1>${official?`<p class="detail-official">${esc(official)}</p>`:''}${loc?`<p class="detail-meta">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</article>${navHtml(p)}${breadcrumbHtml(p)}${sections}`}
