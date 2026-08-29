@@ -6,32 +6,78 @@
   <meta name="theme-color" content="#f6fbfc">
   <meta name="color-scheme" content="light only">
   <meta name="robots" content="noindex,nofollow">
-  <title>Connaître les lieux</title>
+  <title>Visiter les lieux</title>
   <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3">
   <style>
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;background:#f6fbfc;color:#123b4b;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-    main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 18px calc(28px + env(safe-area-inset-bottom))}
+    body{min-height:100vh}
+    main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 18px calc(34px + env(safe-area-inset-bottom))}
     header{height:54px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px}
     header a{width:44px;height:44px;display:grid;place-items:center;border:1px solid #dbe8eb;border-radius:14px;background:#fff;color:#123b4b;text-decoration:none;font-size:1.9rem;line-height:1}
     header strong{text-align:center;font-size:.92rem}
-    section{margin-top:42px;padding:22px;border:1px solid #dbe8eb;border-radius:24px;background:#fff}
-    small{font-size:.65rem;font-weight:900;letter-spacing:.12em;color:#168da4}
-    h1{margin:8px 0 10px;font-size:2rem;line-height:1;letter-spacing:-.04em}
-    p{margin:0;color:#70848b;font-size:.86rem;line-height:1.5}
+    .intro{margin:34px 0 26px}
+    .intro small,.section-title{display:block;font-size:.66rem;font-weight:900;letter-spacing:.12em;color:#168da4;text-transform:uppercase}
+    h1{margin:7px 0 8px;font-size:2.15rem;line-height:1;letter-spacing:-.045em}
+    .intro p{margin:0;color:#70848b;font-size:.9rem;line-height:1.5}
+    .group{margin-top:28px}
+    .section-title{margin:0 0 11px 2px;color:#667f88}
+    .grid-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .card{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:15px 16px;border:1px solid #dbe8eb;border-radius:18px;background:#fff;color:#123b4b;text-decoration:none;font-weight:800;box-shadow:0 5px 16px rgba(23,65,79,.035)}
+    .card strong{font-size:.96rem;line-height:1.2}
+    .card .arrow{font-size:1.1rem;color:#9bb0b7}
+    .card.primary{min-height:88px;padding:18px 16px;border-color:#bddfe6;background:linear-gradient(180deg,#fff 0%,#f5fbfc 100%);box-shadow:0 9px 24px rgba(23,65,79,.065)}
+    .card.primary strong{font-size:1.12rem}
+    .list{display:grid;grid-template-columns:1fr;gap:8px}
+    .parking-card{margin-top:8px;min-height:68px}
+    @media (max-width:560px){
+      .grid-main{grid-template-columns:1fr}
+      .card.primary{min-height:72px}
+      h1{font-size:2rem}
+    }
   </style>
 </head>
 <body>
   <main>
     <header>
       <a href="./" aria-label="Retour au portail">‹</a>
-      <strong>GHE · Connaître les lieux</strong>
+      <strong>GHE · Visiter les lieux</strong>
       <span></span>
     </header>
-    <section>
-      <small>RECONSTRUCTION</small>
-      <h1>Connaître les lieux</h1>
-      <p>Base sauvegardée. Reconstruction propre, étape par étape.</p>
+
+    <section class="intro" aria-labelledby="pageTitle">
+      <small>GHE</small>
+      <h1 id="pageTitle">Visiter les lieux</h1>
+      <p>Choisis d’abord le bâtiment ou le lieu à visiter.</p>
+    </section>
+
+    <section class="group" aria-labelledby="mainBuildingsTitle">
+      <h2 class="section-title" id="mainBuildingsTitle">Bâtiments principaux</h2>
+      <div class="grid-main">
+        <a class="card primary" href="#cardio"><strong>Cardio</strong><span class="arrow">›</span></a>
+        <a class="card primary" href="#neuro"><strong>Neuro</strong><span class="arrow">›</span></a>
+        <a class="card primary" href="#hfme"><strong>HFME</strong><span class="arrow">›</span></a>
+      </div>
+    </section>
+
+    <section class="group" aria-labelledby="otherPlacesTitle">
+      <h2 class="section-title" id="otherPlacesTitle">Autres lieux du GHE</h2>
+      <div class="list">
+        <a class="card" href="#a1"><strong>A1</strong><span class="arrow">›</span></a>
+        <a class="card" href="#a4"><strong>A4</strong><span class="arrow">›</span></a>
+        <a class="card" href="#biologie"><strong>Centre de Biologie / Centre de prélèvements</strong><span class="arrow">›</span></a>
+        <a class="card" href="#medecine-nucleaire"><strong>Centre de médecine nucléaire</strong><span class="arrow">›</span></a>
+        <a class="card" href="#cermep"><strong>CERMEP</strong><span class="arrow">›</span></a>
+        <a class="card" href="#radiotherapie"><strong>Radiothérapie</strong><span class="arrow">›</span></a>
+        <a class="card" href="#idee"><strong>Institut IDEE</strong><span class="arrow">›</span></a>
+        <a class="card" href="#service-mortuaire"><strong>Service mortuaire</strong><span class="arrow">›</span></a>
+        <a class="card" href="#petit-monde"><strong>Maison du Petit Monde</strong><span class="arrow">›</span></a>
+      </div>
+    </section>
+
+    <section class="group" aria-labelledby="parkingTitle">
+      <h2 class="section-title" id="parkingTitle">Parkings</h2>
+      <a class="card parking-card" href="#parkings"><strong>Voir les parkings</strong><span class="arrow">›</span></a>
     </section>
   </main>
 </body>
