@@ -3,97 +3,81 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#f4fafb">
+  <meta name="theme-color" content="#eef5f6">
   <meta name="color-scheme" content="light only">
   <meta name="robots" content="noindex,nofollow">
   <title>Visiter les lieux</title>
   <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3">
   <style>
     :root{
-      --bg:#f4fafb;
-      --panel:#fff;
+      --bg:#eef5f6;
+      --panel:#ffffff;
       --ink:#123b4b;
-      --muted:#6a8189;
-      --line:#d5e5e8;
-      --accent:#0e91a5;
-      --accent-deep:#0b6273;
-      --accent-soft:#dff3f6;
-      --accent-pale:#eef9fa;
-      --shadow:0 10px 26px rgba(24,72,88,.075);
-      --shadow-strong:0 14px 32px rgba(24,72,88,.11);
+      --muted:#617982;
+      --line:#cfdee2;
+      --accent:#117f93;
+      --accent-soft:#dff1f4;
+      --primary:#0e5969;
+      --primary-dark:#0a4553;
+      --arrow:#0b6f82;
     }
     *{box-sizing:border-box}
     html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
     body{min-height:100vh}
     a{-webkit-tap-highlight-color:transparent}
-    main{width:min(100%,780px);margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 18px calc(44px + env(safe-area-inset-bottom))}
+    main{width:min(100%,760px);margin:0 auto;padding:calc(10px + env(safe-area-inset-top)) 16px calc(40px + env(safe-area-inset-bottom))}
 
-    .topbar{min-height:58px;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px}
-    .back{width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--line);border-radius:16px;background:#fff;color:var(--ink);text-decoration:none;font-size:1.75rem;line-height:1;box-shadow:0 6px 18px rgba(25,73,88,.05)}
-    .brand{display:flex;justify-content:center;align-items:center;gap:9px;min-width:0}
-    .brand-badge{display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:31px;padding:0 11px;border-radius:11px;background:var(--accent-deep);color:#fff;font-size:.76rem;font-weight:900;letter-spacing:.06em}
-    .brand strong{font-size:.94rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .topbar{height:58px;display:grid;grid-template-columns:46px 1fr 46px;align-items:center;gap:8px}
+    .back{width:46px;height:46px;display:grid;place-items:center;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);text-decoration:none;font-size:1.8rem;line-height:1}
+    .topbar strong{text-align:center;font-size:.9rem;letter-spacing:.01em}
 
-    .hero{padding:30px 3px 20px}
-    .eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--accent);font-size:.7rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .hero{padding:32px 2px 18px}
+    .eyebrow{display:flex;align-items:center;gap:8px;margin-bottom:9px;color:var(--accent);font-size:.68rem;font-weight:900;letter-spacing:.13em;text-transform:uppercase}
     .eyebrow::before{content:"";width:22px;height:3px;border-radius:99px;background:var(--accent)}
-    h1{margin:0;font-size:2.35rem;line-height:.98;letter-spacing:-.05em}
-    .hero p{margin:11px 0 0;color:var(--muted);font-size:.95rem;line-height:1.45}
+    h1{margin:0;font-size:2.2rem;line-height:.98;letter-spacing:-.045em}
+    .hero p{margin:10px 0 0;max-width:560px;color:var(--muted);font-size:.92rem;line-height:1.45}
 
-    .group{margin-top:30px}
-    .group-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 3px 12px}
-    .group-title{margin:0;font-size:.75rem;font-weight:950;letter-spacing:.11em;text-transform:uppercase;color:#506f79}
-    .group-note{font-size:.72rem;font-weight:750;color:#8ea3aa}
+    .group{margin-top:26px}
+    .group-head{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:0 2px 10px}
+    .group-title{margin:0;color:#58727b;font-size:.7rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+    .group-note{color:#8aa0a7;font-size:.7rem;font-weight:700}
 
-    .primary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
-    .primary-card{position:relative;min-width:0;min-height:170px;padding:17px 16px 16px;border:1px solid #c8e0e5;border-top:4px solid var(--accent);border-radius:23px;background:linear-gradient(145deg,#fff 0 72%,#e8f7f9 72% 100%);color:var(--ink);text-decoration:none;overflow:hidden;box-shadow:var(--shadow-strong)}
-    .primary-card::before{content:"";position:absolute;right:-32px;bottom:-37px;width:118px;height:118px;border-radius:50%;background:rgba(14,145,165,.08)}
-    .primary-code{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-width:48px;height:34px;padding:0 10px;border-radius:12px;background:var(--accent-soft);color:var(--accent-deep);font-size:.76rem;font-weight:950;letter-spacing:.04em}
-    .primary-copy{position:relative;z-index:1;display:block;margin-top:21px;padding-right:12px}
-    .primary-copy strong{display:block;font-size:1.15rem;line-height:1.08;font-weight:950;color:#103b4a}
-    .primary-copy span{display:block;margin-top:7px;color:#58747e;font-size:.78rem;line-height:1.3;font-weight:700}
-    .primary-arrow{position:absolute;z-index:2;right:13px;bottom:13px;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:var(--accent-deep);color:#fff;font-size:1.28rem;font-weight:850;box-shadow:0 7px 17px rgba(17,92,108,.18)}
-
-    .destination-list{display:grid;grid-template-columns:1fr;gap:10px}
-    .destination{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) 38px;align-items:center;gap:14px;min-height:84px;padding:13px 13px 13px 16px;border:1px solid var(--line);border-radius:19px;background:#fff;color:var(--ink);text-decoration:none;box-shadow:var(--shadow);overflow:hidden}
-    .destination::before{content:"";position:absolute;left:0;top:16px;bottom:16px;width:4px;border-radius:0 8px 8px 0;background:#b9e4e9}
-    .destination-code{display:grid;place-items:center;min-width:56px;height:44px;padding:0 9px;border-radius:13px;background:var(--accent-pale);color:var(--accent-deep);font-size:.74rem;font-weight:950;letter-spacing:.04em;text-align:center;border:1px solid #d9eef1}
+    .primary-list,.destination-list{display:grid;gap:9px}
+    .destination{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 52px;min-height:74px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel);color:var(--ink);text-decoration:none}
+    .destination-main{display:grid;grid-template-columns:78px minmax(0,1fr);align-items:center;gap:14px;padding:12px 15px}
+    .destination-code{display:grid;place-items:center;min-height:44px;padding:6px 7px;border-right:1px solid var(--line);color:var(--accent);font-size:.78rem;font-weight:950;letter-spacing:.05em;text-align:center}
     .destination-copy{min-width:0}
-    .destination-copy strong{display:block;font-size:1.02rem;line-height:1.2;font-weight:900;color:#163f4e}
-    .destination-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.79rem;line-height:1.32;font-weight:650}
-    .destination-arrow{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;color:var(--accent-deep);font-size:1.25rem;font-weight:850;background:#edf8fa}
+    .destination-copy strong{display:block;font-size:.98rem;line-height:1.2;font-weight:880}
+    .destination-copy span{display:block;margin-top:4px;color:var(--muted);font-size:.77rem;line-height:1.32;font-weight:620}
+    .destination-arrow{display:grid;place-items:center;background:#f1f7f8;border-left:1px solid var(--line);color:var(--arrow);font-size:1.5rem;font-weight:700}
 
-    .destination[data-kind="place"] .destination-code{font-size:.67rem;line-height:1.05}
-    .parking-card{background:linear-gradient(90deg,#f0f9fa,#fff);border-color:#cce5e9}
-    .parking-card::before{background:var(--accent)}
-    .parking-card .destination-code{background:#fff}
+    .destination.primary{min-height:88px;border-color:var(--primary);background:var(--primary);color:#fff}
+    .destination.primary .destination-main{grid-template-columns:92px minmax(0,1fr)}
+    .destination.primary .destination-code{min-height:54px;border-color:rgba(255,255,255,.28);color:#bfe8ee;font-size:.93rem}
+    .destination.primary .destination-copy strong{font-size:1.16rem;color:#fff}
+    .destination.primary .destination-copy span{color:#d6ecef;font-size:.8rem}
+    .destination.primary .destination-arrow{border-color:rgba(255,255,255,.18);background:var(--primary-dark);color:#fff}
 
-    @media (min-width:720px){
-      .primary-card{min-height:182px}
-      .destination{min-height:88px}
+    .destination[data-kind="place"] .destination-code{font-size:.7rem;line-height:1.1}
+    .parking{margin-top:8px}
+
+    @media (min-width:700px){
+      .primary-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .destination.primary{grid-template-columns:minmax(0,1fr) 44px;min-height:128px}
+      .destination.primary .destination-main{grid-template-columns:1fr;align-content:center;gap:8px;padding:18px}
+      .destination.primary .destination-code{display:block;min-height:0;padding:0 0 8px;border-right:0;border-bottom:1px solid rgba(255,255,255,.25);text-align:left}
+      .destination.primary .destination-copy strong{font-size:1.2rem}
+      .destination.primary .destination-arrow{font-size:1.35rem}
     }
 
-    @media (max-width:520px){
-      main{padding-left:13px;padding-right:13px}
-      h1{font-size:2.12rem}
-      .primary-grid{gap:8px}
-      .primary-card{min-height:158px;padding:13px 11px;border-radius:19px}
-      .primary-code{min-width:42px;height:31px;padding:0 8px;font-size:.69rem}
-      .primary-copy{margin-top:18px;padding-right:0}
-      .primary-copy strong{font-size:1rem}
-      .primary-copy span{font-size:.71rem}
-      .primary-arrow{right:10px;bottom:10px;width:32px;height:32px}
-      .destination{grid-template-columns:auto minmax(0,1fr) 34px;gap:10px;padding:11px 11px 11px 14px}
-      .destination-code{min-width:48px;height:40px;padding:0 7px}
-      .destination-copy strong{font-size:.95rem}
-      .destination-copy span{font-size:.75rem}
-    }
-
-    @media (max-width:370px){
-      .brand strong{font-size:.85rem}
-      .primary-grid{grid-template-columns:1fr}
-      .primary-card{min-height:116px}
-      .primary-copy{margin-top:14px}
+    @media (max-width:430px){
+      main{padding-left:12px;padding-right:12px}
+      h1{font-size:2.05rem}
+      .destination{grid-template-columns:minmax(0,1fr) 48px}
+      .destination-main{grid-template-columns:66px minmax(0,1fr);gap:11px;padding:11px 12px}
+      .destination.primary .destination-main{grid-template-columns:78px minmax(0,1fr)}
+      .destination-code{font-size:.72rem}
+      .destination-copy strong{font-size:.94rem}
     }
   </style>
 </head>
@@ -101,59 +85,69 @@
   <main>
     <header class="topbar">
       <a class="back" href="./" aria-label="Retour au portail">‹</a>
-      <div class="brand"><span class="brand-badge">GHE</span><strong>Visiter les lieux</strong></div>
+      <strong>GHE · Visiter les lieux</strong>
       <span aria-hidden="true"></span>
     </header>
 
     <section class="hero" aria-labelledby="pageTitle">
-      <div class="eyebrow">Visite guidée du GHE</div>
+      <div class="eyebrow">Orientation GHE</div>
       <h1 id="pageTitle">Visiter les lieux</h1>
-      <p>Choisis d’abord où tu veux aller.</p>
+      <p>Choisis le bâtiment ou le lieu que tu veux rejoindre. Le nom courant reste toujours visible avec l’intitulé complet.</p>
     </section>
 
     <section class="group" aria-labelledby="principauxTitle">
       <div class="group-head">
-        <h2 class="group-title" id="principauxTitle">Les 3 hôpitaux</h2>
-        <span class="group-note">Commencer ici</span>
+        <h2 class="group-title" id="principauxTitle">Bâtiments principaux</h2>
+        <span class="group-note">3 repères majeurs</span>
       </div>
-      <div class="primary-grid">
-        <a class="primary-card" href="#cardio">
-          <span class="primary-code">CAR</span>
-          <span class="primary-copy"><strong>Cardio</strong><span>Hôpital Louis Pradel</span></span>
-          <span class="primary-arrow" aria-hidden="true">›</span>
+      <div class="primary-list">
+        <a class="destination primary" href="#cardio">
+          <span class="destination-main">
+            <span class="destination-code">CARDIO</span>
+            <span class="destination-copy"><strong>Cardio</strong><span>Hôpital Louis Pradel</span></span>
+          </span>
+          <span class="destination-arrow" aria-hidden="true">›</span>
         </a>
-        <a class="primary-card" href="#neuro">
-          <span class="primary-code">NEU</span>
-          <span class="primary-copy"><strong>Neuro</strong><span>Hôpital Pierre Wertheimer</span></span>
-          <span class="primary-arrow" aria-hidden="true">›</span>
+        <a class="destination primary" href="#neuro">
+          <span class="destination-main">
+            <span class="destination-code">NEURO</span>
+            <span class="destination-copy"><strong>Neuro</strong><span>Hôpital Pierre Wertheimer</span></span>
+          </span>
+          <span class="destination-arrow" aria-hidden="true">›</span>
         </a>
-        <a class="primary-card" href="#hfme">
-          <span class="primary-code">HFME</span>
-          <span class="primary-copy"><strong>HFME</strong><span>Hôpital Femme Mère Enfant</span></span>
-          <span class="primary-arrow" aria-hidden="true">›</span>
+        <a class="destination primary" href="#hfme">
+          <span class="destination-main">
+            <span class="destination-code">HFME</span>
+            <span class="destination-copy"><strong>HFME</strong><span>Hôpital Femme Mère Enfant</span></span>
+          </span>
+          <span class="destination-arrow" aria-hidden="true">›</span>
         </a>
       </div>
     </section>
 
     <section class="group" aria-labelledby="autresTitle">
-      <div class="group-head"><h2 class="group-title" id="autresTitle">Autres destinations</h2></div>
+      <div class="group-head">
+        <h2 class="group-title" id="autresTitle">Autres destinations</h2>
+      </div>
       <div class="destination-list">
-        <a class="destination" href="#a1"><span class="destination-code">A1</span><span class="destination-copy"><strong>Bâtiment A1</strong><span>Administration du GHE · consultations pédiatriques · L’Escale</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#biologie"><span class="destination-code">A3</span><span class="destination-copy"><strong>A3 · Centre de Biologie et de Pathologie Est (CBPE)</strong><span>Centre de prélèvements</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#a4"><span class="destination-code">A4</span><span class="destination-copy"><strong>POP · Plateforme d’Oncologie Pluridisciplinaire</strong><span>Bâtiment A4 · SEP / neuro-inflammation</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#medecine-nucleaire"><span class="destination-code">B14</span><span class="destination-copy"><strong>B14 · Centre de médecine nucléaire</strong><span>Imagerie nucléaire · thérapie métabolique</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#self-ghe" data-kind="place"><span class="destination-code">SELF</span><span class="destination-copy"><strong>Self du GHE</strong><span>Restaurant du personnel</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#radiotherapie" data-kind="place"><span class="destination-code">RADIO</span><span class="destination-copy"><strong>Radiothérapie</strong><span>Centre de radiothérapie et neuro-radiochirurgie</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#cermep" data-kind="place"><span class="destination-code">CERMEP</span><span class="destination-copy"><strong>CERMEP</strong><span>Imagerie du vivant</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#idee" data-kind="place"><span class="destination-code">IDÉE</span><span class="destination-copy"><strong>Institut des Épilepsies IDÉE</strong><span>Institut IDÉE</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#service-mortuaire" data-kind="place"><span class="destination-code">FUNÉ</span><span class="destination-copy"><strong>Service mortuaire</strong><span>Nom courant : « Funé »</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
-        <a class="destination" href="#petit-monde" data-kind="place"><span class="destination-code">MPM</span><span class="destination-copy"><strong>Maison du Petit Monde</strong><span>Hébergement des patients et accompagnants</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#a1"><span class="destination-main"><span class="destination-code">A1</span><span class="destination-copy"><strong>Bâtiment A1</strong><span>Administration du GHE · consultations pédiatriques · L’Escale</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#biologie"><span class="destination-main"><span class="destination-code">A3</span><span class="destination-copy"><strong>Centre de Biologie et de Pathologie Est (CBPE)</strong><span>Centre de prélèvements</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#a4"><span class="destination-main"><span class="destination-code">A4</span><span class="destination-copy"><strong>Plateforme d’Oncologie Pluridisciplinaire (POP)</strong><span>Bâtiment A4 · SEP / neuro-inflammation</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#medecine-nucleaire"><span class="destination-main"><span class="destination-code">B14</span><span class="destination-copy"><strong>Centre de médecine nucléaire</strong><span>Imagerie nucléaire · thérapie métabolique</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#self-ghe" data-kind="place"><span class="destination-main"><span class="destination-code">SELF</span><span class="destination-copy"><strong>Self du GHE</strong><span>Restaurant du personnel</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#radiotherapie" data-kind="place"><span class="destination-main"><span class="destination-code">RADIO</span><span class="destination-copy"><strong>Radiothérapie</strong><span>Centre de radiothérapie et neuro-radiochirurgie</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#cermep" data-kind="place"><span class="destination-main"><span class="destination-code">CERMEP</span><span class="destination-copy"><strong>CERMEP</strong><span>Imagerie du vivant</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#idee" data-kind="place"><span class="destination-main"><span class="destination-code">IDÉE</span><span class="destination-copy"><strong>Institut des Épilepsies IDÉE</strong><span>Institut IDÉE</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#service-mortuaire" data-kind="place"><span class="destination-main"><span class="destination-code">FUNÉ</span><span class="destination-copy"><strong>Service mortuaire</strong><span>Nom courant : « Funé »</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+        <a class="destination" href="#petit-monde" data-kind="place"><span class="destination-main"><span class="destination-code">MPM</span><span class="destination-copy"><strong>Maison du Petit Monde</strong><span>Hébergement des patients et accompagnants</span></span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
       </div>
     </section>
 
-    <section class="group" aria-labelledby="parkingTitle">
+    <section class="group parking" aria-labelledby="parkingTitle">
       <div class="group-head"><h2 class="group-title" id="parkingTitle">Stationnement</h2></div>
-      <a class="destination parking-card" href="#parkings" data-kind="place"><span class="destination-code">P</span><span class="destination-copy"><strong>Parkings du GHE</strong><span>P1 à P10 · parking HFME niveau -1</span></span><span class="destination-arrow" aria-hidden="true">›</span></a>
+      <a class="destination" href="#parkings" data-kind="place">
+        <span class="destination-main"><span class="destination-code">P</span><span class="destination-copy"><strong>Parkings du GHE</strong><span>P1 à P10 · parking HFME niveau -1</span></span></span><span class="destination-arrow" aria-hidden="true">›</span>
+      </a>
     </section>
   </main>
 </body>
