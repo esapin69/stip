@@ -74,14 +74,16 @@ function summaryFor(id,byId,byParent,kind){
   const levels=labels.length?` · ${labels.slice(0,6).join(', ')}${labels.length>6?', …':''}`:'';
   return `${prefix} · ${base}${levels}${complete?' · liste relevée complète':' · liste partielle'}`;
 }
+function isCompactContext(row){const sec=row.closest('.places-section,.place-orientation');if(!sec)return false;const h=sec.querySelector('h2,h3');return !!h&&/à proximité|depuis ici|ce que tu croises/i.test(h.textContent||'')}
 function decorateElevatorRows(byId,byParent,tags){
   for(const row of content.querySelectorAll('.place-row[data-place]')){
     const p=byId.get(row.dataset.place);if(!p||!['elevator','elevator_group'].includes(p.place_type))continue;
     const main=row.querySelector('.place-row-main');if(!main)continue;
-    const kind=usage(p.id,tags),text=summaryFor(p.id,byId,byParent,kind);
-    row.dataset.elevatorUsage=kind;
-    let meta=main.querySelector('[data-elevator-row-meta]');
-    if(!meta){meta=document.createElement('p');meta.dataset.elevatorRowMeta='1';main.append(meta)}
+    const kind=usage(p.id,tags);row.dataset.elevatorUsage=kind;
+    const existing=main.querySelector('[data-elevator-row-meta]');
+    if(isCompactContext(row)){existing?.remove();continue}
+    const text=summaryFor(p.id,byId,byParent,kind);
+    let meta=existing;if(!meta){meta=document.createElement('p');meta.dataset.elevatorRowMeta='1';main.append(meta)}
     if(meta.textContent!==text)meta.textContent=text;
   }
 }
@@ -102,8 +104,7 @@ function noticeFor(kind,p){
 }
 function decorate(){
   scheduled=false;if(!data)return;
-  const {byId,byParent,tags}=maps();
-  decorateElevatorRows(byId,byParent,tags);
+  const {byId,byParent,tags}=maps();decorateElevatorRows(byId,byParent,tags);
   const id=currentPlaceId(),old=content.querySelector('[data-elevator-stops]'),oldNotice=content.querySelector('[data-elevator-usage-notice]');
   if(!id){old?.remove();oldNotice?.remove();return}
   const p=byId.get(id);
@@ -111,30 +112,13 @@ function decorate(){
   const kind=usage(id,tags),{stops,complete}=effectiveStops(id,byId,byParent);
   const signature=`${id}:${kind}:${stops.map(s=>`${s.stop_label}:${s.is_served}:${s.linked_place_id||''}:${s.note||''}`).join('|')}`;
   if(old?.dataset.signature===signature){removeDuplicatedFloorRelations(stops);return}
-  old?.remove();oldNotice?.remove();
-  const detail=content.querySelector('.place-detail');if(!detail)return;
+  old?.remove();oldNotice?.remove();const detail=content.querySelector('.place-detail');if(!detail)return;
   const hero=detail.querySelector('.place-hero-card');const notice=noticeFor(kind,p);if(notice&&hero)hero.insertAdjacentHTML('afterend',notice);
   const section=document.createElement('section');section.className='places-section elevator-stops-section';section.dataset.elevatorStops='1';section.dataset.signature=signature;
-  if(stops.length){
-    const served=stops.filter(s=>s.is_served);
-    const small=complete?`${served.length} arrêt${served.length>1?'s':''} relevé${served.length>1?'s':''}`:`${served.length} arrêt${served.length>1?'s':''} connu${served.length>1?'s':''} · liste partielle`;
-    const heading=kind==='professional'?'Étages desservis':kind==='visitor_reference'?'Niveaux indiqués sur la signalétique':'Desserte relevée';
-    section.innerHTML=`<header class="places-section-head"><h2>${heading}</h2><small>${esc(small)}</small></header><div class="places-list">${stops.map(s=>stopRow(s,byId,byParent,p,kind)).join('')}</div>`;
-  }else{
-    const heading=kind==='professional'?'Étages desservis':kind==='visitor_reference'?'Niveaux indiqués sur la signalétique':'Desserte relevée';
-    section.innerHTML=`<header class="places-section-head"><h2>${heading}</h2><small>À compléter</small></header><div class="place-empty"><strong>À compléter</strong><br>La desserte exacte de cet ascenseur n’est pas encore suffisamment documentée.</div>`;
-  }
-  const first=detail.querySelector('.places-section');if(first)first.before(section);else detail.append(section);
-  removeDuplicatedFloorRelations(stops);
+  if(stops.length){const served=stops.filter(s=>s.is_served);const small=complete?`${served.length} arrêt${served.length>1?'s':''} relevé${served.length>1?'s':''}`:`${served.length} arrêt${served.length>1?'s':''} connu${served.length>1?'s':''} · liste partielle`;const heading=kind==='professional'?'Étages desservis':kind==='visitor_reference'?'Niveaux indiqués sur la signalétique':'Desserte relevée';section.innerHTML=`<header class="places-section-head"><h2>${heading}</h2><small>${esc(small)}</small></header><div class="places-list">${stops.map(s=>stopRow(s,byId,byParent,p,kind)).join('')}</div>`}else{const heading=kind==='professional'?'Étages desservis':kind==='visitor_reference'?'Niveaux indiqués sur la signalétique':'Desserte relevée';section.innerHTML=`<header class="places-section-head"><h2>${heading}</h2><small>À compléter</small></header><div class="place-empty"><strong>À compléter</strong><br>La desserte exacte de cet ascenseur n’est pas encore suffisamment documentée.</div>`}
+  const first=detail.querySelector('.places-section');if(first)first.before(section);else detail.append(section);removeDuplicatedFloorRelations(stops)
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(decorate)}
-document.addEventListener('click',e=>{
-  const b=e.target.closest('[data-arrival-elevator]');
-  if(b){sessionStorage.setItem(ARRIVAL,JSON.stringify({elevatorId:b.dataset.arrivalElevator,elevatorName:b.dataset.arrivalName||'',levelId:b.dataset.arrivalLevel||b.dataset.place,at:Date.now()}));return}
-  const p=e.target.closest('[data-place]');if(p&&/(?:_l\d+|_rdc|_rdj|_tm)$/.test(p.dataset.place||''))sessionStorage.removeItem(ARRIVAL);
-  if(e.target.closest('[data-nav-home],[data-nav-visit],#placesHome'))sessionStorage.removeItem(ARRIVAL);
-},true);
-new MutationObserver(schedule).observe(content,{childList:true,subtree:true});
-window.addEventListener('hashchange',schedule);window.addEventListener('stip:place-data-ready',()=>{data=window.__STIP_PLACE_DATA||data;schedule()});
-load().then(d=>{data=d;schedule()}).catch(e=>console.error('Ascenseurs STIP',e));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-arrival-elevator]');if(b){sessionStorage.setItem(ARRIVAL,JSON.stringify({elevatorId:b.dataset.arrivalElevator,elevatorName:b.dataset.arrivalName||'',levelId:b.dataset.arrivalLevel||b.dataset.place,at:Date.now()}));return}const p=e.target.closest('[data-place]');if(p&&/(?:_l\d+|_rdc|_rdj|_tm)$/.test(p.dataset.place||''))sessionStorage.removeItem(ARRIVAL);if(e.target.closest('[data-nav-home],[data-nav-visit],#placesHome'))sessionStorage.removeItem(ARRIVAL)},true);
+new MutationObserver(schedule).observe(content,{childList:true,subtree:true});window.addEventListener('hashchange',schedule);window.addEventListener('stip:place-data-ready',()=>{data=window.__STIP_PLACE_DATA||data;schedule()});load().then(d=>{data=d;schedule()}).catch(e=>console.error('Ascenseurs STIP',e));
 })();
