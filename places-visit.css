@@ -24,11 +24,39 @@
 .visit-floor-stack{display:grid;gap:14px}.visit-floor-card{overflow:hidden;border:1px solid var(--stip-line);border-radius:20px;background:#fff;box-shadow:var(--stip-shadow-soft)}
 .visit-floor-title{padding:13px 14px 10px;background:linear-gradient(180deg,#f8fcfc,#fff);border-bottom:1px solid var(--stip-line);color:var(--stip-ink)}
 .visit-floor-title strong{display:block;font-size:1.02rem;line-height:1.15;font-weight:950;letter-spacing:-.015em}
+.visit-floor-title>small{display:block;margin-top:4px;color:var(--stip-muted);font-size:.61rem;line-height:1.25;font-weight:800}
 .visit-floor-open,.visit-service-link{width:100%;border:0;background:#fff;color:var(--stip-ink);text-align:left;cursor:pointer}
 .visit-floor-open{min-height:58px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
 .visit-floor-open span{min-width:0}.visit-floor-open strong{display:block;font-size:1rem;line-height:1.15;font-weight:950}.visit-floor-open small{display:block;margin-top:3px;color:var(--stip-muted);font-size:.65rem;font-weight:750}.visit-floor-open b,.visit-service-link>b{color:var(--stip-accent);font-size:1.15rem}
 .visit-floor-services{display:grid}.visit-service-link{min-height:52px;padding:10px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;border-top:1px solid rgba(19,73,84,.08)}.visit-service-link:first-child{border-top:0}.visit-service-link span{min-width:0}.visit-service-link small{display:block;margin-bottom:2px;color:var(--stip-muted-2);font-size:.54rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase}.visit-service-link strong{display:block;font-size:.84rem;line-height:1.25;font-weight:900}.visit-service-link:active,.visit-floor-open:active{background:#f2f9fa}
 .visit-floor-empty{padding:12px 14px;color:var(--stip-muted);font-size:.72rem;font-weight:750}
 .place-reference-row{cursor:default!important;box-shadow:none!important;background:#f8fbfb!important;border-style:dashed!important;opacity:1!important}.place-reference-row .place-row-main>strong{color:var(--stip-ink-2)}
-@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-title{padding:12px 12px 9px}.visit-service-link{padding:10px 12px;min-height:50px}}
-@media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}.visit-floor-services{grid-template-columns:1fr 1fr}.visit-service-link:nth-child(2){border-top:0}.visit-service-link:nth-child(even){border-left:1px solid rgba(19,73,84,.08)}}
+
+/* Louis Pradel 1er–9e : lecture immédiate gauche / droite. */
+.visit-floor-split{overflow:visible}
+.visit-floor-side-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;padding:10px;background:#f7fbfc}
+.visit-floor-side{min-width:0;overflow:hidden;border:1px solid rgba(19,73,84,.11);border-radius:15px;background:#fff}
+.visit-floor-side>header{min-height:52px;padding:9px 10px 8px;background:#f4f9fa;border-bottom:1px solid rgba(19,73,84,.08)}
+.visit-floor-side>header strong{display:block;color:var(--stip-ink);font-size:.78rem;line-height:1.1;font-weight:950}
+.visit-floor-side-right>header{text-align:right}
+.visit-floor-side>header small{display:block;margin-top:4px;color:var(--stip-muted);font-size:.57rem;line-height:1.15;font-weight:800}
+.visit-side-services{display:grid}
+.visit-floor-side .visit-service-link{min-height:58px;padding:9px 10px}
+.visit-floor-side .visit-service-link small{font-size:.49rem;letter-spacing:.045em}
+.visit-floor-side .visit-service-link strong{font-size:.75rem;line-height:1.2}
+.visit-floor-side-right .visit-service-link{text-align:right;grid-template-columns:auto minmax(0,1fr)}
+.visit-floor-side-right .visit-service-link>span{grid-column:2;grid-row:1}
+.visit-floor-side-right .visit-service-link>b{grid-column:1;grid-row:1;transform:rotate(180deg)}
+.visit-side-empty{margin:0;padding:14px 10px;color:var(--stip-muted-2);font-size:.64rem;font-weight:800;text-align:center}
+.visit-side-unknown{margin:0 10px 10px;border:1px dashed rgba(19,73,84,.18);border-radius:14px;background:#fbfdfd;padding:9px}
+.visit-side-unknown>strong{display:block;margin-bottom:5px;color:var(--stip-muted);font-size:.6rem;font-weight:900;text-transform:uppercase;letter-spacing:.05em}
+.visit-side-unknown .visit-service-link{border-radius:10px;border:0;min-height:45px;padding:7px 9px}
+.hlp-side-level{border:1px solid rgba(7,152,181,.19);border-radius:20px;background:#f7fbfc;padding:10px;box-shadow:var(--stip-shadow-soft)}
+.hlp-side-level>.places-section-head{padding:2px 2px 9px}
+.hlp-side-level>.places-section-head h2{font-size:1rem}
+.hlp-side-level>.places-section-head small{font-size:.61rem}
+.hlp-side-level .visit-floor-side-grid{padding:0;background:transparent}
+.hlp-side-level .visit-side-unknown{margin:9px 0 0}
+
+@media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-title{padding:12px 12px 9px}.visit-service-link{padding:10px 12px;min-height:50px}.visit-floor-side-grid{gap:7px;padding:8px}.visit-floor-side>header{padding:8px;min-height:50px}.visit-floor-side .visit-service-link{padding:9px 8px;min-height:56px}.visit-floor-side .visit-service-link strong{font-size:.71rem}.visit-floor-side .visit-service-link small{font-size:.46rem}}
+@media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}.visit-floor-simple .visit-floor-services{grid-template-columns:1fr 1fr}.visit-floor-simple .visit-service-link:nth-child(2){border-top:0}.visit-floor-simple .visit-service-link:nth-child(even){border-left:1px solid rgba(19,73,84,.08)}.visit-floor-side-grid{gap:12px;padding:12px}.visit-floor-side .visit-service-link strong{font-size:.82rem}}
