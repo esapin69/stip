@@ -6,11 +6,11 @@ function injectHome(){
   if(!window.STIPSession&&!window.STIPBootCache)return;
   const box=document.querySelector('#homeView .hc-apps');
   if(box&&!box.querySelector('[data-stip-places]')){
-    const b=document.createElement('button');b.type='button';b.className='hc-app places';b.dataset.stipPlaces='1';b.setAttribute('aria-label','Connaître les lieux');b.innerHTML=`<span>${icon}</span><strong>Connaître les lieux</strong>`;b.onclick=open;box.appendChild(b)
+    const b=document.createElement('button');b.type='button';b.className='hc-app places';b.dataset.stipPlaces='1';b.setAttribute('aria-label','Visiter les lieux');b.innerHTML=`<span>${icon}</span><strong>Visiter les lieux</strong>`;b.onclick=open;box.appendChild(b)
   }
   const grid=document.querySelector('#moduleGrid');
   if(grid&&!document.querySelector('#homeView [data-stip-places-fallback]')&&!box){
-    const b=document.createElement('button');b.type='button';b.className='module-card';b.dataset.stipPlacesFallback='1';b.innerHTML='<strong>Connaître les lieux</strong>';b.onclick=open;grid.appendChild(b)
+    const b=document.createElement('button');b.type='button';b.className='module-card';b.dataset.stipPlacesFallback='1';b.innerHTML='<strong>Visiter les lieux</strong>';b.onclick=open;grid.appendChild(b)
   }
 }
 let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;injectHome()})}
