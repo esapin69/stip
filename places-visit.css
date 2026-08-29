@@ -62,3 +62,19 @@
 
 @media(max-width:430px){.places-visit-entry{padding:12px}.places-visit-entry em{font-size:.64rem}.places-visit-intro{padding:15px}.places-visit-grid .place-primary{min-height:116px}.visit-floor-title{padding:12px 12px 9px}.visit-service-link{padding:10px 12px;min-height:50px}.visit-side-origin{margin:8px 8px 0;padding:8px 9px}.visit-floor-side-grid{gap:7px;padding:8px}.visit-floor-side>header{padding:8px;min-height:50px}.visit-floor-side .visit-service-link{padding:9px 8px;min-height:56px}.visit-floor-side .visit-service-link strong{font-size:.71rem}.visit-floor-side .visit-service-link small{font-size:.46rem}}
 @media(min-width:640px){.visit-continue-list .place-row{flex-basis:230px}.visit-floor-simple .visit-floor-services{grid-template-columns:1fr 1fr}.visit-floor-simple .visit-service-link:nth-child(2){border-top:0}.visit-floor-simple .visit-service-link:nth-child(even){border-left:1px solid rgba(19,73,84,.08)}.visit-floor-side-grid{gap:12px;padding:12px}.visit-floor-side .visit-service-link strong{font-size:.82rem}}
+
+/* Hiérarchie globale : niveau > repère d’orientation > directions > destinations. */
+.visit-floor-card{border-radius:22px}
+.visit-floor-title{position:relative;padding:16px 16px 13px 19px;background:#fff;border-bottom:1px solid rgba(19,73,84,.10)}
+.visit-floor-title:before{content:"NIVEAU";display:block;margin-bottom:4px;color:var(--stip-accent);font-size:.52rem;line-height:1;font-weight:950;letter-spacing:.13em;text-transform:uppercase}
+.visit-floor-title:after{content:"";position:absolute;left:0;top:13px;bottom:13px;width:4px;border-radius:0 4px 4px 0;background:var(--stip-accent)}
+.visit-floor-title strong{font-size:1.22rem;line-height:1.08;letter-spacing:-.025em}
+.visit-floor-title>small{margin-top:6px;font-size:.62rem;color:var(--stip-muted);font-weight:800}
+.visit-side-origin{margin-top:10px;background:var(--stip-accent-soft);border:1px solid rgba(7,152,181,.10)}
+.visit-floor-side>header{background:#f7fafb}
+.visit-floor-side>header strong{font-size:.8rem}
+.visit-floor-simple .visit-floor-services{background:#fff}
+.hlp-side-level>.places-section-head{position:relative;padding:10px 10px 12px 14px;border-left:4px solid var(--stip-accent);background:#fff;border-radius:13px}
+.hlp-side-level>.places-section-head:before{content:"NIVEAU / ÉTAGE";display:block;margin-bottom:3px;color:var(--stip-accent);font-size:.5rem;font-weight:950;letter-spacing:.11em;text-transform:uppercase}
+.hlp-side-level>.places-section-head h2{font-size:1.08rem;line-height:1.1}
+@media(max-width:430px){.visit-floor-title{padding:14px 13px 12px 17px}.visit-floor-title:after{top:12px;bottom:12px}.visit-floor-title strong{font-size:1.13rem}.visit-floor-title:before{font-size:.49rem}.hlp-side-level>.places-section-head{padding:9px 9px 11px 13px}}
