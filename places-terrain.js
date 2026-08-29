@@ -9,6 +9,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 const evidenceLabel=v=>v==='official_current'?'Confirmé HCL':v==='terrain_validated'?'Terrain validé':v==='inferred'?'Déduit avec prudence':v==='confirmed_old'?'Source ancienne':'À confirmer';
 const visibilityLabel=v=>v==='restricted'?'Accès restreint':v==='internal_stip'?'Info STIP':'Public';
+const DEST_TYPES=new Set(['service','unit','exam','block']);
 async function load(){
   const token=localStorage.getItem(STORE)||'';
   const headers={'Content-Type':'application/json'};
@@ -24,12 +25,6 @@ async function load(){
   return j;
 }
 function chip(text,cls=''){return `<span class="terrain-chip ${cls}">${esc(text)}</span>`}
-function fragmentCard(f){
-  const steps=Array.isArray(f.steps)?f.steps:[];
-  const restricted=Array.isArray(f.restricted_substeps)?f.restricted_substeps:[];
-  const operational=Array.isArray(f.operational_notes)?f.operational_notes:[];
-  return `<details class="terrain-card"><summary><span><strong>${esc(f.label)}</strong><small>${chip(visibilityLabel(f.visibility),f.visibility)}${chip(evidenceLabel(f.evidence_status),'evidence')}</small></span><b>＋</b></summary><div class="terrain-card-body">${steps.length?`<ol>${steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`:''}${f.notes?`<p>${esc(f.notes)}</p>`:''}${operational.map(n=>`<p class="terrain-operational">${esc(n)}</p>`).join('')}${restricted.map(n=>`<p class="terrain-restricted">${esc(n)}</p>`).join('')}</div></details>`;
-}
 function constraintCard(c){return `<article class="terrain-constraint ${esc(c.visibility)}"><div>${chip(visibilityLabel(c.visibility),c.visibility)}${chip(evidenceLabel(c.evidence_status),'evidence')}</div><p>${esc(c.rule)}</p></article>`}
 function routeState(){const h=location.hash.replace(/^#\/?/,'');if(h==='visit')return{kind:'visit',id:''};const m=h.match(/^(place|route)\/(.+)$/);return m?{kind:m[1],id:decodeURIComponent(m[2])}:{kind:'home',id:''}}
 function currentPlaceId(){const r=routeState();return r.kind==='place'?r.id:''}
@@ -62,9 +57,7 @@ function cleanListItem(v){
   s=s.replace(/^(secteur\s+des?\s+examens?|secteur\s+de\s+|examens?\s+)/i,'').trim();
   return s?s.charAt(0).toUpperCase()+s.slice(1):'';
 }
-function splitList(text=''){
-  return [...new Set(String(text).split(/\s*(?:\/|·|;|•)\s*/).map(cleanListItem).filter(Boolean))];
-}
+function splitList(text=''){return [...new Set(String(text).split(/\s*(?:\/|·|;|•)\s*/).map(cleanListItem).filter(Boolean))]}
 function structuredForRelation(r){
   const d=String(r.direction||'');
   const dash=d.split(/\s+[—–-]\s+/);
@@ -99,6 +92,7 @@ function enhanceRelationLists(){
 }
 function enhanceGenericLists(){
   for(const p of content.querySelectorAll('.place-row-main > p:not([data-list-checked])')){
+    if(p.closest('[data-campus-services]'))continue;
     p.dataset.listChecked='1';
     if(p.closest('.place-row')?.querySelector('[data-smart-list]'))continue;
     const text=String(p.textContent||'').trim();
@@ -127,12 +121,7 @@ function enhanceRouteCueRows(){
 }
 function routeTarget(id,map){
   const allowed=new Set(['route_next','route_branch','connects_to','accesses','exit_near','arrives_near']);
-  return (data?.relations||[])
-    .filter(r=>r.from_place_id===id&&allowed.has(r.relation_type)&&map.has(r.to_place_id))
-    .sort((a,b)=>{
-      const score=t=>t==='route_next'?100:t==='route_branch'?90:t==='connects_to'?80:t==='accesses'?70:60;
-      return score(b.relation_type)-score(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0);
-    })[0]||null;
+  return (data?.relations||[]).filter(r=>r.from_place_id===id&&allowed.has(r.relation_type)&&map.has(r.to_place_id)).sort((a,b)=>{const score=t=>t==='route_next'?100:t==='route_branch'?90:t==='connects_to'?80:t==='accesses'?70:60;return score(b.relation_type)-score(a.relation_type)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)})[0]||null;
 }
 function enhanceLandmark(){
   const id=currentPlaceId();if(!id||!data)return;
@@ -149,7 +138,27 @@ function enhanceLandmark(){
   paragraphs.slice(1).forEach(x=>x.remove());
   if(r.direction){const callout=document.createElement('div');callout.className='landmark-route-instruction';callout.innerHTML=`<b>À faire</b><span>${esc(r.direction)}</span>`;hero.append(callout)}
 }
-function enhanceReadability(){enhanceExamSemantics();enhanceLandmark();enhanceRouteCueRows();enhanceRelationLists();enhanceGenericLists()}
+function campusDestinationChildren(rootId){
+  const places=data?.places||[],byParent=new Map(),out=[],seen=new Set();
+  for(const p of places){if(!p.parent_id)continue;const a=byParent.get(p.parent_id)||[];a.push(p);byParent.set(p.parent_id,a)}
+  function walk(id,depth=0){if(depth>8)return;for(const p of byParent.get(id)||[]){if(seen.has(p.id))continue;seen.add(p.id);if(DEST_TYPES.has(p.place_type))out.push(p);else walk(p.id,depth+1)}}
+  walk(rootId);
+  return out.sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'));
+}
+function campusButton(p){const level=p.level?`<small>${esc(p.level==='RDC'?'RDC':`${p.level}e étage`)}</small>`:'';return `<button type="button" class="visit-campus-service" data-place="${esc(p.id)}"><span><strong>${esc(p.display_name)}</strong>${level}</span><b>›</b></button>`}
+function enhanceCampusSection(){
+  if(!data||routeState().kind!=='visit')return;
+  const section=[...content.querySelectorAll('.places-section')].find(s=>/bâtiments et repères du campus/i.test(s.querySelector('h2')?.textContent||''));
+  if(!section||section.dataset.campusServices==='1')return;
+  const map=mapById(),ids=['a1','a4','a3','b14','radiotherapy','cermep','mortuary','petit_monde'].filter(id=>map.has(id));
+  section.dataset.campusServices='1';
+  const head=section.querySelector('.places-section-head h2');if(head)head.textContent='Autres lieux du GHE';
+  const small=section.querySelector('.places-section-head small');if(small)small.textContent='Un lieu, puis ses services';
+  const wrap=document.createElement('div');wrap.className='visit-campus-groups';wrap.dataset.campusServices='1';
+  for(const id of ids){const place=map.get(id),services=campusDestinationChildren(id);const card=document.createElement('section');card.className='visit-campus-card';card.innerHTML=`<header><strong>${esc(place.display_name)}</strong>${place.place_type==='landmark'?'<small>Repère uniquement</small>':''}</header>${services.length?`<div class="visit-campus-services">${services.map(campusButton).join('')}</div>`:`<p class="visit-campus-no-service">${place.place_type==='landmark'?'Repère de positionnement, non cliquable.':'Services à détailler dans le référentiel.'}</p>`}`;wrap.append(card)}
+  const old=section.querySelector('.places-list');if(old)old.replaceWith(wrap);else section.append(wrap);
+}
+function enhanceReadability(){enhanceCampusSection();enhanceExamSemantics();enhanceLandmark();enhanceRouteCueRows();enhanceRelationLists();enhanceGenericLists()}
 function decorate(){
   scheduled=false;if(!data)return;
   const state=routeState();
@@ -158,23 +167,10 @@ function decorate(){
     const signature=`constraints:${state.id}:${relevant.map(x=>x.id).join(',')}`;
     if(content.querySelector(`[data-terrain-added="constraints"][data-signature="${CSS.escape(signature)}"]`)){enhanceReadability();return}
     content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());
-    if(relevant.length){
-      const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='constraints';section.dataset.signature=signature;
-      section.innerHTML=`<header class="places-section-head"><h2>À savoir sur ce lieu</h2><small>${relevant.length} règle${relevant.length>1?'s':''}</small></header><div class="terrain-constraints">${relevant.map(constraintCard).join('')}</div>`;
-      const detail=content.querySelector('.place-detail');(detail||content).append(section);
-    }
+    if(relevant.length){const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='constraints';section.dataset.signature=signature;section.innerHTML=`<header class="places-section-head"><h2>À savoir sur ce lieu</h2><small>${relevant.length} règle${relevant.length>1?'s':''}</small></header><div class="terrain-constraints">${relevant.map(constraintCard).join('')}</div>`;const detail=content.querySelector('.place-detail');(detail||content).append(section)}
     enhanceReadability();return;
   }
-  if(state.kind!=='home'&&state.kind!=='visit'){content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());enhanceReadability();return}
-  const fragments=data.route_fragments||[];
-  const signature=`fragments:${state.kind}:${fragments.map(x=>x.id).join(',')}`;
-  if(content.querySelector(`[data-terrain-added="fragments"][data-signature="${CSS.escape(signature)}"]`)){enhanceReadability();return}
-  content.querySelectorAll('[data-terrain-added]').forEach(x=>x.remove());
-  if(fragments.length&&content.querySelector('.places-section,.places-visit-intro')){
-    const section=document.createElement('section');section.className='places-section terrain-section';section.dataset.terrainAdded='fragments';section.dataset.signature=signature;
-    section.innerHTML=`<header class="places-section-head"><h2>Parcours terrain</h2><small>${fragments.length} parcours vérifié${fragments.length>1?'s':''}</small></header><div class="terrain-list">${fragments.map(fragmentCard).join('')}</div>`;
-    content.append(section);
-  }
+  content.querySelectorAll('[data-terrain-added="fragments"]').forEach(x=>x.remove());
   enhanceReadability();
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(decorate)}
