@@ -23,16 +23,18 @@
     .group{margin-top:28px}
     .section-title{margin:0 0 11px 2px;color:#667f88}
     .grid-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .card{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:62px;padding:15px 16px;border:1px solid #dbe8eb;border-radius:18px;background:#fff;color:#123b4b;text-decoration:none;font-weight:800;box-shadow:0 5px 16px rgba(23,65,79,.035)}
-    .card strong{font-size:.96rem;line-height:1.2}
-    .card .arrow{font-size:1.1rem;color:#9bb0b7}
-    .card.primary{min-height:88px;padding:18px 16px;border-color:#bddfe6;background:linear-gradient(180deg,#fff 0%,#f5fbfc 100%);box-shadow:0 9px 24px rgba(23,65,79,.065)}
+    .card{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:68px;padding:14px 16px;border:1px solid #dbe8eb;border-radius:18px;background:#fff;color:#123b4b;text-decoration:none;box-shadow:0 5px 16px rgba(23,65,79,.035)}
+    .card-text{display:flex;flex-direction:column;gap:4px;min-width:0}
+    .card strong{font-size:.96rem;line-height:1.2;font-weight:850}
+    .card em{font-style:normal;color:#71878f;font-size:.76rem;line-height:1.3;font-weight:600}
+    .card .arrow{flex:0 0 auto;font-size:1.1rem;color:#9bb0b7}
+    .card.primary{min-height:92px;padding:17px 16px;border-color:#bddfe6;background:linear-gradient(180deg,#fff 0%,#f5fbfc 100%);box-shadow:0 9px 24px rgba(23,65,79,.065)}
     .card.primary strong{font-size:1.12rem}
     .list{display:grid;grid-template-columns:1fr;gap:8px}
     .parking-card{margin-top:8px;min-height:68px}
     @media (max-width:560px){
       .grid-main{grid-template-columns:1fr}
-      .card.primary{min-height:72px}
+      .card.primary{min-height:76px}
       h1{font-size:2rem}
     }
   </style>
@@ -54,30 +56,31 @@
     <section class="group" aria-labelledby="mainBuildingsTitle">
       <h2 class="section-title" id="mainBuildingsTitle">Bâtiments principaux</h2>
       <div class="grid-main">
-        <a class="card primary" href="#cardio"><strong>Cardio</strong><span class="arrow">›</span></a>
-        <a class="card primary" href="#neuro"><strong>Neuro</strong><span class="arrow">›</span></a>
-        <a class="card primary" href="#hfme"><strong>HFME</strong><span class="arrow">›</span></a>
+        <a class="card primary" href="#cardio"><span class="card-text"><strong>Cardio</strong><em>Hôpital Louis Pradel</em></span><span class="arrow">›</span></a>
+        <a class="card primary" href="#neuro"><span class="card-text"><strong>Neuro</strong><em>Hôpital Pierre Wertheimer</em></span><span class="arrow">›</span></a>
+        <a class="card primary" href="#hfme"><span class="card-text"><strong>HFME</strong><em>Hôpital Femme Mère Enfant</em></span><span class="arrow">›</span></a>
       </div>
     </section>
 
     <section class="group" aria-labelledby="otherPlacesTitle">
-      <h2 class="section-title" id="otherPlacesTitle">Autres lieux du GHE</h2>
+      <h2 class="section-title" id="otherPlacesTitle">Autres bâtiments et lieux du GHE</h2>
       <div class="list">
-        <a class="card" href="#a1"><strong>A1</strong><span class="arrow">›</span></a>
-        <a class="card" href="#a4"><strong>A4</strong><span class="arrow">›</span></a>
-        <a class="card" href="#biologie"><strong>Centre de Biologie / Centre de prélèvements</strong><span class="arrow">›</span></a>
-        <a class="card" href="#medecine-nucleaire"><strong>Centre de médecine nucléaire</strong><span class="arrow">›</span></a>
-        <a class="card" href="#cermep"><strong>CERMEP</strong><span class="arrow">›</span></a>
-        <a class="card" href="#radiotherapie"><strong>Radiothérapie</strong><span class="arrow">›</span></a>
-        <a class="card" href="#idee"><strong>Institut IDEE</strong><span class="arrow">›</span></a>
-        <a class="card" href="#service-mortuaire"><strong>Service mortuaire</strong><span class="arrow">›</span></a>
-        <a class="card" href="#petit-monde"><strong>Maison du Petit Monde</strong><span class="arrow">›</span></a>
+        <a class="card" href="#a1"><span class="card-text"><strong>Bâtiment A1</strong><em>Administration du GHE · consultations pédiatriques · L’Escale</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#a4"><span class="card-text"><strong>Bâtiment A4</strong><em>Plateforme d’Oncologie Pluridisciplinaire (POP) · SEP / neuro-inflammation</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#biologie"><span class="card-text"><strong>Centre de Biologie et de Pathologie Est (CBPE)</strong><em>Centre de prélèvements</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#medecine-nucleaire"><span class="card-text"><strong>Centre de médecine nucléaire (B14)</strong><em>Imagerie nucléaire · unité de thérapie métabolique</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#self-ghe"><span class="card-text"><strong>Self du GHE</strong><em>Restaurant du personnel</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#cermep"><span class="card-text"><strong>CERMEP</strong><em>Imagerie du vivant</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#radiotherapie"><span class="card-text"><strong>Bâtiment Radiothérapie</strong><em>Centre de radiothérapie et neuro-radiochirurgie</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#idee"><span class="card-text"><strong>Institut des Épilepsies IDÉE</strong><em>Institut IDÉE</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#service-mortuaire"><span class="card-text"><strong>Service mortuaire</strong><em>« Funé »</em></span><span class="arrow">›</span></a>
+        <a class="card" href="#petit-monde"><span class="card-text"><strong>Maison du Petit Monde</strong><em>Hébergement des patients et accompagnants</em></span><span class="arrow">›</span></a>
       </div>
     </section>
 
     <section class="group" aria-labelledby="parkingTitle">
       <h2 class="section-title" id="parkingTitle">Parkings</h2>
-      <a class="card parking-card" href="#parkings"><strong>Voir les parkings</strong><span class="arrow">›</span></a>
+      <a class="card parking-card" href="#parkings"><span class="card-text"><strong>Voir les parkings</strong><em>Parkings et stationnement du GHE</em></span><span class="arrow">›</span></a>
     </section>
   </main>
 </body>
