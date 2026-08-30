@@ -1,0 +1,33 @@
+name: Position hospital hero text
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/position-hospital-hero-text.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cat >> places.html <<'EOF'
+          
+EOF
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('places.html')
+          s=p.read_text(encoding='utf-8')
+          marker='</style>'
+          css='''\n    /* Positionnement éditorial adapté à chaque photo d’hôpital */\n    .detail-hero.hospital-photo-pw{display:flex!important;flex-direction:column!important;justify-content:flex-start!important;align-items:flex-start!important;text-align:left!important;padding-top:26px!important;background-image:linear-gradient(180deg,rgba(7,30,49,.70) 0%,rgba(7,30,49,.42) 35%,rgba(7,30,49,.08) 67%,rgba(7,30,49,0) 100%),url("images/hospitals/neuro.jpg")!important;background-position:center!important}\n    .detail-hero.hospital-photo-pw>*{max-width:78%;margin-left:0!important;margin-right:auto!important}\n    .detail-hero.hospital-photo-hfme{display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:center!important;text-align:center!important;padding-bottom:28px!important;background-image:linear-gradient(0deg,rgba(7,30,49,.72) 0%,rgba(7,30,49,.44) 40%,rgba(7,30,49,.08) 72%,rgba(7,30,49,0) 100%),url("images/hospitals/hfme.jpg")!important;background-position:center!important}\n    .detail-hero.hospital-photo-hfme>*{max-width:88%;margin-left:auto!important;margin-right:auto!important}\n    .detail-hero.hospital-photo-hfme h1,.detail-hero.hospital-photo-hfme .detail-official,.detail-hero.hospital-photo-hfme .detail-meta,.detail-hero.hospital-photo-hfme p{width:100%;text-align:center!important}\n'''
+          if marker not in s: raise SystemExit('style marker missing')
+          s=s.replace(marker,css+marker,1)
+          s=s.replace('stip-theme.css?v=20260830-places-photo3','stip-theme.css?v=20260830-places-photo4',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add places.html
+          git commit -m "Positionne le texte selon les photos Neuro et HFME"
+          git push
