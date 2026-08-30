@@ -11,13 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Sync latest main
-        shell: bash
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
       - name: Patch proximity grouping only
         shell: bash
         run: |
@@ -25,36 +18,29 @@ jobs:
           from pathlib import Path
           p=Path('places.html')
           s=p.read_text(encoding='utf-8')
-
           old="const proximityTypes=new Set(['near','adjacent','same_hall','same_sector','exit_near','behind','opens_to','adjacent_landmark','opposite_side_landmark']);"
           new="const proximityTypes=new Set(['near','adjacent','same_hall','same_sector','exit_near','behind','opens_to','adjacent_landmark','opposite_side_landmark','co_signposted','route_next']);"
-          if old not in s:
-              raise SystemExit('proximityTypes block changed; aborting safely')
+          if old not in s: raise SystemExit('proximityTypes changed; safe abort')
           s=s.replace(old,new,1)
-
-          old="""function proximityGroups(items){if(items.length<2)return items.map(x=>[x]);const ids=new Set(items.map(x=>x.id)),parent=new Map(items.map(x=>[x.id,x.id]));const find=x=>{let p=parent.get(x);while(p!==parent.get(p)){parent.set(p,parent.get(parent.get(p)));p=parent.get(p)}return p};const join=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent.set(rb,ra)};for(const r of relations){if(!proximityTypes.has(r.relation_type)||!ids.has(r.from_place_id)||!ids.has(r.to_place_id))continue;join(r.from_place_id,r.to_place_id)}const groups=new Map();for(const p of items){const root=find(p.id),g=groups.get(root)||[];g.push(p);groups.set(root,g)}return [...groups.values()].sort((a,b)=>items.indexOf(a[0])-items.indexOf(b[0]))}
-function groupedRowsHtml(items,isHfme=false){return proximityGroups(items).map(g=>g.length>1?`<div class=\"proximity-group\" aria-label=\"Lieux proches\">${g.map(x=>rowHtml(x,false,{hfme:isHfme})).join('')}</div>`:rowHtml(g[0],false,{hfme:isHfme})).join('')}"""
-          new="""function proximityGroups(items){if(items.length<2)return items.map(x=>[x]);const ids=new Set(items.map(x=>x.id)),parent=new Map(items.map(x=>[x.id,x.id]));const find=x=>{let p=parent.get(x);while(p!==parent.get(p)){parent.set(p,parent.get(parent.get(p)));p=parent.get(p)}return p};const join=(a,b)=>{if(!ids.has(a)||!ids.has(b))return;const ra=find(a),rb=find(b);if(ra!==rb)parent.set(rb,ra)};const trusted=r=>['terrain_validated','official_current','confirmed_old'].includes(String(r.evidence_status||''));for(const r of relations){if(!trusted(r)||!proximityTypes.has(r.relation_type)||!ids.has(r.from_place_id)||!ids.has(r.to_place_id))continue;join(r.from_place_id,r.to_place_id)}const contained=new Map();for(const r of relations){if(!trusted(r)||r.relation_type!=='contains'||!ids.has(r.to_place_id))continue;const g=contained.get(r.from_place_id)||[];g.push(r.to_place_id);contained.set(r.from_place_id,g)}for(const members of contained.values()){if(members.length<2)continue;for(let i=1;i<members.length;i++)join(members[0],members[i])}const groups=new Map();for(const p of items){const root=find(p.id),g=groups.get(root)||[];g.push(p);groups.set(root,g)}return [...groups.values()].sort((a,b)=>items.indexOf(a[0])-items.indexOf(b[0]))}
-function groupedRowsHtml(items,isHfme=false){return proximityGroups(items).map(g=>g.length>1?`<div class=\"proximity-group\" aria-label=\"Lieux proches ou du même secteur\">${g.map(x=>rowHtml(x,false,{hfme:isHfme})).join('')}</div>`:rowHtml(g[0],false,{hfme:isHfme})).join('')}"""
-          if old not in s:
-              raise SystemExit('proximityGroups block changed; aborting safely')
+          old="function proximityGroups(items){if(items.length<2)return items.map(x=>[x]);const ids=new Set(items.map(x=>x.id)),parent=new Map(items.map(x=>[x.id,x.id]));const find=x=>{let p=parent.get(x);while(p!==parent.get(p)){parent.set(p,parent.get(parent.get(p)));p=parent.get(p)}return p};const join=(a,b)=>{const ra=find(a),rb=find(b);if(ra!==rb)parent.set(rb,ra)};for(const r of relations){if(!proximityTypes.has(r.relation_type)||!ids.has(r.from_place_id)||!ids.has(r.to_place_id))continue;join(r.from_place_id,r.to_place_id)}const groups=new Map();for(const p of items){const root=find(p.id),g=groups.get(root)||[];g.push(p);groups.set(root,g)}return [...groups.values()].sort((a,b)=>items.indexOf(a[0])-items.indexOf(b[0]))}"
+          new="function proximityGroups(items){if(items.length<2)return items.map(x=>[x]);const ids=new Set(items.map(x=>x.id)),parent=new Map(items.map(x=>[x.id,x.id]));const find=x=>{let p=parent.get(x);while(p!==parent.get(p)){parent.set(p,parent.get(parent.get(p)));p=parent.get(p)}return p};const join=(a,b)=>{if(!ids.has(a)||!ids.has(b))return;const ra=find(a),rb=find(b);if(ra!==rb)parent.set(rb,ra)};const trusted=r=>['terrain_validated','official_current','confirmed_old'].includes(String(r.evidence_status||''));for(const r of relations){if(!trusted(r)||!proximityTypes.has(r.relation_type)||!ids.has(r.from_place_id)||!ids.has(r.to_place_id))continue;join(r.from_place_id,r.to_place_id)}const contained=new Map();for(const r of relations){if(!trusted(r)||r.relation_type!=='contains'||!ids.has(r.to_place_id))continue;const g=contained.get(r.from_place_id)||[];g.push(r.to_place_id);contained.set(r.from_place_id,g)}for(const members of contained.values()){if(members.length<2)continue;for(let i=1;i<members.length;i++)join(members[0],members[i])}const groups=new Map();for(const p of items){const root=find(p.id),g=groups.get(root)||[];g.push(p);groups.set(root,g)}return [...groups.values()].sort((a,b)=>items.indexOf(a[0])-items.indexOf(b[0]))}"
+          if old not in s: raise SystemExit('proximityGroups changed; safe abort')
           s=s.replace(old,new,1)
-
-          old=".proximity-group{position:relative;display:grid;gap:9px;padding-right:17px}.proximity-group:after{content:\"\";position:absolute;right:0;top:0;bottom:0;width:10px;border-right:2px solid #7fb3bc;border-top:2px solid #7fb3bc;border-bottom:2px solid #7fb3bc;border-radius:0 10px 10px 0}"
-          new=".proximity-group{position:relative;display:grid;gap:9px;margin:2px 0;padding-right:19px}.proximity-group:after{content:\"\";position:absolute;right:1px;top:7px;bottom:7px;width:12px;border-right:3px solid #4da3b0;border-top:3px solid #4da3b0;border-bottom:3px solid #4da3b0;border-radius:0 13px 13px 0;opacity:.82}"
-          if old not in s:
-              raise SystemExit('proximity CSS changed; aborting safely')
+          old="function groupedRowsHtml(items,isHfme=false){return proximityGroups(items).map(g=>g.length>1?`<div class=\"proximity-group\" aria-label=\"Lieux proches\">${g.map(x=>rowHtml(x,false,{hfme:isHfme})).join('')}</div>`:rowHtml(g[0],false,{hfme:isHfme})).join('')}"
+          new="function groupedRowsHtml(items,isHfme=false){return proximityGroups(items).map(g=>g.length>1?`<div class=\"proximity-group\" aria-label=\"Lieux proches ou du même secteur\">${g.map(x=>rowHtml(x,false,{hfme:isHfme})).join('')}</div>`:rowHtml(g[0],false,{hfme:isHfme})).join('')}"
+          if old not in s: raise SystemExit('groupedRowsHtml changed; safe abort')
           s=s.replace(old,new,1)
-
-          old=".proximity-group{padding-right:14px}.proximity-group:after{width:8px}"
-          new=".proximity-group{padding-right:16px}.proximity-group:after{right:0;top:6px;bottom:6px;width:10px;border-right-width:2px;border-top-width:2px;border-bottom-width:2px}"
-          if old not in s:
-              raise SystemExit('mobile proximity CSS changed; aborting safely')
+          old='.proximity-group{position:relative;display:grid;gap:9px;padding-right:17px}.proximity-group:after{content:"";position:absolute;right:0;top:0;bottom:0;width:10px;border-right:2px solid #7fb3bc;border-top:2px solid #7fb3bc;border-bottom:2px solid #7fb3bc;border-radius:0 10px 10px 0}'
+          new='.proximity-group{position:relative;display:grid;gap:9px;margin:2px 0;padding-right:19px}.proximity-group:after{content:"";position:absolute;right:1px;top:7px;bottom:7px;width:12px;border-right:3px solid #4da3b0;border-top:3px solid #4da3b0;border-bottom:3px solid #4da3b0;border-radius:0 13px 13px 0;opacity:.82}'
+          if old not in s: raise SystemExit('proximity CSS changed; safe abort')
           s=s.replace(old,new,1)
-
+          old='.proximity-group{padding-right:14px}.proximity-group:after{width:8px}'
+          new='.proximity-group{padding-right:16px}.proximity-group:after{right:0;top:6px;bottom:6px;width:10px;border-right-width:2px;border-top-width:2px;border-bottom-width:2px}'
+          if old not in s: raise SystemExit('mobile proximity CSS changed; safe abort')
+          s=s.replace(old,new,1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit surgical change and remove workflow
+      - name: Commit and remove temporary workflow
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
@@ -62,5 +48,4 @@ function groupedRowsHtml(items,isHfme=false){return proximityGroups(items).map(g
           git rm .github/workflows/patch-proximity-braces.yml
           git add places.html
           git commit -m "Améliore les groupes de proximité droite"
-          git pull --rebase origin main
-          git push origin main
+          git push
