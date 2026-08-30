@@ -1,0 +1,58 @@
+name: Finalize places visual
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-places-visual.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Finalize places visual
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('places.html')
+          s=p.read_text(encoding='utf-8')
+          s=s.replace('stip-theme.css?v=20260824-theme3','stip-theme.css?v=20260830-places-photo2')
+          marker='''    /* STIP_SERVICE_FICHE_V1 */'''
+          css=r'''
+    /* STIP_PLACES_BLUE_PHOTO_FINAL_V1 */
+    :root{--accent:#234f70;--accent2:#1b4565;--primary:#173f5d;--primary-dark:#0c304b;--arrow:#173f5d}
+    .eyebrow,.group-title{color:#234f70!important}.eyebrow:before{background:#234f70!important}
+    .search-box{border-color:#173f5d!important}.search-icon,.search-clear,.search-floor-label,.floor-link,.nav-btn{background:#173f5d!important}
+    .home-code{background:#234f70!important;box-shadow:0 4px 10px rgba(23,63,93,.22)!important}
+    .map-direction:before{color:#315f80!important}.map-anchor:after,.axis-hospitals:before,.between-zone:before{background:#7394aa!important}
+    .between-label{background:#edf2f6!important;color:#173f5d!important}
+    .search-brace:before,.floor-body:before{border-color:#7394aa!important}
+    a.destination.primary[href="#/place/hfme"]{background:linear-gradient(90deg,rgba(10,38,61,.72) 0%,rgba(10,38,61,.38) 47%,rgba(10,38,61,.06) 100%),url("images/hospitals/hfme.jpg") center 48%/cover no-repeat!important}
+    a.destination.primary[href="#/place/pw"]{background:linear-gradient(90deg,rgba(10,38,61,.74) 0%,rgba(10,38,61,.40) 50%,rgba(10,38,61,.06) 100%),url("images/hospitals/neuro.jpg") center/cover no-repeat!important}
+    a.destination.primary[href="#/place/hlp"]{background:linear-gradient(90deg,rgba(10,38,61,.74) 0%,rgba(10,38,61,.40) 50%,rgba(10,38,61,.06) 100%),url("images/hospitals/cardio.jpg") center/cover no-repeat!important}
+    a.destination.primary[href="#/place/hfme"] .destination-arrow,a.destination.primary[href="#/place/pw"] .destination-arrow,a.destination.primary[href="#/place/hlp"] .destination-arrow{background:rgba(7,31,50,.70)!important;backdrop-filter:none!important}
+    .detail-hero.hospital-photo-hero{position:relative;min-height:260px;padding:26px 22px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;text-shadow:0 2px 9px rgba(0,0,0,.42)}
+    .detail-hero.hospital-photo-hero .detail-type,.detail-hero.hospital-photo-hero .detail-meta{color:#e6eef4!important}
+    .detail-hero.hospital-photo-hero p{color:#f2f6f8!important}.detail-hero.hospital-photo-hero .detail-official{color:#fff!important}
+    .detail-hero.hospital-photo-hfme{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/hfme.jpg")!important}
+    .detail-hero.hospital-photo-pw{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/neuro.jpg")!important}
+    .detail-hero.hospital-photo-hlp{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/cardio.jpg")!important}
+'''
+          if 'STIP_PLACES_BLUE_PHOTO_FINAL_V1' not in s:
+              s=s.replace(marker,css+'\n'+marker)
+          old="""function renderPlace(id){const p=byId.get(id)||virtualById.get(id);"""
+          new="""function renderPlace(id){const p=byId.get(id)||virtualById.get(id);"""
+          s=s.replace(old,new)
+          needle="""detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a><article class=\"detail-hero\">"""
+          repl="""const hospitalHeroClass=id==='hfme'?' hospital-photo-hero hospital-photo-hfme':id==='pw'?' hospital-photo-hero hospital-photo-pw':(id==='hlp'||id==='lp')?' hospital-photo-hero hospital-photo-hlp':'';detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a><article class=\"detail-hero${hospitalHeroClass}\">"""
+          if needle in s and 'const hospitalHeroClass=' not in s:
+              s=s.replace(needle,repl,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add places.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Finalise les photos et le bleu de Visiter les lieux"
+          git push
