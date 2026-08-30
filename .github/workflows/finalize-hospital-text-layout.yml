@@ -1,0 +1,45 @@
+name: Finalize hospital text layout
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/finalize-hospital-text-layout.yml'
+permissions:
+  contents: write
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Finalize hospital text layout
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('places.html')
+          s=p.read_text(encoding='utf-8')
+          css='''
+    /* STIP_HOSPITAL_TEXT_LAYOUT_FINAL_V2 */
+    .detail-hero.hospital-photo-pw{justify-content:flex-start!important;align-items:stretch!important;text-align:left!important;padding-top:22px!important;background-image:linear-gradient(180deg,rgba(7,30,49,.78) 0%,rgba(7,30,49,.48) 34%,rgba(7,30,49,.10) 66%,rgba(7,30,49,0) 100%),url("images/hospitals/neuro.jpg")!important}
+    .detail-hero.hospital-photo-pw .detail-type,.detail-hero.hospital-photo-pw h1{align-self:flex-start!important;width:auto!important;max-width:78%!important;text-align:left!important;margin-left:0!important;margin-right:auto!important}
+    .detail-hero.hospital-photo-pw .detail-official,.detail-hero.hospital-photo-pw .detail-meta,.detail-hero.hospital-photo-pw>p:not(.detail-official):not(.detail-meta){align-self:center!important;width:86%!important;max-width:86%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+
+    .detail-hero.hospital-photo-hlp{justify-content:flex-start!important;align-items:stretch!important;text-align:right!important;padding-top:22px!important;background-image:linear-gradient(180deg,rgba(7,30,49,.76) 0%,rgba(7,30,49,.46) 35%,rgba(7,30,49,.10) 67%,rgba(7,30,49,0) 100%),url("images/hospitals/cardio.jpg")!important}
+    .detail-hero.hospital-photo-hlp .detail-type,.detail-hero.hospital-photo-hlp h1{align-self:flex-end!important;width:auto!important;max-width:78%!important;text-align:right!important;margin-left:auto!important;margin-right:0!important}
+    .detail-hero.hospital-photo-hlp .detail-official,.detail-hero.hospital-photo-hlp .detail-meta,.detail-hero.hospital-photo-hlp>p:not(.detail-official):not(.detail-meta){align-self:center!important;width:86%!important;max-width:86%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+
+    .detail-hero.hospital-photo-hfme{justify-content:flex-end!important;align-items:center!important;text-align:center!important;padding-bottom:26px!important;background-image:linear-gradient(0deg,rgba(7,30,49,.76) 0%,rgba(7,30,49,.46) 39%,rgba(7,30,49,.10) 71%,rgba(7,30,49,0) 100%),url("images/hospitals/hfme.jpg")!important}
+    .detail-hero.hospital-photo-hfme>*{width:88%!important;max-width:88%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+'''
+          marker='</style>'
+          if 'STIP_HOSPITAL_TEXT_LAYOUT_FINAL_V2' not in s:
+              if marker not in s: raise SystemExit('style marker missing')
+              s=s.replace(marker,css+marker,1)
+          s=s.replace('stip-theme.css?v=20260830-places-photo4','stip-theme.css?v=20260830-places-photo5',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add places.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Finalise le placement des textes hôpitaux"
+          git push
