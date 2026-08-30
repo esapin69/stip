@@ -1,0 +1,45 @@
+name: Audit place navigation
+on:
+  push:
+    paths:
+      - '.github/workflows/audit-places-navigation.yml'
+permissions:
+  contents: write
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch public place data and audit navigation
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, re
+          url='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places'
+          req=urllib.request.Request(url,data=json.dumps({'action':'bootstrap_public'}).encode(),headers={'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=30) as r:
+              d=json.load(r)
+          places=d.get('places',[])
+          by_id={p.get('id'):p for p in places}
+          children={}
+          for p in places:
+              if p.get('parent_id'): children.setdefault(p['parent_id'],[]).append(p)
+          dest={'service','unit','exam','bloc','helipad'}
+          out={'counts':{'places':len(places)},'levels':[],'orphan_destinations':[],'all_destinations':[]}
+          for p in places:
+              if p.get('place_type') in dest:
+                  out['all_destinations'].append({k:p.get(k) for k in ['id','place_type','display_name','official_name','parent_id','building_code','level','summary']})
+                  if not p.get('parent_id') and not p.get('level'):
+                      out['orphan_destinations'].append(out['all_destinations'][-1])
+              if p.get('place_type')=='level':
+                  kids=[x for x in children.get(p.get('id'),[]) if x.get('place_type') in dest]
+                  out['levels'].append({
+                    'id':p.get('id'),'display_name':p.get('display_name'),'parent_id':p.get('parent_id'),'level':p.get('level'),'summary':p.get('summary'),
+                    'destinations':[{k:x.get(k) for k in ['id','place_type','display_name','official_name','level','summary']} for x in kids]
+                  })
+          open('places-navigation-audit.json','w').write(json.dumps(out,ensure_ascii=False,indent=2))
+          PY
+          git config user.name 'STIP audit'
+          git config user.email 'actions@users.noreply.github.com'
+          git add places-navigation-audit.json
+          git commit -m 'chore: generated place navigation audit' || exit 0
+          git push
