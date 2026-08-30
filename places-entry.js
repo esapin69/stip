@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const icon='<img src="images/icone_app/visiter-les-lieux.webp" alt="" aria-hidden="true">';
+const icon='<img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" aria-hidden="true">';
 function open(e){e?.preventDefault?.();e?.stopPropagation?.();location.href='places.html'}
 function injectHome(){
   if(!window.STIPSession&&!window.STIPBootCache)return;
