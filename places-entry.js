@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.2 7-12a7 7 0 1 0-14 0c0 6.8 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>';
+const icon='<img src="images/icone_app/visiter-les-lieux.webp" alt="" aria-hidden="true">';
 function open(e){e?.preventDefault?.();e?.stopPropagation?.();location.href='places.html'}
 function injectHome(){
   if(!window.STIPSession&&!window.STIPBootCache)return;
