@@ -14,8 +14,7 @@ function injectHome(){
   }
 }
 let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;injectHome()})}
-new MutationObserver(queue).observe(document.body,{childList:true,subtree:true});
-['stip:session-ready','stip:boot-updated'].forEach(n=>window.addEventListener(n,queue));
+['stip:session-ready','stip:boot-updated','stip:route'].forEach(n=>window.addEventListener(n,queue));window.addEventListener('pageshow',queue);
 document.addEventListener('pointerdown',e=>{if(e.target.closest?.('[data-stip-places]')){const l=document.createElement('link');l.rel='prefetch';l.href='places.html';document.head.appendChild(l)}},{passive:true,capture:true});
 queue();
 })();
