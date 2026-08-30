@@ -163,3 +163,9 @@ a.destination.primary[href="#/place/hfme"]{background:linear-gradient(90deg,rgba
 a.destination.primary[href="#/place/pw"]{background:linear-gradient(90deg,rgba(8,47,87,.88),rgba(8,47,87,.60)),url("images/hospitals/neuro.jpg") center/cover no-repeat!important}
 a.destination.primary[href="#/place/hlp"]{background:linear-gradient(90deg,rgba(8,47,87,.88),rgba(8,47,87,.60)),url("images/hospitals/cardio.jpg") center/cover no-repeat!important}
 a.destination.primary[href="#/place/hfme"] .destination-arrow,a.destination.primary[href="#/place/pw"] .destination-arrow,a.destination.primary[href="#/place/hlp"] .destination-arrow{background:rgba(4,38,63,.64)!important;backdrop-filter:blur(1px)}
+
+/* Visiter les lieux : rupture claire entre le moteur de recherche et la carte de base. */
+#homeView .search-wrap + .group{position:relative;margin-top:0!important;padding-top:46px}
+#homeView .search-wrap + .group:before{content:"";position:absolute;left:0;right:0;top:17px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(23,63,93,0),rgba(115,148,170,.75) 12%,#173f5d 50%,rgba(115,148,170,.75) 88%,rgba(23,63,93,0));box-shadow:0 9px 20px rgba(23,63,93,.08)}
+#homeView .search-wrap + .group:after{content:"";position:absolute;top:11px;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border:3px solid #eef5f6;border-radius:3px;background:#173f5d;box-shadow:0 2px 8px rgba(23,63,93,.16)}
+@media(max-width:430px){#homeView .search-wrap + .group{padding-top:42px}#homeView .search-wrap + .group:before{top:15px}#homeView .search-wrap + .group:after{top:9px;width:11px;height:11px}}
