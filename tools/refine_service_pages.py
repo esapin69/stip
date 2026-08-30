@@ -22,4 +22,5 @@ old="function rebuildVirtualSummaryPlaces(){virtualById=new Map();for(const leve
 assert old in s
 new="function isGuideOnlySummarySegment(label){const n=norm(label);if(!n)return true;return /(^| )(ascenseur|ascenseurs|hall|entree|entrees|passerelle|passerelles|couloir|couloirs|escalier|escaliers|porte|portes|parking|stationnement)( |$)/.test(n)}\nfunction rebuildVirtualSummaryPlaces(){virtualById=new Map();for(const level of places.filter(x=>x.place_type==='level')){const real=realDestinationsForLevel(level),parts=summarySegments(level);if(!parts.length)continue;const top=topContainer(level);parts.filter(label=>!isGuideOnlySummarySegment(label)&&!summarySegmentCovered(label,real)).forEach((label,i)=>{const v={id:`__summary__${level.id}__${i}`,place_type:'service',display_name:label,official_name:null,parent_id:level.id,building_code:top?.building_code||'',level:level.level||'',summary:'',details:'',sort_order:1000+i,__virtual_summary:true};virtualById.set(v.id,v)})}}"
 s=s.replace(old,new,1)
+s='\n'.join(line.rstrip() for line in s.splitlines())+'\n'
 p.write_text(s)
