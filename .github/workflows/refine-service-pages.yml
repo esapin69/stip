@@ -1,0 +1,65 @@
+name: Refine service pages
+on:
+  push:
+    paths:
+      - '.github/workflows/refine-service-pages.yml'
+permissions:
+  contents: write
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refine all service pages
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('places.html')
+          s=p.read_text()
+
+          css='''\n    .service-intro{margin-top:18px;padding:17px 18px;border:1px solid #b8d4da;border-radius:15px;background:#fff;box-shadow:0 8px 20px rgba(18,59,75,.05)}.service-intro h2{margin:0 0 7px;font-size:1rem;color:var(--ink)}.service-intro p{margin:0;color:#58727c;font-size:.82rem;line-height:1.5;font-weight:680}.public-contact-grid{display:grid;gap:8px;margin-top:10px}.public-contact-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;border-radius:11px;background:#f4f9fa}.public-contact-item span{min-width:0;color:#58727c;font-size:.76rem;font-weight:760}.public-contact-item a{flex:0 0 auto;color:var(--primary);font-size:.76rem;font-weight:900;text-decoration:none}.service-audience-note{margin-top:8px;color:#71878e;font-size:.7rem;line-height:1.4;font-weight:700}\n'''
+          assert '</style>' in s
+          s=s.replace('</style>',css+'</style>',1)
+
+          start=s.index('function serviceGuideData(p){')
+          end=s.index('\nfunction completionRowHtml',start)
+          new=r'''function publicContactValues(p,prefixes){return tagValuesFor(p,prefixes)}
+function publicContactItemHtml(label,value,kind='text'){const v=String(value||'').trim();if(!v)return'';let href='';if(kind==='phone')href=`tel:${v.replace(/[^+0-9]/g,'')}`;else if(kind==='email')href=`mailto:${v}`;else if(kind==='url')href=/^https?:\/\//i.test(v)?v:`https://${v}`;return `<div class="public-contact-item"><span>${esc(label)}</span>${href?`<a href="${esc(href)}"${kind==='url'?' target="_blank" rel="noopener"':''}>${esc(v)}</a>`:`<strong>${esc(v)}</strong>`}</div>`}
+function serviceGuideData(p){return{routeMarkup:routesHtml(p),nearMarkup:relationsHtml(p),arrival:tagValuesFor(p,['arrival:','arrivee:','repere_arrivee:']),inside:tagValuesFor(p,['inside:','dans_service:']),landmarks:tagValuesFor(p,['landmark:','repere:']),access:tagValuesFor(p,['accessibility:','accessibilite:']),purpose:tagValuesFor(p,['purpose:','about:','service_about:','public_info:']),rdv:publicContactValues(p,['rdv:','appointment:','booking:']),publicPhone:publicContactValues(p,['public_phone:','phone_public:','tel_public:']),publicEmail:publicContactValues(p,['public_email:','email_public:']),publicUrl:publicContactValues(p,['public_url:','website:','site_web:'])}}
+function publicServiceIntroHtml(p,g){const purpose=g.purpose.length?g.purpose:((p.details&&norm(p.details)!==norm(p.summary))?[p.details]:(p.summary?[p.summary]:[])),intro=purpose.length?`<section class="service-intro"><h2>À quoi sert ce service ?</h2>${valuesHtml(purpose)}</section>`:'';const contacts=[];g.rdv.forEach(v=>contacts.push(publicContactItemHtml('Prendre rendez-vous',v,'text')));g.publicPhone.forEach(v=>contacts.push(publicContactItemHtml('Téléphone',v,'phone')));g.publicEmail.forEach(v=>contacts.push(publicContactItemHtml('E-mail',v,'email')));g.publicUrl.forEach(v=>contacts.push(publicContactItemHtml('Site / rendez-vous en ligne',v,'url')));const contact=contacts.length?`<section class="service-intro"><h2>Venir ici / prendre rendez-vous</h2><div class="public-contact-grid">${contacts.join('')}</div><p class="service-audience-note">Coordonnées destinées au public. Les contacts professionnels internes sont séparés plus bas après connexion STIP.</p></section>`:'';return intro+contact}
+function serviceGuideHtml(p){const g=serviceGuideData(p),parts=[];if(g.routeMarkup)parts.push(guideBlock('Comment y aller',g.routeMarkup));if(g.nearMarkup)parts.push(guideBlock('À proximité',g.nearMarkup));if(g.arrival.length)parts.push(guideBlock('Reconnaître l’arrivée',valuesHtml(g.arrival)));const inside=g.inside.length?g.inside:[];if(inside.length)parts.push(guideBlock('Dans le service',valuesHtml(inside)));if(g.landmarks.length)parts.push(guideBlock('Repères et équipements utiles',valuesHtml(g.landmarks)));if(g.access.length)parts.push(guideBlock('Accessibilité',valuesHtml(g.access)));const guide=parts.length?`<section class="service-guide"><h2 class="service-guide-title">Se repérer dans ce lieu</h2><div class="guide-stack">${parts.join('')}</div></section>`:'';return `${publicServiceIntroHtml(p,g)}${guide}`}
+'''
+          s=s[:start]+new+s[end:]
+
+          start=s.index('function internalServiceHtml(p){')
+          end=s.index('\n\nfunction renderPlace',start)
+          old=s[start:end]
+          new=r'''function internalServiceHtml(p){if(!isInternalAccess())return'';const g=serviceGuideData(p),transport=tagValuesFor(p,['transport:','patient_transport:']),staffElev=tagValuesFor(p,['staff_elevator:','elevator_staff:','ascenseur_pro:']),contacts=tagValuesFor(p,['contact:','phone:','tel:','telephone:','internal_email:','email_internal:']),particular=tagValuesFor(p,['internal:','particularity:','particularite:']),warnings=tagValuesFor(p,['warning:','vigilance:']),shortcuts=tagValuesFor(p,['shortcut:','raccourci:','liaison_pro:']),care=tagValuesFor(p,['care:','prise_en_charge:']),temporary=tagValuesFor(p,['temporary:','temporaire:']),notes=tagValuesFor(p,['internal_note:','note_terrain:']);const purposeDone=g.purpose.length>0||!!p.details||!!p.summary,publicContactDone=g.rdv.length>0||g.publicPhone.length>0||g.publicEmail.length>0||g.publicUrl.length>0;const tracker=[['À quoi sert ce service',purposeDone],['Contact public / rendez-vous',publicContactDone],['Comment y aller',!!g.routeMarkup],['À proximité',!!g.nearMarkup],['Reconnaître l’arrivée',g.arrival.length>0],['Dans le service',g.inside.length>0],['Repères / équipements',g.landmarks.length>0],['Accessibilité',g.access.length>0],['Transport patient',transport.length>0],['Ascenseurs professionnels',staffElev.length>0],['Contacts internes',contacts.length>0],['Particularités du service',particular.length>0],['Points de vigilance',warnings.length>0],['Raccourcis / liaisons',shortcuts.length>0],['Prise en charge particulière',care.length>0],['Informations temporaires',temporary.length>0],['Notes terrain STIP',notes.length>0]];return `<div class="internal-divider"><span>Informations internes STIP</span></div><section class="internal-zone"><p>Cette partie est réservée aux professionnels connectés. Les informations publiques restent volontairement séparées au-dessus.</p><div class="internal-subtitle">Avancement de la fiche</div><div class="completion-grid">${tracker.map(x=>completionRowHtml(x[0],x[1])).join('')}</div><div class="internal-subtitle">Informations métier</div><div class="internal-cards">${internalCardHtml('Transport patient',transport)}${internalCardHtml('Ascenseurs professionnels',staffElev)}${internalCardHtml('Contacts internes',contacts)}${internalCardHtml('Particularités du service',particular)}${internalCardHtml('Points de vigilance',warnings)}${internalCardHtml('Raccourcis et liaisons professionnelles',shortcuts)}${internalCardHtml('Prise en charge particulière',care)}${internalCardHtml('Informations temporaires',temporary)}${internalCardHtml('Notes terrain STIP',notes)}</div></section>`}'''
+          s=s[:start]+new+s[end:]
+
+          old="function rebuildVirtualSummaryPlaces(){virtualById=new Map();for(const level of places.filter(x=>x.place_type==='level')){const real=realDestinationsForLevel(level),parts=summarySegments(level);if(!parts.length)continue;const top=topContainer(level);parts.filter(label=>!summarySegmentCovered(label,real)).forEach((label,i)=>{const v={id:`__summary__${level.id}__${i}`,place_type:'service',display_name:label,official_name:null,parent_id:level.id,building_code:top?.building_code||'',level:level.level||'',summary:'',details:'',sort_order:1000+i,__virtual_summary:true};virtualById.set(v.id,v)})}}"
+          assert old in s
+          new="function isGuideOnlySummarySegment(label){const n=norm(label);if(!n)return true;return /(^| )(ascenseur|ascenseurs|hall|entree|entrees|passerelle|passerelles|couloir|couloirs|escalier|escaliers|porte|portes|parking|stationnement)( |$)/.test(n)}\nfunction rebuildVirtualSummaryPlaces(){virtualById=new Map();for(const level of places.filter(x=>x.place_type==='level')){const real=realDestinationsForLevel(level),parts=summarySegments(level);if(!parts.length)continue;const top=topContainer(level);parts.filter(label=>!isGuideOnlySummarySegment(label)&&!summarySegmentCovered(label,real)).forEach((label,i)=>{const v={id:`__summary__${level.id}__${i}`,place_type:'service',display_name:label,official_name:null,parent_id:level.id,building_code:top?.building_code||'',level:level.level||'',summary:'',details:'',sort_order:1000+i,__virtual_summary:true};virtualById.set(v.id,v)})}}"
+          s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
+      - name: Validate and commit
+        run: |
+          git diff --check
+          grep -q 'À quoi sert ce service ?' places.html
+          grep -q 'Contacts internes' places.html
+          grep -q 'isGuideOnlySummarySegment' places.html
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess, tempfile
+          s=Path('places.html').read_text()
+          scripts=re.findall(r'<script[^>]*>(.*?)</script>',s,re.S)
+          for i,x in enumerate(scripts):
+              f=Path(tempfile.gettempdir())/f'stip-{i}.js'; f.write_text(x); subprocess.run(['node','--check',str(f)],check=True)
+          PY
+          git config user.name 'STIP service pages'
+          git config user.email 'actions@users.noreply.github.com'
+          git add places.html
+          git commit -m 'Refine service pages for public and internal use'
+          git push
