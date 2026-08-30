@@ -1,0 +1,32 @@
+name: Adapt hospital photo text
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/adapt-hospital-photo-text.yml'
+permissions:
+  contents: write
+jobs:
+  adapt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Adapt text to each hospital photo
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('places.html')
+          s=p.read_text(encoding='utf-8')
+          old='''.detail-hero.hospital-photo-hlp{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/cardio.jpg")!important}'''
+          new='''.detail-hero.hospital-photo-hlp{align-items:flex-end;text-align:right;background-image:linear-gradient(270deg,rgba(7,30,49,.82) 0%,rgba(7,30,49,.52) 38%,rgba(7,30,49,.12) 70%,rgba(7,30,49,.02) 100%),linear-gradient(0deg,rgba(7,30,49,.62) 0%,rgba(7,30,49,.08) 48%,rgba(7,30,49,0) 75%),url("images/hospitals/cardio.jpg")!important;background-position:center!important}.detail-hero.hospital-photo-hlp>*{max-width:62%;margin-left:auto}.detail-hero.hospital-photo-hlp h1{width:100%}.detail-hero.hospital-photo-hlp .detail-official,.detail-hero.hospital-photo-hlp .detail-meta,.detail-hero.hospital-photo-hlp p{width:100%}@media(max-width:430px){.detail-hero.hospital-photo-hlp>*{max-width:68%}}'''
+          if old not in s:
+              raise SystemExit('Cardio hero rule not found')
+          s=s.replace(old,new,1)
+          s=s.replace('stip-theme.css?v=20260830-places-photo2','stip-theme.css?v=20260830-places-photo3',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add places.html
+          git commit -m "Adapte le texte à la photo Cardio"
+          git push
