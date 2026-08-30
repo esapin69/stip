@@ -6,8 +6,8 @@ function token(){return localStorage.getItem(STORAGE)||''}
 function route(){return location.hash.replace(/^#\/?/,'')||'home'}
 function clean(next){return String(next||'home').replace(/^\/+|\/+$/g,'')||'home'}
 function urlFor(next){return location.pathname+location.search+'#/'+clean(next)}
-function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
-function back(fallback='home'){if(history.length>1&&history.state?.stip)history.back();else setRoute(fallback,{replace:true})}
+function setRoute(next,opt={}){const target=clean(next);if(route()===target){if(opt.force)restore();return}const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
+function back(fallback='home'){if(history.state?.panel){history.back();return}if(route()!=='home'&&history.length>1&&history.state?.stip){history.back();return}setRoute(fallback,{replace:true})}
 function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden');window.scrollTo({top:0,behavior:'auto'})}
 function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
 function dockButton(action,icon,label){return`<button type="button" data-root-action="${action}" aria-label="${label}"><span>${icon}</span><small>${label}</small></button>`}
