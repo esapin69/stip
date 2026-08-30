@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const loaded=new Map(),V='20260830-core1';
+const loaded=new Map(),V='20260831-home1';
 function load(src){if(loaded.has(src))return loaded.get(src);const p=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=`${src}?v=${V}`;s.async=false;s.onload=()=>ok(src);s.onerror=()=>{loaded.delete(src);ko(new Error(`Chargement impossible: ${src}`))};document.body.appendChild(s)});loaded.set(src,p);return p}
 async function seq(list){for(const x of list)await load(x)}
 const coreHome=['home-retain-dashboard.js'];
