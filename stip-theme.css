@@ -122,7 +122,7 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 .ra-search{background:rgba(255,255,255,.97)!important;border-color:var(--stip-line)!important;box-shadow:var(--stip-shadow-soft)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .ra-group,.ra-absence-group,.ra-person{background:var(--stip-surface)!important;border-color:var(--stip-line)!important;box-shadow:none!important}
 .ra-person:active{background:var(--stip-surface-soft)!important}
-.ra-avatar{background:var(--stip-accent-soft)!important;color:var(--stip-accent)!important}
+.ra-avatar{background:var(--stip-accent-soft)!important;color:var(--stip-ink)!important}
 .ra-day-head h1,.ra-person-copy b,.ra-group>header>div>span{color:var(--stip-ink)!important}
 .ra-day-head p,.ra-person-copy small,.ra-absence-group summary small,.ra-empty{color:var(--stip-muted)!important}
 
