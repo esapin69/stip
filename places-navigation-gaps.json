@@ -1,0 +1,386 @@
+{
+  "places": 293,
+  "destinations": 168,
+  "levels_with_summary_but_no_destination": [
+    {
+      "level_id": "hfme_lm1",
+      "parent_id": "hfme",
+      "level": "-1",
+      "summary": "Parking",
+      "candidates": [
+        {
+          "score": 0.4,
+          "id": "hlp_cardio_a",
+          "name": "Cardiologie A",
+          "parent_id": "hlp_l4",
+          "level": "4"
+        },
+        {
+          "score": 0.4,
+          "id": "hlp_cardio_b",
+          "name": "Cardiologie B",
+          "parent_id": "hlp_l4",
+          "level": "4"
+        },
+        {
+          "score": 0.4,
+          "id": "hfme_ped_general",
+          "name": "Pédiatrie générale",
+          "parent_id": "hfme_l4",
+          "level": "4"
+        },
+        {
+          "score": 0.381,
+          "id": "pw_plateforme_ait",
+          "name": "Plateforme AIT",
+          "parent_id": "pw_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.375,
+          "id": "hfme_chaplaincy",
+          "name": "Aumônerie",
+          "parent_id": "hfme_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.364,
+          "id": "hlp_cardio_hdj",
+          "name": "HDJ cardiologie",
+          "parent_id": "hlp_l6",
+          "level": "6"
+        }
+      ]
+    },
+    {
+      "level_id": "a1_rdc",
+      "parent_id": "a1",
+      "level": "RDC",
+      "summary": "Guichet stationnement",
+      "candidates": [
+        {
+          "score": 0.524,
+          "id": "hlp_sicat",
+          "name": "SICAT / transplantation",
+          "parent_id": "hlp_l3",
+          "level": "3"
+        },
+        {
+          "score": 0.448,
+          "id": "hfme_neonat",
+          "name": "Néonatalogie et réanimation néonatale",
+          "parent_id": "hfme_l3",
+          "level": "3"
+        },
+        {
+          "score": 0.444,
+          "id": "pw_irm_saturne",
+          "name": "IRM 3 T — SATURNE",
+          "parent_id": "pw_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.444,
+          "id": "pw_neuro_consult",
+          "name": "Consultations neurologie",
+          "parent_id": "pw_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.435,
+          "id": "hfme_hepato",
+          "name": "Hépato-gastro pédiatrique",
+          "parent_id": "hfme_l3",
+          "level": "3"
+        },
+        {
+          "score": 0.429,
+          "id": "lp_centre_prelevement",
+          "name": "Centre de prélèvement",
+          "parent_id": "hlp_rdc",
+          "level": "RDC"
+        }
+      ]
+    },
+    {
+      "level_id": "a4_rdc",
+      "parent_id": "a4",
+      "level": "RDC",
+      "summary": "POP",
+      "candidates": [
+        {
+          "score": 0.5,
+          "id": "a1_ihope",
+          "name": "IHOPe",
+          "parent_id": "a1_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.286,
+          "id": "hfme_usap",
+          "name": "USAP",
+          "parent_id": "hfme_l4",
+          "level": "4"
+        },
+        {
+          "score": 0.286,
+          "id": "hlp_tm_fibroscopie",
+          "name": "Fibroscopie",
+          "parent_id": "hlp_tm",
+          "level": "TM"
+        }
+      ]
+    },
+    {
+      "level_id": "a4_l1",
+      "parent_id": "a4",
+      "level": "1",
+      "summary": "SEP · neuro-inflammation · hospitalisation conventionnelle/semaine",
+      "candidates": [
+        {
+          "score": 0.667,
+          "id": "a4_neuroinflam",
+          "name": "SEP / neuro-inflammation",
+          "parent_id": "a4",
+          "level": "1-2"
+        },
+        {
+          "score": 0.538,
+          "id": "hfme_ped_explorations_rdc",
+          "name": "Consultations et explorations fonctionnelles de pédiatrie",
+          "parent_id": "hfme_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.485,
+          "id": "pw_radio_interv",
+          "name": "Consultation radiologie interventionnelle",
+          "parent_id": "pw_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.481,
+          "id": "lp_efr",
+          "name": "Exploration fonctionnelle respiratoire (EFR)",
+          "parent_id": "lp_plateau_explo",
+          "level": "RDC"
+        },
+        {
+          "score": 0.442,
+          "id": "hlp_ped_hosp",
+          "name": "Hospitalisation cardiopédiatrique",
+          "parent_id": "hlp_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.427,
+          "id": "hfme_ped_er_hosp",
+          "name": "Hospitalisation des urgences pédiatriques",
+          "parent_id": "hfme_rdj",
+          "level": "RDJ"
+        }
+      ]
+    },
+    {
+      "level_id": "a4_l2",
+      "parent_id": "a4",
+      "level": "2",
+      "summary": "SEP · neuro-inflammation · hôpital de jour",
+      "candidates": [
+        {
+          "score": 0.733,
+          "id": "a4_neuroinflam",
+          "name": "SEP / neuro-inflammation",
+          "parent_id": "a4",
+          "level": "1-2"
+        },
+        {
+          "score": 0.627,
+          "id": "hfme_gyn_a_hdj",
+          "name": "Gynécologie A / hôpital de jour",
+          "parent_id": "hfme_gyn",
+          "level": "5"
+        },
+        {
+          "score": 0.5,
+          "id": "hlp_endo_a",
+          "name": "Endocrinologie A — HDJ",
+          "parent_id": "hlp_l9",
+          "level": "9"
+        },
+        {
+          "score": 0.5,
+          "id": "hlp_pneumo_a",
+          "name": "HDJ pneumologie A",
+          "parent_id": "hlp_l8",
+          "level": "8"
+        },
+        {
+          "score": 0.5,
+          "id": "hlp_cardio_hdj",
+          "name": "HDJ cardiologie",
+          "parent_id": "hlp_l6",
+          "level": "6"
+        },
+        {
+          "score": 0.5,
+          "id": "pw_u502",
+          "name": "Unité 502",
+          "parent_id": "pw_l5",
+          "level": "5"
+        }
+      ]
+    },
+    {
+      "level_id": "pw_l6",
+      "parent_id": "pw",
+      "level": "6",
+      "summary": "Bureaux médicaux · Amphithéâtre Michel Jouvet · Salle Claude Lapras",
+      "candidates": [
+        {
+          "score": 0.388,
+          "id": "hfme_ped_imaging",
+          "name": "Imagerie pédiatrique et de la femme",
+          "parent_id": "hfme_rdj",
+          "level": "RDJ"
+        },
+        {
+          "score": 0.388,
+          "id": "hfme_surg_ouest",
+          "name": "Chirurgie pédiatrique — secteur OUEST",
+          "parent_id": "hfme_ped_surg",
+          "level": "1"
+        },
+        {
+          "score": 0.384,
+          "id": "hfme_surg_centre",
+          "name": "Chirurgie pédiatrique — secteur CENTRE",
+          "parent_id": "hfme_ped_surg",
+          "level": "1"
+        },
+        {
+          "score": 0.375,
+          "id": "pw_neurochir_rachis",
+          "name": "Neurochirurgie du rachis et de la moelle épinière",
+          "parent_id": "pw_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.354,
+          "id": "hfme_surg_est",
+          "name": "Chirurgie pédiatrique — secteur EST",
+          "parent_id": "hfme_ped_surg",
+          "level": "1"
+        },
+        {
+          "score": 0.351,
+          "id": "lp_echo_ped",
+          "name": "Échocardiographie pédiatrique, congénitale et fœtale",
+          "parent_id": "hlp_rdc",
+          "level": "RDC"
+        }
+      ]
+    },
+    {
+      "level_id": "hlp_l10",
+      "parent_id": "hlp",
+      "level": "10",
+      "summary": "Niveau utilisé pour des salles / événements",
+      "candidates": [
+        {
+          "score": 0.54,
+          "id": "a3_samples",
+          "name": "Centre de prélèvements",
+          "parent_id": "a3_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.516,
+          "id": "lp_centre_prelevement",
+          "name": "Centre de prélèvement",
+          "parent_id": "hlp_rdc",
+          "level": "RDC"
+        },
+        {
+          "score": 0.453,
+          "id": "pw_pole_specialites_neuro",
+          "name": "Pôle des spécialités neurologiques",
+          "parent_id": "pw",
+          "level": null
+        },
+        {
+          "score": 0.444,
+          "id": "pw_neurochir_rachis",
+          "name": "Neurochirurgie du rachis et de la moelle épinière",
+          "parent_id": "pw_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.421,
+          "id": "hfme_ped_imaging",
+          "name": "Imagerie pédiatrique et de la femme",
+          "parent_id": "hfme_rdj",
+          "level": "RDJ"
+        },
+        {
+          "score": 0.415,
+          "id": "hfme_ped_er_hosp",
+          "name": "Hospitalisation des urgences pédiatriques",
+          "parent_id": "hfme_rdj",
+          "level": "RDJ"
+        }
+      ]
+    },
+    {
+      "level_id": "hlp_l11",
+      "parent_id": "hlp",
+      "level": "11",
+      "summary": "Hélistation",
+      "candidates": [
+        {
+          "score": 0.483,
+          "id": "hlp_tm_rea",
+          "name": "Réanimation adulte",
+          "parent_id": "hlp_tm",
+          "level": "TM"
+        },
+        {
+          "score": 0.444,
+          "id": "hfme_acha_ped",
+          "name": "ACHA pédiatrique",
+          "parent_id": "hfme_l1",
+          "level": "1"
+        },
+        {
+          "score": 0.438,
+          "id": "hlp_sicat",
+          "name": "SICAT / transplantation",
+          "parent_id": "hlp_l3",
+          "level": "3"
+        },
+        {
+          "score": 0.429,
+          "id": "pw_neuro_rehab",
+          "name": "Neuro-rééducation",
+          "parent_id": "pw_rdj",
+          "level": "RDJ"
+        },
+        {
+          "score": 0.424,
+          "id": "a4_neuroinflam",
+          "name": "SEP / neuro-inflammation",
+          "parent_id": "a4",
+          "level": "1-2"
+        },
+        {
+          "score": 0.414,
+          "id": "hfme_ped_general",
+          "name": "Pédiatrie générale",
+          "parent_id": "hfme_l4",
+          "level": "4"
+        }
+      ]
+    }
+  ],
+  "destinations_without_parent": []
+}
