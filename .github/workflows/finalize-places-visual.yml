@@ -12,40 +12,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Finalize places visual
+        env:
+          CSS_B64: CiAgICAvKiBTVElQX1BMQUNFU19CTFVFX1BIT1RPX0ZJTkFMX1YxICovCiAgICA6cm9vdHstLWFjY2VudDojMjM0ZjcwOy0tYWNjZW50MjojMWI0NTY1Oy0tcHJpbWFyeTojMTczZjVkOy0tcHJpbWFyeS1kYXJrOiMwYzMwNGI7LS1hcnJvdzojMTczZjVkfQogICAgLmV5ZWJyb3csLmdyb3VwLXRpdGxle2NvbG9yOiMyMzRmNzAhaW1wb3J0YW50fS5leWVicm93OmJlZm9yZXtiYWNrZ3JvdW5kOiMyMzRmNzAhaW1wb3J0YW50fQogICAgLnNlYXJjaC1ib3h7Ym9yZGVyLWNvbG9yOiMxNzNmNWQhaW1wb3J0YW50fS5zZWFyY2gtaWNvbiwuc2VhcmNoLWNsZWFyLC5zZWFyY2gtZmxvb3ItbGFiZWwsLmZsb29yLWxpbmssLm5hdi1idG57YmFja2dyb3VuZDojMTczZjVkIWltcG9ydGFudH0KICAgIC5ob21lLWNvZGV7YmFja2dyb3VuZDojMjM0ZjcwIWltcG9ydGFudDtib3gtc2hhZG93OjAgNHB4IDEwcHggcmdiYSgyMyw2Myw5MywuMjIpIWltcG9ydGFudH0KICAgIC5tYXAtZGlyZWN0aW9uOmJlZm9yZXtjb2xvcjojMzE1ZjgwIWltcG9ydGFudH0ubWFwLWFuY2hvcjphZnRlciwuYXhpcy1ob3NwaXRhbHM6YmVmb3JlLC5iZXR3ZWVuLXpvbmU6YmVmb3Jle2JhY2tncm91bmQ6IzczOTRhYSFpbXBvcnRhbnR9CiAgICAuYmV0d2Vlbi1sYWJlbHtiYWNrZ3JvdW5kOiNlZGYyZjYhaW1wb3J0YW50O2NvbG9yOiMxNzNmNWQhaW1wb3J0YW50fQogICAgLnNlYXJjaC1icmFjZTpiZWZvcmUsLmZsb29yLWJvZHk6YmVmb3Jle2JvcmRlci1jb2xvcjojNzM5NGFhIWltcG9ydGFudH0KICAgIGEuZGVzdGluYXRpb24ucHJpbWFyeVtocmVmPSIjL3BsYWNlL2hmbWUiXXtiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCg5MGRlZyxyZ2JhKDEwLDM4LDYxLC43MikgMCUscmdiYSgxMCwzOCw2MSwuMzgpIDQ3JSxyZ2JhKDEwLDM4LDYxLC4wNikgMTAwJSksdXJsKCJpbWFnZXMvaG9zcGl0YWxzL2hmbWUuanBnIikgY2VudGVyIDQ4JS9jb3ZlciBuby1yZXBlYXQhaW1wb3J0YW50fQogICAgYS5kZXN0aW5hdGlvbi5wcmltYXJ5W2hyZWY9IiMvcGxhY2UvcHciXXtiYWNrZ3JvdW5kOmxpbmVhci1ncmFkaWVudCg5MGRlZyxyZ2JhKDEwLDM4LDYxLC43NCkgMCUscmdiYSgxMCwzOCw2MSwuNDApIDUwJSxyZ2JhKDEwLDM4LDYxLC4wNikgMTAwJSksdXJsKCJpbWFnZXMvaG9zcGl0YWxzL25ldXJvLmpwZyIpIGNlbnRlci9jb3ZlciBuby1yZXBlYXQhaW1wb3J0YW50fQogICAgYS5kZXN0aW5hdGlvbi5wcmltYXJ5W2hyZWY9IiMvcGxhY2UvaGxwIl17YmFja2dyb3VuZDpsaW5lYXItZ3JhZGllbnQoOTBkZWcscmdiYSgxMCwzOCw2MSwuNzQpIDAlLHJnYmEoMTAsMzgsNjEsLjQwKSA1MCUscmdiYSgxMCwzOCw2MSwuMDYpIDEwMCUpLHVybCgiaW1hZ2VzL2hvc3BpdGFscy9jYXJkaW8uanBnIikgY2VudGVyL2NvdmVyIG5vLXJlcGVhdCFpbXBvcnRhbnR9CiAgICBhLmRlc3RpbmF0aW9uLnByaW1hcnlbaHJlZj0iIy9wbGFjZS9oZm1lIl0gLmRlc3RpbmF0aW9uLWFycm93LGEuZGVzdGluYXRpb24ucHJpbWFyeVtocmVmPSIjL3BsYWNlL3B3Il0gLmRlc3RpbmF0aW9uLWFycm93LGEuZGVzdGluYXRpb24ucHJpbWFyeVtocmVmPSIjL3BsYWNlL2hscCJdIC5kZXN0aW5hdGlvbi1hcnJvd3tiYWNrZ3JvdW5kOnJnYmEoNywzMSw1MCwuNzApIWltcG9ydGFudDtiYWNrZHJvcC1maWx0ZXI6bm9uZSFpbXBvcnRhbnR9CiAgICAuZGV0YWlsLWhlcm8uaG9zcGl0YWwtcGhvdG8taGVyb3twb3NpdGlvbjpyZWxhdGl2ZTttaW4taGVpZ2h0OjI2MHB4O3BhZGRpbmc6MjZweCAyMnB4O2Rpc3BsYXk6ZmxleDtmbGV4LWRpcmVjdGlvbjpjb2x1bW47anVzdGlmeS1jb250ZW50OmZsZXgtZW5kO292ZXJmbG93OmhpZGRlbjtiYWNrZ3JvdW5kLXBvc2l0aW9uOmNlbnRlciFpbXBvcnRhbnQ7YmFja2dyb3VuZC1zaXplOmNvdmVyIWltcG9ydGFudDtiYWNrZ3JvdW5kLXJlcGVhdDpuby1yZXBlYXQhaW1wb3J0YW50O3RleHQtc2hhZG93OjAgMnB4IDlweCByZ2JhKDAsMCwwLC40Mil9CiAgICAuZGV0YWlsLWhlcm8uaG9zcGl0YWwtcGhvdG8taGVybyAuZGV0YWlsLXR5cGUsLmRldGFpbC1oZXJvLmhvc3BpdGFsLXBob3RvLWhlcm8gLmRldGFpbC1tZXRhe2NvbG9yOiNlNmVlZjQhaW1wb3J0YW50fQogICAgLmRldGFpbC1oZXJvLmhvc3BpdGFsLXBob3RvLWhlcm8gcHtjb2xvcjojZjJmNmY4IWltcG9ydGFudH0uZGV0YWlsLWhlcm8uaG9zcGl0YWwtcGhvdG8taGVybyAuZGV0YWlsLW9mZmljaWFse2NvbG9yOiNmZmYhaW1wb3J0YW50fQogICAgLmRldGFpbC1oZXJvLmhvc3BpdGFsLXBob3RvLWhmbWV7YmFja2dyb3VuZC1pbWFnZTpsaW5lYXItZ3JhZGllbnQoMGRlZyxyZ2JhKDcsMzAsNDksLjg0KSAwJSxyZ2JhKDcsMzAsNDksLjM4KSA1NCUscmdiYSg3LDMwLDQ5LC4wNikgMTAwJSksdXJsKCJpbWFnZXMvaG9zcGl0YWxzL2hmbWUuanBnIikhaW1wb3J0YW50fQogICAgLmRldGFpbC1oZXJvLmhvc3BpdGFsLXBob3RvLXB3e2JhY2tncm91bmQtaW1hZ2U6bGluZWFyLWdyYWRpZW50KDBkZWcscmdiYSg3LDMwLDQ5LC44NCkgMCUscmdiYSg3LDMwLDQ5LC4zOCkgNTQlLHJnYmEoNywzMCw0OSwuMDYpIDEwMCUpLHVybCgiaW1hZ2VzL2hvc3BpdGFscy9uZXVyby5qcGciKSFpbXBvcnRhbnR9CiAgICAuZGV0YWlsLWhlcm8uaG9zcGl0YWwtcGhvdG8taGxwe2JhY2tncm91bmQtaW1hZ2U6bGluZWFyLWdyYWRpZW50KDBkZWcscmdiYSg3LDMwLDQ5LC44NCkgMCUscmdiYSg3LDMwLDQ5LC4zOCkgNTQlLHJnYmEoNywzMCw0OSwuMDYpIDEwMCUpLHVybCgiaW1hZ2VzL2hvc3BpdGFscy9jYXJkaW8uanBnIikhaW1wb3J0YW50fQo=
         run: |
           python - <<'PY'
+          import base64, os
           from pathlib import Path
           p=Path('places.html')
           s=p.read_text(encoding='utf-8')
           s=s.replace('stip-theme.css?v=20260824-theme3','stip-theme.css?v=20260830-places-photo2')
-          marker='''    /* STIP_SERVICE_FICHE_V1 */'''
-          css=r'''
-    /* STIP_PLACES_BLUE_PHOTO_FINAL_V1 */
-    :root{--accent:#234f70;--accent2:#1b4565;--primary:#173f5d;--primary-dark:#0c304b;--arrow:#173f5d}
-    .eyebrow,.group-title{color:#234f70!important}.eyebrow:before{background:#234f70!important}
-    .search-box{border-color:#173f5d!important}.search-icon,.search-clear,.search-floor-label,.floor-link,.nav-btn{background:#173f5d!important}
-    .home-code{background:#234f70!important;box-shadow:0 4px 10px rgba(23,63,93,.22)!important}
-    .map-direction:before{color:#315f80!important}.map-anchor:after,.axis-hospitals:before,.between-zone:before{background:#7394aa!important}
-    .between-label{background:#edf2f6!important;color:#173f5d!important}
-    .search-brace:before,.floor-body:before{border-color:#7394aa!important}
-    a.destination.primary[href="#/place/hfme"]{background:linear-gradient(90deg,rgba(10,38,61,.72) 0%,rgba(10,38,61,.38) 47%,rgba(10,38,61,.06) 100%),url("images/hospitals/hfme.jpg") center 48%/cover no-repeat!important}
-    a.destination.primary[href="#/place/pw"]{background:linear-gradient(90deg,rgba(10,38,61,.74) 0%,rgba(10,38,61,.40) 50%,rgba(10,38,61,.06) 100%),url("images/hospitals/neuro.jpg") center/cover no-repeat!important}
-    a.destination.primary[href="#/place/hlp"]{background:linear-gradient(90deg,rgba(10,38,61,.74) 0%,rgba(10,38,61,.40) 50%,rgba(10,38,61,.06) 100%),url("images/hospitals/cardio.jpg") center/cover no-repeat!important}
-    a.destination.primary[href="#/place/hfme"] .destination-arrow,a.destination.primary[href="#/place/pw"] .destination-arrow,a.destination.primary[href="#/place/hlp"] .destination-arrow{background:rgba(7,31,50,.70)!important;backdrop-filter:none!important}
-    .detail-hero.hospital-photo-hero{position:relative;min-height:260px;padding:26px 22px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;background-position:center!important;background-size:cover!important;background-repeat:no-repeat!important;text-shadow:0 2px 9px rgba(0,0,0,.42)}
-    .detail-hero.hospital-photo-hero .detail-type,.detail-hero.hospital-photo-hero .detail-meta{color:#e6eef4!important}
-    .detail-hero.hospital-photo-hero p{color:#f2f6f8!important}.detail-hero.hospital-photo-hero .detail-official{color:#fff!important}
-    .detail-hero.hospital-photo-hfme{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/hfme.jpg")!important}
-    .detail-hero.hospital-photo-pw{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/neuro.jpg")!important}
-    .detail-hero.hospital-photo-hlp{background-image:linear-gradient(0deg,rgba(7,30,49,.84) 0%,rgba(7,30,49,.38) 54%,rgba(7,30,49,.06) 100%),url("images/hospitals/cardio.jpg")!important}
-'''
+          css=base64.b64decode(os.environ['CSS_B64']).decode('utf-8')
+          marker='    /* STIP_SERVICE_FICHE_V1 */'
           if 'STIP_PLACES_BLUE_PHOTO_FINAL_V1' not in s:
               s=s.replace(marker,css+'\n'+marker)
-          old="""function renderPlace(id){const p=byId.get(id)||virtualById.get(id);"""
-          new="""function renderPlace(id){const p=byId.get(id)||virtualById.get(id);"""
-          s=s.replace(old,new)
-          needle="""detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a><article class=\"detail-hero\">"""
-          repl="""const hospitalHeroClass=id==='hfme'?' hospital-photo-hero hospital-photo-hfme':id==='pw'?' hospital-photo-hero hospital-photo-pw':(id==='hlp'||id==='lp')?' hospital-photo-hero hospital-photo-hlp':'';detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a><article class=\"detail-hero${hospitalHeroClass}\">"""
+          needle='detail.innerHTML=`<a class="detail-back" href="#">‹ Retour à Visiter les lieux</a><article class="detail-hero">'
+          repl="const hospitalHeroClass=id==='hfme'?' hospital-photo-hero hospital-photo-hfme':id==='pw'?' hospital-photo-hero hospital-photo-pw':(id==='hlp'||id==='lp')?' hospital-photo-hero hospital-photo-hlp':'';detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a><article class=\"detail-hero${hospitalHeroClass}\">"
           if needle in s and 'const hospitalHeroClass=' not in s:
               s=s.replace(needle,repl,1)
           p.write_text(s,encoding='utf-8')
