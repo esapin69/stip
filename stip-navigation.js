@@ -6,7 +6,10 @@ function familyFallback(){
   if(p.includes('responsable-'))return 'responsable.html';
   return 'index.html';
 }
-function canBack(){return history.length>1}
+function previousSameSite(){
+  try{const u=new URL(document.referrer);return u.origin===location.origin&&u.href!==location.href}catch{return false}
+}
+function canBack(){return history.length>1&&previousSameSite()}
 function back(fallback=familyFallback()){
   if(canBack()){history.back();return true}
   location.assign(fallback);return false
