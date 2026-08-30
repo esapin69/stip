@@ -64,7 +64,7 @@ const destinationTypes=new Set(['service','unit','exam','block','helipad']);
 const relationTypes=new Set(['route_branch','route_next','near','signposted_to','serves','connects_to','accesses','passes_near','adjacent','access_via','same_hall','same_sector','exit_near','behind','opens_to','adjacent_landmark','signposted_near','opposite_side_landmark','located_in','arrives_near','corridor_connection']);
 const elevatorColors={hfme_elev_orange:{name:'Orange',cls:'elev-orange'},hfme_elev_blue:{name:'Bleu',cls:'elev-blue'},hfme_elev_rose:{name:'Rose',cls:'elev-pink'},hfme_elev_green:{name:'Vert',cls:'elev-green'}};
 let data=null,places=[],index=[],byId=new Map(),children=new Map(),aliases=new Map(),tags=new Map(),relations=[],routes=[],routeSteps=[],constraints=[],elevatorStops=[];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
 const rx=v=>String(v??'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 const cap=v=>{const s=String(v??'');return s?s.charAt(0).toUpperCase()+s.slice(1):s};
