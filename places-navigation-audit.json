@@ -1,0 +1,3153 @@
+{
+  "counts": {
+    "places": 293
+  },
+  "levels": [
+    {
+      "id": "hfme_lm1",
+      "display_name": "Niveau -1",
+      "parent_id": "hfme",
+      "level": "-1",
+      "summary": "Parking",
+      "destinations": []
+    },
+    {
+      "id": "a1_rdc",
+      "display_name": "A1 · RDC",
+      "parent_id": "a1",
+      "level": "RDC",
+      "summary": "Guichet stationnement",
+      "destinations": []
+    },
+    {
+      "id": "a3_rdc",
+      "display_name": "A3 · RDC",
+      "parent_id": "a3",
+      "level": "RDC",
+      "summary": "Centre de prélèvements",
+      "destinations": [
+        {
+          "id": "a3_samples",
+          "place_type": "service",
+          "display_name": "Centre de prélèvements",
+          "official_name": "Centre de prélèvements du GHE",
+          "level": "RDC",
+          "summary": "Prélèvements biologiques"
+        }
+      ]
+    },
+    {
+      "id": "a4_rdc",
+      "display_name": "A4 · RDC",
+      "parent_id": "a4",
+      "level": "RDC",
+      "summary": "POP",
+      "destinations": []
+    },
+    {
+      "id": "b14_rdc",
+      "display_name": "B14 · RDC",
+      "parent_id": "b14",
+      "level": "RDC",
+      "summary": "Médecine nucléaire",
+      "destinations": [
+        {
+          "id": "b14_imaging",
+          "place_type": "service",
+          "display_name": "Imagerie nucléaire",
+          "official_name": "Médecine nucléaire · imagerie",
+          "level": "RDC",
+          "summary": "Examens de médecine nucléaire"
+        },
+        {
+          "id": "b14_therapy",
+          "place_type": "service",
+          "display_name": "Thérapie métabolique",
+          "official_name": "Unité de thérapie métabolique",
+          "level": "RDC",
+          "summary": "Hospitalisations en chambres radioprotégées"
+        }
+      ]
+    },
+    {
+      "id": "pw_rdj",
+      "display_name": "Pierre Wertheimer — rez-de-jardin",
+      "parent_id": "pw",
+      "level": "RJ",
+      "summary": "SRPR · psychiatrie/addictologie · neuro-rééducation · HDJ artériographie",
+      "destinations": [
+        {
+          "id": "pw_srpr",
+          "place_type": "service",
+          "display_name": "SRPR / salon d'accueil",
+          "official_name": "Service de Rééducation Post Réanimation",
+          "level": "RDJ",
+          "summary": "Post-réanimation / rééducation"
+        },
+        {
+          "id": "pw_psy",
+          "place_type": "service",
+          "display_name": "Psychiatrie adulte / addictologie",
+          "official_name": "Psychiatrie adulte / addictologie",
+          "level": "RDJ",
+          "summary": "Entrée B – rez-de-jardin selon page HCL récente"
+        },
+        {
+          "id": "pw_neuro_rehab",
+          "place_type": "service",
+          "display_name": "Neuro-rééducation",
+          "official_name": "Neuro-rééducation",
+          "level": "RDJ",
+          "summary": "Rééducation neurologique"
+        },
+        {
+          "id": "pw_hdja",
+          "place_type": "service",
+          "display_name": "HDJ artériographie / neurochirurgie",
+          "official_name": "HDJ artériographie / neurochirurgie",
+          "level": "RDJ",
+          "summary": "Hôpital de jour"
+        }
+      ]
+    },
+    {
+      "id": "hlp_rdc",
+      "display_name": "Rez-de-chaussée",
+      "parent_id": "hlp",
+      "level": "RDC",
+      "summary": "CCU · écho · Doppler · explorations · cardiogénétique",
+      "destinations": [
+        {
+          "id": "lp_centre_prelevement",
+          "place_type": "service",
+          "display_name": "Centre de prélèvement",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_consult_urg_cardio",
+          "place_type": "service",
+          "display_name": "Consultations cardiologiques d'urgence",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_echo_doppler",
+          "place_type": "exam",
+          "display_name": "Écho-Doppler / Échographie générale",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_echo_ped",
+          "place_type": "exam",
+          "display_name": "Échocardiographie pédiatrique, congénitale et fœtale",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_efs",
+          "place_type": "service",
+          "display_name": "Établissement Français du Sang — distribution de produits sanguins",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_service_social",
+          "place_type": "service",
+          "display_name": "Service social des usagers",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_dietetique",
+          "place_type": "service",
+          "display_name": "Unité de diététique",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "lp_usc_chir",
+          "place_type": "service",
+          "display_name": "USC chirurgicale adulte",
+          "official_name": null,
+          "level": "RDC",
+          "summary": "RDC"
+        },
+        {
+          "id": "hlp_ccu",
+          "place_type": "service",
+          "display_name": "Urgences cardiologiques / CCU",
+          "official_name": "Urgences cardiologiques et soins intensifs de cardiologie",
+          "level": "RDC",
+          "summary": "RDC · accès ambulance direct"
+        },
+        {
+          "id": "hlp_echo",
+          "place_type": "service",
+          "display_name": "Échographie cardio / Doppler",
+          "official_name": "Laboratoire d’échographie adulte / Doppler",
+          "level": "RDC",
+          "summary": "Échographie et Doppler"
+        },
+        {
+          "id": "hlp_cardio_genetics",
+          "place_type": "service",
+          "display_name": "Cardiogénétique",
+          "official_name": "Cardiogénétique",
+          "level": "RDC",
+          "summary": "Couloir à gauche du Relais H"
+        },
+        {
+          "id": "lp_bureau_admissions",
+          "place_type": "service",
+          "display_name": "Bureau des admissions",
+          "official_name": null,
+          "level": "RDC",
+          "summary": "Repère administratif au RDC."
+        }
+      ]
+    },
+    {
+      "id": "hfme_rdj",
+      "display_name": "Rez-de-jardin",
+      "parent_id": "hfme",
+      "level": "RDJ",
+      "summary": "Urgences pédiatriques · UHCD/USC · imagerie · gynécologie/maternité · reproduction/CECOS · sénologie",
+      "destinations": [
+        {
+          "id": "hfme_ped_er",
+          "place_type": "service",
+          "display_name": "Urgences pédiatriques",
+          "official_name": "Urgences pédiatriques",
+          "level": "RDJ",
+          "summary": "Urgences pédiatriques + UHCD"
+        },
+        {
+          "id": "hfme_ped_imaging",
+          "place_type": "service",
+          "display_name": "Imagerie pédiatrique et de la femme",
+          "official_name": "Service d’imagerie pédiatrique et de la femme",
+          "level": "RDJ",
+          "summary": "RDJ · IRM · scanner · radiologie · échographie · imagerie pédiatrique, fœtale et de la femme"
+        },
+        {
+          "id": "hfme_diag_antenatal",
+          "place_type": "service",
+          "display_name": "Diagnostic anténatal",
+          "official_name": "Diagnostic anténatal",
+          "level": "RDJ",
+          "summary": "Rez-de-jardin via ascenseur orange"
+        },
+        {
+          "id": "hfme_ped_er_hosp",
+          "place_type": "unit",
+          "display_name": "Hospitalisation des urgences pédiatriques",
+          "official_name": null,
+          "level": "RDJ",
+          "summary": "Hospitalisation des urgences pédiatriques · RDJ"
+        },
+        {
+          "id": "hfme_gyn_anesthesia",
+          "place_type": "service",
+          "display_name": "Anesthésie gynéco-maternité",
+          "official_name": "Anesthésie gynéco-maternité",
+          "level": "RDJ",
+          "summary": "Consultations gynécologie / maternité · RDJ"
+        },
+        {
+          "id": "hfme_cpdph",
+          "place_type": "service",
+          "display_name": "Centre Pluridisciplinaire de Diagnostic Prénatal (CPDPN)",
+          "official_name": "Centre Pluridisciplinaire de Diagnostic Prénatal (CPDPN)",
+          "level": "RDJ",
+          "summary": "Diagnostic prénatal · RDJ"
+        },
+        {
+          "id": "hfme_gyn_consult",
+          "place_type": "service",
+          "display_name": "Consultations de gynécologie",
+          "official_name": "Gynécologie",
+          "level": "RDJ",
+          "summary": "Consultations gynécologie / maternité · RDJ"
+        },
+        {
+          "id": "hfme_cecos",
+          "place_type": "service",
+          "display_name": "Médecine de la reproduction — CECOS",
+          "official_name": "Médecine de la reproduction - CECOS",
+          "level": "RDJ",
+          "summary": "Médecine de la reproduction / CECOS · RDJ"
+        },
+        {
+          "id": "hfme_preg_followup",
+          "place_type": "service",
+          "display_name": "Suivi de grossesse",
+          "official_name": "Suivi de grossesse",
+          "level": "RDJ",
+          "summary": "Consultations gynécologie / maternité · RDJ"
+        },
+        {
+          "id": "hfme_senology",
+          "place_type": "service",
+          "display_name": "Sénologie",
+          "official_name": "Sénologie",
+          "level": "RDJ",
+          "summary": "Consultations / imagerie · RDJ"
+        },
+        {
+          "id": "hfme_uhcd",
+          "place_type": "unit",
+          "display_name": "UHCD — Urgences pédiatriques",
+          "official_name": "Unité d’Hospitalisation de Courte Durée",
+          "level": "RDJ",
+          "summary": "UHCD / USC · RDJ · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_social_service",
+          "place_type": "service",
+          "display_name": "Service social HFME",
+          "official_name": null,
+          "level": "RDJ",
+          "summary": "Service social · RDJ"
+        },
+        {
+          "id": "hfme_ref_rdj",
+          "place_type": "service",
+          "display_name": "Centres de référence — RDJ",
+          "official_name": "Centres de référence — RDJ",
+          "level": "RDJ",
+          "summary": "Centres de référence du rez-de-jardin"
+        }
+      ]
+    },
+    {
+      "id": "a1_l1",
+      "display_name": "A1 · 1er étage",
+      "parent_id": "a1",
+      "level": "1",
+      "summary": "Consultations pédiatriques · IHOPe",
+      "destinations": [
+        {
+          "id": "a1_ped_consult",
+          "place_type": "service",
+          "display_name": "Consultations pédiatriques A1",
+          "official_name": "Consultations pédiatriques A1",
+          "level": "1",
+          "summary": "1er étage A1"
+        },
+        {
+          "id": "a1_ihope",
+          "place_type": "service",
+          "display_name": "IHOPe",
+          "official_name": "Hématologie / oncologie pédiatrique",
+          "level": "1",
+          "summary": "1er étage"
+        }
+      ]
+    },
+    {
+      "id": "a4_l1",
+      "display_name": "A4 · 1er étage",
+      "parent_id": "a4",
+      "level": "1",
+      "summary": "SEP · neuro-inflammation · hospitalisation conventionnelle/semaine",
+      "destinations": []
+    },
+    {
+      "id": "hlp_tm",
+      "display_name": "Niveau TM",
+      "parent_id": "hlp",
+      "level": "TM",
+      "summary": "Réanimation adulte · consultations · imagerie · plateau interventionnel",
+      "destinations": [
+        {
+          "id": "hlp_tm_rea",
+          "place_type": "service",
+          "display_name": "Réanimation adulte",
+          "official_name": "Réanimation chirurgicale adulte",
+          "level": "TM",
+          "summary": "Niveau TM"
+        },
+        {
+          "id": "hlp_tm_consult",
+          "place_type": "service",
+          "display_name": "Consultations Cardio / Pneumo / Endocrino",
+          "official_name": "Consultations spécialisées",
+          "level": "TM",
+          "summary": "Cardiologie · pneumologie · anesthésie · endocrinologie · chirurgie"
+        },
+        {
+          "id": "hlp_tm_imaging",
+          "place_type": "service",
+          "display_name": "Imagerie / plateau interventionnel",
+          "official_name": "Imagerie · unité d’abord vasculaire · plateau interventionnel",
+          "level": "TM",
+          "summary": "Scanner / imagerie / interventionnel"
+        },
+        {
+          "id": "hlp_tm_uav",
+          "place_type": "service",
+          "display_name": "Unité d’Abord Vasculaire",
+          "official_name": null,
+          "level": "TM",
+          "summary": "Unité d’abord vasculaire au niveau TM."
+        },
+        {
+          "id": "hlp_tm_fibroscopie",
+          "place_type": "service",
+          "display_name": "Fibroscopie",
+          "official_name": null,
+          "level": "TM",
+          "summary": "Repère de fibroscopie relevé sur le secteur TM."
+        }
+      ]
+    },
+    {
+      "id": "pw_rdc",
+      "display_name": "Pierre Wertheimer — rez-de-chaussée",
+      "parent_id": "pw",
+      "level": "RDC",
+      "summary": "Réanimation · consultations · imagerie · TCA",
+      "destinations": [
+        {
+          "id": "pw_radio_interv",
+          "place_type": "service",
+          "display_name": "Consultation radiologie interventionnelle",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "pw_consult_neurochir_anesth",
+          "place_type": "service",
+          "display_name": "Consultations de neurochirurgie et d'anesthésie",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "pw_echo_doppler",
+          "place_type": "exam",
+          "display_name": "Échographie — Doppler",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "pw_radiologie",
+          "place_type": "exam",
+          "display_name": "Radiologie",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "pw_u1000",
+          "place_type": "unit",
+          "display_name": "Unité 1000",
+          "official_name": null,
+          "level": "RDC",
+          "summary": null
+        },
+        {
+          "id": "pw_rea",
+          "place_type": "service",
+          "display_name": "Réanimation neurologique",
+          "official_name": "Réanimation neurologique",
+          "level": "RDC",
+          "summary": "RDC · entrée A"
+        },
+        {
+          "id": "pw_tca",
+          "place_type": "service",
+          "display_name": "TCA",
+          "official_name": "Centre référent anorexie / troubles du comportement alimentaire",
+          "level": "RDC",
+          "summary": "RDC · entrée A"
+        },
+        {
+          "id": "pw_neuro_consult",
+          "place_type": "service",
+          "display_name": "Consultations neurologie",
+          "official_name": "Consultations neurologie",
+          "level": "RDC",
+          "summary": "Consultations neurologiques"
+        },
+        {
+          "id": "pw_cetd",
+          "place_type": "service",
+          "display_name": "Centre d'évaluation et traitement de la douleur",
+          "official_name": "Centre d’Évaluation et de Traitement de la Douleur",
+          "level": "RDC",
+          "summary": "Douleur"
+        },
+        {
+          "id": "pw_neuropsych",
+          "place_type": "service",
+          "display_name": "Neuropsychologie",
+          "official_name": "Neuropsychologie",
+          "level": "RDC",
+          "summary": "Neuropsychologie"
+        },
+        {
+          "id": "pw_neurogenetique",
+          "place_type": "service",
+          "display_name": "Consultations de neurogénétique et de médecine prédictive",
+          "official_name": "Consultations de neurogénétique et de médecine prédictive",
+          "level": "RDC",
+          "summary": "RDC"
+        },
+        {
+          "id": "pw_bureau_admissions",
+          "place_type": "service",
+          "display_name": "Bureau des admissions — Neuro",
+          "official_name": null,
+          "level": "RDC",
+          "summary": "Repère administratif du hall de distribution."
+        }
+      ]
+    },
+    {
+      "id": "hfme_rdc",
+      "display_name": "Rez-de-chaussée",
+      "parent_id": "hfme",
+      "level": "RDC",
+      "summary": "Urgences gynéco-obstétricales · consultations pédiatriques · blocs gynéco/maternité · ESEFNP · accueil",
+      "destinations": [
+        {
+          "id": "hfme_gyn_er",
+          "place_type": "service",
+          "display_name": "Urgences gynéco-obstétricales",
+          "official_name": "Urgences gynécologiques et obstétricales",
+          "level": "RDC",
+          "summary": "RDC"
+        },
+        {
+          "id": "hfme_birth",
+          "place_type": "service",
+          "display_name": "Salles d’accouchement",
+          "official_name": "Salles d’accouchement",
+          "level": "RDC",
+          "summary": "RDC"
+        },
+        {
+          "id": "hfme_ped_consult",
+          "place_type": "service",
+          "display_name": "Consultations pédiatriques",
+          "official_name": "Consultations pédiatriques et néonatologiques",
+          "level": "RDC",
+          "summary": "RDC"
+        },
+        {
+          "id": "hfme_uaped",
+          "place_type": "service",
+          "display_name": "UAPED",
+          "official_name": "UAPED",
+          "level": "RDC",
+          "summary": "Consultations médicales · RDC · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_cardio_consult",
+          "place_type": "service",
+          "display_name": "Consultations de cardiologie pédiatrique",
+          "official_name": "Cardiologie",
+          "level": "RDC",
+          "summary": "Consultations médicales · RDC"
+        },
+        {
+          "id": "hfme_neonat_consult",
+          "place_type": "service",
+          "display_name": "Consultations de néonatologie",
+          "official_name": "Néonatologie",
+          "level": "RDC",
+          "summary": "Consultations médicales · RDC"
+        },
+        {
+          "id": "hfme_ped_explorations_rdc",
+          "place_type": "service",
+          "display_name": "Consultations et explorations fonctionnelles de pédiatrie",
+          "official_name": null,
+          "level": "RDC",
+          "summary": "ORL · ophtalmologie · stomatologie/maxillo-facial · chirurgie · anesthésie · suites de soins"
+        },
+        {
+          "id": "hfme_esefnp",
+          "place_type": "service",
+          "display_name": "Épilepsie, sommeil et explorations fonctionnelles neuropédiatriques",
+          "official_name": "Service d’épileptologie clinique, des troubles du sommeil et de neurologie fonctionnelle de l’enfant",
+          "level": "RDC",
+          "summary": "RDC · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_school",
+          "place_type": "service",
+          "display_name": "École des enfants hospitalisés",
+          "official_name": "École des enfants hospitalisés",
+          "level": "RDC",
+          "summary": "RDC · ascenseurs rose ou bleu indiqués"
+        },
+        {
+          "id": "hfme_chaplaincy",
+          "place_type": "service",
+          "display_name": "Aumônerie",
+          "official_name": "Aumônerie",
+          "level": "RDC",
+          "summary": "RDC · ascenseurs rose ou bleu indiqués"
+        },
+        {
+          "id": "hfme_ref_rdc_passerelle",
+          "place_type": "service",
+          "display_name": "Centres de référence — RDC après la passerelle",
+          "official_name": "RDC - APRÈS LA PASSERELLE",
+          "level": "RDC",
+          "summary": "Centres de référence après la passerelle"
+        },
+        {
+          "id": "hfme_ref_rdc_esefnp",
+          "place_type": "service",
+          "display_name": "Centre de référence — RDC ESEFNP",
+          "official_name": "RDC - ESEFNP",
+          "level": "RDC",
+          "summary": "Narcolepsies et hypersomnies rares"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l1",
+      "display_name": "1er étage",
+      "parent_id": "hlp",
+      "level": "1",
+      "summary": "Cardiopédiatrie · réanimation cardiopédiatrique",
+      "destinations": [
+        {
+          "id": "hlp_ped_icu",
+          "place_type": "service",
+          "display_name": "Réanimation cardiopédiatrique",
+          "official_name": "Réanimation cardiopédiatrique",
+          "level": "1",
+          "summary": "Réanimation cardiaque pédiatrique"
+        },
+        {
+          "id": "hlp_ped_hosp",
+          "place_type": "service",
+          "display_name": "Hospitalisation cardiopédiatrique",
+          "official_name": "Unité d’hospitalisation médico-chirurgicale en cardiopédiatrie",
+          "level": "1",
+          "summary": "Unité 10 · hospitalisation médico-chirurgicale"
+        },
+        {
+          "id": "hlp_ped_usc",
+          "place_type": "service",
+          "display_name": "Soins continus cardiopédiatriques",
+          "official_name": "Unité de Soins Continus cardiopédiatriques",
+          "level": "1",
+          "summary": "Unité 10 · soins continus cardiopédiatriques"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l1",
+      "display_name": "1er étage",
+      "parent_id": "hfme",
+      "level": "1",
+      "summary": "Réanimation pédiatrique · ACHA · chirurgie pédiatrique · bloc · salon d’accueil",
+      "destinations": [
+        {
+          "id": "hfme_ped_icu",
+          "place_type": "service",
+          "display_name": "Réanimation pédiatrique",
+          "official_name": "Réanimation médico-chirurgicale pédiatrique",
+          "level": "1",
+          "summary": "1er · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_acha_ped",
+          "place_type": "service",
+          "display_name": "ACHA pédiatrique",
+          "official_name": "Accueil de chirurgie ambulatoire pédiatrique",
+          "level": "1",
+          "summary": "1er · ascenseur orange indiqué"
+        },
+        {
+          "id": "hfme_ped_surg",
+          "place_type": "service",
+          "display_name": "Chirurgie pédiatrique",
+          "official_name": "Chirurgie pédiatrique",
+          "level": "1",
+          "summary": "1er étage"
+        },
+        {
+          "id": "hfme_surgery_welcome",
+          "place_type": "service",
+          "display_name": "Salon d’accueil de chirurgie",
+          "official_name": "Salon d’accueil de chirurgie",
+          "level": "1",
+          "summary": "1er · ascenseur bleu indiqué"
+        },
+        {
+          "id": "hfme_ref_l1",
+          "place_type": "service",
+          "display_name": "Centres de référence — niveau 1",
+          "official_name": "Centres de référence — niveau 1",
+          "level": "1",
+          "summary": "Centres de référence du niveau 1"
+        }
+      ]
+    },
+    {
+      "id": "a1_l3",
+      "display_name": "A1 · 3e étage",
+      "parent_id": "a1",
+      "level": "3",
+      "summary": "Escale · rééducation pédiatrique",
+      "destinations": [
+        {
+          "id": "a1_escale",
+          "place_type": "service",
+          "display_name": "Escale",
+          "official_name": "Rééducation pédiatrique — Escale",
+          "level": "3",
+          "summary": "3e étage"
+        }
+      ]
+    },
+    {
+      "id": "a4_l2",
+      "display_name": "A4 · 2e étage",
+      "parent_id": "a4",
+      "level": "2",
+      "summary": "SEP · neuro-inflammation · hôpital de jour",
+      "destinations": []
+    },
+    {
+      "id": "pw_l1",
+      "display_name": "Pierre Wertheimer — niveau 1",
+      "parent_id": "pw",
+      "level": "1",
+      "summary": "Bloc · 100 · 101 USINV · 102 HCNV · neuroradiologie interventionnelle",
+      "destinations": [
+        {
+          "id": "pw_angio",
+          "place_type": "exam",
+          "display_name": "Angiographie — biplan / monoplan",
+          "official_name": null,
+          "level": "1",
+          "summary": null
+        },
+        {
+          "id": "pw_irm_venus",
+          "place_type": "exam",
+          "display_name": "IRM 1,5 T — VENUS",
+          "official_name": null,
+          "level": "1",
+          "summary": "IRM 1,5 T · niveau 1 · branche distincte du secteur imagerie"
+        },
+        {
+          "id": "pw_irm_jupiter",
+          "place_type": "exam",
+          "display_name": "IRM 3 T — JUPITER",
+          "official_name": null,
+          "level": "1",
+          "summary": "IRM 3 T · niveau 1 · secteur neuroradiologie"
+        },
+        {
+          "id": "pw_irm_saturne",
+          "place_type": "exam",
+          "display_name": "IRM 3 T — SATURNE",
+          "official_name": null,
+          "level": "1",
+          "summary": "IRM 3 T · niveau 1 · secteur neuroradiologie"
+        },
+        {
+          "id": "pw_neurochir_rachis",
+          "place_type": "service",
+          "display_name": "Neurochirurgie du rachis et de la moelle épinière",
+          "official_name": "Neurochirurgie du rachis et de la moelle épinière",
+          "level": "1",
+          "summary": "1er étage · secteur unité 100"
+        },
+        {
+          "id": "pw_scanner",
+          "place_type": "exam",
+          "display_name": "Scanner neuroradiologie",
+          "official_name": null,
+          "level": "1",
+          "summary": null
+        },
+        {
+          "id": "pw_u100",
+          "place_type": "unit",
+          "display_name": "Unité 100",
+          "official_name": "Neurochirurgie rachis / moelle · neuroradiologie interventionnelle",
+          "level": "1",
+          "summary": "Neurochirurgie du rachis et de la moelle épinière · neuro-radiologie interventionnelle"
+        },
+        {
+          "id": "pw_u101",
+          "place_type": "unit",
+          "display_name": "Unité 101",
+          "official_name": "Unité de soins intensifs neurovasculaires",
+          "level": "1",
+          "summary": "USINV"
+        },
+        {
+          "id": "pw_u102",
+          "place_type": "unit",
+          "display_name": "Unité 102",
+          "official_name": "Hospitalisation complète neurovasculaire",
+          "level": "1",
+          "summary": "HCNV"
+        },
+        {
+          "id": "pw_plateforme_ait",
+          "place_type": "service",
+          "display_name": "Plateforme AIT",
+          "official_name": "Plateforme AIT",
+          "level": "1",
+          "summary": "Prise en charge des accidents ischémiques transitoires · 1er étage"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l2",
+      "display_name": "2e étage",
+      "parent_id": "hfme",
+      "level": "2",
+      "summary": "Biberonnerie",
+      "destinations": [
+        {
+          "id": "hfme_biberon",
+          "place_type": "service",
+          "display_name": "Biberonnerie",
+          "official_name": "Biberonnerie HFME",
+          "level": "2",
+          "summary": "2e · ascenseur orange · accolée au service diététique"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l2",
+      "display_name": "2e étage",
+      "parent_id": "hlp",
+      "level": "2",
+      "summary": "USIC · soins continus",
+      "destinations": [
+        {
+          "id": "hlp_usic",
+          "place_type": "service",
+          "display_name": "USIC",
+          "official_name": "Unité de soins intensifs cardiologiques",
+          "level": "2",
+          "summary": "USIC"
+        },
+        {
+          "id": "hlp_usc",
+          "place_type": "service",
+          "display_name": "Soins continus",
+          "official_name": "Soins continus médicaux adultes",
+          "level": "2",
+          "summary": "USC / soins continus"
+        }
+      ]
+    },
+    {
+      "id": "a1_l4",
+      "display_name": "A1 · 4e étage",
+      "parent_id": "a1",
+      "level": "4",
+      "summary": "Génétique clinique",
+      "destinations": [
+        {
+          "id": "a1_genetics",
+          "place_type": "service",
+          "display_name": "Génétique clinique",
+          "official_name": "Consultations de génétique clinique",
+          "level": "4",
+          "summary": "4e étage"
+        }
+      ]
+    },
+    {
+      "id": "pw_l2",
+      "display_name": "Pierre Wertheimer — niveau 2",
+      "parent_id": "pw",
+      "level": "2",
+      "summary": "200 · 202 · neuro-ophtalmologie / ORL",
+      "destinations": [
+        {
+          "id": "pw_u201",
+          "place_type": "unit",
+          "display_name": "Unité 201",
+          "official_name": null,
+          "level": "2",
+          "summary": null
+        },
+        {
+          "id": "pw_u200",
+          "place_type": "unit",
+          "display_name": "Unité 200",
+          "official_name": "Neurochirurgie crânienne / fonctionnelle",
+          "level": "2",
+          "summary": "Entrée A · neurochirurgie"
+        },
+        {
+          "id": "pw_u202",
+          "place_type": "unit",
+          "display_name": "Unité 202",
+          "official_name": "Neuro-oncologie médicale",
+          "level": "2",
+          "summary": "Neuro-oncologie médicale"
+        },
+        {
+          "id": "pw_neuro_oph",
+          "place_type": "service",
+          "display_name": "Neuro-ophtalmologie / ORL",
+          "official_name": "Neuro-ophtalmologie / ORL",
+          "level": "2",
+          "summary": "Consultations au 2e"
+        },
+        {
+          "id": "pw_service_social_l2",
+          "place_type": "service",
+          "display_name": "Service social",
+          "official_name": null,
+          "level": "2",
+          "summary": "Repère de service au 2e étage"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l3",
+      "display_name": "3e étage",
+      "parent_id": "hlp",
+      "level": "3",
+      "summary": "Rythmologie · cardiologie congénitale · SICAT",
+      "destinations": [
+        {
+          "id": "hlp_rythmo",
+          "place_type": "service",
+          "display_name": "Rythmologie",
+          "official_name": "Rythmologie / cardiologie congénitale adulte",
+          "level": "3",
+          "summary": "3e étage"
+        },
+        {
+          "id": "hlp_sicat",
+          "place_type": "service",
+          "display_name": "SICAT / transplantation",
+          "official_name": "SICAT",
+          "level": "3",
+          "summary": "Secteur transplantation / insuffisance cardiaque"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l3",
+      "display_name": "3e étage",
+      "parent_id": "hfme",
+      "level": "3",
+      "summary": "Néonatalogie/réanimation néonatale · pneumologie · hépato-gastroentérologie · centres de référence",
+      "destinations": [
+        {
+          "id": "hfme_neonat",
+          "place_type": "service",
+          "display_name": "Néonatalogie et réanimation néonatale",
+          "official_name": "Réanimation et médecine néonatales",
+          "level": "3",
+          "summary": "3e · néonatalogie et réanimation néonatale · ascenseur orange indiqué"
+        },
+        {
+          "id": "hfme_hepato",
+          "place_type": "service",
+          "display_name": "Hépato-gastro pédiatrique",
+          "official_name": "Pédiatrie hépato-gastro-entérologie",
+          "level": "3",
+          "summary": "3e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_pulmo_allergy",
+          "place_type": "service",
+          "display_name": "Pneumo / allergologie pédiatrique",
+          "official_name": "Pédiatrie pneumologie / allergologie",
+          "level": "3",
+          "summary": "3e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_ped_general_l3",
+          "place_type": "service",
+          "display_name": "Pédiatrie générale — niveau 3",
+          "official_name": null,
+          "level": "3",
+          "summary": "Pédiatrie générale · hospitalisation / consultation"
+        },
+        {
+          "id": "hfme_ref_l3",
+          "place_type": "service",
+          "display_name": "Centres de référence — niveau 3",
+          "official_name": "Centres de référence — niveau 3",
+          "level": "3",
+          "summary": "Centres de référence du niveau 3"
+        }
+      ]
+    },
+    {
+      "id": "pw_l3",
+      "display_name": "Pierre Wertheimer — niveau 3",
+      "parent_id": "pw",
+      "level": "3",
+      "summary": "300 · 301 épileptologie",
+      "destinations": [
+        {
+          "id": "pw_u302",
+          "place_type": "unit",
+          "display_name": "Unité 302",
+          "official_name": null,
+          "level": "3",
+          "summary": null
+        },
+        {
+          "id": "pw_u300",
+          "place_type": "unit",
+          "display_name": "Unité 300",
+          "official_name": "Hôpital de semaine neurochirurgie",
+          "level": "3",
+          "summary": "Unité 300"
+        },
+        {
+          "id": "pw_u301",
+          "place_type": "unit",
+          "display_name": "Unité 301",
+          "official_name": "Neurologie fonctionnelle / épileptologie",
+          "level": "3",
+          "summary": "Épileptologie"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l4",
+      "display_name": "4e étage",
+      "parent_id": "hfme",
+      "level": "4",
+      "summary": "Maternité · unité Kangourou · pédiatrie générale · endocrino/métabolique · UERTD · centres de référence",
+      "destinations": [
+        {
+          "id": "hfme_maternity",
+          "place_type": "service",
+          "display_name": "Maternité / suites de naissance",
+          "official_name": "Obstétrique suites de naissance / unité kangourou",
+          "level": "4",
+          "summary": "4e · ascenseurs rose ou orange indiqués"
+        },
+        {
+          "id": "hfme_usap",
+          "place_type": "service",
+          "display_name": "USAP",
+          "official_name": "USAP",
+          "level": "4",
+          "summary": "4e étage"
+        },
+        {
+          "id": "hfme_ped_endo",
+          "place_type": "service",
+          "display_name": "Endocrino / diabéto / métabolique pédiatrique",
+          "official_name": "Pédiatrie endocrinologie / diabétologie / maladies métaboliques",
+          "level": "4",
+          "summary": "4e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_ped_general",
+          "place_type": "service",
+          "display_name": "Pédiatrie générale",
+          "official_name": "Pédiatrie générale",
+          "level": "4",
+          "summary": "4e · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_uertd",
+          "place_type": "service",
+          "display_name": "UERTD",
+          "official_name": "UERTD",
+          "level": "4",
+          "summary": "4e · ascenseur bleu indiqué"
+        },
+        {
+          "id": "hfme_kangaroo",
+          "place_type": "unit",
+          "display_name": "Unité Kangourou",
+          "official_name": "Unité KANGOUROU",
+          "level": "4",
+          "summary": "4e · ascenseur orange indiqué"
+        },
+        {
+          "id": "hfme_ref_l4",
+          "place_type": "service",
+          "display_name": "Centres de référence — niveau 4",
+          "official_name": "Centres de référence — niveau 4",
+          "level": "4",
+          "summary": "Centres de référence du niveau 4"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l4",
+      "display_name": "4e étage",
+      "parent_id": "hlp",
+      "level": "4",
+      "summary": "Cardiologie A et B",
+      "destinations": [
+        {
+          "id": "hlp_cardio_a",
+          "place_type": "unit",
+          "display_name": "Cardiologie A",
+          "official_name": "Cardiologie A",
+          "level": "4",
+          "summary": "Cardiologie A"
+        },
+        {
+          "id": "hlp_cardio_b",
+          "place_type": "unit",
+          "display_name": "Cardiologie B",
+          "official_name": "Cardiologie B",
+          "level": "4",
+          "summary": "Cardiologie B"
+        }
+      ]
+    },
+    {
+      "id": "pw_l4",
+      "display_name": "Pierre Wertheimer — niveau 4",
+      "parent_id": "pw",
+      "level": "4",
+      "summary": "402 neuro-cognition / neuro-ophtalmologie",
+      "destinations": [
+        {
+          "id": "pw_u400",
+          "place_type": "unit",
+          "display_name": "Unité 400",
+          "official_name": null,
+          "level": "4",
+          "summary": null
+        },
+        {
+          "id": "pw_u401",
+          "place_type": "unit",
+          "display_name": "Unité 401",
+          "official_name": null,
+          "level": "4",
+          "summary": null
+        },
+        {
+          "id": "pw_u402",
+          "place_type": "unit",
+          "display_name": "Unité 402",
+          "official_name": "Neuro-cognition / neuro-ophtalmologie",
+          "level": "4",
+          "summary": "Unité 402"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l5",
+      "display_name": "5e étage",
+      "parent_id": "hlp",
+      "level": "5",
+      "summary": "Chirurgie cardiovasculaire / vasculaire / endovasculaire",
+      "destinations": [
+        {
+          "id": "hlp_cv_surg",
+          "place_type": "service",
+          "display_name": "Chirurgie cardiovasculaire / vasculaire",
+          "official_name": "Chirurgie cardiovasculaire, vasculaire et endovasculaire",
+          "level": "5",
+          "summary": "Chirurgie cardio-vasculaire"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l5",
+      "display_name": "5e étage",
+      "parent_id": "hfme",
+      "level": "5",
+      "summary": "Gynécologie A/B · neurologie · néphrologie/rhumatologie/dermatologie · dialyse · centres de référence",
+      "destinations": [
+        {
+          "id": "hfme_gyn",
+          "place_type": "service",
+          "display_name": "Gynécologie / sénologie",
+          "official_name": "Gynécologie / sénologie",
+          "level": "5",
+          "summary": "5e étage"
+        },
+        {
+          "id": "hfme_repro",
+          "place_type": "service",
+          "display_name": "PMA / médecine de la reproduction",
+          "official_name": "Médecine de la reproduction",
+          "level": "5",
+          "summary": "5e étage"
+        },
+        {
+          "id": "hfme_orthogeny",
+          "place_type": "service",
+          "display_name": "Orthogénie / IVG",
+          "official_name": "Orthogénie",
+          "level": "5",
+          "summary": "5e étage"
+        },
+        {
+          "id": "hfme_ped_special",
+          "place_type": "service",
+          "display_name": "Pédiatrie spécialisée",
+          "official_name": "Neurologie / néphrologie / dialyse / rhumatologie / dermatologie pédiatriques",
+          "level": "5",
+          "summary": "5e étage"
+        },
+        {
+          "id": "hfme_ped_functional_l5",
+          "place_type": "service",
+          "display_name": "Explorations fonctionnelles pédiatriques — EEG / EMG / sommeil",
+          "official_name": null,
+          "level": "5",
+          "summary": "EEG · EMG · sommeil"
+        },
+        {
+          "id": "hfme_a2_obstetric_l5",
+          "place_type": "unit",
+          "display_name": "Obstétrique — suites de naissance (secteur A2)",
+          "official_name": null,
+          "level": "5",
+          "summary": "Suites de naissance · hospitalisation · secteur A2"
+        },
+        {
+          "id": "hfme_neurology",
+          "place_type": "service",
+          "display_name": "Neurologie pédiatrique",
+          "official_name": "Neurologie",
+          "level": "5",
+          "summary": "5e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_nephro_rheum_derm",
+          "place_type": "service",
+          "display_name": "Néphrologie / rhumatologie / dermatologie pédiatrique",
+          "official_name": "Néphrologie, rhumatologie, dermatologie",
+          "level": "5",
+          "summary": "5e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_dialysis",
+          "place_type": "service",
+          "display_name": "Dialyse pédiatrique",
+          "official_name": "Dialyse",
+          "level": "5",
+          "summary": "5e · ascenseur vert indiqué"
+        },
+        {
+          "id": "hfme_ref_l5",
+          "place_type": "service",
+          "display_name": "Centres de référence — niveau 5",
+          "official_name": "Centres de référence — niveau 5",
+          "level": "5",
+          "summary": "Centres de référence du niveau 5"
+        }
+      ]
+    },
+    {
+      "id": "pw_l5",
+      "display_name": "Pierre Wertheimer — niveau 5",
+      "parent_id": "pw",
+      "level": "5",
+      "summary": "501 · 502 · explorations fonctionnelles",
+      "destinations": [
+        {
+          "id": "pw_u500",
+          "place_type": "unit",
+          "display_name": "Unité 500",
+          "official_name": null,
+          "level": "5",
+          "summary": null
+        },
+        {
+          "id": "pw_u501",
+          "place_type": "unit",
+          "display_name": "Unité 501",
+          "official_name": "Troubles du mouvement / pathologies neuromusculaires",
+          "level": "5",
+          "summary": "Unité 501"
+        },
+        {
+          "id": "pw_u502",
+          "place_type": "unit",
+          "display_name": "Unité 502",
+          "official_name": "Plateforme commune de jour",
+          "level": "5",
+          "summary": "Hôpital de jour / plateforme commune"
+        },
+        {
+          "id": "pw_eeg",
+          "place_type": "service",
+          "display_name": "EEG / ENMG",
+          "official_name": "Explorations fonctionnelles neurologiques EEG-ENMG",
+          "level": "5",
+          "summary": "Explorations fonctionnelles"
+        }
+      ]
+    },
+    {
+      "id": "hfme_l6",
+      "display_name": "6e étage",
+      "parent_id": "hfme",
+      "level": "6",
+      "summary": "Pathologies de la grossesse · psychopathologie enfant/adolescent · amphithéâtre RABELAIS",
+      "destinations": [
+        {
+          "id": "hfme_child_psych",
+          "place_type": "service",
+          "display_name": "Psychopathologie enfant / adolescent",
+          "official_name": "Psychopathologie du développement de l’enfant et de l’adolescent",
+          "level": "6",
+          "summary": "6e · ascenseurs bleu ou vert indiqués"
+        },
+        {
+          "id": "hfme_path_preg",
+          "place_type": "service",
+          "display_name": "Grossesse pathologique",
+          "official_name": "Obstétrique · pathologie de la grossesse",
+          "level": "6",
+          "summary": "6e · ascenseur orange indiqué"
+        },
+        {
+          "id": "hfme_pain_consult",
+          "place_type": "service",
+          "display_name": "Consultation prise en charge de la douleur",
+          "official_name": null,
+          "level": "6",
+          "summary": "Consultation douleur · niveau 6"
+        },
+        {
+          "id": "hfme_hemato_onco_consult",
+          "place_type": "service",
+          "display_name": "Consultation Institut d’Hématologie et d’Oncologie Pédiatrique",
+          "official_name": null,
+          "level": "6",
+          "summary": "Hématologie / oncologie pédiatrique · consultation · niveau 6"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l6",
+      "display_name": "6e étage",
+      "parent_id": "hlp",
+      "level": "6",
+      "summary": "Chirurgie thoraco-pulmonaire · HDJ cardiologie",
+      "destinations": [
+        {
+          "id": "hlp_thoracic",
+          "place_type": "service",
+          "display_name": "Chirurgie thoraco-pulmonaire",
+          "official_name": "Chirurgie thoraco-pulmonaire",
+          "level": "6",
+          "summary": "6e étage"
+        },
+        {
+          "id": "hlp_cardio_hdj",
+          "place_type": "service",
+          "display_name": "HDJ cardiologie",
+          "official_name": "Hôpital de jour de cardiologie",
+          "level": "6",
+          "summary": "6e étage"
+        }
+      ]
+    },
+    {
+      "id": "pw_l6",
+      "display_name": "Pierre Wertheimer — niveau 6",
+      "parent_id": "pw",
+      "level": "6",
+      "summary": "Bureaux médicaux · Amphithéâtre Michel Jouvet · Salle Claude Lapras",
+      "destinations": []
+    },
+    {
+      "id": "hlp_l7",
+      "display_name": "7e étage",
+      "parent_id": "hlp",
+      "level": "7",
+      "summary": "Pneumologie B et C",
+      "destinations": [
+        {
+          "id": "hlp_pneumo_b",
+          "place_type": "unit",
+          "display_name": "Pneumologie B",
+          "official_name": "Pneumologie B",
+          "level": "7",
+          "summary": "Hospitalisation de semaine · U70"
+        },
+        {
+          "id": "hlp_pneumo_c",
+          "place_type": "unit",
+          "display_name": "Pneumologie C",
+          "official_name": "Pneumologie C",
+          "level": "7",
+          "summary": "Hospitalisation complète · U71"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l8",
+      "display_name": "8e étage",
+      "parent_id": "hlp",
+      "level": "8",
+      "summary": "HDJ pneumologie A",
+      "destinations": [
+        {
+          "id": "hlp_pneumo_a",
+          "place_type": "service",
+          "display_name": "HDJ pneumologie A",
+          "official_name": "Pneumologie A · hôpital de jour",
+          "level": "8",
+          "summary": "8e étage"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l9",
+      "display_name": "9e étage",
+      "parent_id": "hlp",
+      "level": "9",
+      "summary": "Endocrinologie A HDJ · B · C",
+      "destinations": [
+        {
+          "id": "hlp_endo_a",
+          "place_type": "service",
+          "display_name": "Endocrinologie A — HDJ",
+          "official_name": "Service d’endocrinologie, diabétologie et maladies métaboliques A",
+          "level": "9",
+          "summary": "Hôpital de jour"
+        },
+        {
+          "id": "hlp_endo_b",
+          "place_type": "service",
+          "display_name": "Endocrinologie B",
+          "official_name": "Service d’endocrinologie, diabétologie et maladies métaboliques B",
+          "level": "9",
+          "summary": "Hospitalisation · secteur U90"
+        },
+        {
+          "id": "hlp_endo_c",
+          "place_type": "unit",
+          "display_name": "Endocrinologie C",
+          "official_name": "Endocrinologie C",
+          "level": "9",
+          "summary": "Hospitalisation · secteur U90"
+        }
+      ]
+    },
+    {
+      "id": "hlp_l10",
+      "display_name": "10e étage",
+      "parent_id": "hlp",
+      "level": "10",
+      "summary": "Niveau utilisé pour des salles / événements",
+      "destinations": []
+    },
+    {
+      "id": "hlp_l11",
+      "display_name": "11e étage",
+      "parent_id": "hlp",
+      "level": "11",
+      "summary": "Hélistation",
+      "destinations": []
+    }
+  ],
+  "orphan_destinations": [],
+  "all_destinations": [
+    {
+      "id": "pw_angio",
+      "place_type": "exam",
+      "display_name": "Angiographie — biplan / monoplan",
+      "official_name": null,
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": null
+    },
+    {
+      "id": "lp_centre_prelevement",
+      "place_type": "service",
+      "display_name": "Centre de prélèvement",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_radio_interv",
+      "place_type": "service",
+      "display_name": "Consultation radiologie interventionnelle",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_consult_urg_cardio",
+      "place_type": "service",
+      "display_name": "Consultations cardiologiques d'urgence",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_consult_neurochir_anesth",
+      "place_type": "service",
+      "display_name": "Consultations de neurochirurgie et d'anesthésie",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_echo_doppler",
+      "place_type": "exam",
+      "display_name": "Écho-Doppler / Échographie générale",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_echo_adulte",
+      "place_type": "exam",
+      "display_name": "Échocardiographie adulte",
+      "official_name": null,
+      "parent_id": "lp_plateau_explo",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_echo_ped",
+      "place_type": "exam",
+      "display_name": "Échocardiographie pédiatrique, congénitale et fœtale",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_echo_doppler",
+      "place_type": "exam",
+      "display_name": "Échographie — Doppler",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_effort_vo2",
+      "place_type": "exam",
+      "display_name": "Épreuve d'effort / VO2",
+      "official_name": null,
+      "parent_id": "lp_plateau_explo",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_efs",
+      "place_type": "service",
+      "display_name": "Établissement Français du Sang — distribution de produits sanguins",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_efr",
+      "place_type": "exam",
+      "display_name": "Exploration fonctionnelle respiratoire (EFR)",
+      "official_name": null,
+      "parent_id": "lp_plateau_explo",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_irm_venus",
+      "place_type": "exam",
+      "display_name": "IRM 1,5 T — VENUS",
+      "official_name": null,
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "IRM 1,5 T · niveau 1 · branche distincte du secteur imagerie"
+    },
+    {
+      "id": "pw_irm_jupiter",
+      "place_type": "exam",
+      "display_name": "IRM 3 T — JUPITER",
+      "official_name": null,
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "IRM 3 T · niveau 1 · secteur neuroradiologie"
+    },
+    {
+      "id": "pw_irm_saturne",
+      "place_type": "exam",
+      "display_name": "IRM 3 T — SATURNE",
+      "official_name": null,
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "IRM 3 T · niveau 1 · secteur neuroradiologie"
+    },
+    {
+      "id": "pw_neurochir_rachis",
+      "place_type": "service",
+      "display_name": "Neurochirurgie du rachis et de la moelle épinière",
+      "official_name": "Neurochirurgie du rachis et de la moelle épinière",
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "1er étage · secteur unité 100"
+    },
+    {
+      "id": "pw_plateau_recherche_neuro",
+      "place_type": "service",
+      "display_name": "Plateau de recherche en neurosciences",
+      "official_name": null,
+      "parent_id": "pw",
+      "building_code": "PW",
+      "level": null,
+      "summary": null
+    },
+    {
+      "id": "pw_pole_specialites_neuro",
+      "place_type": "service",
+      "display_name": "Pôle des spécialités neurologiques",
+      "official_name": null,
+      "parent_id": "pw",
+      "building_code": "PW",
+      "level": null,
+      "summary": null
+    },
+    {
+      "id": "pw_radiologie",
+      "place_type": "exam",
+      "display_name": "Radiologie",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_reeduc_cardiaque",
+      "place_type": "service",
+      "display_name": "Rééducation cardiaque / plateau d'effort",
+      "official_name": null,
+      "parent_id": "lp_plateau_explo",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_scanner",
+      "place_type": "exam",
+      "display_name": "Scanner neuroradiologie",
+      "official_name": null,
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": null
+    },
+    {
+      "id": "lp_service_social",
+      "place_type": "service",
+      "display_name": "Service social des usagers",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "uhim_internat",
+      "place_type": "service",
+      "display_name": "UHIM / Internat",
+      "official_name": null,
+      "parent_id": "ghe",
+      "building_code": null,
+      "level": null,
+      "summary": null
+    },
+    {
+      "id": "pw_u1000",
+      "place_type": "unit",
+      "display_name": "Unité 1000",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "pw_u201",
+      "place_type": "unit",
+      "display_name": "Unité 201",
+      "official_name": null,
+      "parent_id": "pw_l2",
+      "building_code": "PW",
+      "level": "2",
+      "summary": null
+    },
+    {
+      "id": "pw_u302",
+      "place_type": "unit",
+      "display_name": "Unité 302",
+      "official_name": null,
+      "parent_id": "pw_l3",
+      "building_code": "PW",
+      "level": "3",
+      "summary": null
+    },
+    {
+      "id": "pw_u400",
+      "place_type": "unit",
+      "display_name": "Unité 400",
+      "official_name": null,
+      "parent_id": "pw_l4",
+      "building_code": "PW",
+      "level": "4",
+      "summary": null
+    },
+    {
+      "id": "pw_u401",
+      "place_type": "unit",
+      "display_name": "Unité 401",
+      "official_name": null,
+      "parent_id": "pw_l4",
+      "building_code": "PW",
+      "level": "4",
+      "summary": null
+    },
+    {
+      "id": "pw_u500",
+      "place_type": "unit",
+      "display_name": "Unité 500",
+      "official_name": null,
+      "parent_id": "pw_l5",
+      "building_code": "PW",
+      "level": "5",
+      "summary": null
+    },
+    {
+      "id": "lp_dietetique",
+      "place_type": "service",
+      "display_name": "Unité de diététique",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "lp_usc_chir",
+      "place_type": "service",
+      "display_name": "USC chirurgicale adulte",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": "RDC"
+    },
+    {
+      "id": "hfme_biberon",
+      "place_type": "service",
+      "display_name": "Biberonnerie",
+      "official_name": "Biberonnerie HFME",
+      "parent_id": "hfme_l2",
+      "building_code": "HFME",
+      "level": "2",
+      "summary": "2e · ascenseur orange · accolée au service diététique"
+    },
+    {
+      "id": "hlp_cardio_a",
+      "place_type": "unit",
+      "display_name": "Cardiologie A",
+      "official_name": "Cardiologie A",
+      "parent_id": "hlp_l4",
+      "building_code": "HLP",
+      "level": "4",
+      "summary": "Cardiologie A"
+    },
+    {
+      "id": "a3_samples",
+      "place_type": "service",
+      "display_name": "Centre de prélèvements",
+      "official_name": "Centre de prélèvements du GHE",
+      "parent_id": "a3_rdc",
+      "building_code": "A3",
+      "level": "RDC",
+      "summary": "Prélèvements biologiques"
+    },
+    {
+      "id": "hlp_cv_surg",
+      "place_type": "service",
+      "display_name": "Chirurgie cardiovasculaire / vasculaire",
+      "official_name": "Chirurgie cardiovasculaire, vasculaire et endovasculaire",
+      "parent_id": "hlp_l5",
+      "building_code": "HLP",
+      "level": "5",
+      "summary": "Chirurgie cardio-vasculaire"
+    },
+    {
+      "id": "hlp_thoracic",
+      "place_type": "service",
+      "display_name": "Chirurgie thoraco-pulmonaire",
+      "official_name": "Chirurgie thoraco-pulmonaire",
+      "parent_id": "hlp_l6",
+      "building_code": "HLP",
+      "level": "6",
+      "summary": "6e étage"
+    },
+    {
+      "id": "a1_ped_consult",
+      "place_type": "service",
+      "display_name": "Consultations pédiatriques A1",
+      "official_name": "Consultations pédiatriques A1",
+      "parent_id": "a1_l1",
+      "building_code": "A1",
+      "level": "1",
+      "summary": "1er étage A1"
+    },
+    {
+      "id": "hlp_endo_a",
+      "place_type": "service",
+      "display_name": "Endocrinologie A — HDJ",
+      "official_name": "Service d’endocrinologie, diabétologie et maladies métaboliques A",
+      "parent_id": "hlp_l9",
+      "building_code": "HLP",
+      "level": "9",
+      "summary": "Hôpital de jour"
+    },
+    {
+      "id": "a1_escale",
+      "place_type": "service",
+      "display_name": "Escale",
+      "official_name": "Rééducation pédiatrique — Escale",
+      "parent_id": "a1_l3",
+      "building_code": "A1",
+      "level": "3",
+      "summary": "3e étage"
+    },
+    {
+      "id": "a1_genetics",
+      "place_type": "service",
+      "display_name": "Génétique clinique",
+      "official_name": "Consultations de génétique clinique",
+      "parent_id": "a1_l4",
+      "building_code": "A1",
+      "level": "4",
+      "summary": "4e étage"
+    },
+    {
+      "id": "hfme_gyn",
+      "place_type": "service",
+      "display_name": "Gynécologie / sénologie",
+      "official_name": "Gynécologie / sénologie",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e étage"
+    },
+    {
+      "id": "hlp_pneumo_a",
+      "place_type": "service",
+      "display_name": "HDJ pneumologie A",
+      "official_name": "Pneumologie A · hôpital de jour",
+      "parent_id": "hlp_l8",
+      "building_code": "HLP",
+      "level": "8",
+      "summary": "8e étage"
+    },
+    {
+      "id": "b14_imaging",
+      "place_type": "service",
+      "display_name": "Imagerie nucléaire",
+      "official_name": "Médecine nucléaire · imagerie",
+      "parent_id": "b14_rdc",
+      "building_code": "B14",
+      "level": "RDC",
+      "summary": "Examens de médecine nucléaire"
+    },
+    {
+      "id": "hfme_maternity",
+      "place_type": "service",
+      "display_name": "Maternité / suites de naissance",
+      "official_name": "Obstétrique suites de naissance / unité kangourou",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e · ascenseurs rose ou orange indiqués"
+    },
+    {
+      "id": "hfme_neonat",
+      "place_type": "service",
+      "display_name": "Néonatalogie et réanimation néonatale",
+      "official_name": "Réanimation et médecine néonatales",
+      "parent_id": "hfme_l3",
+      "building_code": "HFME",
+      "level": "3",
+      "summary": "3e · néonatalogie et réanimation néonatale · ascenseur orange indiqué"
+    },
+    {
+      "id": "hlp_pneumo_b",
+      "place_type": "unit",
+      "display_name": "Pneumologie B",
+      "official_name": "Pneumologie B",
+      "parent_id": "hlp_l7",
+      "building_code": "HLP",
+      "level": "7",
+      "summary": "Hospitalisation de semaine · U70"
+    },
+    {
+      "id": "hfme_child_psych",
+      "place_type": "service",
+      "display_name": "Psychopathologie enfant / adolescent",
+      "official_name": "Psychopathologie du développement de l’enfant et de l’adolescent",
+      "parent_id": "hfme_l6",
+      "building_code": "HFME",
+      "level": "6",
+      "summary": "6e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "hlp_tm_rea",
+      "place_type": "service",
+      "display_name": "Réanimation adulte",
+      "official_name": "Réanimation chirurgicale adulte",
+      "parent_id": "hlp_tm",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Niveau TM"
+    },
+    {
+      "id": "hlp_ped_icu",
+      "place_type": "service",
+      "display_name": "Réanimation cardiopédiatrique",
+      "official_name": "Réanimation cardiopédiatrique",
+      "parent_id": "hlp_l1",
+      "building_code": "HLP",
+      "level": "1",
+      "summary": "Réanimation cardiaque pédiatrique"
+    },
+    {
+      "id": "pw_rea",
+      "place_type": "service",
+      "display_name": "Réanimation neurologique",
+      "official_name": "Réanimation neurologique",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "RDC · entrée A"
+    },
+    {
+      "id": "hfme_ped_icu",
+      "place_type": "service",
+      "display_name": "Réanimation pédiatrique",
+      "official_name": "Réanimation médico-chirurgicale pédiatrique",
+      "parent_id": "hfme_l1",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur vert indiqué"
+    },
+    {
+      "id": "hlp_rythmo",
+      "place_type": "service",
+      "display_name": "Rythmologie",
+      "official_name": "Rythmologie / cardiologie congénitale adulte",
+      "parent_id": "hlp_l3",
+      "building_code": "HLP",
+      "level": "3",
+      "summary": "3e étage"
+    },
+    {
+      "id": "pw_srpr",
+      "place_type": "service",
+      "display_name": "SRPR / salon d'accueil",
+      "official_name": "Service de Rééducation Post Réanimation",
+      "parent_id": "pw_rdj",
+      "building_code": "PW",
+      "level": "RDJ",
+      "summary": "Post-réanimation / rééducation"
+    },
+    {
+      "id": "pw_u200",
+      "place_type": "unit",
+      "display_name": "Unité 200",
+      "official_name": "Neurochirurgie crânienne / fonctionnelle",
+      "parent_id": "pw_l2",
+      "building_code": "PW",
+      "level": "2",
+      "summary": "Entrée A · neurochirurgie"
+    },
+    {
+      "id": "pw_u300",
+      "place_type": "unit",
+      "display_name": "Unité 300",
+      "official_name": "Hôpital de semaine neurochirurgie",
+      "parent_id": "pw_l3",
+      "building_code": "PW",
+      "level": "3",
+      "summary": "Unité 300"
+    },
+    {
+      "id": "pw_u402",
+      "place_type": "unit",
+      "display_name": "Unité 402",
+      "official_name": "Neuro-cognition / neuro-ophtalmologie",
+      "parent_id": "pw_l4",
+      "building_code": "PW",
+      "level": "4",
+      "summary": "Unité 402"
+    },
+    {
+      "id": "pw_u501",
+      "place_type": "unit",
+      "display_name": "Unité 501",
+      "official_name": "Troubles du mouvement / pathologies neuromusculaires",
+      "parent_id": "pw_l5",
+      "building_code": "PW",
+      "level": "5",
+      "summary": "Unité 501"
+    },
+    {
+      "id": "hlp_ccu",
+      "place_type": "service",
+      "display_name": "Urgences cardiologiques / CCU",
+      "official_name": "Urgences cardiologiques et soins intensifs de cardiologie",
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": "RDC · accès ambulance direct"
+    },
+    {
+      "id": "hfme_gyn_er",
+      "place_type": "service",
+      "display_name": "Urgences gynéco-obstétricales",
+      "official_name": "Urgences gynécologiques et obstétricales",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC"
+    },
+    {
+      "id": "hfme_ped_er",
+      "place_type": "service",
+      "display_name": "Urgences pédiatriques",
+      "official_name": "Urgences pédiatriques",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Urgences pédiatriques + UHCD"
+    },
+    {
+      "id": "hlp_usic",
+      "place_type": "service",
+      "display_name": "USIC",
+      "official_name": "Unité de soins intensifs cardiologiques",
+      "parent_id": "hlp_l2",
+      "building_code": "HLP",
+      "level": "2",
+      "summary": "USIC"
+    },
+    {
+      "id": "hfme_acha_ped",
+      "place_type": "service",
+      "display_name": "ACHA pédiatrique",
+      "official_name": "Accueil de chirurgie ambulatoire pédiatrique",
+      "parent_id": "hfme_l1",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur orange indiqué"
+    },
+    {
+      "id": "hlp_cardio_b",
+      "place_type": "unit",
+      "display_name": "Cardiologie B",
+      "official_name": "Cardiologie B",
+      "parent_id": "hlp_l4",
+      "building_code": "HLP",
+      "level": "4",
+      "summary": "Cardiologie B"
+    },
+    {
+      "id": "hlp_tm_consult",
+      "place_type": "service",
+      "display_name": "Consultations Cardio / Pneumo / Endocrino",
+      "official_name": "Consultations spécialisées",
+      "parent_id": "hlp_tm",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Cardiologie · pneumologie · anesthésie · endocrinologie · chirurgie"
+    },
+    {
+      "id": "hlp_echo",
+      "place_type": "service",
+      "display_name": "Échographie cardio / Doppler",
+      "official_name": "Laboratoire d’échographie adulte / Doppler",
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": "Échographie et Doppler"
+    },
+    {
+      "id": "hlp_endo_b",
+      "place_type": "service",
+      "display_name": "Endocrinologie B",
+      "official_name": "Service d’endocrinologie, diabétologie et maladies métaboliques B",
+      "parent_id": "hlp_l9",
+      "building_code": "HLP",
+      "level": "9",
+      "summary": "Hospitalisation · secteur U90"
+    },
+    {
+      "id": "hfme_path_preg",
+      "place_type": "service",
+      "display_name": "Grossesse pathologique",
+      "official_name": "Obstétrique · pathologie de la grossesse",
+      "parent_id": "hfme_l6",
+      "building_code": "HFME",
+      "level": "6",
+      "summary": "6e · ascenseur orange indiqué"
+    },
+    {
+      "id": "hlp_cardio_hdj",
+      "place_type": "service",
+      "display_name": "HDJ cardiologie",
+      "official_name": "Hôpital de jour de cardiologie",
+      "parent_id": "hlp_l6",
+      "building_code": "HLP",
+      "level": "6",
+      "summary": "6e étage"
+    },
+    {
+      "id": "hfme_hepato",
+      "place_type": "service",
+      "display_name": "Hépato-gastro pédiatrique",
+      "official_name": "Pédiatrie hépato-gastro-entérologie",
+      "parent_id": "hfme_l3",
+      "building_code": "HFME",
+      "level": "3",
+      "summary": "3e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "hlp_ped_hosp",
+      "place_type": "service",
+      "display_name": "Hospitalisation cardiopédiatrique",
+      "official_name": "Unité d’hospitalisation médico-chirurgicale en cardiopédiatrie",
+      "parent_id": "hlp_l1",
+      "building_code": "HLP",
+      "level": "1",
+      "summary": "Unité 10 · hospitalisation médico-chirurgicale"
+    },
+    {
+      "id": "a1_ihope",
+      "place_type": "service",
+      "display_name": "IHOPe",
+      "official_name": "Hématologie / oncologie pédiatrique",
+      "parent_id": "a1_l1",
+      "building_code": "A1",
+      "level": "1",
+      "summary": "1er étage"
+    },
+    {
+      "id": "hfme_ped_imaging",
+      "place_type": "service",
+      "display_name": "Imagerie pédiatrique et de la femme",
+      "official_name": "Service d’imagerie pédiatrique et de la femme",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "RDJ · IRM · scanner · radiologie · échographie · imagerie pédiatrique, fœtale et de la femme"
+    },
+    {
+      "id": "hfme_repro",
+      "place_type": "service",
+      "display_name": "PMA / médecine de la reproduction",
+      "official_name": "Médecine de la reproduction",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e étage"
+    },
+    {
+      "id": "hlp_pneumo_c",
+      "place_type": "unit",
+      "display_name": "Pneumologie C",
+      "official_name": "Pneumologie C",
+      "parent_id": "hlp_l7",
+      "building_code": "HLP",
+      "level": "7",
+      "summary": "Hospitalisation complète · U71"
+    },
+    {
+      "id": "pw_psy",
+      "place_type": "service",
+      "display_name": "Psychiatrie adulte / addictologie",
+      "official_name": "Psychiatrie adulte / addictologie",
+      "parent_id": "pw_rdj",
+      "building_code": "PW",
+      "level": "RDJ",
+      "summary": "Entrée B – rez-de-jardin selon page HCL récente"
+    },
+    {
+      "id": "hfme_birth",
+      "place_type": "service",
+      "display_name": "Salles d’accouchement",
+      "official_name": "Salles d’accouchement",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC"
+    },
+    {
+      "id": "a4_neuroinflam",
+      "place_type": "service",
+      "display_name": "SEP / neuro-inflammation",
+      "official_name": "Sclérose en plaques, pathologies de la myéline et neuro-inflammations",
+      "parent_id": "a4",
+      "building_code": "A4",
+      "level": "1-2",
+      "summary": "1er conventionnel/semaine · 2e HDJ"
+    },
+    {
+      "id": "hlp_sicat",
+      "place_type": "service",
+      "display_name": "SICAT / transplantation",
+      "official_name": "SICAT",
+      "parent_id": "hlp_l3",
+      "building_code": "HLP",
+      "level": "3",
+      "summary": "Secteur transplantation / insuffisance cardiaque"
+    },
+    {
+      "id": "hlp_usc",
+      "place_type": "service",
+      "display_name": "Soins continus",
+      "official_name": "Soins continus médicaux adultes",
+      "parent_id": "hlp_l2",
+      "building_code": "HLP",
+      "level": "2",
+      "summary": "USC / soins continus"
+    },
+    {
+      "id": "pw_tca",
+      "place_type": "service",
+      "display_name": "TCA",
+      "official_name": "Centre référent anorexie / troubles du comportement alimentaire",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "RDC · entrée A"
+    },
+    {
+      "id": "b14_therapy",
+      "place_type": "service",
+      "display_name": "Thérapie métabolique",
+      "official_name": "Unité de thérapie métabolique",
+      "parent_id": "b14_rdc",
+      "building_code": "B14",
+      "level": "RDC",
+      "summary": "Hospitalisations en chambres radioprotégées"
+    },
+    {
+      "id": "pw_u100",
+      "place_type": "unit",
+      "display_name": "Unité 100",
+      "official_name": "Neurochirurgie rachis / moelle · neuroradiologie interventionnelle",
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "Neurochirurgie du rachis et de la moelle épinière · neuro-radiologie interventionnelle"
+    },
+    {
+      "id": "pw_u202",
+      "place_type": "unit",
+      "display_name": "Unité 202",
+      "official_name": "Neuro-oncologie médicale",
+      "parent_id": "pw_l2",
+      "building_code": "PW",
+      "level": "2",
+      "summary": "Neuro-oncologie médicale"
+    },
+    {
+      "id": "pw_u301",
+      "place_type": "unit",
+      "display_name": "Unité 301",
+      "official_name": "Neurologie fonctionnelle / épileptologie",
+      "parent_id": "pw_l3",
+      "building_code": "PW",
+      "level": "3",
+      "summary": "Épileptologie"
+    },
+    {
+      "id": "pw_u502",
+      "place_type": "unit",
+      "display_name": "Unité 502",
+      "official_name": "Plateforme commune de jour",
+      "parent_id": "pw_l5",
+      "building_code": "PW",
+      "level": "5",
+      "summary": "Hôpital de jour / plateforme commune"
+    },
+    {
+      "id": "hfme_usap",
+      "place_type": "service",
+      "display_name": "USAP",
+      "official_name": "USAP",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e étage"
+    },
+    {
+      "id": "hlp_cardio_genetics",
+      "place_type": "service",
+      "display_name": "Cardiogénétique",
+      "official_name": "Cardiogénétique",
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": "Couloir à gauche du Relais H"
+    },
+    {
+      "id": "hfme_ped_surg",
+      "place_type": "service",
+      "display_name": "Chirurgie pédiatrique",
+      "official_name": "Chirurgie pédiatrique",
+      "parent_id": "hfme_l1",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er étage"
+    },
+    {
+      "id": "pw_neuro_consult",
+      "place_type": "service",
+      "display_name": "Consultations neurologie",
+      "official_name": "Consultations neurologie",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "Consultations neurologiques"
+    },
+    {
+      "id": "hfme_ped_consult",
+      "place_type": "service",
+      "display_name": "Consultations pédiatriques",
+      "official_name": "Consultations pédiatriques et néonatologiques",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC"
+    },
+    {
+      "id": "hfme_diag_antenatal",
+      "place_type": "service",
+      "display_name": "Diagnostic anténatal",
+      "official_name": "Diagnostic anténatal",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Rez-de-jardin via ascenseur orange"
+    },
+    {
+      "id": "pw_eeg",
+      "place_type": "service",
+      "display_name": "EEG / ENMG",
+      "official_name": "Explorations fonctionnelles neurologiques EEG-ENMG",
+      "parent_id": "pw_l5",
+      "building_code": "PW",
+      "level": "5",
+      "summary": "Explorations fonctionnelles"
+    },
+    {
+      "id": "hfme_ped_endo",
+      "place_type": "service",
+      "display_name": "Endocrino / diabéto / métabolique pédiatrique",
+      "official_name": "Pédiatrie endocrinologie / diabétologie / maladies métaboliques",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "hlp_endo_c",
+      "place_type": "unit",
+      "display_name": "Endocrinologie C",
+      "official_name": "Endocrinologie C",
+      "parent_id": "hlp_l9",
+      "building_code": "HLP",
+      "level": "9",
+      "summary": "Hospitalisation · secteur U90"
+    },
+    {
+      "id": "hlp_tm_imaging",
+      "place_type": "service",
+      "display_name": "Imagerie / plateau interventionnel",
+      "official_name": "Imagerie · unité d’abord vasculaire · plateau interventionnel",
+      "parent_id": "hlp_tm",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Scanner / imagerie / interventionnel"
+    },
+    {
+      "id": "pw_neuro_oph",
+      "place_type": "service",
+      "display_name": "Neuro-ophtalmologie / ORL",
+      "official_name": "Neuro-ophtalmologie / ORL",
+      "parent_id": "pw_l2",
+      "building_code": "PW",
+      "level": "2",
+      "summary": "Consultations au 2e"
+    },
+    {
+      "id": "pw_neuro_rehab",
+      "place_type": "service",
+      "display_name": "Neuro-rééducation",
+      "official_name": "Neuro-rééducation",
+      "parent_id": "pw_rdj",
+      "building_code": "PW",
+      "level": "RDJ",
+      "summary": "Rééducation neurologique"
+    },
+    {
+      "id": "hfme_orthogeny",
+      "place_type": "service",
+      "display_name": "Orthogénie / IVG",
+      "official_name": "Orthogénie",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e étage"
+    },
+    {
+      "id": "hfme_pulmo_allergy",
+      "place_type": "service",
+      "display_name": "Pneumo / allergologie pédiatrique",
+      "official_name": "Pédiatrie pneumologie / allergologie",
+      "parent_id": "hfme_l3",
+      "building_code": "HFME",
+      "level": "3",
+      "summary": "3e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "hlp_ped_usc",
+      "place_type": "service",
+      "display_name": "Soins continus cardiopédiatriques",
+      "official_name": "Unité de Soins Continus cardiopédiatriques",
+      "parent_id": "hlp_l1",
+      "building_code": "HLP",
+      "level": "1",
+      "summary": "Unité 10 · soins continus cardiopédiatriques"
+    },
+    {
+      "id": "pw_u101",
+      "place_type": "unit",
+      "display_name": "Unité 101",
+      "official_name": "Unité de soins intensifs neurovasculaires",
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "USINV"
+    },
+    {
+      "id": "pw_hdja",
+      "place_type": "service",
+      "display_name": "HDJ artériographie / neurochirurgie",
+      "official_name": "HDJ artériographie / neurochirurgie",
+      "parent_id": "pw_rdj",
+      "building_code": "PW",
+      "level": "RDJ",
+      "summary": "Hôpital de jour"
+    },
+    {
+      "id": "hfme_ped_er_hosp",
+      "place_type": "unit",
+      "display_name": "Hospitalisation des urgences pédiatriques",
+      "official_name": null,
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Hospitalisation des urgences pédiatriques · RDJ"
+    },
+    {
+      "id": "pw_imaging",
+      "place_type": "service",
+      "display_name": "Neuroradiologie / imagerie",
+      "official_name": "Neuroradiologie / imagerie",
+      "parent_id": "pw",
+      "building_code": "PW",
+      "level": "RDC/1",
+      "summary": "Imagerie neurologique · scanner et IRM détaillés par examen au 1er étage"
+    },
+    {
+      "id": "hfme_ped_general_l3",
+      "place_type": "service",
+      "display_name": "Pédiatrie générale — niveau 3",
+      "official_name": null,
+      "parent_id": "hfme_l3",
+      "building_code": "HFME",
+      "level": "3",
+      "summary": "Pédiatrie générale · hospitalisation / consultation"
+    },
+    {
+      "id": "hfme_ped_special",
+      "place_type": "service",
+      "display_name": "Pédiatrie spécialisée",
+      "official_name": "Neurologie / néphrologie / dialyse / rhumatologie / dermatologie pédiatriques",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e étage"
+    },
+    {
+      "id": "pw_u102",
+      "place_type": "unit",
+      "display_name": "Unité 102",
+      "official_name": "Hospitalisation complète neurovasculaire",
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "HCNV"
+    },
+    {
+      "id": "pw_cetd",
+      "place_type": "service",
+      "display_name": "Centre d'évaluation et traitement de la douleur",
+      "official_name": "Centre d’Évaluation et de Traitement de la Douleur",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "Douleur"
+    },
+    {
+      "id": "hfme_pain_consult",
+      "place_type": "service",
+      "display_name": "Consultation prise en charge de la douleur",
+      "official_name": null,
+      "parent_id": "hfme_l6",
+      "building_code": "HFME",
+      "level": "6",
+      "summary": "Consultation douleur · niveau 6"
+    },
+    {
+      "id": "pw_plateforme_ait",
+      "place_type": "service",
+      "display_name": "Plateforme AIT",
+      "official_name": "Plateforme AIT",
+      "parent_id": "pw_l1",
+      "building_code": "PW",
+      "level": "1",
+      "summary": "Prise en charge des accidents ischémiques transitoires · 1er étage"
+    },
+    {
+      "id": "hfme_hemato_onco_consult",
+      "place_type": "service",
+      "display_name": "Consultation Institut d’Hématologie et d’Oncologie Pédiatrique",
+      "official_name": null,
+      "parent_id": "hfme_l6",
+      "building_code": "HFME",
+      "level": "6",
+      "summary": "Hématologie / oncologie pédiatrique · consultation · niveau 6"
+    },
+    {
+      "id": "pw_neuropsych",
+      "place_type": "service",
+      "display_name": "Neuropsychologie",
+      "official_name": "Neuropsychologie",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "Neuropsychologie"
+    },
+    {
+      "id": "pw_neurogenetique",
+      "place_type": "service",
+      "display_name": "Consultations de neurogénétique et de médecine prédictive",
+      "official_name": "Consultations de neurogénétique et de médecine prédictive",
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "RDC"
+    },
+    {
+      "id": "pw_service_social_l2",
+      "place_type": "service",
+      "display_name": "Service social",
+      "official_name": null,
+      "parent_id": "pw_l2",
+      "building_code": "PW",
+      "level": "2",
+      "summary": "Repère de service au 2e étage"
+    },
+    {
+      "id": "hfme_ped_functional_l5",
+      "place_type": "service",
+      "display_name": "Explorations fonctionnelles pédiatriques — EEG / EMG / sommeil",
+      "official_name": null,
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "EEG · EMG · sommeil"
+    },
+    {
+      "id": "hfme_a2_obstetric_l5",
+      "place_type": "unit",
+      "display_name": "Obstétrique — suites de naissance (secteur A2)",
+      "official_name": null,
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "Suites de naissance · hospitalisation · secteur A2"
+    },
+    {
+      "id": "hfme_gyn_anesthesia",
+      "place_type": "service",
+      "display_name": "Anesthésie gynéco-maternité",
+      "official_name": "Anesthésie gynéco-maternité",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Consultations gynécologie / maternité · RDJ"
+    },
+    {
+      "id": "hfme_gyn_a_hdj",
+      "place_type": "unit",
+      "display_name": "Gynécologie A / hôpital de jour",
+      "official_name": "Gynécologie A / hôpital de jour",
+      "parent_id": "hfme_gyn",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e · ascenseur rose indiqué"
+    },
+    {
+      "id": "hfme_ped_general",
+      "place_type": "service",
+      "display_name": "Pédiatrie générale",
+      "official_name": "Pédiatrie générale",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e · ascenseur vert indiqué"
+    },
+    {
+      "id": "hfme_uaped",
+      "place_type": "service",
+      "display_name": "UAPED",
+      "official_name": "UAPED",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "Consultations médicales · RDC · ascenseur vert indiqué"
+    },
+    {
+      "id": "hfme_cpdph",
+      "place_type": "service",
+      "display_name": "Centre Pluridisciplinaire de Diagnostic Prénatal (CPDPN)",
+      "official_name": "Centre Pluridisciplinaire de Diagnostic Prénatal (CPDPN)",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Diagnostic prénatal · RDJ"
+    },
+    {
+      "id": "hfme_cardio_consult",
+      "place_type": "service",
+      "display_name": "Consultations de cardiologie pédiatrique",
+      "official_name": "Cardiologie",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "Consultations médicales · RDC"
+    },
+    {
+      "id": "hfme_gyn_b_acha",
+      "place_type": "unit",
+      "display_name": "Gynécologie B / ACHA",
+      "official_name": "Gynécologie B / ACHA",
+      "parent_id": "hfme_gyn",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e · ascenseur rose indiqué"
+    },
+    {
+      "id": "hfme_surgery_welcome",
+      "place_type": "service",
+      "display_name": "Salon d’accueil de chirurgie",
+      "official_name": "Salon d’accueil de chirurgie",
+      "parent_id": "hfme_l1",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur bleu indiqué"
+    },
+    {
+      "id": "hfme_uertd",
+      "place_type": "service",
+      "display_name": "UERTD",
+      "official_name": "UERTD",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e · ascenseur bleu indiqué"
+    },
+    {
+      "id": "hfme_gyn_consult",
+      "place_type": "service",
+      "display_name": "Consultations de gynécologie",
+      "official_name": "Gynécologie",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Consultations gynécologie / maternité · RDJ"
+    },
+    {
+      "id": "hfme_neonat_consult",
+      "place_type": "service",
+      "display_name": "Consultations de néonatologie",
+      "official_name": "Néonatologie",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "Consultations médicales · RDC"
+    },
+    {
+      "id": "hfme_kangaroo",
+      "place_type": "unit",
+      "display_name": "Unité Kangourou",
+      "official_name": "Unité KANGOUROU",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "4e · ascenseur orange indiqué"
+    },
+    {
+      "id": "hfme_cecos",
+      "place_type": "service",
+      "display_name": "Médecine de la reproduction — CECOS",
+      "official_name": "Médecine de la reproduction - CECOS",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Médecine de la reproduction / CECOS · RDJ"
+    },
+    {
+      "id": "pw_bureau_admissions",
+      "place_type": "service",
+      "display_name": "Bureau des admissions — Neuro",
+      "official_name": null,
+      "parent_id": "pw_rdc",
+      "building_code": "PW",
+      "level": "RDC",
+      "summary": "Repère administratif du hall de distribution."
+    },
+    {
+      "id": "hfme_preg_followup",
+      "place_type": "service",
+      "display_name": "Suivi de grossesse",
+      "official_name": "Suivi de grossesse",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Consultations gynécologie / maternité · RDJ"
+    },
+    {
+      "id": "hfme_ped_explorations_rdc",
+      "place_type": "service",
+      "display_name": "Consultations et explorations fonctionnelles de pédiatrie",
+      "official_name": null,
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "ORL · ophtalmologie · stomatologie/maxillo-facial · chirurgie · anesthésie · suites de soins"
+    },
+    {
+      "id": "hfme_senology",
+      "place_type": "service",
+      "display_name": "Sénologie",
+      "official_name": "Sénologie",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Consultations / imagerie · RDJ"
+    },
+    {
+      "id": "hfme_uhcd",
+      "place_type": "unit",
+      "display_name": "UHCD — Urgences pédiatriques",
+      "official_name": "Unité d’Hospitalisation de Courte Durée",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "UHCD / USC · RDJ · ascenseur vert indiqué"
+    },
+    {
+      "id": "hfme_esefnp",
+      "place_type": "service",
+      "display_name": "Épilepsie, sommeil et explorations fonctionnelles neuropédiatriques",
+      "official_name": "Service d’épileptologie clinique, des troubles du sommeil et de neurologie fonctionnelle de l’enfant",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC · ascenseur vert indiqué"
+    },
+    {
+      "id": "hfme_social_service",
+      "place_type": "service",
+      "display_name": "Service social HFME",
+      "official_name": null,
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Service social · RDJ"
+    },
+    {
+      "id": "hfme_surg_est",
+      "place_type": "unit",
+      "display_name": "Chirurgie pédiatrique — secteur EST",
+      "official_name": "EST",
+      "parent_id": "hfme_ped_surg",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur rose indiqué"
+    },
+    {
+      "id": "hfme_school",
+      "place_type": "service",
+      "display_name": "École des enfants hospitalisés",
+      "official_name": "École des enfants hospitalisés",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC · ascenseurs rose ou bleu indiqués"
+    },
+    {
+      "id": "lp_hoppen",
+      "place_type": "service",
+      "display_name": "HOPPEN / happytal",
+      "official_name": null,
+      "parent_id": "lp_hall",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "hfme_neurology",
+      "place_type": "service",
+      "display_name": "Neurologie pédiatrique",
+      "official_name": "Neurologie",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "hlp_tm_radiologie",
+      "place_type": "service",
+      "display_name": "Radiologie",
+      "official_name": null,
+      "parent_id": "hlp_tm_imaging",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": null
+    },
+    {
+      "id": "hfme_radiology",
+      "place_type": "service",
+      "display_name": "Radiologie / radiographies HFME",
+      "official_name": "Radiologie",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Radiologie conventionnelle · RDJ"
+    },
+    {
+      "id": "hfme_chaplaincy",
+      "place_type": "service",
+      "display_name": "Aumônerie",
+      "official_name": "Aumônerie",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "RDC · ascenseurs rose ou bleu indiqués"
+    },
+    {
+      "id": "hfme_surg_centre",
+      "place_type": "unit",
+      "display_name": "Chirurgie pédiatrique — secteur CENTRE",
+      "official_name": "CENTRE",
+      "parent_id": "hfme_ped_surg",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur rose indiqué"
+    },
+    {
+      "id": "hfme_mri",
+      "place_type": "service",
+      "display_name": "IRM HFME",
+      "official_name": "IRM",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "IRM · RDJ · pédiatrique, fœtale, pelvienne et mammaire"
+    },
+    {
+      "id": "hfme_nephro_rheum_derm",
+      "place_type": "service",
+      "display_name": "Néphrologie / rhumatologie / dermatologie pédiatrique",
+      "official_name": "Néphrologie, rhumatologie, dermatologie",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e · ascenseurs bleu ou vert indiqués"
+    },
+    {
+      "id": "lp_securite",
+      "place_type": "service",
+      "display_name": "Poste de sécurité",
+      "official_name": null,
+      "parent_id": "lp_hall",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": null
+    },
+    {
+      "id": "hfme_surg_ouest",
+      "place_type": "unit",
+      "display_name": "Chirurgie pédiatrique — secteur OUEST",
+      "official_name": "OUEST",
+      "parent_id": "hfme_ped_surg",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "1er · ascenseur bleu indiqué"
+    },
+    {
+      "id": "hfme_dialysis",
+      "place_type": "service",
+      "display_name": "Dialyse pédiatrique",
+      "official_name": "Dialyse",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "5e · ascenseur vert indiqué"
+    },
+    {
+      "id": "hfme_scanner",
+      "place_type": "service",
+      "display_name": "Scanner HFME",
+      "official_name": "Scanner",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Scanner · RDJ · imagerie pédiatrique et de la femme"
+    },
+    {
+      "id": "hfme_ultrasound",
+      "place_type": "service",
+      "display_name": "Échographie / Doppler HFME",
+      "official_name": "Échographie",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Échographie · Doppler pédiatrique · RDJ"
+    },
+    {
+      "id": "hfme_absorptiometry",
+      "place_type": "service",
+      "display_name": "Ostéodensitométrie / absorptiométrie",
+      "official_name": "Absorptiométrie",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Ostéodensitométrie · absorptiométrie · RDJ"
+    },
+    {
+      "id": "hfme_breast_gyn_imaging",
+      "place_type": "service",
+      "display_name": "Imagerie de la femme — mammaire et gynécologique",
+      "official_name": "Imagerie mammaire et gynécologique",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "RDJ · mammographie · échographie mammaire · IRM pelvienne/mammaire · scanner"
+    },
+    {
+      "id": "hlp_tm_scanner",
+      "place_type": "service",
+      "display_name": "Scanner",
+      "official_name": null,
+      "parent_id": "hlp_tm_imaging",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Imagerie scanner au niveau TM."
+    },
+    {
+      "id": "hfme_angiomes_consult",
+      "place_type": "service",
+      "display_name": "Consultation multidisciplinaire des angiomes",
+      "official_name": "Consultation Multidisciplinaire des Angiomes",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Angiomes · lésions vasculaires superficielles"
+    },
+    {
+      "id": "hlp_tm_coronarographie",
+      "place_type": "service",
+      "display_name": "Coronarographie",
+      "official_name": null,
+      "parent_id": "hlp_tm_imaging",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Cardiologie interventionnelle / coronarographie."
+    },
+    {
+      "id": "hfme_cerebellum_imaging",
+      "place_type": "service",
+      "display_name": "Cervelet malformatif — expertise imagerie",
+      "official_name": "Centre de compétence Cervelet malformatif",
+      "parent_id": "hfme_ped_imaging",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Expertise pédiatrique et fœtale"
+    },
+    {
+      "id": "lp_bureau_admissions",
+      "place_type": "service",
+      "display_name": "Bureau des admissions",
+      "official_name": null,
+      "parent_id": "hlp_rdc",
+      "building_code": "HLP",
+      "level": "RDC",
+      "summary": "Repère administratif au RDC."
+    },
+    {
+      "id": "hlp_tm_uav",
+      "place_type": "service",
+      "display_name": "Unité d’Abord Vasculaire",
+      "official_name": null,
+      "parent_id": "hlp_tm",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Unité d’abord vasculaire au niveau TM."
+    },
+    {
+      "id": "hfme_ref_a1",
+      "place_type": "service",
+      "display_name": "Centres de référence — Aile A1 / Escale",
+      "official_name": "AILE A1 – ESCALE",
+      "parent_id": "hfme",
+      "building_code": "HFME",
+      "level": null,
+      "summary": "Centres de référence de l’Aile A1 / Escale"
+    },
+    {
+      "id": "hfme_ref_l1",
+      "place_type": "service",
+      "display_name": "Centres de référence — niveau 1",
+      "official_name": "Centres de référence — niveau 1",
+      "parent_id": "hfme_l1",
+      "building_code": "HFME",
+      "level": "1",
+      "summary": "Centres de référence du niveau 1"
+    },
+    {
+      "id": "hfme_ref_l3",
+      "place_type": "service",
+      "display_name": "Centres de référence — niveau 3",
+      "official_name": "Centres de référence — niveau 3",
+      "parent_id": "hfme_l3",
+      "building_code": "HFME",
+      "level": "3",
+      "summary": "Centres de référence du niveau 3"
+    },
+    {
+      "id": "hfme_ref_l4",
+      "place_type": "service",
+      "display_name": "Centres de référence — niveau 4",
+      "official_name": "Centres de référence — niveau 4",
+      "parent_id": "hfme_l4",
+      "building_code": "HFME",
+      "level": "4",
+      "summary": "Centres de référence du niveau 4"
+    },
+    {
+      "id": "hfme_ref_l5",
+      "place_type": "service",
+      "display_name": "Centres de référence — niveau 5",
+      "official_name": "Centres de référence — niveau 5",
+      "parent_id": "hfme_l5",
+      "building_code": "HFME",
+      "level": "5",
+      "summary": "Centres de référence du niveau 5"
+    },
+    {
+      "id": "hfme_ref_rdc_passerelle",
+      "place_type": "service",
+      "display_name": "Centres de référence — RDC après la passerelle",
+      "official_name": "RDC - APRÈS LA PASSERELLE",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "Centres de référence après la passerelle"
+    },
+    {
+      "id": "hfme_ref_rdj",
+      "place_type": "service",
+      "display_name": "Centres de référence — RDJ",
+      "official_name": "Centres de référence — RDJ",
+      "parent_id": "hfme_rdj",
+      "building_code": "HFME",
+      "level": "RDJ",
+      "summary": "Centres de référence du rez-de-jardin"
+    },
+    {
+      "id": "hlp_tm_fibroscopie",
+      "place_type": "service",
+      "display_name": "Fibroscopie",
+      "official_name": null,
+      "parent_id": "hlp_tm",
+      "building_code": "HLP",
+      "level": "TM",
+      "summary": "Repère de fibroscopie relevé sur le secteur TM."
+    },
+    {
+      "id": "hfme_ref_rdc_esefnp",
+      "place_type": "service",
+      "display_name": "Centre de référence — RDC ESEFNP",
+      "official_name": "RDC - ESEFNP",
+      "parent_id": "hfme_rdc",
+      "building_code": "HFME",
+      "level": "RDC",
+      "summary": "Narcolepsies et hypersomnies rares"
+    }
+  ]
+}
