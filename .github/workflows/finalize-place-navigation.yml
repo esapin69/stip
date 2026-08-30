@@ -1,0 +1,33 @@
+name: Finalize place navigation
+on:
+  push:
+    paths:
+      - '.github/workflows/finalize-place-navigation.yml'
+permissions:
+  contents: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply final completeness migration
+        run: python3 tools/refine_place_virtuals.py
+      - name: Validate HTML script syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('places.html').read_text()
+          js=s.rsplit('<script>',1)[1].split('</script>',1)[0]
+          Path('/tmp/places.js').write_text(js)
+          assert 'summarySegmentCovered' in js
+          assert 'virtualById.get(id)' in js
+          PY
+          node --check /tmp/places.js
+          git diff --check
+      - name: Commit final navigation fix
+        run: |
+          git config user.name 'STIP navigation fix'
+          git config user.email 'actions@users.noreply.github.com'
+          git add places.html
+          git commit -m 'Complete clickable navigation for every listed place'
+          git push
