@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - '.github/workflows/refine-service-pages.yml'
+      - 'tools/refine_service_pages.py'
 permissions:
   contents: write
 jobs:
