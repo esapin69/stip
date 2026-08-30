@@ -1,0 +1,43 @@
+name: Patch room ambiguity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-room-ambiguity.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch room search in place
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('places.html')
+          text = path.read_text(encoding='utf-8')
+          start = text.index('function roomMatches(q){')
+          end = text.index('\nfunction searchBuildingHeader', start)
+          replacement = r'''function roomMatches(q){const typed=roomQueryNumber(q);if(!Number.isFinite(typed))return[];const collect=allowShort=>{const raw=[];for(const r of roomRanges){const candidates=[typed];if(allowShort){const off=Number(r.short_number_offset);if(Number.isFinite(off)&&off>0&&typed>off)candidates.push(typed-off);if(typed>=100){const short=typed%100;if(short>0)candidates.push(short)}}for(const n of [...new Set(candidates)]){if(n<Number(r.room_from)||n>Number(r.room_to))continue;const p=roomFromRange(r,n);if(p)raw.push(p)}}const byLocation=new Map();for(const p of raw){const key=[norm(p.building_code),levelKey(p.level),p.__room_number].join('|'),arr=byLocation.get(key)||[];arr.push(p);byLocation.set(key,arr)}const out=[];for(const arr of byLocation.values()){const assigned=arr.filter(p=>p.__service_id);out.push(...(assigned.length?assigned:arr))}const unique=new Map();for(const p of out){const key=[norm(p.building_code),levelKey(p.level),p.__service_id||'__unassigned__',p.__room_number].join('|');if(!unique.has(key))unique.set(key,p)}return [...unique.values()]};let matches=collect(false);if(!matches.length)matches=collect(true);return matches.sort((a,b)=>{const ta=topContainer(a),tb=topContainer(b),c=sortPlaces(ta||a,tb||b);if(c)return c;const fa=floorOrder(a.level),fb=floorOrder(b.level);if(fa!==fb)return fa-fb;const sa=a.__service_id?byId.get(a.__service_id):null,sb=b.__service_id?byId.get(b.__service_id):null;if(sa&&sb){const d=sortPlaces(sa,sb);if(d)return d}else if(sa&&!sb)return-1;else if(!sa&&sb)return 1;return a.__room_number-b.__room_number})}'''
+          path.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
+          PY
+          git rm .github/workflows/patch-room-ambiguity.yml
+          git config user.name 'STIP maintenance'
+          git config user.email 'actions@users.noreply.github.com'
+          git add places.html
+          git commit -m 'Corrige les chambres ambiguës dans la recherche'
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git fetch origin main
+            git rebase origin/main
+          done
+          exit 1
