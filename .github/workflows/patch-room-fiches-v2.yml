@@ -1,0 +1,100 @@
+name: Patch room fiches v2
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-room-fiches-v2.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Patch current production files only
+        shell: bash
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_between(text, start_marker, end_marker, replacement):
+              start=text.index(start_marker)
+              end=text.index(end_marker,start)
+              return text[:start]+replacement+text[end:]
+
+          p=Path('places.html')
+          text=p.read_text(encoding='utf-8')
+
+          old="const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places',STORE='stip_session_v1';"
+          new="const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places',STORE='stip_session_v1';\nconst ACCESS_MODE=new URLSearchParams(location.search).get('mode')||'auto';\nconst hasProAccess=()=>ACCESS_MODE!=='visitor'&&!!localStorage.getItem(STORE);"
+          assert old in text
+          text=text.replace(old,new,1)
+
+          old="async function loadData(){if(data)return data;const session=localStorage.getItem(STORE)||'',action=session?'bootstrap':'bootstrap_public'"
+          new="async function loadData(){if(data)return data;const session=hasProAccess()?(localStorage.getItem(STORE)||''):'',action=session?'bootstrap':'bootstrap_public'"
+          assert old in text
+          text=text.replace(old,new,1)
+
+          text=text.replace("function isInternalAccess(){return !!localStorage.getItem(STORE)}","function isInternalAccess(){return hasProAccess()}",1)
+
+          text=replace_between(text,'function roomFromRange(r,n){','\nfunction roomFromId',r'''function roomFromRange(r,n){const service=r.service_place_id?byId.get(r.service_place_id):null,lvl=roomLevelForRange(r),top=service?topContainer(service):roomTopForRange(r),parent=service||lvl||top,group=String(r.responsible_group_label||'').trim();return{id:virtualRoomId(r,n),place_type:'virtual_room',display_name:`${String(r.display_prefix||'Chambre').trim()||'Chambre'} ${n}`,official_name:null,parent_id:parent?.id||null,building_code:r.building_code||service?.building_code||top?.building_code||'',level:r.level||service?.level||lvl?.level||'',summary:service?cleanTitle(service):group,details:'',sort_order:Number(n)||0,__virtual_room:true,__room_number:Number(n),__room_range_id:r.id,__service_id:service?.id||null,__responsible_group_label:group,__purpose_note:String(r.purpose_note||'').trim(),__route_hint:String(r.route_hint||'').trim(),__arrival_hint:String(r.arrival_hint||'').trim(),__evidence_status:String(r.evidence_status||''),__visibility:String(r.visibility||'public'),__service_unassigned:!service}}''')
+
+          text=replace_between(text,'function roomMatches(q){','\nfunction searchBuildingHeader',r'''function roomMatches(q){const typed=roomQueryNumber(q);if(!Number.isFinite(typed))return[];const collect=allowShort=>{const raw=[];for(const r of roomRanges){const candidates=[typed];if(allowShort){const off=Number(r.short_number_offset);if(Number.isFinite(off)&&off>0&&typed>off)candidates.push(typed-off);if(typed>=100){const short=typed%100;if(short>0)candidates.push(short)}}for(const n of [...new Set(candidates)]){if(n<Number(r.room_from)||n>Number(r.room_to))continue;const p=roomFromRange(r,n);if(p)raw.push(p)}}const byLocation=new Map();for(const p of raw){const key=[norm(p.building_code),levelKey(p.level),p.__room_number].join('|'),arr=byLocation.get(key)||[];arr.push(p);byLocation.set(key,arr)}const out=[];for(const arr of byLocation.values()){const rank=p=>p.__service_id?3:(p.__responsible_group_label?2:1),best=Math.max(...arr.map(rank));out.push(...arr.filter(p=>rank(p)===best))}const unique=new Map();for(const p of out){const owner=p.__service_id||p.__responsible_group_label||'__unassigned__',key=[norm(p.building_code),levelKey(p.level),norm(owner),p.__room_number].join('|'),prev=unique.get(key);if(!prev||p.__visibility==='internal_stip'&&prev.__visibility==='public')unique.set(key,p)}return [...unique.values()]};let matches=collect(false);if(!matches.length)matches=collect(true);return matches.sort((a,b)=>{const ta=topContainer(a),tb=topContainer(b),c=sortPlaces(ta||a,tb||b);if(c)return c;const fa=floorOrder(a.level),fb=floorOrder(b.level);if(fa!==fb)return fa-fb;const sa=a.__service_id?byId.get(a.__service_id):null,sb=b.__service_id?byId.get(b.__service_id):null;if(sa&&sb){const d=sortPlaces(sa,sb);if(d)return d}else if(sa&&!sb)return-1;else if(!sa&&sb)return 1;const ga=norm(a.__responsible_group_label),gb=norm(b.__responsible_group_label);if(ga!==gb)return ga.localeCompare(gb,'fr');return a.__room_number-b.__room_number})}''')
+
+          text=replace_between(text,'function roomSearchGroupedHtml(found){','\nfunction serviceRoomsHtml',r'''function roomSearchGroupedHtml(found){const groups=new Map();for(const p of found){const range=roomRanges.find(r=>String(r.id)===String(p.__room_range_id))||{},top=topContainer(p)||roomTopForRange(range)||p,key=top.id||'ghe';if(!groups.has(key))groups.set(key,{top,items:[]});groups.get(key).items.push(p)}return [...groups.values()].sort((a,b)=>sortPlaces(a.top,b.top)).map(g=>{const floors=new Map();for(const p of g.items){const range=roomRanges.find(r=>String(r.id)===String(p.__room_range_id))||{},lvl=nearestLevel(p)||roomLevelForRange(range),raw=lvl?.level||p.level||'',key=raw?`f:${String(raw).toUpperCase()}`:'other';if(!floors.has(key))floors.set(key,{raw,items:[]});floors.get(key).items.push(p)}const parts=[...floors.values()].sort((a,b)=>floorOrder(a.raw)-floorOrder(b.raw)).map(f=>{const owners=new Map(),standalone=[];for(const p of f.items){const service=p.__service_id?byId.get(p.__service_id):null,label=service?cleanTitle(service):p.__responsible_group_label;if(!label){standalone.push(p);continue}const key=service?`s:${service.id}`:`g:${norm(label)}`;if(!owners.has(key))owners.set(key,{service,label,items:[]});owners.get(key).items.push(p)}const grouped=[...owners.values()].sort((a,b)=>String(a.label).localeCompare(String(b.label),'fr')).map(s=>`<div class="room-service-group"><div class="room-service-title">${s.service?`<a href="${placeHref(s.service)}">${esc(s.label)}</a>`:`<span>${esc(s.label)}</span>`}</div><div class="room-service-brace"><div class="search-cards">${s.items.sort((a,b)=>a.__room_number-b.__room_number).map(searchCard).join('')}</div></div></div>`).join(''),loose=standalone.length?`<div class="search-cards">${standalone.sort((a,b)=>a.__room_number-b.__room_number).map(searchCard).join('')}</div>`:'';return `<div class="search-floor">${f.raw?`<span class="search-floor-label">${esc(floorLabelFromRaw(f.raw))}</span>`:''}<div class="search-brace">${grouped}${loose}</div></div>`}).join('');return `<section class="search-building">${searchBuildingHeader(g.top)}${parts}</section>`}).join('')}''')
+
+          text=replace_between(text,'function roomOwnerHtml(p){','\nfunction roomGuideHtml',r'''function roomOwnerHtml(p){const owner=byId.get(p.__service_id),group=p.__responsible_group_label||'',label=owner?cleanTitle(owner):group,meta=[p.building_code,p.level&&floorLabelFromRaw(p.level)].filter(Boolean).join(' · ');if(!label)return `<section class="info-card room-owner-card room-owner-missing"><h2>Service responsable</h2>${isInternalAccess()?'<span class="completion-badge missing">À compléter</span>':'<p>Service à préciser.</p>'}</section>`;const content=`<span><strong>${esc(label)}</strong>${meta?`<small>${esc(meta)}</small>`:''}</span>${owner?'<b>›</b>':''}`;return `<section class="info-card room-owner-card"><h2>Service responsable</h2>${owner?`<a class="room-owner-link" href="${placeHref(owner)}">${content}</a>`:`<div class="room-owner-link static">${content}</div>`}${isInternalAccess()&&p.__evidence_status==='to_confirm'?'<div class="room-owner-state"><span class="completion-badge missing">À confirmer terrain</span></div>':''}</section>`}
+function roomPurposeHtml(p){const owner=byId.get(p.__service_id),values=p.__purpose_note?[p.__purpose_note]:(owner?servicePurposeValues(owner):[]);return `<section class="info-card"><h2>Pour qui / pour quoi cette chambre est prévue</h2>${values.length?valuesHtml(values):(isInternalAccess()?'<div class="guide-placeholder internal">À compléter</div>':'<div class="guide-placeholder">Information en cours de préparation.</div>')}</section>`}
+function roomRouteHtml(p){const range=roomRanges.find(r=>String(r.id)===String(p.__room_range_id)),top=topContainer(p)||roomTopForRange(range||{}),floor=p.level?floorLabelFromRaw(p.level):'',sector=range?roomRangeLabel(range):`Chambre ${p.__room_number}`,fallback=[top&&`Rejoindre ${cleanTitle(top)}`,floor,sector&&`secteur ${sector.toLowerCase()}`].filter(Boolean).join(' · '),text=p.__route_hint||fallback;return `<section class="info-card"><h2>Comment y aller</h2>${text?`<p>${esc(text)}</p>`:(isInternalAccess()?'<div class="guide-placeholder internal">À compléter</div>':'<div class="guide-placeholder">Information en cours de préparation.</div>')}</section>`}
+function roomArrivalHtml(p){return `<section class="info-card"><h2>Reconnaître l’arrivée</h2>${p.__arrival_hint?`<p>${esc(p.__arrival_hint)}</p>`:(isInternalAccess()?'<div class="guide-placeholder internal">À compléter</div>':'<div class="guide-placeholder">Information en cours de préparation.</div>')}</section>`}
+function roomCompletionHtml(p){if(!isInternalAccess())return'';const owner=byId.get(p.__service_id),g=owner?serviceGuideData(owner):null,transport=owner?tagValuesFor(owner,['transport:','patient_transport:']):[],staffElev=owner?tagValuesFor(owner,['staff_elevator:','elevator_staff:','ascenseur_pro:']):[],contacts=owner?tagValuesFor(owner,['contact:','phone:','tel:','telephone:','internal_email:','email_internal:']):[],warnings=owner?tagValuesFor(owner,['warning:','vigilance:']):[],tracker=[['Service responsable',!!(owner||p.__responsible_group_label)],['Affectation exacte de la chambre',!!owner],['Pour qui / pour quoi',!!p.__purpose_note||(g&&g.purpose.length>0)],['Comment y aller',!!p.__route_hint],['Reconnaître l’arrivée',!!p.__arrival_hint],['À proximité',!!(g&&g.nearMarkup)],['Dans le service',!!(g&&(g.inside.length||g.landmarks.length))],['Contact public',!!(g&&(g.publicPhone.length||g.publicEmail.length||g.publicUrl.length))],['Accessibilité',!!(g&&g.access.length)],['Transport patient',transport.length>0],['Ascenseurs / accès professionnels',staffElev.length>0],['Contacts internes',contacts.length>0],['Points de vigilance',warnings.length>0]];return `<div class="internal-divider"><span>Informations internes STIP · chambre</span></div><section class="internal-zone"><div class="completion-grid">${tracker.map(x=>completionRowHtml(x[0],x[1])).join('')}</div></section>`}
+function genericFutureSlotsHtml(p){if(!isInternalAccess()||destinationTypes.has(p.place_type)||p.__virtual_room)return'';const purpose=!!(p.details||tagValuesFor(p,['purpose:','about:','public_info:']).length),route=routes.some(r=>r.to_place_id===p.id||r.from_place_id===p.id),near=relations.some(r=>r.from_place_id===p.id||r.to_place_id===p.id),arrival=tagValuesFor(p,['arrival:','arrivee:','repere_arrivee:']).length>0,access=tagValuesFor(p,['accessibility:','accessibilite:']).length>0,contact=tagValuesFor(p,['public_phone:','phone_public:','tel_public:','public_email:','email_public:','public_url:','website:']).length>0,missing=[['À quoi sert ce lieu',purpose],['Comment y aller',route],['À proximité',near],['Reconnaître l’arrivée',arrival],['Accessibilité',access],['Contact public',contact]].filter(x=>!x[1]);if(!missing.length)return'';return `<div class="internal-divider"><span>Informations à compléter</span></div><section class="internal-zone"><div class="completion-grid">${missing.map(x=>completionRowHtml(x[0],false)).join('')}</div></section>`}
+function roomInternalHtml(p){const owner=byId.get(p.__service_id);return `${roomCompletionHtml(p)}${owner?internalServiceHtml(owner):''}`}
+''')
+
+          # Remove the old roomInternalHtml that follows roomGuideHtml, while keeping roomGuideHtml itself.
+          old="function roomGuideHtml(p){const owner=byId.get(p.__service_id);return owner?serviceGuideHtml(owner):''}\nfunction roomInternalHtml(p){const owner=byId.get(p.__service_id);return owner?internalServiceHtml(owner):''}"
+          new="function roomGuideHtml(p){const owner=byId.get(p.__service_id);return owner?serviceGuideHtml(owner):''}"
+          assert old in text
+          text=text.replace(old,new,1)
+
+          old="${locationHtml(p)}${isRoom?roomOwnerHtml(p):''}${isService?serviceRoomsHtml(p):''}${serviceContent}${elevatorReferenceHtml(p)}${elevatorStopsHtml(p)}${helipadInfoHtml(p)}${constraintsHtml(p)}${internalContent}${sections}`"
+          new="${locationHtml(p)}${isRoom?roomOwnerHtml(p)+roomPurposeHtml(p)+roomRouteHtml(p)+roomArrivalHtml(p):''}${isService?serviceRoomsHtml(p):''}${serviceContent}${elevatorReferenceHtml(p)}${elevatorStopsHtml(p)}${helipadInfoHtml(p)}${constraintsHtml(p)}${internalContent}${genericFutureSlotsHtml(p)}${sections}`"
+          assert old in text
+          text=text.replace(old,new,1)
+
+          css='''\n    /* STIP_ROOM_FICHE_V2 */\n    .room-owner-card{border:2px solid var(--primary);box-shadow:0 11px 26px rgba(23,63,93,.10)}.room-owner-card h2{font-size:1rem}.room-owner-link.static{grid-template-columns:minmax(0,1fr)}.room-owner-link.static>span{padding:13px 14px}.room-owner-state{margin-top:9px}.room-owner-missing{border-color:#d98f9a;background:#fffafa}.room-owner-missing>.completion-badge{margin-top:5px}.room-service-title>span{color:var(--primary)}\n'''
+          marker='    /* STIP_HOSPITAL_TEXT_LAYOUT_FINAL_V2 */'
+          assert marker in text
+          if '/* STIP_ROOM_FICHE_V2 */' not in text:
+              text=text.replace(marker,css+'\n'+marker,1)
+
+          p.write_text(text,encoding='utf-8')
+
+          entry=Path('places-entry.js')
+          et=entry.read_text(encoding='utf-8')
+          et=et.replace("const target='places.html?v=20260831-rooms-final1';","const target='places.html?v=20260831-room-fiche2&mode=pro';")
+          entry.write_text(et,encoding='utf-8')
+
+          idx=Path('index.html')
+          it=idx.read_text(encoding='utf-8')
+          assert 'places.html?v=20260831-rooms-final1' in it
+          it=it.replace('places.html?v=20260831-rooms-final1','places.html?v=20260831-room-fiche2&mode=visitor',1)
+          it=it.replace('places-entry.js?v=20260831-rooms-final1','places-entry.js?v=20260831-room-fiche2',1)
+          idx.write_text(it,encoding='utf-8')
+          PY
+          git rm .github/workflows/patch-room-fiches-v2.yml
+          git config user.name 'STIP maintenance'
+          git config user.email 'actions@users.noreply.github.com'
+          git add places.html places-entry.js index.html
+          git commit -m 'Finalise les fiches chambres et les accès visiteur pro'
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git fetch origin main
+            git rebase origin/main
+          done
+          exit 1
