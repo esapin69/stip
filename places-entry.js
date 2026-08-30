@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
 const icon='<img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" aria-hidden="true">';
-function open(e){e?.preventDefault?.();e?.stopPropagation?.();location.href='places.html'}
+const target='places.html?v=20260831-rooms-final1';
+function open(e){e?.preventDefault?.();e?.stopPropagation?.();location.href=target}
 function injectHome(){
   if(!window.STIPSession&&!window.STIPBootCache)return;
   const box=document.querySelector('#homeView .hc-apps');
@@ -15,6 +16,6 @@ function injectHome(){
 }
 let queued=false;function queue(){if(queued)return;queued=true;requestAnimationFrame(()=>{queued=false;injectHome()})}
 ['stip:session-ready','stip:boot-updated','stip:route'].forEach(n=>window.addEventListener(n,queue));window.addEventListener('pageshow',queue);
-document.addEventListener('pointerdown',e=>{if(e.target.closest?.('[data-stip-places]')){const l=document.createElement('link');l.rel='prefetch';l.href='places.html';document.head.appendChild(l)}},{passive:true,capture:true});
+document.addEventListener('pointerdown',e=>{if(e.target.closest?.('[data-stip-places]')){const l=document.createElement('link');l.rel='prefetch';l.href=target;document.head.appendChild(l)}},{passive:true,capture:true});
 queue();
 })();
