@@ -1,0 +1,46 @@
+from pathlib import Path
+
+p=Path('places.html')
+s=p.read_text()
+
+old="let data=null,places=[],index=[],byId=new Map(),children=new Map(),aliases=new Map(),tags=new Map(),relations=[],routes=[],routeSteps=[],constraints=[],elevatorStops=[];"
+new="let data=null,places=[],index=[],byId=new Map(),virtualById=new Map(),children=new Map(),aliases=new Map(),tags=new Map(),relations=[],routes=[],routeSteps=[],constraints=[],elevatorStops=[];"
+assert old in s
+s=s.replace(old,new,1)
+
+start=s.index('function build(d){')
+end=s.index('\nasync function loadData',start)
+build_new="""function build(d){data=d;places=d.places||[];relations=d.relations||[];routes=d.routes||[];routeSteps=d.route_steps||[];constraints=d.constraints||[];elevatorStops=d.elevator_stops||[];byId=new Map();virtualById=new Map();children=new Map();aliases=new Map();tags=new Map();places.forEach(p=>byId.set(p.id,p));places.forEach(p=>{if(!p.parent_id)return;const x=children.get(p.parent_id)||[];x.push(p);children.set(p.parent_id,x)});for(const x of children.values())x.sort(sortPlaces);(d.aliases||[]).forEach(a=>{const x=aliases.get(a.place_id)||[];x.push(a.alias);aliases.set(a.place_id,x)});(d.tags||[]).forEach(t=>{const x=tags.get(t.place_id)||[];x.push(t.tag);tags.set(t.place_id,x)});rebuildVirtualSummaryPlaces();const searchable=[...places,...virtualById.values()];index=searchable.map(p=>{const primary=norm([cleanTitle(p),p.display_name,p.official_name,p.building_code,p.level,...(aliases.get(p.id)||[]),...(tags.get(p.id)||[])].filter(Boolean).join(' ')),secondary=norm([p.summary,p.details].filter(Boolean).join(' '));return{p,primary,secondary,text:[primary,secondary].filter(Boolean).join(' ')}})}"""
+s=s[:start]+build_new+s[end:]
+
+marker="function levelKey(v){return String(v||'').toUpperCase().replace(/^NIVEAU\\s*/,'').replace(/^ÉTAGE\\s*/,'').replace(/\\s+/g,'').trim()}"
+assert marker in s
+helpers=marker+"""
+function levelTokensFor(raw){const value=String(raw||'').toUpperCase().trim(),out=new Set();if(!value)return out;const range=value.match(/^\\s*(-?\\d+)\\s*-\\s*(-?\\d+)\\s*$/);if(range){let a=Number(range[1]),b=Number(range[2]),step=a<=b?1:-1;for(let n=a;;n+=step){out.add(String(n));if(n===b)break}return out}for(const part of value.split(/[\\/,+]/).map(x=>x.trim()).filter(Boolean))out.add(levelKey(part));return out}
+function realDestinationsForLevel(level){const own=(children.get(level.id)||[]).filter(x=>destinationTypes.has(x.place_type)),container=level.parent_id?byId.get(level.parent_id):null,direct=container?(children.get(container.id)||[]).filter(x=>destinationTypes.has(x.place_type)):[],key=levelKey(level.level),extra=direct.filter(x=>x.id!==level.id&&levelTokensFor(x.level).has(key)),seen=new Set(),out=[];for(const x of [...own,...extra].sort(sortPlaces)){if(!x?.id||seen.has(x.id))continue;seen.add(x.id);out.push(x)}return out}
+function summarySegments(level){return String(level?.summary||'').split(/\\s*·\\s*/).map(x=>x.trim()).filter(Boolean)}
+function virtualSummaryItems(level){return [...virtualById.values()].filter(x=>x.parent_id===level.id).sort(sortPlaces)}
+function rebuildVirtualSummaryPlaces(){virtualById=new Map();for(const level of places.filter(x=>x.place_type==='level')){if(realDestinationsForLevel(level).length)continue;const parts=summarySegments(level);if(!parts.length)continue;const top=topContainer(level);parts.forEach((label,i)=>{const v={id:`__summary__${level.id}__${i}`,place_type:'service',display_name:label,official_name:null,parent_id:level.id,building_code:top?.building_code||'',level:level.level||'',summary:'',details:'',sort_order:i+1,__virtual_summary:true};virtualById.set(v.id,v)})}}
+function destinationsForLevel(level){const real=realDestinationsForLevel(level);return real.length?real:virtualSummaryItems(level)}"""
+s=s.replace(marker,helpers,1)
+
+start=s.index('function floorBlockHtml(')
+end=s.index('\nfunction looseGroupHtml',start)
+floor_new="""function floorBlockHtml(level,extras=[],isHfme=false){const own=(children.get(level.id)||[]).filter(x=>destinationTypes.has(x.place_type)),seen=new Set(),real=[];for(const x of [...own,...extras].sort(sortPlaces)){if(!x?.id||seen.has(x.id))continue;seen.add(x.id);real.push(x)}const items=real.length?real:virtualSummaryItems(level);return `<section class=\"floor-block\"><div class=\"floor-head\"><a class=\"floor-link\" href=\"#/place/${encodeURIComponent(level.id)}\">${esc(floorLabel(level))}<span>›</span></a></div><div class=\"floor-body\">${items.length?`<div class=\"detail-list\">${groupedRowsHtml(items,isHfme)}</div>`:(level.summary?`<p class=\"floor-summary\">${esc(level.summary)}</p>`:'')}</div></section>`}"""
+s=s[:start]+floor_new+s[end:]
+
+start=s.index('function containerSections(')
+end=s.index('\nfunction detailsHtml',start)
+container_new="""function containerSections(container,levels,direct){const extras=new Map(levels.map(l=>[l.id,[]])),multi=[],unknown=[];for(const p of direct){const raw=String(p.level||'').trim();if(!raw){unknown.push(p);continue}const tokens=levelTokensFor(raw),matched=levels.filter(l=>tokens.has(levelKey(l.level)));if(matched.length){matched.forEach(l=>extras.get(l.id).push(p))}else multi.push(p)}const hfme=container.id==='hfme';let out=hfme?hfmeLegend():'';out+=levels.map(l=>floorBlockHtml(l,extras.get(l.id)||[],hfme)).join('');out+=looseGroupHtml('Plusieurs niveaux','Ces lieux couvrent plusieurs niveaux ; ils ne sont donc pas rangés sous un seul étage.',multi,hfme);out+=looseGroupHtml('Étage à préciser','Le lieu est connu, mais son étage exact reste à préciser.',unknown,hfme);return out}"""
+s=s[:start]+container_new+s[end:]
+
+old="function renderPlace(id){const p=byId.get(id);"
+assert old in s
+s=s.replace(old,"function renderPlace(id){const p=byId.get(id)||virtualById.get(id);",1)
+
+old="else if(isLevel)sections=sectionHtml('Lieux et services de cet étage',destinations,false,{hfme:topContainer(p)?.id==='hfme'})+sectionHtml('Autres secteurs',other,false);"
+assert old in s
+s=s.replace(old,"else if(isLevel)sections=sectionHtml('Lieux et services de cet étage',destinationsForLevel(p),false,{hfme:topContainer(p)?.id==='hfme'})+sectionHtml('Autres secteurs',other,false);",1)
+
+p.write_text(s)
+print('patched',len(s))
