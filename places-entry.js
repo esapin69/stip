@@ -2,8 +2,10 @@
 'use strict';
 const icon='<img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" aria-hidden="true">';
 const target='places-app.html?v=20260831-access-depth1';
-function level(){const d=window.STIPSession?.depths||window.STIPBootCache?.depths||{};if(Object.prototype.hasOwnProperty.call(d,'places'))return String(d.places||'none').toLowerCase();return 'basic'}
-function allowed(){const r=String(window.STIPSession?.role_key||window.STIPBootCache?.role_key||'').toLowerCase();return r==='admin'||level()!=='none'}
+function session(){return window.STIPSession||window.STIPBootCache||{}}
+function level(){const d=session().depths||{};if(Object.prototype.hasOwnProperty.call(d,'places'))return String(d.places||'none').toLowerCase();return 'basic'}
+function permission(){const p=session().permissions||{};if(Object.prototype.hasOwnProperty.call(p,'places_enabled'))return !!p.places_enabled;if(Object.prototype.hasOwnProperty.call(p,'places'))return !!p.places;if(Object.prototype.hasOwnProperty.call(p,'visiter_les_lieux'))return !!p.visiter_les_lieux;return null}
+function allowed(){const r=String(session().role_key||'').toLowerCase();if(r==='admin')return true;const p=permission();if(p===false)return false;if(p===true)return level()!=='none';return level()!=='none'}
 function open(e){e?.preventDefault?.();e?.stopPropagation?.();if(!allowed())return;location.href=target}
 function injectHome(){
   if(!window.STIPSession&&!window.STIPBootCache)return;
