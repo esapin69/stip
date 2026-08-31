@@ -26,4 +26,5 @@ async function searchAgents(query=''){await GHE_AUTH_READY;const r=await eva('se
 async function ensureCase(agentId){return agentId}
 function openAgentEvaluation(agentId){location.href=`responsable-evaluations.html?agent=${encodeURIComponent(agentId)}`;return Promise.resolve(agentId)}
 window.GHEAuth={ready:GHE_AUTH_READY,get user(){return authState.user},hasAccess:key=>Boolean(bootCache?.permissions?.[key])};window.AgentContext=AgentContext;window.apiGet=apiGet;window.apiPost=apiPost;window.esc=esc;window.q=q;window.setStatus=setStatus;window.formObject=formObject;window.displayDate=displayDate;window.GHEBase={bootstrap,searchAgents,ensureCase,openAgentEvaluation,displayName,onb,eva};
+if(!document.querySelector('script[data-stip-quick-universal]')){const s=document.createElement('script');s.src='quick-access-universal.js?v=20260831-quick3';s.dataset.stipQuickUniversal='1';document.head.appendChild(s)}
 })();
