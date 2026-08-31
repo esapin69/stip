@@ -1,6 +1,0 @@
-(()=>{'use strict';
-const URL='https://sites.google.com/view/hfme-notes/notes-rapides';
-function allowed(){const p=window.STIPSession?.permissions||window.STIPBootCache?.permissions||{},lv=String(p.__levels?.notes||'').toLowerCase();return p.notes===true&&lv==='pro'}
-function install(){const apps=document.querySelector('#homeView .hc-apps');if(!apps)return;let b=apps.querySelector('[data-app="notes"]');if(!allowed()){b?.remove();return}if(b)return;b=document.createElement('button');b.type='button';b.className='hc-app notes';b.dataset.app='notes';b.innerHTML='<span><svg viewBox="0 0 24 24"><path d="M4 20h4l11-11-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4M4 20l4-1"/></svg></span><strong>Prendre des notes</strong>';b.addEventListener('click',()=>{if(allowed())location.href=URL});const responsable=apps.querySelector('[data-app="responsable"]');if(responsable)responsable.insertAdjacentElement('afterend',b);else apps.appendChild(b)}
-let raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;install()})}['stip:session-ready','stip:boot-updated','stip:route'].forEach(e=>window.addEventListener(e,schedule));window.addEventListener('pageshow',schedule);schedule();
-})();
