@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const loaded=new Map(),V='20260831-perf1';
+const loaded=new Map(),V='20260831-stable5';
 function load(src){if(loaded.has(src))return loaded.get(src);const p=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=`${src}?v=${V}`;s.async=false;s.onload=()=>ok(src);s.onerror=()=>{loaded.delete(src);ko(new Error(`Chargement impossible: ${src}`))};document.body.appendChild(s)});loaded.set(src,p);return p}
 async function seq(list){for(const x of list)await load(x)}
 function later(list){const run=()=>seq(list).catch(console.error);if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2400});else setTimeout(run,900)}
@@ -8,7 +8,7 @@ const personalCore=['planning-home.js','planning-compare-inline.js','planning-mo
 const personalExtras=['planning-print-reference.js','agent-week-view.js','planning-agenda-extras.js','calendar-subscriptions.js','calendar-responsable-gate.js','change-permission-gate.js','day-workflow.js','day-workflow-leave.js','day-workflow-home-bridge.js','signature-success-ui.js'];
 const teamCore=['planning-home.js','planning-hub-enhance.js'];
 const teamExtras=['calendar-subscriptions.js','calendar-responsable-gate.js'];
-const changeCore=['planning-home.js','change-workflow.js','change-permission-gate.js'];
+const changeCore=['planning-home.js','change-workflow.js','change-permission-gate.js','staffing-guidance.js'];
 let busyRoute='';
 async function ensureRoute(r){r=String(r||'');if(!r)return;if(r.startsWith('contacts')){window.STIPReadCache?.requestContacts?.();await seq(['section-hubs.js']);window.STIPHubs?.contactsRoute?.(r);return}if(!r.startsWith('planning'))return;const kind=r.includes('/team')||r.includes('/spirit')?'team':r.includes('/change')?'change':'personal';const key=`${r}|${kind}`;if(busyRoute===key)return;busyRoute=key;try{if(kind==='team'){await seq(teamCore);later(teamExtras)}else if(kind==='change'){await seq(changeCore)}else{await seq(personalCore);later(personalExtras)}window.dispatchEvent(new CustomEvent('stip:lazy-ready',{detail:{route:r,kind}}))}finally{busyRoute=''}}
 window.STIPLoad={script:load,route:ensureRoute};
