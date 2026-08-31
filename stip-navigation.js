@@ -26,4 +26,5 @@ document.addEventListener('click',e=>{
   back(b.dataset?.backFallback||familyFallback());
 },true);
 window.STIPNav={back,canBack};
+if(!document.querySelector('script[data-stip-quick-universal]')){const s=document.createElement('script');s.src='quick-access-universal.js?v=20260831-quick3';s.dataset.stipQuickUniversal='1';document.head.appendChild(s)}
 })();
