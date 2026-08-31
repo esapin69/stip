@@ -1,4 +1,4 @@
-name: Fix IRM full photo
+name: Consolidate IRM hero
 
 on:
   push:
@@ -14,25 +14,48 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Fix IRM hero CSS
+      - name: Consolidate IRM implementation
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
           p=Path('places.html')
           s=p.read_text(encoding='utf-8')
-          old='''.irm-visual:after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(180deg,rgba(4,20,33,0) 0%,rgba(4,20,33,.20) 45%,rgba(4,20,33,.62) 100%);pointer-events:none}\n    .irm-title-overlay{position:absolute;z-index:2;left:22px;right:22px;bottom:18px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.95),0 0 18px rgba(0,0,0,.55)}'''
-          new='''.irm-visual:after{display:none!important}\n    .irm-title-overlay{position:absolute;z-index:2;left:18px;right:auto;bottom:16px;max-width:calc(100% - 36px);padding:10px 14px 11px;border-radius:12px;background:rgba(4,20,33,.54);color:#fff;box-shadow:0 5px 18px rgba(0,0,0,.16);text-shadow:0 2px 7px rgba(0,0,0,.95);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}'''
-          if old not in s:
-              raise SystemExit('current IRM CSS marker not found')
-          s=s.replace(old,new,1)
+
+          # Remove every previous IRM CSS layer.
+          s=re.sub(r'\n\s*/\* STIP_IRM_HERO_PHOTO_V1 \*/.*?(?=\n\s*/\* STIP_SERVICE_FICHE_V1 \*/)', '\n', s, flags=re.S)
+          s=re.sub(r'\n\s*/\* STIP_IRM_COMPLETE_IMAGE_V3 \*/.*?(?=\n\s*</style>)', '\n', s, flags=re.S)
+
+          css=r'''
+    /* STIP_IRM_SINGLE_V1 */
+    .irm-card{padding:0!important;min-height:0!important;display:block!important;overflow:hidden!important;border:1px solid #c9d9de!important;border-radius:14px!important;background:#fff!important;color:var(--ink)!important;text-shadow:none!important;box-shadow:0 12px 28px rgba(10,69,83,.10)!important}
+    .irm-visual{position:relative;width:100%;overflow:hidden;background:#071e31}
+    .irm-visual img{display:block!important;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;object-position:center!important}
+    .irm-title-overlay{position:absolute;left:16px;bottom:14px;z-index:2;max-width:calc(100% - 32px);padding:8px 11px 9px;border-radius:10px;background:rgba(4,20,33,.58);color:#fff;text-shadow:0 2px 7px rgba(0,0,0,.9)}
+    .irm-title-overlay .detail-type{margin:0 0 4px!important;color:#fff!important;font-size:.62rem!important;font-weight:950!important;letter-spacing:.12em!important}
+    .irm-title-overlay h1{margin:0!important;color:#fff!important;font-size:clamp(1.75rem,8vw,2.45rem)!important;line-height:1!important;letter-spacing:-.04em!important}
+    .irm-subtitles{padding:13px 16px 15px;background:#fff}
+    .irm-subtitles p{margin:0!important;color:#466a76!important;text-shadow:none!important;font-size:.78rem!important;line-height:1.4!important;font-weight:730!important}
+    .irm-subtitles p+p{margin-top:5px!important}
+'''
+          s=s.replace('</style>', css+'\n</style>', 1)
+
+          # Replace the IRM render once with a single clean structure and a short title.
+          pattern=r"const irmHeroClass=isIrm\?' irm-photo-hero':'';const heroHtml=isIrm\?`<article class=\\\"detail-hero irm-card\\\">.*?</article>`:`<article class=\\\"detail-hero\$\{hospitalHeroClass\}\$\{irmHeroClass\}\\\">.*?</article>`;detail\.innerHTML=`<a class=\\\"detail-back\\\" href=\\\"#\\\">‹ Retour à Visiter les lieux</a>\$\{heroHtml\}\$\{navHtml\(p\)\}"
+          m=re.search(pattern,s,flags=re.S)
+          if not m:
+              raise SystemExit('current IRM render block not found')
+          replacement="""const irmHeroClass=isIrm?' irm-photo-hero':'';const irmShortTitle=isIrm?cleanTitle(p).replace(/^IRM\\s*(?:\\d+(?:[,.]\\d+)?\\s*T)?\\s*[—–:-]*\\s*/i,'').trim():'';const irmSummary=isIrm?String(p.summary||'').replace(/^IRM\\s*\\d+(?:[,.]\\d+)?\\s*T\\s*[·—–:-]*\\s*/i,'').trim():'';const heroHtml=isIrm?`<article class=\"detail-hero irm-card\"><div class=\"irm-visual\"><img src=\"images/irm/irm-header.jpg\" alt=\"\"><div class=\"irm-title-overlay\"><span class=\"detail-type\">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(irmShortTitle||cleanTitle(p))}</h1></div></div><div class=\"irm-subtitles\">${loc?`<p>${esc(loc)}</p>`:''}${irmSummary?`<p>${esc(irmSummary)}</p>`:''}</div></article>`:`<article class=\"detail-hero${hospitalHeroClass}${irmHeroClass}\"><span class=\"detail-type\">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1>${official?`<p class=\"detail-official\">${esc(official)}</p>`:''}${loc?`<p class=\"detail-meta\">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</article>`;detail.innerHTML=`<a class=\"detail-back\" href=\"#\">‹ Retour à Visiter les lieux</a>${heroHtml}${navHtml(p)}"""
+          s=s[:m.start()]+replacement+s[m.end():]
+
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit
+      - name: Commit clean implementation
         run: |
           git config user.name 'STIP automation'
           git config user.email 'actions@users.noreply.github.com'
           git add places.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Remove IRM photo veil and localize title contrast'
+          git commit -m 'Consolidate IRM hero and remove duplicate layers'
           git push
