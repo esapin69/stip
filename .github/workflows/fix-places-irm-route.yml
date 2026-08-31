@@ -1,4 +1,4 @@
-name: Fix places IRM and route
+name: Fix IRM full photo
 
 on:
   push:
@@ -14,35 +14,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Patch places.html
+      - name: Fix IRM hero CSS
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('places.html')
           s=p.read_text(encoding='utf-8')
-          css='''\n    /* STIP_IRM_COMPLETE_IMAGE_V3 */\n    .irm-card{padding:0!important;min-height:0!important;display:block!important;overflow:hidden!important;background:#fff!important;color:var(--ink)!important;text-shadow:none!important;border:1px solid #c9d9de!important}\n    .irm-visual{position:relative;width:100%;background:#071e31;overflow:hidden}\n    .irm-visual img{display:block;width:100%;height:auto!important;max-height:none!important;object-fit:contain!important;object-position:center!important}\n    .irm-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,20,33,.02) 0%,rgba(4,20,33,.01) 48%,rgba(4,20,33,.64) 100%);pointer-events:none}\n    .irm-title-overlay{position:absolute;z-index:2;left:22px;right:22px;bottom:18px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.9)}\n    .irm-title-overlay .detail-type{margin:0 0 7px;color:#fff!important;font-size:.67rem;font-weight:950;letter-spacing:.13em}\n    .irm-title-overlay h1{margin:0;color:#fff;font-size:clamp(1.85rem,8vw,2.55rem);line-height:1;letter-spacing:-.04em}\n    .irm-subtitles{padding:15px 22px 17px;background:#fff}\n    .irm-subtitles .detail-official,.irm-subtitles .detail-meta,.irm-subtitles p{margin:0!important;color:#355d6b!important;text-shadow:none!important}\n    .irm-subtitles .detail-official{font-size:.88rem!important;font-weight:900!important}.irm-subtitles .detail-meta{font-size:.82rem!important;font-weight:850!important}.irm-subtitles p{font-size:.78rem!important;line-height:1.42!important;font-weight:700!important}.irm-subtitles>*+*{margin-top:7px!important}\n    @media(max-width:430px){.irm-title-overlay{left:16px;right:16px;bottom:14px}.irm-subtitles{padding:13px 16px 15px}}\n'''
-          if 'STIP_IRM_COMPLETE_IMAGE_V3' not in s:s=s.replace('</style>',css+'\n</style>',1)
-          if 'ROUTE_STORE' not in s:s=s.replace("const ACCESS_MODE=new URLSearchParams(location.search).get('mode')||'auto';","const ACCESS_MODE=new URLSearchParams(location.search).get('mode')||'auto';\nconst ROUTE_STORE='stip_places_route_v1';",1)
-          old='''const irmHeroClass=isIrm?' irm-photo-hero':'';detail.innerHTML=`<a class="detail-back" href="#">‹ Retour à Visiter les lieux</a><article class="detail-hero${hospitalHeroClass}${irmHeroClass}"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1>${official?`<p class="detail-official">${esc(official)}</p>`:''}${loc?`<p class="detail-meta">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</article>${navHtml(p)}'''
-          new='''const irmHeroClass=isIrm?' irm-photo-hero':'';const heroHtml=isIrm?`<article class="detail-hero irm-card"><div class="irm-visual"><img src="images/irm/irm-header.jpg" alt=""><div class="irm-title-overlay"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1></div></div><div class="irm-subtitles">${official?`<p class="detail-official">${esc(official)}</p>`:''}${loc?`<p class="detail-meta">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</div></article>`:`<article class="detail-hero${hospitalHeroClass}${irmHeroClass}"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1>${official?`<p class="detail-official">${esc(official)}</p>`:''}${loc?`<p class="detail-meta">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</article>`;detail.innerHTML=`<a class="detail-back" href="#">‹ Retour à Visiter les lieux</a>${heroHtml}${navHtml(p)}'''
-          if old not in s:raise SystemExit('IRM marker not found')
+          old='''.irm-visual:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,20,33,.02) 0%,rgba(4,20,33,.01) 48%,rgba(4,20,33,.64) 100%);pointer-events:none}\n    .irm-title-overlay{position:absolute;z-index:2;left:22px;right:22px;bottom:18px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.9)}'''
+          new='''.irm-visual:after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;background:linear-gradient(180deg,rgba(4,20,33,0) 0%,rgba(4,20,33,.20) 45%,rgba(4,20,33,.62) 100%);pointer-events:none}\n    .irm-title-overlay{position:absolute;z-index:2;left:22px;right:22px;bottom:18px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.95),0 0 18px rgba(0,0,0,.55)}'''
+          if old not in s:
+              raise SystemExit('current IRM CSS marker not found')
           s=s.replace(old,new,1)
-          oldr='''async function renderRoute(){const raw=location.hash.replace(/^#\\/?/,'');if(!raw){home.hidden=false;detail.hidden=true;pageBack.href='./';window.scrollTo({top:0,behavior:'auto'});return}home.hidden=true;detail.hidden=false;pageBack.href='#';detail.innerHTML='<div class="loading">Chargement…</div>';try{await loadData()}catch(e){detail.innerHTML='<div class="empty">Les informations des lieux sont momentanément indisponibles.</div>';return}if(raw==='parkings')renderParkings();else if(raw.startsWith('place/'))renderPlace(decodeURIComponent(raw.slice(6)));else{location.hash='';return}window.scrollTo({top:0,behavior:'auto'})}'''
-          newr='''async function renderRoute(){let raw=location.hash.replace(/^#\\/?/,'');if(!raw){const saved=sessionStorage.getItem(ROUTE_STORE)||'';if(saved){raw=saved;history.replaceState(null,'',location.pathname+location.search+'#/'+saved)}else{home.hidden=false;detail.hidden=true;pageBack.href='./';window.scrollTo({top:0,behavior:'auto'});return}}sessionStorage.setItem(ROUTE_STORE,raw);home.hidden=true;detail.hidden=false;pageBack.href='#';detail.innerHTML='<div class="loading">Chargement…</div>';try{await loadData()}catch(e){detail.innerHTML='<div class="empty">Les informations des lieux sont momentanément indisponibles.</div>';return}if(raw==='parkings')renderParkings();else if(raw.startsWith('place/'))renderPlace(decodeURIComponent(raw.slice(6)));else{sessionStorage.removeItem(ROUTE_STORE);location.hash='';return}window.scrollTo({top:0,behavior:'auto'})}'''
-          if oldr not in s:raise SystemExit('route marker not found')
-          s=s.replace(oldr,newr,1)
-          oldl="input.addEventListener('focus',()=>loadData().catch(()=>{}),{once:true});input.addEventListener('input',()=>search(input.value));clear.addEventListener('click',()=>{input.value='';search('');input.focus()});window.addEventListener('hashchange',renderRoute);renderRoute();"
-          newl="input.addEventListener('focus',()=>loadData().catch(()=>{}),{once:true});input.addEventListener('input',()=>search(input.value));clear.addEventListener('click',()=>{input.value='';search('');input.focus()});document.addEventListener('click',e=>{const a=e.target.closest('a');if(!a)return;if(a.classList.contains('detail-back')||(a===pageBack&&!detail.hidden))sessionStorage.removeItem(ROUTE_STORE)});window.addEventListener('hashchange',renderRoute);renderRoute();"
-          if oldl not in s:raise SystemExit('listener marker not found')
-          s=s.replace(oldl,newl,1)
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit fix
+      - name: Commit
         run: |
           git config user.name 'STIP automation'
           git config user.email 'actions@users.noreply.github.com'
           git add places.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Fix IRM full image and preserve detail route'
+          git commit -m 'Show full IRM photo with local title contrast'
           git push
