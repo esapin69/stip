@@ -1,4 +1,4 @@
-name: Finalize IRM hero
+name: Apply direct IRM CSS fix
 
 on:
   push:
@@ -14,47 +14,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Rebuild IRM hero cleanly
+      - name: Replace current IRM CSS exactly
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
           p=Path('places.html')
           s=p.read_text(encoding='utf-8')
-
-          # Remove every historical IRM CSS block.
-          for marker in ['STIP_IRM_HERO_PHOTO_V1','STIP_IRM_COMPLETE_IMAGE_V3','STIP_IRM_HOSPITAL_PATTERN_V1','STIP_IRM_SINGLE_FINAL','STIP_IRM_SINGLE_V1']:
-              s=re.sub(r'\n\s*/\* '+re.escape(marker)+r' \*/.*?(?=\n\s*/\*|\n\s*</style>)','\n',s,flags=re.S)
-
-          css=r'''
-    /* STIP_IRM_FINAL_ONE_SOURCE */
+          start=s.index('    /* STIP_IRM_COMPLETE_IMAGE_V3 */')
+          end=s.index('\n\n</style>',start)
+          css='''    /* STIP_IRM_FINAL_ONE_SOURCE */
     .detail-hero.irm-card{padding:0!important;min-height:0!important;height:auto!important;display:block!important;overflow:hidden!important;border:1px solid #c9d9de!important;border-radius:14px!important;background:#fff!important;background-image:none!important;color:var(--ink)!important;text-shadow:none!important;box-shadow:0 12px 28px rgba(10,69,83,.10)!important}
     .irm-visual{position:relative!important;width:100%!important;height:auto!important;min-height:0!important;overflow:hidden!important;background:#071e31!important}
     .irm-visual img{display:block!important;width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important;object-position:center!important}
-    .irm-visual:after{content:"";position:absolute;left:0;right:0;bottom:0;height:28%;background:linear-gradient(180deg,rgba(3,18,29,0),rgba(3,18,29,.52));pointer-events:none}
-    .irm-title-overlay{position:absolute!important;z-index:2!important;left:18px!important;right:18px!important;bottom:15px!important;padding:0!important;background:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.95)!important}
+    .irm-visual:after{content:none!important;display:none!important}
+    .irm-title-overlay{position:absolute!important;z-index:2!important;left:18px!important;right:18px!important;bottom:15px!important;top:auto!important;height:auto!important;min-height:0!important;padding:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.95)!important}
     .irm-title-overlay .detail-type{display:block!important;margin:0 0 5px!important;color:#fff!important;font-size:.64rem!important;font-weight:950!important;letter-spacing:.13em!important}
     .irm-title-overlay h1{margin:0!important;color:#fff!important;font-size:clamp(1.9rem,8vw,2.55rem)!important;line-height:1!important;letter-spacing:-.04em!important}
     .irm-subtitles{padding:13px 18px 15px!important;background:#fff!important}
-    .irm-subtitles p{margin:0!important;color:#466a76!important;text-shadow:none!important;font-size:.8rem!important;line-height:1.4!important;font-weight:750!important}
-    .irm-subtitles p+p{margin-top:5px!important}
-'''
-          s=s.replace('</style>',css+'\n</style>',1)
-
-          old='''const irmHeroClass=isIrm?' irm-photo-hero':'';const heroHtml=isIrm?`<article class="detail-hero irm-card"><div class="irm-visual"><img src="images/irm/irm-header.jpg" alt=""><div class="irm-title-overlay"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(cleanTitle(p))}</h1></div></div><div class="irm-subtitles">${official?`<p class="detail-official">${esc(official)}</p>`:''}${loc?`<p class="detail-meta">${esc(loc)}</p>`:''}${p.summary?`<p>${esc(p.summary)}</p>`:''}</div></article>`:'''
-          new='''const irmHeroClass=isIrm?' irm-photo-hero':'';const irmShortTitle=isIrm?cleanTitle(p).replace(/^IRM\\s*(?:\\d+(?:[,.]\\d+)?\\s*T)?\\s*[—–:-]*\\s*/i,'').trim():'';const irmSummary=isIrm?String(p.summary||'').replace(/^IRM\\s*\\d+(?:[,.]\\d+)?\\s*T\\s*[·—–:-]*\\s*/i,'').trim():'';const heroHtml=isIrm?`<article class="detail-hero irm-card"><div class="irm-visual"><img src="images/irm/irm-header.jpg" alt=""><div class="irm-title-overlay"><span class="detail-type">${esc(typeLabels[p.place_type]||'Lieu')}</span><h1>${esc(irmShortTitle||cleanTitle(p))}</h1></div></div><div class="irm-subtitles">${loc?`<p>${esc(loc)}</p>`:''}${irmSummary?`<p>${esc(irmSummary)}</p>`:''}</div></article>`:'''
-          if old not in s:
-              raise SystemExit('IRM render prefix not found')
-          s=s.replace(old,new,1)
-
+    .irm-subtitles .detail-official,.irm-subtitles .detail-meta,.irm-subtitles p{margin:0!important;color:#466a76!important;text-shadow:none!important;font-size:.8rem!important;line-height:1.4!important;font-weight:750!important}
+    .irm-subtitles>*+*{margin-top:5px!important}'''
+          s=s[:start]+css+s[end:]
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Commit final IRM hero
+      - name: Commit
         run: |
           git config user.name 'STIP automation'
           git config user.email 'actions@users.noreply.github.com'
           git add places.html
           git diff --cached --quiet && exit 0
-          git commit -m 'Finalize IRM image and remove duplicate title layers'
+          git commit -m 'Fix IRM full image without grey overlay'
           git push
