@@ -1,7 +1,0 @@
-(()=>{'use strict';
-function allowed(){return !!(window.STIPSession?.permissions?.activity||window.STIPBootCache?.permissions?.activity)}
-function icon(){return '<svg viewBox="0 0 24 24"><path d="M4 16l4-5 4 3 5-7 3 2"/><path d="M4 20h16"/></svg>'}
-function ensure(){const box=document.querySelector('#homeView .hc-apps');if(!box)return;const b=box.querySelector('[data-app="activity"]');if(!allowed()){b?.remove();return}if(b)return;const n=document.createElement('button');n.className='hc-app activity';n.dataset.app='activity';n.innerHTML=`<span>${icon()}</span><strong>Activité</strong>`;n.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();location.href='cadre-activite.html'});const admin=box.querySelector('[data-app="admin"]');if(admin)box.insertBefore(n,admin);else box.appendChild(n)}
-const st=document.createElement('style');st.textContent='.hc-app.activity>span{background:#ff5a61!important}.hc-app.activity svg{fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}';document.head.appendChild(st);
-let raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;ensure()})}['stip:session-ready','stip:boot-updated','stip:route','stip:lazy-ready'].forEach(e=>window.addEventListener(e,schedule));window.addEventListener('pageshow',schedule);new MutationObserver(schedule).observe(document.getElementById('homeView')||document.body,{childList:true,subtree:true});schedule();
-})();
