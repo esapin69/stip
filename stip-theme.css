@@ -14,7 +14,9 @@
 /* STIP_PLACES_MOBILE_READABILITY_V1
    Mobile first: readability without clipping. Cards grow with content; useful text may wrap and is never ellipsized. */
 @media(max-width:560px){
-  #homeView{display:flex!important;flex-direction:column!important}
+  #homeView:not([hidden]){display:flex!important;flex-direction:column!important}
+  #homeView[hidden]{display:none!important}
+  #detailView[hidden]{display:none!important}
   #homeView>.hero{order:1}
   #homeView>.search-wrap{order:2}
 
