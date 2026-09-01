@@ -1,13 +1,13 @@
 /* Global guard: every STIP application tile must keep a visible icon. */
-.hc-app>span,.resp-app .resp-icon,.module-card .module-icon{position:relative;display:grid;place-items:center;overflow:hidden}
-.hc-app>span svg,.resp-app .resp-icon svg,.module-card .module-icon svg{display:block;width:48%;height:48%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.hc-app>span img,.resp-app .resp-icon img,.module-card .module-icon img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.hc-app>span,.resp-app .resp-icon,.module-card .module-icon,.cadre-app-icon{position:relative;display:grid;place-items:center;overflow:hidden}
+.hc-app>span svg,.resp-app .resp-icon svg,.module-card .module-icon svg,.cadre-app-icon svg{display:block;width:48%;height:48%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.hc-app>span img,.resp-app .resp-icon img,.module-card .module-icon img,.cadre-app-icon img{display:block;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
 .hc-app.notes>span{background:#7a69d8!important;color:#fff!important}
 .hc-app.activity>span{background:#ff5a61!important;color:#fff!important}
-.hc-app.places>span,[data-stip-places] > span{background:transparent!important;color:#fff!important}
+.hc-app.places>span,[data-stip-places]>span,.public-tools .visitor-entry:first-child .visitor-entry-icon{background:transparent url('images/icone_app/visiter-les-lieux.webp') center/contain no-repeat!important;color:transparent!important;font-size:0!important}
+.hc-app.places>span::before,.hc-app.places>span::after,[data-stip-places]>span::before,[data-stip-places]>span::after{display:none!important}
 .hc-app.admin>span{background:transparent url('images/icone_app/admin.webp') center/contain no-repeat!important;color:transparent!important}
 .hc-app.admin>span svg{visibility:hidden}
-.public-tools .visitor-entry:first-child .visitor-entry-icon{background:transparent url('images/icone_app/visiter-les-lieux.webp') center/contain no-repeat!important;color:transparent!important;font-size:0!important}
 .hc-app:not(.personal):not(.team):not(.change):not(.calendar):not(.contacts):not(.responsable):not(.newagent):not(.upload):not(.admin):not(.notes):not(.places):not(.activity)>span{background:#506b7b;color:#fff}
-.hc-app>span:empty::before,.resp-app .resp-icon:empty::before,.module-card .module-icon:empty::before{content:'•';display:grid;place-items:center;width:46%;height:46%;border:2px solid currentColor;border-radius:50%;font-size:0}
-.hc-app>span:empty::after,.resp-app .resp-icon:empty::after,.module-card .module-icon:empty::after{content:'';position:absolute;width:30%;height:2px;background:currentColor;border-radius:2px;transform:rotate(-45deg)}
+.hc-app>span:empty::before,.resp-app .resp-icon:empty::before,.module-card .module-icon:empty::before,.cadre-app-icon:empty::before{content:'•';display:grid;place-items:center;width:46%;height:46%;border:2px solid currentColor;border-radius:50%;font-size:0}
+.hc-app>span:empty::after,.resp-app .resp-icon:empty::after,.module-card .module-icon:empty::after,.cadre-app-icon:empty::after{content:'';position:absolute;width:30%;height:2px;background:currentColor;border-radius:2px;transform:rotate(-45deg)}
