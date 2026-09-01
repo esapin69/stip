@@ -28,7 +28,7 @@ function forceExplicitEntry(){
   const file=location.pathname.split('/').pop()||'';
   if(!localStorage.getItem(TOKEN)||!(!file||file==='index.html'))return false;
   const u=new URL(location.href);
-  if(u.searchParams.has('quick')||u.searchParams.has('next'))return false;
+  if(u.searchParams.has('quick'))return false;
   u.searchParams.set('quick','public');
   history.replaceState(history.state,'',u.pathname+u.search+u.hash);
   return true
@@ -50,7 +50,6 @@ forceExplicitEntry();
 refreshQuickAccessCss();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
 window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}});
-window.addEventListener('stip:session-ready',()=>go(),{once:true});
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go,{once:true});else go();
+window.addEventListener('stip:login-success',()=>go(),{once:true});
 window.STIPEntry={remember,pending,consume,go,saveRoute,restoreRoute};
 })();
