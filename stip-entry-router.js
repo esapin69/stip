@@ -28,16 +28,10 @@ function forceExplicitEntry(){
   const file=location.pathname.split('/').pop()||'';
   if(!localStorage.getItem(TOKEN)||!(!file||file==='index.html'))return false;
   const u=new URL(location.href);
-  if(u.searchParams.has('quick'))return false;
+  if(u.searchParams.has('quick')||u.hash)return false;
   u.searchParams.set('quick','public');
-  history.replaceState(history.state,'',u.pathname+u.search+u.hash);
+  history.replaceState(history.state,'',u.pathname+u.search);
   return true
-}
-function refreshQuickAccessCss(){
-  const file=location.pathname.split('/').pop()||'';
-  if(file&&file!=='index.html')return;
-  if(document.querySelector('link[data-stip-quick-refresh]'))return;
-  const l=document.createElement('link');l.rel='stylesheet';l.href='quick-access.css?v=20260901-quick4';l.dataset.stipQuickRefresh='1';document.head.appendChild(l)
 }
 function go(){
   const n=pending();
@@ -47,7 +41,6 @@ function go(){
 remember();
 restoreRoute();
 forceExplicitEntry();
-refreshQuickAccessCss();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
 window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}});
 window.addEventListener('stip:login-success',()=>go(),{once:true});
