@@ -11,19 +11,22 @@
 #detailView .detail-hero.irm-card .irm-subtitles p+p{margin-top:5px!important}
 @media(max-width:430px){#detailView .detail-hero.irm-card .irm-title-overlay{left:16px!important;right:16px!important;bottom:14px!important}}
 
-/* STIP_PLACES_MOBILE_READABILITY_V2
+/* STIP_PLACES_MOBILE_READABILITY_V3
    Mobile first: readable, spatial, and never clipped. */
 @media(max-width:560px){
   #homeView:not([hidden]){display:flex!important;flex-direction:column!important}
   #homeView>.hero{order:1}
   #homeView>.search-wrap{order:2}
 
-  /* One geographic rubric. FUNÉ is the first item AFTER its heading. */
+  /* One geographic rubric. Its existing heading is kept as a visual separator only:
+     it starts the visit section after search and sits immediately above FUNÉ. */
   #homeView>.group:has(.site-schematic),
   #homeView>.group:has(a[href="#/place/mortuary"]),
   #homeView>.group:has(a[href="#/place/a1"]),
   #homeView>.group:has(a[href="#/place/cermep"]){display:contents!important}
-  #homeView>.group:has(.site-schematic)>.group-head{order:3;margin-top:26px!important;margin-bottom:10px!important}
+  #homeView>.group:has(.site-schematic)>.group-head{order:3!important;display:block!important;height:1px!important;min-height:1px!important;margin:26px 2px 18px!important;padding:0!important;background:#b9cdd3!important;overflow:visible!important}
+  #homeView>.group:has(.site-schematic)>.group-head:before{content:""!important;display:block!important;width:42px!important;height:3px!important;position:relative!important;top:-1px!important;border-radius:99px!important;background:var(--primary)!important}
+  #homeView>.group:has(.site-schematic)>.group-head>*{display:none!important}
   #homeView>.group:has(a[href="#/place/mortuary"])>.group-head,
   #homeView>.group:has(a[href="#/place/a1"])>.group-head,
   #homeView>.group:has(a[href="#/place/cermep"])>.group-head{display:none!important}
