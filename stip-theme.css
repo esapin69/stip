@@ -11,6 +11,10 @@
 #detailView .detail-hero.irm-card .irm-subtitles p+p{margin-top:5px!important}
 @media(max-width:430px){#detailView .detail-hero.irm-card .irm-title-overlay{left:16px!important;right:16px!important;bottom:14px!important}}
 
+/* Parking is deliberately not part of the current geographic home sweep.
+   It will return only when its real map position has been validated. */
+#homeView>.group.parking{display:none!important}
+
 /* STIP_PLACES_MOBILE_READABILITY_V5 */
 @media(max-width:560px){
   #homeView:not([hidden]){display:flex!important;flex-direction:column!important}
@@ -32,7 +36,6 @@
   #homeView .site-schematic>.map-anchor{order:8!important;margin-top:12px!important;padding-top:12px!important;border-top:1px solid #d8e5e9!important}
   #homeView .site-schematic>.map-anchor:before{content:none!important;display:none!important}
   #homeView .site-schematic>.map-anchor:after{display:none!important}
-  #homeView>.group.parking{order:9}
 
   #homeView .group-title,#detailView .service-guide-title,#detailView .internal-divider,#detailView .internal-subtitle{font-size:.82rem!important;line-height:1.35!important;letter-spacing:.075em!important}
   #homeView .group-note,#homeView .search-help,#detailView .contact-scope,#detailView .service-audience-note,#detailView .internal-contact-scope{font-size:.78rem!important;line-height:1.45!important}
