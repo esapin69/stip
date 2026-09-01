@@ -17,11 +17,17 @@
   #homeView{display:flex!important;flex-direction:column!important}
   #homeView>.hero{order:1}
   #homeView>.search-wrap{order:2}
-  #homeView>.group:nth-of-type(5){order:3} /* Côté Neuro / FUNÉ */
-  #homeView>.group:nth-of-type(3){order:4} /* Repères principaux */
-  #homeView>.group:nth-of-type(4){order:5} /* secteur HFME */
-  #homeView>.group:nth-of-type(6){order:6}
-  #homeView>.group:nth-of-type(7){order:7}
+
+  /* Repères principaux = début de la lecture géographique.
+     FUNÉ appartient à cette rubrique et ne doit plus apparaître au-dessus de sa séparation. */
+  #homeView>.group:nth-of-type(3),#homeView>.group:nth-of-type(5){display:contents!important}
+  #homeView>.group:nth-of-type(3)>.group-head{order:3;margin-top:26px!important}
+  #homeView>.group:nth-of-type(5)>.group-head{display:none!important}
+  #homeView>.group:nth-of-type(5)>.home-list{order:4;margin-top:0!important;margin-bottom:12px!important}
+  #homeView>.group:nth-of-type(3)>.site-schematic{order:5}
+  #homeView>.group:nth-of-type(4){order:6}
+  #homeView>.group:nth-of-type(6){order:7}
+  #homeView>.group:nth-of-type(7){order:8}
 
   #homeView .group-title,#detailView .service-guide-title,#detailView .internal-divider,#detailView .internal-subtitle{font-size:.82rem!important;line-height:1.35!important;letter-spacing:.075em!important}
   #homeView .group-note,#homeView .search-help,#detailView .contact-scope,#detailView .service-audience-note,#detailView .internal-contact-scope{font-size:.78rem!important;line-height:1.45!important}
