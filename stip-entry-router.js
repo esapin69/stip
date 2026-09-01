@@ -24,6 +24,21 @@ function restoreRoute(){
   history.replaceState({...(history.state||{}),stip:true,route:r,panel:false},'',location.pathname+location.search+'#/'+r);
   return true
 }
+function forceExplicitEntry(){
+  const file=location.pathname.split('/').pop()||'';
+  if(!localStorage.getItem(TOKEN)||!(!file||file==='index.html'))return false;
+  const u=new URL(location.href);
+  if(u.searchParams.has('quick')||u.searchParams.has('next'))return false;
+  u.searchParams.set('quick','public');
+  history.replaceState(history.state,'',u.pathname+u.search+u.hash);
+  return true
+}
+function refreshQuickAccessCss(){
+  const file=location.pathname.split('/').pop()||'';
+  if(file&&file!=='index.html')return;
+  if(document.querySelector('link[data-stip-quick-refresh]'))return;
+  const l=document.createElement('link');l.rel='stylesheet';l.href='quick-access.css?v=20260901-quick4';l.dataset.stipQuickRefresh='1';document.head.appendChild(l)
+}
 function go(){
   const n=pending();
   if(!n||!localStorage.getItem(TOKEN)||sameTarget(n))return false;
@@ -31,6 +46,8 @@ function go(){
 }
 remember();
 restoreRoute();
+forceExplicitEntry();
+refreshQuickAccessCss();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
 window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}});
 window.addEventListener('stip:session-ready',()=>go(),{once:true});
