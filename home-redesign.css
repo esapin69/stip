@@ -1,0 +1,57 @@
+/* Home redesign — mobile first, single readable flow */
+#homeView .cp-flow{display:grid!important;grid-template-columns:1fr!important;gap:14px!important;align-items:start!important}
+#homeView .cp-card{padding:14px!important;border-radius:24px!important}
+#homeView .cp-card h2{font-size:1.15rem!important;margin:2px 0 10px!important}
+
+/* Week: one compact horizontal strip instead of a narrow vertical column */
+#homeView .cp-days{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:7px!important;margin-top:8px!important}
+#homeView .cp-days>.cp-week-sep{grid-column:1/-1!important;margin:2px 0 4px!important}
+#homeView .cp-days>.cp-month-sep{grid-column:1/-1!important;margin:4px 0 2px!important;font-size:.86rem!important;letter-spacing:.04em!important}
+#homeView .cp-days>.cp-day{grid-column:auto!important;grid-row:auto!important;min-width:0!important;min-height:128px!important;border-radius:17px!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:28px 38px 1fr!important;padding:0 4px 7px!important;text-align:center!important;overflow:hidden!important}
+#homeView .cp-days>.cp-day i{grid-column:1!important;grid-row:1!important;padding:8px 1px 3px!important;font-size:.56rem!important;line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+#homeView .cp-days>.cp-day b{grid-column:1!important;grid-row:2!important;justify-self:center!important;align-self:center!important;font-size:1.45rem!important;line-height:1!important}
+#homeView .cp-days>.cp-day .cp-shift-visual{grid-column:1!important;grid-row:3!important;width:100%!important;height:50px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+#homeView .cp-days>.cp-day .cp-shift-visual img{max-width:54px!important;max-height:48px!important;object-fit:contain!important}
+#homeView .cp-days>.cp-day .cp-shift-visual>span{font-size:.62rem!important;font-weight:950!important}
+#homeView .cp-days>.cp-day small{display:none!important}
+#homeView .cp-more,#homeView .hc-more{width:100%!important;min-height:48px!important;margin-top:10px!important;border-radius:15px!important;font-size:.95rem!important;font-weight:950!important}
+
+/* Action area becomes a clear dashboard below the week */
+#homeView .cp-tools{grid-column:1!important;grid-row:auto!important;margin-top:0!important}
+#homeView .cp-section-title{padding:2px 3px 8px!important}
+#homeView .cp-section-title>span{font-size:.68rem!important;letter-spacing:.11em!important}
+#homeView .cp-tools-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#homeView .cp-tool{min-height:108px!important;padding:13px!important;border-radius:20px!important;grid-template-columns:44px minmax(0,1fr) auto!important;gap:10px!important;align-items:center!important}
+#homeView .cp-tool:first-child{grid-column:1/-1!important;min-height:82px!important}
+#homeView .cp-tool-icon{width:44px!important;height:44px!important;border-radius:14px!important}
+#homeView .cp-tool strong{font-size:.88rem!important;line-height:1.2!important}
+#homeView .cp-tool small{font-size:.65rem!important;line-height:1.35!important;margin-top:4px!important}
+
+/* Future items: full-width readable list */
+#homeView .hc-columns{display:grid!important;grid-template-columns:1fr!important;gap:14px!important}
+#homeView .hc-week,#homeView .hc-retain{width:100%!important;min-width:0!important}
+#homeView .hc-retain{border-radius:24px!important;padding:14px!important}
+#homeView .hc-retain>header{display:flex!important;align-items:end!important;justify-content:space-between!important;gap:10px!important;margin-bottom:10px!important}
+#homeView .hc-retain article{display:grid!important;grid-template-columns:56px 40px minmax(0,1fr)!important;gap:10px!important;align-items:center!important;min-height:82px!important;padding:10px!important;border-radius:18px!important}
+#homeView .hc-retain article p{min-width:0!important}
+#homeView .hc-retain article p strong{font-size:.9rem!important;line-height:1.25!important}
+#homeView .hc-retain article p small{font-size:.69rem!important;line-height:1.35!important;margin-top:3px!important}
+
+@media(max-width:560px){
+  #homeView .hs-home{padding-left:12px!important;padding-right:12px!important}
+  #homeView .cp-days{gap:5px!important}
+  #homeView .cp-days>.cp-day{min-height:116px!important;border-radius:15px!important;padding-left:2px!important;padding-right:2px!important}
+  #homeView .cp-days>.cp-day i{font-size:.48rem!important}
+  #homeView .cp-days>.cp-day b{font-size:1.32rem!important}
+  #homeView .cp-days>.cp-day .cp-shift-visual img{max-width:45px!important;max-height:43px!important}
+  #homeView .cp-tool{padding:11px!important;grid-template-columns:40px minmax(0,1fr) auto!important}
+  #homeView .cp-tool-icon{width:40px!important;height:40px!important}
+}
+
+@media(max-width:380px){
+  #homeView .cp-days{gap:4px!important}
+  #homeView .cp-days>.cp-day i{font-size:.44rem!important}
+  #homeView .cp-days>.cp-day b{font-size:1.2rem!important}
+  #homeView .cp-tools-grid{grid-template-columns:1fr!important}
+  #homeView .cp-tool:first-child{grid-column:auto!important}
+}
