@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const loaded=new Map(),V='20260902-home-dashboard2';
+const loaded=new Map(),V='20260902-home-dashboard3';
 function load(src){if(loaded.has(src))return loaded.get(src);const p=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=`${src}?v=${V}`;s.async=false;s.onload=()=>ok(src);s.onerror=()=>{loaded.delete(src);ko(new Error(`Chargement impossible: ${src}`))};document.body.appendChild(s)});loaded.set(src,p);return p}
 async function seq(list){for(const x of list)await load(x)}
 function later(list){const run=()=>seq(list).catch(console.error);if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2400});else setTimeout(run,900)}
