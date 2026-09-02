@@ -101,3 +101,71 @@
   #detailView .floor-body{padding-right:4px!important}
   #homeView *,#detailView *{text-overflow:clip}
 }
+
+/* HFME room headers — image only when the room has a confirmed, unambiguous service owner.
+   No image is inferred from the room number itself. Ambiguous/mixed services stay neutral. */
+#detailView:not(:has(.room-owner-state .completion-badge.missing)):has(
+  .room-owner-link[href="#/place/hfme_acha_ped"],
+  .room-owner-link[href="#/place/hfme_ped_surg"],
+  .room-owner-link[href="#/place/hfme_surg_centre"],
+  .room-owner-link[href="#/place/hfme_surg_est"],
+  .room-owner-link[href="#/place/hfme_surg_ouest"],
+  .room-owner-link[href="#/place/hfme_ped_icu"],
+  .room-owner-link[href="#/place/hfme_hepato"],
+  .room-owner-link[href="#/place/hfme_neonat"],
+  .room-owner-link[href="#/place/hfme_ped_general_l3"],
+  .room-owner-link[href="#/place/hfme_pulmo_allergy"],
+  .room-owner-link[href="#/place/hfme_ped_endo"],
+  .room-owner-link[href="#/place/hfme_ped_general"],
+  .room-owner-link[href="#/place/hfme_dialysis"],
+  .room-owner-link[href="#/place/hfme_ped_functional_l5"],
+  .room-owner-link[href="#/place/hfme_nephro_rheum_derm"],
+  .room-owner-link[href="#/place/hfme_neurology"],
+  .room-owner-link[href="#/place/hfme_ped_special"],
+  .room-owner-link[href="#/place/hfme_hemato_onco_consult"],
+  .room-owner-link[href="#/place/hfme_child_psych"],
+  .room-owner-link[href="#/place/hfme_cardio_consult"],
+  .room-owner-link[href="#/place/hfme_neonat_consult"],
+  .room-owner-link[href="#/place/hfme_ped_explorations_rdc"],
+  .room-owner-link[href="#/place/hfme_ped_consult"],
+  .room-owner-link[href="#/place/hfme_esefnp"],
+  .room-owner-link[href="#/place/hfme_ped_er_hosp"],
+  .room-owner-link[href="#/place/hfme_uhcd"],
+  .room-owner-link[href="#/place/hfme_ped_er"],
+  .room-owner-link[href="#/place/hfme_uaped"]
+) .detail-hero{
+  background-color:#214c68!important;
+  background-image:linear-gradient(rgba(9,43,61,.34),rgba(9,43,61,.34)),url("images/hfme-couleur-cote-enfant.png?v=20260902-roomside1")!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:cover!important;
+  text-shadow:0 2px 7px rgba(0,0,0,.42)!important;
+}
+
+#detailView:not(:has(.room-owner-state .completion-badge.missing)):has(
+  .room-owner-link[href="#/place/hfme_maternity"],
+  .room-owner-link[href="#/place/hfme_gyn"],
+  .room-owner-link[href="#/place/hfme_gyn_a_hdj"],
+  .room-owner-link[href="#/place/hfme_gyn_b_acha"],
+  .room-owner-link[href="#/place/hfme_a2_obstetric_l5"],
+  .room-owner-link[href="#/place/hfme_orthogeny"],
+  .room-owner-link[href="#/place/hfme_repro"],
+  .room-owner-link[href="#/place/hfme_path_preg"],
+  .room-owner-link[href="#/place/hfme_birth"],
+  .room-owner-link[href="#/place/hfme_gyn_er"],
+  .room-owner-link[href="#/place/hfme_gyn_anesthesia"],
+  .room-owner-link[href="#/place/hfme_cpdph"],
+  .room-owner-link[href="#/place/hfme_gyn_consult"],
+  .room-owner-link[href="#/place/hfme_diag_antenatal"],
+  .room-owner-link[href="#/place/hfme_breast_gyn_imaging"],
+  .room-owner-link[href="#/place/hfme_cecos"],
+  .room-owner-link[href="#/place/hfme_senology"],
+  .room-owner-link[href="#/place/hfme_preg_followup"]
+) .detail-hero{
+  background-color:#9b526b!important;
+  background-image:linear-gradient(rgba(62,29,44,.28),rgba(62,29,44,.28)),url("images/hfme-couleur-cote-femme.png?v=20260902-roomside1")!important;
+  background-position:center!important;
+  background-repeat:no-repeat!important;
+  background-size:cover!important;
+  text-shadow:0 2px 7px rgba(0,0,0,.42)!important;
+}
