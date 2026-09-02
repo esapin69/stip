@@ -68,7 +68,7 @@
     <section class="hero"><div class="eyebrow">Orientation GHE</div><h1>Visiter les lieux</h1><p>Repère d’abord le secteur, puis ouvre le lieu à rejoindre. L’organisation ci-dessous reprend la logique du plan du GHE plutôt qu’une simple liste.</p></section>
     <section class="search-wrap" aria-label="Recherche d’un lieu">
       <div class="search-box"><span class="search-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="6.5" stroke-width="2.2"/><path d="m16 16 4 4" stroke-width="2.2" stroke-linecap="round"/></svg></span><input id="placeSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Service, unité, examen, bâtiment, chambre…" aria-label="Rechercher un lieu ou un service"><button id="placeSearchClear" class="search-clear" type="button" aria-label="Effacer">×</button></div>
-      <div class="search-help">Ex. 301, POP, médecine nucléaire, néonat, IRM, cardiologie…</div><div id="placeSearchResults" class="search-results" aria-live="polite"></div>
+      <div class="search-help">Ex. 24 ou 224, POP, médecine nucléaire, néonat, IRM, cardiologie…</div><div id="placeSearchResults" class="search-results" aria-live="polite"></div>
     </section>
     <section class="group geo-navigation">
       <div class="group-head"><h2 class="group-title">Repères principaux</h2><span class="group-note">lecture du site</span></div>
@@ -177,7 +177,56 @@ function roomFromRange(r,n){
 }
 function roomFromId(id){const m=String(id||'').match(/^__room__(\d+)__(\d+)$/);if(!m)return null;const r=roomRanges.find(x=>String(x.id)===m[1]);if(!r)return null;const n=Number(m[2]);return n>=Number(r.room_from)&&n<=Number(r.room_to)?roomFromRange(r,n):null}
 function roomQueryNumber(q){const n=norm(q),m=n.match(/^(?:(?:chambre|ch|room)\s+)?(\d+)$/);return m?Number(m[1]):null}
-function roomMatches(q){const typed=roomQueryNumber(q);if(!Number.isFinite(typed))return[];const raw=[];for(const r of roomRanges){if(typed<Number(r.room_from)||typed>Number(r.room_to))continue;const p=roomFromRange(r,typed);if(p)raw.push(p)}const byLocation=new Map();for(const p of raw){const key=[norm(p.building_code),levelKey(p.level),p.__room_number].join('|'),arr=byLocation.get(key)||[];arr.push(p);byLocation.set(key,arr)}const out=[];for(const arr of byLocation.values()){const rank=p=>p.__service_id?3:(p.__responsible_group_label?2:1),best=Math.max(...arr.map(rank));out.push(...arr.filter(p=>rank(p)===best))}const unique=new Map();for(const p of out){const owner=p.__service_id||p.__responsible_group_label||'__unassigned__',key=[norm(p.building_code),levelKey(p.level),norm(owner),p.__room_number].join('|'),prev=unique.get(key);if(!prev||p.__visibility==='internal_stip'&&prev.__visibility==='public')unique.set(key,p)}return [...unique.values()].sort((a,b)=>{const ta=topContainer(a),tb=topContainer(b),c=sortPlaces(ta||a,tb||b);if(c)return c;const fa=floorOrder(a.level),fb=floorOrder(b.level);if(fa!==fb)return fa-fb;const sa=a.__service_id?byId.get(a.__service_id):null,sb=b.__service_id?byId.get(b.__service_id):null;if(sa&&sb){const d=sortPlaces(sa,sb);if(d)return d}else if(sa&&!sb)return-1;else if(!sa&&sb)return 1;const ga=norm(a.__responsible_group_label),gb=norm(b.__responsible_group_label);if(ga!==gb)return ga.localeCompare(gb,'fr');return a.__room_number-b.__room_number})}
+function roomMatches(q){
+  const typed=roomQueryNumber(q);
+  if(!Number.isFinite(typed))return[];
+  const raw=[];
+  for(const r of roomRanges){
+    const candidates=[typed],rawOffset=r.short_number_offset,hasOffset=rawOffset!==null&&rawOffset!==undefined&&String(rawOffset).trim()!=='',offset=hasOffset?Number(rawOffset):NaN;
+    if(typed>=0&&typed<100){
+      if(Number.isFinite(offset))candidates.push(typed+offset);
+      const floor=Number(levelKey(r.level));
+      if(Number.isFinite(floor)&&floor>0)candidates.push(floor*100+typed);
+    }else{
+      candidates.push(typed%100);
+      if(Number.isFinite(offset))candidates.push(typed-offset);
+    }
+    for(const n of new Set(candidates)){
+      if(n<Number(r.room_from)||n>Number(r.room_to))continue;
+      const p=roomFromRange(r,n);
+      if(p)raw.push(p);
+    }
+  }
+  const byLocation=new Map();
+  for(const p of raw){
+    const key=[norm(p.building_code),levelKey(p.level),p.__room_number].join('|'),arr=byLocation.get(key)||[];
+    arr.push(p);
+    byLocation.set(key,arr);
+  }
+  const out=[];
+  for(const arr of byLocation.values()){
+    const rank=p=>p.__service_id?3:(p.__responsible_group_label?2:1),best=Math.max(...arr.map(rank));
+    out.push(...arr.filter(p=>rank(p)===best));
+  }
+  const unique=new Map();
+  for(const p of out){
+    const owner=p.__service_id||p.__responsible_group_label||'__unassigned__',key=[norm(p.building_code),levelKey(p.level),norm(owner),p.__room_number].join('|'),prev=unique.get(key);
+    if(!prev||p.__visibility==='internal_stip'&&prev.__visibility==='public')unique.set(key,p);
+  }
+  return [...unique.values()].sort((a,b)=>{
+    const ta=topContainer(a),tb=topContainer(b),c=sortPlaces(ta||a,tb||b);
+    if(c)return c;
+    const fa=floorOrder(a.level),fb=floorOrder(b.level);
+    if(fa!==fb)return fa-fb;
+    const sa=a.__service_id?byId.get(a.__service_id):null,sb=b.__service_id?byId.get(b.__service_id):null;
+    if(sa&&sb){const d=sortPlaces(sa,sb);if(d)return d}
+    else if(sa&&!sb)return-1;
+    else if(!sa&&sb)return 1;
+    const ga=norm(a.__responsible_group_label),gb=norm(b.__responsible_group_label);
+    if(ga!==gb)return ga.localeCompare(gb,'fr');
+    return a.__room_number-b.__room_number;
+  });
+}
 function searchBuildingHeader(top){const title=cleanTitle(top),src=searchHospitalPhotos[top?.id];return src?`<div class="search-building-hero" role="heading" aria-level="3" aria-label="${esc(title)}"><img src="${esc(src)}" alt=""><span>${esc(title)}</span></div>`:`<h3 class="search-building-title">${esc(title)}</h3>`}
 function roomSearchGroupedHtml(found){
   const groups=new Map();
