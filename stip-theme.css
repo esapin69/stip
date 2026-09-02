@@ -15,6 +15,8 @@
    One semantic order for every screen. Layout may adapt; sequence never changes. */
 #homeView>.group.parking{display:none!important}
 #homeView .geo-navigation{margin-top:26px}
+/* Keep only the intended upper separator: suppress inherited duplicate decorations. */
+#homeView .geo-navigation:before,#homeView .geo-navigation:after,#homeView .geo-navigation>.group-head:after{display:none!important;content:none!important}
 #homeView .geo-navigation>.group-head{display:flex!important;margin:0 2px 12px!important;padding-top:20px!important;border-top:2px solid #a8c0c8!important;position:relative!important}
 #homeView .geo-navigation>.group-head:before{content:""!important;position:absolute!important;left:50%!important;top:-7px!important;width:12px!important;height:12px!important;transform:translateX(-50%) rotate(45deg)!important;background:var(--primary)!important;border:3px solid var(--bg)!important;box-shadow:0 1px 3px rgba(18,59,75,.18)!important}
 #homeView .geo-sweep{display:grid!important;gap:12px!important}
@@ -25,6 +27,8 @@
 #homeView .geo-hfme{margin-top:4px!important;padding-top:12px!important;border-top:1px solid #d8e5e9!important}
 #homeView .geo-hfme:before,#homeView .geo-hfme:after{display:none!important;content:none!important}
 #homeView .geo-middle .home-card{min-width:0!important}
+/* Current official GHE plans show A1, not B1. */
+#homeView .home-card[href="#/place/b1"]{display:none!important}
 
 @media(min-width:700px){
   #homeView .geo-north{grid-template-columns:repeat(2,minmax(0,1fr))!important}
