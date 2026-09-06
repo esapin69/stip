@@ -33,6 +33,16 @@ function read(file) {
   return fs.readFileSync(path.join(ROOT, file), 'utf8');
 }
 
+function readAt(ref, file) {
+  if (!ref) return '';
+  return git(['show', `${ref}:${file}`], '');
+}
+
+function countMatches(text, regex) {
+  const flags = regex.flags.includes('g') ? regex.flags : `${regex.flags}g`;
+  return [...String(text || '').matchAll(new RegExp(regex.source, flags))].length;
+}
+
 function normalize(file) {
   return file.replaceAll('\\', '/');
 }
@@ -92,24 +102,35 @@ for (const file of files) {
   const ext = path.extname(file).toLowerCase();
   const additions = addedLines(base, file);
   const content = read(file);
+  const created = isNewFile(base, file);
+  const previous = created ? '' : readAt(base, file);
 
   if (ext === '.html') {
     const basename = path.basename(file);
     const exempt = HTML_EXEMPT.has(basename);
 
-    if (isNewFile(base, file) && !exempt && !/stip-theme\.css(?:\?|["'])/i.test(content)) {
+    if (created && !exempt && !/stip-theme\.css(?:\?|["'])/i.test(content)) {
       errors.push(`${file}: toute nouvelle page STIP doit charger stip-theme.css.`);
     }
 
-    for (const line of additions) {
-      if (/stip-ui\.css/i.test(line)) {
-        errors.push(`${file}: nouvel import de stip-ui.css interdit ; utiliser stip-theme.css.`);
-      }
-      if (/<style(?:\s|>)/i.test(line)) {
-        errors.push(`${file}: nouveau bloc <style> interdit ; déplacer la règle dans le thème ou la feuille métier.`);
-      }
-      if (/\sstyle\s*=\s*["']/i.test(line)) {
-        errors.push(`${file}: nouveau style inline interdit ; utiliser une classe STIP.`);
+    const checks = [
+      {
+        regex: /stip-ui\.css/gi,
+        message: `${file}: nouvel import de stip-ui.css interdit ; utiliser stip-theme.css.`,
+      },
+      {
+        regex: /<style(?:\s|>)/gi,
+        message: `${file}: nouveau bloc <style> interdit ; déplacer la règle dans le thème ou la feuille métier.`,
+      },
+      {
+        regex: /\sstyle\s*=\s*["']/gi,
+        message: `${file}: nouveau style inline interdit ; utiliser une classe STIP.`,
+      },
+    ];
+
+    for (const check of checks) {
+      if (countMatches(content, check.regex) > countMatches(previous, check.regex)) {
+        errors.push(check.message);
       }
     }
 
@@ -120,17 +141,20 @@ for (const file of files) {
 
   if (ext === '.css') {
     const basename = path.basename(file);
-    for (const line of additions) {
-      if (/^\s*:root\s*\{/i.test(line) && !ROOT_TOKEN_FILES.has(basename)) {
+
+    if (!ROOT_TOKEN_FILES.has(basename)) {
+      if (countMatches(content, /(^|\n)\s*:root\s*\{/gi) > countMatches(previous, /(^|\n)\s*:root\s*\{/gi)) {
         errors.push(`${file}: nouvelle déclaration :root interdite hors thème maître.`);
       }
-      if (/--stip-[a-z0-9-]+\s*:/i.test(line) && !ROOT_TOKEN_FILES.has(basename)) {
+      if (countMatches(content, /--stip-[a-z0-9-]+\s*:/gi) > countMatches(previous, /--stip-[a-z0-9-]+\s*:/gi)) {
         errors.push(`${file}: un token --stip-* ne peut être défini que dans le thème maître.`);
       }
-      if (/stip-ui\.css/i.test(line) && /@import/i.test(line)) {
+      if (countMatches(content, /@import[^;\n]*stip-ui\.css/gi) > countMatches(previous, /@import[^;\n]*stip-ui\.css/gi)) {
         errors.push(`${file}: nouvel import de stip-ui.css interdit.`);
       }
+    }
 
+    for (const line of additions) {
       const hardColor = /(?:color|background(?:-color)?|border(?:-color)?|box-shadow)\s*:[^;]*(?:#[0-9a-f]{3,8}\b|rgba?\()/i.test(line);
       const usesToken = /var\(--stip-/i.test(line);
       if (hardColor && !usesToken && !ROOT_TOKEN_FILES.has(basename)) {
