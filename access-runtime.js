@@ -3,6 +3,25 @@ const p=()=>({...((window.STIPSession?.permissions)||{}),...((window.STIPBootCac
 function explicit(k){const x=p();return Object.prototype.hasOwnProperty.call(x,k)?!!x[k]:false}
 const APP_POLICY={personal:()=>explicit('planning_personal'),team:()=>explicit('planning_team'),compare:()=>explicit('planning_team'),change:()=>explicit('change_app'),calendar:()=>explicit('calendar_subscribe'),dates:()=>explicit('agent_dates'),contacts:()=>explicit('contacts'),responsable:()=>explicit('responsable'),notes:()=>explicit('notes')&&infoLevel('notes')==='pro',newagent:()=>explicit('nouveaux_arrivants'),upload:()=>explicit('file_upload'),activity:()=>explicit('activity'),admin:()=>explicit('admin'),places:()=>explicit('places'),assistant:()=>explicit('assistant_enabled'),access:()=>explicit('access_manage')||explicit('admin'),profile_photo:()=>explicit('profile_photo')};
 function canApp(k){return APP_POLICY[k]?.()??false}
+let livePermRefresh=null;
+async function refreshLivePermissions(){
+  if(livePermRefresh)return livePermRefresh;
+  const token=localStorage.getItem('stip_session_v1')||'';
+  if(!token)return null;
+  livePermRefresh=(async()=>{
+    try{
+      const r=await fetch('https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-stip-session':token},body:JSON.stringify({action:'me'})});
+      const j=await r.json().catch(()=>null);
+      if(!r.ok||!j?.permissions)return null;
+      window.STIPSession={...(window.STIPSession||{}),permissions:{...((window.STIPSession||{}).permissions||{}),...j.permissions},depths:{...((window.STIPSession||{}).depths||{}),...(j.depths||{})}};
+      if(window.STIPBootCache)window.STIPBootCache={...window.STIPBootCache,permissions:{...(window.STIPBootCache.permissions||{}),...j.permissions}};
+      window.dispatchEvent(new CustomEvent('stip:permissions-live',{detail:j.permissions}));
+      return j.permissions;
+    }catch{return null}
+    finally{livePermRefresh=null}
+  })();
+  return livePermRefresh;
+}
 function normalizeInfoLevel(v){v=String(v||'').toLowerCase();if(v==='pro'||v==='internal'||v==='internal_stip'||v==='restricted'||v==='admin')return'pro';if(v==='visitor'||v==='visiteur'||v==='public'||v==='basic')return'visitor';return'none'}
 function infoLevel(app=''){const lv=p().__levels?.[app];if(lv)return normalizeInfoLevel(lv);const n=normalizeInfoLevel(depth(app));return n!=='none'?n:'visitor'}
 function canInfo(level='visitor',app=''){if(app&&!explicit(app))return false;const wanted=normalizeInfoLevel(level),current=infoLevel(app);return wanted==='visitor'?(current==='visitor'||current==='pro'):wanted==='pro'&&current==='pro'}
@@ -17,4 +36,4 @@ function ensureCard(box,key,title,cls){let b=box.querySelector(`[data-app="${key
 function applyHomePolicy(){const box=document.querySelector('#homeView .hc-apps');if(!box)return;box.querySelectorAll('[data-app="equipe"]').forEach(b=>b.remove());dedupe(box);for(const b of [...box.querySelectorAll('[data-app]')]){const k=b.dataset.app;if(k in APP_POLICY&&!canApp(k))b.remove()}const wanted=[];for(const [key,title,cls] of SPECS){const b=ensureCard(box,key,title,cls);if(b)wanted.push(b)}dedupe(box);const current=[...box.querySelectorAll('.hc-app')];const stable=wanted.length===current.length&&wanted.every((b,i)=>current[i]===b);if(!stable){const frag=document.createDocumentFragment();wanted.forEach(b=>frag.appendChild(b));box.replaceChildren(frag)}const empty=box.querySelector('.hc-empty');if(empty&&wanted.length)empty.remove();if(!wanted.length&&!box.querySelector('.hc-empty'))box.innerHTML='<p class="hc-empty">Aucune application autorisée.</p>'}
 function tuneDock(){for(const b of document.querySelectorAll('#stipContextDock [data-root-action]')){const a=b.dataset.rootAction;let ok=true;if(a==='calendar'||a==='personalcal')ok=canApp('calendar');if(a==='teamcal')ok=canApp('team')&&explicit('calendar_subscribe');if(a==='contact-share')ok=canApp('contacts');b.style.display=ok?'':'none'}}
 function run(){if(!guardStandalone())return;guardRoute();applyHomePolicy();tuneDock();applyInfoPolicy();document.documentElement.dataset.stipInfoLevel=infoLevel()}
-let raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;run()})}['stip:session-ready','stip:boot-updated','stip:route','stip:lazy-ready','stip:home-rendered'].forEach(e=>window.addEventListener(e,schedule));window.addEventListener('pageshow',schedule);window.STIPAccess={has:k=>explicit(k),allow:k=>explicit(k),app:canApp,depth:k=>depth(k),can:k=>explicit(k),infoLevel,canInfo,applyInfoPolicy,open:openApp};schedule()})();
+let raf=0;function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;run()})}['stip:session-ready','stip:boot-updated','stip:route','stip:lazy-ready','stip:home-rendered','stip:permissions-live'].forEach(e=>window.addEventListener(e,schedule));window.addEventListener('stip:session-ready',()=>refreshLivePermissions().then(schedule));window.addEventListener('pageshow',()=>{schedule();refreshLivePermissions().then(schedule)});window.STIPAccess={has:k=>explicit(k),allow:k=>explicit(k),app:canApp,depth:k=>depth(k),can:k=>explicit(k),infoLevel,canInfo,applyInfoPolicy,open:openApp};schedule()})();
