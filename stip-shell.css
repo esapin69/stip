@@ -28,3 +28,6 @@ body .cadre-shell{max-width:790px!important;padding-top:calc(22px + env(safe-are
 
 @media(hover:hover){.visitor-entry:hover,.resp-app:hover,body .cadre-app:hover{transform:translateY(-2px)!important;box-shadow:var(--stip-shadow)!important}.hc-app:hover>span{transform:translateY(-2px)!important;box-shadow:var(--stip-shadow)!important}}
 @media(max-width:560px){.login-screen{padding-inline:10px!important}.login-card{padding:18px 14px!important;border-radius:24px!important}.hs-home{padding-left:12px!important;padding-right:12px!important}.hc-head h1{font-size:2.15rem!important}.hc-profile{padding:11px 12px!important}.resp-home{padding-inline:12px!important}.resp-apps{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}.resp-app{min-height:106px!important;padding-inline:2px!important}.resp-icon{width:58px!important;height:58px!important}.resp-label{font-size:.69rem!important}body .cadre-apps{gap:8px!important}body .cadre-app{min-height:128px!important;padding:10px 4px 8px!important}body .cadre-app-icon{width:62px!important;height:62px!important}body .cadre-app small{font-size:.59rem!important}}
+
+/* mobile-readability-20260918 */
+@media(max-width:560px){html{font-size:18px}}
