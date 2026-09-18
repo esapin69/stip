@@ -1,10 +1,10 @@
 (()=>{'use strict';
-const loaded=new Map(),V='20260918-weekicons1';
+const loaded=new Map(),V='20260918-mobileweek1';
 function load(src){if(loaded.has(src))return loaded.get(src);const p=new Promise((ok,ko)=>{const s=document.createElement('script');s.src=`${src}?v=${V}`;s.async=false;s.onload=()=>ok(src);s.onerror=()=>{loaded.delete(src);ko(new Error(`Chargement impossible: ${src}`))};document.body.appendChild(s)});loaded.set(src,p);return p}
 async function seq(list){for(const x of list)await load(x)}
 function later(list){const run=()=>seq(list).catch(console.error);if('requestIdleCallback'in window)requestIdleCallback(run,{timeout:2400});else setTimeout(run,900)}
-const personalCore=['planning-home.js','planning-month-hero.js'];
-const personalExtras=['planning-print-reference.js','agent-week-view.js','planning-agenda-extras.js','calendar-subscriptions.js','calendar-responsable-gate.js','change-permission-gate.js','day-workflow.js','day-workflow-leave.js','day-workflow-home-bridge.js','signature-success-ui.js'];
+const personalCore=['planning-home.js','planning-month-hero.js','planning-print-reference.js'];
+const personalExtras=['agent-week-view.js','planning-agenda-extras.js','calendar-subscriptions.js','calendar-responsable-gate.js','change-permission-gate.js','day-workflow.js','day-workflow-leave.js','day-workflow-home-bridge.js','signature-success-ui.js'];
 const teamCore=['planning-home.js','planning-hub-enhance.js'];
 const teamExtras=['calendar-subscriptions.js','calendar-responsable-gate.js'];
 const changeCore=['planning-home.js','change-workflow.js','change-permission-gate.js','staffing-guidance.js'];
