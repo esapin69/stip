@@ -1,5 +1,5 @@
 (()=>{'use strict';
-const p=()=>window.STIPSession?.permissions||window.STIPBootCache?.permissions||{},depth=k=>window.STIPSession?.depths?.[k]||window.STIPBootCache?.depths?.[k]||'none';
+const p=()=>({...((window.STIPSession?.permissions)||{}),...((window.STIPBootCache?.permissions)||{})}),depth=k=>window.STIPBootCache?.depths?.[k]||window.STIPSession?.depths?.[k]||'none';
 function explicit(k){const x=p();return Object.prototype.hasOwnProperty.call(x,k)?!!x[k]:false}
 const APP_POLICY={personal:()=>explicit('planning_personal'),team:()=>explicit('planning_team'),compare:()=>explicit('planning_team'),change:()=>explicit('change_app'),calendar:()=>explicit('calendar_subscribe'),dates:()=>explicit('agent_dates'),contacts:()=>explicit('contacts'),responsable:()=>explicit('responsable'),notes:()=>explicit('notes')&&infoLevel('notes')==='pro',newagent:()=>explicit('nouveaux_arrivants'),upload:()=>explicit('file_upload'),activity:()=>explicit('activity'),admin:()=>explicit('admin'),places:()=>explicit('places'),assistant:()=>explicit('assistant_enabled'),access:()=>explicit('access_manage')||explicit('admin'),profile_photo:()=>explicit('profile_photo')};
 function canApp(k){return APP_POLICY[k]?.()??false}
