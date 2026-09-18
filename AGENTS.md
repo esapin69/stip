@@ -1,0 +1,56 @@
+# STIP — Completion discipline
+
+These rules apply to every substantial task in this repository.
+
+## 1. Build the acceptance ledger first
+Before editing code, identify every requested change, constraint, previously validated decision, and expected behavior. Convert them into a concrete checklist.
+
+Do not silently drop, reinterpret, postpone, or simplify a requirement.
+
+## 2. Inspect before changing
+Read the relevant existing files and understand the current behavior before editing. Reuse the existing architecture and conventions where possible.
+
+For UI work, inspect both the implementation and the user-visible result when tools allow it.
+
+## 3. Execute the whole task
+Complete all independent requested changes that can be completed in the current task. Do not stop after the first successful edit or an intermediate milestone.
+
+If one item depends on another, resolve them in the necessary order.
+
+## 4. Verify with evidence
+Run the strongest available checks that are relevant to the change, for example:
+- build / typecheck / lint
+- automated tests
+- targeted functional checks
+- route and data-flow checks
+- responsive/mobile checks
+- visual verification when available
+
+Do not claim a check passed unless it was actually executed or directly inspected.
+
+## 5. Check regressions
+Verify that existing behavior related to the changed area was not broken, especially navigation, permissions, Supabase access, responsive layout, filtering, loading states, and existing user flows.
+
+## 6. Re-read the original request
+Before declaring completion, compare the final result against the original request and the acceptance ledger item by item.
+
+A task is complete only when every item is either:
+- verified as done, or
+- explicitly reported as blocked / unverifiable with the reason.
+
+## 7. Completion report
+When reporting completion, state concisely:
+- what changed
+- what was verified
+- anything still blocked or not verified
+
+Never use “done”, “fixed”, “finished”, or equivalent wording when known requirements remain incomplete.
+
+## 8. No silent assumptions
+When a requirement is ambiguous and a wrong assumption could materially change the result, inspect available project context first. If ambiguity still matters, ask instead of inventing.
+
+## 9. Preserve validated decisions
+Do not reverse an already validated product or design decision unless the user explicitly approves the change.
+
+## 10. Prefer completion over commentary
+For implementation tasks, spend effort on executing and verifying the requested work rather than merely describing what could be done.
