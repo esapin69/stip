@@ -96,3 +96,24 @@
 
 /* date-des-agents-app-icon-20260918 */
 .hc-app.dates>span{padding:0!important;overflow:hidden;background:#fff!important}.hc-app.dates>span img{width:100%;height:100%;display:block;object-fit:cover;border-radius:inherit}.hc-app.dates>span svg{display:none}
+
+/* week-month-context-20260918 */
+.hc-week-month-context{margin:-1px 0 9px;padding:0 4px;color:#0d6277;text-align:center;font-size:.82rem;font-weight:950;line-height:1.15;letter-spacing:.055em;text-transform:uppercase}
+.hc-month-open{min-height:58px!important;margin-top:9px!important;padding:5px 10px 5px 6px!important;grid-template-columns:46px minmax(0,1fr) 18px!important;gap:9px!important;border-radius:13px!important}
+.hc-month-open>svg{display:none!important}
+.hc-month-open-date{width:42px;height:46px;border:2px solid #0d6277;border-radius:10px;overflow:hidden;display:grid;grid-template-rows:16px 1fr;place-items:center;background:#fff;color:#0d4257;box-shadow:0 2px 6px rgba(13,66,87,.07)}
+.hc-month-open-date small{align-self:stretch;width:100%;display:grid;place-items:center;background:#0d6277;color:#fff;font-size:.48rem;font-weight:950;line-height:1;letter-spacing:.04em}
+.hc-month-open-date strong{font-size:1.05rem;font-weight:950;line-height:1}
+.hc-month-open-copy{min-width:0;display:grid;gap:2px;text-align:left}
+.hc-month-open-copy>strong{min-width:0;color:#174b5d;font-size:.78rem;font-weight:950;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-month-open-copy>small{min-width:0;color:#6f858e;font-size:.61rem;font-weight:850;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hc-month-open>b{font-size:1.15rem!important;color:#78919a!important}
+@media(max-width:430px){
+  .hc-week-month-context{font-size:.77rem;margin-bottom:8px;letter-spacing:.045em}
+  .hc-month-open{min-height:56px!important;grid-template-columns:44px minmax(0,1fr) 17px!important;gap:8px!important}
+  .hc-month-open-date{width:40px;height:44px;grid-template-rows:15px 1fr}
+  .hc-month-open-date small{font-size:.45rem}
+  .hc-month-open-date strong{font-size:1rem}
+  .hc-month-open-copy>strong{font-size:.75rem}
+  .hc-month-open-copy>small{font-size:.58rem}
+}
