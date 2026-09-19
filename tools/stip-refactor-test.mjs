@@ -95,6 +95,12 @@ const tomorrowCss=read('tomorrow-hub.css');
 check(!tomorrowCss.includes('var(--stip-surface)8f8'),'Pour demain contient une valeur CSS invalide.');
 check(tomorrowCss.includes('var(--stip-bg)')&&tomorrowCss.includes('var(--stip-surface)'),'Pour demain ne consomme plus le thème maître STIP.');
 
+const accessManageSource=read('access-manage.js');
+const accessManageEdge=read('supabase/functions/stip-access-manage/index.ts');
+check(accessManageSource.includes('ESPRIT_KEYS')&&accessManageSource.includes('product_bundle: "esprit"'),'Accès ne regroupe plus Planning équipe / Activité / Assistant derrière Esprit d’équipe.');
+check(accessManageSource.includes('levels: false')&&accessManageSource.includes('MAXI n’est pas proposé'),'Esprit d’équipe affiche de nouveau un faux niveau MAXI.');
+check(accessManageEdge.includes('requestedPermissions')&&accessManageEdge.includes('b.permissions'),'La création d’accès ignore de nouveau les applications choisies.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
