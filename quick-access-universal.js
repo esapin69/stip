@@ -12,10 +12,9 @@
     USAGE = "stip_app_usage_v1",
     FAV = "stip_app_favorites_v1";
   const I = {
-    home: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3l8.5 7.5"/><path d="M5.5 9.5V21h13V9.5M9.5 21v-6h5v6"/></svg>',
-    profile:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2.5"/><path d="M5.8 17c.6-2.3 1.8-3.5 3.2-3.5s2.7 1.2 3.2 3.5M15 9h3M15 13h3"/></svg>',
-    fav: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
+    home: '<img src="images/icone_app/quick-card.svg?v=20260919-restore1" alt="" aria-hidden="true">',
+    profile: '<img src="images/icone_app/quick-home.svg?v=20260919-restore1" alt="" aria-hidden="true">',
+    fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
   const APPS = {
     places: { label: "Visiter les lieux", home: "places-app.html" },
@@ -178,7 +177,7 @@
       return;
     const css = document.createElement("link");
     css.rel = "stylesheet";
-    css.href = "quick-access.css?v=20260901-favorites1";
+    css.href = "quick-access.css?v=20260919-art1";
     document.head.appendChild(css);
   }
   function closeFav() {
