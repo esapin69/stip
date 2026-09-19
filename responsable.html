@@ -13,14 +13,15 @@
       content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'"
     />
     <title>Responsable · STIP</title>
-    <link rel="stylesheet" href="responsable-home.css?v=20260919-cockpit1" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260920-neutral1" />
+    <link rel="stylesheet" href="stip-shell.css?v=20260920-context1" />
+    <link rel="stylesheet" href="stip-loading.css?v=20260830-core2" />
+    <link rel="stylesheet" href="stip-agent-selector.css?v=20260920-common1" />
+    <link rel="stylesheet" href="responsable-home.css?v=20260920-stability1" />
     <link
       rel="stylesheet"
       href="responsable-agents-native.css?v=20260827-native5"
     />
-    <link rel="stylesheet" href="stip-theme.css?v=20260824-theme3" />
-    <link rel="stylesheet" href="stip-shell.css?v=20260907-polish1" />
-    <link rel="stylesheet" href="stip-loading.css?v=20260830-core2" />
   </head>
   <body class="responsable-home-page">
     <header class="top resp-top">
@@ -87,22 +88,36 @@
           ><span class="resp-label">Agenda agents</span>
         </button>
       </nav>
-    <section class="resp-dashboard-grid" aria-label="Cockpit Responsable">
-      <div>
-        <h2>Couverture du jour</h2>
-        <p>Effectifs comparés aux références HCL.</p>
-        <section id="respCoverage" class="resp-operational" hidden></section>
-      </div>
-      <div>
-        <h2>Points à traiter</h2>
-        <p>Signaux utiles des sept prochains jours.</p>
-        <section id="respInsights" class="resp-operational" hidden></section>
-      </div>
-    </section>
-    <section class="resp-live-head">
-      <span>SUIVI OPÉRATIONNEL</span>
-      <h2>Demandes et échéances</h2>
-    </section>
+      <section class="resp-dashboard-grid" aria-label="Cockpit Responsable">
+        <div>
+          <h2>Couverture du jour</h2>
+          <p>Effectifs comparés aux références HCL.</p>
+          <section
+            id="respCoverage"
+            class="resp-operational cockpit-placeholder"
+            aria-busy="true"
+          >
+            <div class="stip-skeleton"></div>
+            <div class="stip-skeleton"></div>
+          </section>
+        </div>
+        <div>
+          <h2>Points à traiter</h2>
+          <p>Signaux utiles des sept prochains jours.</p>
+          <section
+            id="respInsights"
+            class="resp-operational cockpit-placeholder"
+            aria-busy="true"
+          >
+            <div class="stip-skeleton"></div>
+            <div class="stip-skeleton"></div>
+          </section>
+        </div>
+      </section>
+      <section class="resp-live-head">
+        <span>SUIVI OPÉRATIONNEL</span>
+        <h2>Demandes et échéances</h2>
+      </section>
       <section class="resp-carousel" id="respCarousel">
         <div class="resp-empty calm" aria-busy="true">
           <div class="stip-skeleton">&nbsp;</div>
@@ -120,11 +135,13 @@
     </section>
     <script src="stip-loading.js?v=20260830-core2"></script>
     <script src="name-format.js?v=20260822-final3"></script>
+    <script src="stip-agent-selector.js?v=20260920-common1"></script>
+    <script src="stip-navigation.js?v=20260920-context2"></script>
     <script src="responsable-base.js?v=20260830-core1"></script>
-    <script src="responsable-home.js?v=20260919-cockpit1"></script>
+    <script src="responsable-home.js?v=20260920-context1"></script>
     <script src="responsable-official-documents.js?v=20260827-official5"></script>
-    <script src="responsable-loader.js?v=20260919-cockpit1"></script>
-    <script src="responsable-staffing.js?v=20260919-cockpit1"></script>
+    <script src="responsable-loader.js?v=20260920-stability1"></script>
+    <script src="responsable-staffing.js?v=20260920-stability1"></script>
     <script src="assistant-presence.js?v=20260918-staff3"></script>
     <script src="quick-access-universal.js?v=20260919-refactor1"></script>
   </body>

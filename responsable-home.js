@@ -1,82 +1,285 @@
-(()=>{'use strict';
-const ACTION_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions';
-const CHANGE_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-change';
-const ACCESS_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access';
-const STORE='stip_session_v1';
-const $=s=>document.querySelector(s);
-let items=[],changes=[],boot=null,accessLevel='visitor';
+(() => {
+  "use strict";
+  const ACTION_API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions";
+  const CHANGE_API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-change";
+  const ACCESS_API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access";
+  const STORE = "stip_session_v1";
+  const $ = (s) => document.querySelector(s);
+  let items = [],
+    changes = [],
+    boot = null,
+    accessLevel = "visitor";
+  const navigationState = window.STIPNav?.read?.() || {};
 
-function errorText(e){
-  if(!e)return'Erreur inconnue';
-  if(typeof e==='string')return e;
-  if(typeof e.message==='string')return e.message;
-  try{return JSON.stringify(e)}catch{return'Erreur inconnue'}
-}
-async function call(url,action,body={}){
-  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORE)||''},body:JSON.stringify({action,...body})});
-  const j=await r.json().catch(()=>({}));
-  if(!r.ok||j.error)throw new Error(typeof(j.error||'')==='string'?(j.error||`Erreur ${r.status}`):(j.error?.message||`Erreur ${r.status}`));
-  return j;
-}
-const actionCall=(a,b)=>call(ACTION_API,a,b);
-const changeCall=(a,b)=>call(CHANGE_API,a,b);
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const name=a=>[a?.prenom,a?.nom].filter(Boolean).join(' ').trim()||'Agent';
-const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}).replace('.',''):'—';
-function age(v){if(!v)return'';const h=Math.floor((Date.now()-new Date(v).getTime())/36e5);return h<1?'À l’instant':h<24?`${h} h`:`${Math.floor(h/24)} j`}
-function pro(){return accessLevel==='pro'}
-function setDots(n=1,active=0){const d=$('#respDots');if(d)d.innerHTML=Array.from({length:n},(_,i)=>`<i class="${i===active?'active':''}"></i>`).join('')}
-function changeCard(x){return`<button class="resp-card change" data-change-id="${esc(x.id)}" type="button"><span class="resp-status urgent">${pro()?'À valider':'À consulter'}</span><h3>${esc(name(x.requester))}</h3><p>${esc(fmt(x.date_from))} · ${esc(x.requester_code||'—')} → ${esc(x.context?.target_shift||x.desired_code||'—')}</p><div class="resp-meta"><span>${x.target?`avec ${esc(name(x.target))}`:'sans collègue'}</span><span>${esc(age(x.created_at))}</span></div></button>`}
-function renderTracking(){
-  const car=$('#respCarousel');if(!car)return;
-  const active=items.filter(x=>x.status==='pending');
-  const html=[...changes.map(changeCard),...active.map(a=>`<button class="resp-card ${esc(a.status)}" data-id="${esc(a.id)}" type="button"><span class="resp-status">${a.seen_at?'Vu · en attente':'Envoyé · non vu'}</span><h3>${esc(name(a.target))}</h3><p>${esc(a.title)}</p><div class="resp-meta"><span>${esc(a.kind)}</span><span>${esc(age(a.created_at))}</span></div></button>`)];
-  if(!html.length){car.innerHTML='<div class="resp-empty calm"><strong>Rien à signaler maintenant</strong><p>Les informations utiles apparaîtront ici automatiquement.</p></div>';setDots(0);return}
-  car.innerHTML=html.join('');setDots(html.length,0);
-  car.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openDetail(b.dataset.id));
-  car.querySelectorAll('[data-change-id]').forEach(b=>b.onclick=()=>openChange(b.dataset.changeId));
-}
-async function load(){
-  const car=$('#respCarousel');
-  try{
-    const [r,c,b]=await Promise.all([actionCall('manager_list'),changeCall('responsable_list'),GHEBase.bootstrap().catch(()=>null)]);
-    items=r.actions||[];changes=c.items||[];boot=b;renderTracking();
-  }catch(e){if(car)car.innerHTML=`<div class="resp-empty error"><strong>Suivi indisponible</strong><p>${esc(errorText(e))}</p><button type="button" id="respRetry">Réessayer</button></div>`;$('#respRetry')?.addEventListener('click',load)}
-}
-function openChange(id){
-  const x=changes.find(v=>v.id===id);if(!x)return;
-  const p=$('#respPanel'),b=$('#respPanelBody');p.classList.add('open');p.setAttribute('aria-hidden','false');$('#respPanelTitle').textContent='Changement planning';
-  const controls=pro()?'<div class="resp-actions"><button class="primary" id="respAcceptChange">Valider le changement</button><button class="danger" id="respRefuseChange">Refuser</button></div>':'<p class="resp-feedback">Vue Visiteur : consultation uniquement.</p>';
-  b.innerHTML=`<div class="resp-detail change-detail"><span class="resp-status urgent">${pro()?'Décision':'Consultation'}</span><h3>${esc(name(x.requester))}</h3><p><strong>${esc(fmt(x.date_from))}</strong></p><div class="change-swap"><span><small>Actuel</small><b>${esc(x.requester_code||'—')}</b></span><i>→</i><span><small>Demandé</small><b>${esc(x.context?.target_shift||x.desired_code||'—')}</b></span></div>${x.target?`<p class="change-colleague">Collègue : <strong>${esc(name(x.target))}</strong></p>`:''}${controls}<div class="resp-feedback" id="respFeedback"></div></div>`;
-  if(pro()){$('#respAcceptChange').onclick=()=>decideChange(id,'accept');$('#respRefuseChange').onclick=()=>decideChange(id,'refuse')}
-}
-async function decideChange(id,decision){
-  if(!pro())return;const f=$('#respFeedback');f.textContent=decision==='accept'?'Validation…':'Refus…';
-  try{await changeCall('responsable_decide',{id,decision});f.textContent=decision==='accept'?'Changement validé et appliqué.':'Demande refusée.';await load();setTimeout(closePanel,450)}catch(e){f.textContent=errorText(e)}
-}
-function openDetail(id){
-  const a=items.find(x=>x.id===id);if(!a)return;
-  const p=$('#respPanel'),b=$('#respPanelBody');p.classList.add('open');p.setAttribute('aria-hidden','false');$('#respPanelTitle').textContent=name(a.target);
-  const controls=pro()&&a.status==='pending'?'<div class="resp-actions"><button class="primary" id="respRemind">Relancer</button><button class="danger" id="respCancel">Annuler</button></div>':`<p class="resp-feedback">${pro()?'':'Vue Visiteur : aucune action de gestion.'}</p>`;
-  b.innerHTML=`<div class="resp-detail"><span class="resp-status">${pro()?'Pilotage':'Consultation'}</span><h3>${esc(a.title)}</h3><p>${esc(a.body||'Aucun message supplémentaire.')}</p>${controls}<div class="resp-feedback" id="respFeedback"></div></div>`;
-  if(pro()&&a.status==='pending'){
-    $('#respRemind').onclick=async()=>{try{await actionCall('manager_remind',{action_id:a.id});await load()}catch(e){$('#respFeedback').textContent=errorText(e)}};
-    $('#respCancel').onclick=async()=>{if(!confirm('Annuler cette demande ?'))return;try{await actionCall('manager_cancel',{action_id:a.id});await load();closePanel()}catch(e){$('#respFeedback').textContent=errorText(e)}};
+  function errorText(e) {
+    if (!e) return "Erreur inconnue";
+    if (typeof e === "string") return e;
+    if (typeof e.message === "string") return e.message;
+    try {
+      return JSON.stringify(e);
+    } catch {
+      return "Erreur inconnue";
+    }
   }
-}
-function closePanel(){const p=$('#respPanel');p?.classList.remove('open');p?.setAttribute('aria-hidden','true')}
-function applyView(){const h=$('.resp-head h1'),p=$('.resp-head p'),k=$('.resp-head .kicker');if(h)h.textContent='Responsable';if(k)k.textContent='AUJOURD’HUI';if(p)p.textContent=pro()?'Voir, décider et piloter ce qui demande ton attention.':'Voir ce qui demande ton attention.'}
-async function initAccess(){
-  const me=await call(ACCESS_API,'me');
-  if(!me.permissions?.responsable){location.replace('index.html');return false}
-  accessLevel=String(me.permissions?.__levels?.responsable||'visitor').toLowerCase()==='pro'?'pro':'visitor';
-  document.documentElement.dataset.responsableLevel=accessLevel;applyView();
-  document.querySelectorAll('[data-resp-official]').forEach(x=>x.hidden=!pro());
-  document.querySelectorAll('[data-resp-agents="evaluation"]').forEach(x=>x.hidden=!pro());
-  return true;
-}
-$('#respPanelBack')?.addEventListener('click',closePanel);
-$('#respRefresh')?.addEventListener('click',load);
-(async()=>{try{if(!await initAccess())return;await GHEAuth.ready;await load()}catch(e){const c=$('#respCarousel');if(c)c.innerHTML=`<div class="resp-empty error"><strong>Accès impossible</strong><p>${esc(errorText(e))}</p></div>`}})();
-setInterval(()=>{if(!document.hidden)load()},30000);
+  async function call(url, action, body = {}) {
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-STIP-Session": localStorage.getItem(STORE) || "",
+      },
+      body: JSON.stringify({ action, ...body }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error)
+      throw new Error(
+        typeof (j.error || "") === "string"
+          ? j.error || `Erreur ${r.status}`
+          : j.error?.message || `Erreur ${r.status}`,
+      );
+    return j;
+  }
+  const actionCall = (a, b) => call(ACTION_API, a, b);
+  const changeCall = (a, b) => call(CHANGE_API, a, b);
+  const esc = (v) =>
+    String(v ?? "").replace(
+      /[&<>"']/g,
+      (c) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[c],
+    );
+  const name = (a) =>
+    [a?.prenom, a?.nom].filter(Boolean).join(" ").trim() || "Agent";
+  const fmt = (d) =>
+    d
+      ? new Date(d + "T12:00:00")
+          .toLocaleDateString("fr-FR", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          })
+          .replace(".", "")
+      : "—";
+  function age(v) {
+    if (!v) return "";
+    const h = Math.floor((Date.now() - new Date(v).getTime()) / 36e5);
+    return h < 1
+      ? "À l’instant"
+      : h < 24
+        ? `${h} h`
+        : `${Math.floor(h / 24)} j`;
+  }
+  function pro() {
+    return accessLevel === "pro";
+  }
+  function setDots(n = 1, active = 0) {
+    const d = $("#respDots");
+    if (d)
+      d.innerHTML = Array.from(
+        { length: n },
+        (_, i) => `<i class="${i === active ? "active" : ""}"></i>`,
+      ).join("");
+  }
+  function changeCard(x) {
+    return `<button class="resp-card change" data-change-id="${esc(x.id)}" type="button"><span class="resp-status urgent">${pro() ? "À valider" : "À consulter"}</span><h3>${esc(name(x.requester))}</h3><p>${esc(fmt(x.date_from))} · ${esc(x.requester_code || "—")} → ${esc(x.context?.target_shift || x.desired_code || "—")}</p><div class="resp-meta"><span>${x.target ? `avec ${esc(name(x.target))}` : "sans collègue"}</span><span>${esc(age(x.created_at))}</span></div></button>`;
+  }
+  function renderTracking() {
+    const car = $("#respCarousel");
+    if (!car) return;
+    const active = items.filter((x) => x.status === "pending");
+    const html = [
+      ...changes.map(changeCard),
+      ...active.map(
+        (a) =>
+          `<button class="resp-card ${esc(a.status)}" data-id="${esc(a.id)}" type="button"><span class="resp-status">${a.seen_at ? "Vu · en attente" : "Envoyé · non vu"}</span><h3>${esc(name(a.target))}</h3><p>${esc(a.title)}</p><div class="resp-meta"><span>${esc(a.kind)}</span><span>${esc(age(a.created_at))}</span></div></button>`,
+      ),
+    ];
+    if (!html.length) {
+      car.innerHTML =
+        '<div class="resp-empty calm"><strong>Rien à signaler maintenant</strong><p>Les informations utiles apparaîtront ici automatiquement.</p></div>';
+      setDots(0);
+      return;
+    }
+    car.innerHTML = html.join("");
+    setDots(html.length, 0);
+    car
+      .querySelectorAll("[data-id]")
+      .forEach((b) => (b.onclick = () => openDetail(b.dataset.id)));
+    car
+      .querySelectorAll("[data-change-id]")
+      .forEach((b) => (b.onclick = () => openChange(b.dataset.changeId)));
+  }
+  async function load() {
+    const car = $("#respCarousel");
+    try {
+      const [r, c, b] = await Promise.all([
+        actionCall("manager_list"),
+        changeCall("responsable_list"),
+        GHEBase.bootstrap().catch(() => null),
+      ]);
+      items = r.actions || [];
+      changes = c.items || [];
+      boot = b;
+      renderTracking();
+    } catch (e) {
+      if (car)
+        car.innerHTML = `<div class="resp-empty error"><strong>Suivi indisponible</strong><p>${esc(errorText(e))}</p><button type="button" id="respRetry">Réessayer</button></div>`;
+      $("#respRetry")?.addEventListener("click", load);
+    }
+  }
+  function openChange(id) {
+    const x = changes.find((v) => v.id === id);
+    if (!x) return;
+    window.STIPNav?.remember?.({
+      panelKind: "change",
+      panelItemId: id,
+    });
+    const p = $("#respPanel"),
+      b = $("#respPanelBody");
+    p.classList.add("open");
+    p.setAttribute("aria-hidden", "false");
+    $("#respPanelTitle").textContent = "Changement planning";
+    const controls = pro()
+      ? '<div class="resp-actions"><button class="primary" id="respAcceptChange">Valider le changement</button><button class="danger" id="respRefuseChange">Refuser</button></div>'
+      : '<p class="resp-feedback">Vue Visiteur : consultation uniquement.</p>';
+    b.innerHTML = `<div class="resp-detail change-detail"><span class="resp-status urgent">${pro() ? "Décision" : "Consultation"}</span><h3>${esc(name(x.requester))}</h3><p><strong>${esc(fmt(x.date_from))}</strong></p><div class="change-swap"><span><small>Actuel</small><b>${esc(x.requester_code || "—")}</b></span><i>→</i><span><small>Demandé</small><b>${esc(x.context?.target_shift || x.desired_code || "—")}</b></span></div>${x.target ? `<p class="change-colleague">Collègue : <strong>${esc(name(x.target))}</strong></p>` : ""}${controls}<div class="resp-feedback" id="respFeedback"></div></div>`;
+    if (pro()) {
+      $("#respAcceptChange").onclick = () => decideChange(id, "accept");
+      $("#respRefuseChange").onclick = () => decideChange(id, "refuse");
+    }
+  }
+  async function decideChange(id, decision) {
+    if (!pro()) return;
+    const f = $("#respFeedback");
+    f.textContent = decision === "accept" ? "Validation…" : "Refus…";
+    try {
+      await changeCall("responsable_decide", { id, decision });
+      f.textContent =
+        decision === "accept"
+          ? "Changement validé et appliqué."
+          : "Demande refusée.";
+      await load();
+      setTimeout(closePanel, 450);
+    } catch (e) {
+      f.textContent = errorText(e);
+    }
+  }
+  function openDetail(id) {
+    const a = items.find((x) => x.id === id);
+    if (!a) return;
+    window.STIPNav?.remember?.({
+      panelKind: "action",
+      panelItemId: id,
+    });
+    const p = $("#respPanel"),
+      b = $("#respPanelBody");
+    p.classList.add("open");
+    p.setAttribute("aria-hidden", "false");
+    $("#respPanelTitle").textContent = name(a.target);
+    const controls =
+      pro() && a.status === "pending"
+        ? '<div class="resp-actions"><button class="primary" id="respRemind">Relancer</button><button class="danger" id="respCancel">Annuler</button></div>'
+        : `<p class="resp-feedback">${pro() ? "" : "Vue Visiteur : aucune action de gestion."}</p>`;
+    b.innerHTML = `<div class="resp-detail"><span class="resp-status">${pro() ? "Pilotage" : "Consultation"}</span><h3>${esc(a.title)}</h3><p>${esc(a.body || "Aucun message supplémentaire.")}</p>${controls}<div class="resp-feedback" id="respFeedback"></div></div>`;
+    if (pro() && a.status === "pending") {
+      $("#respRemind").onclick = async () => {
+        try {
+          await actionCall("manager_remind", { action_id: a.id });
+          await load();
+        } catch (e) {
+          $("#respFeedback").textContent = errorText(e);
+        }
+      };
+      $("#respCancel").onclick = async () => {
+        if (!confirm("Annuler cette demande ?")) return;
+        try {
+          await actionCall("manager_cancel", { action_id: a.id });
+          await load();
+          closePanel();
+        } catch (e) {
+          $("#respFeedback").textContent = errorText(e);
+        }
+      };
+    }
+  }
+  function closePanel() {
+    const p = $("#respPanel");
+    p?.classList.remove("open");
+    p?.setAttribute("aria-hidden", "true");
+    window.STIPNav?.remember?.({
+      panel: "",
+      panelKind: "",
+      panelItemId: "",
+      agentId: "",
+    });
+  }
+  function applyView() {
+    const h = $(".resp-head h1"),
+      p = $(".resp-head p"),
+      k = $(".resp-head .kicker");
+    if (h) h.textContent = "Responsable";
+    if (k) k.textContent = "AUJOURD’HUI";
+    if (p)
+      p.textContent = pro()
+        ? "Voir, décider et piloter ce qui demande ton attention."
+        : "Voir ce qui demande ton attention.";
+  }
+  async function initAccess() {
+    const me = await call(ACCESS_API, "me");
+    if (!me.permissions?.responsable) {
+      location.replace("index.html");
+      return false;
+    }
+    accessLevel =
+      String(
+        me.permissions?.__levels?.responsable || "visitor",
+      ).toLowerCase() === "pro"
+        ? "pro"
+        : "visitor";
+    document.documentElement.dataset.responsableLevel = accessLevel;
+    applyView();
+    document
+      .querySelectorAll("[data-resp-official]")
+      .forEach((x) => (x.hidden = !pro()));
+    document
+      .querySelectorAll('[data-resp-agents="evaluation"]')
+      .forEach((x) => (x.hidden = !pro()));
+    return true;
+  }
+  $("#respPanelBack")?.addEventListener("click", closePanel);
+  $("#respRefresh")?.addEventListener("click", load);
+  (async () => {
+    try {
+      if (!(await initAccess())) return;
+      await GHEAuth.ready;
+      await load();
+      if (navigationState.panelKind === "change")
+        openChange(navigationState.panelItemId);
+      if (navigationState.panelKind === "action")
+        openDetail(navigationState.panelItemId);
+      window.STIPNav?.restoreScroll?.();
+    } catch (e) {
+      const c = $("#respCarousel");
+      if (c)
+        c.innerHTML = `<div class="resp-empty error"><strong>Accès impossible</strong><p>${esc(errorText(e))}</p></div>`;
+    }
+  })();
+  window.STIPNav?.register?.({
+    capture: () => ({
+      panel:
+        document.querySelector('#respPanel.open[aria-hidden="false"]')?.id ||
+        "",
+    }),
+  });
+  setInterval(() => {
+    if (!document.hidden) load();
+  }, 30000);
 })();

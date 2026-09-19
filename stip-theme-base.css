@@ -1,18 +1,18 @@
 :root{
   color-scheme:light;
-  --stip-bg:#f6fbfc;
-  --stip-bg-strong:#eef6f8;
+  --stip-bg:#f6f7f8;
+  --stip-bg-strong:#eef1f3;
   --stip-surface:#ffffff;
-  --stip-surface-soft:#f2f8f9;
-  --stip-surface-tint:#eaf6f8;
-  --stip-ink:#103f51;
-  --stip-ink-2:#315866;
-  --stip-muted:#72858d;
-  --stip-muted-2:#8da0a7;
-  --stip-accent:#0798b5;
-  --stip-accent-soft:#dff5f8;
-  --stip-line:#dbe8eb;
-  --stip-line-soft:#edf3f4;
+  --stip-surface-soft:#f2f4f5;
+  --stip-surface-tint:#eaf0f3;
+  --stip-ink:#173f5d;
+  --stip-ink-2:#365a70;
+  --stip-muted:#6d7f8a;
+  --stip-muted-2:#8b99a1;
+  --stip-accent:#176b93;
+  --stip-accent-soft:#e5eef3;
+  --stip-line:#dce2e6;
+  --stip-line-soft:#edf0f2;
   --stip-danger:#b52b2b;
   --stip-warning:#a96a00;
   --stip-success:#2d7658;
@@ -21,9 +21,9 @@
   --stip-radius-md:18px;
   --stip-radius-lg:24px;
   --stip-radius-xl:30px;
-  --stip-shadow-soft:0 5px 16px rgba(16,63,81,.05);
-  --stip-shadow:0 10px 28px rgba(16,63,81,.08);
-  --stip-shadow-strong:0 16px 42px rgba(16,63,81,.12);
+  --stip-shadow-soft:0 5px 16px rgba(23,63,93,.05);
+  --stip-shadow:0 10px 28px rgba(23,63,93,.08);
+  --stip-shadow-strong:0 16px 42px rgba(23,63,93,.12);
   --stip-page-pad:clamp(10px,2.6vw,18px);
   --stip-gap:clamp(4px,1vw,7px);
   --stip-calendar-cell:minmax(0,1fr);
@@ -32,7 +32,8 @@
 
   /* Compatibilité : les anciennes couches héritent maintenant du thème maître. */
   --cp-ink:var(--stip-ink);--cp-muted:var(--stip-muted);--cp-bg:var(--stip-bg);--cp-card:var(--stip-surface);--cp-line:var(--stip-line);--cp-shadow:var(--stip-shadow);
-  --rh-navy:var(--stip-ink);--rh-cyan:var(--stip-accent);--rh-cyan2:var(--stip-accent);--rh-line:var(--stip-line);--rh-muted:var(--stip-muted);--rh-bg:var(--stip-bg);--rh-card:var(--stip-surface);--rh-shadow:var(--stip-shadow);
+  --rh-navy:var(--stip-ink);--rh-cyan:var(--stip-accent);--rh-cyan2:var(--stip-accent);--rh-line:var(--stip-line);--rh-muted:var(--stip-muted);--rh-bg:var(--stip-bg);--rh-card:var(--stip-surface);--rh-soft:var(--stip-surface-soft);--rh-shadow:var(--stip-shadow);
+  --ink:var(--stip-ink);--muted:var(--stip-muted);--line:var(--stip-line);--accent:var(--stip-accent);--soft:var(--stip-accent-soft);--surface:var(--stip-surface);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--stip-bg)!important;color:var(--stip-ink)!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
@@ -74,7 +75,7 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 .cp-day{border-color:var(--stip-line)!important;box-shadow:var(--stip-shadow-soft)!important}
 .cp-day.today{border-color:var(--stip-ink)!important;box-shadow:0 0 0 2px rgba(16,63,81,.08),var(--stip-shadow-soft)!important}
 .hs-panel{background:var(--stip-bg)!important;color:var(--stip-ink)!important}
-.hs-panel-head{background:rgba(246,251,252,.97)!important;border-color:var(--stip-line)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.hs-panel-head{background:rgba(246,247,248,.97)!important;border-color:var(--stip-line)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 
 /* Planning perso : composant de référence STIP */
 #planningView{background:var(--stip-bg)!important}
@@ -118,7 +119,7 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 .resp-icon{border-radius:20px!important;box-shadow:var(--stip-shadow-soft)!important}
 .resp-app.selected .resp-icon{box-shadow:0 0 0 3px var(--stip-accent-soft),0 0 0 5px rgba(7,152,181,.38),var(--stip-shadow)!important}
 .resp-panel{transition:transform var(--stip-motion)!important}
-.resp-panel-head{background:rgba(246,251,252,.97)!important;border-color:var(--stip-line)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+.resp-panel-head{background:rgba(246,247,248,.97)!important;border-color:var(--stip-line)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .ra-search{background:rgba(255,255,255,.97)!important;border-color:var(--stip-line)!important;box-shadow:var(--stip-shadow-soft)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 .ra-group,.ra-absence-group,.ra-person{background:var(--stip-surface)!important;border-color:var(--stip-line)!important;box-shadow:none!important}
 .ra-person:active{background:var(--stip-surface-soft)!important}
@@ -159,15 +160,15 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 
 /* Visiter les lieux : photos terrain des trois hôpitaux, stockées localement dans STIP. */
-a.destination.primary[href="#/place/hfme"]{background:linear-gradient(90deg,rgba(8,47,87,.86),rgba(8,47,87,.58)),url("images/hospitals/hfme.jpg") center 48%/cover no-repeat!important}
-a.destination.primary[href="#/place/pw"]{background:linear-gradient(90deg,rgba(8,47,87,.88),rgba(8,47,87,.60)),url("images/hospitals/neuro.jpg") center/cover no-repeat!important}
-a.destination.primary[href="#/place/hlp"]{background:linear-gradient(90deg,rgba(8,47,87,.88),rgba(8,47,87,.60)),url("images/hospitals/cardio.jpg") center/cover no-repeat!important}
+a.destination.primary[href="#/place/hfme"]{background:linear-gradient(90deg,rgba(16,43,61,.84),rgba(16,43,61,.64)),url("images/hospitals/hfme.jpg") center 48%/cover no-repeat!important}
+a.destination.primary[href="#/place/pw"]{background:linear-gradient(90deg,rgba(16,43,61,.86),rgba(16,43,61,.66)),url("images/hospitals/neuro.jpg") center/cover no-repeat!important}
+a.destination.primary[href="#/place/hlp"]{background:linear-gradient(90deg,rgba(16,43,61,.86),rgba(16,43,61,.66)),url("images/hospitals/cardio.jpg") center/cover no-repeat!important}
 a.destination.primary[href="#/place/hfme"] .destination-arrow,a.destination.primary[href="#/place/pw"] .destination-arrow,a.destination.primary[href="#/place/hlp"] .destination-arrow{background:rgba(4,38,63,.64)!important;backdrop-filter:blur(1px)}
 
 /* Visiter les lieux : rupture claire entre le moteur de recherche et la carte de base. */
 #homeView .search-wrap + .group{position:relative;margin-top:0!important;padding-top:46px}
-#homeView .search-wrap + .group:before{content:"";position:absolute;left:0;right:0;top:17px;height:2px;border-radius:999px;background:linear-gradient(90deg,rgba(23,63,93,0),rgba(115,148,170,.75) 12%,#173f5d 50%,rgba(115,148,170,.75) 88%,rgba(23,63,93,0));box-shadow:0 9px 20px rgba(23,63,93,.08)}
-#homeView .search-wrap + .group:after{content:"";position:absolute;top:11px;left:50%;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border:3px solid #eef5f6;border-radius:3px;background:#173f5d;box-shadow:0 2px 8px rgba(23,63,93,.16)}
+#homeView .search-wrap + .group:before{content:"";position:absolute;left:8%;right:8%;top:17px;height:1px;background:var(--stip-line)}
+#homeView .search-wrap + .group:after{display:none}
 @media(max-width:430px){#homeView .search-wrap + .group{padding-top:42px}#homeView .search-wrap + .group:before{top:15px}#homeView .search-wrap + .group:after{top:9px;width:11px;height:11px}}
 
 /* IRM : photo entière, titre lisible sur l'image, informations secondaires sous l'image. */

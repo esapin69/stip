@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260919-cockpit1",
+  const V = "20260920-stability1",
     m = new Map(),
     done = new Set();
   function load(src) {
@@ -64,11 +64,20 @@
   "requestIdleCallback" in window
     ? requestIdleCallback(idle, { timeout: 1800 })
     : setTimeout(idle, 800);
-  if (new URLSearchParams(location.search).get("open") === "evaluation")
+  const savedNavigation = window.STIPNav?.read?.() || {};
+  const requestedAgents =
+    new URLSearchParams(location.search).get("open") === "evaluation"
+      ? "evaluation"
+      : savedNavigation.panelKind === "agents"
+        ? savedNavigation.agentMode || "directory"
+        : "";
+  if (requestedAgents)
     seq(["responsable-agents.js"])
       .then(() =>
         requestAnimationFrame(() =>
-          document.querySelector('[data-resp-agents="evaluation"]')?.click(),
+          document
+            .querySelector(`[data-resp-agents="${requestedAgents}"]`)
+            ?.click(),
         ),
       )
       .catch(() => {});

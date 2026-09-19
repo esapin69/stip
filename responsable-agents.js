@@ -1,28 +1,195 @@
-(()=>{'use strict';
-const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly',STORE='stip_session_v1';
-const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const SHIFT={M:{label:'Matin',time:'06h50 – 14h40',c:'#1688d3'},J:{label:'Journée',time:'08h30 – 16h20',c:'#20a765'},J4:{label:'J4',time:'10h10 – 18h00',c:'#f2763e'},S:{label:'Soir',time:'13h30 – 21h00',c:'#dea72d'},N:{label:'Nuit',time:'21h00 – 06h50',c:'#6e55d8'}};
-const ABS_ORDER=['AR','AT','MA','CA','RH','RTT','RTa','RTTA','RC','AA','RF','SYR'];
-const buttons=$$('[data-resp-agents]');if(!buttons.length)return;
-let directory=null,query='',mode='directory',selectedAgent=null;
-function errorText(e){if(!e)return'Erreur inconnue';if(typeof e==='string')return e;if(typeof e.message==='string'&&e.message!=='[object Object]')return e.message;try{return JSON.stringify(e)}catch{return'Erreur inconnue'}}
-async function call(action,body={}){const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORE)||''},body:JSON.stringify({action,...body})}),j=await r.json().catch(()=>({}));if(!r.ok||j.error){const raw=j.error||`Erreur ${r.status}`;throw Error(typeof raw==='string'?raw:(raw?.message||JSON.stringify(raw)))}return j}
-function displayName(a){return window.STIPName?.format?.(a)||window.GHEBase?.displayName?.(a)||[a?.prenom,a?.nom].filter(Boolean).join(' ')||'Agent'}
-function initials(a){const parts=displayName(a).trim().split(/\s+/).filter(Boolean);return((parts[0]?.[0]||'')+(parts.at(-1)?.[0]||'')).toUpperCase()||'ST'}
-function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('fr-FR')}
-function baseShift(code){const c=String(code||'').toUpperCase();return SHIFT[c]?c:(c.endsWith('*')&&SHIFT[c.slice(0,-1)]?c.slice(0,-1):null)}
-function isWorking(a){return !!baseShift(a.today_code)}
-function isBrancardier(a){return !/^chef/i.test(String(a.type_planning||a.equipe||''))&&!/chef|cadre/i.test(String(a.role||''))}
-function avatar(a,big=false){const u=String(a.avatar_url||a.profile_photo_url||'');const ini=esc(initials(a));return`<span class="ra-avatar${big?' big':''}" data-initials="${ini}">${/^https?:/i.test(u)?`<img src="${esc(u)}" alt="" loading="lazy">`:ini}</span>`}
-function row(a){const code=String(a.today_code||'').toUpperCase(),base=baseShift(code),m=base&&SHIFT[base];const status=m?`${code} · ${m.time}`:(code?`Absent · ${code}`:'Absent · motif non renseigné');const meta=[status,a.ghe?`GHE ${a.ghe}`:''].filter(Boolean).join(' · ');return`<button class="ra-person" type="button" data-agent="${esc(a.id)}">${avatar(a)}<span class="ra-person-copy"><b>${esc(displayName(a))}</b><small>${esc(meta)}</small></span>${m?`<i class="ra-dot" style="--dot:${m.c}"></i>`:`<span class="ra-code">${esc(code||'—')}</span>`}<em>›</em></button>`}
-function sectionShift(code,items){if(!items.length)return'';const m=SHIFT[code];return`<section class="ra-group ra-work-group" style="--group:${m.c}"><header><div><b>${code}</b><span>${m.label}<small>${m.time}</small></span></div><strong>${items.length}</strong></header><div>${items.map(row).join('')}</div></section>`}
-function sectionAbsence(code,items,index){if(!items.length)return'';return`<details class="ra-absence-group" ${index===0?'open':''}><summary><span><b>${esc(code||'Sans motif')}</b><small>Non présents aujourd’hui</small></span><strong>${items.length}</strong></summary><div>${items.map(row).join('')}</div></details>`}
-function searchResults(items){const q=norm(query.trim());if(q.length<2)return'';const found=items.filter(a=>norm([displayName(a),a.source_key,a.ghe,a.today_code].filter(Boolean).join(' ')).includes(q)).sort((a,b)=>displayName(a).localeCompare(displayName(b),'fr'));return`<section class="ra-search-results"><header><span>RÉSULTATS</span><b>${found.length}</b></header>${found.length?found.map(row).join(''):'<p>Aucun brancardier trouvé.</p>'}</section>`}
-function render(){const body=$('#respPanelBody');if(!body||!directory)return;const all=(directory.items||[]).filter(isBrancardier),working=all.filter(isWorking),absent=all.filter(a=>!isWorking(a));const d=new Date(`${directory.date}T12:00:00`),dateLabel=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});const workHtml=Object.keys(SHIFT).map(code=>sectionShift(code,working.filter(a=>baseShift(a.today_code)===code).sort((a,b)=>displayName(a).localeCompare(displayName(b),'fr')))).join('');const codes=[...new Set(absent.map(a=>String(a.today_code||'')))].sort((a,b)=>{const ai=ABS_ORDER.indexOf(a),bi=ABS_ORDER.indexOf(b);if(ai!==-1||bi!==-1)return(ai===-1?999:ai)-(bi===-1?999:bi);return a.localeCompare(b,'fr')});const absHtml=codes.map((code,i)=>sectionAbsence(code,absent.filter(a=>String(a.today_code||'')===code).sort((a,b)=>displayName(a).localeCompare(displayName(b),'fr')),i)).join('');const searching=query.trim().length>=2;$('#respPanelTitle').textContent=mode==='evaluation'?'Évaluation':'Brancardiers';body.innerHTML=`<main class="ra-day"><header class="ra-day-head"><span>${mode==='evaluation'?'ÉVALUATION 2026':'ÉQUIPE · AUJOURD’HUI'}</span><h1>${mode==='evaluation'?'Choisir un agent':esc(dateLabel)}</h1><p>${mode==='evaluation'?'Recherche un agent pour ouvrir ou commencer son évaluation.':`<b>${working.length}</b> au travail <i>·</i> <b>${absent.length}</b> non présents`}</p></header><label class="ra-search"><span aria-hidden="true">⌕</span><input id="raSearch" type="search" autocomplete="off" spellcheck="false" value="${esc(query)}" placeholder="Nom ou prénom · dès 2 lettres" aria-label="Rechercher un agent"><button id="raSearchClear" type="button" ${query?'':'hidden'} aria-label="Effacer">×</button></label>${searching?searchResults(all):`<section class="ra-present"><div class="ra-section-title"><span>EN POSTE</span><b>${working.length}</b></div>${workHtml||'<p class="ra-empty">Aucun brancardier en poste aujourd’hui.</p>'}</section><section class="ra-absent"><div class="ra-section-title"><span>NON PRÉSENTS</span><b>${absent.length}</b></div>${absHtml||'<p class="ra-empty">Aucune absence aujourd’hui.</p>'}</section>`}</main>`;wire()}
-function wire(){const input=$('#raSearch');input?.addEventListener('input',e=>{query=e.target.value;render();requestAnimationFrame(()=>{const n=$('#raSearch');n?.focus();try{n?.setSelectionRange(query.length,query.length)}catch{}})});$('#raSearchClear')?.addEventListener('click',()=>{query='';render();requestAnimationFrame(()=>$('#raSearch')?.focus())});$$('.ra-avatar img').forEach(img=>img.addEventListener('error',()=>{const box=img.parentElement;if(!box)return;box.textContent=box.dataset.initials||'ST'} ,{once:true}));$$('[data-agent]').forEach(x=>x.onclick=()=>{const a=(directory.items||[]).find(v=>String(v.id)===String(x.dataset.agent));if(!a)return;if(mode==='evaluation')openEvaluation(a);else openAgent(a)})}
-async function openEvaluation(a){const body=$('#respPanelBody');body.innerHTML=`<div class="ra-load"><i></i><b>Ouverture de l’évaluation de ${esc(displayName(a))}…</b></div>`;try{await GHEBase.openAgentEvaluation(a.id)}catch(e){body.innerHTML=`<div class="ra-error"><b>Impossible d’ouvrir l’évaluation</b><span>${esc(errorText(e))}</span><button type="button" id="raBackList">Retour à la liste</button></div>`;$('#raBackList')?.addEventListener('click',render)}}
-function openAgent(a){selectedAgent=a;$('#respPanelTitle').textContent=displayName(a);const code=String(a.today_code||'').toUpperCase()||'—',meta=[a.role,a.ghe?`GHE ${a.ghe}`:'',code].filter(Boolean).join(' · ');$('#respPanelBody').innerHTML=`<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour aux brancardiers</button><section class="ra-hero">${avatar(a,true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(a))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;wire();$('#raBackList')?.addEventListener('click',render);$('#raOpenEval')?.addEventListener('click',()=>openEvaluation(a));$('#raOpenProfile')?.addEventListener('click',()=>openReadonly(a))}
-async function openReadonly(a){const s=$('#raActionStatus');if(s)s.textContent='Ouverture de la fiche…';try{const g=await call('issue_grant',{agent_id:a.id});if(!g.grant)throw Error('Laissez-passer indisponible.');location.href=`agent-readonly.html#g=${encodeURIComponent(g.grant)}`}catch(e){if(s)s.innerHTML=`<div class="ra-error"><b>Impossible d’ouvrir la fiche</b><span>${esc(errorText(e))}</span></div>`}}
-async function openPanel(trigger){mode=trigger?.dataset?.respAgents||'directory';selectedAgent=null;query='';const panel=$('#respPanel');panel.classList.add('open','ra-native-panel');panel.setAttribute('aria-hidden','false');$('#respPanelTitle').textContent=mode==='evaluation'?'Évaluation':'Brancardiers';$('#respPanelBody').innerHTML=`<div class="ra-load"><i></i><b>${mode==='evaluation'?'Chargement des agents…':'Lecture du planning du jour…'}</b></div>`;try{directory=await call('directory');render()}catch(e){$('#respPanelBody').innerHTML=`<div class="ra-error"><b>Impossible de charger les agents</b><span>${esc(errorText(e))}</span></div>`}}
-buttons.forEach(btn=>btn.addEventListener('click',()=>openPanel(btn)));
+(() => {
+  "use strict";
+
+  const API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly";
+  const STORE = "stip_session_v1";
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [
+    ...root.querySelectorAll(selector),
+  ];
+  const esc = (value) =>
+    String(value ?? "").replace(
+      /[&<>"']/g,
+      (char) =>
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        })[char],
+    );
+  const buttons = $$("[data-resp-agents]");
+  if (!buttons.length) return;
+
+  let directory = null;
+  let mode = "directory";
+
+  function errorText(error) {
+    if (!error) return "Erreur inconnue";
+    if (typeof error === "string") return error;
+    if (
+      typeof error.message === "string" &&
+      error.message !== "[object Object]"
+    )
+      return error.message;
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return "Erreur inconnue";
+    }
+  }
+
+  async function call(action, body = {}) {
+    const response = await fetch(API, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "X-STIP-Session": localStorage.getItem(STORE) || "",
+      },
+      body: JSON.stringify({ action, ...body }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.error) {
+      const raw = data.error || `Erreur ${response.status}`;
+      throw Error(
+        typeof raw === "string" ? raw : raw?.message || JSON.stringify(raw),
+      );
+    }
+    return data;
+  }
+
+  function isBrancardier(agent) {
+    return (
+      !/^chef/i.test(String(agent.type_planning || agent.equipe || "")) &&
+      !/chef|cadre/i.test(String(agent.role || ""))
+    );
+  }
+
+  function displayName(agent) {
+    return window.STIPAgentSelector?.name(agent) || "Agent";
+  }
+
+  function initials(agent) {
+    const parts = displayName(agent).trim().split(/\s+/).filter(Boolean);
+    return (
+      `${parts[0]?.[0] || ""}${parts.at(-1)?.[0] || ""}`.toUpperCase() || "ST"
+    );
+  }
+
+  function avatar(agent, big = false) {
+    const url = String(agent.avatar_url || agent.profile_photo_url || "");
+    const value = esc(initials(agent));
+    return `<span class="ra-avatar${big ? " big" : ""}" data-initials="${value}">${/^https?:/i.test(url) ? `<img src="${esc(url)}" alt="" loading="lazy">` : value}</span>`;
+  }
+
+  function renderSelector() {
+    const body = $("#respPanelBody");
+    if (!body || !directory) return;
+    const all = (directory.items || []).filter(isBrancardier);
+    const evaluation = mode === "evaluation";
+    $("#respPanelTitle").textContent = evaluation
+      ? "Évaluation"
+      : "Brancardiers";
+    body.innerHTML =
+      '<main class="ra-day"><div id="respAgentSelector"></div></main>';
+    if (!window.STIPAgentSelector) {
+      $("#respAgentSelector").innerHTML =
+        '<div class="ra-error"><b>Sélecteur indisponible</b><span>Recharge la page pour réessayer.</span></div>';
+      return;
+    }
+    window.STIPAgentSelector.mount($("#respAgentSelector"), {
+      items: all,
+      date: directory.date,
+      kicker: evaluation ? "ÉVALUATION 2026" : "ÉQUIPE · AUJOURD’HUI",
+      title: evaluation ? "Choisir un agent" : "Brancardiers",
+      description: evaluation
+        ? "Recherche un agent pour ouvrir ou commencer son évaluation."
+        : "Présents par horaire, puis absents visibles directement.",
+      onSelect: evaluation ? openEvaluation : openAgent,
+    });
+  }
+
+  async function openEvaluation(agent) {
+    const body = $("#respPanelBody");
+    body.innerHTML = `<div class="ra-load"><i></i><b>Ouverture de l’évaluation de ${esc(displayName(agent))}…</b></div>`;
+    try {
+      await GHEBase.openAgentEvaluation(agent.id);
+    } catch (error) {
+      body.innerHTML = `<div class="ra-error"><b>Impossible d’ouvrir l’évaluation</b><span>${esc(errorText(error))}</span><button type="button" id="raBackList">Retour à la liste</button></div>`;
+      $("#raBackList")?.addEventListener("click", renderSelector);
+    }
+  }
+
+  function openAgent(agent) {
+    window.STIPNav?.remember?.({
+      panelKind: "agents",
+      agentMode: mode,
+      agentId: agent.id,
+    });
+    $("#respPanelTitle").textContent = displayName(agent);
+    const code = String(agent.today_code || "").toUpperCase() || "—";
+    const meta = [agent.role, agent.ghe ? `GHE ${agent.ghe}` : "", code]
+      .filter(Boolean)
+      .join(" · ");
+    $("#respPanelBody").innerHTML =
+      `<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour aux brancardiers</button><section class="ra-hero">${avatar(agent, true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(agent))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;
+    $("#raBackList")?.addEventListener("click", renderSelector);
+    $("#raOpenEval")?.addEventListener("click", () => openEvaluation(agent));
+    $("#raOpenProfile")?.addEventListener("click", () => openReadonly(agent));
+  }
+
+  async function openReadonly(agent) {
+    const status = $("#raActionStatus");
+    if (status) status.textContent = "Ouverture de la fiche…";
+    try {
+      const result = await call("issue_grant", { agent_id: agent.id });
+      if (!result.grant) throw Error("Laissez-passer indisponible.");
+      const url = `agent-readonly.html#g=${encodeURIComponent(result.grant)}`;
+      if (window.STIPNav) window.STIPNav.go(url);
+      else location.href = url;
+    } catch (error) {
+      if (status)
+        status.innerHTML = `<div class="ra-error"><b>Impossible d’ouvrir la fiche</b><span>${esc(errorText(error))}</span></div>`;
+    }
+  }
+
+  async function openPanel(trigger) {
+    mode = trigger?.dataset?.respAgents || "directory";
+    const savedBeforeOpen = window.STIPNav?.read?.() || {};
+    const restoringAgent =
+      savedBeforeOpen.panelKind === "agents" &&
+      savedBeforeOpen.agentMode === mode
+        ? savedBeforeOpen.agentId
+        : "";
+    window.STIPNav?.remember?.({
+      panelKind: "agents",
+      agentMode: mode,
+      agentId: restoringAgent,
+    });
+    const panel = $("#respPanel");
+    panel.classList.add("open", "ra-native-panel");
+    panel.setAttribute("aria-hidden", "false");
+    $("#respPanelTitle").textContent =
+      mode === "evaluation" ? "Évaluation" : "Brancardiers";
+    $("#respPanelBody").innerHTML =
+      `<div class="ra-load"><i></i><b>${mode === "evaluation" ? "Chargement des agents…" : "Lecture du planning du jour…"}</b></div>`;
+    try {
+      directory = await call("directory");
+      renderSelector();
+      const selected = (directory.items || []).find(
+        (agent) => String(agent.id) === String(restoringAgent || ""),
+      );
+      if (selected) openAgent(selected);
+    } catch (error) {
+      $("#respPanelBody").innerHTML =
+        `<div class="ra-error"><b>Impossible de charger les agents</b><span>${esc(errorText(error))}</span></div>`;
+    }
+  }
+
+  buttons.forEach((button) =>
+    button.addEventListener("click", () => openPanel(button)),
+  );
 })();
