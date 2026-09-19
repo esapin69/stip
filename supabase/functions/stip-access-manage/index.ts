@@ -285,9 +285,17 @@ async function createAccess(b: any, me: any) {
     .eq("actif", true)
     .maybeSingle();
   if (!a) throw Error("Agent introuvable");
+  const requestedPermissions =
+    b.permissions && typeof b.permissions === "object"
+      ? b.permissions
+      : preset.permissions || {};
+  const requestedLevels =
+    b.levels && typeof b.levels === "object"
+      ? b.levels
+      : requestedPermissions?.__levels || {};
   const perms = normalizePermissions(
-    preset.permissions || {},
-    preset.permissions?.__levels || {},
+    requestedPermissions,
+    requestedLevels,
     apps,
   );
   perms.notes =
