@@ -296,3 +296,8 @@
   .access-levels{width:min(180px,100%)}
   .access-app-info{grid-column:1}
 }
+
+.access-app:not(.is-enabled) .access-levels,
+.access-app:not(.is-enabled) .access-single{opacity:.38}
+.access-app:not(.is-enabled) .access-levels{pointer-events:none}
+.access-app.is-enabled{border-color:var(--stip-line-strong)!important}
