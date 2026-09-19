@@ -44,6 +44,11 @@
   function message(text) {
     $("msg").textContent = text || "";
   }
+  function displayAccessText(value = "") {
+    return String(value)
+      .replace(/\bVisiteur\b/gi, "MINI")
+      .replace(/\bPro\b/g, "MAXI");
+  }
 
   async function load() {
     try {
@@ -114,8 +119,9 @@
           control = `<div class="access-levels stip-levels" aria-label="Niveau ${esc(app.label)}"><button type="button" data-level="${esc(app.key)}" data-value="visitor" class="${level === "visitor" ? "active" : ""}">MINI</button><button type="button" data-level="${esc(app.key)}" data-value="pro" class="${level === "pro" ? "active" : ""}">MAXI</button></div>`;
           levelHelp = "MINI donne l’essentiel. MAXI ouvre la version la plus complète prévue pour cette application.";
         }
-        const help = [String(app.help || "").trim(), levelHelp].filter(Boolean).join(" ");
-        return `<div class="access-app stip-catalog-row"><label class="access-app-main"><input type="checkbox" data-permission="${esc(app.key)}" ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(app.help)}</small></span></label><div class="access-app-tools"><button class="access-info-btn" type="button" data-app-help="${esc(app.key)}" aria-expanded="false" aria-label="Comprendre ${esc(app.label)}">?</button>${control}</div><div class="access-app-info" data-app-info="${esc(app.key)}" hidden>${esc(help)}</div></div>`;
+        const visibleHelp = displayAccessText(app.help || "");
+        const help = [visibleHelp.trim(), levelHelp].filter(Boolean).join(" ");
+        return `<div class="access-app stip-catalog-row"><label class="access-app-main"><input type="checkbox" data-permission="${esc(app.key)}" ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(visibleHelp)}</small></span></label><div class="access-app-tools"><button class="access-info-btn" type="button" data-app-help="${esc(app.key)}" aria-expanded="false" aria-label="Comprendre ${esc(app.label)}">?</button>${control}</div><div class="access-app-info" data-app-info="${esc(app.key)}" hidden>${esc(help)}</div></div>`;
       })
       .join("");
     $("apps")
