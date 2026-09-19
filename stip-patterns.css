@@ -60,7 +60,7 @@
 :where(.stip-action-filters,.hc-action-filters) button[aria-selected="true"]{
   border-color:var(--stip-accent);
   background:var(--stip-accent);
-  color:#fff;
+  color:var(--stip-on-accent);
 }
 
 /* 4. CATALOGUE — applications, favoris, accès et niveaux */
@@ -92,7 +92,7 @@
 }
 .stip-levels button.active{
   background:var(--stip-accent);
-  color:#fff;
+  color:var(--stip-on-accent);
 }
 
 /* 5. PILOTAGE — cockpit, métriques, recommandations */
