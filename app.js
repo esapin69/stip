@@ -35,7 +35,7 @@ loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=Str
 const accessCodeToggle=$('#toggleAccessCode');
 function sanitizeAccessCode(){
   if(!accessCode)return;
-  const clean=String(accessCode.value||'').replace(/\\D/g,'').slice(0,6);
+  const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
   if(accessCode.value!==clean)accessCode.value=clean;
 }
 function hideAccessCode(){
