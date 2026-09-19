@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260920-stability1",
+  const V = "20260920-pattern1",
     m = new Map(),
     done = new Set();
   function load(src) {
