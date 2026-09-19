@@ -33,6 +33,7 @@
   --stip-surface-active:linear-gradient(180deg,#f8fcfd 0%,#edf7f9 100%);
   --stip-line-strong:#c8d4da;
   --stip-focus-ring:rgba(23,107,147,.22);
+  --stip-on-accent:#fff;
 
   /* Compatibilité : les anciennes couches héritent maintenant du thème maître. */
   --cp-ink:var(--stip-ink);--cp-muted:var(--stip-muted);--cp-bg:var(--stip-bg);--cp-card:var(--stip-surface);--cp-line:var(--stip-line);--cp-shadow:var(--stip-shadow);
