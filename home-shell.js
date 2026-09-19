@@ -867,7 +867,10 @@
             window.dispatchEvent(
               new CustomEvent("stip:action-center-open", { detail: n }),
             );
-          else if (n?.action_id) openAction(n.action_id);
+          else if (n?.action_id) {
+            if (inline) panel(true, "À traiter");
+            openAction(n.action_id);
+          }
         }),
     );
   }
@@ -893,8 +896,7 @@
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
-    const a = state.boot.agent || state.session?.agent || {},
-      markup = `${homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    const markup = `${homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
@@ -1190,8 +1192,4 @@
       refresh().catch(() => {});
   }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
-  const style = document.createElement("style");
-  style.textContent =
-    ".hc-planning-status{margin:8px 4px 0;text-align:center;color:#6f838b;font-size:.72rem;font-weight:800}.hc-planning-status.error{display:flex;align-items:center;justify-content:center;gap:8px}.hc-planning-status button{border:1px solid #d8e7ea;border-radius:10px;background:#f3f8f9;color:#0d4257;padding:7px 10px;font-weight:900}.hc-day.loading .hc-shift-loading{color:#9aabb1;animation:hcLoadPulse 1s ease-in-out infinite}@keyframes hcLoadPulse{50%{opacity:.35}}";
-  document.head.appendChild(style);
 })();
