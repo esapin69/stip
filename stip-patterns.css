@@ -3,12 +3,6 @@
    repeated visual patterns across the product. */
 
 /* 1. TEMPS — planning, semaines, jours, agenda */
-.stip-time-nav,
-.team-week-nav,
-.week-wrap,
-.hc-week-nav{
-  --stip-family-accent:var(--stip-accent);
-}
 :where(.stip-time-nav,.team-week-nav,.week-wrap,.hc-week-nav) button{
   border-color:var(--stip-line)!important;
   background:var(--stip-surface-raised)!important;
