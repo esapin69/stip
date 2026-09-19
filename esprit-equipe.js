@@ -266,7 +266,7 @@
 
   function dayContainer(day, summary, body, kind) {
     const today = day === todayIso();
-    return `<article id="team-day-${day}" class="team-day ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${body}</div></article>`;
+    return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${body}</div></article>`;
   }
 
   function agentRow(item) {
