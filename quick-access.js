@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  window.__STIPQuickAccessOwner = "main";
+  document.getElementById("stipQuickUniversal")?.remove();
   const CODE_STORE = "stip_access_code_v1",
     USAGE_STORE = "stip_app_usage_v1",
     FAV_STORE = "stip_app_favorites_v1",
@@ -212,12 +214,11 @@
     n.id = "stipQuickSwitch";
     n.className = "stip-quick-switch";
     n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-qs="public" aria-label="Accès public STIP"><span class="qs-icon">${I.home}</span></button><button type="button" data-qs="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-qs="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
+    n.innerHTML = `<button type="button" data-qs="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-qs="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
     n.addEventListener("click", (e) => {
       const b = e.target.closest?.("[data-qs]");
       if (!b) return;
       const a = b.dataset.qs;
-      if (a === "public") return showPublic();
       if (a === "profile") return showProfile();
       if (a === "favorites") return toggleFavorites();
     });
@@ -233,12 +234,11 @@
   function toggleFavorites() {
     if (document.getElementById("stipFavoritesPanel")) return closeFavorites();
     const pinned = readFav().filter(allowed),
-      suggest = suggestions(),
       all = Object.keys(META).filter(allowed),
       p = document.createElement("section");
     p.id = "stipFavoritesPanel";
     p.className = "stip-favorites-panel";
-    p.innerHTML = `<button type="button" class="stip-fav-backdrop" aria-label="Fermer"></button><div class="stip-fav-sheet"><header><div><small>ACCÈS RAPIDE</small><h2>Applications favorites</h2></div><button type="button" class="stip-fav-close" aria-label="Fermer">×</button></header>${pinned.length ? `<section><h3>Épinglées</h3><div>${pinned.map((k) => favRow(k, true)).join("")}</div></section>` : ""}<section><h3>${pinned.length ? "Suggestions" : "Suggestions selon votre usage"}</h3><div>${suggest.length ? suggest.map((k) => favRow(k, false)).join("") : '<p class="stip-fav-empty">Utilisez vos applications : vos raccourcis apparaîtront ici.</p>'}</div></section><details><summary>Choisir une autre application</summary><div class="stip-fav-all">${all.map((k) => favRow(k, pinned.includes(k))).join("")}</div></details></div>`;
+    p.innerHTML = `<button type="button" class="stip-fav-backdrop" aria-label="Fermer"></button><div class="stip-fav-sheet"><header><div><small>RACCOURCIS</small><h2>Mes favoris</h2></div><button type="button" class="stip-fav-close" aria-label="Fermer">×</button></header>${pinned.length ? `<section><h3>Mes applications</h3><div>${pinned.map((k) => favRow(k, true)).join("")}</div></section><details><summary>Ajouter une application</summary><div class="stip-fav-all">${all.map((k) => favRow(k, pinned.includes(k))).join("")}</div></details>` : `<section class="stip-fav-first"><p class="stip-fav-empty">Ajoutez les applications que vous voulez retrouver ici.</p><details open><summary>Choisir mes applications</summary><div class="stip-fav-all">${all.map((k) => favRow(k, false)).join("")}</div></details></section>`}</div>`;
     document.body.appendChild(p);
     document.body.classList.add("stip-favorites-open");
     p.querySelector(".stip-fav-backdrop").onclick = closeFavorites;
@@ -274,6 +274,7 @@
     document.body.classList.toggle("stip-quick-connected", connected);
   }
   function mount() {
+    document.getElementById("stipQuickUniversal")?.remove();
     const existing = $("#stipQuickSwitch");
     if (!window.STIPSession) {
       existing?.remove();
@@ -295,10 +296,6 @@
       session &&
         !publicPreview &&
         (window.STIPRouter?.get?.() || "home") === "home",
-    );
-    n.querySelector('[data-qs="public"]').classList.toggle(
-      "is-current",
-      session && publicPreview,
     );
     n.querySelector('[data-qs="favorites"]').classList.toggle(
       "is-current",
