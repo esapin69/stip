@@ -8,6 +8,8 @@ function add(v,n){const d=dateObj(v);d.setDate(d.getDate()+n);return iso(d)}
 function tomorrow(){return add(iso(),1)}
 function fullDate(v){return dateObj(v).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
 function shortDate(v){return dateObj(v).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}).replace(/\./g,"")}
+function relation(day=tomorrow()){const base=tomorrow(),a=dateObj(base),b=dateObj(day),diff=Math.round((b-a)/86400000);if(diff===0)return{key:"tomorrow",label:"Demain",offset:0};if(diff===1)return{key:"after-tomorrow",label:"Après-demain",offset:1};return{key:"future",label:fullDate(day),offset:diff}}
+function futureDays(count=8,start=tomorrow()){const n=Math.max(1,Math.min(31,Number(count)||8));return Array.from({length:n},(_,i)=>add(start,i))}
 function canon(v){const s=String(v||"").trim().toUpperCase().replace(/\*/g,"");if(/^M\d*$/.test(s))return"M";if(s==="J0464"||s==="J"||(/^J\d+$/.test(s)&&!/^J4/.test(s)))return"J";if(s==="J4"||/^J4\d+$/.test(s))return"J4";if(/^S\d*$/.test(s))return"S";if(/^N\d*$/.test(s))return"N";return s||"—"}
 function shiftTime(code,row={}){const direct=String(row.horaire||row.horaires||row.shift_time||"").trim();if(direct)return direct;const a=String(row.start_time||"").slice(0,5),b=String(row.end_time||"").slice(0,5);if(a||b)return[a,b].filter(Boolean).join("–");return SHIFT[code]?.[1]||""}
 function shiftFor(day=tomorrow()){const b=window.STIPBootCache||{},row=(b.personal||[]).find(x=>String(x.date||"").slice(0,10)===day)||null,code=canon(row?.code||row?.source_value||"");return{row,code,label:SHIFT[code]?.[0]||(REST.has(code)?"Repos":code==="—"?"Horaire non renseigné":code),time:shiftTime(code,row||{}),rest:REST.has(code)}}
@@ -32,9 +34,9 @@ function moveNext(day,id){const rows=tasks(day),item=rows.find(x=>x.id===id);if(
 function mins(t){const m=String(t||"").match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):null}
 function range(t){const p=String(t||"").match(/(\d{1,2}):?(\d{2})?\s*[–-]\s*(\d{1,2}):?(\d{2})?/);return p?[Number(p[1])*60+Number(p[2]||0),Number(p[3])*60+Number(p[4]||0)]:null}
 function insights(day=tomorrow()){const sh=shiftFor(day),ev=events(day),ts=tasks(day),out=[],sr=range(sh.time);
-if(sh.rest)out.push({icon:"◷",title:"Journée sans poste détecté",text:ev.length||ts.length?"Tu as tout de même des éléments prévus pour demain.":"Aucun rendez-vous ni tâche personnelle n’est détecté.",level:"info"});
-else if(sh.code!=="—")out.push({icon:"↗",title:sh.label+" · "+(sh.time||"horaire à confirmer"),text:"Ton planning de demain est déjà identifié.",level:"info"});
-else out.push({icon:"?",title:"Horaire à vérifier",text:"Aucun poste n’est renseigné dans le planning pour demain.",level:"warning"});
+if(sh.rest)out.push({icon:"◷",title:"Journée sans poste détecté",text:ev.length||ts.length?"Tu as tout de même des éléments prévus pour cette journée.":"Aucun rendez-vous ni tâche personnelle n’est détecté.",level:"info"});
+else if(sh.code!=="—")out.push({icon:"↗",title:sh.label+" · "+(sh.time||"horaire à confirmer"),text:"Ton planning est déjà identifié pour cette journée.",level:"info"});
+else out.push({icon:"?",title:"Horaire à vérifier",text:"Aucun poste n’est renseigné dans le planning pour cette journée.",level:"warning"});
 const timed=ev.map(x=>({x,m:mins(x.start||String(x.time).slice(0,5))})).filter(x=>x.m!=null).sort((a,b)=>a.m-b.m);
 for(let i=1;i<timed.length;i++){if(timed[i].m-timed[i-1].m<30){out.push({icon:"⚠",title:"Enchaînement serré",text:timed[i-1].x.title+" puis "+timed[i].x.title+" à moins de 30 min d’intervalle.",level:"warning"});break}}
 if(sr){const inside=timed.filter(e=>e.m>=sr[0]&&e.m<=sr[1]);if(inside.length)out.push({icon:"◎",title:inside.length+" élément"+(inside.length>1?"s":"")+" pendant le service",text:inside.slice(0,2).map(e=>e.x.title).join(" · "),level:"info"});const before=timed.find(e=>e.m<sr[0]&&sr[0]-e.m<=45);if(before)out.push({icon:"!",title:"Avant la prise de poste",text:before.x.title+" est prévu peu avant ton horaire de travail.",level:"warning"})}
@@ -43,7 +45,7 @@ if(ev.some(x=>x.kind==="formation"))out.push({icon:"🎓",title:"Formation prév
 if(ev.some(x=>x.type==="Visite médicale"))out.push({icon:"🩺",title:"Visite médicale prévue",text:"Vérifie l’heure, le lieu et les documents nécessaires.",level:"info"});
 const open=ts.filter(x=>!x.done).length;if(open)out.push({icon:"✓",title:open+" chose"+(open>1?"s":"")+" à faire",text:"Tes ajouts personnels sont regroupés ici et peuvent être réordonnés.",level:"info"});
 return out.slice(0,5)}
-function snapshot(day=tomorrow()){return{day,shift:shiftFor(day),events:events(day),tasks:tasks(day),insights:insights(day),fullDate:fullDate(day),shortDate:shortDate(day)}}
-window.STIPTomorrow={iso,tomorrow,add,dateObj,fullDate,shortDate,canon,esc,shiftFor,events,tasks,write,upsert,remove,toggle,reorder,moveNext,insights,snapshot};
+function snapshot(day=tomorrow()){return{day,shift:shiftFor(day),events:events(day),tasks:tasks(day),insights:insights(day),fullDate:fullDate(day),shortDate:shortDate(day),relation:relation(day)}}
+window.STIPTomorrow={iso,tomorrow,add,dateObj,fullDate,shortDate,relation,futureDays,canon,esc,shiftFor,events,tasks,write,upsert,remove,toggle,reorder,moveNext,insights,snapshot};
 window.dispatchEvent(new CustomEvent("stip:tomorrow-ready"));
 })();

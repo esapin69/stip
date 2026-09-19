@@ -8,3 +8,18 @@
 .td-sheet-wrap{position:fixed;z-index:13000;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:9px;background:rgba(9,27,38,.42)}.td-sheet{width:min(620px,100%);padding:10px 13px calc(15px + env(safe-area-inset-bottom));border-radius:24px 24px 17px 17px;background:var(--stip-surface)}.td-sheet h3{margin:2px 0 11px}.td-form{display:grid;gap:9px}.td-form label{display:grid;gap:4px;color:var(--stip-muted);font-size:.7rem;font-weight:900}.td-form input,.td-form textarea{width:100%;min-height:43px;padding:9px 10px;border:1px solid var(--stip-line);border-radius:12px;font:inherit}.td-form textarea{min-height:70px}.td-actions{display:grid;grid-template-columns:1fr 1.4fr;gap:7px}.td-actions button,.td-sheet .secondary{min-height:44px;border:1px solid var(--stip-line);border-radius:12px;background:var(--stip-surface-soft);font-weight:900}.td-actions .primary{background:var(--stip-accent);border-color:var(--stip-accent);color:var(--stip-surface)}.td-sheet .secondary{width:100%;margin-top:7px}.td-sheet .danger{color:var(--stip-danger);background:var(--stip-surface)}
 .td-float{position:fixed;z-index:11999;right:13px;bottom:calc(13px + env(safe-area-inset-bottom));padding:9px 12px;border:1px solid #cfdae0;border-radius:999px;background:var(--stip-surface);color:var(--stip-ink);box-shadow:var(--stip-shadow-strong);font-weight:950}
 @media(max-width:390px){.td-card-main{display:grid;gap:1px}.td-head{grid-template-columns:38px 1fr 38px 38px}.td-head button{width:36px;height:36px}.td-hero h1{font-size:1.4rem}}
+.td-back-tomorrow{min-height:40px;margin:0 0 8px;padding:0 11px;border:1px solid var(--stip-line);border-radius:12px;background:var(--stip-surface-soft);color:var(--stip-accent);font-weight:900}
+.td-day-nav{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:stretch;margin-bottom:10px}
+.td-day-strip{display:flex;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;padding:1px}
+.td-day-strip::-webkit-scrollbar{display:none}
+.td-day-strip button{position:relative;flex:0 0 58px;min-height:66px;padding:6px 3px;border:1px solid var(--stip-line);border-radius:15px;background:var(--stip-surface);color:var(--stip-ink);display:grid;place-items:center;align-content:center;gap:1px}
+.td-day-strip button small{color:var(--stip-muted);font-size:.54rem;font-weight:950;letter-spacing:.04em}
+.td-day-strip button b{font-size:1.08rem;line-height:1}
+.td-day-strip button em{margin-top:2px;color:var(--stip-accent);font-size:.58rem;font-style:normal;font-weight:950}
+.td-day-strip button i{position:absolute;right:3px;top:3px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:var(--stip-accent);color:var(--stip-surface);display:grid;place-items:center;font-size:.48rem;font-style:normal;font-weight:950}
+.td-day-strip button.on{border-color:var(--stip-accent);background:var(--stip-accent-soft);box-shadow:0 0 0 2px var(--stip-accent-soft)}
+.td-day-strip button.on small,.td-day-strip button.on em{color:var(--stip-accent)}
+.td-date-pick{min-width:54px;border:1px solid var(--stip-line);border-radius:15px;background:var(--stip-surface-soft);color:var(--stip-accent);font-size:.68rem;font-weight:950}
+.td-reassure{margin:11px 0 0;padding:9px 10px;border-radius:13px;background:var(--stip-surface-soft);color:var(--stip-ink-2);font-size:.76rem;line-height:1.35;font-weight:780}
+.td-day-strip button:focus-visible,.td-date-pick:focus-visible,.td-back-tomorrow:focus-visible{outline:3px solid var(--stip-accent-soft);outline-offset:2px}
+@media(max-width:390px){.td-day-strip button{flex-basis:54px;min-height:62px}.td-date-pick{min-width:50px}}
