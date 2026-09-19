@@ -36,9 +36,9 @@ check(['M','J','J4','S','N'].every(code=>new RegExp(`\\b${code}: \\{ label:`).te
 check(selector.includes('sas-absence-divider')&&selector.includes('sas-absent'),'Le sélecteur commun ne sépare plus les absents.');
 check(read('responsable-agents.js').includes('STIPAgentSelector.mount'),'Responsable ne réutilise plus le sélecteur commun.');
 
-check(read('assistant.js').includes('class="as-day"'),'Assistant ne regroupe plus les sujets par journée.');
+check(/class="[^"]*as-day\b/.test(read('assistant.js')),'Assistant ne regroupe plus les sujets par journée.');
 check(/id="dayCard"[\s\S]*id="insightSection"/.test(read('cadre-activite.html')),'Activité sépare de nouveau l’analyse du conteneur de journée.');
-check(read('responsable-intelligence.js').includes('class="op-day"'),'Le cockpit Responsable ne regroupe plus les signaux par journée.');
+check(/class="[^"]*op-day\b/.test(read('responsable-intelligence.js')),'Le cockpit Responsable ne regroupe plus les signaux par journée.');
 
 const theme=read('stip-theme-base.css');
 check(theme.includes('--stip-bg:#f6f7f8'),'Le fond maître neutre n’est plus appliqué.');
