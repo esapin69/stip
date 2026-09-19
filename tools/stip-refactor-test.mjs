@@ -101,6 +101,11 @@ check(accessManageSource.includes('ESPRIT_KEYS')&&accessManageSource.includes('p
 check(accessManageSource.includes('levels: false')&&accessManageSource.includes('MAXI n’est pas proposé'),'Esprit d’équipe affiche de nouveau un faux niveau MAXI.');
 check(accessManageEdge.includes('requestedPermissions')&&accessManageEdge.includes('b.permissions'),'La création d’accès ignore de nouveau les applications choisies.');
 
+check(read('assistant.js').includes('as-day stip-time-surface'),'Assistant ne réutilise plus la famille visuelle Temps.');
+check(read('esprit-equipe.js').includes('team-day stip-time-surface'),'Esprit d’équipe ne réutilise plus la famille visuelle Temps.');
+check(read('responsable-intelligence.js').includes('op-day stip-time-surface'),'Responsable Intelligence ne réutilise plus la famille visuelle Temps.');
+check(read('cadre-activite.html').includes('activity-day stip-time-surface'),'Activité ne réutilise plus la famille visuelle Temps.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
