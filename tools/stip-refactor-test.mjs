@@ -10,11 +10,19 @@ const home=read('home-shell.js');
 const responsable=read('responsable-home.js');
 const loader=read('stip-loader.js');
 
-check(home.includes("today=dateObj(parisIso())"),'Le bloc mois doit rester ancré sur la date réelle.');
+check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 check(home.indexOf('class="hc-month-open"')<home.indexOf('class="hc-days hc-days-seven'),'Le mois complet doit précéder la ligne des jours.');
 check(!loader.includes('signature-success-ui.js'),'Le chargeur référence encore le script absent signature-success-ui.js.');
 check(!responsable.includes('dashboardMode'),'Le chargement Responsable dépend encore du paramètre dashboard.');
 check(responsable.includes('await load()'),'Le cockpit Responsable ne déclenche pas son chargement principal.');
+check(existsSync(join(root,'esprit-equipe.html')),'La page unifiée Esprit d’équipe est absente.');
+check(home.includes('Esprit d’équipe'),'L’accueil ne référence pas Esprit d’équipe.');
+check(!home.includes('hc-calendar-edge'),'Une bulle calendrier flottante reste active.');
+check(home.includes('Synchroniser mon calendrier'),'L’entrée calendrier centrale n’a pas son libellé validé.');
+const planningHome=read('planning-home.js');
+check(!planningHome.includes('Envoyer PDF'),'L’action obsolète Envoyer PDF est encore affichée.');
+check(planningHome.includes('Aperçu A4 paysage'),'L’aperçu PDF A4 paysage n’est pas explicite.');
+check(read('planning-print-reference.js').includes('@page{size:A4 landscape'),'L’aperçu imprimable a perdu le format A4 paysage.');
 
 for(const htmlName of readdirSync(root).filter(name=>name.endsWith('.html'))){
   const html=read(htmlName);
