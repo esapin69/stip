@@ -66,6 +66,8 @@
       '<img src="images/icone_app/home-planning.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-apps.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
+    homeProfile:
+      '<img src="images/icone_app/quick-card.svg?v=20260920-profile1" alt="" aria-hidden="true">',
   };
   function esc(v) {
     return String(v ?? "").replace(
@@ -765,10 +767,15 @@
       media = state.boot?.media || {},
       avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
       ghe = String(a.ghe || "").trim(),
+      team = String(a.type_planning || a.equipe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
-      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase();
-    return `<section class="hc-profile"><div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy">${ghe ? `<strong>${esc(ghe.toUpperCase().startsWith("GHE") ? ghe : `GHE ${ghe}`)}</strong>` : ""}<div>${tel ? `<button data-copy="${esc(tel)}" data-label="Numéro">${esc(tel)}</button>` : ""}${mail ? `<button data-copy="${esc(mail)}" data-label="E-mail">${esc(mail)}</button>` : ""}</div></div></section>`;
+      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
+      meta = [
+        ghe ? (ghe.toUpperCase().startsWith("GHE") ? ghe : `GHE ${ghe}`) : "",
+        team ? `Équipe ${cap(team)}` : "",
+      ].filter(Boolean);
+    return `<section class="hc-profile hc-profile-full"><div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>MON PROFIL</small><strong>${esc(agentName(a))}</strong>${meta.length ? `<p class="hc-profile-meta">${esc(meta.join(" · "))}</p>` : ""}<div>${tel ? `<button data-copy="${esc(tel)}" data-label="Numéro">${esc(tel)}</button>` : ""}${mail ? `<button data-copy="${esc(mail)}" data-label="E-mail">${esc(mail)}</button>` : ""}</div></div></section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -796,29 +803,89 @@
       s += app("access", "Accès", "access", "access");
     return s || '<p class="hc-empty">Aucune application autorisée.</p>';
   }
-  function homeModeNav(a = {}) {
-    const media = state.boot?.media || {},
-      avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
-      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
-      active = state.homeMode || "planning",
-      profileArt = avatar
-        ? `<img src="${esc(avatar)}" alt="" aria-hidden="true">`
-        : `<span class="hc-home-filter-initials">${esc(ini || "ME")}</span>`,
+  function homeModeNav() {
+    const active = state.homeMode || "planning",
+      count = notifications().length,
       items = [
-        ["profile", "Mon profil", profileArt],
+        ["profile", "Mon profil", ICON.homeProfile],
         ["planning", "Planning", ICON.homePlanning],
         ["apps", "Applications", ICON.homeApps],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
         ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art ${key === "profile" ? "is-avatar" : ""}">${art}</span><strong>${label}</strong></button>`,
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "profile" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
       )
       .join("")}</nav>`;
   }
+
+  function actionCenterData(filter = state.actionFilter) {
+    const ns = notifications(),
+      cats = [
+        ["all", "Tout"],
+        ["access", "Accès"],
+        ["signatures", "Signatures"],
+        ["reminders", "Rappels"],
+        ["agenda", "Agenda"],
+        ["other", "Autres"],
+      ],
+      counts = Object.fromEntries(
+        cats.map(([k]) => [
+          k,
+          k === "all" ? ns.length : ns.filter((n) => noteCategory(n) === k).length,
+        ]),
+      ),
+      shown = filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
+    return { ns, cats, counts, shown };
+  }
+
+  function actionCenterMarkup(filter = state.actionFilter, inline = false) {
+    const { ns, cats, counts, shown } = actionCenterData(filter);
+    const head = inline
+      ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>Notifications</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Rien ne demande votre attention pour le moment."}</p></div></header>`
+      : "";
+    return `${head}<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">${cats.map(([k, l]) => `<button type="button" role="tab" aria-selected="${filter === k}" data-action-filter="${k}">${l}${counts[k] ? ` <span>${counts[k]}</span>` : ""}</button>`).join("")}</div>${shown.length ? `<div class="hc-panel-list">${shown.map((n, i) => `<button class="hs-note" data-note-index="${i}"><small>${esc(cats.find((x) => x[0] === noteCategory(n))?.[1] || "Autres")}</small><strong>${esc(n.title)}</strong>${n.body ? `<p>${esc(n.body)}</p>` : ""}</button>`).join("")}</div>` : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>'}`;
+  }
+
+  function bindActionCenter(scope, filter = state.actionFilter, inline = false) {
+    if (!scope) return;
+    const { shown } = actionCenterData(filter);
+    scope.querySelectorAll("[data-action-filter]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const next = b.dataset.actionFilter || "all";
+          state.actionFilter = next;
+          if (inline) renderProfileActions(next);
+          else renderActionCenter(next);
+        }),
+    );
+    scope.querySelectorAll("[data-note-index]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const n = shown[Number(b.dataset.noteIndex)];
+          if (n?.source && n.source !== "stip")
+            window.dispatchEvent(
+              new CustomEvent("stip:action-center-open", { detail: n }),
+            );
+          else if (n?.action_id) openAction(n.action_id);
+        }),
+    );
+  }
+
+  function renderProfileActions(filter = state.actionFilter) {
+    const host = $("#hcProfileActions");
+    if (!host) return;
+    state.actionFilter = filter;
+    host.innerHTML = actionCenterMarkup(filter, true);
+    bindActionCenter(host, filter, true);
+  }
+
+  function profilePane() {
+    return `<section class="hc-home-pane hc-home-pane-profile">${profile()}<section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></section>`;
+  }
+
   function homeModeBody() {
-    if (state.homeMode === "profile")
-      return `<section class="hc-home-pane hc-home-pane-profile">${profile()}</section>`;
+    if (state.homeMode === "profile") return profilePane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
@@ -827,10 +894,7 @@
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
     const a = state.boot.agent || state.session?.agent || {},
-      name = agentName(a),
-      team = String(a.type_planning || a.equipe || "").trim(),
-      count = notifications().length,
-      markup = `<header class="hc-head"><div><h1>${esc(name)}</h1><p>${team ? `Équipe ${esc(cap(team))}` : "Mon espace personnel"}</p></div><div class="hc-actions"><button id="cpBell" class="hc-bell" aria-label="Centre À traiter">🔔${count ? `<span>${count}</span>` : ""}</button><button class="hc-logout" id="hcLogout">Déconnexion <b>→</b></button></div></header>${homeModeNav(a)}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+      markup = `${homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
@@ -844,7 +908,7 @@
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
     );
-    $("#cpBell")?.addEventListener("click", openNotifications);
+    if (state.homeMode === "profile") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -966,45 +1030,11 @@
     renderActionCenter("all");
   }
   function renderActionCenter(filter = state.actionFilter) {
-    const body = $("#hsPanelBody"),
-      ns = notifications();
+    const body = $("#hsPanelBody");
     if (!body) return;
     state.actionFilter = filter;
-    const cats = [
-        ["all", "Tout"],
-        ["access", "Accès"],
-        ["signatures", "Signatures"],
-        ["reminders", "Rappels"],
-        ["agenda", "Agenda"],
-        ["other", "Autres"],
-      ],
-      counts = Object.fromEntries(
-        cats.map(([k]) => [
-          k,
-          k === "all"
-            ? ns.length
-            : ns.filter((n) => noteCategory(n) === k).length,
-        ]),
-      ),
-      shown =
-        filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
-    body.innerHTML = `<div class="hc-action-filters" role="tablist" aria-label="Catégories à traiter">${cats.map(([k, l]) => `<button type="button" role="tab" aria-selected="${filter === k}" data-action-filter="${k}">${l}${counts[k] ? ` <span>${counts[k]}</span>` : ""}</button>`).join("")}</div>${shown.length ? `<div class="hc-panel-list">${shown.map((n, i) => `<button class="hs-note" data-note-index="${i}"><small>${esc(cats.find((x) => x[0] === noteCategory(n))?.[1] || "Autres")}</small><strong>${esc(n.title)}</strong>${n.body ? `<p>${esc(n.body)}</p>` : ""}</button>`).join("")}</div>` : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>'}`;
-    body
-      .querySelectorAll("[data-action-filter]")
-      .forEach(
-        (b) => (b.onclick = () => renderActionCenter(b.dataset.actionFilter)),
-      );
-    body.querySelectorAll("[data-note-index]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          const n = shown[Number(b.dataset.noteIndex)];
-          if (n?.source && n.source !== "stip")
-            window.dispatchEvent(
-              new CustomEvent("stip:action-center-open", { detail: n }),
-            );
-          else if (n?.action_id) openAction(n.action_id);
-        }),
-    );
+    body.innerHTML = actionCenterMarkup(filter, false);
+    bindActionCenter(body, filter, false);
   }
   async function openAction(id) {
     const body = $("#hsPanelBody");
