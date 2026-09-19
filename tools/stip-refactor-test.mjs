@@ -91,6 +91,10 @@ check(read('stip-theme.css').includes('stip-patterns.css'),'Le thème maître ne
 check(loadingJs.includes('const VISIBLE=new Set()'),'Le HUD global de chargement peut redevenir visible.');
 check(loadingCss.includes('#stipLoadHud{display:none!important}'),'Le HUD global de chargement n’est plus neutralisé.');
 
+const tomorrowCss=read('tomorrow-hub.css');
+check(!tomorrowCss.includes('var(--stip-surface)8f8'),'Pour demain contient une valeur CSS invalide.');
+check(tomorrowCss.includes('var(--stip-bg)')&&tomorrowCss.includes('var(--stip-surface)'),'Pour demain ne consomme plus le thème maître STIP.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
