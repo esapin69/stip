@@ -22,6 +22,7 @@
     actionFilter: "all",
     weekOffset: 0,
     weekFull: false,
+    homeMode: "planning",
   };
   const REST = new Set([
     "RH",
@@ -162,6 +163,22 @@
     if (key) window.STIPRequestedPlanningMonth = key;
     window.STIPPlanningMonth?.set?.(key);
     window.STIPHubs?.planning?.("personal");
+  }
+  function weekRangeLabel(w = []) {
+    const rows = w.filter(Boolean);
+    if (!rows.length) return "";
+    const first = rows[0].d,
+      last = rows.at(-1).d,
+      sameMonth =
+        first.getMonth() === last.getMonth() &&
+        first.getFullYear() === last.getFullYear(),
+      month = (d, short = false) =>
+        d
+          .toLocaleDateString("fr-FR", { month: short ? "short" : "long" })
+          .replace(/\./g, "");
+    if (sameMonth)
+      return `${first.getDate()} → ${last.getDate()} ${month(last)}`;
+    return `${first.getDate()} ${month(first, true)} → ${last.getDate()} ${month(last, true)}`;
   }
 
   async function call(url, action, body = {}) {
@@ -463,7 +480,7 @@
   function weekWidget() {
     const w = selectedWeek(),
       mi = weekMonthInfo(w);
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><b>SEMAINE ${weekNo(w[0].d)}</b><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header><button type="button" class="hc-month-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button><div class="hc-days hc-days-seven ${w.length < 7 ? "hc-days-current" : ""}" style="--day-count:${w.length}">${w.map((x) => dayCard(x, "hc-day", true)).join("")}</div>${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
+    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header><button type="button" class="hc-month-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button><div class="hc-days hc-days-seven ${w.length < 7 ? "hc-days-current" : ""}" style="--day-count:${w.length}">${w.map((x) => dayCard(x, "hc-day", true)).join("")}</div>${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -686,7 +703,7 @@
               const time = String(x.time || "").trim(),
                 place = String(x.place || "").trim(),
                 fallback = !time && !place ? String(x.sub || "").trim() : "";
-              return `<button type="button" class="hc-live-row hc-event-row" data-widget-open="future" data-future-id="${esc(x.id)}"><i>${x.icon || "•"}</i><span><span class="hc-event-meta"><small class="hc-event-type">${esc((x.type || "Événement").toUpperCase())}</small><small class="hc-event-date">${esc(fmtDateRange(x))}</small></span><strong>${esc(x.title)}</strong><span class="hc-event-details">${time ? `<span class="hc-event-time">${esc(time)}</span>` : ""}${place ? `<span class="hc-event-place">${esc(place)}</span>` : ""}${fallback ? `<span class="hc-event-fallback">${esc(fallback)}</span>` : ""}</span></span><b>›</b></button>`;
+              return `<button type="button" class="hc-live-row hc-event-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-event-anchor"><i>${x.icon || "•"}</i><small class="hc-event-date">${esc(fmtDateRange(x))}</small></span><span><span class="hc-event-meta"><small class="hc-event-type">${esc((x.type || "Événement").toUpperCase())}</small></span><strong>${esc(x.title)}</strong><span class="hc-event-details">${time ? `<span class="hc-event-time">${esc(time)}</span>` : ""}${place ? `<span class="hc-event-place">${esc(place)}</span>` : ""}${fallback ? `<span class="hc-event-fallback">${esc(fallback)}</span>` : ""}</span></span><b>›</b></button>`;
             })
             .join("")
         : '<p class="hc-widget-empty">Aucune date importante à venir.</p>'
@@ -779,6 +796,33 @@
       s += app("access", "Accès", "access", "access");
     return s || '<p class="hc-empty">Aucune application autorisée.</p>';
   }
+  function homeModeNav(a = {}) {
+    const media = state.boot?.media || {},
+      avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
+      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
+      active = state.homeMode || "planning",
+      profileArt = avatar
+        ? `<img src="${esc(avatar)}" alt="" aria-hidden="true">`
+        : `<span class="hc-home-filter-initials">${esc(ini || "ME")}</span>`,
+      items = [
+        ["profile", "Mon profil", profileArt],
+        ["planning", "Planning", ICON.homePlanning],
+        ["apps", "Applications", ICON.homeApps],
+      ];
+    return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
+      .map(
+        ([key, label, art]) =>
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art ${key === "profile" ? "is-avatar" : ""}">${art}</span><strong>${label}</strong></button>`,
+      )
+      .join("")}</nav>`;
+  }
+  function homeModeBody() {
+    if (state.homeMode === "profile")
+      return `<section class="hc-home-pane hc-home-pane-profile">${profile()}</section>`;
+    if (state.homeMode === "apps")
+      return `<section class="hc-home-pane hc-home-pane-apps"><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+  }
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
@@ -786,7 +830,7 @@
       name = agentName(a),
       team = String(a.type_planning || a.equipe || "").trim(),
       count = notifications().length,
-      markup = `<header class="hc-head"><div><h1>${esc(name)}</h1><p>${team ? `Équipe ${esc(cap(team))}` : "Mon espace personnel"}</p></div><div class="hc-actions"><button id="cpBell" class="hc-bell" aria-label="Centre À traiter">🔔${count ? `<span>${count}</span>` : ""}</button><button class="hc-logout" id="hcLogout">Déconnexion <b>→</b></button></div></header>${profile()}<main class="hc-widget-zone"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section>`;
+      markup = `<header class="hc-head"><div><h1>${esc(name)}</h1><p>${team ? `Équipe ${esc(cap(team))}` : "Mon espace personnel"}</p></div><div class="hc-actions"><button id="cpBell" class="hc-bell" aria-label="Centre À traiter">🔔${count ? `<span>${count}</span>` : ""}</button><button class="hc-logout" id="hcLogout">Déconnexion <b>→</b></button></div></header>${homeModeNav(a)}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
@@ -801,6 +845,16 @@
       document.getElementById("logoutBtn")?.click(),
     );
     $("#cpBell")?.addEventListener("click", openNotifications);
+    root.querySelectorAll("[data-home-mode]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const next = b.dataset.homeMode || "planning";
+          if (next === state.homeMode) return;
+          state.homeMode = next;
+          state.renderSig = "";
+          render();
+        }),
+    );
     root
       .querySelector("[data-open-month]")
       ?.addEventListener("click", (e) =>
