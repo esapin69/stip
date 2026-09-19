@@ -1,0 +1,115 @@
+/* STIP component families
+   Loaded only through stip-theme.css. Pages keep structure; these families own
+   repeated visual patterns across the product. */
+
+/* 1. TEMPS — planning, semaines, jours, agenda */
+.stip-time-nav,
+.team-week-nav,
+.week-wrap,
+.hc-week-nav{
+  --stip-family-accent:var(--stip-accent);
+}
+:where(.stip-time-nav,.team-week-nav,.week-wrap,.hc-week-nav) button{
+  border-color:var(--stip-line)!important;
+  background:var(--stip-surface-raised)!important;
+  color:var(--stip-ink)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+}
+:where(.stip-time-nav,.team-week-nav,.week-wrap,.hc-week-nav) button:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:2px;
+}
+.stip-time-surface{
+  background:var(--stip-surface-raised);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  box-shadow:var(--stip-shadow);
+}
+
+/* 2. PERSONNES — recherche et sélection d'agents
+   Le moteur commun reste stip-agent-selector.js/.css. */
+.stip-person-surface,
+.sas-selector{
+  color:var(--stip-ink);
+}
+:where(.stip-person-surface,.sas-selector) :is(.sas-search,.sas-person,.sas-shift,.sas-absence-group){
+  border-color:var(--stip-line)!important;
+}
+:where(.stip-person-surface,.sas-selector) .sas-person{
+  background:var(--stip-surface-raised)!important;
+}
+:where(.stip-person-surface,.sas-selector) .sas-person:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:2px;
+}
+
+/* 3. ACTIONS — à traiter, demandes, rappels, signatures */
+.stip-action-surface{
+  background:var(--stip-surface-raised);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  box-shadow:var(--stip-shadow);
+}
+.stip-action-filters,
+.hc-action-filters{
+  display:flex;
+  gap:7px;
+  overflow:auto;
+  scrollbar-width:none;
+}
+:where(.stip-action-filters,.hc-action-filters) button{
+  border:1px solid var(--stip-line);
+  background:var(--stip-surface);
+  color:var(--stip-ink-2);
+  box-shadow:var(--stip-shadow-soft);
+}
+:where(.stip-action-filters,.hc-action-filters) button[aria-selected="true"]{
+  border-color:var(--stip-accent);
+  background:var(--stip-accent);
+  color:#fff;
+}
+
+/* 4. CATALOGUE — applications, favoris, accès et niveaux */
+.stip-catalog-surface{
+  background:var(--stip-surface-raised);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  box-shadow:var(--stip-shadow);
+}
+.stip-catalog-row{
+  background:var(--stip-surface);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-md);
+  box-shadow:var(--stip-shadow-soft);
+}
+.stip-levels{
+  display:flex;
+  overflow:hidden;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-sm);
+  background:var(--stip-surface-soft);
+}
+.stip-levels button{
+  min-height:42px;
+  border:0;
+  background:transparent;
+  color:var(--stip-muted);
+  font-weight:900;
+}
+.stip-levels button.active{
+  background:var(--stip-accent);
+  color:#fff;
+}
+
+/* 5. PILOTAGE — cockpit, métriques, recommandations */
+.stip-cockpit-surface{
+  background:var(--stip-surface-raised);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  box-shadow:var(--stip-shadow);
+}
+.stip-metric{
+  background:var(--stip-surface-soft);
+  border:1px solid var(--stip-line-soft);
+  border-radius:var(--stip-radius-md);
+}
