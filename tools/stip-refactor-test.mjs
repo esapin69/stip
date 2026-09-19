@@ -69,6 +69,28 @@ for(const file of ['home-shell.js','responsable-home.js','access-runtime.js','ad
   check(source.includes('X-STIP-Session')||source.includes('x-stip-session'),`${basename(file)} a perdu la session STIP.`);
 }
 
+
+/* Décisions finales 20/09/2026 */
+const quick=read('quick-access.js');
+const quickUniversal=read('quick-access-universal.js');
+const accessManage=read('access-manage.js');
+const patterns=read('stip-patterns.css');
+const loadingCss=read('stip-loading.css');
+const loadingJs=read('stip-loading.js');
+
+check(home.includes('quick-card.svg')&&home.includes('homeProfile'),'Mon profil n’utilise plus le visuel fiche validé.');
+check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement'),'Mon profil ne contient plus le centre À traiter et la déconnexion secondaire.');
+check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
+check(!quick.includes('data-qs="public"')&&!quickUniversal.includes('data-u="public"'),'Le raccourci bas gauche supprimé est revenu.');
+check(!quick.includes('Suggestions selon votre usage')&&!quickUniversal.includes('Suggestions selon votre usage'),'Les suggestions automatiques de favoris sont revenues.');
+check(quick.includes('Choisir mes applications')&&quick.includes('Ajouter une application'),'Les états du panneau Favoris ne suivent plus les libellés validés.');
+check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
+check(accessManage.includes('sortPeople'),'La liste Accès n’est plus triée alphabétiquement côté interface.');
+check(['stip-time-surface','stip-person-surface','stip-action-surface','stip-catalog-surface','stip-cockpit-surface'].every(key=>patterns.includes(key)),'Une famille visuelle commune STIP a disparu.');
+check(read('stip-theme.css').includes('stip-patterns.css'),'Le thème maître ne charge plus les familles visuelles communes.');
+check(loadingJs.includes('const VISIBLE=new Set()'),'Le HUD global de chargement peut redevenir visible.');
+check(loadingCss.includes('#stipLoadHud{display:none!important}'),'Le HUD global de chargement n’est plus neutralisé.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
