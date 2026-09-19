@@ -5,7 +5,7 @@ async function post(url,body){const r=await fetch(url,{method:'POST',headers:{'C
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris'}).format(new Date());
 function fmtFresh(v){if(!v)return'';try{return new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Paris'}).format(new Date(v)).replace(',',' à')}catch{return''}}
 async function summary(){
-  const host=document.querySelector('#respOperational');if(!host)return;
+  const host=document.querySelector('#respCoverage');if(!host)return;
   try{
     const d=await post(STAFF,{action:'day',date:today()});
     if(!d.available){host.hidden=true;return}

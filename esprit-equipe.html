@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'">
+  <title>Esprit d’équipe · STIP</title>
+  <link rel="stylesheet" href="stip-theme.css?v=20260919-team1">
+  <link rel="stylesheet" href="stip-shell.css?v=20260919-team1">
+  <link rel="stylesheet" href="esprit-equipe.css?v=20260919-team1">
+</head>
+<body class="team-page">
+  <header class="team-top"><a href="index.html" aria-label="Retour à STIP">‹</a><div><b>STIP</b><span>ESPRIT D’ÉQUIPE</span></div><button id="teamRefresh" type="button" aria-label="Actualiser">↻</button></header>
+  <main class="team-shell">
+    <section class="team-heading"><span class="stip-kicker">VUE RÉUNIE</span><h1>Esprit d’équipe</h1><p>Équipe du jour, activité et assistant dans un même espace.</p></section>
+    <section class="team-date"><button id="teamPrev" type="button" aria-label="Jour précédent">‹</button><button id="teamToday" type="button"><small>JOURNÉE</small><strong id="teamDateLabel">Aujourd’hui</strong></button><button id="teamNext" type="button" aria-label="Jour suivant">›</button></section>
+    <nav class="team-tabs" aria-label="Volets Esprit d’équipe">
+      <button type="button" class="active" data-team-tab="overview">Vue globale</button>
+      <button type="button" data-team-tab="team">Équipe</button>
+      <button type="button" data-team-tab="activity">Activité</button>
+      <button type="button" data-team-tab="assistant">Assistant</button>
+    </nav>
+    <p id="teamError" class="team-error" role="status"></p>
+    <section id="teamContent" class="team-content" aria-live="polite"><div class="team-loading">Chargement de la journée…</div></section>
+  </main>
+  <script src="esprit-equipe.js?v=20260919-team1"></script>
+</body>
+</html>
