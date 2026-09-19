@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  if (window.__STIPQuickAccessOwner === "main" || document.getElementById("stipQuickSwitch")) return;
   if (
     /(?:^|\/)index\.html$/.test(location.pathname) ||
     location.pathname === "/" ||
@@ -193,12 +194,11 @@
   function toggleFav(perms) {
     if (document.getElementById("stipFavoritesPanel")) return closeFav();
     const pinned = readFav().filter((k) => allowed(k, perms)),
-      suggest = suggestions(perms),
       all = Object.keys(APPS).filter((k) => allowed(k, perms)),
       p = document.createElement("section");
     p.id = "stipFavoritesPanel";
     p.className = "stip-favorites-panel";
-    p.innerHTML = `<button type="button" class="stip-fav-backdrop" aria-label="Fermer"></button><div class="stip-fav-sheet"><header><div><small>ACCÈS RAPIDE</small><h2>Applications favorites</h2></div><button type="button" class="stip-fav-close" aria-label="Fermer">×</button></header>${pinned.length ? `<section><h3>Épinglées</h3><div>${pinned.map((k) => favRow(k, true)).join("")}</div></section>` : ""}<section><h3>${pinned.length ? "Suggestions" : "Suggestions selon votre usage"}</h3><div>${suggest.length ? suggest.map((k) => favRow(k, false)).join("") : '<p class="stip-fav-empty">Utilisez vos applications : vos raccourcis apparaîtront ici.</p>'}</div></section><details><summary>Choisir une autre application</summary><div class="stip-fav-all">${all.map((k) => favRow(k, pinned.includes(k))).join("")}</div></details></div>`;
+    p.innerHTML = `<button type="button" class="stip-fav-backdrop" aria-label="Fermer"></button><div class="stip-fav-sheet"><header><div><small>RACCOURCIS</small><h2>Mes favoris</h2></div><button type="button" class="stip-fav-close" aria-label="Fermer">×</button></header>${pinned.length ? `<section><h3>Mes applications</h3><div>${pinned.map((k) => favRow(k, true)).join("")}</div></section><details><summary>Ajouter une application</summary><div class="stip-fav-all">${all.map((k) => favRow(k, pinned.includes(k))).join("")}</div></details>` : `<section class="stip-fav-first"><p class="stip-fav-empty">Ajoutez les applications que vous voulez retrouver ici.</p><details open><summary>Choisir mes applications</summary><div class="stip-fav-all">${all.map((k) => favRow(k, false)).join("")}</div></details></section>`}</div>`;
     document.body.appendChild(p);
     document.body.classList.add("stip-favorites-open");
     document.querySelector('[data-u="favorites"]')?.classList.add("is-current");
@@ -224,7 +224,8 @@
     });
   }
   function mount(perms) {
-    if (document.getElementById("stipQuickUniversal")) return;
+    if (window.__STIPQuickAccessOwner === "main" || document.getElementById("stipQuickSwitch") || document.getElementById("stipQuickUniversal")) return;
+    window.__STIPQuickAccessOwner = "universal";
     ensureCss();
     const k = currentKey();
     if (k && allowed(k, perms)) touch(k);
@@ -232,12 +233,11 @@
     n.id = "stipQuickUniversal";
     n.className = "stip-quick-switch";
     n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-u="public" aria-label="Accès public STIP"><span class="qs-icon">${I.home}</span></button><button type="button" data-u="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-u="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
+    n.innerHTML = `<button type="button" data-u="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-u="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
     n.addEventListener("click", (e) => {
       const b = e.target.closest("[data-u]");
       if (!b) return;
       const a = b.dataset.u;
-      if (a === "public") return go("index.html?quick=public");
       if (a === "profile") return go("index.html?quick=profile");
       if (a === "favorites") return toggleFav(perms);
     });
