@@ -229,7 +229,20 @@
     document.body.classList.remove("stip-favorites-open");
   }
   function favRow(k, pinned) {
-    return `<div class="stip-fav-row"><button type="button" class="stip-fav-open" data-fav-open="${k}"><span>${META[k].label}</span><b>›</b></button><button type="button" class="stip-fav-pin ${pinned ? "is-pinned" : ""}" data-fav-pin="${k}" aria-label="${pinned ? "Retirer des favoris" : "Épingler"}">${pinned ? "★" : "☆"}</button></div>`;
+    return `<div class="stip-fav-row"><button type="button" class="stip-fav-open" data-fav-open="${k}"><span>${META[k].label}</span><b>›</b></button><button type="button" class="stip-fav-pin ${pinned ? "is-pinned" : ""}" data-fav-pin="${k}" aria-label="${pinned ? "Retirer des favoris" : "Ajouter aux favoris"}">${pinned ? "★" : "☆"}</button></div>`;
+  }
+  function favoriteFeedback(text) {
+    requestAnimationFrame(() => {
+      const sheet = document.querySelector(".stip-fav-sheet");
+      if (!sheet) return;
+      const note = document.createElement("div");
+      note.className = "stip-fav-feedback";
+      note.setAttribute("role", "status");
+      note.textContent = text;
+      sheet.querySelector(".stip-fav-feedback")?.remove();
+      sheet.querySelector("header")?.insertAdjacentElement("afterend", note);
+      setTimeout(() => note.remove(), 1300);
+    });
   }
   function toggleFavorites() {
     if (document.getElementById("stipFavoritesPanel")) return closeFavorites();
@@ -255,9 +268,11 @@
       if (pin) {
         const k = pin.dataset.favPin,
           a = readFav();
-        writeFav(a.includes(k) ? a.filter((x) => x !== k) : [...a, k]);
+        const adding = !a.includes(k);
+        writeFav(adding ? [...a, k] : a.filter((x) => x !== k));
         closeFavorites();
         toggleFavorites();
+        favoriteFeedback(adding ? "Ajouté aux favoris" : "Retiré des favoris");
       }
     });
   }
