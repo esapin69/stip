@@ -26,3 +26,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(104px + env(safe-area-inse
 .stip-fav-sheet details:not([open]) summary{border:1px solid var(--stip-line)!important;background:var(--stip-surface)!important;color:var(--stip-ink)!important;box-shadow:var(--stip-shadow-soft)!important}
 .stip-fav-pin{transition:transform var(--stip-motion),background var(--stip-motion),color var(--stip-motion)!important}
 .stip-fav-pin:active{transform:scale(.94)!important}
+
+.stip-fav-feedback{
+  margin:0 0 10px;
+  padding:9px 11px;
+  border:1px solid var(--stip-line);
+  border-radius:12px;
+  background:var(--stip-accent-soft);
+  color:var(--stip-ink);
+  font-size:.78rem;
+  font-weight:900;
+  text-align:center;
+}
