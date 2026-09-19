@@ -8,11 +8,11 @@
     />
     <meta name="robots" content="noindex,nofollow" />
     <title>Accès · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260919-refactor1" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
-    <link rel="stylesheet" href="stip-loading.css?v=20260919-refactor1" />
-    <link rel="stylesheet" href="access-manage.css?v=20260919-refactor1" />
-    <link rel="stylesheet" href="quick-access.css?v=20260919-refactor1" />
+    <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
+    <link rel="stylesheet" href="access-manage.css?v=20260920-final1" />
+    <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
     <main class="stip-page access-page">
@@ -33,7 +33,7 @@
         </div>
       </header>
 
-      <section class="stip-surface access-people">
+      <section class="stip-surface stip-catalog-surface access-people">
         <h2>Choisir une personne</h2>
         <input
           id="q"
@@ -45,14 +45,14 @@
         <div id="people" class="access-list" aria-live="polite"></div>
         <div class="access-create">
           <h3>Créer un accès</h3>
-          <button id="newBtn" class="stip-btn secondary" type="button">
+          <button id="newBtn" class="stip-btn access-new-cta" type="button">
             Rechercher parmi les agents sans accès
           </button>
           <div id="candidates" class="access-list"></div>
         </div>
       </section>
 
-      <section id="editor" class="stip-surface access-editor hidden">
+      <section id="editor" class="stip-surface stip-catalog-surface access-editor hidden">
         <header>
           <div>
             <span class="stip-kicker">PROFIL D’ACCÈS</span>
@@ -93,7 +93,7 @@
           <div>
             <h3>Applications</h3>
             <p>
-              Visiteur et Pro sont réglés à l’intérieur de chaque application.
+              MINI et MAXI sont réglés à l’intérieur de chaque application.
             </p>
           </div>
         </div>
@@ -114,7 +114,7 @@
 
       <p id="msg" class="access-message" role="status"></p>
     </main>
-    <script src="access-manage.js?v=20260919-refactor1"></script>
-    <script src="quick-access-universal.js?v=20260919-refactor1"></script>
+    <script src="access-manage.js?v=20260920-final1"></script>
+    <script src="quick-access-universal.js?v=20260920-final1"></script>
   </body>
 </html>
