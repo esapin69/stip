@@ -158,7 +158,7 @@
       ? [...days.entries()]
           .map(
             ([date, rows]) =>
-              `<article class="as-day" data-day="${esc(date)}"><header class="as-day-head"><time>${esc(fmtDate(date))}</time><span>${rows.length} sujet${rows.length > 1 ? "s" : ""}</span></header><div class="as-day-items">${rows.map(renderCard).join("")}</div></article>`,
+              `<article class="as-day stip-time-surface" data-day="${esc(date)}"><header class="as-day-head"><time>${esc(fmtDate(date))}</time><span>${rows.length} sujet${rows.length > 1 ? "s" : ""}</span></header><div class="as-day-items">${rows.map(renderCard).join("")}</div></article>`,
           )
           .join("")
       : '<p class="as-empty">Rien d’utile à signaler dans cette catégorie.</p>';
