@@ -44,6 +44,11 @@
   function message(text) {
     $("msg").textContent = text || "";
   }
+  function displayAccessText(value = "") {
+    return String(value)
+      .replace(/\bVisiteur\b/gi, "MINI")
+      .replace(/\bPro\b/g, "MAXI");
+  }
 
   async function load() {
     try {
@@ -53,9 +58,19 @@
       message(e.message);
     }
   }
+  function alphaName(value = {}) {
+    const a = value.agents || value;
+    return [a.nom, a.prenom].filter(Boolean).join(" ").trim() || "Profil externe";
+  }
+  function sortPeople(items = []) {
+    return [...items].sort((a, b) =>
+      alphaName(a).localeCompare(alphaName(b), "fr", { sensitivity: "base" }),
+    );
+  }
   function renderPeople() {
+    const people = sortPeople(data.people || []);
     $("people").innerHTML =
-      data.people
+      people
         .map(
           (p, i) =>
             `<button class="access-person" data-person="${i}" type="button"><strong>${esc(p.agents?.prenom || "")} ${esc(p.agents?.nom || "Profil externe")}</strong><small>GHE ${esc(String(p.agents?.ghe || p.role_key || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
@@ -64,7 +79,7 @@
     $("people")
       .querySelectorAll("[data-person]")
       .forEach(
-        (b) => (b.onclick = () => edit(data.people[Number(b.dataset.person)])),
+        (b) => (b.onclick = () => edit(people[Number(b.dataset.person)])),
       );
   }
   function presetUI() {
@@ -95,12 +110,18 @@
           : String(levels[app.key] || "visitor").toLowerCase() === "pro"
             ? "pro"
             : "visitor";
-        let control = '<span class="access-single">Accès simple</span>';
-        if (app.pro_only)
-          control = '<span class="access-single">Pro uniquement</span>';
-        else if (app.levels)
-          control = `<div class="access-levels" aria-label="Niveau ${esc(app.label)}"><button type="button" data-level="${esc(app.key)}" data-value="visitor" class="${level === "visitor" ? "active" : ""}">Visiteur</button><button type="button" data-level="${esc(app.key)}" data-value="pro" class="${level === "pro" ? "active" : ""}">Pro</button></div>`;
-        return `<label class="access-app"><input type="checkbox" data-permission="${esc(app.key)}" ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(app.help)}</small></span>${control}</label>`;
+        let control = '<span class="access-single">MINI</span>';
+        let levelHelp = "MINI : accès disponible actuellement pour cette application.";
+        if (app.pro_only) {
+          control = '<span class="access-single access-maxi-only">MAXI</span>';
+          levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";
+        } else if (app.levels) {
+          control = `<div class="access-levels stip-levels" aria-label="Niveau ${esc(app.label)}"><button type="button" data-level="${esc(app.key)}" data-value="visitor" class="${level === "visitor" ? "active" : ""}">MINI</button><button type="button" data-level="${esc(app.key)}" data-value="pro" class="${level === "pro" ? "active" : ""}">MAXI</button></div>`;
+          levelHelp = "MINI donne l’essentiel. MAXI ouvre la version la plus complète prévue pour cette application.";
+        }
+        const visibleHelp = displayAccessText(app.help || "");
+        const help = [visibleHelp.trim(), levelHelp].filter(Boolean).join(" ");
+        return `<div class="access-app stip-catalog-row"><label class="access-app-main"><input type="checkbox" data-permission="${esc(app.key)}" ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(visibleHelp)}</small></span></label><div class="access-app-tools"><button class="access-info-btn" type="button" data-app-help="${esc(app.key)}" aria-expanded="false" aria-label="Comprendre ${esc(app.label)}">?</button>${control}</div><div class="access-app-info" data-app-info="${esc(app.key)}" hidden>${esc(help)}</div></div>`;
       })
       .join("");
     $("apps")
@@ -112,6 +133,36 @@
             $("apps")
               .querySelectorAll(`[data-level="${CSS.escape(key)}"]`)
               .forEach((x) => x.classList.toggle("active", x === b));
+          }),
+      );
+    $("apps")
+      .querySelectorAll("[data-permission]")
+      .forEach((input) => {
+        const sync = () => {
+          const row = input.closest(".access-app");
+          row?.classList.toggle("is-enabled", input.checked);
+          row
+            ?.querySelectorAll("[data-level]")
+            .forEach((button) => (button.disabled = !input.checked));
+        };
+        input.addEventListener("change", sync);
+        sync();
+      });
+    $("apps")
+      .querySelectorAll("[data-app-help]")
+      .forEach(
+        (b) =>
+          (b.onclick = () => {
+            const key = b.dataset.appHelp;
+            const info = $("apps").querySelector(
+              `[data-app-info="${CSS.escape(key)}"]`,
+            );
+            if (!info) return;
+            const open = info.hidden;
+            $("apps").querySelectorAll("[data-app-info]").forEach((x) => (x.hidden = true));
+            $("apps").querySelectorAll("[data-app-help]").forEach((x) => x.setAttribute("aria-expanded", "false"));
+            info.hidden = !open;
+            b.setAttribute("aria-expanded", open ? "true" : "false");
           }),
       );
   }
@@ -260,8 +311,9 @@
   $("newBtn").onclick = async () => {
     try {
       const j = await call("find_new", { q: $("q").value });
+      const candidates = sortPeople(j.candidates || []);
       $("candidates").innerHTML =
-        j.candidates
+        candidates
           .map(
             (a, i) =>
               `<button class="access-person" data-candidate="${i}" type="button"><strong>${esc(a.prenom || "")} ${esc(a.nom || "")}</strong><small>GHE ${esc(String(a.ghe || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
@@ -273,7 +325,7 @@
         .forEach(
           (b) =>
             (b.onclick = () =>
-              editNew(j.candidates[Number(b.dataset.candidate)])),
+              editNew(candidates[Number(b.dataset.candidate)])),
         );
     } catch (e) {
       message(e.message);

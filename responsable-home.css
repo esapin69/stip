@@ -4,8 +4,8 @@
 html,
 body {
   margin: 0;
-  background: var(--rh-bg);
-  color: var(--rh-navy);
+  background: var(--stip-bg);
+  color: var(--stip-ink);
   font-family: Arial, Helvetica, sans-serif;
 }
 button,
@@ -20,7 +20,7 @@ input {
   justify-content: space-between;
   gap: 12px;
   background: #fff;
-  border-bottom: 1px solid var(--rh-line);
+  border-bottom: 1px solid var(--stip-line);
   position: sticky;
   top: 0;
   z-index: 30;
@@ -30,7 +30,7 @@ input {
   align-items: center;
   gap: 8px;
   font-weight: 950;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
 }
 .resp-top .brand b {
   display: grid;
@@ -38,7 +38,7 @@ input {
   min-width: 58px;
   height: 34px;
   padding: 0 10px;
-  border: 2px solid var(--rh-navy);
+  border: 2px solid var(--stip-ink);
   border-radius: 12px;
   font-size: 0.95rem;
   letter-spacing: 0.12em;
@@ -48,7 +48,7 @@ input {
   letter-spacing: 0.05em;
 }
 .resp-top .home {
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
   font-weight: 900;
   text-decoration: none;
   font-size: 0.8rem;
@@ -73,28 +73,28 @@ input {
   font-size: 0.65rem;
   font-weight: 950;
   letter-spacing: 0.13em;
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
 }
 .resp-head h1 {
   margin: 3px 0 0;
   font-size: 2rem;
   line-height: 1;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
   letter-spacing: -0.035em;
 }
 .resp-head p {
   margin: 7px 0 0;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.82rem;
 }
 .resp-refresh {
   width: 46px;
   height: 46px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 15px;
   background: #fff;
-  color: var(--rh-navy);
-  box-shadow: var(--rh-shadow);
+  color: var(--stip-ink);
+  box-shadow: var(--stip-shadow);
   font-size: 1.05rem;
 }
 .resp-apps {
@@ -112,7 +112,7 @@ input {
   flex-direction: column;
   align-items: center;
   gap: 7px;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
 }
 .resp-icon {
   width: 68px;
@@ -165,10 +165,10 @@ input {
 .resp-operational {
   margin: 0 0 14px;
   padding: 12px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 18px;
   background: linear-gradient(145deg, #fbfeff, #f2fafb);
-  box-shadow: var(--rh-shadow);
+  box-shadow: var(--stip-shadow);
 }
 .resp-operational[hidden] {
   display: none;
@@ -200,7 +200,7 @@ input {
   font-size: 0.82rem;
 }
 .op-calm span {
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.7rem;
   line-height: 1.4;
 }
@@ -219,14 +219,14 @@ input {
   font-size: 0.6rem;
   font-weight: 950;
   letter-spacing: 0.12em;
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
 }
 .op-head b {
   font-size: 0.94rem;
 }
 .op-date {
   font-size: 0.66rem;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
 }
 .op-list {
   display: grid;
@@ -238,7 +238,7 @@ input {
 }
 .op-day {
   padding: 9px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 14px;
   background: #fff;
 }
@@ -254,7 +254,7 @@ input {
 }
 .op-day > header span {
   font-size: 0.62rem;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
 }
 .op-card {
   width: 100%;
@@ -265,8 +265,8 @@ input {
   padding: 9px 10px;
   border: 1px solid #e1ebed;
   border-radius: 13px;
-  background: var(--rh-soft);
-  color: var(--rh-navy);
+  background: var(--stip-surface-soft);
+  color: var(--stip-ink);
   text-align: left;
 }
 .op-card.sev-3,
@@ -291,7 +291,7 @@ input {
 .op-main small {
   margin-top: 2px;
   font-size: 0.64rem;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
 }
 .op-sev {
   font-size: 0.58rem;
@@ -302,7 +302,7 @@ input {
   text-align: center;
   padding-top: 6px;
   font-size: 0.65rem;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
 }
 .resp-carousel {
   display: grid;
@@ -313,11 +313,11 @@ input {
 .resp-empty {
   width: 100%;
   padding: 15px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 18px;
   background: #fff;
-  color: var(--rh-navy);
-  box-shadow: var(--rh-shadow);
+  color: var(--stip-ink);
+  box-shadow: var(--stip-shadow);
 }
 .resp-card {
   text-align: left;
@@ -330,7 +330,7 @@ input {
 .resp-preview p,
 .resp-empty p {
   margin: 4px 0 0;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.74rem;
   line-height: 1.4;
 }
@@ -372,7 +372,7 @@ input {
   font-size: 0.62rem;
   font-weight: 950;
   letter-spacing: 0.1em;
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
 }
 .resp-expand {
   width: 34px;
@@ -381,7 +381,7 @@ input {
   background: #eef6f8;
   display: grid;
   place-items: center;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
 }
 .resp-expand svg {
   width: 18px;
@@ -429,7 +429,7 @@ input {
   align-items: center;
   padding: 10px 12px;
   background: #f9fdfe;
-  border-bottom: 1px solid var(--rh-line);
+  border-bottom: 1px solid var(--stip-line);
 }
 .resp-panel-head button {
   width: 38px;
@@ -437,7 +437,7 @@ input {
   border: 0;
   border-radius: 50%;
   background: #e8f0f2;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
   font-size: 1.2rem;
 }
 .resp-panel-head h2 {
@@ -468,11 +468,11 @@ input {
   border: 0;
   border-radius: 13px;
   background: #eaf2f4;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
   font-weight: 900;
 }
 .resp-actions .primary {
-  background: var(--rh-navy);
+  background: var(--stip-ink);
   color: #fff;
 }
 .resp-actions .danger {
@@ -537,7 +537,7 @@ input {
 .ra-search input {
   width: 100%;
   height: 50px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 15px;
   background: #fff;
   padding: 0 14px;
@@ -547,7 +547,7 @@ input {
 .ra-search span {
   display: block;
   padding: 6px 4px 0;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.65rem;
 }
 .ra-results {
@@ -556,7 +556,7 @@ input {
 }
 .ra-person {
   width: 100%;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 15px;
   background: #fff;
   padding: 9px;
@@ -565,7 +565,7 @@ input {
   align-items: center;
   gap: 10px;
   text-align: left;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
 }
 .ra-person b,
 .ra-person small {
@@ -573,7 +573,7 @@ input {
 }
 .ra-person small {
   margin-top: 3px;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.68rem;
 }
 .ra-person i {
@@ -604,7 +604,7 @@ input {
 .ra-hint {
   padding: 28px 12px;
   text-align: center;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.8rem;
 }
 .ra-profile {
@@ -615,7 +615,7 @@ input {
   justify-self: start;
   border: 0;
   background: transparent;
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
   font-weight: 900;
   padding: 4px 0;
 }
@@ -630,7 +630,7 @@ input {
 }
 .ra-hero p {
   margin: 0;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.72rem;
 }
 .ra-attn,
@@ -665,7 +665,7 @@ input {
 .ra-grid div {
   min-width: 0;
   padding: 10px;
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 13px;
   background: #fff;
 }
@@ -674,7 +674,7 @@ input {
   display: block;
 }
 .ra-grid small {
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.61rem;
   margin-bottom: 3px;
 }
@@ -687,7 +687,7 @@ input {
   gap: 7px;
 }
 .ra-sections details {
-  border: 1px solid var(--rh-line);
+  border: 1px solid var(--stip-line);
   border-radius: 14px;
   background: #fff;
   padding: 11px;
@@ -701,7 +701,7 @@ input {
   float: right;
 }
 .ra-sections p {
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.71rem;
   line-height: 1.45;
 }
@@ -719,13 +719,13 @@ input {
   place-items: center;
   text-decoration: none;
   font-weight: 900;
-  background: var(--rh-navy);
+  background: var(--stip-ink);
   color: #fff;
 }
 .ra-actions a + a,
 .ra-actions button + button {
   background: #eaf4f6;
-  color: var(--rh-navy);
+  color: var(--stip-ink);
 }
 .ra-error {
   display: grid;
@@ -781,7 +781,7 @@ body.resp-dashboard-mode .resp-carousel {
 }
 .resp-dashboard-grid > div > p {
   margin: 4px 0 8px;
-  color: var(--rh-muted);
+  color: var(--stip-muted);
   font-size: 0.7rem;
 }
 .resp-dashboard-grid .resp-operational {
@@ -794,7 +794,7 @@ body.resp-dashboard-mode .resp-carousel {
 .resp-live-head span {
   display: block;
   margin-bottom: 3px;
-  color: var(--rh-cyan2);
+  color: var(--stip-accent);
   font-size: 0.6rem;
   font-weight: 950;
   letter-spacing: 0.12em;

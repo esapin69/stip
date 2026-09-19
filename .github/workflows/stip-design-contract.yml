@@ -20,3 +20,6 @@ jobs:
 
       - name: Check STIP visual contract
         run: node tools/stip-design-audit.mjs
+
+      - name: Check STIP refactor invariants
+        run: node tools/stip-refactor-test.mjs
