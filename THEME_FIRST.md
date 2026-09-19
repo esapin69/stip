@@ -86,6 +86,23 @@ Réutiliser en priorité :
 
 Quand un motif est utilisé au moins deux fois, il doit devenir un composant commun plutôt que deux copies CSS.
 
+
+
+## Familles visuelles communes
+
+STIP garde **un seul thème maître**. Les catégories ci-dessous ne sont pas des thèmes séparés : ce sont des familles de composants communes chargées par `stip-theme.css` via `stip-patterns.css`.
+
+1. **Temps** — planning personnel/équipe, semaine, jour, agenda, navigation temporelle.
+2. **Personnes** — recherche et sélection d’agents, groupes présents/absents, fiches de sélection. Le moteur commun est `stip-agent-selector.js/.css`.
+3. **Actions** — À traiter, demandes, rappels, signatures, filtres et listes d’actions.
+4. **Catalogue** — applications, favoris, gestion des accès, niveaux MINI/MAXI.
+5. **Pilotage** — cockpit Responsable/Cadre, métriques, alertes et recommandations.
+
+Règle : deux écrans utilisant le même motif doivent prendre leur base visuelle dans la même famille. Une page ne recrée pas localement sa propre version d’un sélecteur d’agent, d’une navigation de semaine, d’un panneau d’actions ou d’un catalogue d’applications.
+
+La hiérarchie reste :
+`stip-theme-base.css` = tokens → `stip-patterns.css` = familles de composants → CSS de page = structure métier uniquement.
+
 ## Structure d’une page STIP
 
 Une nouvelle page doit suivre ce principe :
