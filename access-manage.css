@@ -1,0 +1,224 @@
+.access-page {
+  max-width: 820px;
+  padding-bottom: calc(120px + env(safe-area-inset-bottom));
+}
+.access-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.access-head .access-back {
+  flex: 0 0 auto;
+}
+.access-head .stip-title {
+  margin-top: 3px;
+}
+.access-people,
+.access-editor {
+  padding: clamp(16px, 4vw, 24px);
+}
+.access-people h2,
+.access-editor h2,
+.access-editor h3 {
+  margin: 0;
+  color: var(--stip-ink);
+}
+.access-people .stip-search {
+  width: 100%;
+  margin: 14px 0 8px;
+}
+.access-list {
+  display: grid;
+  gap: 8px;
+}
+.access-person {
+  width: 100%;
+  min-height: 62px;
+  padding: 12px 14px;
+  border: 1px solid var(--stip-line);
+  border-radius: var(--stip-radius-md);
+  background: var(--stip-surface-soft);
+  color: var(--stip-ink);
+  text-align: left;
+}
+.access-person strong,
+.access-person small {
+  display: block;
+}
+.access-person small {
+  margin-top: 3px;
+  color: var(--stip-muted);
+}
+.access-create {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--stip-line);
+}
+.access-create h3 {
+  margin: 0 0 10px;
+}
+.access-create .access-list {
+  margin-top: 10px;
+}
+.access-editor {
+  margin-top: 16px;
+}
+.access-editor > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.access-close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--stip-radius-md);
+  background: var(--stip-surface-soft);
+  font-size: 1.45rem;
+}
+.access-current-code {
+  margin: 16px 0 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--stip-line);
+  border-radius: var(--stip-radius-md);
+  background: var(--stip-surface-soft);
+}
+.access-current-code b {
+  letter-spacing: 0.14em;
+}
+.access-code {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.access-code input {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--stip-line);
+  border-radius: var(--stip-radius-md);
+  font: inherit;
+}
+.access-help,
+.access-app-head p {
+  margin: 5px 0 12px;
+  color: var(--stip-muted);
+  line-height: 1.4;
+}
+.access-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.access-preset {
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--stip-line);
+  border-radius: 999px;
+  background: var(--stip-surface-soft);
+  color: var(--stip-ink);
+  font-weight: 850;
+}
+.access-preset.active {
+  border-color: var(--stip-accent);
+  background: var(--stip-accent-soft);
+  color: var(--stip-ink);
+}
+.access-apps {
+  display: grid;
+}
+.access-app {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  min-height: 72px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--stip-line-soft);
+}
+.access-app input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+}
+.access-app strong,
+.access-app small {
+  display: block;
+}
+.access-app small {
+  margin-top: 4px;
+  color: var(--stip-muted);
+  line-height: 1.35;
+}
+.access-levels {
+  display: flex;
+  border: 1px solid var(--stip-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.access-levels button {
+  min-height: 42px;
+  padding: 0 11px;
+  border: 0;
+  background: var(--stip-surface-soft);
+  color: var(--stip-muted);
+  font-weight: 850;
+}
+.access-levels button.active {
+  background: var(--stip-accent);
+  color: white;
+}
+.access-single {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: var(--stip-surface-soft);
+  color: var(--stip-muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+.access-save {
+  width: 100%;
+  margin-top: 18px;
+}
+.access-save-preset {
+  display: block;
+  margin: 9px auto 0;
+}
+.access-message {
+  min-height: 24px;
+  color: var(--stip-muted);
+  font-weight: 750;
+}
+.hidden {
+  display: none !important;
+}
+@media (max-width: 560px) {
+  .access-page {
+    padding-inline: 12px;
+  }
+  .access-head {
+    align-items: center;
+  }
+  .access-head .stip-subtitle {
+    display: none;
+  }
+  .access-app {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .access-app > div:last-child,
+  .access-app > .access-single {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .access-levels {
+    width: 100%;
+  }
+  .access-levels button {
+    flex: 1;
+  }
+  .access-code {
+    grid-template-columns: 1fr;
+  }
+}
