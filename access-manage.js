@@ -136,6 +136,19 @@
           }),
       );
     $("apps")
+      .querySelectorAll("[data-permission]")
+      .forEach((input) => {
+        const sync = () => {
+          const row = input.closest(".access-app");
+          row?.classList.toggle("is-enabled", input.checked);
+          row
+            ?.querySelectorAll("[data-level]")
+            .forEach((button) => (button.disabled = !input.checked));
+        };
+        input.addEventListener("change", sync);
+        sync();
+      });
+    $("apps")
       .querySelectorAll("[data-app-help]")
       .forEach(
         (b) =>
