@@ -18,10 +18,12 @@
           "'": "&#39;",
         })[c],
     );
+  const ESPRIT_KEYS = ["planning_team", "activity", "assistant_enabled"];
   let data = null,
     current = null,
     selectedRole = "",
-    creating = false;
+    creating = false,
+    renderBasePermissions = {};
 
   async function request(url, action, body = {}) {
     const r = await fetch(url, {
@@ -100,18 +102,41 @@
     if (p) renderApps(p.permissions || {});
     presetUI();
   }
+  function productApps() {
+    return (data.apps || [])
+      .filter((app) => !["planning_team", "assistant_enabled"].includes(app.key))
+      .map((app) =>
+        app.key === "activity"
+          ? {
+              ...app,
+              label: "Esprit d’équipe",
+              help: "Planning équipe, activité et assistant réunis dans une même application.",
+              levels: false,
+              pro_only: false,
+              product_bundle: "esprit",
+            }
+          : app,
+      );
+  }
   function renderApps(permissions = {}) {
+    renderBasePermissions = JSON.parse(JSON.stringify(permissions || {}));
     const levels = permissions.__levels || {};
-    $("apps").innerHTML = (data.apps || [])
+    $("apps").innerHTML = productApps()
       .map((app) => {
-        const checked = !!permissions[app.key];
+        const checked =
+          app.product_bundle === "esprit"
+            ? ESPRIT_KEYS.some((key) => !!permissions[key])
+            : !!permissions[app.key];
         const level = app.pro_only
           ? "pro"
           : String(levels[app.key] || "visitor").toLowerCase() === "pro"
             ? "pro"
             : "visitor";
         let control = '<span class="access-single">MINI</span>';
-        let levelHelp = "MINI : accès disponible actuellement pour cette application.";
+        let levelHelp =
+          app.product_bundle === "esprit"
+            ? "MINI : l’accès unifié actuel. MAXI n’est pas proposé tant qu’aucune différence fonctionnelle réelle n’existe."
+            : "MINI : accès disponible actuellement pour cette application.";
         if (app.pro_only) {
           control = '<span class="access-single access-maxi-only">MAXI</span>';
           levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";
@@ -121,7 +146,7 @@
         }
         const visibleHelp = displayAccessText(app.help || "");
         const help = [visibleHelp.trim(), levelHelp].filter(Boolean).join(" ");
-        return `<div class="access-app stip-catalog-row"><label class="access-app-main"><input type="checkbox" data-permission="${esc(app.key)}" ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(visibleHelp)}</small></span></label><div class="access-app-tools"><button class="access-info-btn" type="button" data-app-help="${esc(app.key)}" aria-expanded="false" aria-label="Comprendre ${esc(app.label)}">?</button>${control}</div><div class="access-app-info" data-app-info="${esc(app.key)}" hidden>${esc(help)}</div></div>`;
+        return `<div class="access-app stip-catalog-row"><label class="access-app-main"><input type="checkbox" data-permission="${esc(app.key)}" ${app.product_bundle ? `data-bundle="${esc(app.product_bundle)}"` : ""} ${checked ? "checked" : ""}><span><strong>${esc(app.label)}</strong><small>${esc(visibleHelp)}</small></span></label><div class="access-app-tools"><button class="access-info-btn" type="button" data-app-help="${esc(app.key)}" aria-expanded="false" aria-label="Comprendre ${esc(app.label)}">?</button>${control}</div><div class="access-app-info" data-app-info="${esc(app.key)}" hidden>${esc(help)}</div></div>`;
       })
       .join("");
     $("apps")
@@ -145,7 +170,10 @@
             ?.querySelectorAll("[data-level]")
             .forEach((button) => (button.disabled = !input.checked));
         };
-        input.addEventListener("change", sync);
+        input.addEventListener("change", () => {
+          if (input.dataset.bundle) input.dataset.dirty = "1";
+          sync();
+        });
         sync();
       });
     $("apps")
@@ -168,13 +196,36 @@
   }
   function collect() {
     const permissions = {},
-      levels = {};
+      levels = { ...(renderBasePermissions.__levels || {}) };
+    for (const app of data.apps || [])
+      permissions[app.key] = !!renderBasePermissions[app.key];
+
     $("apps")
       .querySelectorAll("[data-permission]")
-      .forEach((x) => (permissions[x.dataset.permission] = x.checked));
+      .forEach((x) => {
+        if (!x.dataset.bundle) permissions[x.dataset.permission] = x.checked;
+      });
+
+    const esprit = $("apps").querySelector('[data-bundle="esprit"]');
+    if (esprit?.dataset.dirty === "1") {
+      for (const key of ESPRIT_KEYS) permissions[key] = esprit.checked;
+      if (esprit.checked)
+        levels.activity =
+          String(renderBasePermissions.__levels?.activity || "").toLowerCase() ===
+          "pro"
+            ? "pro"
+            : "visitor";
+      else delete levels.activity;
+    }
+
     for (const app of data.apps || []) {
-      if (app.pro_only && permissions[app.key]) levels[app.key] = "pro";
-      else if (app.levels && permissions[app.key])
+      if (ESPRIT_KEYS.includes(app.key)) continue;
+      if (!permissions[app.key]) {
+        delete levels[app.key];
+        continue;
+      }
+      if (app.pro_only) levels[app.key] = "pro";
+      else if (app.levels)
         levels[app.key] =
           $("apps").querySelector(
             `[data-level="${CSS.escape(app.key)}"].active`,
@@ -232,6 +283,7 @@
           agent_id: current.agent_id,
           role_key: selectedRole,
           code,
+          ...picked,
         });
         await callDates("set_agent", {
           agent_id: current.agent_id,
