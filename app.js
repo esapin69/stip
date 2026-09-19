@@ -32,7 +32,41 @@ function restore(){if(!session||restoring)return;restoring=true;try{if(!history.
 function isCadreFamily(d){return d?.role_key==='cadre'&&d?.permissions?.cadre_dashboard===true}
 function renderSession(d){window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}session=d;window.STIPSession=d;loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));restore()}
 loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{const d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
-$('#toggleAccessCode')?.addEventListener('click',function(){const show=accessCode?.type==='password';if(!accessCode)return;accessCode.type=show?'text':'password';this.textContent=show?'Cacher':'Voir'});
+const accessCodeToggle=$('#toggleAccessCode');
+function sanitizeAccessCode(){
+  if(!accessCode)return;
+  const clean=String(accessCode.value||'').replace(/\\D/g,'').slice(0,6);
+  if(accessCode.value!==clean)accessCode.value=clean;
+}
+function hideAccessCode(){
+  if(!accessCode)return;
+  accessCode.type='password';
+  accessCodeToggle?.setAttribute('aria-pressed','false');
+  if(accessCodeToggle)accessCodeToggle.textContent='Voir';
+}
+function showAccessCode(){
+  if(!accessCode)return;
+  sanitizeAccessCode();
+  accessCode.type='text';
+  accessCodeToggle?.setAttribute('aria-pressed','true');
+  if(accessCodeToggle)accessCodeToggle.textContent='Relâcher';
+}
+accessCode?.addEventListener('input',sanitizeAccessCode);
+accessCode?.addEventListener('change',sanitizeAccessCode);
+accessCodeToggle?.setAttribute('aria-label','Maintenir pour afficher le code');
+accessCodeToggle?.setAttribute('aria-pressed','false');
+accessCodeToggle?.addEventListener('pointerdown',e=>{e.preventDefault();showAccessCode();try{accessCodeToggle.setPointerCapture(e.pointerId)}catch{}});
+accessCodeToggle?.addEventListener('pointerup',hideAccessCode);
+accessCodeToggle?.addEventListener('pointercancel',hideAccessCode);
+accessCodeToggle?.addEventListener('pointerleave',hideAccessCode);
+accessCodeToggle?.addEventListener('click',e=>{e.preventDefault();hideAccessCode()});
+accessCodeToggle?.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();showAccessCode()}});
+accessCodeToggle?.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();hideAccessCode()}});
+window.addEventListener('blur',hideAccessCode);
+window.addEventListener('pageshow',()=>{sanitizeAccessCode();hideAccessCode()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hideAccessCode()});
+sanitizeAccessCode();
+hideAccessCode();
 logoutBtn?.addEventListener('click',async()=>{try{await access('logout')}catch{}localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
 $('#homeBtn')?.addEventListener('click',()=>setRoute('home'));document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
 window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});
