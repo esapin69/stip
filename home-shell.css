@@ -155,3 +155,70 @@
   .hc-event-row{grid-template-columns:54px minmax(0,1fr) 13px!important}
   .hc-event-anchor>.hc-event-date{max-width:54px;font-size:.55rem!important}
 }
+
+/* final-home-profile-20260920 */
+.hc-home-filters{margin-top:0!important}
+.hc-home-filters>button{
+  position:relative;
+  background:var(--stip-surface-raised)!important;
+  border-color:var(--stip-line)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+}
+.hc-home-filters>button.active{
+  border-color:var(--stip-accent)!important;
+  background:var(--stip-surface-active)!important;
+  box-shadow:0 0 0 2px var(--stip-focus-ring),var(--stip-shadow)!important;
+}
+.hc-home-filter-badge{
+  position:absolute;
+  top:5px;
+  right:7px;
+  min-width:21px;
+  height:21px;
+  padding:0 5px;
+  border-radius:999px;
+  display:grid;
+  place-items:center;
+  background:var(--stip-danger);
+  color:#fff;
+  font-size:.68rem;
+  font-weight:950;
+  box-shadow:0 3px 9px rgba(181,43,43,.2);
+}
+.hc-profile-full{
+  margin-top:0!important;
+  background:var(--stip-surface-raised)!important;
+  border-color:var(--stip-line)!important;
+  box-shadow:var(--stip-shadow)!important;
+}
+.hc-profile-full .hc-profile-copy>strong{font-size:1.32rem}
+.hc-profile-meta{margin:4px 0 0;color:var(--stip-muted);font-size:.8rem;font-weight:800}
+.hc-profile-actions{
+  margin-top:12px;
+  padding:15px;
+}
+.hc-profile-actions-head{margin-bottom:12px}
+.hc-profile-actions-head h2{margin:4px 0 0;color:var(--stip-ink);font-size:1.35rem;line-height:1.05}
+.hc-profile-actions-head p{margin:6px 0 0;color:var(--stip-muted);font-size:.84rem;line-height:1.4}
+.hc-profile-actions .hc-action-filters{padding-bottom:12px}
+.hc-profile-actions .hc-panel-list{gap:7px}
+.hc-profile-actions .hs-note{
+  width:100%;
+  grid-template-columns:1fr;
+  align-items:start;
+  border-color:var(--stip-line);
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+}
+.hc-account-actions{display:flex;justify-content:center;margin:14px 0 2px}
+.hc-account-logout{
+  min-height:44px;
+  padding:0 14px;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-sm);
+  background:var(--stip-surface);
+  color:var(--stip-muted);
+  font-weight:850;
+  box-shadow:var(--stip-shadow-soft);
+}
+.hc-account-logout:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:2px}
