@@ -1385,3 +1385,99 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  border:1px solid rgba(20,111,133,.16)!important;
  box-shadow:0 8px 20px rgba(25,70,86,.08)!important;
 }
+
+
+/* premium-vertical-planning-v22-20260920 */
+.hc-home-pane-planning{
+ --premium-ink:#123e50;--premium-teal:#087f96;
+}
+.hc-planning-month-title{margin-bottom:10px!important}
+.hc-week-nav-global{
+ padding:6px 8px!important;border-radius:22px!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(239,247,249,.82))!important;
+ box-shadow:0 8px 22px rgba(20,62,78,.07)!important;
+}
+.hc-week-nav-global button{
+ width:48px!important;height:48px!important;border-radius:50%!important;
+ background:linear-gradient(145deg,#fff,#edf4f6)!important;
+ border:1px solid rgba(26,84,102,.12)!important;
+ box-shadow:0 5px 13px rgba(18,62,80,.09)!important;
+}
+.hc-planning-group.hc-planning-split{
+ border-radius:28px!important;
+ background:linear-gradient(155deg,rgba(255,255,255,.98),rgba(246,250,251,.96))!important;
+ border:1px solid rgba(22,91,111,.09)!important;
+ box-shadow:0 16px 38px rgba(20,62,78,.11)!important;
+}
+.hc-planning-left .hc-days-vertical{gap:9px!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical{
+ min-height:94px!important;
+ grid-template-rows:38px minmax(50px,auto)!important;
+ padding:0 7px 6px!important;
+ border-width:3px!important;border-radius:17px!important;
+ box-shadow:0 6px 14px rgba(20,62,78,.08)!important;
+}
+.hc-planning-left .hc-day-head{
+ height:38px!important;
+ width:calc(100% + 14px)!important;margin:0 -7px!important;
+}
+.hc-planning-left .hc-day-vertical>.hc-week-visual{
+ padding-top:10px!important;padding-bottom:5px!important;
+}
+.hc-planning-left .hc-work-line{gap:10px!important}
+.hc-planning-left .hc-work-icon{font-size:1.22rem!important}
+.hc-planning-left .hc-shift-name{font-size:1.02rem!important;letter-spacing:.01em!important}
+.hc-planning-left .hc-day-vertical.code-m{
+ background:#dcecff!important;border-color:#1266c4!important;
+}
+.hc-planning-left .hc-day-vertical.code-m .hc-day-head{background:#cce2fb!important}
+.hc-planning-left .hc-day-vertical.code-j{
+ background:#dcf6e7!important;border-color:#07934d!important;
+}
+.hc-planning-left .hc-day-vertical.code-j .hc-day-head{background:#c8efd9!important}
+.hc-planning-left .hc-day-vertical.code-j4{
+ background:#ffead9!important;border-color:#e86f18!important;
+}
+.hc-planning-left .hc-day-vertical.code-j4 .hc-day-head{background:#ffdcc1!important}
+.hc-planning-left .hc-day-vertical.code-s{
+ background:#fff1b9!important;border-color:#dba700!important;
+}
+.hc-planning-left .hc-day-vertical.code-s .hc-day-head{background:#ffe897!important}
+.hc-planning-left .hc-day-vertical.code-n{
+ background:#e3e9ee!important;border-color:#344654!important;
+}
+.hc-planning-left .hc-day-vertical.code-n .hc-day-head{background:#d3dde4!important}
+.hc-planning-left .hc-day-vertical.rest{
+ background:#f3f6f8!important;border-color:#7d8d99!important;
+}
+.hc-planning-left .hc-day-vertical.rest .hc-day-head{background:#e9eef1!important}
+.hc-planning-left .hc-weekend-row{gap:7px!important;margin-top:9px!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend{
+ min-height:88px!important;border-width:3px!important;border-radius:16px!important;
+ box-shadow:0 5px 12px rgba(20,62,78,.07)!important;
+}
+.hc-month-open-right{
+ border-radius:22px!important;
+ background:linear-gradient(145deg,#ffffff,#eef9fb)!important;
+ border:1px solid rgba(7,127,150,.16)!important;
+ box-shadow:0 9px 22px rgba(20,62,78,.09)!important;
+}
+.hc-month-open-right .hc-month-open-icon{
+ box-shadow:0 8px 18px rgba(255,84,99,.22)!important;
+}
+.hc-widget-future{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ padding:9px 0 0!important;
+}
+.hc-widget-future .hc-future-head{
+ padding:0 10px 8px!important;
+}
+.hc-widget-future .hc-future-list{
+ display:flex!important;flex-direction:column!important;gap:9px!important;
+}
+.hc-widget-future .hc-future-item{
+ border:1px solid rgba(18,91,111,.12)!important;border-radius:18px!important;
+ background:linear-gradient(145deg,#fff,#f8fbfc)!important;
+ box-shadow:0 7px 17px rgba(20,62,78,.07)!important;
+ padding:10px!important;
+}
