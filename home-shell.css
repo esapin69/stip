@@ -1709,394 +1709,45 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* intuitive-week-event-key-v28-20260920 */
+
+
+/* week-events-single-source-v41-20260920 */
+.hc-days-landscape{position:relative!important;padding-top:0!important}
+.hc-days-landscape.has-week-events{padding-top:58px!important}
+.hc-days-landscape.no-week-events{padding-top:0!important}
 .hc-days-landscape .hc-day-landscape{position:relative!important;overflow:visible!important}
 .hc-day-event-markers{
  position:absolute!important;
- top:-10px!important;
- left:50%!important;
- transform:translateX(-50%)!important;
- z-index:3!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
- gap:2px!important;
- min-height:24px!important;
- padding:2px 6px!important;
- border-radius:999px!important;
- background:#fff!important;
- border:1px solid rgba(22,91,111,.12)!important;
- box-shadow:0 4px 10px rgba(20,62,78,.12)!important;
- white-space:nowrap!important;
+ top:-50px!important;left:50%!important;transform:translateX(-50%)!important;
+ width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+ padding:0!important;margin:0!important;border-radius:50%!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ background:#fff!important;border:1px solid rgba(22,91,111,.12)!important;
+ box-shadow:0 5px 13px rgba(20,62,78,.12)!important;z-index:5!important;
 }
 .hc-day-event-markers i{
- display:block!important;
- font-style:normal!important;
- font-size:.9rem!important;
- line-height:1!important;
-}
-.hc-week-event-key{
- padding:2px 4px 0!important;
- background:transparent!important;
- border:0!important;
- box-shadow:none!important;
-}
-.hc-week-event-key-list{
- display:flex!important;
- flex-wrap:wrap!important;
- gap:7px 14px!important;
- align-items:center!important;
-}
-.hc-week-event-key-item{
- appearance:none!important;
- border:0!important;
- background:transparent!important;
- padding:4px 2px!important;
- display:flex!important;
- align-items:center!important;
- gap:7px!important;
- min-width:0!important;
- text-align:left!important;
- color:inherit!important;
-}
-.hc-week-event-key-icon{
- flex:0 0 auto!important;
- font-size:1rem!important;
- line-height:1!important;
-}
-.hc-week-event-key-item strong{
- display:block!important;
- font-size:.82rem!important;
- line-height:1.15!important;
- font-weight:800!important;
-}
-.hc-week-event-key-item small{
- display:block!important;
- margin-top:2px!important;
- font-size:.7rem!important;
- line-height:1.15!important;
- opacity:.68!important;
-}
-
-
-/* event-marker-fix-v29-20260920 */
-.hc-days-landscape .hc-day-event-markers{
- top:-9px!important;
- left:50%!important;
- width:auto!important;
- height:22px!important;
- min-width:22px!important;
- min-height:22px!important;
- max-width:none!important;
- padding:0 4px!important;
- margin:0!important;
- border-radius:11px!important;
- line-height:22px!important;
- background:#fff!important;
- transform:translate(-50%,-50%)!important;
- box-sizing:border-box!important;
-}
-.hc-days-landscape .hc-day-event-markers i{
- position:static!important;
- inset:auto!important;
- width:auto!important;
- height:auto!important;
- min-width:0!important;
- min-height:0!important;
- margin:0!important;
- padding:0!important;
- border:0!important;
- border-radius:0!important;
- background:transparent!important;
- box-shadow:none!important;
- transform:none!important;
- display:inline!important;
- font-size:13px!important;
- font-style:normal!important;
- line-height:1!important;
- color:inherit!important;
-}
-.hc-days-landscape .hc-day-event-markers + .hc-day-head{
- position:relative!important;
- z-index:1!important;
-}
-
-
-/* airy-planning-month-action-v30-20260920 */
-.hc-planning-month-title{
- padding-top:22px!important;
- margin-top:12px!important;
- gap:18px!important;
-}
-.hc-month-title-open{
- appearance:none!important;
- border:0!important;
- background:transparent!important;
- color:inherit!important;
- margin:0 auto!important;
- padding:8px 18px 12px!important;
- display:flex!important;
- flex-direction:column!important;
- align-items:center!important;
- justify-content:center!important;
- border-radius:20px!important;
- cursor:pointer!important;
-}
-.hc-month-title-open small{
- display:block!important;
- margin-bottom:5px!important;
-}
-.hc-month-title-name{
- display:block!important;
- font-size:2.35rem!important;
- line-height:1!important;
- font-weight:900!important;
- letter-spacing:-.035em!important;
-}
-.hc-month-title-hint{
- display:block!important;
- margin-top:6px!important;
- font-size:.68rem!important;
- line-height:1!important;
- font-weight:800!important;
- letter-spacing:.045em!important;
- text-transform:uppercase!important;
- opacity:.52!important;
-}
-.hc-month-title-open:active{background:rgba(22,91,111,.055)!important}
-.hc-week-nav-global{margin-top:4px!important}
-.hc-planning-group.hc-planning-landscape{
- margin-top:12px!important;
- padding-top:22px!important;
-}
-.hc-days-landscape .hc-day-event-markers{
- top:-14px!important;
- transform:translate(-50%,-50%)!important;
-}
-.hc-planning-agenda-row{margin-top:18px!important}
-.hc-week-event-key-list{gap:12px 18px!important}
-.hc-week-event-key-item{padding:6px 3px!important}
-
-
-/* planning-clarity-scale-v31-20260920 */
-.hc-month-title-open{padding-bottom:15px!important}
-.hc-month-title-hint{
- margin-top:10px!important;
- min-height:34px!important;
- padding:0 14px!important;
- display:inline-flex!important;
- align-items:center!important;
- justify-content:center!important;
- gap:8px!important;
- border:1px solid rgba(22,91,111,.16)!important;
- border-radius:999px!important;
- background:#fff!important;
- box-shadow:0 5px 14px rgba(20,62,78,.07)!important;
- opacity:1!important;
- color:#527584!important;
- font-size:.76rem!important;
-}
-.hc-month-title-hint b{font-size:1.15rem!important;color:#167d97!important}
-.hc-week-today-under-nav{
- display:block!important;
- width:max-content!important;
- margin:9px auto 0!important;
- padding:7px 14px!important;
- border-radius:999px!important;
- font-size:.82rem!important;
- font-weight:850!important;
-}
-.hc-planning-group.hc-planning-landscape{padding-top:34px!important}
-.hc-days-landscape .hc-day-event-markers{
- top:-25px!important;
- height:34px!important;
- min-width:34px!important;
- min-height:34px!important;
- padding:0 7px!important;
- border-radius:17px!important;
- box-shadow:0 5px 13px rgba(20,62,78,.14)!important;
-}
-.hc-days-landscape .hc-day-event-markers i{font-size:21px!important}
-.hc-week-event-key{padding:8px 6px 2px!important}
-.hc-week-event-key-list{
- display:grid!important;
- grid-template-columns:1fr!important;
- gap:6px!important;
-}
-.hc-week-event-key-item{
- width:100%!important;
- min-height:66px!important;
- padding:8px 8px!important;
- gap:12px!important;
- border-radius:14px!important;
-}
-.hc-week-event-key-icon{
- width:38px!important;
- flex:0 0 38px!important;
- text-align:center!important;
- font-size:27px!important;
- line-height:1!important;
-}
-.hc-week-event-key-item strong{
- font-size:1.02rem!important;
- line-height:1.16!important;
- font-weight:850!important;
-}
-.hc-week-event-key-item small{
- margin-top:5px!important;
- font-size:.84rem!important;
- line-height:1.2!important;
- opacity:.82!important;
- font-weight:650!important;
-}
-
-
-/* event-marker-spacing-v32-20260920 */
-/* Reserve a real icon lane above the week cards: icons never sit on the shift/day card edge. */
-.hc-planning-group.hc-planning-landscape{padding-top:28px!important}
-.hc-days-landscape{padding-top:44px!important}
-.hc-days-landscape .hc-day-event-markers{
- top:0!important;
- transform:translate(-50%,-100%)!important;
- margin-top:-8px!important;
- height:40px!important;
- min-width:40px!important;
- min-height:40px!important;
- padding:0 8px!important;
- border-radius:20px!important;
-}
-.hc-days-landscape .hc-day-event-markers i{font-size:25px!important}
-
-
-/* event-marker-clearance-v33-20260920 */
-/* Keep event bubbles fully inside their own lane with visible air before the day cards. */
-.hc-days-landscape{
- padding-top:58px!important;
-}
-.hc-days-landscape .hc-day-event-markers{
- top:42px!important;
- transform:translate(-50%,-100%)!important;
- margin:0!important;
- height:40px!important;
- min-width:40px!important;
- min-height:40px!important;
-}
-
-
-/* stable-event-lane-v34-20260920 */
-/* Event lane exists only when needed; marker position is independent from the day-card top. */
-.hc-days-landscape{
- position:relative!important;
- padding-top:0!important;
-}
-.hc-days-landscape.has-week-events{
- padding-top:56px!important;
-}
-.hc-days-landscape.no-week-events{
- padding-top:0!important;
-}
-.hc-days-landscape.has-week-events .hc-day-event-markers{
- top:8px!important;
- bottom:auto!important;
- transform:translate(-50%,0)!important;
- margin:0!important;
- z-index:8!important;
- height:40px!important;
- min-width:40px!important;
- min-height:40px!important;
-}
-.hc-days-landscape.has-week-events .hc-day-event-markers i{
- font-size:25px!important;
-}
-.hc-days-landscape.has-week-events .hc-day-landscape{
- position:relative!important;
-}
-.hc-days-landscape.no-week-events + .hc-planning-status:empty{
- display:none!important;
-}
-
-
-/* event-marker-final-position-v36-20260920 */
-/* Marker belongs to the reserved lane, never to the card itself. */
-.hc-days-landscape.has-week-events{
- padding-top:64px!important;
-}
-.hc-days-landscape.has-week-events .hc-day-event-markers{
- top:-52px!important;
- left:50%!important;
- bottom:auto!important;
- transform:translateX(-50%)!important;
- margin:0!important;
- width:44px!important;
- height:44px!important;
- min-width:44px!important;
- min-height:44px!important;
- padding:0!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
- border-radius:50%!important;
- z-index:10!important;
-}
-.hc-days-landscape.has-week-events .hc-day-event-markers i{
- display:block!important;
- font-size:27px!important;
- line-height:1!important;
-}
-
-
-/* event-per-day-rows-v38-20260920 */
-.hc-week-event-key-list{
- display:grid!important;
- grid-template-columns:1fr!important;
- gap:0!important;
-}
-.hc-week-event-day-row{
- display:grid!important;
- grid-template-columns:52px minmax(0,1fr)!important;
- width:100%!important;
- min-height:82px!important;
- padding:12px 8px!important;
- gap:12px!important;
- border-radius:0!important;
- border-bottom:1px solid rgba(22,91,111,.10)!important;
-}
-.hc-week-event-day-row:last-child{border-bottom:0!important}
-.hc-week-event-day-row .hc-week-event-key-icon{
- width:52px!important;
- flex:none!important;
- font-size:30px!important;
- align-self:center!important;
-}
-.hc-week-event-copy{min-width:0!important}
-.hc-week-event-day-row .hc-week-event-date{
- min-width:92px!important;
- justify-content:center!important;
- text-transform:capitalize!important;
-}
-
-
-
-
-/* event-marker-native-v40-20260920 */
-.hc-days-landscape.has-week-events .hc-day-event-markers{
- top:-52px!important;
- left:50%!important;
- transform:translateX(-50%)!important;
- width:44px!important;
- height:44px!important;
- min-width:44px!important;
- min-height:44px!important;
- max-width:44px!important;
- max-height:44px!important;
- padding:0!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
- border-radius:50%!important;
-}
-.hc-days-landscape.has-week-events .hc-day-event-markers i{
  width:auto!important;height:auto!important;min-width:0!important;min-height:0!important;
  padding:0!important;margin:0!important;border:0!important;background:transparent!important;
- box-shadow:none!important;font-size:27px!important;line-height:1!important;
+ box-shadow:none!important;font-style:normal!important;font-size:26px!important;line-height:1!important;
 }
+.hc-week-event-key{padding:8px 6px 2px!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.hc-week-event-key-list{display:grid!important;grid-template-columns:1fr!important;gap:0!important}
+.hc-week-event-day-row{
+ display:grid!important;grid-template-columns:52px minmax(0,1fr)!important;align-items:center!important;
+ width:100%!important;min-height:82px!important;padding:12px 8px!important;gap:12px!important;
+ border:0!important;border-bottom:1px solid rgba(22,91,111,.10)!important;
+ border-radius:0!important;background:transparent!important;text-align:left!important;color:inherit!important;
+}
+.hc-week-event-day-row:last-child{border-bottom:0!important}
+.hc-week-event-key-icon{width:52px!important;text-align:center!important;font-size:30px!important;line-height:1!important}
+.hc-week-event-copy{min-width:0!important}
+.hc-week-event-copy>strong{display:block!important;font-size:1.08rem!important;line-height:1.18!important;font-weight:850!important}
+.hc-week-event-when{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px 9px!important;margin-top:7px!important}
+.hc-week-event-date,.hc-week-event-time{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ min-height:30px!important;padding:4px 9px!important;border-radius:9px!important;
+ font-size:.98rem!important;line-height:1!important;font-weight:900!important;
+}
+.hc-week-event-date{background:#eef3f5!important;color:#365968!important;text-transform:capitalize!important}
+.hc-week-event-time{background:#dff3f7!important;color:#086d86!important;font-size:1.05rem!important}
+.hc-week-event-place{flex-basis:100%!important;font-size:.9rem!important;line-height:1.25!important;font-weight:700!important;color:#55717e!important}
