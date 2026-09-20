@@ -13,7 +13,7 @@ import {
   type Intent,
 } from "./core.ts";
 import { resolvePeople } from "./people.ts";
-import { exchangeAnswer, colleaguesAnswer, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
+import { exchangeAnswer, colleaguesAnswer, onDutyRoster, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
 import { contactAnswer, messagingHelp, placeAnswer } from "./handlers-lookup.ts";
 import { baseContext, choiceResponse, contextSubjects, findAgents, personCard, personResponse } from "./presentation.ts";
 import { directory, shiftDefinitions, todayParis } from "./runtime.ts";
@@ -21,7 +21,7 @@ import type { Agent, SessionCtx } from "./types.ts";
 
 function defaultScope(intent: Intent): DateScope {
   const base = todayParis();
-  if (["planning", "colleagues", "shift_roster", "organization"].includes(intent)) {
+  if (["planning", "colleagues", "on_duty", "shift_roster", "organization"].includes(intent)) {
     const d = addDays(base, 1);
     return { start: d, end: d };
   }
@@ -128,12 +128,13 @@ export async function answer(c: SessionCtx, body: any) {
       cards: [], actions: [], context: baseContext(old, { date_scope: ds, last_intent: "place" }), suggestions: ["Où est l’IRM ?", "Où est l’ascenseur bleu ?"],
     };
   }
+  if (intent === "on_duty") return onDutyRoster(c, old, ds, all, defs);
   if (intent === "organization" && !extractShift(raw)) return organizationAnswer(c, old, ds);
   if (intent === "shift_roster" || (intent === "organization" && extractShift(raw))) return shiftRoster(c, old, ds, extractShift(raw)!, all, defs);
 
   if (intent === "colleagues") {
     const subject = explicitSubjects[0] || findAgents(all, contextIds)[0] || c.agent;
-    return colleaguesAnswer(c, old, subject, ds, defs, all);
+    return colleaguesAnswer(c, old, subject, ds, defs, all, raw);
   }
   if (intent === "contact") {
     const subjects = explicitSubjects.length ? explicitSubjects : findAgents(all, contextIds);
