@@ -1670,3 +1670,40 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-days-landscape[style*="--visible-days:3"] .hc-status-code,
 .hc-days-landscape[style*="--visible-days:2"] .hc-status-code,
 .hc-days-landscape[style*="--visible-days:1"] .hc-status-code{font-size:1.12rem!important}
+
+
+/* direct-week-events-v27-20260920 */
+/* Event cards explain themselves: no ambiguous section title or generic "Tout voir". */
+.hc-widget-events-direct{
+ padding:0!important;
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+}
+.hc-widget-events-direct .hc-widget-list{
+ display:grid!important;
+ gap:8px!important;
+}
+.hc-widget-events-direct .hc-event-row{
+ min-height:72px!important;
+ border-radius:18px!important;
+ background:#fff!important;
+ border:1px solid rgba(22,91,111,.11)!important;
+ box-shadow:0 7px 20px rgba(20,62,78,.07)!important;
+ padding:10px 12px!important;
+}
+.hc-widget-events-direct .hc-event-type{
+ font-size:.72rem!important;
+ font-weight:850!important;
+ letter-spacing:.055em!important;
+}
+.hc-widget-events-direct .hc-event-row strong{
+ font-size:1rem!important;
+ line-height:1.2!important;
+}
+.hc-widget-events-direct .hc-widget-empty{
+ margin:2px 0!important;
+ padding:10px 4px!important;
+ text-align:center!important;
+ opacity:.62!important;
+}
