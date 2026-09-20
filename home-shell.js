@@ -626,6 +626,7 @@
           title: [x.prenom, x.nom].filter(Boolean).join(" ") || "Stagiaire",
           time,
           place,
+          relation: "Référent : vous",
           sub: [time, place].filter(Boolean).join(" · "),
         });
       });
@@ -790,9 +791,21 @@
     return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${rows
       .map(({ event:x, day, time, place }) => {
         const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
-        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
+        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
       })
       .join("")}</div></section>`;
+  }
+  function fixedShiftLegend() {
+    const shifts = [
+      ["M", "Matin", "shift-m"],
+      ["J", "Journée", "shift-j"],
+      ["J4", "J4", "shift-j4"],
+      ["S", "Soir", "shift-s"],
+      ["N", "Nuit", "shift-n"],
+    ];
+    return `<section class="hc-fixed-shift-legend" aria-label="Repères horaires"><small>REPÈRES HORAIRES</small><div>${shifts
+      .map(([code, label, cls]) => `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`)
+      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span></div></section>`;
   }
   function nativeExchanges() {
     const b = state.boot || {},
@@ -991,7 +1004,8 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    const weeklyDetails = futureWidget();
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
