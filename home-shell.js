@@ -43,6 +43,8 @@
   const ICON = {
     personal:
       '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+    tomorrow:
+      '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
     team: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
     change:
       '<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>',
@@ -784,6 +786,8 @@
     let s = "";
     if (has("planning_personal"))
       s += app("personal", "Planning perso", "personal", "personal");
+    if (has("tomorrow"))
+      s += app("tomorrow", "Pour demain", "tomorrow", "tomorrow");
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
     if (has("change_app")) s += app("change", "Changement", "change", "change");
@@ -980,6 +984,7 @@
   }
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
+    if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
     if (k === "team") return (location.href = "esprit-equipe.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
