@@ -64,12 +64,12 @@
       '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg>',
     admin:
       '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M9 12h6M12 9v6"/></svg>',
-    homePlanning:
-      '<img src="images/icone_app/home-planning.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
+    homeHome:
+      '<img src="images/icone_app/home-home.svg?v=20260920-nav1" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-apps.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
-    homeProfile:
-      '<img src="images/icone_app/quick-card.svg?v=20260920-profile1" alt="" aria-hidden="true">',
+    homeBell:
+      '<img src="images/icone_app/home-bell.svg?v=20260920-nav1" alt="" aria-hidden="true">',
   };
   function esc(v) {
     return String(v ?? "").replace(
