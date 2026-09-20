@@ -607,3 +607,48 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-id-card{grid-template-columns:74px minmax(0,1fr)!important}
  .hc-id-card .hc-avatar{width:74px!important;height:92px!important}
 }
+
+/* profile-card-corrected-20260920 */
+/* Profile correction: compact without shrinking the portrait into a thumbnail. */
+.hc-id-card{
+  grid-template-columns:118px minmax(0,1fr)!important;
+  gap:14px!important;
+  padding:10px 12px!important;
+  min-height:0!important;
+  align-items:center!important;
+}
+.hc-id-card .hc-avatar{
+  width:118px!important;
+  height:142px!important;
+  min-height:0!important;
+  align-self:center!important;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  background:transparent!important;
+}
+.hc-id-card .hc-avatar img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  border:0!important;
+  border-radius:0!important;
+}
+.hc-id-card .hc-profile-copy{
+  min-height:0!important;
+  align-content:center!important;
+  text-align:left!important;
+}
+.hc-id-card .hc-profile-copy>*{text-align:left!important}
+.hc-id-card .hc-profile-contacts{margin-top:5px!important;gap:3px!important}
+.hc-id-card .hc-profile-contact{padding-top:4px!important}
+@media(max-width:430px){
+ .hc-id-card{grid-template-columns:112px minmax(0,1fr)!important;gap:12px!important;padding:9px 10px!important}
+ .hc-id-card .hc-avatar{width:112px!important;height:136px!important}
+}
+@media(max-width:380px){
+ .hc-id-card{grid-template-columns:104px minmax(0,1fr)!important;gap:10px!important}
+ .hc-id-card .hc-avatar{width:104px!important;height:128px!important}
+}
