@@ -88,9 +88,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 .stip-store-icon{width:62px;height:62px;flex:0 0 62px;border-radius:18px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(145deg,#10a8c3,#0c6ea5);color:#fff;font-size:1.05rem;font-weight:950;letter-spacing:-.04em;box-shadow:0 8px 18px rgba(13,91,122,.18)}
 .stip-store-icon>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit}
 .stip-store-icon>svg{display:block;width:46%;height:46%;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
-.stip-store-icon-personal,.stip-store-icon-tomorrow,.stip-store-icon-dates,.stip-store-icon-places,.stip-store-icon-newagent,.stip-store-icon-admin{background:transparent;box-shadow:none}
+.stip-store-icon-personal,.stip-store-icon-tomorrow,.stip-store-icon-dates,.stip-store-icon-places,.stip-store-icon-newagent,.stip-store-icon-access,.stip-store-icon-admin{background:transparent;box-shadow:none}
 .stip-store-icon-team,.stip-store-icon-contacts{background:linear-gradient(145deg,#5a9ff0,#4965d5)}
-.stip-store-icon-access,.stip-store-icon-admin{background-color:#314b5b}
+.stip-store-icon-admin{background-color:#314b5b}
 .stip-store-icon-places{background-color:transparent}
 .stip-store-icon-assistant{background:linear-gradient(145deg,#13b4cb,#0a8ab7)}
 .stip-store-icon-activity{background:linear-gradient(145deg,#ff6d72,#e24d5f)}
