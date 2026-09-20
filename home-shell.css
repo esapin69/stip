@@ -962,3 +962,64 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-planning-left .hc-days-vertical .hc-day-vertical>i{font-size:.74rem!important}
   .hc-planning-left .hc-weekend-row .hc-day-weekend>i{font-size:.68rem!important}
 }
+
+
+/* week-card-layout-v2-20260920
+   Number first, shift/status on the line immediately below.
+   The card border already communicates the shift colour. */
+.hc-planning-left .hc-days-vertical .hc-day-vertical{
+  grid-template-rows:26px 38px minmax(27px,auto)!important;
+  min-height:96px!important;
+  padding:0 5px 7px!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>i{
+  width:calc(100% + 10px)!important;
+  margin:0 -5px!important;
+  font-size:.88rem!important;
+  letter-spacing:.035em!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>b{
+  font-size:1.9rem!important;
+  line-height:1!important;
+  align-self:center!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual{
+  min-height:27px!important;
+  align-self:start!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-name{
+  font-size:.9rem!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-status-icon{
+  font-size:1.35rem!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-shift-time.hc-status-code{
+  position:absolute!important;
+  left:calc(50% + 13px)!important;
+  right:auto!important;
+  bottom:9px!important;
+  min-height:0!important;
+  font-size:.82rem!important;
+  line-height:1!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend{
+  grid-template-rows:26px 38px minmax(27px,auto)!important;
+  min-height:96px!important;
+  padding:0 4px 7px!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>i{
+  width:calc(100% + 8px)!important;
+  margin:0 -4px!important;
+  font-size:.82rem!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>b{font-size:1.72rem!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>.hc-week-visual .hc-shift-name{font-size:.84rem!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>.hc-shift-time.hc-status-code{
+  left:calc(50% + 11px)!important;
+  bottom:9px!important;
+  font-size:.76rem!important;
+}
+@media(max-width:380px){
+ .hc-planning-left .hc-days-vertical .hc-day-vertical>i{font-size:.82rem!important}
+ .hc-planning-left .hc-weekend-row .hc-day-weekend>i{font-size:.76rem!important}
+}
