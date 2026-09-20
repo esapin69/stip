@@ -1245,8 +1245,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card .hc-profile-contact:active strong{color:var(--stip-accent)!important}
 .hc-profile-bell{
  position:absolute!important;
- top:11px!important;
+ top:50%!important;
  right:14px!important;
+ transform:translateY(-50%)!important;
  z-index:3!important;
  width:auto!important;
  height:auto!important;
@@ -1269,8 +1270,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-profile-bell>b{
  position:absolute!important;
- top:-7px!important;
- right:-9px!important;
+ top:-6px!important;
+ right:-8px!important;
  min-width:20px!important;
  height:20px!important;
  padding:0 5px!important;
