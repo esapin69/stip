@@ -24,6 +24,7 @@
     activity: { label: "Activité", home: "esprit-equipe.html?tab=activity" },
     access: { label: "Accès", home: "access-manage.html" },
     personal: { label: "Planning perso", home: "index.html?quick=personal" },
+    tomorrow: { label: "Pour demain", home: "index.html?quick=tomorrow" },
     team: { label: "Esprit d’équipe", home: "esprit-equipe.html" },
     compare: {
       label: "Comparer les plannings",
@@ -49,6 +50,7 @@
     activity: "activity",
     access: "access_manage",
     personal: "planning_personal",
+    tomorrow: "tomorrow",
     team: "planning_team",
     compare: "planning_team",
     change: "change_app",
