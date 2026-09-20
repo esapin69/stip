@@ -1335,6 +1335,13 @@
   function ready(e) {
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
+    try {
+      const requested = sessionStorage.getItem("stip_home_mode_once");
+      if (requested === "notifications" || requested === "apps" || requested === "planning") {
+        state.homeMode = requested;
+        sessionStorage.removeItem("stip_home_mode_once");
+      }
+    } catch {}
     state.bootStatus = "loading";
     state.bootError = "";
     state.renderSig = "";
