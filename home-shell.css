@@ -356,3 +356,6 @@
   .hc-profile-ghe{font-size:1.58rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:1rem!important}
 }
+
+/* profile-header-position-20260920 */
+.hc-id-card + .hc-home-filters{margin-top:12px!important}
