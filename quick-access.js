@@ -8,8 +8,6 @@
     PENDING_STORE = "stip_pending_app_v1",
     $ = (s) => document.querySelector(s);
   const I = {
-    home: '<img src="images/icone_app/quick-card.svg?v=20260919-restore1" alt="" aria-hidden="true">',
-    profile: '<img src="images/icone_app/quick-home.svg?v=20260919-restore1" alt="" aria-hidden="true">',
     fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
   const META = {
@@ -219,13 +217,10 @@
     n.id = "stipQuickSwitch";
     n.className = "stip-quick-switch";
     n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-qs="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-qs="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
+    n.innerHTML = `<button type="button" data-qs="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
     n.addEventListener("click", (e) => {
       const b = e.target.closest?.("[data-qs]");
-      if (!b) return;
-      const a = b.dataset.qs;
-      if (a === "profile") return showProfile();
-      if (a === "favorites") return toggleFavorites();
+      if (b?.dataset.qs === "favorites") toggleFavorites();
     });
     return n;
   }
@@ -311,12 +306,6 @@
     const n = $("#stipQuickSwitch");
     if (!n) return;
     const session = !!window.STIPSession;
-    n.querySelector('[data-qs="profile"]').classList.toggle(
-      "is-current",
-      session &&
-        !publicPreview &&
-        (window.STIPRouter?.get?.() || "home") === "home",
-    );
     n.querySelector('[data-qs="favorites"]').classList.toggle(
       "is-current",
       !!document.getElementById("stipFavoritesPanel"),
