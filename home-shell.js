@@ -587,11 +587,8 @@
       selectedIso = w[0]?.iso || parisIso(),
       back = state.weekOffset !== 0 || state.weekFull
         ? '<button type="button" class="hc-week-today hc-week-today-under-nav" data-week-today>Revenir à cette semaine</button>'
-        : "",
-      tomorrow = has("tomorrow")
-        ? `<button type="button" class="hc-tomorrow-launch" data-app="tomorrow" aria-label="Ouvrir Pour demain"><span>${ICON.tomorrow}</span><strong>Pour demain</strong></button>`
         : "";
-    return `<header class="hc-planning-month-title"><div class="hc-month-title-block"><div class="hc-month-title-open"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span></div><button type="button" class="hc-month-title-hint" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}">Ouvrir le planning du mois <b aria-hidden="true">›</b></button></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-label="Choisir directement une date"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div class="hc-date-jump-panel" data-date-jump-panel hidden><label><span>Aller à une date</span><input type="date" value="${esc(selectedIso)}" data-date-jump-input></label><button type="button" data-date-jump-today>Aujourd’hui</button></div>${back || tomorrow ? `<div class="hc-planning-tools">${back}${tomorrow}</div>` : ""}</header>`;
+    return `<header class="hc-planning-month-title"><div class="hc-month-title-block"><div class="hc-month-title-open"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span></div><button type="button" class="hc-month-title-hint" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}">Ouvrir le planning du mois <b aria-hidden="true">›</b></button></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-label="Choisir directement une date"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div class="hc-date-jump-panel" data-date-jump-panel hidden><label><span>Aller à une date</span><input type="date" value="${esc(selectedIso)}" data-date-jump-input></label><button type="button" data-date-jump-today>Aujourd’hui</button></div>${back ? `<div class="hc-planning-tools">${back}</div>` : ""}</header>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -909,12 +906,14 @@
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
+      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       gheLabel = ghe
         ? ghe.toUpperCase().startsWith("GHE")
           ? ghe
           : `GHE ${ghe}`
         : "";
     return `<section class="hc-profile hc-profile-full hc-id-card">
+      <button type="button" class="hc-profile-bell" data-home-mode="notifications" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
       <div class="hc-profile-copy">
         <small>MON PROFIL</small>
@@ -960,16 +959,16 @@
   }
   function homeModeNav() {
     const active = state.homeMode || "planning",
-      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
-        ["notifications", "Notifications", ICON.homeBell],
-        ["planning", "Mon profil", ICON.homeHome],
-        ["apps", "Applications", ICON.homeApps],
+        ["apps", "Applications", ICON.homeApps, "mode"],
+        ["planning", "Mon profil", ICON.homeHome, "mode"],
+        ["tomorrow", "Actions", ICON.tomorrow, "app"],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-      .map(
-        ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "notifications" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
+      .map(([key, label, art, kind]) =>
+        kind === "app"
+          ? `<button type="button" data-app="${key}" aria-label="${esc(label)}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`
+          : `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`
       )
       .join("")}</nav>`;
   }
