@@ -138,6 +138,12 @@ check(!read('index.html').includes('quick-access-icons.css'),'index.html charge 
 check(home.includes('const markup = `${profile()}${homeModeNav()}<section class="hc-home-mode-content"'),'La carte identité n’est plus placée au-dessus des trois accès rapides.');
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
+const homeCss=read('home-shell.css');
+check(home.includes('function calendarShiftPill')&&home.includes('hc-date-jump-shift'),'Le sélecteur de semaine n’affiche plus les capsules de shift dans le calendrier.');
+check(home.includes('dateJumpOpen: false')&&home.includes('data-cal-close'),'Le calendrier d’aperçu n’a plus son ouverture/fermeture manuelle.');
+check(home.includes('state.dateJumpOpen = true')&&home.includes('state.dateJumpMonth = String(day.dataset.calDay || "").slice(0, 7)'),'Choisir une date doit conserver l’aperçu ouvert pour la prise d’information.');
+check(homeCss.includes('.hc-date-jump-shift.shift-morning')&&homeCss.includes('.hc-date-jump-shift.shift-night'),'Les couleurs de shift du calendrier d’aperçu ont disparu.');
+check(homeCss.includes('.hc-date-jump-number')&&homeCss.includes('.hc-date-jump-actions'),'Le numéro du jour ou les actions du calendrier d’aperçu ont régressé.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
