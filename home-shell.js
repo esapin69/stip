@@ -519,7 +519,7 @@
     return `<div class="hc-days-vertical">${weekdays.map((x) => dayCard(x, "hc-day hc-day-vertical", true)).join("")}${weekend.length ? `<div class="hc-weekend-row">${weekend.map((x) => dayCard(x, "hc-day hc-day-vertical hc-day-weekend", true)).join("")}</div>` : ""}</div>`;
   }
   function weekDaysLandscape(w) {
-    return `<div class="hc-days-landscape">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
+    return `<div class="hc-days-landscape" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
