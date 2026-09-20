@@ -773,11 +773,26 @@
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
-      meta = [
-        ghe ? (ghe.toUpperCase().startsWith("GHE") ? ghe : `GHE ${ghe}`) : "",
-        team ? `Équipe ${cap(team)}` : "",
-      ].filter(Boolean);
-    return `<section class="hc-profile hc-profile-full"><div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>MON PROFIL</small><strong>${esc(agentName(a))}</strong>${meta.length ? `<p class="hc-profile-meta">${esc(meta.join(" · "))}</p>` : ""}<div>${tel ? `<button data-copy="${esc(tel)}" data-label="Numéro">${esc(tel)}</button>` : ""}${mail ? `<button data-copy="${esc(mail)}" data-label="E-mail">${esc(mail)}</button>` : ""}</div></div></section>`;
+      gheLabel = ghe
+        ? ghe.toUpperCase().startsWith("GHE")
+          ? ghe
+          : `GHE ${ghe}`
+        : "";
+    return `<section class="hc-profile hc-profile-full hc-id-card">
+      <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
+      <div class="hc-profile-copy">
+        <small>MON PROFIL</small>
+        <strong class="hc-profile-name">${esc(agentName(a))}</strong>
+        <div class="hc-profile-role">
+          ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
+          ${team ? `<span class="hc-profile-team">Équipe ${esc(cap(team))}</span>` : ""}
+        </div>
+        <div class="hc-profile-contacts">
+          ${tel ? `<button class="hc-profile-contact" data-copy="${esc(tel)}" data-label="Numéro"><span>TÉLÉPHONE</span><strong>${esc(tel)}</strong></button>` : ""}
+          ${mail ? `<button class="hc-profile-contact" data-copy="${esc(mail)}" data-label="E-mail"><span>E-MAIL</span><strong>${esc(mail)}</strong></button>` : ""}
+        </div>
+      </div>
+    </section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
