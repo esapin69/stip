@@ -974,7 +974,8 @@
     root.querySelectorAll("[data-open-favorites]").forEach(
       (b) =>
         (b.onclick = () => {
-          document.querySelector('#stipQuickSwitch [data-qs="favorites"]')?.click();
+          if (window.STIPFavorites?.open) window.STIPFavorites.open();
+          else document.querySelector('#stipQuickSwitch [data-qs="favorites"]')?.click();
         }),
     );
     root
