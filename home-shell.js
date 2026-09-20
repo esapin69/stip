@@ -530,10 +530,12 @@
   function weekEventMarker(x) {
     const events = weekEventsForDay(x);
     if (!events.length) return "";
+    const shift = canonicalShift(x.code),
+      shiftCode = shift.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none";
     return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .slice(0, 3)
       .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
-      .join("")}</span>`;
+      .join("")}<b class="hc-event-shift-dot hc-event-shift-dot-${shiftCode}" aria-label="${esc(shift)}"></b></span>`;
   }
   function weekDaysLandscape(w) {
     const hasEvents = w.some((x) => weekEventsForDay(x).length);
@@ -786,7 +788,7 @@
         const time = String(x.time || "").trim(),
           place = String(x.place || "").trim(),
           extra = [time, place].filter(Boolean).join(" · ");
-        return `<button type="button" class="hc-week-event-key-item" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span><strong>${esc(x.title)}</strong><small>${esc(fmtDateRange(x))}${extra ? ` · ${esc(extra)}` : ""}</small></span></button>`;
+        return `<button type="button" class="hc-week-event-key-item" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(fmtDateRange(x))}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
       })
       .join("")}</div></section>`;
   }
