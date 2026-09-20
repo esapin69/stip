@@ -83,8 +83,6 @@
       '<img src="images/icone_app/home-apps.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.svg?v=20260920-nav1" alt="" aria-hidden="true">',
-    homeRocket:
-      '<img src="images/icone_app/quick-rocket.svg?v=20260920-nav2" alt="" aria-hidden="true">',
   };
   function esc(v) {
     return String(v ?? "").replace(
@@ -935,7 +933,7 @@
   }
 
   function favoritesLauncher() {
-    return `<button type="button" class="hc-favorites-launcher" data-open-favorites><span class="hc-favorites-launcher-art">${ICON.homeRocket}</span><span><small>RACCOURCIS</small><strong>Mes favoris</strong><em>Retrouver rapidement mes applications</em></span><b>›</b></button>`;
+    return `<button type="button" class="hc-favorites-launcher" data-open-favorites><span class="hc-favorites-launcher-art"><img src="images/icone_app/quick-rocket.svg?v=20260920-nav3" alt="" aria-hidden="true"></span><span><small>RACCOURCIS</small><strong>Mes favoris</strong><em>Retrouver rapidement mes applications</em></span><b>›</b></button>`;
   }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
