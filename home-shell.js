@@ -762,7 +762,7 @@
         return start <= weekEnd && end >= weekStart;
       }),
       show = items.slice(0, 3);
-    return `<section class="hc-widget hc-widget-future" data-widget="future"><header class="hc-widget-head hc-widget-head-compact"><div><small>AGENDA</small><h2>À ne pas manquer</h2></div><button type="button" data-widget-open="future">Tout voir ›</button></header><div class="hc-widget-list">${
+    return `<section class="hc-widget hc-widget-future hc-widget-events-direct" data-widget="future"><div class="hc-widget-list">${
       show.length
         ? show
             .map((x) => {
