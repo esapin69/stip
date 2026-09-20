@@ -767,7 +767,8 @@
   function profile() {
     const a = state.boot?.agent || state.session?.agent || {},
       media = state.boot?.media || {},
-      avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
+      defaultAvatar = media.avatars?.[a.source_key] || a.avatar_url || "",
+      avatar = a.profile_photo_url || defaultAvatar || "",
       ghe = String(a.ghe || "").trim(),
       team = String(a.type_planning || a.equipe || "").trim(),
       tel = String(a.telephone || "").trim(),
@@ -779,7 +780,7 @@
           : `GHE ${ghe}`
         : "";
     return `<section class="hc-profile hc-profile-full hc-id-card">
-      <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
+      <div class="hc-avatar" data-default-avatar="${esc(defaultAvatar)}" data-initials="${esc(ini)}">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
       <div class="hc-profile-copy">
         <small>MON PROFIL</small>
         <strong class="hc-profile-name">${esc(agentName(a))}</strong>
