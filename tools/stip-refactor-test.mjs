@@ -80,7 +80,7 @@ const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
 check(home.includes('class="hc-profile-bell"')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée au profil.');
-check(home.includes('["apps", "Applications", ICON.homeApps, "mode"]')&&home.includes('["planning", "Mon profil", ICON.homeHome, "mode"]')&&home.includes('["tomorrow", "Actions", ICON.tomorrow, "app"]'),'La navigation principale Applications / Mon profil / Actions n’est plus conforme.');
+check(home.includes('["apps", "Applications", ICON.homeApps]')&&home.includes('["planning", "Mon profil", ICON.homeHome]')&&home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),'La navigation principale Applications / Mon profil et l’accès Actions ne sont plus conformes.');
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
@@ -119,10 +119,10 @@ const tomorrowAppAccess=read('access-runtime.js');
 const tomorrowAppUi=read('tomorrow-ui.js');
 const tomorrowMigration=read('supabase/migrations/20260920020500_add_tomorrow_app_access.sql');
 check(existsSync(join(root,'images/icone_app/pour-demain.svg')),'L’icône Pour demain a disparu.');
-check(tomorrowAppHome.includes('app("tomorrow", "Pour demain"')&&tomorrowAppHome.includes('STIPTomorrowUI?.open'),'Pour demain n’est plus intégré à la grille Applications.');
-check(tomorrowAppQuick.includes('label: "Pour demain"')&&tomorrowAppQuick.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris principaux.');
+check(tomorrowAppHome.includes('app("tomorrow", "Actions"')&&tomorrowAppHome.includes('STIPTomorrowUI?.open'),'Actions / Pour demain n’est plus intégré à la grille Applications.');
+check(tomorrowAppQuick.includes('label: "Actions"')&&tomorrowAppQuick.includes('tomorrow: "tomorrow"'),'Actions / Pour demain n’est plus disponible dans les favoris principaux.');
 check(tomorrowAppUniversal.includes('index.html?quick=tomorrow')&&tomorrowAppUniversal.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris universels.');
-check(tomorrowAppAccess.includes('tomorrow: () => explicit("tomorrow")')&&tomorrowAppAccess.includes('["tomorrow", "Pour demain", "tomorrow"]'),'Le droit Pour demain n’est plus relié au runtime Accès.');
+check(tomorrowAppAccess.includes('tomorrow: () => explicit("tomorrow")')&&tomorrowAppAccess.includes('["tomorrow", "Actions", "tomorrow"]'),'Le droit Actions / Pour demain n’est plus relié au runtime Accès.');
 check(tomorrowAppUi.includes('app("tomorrow")')&&tomorrowAppUi.includes('p.tomorrow'),'Pour demain n’est plus protégé par son droit dédié.');
 check(tomorrowMigration.includes("'tomorrow'")&&tomorrowMigration.includes("level_mode")&&tomorrowMigration.includes("planning_personal"),'La migration canonique Pour demain est incomplète.');
 
@@ -138,6 +138,14 @@ check(!read('index.html').includes('quick-access-icons.css'),'index.html charge 
 check(home.includes('const markup = `${profile()}${homeModeNav()}<section class="hc-home-mode-content"'),'La carte identité n’est plus placée au-dessus des trois accès rapides.');
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
+
+const espritHtml=read('esprit-equipe.html');
+const espritJs=read('esprit-equipe.js');
+check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
+check(espritHtml.includes('teamMonthLabel')&&espritHtml.includes('stip-time-days'),'Esprit d’équipe n’est plus la référence du filtre temporel à trois niveaux.');
+check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
+check(espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne navigue plus vers la journée choisie.');
+check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
 
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
