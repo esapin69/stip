@@ -532,7 +532,7 @@
   }
   function monthShortcut() {
     const mi = weekMonthInfo(selectedWeek());
-    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon" aria-hidden="true">${ICON.personal}</span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Mon planning du mois</strong><small>Voir ${esc(mi.targetLabel)} en entier</small></span><b>›</b></button>`;
+    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon" aria-hidden="true"><img src="images/icone_app/planning.svg?v=20260920-restored1" alt=""></span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Mon planning du mois</strong><small>Voir ${esc(mi.targetLabel)} en entier</small></span><b>›</b></button>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -749,15 +749,40 @@
           ?.scrollIntoView({ block: "center", behavior: "smooth" }),
       );
   }
+  function weekFutureItems(w = selectedWeek()) {
+    const weekStart = w[0]?.iso || "",
+      weekEnd = w[w.length - 1]?.iso || "";
+    return futureItems().filter((x) => {
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+      return start <= weekEnd && end >= weekStart;
+    });
+  }
+  function compactFutureEvent(x, iso) {
+    const time = String(x.time || "").trim(),
+      place = String(x.place || "").trim(),
+      type = String(x.type || "Événement").toUpperCase();
+    return `<button type="button" class="hc-day-event" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-day-event-link" aria-hidden="true"></span><span class="hc-day-event-icon">${x.icon || "•"}</span><span class="hc-day-event-copy"><small>${esc(type)}</small><strong>${esc(x.title)}</strong>${time ? `<em>${esc(time)}</em>` : ""}${place ? `<span>${esc(place)}</span>` : ""}</span><b>›</b></button>`;
+  }
+  function weekAgendaGrid() {
+    const w = selectedWeek(),
+      items = weekFutureItems(w),
+      weekdays = w.filter((x) => x.dow < 6),
+      weekend = w.filter((x) => x.dow > 5),
+      forDay = (x) => items.filter((item) => {
+        const start = String(item.date || "").slice(0, 10),
+          end = String(item.endDate || item.end_date || item.date || "").slice(0, 10);
+        return start <= x.iso && end >= x.iso;
+      }),
+      slot = (x, extra = "") => {
+        const dayItems = forDay(x);
+        return `<div class="hc-agenda-day-slot ${dayItems.length ? "has-event" : "empty"} ${extra}" data-agenda-date="${esc(x.iso)}">${dayItems.map((item) => compactFutureEvent(item, x.iso)).join("")}</div>`;
+      };
+    return `<section class="hc-week-agenda" data-widget="future"><header class="hc-week-agenda-head"><span><small>AGENDA</small><strong>À ne pas manquer</strong></span><button type="button" data-widget-open="future">Tout voir ›</button></header><div class="hc-week-agenda-slots">${weekdays.map((x) => slot(x)).join("")}${weekend.length ? `<div class="hc-agenda-weekend-slot">${weekend.map((x) => slot(x, "weekend")).join("")}</div>` : ""}</div></section>`;
+  }
   function futureWidget() {
     const w = selectedWeek(),
-      weekStart = w[0]?.iso || "",
-      weekEnd = w[w.length - 1]?.iso || "",
-      items = futureItems().filter((x) => {
-        const start = String(x.date || "").slice(0, 10),
-          end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
-        return start <= weekEnd && end >= weekStart;
-      }),
+      items = weekFutureItems(w),
       show = items.slice(0, 3);
     return `<section class="hc-widget hc-widget-future" data-widget="future"><header class="hc-widget-head hc-widget-head-compact"><div><small>AGENDA</small><h2>À ne pas manquer</h2></div><button type="button" data-widget-open="future">Tout voir ›</button></header><div class="hc-widget-list">${
       show.length
@@ -969,7 +994,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right"><div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${monthShortcut()}${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right"><div id="hcTomorrowDock"></div>${weekAgendaGrid()}</div></section>${monthShortcut()}${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
