@@ -103,6 +103,26 @@ Règle : deux écrans utilisant le même motif doivent prendre leur base visuell
 La hiérarchie reste :
 `stip-theme-base.css` = tokens → `stip-patterns.css` = familles de composants → CSS de page = structure métier uniquement.
 
+
+
+## Navigation temporelle canonique
+
+Le visuel de référence pour les filtres temporels STIP est un empilement de cartes interactives de la famille **Temps**.
+
+La hiérarchie canonique est :
+
+1. **Mois / année** — contexte principal, avec le mois fortement mis en évidence et une action éventuelle seulement si la page possède réellement une vue mensuelle.
+2. **Semaine** — flèche précédente, période centrale, numéro de semaine en information secondaire, flèche suivante.
+3. **Jours** — sept boutons de lundi à dimanche. Un clic ne masque pas la semaine : il déplace directement vers la journée choisie et conserve la semaine complète.
+
+Deux variantes sont autorisées :
+- **2 niveaux** : mois + semaine, lorsque la page n’a pas besoin de choisir directement un jour ;
+- **3 niveaux** : mois + semaine + jours, lorsque le jour doit être accessible directement.
+
+La page **Esprit d’équipe** est la référence officielle de la variante complète à 3 niveaux. Toute autre page qui a besoin des trois niveaux doit réutiliser les classes partagées `.stip-time-stack`, `.stip-time-month`, `.stip-time-week` et `.stip-time-days`, et ne pas recréer sa propre version locale.
+
+Le clic sur un jour doit produire un état sélectionné visible, être mémorisé dans le contexte de navigation quand cela est pertinent et rester cohérent avec la semaine affichée.
+
 ## Structure d’une page STIP
 
 Une nouvelle page doit suivre ce principe :
