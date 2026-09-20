@@ -20,6 +20,7 @@
     widgets: new Map(),
     externalActions: new Map(),
     actionFilter: "all",
+    actionPrefs: { tabs: [], moves: {}, dismissed: {} },
     weekOffset: 0,
     weekFull: false,
     dayFocus: parisIso(),
@@ -351,6 +352,90 @@
       (a) => a.status === "pending" && !a.completed_at && !a.cancelled_at,
     );
   }
+  function actionOwnerKey() {
+    const a = state.session?.agent || state.boot?.agent || window.STIPSession?.agent || {};
+    return String(a.id || a.source_key || "local");
+  }
+  function actionPrefsKey() {
+    return "stip_action_center_prefs_v1:" + actionOwnerKey();
+  }
+  function loadActionPrefs() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(actionPrefsKey()) || "{}"),
+        tabs = Array.isArray(raw.tabs)
+          ? raw.tabs
+              .filter((x) => x && typeof x.id === "string" && typeof x.label === "string")
+              .slice(0, 20)
+          : [];
+      state.actionPrefs = {
+        tabs,
+        moves: raw.moves && typeof raw.moves === "object" ? raw.moves : {},
+        dismissed:
+          raw.dismissed && typeof raw.dismissed === "object" ? raw.dismissed : {},
+      };
+    } catch {
+      state.actionPrefs = { tabs: [], moves: {}, dismissed: {} };
+    }
+  }
+  function saveActionPrefs() {
+    try {
+      localStorage.setItem(actionPrefsKey(), JSON.stringify(state.actionPrefs));
+    } catch {}
+  }
+  function actionNoteKey(n = {}) {
+    return String(
+      n.id ||
+        n.action_id ||
+        [n.source || "stip", n.title || "", n.body || ""].join(":"),
+    );
+  }
+  function displayNoteCategory(n = {}) {
+    return state.actionPrefs.moves[actionNoteKey(n)] || noteCategory(n);
+  }
+  function refreshActionCenterUi() {
+    state.renderSig = "";
+    render();
+    if (
+      $("#hsPanel")?.classList.contains("open") &&
+      $("#hsPanelTitle")?.textContent === "À traiter"
+    )
+      renderActionCenter(state.actionFilter);
+  }
+  function dismissActionNote(n) {
+    state.actionPrefs.dismissed[actionNoteKey(n)] = Date.now();
+    delete state.actionPrefs.moves[actionNoteKey(n)];
+    saveActionPrefs();
+    refreshActionCenterUi();
+  }
+  function moveActionNote(n, category) {
+    const key = actionNoteKey(n);
+    if (category && category !== noteCategory(n))
+      state.actionPrefs.moves[key] = category;
+    else delete state.actionPrefs.moves[key];
+    saveActionPrefs();
+    refreshActionCenterUi();
+  }
+  function addActionTab(label) {
+    label = String(label || "").trim().replace(/\s+/g, " ").slice(0, 24);
+    if (!label) return "";
+    const id =
+      "custom:" +
+      Date.now().toString(36) +
+      ":" +
+      Math.random().toString(36).slice(2, 7);
+    state.actionPrefs.tabs.push({ id, label });
+    saveActionPrefs();
+    return id;
+  }
+  function removeActionTab(id) {
+    state.actionPrefs.tabs = state.actionPrefs.tabs.filter((x) => x.id !== id);
+    Object.keys(state.actionPrefs.moves).forEach((k) => {
+      if (state.actionPrefs.moves[k] === id) state.actionPrefs.moves[k] = "other";
+    });
+    if (state.actionFilter === id) state.actionFilter = "all";
+    saveActionPrefs();
+    refreshActionCenterUi();
+  }
   function noteCategory(n = {}) {
     if (n.category) return n.category;
     const s = `${n.title || ""} ${n.body || ""}`.toLowerCase();
@@ -366,7 +451,9 @@
         .filter((n) => !n.action_id || p.has(String(n.action_id)))
         .map((n) => ({ ...n, category: noteCategory(n), source: "stip" })),
       external = [...state.externalActions.values()].flat();
-    return [...native, ...external];
+    return [...native, ...external].filter(
+      (n) => !state.actionPrefs.dismissed[actionNoteKey(n)],
+    );
   }
   function agentName(a = {}) {
     return (
@@ -1144,7 +1231,7 @@
           : `GHE ${ghe}`
         : "";
     return `<section class="hc-profile hc-profile-full hc-id-card">
-      <button type="button" class="hc-profile-bell" data-home-mode="notifications" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+      <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
       <div class="hc-profile-copy">
         <strong class="hc-profile-name">${esc(agentName(a))}</strong>
@@ -1206,36 +1293,291 @@
   function actionCenterData(filter = state.actionFilter) {
     const ns = notifications(),
       cats = [
-        ["all", "Tout"],
-        ["access", "Accès"],
-        ["signatures", "Signatures"],
-        ["reminders", "Rappels"],
-        ["agenda", "Agenda"],
-        ["other", "Autres"],
+        ["all", "Tout", false],
+        ["access", "Accès", false],
+        ["signatures", "Signatures", false],
+        ["reminders", "Rappels", false],
+        ["agenda", "Agenda", false],
+        ["other", "Autres", false],
+        ...state.actionPrefs.tabs.map((x) => [x.id, x.label, true]),
       ],
       counts = Object.fromEntries(
         cats.map(([k]) => [
           k,
-          k === "all" ? ns.length : ns.filter((n) => noteCategory(n) === k).length,
+          k === "all"
+            ? ns.length
+            : ns.filter((n) => displayNoteCategory(n) === k).length,
         ]),
       ),
-      shown = filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
+      shown =
+        filter === "all"
+          ? ns
+          : ns.filter((n) => displayNoteCategory(n) === filter);
     return { ns, cats, counts, shown };
   }
-
   function actionCenterMarkup(filter = state.actionFilter, inline = false) {
     const { ns, cats, counts, shown } = actionCenterData(filter),
-      visibleCats = cats.filter(([k]) => k === "all" || counts[k] > 0);
+      visibleCats = cats.filter(([k, , manual]) => manual || k === "all" || counts[k] > 0),
+      filterBar =
+        '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">' +
+        visibleCats
+          .map(([k, l, manual]) => {
+            const tab =
+              '<button type="button" role="tab" aria-selected="' +
+              (filter === k) +
+              '" data-action-filter="' +
+              esc(k) +
+              '">' +
+              esc(l) +
+              (counts[k] ? ' <span>' + counts[k] + "</span>" : "") +
+              "</button>";
+            return manual
+              ? '<span class="hc-action-filter-custom">' +
+                  tab +
+                  '<button type="button" class="hc-action-filter-close" data-action-tab-delete="' +
+                  esc(k) +
+                  '" aria-label="Supprimer l’onglet ' +
+                  esc(l) +
+                  '">×</button></span>'
+              : tab;
+          })
+          .join("") +
+        '<button type="button" class="hc-action-filter-add" data-action-tab-add aria-label="Ajouter un onglet">＋</button></div>';
     const head = inline
       ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
       : "";
-    if (!ns.length) return head || '<div class="hc-empty">Rien à traiter.</div>';
-    return `${head}<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">${visibleCats.map(([k, l]) => `<button type="button" role="tab" aria-selected="${filter === k}" data-action-filter="${k}">${l}${counts[k] ? ` <span>${counts[k]}</span>` : ""}</button>`).join("")}</div>${shown.length ? `<div class="hc-panel-list">${shown.map((n, i) => `<button class="hs-note" data-note-index="${i}"><small>${esc(cats.find((x) => x[0] === noteCategory(n))?.[1] || "Autres")}</small><strong>${esc(n.title)}</strong>${n.body ? `<p>${esc(n.body)}</p>` : ""}</button>`).join("")}</div>` : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>'}`;
+    if (!ns.length) return head + filterBar;
+    const cards = shown.length
+      ? '<div class="hc-panel-list">' +
+        shown
+          .map((n, i) => {
+            const cat = displayNoteCategory(n),
+              catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres";
+            return '<div class="hc-note-swipe" data-note-index="' +
+              i +
+              '"><div class="hc-note-swipe-bg hc-note-delete"><span>✕</span><strong>Supprimer</strong></div><div class="hc-note-swipe-bg hc-note-move"><span>↔</span><strong>Déplacer</strong></div><button type="button" class="hs-note hc-note-card" data-note-open><small>' +
+              esc(catLabel) +
+              "</small><strong>" +
+              esc(n.title) +
+              "</strong>" +
+              (n.body ? "<p>" + esc(n.body) + "</p>" : "") +
+              "</button></div>";
+          })
+          .join("") +
+        "</div>"
+      : '<div class="hc-empty">Rien à traiter dans cet onglet.</div>';
+    return head + filterBar + cards;
   }
 
+  function bigConfirm({ title, body = "", confirmLabel = "Confirmer" } = {}) {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "hc-confirm-backdrop";
+      wrap.innerHTML =
+        '<section class="hc-confirm-pop" role="dialog" aria-modal="true"><h3>' +
+        esc(title || "Confirmer ?") +
+        "</h3>" +
+        (body ? "<p>" + esc(body) + "</p>" : "") +
+        '<div class="hc-confirm-actions"><button type="button" data-confirm-no><span>❌</span><strong>Annuler</strong></button><button type="button" class="is-confirm" data-confirm-yes><span>✔</span><strong>' +
+        esc(confirmLabel) +
+        "</strong></button></div></section>";
+      document.body.appendChild(wrap);
+      const done = (v) => {
+        wrap.remove();
+        resolve(v);
+      };
+      wrap.querySelector("[data-confirm-no]").onclick = () => done(false);
+      wrap.querySelector("[data-confirm-yes]").onclick = () => done(true);
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) done(false);
+      });
+    });
+  }
+
+  function openActionTabSheet(note = null) {
+    const { cats } = actionCenterData(),
+      wrap = document.createElement("div");
+    wrap.className = "hc-action-sheet-backdrop";
+    wrap.innerHTML =
+      '<section class="hc-action-sheet"><header><div><small>ORGANISER</small><h3>' +
+      (note ? "Déplacer la notification" : "Ajouter un onglet") +
+      '</h3></div><button type="button" data-sheet-close>×</button></header>' +
+      (note
+        ? '<div class="hc-action-sheet-tabs">' +
+          cats
+            .filter(([k]) => k !== "all")
+            .map(
+              ([k, l]) =>
+                '<button type="button" data-move-category="' +
+                esc(k) +
+                '"><span>' +
+                esc(l) +
+                "</span><b>›</b></button>",
+            )
+            .join("") +
+          "</div>"
+        : "") +
+      '<form class="hc-action-tab-create"><label>Nouvel onglet<input name="label" maxlength="24" placeholder="Nom de l’onglet" autocomplete="off"></label><button type="submit">＋ Ajouter</button></form></section>';
+    document.body.appendChild(wrap);
+    const close = () => wrap.remove();
+    wrap.querySelector("[data-sheet-close]").onclick = close;
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) close();
+    });
+    wrap.querySelectorAll("[data-move-category]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          if (note) moveActionNote(note, b.dataset.moveCategory);
+          close();
+        }),
+    );
+    wrap.querySelector("form").onsubmit = (e) => {
+      e.preventDefault();
+      const label = new FormData(e.currentTarget).get("label"),
+        id = addActionTab(label);
+      if (!id) return;
+      if (note) moveActionNote(note, id);
+      else {
+        state.actionFilter = id;
+        refreshActionCenterUi();
+      }
+      close();
+    };
+    setTimeout(() => wrap.querySelector("input")?.focus(), 30);
+  }
+
+  function openNotificationDetail(n) {
+    document.getElementById("hcNotificationDetail")?.remove();
+    const cat = displayNoteCategory(n),
+      { cats } = actionCenterData(),
+      catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
+      manageable = (n?.source && n.source !== "stip") || n?.action_id;
+    const page = document.createElement("section");
+    page.id = "hcNotificationDetail";
+    page.className = "hc-notification-detail";
+    page.innerHTML =
+      '<header><button type="button" data-detail-close aria-label="Retour">‹</button><div><small>NOTIFICATION</small><strong>' +
+      esc(catLabel) +
+      '</strong></div><span></span></header><main><span class="hc-detail-category">' +
+      esc(catLabel) +
+      "</span><h2>" +
+      esc(n.title || "Notification") +
+      "</h2>" +
+      (n.body ? "<p>" + esc(n.body) + "</p>" : "") +
+      '<div class="hc-detail-actions">' +
+      (manageable
+        ? '<button type="button" class="primary" data-detail-manage>Gérer cette notification</button>'
+        : "") +
+      '<button type="button" data-detail-move>Déplacer</button><button type="button" class="danger" data-detail-delete>Supprimer</button></div></main>';
+    document.body.appendChild(page);
+    const close = () => page.remove();
+    page.querySelector("[data-detail-close]").onclick = close;
+    page.querySelector("[data-detail-manage]")?.addEventListener("click", () => {
+      close();
+      if (n?.source && n.source !== "stip")
+        window.dispatchEvent(
+          new CustomEvent("stip:action-center-open", { detail: n }),
+        );
+      else if (n?.action_id) {
+        panel(true, "À traiter");
+        openAction(n.action_id);
+      }
+    });
+    page.querySelector("[data-detail-move]").onclick = () => {
+      close();
+      openActionTabSheet(n);
+    };
+    page.querySelector("[data-detail-delete]").onclick = async () => {
+      const ok = await bigConfirm({
+        title: "Supprimer cette notification ?",
+        body: "Elle disparaîtra de votre Cloche STIP.",
+        confirmLabel: "Confirmer",
+      });
+      if (!ok) return;
+      close();
+      dismissActionNote(n);
+    };
+  }
+
+  function bindNoteSwipe(wrap, note) {
+    const card = wrap.querySelector(".hc-note-card");
+    if (!card) return;
+    let startX = 0,
+      startY = 0,
+      dx = 0,
+      active = false,
+      horizontal = false,
+      swiped = false;
+    const reset = () => {
+      card.style.transform = "";
+      wrap.classList.remove("is-delete", "is-move", "is-dragging");
+    };
+    card.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+      active = true;
+      horizontal = false;
+      swiped = false;
+      wrap.classList.add("is-dragging");
+      try {
+        card.setPointerCapture(e.pointerId);
+      } catch {}
+    });
+    card.addEventListener("pointermove", (e) => {
+      if (!active) return;
+      const x = e.clientX - startX,
+        y = e.clientY - startY;
+      if (!horizontal) {
+        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
+        if (Math.abs(y) > Math.abs(x) * 1.1) {
+          active = false;
+          reset();
+          return;
+        }
+        horizontal = true;
+      }
+      e.preventDefault();
+      dx = Math.max(-122, Math.min(122, x));
+      swiped = Math.abs(dx) > 12;
+      card.style.transform = "translate3d(" + dx + "px,0,0)";
+      wrap.classList.toggle("is-delete", dx > 0);
+      wrap.classList.toggle("is-move", dx < 0);
+    });
+    const finish = async () => {
+      if (!active && !horizontal) return;
+      const finalDx = dx;
+      active = false;
+      reset();
+      if (finalDx > 72) {
+        const ok = await bigConfirm({
+          title: "Supprimer cette notification ?",
+          body: "Elle disparaîtra de votre Cloche STIP.",
+          confirmLabel: "Confirmer",
+        });
+        if (ok) dismissActionNote(note);
+      } else if (finalDx < -72) openActionTabSheet(note);
+      setTimeout(() => (swiped = false), 180);
+    };
+    card.addEventListener("pointerup", finish);
+    card.addEventListener("pointercancel", () => {
+      active = false;
+      reset();
+      setTimeout(() => (swiped = false), 180);
+    });
+    card.addEventListener("click", (e) => {
+      if (swiped) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      openNotificationDetail(note);
+    });
+  }
   function bindActionCenter(scope, filter = state.actionFilter, inline = false) {
     if (!scope) return;
-    const { shown } = actionCenterData(filter);
+    const { shown, cats } = actionCenterData(filter);
     scope.querySelectorAll("[data-action-filter]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -1245,22 +1587,29 @@
           else renderActionCenter(next);
         }),
     );
-    scope.querySelectorAll("[data-note-index]").forEach(
+    scope.querySelector("[data-action-tab-add]")?.addEventListener("click", () =>
+      openActionTabSheet(),
+    );
+    scope.querySelectorAll("[data-action-tab-delete]").forEach(
       (b) =>
-        (b.onclick = () => {
-          const n = shown[Number(b.dataset.noteIndex)];
-          if (n?.source && n.source !== "stip")
-            window.dispatchEvent(
-              new CustomEvent("stip:action-center-open", { detail: n }),
-            );
-          else if (n?.action_id) {
-            if (inline) panel(true, "À traiter");
-            openAction(n.action_id);
-          }
+        (b.onclick = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = b.dataset.actionTabDelete,
+            label = cats.find((x) => x[0] === id)?.[1] || "cet onglet",
+            ok = await bigConfirm({
+              title: "Supprimer l’onglet « " + label + " » ?",
+              body: "Les notifications qu’il contient retourneront dans Autres.",
+              confirmLabel: "Confirmer",
+            });
+          if (ok) removeActionTab(id);
         }),
     );
+    scope.querySelectorAll("[data-note-index]").forEach((wrap) => {
+      const n = shown[Number(wrap.dataset.noteIndex)];
+      if (n) bindNoteSwipe(wrap, n);
+    });
   }
-
   function renderProfileActions(filter = state.actionFilter) {
     const host = $("#hcProfileActions");
     if (!host) return;
@@ -1529,6 +1878,7 @@
   function ready(e) {
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
+    loadActionPrefs();
     try {
       const quick = new URLSearchParams(location.search).get("quick") || "",
         requested = sessionStorage.getItem("stip_home_mode_once");
@@ -1561,6 +1911,8 @@
     state.bootError = "";
     state.home = { actions: [], notifications: [] };
     state.externalActions.clear();
+    state.actionPrefs = { tabs: [], moves: {}, dismissed: {} };
+    state.actionFilter = "all";
     state.weekOffset = 0;
     state.weekFull = false;
     state.renderSig = "";
