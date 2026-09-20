@@ -148,6 +148,9 @@ const homePlanningBlock=home.slice(home.indexOf('function homeModeBody()'),home.
 check(homePlanningBlock.indexOf('fixedShiftLegend()') < homePlanningBlock.indexOf('planningCalendarOverview()')&&homePlanningBlock.indexOf('planningCalendarOverview()') < homePlanningBlock.indexOf('homeAIEntry()'),'Le calendrier permanent doit rester sous les légendes et juste avant la zone IA du planning.');
 check(homeCss.includes('.hc-date-jump-workday.shift-morning')&&homeCss.includes('.hc-date-jump-workday.shift-night'),'Les couleurs des pastilles de jours travaillés ont disparu.');
 check(homeCss.includes('color:#fff!important')&&homeCss.includes('.hc-week-nav-global.hc-week-nav-hero'),'Le contraste blanc des numéros ou le nouveau titre semaine a régressé.');
+check(home.includes('state.weekOffset !== 0')&&home.includes('data-week-today')&&home.includes('Revenir à cette semaine'),'Le retour contextuel vers la semaine actuelle a disparu.');
+check(home.includes('monthKey === currentMonthKey')&&home.includes('hc-week-today hc-date-jump-today'),'Le bouton Aujourd’hui doit être absent sur le mois courant et réutiliser l’ancienne couche sur les autres mois.');
+check(homeCss.includes('CONTEXTUAL CURRENT RETURN')&&homeCss.includes('.hc-planning-primary-head .hc-week-return-current')&&homeCss.includes('.hc-date-jump-permanent .hc-date-jump-today'),'Le style historique partagé des retours semaine/mois a disparu.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
