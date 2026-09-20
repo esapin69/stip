@@ -1874,34 +1874,35 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  background:rgba(72,111,124,.14)!important;
 }
 .hc-fixed-shift-legend{
- padding:0 6px 5px!important;
+ padding:1px 4px 4px!important;
 }
 .hc-fixed-shift-legend>small{
  display:block!important;
- margin:0 0 9px!important;
- color:#7a9099!important;
- font-size:.62rem!important;
- font-weight:950!important;
- letter-spacing:.09em!important;
+ margin:0 0 10px!important;
+ color:#8a9ba2!important;
+ font-size:.66rem!important;
+ font-weight:900!important;
+ letter-spacing:.095em!important;
 }
 .hc-fixed-shift-legend>div{
  display:grid!important;
- grid-template-columns:repeat(2,minmax(0,1fr))!important;
- gap:7px 12px!important;
+ grid-template-columns:repeat(auto-fit,minmax(148px,1fr))!important;
+ gap:9px 14px!important;
+ align-items:center!important;
 }
 .hc-fixed-shift-item{
  min-width:0!important;
  display:flex!important;
  align-items:center!important;
- gap:6px!important;
- color:#536f7a!important;
- font-size:.78rem!important;
- line-height:1.1!important;
+ gap:7px!important;
+ color:#667b84!important;
+ font-size:.9rem!important;
+ line-height:1.15!important;
 }
 .hc-fixed-shift-item>i{
- flex:0 0 12px!important;
- width:12px!important;
- height:12px!important;
+ flex:0 0 13px!important;
+ width:13px!important;
+ height:13px!important;
  border-radius:50%!important;
  font-style:normal!important;
 }
@@ -1915,11 +1916,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-fixed-shift-pending{
  margin-top:0!important;
- color:#718790!important;
- font-size:.72rem!important;
+ color:#82939a!important;
+ font-size:.82rem!important;
 }
 .hc-fixed-shift-pending>b{
- color:#718790!important;
+ color:#82939a!important;
  font-weight:800!important;
  line-height:1.15!important;
 }
@@ -1945,12 +1946,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  transform:rotate(-45deg)!important;
  transform-origin:center!important;
 }
-.hc-fixed-shift-item>b{color:#244d5d!important;font-weight:900!important}
+.hc-fixed-shift-item>b{color:#365866!important;font-weight:900!important}
 .hc-fixed-shift-item>em{font-style:normal!important;color:#a1afb4!important}
 .hc-fixed-shift-item>strong{
  min-width:0!important;
- color:#5d7781!important;
- font-size:.75rem!important;
+ color:#71878f!important;
+ font-size:.86rem!important;
  font-weight:800!important;
  white-space:nowrap!important;
 }
