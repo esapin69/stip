@@ -336,6 +336,7 @@
     $("#appView")?.classList.remove("hidden");
     window.STIPRouter?.set?.("home");
     mount();
+    setTimeout(() => document.querySelector('[data-home-mode="notifications"]')?.click(), 0);
     window.scrollTo({ top: 0, behavior: "auto" });
   }
   function openKey(key) {
@@ -370,7 +371,7 @@
       history.replaceState(null, "", location.pathname + location.hash);
       setTimeout(() => {
         if (q === "public") showPublic();
-        else if (q === "profile") showProfile();
+        else if (q === "profile" || q === "notifications") showProfile();
         else if (allowed(q)) openKey(q);
       }, 40);
       return;
