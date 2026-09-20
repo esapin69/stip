@@ -1751,3 +1751,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-week-event-date{background:#eef3f5!important;color:#365968!important;text-transform:capitalize!important}
 .hc-week-event-time{background:#dff3f7!important;color:#086d86!important;font-size:1.05rem!important}
 .hc-week-event-place{flex-basis:100%!important;font-size:.9rem!important;line-height:1.25!important;font-weight:700!important;color:#55717e!important}
+
+
+/* event-icon-no-extra-dot-v42-20260920 */
+.hc-day-event-markers::before,.hc-day-event-markers::after,.hc-day-event-markers i::before,.hc-day-event-markers i::after{content:none!important;display:none!important}
