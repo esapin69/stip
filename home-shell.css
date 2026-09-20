@@ -356,3 +356,9 @@
   .hc-profile-ghe{font-size:1.58rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:1rem!important}
 }
+
+/* profile-header-flow-20260920 */
+.hc-id-card{margin-top:0!important;margin-bottom:12px!important}
+.hc-id-card + .hc-home-filters{margin-top:0!important}
+/* The profile card stays in normal document flow: it scrolls away naturally
+   when going down and returns when the user scrolls back up. */
