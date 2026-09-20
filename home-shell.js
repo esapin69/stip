@@ -591,17 +591,29 @@
       .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
       .join("")}</span>`;
   }
-  function weekDaysLandscape(w) {
-    const liveTail = state.weekOffset === 0 && !state.weekFull && w[0]?.today && w[0]?.dow >= 5,
+  function weekDisplayModel(w = selectedWeek()) {
+    const liveTail =
+        state.weekOffset === 0 &&
+        !state.weekFull &&
+        w[0]?.today &&
+        w[0]?.dow >= 5,
       nextMonday = liveTail
         ? (() => {
             const d = new Date(w[w.length - 1].d);
             d.setDate(d.getDate() + 1);
             return agendaRange(d, 1)[0];
           })()
-        : null,
-      visualDays = nextMonday ? [...w, nextMonday] : w,
-      slotCount = Math.max(1, w.length + (nextMonday ? 2 : 0)),
+        : null;
+    return {
+      weekDays: w,
+      nextMonday,
+      visualDays: nextMonday ? [...w, nextMonday] : w,
+      slotCount: Math.max(1, w.length + (nextMonday ? 2 : 0)),
+    };
+  }
+  function weekDaysLandscape(w) {
+    const model = weekDisplayModel(w),
+      { nextMonday, visualDays, slotCount } = model,
       hasEvents = visualDays.some((x) => weekEventsForDay(x).length),
       bridge = nextMonday
         ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
@@ -866,7 +878,7 @@
       .join("")}</div></section>`;
   }
   function fixedShiftLegend() {
-    const visible = selectedWeek(),
+    const visible = weekDisplayModel().visualDays,
       present = new Set(visible.map((x) => canonicalShift(x.code))),
       pending = visible.some((x) => {
         const code = canonicalShift(x.code);
