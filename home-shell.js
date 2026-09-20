@@ -153,7 +153,8 @@
       first = rows[0]?.d || today,
       last = rows.at(-1)?.d || first,
       keys = [...new Set(rows.map((x) => monthKeyOf(x.d)))],
-      targetKey = monthKeyOf(today),
+      anchor = rows[Math.min(3, Math.max(0, rows.length - 1))]?.d || first,
+      targetKey = monthKeyOf(anchor),
       sameYear = first.getFullYear() === last.getFullYear(),
       heading =
         keys.length <= 1
@@ -166,13 +167,13 @@
       heading,
       yearLabel,
       targetKey,
-      anchor: today,
-      targetLabel: `${monthNameOf(today)} ${today.getFullYear()}`,
-      anchorDow: today
+      anchor,
+      targetLabel: `${monthNameOf(anchor)} ${anchor.getFullYear()}`,
+      anchorDow: anchor
         .toLocaleDateString("fr-FR", { weekday: "short" })
         .replace(/\./g, "")
         .toUpperCase(),
-      anchorDay: today.getDate(),
+      anchorDay: anchor.getDate(),
     };
   }
   function openPlanningMonth(key) {
@@ -330,11 +331,11 @@
     ST: "👶",
   };
   const WORK_SHIFT_ICON = {
-    M: "🔵",
-    J: "🟢",
-    J4: "🟠",
-    S: "🟡",
-    N: "⚫",
+    M: "m",
+    J: "j",
+    J4: "j4",
+    S: "s",
+    N: "n",
   };
   function canonicalShift(raw) {
     const src = String(raw || "")
@@ -508,7 +509,7 @@
         : statusIcon
           ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
           : workIcon
-            ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
+            ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon hc-work-dot hc-work-dot-${esc(workIcon)}" aria-hidden="true"></span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
             : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
     return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
   }
@@ -968,7 +969,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right">${monthShortcut()}<div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right"><div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${monthShortcut()}${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
