@@ -903,7 +903,7 @@
   }
 
   function notificationsPane() {
-    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Mon profil</summary><div>${profile()}<section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
+    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Compte</summary><div><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
   }
 
   function homeModeBody() {
@@ -915,7 +915,7 @@
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
-    const markup = `${homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    const markup = `${profile()}${homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
