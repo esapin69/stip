@@ -147,6 +147,14 @@ check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),
 check(espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne navigue plus vers la journée choisie.');
 check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
 
+const espritInteractiveHtml=read('esprit-equipe.html');
+const espritInteractiveJs=read('esprit-equipe.js');
+const espritInteractiveCss=read('esprit-equipe.css');
+check(espritInteractiveHtml.includes('id="teamCurrent"'),'Esprit d’équipe a perdu le raccourci Aujourd’hui.');
+check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.includes('aria-expanded'),'Les shifts Esprit d’équipe ne sont plus interactifs.');
+check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
+check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);

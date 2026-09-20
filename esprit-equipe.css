@@ -470,3 +470,321 @@ body.team-page {
     margin-top: 5px;
   }
 }
+
+
+/* interactive-polish-20260920
+   Esprit d'équipe doit se comporter comme une vraie application, pas comme une page statique. */
+.team-heading{
+  padding:17px 18px;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  background:linear-gradient(145deg,var(--stip-surface),color-mix(in srgb,var(--stip-accent-soft) 38%,var(--stip-surface)));
+  box-shadow:var(--stip-shadow);
+}
+.team-heading h1{font-size:clamp(1.9rem,6.5vw,2.7rem)}
+.team-heading p{margin-top:7px!important}
+
+.team-tabs{
+  margin-top:12px!important;
+  gap:7px!important;
+  padding:6px!important;
+  border-radius:20px!important;
+  background:var(--stip-surface-raised)!important;
+  box-shadow:var(--stip-shadow)!important;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.team-tabs button{
+  min-height:50px!important;
+  border:1px solid transparent!important;
+  border-radius:15px!important;
+  background:var(--stip-surface-soft)!important;
+  color:var(--stip-ink-2)!important;
+  box-shadow:none!important;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-tabs button.active{
+  border-color:color-mix(in srgb,var(--stip-accent) 45%,var(--stip-line))!important;
+  background:linear-gradient(145deg,var(--stip-accent),color-mix(in srgb,var(--stip-accent) 78%,var(--stip-ink)))!important;
+  color:var(--stip-on-accent)!important;
+  box-shadow:0 8px 18px color-mix(in srgb,var(--stip-accent) 24%,transparent)!important;
+}
+.team-tabs button:active{transform:scale(.97)!important}
+
+.team-time-stack{
+  gap:8px!important;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.team-time-month{
+  min-height:88px!important;
+  padding:14px 17px!important;
+  background:linear-gradient(150deg,var(--stip-surface),color-mix(in srgb,var(--stip-accent-soft) 22%,var(--stip-surface)))!important;
+}
+.team-time-month .stip-time-month-title{
+  margin-top:5px!important;
+  font-size:clamp(1.85rem,8.8vw,3rem)!important;
+  line-height:.92!important;
+}
+.team-time-month .stip-time-month-action{
+  min-height:36px!important;
+  padding:0 11px!important;
+  border:1px solid var(--stip-line)!important;
+  border-radius:999px!important;
+  background:var(--stip-surface)!important;
+  color:var(--stip-accent)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-time-month .stip-time-month-action:active{transform:scale(.96)!important}
+
+.team-week-nav button,
+.team-days button,
+.team-top button{
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-week-nav>button:first-child,
+.team-week-nav>button:last-child{
+  border-color:color-mix(in srgb,var(--stip-accent) 22%,var(--stip-line))!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+}
+.team-week-nav>button:first-child:active,
+.team-week-nav>button:last-child:active{transform:scale(.92)!important}
+.team-days>button{
+  transition:transform var(--stip-motion),background var(--stip-motion),box-shadow var(--stip-motion),border-color var(--stip-motion)!important;
+}
+.team-days>button:active{transform:scale(.94)!important}
+.team-days>button.selected{
+  background:linear-gradient(180deg,var(--stip-surface-active),color-mix(in srgb,var(--stip-accent-soft) 74%,var(--stip-surface)))!important;
+  box-shadow:inset 0 -4px 0 var(--stip-accent),var(--stip-shadow-soft)!important;
+}
+
+.team-day{
+  border-color:var(--stip-line-strong)!important;
+  background:var(--stip-surface-raised)!important;
+  box-shadow:var(--stip-shadow)!important;
+}
+.team-day>header{
+  background:linear-gradient(180deg,var(--stip-surface),var(--stip-surface-soft));
+}
+.team-day>header h2{font-size:1.28rem!important}
+.team-day>header>strong{
+  padding:6px 9px;
+  border-radius:999px;
+  background:var(--stip-surface);
+  border:1px solid var(--stip-line);
+  color:var(--stip-ink-2)!important;
+  box-shadow:var(--stip-shadow-soft);
+}
+
+.team-shift{
+  box-shadow:var(--stip-shadow-soft);
+  transition:box-shadow var(--stip-motion),transform var(--stip-motion),border-color var(--stip-motion);
+}
+.team-shift.open{
+  box-shadow:var(--stip-shadow);
+  border-color:color-mix(in srgb,var(--shift) 35%,var(--stip-line));
+}
+.team-shift-head{
+  width:100%;
+  min-height:68px;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr) 36px 22px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border:0;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--shift) 9%,var(--stip-surface)),var(--stip-surface));
+  color:var(--stip-ink);
+  text-align:left;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-shift-head:active{transform:none!important;background:color-mix(in srgb,var(--shift) 13%,var(--stip-surface))}
+.team-shift-head>b,
+.team-shift-head>em{
+  color:var(--shift);
+  font-style:normal;
+  font-size:1.12rem;
+  font-weight:950;
+}
+.team-shift-head>span strong,
+.team-shift-head>span small{display:block}
+.team-shift-head>span strong{font-size:.92rem;color:var(--stip-ink)}
+.team-shift-head>span small{margin-top:2px;font-size:.66rem;color:var(--stip-muted)}
+.team-shift-head>em{text-align:right}
+.team-shift-head>i{
+  color:var(--stip-muted);
+  font-style:normal;
+  font-size:1.25rem;
+  line-height:1;
+  transition:transform var(--stip-motion);
+}
+.team-shift.open .team-shift-head>i{transform:rotate(180deg)}
+.team-shift-agents{
+  padding:4px 9px 8px;
+  border-top:1px solid var(--stip-line-soft);
+  background:var(--stip-surface);
+}
+.team-shift-agents[hidden]{display:none!important}
+
+.team-agent{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 42px!important;
+  gap:7px!important;
+  min-height:58px!important;
+  border-bottom:1px solid var(--stip-line-soft)!important;
+}
+.team-agent-main{
+  min-width:0;
+  min-height:56px;
+  display:grid;
+  grid-template-columns:66px minmax(0,1fr) 18px;
+  align-items:center;
+  gap:9px;
+  padding:5px 2px;
+  border:0;
+  background:transparent;
+  color:var(--stip-ink);
+  text-align:left;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-agent-main:disabled{opacity:.72}
+.team-agent-main:not(:disabled):active{transform:scale(.99)!important;background:var(--stip-surface-soft)}
+.team-agent-main>i{color:var(--stip-muted);font-style:normal;font-size:1.2rem;text-align:right}
+.team-agent-main strong,.team-agent-main small{display:block}
+.team-agent-main strong{font-size:.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-agent-main small{margin-top:3px;color:var(--stip-muted);font-size:.62rem}
+.team-agent>a{
+  align-self:center;
+  justify-self:end;
+  box-shadow:var(--stip-shadow-soft);
+}
+.team-agent>a:active{transform:scale(.92)}
+
+.team-sheet-open{overflow:hidden}
+.team-agent-overlay{
+  position:fixed;
+  inset:0;
+  z-index:2200;
+  display:grid;
+  align-items:end;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity var(--stip-motion);
+}
+.team-agent-overlay.open{opacity:1;pointer-events:auto}
+.team-agent-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:rgba(7,29,39,.48);
+  backdrop-filter:blur(2px);
+}
+.team-agent-sheet{
+  position:relative;
+  z-index:1;
+  width:min(620px,100%);
+  max-height:min(82vh,720px);
+  margin:0 auto;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows:auto auto minmax(0,1fr);
+  border-radius:26px 26px 0 0;
+  background:var(--stip-bg);
+  box-shadow:0 -22px 60px rgba(7,29,39,.24);
+}
+.team-sheet-handle{
+  width:46px;
+  height:5px;
+  margin:9px auto 3px;
+  border-radius:999px;
+  background:var(--stip-line-strong);
+}
+.team-agent-sheet>header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:9px 16px 13px;
+  border-bottom:1px solid var(--stip-line);
+  background:var(--stip-surface);
+}
+.team-agent-sheet>header div{min-width:0}
+.team-agent-sheet>header small,
+.team-agent-sheet>header strong,
+.team-agent-sheet>header span{display:block}
+.team-agent-sheet>header small{color:var(--stip-accent);font-size:.62rem;font-weight:950;letter-spacing:.09em}
+.team-agent-sheet>header strong{margin-top:3px;color:var(--stip-ink);font-size:1.12rem}
+.team-agent-sheet>header span{margin-top:2px;color:var(--stip-muted);font-size:.72rem}
+.team-agent-sheet>header button{
+  width:40px;
+  height:40px;
+  border:1px solid var(--stip-line);
+  border-radius:50%;
+  background:var(--stip-surface-soft);
+  color:var(--stip-ink);
+  font-size:1.4rem;
+}
+.team-agent-sheet-body{
+  overflow:auto;
+  padding:12px 12px calc(22px + env(safe-area-inset-bottom));
+}
+.team-agent-loading{padding:30px 12px;text-align:center;color:var(--stip-muted);font-weight:850}
+.team-agent-contact{
+  display:grid;
+  gap:7px;
+  margin-bottom:10px;
+}
+.team-agent-contact a,
+.team-agent-contact button{
+  min-height:46px;
+  display:flex;
+  align-items:center;
+  padding:0 13px;
+  border:1px solid var(--stip-line);
+  border-radius:14px;
+  background:var(--stip-surface);
+  color:var(--stip-ink);
+  text-decoration:none;
+  font-weight:850;
+  box-shadow:var(--stip-shadow-soft);
+}
+.team-agent-plan{display:grid;gap:7px}
+.team-agent-plan>div{
+  display:grid;
+  grid-template-columns:92px 42px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  min-height:54px;
+  padding:9px 11px;
+  border:1px solid var(--stip-line);
+  border-radius:14px;
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+}
+.team-agent-plan span{color:var(--stip-muted);font-size:.72rem;font-weight:800;text-transform:capitalize}
+.team-agent-plan strong{color:var(--stip-accent);font-size:1rem}
+.team-agent-plan small{color:var(--stip-ink-2);font-size:.72rem}
+
+@media(max-width:430px){
+  .team-heading{padding:15px 15px}
+  .team-tabs{margin-top:9px!important}
+  .team-tabs button{min-height:48px!important}
+  .team-time-month{min-height:80px!important;padding:12px 14px!important}
+  .team-time-month .stip-time-month-title{font-size:clamp(1.75rem,9.5vw,2.45rem)!important}
+  .team-day>header h2{font-size:1.12rem!important}
+  .team-day>header>strong{padding:5px 7px}
+  .team-shift-head{grid-template-columns:40px minmax(0,1fr) 30px 18px;gap:7px;padding:9px}
+  .team-agent-main{grid-template-columns:58px minmax(0,1fr) 15px;gap:7px}
+  .team-agent-plan>div{grid-template-columns:82px 38px minmax(0,1fr);padding-inline:9px}
+}
+
+.team-shift>.team-shift-agents{
+  padding:4px 9px 8px!important;
+  border-top:1px solid var(--stip-line-soft)!important;
+}
