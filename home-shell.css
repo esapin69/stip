@@ -3120,3 +3120,137 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.8rem!important;
   }
 }
+
+/* WEEK PICKER AFFORDANCE + EVENT BREATHING ROOM — 20260921 */
+.hc-calendar-driven-planning>.hc-planning-calendar-block{
+  margin-bottom:14px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+  padding-top:8px!important;
+  padding-bottom:8px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-head{
+  grid-template-columns:40px minmax(0,1fr) 40px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-head>button{
+  width:40px!important;
+  height:40px!important;
+  font-size:1.5rem!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-weekdays{
+  margin:7px 0 3px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid{
+  gap:2px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button,
+.hc-calendar-driven-planning .hc-date-jump-empty{
+  height:37px!important;
+  min-height:37px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button{
+  position:relative!important;
+  overflow:visible!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-number{
+  width:28px!important;
+  height:28px!important;
+  font-size:.78rem!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week{
+  border-color:transparent!important;
+  border-radius:5px!important;
+  background:#e7f5f7!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.78),
+    inset 0 -3px 0 rgba(12,135,158,.26)!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-start{
+  border-radius:12px 5px 5px 12px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-end{
+  border-radius:5px 12px 12px 5px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-start.is-week-end{
+  border-radius:12px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week:active{
+  transform:translateY(1px) scale(.96)!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-today{
+  box-shadow:
+    inset 0 0 0 2px #168297,
+    inset 0 -3px 0 rgba(12,135,158,.26)!important;
+}
+.hc-calendar-driven-planning .hc-planning-week-row{
+  position:relative!important;
+  margin-top:12px!important;
+  padding-top:15px!important;
+  border-top:1px solid rgba(31,139,160,.16)!important;
+}
+.hc-calendar-driven-planning .hc-planning-week-row::before{
+  content:"";
+  position:absolute;
+  top:-1px;
+  left:50%;
+  width:42px;
+  height:3px;
+  border-radius:999px;
+  transform:translateX(-50%);
+  background:linear-gradient(90deg,transparent,#45a6b8,transparent);
+}
+.hc-calendar-driven-planning .hc-days-landscape.has-week-events{
+  padding-top:72px!important;
+}
+.hc-calendar-driven-planning .hc-day-event-markers{
+  top:-54px!important;
+  min-height:40px!important;
+  gap:6px!important;
+}
+.hc-calendar-driven-planning .hc-day-event-markers i{
+  font-size:35px!important;
+  filter:drop-shadow(0 4px 5px rgba(20,62,78,.14));
+}
+@media(max-width:390px){
+  .hc-calendar-driven-planning>.hc-planning-calendar-block{
+    margin-bottom:12px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+    padding-top:7px!important;
+    padding-bottom:7px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-head{
+    grid-template-columns:38px minmax(0,1fr) 38px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-head>button{
+    width:38px!important;
+    height:38px!important;
+    font-size:1.42rem!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-grid>button,
+  .hc-calendar-driven-planning .hc-date-jump-empty{
+    height:35px!important;
+    min-height:35px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-number{
+    width:27px!important;
+    height:27px!important;
+    font-size:.76rem!important;
+  }
+  .hc-calendar-driven-planning .hc-planning-week-row{
+    margin-top:11px!important;
+    padding-top:14px!important;
+  }
+  .hc-calendar-driven-planning .hc-days-landscape.has-week-events{
+    padding-top:68px!important;
+  }
+  .hc-calendar-driven-planning .hc-day-event-markers{
+    top:-51px!important;
+    min-height:38px!important;
+  }
+  .hc-calendar-driven-planning .hc-day-event-markers i{
+    font-size:33px!important;
+  }
+}
