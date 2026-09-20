@@ -198,7 +198,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
   const candidates = [...candidateMap.values()].filter((x) => daysToExchange.every((d) => x.days.has(d)));
   return {
     kind: "exchange", title: `Échange vers ${desired} · ${ds.label || (ds.start === ds.end ? dayLabel(ds.start) : `${shortDay(ds.start)} → ${shortDay(ds.end)}`)}`,
-    text: candidates.length ? `${candidates.length} collègue${candidates.length > 1 ? "s" : ""} compatible${candidates.length > 1 ? "s" : ""} selon les mêmes règles que l’application Changement. Aucune demande n’est envoyée automatiquement.` : "Aucun collègue compatible n’est trouvé pour ce shift sur toute la sélection.",
+    text: candidates.length ? `${candidates.length} collègue${candidates.length > 1 ? "s" : ""} compatible${candidates.length > 1 ? "s" : ""} selon les données d’éligibilité disponibles dans STIP. Aucune demande n’est envoyée automatiquement.` : "Aucun collègue compatible n’est trouvé pour ce shift sur toute la sélection.",
     cards: candidates.slice(0, 24).map((x) => personCard(x.a, { badge: desired, detail: daysToExchange.map(shortDay).join(" · ") })), actions: [],
     context: baseContext(old, { date_scope: ds, last_intent: "exchange", last_choice_ids: candidates.map((x) => x.a.id), last_choice_kind: "agent" }),
   };
