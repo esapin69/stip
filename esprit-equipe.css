@@ -783,3 +783,8 @@ body.team-page {
   .team-agent-main{grid-template-columns:58px minmax(0,1fr) 15px;gap:7px}
   .team-agent-plan>div{grid-template-columns:82px 38px minmax(0,1fr);padding-inline:9px}
 }
+
+.team-shift>.team-shift-agents{
+  padding:4px 9px 8px!important;
+  border-top:1px solid var(--stip-line-soft)!important;
+}
