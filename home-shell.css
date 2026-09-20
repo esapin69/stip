@@ -881,10 +881,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-right .hc-event-time{font-size:.75rem!important}
 .hc-planning-right .hc-event-place,.hc-planning-right .hc-event-fallback{font-size:.64rem!important}
 
-/* Existing Pour demain summary is moved into the right dock after render. */
-.hc-planning-right #hcTomorrowDock:empty{display:none}
-.hc-planning-right #hcTomorrowDock>.hc-tomorrow-summary{margin:0!important;border-radius:20px!important}
-
 
 /* week-card-readability-20260920
    The card border already carries the shift colour: work days use a plain text label.
@@ -1353,6 +1349,13 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  padding:0 6px!important;
  gap:22px!important;
 }
+.hc-month-title-block{
+ width:100%!important;
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ position:relative!important;
+}
 .hc-month-title-open{
  appearance:none!important;
  border:0!important;
@@ -1367,6 +1370,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  justify-content:center!important;
  text-align:center!important;
  cursor:pointer!important;
+ user-select:none!important;
+ -webkit-user-select:none!important;
+ touch-action:manipulation!important;
 }
 .hc-month-title-open small{
  display:block!important;
@@ -1386,6 +1392,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  letter-spacing:-.045em!important;
 }
 .hc-month-title-hint{
+ appearance:none!important;
+ font:inherit!important;
  margin-top:15px!important;
  min-height:46px!important;
  padding:0 20px!important;
@@ -1408,6 +1416,53 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  color:#168297!important;
  font-size:1.18rem!important;
  line-height:1!important;
+}
+.hc-date-jump-panel{
+ width:min(430px,94%)!important;
+ margin:12px auto 0!important;
+ padding:10px!important;
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) auto!important;
+ gap:8px!important;
+ align-items:end!important;
+ border:1px solid rgba(22,91,111,.13)!important;
+ border-radius:17px!important;
+ background:#fff!important;
+ box-shadow:0 10px 24px rgba(20,62,78,.10)!important;
+}
+.hc-date-jump-panel[hidden]{display:none!important}
+.hc-date-jump-panel label{
+ min-width:0!important;
+ display:grid!important;
+ gap:5px!important;
+ color:#607c87!important;
+ font-size:.64rem!important;
+ font-weight:900!important;
+ letter-spacing:.045em!important;
+ text-transform:uppercase!important;
+}
+.hc-date-jump-panel input{
+ width:100%!important;
+ min-height:42px!important;
+ box-sizing:border-box!important;
+ padding:7px 10px!important;
+ border:1px solid #d4e3e7!important;
+ border-radius:11px!important;
+ background:#f7fbfc!important;
+ color:#153f50!important;
+ font:inherit!important;
+ font-size:.9rem!important;
+ font-weight:850!important;
+}
+.hc-date-jump-panel>button{
+ min-height:42px!important;
+ padding:0 12px!important;
+ border:0!important;
+ border-radius:11px!important;
+ background:#eaf5f7!important;
+ color:#0b7c92!important;
+ font-size:.72rem!important;
+ font-weight:950!important;
 }
 .hc-week-nav-global{
  width:100%!important;
@@ -1448,19 +1503,48 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  font-weight:900!important;
  letter-spacing:.05em!important;
 }
+.hc-planning-tools{
+ width:100%!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ flex-wrap:wrap!important;
+ gap:8px!important;
+ margin:-8px 0 0!important;
+}
 .hc-week-today-under-nav{
  display:block!important;
  width:max-content!important;
  max-width:100%!important;
- margin:-8px auto 0!important;
- padding:8px 16px!important;
+ margin:0!important;
+ padding:8px 14px!important;
  border:0!important;
  background:transparent!important;
  color:#167b96!important;
- font-size:.88rem!important;
+ font-size:.86rem!important;
  line-height:1.1!important;
  font-weight:900!important;
 }
+.hc-tomorrow-launch{
+ appearance:none!important;
+ min-height:40px!important;
+ padding:5px 12px 5px 7px!important;
+ display:inline-flex!important;
+ align-items:center!important;
+ gap:7px!important;
+ border:1px solid rgba(22,91,111,.14)!important;
+ border-radius:999px!important;
+ background:#fff!important;
+ color:#17485a!important;
+ box-shadow:0 5px 14px rgba(20,62,78,.07)!important;
+ font:inherit!important;
+ cursor:pointer!important;
+}
+.hc-tomorrow-launch>span{
+ width:28px!important;height:28px!important;flex:0 0 28px!important;display:grid!important;place-items:center!important;
+}
+.hc-tomorrow-launch img{width:28px!important;height:28px!important;object-fit:contain!important}
+.hc-tomorrow-launch strong{font-size:.76rem!important;line-height:1!important;font-weight:950!important}
 
 .hc-planning-group.hc-planning-landscape{
  display:block!important;
@@ -1602,6 +1686,10 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-days-landscape .code-n .hc-day-head{background:#2f4351!important}
 .hc-days-landscape .rest{background:#f4f6f7!important;border-color:#81909b!important}
 .hc-days-landscape .rest .hc-day-head{background:#81909b!important}
+.hc-days-landscape .pending{background:#f6f8f9!important;border-color:#9aa8af!important}
+.hc-days-landscape .pending .hc-day-head{background:#8a99a2!important}
+.hc-pending-line{width:100%!important;display:flex!important;align-items:center!important;justify-content:center!important}
+.hc-pending-icon{font-size:1.65rem!important;line-height:1!important}
 
 .hc-days-landscape[style*="--visible-days:6"]{--week-card-h:118px}
 .hc-days-landscape[style*="--visible-days:5"]{--week-card-h:120px}
@@ -1664,7 +1752,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  line-height:1!important;
 }
 
-.hc-planning-landscape #hcTomorrowDock{margin:12px -12px 0!important}
 .hc-planning-agenda-row{margin:0 -12px -12px!important;padding:0 12px 12px!important}
 .hc-planning-agenda-row .hc-widget-future{padding-top:14px!important}
 .hc-week-event-key{
@@ -1820,6 +1907,10 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-fixed-shift-item>i.shift-n{background:#2f4351!important}
 .hc-fixed-shift-item>i.shift-rh{
  width:auto!important;height:auto!important;flex:0 0 auto!important;border-radius:0!important;font-size:.86rem!important;line-height:1!important;
+}
+.hc-fixed-shift-pending{grid-column:1/-1!important;margin-top:2px!important}
+.hc-fixed-shift-item>i.shift-pending{
+ width:auto!important;height:auto!important;flex:0 0 auto!important;border-radius:0!important;font-size:.92rem!important;line-height:1!important;
 }
 .hc-fixed-shift-item>b{color:#244d5d!important;font-weight:900!important}
 .hc-fixed-shift-item>em{font-style:normal!important;color:#a1afb4!important}
