@@ -329,6 +329,13 @@
     FO: "🎓",
     ST: "👶",
   };
+  const WORK_SHIFT_ICON = {
+    M: "☀️",
+    J: "🌤️",
+    J4: "🌇",
+    S: "🌒",
+    N: "⭐",
+  };
   function canonicalShift(raw) {
     const src = String(raw || "")
       .trim()
@@ -494,11 +501,15 @@
       dayOff = DAY_OFF.has(canonical),
       statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
       shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical,
+      workIcon = WORK_SHIFT_ICON[canonical] || "",
+      workLabel = weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
       visual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : statusIcon
           ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
-          : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
+          : workIcon
+            ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
+            : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
     return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span></span>`;
   }
   function weekDaysVertical(w) {
