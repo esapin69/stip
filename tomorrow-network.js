@@ -150,12 +150,8 @@
     if (!c?.localTasks || !c?.clearLocal) return false;
     const local = c.localTasks(day);
     if (!local.length) return false;
-    const remote = (data?.notes || []).filter((n) => n.kind === "personal");
-    const existing = new Set(remote.map((n) => String(n.client_id || "")).filter(Boolean));
-    let created = false;
     for (const item of local) {
       const clientId = String(item.clientId || item.id || "").trim() || ("legacy-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8));
-      if (existing.has(clientId)) continue;
       await call("note_create", {
         date: day,
         client_id: clientId,
@@ -165,11 +161,9 @@
         done: !!item.done,
         sort_order: Number(item.order || 0),
       });
-      existing.add(clientId);
-      created = true;
     }
     c.clearLocal(day);
-    return created;
+    return true;
   }
   async function taskUpsert(day, item = {}) {
     const clientId = String(item.clientId || item.id || ("web-" + (crypto.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 8)))));
@@ -268,7 +262,7 @@
     const day = String(e.detail?.day || "");
     const page = document.getElementById("tdPage");
     if (page) page.dataset.remoteDay = day;
-    load(day);
+    load(day).catch(() => {});
   });
   window.STIPTomorrowRemote = { load, refresh: (day) => load(day, true), call, taskUpsert, taskStatus, taskDelete, taskMoveNext, taskReorder };
 })();
