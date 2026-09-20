@@ -11,7 +11,8 @@ const responsable=read('responsable-home.js');
 const loader=read('stip-loader.js');
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
-check(home.indexOf('class="hc-month-title-open"')<home.indexOf('class="hc-days-landscape'),'Le mois complet doit précéder la ligne des jours.');
+const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
+check(homeModeBody.indexOf('${planningMonthTitle()}')<homeModeBody.indexOf('${weekWidget()}'),'Le mois complet doit précéder la ligne des jours.');
 check(!loader.includes('signature-success-ui.js'),'Le chargeur référence encore le script absent signature-success-ui.js.');
 check(!responsable.includes('dashboardMode'),'Le chargement Responsable dépend encore du paramètre dashboard.');
 check(responsable.includes('await load()'),'Le cockpit Responsable ne déclenche pas son chargement principal.');
@@ -78,17 +79,17 @@ const patterns=read('stip-patterns.css');
 const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
-check(home.includes('home-bell.svg')&&home.includes('homeBell')&&home.includes('["notifications", "Notifications"'),'La cloche de communication n’utilise plus son visuel validé.');
-check(home.includes('home-home.svg')&&home.includes('homeHome')&&home.includes('["planning", "Accueil"'),'Accueil n’utilise plus la maison centrale validée.');
+check(home.includes('home-bell.webp')&&home.includes('homeBell')&&home.includes('["notifications", "Notifications"'),'La cloche de communication n’utilise plus son visuel validé.');
+check(home.includes('home-home.webp')&&home.includes('homeHome')&&home.includes('["planning", "Accueil"'),'Accueil n’utilise plus la maison centrale validée.');
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
 check(!quick.includes('data-qs="public"')&&!quickUniversal.includes('data-u="public"'),'Le raccourci bas gauche supprimé est revenu.');
 check(!quick.includes('data-qs="profile"')&&!quickUniversal.includes('data-u="profile"'),'La maison basse supprimée est revenue.');
 check(!existsSync(join(root,'images/icone_app/quick-card.svg'))&&!existsSync(join(root,'images/icone_app/quick-home.svg'))&&!existsSync(join(root,'images/icone_app/home-planning.webp')),'Un ancien visuel de navigation supprimé existe encore.');
-check(existsSync(join(root,'images/icone_app/home-bell.svg'))&&existsSync(join(root,'images/icone_app/home-home.svg')),'Les nouveaux visuels Cloche/Accueil sont absents.');
+check(existsSync(join(root,'images/icone_app/home-bell.webp'))&&existsSync(join(root,'images/icone_app/home-home.webp')),'Les visuels Cloche/Accueil validés sont absents.');
 check(!quick.includes('Suggestions selon votre usage')&&!quickUniversal.includes('Suggestions selon votre usage'),'Les suggestions automatiques de favoris sont revenues.');
-check(quick.includes('Choisir mes applications')&&quick.includes('Ajouter une application'),'Les états du panneau Favoris ne suivent plus les libellés validés.');
+check(quick.includes('Parcourir les applications')&&quick.includes('+ Ajouter')&&quick.includes('Construisez votre STIP'),'Les états du panneau Applications ne suivent plus les libellés validés.');
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
 check(accessManage.includes('sortPeople'),'La liste Accès n’est plus triée alphabétiquement côté interface.');
 check(['stip-time-surface','stip-person-surface','stip-action-surface','stip-catalog-surface','stip-cockpit-surface'].every(key=>patterns.includes(key)),'Une famille visuelle commune STIP a disparu.');
@@ -135,7 +136,7 @@ check(!read('responsable.html').includes('assistant-presence.js'),'Responsable c
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
 check(home.includes('const markup = `${profile()}${homeModeNav()}<section class="hc-home-mode-content"'),'La carte identité n’est plus placée au-dessus des trois accès rapides.');
-const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function favoritesLauncher()'));
+const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
 
 if(failures.length){
