@@ -515,8 +515,9 @@
     return "";
   }
   function planningMonthTitle() {
-    const mi = weekMonthInfo(selectedWeek());
-    return `<header class="hc-planning-month-title"><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></header>`;
+    const w = selectedWeek(),
+      mi = weekMonthInfo(w);
+    return `<header class="hc-planning-month-title"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header>`;
   }
   function monthShortcut() {
     const mi = weekMonthInfo(selectedWeek());
@@ -524,7 +525,7 @@
   }
   function weekWidget() {
     const w = selectedWeek();
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head hc-week-only-head"><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header>${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
+    return `<section class="hc-widget hc-widget-planning" data-widget="planning">${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
