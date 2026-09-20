@@ -480,3 +480,42 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-home-filters>button>strong{font-size:.62rem!important;letter-spacing:-.02em}
  .hc-home-filter-art{width:43px!important;height:43px!important}
 }
+
+/* profile-compact-final-20260920 */
+/* Three top navigation cards again. */
+.hc-home-filters{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+.hc-home-filters>button{min-height:88px!important;padding:7px 5px 8px!important}
+.hc-home-filters>button>strong{font-size:.76rem!important}
+
+/* The identity card follows its content; the avatar no longer stretches the whole card. */
+.hc-id-card{
+  grid-template-columns:clamp(94px,27vw,118px) minmax(0,1fr)!important;
+  gap:13px!important;
+  align-items:start!important;
+  padding:10px 12px!important;
+}
+.hc-id-card .hc-avatar{
+  width:100%!important;
+  height:168px!important;
+  min-height:0!important;
+  align-self:start!important;
+  border-radius:19px!important;
+}
+.hc-id-card .hc-profile-copy>small{font-size:.7rem!important}
+.hc-id-card .hc-profile-name{font-size:clamp(1.3rem,5.2vw,1.72rem)!important}
+.hc-profile-ghe{font-size:clamp(1.4rem,5.4vw,1.82rem)!important}
+.hc-profile-team{font-size:.9rem!important}
+.hc-id-card .hc-profile-contacts{gap:3px!important;margin-top:6px!important}
+.hc-id-card .hc-profile-contact{padding-top:5px!important}
+.hc-id-card .hc-profile-contact strong{font-size:clamp(.92rem,3.8vw,1.12rem)!important}
+
+@media(max-width:430px){
+ .hc-home-filters{gap:8px!important}
+ .hc-home-filters>button>strong{font-size:.72rem!important}
+ .hc-id-card{grid-template-columns:104px minmax(0,1fr)!important;gap:12px!important;padding:9px 10px!important}
+ .hc-id-card .hc-avatar{height:164px!important}
+}
+@media(max-width:380px){
+ .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important}
+ .hc-id-card .hc-avatar{height:154px!important}
+}
