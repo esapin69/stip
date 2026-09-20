@@ -117,9 +117,12 @@ export async function answer(c: SessionCtx, body: any) {
   const explicitSubjects = resolved.candidates;
 
   if (intent === "request_help") {
+    const requestText = normalize(raw), isAbsence = /\b(absence|absent|absente)\b/.test(requestText);
     return {
-      kind: "redirect", title: "Demande de congé",
-      text: "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
+      kind: "redirect", title: isAbsence ? "Prévenir d’une absence" : "Demande de congé",
+      text: isAbsence
+        ? "STIP possède déjà le parcours “Prévenir d’une absence” avec contexte d’effectif et circuit responsable. Ouvre ton planning puis touche le jour concerné."
+        : "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
       cards: [], actions: [{ type: "open", label: "Ouvrir mon planning", url: "index.html?quick=personal" }],
       context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
       suggestions: ["Mon planning sur cette période ?"],
