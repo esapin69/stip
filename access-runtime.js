@@ -14,6 +14,7 @@
   }
   const APP_POLICY = {
     personal: () => explicit("planning_personal"),
+    tomorrow: () => explicit("tomorrow"),
     team: () =>
       explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
     compare: () => explicit("planning_team"),
@@ -168,6 +169,8 @@
   const ICON = {
     personal:
       '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
+    tomorrow:
+      '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
     team: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
     compare:
       '<svg viewBox="0 0 24 24"><path d="M4 7h13l-3-3M20 17H7l3 3"/><path d="M17 7l-3 3M7 17l3-3"/></svg>',
@@ -198,6 +201,7 @@
   };
   const SPECS = [
     ["personal", "Planning perso", "personal"],
+    ["tomorrow", "Pour demain", "tomorrow"],
     ["team", "Esprit d’équipe", "team"],
     ["compare", "Comparer les plannings", "compare"],
     ["change", "Changement", "change"],
@@ -217,6 +221,7 @@
     e?.stopPropagation?.();
     if (!canApp(k)) return;
     if (k === "personal") return (location.href = "index.html?quick=personal");
+    if (k === "tomorrow") return (location.href = "index.html?quick=tomorrow");
     if (k === "team") return (location.href = "esprit-equipe.html?tab=team");
     if (k === "compare") return (location.href = "planning-compare-app.html");
     if (k === "change") return (location.href = "index.html?quick=change");
