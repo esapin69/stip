@@ -2014,3 +2014,32 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-days-landscape.no-week-events + .hc-planning-status:empty{
  display:none!important;
 }
+
+
+/* event-marker-final-position-v36-20260920 */
+/* Marker belongs to the reserved lane, never to the card itself. */
+.hc-days-landscape.has-week-events{
+ padding-top:64px!important;
+}
+.hc-days-landscape.has-week-events .hc-day-event-markers{
+ top:-52px!important;
+ left:50%!important;
+ bottom:auto!important;
+ transform:translateX(-50%)!important;
+ margin:0!important;
+ width:44px!important;
+ height:44px!important;
+ min-width:44px!important;
+ min-height:44px!important;
+ padding:0!important;
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ border-radius:50%!important;
+ z-index:10!important;
+}
+.hc-days-landscape.has-week-events .hc-day-event-markers i{
+ display:block!important;
+ font-size:27px!important;
+ line-height:1!important;
+}
