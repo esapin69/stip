@@ -497,10 +497,9 @@
       visual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : statusIcon
-          ? `<span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span>`
-          : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
-      statusCode = statusIcon ? canonical : "";
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span><small class="hc-shift-time ${statusCode ? "hc-status-code" : ""}">${statusCode ? esc(statusCode) : ""}</small></span>`;
+          ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
+          : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span></span>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
