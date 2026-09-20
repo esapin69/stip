@@ -96,32 +96,14 @@
     dialog.querySelector("form").addEventListener("submit",e=>{e.preventDefault();const input=e.currentTarget.elements.q,q=String(input.value||"").trim();if(!q)return;input.value="";submitAsk(q)});
     return dialog
   }
-  function ensureDialogWelcome(){
-    if(dialogHistory.length)return;
-    dialogHistory.push({side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Je suis avec qui demain ?</button><button>Qui est en J4 demain ?</button><button>Mon horaire demain ?</button></div></article>'})
-  }
-  function bindDialogBody(body,surface){
-    body.querySelectorAll(".ch-suggestions button").forEach(b=>b.addEventListener("click",()=>submitAsk(b.textContent,surface)));
-    body.querySelectorAll("[data-dialog-action]").forEach(b=>b.addEventListener("click",()=>runDialogAction(JSON.parse(decodeURIComponent(b.dataset.dialogAction)))));
-    body.querySelectorAll("[data-choice-agent]").forEach(b=>b.addEventListener("click",()=>{dialogContext={...dialogContext,agent_id:b.dataset.choiceAgent};dialogHistory.push({side:"bot",html:'<article class="ch-answer"><strong>'+esc(b.dataset.choiceName)+'</strong><p>D’accord, je garde cette personne. Planning, coordonnées ou message ?</p></article>'});surface==="inline"?renderAIHost():renderDialog()}))
-  }
-  function renderAIHost(){
-    const host=document.getElementById("hcAIHub");if(!host)return;
-    if(!can("dialog")){host.innerHTML='<div class="ch-error">STIP IA n’est pas autorisé pour ce profil.</div>';return}
-    ensureDialogWelcome();
-    host.innerHTML='<section class="ch-ai-surface"><header><span class="stip-kicker">STIP IA</span><h2>Recherche intelligente</h2><p>Pose ta question naturellement. STIP cherche dans les données auxquelles tu as accès.</p></header><main class="ch-ai-body" data-ai-body></main><form class="ch-ai-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit" aria-label="Envoyer">↑</button></form></section>';
-    const body=host.querySelector("[data-ai-body]");
-    body.innerHTML=dialogHistory.map(x=>'<div class="ch-msg '+x.side+'">'+x.html+'</div>').join("");
-    bindDialogBody(body,"inline");
-    body.scrollTop=body.scrollHeight;
-    host.querySelector("form")?.addEventListener("submit",e=>{e.preventDefault();const input=e.currentTarget.elements.q,q=String(input.value||"").trim();if(!q)return;input.value="";submitAsk(q,"inline")})
-  }
-  function openDialog(){if(!can("dialog"))return;const d=dialogShell();syncVisualViewport();d.hidden=false;document.documentElement.classList.add("ch-lock");ensureDialogWelcome();renderDialog();setTimeout(()=>{syncVisualViewport();const input=d.querySelector('input');try{input?.focus({preventScroll:true})}catch{input?.focus()}setTimeout(syncVisualViewport,80)},30)}
+  function openDialog(){if(!can("dialog"))return;const d=dialogShell();syncVisualViewport();d.hidden=false;document.documentElement.classList.add("ch-lock");if(!dialogHistory.length){dialogHistory.push({side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Je suis avec qui demain ?</button><button>Qui est en J4 demain ?</button><button>Mon horaire demain ?</button></div></article>'});renderDialog()}setTimeout(()=>{syncVisualViewport();const input=d.querySelector('input');try{input?.focus({preventScroll:true})}catch{input?.focus()}setTimeout(syncVisualViewport,80)},30)}
   function closeDialog(){if(dialog)dialog.hidden=true;document.documentElement.classList.remove("ch-lock","ch-keyboard-open");syncVisualViewport(true)}
   function renderDialog(){
     const body=dialog?.querySelector("[data-dialog-body]");if(!body)return;
     body.innerHTML=dialogHistory.map(x=>'<div class="ch-msg '+x.side+'">'+x.html+'</div>').join("");
-    bindDialogBody(body,"dialog");
+    body.querySelectorAll(".ch-suggestions button").forEach(b=>b.addEventListener("click",()=>submitAsk(b.textContent)));
+    body.querySelectorAll("[data-dialog-action]").forEach(b=>b.addEventListener("click",()=>runDialogAction(JSON.parse(decodeURIComponent(b.dataset.dialogAction)))));
+    body.querySelectorAll("[data-choice-agent]").forEach(b=>b.addEventListener("click",()=>{dialogContext={...dialogContext,agent_id:b.dataset.choiceAgent};dialogHistory.push({side:"bot",html:'<article class="ch-answer"><strong>'+esc(b.dataset.choiceName)+'</strong><p>D’accord, je garde cette personne. Planning, coordonnées ou message ?</p></article>'});renderDialog()}));
     body.scrollTop=body.scrollHeight
   }
   function actionButton(a){return '<button type="button" data-dialog-action="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(a.label||"Ouvrir")+'</button>'}
@@ -134,14 +116,11 @@
     const choice=r.kind==="choice";
     return '<article class="ch-answer '+esc(r.kind||"")+'"><small>'+esc(r.title||"STIP")+'</small><p>'+esc(r.text||"")+'</p>'+(r.cards?.length?'<div class="ch-results">'+r.cards.map(c=>cardHtml(c,choice)).join("")+'</div>':"")+(r.actions?.length?'<div class="ch-answer-actions">'+r.actions.map(actionButton).join("")+'</div>':"")+(r.suggestions?.length?'<div class="ch-suggestions">'+r.suggestions.map(s=>'<button type="button">'+esc(s)+'</button>').join("")+'</div>':"")+'</article>'
   }
-  async function submitAsk(q,surface="dialog"){
-    if(surface==="dialog")openDialog();else ensureDialogWelcome();
-    dialogHistory.push({side:"me",html:'<p>'+esc(q)+'</p>'});
-    dialogHistory.push({side:"bot",html:'<article class="ch-thinking">Je regarde…</article>'});
-    surface==="inline"?renderAIHost():renderDialog();
+  async function submitAsk(q){
+    openDialog();dialogHistory.push({side:"me",html:'<p>'+esc(q)+'</p>'});dialogHistory.push({side:"bot",html:'<article class="ch-thinking">Je regarde…</article>'});renderDialog();
     try{const r=await ask(q,dialogContext);dialogHistory.pop();dialogContext={...dialogContext,...(r.context||{})};dialogHistory.push({side:"bot",html:answerHtml(r)})}
     catch(e){dialogHistory.pop();dialogHistory.push({side:"bot",html:'<article class="ch-answer error"><strong>Ça coince côté données.</strong><p>'+esc(e.message||"Réessaie.")+'</p></article>'})}
-    surface==="inline"?renderAIHost():renderDialog()
+    renderDialog()
   }
   async function runDialogAction(a){
     if(a.type==="call")return location.href="tel:"+a.value;
@@ -189,7 +168,7 @@
   function profileSheet(){
     if(!home?.me)return;const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>MON IDENTITÉ MESSAGES</small><h3>Pseudo</h3></div><button type="button" data-close>×</button></header><form class="ch-profile-form"><label>Pseudo visible<input name="nickname" maxlength="32" value="'+esc(home.me.nickname||"")+'" placeholder="'+esc(home.me.prenom||"Prénom")+'"></label><label class="ch-check"><input type="checkbox" name="preview" '+(home.me.notification_preview!==false?"checked":"")+'> Afficher le nom et le message dans les futures notifications téléphone</label><button type="submit">Enregistrer</button></form></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await msg("profile_set",{nickname:f.get("nickname"),notification_preview:f.get("preview")==="on"});close();loadHome(true)}catch(err){alert(err.message)}}
   }
-  function onRender(){const mode=currentMode();if(mode==="ai")renderAIHost();if(mode==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},20000)}else{clearInterval(homeTimer);homeTimer=null}}
+  function onRender(){if(currentMode()==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},20000)}else{clearInterval(homeTimer);homeTimer=null}}
   ["stip:home-rendered","stip:permissions-live","stip:session-ready"].forEach(e=>window.addEventListener(e,()=>setTimeout(onRender,0)));
   window.addEventListener("stip:session-ended",()=>{home=null;setUnread(0);closeDialog();closeThread()});
   syncVisualViewport(true);
@@ -197,5 +176,5 @@
   window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
   window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
-  window.STIPCommunication={openDialog,openDirect,openThread,renderAI:renderAIHost,refresh:()=>loadHome(true)};
+  window.STIPCommunication={openDialog,openDirect,openThread,refresh:()=>loadHome(true)};
 })();
