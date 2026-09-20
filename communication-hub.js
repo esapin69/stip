@@ -26,16 +26,34 @@
     if(forceBase||!keyboardOpen)
       viewportBaseHeight=Math.max(viewportBaseHeight,docH,innerH,visualH+visualTop);
     const base=Math.max(viewportBaseHeight,visualH+visualTop),
-      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0;
+      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0,
+      layoutVisibleH=Math.max(1,innerH-visualTop),
+      layoutLooksKeyboardResized=keyboardOpen&&base>0&&innerH<base-80,
+      visualGap=layoutVisibleH-visualH,
+      panelH=layoutLooksKeyboardResized&&visualGap>0&&visualGap<180?layoutVisibleH:visualH;
     document.documentElement.style.setProperty("--ch-keyboard-inset",keyboardInset+"px");
     document.documentElement.style.setProperty("--ch-viewport-top",visualTop+"px");
+    document.documentElement.style.setProperty("--ch-viewport-height",Math.max(1,panelH)+"px");
+    document.documentElement.classList.toggle("ch-visual-viewport",!!vv);
+  }
+  function keepActiveComposerVisible(){
+    const active=document.activeElement;
+    if(!active?.matches?.("input,textarea"))return;
+    const panel=active.closest?.(".ch-dialog,.ch-thread");
+    if(!panel||panel.hidden)return;
+    const body=panel.querySelector(".ch-dialog-body,[data-thread-body]");
+    requestAnimationFrame(()=>{
+      if(body)body.scrollTop=body.scrollHeight;
+      try{active.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"})}catch{}
+    });
   }
   function queueViewportSync(){
     clearTimeout(viewportSyncTimer);
     syncVisualViewport();
-    viewportSyncTimer=setTimeout(syncVisualViewport,80);
-    setTimeout(syncVisualViewport,220);
-    setTimeout(syncVisualViewport,420);
+    keepActiveComposerVisible();
+    viewportSyncTimer=setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},80);
+    setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},220);
+    setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},420);
   }
   function bindKeyboardTracking(root){
     root.addEventListener("focusin",(e)=>{
@@ -43,6 +61,7 @@
       syncVisualViewport(true);
       document.documentElement.classList.add("ch-keyboard-open");
       queueViewportSync();
+      setTimeout(keepActiveComposerVisible,40);
     });
     root.addEventListener("focusout",(e)=>{
       if(!e.target.matches("input,textarea"))return;
