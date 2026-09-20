@@ -492,34 +492,31 @@
 
   function renderContent(bundle) {
     const host = $("#teamContent");
+    normalizeDayFocus();
+    const day = state.dayFocus;
     const permitted = {
       team: allowed("planning_team"),
       activity: allowed("activity"),
       assistant: allowed("assistant_enabled"),
     }[state.tab];
+
     if (!permitted) {
       host.innerHTML =
         '<div class="team-empty">Ce volet n’est pas inclus dans votre accès.</div>';
     } else if (state.tab === "activity" && !bundle.activity) {
-      host.innerHTML = daysOfWeek()
-        .map((day) =>
-          dayContainer(
-            day,
-            "Lecture…",
-            '<div class="stip-skeleton team-day-placeholder"></div>',
-            "activity",
-          ),
-        )
-        .join("");
+      host.innerHTML = dayContainer(
+        day,
+        "Lecture…",
+        '<div class="stip-skeleton team-day-placeholder"></div>',
+        "activity",
+      );
     } else {
       const renderer = {
         team: teamDay,
         activity: activityDay,
         assistant: assistantDay,
       }[state.tab];
-      host.innerHTML = daysOfWeek()
-        .map((day) => renderer(bundle, day))
-        .join("");
+      host.innerHTML = renderer(bundle, day);
     }
     host.setAttribute("aria-busy", "false");
     state.rendered = true;
@@ -601,7 +598,6 @@
       scrollY: 0,
     });
     showWeek({ preserve: true });
-    scrollTo({ top: 0, behavior: "smooth" });
   }
 
   $$("[data-team-tab]").forEach((button) =>
@@ -628,12 +624,12 @@
   $("#teamDays").addEventListener("click", (event) => {
     const button = event.target.closest("[data-team-day]");
     if (!button) return;
-    state.dayFocus = button.dataset.teamDay;
-    const firstShift = document.querySelector(
-      `#team-day-${CSS.escape(state.dayFocus)} [data-team-shift]`,
-    );
-    state.openShift = firstShift?.dataset.teamShift || "";
-    syncShiftPanels();
+    const nextDay = button.dataset.teamDay;
+    if (!nextDay || nextDay === state.dayFocus) return;
+
+    state.dayFocus = nextDay;
+    state.openShift = "";
+
     $("#teamDays")
       .querySelectorAll("[data-team-day]")
       .forEach((item) => {
@@ -641,14 +637,14 @@
         item.classList.toggle("selected", selected);
         item.setAttribute("aria-pressed", String(selected));
       });
+
+    renderContent(cacheEntry(state.weekStart));
+
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
       dayFocus: state.dayFocus,
     });
-    document
-      .getElementById(`team-day-${state.dayFocus}`)
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   $("#teamContent").addEventListener("click", (event) => {
