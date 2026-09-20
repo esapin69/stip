@@ -11,7 +11,7 @@ const responsable=read('responsable-home.js');
 const loader=read('stip-loader.js');
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
-check(home.indexOf('class="hc-month-open"')<home.indexOf('class="hc-days hc-days-seven'),'Le mois complet doit précéder la ligne des jours.');
+check(home.indexOf('class="hc-month-title-open"')<home.indexOf('class="hc-days-landscape'),'Le mois complet doit précéder la ligne des jours.');
 check(!loader.includes('signature-success-ui.js'),'Le chargeur référence encore le script absent signature-success-ui.js.');
 check(!responsable.includes('dashboardMode'),'Le chargement Responsable dépend encore du paramètre dashboard.');
 check(responsable.includes('await load()'),'Le cockpit Responsable ne déclenche pas son chargement principal.');
