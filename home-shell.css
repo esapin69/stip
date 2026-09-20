@@ -2110,3 +2110,34 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  font-weight:700!important;
  color:#55717e!important;
 }
+
+
+/* event-per-day-rows-v38-20260920 */
+.hc-week-event-key-list{
+ display:grid!important;
+ grid-template-columns:1fr!important;
+ gap:0!important;
+}
+.hc-week-event-day-row{
+ display:grid!important;
+ grid-template-columns:52px minmax(0,1fr)!important;
+ width:100%!important;
+ min-height:82px!important;
+ padding:12px 8px!important;
+ gap:12px!important;
+ border-radius:0!important;
+ border-bottom:1px solid rgba(22,91,111,.10)!important;
+}
+.hc-week-event-day-row:last-child{border-bottom:0!important}
+.hc-week-event-day-row .hc-week-event-key-icon{
+ width:52px!important;
+ flex:none!important;
+ font-size:30px!important;
+ align-self:center!important;
+}
+.hc-week-event-copy{min-width:0!important}
+.hc-week-event-day-row .hc-week-event-date{
+ min-width:92px!important;
+ justify-content:center!important;
+ text-transform:capitalize!important;
+}
