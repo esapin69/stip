@@ -2043,3 +2043,70 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  font-size:27px!important;
  line-height:1!important;
 }
+
+
+/* event-shift-dot-and-time-hierarchy-v37-20260920 */
+.hc-day-event-markers{
+ gap:5px!important;
+ width:auto!important;
+ min-width:44px!important;
+ padding:0 7px!important;
+}
+.hc-event-shift-dot{
+ display:block!important;
+ flex:0 0 13px!important;
+ width:13px!important;
+ height:13px!important;
+ min-width:13px!important;
+ min-height:13px!important;
+ border-radius:50%!important;
+ border:1px solid rgba(0,0,0,.10)!important;
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.55)!important;
+}
+.hc-event-shift-dot-m{background:#0870d8!important}
+.hc-event-shift-dot-j{background:#009c50!important}
+.hc-event-shift-dot-j4{background:#f27613!important}
+.hc-event-shift-dot-s{background:#e0aa00!important}
+.hc-event-shift-dot-n{background:#2f4351!important}
+.hc-event-shift-dot-fo,.hc-event-shift-dot-rh,.hc-event-shift-dot-r,.hc-event-shift-dot-none{background:#81909b!important}
+
+.hc-week-event-key-item{align-items:center!important}
+.hc-week-event-key-item strong{
+ font-size:1.08rem!important;
+ line-height:1.18!important;
+}
+.hc-week-event-when{
+ display:flex!important;
+ flex-wrap:wrap!important;
+ align-items:center!important;
+ gap:5px 9px!important;
+ margin-top:7px!important;
+}
+.hc-week-event-date,
+.hc-week-event-time{
+ display:inline-flex!important;
+ align-items:center!important;
+ min-height:30px!important;
+ padding:4px 9px!important;
+ border-radius:9px!important;
+ font-size:.98rem!important;
+ line-height:1!important;
+ font-weight:900!important;
+ letter-spacing:.005em!important;
+}
+.hc-week-event-date{
+ background:#eef3f5!important;
+ color:#365968!important;
+}
+.hc-week-event-time{
+ background:#dff3f7!important;
+ color:#086d86!important;
+ font-size:1.05rem!important;
+}
+.hc-week-event-place{
+ flex-basis:100%!important;
+ font-size:.9rem!important;
+ line-height:1.25!important;
+ font-weight:700!important;
+ color:#55717e!important;
+}
