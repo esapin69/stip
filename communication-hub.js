@@ -86,26 +86,34 @@
   function bubbleAgent(a){return '<button class="ch-person-bubble" type="button" data-agent="'+esc(a.id)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>'}
   function renderHost(){
     const host=document.getElementById("hcCommunicationHub");if(!host)return;
-    const dialogOk=can("dialog"),messagesOk=can("messages");
-    const recent=home?.conversations||[],suggestions=home?.suggestions||[];
-    host.innerHTML='<section class="ch-hub">'+
-      '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>Rechercher dans STIP ou échanger avec les professionnels connectés au site.</p></div>'+(messagesOk&&home?.me?'<button type="button" class="ch-profile-btn" data-msg-profile>'+avatar(home.me,"ch-mini-avatar")+'<span>'+esc(name(home.me))+'</span></button>':"")+'</header>'+
-      
-      (messagesOk?'<section class="ch-messages"><div class="ch-section-head"><div><span class="stip-kicker">MESSAGES</span><h3>Professionnels STIP</h3></div><div class="ch-head-actions"><button type="button" data-broadcast>Diffuser</button><button type="button" data-new-message>＋ Nouveau</button></div></div><button type="button" class="ch-push" data-push-enable>'+esc(pushText())+'</button>'+
-        (home?'<div class="ch-bubbles">'+suggestions.slice(0,12).map(bubbleAgent).join("")+'</div>':'<div class="ch-loading">Chargement des messages…</div>')+
-        (recent.length?'<div class="ch-recent">'+recent.slice(0,8).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></div>'+(c.unread?'<b>'+c.unread+'</b>':"")+'</button>').join("")+'</div>':'<p class="ch-empty">Aucune conversation pour l’instant. Choisis une personne ci-dessus.</p>')+
-      '</section>':"")+
+    const messagesOk=can("messages");
+    const recent=home?.conversations||[],unread=recent.filter(c=>Number(c.unread||0)>0),unreadCount=unread.reduce((n,c)=>n+Number(c.unread||0),0);
+    host.innerHTML='<section class="ch-hub ch-hub-compact">'+
+      '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>'+(unreadCount?unreadCount+' message'+(unreadCount>1?'s':'')+' non lu'+(unreadCount>1?'s':'')+'.':'Tout ce qui demande votre attention, sans bruit.')+'</p></div></header>'+
+      (messagesOk?'<button type="button" class="ch-exchange-entry" data-exchanges-open><span aria-hidden="true">↔</span><div><strong>Échanges</strong><small>Messages et conversations entre comptes</small></div><b>›</b></button>':"")+
+      (unread.length?'<div class="ch-recent ch-unread-only">'+unread.slice(0,5).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Nouveau message")+'</small></div><b>'+Number(c.unread||0)+'</b></button>').join("")+'</div>':"")+
     '</section>';
-    host.querySelector("[data-new-message]")?.addEventListener("click",()=>recipientSheet(false));
-    host.querySelector("[data-broadcast]")?.addEventListener("click",broadcastSheet);
-    host.querySelector("[data-push-enable]")?.addEventListener("click",e=>enablePush(e.currentTarget));
-    host.querySelector("[data-msg-profile]")?.addEventListener("click",profileSheet);
-    host.querySelectorAll("[data-agent]").forEach(b=>b.addEventListener("click",()=>openDirect(b.dataset.agent)));
+    host.querySelector("[data-exchanges-open]")?.addEventListener("click",exchangeSheet);
     host.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>openThread(b.dataset.conv)));
   }
   async function loadHome(force=false){
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
-    try{home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost();if(currentMode()==="notifications"){let pending="";try{pending=sessionStorage.getItem("stip_message_open_v1")||"";if(pending)sessionStorage.removeItem("stip_message_open_v1")}catch{}if(pending)setTimeout(()=>openThread(pending),20)}}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
+    try{
+      home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost();
+      if(currentMode()==="notifications"){
+        let pending="",openExchange=false;
+        try{
+          pending=sessionStorage.getItem("stip_message_open_v1")||"";
+          if(pending)sessionStorage.removeItem("stip_message_open_v1");
+          const quick=new URLSearchParams(location.search).get("quick")||"";
+          if(quick==="exchange"&&sessionStorage.getItem("stip_exchange_opened_once")!=="1"){
+            sessionStorage.setItem("stip_exchange_opened_once","1");openExchange=true;
+          }
+        }catch{}
+        if(pending)setTimeout(()=>openThread(pending),20);
+        else if(openExchange)setTimeout(exchangeSheet,30);
+      }
+    }catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
   }
   function dialogWelcome(){return {side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Mon horaire demain ?</button><button>Qui est avec moi vendredi ?</button><button>Où est l’IRM ?</button><button>Je peux échanger demain ?</button><button>Je veux poser un congé</button></div></article>'}}
   function dialogShell(){
@@ -187,6 +195,24 @@
     try{const r=await msg("thread",{conversation_id:id}),me=window.STIPSession?.agent?.id||window.STIPBootCache?.agent?.id,other=r.members?.find(m=>String(m.agent_id)!==String(me))?.agent,title=r.conversation.kind==="direct"?name(other):r.conversation.title||"Conversation",head=thread.querySelector("[data-thread-head]"),body=thread.querySelector("[data-thread-body]");head.innerHTML=(other?avatar(other,"ch-mini-avatar"):"")+'<div><strong>'+esc(title)+'</strong><small>'+esc(r.conversation.kind==="direct"?"Message privé":"Groupe STIP")+'</small></div>';const operational=r.broadcast?'<section class="ch-operational '+esc(r.broadcast.status)+'"><small>INFO TERRAIN</small><strong>'+esc(r.broadcast.title||"Information équipe")+'</strong><p>'+esc(r.broadcast.body||"")+'</p><div class="ch-operational-meta">'+(r.broadcast.location_text?'<span>⌖ '+esc(r.broadcast.location_text)+'</span>':"")+(r.broadcast.quantity!=null?'<span><b>'+esc(r.broadcast.quantity)+'</b> disponible'+(Number(r.broadcast.quantity)>1?"s":"")+'</span>':"")+'<span>'+(r.broadcast.status==="resolved"?"Terminé":"Mis à jour "+new Date(r.broadcast.updated_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}))+'</span></div>'+(r.broadcast.status!=="resolved"?'<div class="ch-operational-actions"><button type="button" data-broadcast-action="confirm">Toujours là</button><button type="button" data-broadcast-action="less">Il en reste moins</button><button type="button" data-broadcast-action="resolved">Plus rien</button></div>':'<div class="ch-operational-done">✓ Information clôturée</div>')+'</section>':"";body.innerHTML=operational+((r.messages||[]).map(m=>'<article class="ch-bubble '+(String(m.sender_agent_id)===String(me)?"mine":"theirs")+'">'+(String(m.sender_agent_id)!==String(me)?'<small>'+esc(name(m.sender))+'</small>':"")+'<p>'+esc(m.body)+'</p><time>'+new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</time></article>').join("")||'<p class="ch-empty">Pas encore de message. À toi de jouer.</p>');body.querySelectorAll("[data-broadcast-action]").forEach(b=>b.addEventListener("click",async()=>{let quantity=null;if(b.dataset.broadcastAction==="less"){const v=prompt("Il en reste combien ?",String(r.broadcast.quantity??""));if(v===null)return;quantity=Math.max(0,Number(v)||0)}b.disabled=true;try{await msg("broadcast_update",{conversation_id:id,update:b.dataset.broadcastAction,quantity});await renderThread(id)}catch(err){b.disabled=false;alert(err.message)}}));if(!quiet||body.scrollHeight-body.scrollTop-body.clientHeight<100)body.scrollTop=body.scrollHeight;loadHome(true)}
     catch(e){if(!quiet)thread.querySelector("[data-thread-body]").innerHTML='<p class="ch-error">'+esc(e.message)+'</p>'}
   }
+  function exchangeSheet(){
+    document.querySelector(".ch-sheet-wrap[data-exchange-sheet]")?.remove();
+    const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.dataset.exchangeSheet="1";
+    const recent=home?.conversations||[];
+    wrap.innerHTML='<section class="ch-sheet ch-exchange-sheet"><header><div><small>COMMUNICATION STIP</small><h3>Échanges</h3></div><button type="button" data-close>×</button></header>'+
+      '<div class="ch-exchange-actions"><button type="button" data-new-message><span>＋</span><strong>Nouveau message</strong></button><button type="button" data-broadcast><span>↗</span><strong>Diffuser</strong></button></div>'+
+      (recent.length?'<div class="ch-exchange-recent"><small>CONVERSATIONS</small><div class="ch-recent">'+recent.slice(0,20).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></div>'+(c.unread?'<b>'+c.unread+'</b>':"")+'</button>').join("")+'</div></div>':'<p class="ch-empty">Aucune conversation pour l’instant.</p>')+
+      '<div class="ch-exchange-settings"><button type="button" data-push-enable>'+esc(pushText())+'</button>'+(home?.me?'<button type="button" data-msg-profile>Réglages messages</button>':"")+'</div></section>';
+    document.body.appendChild(wrap);
+    const close=()=>wrap.remove();
+    wrap.querySelector("[data-close]").onclick=close;
+    wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    wrap.querySelector("[data-new-message]")?.addEventListener("click",()=>{close();recipientSheet(false)});
+    wrap.querySelector("[data-broadcast]")?.addEventListener("click",()=>{close();broadcastSheet()});
+    wrap.querySelector("[data-push-enable]")?.addEventListener("click",e=>enablePush(e.currentTarget));
+    wrap.querySelector("[data-msg-profile]")?.addEventListener("click",()=>{close();profileSheet()});
+    wrap.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.conv;close();openThread(id)}));
+  }
   async function recipientSheet(group=false){
     const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>NOUVEAU MESSAGE</small><h3>Choisir un professionnel</h3></div><button type="button" data-close>×</button></header><label class="ch-search"><span>⌕</span><input type="search" placeholder="Nom, prénom ou pseudo…"></label><div class="ch-picker" data-picker><p class="ch-empty">Chargement…</p></div><button class="ch-group-create" type="button" data-group hidden>Créer le groupe</button></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});let selected=new Set(),all=[];
     const paint=()=>{const q=String(wrap.querySelector("input").value||"").toLowerCase(),rows=all.filter(a=>!q||name(a).toLowerCase().includes(q)||String(a.prenom||"").toLowerCase().includes(q)||String(a.nom||"").toLowerCase().includes(q));wrap.querySelector("[data-picker]").innerHTML='<div class="ch-picker-grid">'+rows.map(a=>'<button type="button" data-pick="'+esc(a.id)+'" class="'+(selected.has(String(a.id))?"on":"")+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>').join("")+'</div>';wrap.querySelectorAll("[data-pick]").forEach(b=>b.onclick=async()=>{const id=String(b.dataset.pick);if(!group){close();return openDirect(id)}selected.has(id)?selected.delete(id):selected.add(id);paint();wrap.querySelector("[data-group]").hidden=!selected.size})};
@@ -215,5 +241,5 @@
   window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
   window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
-  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,refresh:()=>loadHome(true)};
+  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true)};
 })();
