@@ -1159,3 +1159,32 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-left .hc-weekend-row .hc-rest-line{gap:4px!important}
 .hc-planning-left .hc-weekend-row .hc-rest-line .hc-status-icon{font-size:1.12rem!important}
 .hc-planning-left .hc-weekend-row .hc-rest-line .hc-status-code{font-size:.78rem!important}
+
+
+/* work-shift-icons-v6-20260920 */
+.hc-planning-left .hc-work-line{
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ gap:7px!important;
+ width:100%!important;
+ min-width:0!important;
+ white-space:nowrap!important;
+}
+.hc-planning-left .hc-work-icon{
+ flex:0 0 auto!important;
+ font-size:1.12rem!important;
+ line-height:1!important;
+}
+.hc-planning-left .hc-work-line .hc-shift-name{
+ display:block!important;
+ min-width:0!important;
+ overflow:visible!important;
+ text-overflow:clip!important;
+}
+.hc-planning-left .hc-weekend-row .hc-work-line{gap:3px!important}
+.hc-planning-left .hc-weekend-row .hc-work-icon{font-size:.92rem!important}
+.hc-planning-left .hc-weekend-row .hc-work-line .hc-shift-name{
+ font-size:.82rem!important;
+ overflow:visible!important;
+}
