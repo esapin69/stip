@@ -2063,3 +2063,149 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  box-shadow:0 7px 17px rgba(20,62,78,.07)!important;
  padding:10px!important;
 }
+
+
+/* NOTIFICATIONS PAGE — responsive Actions-family layout 20260920
+   The bell destination belongs to the shared Actions family. Keep chat styling
+   in communication-hub.css; this block only owns the notification page shell. */
+.hc-home-pane-notifications{
+  width:100%;
+  max-width:none;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:var(--stip-gap);
+  align-items:start;
+}
+.hc-home-pane-notifications>.hc-profile-actions{
+  width:100%;
+  min-width:0;
+  margin:0;
+  padding:clamp(14px,2.4vw,22px);
+  background:var(--stip-surface-raised);
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  box-shadow:var(--stip-shadow);
+}
+.hc-home-pane-notifications .hc-profile-actions-head{
+  margin:0 0 clamp(12px,2vw,18px);
+}
+.hc-home-pane-notifications .hc-profile-actions-head small{
+  color:var(--stip-accent);
+  font-size:.7rem;
+  font-weight:950;
+  letter-spacing:.095em;
+}
+.hc-home-pane-notifications .hc-profile-actions-head h2{
+  margin:4px 0 0;
+  color:var(--stip-ink);
+  font-size:clamp(1.45rem,3vw,2rem);
+  line-height:1;
+  letter-spacing:-.03em;
+}
+.hc-home-pane-notifications .hc-profile-actions-head p{
+  max-width:62ch;
+  margin:7px 0 0;
+  color:var(--stip-muted);
+  font-size:clamp(.8rem,1.5vw,.92rem);
+  line-height:1.42;
+}
+.hc-home-pane-notifications .hc-action-filters{
+  margin-inline:0;
+  padding:0 0 14px;
+  scroll-snap-type:x proximity;
+}
+.hc-home-pane-notifications .hc-action-filters button{
+  min-height:42px;
+  scroll-snap-align:start;
+}
+.hc-home-pane-notifications .hc-panel-list{
+  min-width:0;
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+.hc-home-pane-notifications .hc-panel-list article,
+.hc-home-pane-notifications .hc-panel-list .hs-note{
+  min-width:0;
+  min-height:64px;
+  margin:0;
+  padding:12px 13px;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-md);
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+  overflow-wrap:anywhere;
+}
+.hc-home-pane-notifications .hc-account-fold{
+  width:100%;
+  min-width:0;
+  margin:0;
+  border-color:var(--stip-line);
+  border-radius:var(--stip-radius-md);
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+}
+@media(max-width:699px){
+  .hc-home-pane-notifications{
+    gap:10px;
+  }
+  .hc-home-pane-notifications>.hc-profile-actions{
+    padding:13px 11px;
+    border-radius:20px;
+  }
+  .hc-home-pane-notifications .hc-profile-actions-head h2{
+    font-size:1.5rem;
+  }
+  .hc-home-pane-notifications .hc-action-filters{
+    margin-inline:-11px;
+    padding-inline:11px;
+    padding-bottom:12px;
+  }
+  .hc-home-pane-notifications .hc-action-filters button{
+    min-height:44px;
+    padding-inline:12px;
+  }
+  .hc-home-pane-notifications .hc-panel-list article,
+  .hc-home-pane-notifications .hc-panel-list .hs-note{
+    padding:11px;
+    border-radius:15px;
+  }
+}
+@media(min-width:700px) and (max-width:1099px){
+  .hs-home:has(.hc-home-pane-notifications){
+    max-width:940px!important;
+  }
+  .hc-home-pane-notifications>.hc-profile-actions{
+    padding:20px;
+  }
+  .hc-home-pane-notifications .hc-panel-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+@media(min-width:1100px){
+  .hs-home:has(.hc-home-pane-notifications){
+    max-width:1180px!important;
+  }
+  .hc-home-pane-notifications{
+    grid-template-columns:minmax(0,1fr) minmax(260px,320px);
+    column-gap:20px;
+  }
+  .hc-home-pane-notifications>.hc-profile-actions{
+    grid-column:1;
+    grid-row:1 / span 2;
+    padding:22px 24px;
+  }
+  .hc-home-pane-notifications>.hc-account-fold{
+    grid-column:2;
+    grid-row:1;
+  }
+  .hc-home-pane-notifications>.hc-communication-host{
+    grid-column:2;
+    grid-row:2;
+    min-width:0;
+  }
+  .hc-home-pane-notifications .hc-panel-list{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
