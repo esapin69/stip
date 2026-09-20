@@ -48,6 +48,7 @@
     weeks: new Map(),
     request: 0,
     rendered: false,
+    openShift: "",
   };
 
   function token() {
@@ -311,14 +312,32 @@
     const agent = item.agents || {};
     const phone = phoneHref(agent.telephone);
     const ghe = String(agent.ghe || "").replace(/^GHE\s*/i, "");
-    return `<div class="team-agent"><span class="team-agent-ghe">GHE ${esc(ghe || "—")}</span><span><strong>${esc(displayName(agent))}</strong><small>${esc(agent.role || "Brancardier")}</small></span>${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}</div>`;
+    const key = String(agent.source_key || "");
+    return `<div class="team-agent">
+      <button class="team-agent-main" type="button" data-team-agent="${esc(key)}" ${key ? "" : "disabled"}>
+        <span class="team-agent-ghe">GHE ${esc(ghe || "—")}</span>
+        <span><strong>${esc(displayName(agent))}</strong><small>${esc(agent.role || "Brancardier")}</small></span>
+        <i aria-hidden="true">›</i>
+      </button>
+      ${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}
+    </div>`;
   }
 
-  function shiftBlock(code, items) {
+  function shiftBlock(day, code, items) {
     const base = baseShift(code);
     const meta = SHIFT[base];
     if (!meta || !items.length) return "";
-    return `<section class="team-shift shift-${base.toLowerCase()}"><header><b>${esc(code)}</b><span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span><em>${items.length}</em></header><div>${items.map(agentRow).join("")}</div></section>`;
+    const key = `${day}|${code}`;
+    const open = state.openShift === key;
+    return `<section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
+      <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
+        <b>${esc(code)}</b>
+        <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
+        <em>${items.length}</em>
+        <i aria-hidden="true">⌄</i>
+      </button>
+      <div class="team-shift-agents" ${open ? "" : "hidden"}>${items.map(agentRow).join("")}</div>
+    </section>`;
   }
 
   function teamDay(bundle, day) {
@@ -336,7 +355,9 @@
       ([a], [b]) =>
         SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
     );
-    const body = ordered.map(([code, rows]) => shiftBlock(code, rows)).join("");
+    if (!state.openShift && day === state.dayFocus && ordered[0])
+      state.openShift = `${day}|${ordered[0][0]}`;
+    const body = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
@@ -386,6 +407,73 @@
       body,
       "assistant",
     );
+  }
+
+  function closeAgentSheet() {
+    document.getElementById("teamAgentOverlay")?.remove();
+    document.body.classList.remove("team-sheet-open");
+  }
+
+  function formatAgentDate(value) {
+    return dateObj(value).toLocaleDateString("fr-FR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  }
+
+  async function openAgentSheet(sourceKey) {
+    if (!sourceKey) return;
+    const planning = cacheEntry(state.weekStart)?.team?.planning || [];
+    const fallback =
+      planning.find((item) => item.agents?.source_key === sourceKey)?.agents || {};
+    closeAgentSheet();
+    const overlay = document.createElement("div");
+    overlay.id = "teamAgentOverlay";
+    overlay.className = "team-agent-overlay";
+    overlay.innerHTML = `<button class="team-agent-backdrop" type="button" aria-label="Fermer"></button>
+      <section class="team-agent-sheet" aria-modal="true" role="dialog">
+        <div class="team-sheet-handle"></div>
+        <header>
+          <div><small>PLANNING AGENT</small><strong>${esc(displayName(fallback))}</strong><span>${fallback.ghe ? `GHE ${esc(String(fallback.ghe).replace(/^GHE\\s*/i, ""))}` : ""}</span></div>
+          <button type="button" data-agent-close aria-label="Fermer">×</button>
+        </header>
+        <div class="team-agent-sheet-body"><div class="team-agent-loading">Chargement du planning…</div></div>
+      </section>`;
+    document.body.appendChild(overlay);
+    document.body.classList.add("team-sheet-open");
+    overlay.querySelector(".team-agent-backdrop")?.addEventListener("click", closeAgentSheet);
+    overlay.querySelector("[data-agent-close]")?.addEventListener("click", closeAgentSheet);
+    requestAnimationFrame(() => overlay.classList.add("open"));
+    const body = overlay.querySelector(".team-agent-sheet-body");
+    try {
+      const data = await post("stip-data", {
+        action: "agent_planning",
+        source_key: sourceKey,
+      });
+      const contact = data.contact || fallback;
+      const today = todayIso();
+      const rows = (data.items || [])
+        .filter((item) => String(item.date || "") >= today)
+        .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")))
+        .slice(0, 14);
+      const tel = phoneHref(contact.telephone);
+      body.innerHTML = `
+        ${contact.telephone || contact.email ? `<div class="team-agent-contact">
+          ${contact.telephone ? `<a href="${esc(tel)}">${esc(contact.telephone)}</a>` : ""}
+          ${contact.email ? `<button type="button" data-agent-copy="${esc(contact.email)}">${esc(contact.email)}</button>` : ""}
+        </div>` : ""}
+        <div class="team-agent-plan">${rows.length ? rows.map((item) => {
+          const code = String(item.code || "—").toUpperCase();
+          const meta = SHIFT[baseShift(code)];
+          return `<div><span>${esc(formatAgentDate(item.date))}</span><strong>${esc(code)}</strong><small>${esc(meta?.label || "Planning")} ${meta?.time ? `· ${esc(meta.time)}` : ""}</small></div>`;
+        }).join("") : '<p>Aucun poste à venir trouvé.</p>'}</div>`;
+      body.querySelector("[data-agent-copy]")?.addEventListener("click", async (event) => {
+        try { await navigator.clipboard.writeText(event.currentTarget.dataset.agentCopy || ""); } catch {}
+      });
+    } catch (error) {
+      body.innerHTML = `<div class="team-agent-loading">${esc(error.message || "Planning indisponible.")}</div>`;
+    }
   }
 
   function renderContent(bundle) {
@@ -507,16 +595,19 @@
   );
   $("#teamPrev").addEventListener("click", () => moveWeek(-1));
   $("#teamNext").addEventListener("click", () => moveWeek(1));
-  $("#teamToday").addEventListener("click", () => {
+  function goToday() {
     state.weekStart = monday(todayIso());
     state.dayFocus = todayIso();
+    state.openShift = "";
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
       dayFocus: state.dayFocus,
     });
     showWeek({ preserve: true });
-  });
+  }
+  $("#teamToday").addEventListener("click", goToday);
+  $("#teamCurrent").addEventListener("click", goToday);
   $("#teamRefresh").addEventListener("click", () =>
     showWeek({ force: true, preserve: true }),
   );
@@ -524,6 +615,7 @@
     const button = event.target.closest("[data-team-day]");
     if (!button) return;
     state.dayFocus = button.dataset.teamDay;
+    state.openShift = "";
     $("#teamDays")
       .querySelectorAll("[data-team-day]")
       .forEach((item) => {
@@ -539,6 +631,30 @@
     document
       .getElementById(`team-day-${state.dayFocus}`)
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("#teamContent").addEventListener("click", (event) => {
+    const shift = event.target.closest("[data-team-shift]");
+    if (shift) {
+      const key = shift.dataset.teamShift || "";
+      state.openShift = state.openShift === key ? "" : key;
+      $("#teamContent")
+        .querySelectorAll("[data-team-shift]")
+        .forEach((button) => {
+          const active = button.dataset.teamShift === state.openShift;
+          button.setAttribute("aria-expanded", String(active));
+          const section = button.closest(".team-shift");
+          section?.classList.toggle("open", active);
+          const agents = section?.querySelector(".team-shift-agents");
+          if (agents) agents.hidden = !active;
+        });
+      return;
+    }
+    const agent = event.target.closest("[data-team-agent]");
+    if (agent) openAgentSheet(agent.dataset.teamAgent);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeAgentSheet();
   });
 
   async function boot() {
