@@ -941,7 +941,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right"><div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
