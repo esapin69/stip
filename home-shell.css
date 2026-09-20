@@ -1949,3 +1949,20 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  opacity:.82!important;
  font-weight:650!important;
 }
+
+
+/* event-marker-spacing-v32-20260920 */
+/* Reserve a real icon lane above the week cards: icons never sit on the shift/day card edge. */
+.hc-planning-group.hc-planning-landscape{padding-top:28px!important}
+.hc-days-landscape{padding-top:44px!important}
+.hc-days-landscape .hc-day-event-markers{
+ top:0!important;
+ transform:translate(-50%,-100%)!important;
+ margin-top:-8px!important;
+ height:40px!important;
+ min-width:40px!important;
+ min-height:40px!important;
+ padding:0 8px!important;
+ border-radius:20px!important;
+}
+.hc-days-landscape .hc-day-event-markers i{font-size:25px!important}
