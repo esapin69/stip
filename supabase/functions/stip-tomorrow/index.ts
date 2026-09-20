@@ -80,6 +80,7 @@ function cleanNote(n: any) {
     completed_at: n.completed_at,
     created_at: n.created_at,
     updated_at: n.updated_at,
+    client_id: n.client_id || null,
     owner: n.owner || null,
     author: n.author || null,
   };
@@ -87,7 +88,7 @@ function cleanNote(n: any) {
 async function notesFor(ctx: any, date: string) {
   const q = await db
     .from("stip_tomorrow_notes")
-    .select("id,target_date,title,body,note_time,note_kind,status,sort_order,completed_at,created_at,updated_at,author:agents!stip_tomorrow_notes_author_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)")
+    .select("id,target_date,title,body,note_time,note_kind,status,sort_order,completed_at,created_at,updated_at,client_id,author:agents!stip_tomorrow_notes_author_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)")
     .eq("owner_agent_id", ctx.agent.id)
     .eq("target_date", date)
     .neq("status", "archived")
@@ -100,7 +101,7 @@ async function sentFor(ctx: any, date: string) {
   if (ctx.level !== "pro") return [];
   const q = await db
     .from("stip_tomorrow_notes")
-    .select("id,target_date,title,body,note_time,note_kind,status,sort_order,completed_at,created_at,updated_at,owner:agents!stip_tomorrow_notes_owner_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)")
+    .select("id,target_date,title,body,note_time,note_kind,status,sort_order,completed_at,created_at,updated_at,client_id,owner:agents!stip_tomorrow_notes_owner_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)")
     .eq("author_agent_id", ctx.agent.id)
     .eq("target_date", date)
     .eq("note_kind", "assigned")
@@ -184,8 +185,32 @@ async function createNote(ctx: any, body: any) {
   const title = String(body.title || "").trim().slice(0, 160);
   const noteBody = String(body.body || "").trim().slice(0, 1000);
   const time = String(body.time || "").trim();
+  const personal = target === String(ctx.agent.id);
+  const clientId = personal ? String(body.client_id || "").trim().slice(0, 120) || null : null;
   if (!title) throw Error("Titre requis.");
   if (time && !/^\d{2}:\d{2}$/.test(time)) throw Error("Heure invalide.");
+  if (clientId) {
+    const { data: existing, error: qe } = await db.from("stip_tomorrow_notes")
+      .select("id")
+      .eq("owner_agent_id", target)
+      .eq("client_id", clientId)
+      .maybeSingle();
+    if (qe) throw qe;
+    if (existing?.id) {
+      const { error } = await db.from("stip_tomorrow_notes").update({
+        target_date: date,
+        title,
+        body: noteBody || null,
+        note_time: time || null,
+        status: body.done ? "done" : "active",
+        completed_at: body.done ? new Date().toISOString() : null,
+        sort_order: Number(body.sort_order || 0),
+        updated_at: new Date().toISOString(),
+      }).eq("id", existing.id);
+      if (error) throw error;
+      return { ok: true, id: existing.id, migrated: true };
+    }
+  }
   const { data, error } = await db.from("stip_tomorrow_notes").insert({
     owner_agent_id: target,
     author_agent_id: ctx.agent.id,
@@ -193,9 +218,11 @@ async function createNote(ctx: any, body: any) {
     title,
     body: noteBody || null,
     note_time: time || null,
-    note_kind: target === String(ctx.agent.id) ? "personal" : "assigned",
-    status: "active",
+    note_kind: personal ? "personal" : "assigned",
+    status: body.done ? "done" : "active",
+    completed_at: body.done ? new Date().toISOString() : null,
     sort_order: Number(body.sort_order || 0),
+    client_id: clientId,
   }).select("id").single();
   if (error) throw error;
   return { ok: true, id: data.id };
@@ -221,6 +248,7 @@ async function updateNote(ctx: any, body: any) {
     patch.note_time = t || null;
   }
   if (body.sort_order !== undefined) patch.sort_order = Number(body.sort_order || 0);
+  if (body.date !== undefined) patch.target_date = validDate(body.date);
   const { error } = await db.from("stip_tomorrow_notes").update(patch).eq("id", id);
   if (error) throw error;
   return { ok: true };
@@ -249,6 +277,26 @@ async function removeNote(ctx: any, body: any) {
   return { ok: true };
 }
 
+async function reorderNotes(ctx: any, body: any) {
+  const date = validDate(body.date);
+  const ids = Array.isArray(body.ids) ? body.ids.map(String).filter(Boolean) : [];
+  if (!ids.length) return { ok: true };
+  const { data: rows, error: qe } = await db.from("stip_tomorrow_notes")
+    .select("id,owner_agent_id,note_kind")
+    .in("id", ids)
+    .eq("target_date", date);
+  if (qe) throw qe;
+  const allowed = (rows || []).filter((n: any) => n.note_kind === "personal" && String(n.owner_agent_id) === String(ctx.agent.id));
+  if (allowed.length !== ids.length) throw Error("Réorganisation non autorisée.");
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await db.from("stip_tomorrow_notes")
+      .update({ sort_order: i, updated_at: new Date().toISOString() })
+      .eq("id", ids[i]);
+    if (error) throw error;
+  }
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: H });
   if (req.method !== "POST") return J({ error: "Méthode non autorisée." }, 405);
@@ -262,6 +310,7 @@ Deno.serve(async (req) => {
     if (action === "note_update") return J(await updateNote(c, b));
     if (action === "note_status") return J(await noteStatus(c, b));
     if (action === "note_delete") return J(await removeNote(c, b));
+    if (action === "note_reorder") return J(await reorderNotes(c, b));
     return J({ error: "Action inconnue." }, 400);
   } catch (e) {
     console.error(e);
