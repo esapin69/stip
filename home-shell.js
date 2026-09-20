@@ -530,12 +530,16 @@
   function weekEventMarker(x) {
     const events = weekEventsForDay(x);
     if (!events.length) return "";
-    const shift = canonicalShift(x.code),
-      shiftCode = shift.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none";
+    const eventShift = events
+        .map((event) => canonicalShift(event.shift || event.workShift || event.work_shift || event.schedule || event.shiftCode || event.shift_code || ""))
+        .find((code) => WORK_SHIFT_ICON[code]),
+      dayShift = canonicalShift(x.code),
+      shift = eventShift || (WORK_SHIFT_ICON[dayShift] ? dayShift : ""),
+      shiftCode = shift ? shift.replace(/[^A-Z0-9]/g, "").toLowerCase() : "";
     return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .slice(0, 3)
       .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
-      .join("")}<b class="hc-event-shift-dot hc-event-shift-dot-${shiftCode}" aria-label="${esc(shift)}"></b></span>`;
+      .join("")}${shiftCode ? `<b class="hc-event-shift-dot hc-event-shift-dot-${shiftCode}" aria-label="Shift ${esc(shift)}"></b>` : ""}</span>`;
   }
   function weekDaysLandscape(w) {
     const hasEvents = w.some((x) => weekEventsForDay(x).length);
