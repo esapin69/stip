@@ -4,6 +4,7 @@
   const STORE = "stip_session_v1";
   const cache = new Map();
   let loadingDay = "";
+  const core = () => window.STIPTomorrow;
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   async function call(action, body = {}) {
     const r = await fetch(API, {
@@ -126,19 +127,126 @@
       wrap.querySelector("[data-close]")?.addEventListener("click", close);
     }
   }
+  function taskFromNote(n) {
+    return {
+      id: "remote:" + n.id,
+      remoteId: n.id,
+      clientId: n.client_id || "",
+      title: n.title || "",
+      time: n.time || "",
+      note: n.body || "",
+      done: n.status === "done",
+      order: Number(n.sort_order || 0),
+      createdAt: n.created_at || "",
+      remote: true,
+    };
+  }
+  function publishPersonal(day, data) {
+    const personal = (data?.notes || []).filter((n) => n.kind === "personal").map(taskFromNote);
+    core()?.setRemoteTasks?.(day, personal);
+  }
+  async function migrateLocal(day, data) {
+    const c = core();
+    if (!c?.localTasks || !c?.clearLocal) return false;
+    const local = c.localTasks(day);
+    if (!local.length) return false;
+    const remote = (data?.notes || []).filter((n) => n.kind === "personal");
+    const existing = new Set(remote.map((n) => String(n.client_id || "")).filter(Boolean));
+    let created = false;
+    for (const item of local) {
+      const clientId = String(item.clientId || item.id || "").trim() || ("legacy-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8));
+      if (existing.has(clientId)) continue;
+      await call("note_create", {
+        date: day,
+        client_id: clientId,
+        title: item.title,
+        time: item.time,
+        body: item.note,
+        done: !!item.done,
+        sort_order: Number(item.order || 0),
+      });
+      existing.add(clientId);
+      created = true;
+    }
+    c.clearLocal(day);
+    return created;
+  }
+  async function taskUpsert(day, item = {}) {
+    const clientId = String(item.clientId || item.id || ("web-" + (crypto.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 8)))));
+    if (item.remoteId) {
+      await call("note_update", {
+        id: item.remoteId,
+        date: day,
+        title: item.title,
+        time: item.time,
+        body: item.note,
+        sort_order: Number(item.order || 0),
+      });
+    } else {
+      await call("note_create", {
+        date: day,
+        client_id: clientId,
+        title: item.title,
+        time: item.time,
+        body: item.note,
+        done: !!item.done,
+        sort_order: Number(item.order || 0),
+      });
+    }
+    cache.delete(day);
+    return load(day, true);
+  }
+  async function taskStatus(day, item, done) {
+    if (!item?.remoteId) throw Error("Note locale non synchronisée.");
+    await call("note_status", { id: item.remoteId, status: done ? "done" : "active" });
+    cache.delete(day);
+    return load(day, true);
+  }
+  async function taskDelete(day, item) {
+    if (!item?.remoteId) throw Error("Note locale non synchronisée.");
+    await call("note_delete", { id: item.remoteId });
+    cache.delete(day);
+    return load(day, true);
+  }
+  async function taskMoveNext(day, item) {
+    if (!item?.remoteId) throw Error("Note locale non synchronisée.");
+    const next = core()?.add?.(day, 1);
+    await call("note_update", { id: item.remoteId, date: next });
+    cache.delete(day);
+    if (next) cache.delete(next);
+    await load(day, true);
+    if (next) await load(next, true);
+  }
+  async function taskReorder(day, ids = []) {
+    const rows = core()?.tasks?.(day) || [];
+    const byId = new Map(rows.map((x) => [String(x.id), x]));
+    const remoteIds = ids.map((id) => byId.get(String(id))?.remoteId).filter(Boolean);
+    if (!remoteIds.length) return;
+    if (remoteIds.length !== ids.length) throw Error("Synchronisation incomplète.");
+    await call("note_reorder", { date: day, ids: remoteIds });
+    cache.delete(day);
+    return load(day, true);
+  }
+
   async function load(day, force = false) {
     if (!day) return;
     if (!force && cache.has(day)) {
-      render(cache.get(day), day);
-      return cache.get(day);
+      const cached = cache.get(day);
+      publishPersonal(day, cached);
+      render(cached, day);
+      return cached;
     }
     if (loadingDay === day) return;
     loadingDay = day;
     try {
-      const data = await call("day", { date: day });
+      let data = await call("day", { date: day });
+      const migrated = await migrateLocal(day, data);
+      if (migrated) data = await call("day", { date: day });
       cache.set(day, data);
+      publishPersonal(day, data);
       render(data, day);
       window.dispatchEvent(new CustomEvent("stip:tomorrow-remote", { detail: data }));
+      setTimeout(() => window.STIPTomorrowUI?.refresh?.(), 0);
       return data;
     } catch (e) {
       const page = document.getElementById("tdPage");
@@ -148,9 +256,10 @@
         const box = document.createElement("div");
         box.dataset.tdnInjected = "1";
         box.className = "tdn-block";
-        box.innerHTML = '<div class="tdn-error">Les notes partagées ne se chargent pas pour le moment. Tes ajouts personnels restent disponibles.</div>';
+        box.innerHTML = '<div class="tdn-error">Synchronisation indisponible. Tes ajouts locaux restent utilisables et seront repris plus tard.</div>';
         hero?.insertAdjacentElement("afterend", box);
       }
+      throw e;
     } finally {
       if (loadingDay === day) loadingDay = "";
     }
@@ -161,5 +270,5 @@
     if (page) page.dataset.remoteDay = day;
     load(day);
   });
-  window.STIPTomorrowRemote = { load, refresh: (day) => load(day, true), call };
+  window.STIPTomorrowRemote = { load, refresh: (day) => load(day, true), call, taskUpsert, taskStatus, taskDelete, taskMoveNext, taskReorder };
 })();
