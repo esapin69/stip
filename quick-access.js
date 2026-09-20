@@ -364,7 +364,13 @@
   });
   window.addEventListener("stip:login-success", () => saveCode());
   window.addEventListener("stip:session-ready", () => {
-    const q = new URLSearchParams(location.search).get("quick") || "";
+    const params = new URLSearchParams(location.search),
+      q = params.get("quick") || "",
+      conversation = params.get("conversation") || "";
+    if (conversation)
+      try {
+        sessionStorage.setItem("stip_message_open_v1", conversation);
+      } catch {}
     publicPreview = q === "public";
     mount();
     if (q) {
