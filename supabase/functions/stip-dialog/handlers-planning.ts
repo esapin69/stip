@@ -1,4 +1,4 @@
-import type { DateScope, DialogContext } from "./core.ts";
+import { normalize, type DateScope, type DialogContext } from "./core.ts";
 import { baseContext, personActions, personCard } from "./presentation.ts";
 import { canon, dayLabel, db, isChief, overlaps, planningRows, shiftText, shortDay, teamOf } from "./runtime.ts";
 import type { Agent, SessionCtx, ShiftDef } from "./types.ts";
@@ -36,7 +36,7 @@ export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects
   };
 }
 
-export async function colleaguesAnswer(c: SessionCtx, old: DialogContext, subject: Agent, ds: DateScope, defs: Record<string, ShiftDef>, all: Agent[]) {
+export async function colleaguesAnswer(c: SessionCtx, old: DialogContext, subject: Agent, ds: DateScope, defs: Record<string, ShiftDef>, all: Agent[], raw = "") {
   const subjectRows = await planningRows([subject.id], ds.start, ds.end);
   if (!subjectRows.length) return {
     kind: "team", title: ds.label || dayLabel(ds.start), text: "Aucun horaire n’est renseigné pour cette personne sur cette période.", cards: [], actions: [],
@@ -49,10 +49,18 @@ export async function colleaguesAnswer(c: SessionCtx, old: DialogContext, subjec
   if (error) throw error;
   const personBy = new Map(all.map((a) => [String(a.id), a]));
   const ownByDate = new Map<string, string>(subjectRows.map((r: any) => [String(r.date), canon(r.code)]));
-  const matches = (data || []).filter((r: any) => String(r.agent_id) !== String(subject.id) && ownByDate.has(r.date) && overlaps(ownByDate.get(r.date)!, canon(r.code), defs));
+  const wording = normalize(raw), mode = /\bcommence\b/.test(wording) ? "start" : /\b(finit|termine)\b/.test(wording) ? "end" : "overlap";
+  const matches = (data || []).filter((r: any) => {
+    if (String(r.agent_id) === String(subject.id) || !ownByDate.has(r.date)) return false;
+    const own = ownByDate.get(r.date)!, other = canon(r.code), A = defs[own], B = defs[other];
+    if (!A || !B) return false;
+    if (mode === "start") return A.start_time === B.start_time;
+    if (mode === "end") return A.end_time === B.end_time;
+    return overlaps(own, other, defs);
+  });
   if (ds.start === ds.end) return {
     kind: "team", title: `${shiftText(ownByDate.get(ds.start) || "", defs)} · ${dayLabel(ds.start)}`,
-    text: `${matches.length} collègue${matches.length > 1 ? "s" : ""} croise${matches.length > 1 ? "nt" : ""} ce service.`,
+    text: mode === "start" ? `${matches.length} collègue${matches.length > 1 ? "s" : ""} commence${matches.length > 1 ? "nt" : ""} à la même heure.` : mode === "end" ? `${matches.length} collègue${matches.length > 1 ? "s" : ""} termine${matches.length > 1 ? "nt" : ""} à la même heure.` : `${matches.length} collègue${matches.length > 1 ? "s" : ""} croise${matches.length > 1 ? "nt" : ""} ce service.`,
     cards: matches.slice(0, 20).map((r: any) => personCard(personBy.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: canon(r.code), detail: defs[canon(r.code)] ? `${defs[canon(r.code)].start_time} → ${defs[canon(r.code)].end_time}` : "" })),
     actions: [], context: baseContext(old, { subject_agent_ids: [subject.id], agent_id: subject.id, date_scope: ds, last_intent: "colleagues" }),
     suggestions: ["Qui commence avec moi ?", "Combien on est en J4 ?"],
@@ -66,7 +74,7 @@ export async function colleaguesAnswer(c: SessionCtx, old: DialogContext, subjec
   const list = [...agg.values()].sort((a, b) => b.days.length - a.days.length);
   return {
     kind: "team", title: ds.label || `${shortDay(ds.start)} → ${shortDay(ds.end)}`,
-    text: `${list.length} collègue${list.length > 1 ? "s" : ""} croise${list.length > 1 ? "nt" : ""} ${subject.id === c.agent.id ? "tes" : "ses"} horaires sur cette période.`,
+    text: mode === "start" ? `${list.length} collègue${list.length > 1 ? "s" : ""} partage${list.length > 1 ? "nt" : ""} au moins une heure de début avec ${subject.id === c.agent.id ? "toi" : "cette personne"} sur la période.` : mode === "end" ? `${list.length} collègue${list.length > 1 ? "s" : ""} partage${list.length > 1 ? "nt" : ""} au moins une heure de fin avec ${subject.id === c.agent.id ? "toi" : "cette personne"} sur la période.` : `${list.length} collègue${list.length > 1 ? "s" : ""} croise${list.length > 1 ? "nt" : ""} ${subject.id === c.agent.id ? "tes" : "ses"} horaires sur cette période.`,
     cards: list.slice(0, 20).map((x) => personCard(x.a, { detail: `${x.days.length} jour${x.days.length > 1 ? "s" : ""} en commun · ${x.days.slice(0, 4).map((d, i) => `${shortDay(d)} ${x.codes[i]}`).join(" · ")}` })),
     actions: [], context: baseContext(old, { subject_agent_ids: [subject.id], agent_id: subject.id, date_scope: ds, last_intent: "colleagues" }),
   };
@@ -98,11 +106,42 @@ export async function shiftRoster(c: SessionCtx, old: DialogContext, ds: DateSco
   };
 }
 
+export async function onDutyRoster(c: SessionCtx, old: DialogContext, ds: DateScope, all: Agent[], defs: Record<string, ShiftDef>) {
+  let q = db.from("planning").select("agent_id,date,code,equipe").gte("date", ds.start).lte("date", ds.end);
+  q = c.team === "chefs" ? q.in("equipe", ["jour", "nuit", "chefs"]) : q.eq("equipe", c.team);
+  const { data, error } = await q;
+  if (error) throw error;
+  const rows = (data || []).filter((x: any) => !!defs[canon(x.code)]);
+  const by = new Map(all.map((a) => [String(a.id), a]));
+  if (ds.start === ds.end) return {
+    kind: "team", title: `Sur le terrain · ${dayLabel(ds.start)}`,
+    text: `${rows.length} agent${rows.length > 1 ? "s" : ""} a${rows.length > 1 ? "uront" : "ura"} un shift de travail renseigné ce jour-là.`,
+    cards: rows.slice(0, 30).map((r: any) => {
+      const code = canon(r.code), def = defs[code];
+      return personCard(by.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: code, detail: def ? `${def.start_time} → ${def.end_time}` : "" });
+    }),
+    actions: [], context: baseContext(old, { date_scope: ds, last_intent: "on_duty" }),
+  };
+  const agg = new Map<string, { a: Agent; entries: Array<{ date: string; code: string }> }>();
+  for (const r of rows as any[]) {
+    const a = by.get(String(r.agent_id)); if (!a) continue;
+    const x = agg.get(String(a.id)) || { a, entries: [] };
+    x.entries.push({ date: r.date, code: canon(r.code) }); agg.set(String(a.id), x);
+  }
+  const list = [...agg.values()].sort((a, b) => b.entries.length - a.entries.length);
+  return {
+    kind: "team", title: `Sur le terrain · ${ds.label || `${shortDay(ds.start)} → ${shortDay(ds.end)}`}`,
+    text: `${list.length} agent${list.length > 1 ? "s" : ""} possède${list.length > 1 ? "nt" : ""} au moins un shift de travail sur la période.`,
+    cards: list.slice(0, 30).map((x) => personCard(x.a, { detail: x.entries.slice(0, 5).map((e) => `${shortDay(e.date)} ${e.code}`).join(" · ") })),
+    actions: [], context: baseContext(old, { date_scope: ds, last_intent: "on_duty" }),
+  };
+}
+
 export async function organizationAnswer(c: SessionCtx, old: DialogContext, ds: DateScope) {
   if (c.level !== "pro") return { kind: "help", title: "Organisation", text: "Les chiffres d’organisation étendus ne sont pas disponibles avec cet accès.", cards: [], actions: [], context: baseContext(old, { date_scope: ds, last_intent: "organization" }) };
   if (ds.start !== ds.end) return {
     kind: "help", title: ds.label || "Période", text: "Pour les effectifs, donne-moi un jour précis afin de comparer les planifiés à la référence HCL datée.", cards: [], actions: [],
-    context: baseContext(old, { date_scope: ds, last_intent: "organization" }), suggestions: [`Effectif le ${shortDay(ds.start)} ?`],
+    context: baseContext(old, { date_scope: ds, last_intent: "organization" }), suggestions: [`Effectif le ${dayLabel(ds.start)} ?`],
   };
   const { data, error } = await db.from("stip_staffing_advice").select("metric,shift_code,target_count,planned_count,gap,severity,status,guidance").eq("reference_date", ds.start).eq("equipe", c.team).order("severity", { ascending: false });
   if (error) throw error;
@@ -139,7 +178,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
       return { type: "metric", title: shortDay(r.date), subtitle: `Ton shift : ${current}`, detail };
     });
     const first = workRows[0];
-    const suggestions = Object.keys(defs).filter((x) => x !== canon(first.code)).slice(0, 3).map((x) => `Échanger en ${x} le ${shortDay(first.date)}`);
+    const suggestions = Object.keys(defs).filter((x) => x !== canon(first.code)).slice(0, 3).map((x) => `Échanger en ${x} le ${dayLabel(first.date)}`);
     return {
       kind: "exchange", title: ds.label || "Échange de planning",
       text: workRows.length === 1 ? "Je connais ton shift ce jour-là. Choisis le shift souhaité et je te donnerai uniquement les collègues compatibles." : "Je te montre tes jours de travail sur la période. Indique le jour et le shift souhaité pour obtenir les collègues compatibles.",
