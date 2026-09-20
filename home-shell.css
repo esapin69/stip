@@ -1481,3 +1481,85 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  box-shadow:0 7px 17px rgba(20,62,78,.07)!important;
  padding:10px!important;
 }
+
+
+/* landscape-week-premium-v23-20260920 */
+.hc-planning-group.hc-planning-landscape{
+ display:block!important;
+ padding:12px!important;
+ border-radius:28px!important;
+ background:linear-gradient(155deg,#fff,#f6fafb)!important;
+ border:1px solid rgba(22,91,111,.10)!important;
+ box-shadow:0 16px 38px rgba(20,62,78,.11)!important;
+ overflow:hidden!important;
+}
+.hc-planning-month-row{margin-bottom:12px!important}
+.hc-planning-month-row .hc-month-open-right{
+ width:100%!important;min-height:78px!important;margin:0!important;
+}
+.hc-planning-week-row{width:100%!important}
+.hc-planning-week-row .hc-widget-planning{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.hc-days-landscape{
+ display:grid!important;
+ grid-template-columns:repeat(7,minmax(0,1fr))!important;
+ gap:5px!important;
+ width:100%!important;
+}
+.hc-days-landscape .hc-day-landscape{
+ min-width:0!important;
+ min-height:132px!important;
+ display:grid!important;
+ grid-template-rows:34px 1fr!important;
+ padding:0!important;
+ overflow:hidden!important;
+ border:2px solid #80909c!important;
+ border-radius:14px!important;
+ background:#f5f7f8!important;
+ box-shadow:0 5px 12px rgba(20,62,78,.07)!important;
+}
+.hc-days-landscape .hc-day-head{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ gap:0!important;height:34px!important;width:100%!important;margin:0!important;
+ background:#7c8b97!important;color:#fff!important;border:0!important;
+}
+.hc-days-landscape .hc-day-head i{
+ font-size:.72rem!important;font-weight:900!important;line-height:.8!important;letter-spacing:.02em!important;
+}
+.hc-days-landscape .hc-day-head b{
+ font-size:1.22rem!important;font-weight:950!important;line-height:1.05!important;
+}
+.hc-days-landscape .hc-week-visual{
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ padding:8px 1px!important;min-width:0!important;
+}
+.hc-days-landscape .hc-work-line,.hc-days-landscape .hc-rest-line{
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ gap:7px!important;width:100%!important;
+}
+.hc-days-landscape .hc-work-icon{font-size:1.2rem!important;line-height:1!important}
+.hc-days-landscape .hc-shift-name,.hc-days-landscape .hc-status-code{
+ font-size:1.02rem!important;font-weight:950!important;line-height:1!important;letter-spacing:-.02em!important;
+}
+.hc-days-landscape .hc-status-icon{font-size:1.35rem!important}
+.hc-days-landscape .code-m{background:#dcecff!important;border-color:#1266c4!important}
+.hc-days-landscape .code-m .hc-day-head{background:#1266c4!important}
+.hc-days-landscape .code-j{background:#dcf6e7!important;border-color:#07934d!important}
+.hc-days-landscape .code-j .hc-day-head{background:#07934d!important}
+.hc-days-landscape .code-j4{background:#ffead9!important;border-color:#e86f18!important}
+.hc-days-landscape .code-j4 .hc-day-head{background:#e86f18!important}
+.hc-days-landscape .code-s{background:#fff1b9!important;border-color:#dba700!important}
+.hc-days-landscape .code-s .hc-day-head{background:#dba700!important}
+.hc-days-landscape .code-n{background:#e3e9ee!important;border-color:#344654!important}
+.hc-days-landscape .code-n .hc-day-head{background:#344654!important}
+.hc-days-landscape .rest{background:#f1f4f6!important;border-color:#7d8d99!important}
+.hc-days-landscape .rest .hc-day-head{background:#7d8d99!important}
+.hc-planning-landscape #hcTomorrowDock{margin:12px -12px 0!important}
+.hc-planning-agenda-row{margin:0 -12px -12px!important;padding:0 12px 12px!important}
+.hc-planning-agenda-row .hc-widget-future{padding-top:14px!important}
+@media(max-width:390px){
+ .hc-days-landscape{gap:3px!important}
+ .hc-days-landscape .hc-day-landscape{min-height:124px!important;border-radius:12px!important}
+ .hc-days-landscape .hc-day-head i{font-size:.66rem!important}
+ .hc-days-landscape .hc-day-head b{font-size:1.12rem!important}
+ .hc-days-landscape .hc-shift-name,.hc-days-landscape .hc-status-code{font-size:.94rem!important}
+}
