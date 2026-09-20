@@ -511,12 +511,29 @@
           : workIcon
             ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
             : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}>${landscape ? weekEventMarker(x) : ""}<span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
       weekend = w.filter((x) => x.dow > 5);
     return `<div class="hc-days-vertical">${weekdays.map((x) => dayCard(x, "hc-day hc-day-vertical", true)).join("")}${weekend.length ? `<div class="hc-weekend-row">${weekend.map((x) => dayCard(x, "hc-day hc-day-vertical hc-day-weekend", true)).join("")}</div>` : ""}</div>`;
+  }
+  function weekEventsForDay(x) {
+    const iso = String(x?.iso || "");
+    if (!iso) return [];
+    return futureItems().filter((event) => {
+      const start = String(event.date || "").slice(0, 10),
+        end = String(event.endDate || event.end_date || event.date || "").slice(0, 10);
+      return start <= iso && end >= iso;
+    });
+  }
+  function weekEventMarker(x) {
+    const events = weekEventsForDay(x);
+    if (!events.length) return "";
+    return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
+      .slice(0, 3)
+      .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
+      .join("")}</span>`;
   }
   function weekDaysLandscape(w) {
     return `<div class="hc-days-landscape" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
@@ -762,18 +779,15 @@
         return start <= weekEnd && end >= weekStart;
       }),
       show = items.slice(0, 3);
-    return `<section class="hc-widget hc-widget-future hc-widget-events-direct" data-widget="future"><div class="hc-widget-list">${
-      show.length
-        ? show
-            .map((x) => {
-              const time = String(x.time || "").trim(),
-                place = String(x.place || "").trim(),
-                fallback = !time && !place ? String(x.sub || "").trim() : "";
-              return `<button type="button" class="hc-live-row hc-event-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-event-anchor"><i>${x.icon || "•"}</i><small class="hc-event-date">${esc(fmtDateRange(x))}</small></span><span><span class="hc-event-meta"><small class="hc-event-type">${esc((x.type || "Événement").toUpperCase())}</small></span><strong>${esc(x.title)}</strong><span class="hc-event-details">${time ? `<span class="hc-event-time">${esc(time)}</span>` : ""}${place ? `<span class="hc-event-place">${esc(place)}</span>` : ""}${fallback ? `<span class="hc-event-fallback">${esc(fallback)}</span>` : ""}</span></span><b>›</b></button>`;
-            })
-            .join("")
-        : '<p class="hc-widget-empty">Aucune date importante à venir.</p>'
-    }</div></section>`;
+    if (!show.length) return "";
+    return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${show
+      .map((x) => {
+        const time = String(x.time || "").trim(),
+          place = String(x.place || "").trim(),
+          extra = [time, place].filter(Boolean).join(" · ");
+        return `<button type="button" class="hc-week-event-key-item" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span><strong>${esc(x.title)}</strong><small>${esc(fmtDateRange(x))}${extra ? ` · ${esc(extra)}` : ""}</small></span></button>`;
+      })
+      .join("")}</div></section>`;
   }
   function nativeExchanges() {
     const b = state.boot || {},
