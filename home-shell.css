@@ -233,7 +233,7 @@
   grid-template-columns:clamp(112px,30vw,142px) minmax(0,1fr)!important;
   gap:18px!important;
   align-items:stretch!important;
-  padding:16px!important;
+  padding:12px 14px!important;
   border-color:var(--stip-line)!important;
   background:var(--stip-surface-raised)!important;
   box-shadow:var(--stip-shadow)!important;
@@ -241,7 +241,7 @@
 .hc-id-card .hc-avatar{
   width:100%!important;
   height:100%!important;
-  min-height:176px!important;
+  min-height:148px!important;
   align-self:stretch;
   border-radius:22px!important;
   background:var(--stip-surface-soft)!important;
@@ -263,7 +263,7 @@
   min-width:0;
 }
 .hc-id-card .hc-profile-copy>small{
-  margin:0 0 5px!important;
+  margin:0 0 3px!important;
   color:var(--stip-accent)!important;
   font-size:.78rem!important;
   font-weight:950!important;
@@ -282,7 +282,7 @@
   align-items:baseline!important;
   flex-wrap:wrap!important;
   gap:4px 10px!important;
-  margin:10px 0 0!important;
+  margin:6px 0 0!important;
 }
 .hc-profile-ghe{
   color:var(--stip-ink)!important;
@@ -299,16 +299,16 @@
 }
 .hc-id-card .hc-profile-contacts{
   display:grid!important;
-  gap:8px!important;
-  margin:13px 0 0!important;
+  gap:5px!important;
+  margin:8px 0 0!important;
 }
 .hc-id-card .hc-profile-contact{
   width:100%!important;
   max-width:none!important;
   min-width:0!important;
   display:grid!important;
-  gap:2px!important;
-  padding:9px 0 0!important;
+  gap:1px!important;
+  padding:6px 0 0!important;
   border:0!important;
   border-top:1px solid var(--stip-line-soft)!important;
   border-radius:0!important;
@@ -340,18 +340,18 @@
   .hc-id-card{
     grid-template-columns:minmax(108px,34vw) minmax(0,1fr)!important;
     gap:14px!important;
-    padding:14px!important;
+    padding:11px 12px!important;
   }
-  .hc-id-card .hc-avatar{min-height:184px!important}
+  .hc-id-card .hc-avatar{min-height:150px!important}
   .hc-id-card .hc-profile-team{font-size:.92rem!important}
 }
 @media(max-width:380px){
   .hc-id-card{
     grid-template-columns:100px minmax(0,1fr)!important;
     gap:12px!important;
-    padding:12px!important;
+    padding:10px!important;
   }
-  .hc-id-card .hc-avatar{min-height:174px!important;border-radius:18px!important}
+  .hc-id-card .hc-avatar{min-height:142px!important;border-radius:18px!important}
   .hc-id-card .hc-profile-copy>small{font-size:.68rem!important}
   .hc-id-card .hc-profile-name{font-size:1.32rem!important}
   .hc-profile-ghe{font-size:1.58rem!important}
