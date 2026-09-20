@@ -1777,3 +1777,46 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  line-height:1.15!important;
  opacity:.68!important;
 }
+
+
+/* event-marker-fix-v29-20260920 */
+.hc-days-landscape .hc-day-event-markers{
+ top:-9px!important;
+ left:50%!important;
+ width:auto!important;
+ height:22px!important;
+ min-width:22px!important;
+ min-height:22px!important;
+ max-width:none!important;
+ padding:0 4px!important;
+ margin:0!important;
+ border-radius:11px!important;
+ line-height:22px!important;
+ background:#fff!important;
+ transform:translate(-50%,-50%)!important;
+ box-sizing:border-box!important;
+}
+.hc-days-landscape .hc-day-event-markers i{
+ position:static!important;
+ inset:auto!important;
+ width:auto!important;
+ height:auto!important;
+ min-width:0!important;
+ min-height:0!important;
+ margin:0!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:transparent!important;
+ box-shadow:none!important;
+ transform:none!important;
+ display:inline!important;
+ font-size:13px!important;
+ font-style:normal!important;
+ line-height:1!important;
+ color:inherit!important;
+}
+.hc-days-landscape .hc-day-event-markers + .hc-day-head{
+ position:relative!important;
+ z-index:1!important;
+}
