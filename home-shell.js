@@ -273,10 +273,15 @@
         `<button type="button" class="${cls}" data-cal-day="${iso}" aria-label="${esc(aria)}"><span class="${numberClass}">${day}</span></button>`,
       );
     }
-    const monthKey = monthKeyOf(first);
+    const monthKey = monthKeyOf(first),
+      currentMonthKey = parisIso().slice(0, 7),
+      returnToToday =
+        monthKey === currentMonthKey
+          ? ""
+          : '<div class="hc-date-jump-actions"><button type="button" class="hc-week-today hc-date-jump-today" data-cal-today>Aujourd’hui</button></div>';
     state.dateJumpMonth = monthKey;
     panel.dataset.calendarMonth = monthKey;
-    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div><div class="hc-date-jump-actions"><button type="button" class="hc-date-jump-today" data-cal-today>Aujourd’hui</button></div>`;
+    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div>${returnToToday}`;
   }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
@@ -708,8 +713,12 @@
   }
   function planningMonthTitle() {
     const w = navigationWeek(),
-      mi = weekMonthInfo(w);
-    return `<header class="hc-planning-primary-head"><div class="hc-week-nav hc-week-nav-global hc-week-nav-hero"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><div class="hc-week-context"><small class="hc-week-hero-kicker">PLANNING · ${esc(mi.heading)} ${esc(mi.yearLabel)}</small><strong>${esc(weekRangeLabel(w))}</strong><span>SEMAINE ${weekNo(w[0].d)}</span></div><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${homeDayStrip(w)}</header>`;
+      mi = weekMonthInfo(w),
+      returnToCurrentWeek =
+        state.weekOffset !== 0
+          ? '<button type="button" class="hc-week-today hc-week-return-current" data-week-today>Revenir à cette semaine</button>'
+          : "";
+    return `<header class="hc-planning-primary-head"><div class="hc-week-nav hc-week-nav-global hc-week-nav-hero"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><div class="hc-week-context"><small class="hc-week-hero-kicker">PLANNING · ${esc(mi.heading)} ${esc(mi.yearLabel)}</small><strong>${esc(weekRangeLabel(w))}</strong><span>SEMAINE ${weekNo(w[0].d)}</span></div><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${homeDayStrip(w)}${returnToCurrentWeek}</header>`;
   }
   function planningCalendarOverview() {
     const w = navigationWeek(),
@@ -1320,6 +1329,9 @@
     root
       .querySelectorAll("[data-week-step]")
       .forEach((b) => (b.onclick = () => moveWeek(b.dataset.weekStep)));
+    root
+      .querySelector("[data-week-today]")
+      ?.addEventListener("click", () => jumpToDate(parisIso()));
     root
       .querySelectorAll("[data-home-day]")
       .forEach((b) =>
