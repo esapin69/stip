@@ -15,6 +15,8 @@
   const APP_POLICY = {
     personal: () => explicit("planning_personal"),
     tomorrow: () => explicit("tomorrow"),
+    dialog: () => explicit("dialog"),
+    messages: () => explicit("messages"),
     team: () =>
       explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
     compare: () => explicit("planning_team"),

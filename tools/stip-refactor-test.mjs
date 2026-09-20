@@ -78,10 +78,15 @@ const patterns=read('stip-patterns.css');
 const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
-check(home.includes('quick-card.svg')&&home.includes('homeProfile'),'Mon profil n’utilise plus le visuel fiche validé.');
-check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement'),'Mon profil ne contient plus le centre À traiter et la déconnexion secondaire.');
+check(home.includes('home-bell.svg')&&home.includes('homeBell')&&home.includes('["notifications", "Notifications"'),'La cloche de communication n’utilise plus son visuel validé.');
+check(home.includes('home-home.svg')&&home.includes('homeHome')&&home.includes('["planning", "Accueil"'),'Accueil n’utilise plus la maison centrale validée.');
+check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
+check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
 check(!quick.includes('data-qs="public"')&&!quickUniversal.includes('data-u="public"'),'Le raccourci bas gauche supprimé est revenu.');
+check(!quick.includes('data-qs="profile"')&&!quickUniversal.includes('data-u="profile"'),'La maison basse supprimée est revenue.');
+check(!existsSync(join(root,'images/icone_app/quick-card.svg'))&&!existsSync(join(root,'images/icone_app/quick-home.svg'))&&!existsSync(join(root,'images/icone_app/home-planning.webp')),'Un ancien visuel de navigation supprimé existe encore.');
+check(existsSync(join(root,'images/icone_app/home-bell.svg'))&&existsSync(join(root,'images/icone_app/home-home.svg')),'Les nouveaux visuels Cloche/Accueil sont absents.');
 check(!quick.includes('Suggestions selon votre usage')&&!quickUniversal.includes('Suggestions selon votre usage'),'Les suggestions automatiques de favoris sont revenues.');
 check(quick.includes('Choisir mes applications')&&quick.includes('Ajouter une application'),'Les états du panneau Favoris ne suivent plus les libellés validés.');
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');

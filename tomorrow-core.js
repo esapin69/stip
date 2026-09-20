@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const STORE="stip_tomorrow_v1",TZ="Europe/Paris",REST=new Set(["RH","RTT","RTTA","RTA","RC","RF","CA","OFF","REPOS","-","—"]);
+const STORE="stip_tomorrow_v1",TZ="Europe/Paris",REMOTE=new Map(),REST=new Set(["RH","RTT","RTTA","RTA","RC","RF","CA","OFF","REPOS","-","—"]);
 const SHIFT={M:["Matin","06:50–14:40"],J:["Journée","08:30–16:20"],J4:["Journée décalée","10:10–18:00"],S:["Soir","13:30–21:00"],N:["Nuit","21:00–06:50"]};
 const pad=n=>String(n).padStart(2,"0"),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 function iso(d=new Date()){const p=new Intl.DateTimeFormat("en-CA",{timeZone:TZ,year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d),m=Object.fromEntries(p.map(x=>[x.type,x.value]));return m.year+"-"+m.month+"-"+m.day}
@@ -24,7 +24,12 @@ return out.sort((a,b)=>String(a.start||"99:99").localeCompare(String(b.start||"9
 function scope(){const a=window.STIPBootCache?.agent||window.STIPSession?.agent||{};return String(a.source_key||a.id||"device")}
 function load(){try{const x=JSON.parse(localStorage.getItem(STORE)||"{}");return x&&typeof x==="object"?x:{}}catch{return{}}}
 function save(x){try{localStorage.setItem(STORE,JSON.stringify(x))}catch{}window.dispatchEvent(new CustomEvent("stip:tomorrow-updated"))}
-function tasks(day=tomorrow()){const x=load(),rows=x[scope()]?.[day];return Array.isArray(rows)?rows.slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0)):[]}
+function localTasks(day=tomorrow()){const x=load(),rows=x[scope()]?.[day];return Array.isArray(rows)?rows.slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0)):[]}
+function remoteKey(day){return scope()+"|"+day}
+function tasks(day=tomorrow()){const local=localTasks(day),remote=REMOTE.get(remoteKey(day));if(!Array.isArray(remote))return local;const remoteClient=new Set(remote.map(x=>String(x.clientId||"")).filter(Boolean)),remoteIds=new Set(remote.map(x=>String(x.id||"")));const pending=local.filter(x=>!remoteIds.has(String(x.id||""))&&!remoteClient.has(String(x.id||""))&&!remoteClient.has(String(x.clientId||"")));return remote.concat(pending).sort((a,b)=>Number(a.order||0)-Number(b.order||0))}
+function setRemoteTasks(day,rows){REMOTE.set(remoteKey(day),(Array.isArray(rows)?rows:[]).slice().sort((a,b)=>Number(a.order||0)-Number(b.order||0)));return tasks(day)}
+function clearRemoteTasks(){REMOTE.clear()}
+function clearLocal(day){const x=load(),s=scope();if(x[s]?.[day]){delete x[s][day];if(!Object.keys(x[s]).length)delete x[s];try{localStorage.setItem(STORE,JSON.stringify(x))}catch{}}}
 function write(day,rows){const x=load(),s=scope();x[s]=x[s]||{};x[s][day]=rows.map((r,i)=>({...r,order:i}));save(x);return x[s][day]}
 function upsert(day,item){const rows=tasks(day),id=item.id||("td-"+Date.now()+"-"+Math.random().toString(36).slice(2,7)),i=rows.findIndex(x=>x.id===id),next={id,title:String(item.title||"").trim(),time:String(item.time||"").trim(),note:String(item.note||"").trim(),done:!!item.done,order:i>=0?rows[i].order:rows.length,createdAt:item.createdAt||new Date().toISOString()};if(i>=0)rows[i]=next;else rows.push(next);write(day,rows);return next}
 function remove(day,id){write(day,tasks(day).filter(x=>x.id!==id))}
@@ -46,6 +51,7 @@ if(ev.some(x=>x.type==="Visite médicale"))out.push({icon:"🩺",title:"Visite m
 const open=ts.filter(x=>!x.done).length;if(open)out.push({icon:"✓",title:open+" chose"+(open>1?"s":"")+" à faire",text:"Tes ajouts personnels sont regroupés ici et peuvent être réordonnés.",level:"info"});
 return out.slice(0,5)}
 function snapshot(day=tomorrow()){return{day,shift:shiftFor(day),events:events(day),tasks:tasks(day),insights:insights(day),fullDate:fullDate(day),shortDate:shortDate(day),relation:relation(day)}}
-window.STIPTomorrow={iso,tomorrow,add,dateObj,fullDate,shortDate,relation,futureDays,canon,esc,shiftFor,events,tasks,write,upsert,remove,toggle,reorder,moveNext,insights,snapshot};
+window.STIPTomorrow={iso,tomorrow,add,dateObj,fullDate,shortDate,relation,futureDays,canon,esc,shiftFor,events,localTasks,tasks,setRemoteTasks,clearRemoteTasks,clearLocal,write,upsert,remove,toggle,reorder,moveNext,insights,snapshot};
+window.addEventListener("stip:session-ended",clearRemoteTasks);
 window.dispatchEvent(new CustomEvent("stip:tomorrow-ready"));
 })();
