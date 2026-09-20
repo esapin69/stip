@@ -864,16 +864,29 @@
       .join("")}</div></section>`;
   }
   function fixedShiftLegend() {
-    const shifts = [
-      ["M", "Matin", "shift-m"],
-      ["J", "Journée", "shift-j"],
-      ["J4", "J4", "shift-j4"],
-      ["S", "Soir", "shift-s"],
-      ["N", "Nuit", "shift-n"],
-    ];
-    return `<section class="hc-fixed-shift-legend" aria-label="Repères horaires"><small>REPÈRES HORAIRES</small><div>${shifts
-      .map(([code, label, cls]) => `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`)
-      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span><span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true"></i><b>En attente du nouveau planning</b></span></div></section>`;
+    const visible = selectedWeek(),
+      present = new Set(visible.map((x) => canonicalShift(x.code))),
+      pending = visible.some((x) => {
+        const code = canonicalShift(x.code);
+        return !code || code === "—";
+      }),
+      shifts = [
+        ["M", "Matin", "shift-m"],
+        ["J", "Journée", "shift-j"],
+        ["J4", "J4", "shift-j4"],
+        ["S", "Soir", "shift-s"],
+        ["N", "Nuit", "shift-n"],
+      ].filter(([code]) => present.has(code)),
+      items = shifts.map(
+        ([code, label, cls]) =>
+          `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`,
+      );
+    if (present.has("RH"))
+      items.push('<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span>');
+    if (pending)
+      items.push('<span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true"></i><b>En attente du nouveau planning</b></span>');
+    if (!items.length) return "";
+    return `<section class="hc-fixed-shift-legend" aria-label="Repères horaires"><small>REPÈRES HORAIRES</small><div>${items.join("")}</div></section>`;
   }
   function nativeExchanges() {
     const b = state.boot || {},
