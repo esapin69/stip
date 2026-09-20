@@ -1025,15 +1025,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-left .hc-day-weekend>i{background:transparent!important}
 
 
-/* quick-access-round-icons-v9-20260920 */
-/* Top quick-access artwork is intentionally circular; app-store artwork remains unchanged. */
-.hc-home-filters 
-.hc-home-filters 
-@media(max-width:430px){
- .hc-home-filters 
-}
-
-
 /* week-navigation-below-month-v10-20260920 */
 
 
