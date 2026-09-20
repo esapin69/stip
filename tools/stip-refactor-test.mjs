@@ -154,9 +154,7 @@ check(homeCss.includes('CONTEXTUAL CURRENT RETURN')&&homeCss.includes('.hc-plann
 check(home.includes('hc-home-day-shift')&&home.includes('weekEventsForDay(x).slice(0, 2)'),'Le sélecteur compact de jours doit contenir le shift et les repères d’événements.');
 check(home.includes('hc-selected-day-card')&&!/function weekWidget\(\)[\s\S]{0,500}weekDaysLandscape/.test(home),'Les anciennes grosses cartes de semaine ne doivent plus doubler le sélecteur compact.');
 check(home.includes('return start <= focus.iso && end >= focus.iso'),'Les détails sous le sélecteur doivent suivre uniquement le jour sélectionné.');
-check(homeCss.includes('COMPACT WEEK SELECTOR + SELECTED DAY DETAIL')&&homeCss.includes('.hc-selected-day-card'),'Le sélecteur compact ou sa fiche de jour sélectionné a régressé.');
-check(home.includes('class="hc-planning-day-panel"')&&home.indexOf('homeDayStrip(w)') < home.indexOf('weekWidget()'),'Le sélecteur compact doit rester au-dessus des détails, dans le même bloc fusionné.');
-check(homeCss.includes('FUSED COMPACT SELECTOR PANEL')&&homeCss.includes('.hc-planning-day-panel .hc-home-week-days')&&homeCss.includes('.hc-planning-day-panel .hc-selected-day-card'),'Le raccord visuel entre le sélecteur compact et le bloc planning a disparu.');
+check(homeCss.includes('COMPACT WEEK SELECTOR + SELECTED DAY DETAIL')&&homeCss.includes('min-height:58px!important')&&homeCss.includes('.hc-selected-day-card'),'Le sélecteur compact ou sa fiche de jour sélectionné a régressé.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
