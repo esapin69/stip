@@ -61,9 +61,9 @@
           aria-label="Accéder directement à une journée"
         ></nav>
         <nav class="team-tabs stip-levels" role="tablist" aria-label="Volets Esprit d’équipe">
-          <button type="button" class="active" data-team-tab="team">Équipe</button>
-          <button type="button" data-team-tab="activity">Activité</button>
-          <button type="button" data-team-tab="assistant">Assistant</button>
+          <button type="button" role="tab" aria-selected="true" class="active" data-team-tab="team">Équipe</button>
+          <button type="button" role="tab" aria-selected="false" data-team-tab="activity">Activité</button>
+          <button type="button" role="tab" aria-selected="false" data-team-tab="assistant">Assistant</button>
         </nav>
       </section>
       <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
