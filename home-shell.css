@@ -1558,3 +1558,36 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-day-event-icon{width:28px!important;height:28px!important;font-size:1rem!important}
  .hc-day-event-copy strong{font-size:.69rem!important}
 }
+
+
+/* repair-planning-layout-v18-20260920 */
+/* Repair the mobile planning after the over-tall agenda experiment. */
+.hc-planning-group.hc-planning-split{
+ align-items:start!important;
+ min-height:0!important;
+ height:auto!important;
+ background:transparent!important;
+ box-shadow:none!important;
+ overflow:visible!important;
+}
+.hc-planning-left,.hc-planning-right{
+ min-height:0!important;height:auto!important;
+}
+.hc-week-agenda-slots{display:block!important}
+.hc-agenda-day-slot.empty{display:none!important}
+.hc-agenda-weekend-slot{display:block!important}
+.hc-agenda-weekend-slot .hc-agenda-day-slot.empty{display:none!important}
+.hc-week-agenda:not(:has(.hc-agenda-day-slot.has-event)) .hc-week-agenda-head{
+ min-height:82px!important;
+ align-items:center!important;
+ padding:10px 8px!important;
+}
+.hc-week-agenda:not(:has(.hc-agenda-day-slot.has-event)) .hc-week-agenda-slots{display:none!important}
+.hc-agenda-day-slot.has-event{
+ min-height:76px!important;margin:5px 0!important;
+}
+.hc-day-event{min-height:74px!important}
+
+/* Keep the visible day card compact instead of stretching to the height of the other column. */
+.hc-widget-planning,.hc-days-vertical{min-height:0!important;height:auto!important}
+.hc-planning-left .hc-day-vertical{min-height:78px!important;height:auto!important}
