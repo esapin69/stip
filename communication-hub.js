@@ -101,16 +101,27 @@
   function renderDialog(){
     const body=dialog?.querySelector("[data-dialog-body]");if(!body)return;
     body.innerHTML=dialogHistory.map(x=>'<div class="ch-msg '+x.side+'">'+x.html+'</div>').join("");
-    body.querySelectorAll(".ch-suggestions button").forEach(b=>b.addEventListener("click",()=>submitAsk(b.textContent)));
+    body.querySelectorAll(".ch-suggestions button").forEach(b=>b.addEventListener("click",()=>submitAsk(String(b.textContent||""))));
     body.querySelectorAll("[data-dialog-action]").forEach(b=>b.addEventListener("click",()=>runDialogAction(JSON.parse(decodeURIComponent(b.dataset.dialogAction)))));
-    body.querySelectorAll("[data-choice-agent]").forEach(b=>b.addEventListener("click",()=>{dialogContext={...dialogContext,agent_id:b.dataset.choiceAgent};dialogHistory.push({side:"bot",html:'<article class="ch-answer"><strong>'+esc(b.dataset.choiceName)+'</strong><p>D’accord, je garde cette personne. Planning, coordonnées ou message ?</p></article>'});renderDialog()}));
+    body.querySelectorAll(".ch-result-avatar img").forEach(img=>img.addEventListener("error",()=>{const host=img.parentElement;if(host){host.textContent=host.dataset.avatarFallback||"ST"}},{once:true}));
+    body.querySelectorAll("[data-choice-agent]").forEach(b=>b.addEventListener("click",()=>{
+      const id=String(b.dataset.choiceAgent||""),label=String(b.dataset.choiceName||"Cette personne"),me=String(window.STIPSession?.agent?.id||window.STIPBootCache?.agent?.id||""),
+        options=["Planning","Coordonnées"],canMessage=b.dataset.choiceMessage==="1"&&id&&id!==me;
+      if(canMessage)options.push("Message");
+      dialogContext={...dialogContext,version:2,subject_agent_ids:[id],agent_id:id,last_choice_ids:[],last_choice_kind:"agent",offered_options:options};
+      dialogHistory.push({side:"bot",html:'<article class="ch-answer"><strong>'+esc(label)+'</strong><p>D’accord, je garde cette personne. Que veux-tu regarder ?</p><div class="ch-suggestions">'+options.map(x=>'<button type="button">'+esc(x)+'</button>').join("")+'</div></article>'});
+      renderDialog()
+    }));
     body.scrollTop=body.scrollHeight
   }
   function actionButton(a){return '<button type="button" data-dialog-action="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(a.label||"Ouvrir")+'</button>'}
   function cardHtml(c,choice=false){
     if(c.type==="metric")return '<article class="ch-result metric"><b>'+esc(c.title)+'</b><strong>'+esc(c.subtitle)+'</strong><small>'+esc(c.detail)+'</small></article>';
     if(c.type==="place")return '<article class="ch-result"><span class="ch-result-icon">⌖</span><div><strong>'+esc(c.title)+'</strong><small>'+esc(c.subtitle)+'</small><p>'+esc(c.detail||"")+'</p></div></article>';
-    return '<button type="button" class="ch-result person" '+(choice?'data-choice-agent="'+esc(c.id)+'" data-choice-name="'+esc(c.title)+'"':"")+'>'+(c.avatar?'<span class="ch-result-avatar"><img src="'+esc(c.avatar)+'" alt=""></span>':'<span class="ch-result-avatar">'+esc(String(c.title||"ST").slice(0,2).toUpperCase())+'</span>')+'<div><strong>'+esc(c.title)+'</strong><small>'+esc(c.subtitle||"")+'</small>'+(c.detail?'<p>'+esc(c.detail)+'</p>':"")+'</div>'+(c.badge?'<b>'+esc(c.badge)+'</b>':"")+'</button>'
+    const initials=String(c.title||"ST").split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]||"").join("").toUpperCase()||"ST",
+      choiceData=choice?'data-choice-agent="'+esc(c.id)+'" data-choice-name="'+esc(c.title)+'" data-choice-message="'+(c.can_message?"1":"0")+'"':"",
+      avatar=c.avatar?'<span class="ch-result-avatar" data-avatar-fallback="'+esc(initials)+'"><img src="'+esc(c.avatar)+'" alt=""></span>':'<span class="ch-result-avatar">'+esc(initials)+'</span>';
+    return '<button type="button" class="ch-result person" '+choiceData+'>'+avatar+'<div><strong>'+esc(c.title)+'</strong><small>'+esc(c.subtitle||"")+'</small>'+(c.detail?'<p>'+esc(c.detail)+'</p>':"")+'</div>'+(c.badge?'<b>'+esc(c.badge)+'</b>':"")+'</button>'
   }
   function answerHtml(r){
     const choice=r.kind==="choice";
@@ -127,7 +138,12 @@
     if(a.type==="mail")return location.href="mailto:"+a.value;
     if(a.type==="copy"){try{await navigator.clipboard.writeText(a.value)}catch{}return}
     if(a.type==="open"&&a.url)return location.href=a.url;
+    if(a.type==="new_message"){closeDialog();return recipientSheet(false)}
     if(a.type==="message"&&a.agent_id){closeDialog();return openDirect(a.agent_id)}
+    if(a.type==="group_message"&&Array.isArray(a.agent_ids)&&a.agent_ids.length){
+      try{const r=await msg("group",{agent_ids:a.agent_ids,title:"Groupe STIP"});closeDialog();await loadHome(true);return openThread(r.conversation.id)}
+      catch(e){alert(e.message||"Conversation impossible.");return}
+    }
     if(a.type==="compare"&&a.source_key){try{sessionStorage.setItem("stip_compare_prefill_v1",JSON.stringify({source_keys:[a.source_key],created_at:Date.now()}))}catch{}return location.href="planning-compare-app.html"}
   }
   async function openDirect(agentId){
