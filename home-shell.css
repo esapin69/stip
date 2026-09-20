@@ -1142,15 +1142,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-id-card{
  position:relative!important;
- grid-template-columns:clamp(100px,26vw,118px) minmax(0,1fr)!important;
- gap:14px!important;
+ grid-template-columns:clamp(98px,25vw,112px) minmax(0,1fr)!important;
+ gap:13px!important;
  align-items:center!important;
- padding:9px 14px!important;
+ padding:8px 14px!important;
  min-height:0!important;
 }
 .hc-id-card .hc-avatar{
  width:100%!important;
- height:128px!important;
+ height:116px!important;
  min-height:0!important;
  align-self:center!important;
  border:0!important;
@@ -1171,60 +1171,67 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card .hc-profile-copy{
  min-width:0!important;
  min-height:0!important;
+ padding-right:38px!important;
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
  align-content:center!important;
+ gap:3px!important;
  text-align:left!important;
 }
 .hc-id-card .hc-profile-copy>*{text-align:left!important}
-.hc-id-card .hc-profile-copy>small{
- display:block!important;
- margin-bottom:4px!important;
- color:#168297!important;
- font-size:.7rem!important;
- line-height:1!important;
- font-weight:950!important;
- letter-spacing:.085em!important;
-}
 .hc-id-card .hc-profile-name{
  display:block!important;
+ min-width:0!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
+ white-space:nowrap!important;
  color:#153a4a!important;
- font-size:clamp(1.35rem,5.1vw,1.72rem)!important;
- line-height:1.02!important;
+ font-size:clamp(1.3rem,4.9vw,1.62rem)!important;
+ line-height:1!important;
  font-weight:950!important;
  letter-spacing:-.025em!important;
 }
 .hc-profile-ghe{
+ display:block!important;
  color:#153a4a!important;
- font-size:clamp(1.42rem,5.4vw,1.8rem)!important;
+ font-size:clamp(1.34rem,5vw,1.66rem)!important;
  line-height:1!important;
  font-weight:950!important;
 }
-.hc-profile-team{
- color:#6f8189!important;
- font-size:.9rem!important;
- line-height:1!important;
- font-weight:850!important;
+.hc-id-card .hc-profile-contacts{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ gap:2px!important;
+ margin-top:1px!important;
+ min-width:0!important;
+}
+.hc-id-card .hc-profile-contact{
+ width:max-content!important;
+ max-width:100%!important;
+ min-height:0!important;
+ padding:0!important;
+ border:0!important;
+ background:transparent!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
  white-space:nowrap!important;
 }
-.hc-id-card .hc-profile-contacts{
- gap:2px!important;
- margin-top:5px!important;
-}
-.hc-id-card .hc-profile-contact{padding-top:3px!important}
-.hc-id-card .hc-profile-contact span{
- color:#7c9098!important;
- font-size:.56rem!important;
- font-weight:900!important;
- letter-spacing:.055em!important;
-}
 .hc-id-card .hc-profile-contact strong{
+ display:block!important;
+ min-width:0!important;
+ max-width:100%!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
+ white-space:nowrap!important;
  color:#244d5d!important;
- font-size:clamp(.94rem,3.7vw,1.08rem)!important;
- line-height:1.02!important;
+ font-size:clamp(.91rem,3.45vw,1.02rem)!important;
+ line-height:1.05!important;
  font-weight:900!important;
 }
+.hc-id-card .hc-profile-contact:active strong{color:var(--stip-accent)!important}
 .hc-profile-bell{
  position:absolute!important;
- top:12px!important;
+ top:11px!important;
  right:14px!important;
  z-index:3!important;
  width:auto!important;
@@ -1438,7 +1445,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     gap:12px!important;
     padding:10px 11px!important;
   }
-  .hc-id-card .hc-avatar{height:122px!important}
+  .hc-id-card .hc-avatar{height:112px!important}
   .hc-home-filters{
     width:min(100%,350px)!important;
     margin:18px auto 18px!important;
@@ -1452,7 +1459,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
-  .hc-id-card .hc-avatar{height:122px!important}
+  .hc-id-card .hc-avatar{height:108px!important}
   .hc-id-card .hc-profile-name{font-size:1.22rem!important}
   .hc-profile-ghe{font-size:1.42rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:.9rem!important}
