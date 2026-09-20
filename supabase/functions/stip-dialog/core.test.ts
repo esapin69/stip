@@ -20,6 +20,7 @@ eq(parseDateScope("semaine prochaine", base), { start: "2026-09-21", end: "2026-
 eq(parseDateScope("phrase sans date", base), null, "no invented date");
 const ctx: DialogContext = { date_scope: { start: "2026-09-21", end: "2026-09-21" } };
 eq(parseDateScope("Et vendredi ?", base, ctx), { start: "2026-09-25", end: "2026-09-25" }, "follow up weekday");
+eq(parseDateScope("Qui est en J4 ce jour-là ?", base, ctx), { start: "2026-09-21", end: "2026-09-21" }, "same-day conversational reference");
 eq(classifyIntent("Y a-t-il un système de chat ici ?"), "messaging_help", "chat intent");
 eq(classifyIntent("Je peux échanger avec qui la dernière semaine de septembre ?"), "exchange", "exchange intent");
 eq(classifyIntent("Qui est en J4 demain ?"), "shift_roster", "shift roster");
