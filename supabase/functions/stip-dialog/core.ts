@@ -14,6 +14,7 @@ export type DialogContext = {
 export type Intent =
   | "selection"
   | "messaging_help"
+  | "request_help"
   | "exchange"
   | "contact"
   | "place"
@@ -218,11 +219,12 @@ export function classifyIntent(raw: string): Intent {
   const q = normalize(raw);
   if (selectionCount(raw)) return "selection";
   if (/\b(chat|messagerie|systeme de chat|systeme de message|messages? stip|discuter ici|ecrire a quelqu un|envoyer un message)\b/.test(q)) return "messaging_help";
+  if (/\b(conge|conges|poser (?:un |des )?conges?|demande de conge|absence|demander (?:un )?repos|poser (?:un )?repos)\b/.test(q)) return "request_help";
   if (/\b(echange|echanger|permuter|permutation|changer mon shift|changer mon horaire|changer mon planning)\b/.test(q)) return "exchange";
   if (/\b(numero|telephone|tel|mail|email|e mail|coordonnees?|adresse professionnelle)\b/.test(q)) return "contact";
   if (/\b(ou est|ou se trouve|comment aller|comment y aller|batiment|ascenseur|irm|imagerie|service|lieu|etage)\b/.test(q)) return "place";
   if (/\b(combien|effectif|besoin|organisation|couverture|reference hcl)\b/.test(q)) return "organization";
-  if (/\b(avec qui|qui travaille avec|qui commence avec|qui finit avec|qui croise)\b/.test(q)) return "colleagues";
+  if (/\b(avec qui|qui travaille avec|qui commence avec|qui finit avec|qui croise|qui est avec|qui sont avec|qui avec moi|je suis avec)\b/.test(q)) return "colleagues";
   if (/\b(sur le terrain|qui travaille(?:\s+(?:aujourd hui|demain|apres demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche))?|qui est present|qui est presente|qui sont presents|qui sont presentes)\b/.test(q)) return "on_duty";
   if (/\bqui\b/.test(q) && extractShift(raw)) return "shift_roster";
   if (/\b(horaire|planning|shift|poste|travaille|travail|quand|je suis de quoi|je suis quoi|je fais quoi)\b/.test(q) || /\b(aujourd hui|demain|apres demain|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b/.test(q)) return "planning";
