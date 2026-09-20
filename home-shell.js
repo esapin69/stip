@@ -24,7 +24,6 @@
     weekFull: false,
     dayFocus: parisIso(),
     homeMode: "planning",
-    dateJumpOpen: true,
     dateJumpMonth: "",
   };
   const REST = new Set([
@@ -179,12 +178,6 @@
         .toUpperCase(),
       anchorDay: today.getDate(),
     };
-  }
-  function openPlanningMonth(key) {
-    key = String(key || "").trim();
-    if (key) window.STIPRequestedPlanningMonth = key;
-    window.STIPPlanningMonth?.set?.(key);
-    window.STIPHubs?.planning?.("personal");
   }
   function jumpToDate(iso) {
     iso = String(iso || "").slice(0, 10);
@@ -1224,11 +1217,6 @@
     root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
       window.STIPCommunication?.openDialog?.(),
     );
-    root
-      .querySelector("[data-open-month]")
-      ?.addEventListener("click", (e) =>
-        openPlanningMonth(e.currentTarget.dataset.openMonth),
-      );
     const dateJumpPanel = root.querySelector("[data-date-jump-panel]");
     if (dateJumpPanel)
       renderDateJumpCalendar(
