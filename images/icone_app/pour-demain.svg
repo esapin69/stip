@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Pour demain">
+  <defs>
+    <linearGradient id="bg" x1="28" y1="24" x2="226" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff9f62"/>
+      <stop offset=".52" stop-color="#f06a58"/>
+      <stop offset="1" stop-color="#7256d8"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="99" y1="135" x2="164" y2="198" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffd66b"/>
+      <stop offset="1" stop-color="#ff9f43"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#623a70" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="54" fill="url(#bg)"/>
+  <path d="M22 74c50-37 117-51 210-28v76c-49-19-100-20-153-5-27 8-46 16-57 24Z" fill="#fff" opacity=".08"/>
+  <g filter="url(#shadow)">
+    <rect x="50" y="53" width="156" height="151" rx="31" fill="#fff" opacity=".97"/>
+    <path d="M50 99h156" stroke="#7358d7" stroke-width="12"/>
+    <path d="M84 42v30M171 42v30" stroke="#fff" stroke-width="15" stroke-linecap="round"/>
+    <path d="M84 42v30M171 42v30" stroke="#6f55d4" stroke-width="9" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(0 2)">
+    <path d="M79 170h98" stroke="#e7e9f3" stroke-width="10" stroke-linecap="round"/>
+    <path d="M96 170a32 32 0 0 1 64 0Z" fill="url(#sun)"/>
+    <path d="M128 126v-16M91 137l-11-11M165 137l11-11" stroke="#f3a84f" stroke-width="9" stroke-linecap="round"/>
+    <path d="M96 184h64" stroke="#6d55d5" stroke-width="10" stroke-linecap="round"/>
+    <path d="m151 184-14-13M151 184l-14 13" stroke="#6d55d5" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
