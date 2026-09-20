@@ -82,7 +82,7 @@
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeAI:
-      '<img src="images/icone_app/home-access-stip-ai-thin.webp?v=20260920-ai-thin1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
   };
