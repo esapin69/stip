@@ -17,6 +17,7 @@ eq(parseDateScope("la dernière semaine de septembre", base), { start: "2026-09-
 eq(parseDateScope("du 25 au 30 septembre", base), { start: "2026-09-25", end: "2026-09-30", label: "du 25 au 30 septembre" }, "range");
 eq(parseDateScope("25 septembre 2026", base), { start: "2026-09-25", end: "2026-09-25" }, "named explicit date");
 eq(parseDateScope("semaine prochaine", base), { start: "2026-09-21", end: "2026-09-27", label: "semaine prochaine" }, "next week");
+eq(parseDateScope("mardi et mercredi qui arrive", base), { start: "2026-09-22", end: "2026-09-23", label: "mardi et mercredi", dates: ["2026-09-22", "2026-09-23"] }, "explicit two weekdays");
 eq(parseDateScope("phrase sans date", base), null, "no invented date");
 const ctx: DialogContext = { date_scope: { start: "2026-09-21", end: "2026-09-21" } };
 eq(parseDateScope("Et vendredi ?", base, ctx), { start: "2026-09-25", end: "2026-09-25" }, "follow up weekday");
