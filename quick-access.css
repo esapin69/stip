@@ -100,3 +100,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(104px + env(safe-area-inse
 .stip-store-add{min-width:76px!important;min-height:36px!important;padding:0 11px!important;border:0!important;border-radius:999px!important;background:#e8f7f9!important;color:#087f94!important;font-size:.72rem!important;font-weight:950!important}
 .stip-store-add.is-added{background:#eef2f3!important;color:#6b7d84!important}
 @media(max-width:430px){.stip-my-app-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stip-my-app{min-height:116px!important}.stip-store-icon{width:56px;height:56px;flex-basis:56px}.stip-store-main{grid-template-columns:56px minmax(0,1fr)!important}.stip-store-card{gap:6px;padding:9px}.stip-store-add{min-width:68px!important;padding:0 8px!important}}
+
+/* Store selection controls: immediate add/remove affordance */
+.stip-store-add{min-width:82px!important;min-height:44px!important;padding:0 10px!important;display:grid!important;grid-template-columns:24px auto!important;align-items:center!important;justify-content:center!important;gap:4px!important;background:#e9f8ef!important;color:#16864b!important;border:1px solid #bfe8cf!important}
+.stip-store-add>span{font-size:1.65rem!important;line-height:1!important;font-weight:700!important}
+.stip-store-add>strong{font-size:.69rem!important;font-weight:950!important}
+.stip-store-add.is-added{background:#fff0f0!important;color:#c74343!important;border-color:#f1caca!important}
+.stip-store-card.is-selected{border-color:#dce6e8!important}
+@media(max-width:430px){.stip-store-add{min-width:72px!important;grid-template-columns:1fr!important;gap:0!important}.stip-store-add>span{font-size:1.8rem!important}.stip-store-add>strong{display:none!important}}
