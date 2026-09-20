@@ -488,19 +488,6 @@
     state.renderSig = "";
     render();
   }
-  function underlyingWorkShift(x) {
-    const raw = canonicalShift(x.code);
-    if (WORK_SHIFT_ICON[raw]) return raw;
-    const normalized = String(x.time || "").replace(/h/g, ":").replace(/\s/g, "");
-    const byTime = {
-      "06:50–14:40": "M",
-      "08:30–16:20": "J",
-      "10:10–18:00": "J4",
-      "13:30–21:00": "S",
-      "21:00–06:50": "N",
-    };
-    return byTime[normalized] || raw;
-  }
   function dayCard(x, cls = "hc-day", compact = false) {
     const canonical = canonicalShift(x.code),
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
@@ -553,7 +540,7 @@
     return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"}" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
   }
   function planningStatus() {
-    if (state.bootStatus === "loading")
+    if (state.bootStatus === "loading" && !(state.boot?.personal || []).length)
       return '<p class="hc-planning-status">Chargement du planning…</p>';
     if (state.bootStatus === "error")
       return `<div class="hc-planning-status error"><span>Planning non chargé.</span><button type="button" data-planning-retry>Réessayer</button></div>`;
