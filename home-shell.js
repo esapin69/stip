@@ -81,6 +81,8 @@
       '<img src="images/icone_app/home-access-personal.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
+    homeAI:
+      '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai1" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
   };
@@ -1002,16 +1004,18 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       items = [
-        ["apps", "Applications", ICON.homeApps, "mode"],
-        ["planning", "Mon profil", ICON.homeHome, "mode"],
-      ];
+        ["apps", "Applications", ICON.homeApps],
+        ["planning", "Mon profil", ICON.homeHome],
+      ],
+      ai = has("dialog")
+        ? `<button type="button" class="hc-home-ai" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`
+        : "";
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-      .map(([key, label, art, kind]) =>
-        kind === "app"
-          ? `<button type="button" data-app="${key}" aria-label="${esc(label)}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`
-          : `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`
+      .map(
+        ([key, label, art]) =>
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`,
       )
-      .join("")}</nav>`;
+      .join("")}${ai}</nav>`;
   }
 
   function actionCenterData(filter = state.actionFilter) {
@@ -1086,11 +1090,8 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    const weeklyDetails = futureWidget(),
-      dialogAccess = has("dialog")
-        ? '<div class="hc-fixed-legend-divider" aria-hidden="true"></div><button class="ch-ask-entry" type="button" data-dialog-home><span>⌕</span><div><strong>Demander à STIP</strong><small>Planning, collègue, contact, lieu, effectif…</small></div><b>›</b></button>'
-        : "";
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${dialogAccess}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+    const weeklyDetails = futureWidget();
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
