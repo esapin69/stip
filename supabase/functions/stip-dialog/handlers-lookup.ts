@@ -35,7 +35,7 @@ export async function placeAnswer(c: SessionCtx, old: DialogContext, raw: string
   const currentPlace = old.place_id ? (places || []).find((p: any) => String(p.id) === String(old.place_id)) : null;
   const normalizedRaw = normalize(raw);
   const wantsRoute = !!currentPlace && /\b(comment y aller|y aller|itineraire|trajet|chemin|comment aller)\b/.test(normalizedRaw);
-  const wantsCurrentPlace = !!currentPlace && /\b(afficher le batiment|afficher ce lieu|ce lieu|cet endroit|le batiment)\b/.test(normalizedRaw);
+  const wantsCurrentPlace = !!currentPlace && /\b(afficher le batiment|afficher le lieu|afficher ce lieu|ce lieu|cet endroit|le batiment)\b/.test(normalizedRaw);
   if (wantsRoute) {
     const { data: routes, error: routeError } = await db.from("stip_place_routes")
       .select("id,from_place_id,to_place_id,label,mode,visibility,evidence_status,notes,sort_order")
