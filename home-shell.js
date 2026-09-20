@@ -496,13 +496,14 @@
         .toLocaleDateString("fr-FR", { weekday: "long" })
         .replace(".", "")
         .toUpperCase(),
-      day = weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
+      landscape = cls.includes("hc-day-landscape"),
+      day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       dayOff = DAY_OFF.has(canonical),
       statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
       shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical,
       workIcon = WORK_SHIFT_ICON[canonical] || "",
-      workLabel = weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
+      workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
       visual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : statusIcon
@@ -516,6 +517,9 @@
     const weekdays = w.filter((x) => x.dow < 6),
       weekend = w.filter((x) => x.dow > 5);
     return `<div class="hc-days-vertical">${weekdays.map((x) => dayCard(x, "hc-day hc-day-vertical", true)).join("")}${weekend.length ? `<div class="hc-weekend-row">${weekend.map((x) => dayCard(x, "hc-day hc-day-vertical hc-day-weekend", true)).join("")}</div>` : ""}</div>`;
+  }
+  function weekDaysLandscape(w) {
+    return `<div class="hc-days-landscape">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
@@ -535,7 +539,7 @@
   }
   function weekWidget() {
     const w = selectedWeek();
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning">${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
+    return `<section class="hc-widget hc-widget-planning" data-widget="planning">${weekDaysLandscape(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -968,7 +972,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right">${monthShortcut()}<div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-month-row">${monthShortcut()}</div><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
