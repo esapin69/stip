@@ -488,6 +488,19 @@
     state.renderSig = "";
     render();
   }
+  function underlyingWorkShift(x) {
+    const raw = canonicalShift(x.code);
+    if (WORK_SHIFT_ICON[raw]) return raw;
+    const normalized = String(x.time || "").replace(/h/g, ":").replace(/\s/g, "");
+    const byTime = {
+      "06:50–14:40": "M",
+      "08:30–16:20": "J",
+      "10:10–18:00": "J4",
+      "13:30–21:00": "S",
+      "21:00–06:50": "N",
+    };
+    return byTime[normalized] || raw;
+  }
   function dayCard(x, cls = "hc-day", compact = false) {
     const canonical = canonicalShift(x.code),
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
@@ -530,16 +543,10 @@
   function weekEventMarker(x) {
     const events = weekEventsForDay(x);
     if (!events.length) return "";
-    const eventShift = events
-        .map((event) => canonicalShift(event.shift || event.workShift || event.work_shift || event.schedule || event.shiftCode || event.shift_code || ""))
-        .find((code) => WORK_SHIFT_ICON[code]),
-      dayShift = canonicalShift(x.code),
-      shift = eventShift || (WORK_SHIFT_ICON[dayShift] ? dayShift : ""),
-      shiftCode = shift ? shift.replace(/[^A-Z0-9]/g, "").toLowerCase() : "";
     return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .slice(0, 3)
       .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
-      .join("")}${shiftCode ? `<b class="hc-event-shift-dot hc-event-shift-dot-${shiftCode}" aria-label="Shift ${esc(shift)}"></b>` : ""}</span>`;
+      .join("")}</span>`;
   }
   function weekDaysLandscape(w) {
     const hasEvents = w.some((x) => weekEventsForDay(x).length);
