@@ -1981,3 +1981,36 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  min-width:40px!important;
  min-height:40px!important;
 }
+
+
+/* stable-event-lane-v34-20260920 */
+/* Event lane exists only when needed; marker position is independent from the day-card top. */
+.hc-days-landscape{
+ position:relative!important;
+ padding-top:0!important;
+}
+.hc-days-landscape.has-week-events{
+ padding-top:56px!important;
+}
+.hc-days-landscape.no-week-events{
+ padding-top:0!important;
+}
+.hc-days-landscape.has-week-events .hc-day-event-markers{
+ top:8px!important;
+ bottom:auto!important;
+ transform:translate(-50%,0)!important;
+ margin:0!important;
+ z-index:8!important;
+ height:40px!important;
+ min-width:40px!important;
+ min-height:40px!important;
+}
+.hc-days-landscape.has-week-events .hc-day-event-markers i{
+ font-size:25px!important;
+}
+.hc-days-landscape.has-week-events .hc-day-landscape{
+ position:relative!important;
+}
+.hc-days-landscape.no-week-events + .hc-planning-status:empty{
+ display:none!important;
+}
