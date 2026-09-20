@@ -155,6 +155,12 @@ check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.inclu
 check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
 check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
 
+const espritHtml=read('esprit-equipe.html');
+const espritJs=read('esprit-equipe.js');
+check(espritHtml.indexOf('id="teamDays"') < espritHtml.indexOf('class="team-tabs"'),'Les filtres Équipe / Activité / Assistant doivent rester sous le sélecteur de jour.');
+check(espritJs.includes('const day = state.dayFocus') && !espritJs.includes('.map((day) => renderer(bundle, day))'),'Esprit d’équipe doit afficher uniquement la journée sélectionnée.');
+check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le clic sur un jour ne doit plus faire défiler la page vers une carte plus bas.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
