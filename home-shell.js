@@ -510,7 +510,7 @@
           : workIcon
             ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
             : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span></span>`;
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
