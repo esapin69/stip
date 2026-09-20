@@ -46,7 +46,7 @@
   }
   async function loadHome(force=false){
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
-    try{home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost()}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
+    try{home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost();if(currentMode()==="notifications"){let pending="";try{pending=sessionStorage.getItem("stip_message_open_v1")||"";if(pending)sessionStorage.removeItem("stip_message_open_v1")}catch{}if(pending)setTimeout(()=>openThread(pending),20)}}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
   }
   function floatSync(){
     const show=currentMode()==="notifications"&&can("dialog");
