@@ -738,7 +738,14 @@
       );
   }
   function futureWidget() {
-    const items = futureItems(),
+    const w = selectedWeek(),
+      weekStart = w[0]?.iso || "",
+      weekEnd = w[w.length - 1]?.iso || "",
+      items = futureItems().filter((x) => {
+        const start = String(x.date || "").slice(0, 10),
+          end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+        return start <= weekEnd && end >= weekStart;
+      }),
       show = items.slice(0, 3);
     return `<section class="hc-widget hc-widget-future" data-widget="future"><header class="hc-widget-head hc-widget-head-compact"><div><small>AGENDA</small><h2>À ne pas manquer</h2></div><button type="button" data-widget-open="future">Tout voir ›</button></header><div class="hc-widget-list">${
       show.length
