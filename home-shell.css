@@ -1398,3 +1398,47 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-left .hc-day-vertical.work .hc-day-head{background:var(--card-head,#f2f6f7)!important;border-bottom:1px solid color-mix(in srgb,var(--shift) 28%,transparent)!important}
 .hc-planning-left .hc-day-vertical.rest{background:#f7f9fa!important;box-shadow:inset 0 0 0 1px rgba(125,137,150,.12)!important}
 .hc-planning-left .hc-day-vertical.rest .hc-day-head{background:#f1f4f6!important;border-bottom:1px solid rgba(125,137,150,.22)!important}
+
+
+/* planning-final-pending-fixes-v16-20260920 */
+/* Exact shift dots: no emoji rendering, so colours are stable on every phone. */
+.hc-planning-left .hc-work-dot{
+ width:20px!important;height:20px!important;border-radius:50%!important;
+ display:inline-block!important;flex:0 0 20px!important;
+ box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(21,58,74,.12)!important;
+}
+.hc-planning-left .hc-work-dot-m{background:#155ecb!important}
+.hc-planning-left .hc-work-dot-j{background:#13934f!important}
+.hc-planning-left .hc-work-dot-j4{background:#e96d17!important}
+.hc-planning-left .hc-work-dot-s{background:#e2b400!important}
+.hc-planning-left .hc-work-dot-n{background:#1f2328!important}
+.hc-planning-left .hc-weekend-row .hc-work-dot{width:17px!important;height:17px!important;flex-basis:17px!important}
+
+/* The full-month action belongs below the week table and may use the full width. */
+.hc-home-pane-planning>.hc-month-open-right{
+ width:100%!important;box-sizing:border-box!important;margin:0!important;
+ min-height:86px!important;padding:11px 14px!important;
+ display:grid!important;grid-template-columns:58px minmax(0,1fr) 18px!important;
+ align-items:center!important;gap:12px!important;
+ border:1px solid rgba(20,111,133,.16)!important;border-radius:20px!important;
+ background:linear-gradient(145deg,#fff,#f5fbfc)!important;
+ box-shadow:0 8px 20px rgba(25,70,86,.08)!important;text-align:left!important;
+}
+.hc-home-pane-planning>.hc-month-open-right .hc-month-open-copy>strong{
+ font-size:1.02rem!important;white-space:normal!important;overflow:visible!important;
+}
+.hc-home-pane-planning>.hc-month-open-right .hc-month-open-copy>small{
+ font-size:.72rem!important;white-space:normal!important;overflow:visible!important;
+}
+
+/* Top navigation behaves as three pin buttons rather than cards inside cards. */
+.hc-home-filters>button{
+ background:transparent!important;border-color:transparent!important;
+ box-shadow:none!important;border-radius:18px!important;
+}
+.hc-home-filters>button[aria-selected="true"]{
+ background:transparent!important;box-shadow:none!important;
+}
+.hc-home-filters>button[aria-selected="true"] .hc-home-filter-art{
+ box-shadow:0 0 0 3px #fff,0 0 0 5px #168297,0 7px 16px rgba(21,58,74,.15)!important;
+}
