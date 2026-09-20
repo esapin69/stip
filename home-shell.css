@@ -1079,3 +1079,49 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-planning-left .hc-days-vertical .hc-day-vertical>i{font-size:.86rem!important}
  .hc-planning-left .hc-weekend-row .hc-day-weekend>i{font-size:.9rem!important}
 }
+
+
+/* planning-header-and-width-v3-20260920 */
+.hc-planning-month-title{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:end!important;
+ gap:10px!important;
+ width:100%!important;
+ margin:0 0 8px!important;
+ padding:0 4px!important;
+ box-sizing:border-box!important;
+}
+.hc-planning-month-title h2{margin:1px 0 0!important}
+.hc-week-nav-global{
+ display:grid!important;
+ grid-template-columns:30px minmax(74px,1fr) 30px!important;
+ align-items:center!important;
+ gap:3px!important;
+}
+.hc-week-nav-global button{width:30px!important;height:30px!important}
+.hc-week-nav-global .hc-week-context{text-align:center!important}
+.hc-week-nav-global .hc-week-context strong{font-size:.66rem!important;white-space:normal!important}
+.hc-week-nav-global .hc-week-context small{font-size:.55rem!important}
+.hc-planning-split{
+ grid-template-columns:minmax(0,37%) minmax(0,63%)!important;
+ gap:7px!important;
+}
+.hc-planning-left>.hc-widget-planning{padding:7px 5px!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>i{
+ font-size:.9rem!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>i{
+ font-size:.9rem!important;
+}
+.hc-planning-right .hc-month-open-right{
+ width:100%!important;
+ margin:0!important;
+ box-sizing:border-box!important;
+}
+@media(max-width:380px){
+ .hc-planning-split{grid-template-columns:minmax(0,36%) minmax(0,64%)!important;gap:6px!important}
+ .hc-planning-month-title{gap:6px!important}
+ .hc-week-nav-global{grid-template-columns:27px minmax(68px,1fr) 27px!important}
+ .hc-week-nav-global button{width:27px!important;height:27px!important}
+}
