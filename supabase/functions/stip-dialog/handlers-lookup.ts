@@ -32,6 +32,52 @@ export async function placeAnswer(c: SessionCtx, old: DialogContext, raw: string
   const allowed = c.level === "pro" ? ["public", "internal_stip"] : ["public"];
   const { data: places, error } = await db.from("stip_places").select("id,display_name,official_name,campus,building_code,level,summary,details,visibility,evidence_status,sort_order").in("visibility", allowed).order("sort_order").limit(500);
   if (error) throw error;
+  const currentPlace = old.place_id ? (places || []).find((p: any) => String(p.id) === String(old.place_id)) : null;
+  const normalizedRaw = normalize(raw);
+  const wantsRoute = !!currentPlace && /\b(comment y aller|y aller|itineraire|trajet|chemin|comment aller)\b/.test(normalizedRaw);
+  const wantsCurrentPlace = !!currentPlace && /\b(afficher le batiment|afficher ce lieu|ce lieu|cet endroit|le batiment)\b/.test(normalizedRaw);
+  if (wantsRoute) {
+    const { data: routes, error: routeError } = await db.from("stip_place_routes")
+      .select("id,from_place_id,to_place_id,label,mode,visibility,evidence_status,notes,sort_order")
+      .eq("to_place_id", currentPlace.id).in("visibility", allowed).order("sort_order");
+    if (routeError) throw routeError;
+    const routeIds = (routes || []).map((r: any) => r.id);
+    const { data: steps, error: stepError } = routeIds.length
+      ? await db.from("stip_place_route_steps").select("route_id,step_no,instruction,visibility,evidence_status").in("route_id", routeIds).in("visibility", allowed).order("step_no")
+      : { data: [] as any[], error: null };
+    if (stepError) throw stepError;
+    if ((routes || []).length) {
+      const cards = (routes || []).map((route: any) => {
+        const routeSteps = (steps || []).filter((x: any) => String(x.route_id) === String(route.id)).sort((a: any, b: any) => Number(a.step_no) - Number(b.step_no));
+        return {
+          type: "metric", title: route.label || "Itinéraire",
+          subtitle: routeSteps.length ? `${routeSteps.length} étape${routeSteps.length > 1 ? "s" : ""}` : (route.mode || "Itinéraire"),
+          detail: routeSteps.length ? routeSteps.map((x: any) => `${x.step_no}. ${x.instruction}`).join(" · ") : (route.notes || "Itinéraire enregistré dans STIP."),
+        };
+      });
+      return {
+        kind: "place", title: `Itinéraire · ${currentPlace.display_name || currentPlace.official_name}`,
+        text: (routes || []).length === 1 ? "Voici l’itinéraire enregistré dans STIP." : `${(routes || []).length} itinéraires sont enregistrés pour ce lieu.`,
+        cards, actions: [{ type: "open", url: `places-app.html?focus=${encodeURIComponent(currentPlace.id)}`, label: "Ouvrir la fiche du lieu" }],
+        context: baseContext(old, { place_id: currentPlace.id, date_scope: ds, last_intent: "place" }),
+      };
+    }
+    return {
+      kind: "place", title: currentPlace.display_name || currentPlace.official_name,
+      text: "Le lieu est connu, mais aucun itinéraire fiable n’est encore enregistré dans STIP.",
+      cards: [{ type: "place", id: currentPlace.id, title: currentPlace.display_name || currentPlace.official_name, subtitle: [currentPlace.campus, currentPlace.building_code, currentPlace.level].filter(Boolean).join(" · "), detail: currentPlace.summary || "" }],
+      actions: [{ type: "open", url: `places-app.html?focus=${encodeURIComponent(currentPlace.id)}`, label: "Voir le lieu" }],
+      context: baseContext(old, { place_id: currentPlace.id, date_scope: ds, last_intent: "place" }),
+    };
+  }
+  if (wantsCurrentPlace) return {
+    kind: "place", title: currentPlace.display_name || currentPlace.official_name,
+    text: [currentPlace.building_code, currentPlace.level, currentPlace.summary].filter(Boolean).join(" · ") || "Lieu retrouvé dans STIP.",
+    cards: [{ type: "place", id: currentPlace.id, title: currentPlace.display_name || currentPlace.official_name, subtitle: [currentPlace.campus, currentPlace.building_code, currentPlace.level].filter(Boolean).join(" · "), detail: currentPlace.summary || currentPlace.details || "" }],
+    actions: [{ type: "open", url: `places-app.html?focus=${encodeURIComponent(currentPlace.id)}`, label: "Voir le lieu" }],
+    context: baseContext(old, { place_id: currentPlace.id, date_scope: ds, last_intent: "place" }), suggestions: ["Comment y aller ?"],
+  };
+
   const ids = (places || []).map((p: any) => p.id);
   const [{ data: aliases }, { data: tags }] = await Promise.all([
     ids.length ? db.from("stip_place_aliases").select("place_id,alias").in("place_id", ids) : Promise.resolve({ data: [] as any[] }),
