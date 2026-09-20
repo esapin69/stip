@@ -120,6 +120,8 @@ check(tomorrowAppAccess.includes('tomorrow: () => explicit("tomorrow")')&&tomorr
 check(tomorrowAppUi.includes('app("tomorrow")')&&tomorrowAppUi.includes('p.tomorrow'),'Pour demain n’est plus protégé par son droit dédié.');
 check(tomorrowMigration.includes("'tomorrow'")&&tomorrowMigration.includes("level_mode")&&tomorrowMigration.includes("planning_personal"),'La migration canonique Pour demain est incomplète.');
 
+check(!read('index.html').includes('assistant-presence.js'),'assistant-presence.js ne doit plus être chargé sur l’accueil.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
