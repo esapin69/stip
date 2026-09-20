@@ -28,7 +28,7 @@ function defaultScope(intent: Intent): DateScope {
   return { start: base, end: base };
 }
 
-function selectionAnswer(c: SessionCtx, old: DialogContext, raw: string, all: Agent[], ds: DateScope) {
+async function selectionAnswer(c: SessionCtx, old: DialogContext, raw: string, all: Agent[], ds: DateScope, defs: Awaited<ReturnType<typeof shiftDefinitions>>) {
   const count = selectionCount(raw) || 0;
   const ids = Array.isArray(old.last_choice_ids) ? old.last_choice_ids.map(String) : [];
   if (old.last_choice_kind === "agent" && ids.length === count && count > 0) {
@@ -48,10 +48,33 @@ function selectionAnswer(c: SessionCtx, old: DialogContext, raw: string, all: Ag
     text: `J’ai ${ids.length} personnes possibles. “Les ${count}” ne suffit pas pour savoir lesquelles tu veux.`,
     cards: findAgents(all, ids).map((a) => personCard(a)), actions: [], context: baseContext(old, { date_scope: ds }),
   };
-  const opts = old.offered_options || [];
-  if (opts.length === count && count > 0) return {
-    kind: "help", title: `${count} options`,
-    text: `Tu veux ${opts.join(" et ")} ? Dis-moi ce que tu veux faire et je l’exécute dans cet ordre.`,
+  const opts = (old.offered_options || []).map(normalize);
+  if (count === 2 && opts.length === 2) {
+    const subjects = findAgents(all, contextSubjects(old));
+    if (subjects.length && opts.includes("planning") && opts.includes("coordonnees")) {
+      const [planning, contact] = await Promise.all([
+        planningAnswer(c, old, subjects, ds, defs),
+        contactAnswer(c, old, subjects, "coordonnées", ds),
+      ]);
+      const cards = [...(planning.cards || []), ...(contact.cards || [])].filter((card: any, i, rows) => {
+        const key = `${card.type || ""}:${card.id || ""}:${card.title || ""}:${card.subtitle || ""}:${card.detail || ""}`;
+        return rows.findIndex((x: any) => `${x.type || ""}:${x.id || ""}:${x.title || ""}:${x.subtitle || ""}:${x.detail || ""}` === key) === i;
+      });
+      const actions = [...(planning.actions || []), ...(contact.actions || [])].filter((action: any, i, rows) => {
+        const key = JSON.stringify(action);
+        return rows.findIndex((x: any) => JSON.stringify(x) === key) === i;
+      });
+      return {
+        kind: "combined", title: "Planning + coordonnées",
+        text: `${planning.text} ${contact.text}`.trim(), cards, actions,
+        suggestions: c.permissions?.messages === true && subjects.every((a) => a.can_message && String(a.id) !== String(c.agent.id)) ? ["Message"] : [],
+        context: baseContext(old, { subject_agent_ids: subjects.map((a) => a.id), agent_id: subjects[0]?.id, date_scope: ds, last_intent: "combined", offered_options: [] }),
+      };
+    }
+  }
+  if (opts.length > count && count > 0) return {
+    kind: "help", title: "Lesquels ?",
+    text: `J’ai ${opts.length} options actives : ${opts.join(", ")}. Dis-moi lesquelles tu veux, je ne choisis pas à ta place.`,
     cards: [], actions: [], context: baseContext(old, { date_scope: ds }),
   };
   return {
@@ -84,7 +107,7 @@ export async function answer(c: SessionCtx, body: any) {
   };
   const ds = parsedScope || defaultScope(intent);
 
-  if (intent === "selection") return selectionAnswer(c, old, raw, all, ds);
+  if (intent === "selection") return selectionAnswer(c, old, raw, all, ds, defs);
 
   const contextIds = contextSubjects(old);
   const allowContext = hasContextualPersonRef(raw) || !!option || ["contact", "colleagues"].includes(intent);
