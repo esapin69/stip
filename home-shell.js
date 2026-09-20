@@ -536,8 +536,21 @@
       .join("")}</span>`;
   }
   function weekDaysLandscape(w) {
-    const hasEvents = w.some((x) => weekEventsForDay(x).length);
-    return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"}" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
+    const liveTail = state.weekOffset === 0 && !state.weekFull && w[0]?.today && w[0]?.dow >= 5,
+      nextMonday = liveTail
+        ? (() => {
+            const d = new Date(w[w.length - 1].d);
+            d.setDate(d.getDate() + 1);
+            return agendaRange(d, 1)[0];
+          })()
+        : null,
+      visualDays = nextMonday ? [...w, nextMonday] : w,
+      slotCount = Math.max(1, w.length + (nextMonday ? 2 : 0)),
+      hasEvents = visualDays.some((x) => weekEventsForDay(x).length),
+      bridge = nextMonday
+        ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
+        : "";
+    return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"} ${nextMonday ? "has-next-monday" : ""}" style="--visible-days:${slotCount}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "hc-day hc-day-landscape hc-day-next-monday", true) : ""}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading" && !(state.boot?.personal || []).length)
