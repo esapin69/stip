@@ -788,3 +788,22 @@ body.team-page {
   padding:4px 9px 8px!important;
   border-top:1px solid var(--stip-line-soft)!important;
 }
+
+/* selected-day-view-20260920 */
+.team-time-stack .team-tabs{
+  margin-top:8px!important;
+  margin-bottom:0!important;
+}
+.team-content{
+  min-height:0!important;
+}
+.team-content .team-day{
+  animation:teamDaySwap .14s ease-out;
+}
+@keyframes teamDaySwap{
+  from{opacity:.72;transform:translateY(4px)}
+  to{opacity:1;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .team-content .team-day{animation:none}
+}

@@ -144,7 +144,7 @@ const espritJs=read('esprit-equipe.js');
 check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
 check(espritHtml.includes('teamMonthLabel')&&espritHtml.includes('stip-time-days'),'Esprit d’équipe n’est plus la référence du filtre temporel à trois niveaux.');
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
-check(espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne navigue plus vers la journée choisie.');
+check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
 check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
 
 const espritInteractiveHtml=read('esprit-equipe.html');
@@ -154,6 +154,9 @@ check(espritInteractiveHtml.includes('id="teamCurrent"'),'Esprit d’équipe a p
 check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.includes('aria-expanded'),'Les shifts Esprit d’équipe ne sont plus interactifs.');
 check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
 check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
+
+check(espritHtml.indexOf('id="teamDays"') < espritHtml.indexOf('class="team-tabs"'),'Les filtres Équipe / Activité / Assistant doivent rester sous le sélecteur de jour.');
+check(espritJs.includes('const day = state.dayFocus') && !espritJs.includes('.map((day) => renderer(bundle, day))'),'Esprit d’équipe doit afficher uniquement la journée sélectionnée.');
 
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
