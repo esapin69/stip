@@ -76,6 +76,10 @@ async function group(ctx:any,body:any){
   const members=[ctx.agent.id,...ids].map((id:any)=>({conversation_id:conv.id,agent_id:id,last_read_at:String(id)===String(ctx.agent.id)?new Date().toISOString():null}));
   const r=await db.from("stip_conversation_members").insert(members);if(r.error)throw r.error;
   if(String(body.body||"").trim())await send(ctx,{conversation_id:conv.id,body:body.body,payload:body.payload||{}});
+  if(kind==="broadcast"){
+    const payload=body.payload&&typeof body.payload==="object"?body.payload:{},quantity=payload.quantity===""||payload.quantity==null?null:Math.max(0,Number(payload.quantity)||0);
+    const br=await db.from("stip_operational_broadcasts").insert({conversation_id:conv.id,created_by_agent_id:ctx.agent.id,category:String(payload.category||"info").slice(0,40),title:title,body:String(body.body||"").trim().slice(0,2000),location_text:String(payload.location||"").trim().slice(0,200)||null,quantity,status:"active"});if(br.error)throw br.error
+  }
   return conv
 }
 async function thread(ctx:any,id:string){
@@ -85,8 +89,9 @@ async function thread(ctx:any,id:string){
   const mids=(members||[]).map((x:any)=>x.agent_id);const{data:profiles}=mids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",mids):{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
   const{data:messages,error}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",id).is("deleted_at",null).order("created_at").limit(300);if(error)throw error;
+  const {data:broadcast}=conv.kind==="broadcast"?await db.from("stip_operational_broadcasts").select("id,category,title,body,location_text,quantity,status,expires_at,updated_at,created_at").eq("conversation_id",id).maybeSingle():{data:null};
   await db.from("stip_conversation_members").update({last_read_at:new Date().toISOString()}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
-  return{conversation:conv,members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),messages:(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))}
+  return{conversation:conv,broadcast:broadcast||null,members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),messages:(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))}
 }
 async function send(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
@@ -104,6 +109,16 @@ async function send(ctx:any,body:any){
     }))
   }catch(e){console.error("push",e)}
   return{ok:true,...data}
+}
+async function broadcastUpdate(ctx:any,body:any){
+  const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
+  const {data:row,error}=await db.from("stip_operational_broadcasts").select("id,status,quantity").eq("conversation_id",id).maybeSingle();if(error)throw error;if(!row)throw Error("Diffusion introuvable.");
+  const action=String(body.update||"confirm"),patch:any={updated_at:new Date().toISOString()};
+  if(action==="resolved"){patch.status="resolved";patch.quantity=0}
+  else if(action==="less"){patch.status="active";patch.quantity=Math.max(0,Number(body.quantity)||0)}
+  else patch.status="active";
+  const u=await db.from("stip_operational_broadcasts").update(patch).eq("id",row.id);if(u.error)throw u.error;
+  return{ok:true}
 }
 async function home(ctx:any){
   const{data:member,error}=await db.from("stip_conversation_members").select("conversation_id,last_read_at").eq("agent_id",ctx.agent.id);if(error)throw error;
@@ -145,6 +160,7 @@ Deno.serve(async req=>{
     if(a==="group")return J({conversation:await group(c,b)});
     if(a==="thread")return J(await thread(c,String(b.conversation_id||"")));
     if(a==="send")return J(await send(c,b));
+    if(a==="broadcast_update")return J(await broadcastUpdate(c,b));
     if(a==="profile_set")return J(await profileSet(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
