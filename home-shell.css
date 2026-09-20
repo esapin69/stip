@@ -1269,7 +1269,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
    Two premium primary buttons. STIP IA closes the page as a full-width footer entry. */
 .hc-home-filters{
   width:min(100%,368px)!important;
-  margin:12px auto 22px!important;
+  margin:24px auto 28px!important;
   padding:0!important;
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
@@ -1441,7 +1441,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-id-card .hc-avatar{height:130px!important}
   .hc-home-filters{
     width:min(100%,350px)!important;
-    margin:10px auto 20px!important;
+    margin:28px auto 30px!important;
     gap:8px!important;
   }
   .hc-home-filters>button{min-height:116px!important;padding:8px 7px 9px!important}
@@ -1462,7 +1462,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button>strong{font-size:.7rem!important}
 }
 @media(min-width:700px){
-  .hc-home-filters{width:470px!important;gap:14px!important;margin-top:16px!important}
+  .hc-home-filters{width:470px!important;gap:14px!important;margin:28px auto 32px!important}
   .hc-home-filters>button{min-height:142px!important;padding:10px 10px 12px!important}
   .hc-home-filter-art{width:min(100%,188px)!important}
   .hc-home-filters>button>strong{font-size:.86rem!important}
