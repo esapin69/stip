@@ -72,7 +72,7 @@
   }
 
   function avatar(agent) {
-    const url = String(agent?.avatar_url || agent?.profile_photo_url || "");
+    const url = String(agent?.profile_photo_url || window.STIPBootCache?.media?.avatars?.[agent?.source_key] || agent?.avatar_signed_url || agent?.avatar_url || "");
     const value = esc(initials(agent));
     return `<span class="sas-avatar" data-initials="${value}">${/^https?:/i.test(url) ? `<img src="${esc(url)}" alt="" loading="lazy">` : value}</span>`;
   }
