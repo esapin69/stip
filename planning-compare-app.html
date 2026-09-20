@@ -31,7 +31,8 @@ function monthStart(){return paris().slice(0,7)+'-01'}
 function daysInMonth(){const [y,m]=paris().slice(0,7).split('-').map(Number);return new Date(y,m,0).getDate()}
 function rowsFor(a){const key=a?.source_key;return(spirit?.planning||[]).filter(r=>r.agents?.source_key===key)}
 function mapRows(a){return new Map(rowsFor(a).map(r=>[String(r.date||'').slice(0,10),r]))}
-function collectAgents(){const m=new Map();for(const r of spirit?.planning||[]){const a=r.agents||{};if(a.source_key)m.set(a.source_key,a)}agents=[...m.values()].sort((a,b)=>name(a).localeCompare(name(b),'fr',{sensitivity:'base'}))}\nfunction applyPrefill(){try{const raw=sessionStorage.getItem('stip_compare_prefill_v1');if(!raw)return false;sessionStorage.removeItem('stip_compare_prefill_v1');const p=JSON.parse(raw),keys=Array.isArray(p?.source_keys)?p.source_keys:[];for(const key of keys){const a=agents.find(x=>x.source_key===key);if(a&&a.source_key!==session?.agent?.source_key)selected.set(a.source_key,a)}return selected.size>0}catch{return false}}
+function collectAgents(){const m=new Map();for(const r of spirit?.planning||[]){const a=r.agents||{};if(a.source_key)m.set(a.source_key,a)}agents=[...m.values()].sort((a,b)=>name(a).localeCompare(name(b),'fr',{sensitivity:'base'}))}
+function applyPrefill(){try{const raw=sessionStorage.getItem('stip_compare_prefill_v1');if(!raw)return false;sessionStorage.removeItem('stip_compare_prefill_v1');const p=JSON.parse(raw),keys=Array.isArray(p?.source_keys)?p.source_keys:[];for(const key of keys){const a=agents.find(x=>x.source_key===key);if(a&&a.source_key!==session?.agent?.source_key)selected.set(a.source_key,a)}return selected.size>0}catch{return false}}
 function shiftKey(code){const k=String(code||'').trim().toUpperCase();if(k==='M0130'||k==='M0131')return'M';return k}
 function tone(code){return TONE[shiftKey(code)]||'#277b86'}
 function toneInk(code){return shiftKey(code)==='S'?'#3f3200':'#fff'}
