@@ -101,6 +101,8 @@ export function parseDateScope(raw: string, baseIso: string, ctx?: DialogContext
   const contextScope = ctx?.date_scope || (ctx?.date ? scope(ctx.date) : null);
   const base = parts(baseIso);
 
+  if (contextScope && /\b(ce jour la|ce jour|ce meme jour|ce meme jour la)\b/.test(q)) return contextScope;
+
   let m = q.match(/\bdu\s+(\d{1,2})\s+(?:au|a)\s+(\d{1,2})\s+([a-z]+)(?:\s+(20\d{2}))?\b/);
   if (m) {
     const month = monthFromToken(m[3]);
