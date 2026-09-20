@@ -966,7 +966,7 @@
     if (has("planning_personal"))
       s += app("personal", "Planning perso", "personal", "personal");
     if (has("tomorrow"))
-      s += app("tomorrow", "Pour demain", "tomorrow", "tomorrow");
+      s += app("tomorrow", "Actions", "tomorrow", "tomorrow");
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
     if (has("change_app")) s += app("change", "Changement", "change", "change");
