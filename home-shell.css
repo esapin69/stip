@@ -1591,3 +1591,35 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* Keep the visible day card compact instead of stretching to the height of the other column. */
 .hc-widget-planning,.hc-days-vertical{min-height:0!important;height:auto!important}
 .hc-planning-left .hc-day-vertical{min-height:78px!important;height:auto!important}
+
+
+/* planning-structure-fix-v20-20260920 */
+/* Weekly grid owns only the week + agenda. Secondary cards are full-width below it. */
+#hcTomorrowDock{width:100%!important;margin:8px 0 0!important}
+#hcTomorrowDock:empty{display:none!important}
+#hcTomorrowDock .td-card{
+ width:100%!important;box-sizing:border-box!important;border:1px solid var(--stip-line)!important;
+ border-radius:20px!important;box-shadow:0 7px 18px rgba(25,70,86,.07)!important;
+ padding:12px 16px!important;
+}
+.hc-home-pane-planning>.hc-month-open-right{margin-top:8px!important}
+
+/* Event connector ends at the event card edge; it must never cross its content. */
+.hc-agenda-day-slot.has-event{overflow:visible!important}
+.hc-day-event{overflow:visible!important}
+.hc-day-event-link{
+ left:-14px!important;width:14px!important;z-index:0!important;pointer-events:none!important;
+}
+.hc-day-event-link:after{
+ content:""!important;position:absolute!important;right:-2px!important;top:50%!important;
+ width:5px!important;height:5px!important;border-radius:50%!important;background:#168297!important;
+ transform:translateY(-50%)!important;
+}
+.hc-day-event-icon,.hc-day-event-copy,.hc-day-event>b{position:relative!important;z-index:1!important}
+
+/* Pin navigation: no rectangular selected card around Mon profil. */
+.hc-home-filters>button,
+.hc-home-filters>button[aria-selected="true"]{
+ background:transparent!important;border:0!important;box-shadow:none!important;
+}
+.hc-home-filters>button:before,.hc-home-filters>button:after{display:none!important}
