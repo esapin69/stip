@@ -409,6 +409,19 @@
     );
   }
 
+  function syncShiftPanels() {
+    $("#teamContent")
+      ?.querySelectorAll("[data-team-shift]")
+      .forEach((button) => {
+        const active = button.dataset.teamShift === state.openShift;
+        button.setAttribute("aria-expanded", String(active));
+        const section = button.closest(".team-shift");
+        section?.classList.toggle("open", active);
+        const agents = section?.querySelector(".team-shift-agents");
+        if (agents) agents.hidden = !active;
+      });
+  }
+
   function closeAgentSheet() {
     document.getElementById("teamAgentOverlay")?.remove();
     document.body.classList.remove("team-sheet-open");
@@ -458,10 +471,11 @@
         .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")))
         .slice(0, 14);
       const tel = phoneHref(contact.telephone);
+      const email = contact.email || contact.email_pro || "";
       body.innerHTML = `
-        ${contact.telephone || contact.email ? `<div class="team-agent-contact">
+        ${contact.telephone || email ? `<div class="team-agent-contact">
           ${contact.telephone ? `<a href="${esc(tel)}">${esc(contact.telephone)}</a>` : ""}
-          ${contact.email ? `<button type="button" data-agent-copy="${esc(contact.email)}">${esc(contact.email)}</button>` : ""}
+          ${email ? `<button type="button" data-agent-copy="${esc(email)}">${esc(email)}</button>` : ""}
         </div>` : ""}
         <div class="team-agent-plan">${rows.length ? rows.map((item) => {
           const code = String(item.code || "—").toUpperCase();
@@ -615,7 +629,11 @@
     const button = event.target.closest("[data-team-day]");
     if (!button) return;
     state.dayFocus = button.dataset.teamDay;
-    state.openShift = "";
+    const firstShift = document.querySelector(
+      `#team-day-${CSS.escape(state.dayFocus)} [data-team-shift]`,
+    );
+    state.openShift = firstShift?.dataset.teamShift || "";
+    syncShiftPanels();
     $("#teamDays")
       .querySelectorAll("[data-team-day]")
       .forEach((item) => {
@@ -638,16 +656,7 @@
     if (shift) {
       const key = shift.dataset.teamShift || "";
       state.openShift = state.openShift === key ? "" : key;
-      $("#teamContent")
-        .querySelectorAll("[data-team-shift]")
-        .forEach((button) => {
-          const active = button.dataset.teamShift === state.openShift;
-          button.setAttribute("aria-expanded", String(active));
-          const section = button.closest(".team-shift");
-          section?.classList.toggle("open", active);
-          const agents = section?.querySelector(".team-shift-agents");
-          if (agents) agents.hidden = !active;
-        });
+      syncShiftPanels();
       return;
     }
     const agent = event.target.closest("[data-team-agent]");
