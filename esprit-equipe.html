@@ -13,9 +13,9 @@
       content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'"
     />
     <title>Esprit d’équipe · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260920-final1" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-week1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-timefilter1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -46,21 +46,27 @@
         <button type="button" data-team-tab="activity">Activité</button>
         <button type="button" data-team-tab="assistant">Assistant</button>
       </nav>
-      <section class="team-week-nav stip-time-nav" aria-label="Changer de semaine">
-        <button id="teamPrev" type="button" aria-label="Semaine précédente">
-          ‹</button
-        ><button id="teamToday" type="button">
-          <strong id="teamDateLabel">Cette semaine</strong
-          ><small id="teamWeekLabel">Semaine en cours</small></button
-        ><button id="teamNext" type="button" aria-label="Semaine suivante">
-          ›
-        </button>
+      <section class="team-time-stack stip-time-stack" aria-label="Navigation temporelle">
+        <section class="stip-time-month team-time-month" aria-label="Mois affiché">
+          <div class="stip-time-month-head">
+            <span class="stip-time-month-kicker">ESPRIT D’ÉQUIPE · <b id="teamYearLabel">2026</b></span>
+          </div>
+          <strong id="teamMonthLabel" class="stip-time-month-title">SEPTEMBRE</strong>
+        </section>
+        <section class="team-week-nav stip-time-nav stip-time-week" aria-label="Changer de semaine">
+          <button id="teamPrev" type="button" aria-label="Semaine précédente">‹</button>
+          <button id="teamToday" type="button">
+            <strong id="teamDateLabel">Cette semaine</strong>
+            <small id="teamWeekLabel">Semaine en cours</small>
+          </button>
+          <button id="teamNext" type="button" aria-label="Semaine suivante">›</button>
+        </section>
+        <nav
+          id="teamDays"
+          class="team-days stip-time-days"
+          aria-label="Accéder directement à une journée"
+        ></nav>
       </section>
-      <nav
-        id="teamDays"
-        class="team-days"
-        aria-label="Accéder directement à une journée"
-      ></nav>
       <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
       <section
         id="teamContent"
@@ -74,6 +80,6 @@
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
-    <script src="esprit-equipe.js?v=20260920-pattern1"></script>
+    <script src="esprit-equipe.js?v=20260920-timefilter1"></script>
   </body>
 </html>
