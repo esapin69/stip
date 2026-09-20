@@ -181,6 +181,25 @@
     window.STIPPlanningMonth?.set?.(key);
     window.STIPHubs?.planning?.("personal");
   }
+  function jumpToDate(iso) {
+    iso = String(iso || "").slice(0, 10);
+    if (!iso) return;
+    const today = dateObj(parisIso()),
+      target = dateObj(iso),
+      mondayOf = (d) => {
+        const x = new Date(d),
+          dow = x.getDay() || 7;
+        x.setDate(x.getDate() - (dow - 1));
+        x.setHours(12, 0, 0, 0);
+        return x;
+      },
+      currentMonday = mondayOf(today),
+      targetMonday = mondayOf(target);
+    state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000);
+    state.weekFull = iso !== parisIso();
+    state.renderSig = "";
+    render();
+  }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
     if (!rows.length) return "";
@@ -490,6 +509,7 @@
   }
   function dayCard(x, cls = "hc-day", compact = false) {
     const canonical = canonicalShift(x.code),
+      pending = !canonical || canonical === "—",
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
       weekend = x.dow > 5,
       dayFull = x.d
@@ -506,12 +526,14 @@
       workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
       visual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
-        : statusIcon
-          ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
-          : workIcon
-            ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
-            : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}>${landscape ? weekEventMarker(x) : ""}<span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
+        : pending
+          ? '<span class="hc-pending-line" aria-label="En attente du nouveau planning"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
+          : statusIcon
+            ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
+            : workIcon
+              ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
+              : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}>${landscape ? weekEventMarker(x) : ""}<span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></span>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
@@ -561,8 +583,15 @@
   }
   function planningMonthTitle() {
     const w = selectedWeek(),
-      mi = weekMonthInfo(w);
-    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span><span class="hc-month-title-hint">Ouvrir le planning du mois <b aria-hidden="true">›</b></span></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today hc-week-today-under-nav" data-week-today>Revenir à cette semaine</button>' : ""}</header>`;
+      mi = weekMonthInfo(w),
+      selectedIso = w[0]?.iso || parisIso(),
+      back = state.weekOffset !== 0 || state.weekFull
+        ? '<button type="button" class="hc-week-today hc-week-today-under-nav" data-week-today>Revenir à cette semaine</button>'
+        : "",
+      tomorrow = has("tomorrow")
+        ? `<button type="button" class="hc-tomorrow-launch" data-app="tomorrow" aria-label="Ouvrir Pour demain"><span>${ICON.tomorrow}</span><strong>Pour demain</strong></button>`
+        : "";
+    return `<header class="hc-planning-month-title"><div class="hc-month-title-block"><button type="button" class="hc-month-title-open" data-date-jump-toggle aria-label="Aller directement à une date"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span></button><div class="hc-date-jump-panel" data-date-jump-panel hidden><label><span>Aller à une date</span><input type="date" value="${esc(selectedIso)}" data-date-jump-input></label><button type="button" data-date-jump-today>Aujourd’hui</button></div><button type="button" class="hc-month-title-hint" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}">Ouvrir le planning du mois <b aria-hidden="true">›</b></button></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${back || tomorrow ? `<div class="hc-planning-tools">${back}${tomorrow}</div>` : ""}</header>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -818,7 +847,7 @@
     ];
     return `<section class="hc-fixed-shift-legend" aria-label="Repères horaires"><small>REPÈRES HORAIRES</small><div>${shifts
       .map(([code, label, cls]) => `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`)
-      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span></div></section>`;
+      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span><span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true">🚫</i><b>En attente du nouveau planning</b></span></div></section>`;
   }
   function nativeExchanges() {
     const b = state.boot || {},
@@ -1018,7 +1047,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1054,6 +1083,20 @@
       ?.addEventListener("click", (e) =>
         openPlanningMonth(e.currentTarget.dataset.openMonth),
       );
+    root.querySelector("[data-date-jump-toggle]")?.addEventListener("click", () => {
+      const panel = root.querySelector("[data-date-jump-panel]"),
+        input = panel?.querySelector("[data-date-jump-input]");
+      if (!panel || !input) return;
+      panel.hidden = !panel.hidden;
+      if (!panel.hidden) {
+        requestAnimationFrame(() => {
+          try { input.showPicker?.(); }
+          catch { input.focus(); }
+        });
+      }
+    });
+    root.querySelector("[data-date-jump-input]")?.addEventListener("change", (e) => jumpToDate(e.currentTarget.value));
+    root.querySelector("[data-date-jump-today]")?.addEventListener("click", () => jumpToDate(parisIso()));
     root
       .querySelectorAll("[data-app]")
       .forEach((b) => (b.onclick = () => openApp(b.dataset.app)));
