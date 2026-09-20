@@ -151,6 +151,10 @@ check(homeCss.includes('color:#fff!important')&&homeCss.includes('.hc-week-nav-g
 check(home.includes('state.weekOffset !== 0')&&home.includes('data-week-today')&&home.includes('Revenir à cette semaine'),'Le retour contextuel vers la semaine actuelle a disparu.');
 check(home.includes('monthKey === currentMonthKey')&&home.includes('hc-week-today hc-date-jump-today'),'Le bouton Aujourd’hui doit être absent sur le mois courant et réutiliser l’ancienne couche sur les autres mois.');
 check(homeCss.includes('CONTEXTUAL CURRENT RETURN')&&homeCss.includes('.hc-planning-primary-head .hc-week-return-current')&&homeCss.includes('.hc-date-jump-permanent .hc-date-jump-today'),'Le style historique partagé des retours semaine/mois a disparu.');
+check(home.includes('hc-home-day-shift')&&home.includes('weekEventsForDay(x).slice(0, 2)'),'Le sélecteur compact de jours doit contenir le shift et les repères d’événements.');
+check(home.includes('hc-selected-day-card')&&!/function weekWidget\(\)[\s\S]{0,500}weekDaysLandscape/.test(home),'Les anciennes grosses cartes de semaine ne doivent plus doubler le sélecteur compact.');
+check(home.includes('return start <= focus.iso && end >= focus.iso'),'Les détails sous le sélecteur doivent suivre uniquement le jour sélectionné.');
+check(homeCss.includes('COMPACT WEEK SELECTOR + SELECTED DAY DETAIL')&&homeCss.includes('min-height:58px!important')&&homeCss.includes('.hc-selected-day-card'),'Le sélecteur compact ou sa fiche de jour sélectionné a régressé.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
