@@ -144,7 +144,8 @@ check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),
 check(home.includes('if (!["M", "J", "J4", "S", "N"].includes(code)) return null;'),'Seuls les jours réellement travaillés doivent recevoir un repère coloré dans le calendrier.');
 check(home.includes('hc-date-jump-number hc-date-jump-workday')&&!home.includes('function calendarShiftPill'),'Le numéro du jour travaillé doit être directement gravé dans la pastille, sans afficher le code du shift.');
 check(home.includes('hc-week-nav-global hc-week-nav-hero')&&!home.includes('hc-month-title-card'),'Le bloc semaine doit avoir remplacé l’ancien gros titre de mois.');
-check(home.indexOf('fixedShiftLegend()') < home.indexOf('planningCalendarOverview()'),'Le calendrier permanent doit rester sous les légendes du planning.');
+const homePlanningBlock=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()'));
+check(homePlanningBlock.indexOf('fixedShiftLegend()') < homePlanningBlock.indexOf('planningCalendarOverview()')&&homePlanningBlock.indexOf('planningCalendarOverview()') < homePlanningBlock.indexOf('homeAIEntry()'),'Le calendrier permanent doit rester sous les légendes et juste avant la zone IA du planning.');
 check(homeCss.includes('.hc-date-jump-workday.shift-morning')&&homeCss.includes('.hc-date-jump-workday.shift-night'),'Les couleurs des pastilles de jours travaillés ont disparu.');
 check(homeCss.includes('color:#fff!important')&&homeCss.includes('.hc-week-nav-global.hc-week-nav-hero'),'Le contraste blanc des numéros ou le nouveau titre semaine a régressé.');
 
