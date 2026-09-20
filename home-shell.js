@@ -781,14 +781,22 @@
           end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
         return start <= weekEnd && end >= weekStart;
       }),
-      show = items.slice(0, 3);
-    if (!show.length) return "";
-    return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${show
-      .map((x) => {
-        const time = String(x.time || "").trim(),
-          place = String(x.place || "").trim(),
-          extra = [time, place].filter(Boolean).join(" · ");
-        return `<button type="button" class="hc-week-event-key-item" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(fmtDateRange(x))}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
+      rows = [];
+    items.slice(0, 3).forEach((x) => {
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10),
+        time = String(x.time || "").trim(),
+        place = String(x.place || "").trim();
+      w.forEach((day) => {
+        if (day.iso < start || day.iso > end) return;
+        rows.push({ event: x, day, time, place });
+      });
+    });
+    if (!rows.length) return "";
+    return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${rows
+      .map(({ event:x, day, time, place }) => {
+        const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
+        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
       })
       .join("")}</div></section>`;
   }
