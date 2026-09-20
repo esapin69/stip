@@ -31,6 +31,7 @@
     "AA",
     "MA",
     "CA",
+    "CP",
     "RF",
     "RTA",
     "RTTA",
@@ -48,6 +49,7 @@
     "RC",
     "RF",
     "CA",
+    "CP",
     "OFF",
     "REPOS",
   ]);
@@ -304,6 +306,7 @@
     N: ["night", "Nuit"],
     RH: ["rest", "Repos"],
     CA: ["leave", "Congé annuel"],
+    CP: ["leave", "Congé payé"],
     RTT: ["rest", "RTT"],
     RTTA: ["rest", "RTTA"],
     RTA: ["rest", "RTA"],
@@ -321,6 +324,9 @@
     REPOS: ["rest", "Repos"],
     "-": ["none", "Aucun poste"],
     "—": ["none", "Aucun poste"],
+  };
+  const SPECIAL_SHIFT_ICON = {
+    FO: "🎓",
   };
   function canonicalShift(raw) {
     const src = String(raw || "")
@@ -484,12 +490,14 @@
       loading = x.code === "…",
       weekend = x.dow > 5,
       dayOff = DAY_OFF.has(canonical),
+      statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
       visual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
-        : dayOff
-          ? `<span class="hc-rest-icon" role="img" aria-label="${esc(SHIFT_BADGE_META[canonical]?.[1] || "Repos")}">🏝️</span>`
-          : shiftBadge(x.code);
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span><small class="hc-shift-time" aria-hidden="true"></small></span>`;
+        : statusIcon
+          ? `<span class="hc-status-icon" role="img" aria-label="${esc(SHIFT_BADGE_META[canonical]?.[1] || canonical)}">${statusIcon}</span>`
+          : shiftBadge(x.code),
+      statusCode = statusIcon ? canonical : "";
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span><small class="hc-shift-time ${statusCode ? "hc-status-code" : ""}">${statusCode ? esc(statusCode) : ""}</small></span>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
