@@ -237,18 +237,20 @@
       first = new Date(y, m, 1, 12),
       last = new Date(y, m + 1, 0, 12),
       leading = (first.getDay() + 6) % 7,
+      trailing = (7 - ((leading + last.getDate()) % 7)) % 7,
+      gridStart = new Date(y, m, 1 - leading, 12),
+      totalCells = leading + last.getDate() + trailing,
       todayIso = parisIso(),
       week = navigationWeek(),
       weekStart = week[0]?.iso || "",
       weekEnd = week.at(-1)?.iso || "",
       cells = [];
-    for (let i = 0; i < leading; i++)
-      cells.push(
-        '<span class="hc-date-jump-empty" aria-hidden="true"></span>',
-      );
-    for (let day = 1; day <= last.getDate(); day++) {
-      const d = new Date(y, m, day, 12),
-        iso = dateIsoLocal(d),
+    for (let i = 0; i < totalCells; i++) {
+      const d = new Date(gridStart);
+      d.setDate(gridStart.getDate() + i);
+      d.setHours(12, 0, 0, 0);
+      const iso = dateIsoLocal(d),
+        outsideMonth = d.getMonth() !== m,
         inWeek = weekStart && weekEnd && iso >= weekStart && iso <= weekEnd,
         shift = calendarShiftForDate(iso),
         cls = [
@@ -256,6 +258,7 @@
           inWeek ? "is-week" : "",
           iso === weekStart ? "is-week-start" : "",
           iso === weekEnd ? "is-week-end" : "",
+          outsideMonth ? "is-outside-month" : "",
           shift ? "is-worked" : "",
         ]
           .filter(Boolean)
@@ -272,7 +275,7 @@
           ? `hc-date-jump-number hc-date-jump-workday shift-${esc(shift.type)}`
           : "hc-date-jump-number";
       cells.push(
-        `<button type="button" class="${cls}" data-cal-day="${iso}" aria-label="${esc(aria)}"><span class="${numberClass}">${day}</span></button>`,
+        `<button type="button" class="${cls}" data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><span class="${numberClass}">${d.getDate()}</span></button>`,
       );
     }
     const monthKey = monthKeyOf(first),
@@ -1327,7 +1330,10 @@
         return renderDateJumpCalendar(dateJumpPanel, state.dateJumpMonth);
       }
       if (day) {
-        state.dateJumpMonth = String(day.dataset.calDay || "").slice(0, 7);
+        state.dateJumpMonth =
+          dateJumpPanel.dataset.calendarMonth ||
+          state.dateJumpMonth ||
+          String(day.dataset.calDay || "").slice(0, 7);
         return jumpToDate(day.dataset.calDay);
       }
       if (today) {
