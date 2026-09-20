@@ -1442,3 +1442,119 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-home-filters>button[aria-selected="true"] .hc-home-filter-art{
  box-shadow:0 0 0 3px #fff,0 0 0 5px #168297,0 7px 16px rgba(21,58,74,.15)!important;
 }
+
+
+/* aligned-week-agenda-v17-20260920 */
+/* Give the shift line breathing room below the day/date header. */
+.hc-planning-left .hc-day-vertical>.hc-week-visual,
+.hc-planning-left .hc-day-weekend>.hc-week-visual{
+ padding-top:7px!important;
+ padding-bottom:3px!important;
+ box-sizing:border-box!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical,
+.hc-planning-left .hc-weekend-row .hc-day-weekend{
+ grid-template-rows:34px minmax(39px,auto)!important;
+}
+
+/* Restored planning artwork: show the original image itself, not the temporary calendar glyph. */
+.hc-month-open-icon{
+ overflow:hidden!important;
+ background:transparent!important;
+ box-shadow:none!important;
+ border-radius:18px!important;
+}
+.hc-month-open-icon img{
+ width:100%!important;height:100%!important;display:block!important;
+ object-fit:cover!important;border-radius:18px!important;
+}
+
+/* Agenda is split into the same five weekday rows + one weekend row as the left rail.
+   Empty slots remain invisible but preserve alignment. */
+.hc-planning-right{display:block!important}
+.hc-week-agenda{
+ width:100%!important;min-width:0!important;
+ background:transparent!important;
+}
+.hc-week-agenda-head{
+ min-height:52px!important;padding:2px 8px 7px!important;
+ display:flex!important;align-items:end!important;justify-content:space-between!important;gap:6px!important;
+}
+.hc-week-agenda-head>span{min-width:0!important}
+.hc-week-agenda-head small{
+ display:block!important;color:#168297!important;font-size:.62rem!important;
+ font-weight:950!important;letter-spacing:.09em!important;line-height:1!important;
+}
+.hc-week-agenda-head strong{
+ display:block!important;margin-top:3px!important;color:#153a4a!important;
+ font-size:1.05rem!important;font-weight:950!important;line-height:1!important;
+}
+.hc-week-agenda-head button{
+ border:0!important;background:transparent!important;color:#168297!important;
+ font-size:.65rem!important;font-weight:950!important;padding:4px 0!important;white-space:nowrap!important;
+}
+.hc-week-agenda-slots{
+ display:grid!important;grid-template-columns:1fr!important;gap:5px!important;
+}
+.hc-agenda-day-slot{
+ min-height:83px!important;box-sizing:border-box!important;
+ display:flex!important;flex-direction:column!important;justify-content:center!important;
+ position:relative!important;
+}
+.hc-agenda-day-slot.empty{visibility:hidden!important}
+.hc-agenda-day-slot.has-event{
+ border:1px solid #d8e7ea!important;border-radius:15px!important;
+ background:#fff!important;box-shadow:0 5px 14px rgba(21,67,82,.06)!important;
+}
+.hc-day-event{
+ width:100%!important;min-width:0!important;min-height:81px!important;
+ display:grid!important;grid-template-columns:34px minmax(0,1fr) 10px!important;
+ align-items:center!important;gap:6px!important;
+ padding:7px 7px 7px 10px!important;border:0!important;background:transparent!important;
+ color:#153a4a!important;text-align:left!important;position:relative!important;
+}
+.hc-day-event+.hc-day-event{border-top:1px solid #e4edef!important}
+.hc-day-event-link{
+ position:absolute!important;left:-13px!important;top:50%!important;
+ width:13px!important;height:2px!important;background:#168297!important;
+ transform:translateY(-50%)!important;
+}
+.hc-day-event-link:before{
+ content:""!important;position:absolute!important;left:-4px!important;top:50%!important;
+ width:7px!important;height:7px!important;border-radius:50%!important;background:#168297!important;
+ transform:translateY(-50%)!important;
+}
+.hc-day-event-icon{
+ width:32px!important;height:32px!important;border-radius:10px!important;
+ display:grid!important;place-items:center!important;background:#f1f8f9!important;font-size:1.15rem!important;
+}
+.hc-day-event-copy{min-width:0!important;display:block!important}
+.hc-day-event-copy small{
+ display:block!important;color:#168297!important;font-size:.52rem!important;font-weight:950!important;
+ line-height:1!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.hc-day-event-copy strong{
+ display:block!important;margin-top:3px!important;font-size:.75rem!important;font-weight:950!important;
+ line-height:1.06!important;
+}
+.hc-day-event-copy em,.hc-day-event-copy>span{
+ display:block!important;margin-top:3px!important;font-style:normal!important;color:#536e78!important;
+ font-size:.62rem!important;font-weight:850!important;line-height:1.05!important;
+}
+.hc-day-event>b{font-size:1rem!important;color:#8aa0a8!important}
+.hc-agenda-weekend-slot{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;
+}
+.hc-agenda-weekend-slot .hc-agenda-day-slot{min-height:83px!important}
+.hc-agenda-weekend-slot .hc-day-event{
+ grid-template-columns:1fr 8px!important;padding:6px!important;
+}
+.hc-agenda-weekend-slot .hc-day-event-icon{display:none!important}
+.hc-agenda-weekend-slot .hc-day-event-copy strong{font-size:.66rem!important}
+.hc-agenda-weekend-slot .hc-day-event-copy em,.hc-agenda-weekend-slot .hc-day-event-copy>span{font-size:.56rem!important}
+@media(max-width:380px){
+ .hc-week-agenda-head strong{font-size:.94rem!important}
+ .hc-day-event{grid-template-columns:29px minmax(0,1fr) 8px!important;gap:4px!important;padding-left:8px!important}
+ .hc-day-event-icon{width:28px!important;height:28px!important;font-size:1rem!important}
+ .hc-day-event-copy strong{font-size:.69rem!important}
+}
