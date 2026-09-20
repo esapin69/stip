@@ -151,7 +151,10 @@ check(home.includes('weekStart = w[0]?.iso')&&home.includes('return start <= wee
 check(home.includes('monthKey === currentMonthKey')&&home.includes('hc-week-today hc-date-jump-today'),'Le bouton Aujourd’hui doit rester absent sur le mois courant et revenir sur les autres mois.');
 check(homeCss.includes('.hc-date-jump-workday.shift-morning')&&homeCss.includes('.hc-date-jump-workday.shift-night'),'Les couleurs des pastilles de jours travaillés ont disparu.');
 check(homeCss.includes('CALENDAR-DRIVEN WEEK PLANNING')&&homeCss.includes('.hc-calendar-driven-planning>.hc-planning-calendar-block'),'Le raccord visuel calendrier/planning a disparu.');
-check(homeCss.includes('height:43px!important')&&homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-number'),'Le calendrier fusionné doit rester légèrement plus compact que l’ancienne version.');
+check(home.includes('is-week-start')&&home.includes('is-week-end')&&home.includes('choisir cette semaine'),'Le calendrier doit exprimer une sélection de semaine, pas seulement de jour.');
+check(homeCss.includes('WEEK PICKER AFFORDANCE + EVENT BREATHING ROOM')&&homeCss.includes('.hc-date-jump-grid>button.is-week-start')&&homeCss.includes('box-shadow:')&&homeCss.includes('inset 0 -3px 0 rgba(12,135,158,.26)'),'Le regroupement visuel de la semaine sélectionnée a disparu.');
+check(homeCss.includes('height:37px!important')&&homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-number'),'Le calendrier fusionné doit rester légèrement plus compact que l’ancienne version.');
+check(homeCss.includes('.hc-days-landscape.has-week-events')&&homeCss.includes('padding-top:72px!important')&&homeCss.includes('.hc-day-event-markers i')&&homeCss.includes('font-size:35px!important'),'Les repères événement au-dessus des shifts ont perdu leur espace ou leur importance.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
