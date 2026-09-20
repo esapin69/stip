@@ -13,8 +13,6 @@
     USAGE = "stip_app_usage_v1",
     FAV = "stip_app_favorites_v1";
   const I = {
-    home: '<img src="images/icone_app/quick-card.svg?v=20260919-restore1" alt="" aria-hidden="true">',
-    profile: '<img src="images/icone_app/quick-home.svg?v=20260919-restore1" alt="" aria-hidden="true">',
     fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
   const APPS = {
@@ -250,13 +248,10 @@
     n.id = "stipQuickUniversal";
     n.className = "stip-quick-switch";
     n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-u="profile" aria-label="Mon accueil STIP"><span class="qs-icon">${I.profile}</span></button><button type="button" data-u="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
+    n.innerHTML = `<button type="button" data-u="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
     n.addEventListener("click", (e) => {
       const b = e.target.closest("[data-u]");
-      if (!b) return;
-      const a = b.dataset.u;
-      if (a === "profile") return go("index.html?quick=profile");
-      if (a === "favorites") return toggleFav(perms);
+      if (b?.dataset.u === "favorites") toggleFav(perms);
     });
     document.body.appendChild(n);
     document.body.classList.add("stip-quick-connected", "stip-quick-in-app");
