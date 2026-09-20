@@ -82,7 +82,7 @@
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeAI:
-      '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-stip-ai-thin.webp?v=20260920-ai-thin1" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
   };
@@ -1004,18 +1004,17 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       items = [
-        ["apps", "Applications", ICON.homeApps],
-        ["planning", "Mon profil", ICON.homeHome],
-      ],
-      ai = has("dialog")
-        ? `<button type="button" class="hc-home-ai" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`
-        : "";
+        ["apps", "Applications", ICON.homeApps, ""],
+        ["planning", "Mon profil", ICON.homeHome, ""],
+        ["ai", "STIP IA", ICON.homeAI, "hc-home-ai"],
+      ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
+      .filter(([key]) => key !== "ai" || has("dialog"))
       .map(
-        ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`,
+        ([key, label, art, extra]) =>
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${[extra, active === key ? "active" : ""].filter(Boolean).join(" ")}"><span class="${key === "ai" ? "hc-home-ai-art" : "hc-home-filter-art"}">${art}</span><strong>${esc(label)}</strong></button>`,
       )
-      .join("")}${ai}</nav>`;
+      .join("")}</nav>`;
   }
 
   function actionCenterData(filter = state.actionFilter) {
@@ -1090,6 +1089,8 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
+    if (state.homeMode === "ai")
+      return `<section class="hc-home-pane hc-home-pane-ai"><section id="hcAIHub" class="hc-ai-host" aria-live="polite"></section></section>`;
     const weeklyDetails = futureWidget();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
