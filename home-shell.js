@@ -40,6 +40,17 @@
     "-",
     "",
   ]);
+  const DAY_OFF = new Set([
+    "RH",
+    "RTT",
+    "RTTA",
+    "RTA",
+    "RC",
+    "RF",
+    "CA",
+    "OFF",
+    "REPOS",
+  ]);
   const ICON = {
     personal:
       '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
@@ -471,8 +482,14 @@
         .replace(".", "")
         .toUpperCase(),
       loading = x.code === "…",
-      weekend = x.dow > 5;
-    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${loading ? '<strong class="hc-shift-loading">…</strong>' : shiftBadge(x.code)}</span><small class="hc-shift-time">${x.time ? weekTimeHtml(x.time) : ""}</small></span>`;
+      weekend = x.dow > 5,
+      dayOff = DAY_OFF.has(canonical),
+      visual = loading
+        ? '<strong class="hc-shift-loading">…</strong>'
+        : dayOff
+          ? `<span class="hc-rest-icon" role="img" aria-label="${esc(SHIFT_BADGE_META[canonical]?.[1] || "Repos")}">🏝️</span>`
+          : shiftBadge(x.code);
+    return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span><small class="hc-shift-time" aria-hidden="true"></small></span>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
