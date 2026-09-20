@@ -99,8 +99,10 @@ export function adaptSuggestions(r: DialogResponse, raw: string, c: SessionCtx):
     else if (cards.length === 2) next = ["Les 2", `Planning de ${titleOf(cards[0])} ?`, `Planning de ${titleOf(cards[1])} ?`];
     else if (!cards.length) next = ["Qui peut recevoir un message ?"];
   } else if (r.kind === "place") {
-    const title = normalize(r.title || "");
-    next = title.startsWith("itineraire") ? ["Afficher le lieu"] : ["Comment y aller ?", "Afficher le bâtiment"];
+    const title = normalize(r.title || ""), rawN = normalize(raw);
+    if (title.startsWith("itineraire")) next = ["Afficher le lieu", "Que sait STIP sur ce lieu ?"];
+    else if (/\b(tout sur|que sait|info|information|detail|encyclopedie|fiche|repere|autour|proche|ascenseur|alias|relie)\b/.test(rawN)) next = ["Comment y aller ?", "Afficher le lieu"];
+    else next = ["Comment y aller ?", "Que sait STIP sur ce lieu ?", "Qu’y a-t-il autour ?"];
   } else if (r.kind === "selection" && cards.length) {
     next = [
       "Planning",
