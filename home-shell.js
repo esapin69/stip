@@ -809,7 +809,7 @@
   }
   function homeModeNav() {
     const active = state.homeMode || "planning",
-      count = notifications().length,
+      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         ["notifications", "Notifications", ICON.homeBell],
         ["planning", "Accueil", ICON.homeHome],
@@ -1187,6 +1187,7 @@
   };
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
+  window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
   setInterval(() => {
     if (
