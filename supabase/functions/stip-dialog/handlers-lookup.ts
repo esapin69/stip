@@ -24,7 +24,10 @@ export async function contactAnswer(c: SessionCtx, old: DialogContext, subjects:
     kind: "contact", title: subjects.length === 1 ? (subjects[0].nickname || subjects[0].prenom || subjects[0].nom) : `${subjects.length} personnes`,
     text: lines.join(" "), cards, actions,
     context: baseContext(old, { subject_agent_ids: subjects.map((a) => a.id), agent_id: subjects[0]?.id, date_scope: ds, last_intent: "contact", offered_options: [] }),
-    suggestions: subjects.length > 1 ? ["Leur planning ?", "Message"] : ["Son planning ?", "Message"],
+    suggestions: [
+      subjects.length > 1 ? "Leur planning ?" : "Son planning ?",
+      subjects.some((a) => String(a.id) !== String(c.agent.id) && a.can_message) && c.permissions?.messages === true ? "Message" : null,
+    ].filter(Boolean) as string[],
   };
 }
 
