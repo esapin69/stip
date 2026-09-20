@@ -117,11 +117,11 @@ export async function answer(c: SessionCtx, body: any) {
 
   if (intent === "request_help") {
     return {
-      kind: "redirect", title: "Demande de planning",
-      text: "Pour poser un congé, un repos ou demander une modification de planning, utilise Changement. STIP y garde les règles du vrai workflow plutôt que d’inventer une demande ici.",
-      cards: [], actions: [{ type: "open", label: "Ouvrir Changement", url: "index.html?quick=change" }],
+      kind: "redirect", title: "Demande de congé",
+      text: "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
+      cards: [], actions: [{ type: "open", label: "Ouvrir mon planning", url: "index.html?quick=personal" }],
       context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
-      suggestions: ["Mon planning sur cette période ?", "Avec qui je peux échanger ?"],
+      suggestions: ["Mon planning sur cette période ?"],
     };
   }
     if (intent === "messaging_help") {
