@@ -39,3 +39,13 @@ body.stip-quick-connected{--stip-quick-clearance:calc(104px + env(safe-area-inse
 
 /* Navigation basse finale : favoris uniquement. */
 .stip-quick-switch{grid-template-columns:1fr!important;width:74px!important;justify-items:center!important}
+
+/* quick-switch-no-content-cover-20260920 */
+.stip-quick-switch{
+ left:auto!important;
+ right:10px!important;
+ bottom:max(10px,env(safe-area-inset-bottom))!important;
+ transform:none!important;
+ width:58px!important;
+ grid-template-columns:1fr!important;
+}
