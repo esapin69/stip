@@ -741,3 +741,67 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-weekend-row .hc-day-weekend{grid-template-columns:44px 34px minmax(40px,1fr)!important;gap:3px!important}
  .hc-weekend-row .hc-day-weekend>i{font-size:.65rem!important}
 }
+
+/* vertical-week-compact-reference-20260920 */
+/* Compact proportions inspired by the former week cards, without changing week logic. */
+.hc-days-vertical{gap:6px!important}
+.hc-days-vertical .hc-day-vertical{
+  min-height:62px!important;
+  grid-template-columns:108px 54px minmax(64px,1fr)!important;
+  gap:8px!important;
+  padding:6px 10px!important;
+  border-radius:15px!important;
+}
+.hc-days-vertical .hc-day-vertical>i{
+  margin:-6px 0 -6px -10px!important;
+  padding:0 6px!important;
+  font-size:.72rem!important;
+}
+.hc-days-vertical .hc-day-vertical>b{
+  font-size:1.72rem!important;
+}
+.hc-days-vertical .hc-day-vertical>.hc-week-visual{
+  min-height:40px!important;
+}
+.hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-badge{
+  min-width:48px!important;
+  min-height:36px!important;
+  padding:5px 10px!important;
+  border-radius:11px!important;
+  font-size:.94rem!important;
+}
+.hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-status-icon{
+  font-size:1.55rem!important;
+}
+.hc-days-vertical .hc-day-vertical>.hc-shift-time{
+  right:11px!important;
+  bottom:4px!important;
+  font-size:.62rem!important;
+}
+.hc-weekend-row{gap:6px!important}
+.hc-weekend-row .hc-day-weekend{
+  min-height:62px!important;
+  grid-template-columns:48px 35px minmax(40px,1fr)!important;
+  gap:4px!important;
+  padding:6px!important;
+}
+.hc-weekend-row .hc-day-weekend>i{
+  margin:-6px 0 -6px -6px!important;
+  padding:0 3px!important;
+  font-size:.66rem!important;
+}
+.hc-weekend-row .hc-day-weekend>b{font-size:1.35rem!important}
+.hc-weekend-row .hc-day-weekend>.hc-week-visual{min-height:36px!important}
+.hc-weekend-row .hc-day-weekend>.hc-week-visual .hc-shift-badge{
+  min-width:39px!important;
+  min-height:32px!important;
+  padding:4px 7px!important;
+  font-size:.82rem!important;
+}
+.hc-weekend-row .hc-day-weekend>.hc-week-visual .hc-status-icon{font-size:1.35rem!important}
+.hc-weekend-row .hc-day-weekend>.hc-shift-time{right:5px!important;bottom:3px!important;font-size:.56rem!important}
+@media(max-width:380px){
+ .hc-days-vertical .hc-day-vertical{grid-template-columns:96px 48px minmax(58px,1fr)!important;gap:6px!important}
+ .hc-days-vertical .hc-day-vertical>i{font-size:.68rem!important}
+ .hc-weekend-row .hc-day-weekend{grid-template-columns:44px 32px minmax(36px,1fr)!important;gap:2px!important}
+}
