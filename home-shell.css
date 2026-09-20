@@ -229,19 +229,20 @@
 
 /* identity-card-20260920 */
 .hc-id-card{
-  grid-template-columns:clamp(112px,30vw,142px) minmax(0,1fr)!important;
-  gap:18px!important;
-  align-items:stretch!important;
-  padding:16px!important;
+  grid-template-columns:clamp(96px,26vw,122px) minmax(0,1fr)!important;
+  gap:14px!important;
+  align-items:start!important;
+  padding:13px!important;
   border-color:var(--stip-line)!important;
   background:var(--stip-surface-raised)!important;
   box-shadow:var(--stip-shadow)!important;
 }
 .hc-id-card .hc-avatar{
   width:100%!important;
-  height:100%!important;
-  min-height:176px!important;
-  align-self:stretch;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:4/5;
+  align-self:start;
   border-radius:22px!important;
   background:var(--stip-surface-soft)!important;
   border:1px solid var(--stip-line)!important;
@@ -249,8 +250,8 @@
 .hc-id-card .hc-avatar img{
   width:100%!important;
   height:100%!important;
-  object-fit:contain!important;
-  object-position:center bottom!important;
+  object-fit:cover!important;
+  object-position:center 32%!important;
 }
 .hc-id-card .hc-avatar>span{
   font-size:2rem!important;
@@ -337,20 +338,19 @@
 
 @media(max-width:560px){
   .hc-id-card{
-    grid-template-columns:minmax(108px,34vw) minmax(0,1fr)!important;
-    gap:14px!important;
-    padding:14px!important;
+    grid-template-columns:minmax(96px,29vw) minmax(0,1fr)!important;
+    gap:12px!important;
+    padding:12px!important;
   }
-  .hc-id-card .hc-avatar{min-height:184px!important}
   .hc-id-card .hc-profile-team{font-size:.92rem!important}
 }
 @media(max-width:380px){
   .hc-id-card{
-    grid-template-columns:100px minmax(0,1fr)!important;
+    grid-template-columns:92px minmax(0,1fr)!important;
     gap:12px!important;
     padding:12px!important;
   }
-  .hc-id-card .hc-avatar{min-height:174px!important;border-radius:18px!important}
+  .hc-id-card .hc-avatar{border-radius:18px!important}
   .hc-id-card .hc-profile-copy>small{font-size:.68rem!important}
   .hc-id-card .hc-profile-name{font-size:1.32rem!important}
   .hc-profile-ghe{font-size:1.58rem!important}
@@ -359,3 +359,42 @@
 
 /* profile-header-position-20260920 */
 .hc-id-card + .hc-home-filters{margin-top:12px!important}
+
+/* profile-photo-dialog-20260920 */
+.hc-avatar.profile-photo-enabled{cursor:pointer;position:relative}
+.hc-avatar.profile-photo-enabled:after{
+  content:'✎';position:absolute;right:6px;bottom:6px;width:28px;height:28px;border-radius:50%;
+  display:grid;place-items:center;background:var(--stip-surface);border:1px solid var(--stip-line);
+  color:var(--stip-accent);font-size:13px;font-weight:950;box-shadow:var(--stip-shadow-soft)
+}
+#profilePhotoDialog{
+  position:fixed;inset:0;z-index:2300;display:grid;align-items:end;background:rgba(7,25,33,.48)
+}
+#profilePhotoDialog[hidden]{display:none}
+.profile-photo-sheet{
+  width:min(560px,100%);margin:0 auto;padding:10px 16px calc(18px + env(safe-area-inset-bottom));
+  border-radius:26px 26px 0 0;background:var(--stip-surface);color:var(--stip-ink);
+  box-shadow:0 -24px 60px rgba(7,25,33,.28)
+}
+.profile-photo-handle{width:54px;height:5px;margin:2px auto 18px;border-radius:999px;background:var(--stip-line-strong)}
+.profile-photo-sheet h2{margin:0;font-size:1.3rem}
+.profile-photo-sheet p{margin:6px 0 16px;color:var(--stip-muted);font-size:.86rem;line-height:1.4}
+.profile-photo-actions{display:grid;gap:9px}
+.profile-photo-actions button{
+  min-height:50px;border:1px solid var(--stip-line);border-radius:14px;background:var(--stip-surface-soft);
+  color:var(--stip-ink);font:inherit;font-weight:900
+}
+.profile-photo-actions .primary{background:var(--stip-accent);border-color:var(--stip-accent);color:var(--stip-on-accent,#fff)}
+.profile-photo-actions .danger{color:var(--stip-danger,#a43a43)}
+.profile-photo-preview{
+  width:min(210px,58vw);aspect-ratio:4/5;margin:2px auto 16px;border-radius:22px;overflow:hidden;
+  border:1px solid var(--stip-line);background:var(--stip-surface-soft);box-shadow:var(--stip-shadow-soft)
+}
+.profile-photo-preview img{width:100%;height:100%;display:block;object-fit:cover}
+#profilePhotoToast{
+  position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);
+  z-index:2400;max-width:86vw;padding:10px 13px;border-radius:12px;background:var(--stip-ink);color:#fff;
+  font-size:.74rem;font-weight:800;opacity:0;pointer-events:none;transition:.18s
+}
+#profilePhotoToast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#profilePhotoToast.error{background:#7a2e35}
