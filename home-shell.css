@@ -1447,52 +1447,21 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  text-transform:uppercase!important;
 }
 .hc-date-jump-panel{
- width:min(430px,94%)!important;
- margin:12px auto 0!important;
- padding:10px!important;
- display:grid!important;
- grid-template-columns:minmax(0,1fr) auto!important;
- gap:8px!important;
- align-items:end!important;
- border:1px solid rgba(22,91,111,.13)!important;
- border-radius:17px!important;
- background:#fff!important;
- box-shadow:0 10px 24px rgba(20,62,78,.10)!important;
+ width:min(100%,430px)!important;margin:10px auto 0!important;padding:12px!important;box-sizing:border-box!important;
+ border:1px solid rgba(22,91,111,.13)!important;border-radius:22px!important;
+ background:linear-gradient(155deg,#fff,#f7fbfc)!important;box-shadow:0 12px 28px rgba(20,62,78,.10)!important;
 }
 .hc-date-jump-panel[hidden]{display:none!important}
-.hc-date-jump-panel label{
- min-width:0!important;
- display:grid!important;
- gap:5px!important;
- color:#607c87!important;
- font-size:.64rem!important;
- font-weight:900!important;
- letter-spacing:.045em!important;
- text-transform:uppercase!important;
-}
-.hc-date-jump-panel input{
- width:100%!important;
- min-height:42px!important;
- box-sizing:border-box!important;
- padding:7px 10px!important;
- border:1px solid #d4e3e7!important;
- border-radius:11px!important;
- background:#f7fbfc!important;
- color:#153f50!important;
- font:inherit!important;
- font-size:.9rem!important;
- font-weight:850!important;
-}
-.hc-date-jump-panel>button{
- min-height:42px!important;
- padding:0 12px!important;
- border:0!important;
- border-radius:11px!important;
- background:#eaf5f7!important;
- color:#0b7c92!important;
- font-size:.72rem!important;
- font-weight:950!important;
-}
+.hc-date-jump-head{display:grid!important;grid-template-columns:42px minmax(0,1fr) 42px!important;align-items:center!important;gap:8px!important}
+.hc-date-jump-head>button{width:42px!important;height:42px!important;padding:0!important;border:1px solid rgba(22,91,111,.10)!important;border-radius:50%!important;background:#f2f8f9!important;color:#164d61!important;font-size:1.55rem!important;font-weight:800!important}
+.hc-date-jump-head>strong{color:#173f52!important;font-size:1rem!important;font-weight:950!important;text-align:center!important}
+.hc-date-jump-weekdays,.hc-date-jump-grid{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:5px!important}
+.hc-date-jump-weekdays{margin:11px 0 6px!important;color:#82959d!important;font-size:.63rem!important;font-weight:950!important;text-align:center!important;text-transform:uppercase!important}
+.hc-date-jump-grid>button,.hc-date-jump-empty{aspect-ratio:1/1!important;min-width:0!important}
+.hc-date-jump-grid>button{border:0!important;border-radius:12px!important;background:transparent!important;color:#294f5e!important;font:inherit!important;font-size:.82rem!important;font-weight:850!important;display:grid!important;place-items:center!important}
+.hc-date-jump-grid>button.is-week{background:#e3f4f7!important;color:#087b92!important}
+.hc-date-jump-grid>button.is-today{box-shadow:inset 0 0 0 2px #168297!important;color:#075d70!important;font-weight:950!important}
+.hc-date-jump-today{width:100%!important;min-height:40px!important;margin-top:10px!important;padding:0 12px!important;border:0!important;border-radius:12px!important;background:#e9f5f7!important;color:#08778e!important;font-size:.76rem!important;font-weight:950!important}
 .hc-week-nav-global{
  width:100%!important;
  box-sizing:border-box!important;
@@ -1542,28 +1511,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  line-height:1!important;
  font-weight:900!important;
  letter-spacing:.05em!important;
-}
-.hc-planning-tools{
- width:100%!important;
- display:flex!important;
- align-items:center!important;
- justify-content:center!important;
- flex-wrap:wrap!important;
- gap:8px!important;
- margin:-8px 0 0!important;
-}
-.hc-week-today-under-nav{
- display:block!important;
- width:max-content!important;
- max-width:100%!important;
- margin:0!important;
- padding:8px 14px!important;
- border:0!important;
- background:transparent!important;
- color:#167b96!important;
- font-size:.86rem!important;
- line-height:1.1!important;
- font-weight:900!important;
 }
 
 .hc-planning-group.hc-planning-landscape{
