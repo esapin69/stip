@@ -156,6 +156,10 @@ check(homeCss.includes('WEEK PICKER AFFORDANCE + EVENT BREATHING ROOM')&&homeCss
 check(homeCss.includes('height:37px!important')&&homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-number'),'Le calendrier fusionné doit rester légèrement plus compact que l’ancienne version.');
 check(homeCss.includes('.hc-days-landscape.has-week-events')&&homeCss.includes('padding-top:78px!important')&&homeCss.includes('.hc-day-event-markers i')&&homeCss.includes('font-size:37px!important'),'Les repères événement au-dessus des shifts ont perdu leur espace ou leur importance.');
 check(homeCss.includes('PREMIUM CALENDAR → WEEK TRANSITION')&&homeCss.includes('content:none!important')&&homeCss.includes('border-radius:0 0 22px 22px!important'),'La transition premium entre calendrier et semaine a régressé.');
+check(home.includes('gridStart = new Date(y, m, 1 - leading, 12)')&&home.includes('totalCells = leading + last.getDate() + trailing'),'Le calendrier doit compléter les lignes avec les jours des mois précédent et suivant.');
+check(home.includes('outsideMonth ? "is-outside-month" : ""')&&home.includes('data-cal-month'),'Les jours hors du mois courant doivent rester identifiables et sélectionnables.');
+check(home.includes('dateJumpPanel.dataset.calendarMonth ||')&&home.includes('return jumpToDate(day.dataset.calDay)'),'Sélectionner une semaine via un jour du mois voisin ne doit pas faire sauter le calendrier vers ce mois.');
+check(homeCss.includes('ADJACENT MONTH DAYS')&&homeCss.includes('.is-outside-month:not(.is-week)')&&homeCss.includes('filter:saturate(.78) brightness(1.03)'),'La différenciation visuelle des jours des mois voisins a disparu.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
