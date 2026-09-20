@@ -15,12 +15,44 @@
     return j;
   }
   const msg=(a,b)=>post(MSG_API,a,b),ask=(text,context)=>post(DIALOG_API,"answer",{text,context}),push=(a,b)=>post(PUSH_API,a,b);
-  function syncVisualViewport(){
+  let viewportBaseHeight=0,viewportSyncTimer=0;
+  function syncVisualViewport(forceBase=false){
     const vv=window.visualViewport,
-      height=Math.max(280,Math.round(vv?.height||window.innerHeight||document.documentElement.clientHeight||0)),
-      top=Math.max(0,Math.round(vv?.offsetTop||0));
-    document.documentElement.style.setProperty("--ch-viewport-height",height+"px");
-    document.documentElement.style.setProperty("--ch-viewport-top",top+"px");
+      docH=Math.round(document.documentElement.clientHeight||0),
+      innerH=Math.round(window.innerHeight||0),
+      visualH=Math.round(vv?.height||innerH||docH||0),
+      visualTop=Math.max(0,Math.round(vv?.offsetTop||0)),
+      keyboardOpen=document.documentElement.classList.contains("ch-keyboard-open");
+    if(forceBase||!keyboardOpen)
+      viewportBaseHeight=Math.max(viewportBaseHeight,docH,innerH,visualH+visualTop);
+    const base=Math.max(viewportBaseHeight,visualH+visualTop),
+      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0;
+    document.documentElement.style.setProperty("--ch-keyboard-inset",keyboardInset+"px");
+    document.documentElement.style.setProperty("--ch-viewport-top",visualTop+"px");
+  }
+  function queueViewportSync(){
+    clearTimeout(viewportSyncTimer);
+    syncVisualViewport();
+    viewportSyncTimer=setTimeout(syncVisualViewport,80);
+    setTimeout(syncVisualViewport,220);
+    setTimeout(syncVisualViewport,420);
+  }
+  function bindKeyboardTracking(root){
+    root.addEventListener("focusin",(e)=>{
+      if(!e.target.matches("input,textarea"))return;
+      syncVisualViewport(true);
+      document.documentElement.classList.add("ch-keyboard-open");
+      queueViewportSync();
+    });
+    root.addEventListener("focusout",(e)=>{
+      if(!e.target.matches("input,textarea"))return;
+      setTimeout(()=>{
+        const active=document.activeElement;
+        if(root.contains(active)&&active?.matches("input,textarea"))return;
+        document.documentElement.classList.remove("ch-keyboard-open");
+        syncVisualViewport(true);
+      },120);
+    });
   }
   function name(a={}){return a.nickname||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||"Agent"}
   function avatar(a={},cls="ch-avatar"){const src=a.profile_photo_url||a.avatar_url||a.avatar||"",ini=[a.prenom?.[0],a.nom?.[0]].filter(Boolean).join("").toUpperCase()||String(name(a)).slice(0,2).toUpperCase();return '<span class="'+cls+'">'+(src?'<img src="'+esc(src)+'" alt="">':esc(ini))+'</span>'}
@@ -59,12 +91,13 @@
     if(dialog)return dialog;
     dialog=document.createElement("section");dialog.className="ch-dialog";dialog.hidden=true;dialog.innerHTML='<header><button type="button" data-close>‹</button><div><small>DEMANDER À STIP</small><strong>Recherche intelligente</strong></div><span></span></header><main class="ch-dialog-body" data-dialog-body></main><form class="ch-dialog-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit">↑</button></form>';
     document.body.appendChild(dialog);
+    bindKeyboardTracking(dialog);
     dialog.querySelector("[data-close]").addEventListener("click",closeDialog);
     dialog.querySelector("form").addEventListener("submit",e=>{e.preventDefault();const input=e.currentTarget.elements.q,q=String(input.value||"").trim();if(!q)return;input.value="";submitAsk(q)});
     return dialog
   }
   function openDialog(){if(!can("dialog"))return;const d=dialogShell();syncVisualViewport();d.hidden=false;document.documentElement.classList.add("ch-lock");if(!dialogHistory.length){dialogHistory.push({side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Je suis avec qui demain ?</button><button>Qui est en J4 demain ?</button><button>Mon horaire demain ?</button></div></article>'});renderDialog()}setTimeout(()=>{syncVisualViewport();const input=d.querySelector('input');try{input?.focus({preventScroll:true})}catch{input?.focus()}setTimeout(syncVisualViewport,80)},30)}
-  function closeDialog(){if(dialog)dialog.hidden=true;document.documentElement.classList.remove("ch-lock")}
+  function closeDialog(){if(dialog)dialog.hidden=true;document.documentElement.classList.remove("ch-lock","ch-keyboard-open");syncVisualViewport(true)}
   function renderDialog(){
     const body=dialog?.querySelector("[data-dialog-body]");if(!body)return;
     body.innerHTML=dialogHistory.map(x=>'<div class="ch-msg '+x.side+'">'+x.html+'</div>').join("");
@@ -104,12 +137,13 @@
     if(thread)return thread;
     thread=document.createElement("section");thread.className="ch-thread";thread.hidden=true;thread.innerHTML='<header><button type="button" data-close>‹</button><div data-thread-head></div><span></span></header><main data-thread-body></main><form><textarea name="body" rows="1" maxlength="2000" placeholder="Message…"></textarea><button type="submit">↑</button></form>';
     document.body.appendChild(thread);
+    bindKeyboardTracking(thread);
     thread.querySelector("[data-close]").addEventListener("click",closeThread);
     thread.querySelector("form").addEventListener("submit",async e=>{e.preventDefault();const input=e.currentTarget.elements.body,body=String(input.value||"").trim(),id=thread.dataset.conversation;if(!body||!id)return;input.value="";try{await msg("send",{conversation_id:id,body});await renderThread(id)}catch(err){alert(err.message)}});
     return thread
   }
   async function openThread(id){closeDialog();const t=threadShell();syncVisualViewport();t.hidden=false;t.dataset.conversation=id;document.documentElement.classList.add("ch-lock");await renderThread(id);clearInterval(threadTimer);threadTimer=setInterval(()=>{if(thread&&!thread.hidden&&thread.dataset.conversation)renderThread(thread.dataset.conversation,true)},5000)}
-  function closeThread(){if(thread)thread.hidden=true;clearInterval(threadTimer);threadTimer=null;document.documentElement.classList.remove("ch-lock");loadHome(true)}
+  function closeThread(){if(thread)thread.hidden=true;clearInterval(threadTimer);threadTimer=null;document.documentElement.classList.remove("ch-lock","ch-keyboard-open");syncVisualViewport(true);loadHome(true)}
   async function renderThread(id,quiet=false){
     try{const r=await msg("thread",{conversation_id:id}),me=window.STIPSession?.agent?.id||window.STIPBootCache?.agent?.id,other=r.members?.find(m=>String(m.agent_id)!==String(me))?.agent,title=r.conversation.kind==="direct"?name(other):r.conversation.title||"Conversation",head=thread.querySelector("[data-thread-head]"),body=thread.querySelector("[data-thread-body]");head.innerHTML=(other?avatar(other,"ch-mini-avatar"):"")+'<div><strong>'+esc(title)+'</strong><small>'+esc(r.conversation.kind==="direct"?"Message privé":"Groupe STIP")+'</small></div>';const operational=r.broadcast?'<section class="ch-operational '+esc(r.broadcast.status)+'"><small>INFO TERRAIN</small><strong>'+esc(r.broadcast.title||"Information équipe")+'</strong><p>'+esc(r.broadcast.body||"")+'</p><div class="ch-operational-meta">'+(r.broadcast.location_text?'<span>⌖ '+esc(r.broadcast.location_text)+'</span>':"")+(r.broadcast.quantity!=null?'<span><b>'+esc(r.broadcast.quantity)+'</b> disponible'+(Number(r.broadcast.quantity)>1?"s":"")+'</span>':"")+'<span>'+(r.broadcast.status==="resolved"?"Terminé":"Mis à jour "+new Date(r.broadcast.updated_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}))+'</span></div>'+(r.broadcast.status!=="resolved"?'<div class="ch-operational-actions"><button type="button" data-broadcast-action="confirm">Toujours là</button><button type="button" data-broadcast-action="less">Il en reste moins</button><button type="button" data-broadcast-action="resolved">Plus rien</button></div>':'<div class="ch-operational-done">✓ Information clôturée</div>')+'</section>':"";body.innerHTML=operational+((r.messages||[]).map(m=>'<article class="ch-bubble '+(String(m.sender_agent_id)===String(me)?"mine":"theirs")+'">'+(String(m.sender_agent_id)!==String(me)?'<small>'+esc(name(m.sender))+'</small>':"")+'<p>'+esc(m.body)+'</p><time>'+new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</time></article>').join("")||'<p class="ch-empty">Pas encore de message. À toi de jouer.</p>');body.querySelectorAll("[data-broadcast-action]").forEach(b=>b.addEventListener("click",async()=>{let quantity=null;if(b.dataset.broadcastAction==="less"){const v=prompt("Il en reste combien ?",String(r.broadcast.quantity??""));if(v===null)return;quantity=Math.max(0,Number(v)||0)}b.disabled=true;try{await msg("broadcast_update",{conversation_id:id,update:b.dataset.broadcastAction,quantity});await renderThread(id)}catch(err){b.disabled=false;alert(err.message)}}));if(!quiet||body.scrollHeight-body.scrollTop-body.clientHeight<100)body.scrollTop=body.scrollHeight;loadHome(true)}
     catch(e){if(!quiet)thread.querySelector("[data-thread-body]").innerHTML='<p class="ch-error">'+esc(e.message)+'</p>'}
@@ -137,10 +171,10 @@
   function onRender(){if(currentMode()==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},20000)}else{clearInterval(homeTimer);homeTimer=null}}
   ["stip:home-rendered","stip:permissions-live","stip:session-ready"].forEach(e=>window.addEventListener(e,()=>setTimeout(onRender,0)));
   window.addEventListener("stip:session-ended",()=>{home=null;setUnread(0);closeDialog();closeThread()});
-  syncVisualViewport();
-  window.addEventListener("resize",syncVisualViewport,{passive:true});
-  window.visualViewport?.addEventListener("resize",syncVisualViewport,{passive:true});
-  window.visualViewport?.addEventListener("scroll",syncVisualViewport,{passive:true});
+  syncVisualViewport(true);
+  window.addEventListener("resize",queueViewportSync,{passive:true});
+  window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
+  window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
   window.STIPCommunication={openDialog,openDirect,openThread,refresh:()=>loadHome(true)};
 })();
