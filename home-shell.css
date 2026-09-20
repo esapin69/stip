@@ -1354,3 +1354,34 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  font-size:1.55rem!important;
  font-weight:900!important;
 }
+
+
+/* richer-week-cards-and-centered-month-v12-20260920 */
+.hc-planning-month-title>div:first-child{text-align:center!important}
+.hc-planning-month-title h2{text-align:center!important}
+.hc-planning-month-title>div:first-child>small{text-align:center!important}
+
+/* Stronger shift colour without bringing back the old header highlighter. */
+.hc-planning-left .hc-day-vertical{
+ position:relative!important;
+ background:color-mix(in srgb,currentColor 10%,#fff)!important;
+ box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 12%,transparent)!important;
+}
+.hc-planning-left .hc-day-vertical.work{
+ background:color-mix(in srgb,currentColor 13%,#fff)!important;
+}
+.hc-planning-left .hc-day-vertical.rest{
+ background:color-mix(in srgb,currentColor 7%,#fff)!important;
+}
+.hc-planning-left .hc-day-head{
+ background:color-mix(in srgb,currentColor 8%,transparent)!important;
+ border-bottom:1px solid color-mix(in srgb,currentColor 18%,transparent)!important;
+}
+.hc-planning-left .hc-work-icon{font-size:1.18rem!important}
+
+/* The month launcher should read as an app-style premium shortcut. */
+.hc-planning-right .hc-month-open-right{
+ background:linear-gradient(145deg,#fff,#f5fbfc)!important;
+ border:1px solid rgba(20,111,133,.16)!important;
+ box-shadow:0 8px 20px rgba(25,70,86,.08)!important;
+}
