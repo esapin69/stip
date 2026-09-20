@@ -26,10 +26,14 @@
     if(forceBase||!keyboardOpen)
       viewportBaseHeight=Math.max(viewportBaseHeight,docH,innerH,visualH+visualTop);
     const base=Math.max(viewportBaseHeight,visualH+visualTop),
-      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0;
+      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0,
+      layoutVisibleH=Math.max(1,innerH-visualTop),
+      layoutLooksKeyboardResized=keyboardOpen&&base>0&&innerH<base-80,
+      visualGap=layoutVisibleH-visualH,
+      panelH=layoutLooksKeyboardResized&&visualGap>0&&visualGap<180?layoutVisibleH:visualH;
     document.documentElement.style.setProperty("--ch-keyboard-inset",keyboardInset+"px");
     document.documentElement.style.setProperty("--ch-viewport-top",visualTop+"px");
-    document.documentElement.style.setProperty("--ch-viewport-height",Math.max(1,visualH)+"px");
+    document.documentElement.style.setProperty("--ch-viewport-height",Math.max(1,panelH)+"px");
     document.documentElement.classList.toggle("ch-visual-viewport",!!vv);
   }
   function keepActiveComposerVisible(){
