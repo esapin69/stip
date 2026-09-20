@@ -228,20 +228,6 @@
         localStorage.setItem(CODE_STORE, d);
       } catch {}
   }
-  function nav() {
-    let n = $("#stipQuickSwitch");
-    if (n) return n;
-    n = document.createElement("nav");
-    n.id = "stipQuickSwitch";
-    n.className = "stip-quick-switch";
-    n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-qs="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
-    n.addEventListener("click", (e) => {
-      const b = e.target.closest?.("[data-qs]");
-      if (b?.dataset.qs === "favorites") toggleFavorites();
-    });
-    return n;
-  }
   function closeFavorites() {
     document.getElementById("stipFavoritesPanel")?.remove();
     document.body.classList.remove("stip-favorites-open");
@@ -350,38 +336,21 @@
   };
   function syncMode() {
     const connected = !!window.STIPSession;
-    document.body.classList.toggle(
-      "stip-quick-in-app",
-      connected && !publicPreview,
-    );
+    document.body.classList.remove("stip-quick-in-app", "stip-quick-connected");
     document.body.classList.toggle(
       "stip-public-preview",
       connected && publicPreview,
     );
-    document.body.classList.toggle("stip-quick-connected", connected);
   }
   function mount() {
     document.getElementById("stipQuickUniversal")?.remove();
-    const existing = $("#stipQuickSwitch");
-    if (!window.STIPSession) {
-      existing?.remove();
-      closeFavorites();
-      syncMode();
-      return;
-    }
-    const n = nav();
-    if (n.parentElement !== document.body) document.body.appendChild(n);
+    document.getElementById("stipQuickSwitch")?.remove();
+    if (!window.STIPSession) closeFavorites();
     syncMode();
-    refreshState();
   }
   function refreshState() {
-    const n = $("#stipQuickSwitch");
-    if (!n) return;
-    const session = !!window.STIPSession;
-    n.querySelector('[data-qs="favorites"]').classList.toggle(
-      "is-current",
-      !!document.getElementById("stipFavoritesPanel"),
-    );
+    document.getElementById("stipQuickUniversal")?.remove();
+    document.getElementById("stipQuickSwitch")?.remove();
   }
   function requireSession(key = "") {
     if (window.STIPSession) return true;
