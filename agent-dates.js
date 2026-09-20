@@ -176,10 +176,11 @@
       for (const x of v) {
         const sourceFocus = focus ? focus.split(":").pop() : "",
           foc = !!focus && (x.id === focus || x.source_id === sourceFocus),
-          sub =
+          referent =
             x.category === "intern" && x.meta?.referent
-              ? "Référent : " + x.meta.referent
-              : x.location || x.title || "";
+              ? String(x.meta.referent).trim()
+              : "",
+          sub = referent ? "" : x.location || x.title || "";
         out +=
           '<button class="da-item ' +
           (foc ? "focus" : "") +
@@ -212,6 +213,7 @@
           "</span></span><p>" +
           esc(x.time || x.title || "") +
           "</p>" +
+          (referent ? '<span class="da-referent"><em>Référent</em><b>' + esc(referent) + "</b></span>" : "") +
           (sub ? "<small>" + esc(sub) + "</small>" : "") +
           '</span><span class="da-chev">›</span></button>';
       }
