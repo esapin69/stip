@@ -98,6 +98,7 @@ export async function answer(c: SessionCtx, body: any) {
   if (option === "message") intent = "messaging_help";
   if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(raw)) intent = "exchange";
   if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(raw)) intent = "shift_roster";
+  if (intent === "help" && old.place_id && /\b(autour|repere|reperes|info|infos|information|informations|detail|details|fiche|alias|proche|relie|lie a)\b/.test(normalize(raw))) intent = "place";
 
   const parsedScope = parseDateScope(raw, todayParis(), old);
   if (intent === "exchange" && !parsedScope) return {
