@@ -64,12 +64,12 @@
       '<svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg>',
     admin:
       '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M9 12h6M12 9v6"/></svg>',
-    homePlanning:
-      '<img src="images/icone_app/home-planning.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
+    homeHome:
+      '<img src="images/icone_app/home-home.svg?v=20260920-nav1" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-apps.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
-    homeProfile:
-      '<img src="images/icone_app/quick-card.svg?v=20260920-profile1" alt="" aria-hidden="true">',
+    homeBell:
+      '<img src="images/icone_app/home-bell.svg?v=20260920-nav1" alt="" aria-hidden="true">',
   };
   function esc(v) {
     return String(v ?? "").replace(
@@ -773,11 +773,26 @@
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
-      meta = [
-        ghe ? (ghe.toUpperCase().startsWith("GHE") ? ghe : `GHE ${ghe}`) : "",
-        team ? `Équipe ${cap(team)}` : "",
-      ].filter(Boolean);
-    return `<section class="hc-profile hc-profile-full"><div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>MON PROFIL</small><strong>${esc(agentName(a))}</strong>${meta.length ? `<p class="hc-profile-meta">${esc(meta.join(" · "))}</p>` : ""}<div>${tel ? `<button data-copy="${esc(tel)}" data-label="Numéro">${esc(tel)}</button>` : ""}${mail ? `<button data-copy="${esc(mail)}" data-label="E-mail">${esc(mail)}</button>` : ""}</div></div></section>`;
+      gheLabel = ghe
+        ? ghe.toUpperCase().startsWith("GHE")
+          ? ghe
+          : `GHE ${ghe}`
+        : "";
+    return `<section class="hc-profile hc-profile-full hc-id-card">
+      <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
+      <div class="hc-profile-copy">
+        <small>MON PROFIL</small>
+        <strong class="hc-profile-name">${esc(agentName(a))}</strong>
+        <div class="hc-profile-role">
+          ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
+          ${team ? `<span class="hc-profile-team">Équipe ${esc(cap(team))}</span>` : ""}
+        </div>
+        <div class="hc-profile-contacts">
+          ${tel ? `<button class="hc-profile-contact" data-copy="${esc(tel)}" data-label="Numéro"><span>TÉLÉPHONE</span><strong>${esc(tel)}</strong></button>` : ""}
+          ${mail ? `<button class="hc-profile-contact" data-copy="${esc(mail)}" data-label="E-mail"><span>E-MAIL</span><strong>${esc(mail)}</strong></button>` : ""}
+        </div>
+      </div>
+    </section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -809,16 +824,16 @@
   }
   function homeModeNav() {
     const active = state.homeMode || "planning",
-      count = notifications().length,
+      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
-        ["profile", "Mon profil", ICON.homeProfile],
-        ["planning", "Planning", ICON.homePlanning],
+        ["notifications", "Notifications", ICON.homeBell],
+        ["planning", "Accueil", ICON.homeHome],
         ["apps", "Applications", ICON.homeApps],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
         ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "profile" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "notifications" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
       )
       .join("")}</nav>`;
   }
@@ -887,12 +902,12 @@
     bindActionCenter(host, filter, true);
   }
 
-  function profilePane() {
-    return `<section class="hc-home-pane hc-home-pane-profile">${profile()}<section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></section>`;
+  function notificationsPane() {
+    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Mon profil</summary><div>${profile()}<section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
   }
 
   function homeModeBody() {
-    if (state.homeMode === "profile") return profilePane();
+    if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
@@ -914,7 +929,7 @@
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
     );
-    if (state.homeMode === "profile") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
+    if (state.homeMode === "notifications") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -1187,6 +1202,7 @@
   };
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
+  window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
   setInterval(() => {
     if (
