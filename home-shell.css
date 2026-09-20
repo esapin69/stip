@@ -1627,3 +1627,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-days-landscape .hc-day-head b{font-size:1.32rem!important}
  .hc-days-landscape .hc-shift-name,.hc-days-landscape .hc-status-code{font-size:1rem!important}
 }
+
+
+/* month-shortcut-after-week-v25-20260920 */
+.hc-planning-group.hc-planning-landscape .hc-planning-week-row{margin-bottom:14px!important}
+.hc-planning-group.hc-planning-landscape .hc-planning-month-row{margin:0 0 14px!important}
