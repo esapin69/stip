@@ -858,7 +858,7 @@
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         ["notifications", "Notifications", ICON.homeBell],
-        ["planning", "Accueil", ICON.homeHome],
+        ["planning", "Mon profil", ICON.homeHome],
         ["apps", "Applications", ICON.homeApps],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
