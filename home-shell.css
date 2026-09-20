@@ -418,3 +418,65 @@
  .hc-widget-future .hc-widget-head h2{font-size:1.48rem!important}
  .hc-widget-future .hc-event-row>span>strong{font-size:1.04rem!important}
 }
+
+/* home-final-hierarchy-20260920 */
+/* Four equal top shortcuts; existing cards and relief stay intact. */
+.hc-home-filters{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:7px!important}
+.hc-home-filters>button{min-height:88px!important;padding:7px 3px 8px!important}
+.hc-home-filter-art{width:50px!important;height:50px!important}
+.hc-home-filters>button>strong{font-size:.72rem!important;line-height:1.05!important}
+
+/* 1 — planning context: one strong title, secondary metadata. */
+.hc-widget-planning .hc-widget-head small{font-size:.72rem!important;font-weight:950!important;letter-spacing:.1em!important}
+.hc-widget-planning .hc-widget-head h2{font-size:1.72rem!important;line-height:.98!important;letter-spacing:-.035em!important}
+.hc-week-nav b{font-size:.9rem!important;line-height:1.12!important}
+.hc-week-nav b small{font-size:.72rem!important}
+
+/* 2 — month access: important but subordinate to planning/week. */
+.hc-month-open-copy>strong{font-size:.88rem!important;line-height:1.05!important}
+.hc-month-open-copy>small{font-size:.68rem!important;line-height:1.08!important}
+
+/* 4 — tomorrow: clear title / shift / supporting line. */
+.hc-tomorrow-summary small,.hc-tomorrow-summary .hc-tomorrow-kicker{font-size:.72rem!important;font-weight:950!important}
+.hc-tomorrow-summary strong,.hc-tomorrow-summary h3{font-size:1.28rem!important;line-height:1.04!important}
+.hc-tomorrow-summary p,.hc-tomorrow-summary em{font-size:.86rem!important;line-height:1.2!important}
+
+/* 5 — agenda: every event follows the same four-level type scale. */
+.hc-widget-future .hc-widget-head small{font-size:.7rem!important;font-weight:950!important;letter-spacing:.09em!important}
+.hc-widget-future .hc-widget-head h2{font-size:1.42rem!important;line-height:1!important;letter-spacing:-.025em!important}
+.hc-widget-future .hc-widget-head button{font-size:.78rem!important}
+.hc-widget-future .hc-event-meta .hc-event-type{font-size:.68rem!important;padding:4px 7px!important}
+.hc-widget-future .hc-event-date{font-size:.68rem!important;font-weight:900!important}
+.hc-widget-future .hc-event-row>span>strong{font-size:1.08rem!important;line-height:1.08!important;font-weight:950!important}
+.hc-widget-future .hc-event-time{font-size:.98rem!important;line-height:1.08!important}
+.hc-widget-future .hc-event-place,.hc-widget-future .hc-event-fallback{font-size:.84rem!important;line-height:1.2!important}
+.hc-widget-future .hc-event-row{padding-top:12px!important;padding-bottom:12px!important}
+
+/* Applications / fourth shortcut: rocket engine becomes an in-page launcher, never an overlay. */
+.hc-favorites-launcher{width:100%;min-height:86px;margin:0 0 12px;padding:11px 12px;border:1px solid #d8e7ea;border-radius:20px;background:#fff;color:#153a4a;box-shadow:0 7px 18px rgba(18,59,75,.07);display:grid;grid-template-columns:58px minmax(0,1fr) 18px;gap:11px;align-items:center;text-align:left}
+.hc-favorites-launcher-art{width:58px;height:58px;border-radius:18px;overflow:hidden;display:grid;place-items:center}
+.hc-favorites-launcher-art img{width:100%;height:100%;display:block;object-fit:cover}
+.hc-favorites-launcher>span:nth-child(2){min-width:0}
+.hc-favorites-launcher small,.hc-favorites-launcher strong,.hc-favorites-launcher em{display:block}
+.hc-favorites-launcher small{color:#0b91a9;font-size:.64rem;font-weight:950;letter-spacing:.1em}
+.hc-favorites-launcher strong{margin-top:2px;font-size:1.08rem;font-weight:950;line-height:1.05}
+.hc-favorites-launcher em{margin-top:4px;color:#71868e;font-size:.78rem;font-style:normal;font-weight:750;line-height:1.15}
+.hc-favorites-launcher>b{color:#7c959e;font-size:1.35rem}
+
+/* The old floating rocket is disabled inside the connected STIP app. The same engine is opened by the new controls above. */
+body.stip-quick-in-app .stip-quick-switch{display:none!important}
+body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset-bottom))!important}
+
+@media(max-width:430px){
+ .hc-home-filters{gap:5px!important}
+ .hc-home-filters>button{min-height:82px!important}
+ .hc-home-filter-art{width:46px!important;height:46px!important}
+ .hc-home-filters>button>strong{font-size:.67rem!important}
+ .hc-widget-planning .hc-widget-head h2{font-size:1.62rem!important}
+ .hc-week-nav b{font-size:.86rem!important}
+ .hc-widget-future .hc-widget-head h2{font-size:1.36rem!important}
+}
+@media(max-width:370px){
+ .hc-home-filters>button>strong{font-size:.62rem!important;letter-spacing:-.02em}
+ .hc-home-filter-art{width:43px!important;height:43px!important}
+}
