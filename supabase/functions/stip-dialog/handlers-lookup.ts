@@ -28,13 +28,79 @@ export async function contactAnswer(c: SessionCtx, old: DialogContext, subjects:
   };
 }
 
+async function placeKnowledge(c: SessionCtx, old: DialogContext, p: any, allowed: string[], ds: DateScope) {
+  const [aliasR, tagR, fromR, toR, childR] = await Promise.all([
+    db.from("stip_place_aliases").select("alias").eq("place_id", p.id),
+    db.from("stip_place_tags").select("tag").eq("place_id", p.id),
+    db.from("stip_place_relations").select("from_place_id,to_place_id,relation_type,label,direction,transport_mode,notes,visibility,evidence_status,sort_order").eq("from_place_id", p.id).in("visibility", allowed).order("sort_order"),
+    db.from("stip_place_relations").select("from_place_id,to_place_id,relation_type,label,direction,transport_mode,notes,visibility,evidence_status,sort_order").eq("to_place_id", p.id).in("visibility", allowed).order("sort_order"),
+    db.from("stip_places").select("id,display_name,official_name,place_type,building_code,level,summary,visibility").eq("parent_id", p.id).in("visibility", allowed).order("sort_order"),
+  ]);
+  for (const r of [aliasR, tagR, fromR, toR, childR]) if (r.error) throw r.error;
+  const aliases = (aliasR.data || []).map((x: any) => String(x.alias || "")).filter(Boolean);
+  const tags = (tagR.data || []).map((x: any) => String(x.tag || "")).filter(Boolean);
+  const relations = [...(fromR.data || []), ...(toR.data || [])];
+  const relatedIds = [...new Set([
+    ...(p.parent_id ? [String(p.parent_id)] : []),
+    ...relations.map((r: any) => String(r.from_place_id) === String(p.id) ? String(r.to_place_id) : String(r.from_place_id)),
+  ].filter(Boolean))];
+  const { data: related, error: relatedError } = relatedIds.length
+    ? await db.from("stip_places").select("id,display_name,official_name,place_type,building_code,level,summary,visibility").in("id", relatedIds).in("visibility", allowed)
+    : { data: [] as any[], error: null };
+  if (relatedError) throw relatedError;
+  const byId = new Map((related || []).map((x: any) => [String(x.id), x]));
+  const cards: Card[] = [{
+    type: "place", id: p.id, title: p.display_name || p.official_name,
+    subtitle: [p.place_type, p.campus, p.building_code, p.level].filter(Boolean).join(" · "),
+    detail: p.details || p.summary || "",
+  }];
+  if (aliases.length || tags.length) cards.push({
+    type: "metric", title: "Repères connus",
+    subtitle: aliases.length ? `Alias : ${aliases.slice(0, 6).join(" · ")}` : "Alias non renseigné",
+    detail: tags.length ? `Tags : ${tags.slice(0, 8).join(" · ")}` : "Aucun tag supplémentaire",
+  });
+  if (p.parent_id && byId.get(String(p.parent_id))) {
+    const parent: any = byId.get(String(p.parent_id));
+    cards.push({
+      type: "metric", title: "Rattaché à", subtitle: parent.display_name || parent.official_name || "Lieu parent",
+      detail: [parent.building_code, parent.level, parent.summary].filter(Boolean).join(" · "),
+    });
+  }
+  for (const rel of relations.slice(0, 6)) {
+    const otherId = String(rel.from_place_id) === String(p.id) ? String(rel.to_place_id) : String(rel.from_place_id);
+    const other: any = byId.get(otherId);
+    cards.push({
+      type: "metric",
+      title: rel.label || other?.display_name || other?.official_name || "Lieu lié",
+      subtitle: [rel.relation_type, other?.building_code, other?.level].filter(Boolean).join(" · "),
+      detail: [rel.direction, rel.notes, c.level === "pro" ? rel.evidence_status : null].filter(Boolean).join(" · "),
+    });
+  }
+  const children = childR.data || [];
+  if (children.length) cards.push({
+    type: "metric", title: "Sous-lieux",
+    subtitle: `${children.length} lieu${children.length > 1 ? "x" : ""} rattaché${children.length > 1 ? "s" : ""}`,
+    detail: children.slice(0, 8).map((x: any) => x.display_name || x.official_name).filter(Boolean).join(" · "),
+  });
+  const factual = [p.place_type, p.campus, p.building_code, p.level, p.summary, p.details].filter(Boolean);
+  return {
+    kind: "place", title: `Fiche STIP · ${p.display_name || p.official_name}`,
+    text: factual.join(" · ") || "STIP connaît ce lieu mais ne possède pas encore de description détaillée.",
+    cards,
+    actions: [{ type: "open", url: `places-app.html?focus=${encodeURIComponent(p.id)}`, label: "Ouvrir la fiche complète" }],
+    context: baseContext(old, { place_id: p.id, date_scope: ds, last_intent: "place" }),
+    suggestions: ["Comment y aller ?", "Qu’y a-t-il autour ?"],
+  };
+}
+
 export async function placeAnswer(c: SessionCtx, old: DialogContext, raw: string, ds: DateScope) {
   const allowed = c.level === "pro" ? ["public", "internal_stip"] : ["public"];
-  const { data: places, error } = await db.from("stip_places").select("id,display_name,official_name,campus,building_code,level,summary,details,visibility,evidence_status,sort_order").in("visibility", allowed).order("sort_order").limit(500);
+  const { data: places, error } = await db.from("stip_places").select("id,display_name,official_name,place_type,campus,building_code,level,parent_id,summary,details,visibility,evidence_status,source_kind,source_date,sort_order").in("visibility", allowed).order("sort_order").limit(500);
   if (error) throw error;
   const currentPlace = old.place_id ? (places || []).find((p: any) => String(p.id) === String(old.place_id)) : null;
   const normalizedRaw = normalize(raw);
   const wantsRoute = !!currentPlace && /\b(comment y aller|y aller|itineraire|trajet|chemin|comment aller)\b/.test(normalizedRaw);
+  const wantsKnowledge = !!currentPlace && /\b(tout sur|que sait|que sais|info|infos|information|informations|detail|details|encyclopedie|fiche|repere|reperes|autour|proche|ascenseur|alias|lie a|relie)\b/.test(normalizedRaw);
   const wantsCurrentPlace = !!currentPlace && /\b(afficher le batiment|afficher le lieu|afficher ce lieu|ce lieu|cet endroit|le batiment)\b/.test(normalizedRaw);
   if (wantsRoute) {
     const { data: routes, error: routeError } = await db.from("stip_place_routes")
@@ -70,13 +136,7 @@ export async function placeAnswer(c: SessionCtx, old: DialogContext, raw: string
       context: baseContext(old, { place_id: currentPlace.id, date_scope: ds, last_intent: "place" }),
     };
   }
-  if (wantsCurrentPlace) return {
-    kind: "place", title: currentPlace.display_name || currentPlace.official_name,
-    text: [currentPlace.building_code, currentPlace.level, currentPlace.summary].filter(Boolean).join(" · ") || "Lieu retrouvé dans STIP.",
-    cards: [{ type: "place", id: currentPlace.id, title: currentPlace.display_name || currentPlace.official_name, subtitle: [currentPlace.campus, currentPlace.building_code, currentPlace.level].filter(Boolean).join(" · "), detail: currentPlace.summary || currentPlace.details || "" }],
-    actions: [{ type: "open", url: `places-app.html?focus=${encodeURIComponent(currentPlace.id)}`, label: "Voir le lieu" }],
-    context: baseContext(old, { place_id: currentPlace.id, date_scope: ds, last_intent: "place" }), suggestions: ["Comment y aller ?"],
-  };
+  if (wantsKnowledge || wantsCurrentPlace) return placeKnowledge(c, old, currentPlace, allowed, ds);
 
   const ids = (places || []).map((p: any) => p.id);
   const [{ data: aliases }, { data: tags }] = await Promise.all([
