@@ -1966,3 +1966,18 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  border-radius:20px!important;
 }
 .hc-days-landscape .hc-day-event-markers i{font-size:25px!important}
+
+
+/* event-marker-clearance-v33-20260920 */
+/* Keep event bubbles fully inside their own lane with visible air before the day cards. */
+.hc-days-landscape{
+ padding-top:58px!important;
+}
+.hc-days-landscape .hc-day-event-markers{
+ top:42px!important;
+ transform:translate(-50%,-100%)!important;
+ margin:0!important;
+ height:40px!important;
+ min-width:40px!important;
+ min-height:40px!important;
+}
