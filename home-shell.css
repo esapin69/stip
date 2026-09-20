@@ -3008,3 +3008,115 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-selected-day-meta span{font-size:.66rem!important}
   .hc-selected-day-events i{font-size:1.05rem!important}
 }
+
+/* CALENDAR-DRIVEN WEEK PLANNING — 20260921 */
+.hc-calendar-driven-planning{
+  padding:0 12px 16px!important;
+  overflow:hidden!important;
+}
+.hc-calendar-driven-planning>.hc-planning-calendar-block{
+  width:calc(100% + 24px)!important;
+  margin:0 -12px 8px!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:11px 14px 10px!important;
+  box-sizing:border-box!important;
+  border:0!important;
+  border-bottom:1px solid rgba(22,91,111,.11)!important;
+  border-radius:0!important;
+  background:
+    radial-gradient(circle at 50% -35%,rgba(30,164,188,.09),transparent 43%),
+    linear-gradient(180deg,#fff 0%,#f9fcfd 100%)!important;
+  box-shadow:none!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-head{
+  grid-template-columns:44px minmax(0,1fr) 44px!important;
+  gap:8px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-head>button{
+  width:44px!important;
+  height:44px!important;
+  font-size:1.6rem!important;
+  box-shadow:0 4px 10px rgba(20,62,78,.07)!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-head>strong{
+  font-size:clamp(1rem,4vw,1.18rem)!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-weekdays{
+  margin:9px 0 4px!important;
+  font-size:.64rem!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid{
+  gap:3px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button,
+.hc-calendar-driven-planning .hc-date-jump-empty{
+  aspect-ratio:auto!important;
+  height:43px!important;
+  min-height:43px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-grid>button{
+  padding:1px!important;
+  border-radius:12px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-number{
+  width:31px!important;
+  height:31px!important;
+  font-size:.84rem!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-actions{
+  margin-top:7px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-today{
+  margin-top:0!important;
+}
+.hc-calendar-driven-planning .hc-planning-week-row{
+  margin:0!important;
+  padding-top:0!important;
+}
+.hc-calendar-driven-planning .hc-widget-planning{
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.hc-calendar-driven-planning .hc-week-detail-divider{
+  margin-top:9px!important;
+}
+@media(max-width:390px){
+  .hc-calendar-driven-planning{
+    padding-inline:10px!important;
+  }
+  .hc-calendar-driven-planning>.hc-planning-calendar-block{
+    width:calc(100% + 20px)!important;
+    margin-inline:-10px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+    padding:9px 10px 8px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-head{
+    grid-template-columns:40px minmax(0,1fr) 40px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-head>button{
+    width:40px!important;
+    height:40px!important;
+    font-size:1.5rem!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-weekdays{
+    margin-top:7px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-grid>button,
+  .hc-calendar-driven-planning .hc-date-jump-empty{
+    height:40px!important;
+    min-height:40px!important;
+  }
+  .hc-calendar-driven-planning .hc-date-jump-number{
+    width:29px!important;
+    height:29px!important;
+    font-size:.8rem!important;
+  }
+}
