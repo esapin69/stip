@@ -805,3 +805,82 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-days-vertical .hc-day-vertical>i{font-size:.68rem!important}
  .hc-weekend-row .hc-day-weekend{grid-template-columns:44px 32px minmax(36px,1fr)!important;gap:2px!important}
 }
+
+/* planning-two-columns-mobile-20260920 */
+/* Home planning: week stays left; Pour demain (external summary) + agenda stay right. */
+.hc-planning-split{
+  display:grid!important;
+  grid-template-columns:minmax(0,42%) minmax(0,58%)!important;
+  align-items:start!important;
+  overflow:visible!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  gap:8px!important;
+}
+.hc-planning-left,.hc-planning-right{min-width:0}
+.hc-planning-left>.hc-widget-planning,
+.hc-planning-right>.hc-widget-future{
+  border:1px solid #dbe8eb!important;
+  border-radius:20px!important;
+  box-shadow:0 9px 24px rgba(21,67,82,.07)!important;
+  overflow:hidden!important;
+}
+.hc-planning-left>.hc-widget-planning{padding:10px 7px!important}
+.hc-planning-right{display:grid;gap:8px}
+.hc-planning-right>.hc-widget-future{padding:11px 9px 12px!important}
+.hc-planning-split>.hc-planning-right>.hc-widget{border-top:1px solid #dbe8eb!important}
+
+/* Compact only the left column so a complete week fits in its narrow rail. */
+.hc-planning-left .hc-widget-head{display:grid!important;gap:6px!important}
+.hc-planning-left .hc-widget-head h2{font-size:1.05rem!important}
+.hc-planning-left .hc-widget-head small{font-size:.58rem!important}
+.hc-planning-left .hc-week-nav{width:100%!important;grid-template-columns:28px minmax(0,1fr) 28px!important}
+.hc-planning-left .hc-week-nav button{width:28px!important;height:28px!important;font-size:1.35rem!important}
+.hc-planning-left .hc-week-context strong{font-size:.65rem!important;white-space:normal!important}
+.hc-planning-left .hc-week-context small{font-size:.56rem!important}
+.hc-planning-left .hc-month-open{padding:6px!important;grid-template-columns:38px minmax(0,1fr) 10px!important;gap:5px!important}
+.hc-planning-left .hc-month-open-date{width:38px!important;min-width:38px!important}
+.hc-planning-left .hc-month-open-copy>strong{font-size:.63rem!important}
+.hc-planning-left .hc-month-open-copy>small{font-size:.52rem!important}
+.hc-planning-left .hc-days-vertical{gap:5px!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical{
+  min-height:72px!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:22px 25px 1fr!important;
+  gap:0!important;
+  padding:0 3px 4px!important;
+  border-radius:13px!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>i{
+  margin:-1px -3px 0!important;
+  padding:6px 2px 4px!important;
+  font-size:.58rem!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>b{font-size:1.22rem!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual{min-height:27px!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-badge{
+  min-width:35px!important;min-height:27px!important;padding:3px 6px!important;border-radius:9px!important;font-size:.72rem!important
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-status-icon{font-size:1.15rem!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-shift-time{right:4px!important;bottom:2px!important;font-size:.48rem!important}
+.hc-planning-left .hc-weekend-row{gap:4px!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend{min-width:0!important}
+.hc-planning-left .hc-week-today{font-size:.58rem!important;line-height:1.1!important}
+
+/* Right column remains readable at phone width. */
+.hc-planning-right .hc-widget-head{gap:4px!important}
+.hc-planning-right .hc-widget-head h2{font-size:1.08rem!important}
+.hc-planning-right .hc-widget-head button{font-size:.65rem!important}
+.hc-planning-right .hc-event-row{grid-template-columns:44px minmax(0,1fr) 10px!important;gap:6px!important;padding:9px 1px!important}
+.hc-planning-right .hc-event-anchor>i{width:40px!important;height:40px!important;font-size:1.35rem!important}
+.hc-planning-right .hc-event-date{font-size:.56rem!important}
+.hc-planning-right .hc-event-meta .hc-event-type{font-size:.55rem!important;padding:3px 5px!important}
+.hc-planning-right .hc-event-row>span>strong{font-size:.82rem!important;line-height:1.05!important}
+.hc-planning-right .hc-event-time{font-size:.75rem!important}
+.hc-planning-right .hc-event-place,.hc-planning-right .hc-event-fallback{font-size:.64rem!important}
+
+/* Existing Pour demain summary is moved into the right dock after render. */
+.hc-planning-right #hcTomorrowDock:empty{display:none}
+.hc-planning-right #hcTomorrowDock>.hc-tomorrow-summary{margin:0!important;border-radius:20px!important}
