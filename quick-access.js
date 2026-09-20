@@ -276,6 +276,13 @@
       }
     });
   }
+  window.STIPFavorites = {
+    open: () => {
+      if (!document.getElementById("stipFavoritesPanel")) toggleFavorites();
+    },
+    close: closeFavorites,
+    toggle: toggleFavorites,
+  };
   function syncMode() {
     const connected = !!window.STIPSession;
     document.body.classList.toggle(
