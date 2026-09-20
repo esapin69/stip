@@ -519,3 +519,57 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important}
  .hc-id-card .hc-avatar{height:154px!important}
 }
+
+/* home-apps-favorites-profile-compact-20260920 */
+/* Three primary tabs only. */
+.hc-home-filters{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+.hc-home-filters>button{min-height:88px!important;padding:7px 4px 8px!important}
+.hc-home-filter-art{width:52px!important;height:52px!important}
+.hc-home-filters>button>strong{font-size:.78rem!important}
+
+/* Compact identity card: the previous min-height/stretch made the avatar card unnecessarily tall. */
+.hc-id-card{
+  grid-template-columns:clamp(96px,27vw,118px) minmax(0,1fr)!important;
+  gap:13px!important;
+  align-items:center!important;
+  padding:10px 12px!important;
+}
+.hc-id-card .hc-avatar{
+  width:100%!important;
+  height:132px!important;
+  min-height:0!important;
+  align-self:center!important;
+  border-radius:19px!important;
+}
+.hc-id-card .hc-profile-copy{align-content:center!important}
+.hc-id-card .hc-profile-copy>small{font-size:.7rem!important}
+.hc-id-card .hc-profile-name{font-size:clamp(1.28rem,5vw,1.62rem)!important}
+.hc-profile-ghe{font-size:clamp(1.4rem,5.4vw,1.78rem)!important}
+.hc-profile-team{font-size:.9rem!important}
+.hc-id-card .hc-profile-contacts{gap:3px!important;margin-top:6px!important}
+.hc-id-card .hc-profile-contact{padding-top:4px!important}
+.hc-id-card .hc-profile-contact span{font-size:.56rem!important}
+.hc-id-card .hc-profile-contact strong{font-size:clamp(.92rem,3.8vw,1.08rem)!important}
+
+/* The Favorites engine lives in Applications as a normal full-width card, not as a fourth tab or floating control. */
+.hc-home-pane-apps .hc-favorites-launcher{margin:0 0 15px!important}
+.hc-favorites-launcher{min-height:96px!important;grid-template-columns:64px minmax(0,1fr) 20px!important;padding:12px 14px!important}
+.hc-favorites-launcher-art{width:64px!important;height:64px!important}
+.hc-favorites-launcher strong{font-size:1.2rem!important}
+.hc-favorites-launcher em{font-size:.82rem!important}
+
+@media(max-width:430px){
+ .hc-home-filters{gap:8px!important}
+ .hc-home-filters>button{min-height:84px!important}
+ .hc-home-filter-art{width:50px!important;height:50px!important}
+ .hc-home-filters>button>strong{font-size:.75rem!important}
+ .hc-id-card{grid-template-columns:102px minmax(0,1fr)!important;gap:12px!important;padding:9px 10px!important}
+ .hc-id-card .hc-avatar{height:126px!important}
+}
+@media(max-width:380px){
+ .hc-id-card{grid-template-columns:94px minmax(0,1fr)!important;gap:10px!important}
+ .hc-id-card .hc-avatar{height:120px!important}
+ .hc-id-card .hc-profile-name{font-size:1.2rem!important}
+ .hc-profile-ghe{font-size:1.4rem!important}
+ .hc-id-card .hc-profile-contact strong{font-size:.9rem!important}
+}
