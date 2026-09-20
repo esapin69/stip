@@ -536,7 +536,8 @@
       .join("")}</span>`;
   }
   function weekDaysLandscape(w) {
-    const hasEvents = w.some((x) => weekEventsForDay(x).length);\n    return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"}" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
+    const hasEvents = w.some((x) => weekEventsForDay(x).length);
+    return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"}" style="--visible-days:${Math.max(1, w.length)}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
