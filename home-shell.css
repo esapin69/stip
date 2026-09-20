@@ -1386,9 +1386,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* STIP IA: long, thin and prestigious — visually underlines the two accesses. */
 .hc-home-filters>.hc-home-ai{
   grid-column:1 / -1!important;
+  width:94%!important;
+  justify-self:center!important;
   min-height:0!important;
   height:auto!important;
-  padding:5px!important;
+  padding:4px!important;
   border:1px solid rgba(213,177,105,.62)!important;
   border-radius:19px!important;
   background:linear-gradient(145deg,#080807,#17120d 58%,#090807)!important;
@@ -1407,7 +1409,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   position:relative!important;
   display:block!important;
   width:100%!important;
-  aspect-ratio:4 / 1!important;
+  aspect-ratio:5.4 / 1!important;
   overflow:hidden!important;
   border-radius:14px!important;
   background:#080706!important;
@@ -1424,9 +1426,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-home-filters>.hc-home-ai>strong{
   position:absolute!important;
   z-index:3!important;
-  left:16px!important;
-  bottom:12px!important;
-  padding:5px 9px!important;
+  left:14px!important;
+  bottom:9px!important;
+  padding:4px 8px!important;
   border:1px solid rgba(255,226,174,.32)!important;
   border-radius:999px!important;
   background:rgba(5,4,3,.64)!important;
@@ -1469,7 +1471,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-home-filters>button:not(.hc-home-ai){min-height:116px!important;padding:8px 7px 9px!important}
   .hc-home-filter-art{width:min(100%,142px)!important}
-  .hc-home-filters>.hc-home-ai>strong{left:13px!important;bottom:10px!important;font-size:.68rem!important}
+  .hc-home-filters>.hc-home-ai{width:94%!important}
+  .hc-home-ai-art{aspect-ratio:5.4 / 1!important}
+  .hc-home-filters>.hc-home-ai>strong{left:12px!important;bottom:8px!important;font-size:.66rem!important}
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
@@ -1487,7 +1491,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button:not(.hc-home-ai){min-height:142px!important;padding:10px 10px 12px!important}
   .hc-home-filter-art{width:min(100%,188px)!important}
   .hc-home-filters>button:not(.hc-home-ai)>strong{font-size:.86rem!important}
-  .hc-home-filters>.hc-home-ai>strong{left:20px!important;bottom:14px!important;font-size:.78rem!important}
+  .hc-home-filters>.hc-home-ai{width:92%!important}
+  .hc-home-ai-art{aspect-ratio:5.8 / 1!important}
+  .hc-home-filters>.hc-home-ai>strong{left:14px!important;bottom:9px!important;font-size:.7rem!important}
 }
 
 /* HOME PLANNING CORE — canonical */
