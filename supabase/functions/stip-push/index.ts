@@ -1,0 +1,20 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import webpush from "npm:web-push@3.6.7";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const URL=Deno.env.get("SUPABASE_URL")!,SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,db=createClient(URL,SERVICE,{auth:{persistSession:false}});
+const PUBLIC_KEY="BGCXc9jLIjbzcsWqgH7PJDIIiI278kJmjpg3qHkjlutQ0mQFeX685llxQMiWXv8tK3li6BxMjgcDf8Nf_dUPFzI";
+const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization,content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"},J=(x:any,s=200)=>new Response(JSON.stringify(x),{status:s,headers:H}),enc=new TextEncoder();
+const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,"0")).join("");async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
+async function ctx(req:Request){const t=req.headers.get("x-stip-session")||"";if(!t)throw Error("Session STIP requise.");const{data:s}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at").eq("token_hash",await sha(t)).maybeSingle();if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error("Session expirée.");const{data:p,error}=await db.from("stip_access_profiles").select("agent_id,active,permissions").eq("id",s.profile_id).maybeSingle();if(error)throw error;if(!p?.active||!p.agent_id||!p.permissions?.messages)throw Error("Messages non autorisés.");return p}
+async function configure(){const{data,error}=await db.rpc("stip_push_vapid_private");if(error)throw error;if(!data)throw Error("Clé Web Push absente.");webpush.setVapidDetails("mailto:stip@esapin.com",PUBLIC_KEY,String(data))}
+async function sendTo(agentId:string,payload:any){await configure();const{subscriptions,error}=await (async()=>{const r=await db.from("stip_push_subscriptions").select("id,endpoint,p256dh,auth").eq("agent_id",agentId).eq("active",true);return{subscriptions:r.data||[],error:r.error}})();if(error)throw error;let sent=0;for(const s of subscriptions){try{await webpush.sendNotification({endpoint:s.endpoint,keys:{p256dh:s.p256dh,auth:s.auth}},JSON.stringify(payload),{TTL:60*60*24,urgency:"normal"});sent++}catch(e:any){const code=Number(e?.statusCode||e?.status||0);if(code===404||code===410)await db.from("stip_push_subscriptions").update({active:false,updated_at:new Date().toISOString()}).eq("id",s.id)}}return sent}
+Deno.serve(async req=>{if(req.method==="OPTIONS")return new Response("ok",{headers:H});if(req.method!=="POST")return J({error:"Méthode non autorisée."},405);try{const b=await req.json().catch(()=>({})),a=String(b.action||"");
+  if(a==="send_internal"){const auth=req.headers.get("authorization")||"";if(auth!=="Bearer "+SERVICE)throw Error("Interne uniquement.");return J({ok:true,sent:await sendTo(String(b.agent_id||""),b.payload||{})})}
+  const c=await ctx(req);
+  if(a==="public_key")return J({public_key:PUBLIC_KEY});
+  if(a==="subscribe"){const s=b.subscription||{},endpoint=String(s.endpoint||""),p256dh=String(s.keys?.p256dh||""),auth=String(s.keys?.auth||"");if(!endpoint||!p256dh||!auth)throw Error("Abonnement push invalide.");const{error}=await db.from("stip_push_subscriptions").upsert({agent_id:c.agent_id,endpoint,p256dh,auth,user_agent:String(req.headers.get("user-agent")||"").slice(0,500),active:true,updated_at:new Date().toISOString()},{onConflict:"endpoint"});if(error)throw error;return J({ok:true})}
+  if(a==="unsubscribe"){const endpoint=String(b.endpoint||"");if(endpoint)await db.from("stip_push_subscriptions").update({active:false,updated_at:new Date().toISOString()}).eq("agent_id",c.agent_id).eq("endpoint",endpoint);return J({ok:true})}
+  if(a==="test"){return J({ok:true,sent:await sendTo(String(c.agent_id),{title:"STIP",body:"Les notifications téléphone fonctionnent.",url:"/?quick=notifications",tag:"stip-test"})})}
+  return J({error:"Action inconnue."},400)
+}catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J({error:m},/Session|autorisé|Interne/i.test(m)?403:400)}});
