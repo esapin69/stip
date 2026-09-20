@@ -3360,3 +3360,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   opacity:.88!important;
   filter:saturate(.88)!important;
 }
+
+
+/* Cloche STIP — quiet empty state */
+.hc-home-pane-notifications>.hc-profile-actions.is-empty{
+  padding:14px 16px;
+  background:transparent;
+  border-style:dashed;
+  box-shadow:none;
+}
+.hc-home-pane-notifications>.hc-profile-actions.is-empty .hc-profile-actions-head{margin:0}
+.hc-home-pane-notifications>.hc-profile-actions.is-empty .hc-profile-actions-head h2{font-size:1.18rem}
+.hc-home-pane-notifications>.hc-profile-actions.is-empty .hc-profile-actions-head p{margin-top:4px;font-size:.78rem}
