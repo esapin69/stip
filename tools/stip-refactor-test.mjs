@@ -112,7 +112,7 @@ const tomorrowAppUniversal=read('quick-access-universal.js');
 const tomorrowAppAccess=read('access-runtime.js');
 const tomorrowAppUi=read('tomorrow-ui.js');
 const tomorrowMigration=read('supabase/migrations/20260920020500_add_tomorrow_app_access.sql');
-check(exists('images/icone_app/pour-demain.svg'),'L’icône Pour demain a disparu.');
+check(existsSync(join(root,'images/icone_app/pour-demain.svg')),'L’icône Pour demain a disparu.');
 check(tomorrowAppHome.includes('app("tomorrow", "Pour demain"')&&tomorrowAppHome.includes('STIPTomorrowUI?.open'),'Pour demain n’est plus intégré à la grille Applications.');
 check(tomorrowAppQuick.includes('label: "Pour demain"')&&tomorrowAppQuick.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris principaux.');
 check(tomorrowAppUniversal.includes('index.html?quick=tomorrow')&&tomorrowAppUniversal.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris universels.');
