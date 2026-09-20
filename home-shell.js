@@ -532,7 +532,7 @@
   }
   function monthShortcut() {
     const mi = weekMonthInfo(selectedWeek());
-    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon" aria-hidden="true"><img src="images/icone_app/planning.svg?v=20260920-restored1" alt=""></span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Mon planning du mois</strong><small>Voir ${esc(mi.targetLabel)} en entier</small></span><b>›</b></button>`;
+    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon hc-month-open-icon-clean" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="8" y="11" width="32" height="29" rx="7"/><path d="M15 7v8M33 7v8M8 20h32"/><circle cx="31" cy="31" r="6"/><path d="M31 27.5v4l2.5 1.5"/></svg></span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Mon planning du mois</strong><small>Voir ${esc(mi.targetLabel)} en entier</small></span><b>›</b></button>`;
   }
   function weekWidget() {
     const w = selectedWeek();
