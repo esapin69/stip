@@ -21,10 +21,18 @@
     return [a.prenom, a.nom].filter(Boolean).join(" ").trim() || "Agent";
   }
   function avatar(a = {}) {
-    const src = a.profile_photo_url || a.avatar_url || "";
     const initials = [a.prenom?.[0], a.nom?.[0]].filter(Boolean).join("").toUpperCase() || "ST";
-    return src ? '<span class="tdn-avatar"><img src="'+esc(src)+'" alt=""></span>' : '<span class="tdn-avatar">'+esc(initials)+'</span>';
+    const signed = window.STIPBootCache?.media?.avatars?.[a.source_key] || "";
+    const src = a.profile_photo_url || signed || a.avatar_signed_url || a.avatar_url || "";
+    return src ? '<span class="tdn-avatar" data-avatar-fallback="'+esc(initials)+'"><img src="'+esc(src)+'" alt="" loading="lazy"></span>' : '<span class="tdn-avatar">'+esc(initials)+'</span>';
   }
+  document.addEventListener("error", (event) => {
+    const img = event.target;
+    if (!(img instanceof HTMLImageElement)) return;
+    const host = img.closest?.(".tdn-avatar");
+    if (!host) return;
+    host.textContent = host.dataset.avatarFallback || "ST";
+  }, true);
   function noteCard(n, received = false) {
     const person = received ? n.author : n.owner;
     const meta = [n.time, person ? name(person) : "", person?.ghe ? "GHE "+person.ghe : ""].filter(Boolean).join(" · ");
