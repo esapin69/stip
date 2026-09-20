@@ -884,3 +884,81 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* Existing Pour demain summary is moved into the right dock after render. */
 .hc-planning-right #hcTomorrowDock:empty{display:none}
 .hc-planning-right #hcTomorrowDock>.hc-tomorrow-summary{margin:0!important;border-radius:20px!important}
+
+
+/* week-card-readability-20260920
+   The card border already carries the shift colour: work days use a plain text label.
+   Rest/status days keep their icon with the code directly underneath. */
+.hc-planning-left .hc-days-vertical .hc-day-vertical{
+  grid-template-columns:1fr!important;
+  grid-template-rows:24px 34px minmax(24px,auto) minmax(16px,auto)!important;
+  gap:0!important;
+  min-height:94px!important;
+  padding:0 6px 6px!important;
+  place-items:center!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>i{
+  width:calc(100% + 12px)!important;
+  margin:0 -6px!important;
+  padding:5px 2px 4px!important;
+  align-self:stretch!important;
+  font-size:.78rem!important;
+  line-height:1!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>b{
+  font-size:1.62rem!important;
+  line-height:1!important;
+  align-self:end!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual{
+  min-height:25px!important;
+  height:auto!important;
+  display:grid!important;
+  place-items:center!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-name{
+  color:#173f52!important;
+  background:none!important;
+  box-shadow:none!important;
+  font-size:.82rem!important;
+  font-weight:950!important;
+  line-height:1!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-status-icon{
+  font-size:1.42rem!important;
+  line-height:1!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-shift-time{
+  position:static!important;
+  min-height:16px!important;
+  font-size:.7rem!important;
+  line-height:1!important;
+  color:var(--shift)!important;
+}
+.hc-planning-left .hc-days-vertical .hc-day-vertical.work>.hc-shift-time:empty{display:none!important}
+.hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-shift-time.hc-status-code{
+  display:block!important;
+  font-size:.72rem!important;
+  font-weight:950!important;
+}
+.hc-planning-left .hc-weekend-row{gap:5px!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend{
+  min-height:94px!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:24px 34px minmax(24px,auto) minmax(16px,auto)!important;
+  padding:0 4px 6px!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>i{
+  width:calc(100% + 8px)!important;
+  margin:0 -4px!important;
+  padding:5px 1px 4px!important;
+  font-size:.72rem!important;
+}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>b{font-size:1.52rem!important}
+.hc-planning-left .hc-weekend-row .hc-day-weekend>.hc-week-visual .hc-shift-name{font-size:.76rem!important}
+@media(max-width:430px){
+  .hc-planning-left .hc-days-vertical .hc-day-vertical>i{font-size:.74rem!important}
+  .hc-planning-left .hc-weekend-row .hc-day-weekend>i{font-size:.68rem!important}
+}
