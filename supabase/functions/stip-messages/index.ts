@@ -9,7 +9,7 @@ const enc=new TextEncoder();
 const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,"0")).join("");
 async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
 function nick(a:any,p:any){return String(p?.nickname||a?.prenom||a?.nom||"Agent").trim()}
-function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}
+function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}\nfunction teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
 async function ctx(req:Request){
   const t=req.headers.get("x-stip-session")||"";if(!t)throw Error("Session STIP requise.");
   const{data:s,error:se}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at").eq("token_hash",await sha(t)).maybeSingle();
@@ -35,6 +35,16 @@ async function agents(ctx:any,q=""){
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
   const n=String(q||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
   return(data||[]).filter((a:any)=>String(a.id)!==String(ctx.agent.id)).map((a:any)=>({...a,nickname:nick(a,by.get(String(a.id)))})).filter((a:any)=>!n||`${a.nickname} ${a.prenom||""} ${a.nom||""} ${a.ghe||""}`.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(n)).slice(0,80)
+}
+async function onDuty(ctx:any){
+  const nowParts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),g=(k:string)=>nowParts.find(x=>x.type===k)?.value||"",today=g("year")+"-"+g("month")+"-"+g("day"),minute=Number(g("hour"))*60+Number(g("minute")),d=new Date(today+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);const yesterday=d.toISOString().slice(0,10),team=teamOf(ctx.agent),allowed=new Set(await activeMessagingAgents());
+  let q=db.from("planning").select("date,agent_id,code,equipe,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url)").in("date",[today,yesterday]);
+  q=team==="chefs"?q.in("equipe",["jour","nuit","chefs"]):q.eq("equipe",team);
+  const{data,error}=await q;if(error)throw error;
+  const ranges:any={M:[410,880],J:[510,980],J4:[610,1080],S:[810,1260]},items:any[]=[];
+  for(const r of data||[]){if(!allowed.has(String(r.agent_id)))continue;const code=String(r.code||"").toUpperCase().replace(/\*/g,""),base=code==="J4"?"J4":/^(M|J|S|N)$/.test(code)?code:"";let active=false;if(base==="N")active=(r.date===today&&minute>=1260)||(r.date===yesterday&&minute<=410);else if(r.date===today&&ranges[base])active=minute>=ranges[base][0]&&minute<=ranges[base][1];if(active&&r.agents)items.push({...r.agents,nickname:null,shift:base})}
+  const ids=items.map(x=>x.id),{data:profiles}=ids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",ids):{data:[] as any[]},by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
+  return items.map(a=>({...a,nickname:nick(a,by.get(String(a.id)))}))
 }
 async function isMember(conversationId:string,agentId:string){
   const{data,error}=await db.from("stip_conversation_members").select("conversation_id").eq("conversation_id",conversationId).eq("agent_id",agentId).maybeSingle();
@@ -128,7 +138,7 @@ Deno.serve(async req=>{
   try{
     const c=await ctx(req),b=await req.json().catch(()=>({})),a=String(b.action||"home");
     if(a==="home")return J(await home(c));
-    if(a==="agents")return J({items:await agents(c,String(b.q||""))});
+    if(a==="agents")return J({items:await agents(c,String(b.q||""))});\n    if(a==="on_duty")return J({items:await onDuty(c)});
     if(a==="direct")return J({conversation:await direct(c,String(b.agent_id||""))});
     if(a==="group")return J({conversation:await group(c,b)});
     if(a==="thread")return J(await thread(c,String(b.conversation_id||"")));
