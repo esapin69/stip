@@ -1,4 +1,4 @@
-export type DateScope = { start: string; end: string; label?: string };
+export type DateScope = { start: string; end: string; label?: string; dates?: string[] };
 export type DialogContext = {
   version?: number;
   subject_agent_ids?: string[];
