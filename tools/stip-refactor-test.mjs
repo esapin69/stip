@@ -80,7 +80,7 @@ const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
 check(home.includes('home-bell.webp')&&home.includes('homeBell')&&home.includes('["notifications", "Notifications"'),'La cloche de communication n’utilise plus son visuel validé.');
-check(home.includes('home-home.webp')&&home.includes('homeHome')&&home.includes('["planning", "Accueil"'),'Accueil n’utilise plus la maison centrale validée.');
+check(home.includes('home-home.webp')&&home.includes('homeHome')&&home.includes('["planning", "Mon profil"'),'Le bouton central Mon profil n’utilise plus son visuel validé.');
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
