@@ -78,9 +78,9 @@
     admin:
       '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M9 12h6M12 9v6"/></svg>',
     homeHome:
-      '<img src="images/icone_app/home-home.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-personal.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeApps:
-      '<img src="images/icone_app/home-apps.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.webp?v=20260920-app-logo2" alt="" aria-hidden="true">',
   };
