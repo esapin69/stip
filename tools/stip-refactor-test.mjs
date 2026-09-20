@@ -155,9 +155,13 @@ check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.inclu
 check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
 check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
 
-check(espritHtml.indexOf('id="teamDays"') < espritHtml.indexOf('class="team-tabs"'),'Les filtres Équipe / Activité / Assistant doivent rester sous le sélecteur de jour.');
+check(espritHtml.indexOf('id="teamDays"') < espritHtml.indexOf('class="team-tabs stip-levels"'),'Les filtres Équipe / Activité / Assistant doivent rester sous le sélecteur de jour et réutiliser le segmented control STIP.');
 check(!espritHtml.includes('<i></i><i></i>')&&espritHtml.includes('Chargement de la journée sélectionnée'),'Le chargement Esprit d’équipe ne doit plus simuler plusieurs journées.');
 check(espritJs.includes('const day = state.dayFocus') && !espritJs.includes('.map((day) => renderer(bundle, day))'),'Esprit d’équipe doit afficher uniquement la journée sélectionnée.');
+check(/tab:[\s\S]{0,500}navigationState\.tab[\s\S]{0,300}: "team"/.test(espritJs),'Équipe doit rester l’onglet par défaut quand aucun onglet mémorisé ou demandé n’existe.');
+check(espritJs.includes('window.STIPNav?.remember?.({ tab, weekStart: state.weekStart })'),'L’onglet Esprit d’équipe ouvert doit être mémorisé pendant la navigation.');
+check(espritInteractiveCss.includes('background:var(--shift);')&&espritInteractiveCss.includes('color:#fff;')&&espritInteractiveCss.includes('color-mix(in srgb,var(--shift) 32%'),'Les shifts Esprit d’équipe ont perdu leur contraste fort.');
+check(espritInteractiveCss.includes('.team-tabs button.active')&&espritInteractiveCss.includes('inset 0 1px 0 rgba(255,255,255,.28)'),'Le segmented control premium Esprit d’équipe a régressé.');
 
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
