@@ -1224,11 +1224,13 @@
   }
 
   function actionCenterMarkup(filter = state.actionFilter, inline = false) {
-    const { ns, cats, counts, shown } = actionCenterData(filter);
+    const { ns, cats, counts, shown } = actionCenterData(filter),
+      visibleCats = cats.filter(([k]) => k === "all" || counts[k] > 0);
     const head = inline
-      ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>Notifications</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Rien ne demande votre attention pour le moment."}</p></div></header>`
+      ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
       : "";
-    return `${head}<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">${cats.map(([k, l]) => `<button type="button" role="tab" aria-selected="${filter === k}" data-action-filter="${k}">${l}${counts[k] ? ` <span>${counts[k]}</span>` : ""}</button>`).join("")}</div>${shown.length ? `<div class="hc-panel-list">${shown.map((n, i) => `<button class="hs-note" data-note-index="${i}"><small>${esc(cats.find((x) => x[0] === noteCategory(n))?.[1] || "Autres")}</small><strong>${esc(n.title)}</strong>${n.body ? `<p>${esc(n.body)}</p>` : ""}</button>`).join("")}</div>` : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>'}`;
+    if (!ns.length) return head || '<div class="hc-empty">Rien à traiter.</div>';
+    return `${head}<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">${visibleCats.map(([k, l]) => `<button type="button" role="tab" aria-selected="${filter === k}" data-action-filter="${k}">${l}${counts[k] ? ` <span>${counts[k]}</span>` : ""}</button>`).join("")}</div>${shown.length ? `<div class="hc-panel-list">${shown.map((n, i) => `<button class="hs-note" data-note-index="${i}"><small>${esc(cats.find((x) => x[0] === noteCategory(n))?.[1] || "Autres")}</small><strong>${esc(n.title)}</strong>${n.body ? `<p>${esc(n.body)}</p>` : ""}</button>`).join("")}</div>` : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>'}`;
   }
 
   function bindActionCenter(scope, filter = state.actionFilter, inline = false) {
@@ -1268,7 +1270,8 @@
   }
 
   function notificationsPane() {
-    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Compte</summary><div><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
+    const empty = notifications().length === 0;
+    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcProfileActions" class="hc-profile-actions stip-action-surface${empty ? " is-empty" : ""}">${actionCenterMarkup(state.actionFilter, true)}</section><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section></section>`;
   }
 
   function homeModeBody() {
@@ -1527,8 +1530,11 @@
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
     try {
-      const requested = sessionStorage.getItem("stip_home_mode_once");
-      if (requested === "notifications" || requested === "apps" || requested === "planning") {
+      const quick = new URLSearchParams(location.search).get("quick") || "",
+        requested = sessionStorage.getItem("stip_home_mode_once");
+      if (quick === "notifications" || quick === "exchange") {
+        state.homeMode = "notifications";
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
