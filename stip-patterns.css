@@ -20,6 +20,164 @@
   box-shadow:var(--stip-shadow);
 }
 
+
+
+/* Navigation temporelle canonique — 2 ou 3 niveaux.
+   Niveau 1 : mois/année. Niveau 2 : semaine. Niveau 3 : jours.
+   Esprit d’équipe est la référence de la variante complète à 3 niveaux. */
+.stip-time-stack{
+  display:grid;
+  gap:10px;
+  margin:12px 0 10px;
+}
+.stip-time-month,
+.stip-time-week,
+.stip-time-days{
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-xl);
+  background:var(--stip-surface-raised);
+  box-shadow:var(--stip-shadow);
+}
+.stip-time-month{
+  min-height:118px;
+  padding:16px 18px 17px;
+  display:grid;
+  align-content:center;
+}
+.stip-time-month-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.stip-time-month-kicker{
+  color:var(--stip-accent);
+  font-size:.7rem;
+  font-weight:950;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+}
+.stip-time-month-action{
+  min-height:40px;
+  padding:0 2px;
+  border:0;
+  background:transparent;
+  color:var(--stip-muted);
+  font-size:.72rem;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.stip-time-month-title{
+  display:block;
+  margin-top:7px;
+  color:var(--stip-ink);
+  font-size:clamp(2.25rem,11vw,4.35rem);
+  font-weight:950;
+  line-height:.9;
+  letter-spacing:-.055em;
+  text-transform:uppercase;
+}
+.stip-time-week{
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr) 54px;
+  align-items:center;
+  gap:8px;
+  min-height:86px;
+  padding:10px 12px;
+}
+.stip-time-week>button{
+  min-height:50px;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.stip-time-week>button:first-child,
+.stip-time-week>button:last-child{
+  width:50px;
+  min-width:50px;
+  justify-self:center;
+  border:1px solid var(--stip-line)!important;
+  border-radius:50%!important;
+  background:var(--stip-surface)!important;
+  font-size:2rem!important;
+  line-height:1!important;
+}
+.stip-time-week>button:nth-child(2){
+  display:grid;
+  place-items:center;
+  gap:3px;
+  color:var(--stip-ink)!important;
+}
+.stip-time-week>button:nth-child(2)>strong{
+  color:var(--stip-ink);
+  font-size:1.05rem;
+  font-weight:950;
+  line-height:1.05;
+}
+.stip-time-week>button:nth-child(2)>small{
+  color:var(--stip-muted);
+  font-size:.67rem;
+  font-weight:950;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.stip-time-days{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:5px;
+  padding:9px;
+}
+.stip-time-days>button{
+  min-width:0;
+  min-height:58px;
+  border:1px solid var(--stip-line)!important;
+  border-radius:var(--stip-radius-sm)!important;
+  background:var(--stip-surface)!important;
+  color:var(--stip-ink-2)!important;
+  box-shadow:none!important;
+}
+.stip-time-days>button small,
+.stip-time-days>button b{
+  display:block;
+}
+.stip-time-days>button small{
+  color:var(--stip-muted);
+  font-size:.52rem;
+  font-weight:950;
+}
+.stip-time-days>button b{
+  margin-top:3px;
+  font-size:1rem;
+}
+.stip-time-days>button.today{
+  border-color:var(--stip-accent)!important;
+}
+.stip-time-days>button.selected{
+  border-color:var(--stip-accent)!important;
+  background:var(--stip-surface-active)!important;
+  box-shadow:inset 0 -4px 0 var(--stip-accent)!important;
+}
+.stip-time-days>button:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:2px;
+}
+@media(max-width:430px){
+  .stip-time-stack{gap:8px}
+  .stip-time-month{min-height:106px;padding:14px 15px}
+  .stip-time-month-kicker{font-size:.62rem}
+  .stip-time-month-title{font-size:clamp(2.05rem,13vw,3.2rem)}
+  .stip-time-week{grid-template-columns:48px minmax(0,1fr) 48px;min-height:80px;padding:8px 9px}
+  .stip-time-week>button:first-child,
+  .stip-time-week>button:last-child{width:46px;min-width:46px;height:46px;min-height:46px}
+  .stip-time-week>button:nth-child(2)>strong{font-size:.94rem}
+  .stip-time-week>button:nth-child(2)>small{font-size:.61rem}
+  .stip-time-days{gap:3px;padding:7px}
+  .stip-time-days>button{min-height:52px;padding-inline:1px}
+  .stip-time-days>button small{font-size:.46rem}
+  .stip-time-days>button b{font-size:.94rem}
+}
+
 /* 2. PERSONNES — recherche et sélection d'agents
    Le moteur commun reste stip-agent-selector.js/.css. */
 .stip-person-surface,
