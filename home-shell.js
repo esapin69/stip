@@ -327,6 +327,7 @@
   };
   const SPECIAL_SHIFT_ICON = {
     FO: "🎓",
+    ST: "👶",
   };
   function canonicalShift(raw) {
     const src = String(raw || "")
