@@ -1632,3 +1632,41 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* month-shortcut-after-week-v25-20260920 */
 .hc-planning-group.hc-planning-landscape .hc-planning-week-row{margin-bottom:14px!important}
 .hc-planning-group.hc-planning-landscape .hc-planning-month-row{margin:0 0 14px!important}
+
+
+/* adaptive-visible-week-v26-20260920 */
+/* As elapsed days disappear, remaining days share the full row, stay centered and grow progressively. */
+.hc-days-landscape{
+ grid-template-columns:repeat(var(--visible-days,7),minmax(0,1fr))!important;
+ justify-content:center!important;
+}
+.hc-days-landscape[style*="--visible-days:6"] .hc-day-landscape{min-height:118px!important}
+.hc-days-landscape[style*="--visible-days:5"] .hc-day-landscape{min-height:120px!important}
+.hc-days-landscape[style*="--visible-days:4"] .hc-day-landscape{min-height:122px!important}
+.hc-days-landscape[style*="--visible-days:3"] .hc-day-landscape{min-height:124px!important}
+.hc-days-landscape[style*="--visible-days:2"]{
+ width:min(72%,420px)!important;margin-inline:auto!important;
+}
+.hc-days-landscape[style*="--visible-days:2"] .hc-day-landscape{min-height:126px!important}
+.hc-days-landscape[style*="--visible-days:1"]{
+ width:min(42%,220px)!important;margin-inline:auto!important;
+}
+.hc-days-landscape[style*="--visible-days:1"] .hc-day-landscape{
+ min-height:130px!important;
+}
+.hc-days-landscape[style*="--visible-days:4"] .hc-day-head i,
+.hc-days-landscape[style*="--visible-days:3"] .hc-day-head i,
+.hc-days-landscape[style*="--visible-days:2"] .hc-day-head i,
+.hc-days-landscape[style*="--visible-days:1"] .hc-day-head i{font-size:.82rem!important}
+.hc-days-landscape[style*="--visible-days:4"] .hc-day-head b,
+.hc-days-landscape[style*="--visible-days:3"] .hc-day-head b,
+.hc-days-landscape[style*="--visible-days:2"] .hc-day-head b,
+.hc-days-landscape[style*="--visible-days:1"] .hc-day-head b{font-size:1.48rem!important}
+.hc-days-landscape[style*="--visible-days:4"] .hc-shift-name,
+.hc-days-landscape[style*="--visible-days:3"] .hc-shift-name,
+.hc-days-landscape[style*="--visible-days:2"] .hc-shift-name,
+.hc-days-landscape[style*="--visible-days:1"] .hc-shift-name,
+.hc-days-landscape[style*="--visible-days:4"] .hc-status-code,
+.hc-days-landscape[style*="--visible-days:3"] .hc-status-code,
+.hc-days-landscape[style*="--visible-days:2"] .hc-status-code,
+.hc-days-landscape[style*="--visible-days:1"] .hc-status-code{font-size:1.12rem!important}
