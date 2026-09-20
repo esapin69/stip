@@ -42,6 +42,9 @@
     weekStart: /^\d{4}-\d{2}-\d{2}$/.test(navigationState.weekStart || "")
       ? monday(navigationState.weekStart)
       : monday(todayIso()),
+    dayFocus: /^\d{4}-\d{2}-\d{2}$/.test(navigationState.dayFocus || "")
+      ? navigationState.dayFocus
+      : todayIso(),
     weeks: new Map(),
     request: 0,
     rendered: false,
@@ -128,6 +131,27 @@
         month: "long",
       })
       .replace(/^./, (char) => char.toUpperCase());
+  }
+
+  function monthContext(start = state.weekStart) {
+    const end = addDays(start, 6);
+    const first = dateObj(start);
+    const last = dateObj(end);
+    const months =
+      first.getMonth() === last.getMonth()
+        ? [first.toLocaleDateString("fr-FR", { month: "long" })]
+        : [
+            first.toLocaleDateString("fr-FR", { month: "long" }),
+            last.toLocaleDateString("fr-FR", { month: "long" }),
+          ];
+    const years =
+      first.getFullYear() === last.getFullYear()
+        ? [first.getFullYear()]
+        : [first.getFullYear(), last.getFullYear()];
+    return {
+      month: months.map((value) => value.toUpperCase()).join(" · "),
+      year: years.join(" · "),
+    };
   }
 
   function weekRange(start = state.weekStart) {
@@ -247,7 +271,18 @@
     return cached.activityPromise;
   }
 
+  function normalizeDayFocus() {
+    const days = daysOfWeek();
+    const today = todayIso();
+    if (!days.includes(state.dayFocus))
+      state.dayFocus = days.includes(today) ? today : days[0];
+  }
+
   function renderHeader() {
+    normalizeDayFocus();
+    const context = monthContext();
+    $("#teamMonthLabel").textContent = context.month;
+    $("#teamYearLabel").textContent = context.year;
     $("#teamDateLabel").textContent = weekRange();
     $("#teamWeekLabel").textContent = `Semaine ${isoWeek(state.weekStart)}`;
     $$("[data-team-tab]").forEach((button) => {
@@ -259,7 +294,10 @@
     $("#teamDays").innerHTML = daysOfWeek()
       .map(
         (day) =>
-          `<button type="button" data-team-day="${day}" class="${day === today ? "today" : ""}"><small>${shortDay(day)}</small><b>${dateObj(day).getDate()}</b></button>`,
+          `<button type="button" data-team-day="${day}" class="${[
+            day === today ? "today" : "",
+            day === state.dayFocus ? "selected" : "",
+          ].filter(Boolean).join(" ")}" aria-pressed="${day === state.dayFocus}"><small>${shortDay(day)}</small><b>${dateObj(day).getDate()}</b></button>`,
       )
       .join("");
   }
@@ -453,9 +491,11 @@
 
   function moveWeek(offset) {
     state.weekStart = addDays(state.weekStart, offset * 7);
+    state.dayFocus = state.weekStart;
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
+      dayFocus: state.dayFocus,
       scrollY: 0,
     });
     showWeek({ preserve: true });
@@ -469,9 +509,11 @@
   $("#teamNext").addEventListener("click", () => moveWeek(1));
   $("#teamToday").addEventListener("click", () => {
     state.weekStart = monday(todayIso());
+    state.dayFocus = todayIso();
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
+      dayFocus: state.dayFocus,
     });
     showWeek({ preserve: true });
   });
@@ -481,8 +523,21 @@
   $("#teamDays").addEventListener("click", (event) => {
     const button = event.target.closest("[data-team-day]");
     if (!button) return;
+    state.dayFocus = button.dataset.teamDay;
+    $("#teamDays")
+      .querySelectorAll("[data-team-day]")
+      .forEach((item) => {
+        const selected = item.dataset.teamDay === state.dayFocus;
+        item.classList.toggle("selected", selected);
+        item.setAttribute("aria-pressed", String(selected));
+      });
+    window.STIPNav?.remember?.({
+      tab: state.tab,
+      weekStart: state.weekStart,
+      dayFocus: state.dayFocus,
+    });
     document
-      .getElementById(`team-day-${button.dataset.teamDay}`)
+      .getElementById(`team-day-${state.dayFocus}`)
       ?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
@@ -515,7 +570,11 @@
   }
 
   window.STIPNav?.register?.({
-    capture: () => ({ tab: state.tab, weekStart: state.weekStart }),
+    capture: () => ({
+      tab: state.tab,
+      weekStart: state.weekStart,
+      dayFocus: state.dayFocus,
+    }),
   });
   boot();
 })();
