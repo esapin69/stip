@@ -1266,7 +1266,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 /* HOME ACCESS LAUNCHERS — canonical
-   Two premium primary buttons + one full-width STIP IA banner. */
+   Two primary cards + one slim full-width STIP IA card. */
 .hc-home-filters{
   width:min(100%,368px)!important;
   margin:12px auto 22px!important;
@@ -1309,13 +1309,10 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0))!important;
   pointer-events:none!important;
 }
-.hc-home-filter-art{
+.hc-home-filter-art,
+.hc-home-ai-art{
   position:relative!important;
   z-index:1!important;
-  width:min(100%,148px)!important;
-  height:auto!important;
-  aspect-ratio:16/9!important;
-  flex:0 0 auto!important;
   display:block!important;
   overflow:hidden!important;
   border:0!important;
@@ -1324,7 +1321,13 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-shadow:0 5px 12px rgba(20,62,78,.11)!important;
   transition:transform .16s ease,box-shadow .16s ease,filter .16s ease!important;
 }
-.hc-home-filter-art img{
+.hc-home-filter-art{
+  width:min(100%,148px)!important;
+  aspect-ratio:16/9!important;
+  flex:0 0 auto!important;
+}
+.hc-home-filter-art img,
+.hc-home-ai-art img{
   width:100%!important;
   height:100%!important;
   display:block!important;
@@ -1347,106 +1350,62 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   white-space:nowrap!important;
 }
 
-/* Selected primary access: visibly premium, not just a thin border. */
+/* One premium selected state for all three home accesses. */
 .hc-home-filters>button.active{
   z-index:2!important;
-  border-color:rgba(28,127,168,.48)!important;
-  background:linear-gradient(180deg,#fff 0%,#f1faff 100%)!important;
+  border:2px solid rgba(24,168,220,.95)!important;
+  background:linear-gradient(180deg,#fff 0%,#eefaff 100%)!important;
   box-shadow:
-    0 18px 34px rgba(17,56,73,.18),
-    0 0 0 2px rgba(56,173,220,.17),
-    0 0 0 6px rgba(56,173,220,.065),
-    inset 0 1px 0 rgba(255,255,255,.98)!important;
-  transform:translateY(-2px) scale(1.01)!important;
+    0 20px 38px rgba(17,56,73,.22),
+    0 0 0 3px rgba(56,173,220,.20),
+    0 0 0 8px rgba(56,173,220,.085),
+    0 0 26px rgba(56,173,220,.18),
+    inset 0 1px 0 rgba(255,255,255,.99)!important;
+  transform:translateY(-2px) scale(1.012)!important;
 }
 .hc-home-filters>button.active:after{
   content:""!important;
   position:absolute!important;
-  inset:0!important;
-  border-radius:22px!important;
+  inset:2px!important;
+  border-radius:18px!important;
   pointer-events:none!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.78)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.90)!important;
 }
-.hc-home-filters>button.active .hc-home-filter-art{
-  transform:translateY(-1px) scale(1.035)!important;
+.hc-home-filters>button.active .hc-home-filter-art,
+.hc-home-filters>button.active .hc-home-ai-art{
+  transform:translateY(-1px) scale(1.025)!important;
   box-shadow:
     0 11px 23px rgba(20,62,78,.20),
-    0 0 0 2px rgba(255,255,255,.86),
-    0 0 0 5px rgba(56,173,220,.14)!important;
+    0 0 0 2px rgba(255,255,255,.92),
+    0 0 0 5px rgba(56,173,220,.16)!important;
   filter:saturate(1.08) contrast(1.03)!important;
 }
-.hc-home-filters>button.active .hc-home-filter-art img{
+.hc-home-filters>button.active .hc-home-filter-art img,
+.hc-home-filters>button.active .hc-home-ai-art img{
   filter:saturate(1.08) contrast(1.04) brightness(1.01)!important;
 }
 .hc-home-filters>button.active>strong{
-  color:#0f6f95!important;
-  text-shadow:0 1px 0 rgba(255,255,255,.8)!important;
+  color:#0b6e98!important;
+  text-shadow:0 1px 0 rgba(255,255,255,.82)!important;
 }
 
-/* STIP IA: long, thin and prestigious — visually underlines the two accesses. */
+/* STIP IA uses the exact same outer relief, only the image ratio differs. */
 .hc-home-filters>.hc-home-ai{
   grid-column:1 / -1!important;
-  width:94%!important;
+  width:92%!important;
   justify-self:center!important;
   min-height:0!important;
-  height:auto!important;
-  padding:4px!important;
-  border:1px solid rgba(213,177,105,.62)!important;
-  border-radius:19px!important;
-  background:linear-gradient(145deg,#080807,#17120d 58%,#090807)!important;
-  box-shadow:
-    0 13px 28px rgba(29,20,8,.20),
-    0 0 0 1px rgba(255,225,167,.10),
-    inset 0 1px 0 rgba(255,241,210,.20)!important;
-  display:block!important;
-  overflow:hidden!important;
-}
-.hc-home-filters>.hc-home-ai:before{
-  content:none!important;
-  display:none!important;
+  padding:7px 8px 9px!important;
 }
 .hc-home-ai-art{
-  position:relative!important;
-  display:block!important;
   width:100%!important;
-  aspect-ratio:5.4 / 1!important;
-  overflow:hidden!important;
-  border-radius:14px!important;
-  background:#080706!important;
-}
-.hc-home-ai-art img{
-  display:block!important;
-  width:100%!important;
-  height:100%!important;
-  object-fit:cover!important;
-  object-position:center!important;
-  border-radius:14px!important;
-  filter:saturate(1.04) contrast(1.04)!important;
+  aspect-ratio:10 / 1!important;
+  flex:0 0 auto!important;
 }
 .hc-home-filters>.hc-home-ai>strong{
-  position:absolute!important;
-  z-index:3!important;
-  left:14px!important;
-  bottom:9px!important;
-  padding:4px 8px!important;
-  border:1px solid rgba(255,226,174,.32)!important;
-  border-radius:999px!important;
-  background:rgba(5,4,3,.64)!important;
-  color:#f5dfb2!important;
-  font-size:.72rem!important;
-  font-weight:950!important;
-  letter-spacing:.08em!important;
-  line-height:1!important;
-  text-shadow:0 1px 8px rgba(0,0,0,.72)!important;
-  backdrop-filter:blur(8px)!important;
+  font-size:.74rem!important;
 }
-.hc-home-filters>.hc-home-ai:active{
-  transform:translateY(2px) scale(.992)!important;
-  box-shadow:
-    0 5px 12px rgba(29,20,8,.20),
-    inset 0 2px 6px rgba(0,0,0,.32)!important;
-}
-.hc-home-filters>button:not(.hc-home-ai):active{
+.hc-home-filters>button:active{
   transform:translateY(1px) scale(.985)!important;
   box-shadow:
     0 4px 10px rgba(20,62,78,.10),
@@ -1471,9 +1430,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-home-filters>button:not(.hc-home-ai){min-height:116px!important;padding:8px 7px 9px!important}
   .hc-home-filter-art{width:min(100%,142px)!important}
-  .hc-home-filters>.hc-home-ai{width:94%!important}
-  .hc-home-ai-art{aspect-ratio:5.4 / 1!important}
-  .hc-home-filters>.hc-home-ai>strong{left:12px!important;bottom:8px!important;font-size:.66rem!important}
+  .hc-home-filters>.hc-home-ai{width:92%!important;padding:6px 7px 8px!important}
+  .hc-home-ai-art{aspect-ratio:10 / 1!important}
+  .hc-home-filters>.hc-home-ai>strong{font-size:.68rem!important}
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
@@ -1485,15 +1444,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button:not(.hc-home-ai){min-height:108px!important}
   .hc-home-filter-art{width:min(100%,132px)!important}
   .hc-home-filters>button:not(.hc-home-ai)>strong{font-size:.7rem!important}
+  .hc-home-filters>.hc-home-ai{width:90%!important}
 }
 @media(min-width:700px){
   .hc-home-filters{width:470px!important;gap:14px!important;margin-top:16px!important}
   .hc-home-filters>button:not(.hc-home-ai){min-height:142px!important;padding:10px 10px 12px!important}
   .hc-home-filter-art{width:min(100%,188px)!important}
   .hc-home-filters>button:not(.hc-home-ai)>strong{font-size:.86rem!important}
-  .hc-home-filters>.hc-home-ai{width:92%!important}
-  .hc-home-ai-art{aspect-ratio:5.8 / 1!important}
-  .hc-home-filters>.hc-home-ai>strong{left:14px!important;bottom:9px!important;font-size:.7rem!important}
+  .hc-home-filters>.hc-home-ai{width:90%!important;padding:7px 9px 9px!important}
+  .hc-home-ai-art{aspect-ratio:10 / 1!important}
+  .hc-home-filters>.hc-home-ai>strong{font-size:.76rem!important}
 }
 
 /* HOME PLANNING CORE — canonical */
