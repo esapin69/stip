@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260920-pattern1",
+  const V = "20260921-avatar1",
     m = new Map(),
     done = new Set();
   function load(src) {
