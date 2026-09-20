@@ -153,7 +153,7 @@
       first = rows[0]?.d || today,
       last = rows.at(-1)?.d || first,
       keys = [...new Set(rows.map((x) => monthKeyOf(x.d)))],
-      targetKey = monthKeyOf(today),
+      targetKey = monthKeyOf(first),
       sameYear = first.getFullYear() === last.getFullYear(),
       heading =
         keys.length <= 1
@@ -166,8 +166,8 @@
       heading,
       yearLabel,
       targetKey,
-      anchor: today,
-      targetLabel: `${monthNameOf(today)} ${today.getFullYear()}`,
+      anchor: first,
+      targetLabel: `${monthNameOf(first)} ${first.getFullYear()}`,
       anchorDow: today
         .toLocaleDateString("fr-FR", { weekday: "short" })
         .replace(/\./g, "")
