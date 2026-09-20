@@ -991,7 +991,6 @@
       items = [
         ["apps", "Applications", ICON.homeApps, "mode"],
         ["planning", "Mon profil", ICON.homeHome, "mode"],
-        ["tomorrow", "Actions", ICON.tomorrow, "app"],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(([key, label, art, kind]) =>
