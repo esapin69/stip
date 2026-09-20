@@ -2712,3 +2712,40 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.84rem!important;
   }
 }
+
+/* CONTEXTUAL CURRENT RETURN — restored historical layer 20260920 */
+.hc-planning-primary-head .hc-week-return-current,
+.hc-date-jump-permanent .hc-date-jump-today{
+  display:block!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:9px auto 0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#0a91aa!important;
+  font-size:.78rem!important;
+  line-height:1.2!important;
+  font-weight:900!important;
+  letter-spacing:0!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+}
+.hc-planning-primary-head .hc-week-return-current:active,
+.hc-date-jump-permanent .hc-date-jump-today:active{
+  transform:scale(.97)!important;
+  opacity:.72!important;
+}
+.hc-date-jump-permanent .hc-date-jump-actions{
+  display:block!important;
+  margin-top:10px!important;
+}
+@media(max-width:390px){
+  .hc-planning-primary-head .hc-week-return-current,
+  .hc-date-jump-permanent .hc-date-jump-today{
+    font-size:.74rem!important;
+  }
+}
