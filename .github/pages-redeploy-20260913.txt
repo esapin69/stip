@@ -1,1 +1,2 @@
 Force a fresh GitHub Pages deployment after the STIP planning loading/cache fix.
+redeploy 2026-09-20 14:22 Europe/Paris — profile viewer + parallel-safe refresh
