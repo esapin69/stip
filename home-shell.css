@@ -1266,85 +1266,101 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 /* HOME ACCESS LAUNCHERS — canonical
-   Two obvious home buttons: Applications + Mon profil. */
+   Two side-by-side raised buttons: image above, label below. */
 .hc-home-filters{
-  width:min(100%,360px)!important;
+  width:min(100%,368px)!important;
   margin:12px auto 22px!important;
   padding:0!important;
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  gap:10px!important;
+  gap:12px!important;
   align-items:stretch!important;
 }
 .hc-home-filters>button{
+  position:relative!important;
   width:100%!important;
   min-width:0!important;
-  min-height:92px!important;
-  padding:11px 8px 10px!important;
-  border:1px solid var(--stip-line)!important;
-  border-radius:20px!important;
-  background:var(--stip-surface)!important;
-  box-shadow:var(--stip-shadow-soft)!important;
+  min-height:108px!important;
+  padding:13px 10px 11px!important;
+  border:1px solid color-mix(in srgb,var(--stip-line) 88%,#fff)!important;
+  border-radius:22px!important;
+  background:linear-gradient(180deg,#fff 0%,color-mix(in srgb,var(--stip-surface-soft) 72%,#fff) 100%)!important;
+  box-shadow:
+    0 10px 22px rgba(20,62,78,.10),
+    inset 0 1px 0 rgba(255,255,255,.96)!important;
   color:var(--stip-ink)!important;
   display:flex!important;
   flex-direction:column!important;
   align-items:center!important;
   justify-content:center!important;
-  gap:7px!important;
+  gap:8px!important;
   font:inherit!important;
   cursor:pointer!important;
   touch-action:manipulation!important;
   -webkit-tap-highlight-color:transparent!important;
+  transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease,background .14s ease!important;
+}
+.hc-home-filters>button:before{
+  content:""!important;
+  position:absolute!important;
+  inset:1px 1px auto 1px!important;
+  height:44%!important;
+  border-radius:20px 20px 50% 50%/20px 20px 18px 18px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,0))!important;
+  pointer-events:none!important;
 }
 .hc-home-filter-art{
-  width:50px!important;
-  height:50px!important;
-  flex:0 0 50px!important;
+  position:relative!important;
+  z-index:1!important;
+  width:56px!important;
+  height:56px!important;
+  flex:0 0 56px!important;
   display:grid!important;
   place-items:center!important;
   overflow:hidden!important;
   border:0!important;
-  border-radius:50%!important;
+  border-radius:16px!important;
   background:transparent!important;
-  box-shadow:none!important;
-  filter:none!important;
-  transform:none!important;
-}
-.hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{
-  width:56px!important;
-  height:56px!important;
-  flex-basis:56px!important;
+  box-shadow:0 5px 12px rgba(20,62,78,.10)!important;
 }
 .hc-home-filter-art img{
   width:100%!important;
   height:100%!important;
   display:block!important;
   object-fit:cover!important;
-  border-radius:50%!important;
+  border-radius:16px!important;
   background:transparent!important;
-  box-shadow:none!important;
-  filter:none!important;
 }
 .hc-home-filters>button>strong{
+  position:relative!important;
+  z-index:1!important;
   margin:0!important;
   max-width:100%!important;
   color:var(--stip-ink)!important;
-  font-size:.72rem!important;
+  font-size:.75rem!important;
   line-height:1.05!important;
   font-weight:950!important;
   text-align:center!important;
   white-space:nowrap!important;
 }
 .hc-home-filters>button.active{
-  border-color:color-mix(in srgb,var(--stip-accent) 42%,var(--stip-line))!important;
-  background:linear-gradient(180deg,var(--stip-surface),var(--stip-accent-soft))!important;
-  box-shadow:0 0 0 2px color-mix(in srgb,var(--stip-accent) 10%,transparent),var(--stip-shadow)!important;
+  border-color:color-mix(in srgb,var(--stip-accent) 52%,var(--stip-line))!important;
+  background:linear-gradient(180deg,#fff 0%,color-mix(in srgb,var(--stip-accent-soft) 58%,#fff) 100%)!important;
+  box-shadow:
+    0 12px 24px rgba(20,62,78,.12),
+    0 0 0 2px color-mix(in srgb,var(--stip-accent) 10%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.98)!important;
 }
 .hc-home-filters>button.active>strong{color:var(--stip-accent)!important}
-.hc-home-filters>button:active{transform:scale(.97)!important}
+.hc-home-filters>button:active{
+  transform:translateY(2px) scale(.985)!important;
+  box-shadow:
+    0 4px 10px rgba(20,62,78,.10),
+    inset 0 2px 5px rgba(20,62,78,.08)!important;
+}
 .hc-home-filters>button:focus-visible{
   outline:3px solid var(--stip-focus-ring)!important;
-  outline-offset:2px!important;
+  outline-offset:3px!important;
 }
 
 @media(max-width:430px){
@@ -1355,11 +1371,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-id-card .hc-avatar{height:130px!important}
   .hc-home-filters{
-    width:min(100%,340px)!important;
+    width:min(100%,350px)!important;
     margin:10px auto 20px!important;
-    gap:8px!important;
+    gap:10px!important;
   }
-  .hc-home-filters>button{min-height:88px!important;padding:10px 6px 9px!important}
+  .hc-home-filters>button{min-height:104px!important;padding:12px 8px 10px!important}
+  .hc-home-filter-art{width:54px!important;height:54px!important;flex-basis:54px!important}
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
@@ -1367,18 +1384,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-id-card .hc-profile-name{font-size:1.22rem!important}
   .hc-profile-ghe{font-size:1.42rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:.9rem!important}
-  .hc-home-filters{width:min(100%,318px)!important;gap:7px!important}
-  .hc-home-filters>button{min-height:82px!important}
-  .hc-home-filter-art{width:46px!important;height:46px!important;flex-basis:46px!important}
-  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:52px!important;height:52px!important;flex-basis:52px!important}
-  .hc-home-filters>button>strong{font-size:.66rem!important}
+  .hc-home-filters{width:min(100%,326px)!important;gap:8px!important}
+  .hc-home-filters>button{min-height:98px!important}
+  .hc-home-filter-art{width:50px!important;height:50px!important;flex-basis:50px!important}
+  .hc-home-filters>button>strong{font-size:.69rem!important}
 }
 @media(min-width:700px){
-  .hc-home-filters{width:430px!important;gap:14px!important;margin-top:16px!important}
-  .hc-home-filters>button{min-height:104px!important}
-  .hc-home-filter-art{width:58px!important;height:58px!important;flex-basis:58px!important}
-  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:64px!important;height:64px!important;flex-basis:64px!important}
-  .hc-home-filters>button>strong{font-size:.8rem!important}
+  .hc-home-filters{width:460px!important;gap:16px!important;margin-top:16px!important}
+  .hc-home-filters>button{min-height:122px!important}
+  .hc-home-filter-art{width:64px!important;height:64px!important;flex-basis:64px!important}
+  .hc-home-filters>button>strong{font-size:.84rem!important}
 }
 
 /* HOME PLANNING CORE — canonical */
