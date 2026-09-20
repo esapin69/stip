@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const CLIENT_VERSION="20260920-dialogv2-final1";
+  const CLIENT_VERSION="20260920-dialogv2-reset1";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
