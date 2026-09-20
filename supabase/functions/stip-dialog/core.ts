@@ -172,6 +172,24 @@ export function parseDateScope(raw: string, baseIso: string, ctx?: DialogContext
     if (d) return scope(d, d);
   }
 
+  const weekdayMatches = [...q.matchAll(/\b(dimanche|lundi|mardi|mercredi|jeudi|vendredi|samedi)\b/g)]
+    .map((x) => x[1])
+    .filter((name, i, rows) => rows.indexOf(name) === i);
+  if (weekdayMatches.length >= 2) {
+    const dates: string[] = [];
+    let cursor = baseIso;
+    for (let i = 0; i < weekdayMatches.length; i++) {
+      const name = weekdayMatches[i], dow = DAYS[name];
+      const d = new Date(cursor + "T12:00:00Z");
+      let delta = (dow - d.getUTCDay() + 7) % 7;
+      if (i === 0 && delta === 0 && !/\bce\b/.test(q)) delta = 7;
+      const next = addDays(cursor, delta);
+      dates.push(next);
+      cursor = next;
+    }
+    return { start: dates[0], end: dates[dates.length - 1], label: weekdayMatches.join(" et "), dates };
+  }
+
   if (/\baujourd\s+hui\b/.test(q)) return scope(baseIso);
   if (/\bapres\s+demain\b/.test(q)) return scope(addDays(baseIso, 2));
   if (/\bdemain\b/.test(q)) return scope(addDays(baseIso, 1));
