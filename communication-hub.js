@@ -2,8 +2,10 @@
   "use strict";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
+  const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
+  const VAPID_PUBLIC="BGCXc9jLIjbzcsWqgH7PJDIIiI278kJmjpg3qHkjlutQ0mQFeX685llxQMiWXv8tK3li6BxMjgcDf8Nf_dUPFzI";
   const STORE="stip_session_v1";
-  let home=null,float=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,dialogContext={},dialogHistory=[];
+  let home=null,float=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",dialogContext={},dialogHistory=[];
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const can=k=>window.STIPAccess?.has?.(k) ?? !!({...window.STIPSession?.permissions,...window.STIPBootCache?.permissions}[k]);
   async function post(url,action,body={}){
@@ -12,11 +14,15 @@
     if(!r.ok||j.error)throw Error(typeof j.error==="string"?j.error:"Service indisponible.");
     return j;
   }
-  const msg=(a,b)=>post(MSG_API,a,b),ask=(text,context)=>post(DIALOG_API,"answer",{text,context});
+  const msg=(a,b)=>post(MSG_API,a,b),ask=(text,context)=>post(DIALOG_API,"answer",{text,context}),push=(a,b)=>post(PUSH_API,a,b);
   function name(a={}){return a.nickname||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||"Agent"}
   function avatar(a={},cls="ch-avatar"){const src=a.profile_photo_url||a.avatar_url||a.avatar||"",ini=[a.prenom?.[0],a.nom?.[0]].filter(Boolean).join("").toUpperCase()||String(name(a)).slice(0,2).toUpperCase();return '<span class="'+cls+'">'+(src?'<img src="'+esc(src)+'" alt="">':esc(ini))+'</span>'}
   function currentMode(){return document.querySelector('#homeView [data-home-mode-current]')?.dataset.homeModeCurrent||""}
   function setUnread(n){const next=Number(n)||0,prev=Number(window.STIPMessagesUnread||0);window.STIPMessagesUnread=next;if(next!==prev)window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:next}}))}
+  function vapidBytes(v){const pad="=".repeat((4-v.length%4)%4),raw=atob((v+pad).replace(/-/g,"+").replace(/_/g,"/")),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
+  function pushText(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return"Notifications téléphone indisponibles";if(Notification.permission==="denied")return"Notifications bloquées par le téléphone";if(pushState==="on")return"Notifications téléphone activées";return"Activer les notifications téléphone"}
+  async function refreshPushState(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){pushState="unsupported";return}try{const reg=await navigator.serviceWorker.getRegistration(),sub=await reg?.pushManager.getSubscription();pushState=Notification.permission==="granted"&&sub?"on":Notification.permission==="denied"?"denied":"off"}catch{pushState="off"}}
+  async function enablePush(button){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return;if(Notification.permission==="denied"){pushState="denied";renderHost();return}button.disabled=true;button.textContent="Activation…";try{const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();if(permission!=="granted"){pushState=permission==="denied"?"denied":"off";renderHost();return}const reg=await navigator.serviceWorker.register("./stip-sw.js?v=20260920-1"),sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidBytes(VAPID_PUBLIC)}),json=sub.toJSON();await push("subscribe",{subscription:{endpoint:json.endpoint,keys:json.keys}});pushState="on";renderHost();await push("test")}catch(e){pushState="off";button.disabled=false;button.textContent="Réessayer les notifications";alert(e.message||"Activation impossible.")}}
   function conversationTitle(c){if(c.kind==="direct")return name(c.others?.[0]);return c.title||c.others?.slice(0,3).map(name).join(", ")||"Conversation"}
   function bubbleAgent(a){return '<button class="ch-person-bubble" type="button" data-agent="'+esc(a.id)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>'}
   function renderHost(){
@@ -26,20 +32,21 @@
     host.innerHTML='<section class="ch-hub">'+
       '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>Rechercher dans STIP ou échanger avec les professionnels connectés au site.</p></div>'+(messagesOk&&home?.me?'<button type="button" class="ch-profile-btn" data-msg-profile>'+avatar(home.me,"ch-mini-avatar")+'<span>'+esc(name(home.me))+'</span></button>':"")+'</header>'+
       (dialogOk?'<button class="ch-ask-entry" type="button" data-dialog-open><span>⌕</span><div><strong>Demander à STIP</strong><small>Horaire, collègue, contact, lieu, effectif…</small></div><b>›</b></button>':"")+
-      (messagesOk?'<section class="ch-messages"><div class="ch-section-head"><div><span class="stip-kicker">MESSAGES</span><h3>Professionnels STIP</h3></div><button type="button" data-new-message>＋ Nouveau</button></div>'+
+      (messagesOk?'<section class="ch-messages"><div class="ch-section-head"><div><span class="stip-kicker">MESSAGES</span><h3>Professionnels STIP</h3></div><button type="button" data-new-message>＋ Nouveau</button></div><button type="button" class="ch-push" data-push-enable>'+esc(pushText())+'</button>'+
         (home?'<div class="ch-bubbles">'+suggestions.slice(0,12).map(bubbleAgent).join("")+'</div>':'<div class="ch-loading">Chargement des messages…</div>')+
         (recent.length?'<div class="ch-recent">'+recent.slice(0,8).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></div>'+(c.unread?'<b>'+c.unread+'</b>':"")+'</button>').join("")+'</div>':'<p class="ch-empty">Aucune conversation pour l’instant. Choisis une personne ci-dessus.</p>')+
       '</section>':"")+
     '</section>';
     host.querySelector("[data-dialog-open]")?.addEventListener("click",openDialog);
     host.querySelector("[data-new-message]")?.addEventListener("click",()=>recipientSheet(false));
+    host.querySelector("[data-push-enable]")?.addEventListener("click",e=>enablePush(e.currentTarget));
     host.querySelector("[data-msg-profile]")?.addEventListener("click",profileSheet);
     host.querySelectorAll("[data-agent]").forEach(b=>b.addEventListener("click",()=>openDirect(b.dataset.agent)));
     host.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>openThread(b.dataset.conv)));
   }
   async function loadHome(force=false){
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
-    try{home=await msg("home");setUnread(home.unread);renderHost()}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
+    try{home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost()}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
   }
   function floatSync(){
     const show=currentMode()==="notifications"&&can("dialog");
