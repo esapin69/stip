@@ -136,7 +136,8 @@ check(!read('index.html').includes('quick-access-icons.css'),'index.html charge 
 
 const profileHeaderSource=read('home-shell.js');
 check(profileHeaderSource.includes('const markup = \`${profile()}\${homeModeNav()}'),'La carte identité n’est plus placée au-dessus des accès rapides.');
-check(!/notificationsPane\(\)[\s\S]{0,900}\$\{profile\(\)\}/.test(profileHeaderSource),'La carte identité est dupliquée dans Notifications.');
+const notificationsBlock=profileHeaderSource.slice(profileHeaderSource.indexOf('function notificationsPane()'),profileHeaderSource.indexOf('function homeModeBody()'));
+check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans Notifications.');
 
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
