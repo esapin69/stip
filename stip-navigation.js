@@ -220,7 +220,7 @@
     if (document.querySelector('script[src*="quick-access-universal.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "quick-access-universal.js?v=20260919-art1";
+    script.src = "quick-access-universal.js?v=20260920-tomorrowapp1";
     script.dataset.stipQuickUniversal = "1";
     document.head.appendChild(script);
   };

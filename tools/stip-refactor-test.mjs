@@ -106,6 +106,20 @@ check(read('esprit-equipe.js').includes('team-day stip-time-surface'),'Esprit d�
 check(read('responsable-intelligence.js').includes('op-day stip-time-surface'),'Responsable Intelligence ne réutilise plus la famille visuelle Temps.');
 check(read('cadre-activite.html').includes('activity-day stip-time-surface'),'Activité ne réutilise plus la famille visuelle Temps.');
 
+const tomorrowAppHome=read('home-shell.js');
+const tomorrowAppQuick=read('quick-access.js');
+const tomorrowAppUniversal=read('quick-access-universal.js');
+const tomorrowAppAccess=read('access-runtime.js');
+const tomorrowAppUi=read('tomorrow-ui.js');
+const tomorrowMigration=read('supabase/migrations/20260920020500_add_tomorrow_app_access.sql');
+check(existsSync(join(root,'images/icone_app/pour-demain.svg')),'L’icône Pour demain a disparu.');
+check(tomorrowAppHome.includes('app("tomorrow", "Pour demain"')&&tomorrowAppHome.includes('STIPTomorrowUI?.open'),'Pour demain n’est plus intégré à la grille Applications.');
+check(tomorrowAppQuick.includes('label: "Pour demain"')&&tomorrowAppQuick.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris principaux.');
+check(tomorrowAppUniversal.includes('index.html?quick=tomorrow')&&tomorrowAppUniversal.includes('tomorrow: "tomorrow"'),'Pour demain n’est plus disponible dans les favoris universels.');
+check(tomorrowAppAccess.includes('tomorrow: () => explicit("tomorrow")')&&tomorrowAppAccess.includes('["tomorrow", "Pour demain", "tomorrow"]'),'Le droit Pour demain n’est plus relié au runtime Accès.');
+check(tomorrowAppUi.includes('app("tomorrow")')&&tomorrowAppUi.includes('p.tomorrow'),'Pour demain n’est plus protégé par son droit dédié.');
+check(tomorrowMigration.includes("'tomorrow'")&&tomorrowMigration.includes("level_mode")&&tomorrowMigration.includes("planning_personal"),'La migration canonique Pour demain est incomplète.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
