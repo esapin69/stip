@@ -1026,25 +1026,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 /* planning-columns-rebalance-20260920 */
-.hc-home-pane-planning>.hc-planning-month-title{
-  width:100%;
-  box-sizing:border-box;
-  padding:0 10px 7px;
-}
-.hc-planning-month-title small{
-  display:block;
-  color:#168297;
-  font-size:.72rem;
-  font-weight:950;
-  letter-spacing:.09em;
-}
-.hc-planning-month-title h2{
-  margin:2px 0 0;
-  color:#153a4a;
-  font-size:clamp(1.8rem,7vw,2.25rem);
-  line-height:.95;
-  letter-spacing:-.035em;
-}
+
+
+
 .hc-planning-split{
   grid-template-columns:minmax(0,37%) minmax(0,63%)!important;
 }
@@ -1082,27 +1066,13 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 /* planning-header-and-width-v3-20260920 */
-.hc-planning-month-title{
- display:grid!important;
- grid-template-columns:minmax(0,1fr) auto!important;
- align-items:end!important;
- gap:10px!important;
- width:100%!important;
- margin:0 0 8px!important;
- padding:0 4px!important;
- box-sizing:border-box!important;
-}
-.hc-planning-month-title h2{margin:1px 0 0!important}
-.hc-week-nav-global{
- display:grid!important;
- grid-template-columns:30px minmax(74px,1fr) 30px!important;
- align-items:center!important;
- gap:3px!important;
-}
-.hc-week-nav-global button{width:30px!important;height:30px!important}
-.hc-week-nav-global .hc-week-context{text-align:center!important}
-.hc-week-nav-global .hc-week-context strong{font-size:.66rem!important;white-space:normal!important}
-.hc-week-nav-global .hc-week-context small{font-size:.55rem!important}
+
+
+
+
+
+
+
 .hc-planning-split{
  grid-template-columns:minmax(0,37%) minmax(0,63%)!important;
  gap:7px!important;
@@ -1121,9 +1091,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:380px){
  .hc-planning-split{grid-template-columns:minmax(0,36%) minmax(0,64%)!important;gap:6px!important}
- .hc-planning-month-title{gap:6px!important}
- .hc-week-nav-global{grid-template-columns:27px minmax(68px,1fr) 27px!important}
- .hc-week-nav-global button{width:27px!important;height:27px!important}
+ 
+ 
+ 
 }
 
 
@@ -1262,35 +1232,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 /* week-navigation-below-month-v10-20260920 */
-.hc-planning-month-title{
- display:flex!important;
- flex-direction:column!important;
- align-items:stretch!important;
- gap:7px!important;
-}
-.hc-planning-month-title>div:first-child{width:100%!important}
-.hc-planning-month-title .hc-week-nav-global{
- width:100%!important;
- grid-template-columns:36px minmax(0,1fr) 36px!important;
- gap:8px!important;
-}
-.hc-planning-month-title .hc-week-nav-global button{
- width:36px!important;
- height:34px!important;
-}
-.hc-planning-month-title .hc-week-nav-global .hc-week-context strong{
- font-size:.76rem!important;
- white-space:nowrap!important;
-}
-.hc-planning-month-title .hc-week-nav-global .hc-week-context small{
- font-size:.61rem!important;
-}
+
+
+
+
+
+
 @media(max-width:380px){
- .hc-planning-month-title .hc-week-nav-global{
-  grid-template-columns:32px minmax(0,1fr) 32px!important;
-  gap:6px!important;
- }
- .hc-planning-month-title .hc-week-nav-global button{width:32px!important;height:32px!important}
+ 
+ 
 }
 
 
@@ -1357,9 +1307,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 /* richer-week-cards-and-centered-month-v12-20260920 */
-.hc-planning-month-title>div:first-child{text-align:center!important}
-.hc-planning-month-title h2{text-align:center!important}
-.hc-planning-month-title>div:first-child>small{text-align:center!important}
+
+
+
 
 /* Stronger shift colour without bringing back the old header highlighter. */
 .hc-planning-left .hc-day-vertical{
@@ -1391,18 +1341,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-home-pane-planning{
  --premium-ink:#123e50;--premium-teal:#087f96;
 }
-.hc-planning-month-title{margin-bottom:10px!important}
-.hc-week-nav-global{
- padding:6px 8px!important;border-radius:22px!important;
- background:linear-gradient(145deg,rgba(255,255,255,.9),rgba(239,247,249,.82))!important;
- box-shadow:0 8px 22px rgba(20,62,78,.07)!important;
-}
-.hc-week-nav-global button{
- width:48px!important;height:48px!important;border-radius:50%!important;
- background:linear-gradient(145deg,#fff,#edf4f6)!important;
- border:1px solid rgba(26,84,102,.12)!important;
- box-shadow:0 5px 13px rgba(18,62,80,.09)!important;
-}
+
+
+
 .hc-planning-group.hc-planning-split{
  border-radius:28px!important;
  background:linear-gradient(155deg,rgba(255,255,255,.98),rgba(246,250,251,.96))!important;
@@ -1751,3 +1692,60 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-week-event-date{background:#eef3f5!important;color:#365968!important;text-transform:capitalize!important}
 .hc-week-event-time{background:#dff3f7!important;color:#086d86!important;font-size:1.05rem!important}
 .hc-week-event-place{flex-basis:100%!important;font-size:.9rem!important;line-height:1.25!important;font-weight:700!important;color:#55717e!important}
+
+/* planning-header-single-source-v44-20260920 */
+.hc-home-pane-planning>.hc-planning-month-title{
+ width:100%!important;box-sizing:border-box!important;
+ display:flex!important;flex-direction:column!important;align-items:stretch!important;
+ margin:20px 0 24px!important;padding:0 6px!important;gap:22px!important;
+}
+.hc-month-title-open{
+ appearance:none!important;border:0!important;background:transparent!important;color:inherit!important;
+ width:100%!important;margin:0!important;padding:8px 10px 2px!important;
+ display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+ text-align:center!important;cursor:pointer!important;
+}
+.hc-month-title-open small{
+ display:block!important;margin:0 0 8px!important;color:#168297!important;
+ font-size:.78rem!important;line-height:1!important;font-weight:950!important;letter-spacing:.10em!important;
+}
+.hc-month-title-name{
+ display:block!important;color:#153a4a!important;
+ font-size:clamp(2.35rem,10vw,3.35rem)!important;line-height:.92!important;
+ font-weight:950!important;letter-spacing:-.045em!important;
+}
+.hc-month-title-hint{
+ margin-top:15px!important;min-height:46px!important;padding:0 20px!important;
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;
+ border:1px solid rgba(22,91,111,.15)!important;border-radius:999px!important;background:#fff!important;
+ box-shadow:0 6px 16px rgba(20,62,78,.07)!important;color:#527584!important;
+ font-size:clamp(.72rem,2.5vw,.82rem)!important;line-height:1!important;font-weight:900!important;
+ letter-spacing:.045em!important;text-transform:uppercase!important;
+}
+.hc-month-title-hint b{color:#168297!important;font-size:1.18rem!important;line-height:1!important}
+.hc-week-nav-global{
+ width:100%!important;box-sizing:border-box!important;
+ display:grid!important;grid-template-columns:52px minmax(0,1fr) 52px!important;align-items:center!important;gap:10px!important;
+ padding:7px 10px!important;border-radius:24px!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.92),rgba(239,247,249,.84))!important;
+ box-shadow:0 8px 22px rgba(20,62,78,.07)!important;
+}
+.hc-week-nav-global button{
+ width:52px!important;height:52px!important;border-radius:50%!important;
+ background:linear-gradient(145deg,#fff,#edf4f6)!important;border:1px solid rgba(26,84,102,.12)!important;
+ box-shadow:0 5px 13px rgba(18,62,80,.09)!important;
+}
+.hc-week-nav-global .hc-week-context{min-width:0!important;text-align:center!important}
+.hc-week-nav-global .hc-week-context strong{
+ display:block!important;font-size:clamp(.84rem,3vw,.92rem)!important;line-height:1.1!important;
+ font-weight:900!important;white-space:nowrap!important;
+}
+.hc-week-nav-global .hc-week-context small{
+ display:block!important;margin-top:3px!important;font-size:.72rem!important;line-height:1!important;
+ font-weight:900!important;letter-spacing:.05em!important;
+}
+.hc-week-today-under-nav{
+ display:block!important;width:max-content!important;max-width:100%!important;
+ margin:-8px auto 0!important;padding:8px 16px!important;border:0!important;background:transparent!important;
+ color:#167b96!important;font-size:.88rem!important;line-height:1.1!important;font-weight:900!important;
+}
