@@ -932,13 +932,10 @@
     return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Compte</summary><div><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
   }
 
-  function favoritesLauncher() {
-    return `<button type="button" class="hc-favorites-launcher" data-open-favorites><span class="hc-favorites-launcher-art"><img src="images/icone_app/quick-rocket.svg?v=20260920-nav3" alt="" aria-hidden="true"></span><span><small>RACCOURCIS</small><strong>Mes favoris</strong><em>Retrouver rapidement mes applications</em></span><b>›</b></button>`;
-  }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
-      return `<section class="hc-home-pane hc-home-pane-apps">${favoritesLauncher()}<div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
+      return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
@@ -969,13 +966,7 @@
           render();
         }),
     );
-    root.querySelectorAll("[data-open-favorites]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          if (window.STIPFavorites?.open) window.STIPFavorites.open();
-          else document.querySelector('#stipQuickSwitch [data-qs="favorites"]')?.click();
-        }),
-    );
+    if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
     root
       .querySelector("[data-open-month]")
       ?.addEventListener("click", (e) =>
