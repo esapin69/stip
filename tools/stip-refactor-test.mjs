@@ -139,11 +139,14 @@ check(home.includes('const markup = `${profile()}${homeModeNav()}<section class=
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
 const homeCss=read('home-shell.css');
-check(home.includes('function calendarShiftPill')&&home.includes('hc-date-jump-shift'),'Le sélecteur de semaine n’affiche plus les capsules de shift dans le calendrier.');
-check(home.includes('dateJumpOpen: false')&&home.includes('data-cal-close'),'Le calendrier d’aperçu n’a plus son ouverture/fermeture manuelle.');
-check(home.includes('state.dateJumpOpen = true')&&home.includes('state.dateJumpMonth = String(day.dataset.calDay || "").slice(0, 7)'),'Choisir une date doit conserver l’aperçu ouvert pour la prise d’information.');
-check(homeCss.includes('.hc-date-jump-shift.shift-morning')&&homeCss.includes('.hc-date-jump-shift.shift-night'),'Les couleurs de shift du calendrier d’aperçu ont disparu.');
-check(homeCss.includes('.hc-date-jump-number')&&homeCss.includes('.hc-date-jump-actions'),'Le numéro du jour ou les actions du calendrier d’aperçu ont régressé.');
+check(home.includes('function planningCalendarOverview')&&home.includes('hc-date-jump-permanent'),'Le calendrier mensuel permanent a disparu du bas du planning.');
+check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),'Le calendrier mensuel ne doit plus fonctionner comme un pop-up refermable.');
+check(home.includes('if (!["M", "J", "J4", "S", "N"].includes(code)) return null;'),'Seuls les jours réellement travaillés doivent recevoir un repère coloré dans le calendrier.');
+check(home.includes('hc-date-jump-number hc-date-jump-workday')&&!home.includes('function calendarShiftPill'),'Le numéro du jour travaillé doit être directement gravé dans la pastille, sans afficher le code du shift.');
+check(home.includes('hc-week-nav-global hc-week-nav-hero')&&!home.includes('hc-month-title-card'),'Le bloc semaine doit avoir remplacé l’ancien gros titre de mois.');
+check(home.indexOf('fixedShiftLegend()') < home.indexOf('planningCalendarOverview()'),'Le calendrier permanent doit rester sous les légendes du planning.');
+check(homeCss.includes('.hc-date-jump-workday.shift-morning')&&homeCss.includes('.hc-date-jump-workday.shift-night'),'Les couleurs des pastilles de jours travaillés ont disparu.');
+check(homeCss.includes('color:#fff!important')&&homeCss.includes('.hc-week-nav-global.hc-week-nav-hero'),'Le contraste blanc des numéros ou le nouveau titre semaine a régressé.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
