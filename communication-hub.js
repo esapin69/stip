@@ -6,7 +6,7 @@
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
   const VAPID_PUBLIC="BGCXc9jLIjbzcsWqgH7PJDIIiI278kJmjpg3qHkjlutQ0mQFeX685llxQMiWXv8tK3li6BxMjgcDf8Nf_dUPFzI";
   const STORE="stip_session_v1";
-  let home=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",dialogContext={},dialogHistory=[];
+  let home=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",exchangeQuickOpened=false,dialogContext={},dialogHistory=[];
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const can=k=>window.STIPAccess?.has?.(k) ?? !!({...window.STIPSession?.permissions,...window.STIPBootCache?.permissions}[k]);
   async function post(url,action,body={}){
@@ -106,8 +106,8 @@
           pending=sessionStorage.getItem("stip_message_open_v1")||"";
           if(pending)sessionStorage.removeItem("stip_message_open_v1");
           const quick=new URLSearchParams(location.search).get("quick")||"";
-          if(quick==="exchange"&&sessionStorage.getItem("stip_exchange_opened_once")!=="1"){
-            sessionStorage.setItem("stip_exchange_opened_once","1");openExchange=true;
+          if(quick==="exchange"&&!exchangeQuickOpened){
+            exchangeQuickOpened=true;openExchange=true;
           }
         }catch{}
         if(pending)setTimeout(()=>openThread(pending),20);
