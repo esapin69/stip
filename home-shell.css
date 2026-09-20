@@ -1946,35 +1946,42 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  background:rgba(72,111,124,.14)!important;
 }
 .hc-fixed-shift-legend{
- padding:1px 4px 4px!important;
+ padding:2px 4px 4px!important;
 }
 .hc-fixed-shift-legend>small{
  display:block!important;
- margin:0 0 10px!important;
+ margin:0 0 12px!important;
  color:#8a9ba2!important;
- font-size:.66rem!important;
+ font-size:.7rem!important;
  font-weight:900!important;
  letter-spacing:.095em!important;
+ text-align:center!important;
 }
 .hc-fixed-shift-legend>div{
  display:grid!important;
- grid-template-columns:repeat(auto-fit,minmax(148px,1fr))!important;
- gap:9px 14px!important;
+ grid-template-columns:1fr!important;
+ gap:10px!important;
  align-items:center!important;
+ justify-items:center!important;
 }
 .hc-fixed-shift-item{
  min-width:0!important;
+ width:max-content!important;
+ max-width:100%!important;
+ margin:0 auto!important;
  display:flex!important;
  align-items:center!important;
- gap:7px!important;
+ justify-content:center!important;
+ gap:8px!important;
  color:#667b84!important;
- font-size:.9rem!important;
+ font-size:1rem!important;
  line-height:1.15!important;
+ text-align:center!important;
 }
 .hc-fixed-shift-item>i{
- flex:0 0 13px!important;
- width:13px!important;
- height:13px!important;
+ flex:0 0 14px!important;
+ width:14px!important;
+ height:14px!important;
  border-radius:50%!important;
  font-style:normal!important;
 }
@@ -1989,7 +1996,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-fixed-shift-pending{
  margin-top:0!important;
  color:#82939a!important;
- font-size:.82rem!important;
+ font-size:.9rem!important;
 }
 .hc-fixed-shift-pending>b{
  color:#82939a!important;
@@ -2023,7 +2030,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-fixed-shift-item>strong{
  min-width:0!important;
  color:#71878f!important;
- font-size:.86rem!important;
+ font-size:.94rem!important;
  font-weight:800!important;
  white-space:nowrap!important;
 }
