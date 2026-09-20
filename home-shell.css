@@ -1188,3 +1188,55 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  font-size:.82rem!important;
  overflow:visible!important;
 }
+
+
+/* compact-day-header-v8-20260920 */
+.hc-planning-left .hc-days-vertical .hc-day-vertical,
+.hc-planning-left .hc-weekend-row .hc-day-weekend{
+ grid-template-rows:34px minmax(32px,auto)!important;
+ min-height:76px!important;
+ padding:0 5px 7px!important;
+ overflow:hidden!important;
+}
+.hc-planning-left .hc-day-head{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ gap:8px!important;
+ width:calc(100% + 10px)!important;
+ height:34px!important;
+ margin:0 -5px!important;
+ background:transparent!important;
+}
+.hc-planning-left .hc-day-head>i,
+.hc-planning-left .hc-day-head>b{
+ width:auto!important;
+ margin:0!important;
+ padding:0!important;
+ background:transparent!important;
+ color:inherit!important;
+ line-height:1!important;
+}
+.hc-planning-left .hc-day-head>i{
+ font-size:.9rem!important;
+ font-weight:900!important;
+ letter-spacing:.035em!important;
+}
+.hc-planning-left .hc-day-head>b{
+ font-size:1.35rem!important;
+ font-weight:900!important;
+}
+.hc-planning-left .hc-day-vertical>.hc-week-visual,
+.hc-planning-left .hc-day-weekend>.hc-week-visual{
+ min-height:32px!important;
+ align-self:center!important;
+}
+.hc-planning-left .hc-day-vertical.work .hc-day-head,
+.hc-planning-left .hc-day-vertical.rest .hc-day-head,
+.hc-planning-left .hc-day-weekend.work .hc-day-head,
+.hc-planning-left .hc-day-weekend.rest .hc-day-head{
+ background:transparent!important;
+}
+/* remove filled day-header highlighter while preserving card border/code color */
+.hc-planning-left .hc-day-vertical>i,
+.hc-planning-left .hc-day-weekend>i{background:transparent!important}
