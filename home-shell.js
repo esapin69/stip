@@ -958,7 +958,6 @@
       media = state.boot?.media || {},
       avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
       ghe = String(a.ghe || "").trim(),
-      team = String(a.type_planning || a.equipe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
@@ -972,12 +971,8 @@
       <button type="button" class="hc-profile-bell" data-home-mode="notifications" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
       <div class="hc-profile-copy">
-        <small>MON PROFIL</small>
         <strong class="hc-profile-name">${esc(agentName(a))}</strong>
-        <div class="hc-profile-role">
-          ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
-          ${team ? `<span class="hc-profile-team">Équipe ${esc(cap(team))}</span>` : ""}
-        </div>
+        ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
         <div class="hc-profile-contacts">
           ${tel ? `<button class="hc-profile-contact" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
           ${mail ? `<button class="hc-profile-contact" data-copy="${esc(mail)}" data-label="E-mail" aria-label="Copier l’e-mail"><strong>${esc(mail)}</strong></button>` : ""}
