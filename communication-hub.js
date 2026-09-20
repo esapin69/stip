@@ -16,7 +16,7 @@
   function name(a={}){return a.nickname||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||"Agent"}
   function avatar(a={},cls="ch-avatar"){const src=a.profile_photo_url||a.avatar_url||a.avatar||"",ini=[a.prenom?.[0],a.nom?.[0]].filter(Boolean).join("").toUpperCase()||String(name(a)).slice(0,2).toUpperCase();return '<span class="'+cls+'">'+(src?'<img src="'+esc(src)+'" alt="">':esc(ini))+'</span>'}
   function currentMode(){return document.querySelector('#homeView [data-home-mode-current]')?.dataset.homeModeCurrent||""}
-  function setUnread(n){window.STIPMessagesUnread=Number(n)||0;window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:window.STIPMessagesUnread}}))}
+  function setUnread(n){const next=Number(n)||0,prev=Number(window.STIPMessagesUnread||0);window.STIPMessagesUnread=next;if(next!==prev)window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:next}}))}
   function conversationTitle(c){if(c.kind==="direct")return name(c.others?.[0]);return c.title||c.others?.slice(0,3).map(name).join(", ")||"Conversation"}
   function bubbleAgent(a){return '<button class="ch-person-bubble" type="button" data-agent="'+esc(a.id)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>'}
   function renderHost(){
