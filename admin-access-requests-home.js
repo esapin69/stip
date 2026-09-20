@@ -50,6 +50,7 @@
         title:
           `Accès à vérifier · ${r.agent?.prenom || ""} ${r.agent?.nom || ""}`.trim(),
         body: r.evidence?.note || "La preuve planning doit être contrôlée.",
+        security_index: i,
       })),
       ...(data?.items || []).map((r) => ({
         id: `access-request-${r.id}`,
@@ -58,6 +59,7 @@
         title:
           `${r.unresolved ? "Accès non relié" : "Demande d’accès"} · ${r.first_name || ""} ${r.last_name || ""}`.trim(),
         body: r.evidence?.note || r.comment || "Décision requise.",
+        request_id: r.id,
       })),
     ];
     window.STIPActionCenter?.publish("admin-access", items);
@@ -280,8 +282,21 @@
   }
   window.addEventListener("stip:boot-updated", boot);
   window.addEventListener("stip:session-ready", boot);
-  window.addEventListener("stip:action-center-open", (e) => {
-    if (e.detail?.source === "admin-access") openList();
+  window.addEventListener("stip:action-center-open", async (e) => {
+    const detail = e.detail || {};
+    if (detail.source !== "admin-access" || !isAdmin()) return;
+    try {
+      if (!data) data = await api("list");
+      renderCard();
+      const d = ensureDialog();
+      if (!d.open) d.showModal();
+      if (detail.request_id) return openRequest(detail.request_id);
+      if (Number.isInteger(detail.security_index))
+        return openSecurity(detail.security_index);
+      return openList();
+    } catch {
+      openList();
+    }
   });
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", boot);
