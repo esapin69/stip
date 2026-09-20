@@ -83,6 +83,8 @@
       '<img src="images/icone_app/home-apps.webp?v=20260919-homefilters1" alt="" aria-hidden="true">',
     homeBell:
       '<img src="images/icone_app/home-bell.svg?v=20260920-nav1" alt="" aria-hidden="true">',
+    homeRocket:
+      '<img src="images/icone_app/quick-rocket.svg?v=20260920-nav2" alt="" aria-hidden="true">',
   };
   function esc(v) {
     return String(v ?? "").replace(
@@ -855,6 +857,7 @@
         ["notifications", "Notifications", ICON.homeBell],
         ["planning", "Accueil", ICON.homeHome],
         ["apps", "Applications", ICON.homeApps],
+        ["favorites", "Raccourcis", ICON.homeRocket],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
@@ -932,10 +935,15 @@
     return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Compte</summary><div><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
   }
 
+  function favoritesLauncher() {
+    return `<button type="button" class="hc-favorites-launcher" data-open-favorites><span class="hc-favorites-launcher-art">${ICON.homeRocket}</span><span><small>RACCOURCIS</small><strong>Mes favoris</strong><em>Retrouver rapidement mes applications</em></span><b>›</b></button>`;
+  }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
+    if (state.homeMode === "favorites")
+      return `<section class="hc-home-pane hc-home-pane-favorites">${favoritesLauncher()}</section>`;
     if (state.homeMode === "apps")
-      return `<section class="hc-home-pane hc-home-pane-apps"><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
+      return `<section class="hc-home-pane hc-home-pane-apps">${favoritesLauncher()}<div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
@@ -964,6 +972,12 @@
           state.homeMode = next;
           state.renderSig = "";
           render();
+        }),
+    );
+    root.querySelectorAll("[data-open-favorites]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          document.querySelector('#stipQuickSwitch [data-qs="favorites"]')?.click();
         }),
     );
     root
