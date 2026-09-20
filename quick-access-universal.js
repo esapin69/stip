@@ -239,22 +239,13 @@
     });
   }
   function mount(perms) {
-    if (window.__STIPQuickAccessOwner === "main" || document.getElementById("stipQuickSwitch") || document.getElementById("stipQuickUniversal")) return;
+    if (window.__STIPQuickAccessOwner === "main") return;
     window.__STIPQuickAccessOwner = "universal";
-    ensureCss();
+    document.getElementById("stipQuickSwitch")?.remove();
+    document.getElementById("stipQuickUniversal")?.remove();
+    document.body.classList.remove("stip-quick-connected", "stip-quick-in-app");
     const k = currentKey();
     if (k && allowed(k, perms)) touch(k);
-    const n = document.createElement("nav");
-    n.id = "stipQuickUniversal";
-    n.className = "stip-quick-switch";
-    n.setAttribute("aria-label", "Navigation STIP");
-    n.innerHTML = `<button type="button" data-u="favorites" aria-label="Applications favorites"><span class="qs-icon">${I.fav}</span></button>`;
-    n.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-u]");
-      if (b?.dataset.u === "favorites") toggleFav(perms);
-    });
-    document.body.appendChild(n);
-    document.body.classList.add("stip-quick-connected", "stip-quick-in-app");
   }
   me().then((j) => {
     const perms = j?.permissions || j?.profile?.permissions || {};
