@@ -484,12 +484,12 @@
   function dayCard(x, cls = "hc-day", compact = false) {
     const canonical = canonicalShift(x.code),
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+      weekend = x.dow > 5,
       day = x.d
-        .toLocaleDateString("fr-FR", { weekday: "short" })
+        .toLocaleDateString("fr-FR", { weekday: weekend ? "short" : "long" })
         .replace(".", "")
         .toUpperCase(),
       loading = x.code === "…",
-      weekend = x.dow > 5,
       dayOff = DAY_OFF.has(canonical),
       statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
       visual = loading
@@ -499,6 +499,11 @@
           : shiftBadge(x.code),
       statusCode = statusIcon ? canonical : "";
     return `<span class="${cls} ${x.today ? "today" : ""} ${weekend ? "weekend" : ""} ${loading ? "loading" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><i>${esc(day)}</i><b>${x.d.getDate()}</b><span class="hc-week-visual">${visual}</span><small class="hc-shift-time ${statusCode ? "hc-status-code" : ""}">${statusCode ? esc(statusCode) : ""}</small></span>`;
+  }
+  function weekDaysVertical(w) {
+    const weekdays = w.filter((x) => x.dow < 6),
+      weekend = w.filter((x) => x.dow > 5);
+    return `<div class="hc-days-vertical">${weekdays.map((x) => dayCard(x, "hc-day hc-day-vertical", true)).join("")}${weekend.length ? `<div class="hc-weekend-row">${weekend.map((x) => dayCard(x, "hc-day hc-day-vertical hc-day-weekend", true)).join("")}</div>` : ""}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading")
@@ -510,7 +515,7 @@
   function weekWidget() {
     const w = selectedWeek(),
       mi = weekMonthInfo(w);
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header><button type="button" class="hc-month-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button><div class="hc-days hc-days-seven ${w.length < 7 ? "hc-days-current" : ""}" style="--day-count:${w.length}">${w.map((x) => dayCard(x, "hc-day", true)).join("")}</div>${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
+    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header><button type="button" class="hc-month-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button>${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
