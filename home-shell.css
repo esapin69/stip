@@ -360,3 +360,26 @@
 
 /* profile-header-position-20260920 */
 .hc-id-card + .hc-home-filters{margin-top:12px!important}
+
+/* week-preview-max-readability-20260920 */
+.hc-days-seven .hc-day>i{
+  font-size:.64rem!important;
+  font-weight:950!important;
+  letter-spacing:-.025em!important;
+}
+.hc-days-seven .hc-day>.hc-shift-time.hc-status-code{
+  font-size:.66rem!important;
+  font-weight:950!important;
+  letter-spacing:-.045em!important;
+  line-height:1!important;
+  min-height:18px!important;
+  color:#4f6670!important;
+}
+@media(max-width:430px){
+  .hc-days-seven .hc-day>i{font-size:.62rem!important}
+  .hc-days-seven .hc-day>.hc-shift-time.hc-status-code{font-size:.64rem!important}
+}
+@media(max-width:380px){
+  .hc-days-seven .hc-day>i{font-size:.59rem!important}
+  .hc-days-seven .hc-day>.hc-shift-time.hc-status-code{font-size:.61rem!important}
+}
