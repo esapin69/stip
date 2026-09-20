@@ -109,10 +109,17 @@ export function adaptSuggestions(r: DialogResponse, raw: string, c: SessionCtx):
     ].filter(Boolean) as string[];
   }
 
-  const suggestions = unique(next.length ? next : (r.suggestions || []));
-  if (!suggestions.length) return r;
-  const ctx = { ...(r.context || {}) } as Record<string, unknown>;
+  const candidates = unique(next.length ? next : (r.suggestions || []), 6);
+  const ctx = { ...(r.context || {}) } as DialogContext;
+  const previous = Array.isArray(ctx.suggestion_history) ? ctx.suggestion_history.map(normalize).filter(Boolean) : [];
+  const seen = new Set([...previous, normalize(raw)]);
+  const suggestions = unique(candidates.filter((s) => !seen.has(normalize(s))), 4);
   const opts = offeredOptions(suggestions);
   ctx.offered_options = opts.length && opts.length === suggestions.length ? opts : [];
+  ctx.suggestion_history = unique([
+    ...previous,
+    normalize(raw),
+    ...suggestions.map(normalize),
+  ], 16).map(normalize);
   return { ...r, suggestions, context: ctx };
 }
