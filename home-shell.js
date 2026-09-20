@@ -1018,16 +1018,18 @@
       items = [
         ["apps", "Applications", ICON.homeApps],
         ["planning", "Mon profil", ICON.homeHome],
-      ],
-      ai = has("dialog") || has("assistant_enabled")
-        ? `<button type="button" class="hc-home-ai" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`
-        : "";
+      ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
         ([key, label, art]) =>
           `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`,
       )
-      .join("")}${ai}</nav>`;
+      .join("")}</nav>`;
+  }
+
+  function homeAIEntry() {
+    if (!(has("dialog") || has("assistant_enabled"))) return "";
+    return `<button type="button" class="hc-home-ai-footer" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-footer-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`;
   }
 
   function actionCenterData(filter = state.actionFilter) {
@@ -1103,7 +1105,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
