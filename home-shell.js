@@ -301,7 +301,7 @@
   const SHIFT_BADGE_META = {
     M: ["morning", "Matin"],
     J: ["day", "Journée"],
-    J4: ["late", "Journée décalée"],
+    J4: ["late", "J4"],
     S: ["evening", "Soir"],
     N: ["night", "Nuit"],
     RH: ["rest", "Repos"],
@@ -332,8 +332,8 @@
   const WORK_SHIFT_ICON = {
     M: "🔵",
     J: "🟢",
-    J4: "🟣",
-    S: "🟠",
+    J4: "🟠",
+    S: "🟡",
     N: "⚫",
   };
   function canonicalShift(raw) {
