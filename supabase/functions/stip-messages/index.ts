@@ -84,6 +84,14 @@ async function send(ctx:any,body:any){
   const{data,error}=await db.from("stip_messages").insert({conversation_id:id,sender_agent_id:ctx.agent.id,body:text,payload}).select("id,created_at").single();if(error)throw error;
   await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",id);
   await db.from("stip_conversation_members").update({last_read_at:data.created_at}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
+  try{
+    const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
+    const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile);
+    await Promise.allSettled((members||[]).map(async(m:any)=>{
+      const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
+      await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?text.slice(0,140):"Nouveau message",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-message-"+id}})});
+    }))
+  }catch(e){console.error("push",e)}
   return{ok:true,...data}
 }
 async function home(ctx:any){
