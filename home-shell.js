@@ -1346,7 +1346,7 @@
     const head = inline
       ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
       : "";
-    if (!ns.length) return head + filterBar;
+    if (!ns.length) return state.actionPrefs.tabs.length ? head + filterBar : head;
     const cards = shown.length
       ? '<div class="hc-panel-list">' +
         shown
