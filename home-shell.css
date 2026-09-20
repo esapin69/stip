@@ -2276,3 +2276,36 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters{width:min(100%,620px)!important;gap:44px!important}
   .hc-home-filter-art{width:108px!important;height:108px!important}
 }
+
+
+/* HOME ACCESS LAUNCHERS — compact hierarchy 20260920 */
+.hc-home-filters{
+  width:min(100%,390px)!important;
+  margin:14px auto 24px!important;
+  gap:6px!important;
+}
+.hc-home-filters>button{gap:5px!important}
+.hc-home-filter-art{
+  width:68px!important;
+  height:68px!important;
+}
+.hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{
+  width:82px!important;
+  height:82px!important;
+}
+.hc-home-filters>button>strong{
+  font-size:.72rem!important;
+}
+.hc-home-filters>button[data-home-mode="planning"]>strong{
+  font-size:.76rem!important;
+}
+@media(max-width:380px){
+  .hc-home-filters{width:100%!important;gap:2px!important}
+  .hc-home-filter-art{width:62px!important;height:62px!important}
+  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:76px!important;height:76px!important}
+}
+@media(min-width:700px){
+  .hc-home-filters{width:440px!important;gap:12px!important}
+  .hc-home-filter-art{width:76px!important;height:76px!important}
+  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:92px!important;height:92px!important}
+}
