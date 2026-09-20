@@ -122,6 +122,13 @@ check(tomorrowMigration.includes("'tomorrow'")&&tomorrowMigration.includes("leve
 
 check(!read('index.html').includes('assistant-presence.js'),'assistant-presence.js ne doit plus être chargé sur l’accueil.');
 
+check(!existsSync(join(root,'assistant-presence.js')),'assistant-presence.js doit être supprimé du dépôt.');
+check(!existsSync(join(root,'quick-access-icons.css')),'quick-access-icons.css doit être supprimé du dépôt.');
+check(!existsSync(join(root,'carousel-fold.js')),'carousel-fold.js doit être supprimé du dépôt.');
+check(!read('cadre.html').includes('assistant-presence.js'),'Cadre charge encore l’ancien bandeau Assistant.');
+check(!read('responsable.html').includes('assistant-presence.js'),'Responsable charge encore l’ancien bandeau Assistant.');
+check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
