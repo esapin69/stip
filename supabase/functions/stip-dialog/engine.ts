@@ -97,6 +97,7 @@ export async function answer(c: SessionCtx, body: any) {
   if (option === "coordonnees") intent = "contact";
   if (option === "message") intent = "messaging_help";
   if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(raw)) intent = "exchange";
+  if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(raw)) intent = "shift_roster";
 
   const parsedScope = parseDateScope(raw, todayParis(), old);
   if (intent === "exchange" && !parsedScope) return {
@@ -114,7 +115,16 @@ export async function answer(c: SessionCtx, body: any) {
   const resolved = resolvePeople(raw, all, contextIds, allowContext);
   const explicitSubjects = resolved.candidates;
 
-  if (intent === "messaging_help") {
+  if (intent === "request_help") {
+    return {
+      kind: "redirect", title: "Demande de planning",
+      text: "Pour poser un congé, un repos ou demander une modification de planning, utilise Changement. STIP y garde les règles du vrai workflow plutôt que d’inventer une demande ici.",
+      cards: [], actions: [{ type: "open", label: "Ouvrir Changement", url: "index.html?quick=change" }],
+      context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
+      suggestions: ["Mon planning sur cette période ?", "Avec qui je peux échanger ?"],
+    };
+  }
+    if (intent === "messaging_help") {
     const contextualMessage = !!option || hasContextualPersonRef(raw);
     const subjects = explicitSubjects.length ? explicitSubjects : (contextualMessage ? findAgents(all, contextIds) : []);
     return messagingHelp(c, old, ds, subjects, all, raw);
