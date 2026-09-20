@@ -72,3 +72,31 @@ body.stip-quick-connected{--stip-quick-clearance:calc(104px + env(safe-area-inse
 @media(max-width:430px){
  .stip-fav-sheet{width:calc(100% - 16px)!important;bottom:8px!important;padding:14px!important;border-radius:22px!important}
 }
+
+/* STIP application library — personal screen + internal store */
+.stip-app-empty-state{min-height:46vh;display:grid;place-items:center;align-content:center;gap:12px;padding:28px 18px;text-align:center;color:#123f50}
+.stip-empty-orb{width:78px;height:78px;border-radius:24px;display:grid;place-items:center;background:#e9f7f9;color:#0798b5;font-size:2.2rem;font-weight:500}
+.stip-app-empty-state h2,.stip-my-apps h2,.stip-app-store h2{margin:0;color:#0d4257;font-size:clamp(1.65rem,6vw,2.25rem);letter-spacing:-.035em}
+.stip-app-empty-state p{max-width:390px;margin:0;color:#6f858e;line-height:1.45;font-size:.9rem}
+.stip-store-browse{min-height:48px!important;padding:0 18px!important;border:0!important;border-radius:15px!important;background:#0798b5!important;color:#fff!important;font-weight:950!important;box-shadow:0 9px 20px rgba(7,152,181,.18)!important}
+.stip-my-apps,.stip-app-store{padding:4px 2px 20px;color:#123f50}
+.stip-my-apps>header,.stip-app-store>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+.stip-my-apps header small,.stip-app-store header small,.stip-store-feature small,.stip-store-card small{display:block;color:#0798b5;font-size:.64rem;font-weight:950;letter-spacing:.1em}
+.stip-my-app-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.stip-my-app{min-width:0!important;min-height:128px!important;padding:12px 8px!important;border:0!important;border-radius:22px!important;background:#fff!important;box-shadow:0 8px 24px rgba(15,65,82,.08)!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:9px!important;color:#123f50!important}
+.stip-my-app strong{font-size:.78rem;line-height:1.15;text-align:center}
+.stip-store-icon{width:62px;height:62px;flex:0 0 62px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#10a8c3,#0c6ea5);color:#fff;font-size:1.05rem;font-weight:950;letter-spacing:-.04em;box-shadow:0 8px 18px rgba(13,91,122,.18)}
+.stip-store-icon-tomorrow{background:linear-gradient(145deg,#ffb34c,#ef7444)}
+.stip-store-icon-team,.stip-store-icon-contacts{background:linear-gradient(145deg,#5a9ff0,#4965d5)}
+.stip-store-icon-access,.stip-store-icon-admin{background:linear-gradient(145deg,#657789,#273c4a)}
+.stip-store-icon-places{background:linear-gradient(145deg,#45b998,#148a76)}
+.stip-store-back{width:44px!important;height:44px!important;min-width:44px!important;border:0!important;border-radius:14px!important;background:#edf5f6!important;color:#0d4257!important;font-size:1.65rem!important}
+.stip-app-store>header{justify-content:flex-start}.stip-app-store>header p{margin:4px 0 0;color:#72858c;font-size:.78rem}
+.stip-store-feature{margin:0 0 18px;padding:20px;border-radius:22px;background:linear-gradient(135deg,#e9f8fb,#f7fbfc);border:1px solid #d5eaee}
+.stip-store-feature strong{display:block;margin-top:5px;color:#0d4257;font-size:1.25rem}.stip-store-feature p{margin:5px 0 0;color:#657c85;font-size:.82rem}
+.stip-store-list{display:grid;gap:10px}.stip-store-card{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px;border:1px solid #dce9ec;border-radius:20px;background:#fff}
+.stip-store-main{min-width:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;display:grid!important;grid-template-columns:62px minmax(0,1fr)!important;align-items:center!important;gap:12px!important;text-align:left!important;color:#123f50!important}
+.stip-store-card strong{display:block;margin:2px 0;font-size:.93rem}.stip-store-card em{display:block;color:#72858c;font-size:.7rem;line-height:1.25;font-style:normal}
+.stip-store-add{min-width:76px!important;min-height:36px!important;padding:0 11px!important;border:0!important;border-radius:999px!important;background:#e8f7f9!important;color:#087f94!important;font-size:.72rem!important;font-weight:950!important}
+.stip-store-add.is-added{background:#eef2f3!important;color:#6b7d84!important}
+@media(max-width:430px){.stip-my-app-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stip-my-app{min-height:116px!important}.stip-store-icon{width:56px;height:56px;flex-basis:56px}.stip-store-main{grid-template-columns:56px minmax(0,1fr)!important}.stip-store-card{gap:6px;padding:9px}.stip-store-add{min-width:68px!important;padding:0 8px!important}}
