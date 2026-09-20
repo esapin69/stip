@@ -262,9 +262,45 @@
       setTimeout(() => note.remove(), 1300);
     });
   }
+  const APP_ICON = {
+    personal:
+      '<img src="images/icone_app/planning.svg?v=20260920-appicons1" alt="" aria-hidden="true">',
+    tomorrow:
+      '<img src="images/icone_app/pour-demain.svg?v=20260920-appicons1" alt="" aria-hidden="true">',
+    team:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
+    compare:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="7" height="14" rx="2"/><rect x="13.5" y="5" width="7" height="14" rx="2"/><path d="M7 9h0M17 9h0M7 13h0M17 13h0"/></svg>',
+    change:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>',
+    calendar:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg>',
+    dates:
+      '<img src="images/icone_app/date-des-agents.svg?v=20260920-appicons1" alt="" aria-hidden="true">',
+    contacts:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
+    places:
+      '<img src="images/icone_app/visiter-les-lieux.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
+    responsable:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>',
+    assistant:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>',
+    activity:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
+    access:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg>',
+    newagent:
+      '<img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
+    upload:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 14v5h14v-5"/></svg>',
+    admin:
+      '<img src="images/icone_app/admin.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
+  };
   function appStoreIcon(k) {
-    const initials = (META[k]?.label || k).split(/\\s+/).slice(0, 2).map(x => x[0]).join("").toUpperCase();
-    return `<span class="stip-store-icon stip-store-icon-${k}">${initials}</span>`;
+    const art = APP_ICON[k];
+    if (art) return `<span class="stip-store-icon stip-store-icon-${k}">${art}</span>`;
+    const fallback = (META[k]?.label || k).trim().charAt(0).toUpperCase();
+    return `<span class="stip-store-icon stip-store-icon-${k}">${fallback}</span>`;
   }
   function storeCard(k, added) {
     const meta = APP_STORE_COPY[k] || [META[k].label, "Application STIP", "STIP"];
