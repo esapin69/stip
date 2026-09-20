@@ -268,7 +268,7 @@
   }
   function storeCard(k, added) {
     const meta = APP_STORE_COPY[k] || [META[k].label, "Application STIP", "STIP"];
-    return `<article class="stip-store-card"><button type="button" class="stip-store-main" data-store-open="${k}">${appStoreIcon(k)}<span><small>${meta[2]}</small><strong>${meta[0]}</strong><em>${meta[1]}</em></span></button><button type="button" class="stip-store-add ${added ? "is-added" : ""}" data-store-toggle="${k}">${added ? "Ajoutée" : "Ajouter"}</button></article>`;
+    return `<article class="stip-store-card ${added ? "is-selected" : ""}"><button type="button" class="stip-store-main" data-store-open="${k}">${appStoreIcon(k)}<span><small>${meta[2]}</small><strong>${meta[0]}</strong><em>${meta[1]}</em></span></button><button type="button" class="stip-store-add ${added ? "is-added" : ""}" data-store-toggle="${k}" aria-label="${added ? "Retirer " : "Ajouter "}${meta[0]}"><span aria-hidden="true">${added ? "−" : "+"}</span><strong>${added ? "Retirer" : "Ajouter"}</strong></button></article>`;
   }
   function renderStore(host) {
     const chosen = readFav().filter(allowed), all = Object.keys(META).filter(allowed);
