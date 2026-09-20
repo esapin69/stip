@@ -122,12 +122,14 @@ function ensureViewer(){
       '<button id="ppvSave" type="button"><b>↓</b><span>Enregistrer</span></button>'+
       '<button id="ppvChange" type="button"><b>✎</b><span>Changer</span></button>'+
       '<button id="ppvDelete" class="danger" type="button"><b>⌫</b><span>Supprimer</span></button>'+
+      '<button id="ppvLogout" class="logout" type="button"><b>↪</b><span>Se déconnecter</span></button>'+
     '</div>';
   document.body.appendChild(viewer);
   viewer.querySelector(".ppv-close")?.addEventListener("click",closeViewer);
   viewer.querySelector("#ppvSave")?.addEventListener("click",saveViewerImage);
   viewer.querySelector("#ppvChange")?.addEventListener("click",choose);
   viewer.querySelector("#ppvDelete")?.addEventListener("click",removePhoto);
+  viewer.querySelector("#ppvLogout")?.addEventListener("click",logout);
   viewer.addEventListener("click",e=>{
     if(e.target===viewer||e.target?.classList?.contains("ppv-stage"))closeViewer();
   });
@@ -154,6 +156,7 @@ function openViewer(url){
   v.classList.add("open");
   v.setAttribute("aria-hidden","false");
   document.documentElement.classList.add("ppv-lock");
+  document.body.classList.add("ppv-open");
   setTimeout(()=>v.querySelector(".ppv-close")?.focus(),0);
 }
 
@@ -162,6 +165,7 @@ function closeViewer(){
   viewer.classList.remove("open");
   viewer.setAttribute("aria-hidden","true");
   document.documentElement.classList.remove("ppv-lock");
+  document.body.classList.remove("ppv-open");
 }
 
 function setViewerBusy(on){
@@ -210,6 +214,18 @@ async function saveViewerImage(){
     busy=false;
     setViewerBusy(false);
   }
+}
+
+function logout(){
+  if(busy)return;
+  if(!confirm("Se déconnecter du compte ?"))return;
+  closeViewer();
+  const btn=document.getElementById("logoutBtn");
+  if(btn){btn.click();return;}
+  try{localStorage.removeItem(STORE)}catch{}
+  window.STIPSession=null;
+  window.dispatchEvent(new CustomEvent("stip:session-ended"));
+  location.href="index.html";
 }
 
 async function removePhoto(){
@@ -303,24 +319,27 @@ st.textContent=
   ".hc-id-card .hc-avatar.profile-photo-interactive:active{transform:scale(.985)}"+
   ".hc-id-card .hc-avatar.profile-photo-editable:after{content:'↗';position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #d7e5e8;color:#176075;font-size:12px;font-weight:950;box-shadow:0 2px 8px rgba(0,0,0,.12)}"+
   "html.ppv-lock,html.ppv-lock body{overflow:hidden!important;overscroll-behavior:none}"+
+  "body.ppv-open #stipQuickSwitch,body.ppv-open #stipQuickUniversal,body.ppv-open .stip-quick-switch{display:none!important}"+
   "#profilePhotoViewer{position:fixed;inset:0;z-index:7000;display:none;grid-template-rows:auto minmax(0,1fr) auto;background:rgba(3,10,14,.98);color:#fff;isolation:isolate}"+
   "#profilePhotoViewer.open{display:grid}"+
   "#profilePhotoViewer .ppv-head{min-height:64px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:grid;grid-template-columns:46px 1fr 46px;align-items:center;background:linear-gradient(180deg,rgba(0,0,0,.45),transparent);z-index:2}"+
   "#profilePhotoViewer .ppv-head strong{text-align:center;font:850 1rem/1.1 system-ui,-apple-system,sans-serif;letter-spacing:.01em}"+
   "#profilePhotoViewer .ppv-close{width:42px;height:42px;border:0;border-radius:50%;background:rgba(255,255,255,.1);color:#fff;font:500 2rem/1 system-ui;display:grid;place-items:center;padding:0 0 4px;cursor:pointer}"+
-  "#profilePhotoViewer .ppv-stage{min-height:0;display:grid;place-items:center;padding:8px 0 12px;overflow:hidden}"+
+  "#profilePhotoViewer .ppv-stage{min-height:0;display:grid;place-items:center;padding:8px 0 10px;overflow:hidden}"+
   "#profilePhotoViewer .ppv-stage img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;user-select:none;-webkit-user-drag:none;touch-action:pinch-zoom}"+
-  "#profilePhotoViewer .ppv-actions{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;padding:10px 12px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.72),rgba(0,0,0,.28));z-index:2}"+
-  "#profilePhotoViewer .ppv-actions button{min-height:58px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.09);color:#fff;display:grid;grid-template-columns:auto auto;justify-content:center;align-items:center;gap:8px;padding:8px 10px;font:800 .82rem/1 system-ui,-apple-system,sans-serif;cursor:pointer}"+
+  "#profilePhotoViewer .ppv-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:10px 12px max(18px,calc(12px + env(safe-area-inset-bottom)));background:linear-gradient(0deg,rgba(0,0,0,.78),rgba(0,0,0,.32));z-index:2}"+
+  "#profilePhotoViewer .ppv-actions button{min-height:56px;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.09);color:#fff;display:flex;justify-content:center;align-items:center;gap:8px;padding:9px 10px;font:800 .78rem/1.05 system-ui,-apple-system,sans-serif;cursor:pointer;white-space:nowrap}"+
   "#profilePhotoViewer .ppv-actions button b{font-size:1.2rem;line-height:1}"+
   "#profilePhotoViewer .ppv-actions button.danger{color:#ff9da4;border-color:rgba(255,105,118,.22)}"+
+  "#profilePhotoViewer .ppv-actions button.logout{color:#fff1d2;border-color:rgba(255,214,133,.24)}"+
   "#profilePhotoViewer .ppv-actions button[hidden]{display:none!important}"+
   "#profilePhotoViewer.busy .ppv-stage:after{content:'';position:absolute;width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;animation:ppvspin .75s linear infinite}"+
   "@keyframes ppvspin{to{transform:rotate(360deg)}}"+
   "#profilePhotoToast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(10px);z-index:7200;max-width:86vw;padding:10px 13px;border-radius:12px;background:#153f4e;color:#fff;font-size:.74rem;font-weight:800;opacity:0;pointer-events:none;transition:.18s}"+
   "#profilePhotoToast.show{opacity:1;transform:translateX(-50%) translateY(0)}"+
   "#profilePhotoToast.error{background:#7a2e35}"+
-  "@media(max-width:420px){#profilePhotoViewer .ppv-actions{gap:6px;padding-left:8px;padding-right:8px}#profilePhotoViewer .ppv-actions button{min-height:54px;border-radius:14px;font-size:.76rem;padding:7px 6px;gap:6px}}";
+  "@media(max-width:420px){#profilePhotoViewer .ppv-actions{gap:7px;padding:8px 8px max(20px,calc(14px + env(safe-area-inset-bottom)))}#profilePhotoViewer .ppv-actions button{min-height:52px;border-radius:14px;font-size:.72rem;padding:8px 6px;gap:5px}#profilePhotoViewer .ppv-actions button b{font-size:1rem}}"+
+  "@media(min-width:700px){#profilePhotoViewer .ppv-actions{grid-template-columns:repeat(4,minmax(0,1fr));max-width:820px;width:100%;margin:0 auto;padding-bottom:max(18px,calc(12px + env(safe-area-inset-bottom)))}}";
 document.head.appendChild(st);
 schedule();
 })();
