@@ -844,7 +844,7 @@
     ];
     return `<section class="hc-fixed-shift-legend" aria-label="Repères horaires"><small>REPÈRES HORAIRES</small><div>${shifts
       .map(([code, label, cls]) => `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`)
-      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span><span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true">🚫</i><b>En attente du nouveau planning</b></span></div></section>`;
+      .join("")}<span class="hc-fixed-shift-item"><i class="shift-rh" aria-hidden="true">🏝️</i><b>RH</b><em>•</em><strong>Repos</strong></span><span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true"></i><b>En attente du nouveau planning</b></span></div></section>`;
   }
   function nativeExchanges() {
     const b = state.boot || {},
