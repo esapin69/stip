@@ -330,10 +330,10 @@
     ST: "👶",
   };
   const WORK_SHIFT_ICON = {
-    M: "🌅",
+    M: "🌄",
     J: "☀️",
-    J4: "🌇",
-    S: "🌒",
+    J4: "🕓",
+    S: "🌆",
     N: "⭐",
   };
   function canonicalShift(raw) {
@@ -531,7 +531,7 @@
   }
   function monthShortcut() {
     const mi = weekMonthInfo(selectedWeek());
-    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon" aria-hidden="true">${ICON.personal}</span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button>`;
+    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-icon" aria-hidden="true">${ICON.personal}</span><span class="hc-month-open-copy"><em>PLANNING</em><strong>Mon planning du mois</strong><small>Voir ${esc(mi.targetLabel)} en entier</small></span><b>›</b></button>`;
   }
   function weekWidget() {
     const w = selectedWeek();
