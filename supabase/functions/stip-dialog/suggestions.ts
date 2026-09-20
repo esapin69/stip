@@ -113,6 +113,6 @@ export function adaptSuggestions(r: DialogResponse, raw: string, c: SessionCtx):
   if (!suggestions.length) return r;
   const ctx = { ...(r.context || {}) } as Record<string, unknown>;
   const opts = offeredOptions(suggestions);
-  if (opts.length && opts.length === suggestions.length) ctx.offered_options = opts;
+  ctx.offered_options = opts.length && opts.length === suggestions.length ? opts : [];
   return { ...r, suggestions, context: ctx };
 }
