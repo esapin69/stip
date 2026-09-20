@@ -254,6 +254,8 @@
         cls = [
           iso === todayIso ? "is-today" : "",
           inWeek ? "is-week" : "",
+          iso === weekStart ? "is-week-start" : "",
+          iso === weekEnd ? "is-week-end" : "",
           shift ? "is-worked" : "",
         ]
           .filter(Boolean)
@@ -264,8 +266,8 @@
           month: "long",
         }),
         aria = shift
-          ? `${dayLabel}, ${shift.label}`
-          : dayLabel,
+          ? `${dayLabel}, ${shift.label}, choisir cette semaine`
+          : `${dayLabel}, choisir cette semaine`,
         numberClass = shift
           ? `hc-date-jump-number hc-date-jump-workday shift-${esc(shift.type)}`
           : "hc-date-jump-number";
