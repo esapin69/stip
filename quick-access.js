@@ -17,6 +17,10 @@
       label: "Planning perso",
       open: () => window.STIPHubs?.planning?.("personal"),
     },
+    tomorrow: {
+      label: "Pour demain",
+      open: () => setTimeout(() => window.STIPTomorrowUI?.open?.(), 0),
+    },
     team: {
       label: "Esprit d’équipe",
       open: () => (location.href = "esprit-equipe.html"),
@@ -79,6 +83,7 @@
     const p = window.STIPSession?.permissions || {},
       map = {
         personal: "planning_personal",
+        tomorrow: "tomorrow",
         team: "planning_team",
         compare: "planning_team",
         change: "change_app",
