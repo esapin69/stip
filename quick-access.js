@@ -16,7 +16,7 @@
       open: () => window.STIPHubs?.planning?.("personal"),
     },
     tomorrow: {
-      label: "Pour demain",
+      label: "Actions",
       open: () => setTimeout(() => window.STIPTomorrowUI?.open?.(), 0),
     },
     team: {
@@ -75,7 +75,7 @@
   };
   const APP_STORE_COPY = {
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
-    tomorrow: ["Pour demain", "Préparer et consulter la journée à venir.", "Organisation"],
+    tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
     compare: ["Comparer les plannings", "Comparer rapidement plusieurs plannings.", "Organisation"],
     change: ["Changement", "Gérer les demandes de changement.", "Organisation"],
