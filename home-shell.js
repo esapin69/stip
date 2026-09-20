@@ -485,10 +485,11 @@
     const canonical = canonicalShift(x.code),
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
       weekend = x.dow > 5,
-      day = x.d
-        .toLocaleDateString("fr-FR", { weekday: weekend ? "short" : "long" })
+      dayFull = x.d
+        .toLocaleDateString("fr-FR", { weekday: "long" })
         .replace(".", "")
         .toUpperCase(),
+      day = weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       dayOff = DAY_OFF.has(canonical),
       statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
@@ -513,10 +514,17 @@
       return `<div class="hc-planning-status error"><span>Planning non chargé.</span><button type="button" data-planning-retry>Réessayer</button></div>`;
     return "";
   }
+  function planningMonthTitle() {
+    const mi = weekMonthInfo(selectedWeek());
+    return `<header class="hc-planning-month-title"><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></header>`;
+  }
+  function monthShortcut() {
+    const mi = weekMonthInfo(selectedWeek());
+    return `<button type="button" class="hc-month-open hc-month-open-right" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button>`;
+  }
   function weekWidget() {
-    const w = selectedWeek(),
-      mi = weekMonthInfo(w);
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header><button type="button" class="hc-month-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-open-date"><small>${esc(mi.anchorDow)}</small><strong>${mi.anchorDay}</strong></span><span class="hc-month-open-copy"><strong>Voir le mois complet</strong><small>Planning de ${esc(mi.targetLabel)}</small></span><b>›</b></button>${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
+    const w = selectedWeek();
+    return `<section class="hc-widget hc-widget-planning" data-widget="planning"><header class="hc-widget-head hc-week-only-head"><div class="hc-week-nav"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header>${weekDaysVertical(w)}${planningStatus()}${state.weekOffset !== 0 ? '<button type="button" class="hc-week-today" data-week-today>Revenir à cette semaine</button>' : ""}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -942,7 +950,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right"><div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-split"><div class="hc-planning-left">${weekWidget()}</div><div class="hc-planning-right">${monthShortcut()}<div id="hcTomorrowDock"></div>${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
