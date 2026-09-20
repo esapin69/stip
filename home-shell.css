@@ -2749,3 +2749,262 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.74rem!important;
   }
 }
+
+/* COMPACT WEEK SELECTOR + SELECTED DAY DETAIL — 20260920 */
+.hc-planning-primary-head .hc-home-week-days{
+  gap:3px!important;
+  padding:6px!important;
+  border-radius:22px!important;
+}
+.hc-planning-primary-head .hc-home-week-days>button{
+  position:relative!important;
+  min-height:62px!important;
+  padding:5px 2px 4px!important;
+  display:grid!important;
+  grid-template-rows:auto auto 15px!important;
+  align-items:center!important;
+  justify-items:center!important;
+  gap:1px!important;
+  border-radius:12px!important;
+  overflow:visible!important;
+}
+.hc-planning-primary-head .hc-home-week-days>button small{
+  margin:0!important;
+  font-size:.45rem!important;
+  line-height:1!important;
+  letter-spacing:.025em!important;
+}
+.hc-planning-primary-head .hc-home-week-days>button b{
+  margin:0!important;
+  font-size:.92rem!important;
+  line-height:1!important;
+}
+.hc-home-day-shift{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:22px!important;
+  max-width:94%!important;
+  height:14px!important;
+  padding:0 4px!important;
+  border-radius:999px!important;
+  color:#fff!important;
+  font-size:.46rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:-.01em!important;
+  box-shadow:inset 0 -1px 0 rgba(0,0,0,.13)!important;
+}
+.hc-home-day-shift.code-m{background:#0870d8!important}
+.hc-home-day-shift.code-j{background:#009c50!important}
+.hc-home-day-shift.code-j4{background:#f27613!important}
+.hc-home-day-shift.code-s{background:#d99d00!important;color:#4b3500!important}
+.hc-home-day-shift.code-n{background:#2f4351!important}
+.hc-home-day-shift.code-rh,
+.hc-home-day-shift.code-rtt,
+.hc-home-day-shift.code-rtta,
+.hc-home-day-shift.code-rta,
+.hc-home-day-shift.code-rc,
+.hc-home-day-shift.code-rf{background:#7d8996!important}
+.hc-home-day-shift.code-ca,
+.hc-home-day-shift.code-cp{background:#1698aa!important}
+.hc-home-day-shift.code-fo{background:#7759cf!important}
+.hc-home-day-shift.code-ma,
+.hc-home-day-shift.code-am{background:#c75a6b!important}
+.hc-home-day-shift.code-aa,
+.hc-home-day-shift.code-abs{background:#9a5c61!important}
+.hc-home-day-events{
+  position:absolute!important;
+  top:-8px!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  z-index:2!important;
+  display:flex!important;
+  gap:0!important;
+  pointer-events:none!important;
+}
+.hc-home-day-events i{
+  width:auto!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0 -1px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-style:normal!important;
+  font-size:.72rem!important;
+  line-height:1!important;
+}
+.hc-planning-primary-head .hc-home-week-days>button.selected{
+  z-index:1!important;
+  transform:translateY(-2px)!important;
+  box-shadow:
+    inset 0 -4px 0 var(--stip-accent),
+    0 5px 10px rgba(9,112,137,.12)!important;
+}
+.hc-planning-primary-head .hc-home-week-days>button.selected:active{
+  transform:translateY(-1px) scale(.97)!important;
+}
+.hc-planning-week-row{
+  margin:0!important;
+}
+.hc-planning-week-row .hc-widget-planning.hc-selected-day-widget{
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.hc-selected-day-card{
+  --day-accent:#78909b;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto minmax(88px,auto) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-height:74px!important;
+  padding:10px 12px!important;
+  border:1px solid color-mix(in srgb,var(--day-accent) 28%,rgba(22,91,111,.12))!important;
+  border-left:5px solid var(--day-accent)!important;
+  border-radius:18px!important;
+  background:linear-gradient(100deg,color-mix(in srgb,var(--day-accent) 8%,#fff),#fff 52%)!important;
+  box-shadow:0 8px 18px rgba(20,62,78,.07)!important;
+}
+.hc-selected-day-card.code-m{--day-accent:#0870d8}
+.hc-selected-day-card.code-j{--day-accent:#009c50}
+.hc-selected-day-card.code-j4{--day-accent:#f27613}
+.hc-selected-day-card.code-s{--day-accent:#d99d00}
+.hc-selected-day-card.code-n{--day-accent:#2f4351}
+.hc-selected-day-card.code-rh,
+.hc-selected-day-card.code-rtt,
+.hc-selected-day-card.code-rtta,
+.hc-selected-day-card.code-rta,
+.hc-selected-day-card.code-rc,
+.hc-selected-day-card.code-rf{--day-accent:#7d8996}
+.hc-selected-day-card.code-ca,
+.hc-selected-day-card.code-cp{--day-accent:#1698aa}
+.hc-selected-day-date{
+  min-width:0!important;
+}
+.hc-selected-day-date small{
+  display:block!important;
+  margin-bottom:3px!important;
+  color:#81939b!important;
+  font-size:.55rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.075em!important;
+}
+.hc-selected-day-date strong{
+  display:block!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:#173f52!important;
+  font-size:.98rem!important;
+  line-height:1.05!important;
+  font-weight:950!important;
+  text-transform:capitalize!important;
+}
+.hc-selected-day-shift{
+  display:grid!important;
+  place-items:center!important;
+  min-width:42px!important;
+  height:42px!important;
+  padding:0 7px!important;
+  border-radius:13px!important;
+  background:var(--day-accent)!important;
+  color:#fff!important;
+  font-size:.9rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 5px 11px color-mix(in srgb,var(--day-accent) 24%,transparent)!important;
+}
+.hc-selected-day-meta{
+  min-width:0!important;
+}
+.hc-selected-day-meta strong,
+.hc-selected-day-meta span{
+  display:block!important;
+}
+.hc-selected-day-meta strong{
+  color:#234d5d!important;
+  font-size:.82rem!important;
+  line-height:1.05!important;
+  font-weight:900!important;
+}
+.hc-selected-day-meta span{
+  margin-top:4px!important;
+  color:#687e87!important;
+  font-size:.72rem!important;
+  line-height:1!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+}
+.hc-selected-day-events{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:2px!important;
+}
+.hc-selected-day-events i{
+  width:auto!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  font-style:normal!important;
+  font-size:1.25rem!important;
+  line-height:1!important;
+}
+.hc-planning-agenda-row{
+  margin-top:0!important;
+}
+@media(max-width:430px){
+  .hc-planning-primary-head .hc-home-week-days{
+    gap:2px!important;
+    padding:5px!important;
+  }
+  .hc-planning-primary-head .hc-home-week-days>button{
+    min-height:58px!important;
+    padding:4px 1px 3px!important;
+    grid-template-rows:auto auto 14px!important;
+  }
+  .hc-planning-primary-head .hc-home-week-days>button small{
+    font-size:.42rem!important;
+  }
+  .hc-planning-primary-head .hc-home-week-days>button b{
+    font-size:.88rem!important;
+  }
+  .hc-home-day-shift{
+    min-width:20px!important;
+    height:13px!important;
+    padding-inline:3px!important;
+    font-size:.42rem!important;
+  }
+  .hc-home-day-events{
+    top:-7px!important;
+  }
+  .hc-home-day-events i{
+    font-size:.66rem!important;
+  }
+  .hc-selected-day-card{
+    grid-template-columns:minmax(0,1fr) auto minmax(70px,auto) auto!important;
+    gap:7px!important;
+    min-height:68px!important;
+    padding:9px 9px!important;
+    border-radius:16px!important;
+  }
+  .hc-selected-day-date small{font-size:.49rem!important}
+  .hc-selected-day-date strong{font-size:.88rem!important}
+  .hc-selected-day-shift{
+    min-width:38px!important;
+    height:38px!important;
+    padding-inline:6px!important;
+    border-radius:12px!important;
+    font-size:.82rem!important;
+  }
+  .hc-selected-day-meta strong{font-size:.75rem!important}
+  .hc-selected-day-meta span{font-size:.66rem!important}
+  .hc-selected-day-events i{font-size:1.05rem!important}
+}
