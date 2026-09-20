@@ -330,11 +330,11 @@
     ST: "👶",
   };
   const WORK_SHIFT_ICON = {
-    M: "🌄",
-    J: "☀️",
-    J4: "🕓",
-    S: "🌆",
-    N: "⭐",
+    M: "🔵",
+    J: "🟢",
+    J4: "🟣",
+    S: "🟠",
+    N: "⚫",
   };
   function canonicalShift(raw) {
     const src = String(raw || "")
