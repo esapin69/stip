@@ -177,8 +177,12 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
       const detail = [...counts.entries()].map(([code, n]) => `${code}: ${n}`).join(" · ") || "Aucun autre shift disponible";
       return { type: "metric", title: shortDay(r.date), subtitle: `Ton shift : ${current}`, detail };
     });
-    const first = workRows[0];
-    const suggestions = Object.keys(defs).filter((x) => x !== canon(first.code)).slice(0, 3).map((x) => `Échanger en ${x} le ${dayLabel(first.date)}`);
+    const first = workRows[0], currentFirst = canon(first.code);
+    const availableCodes = [...new Set(
+      eligibleRows.filter((x: any) => x.date === first.date).map((x: any) => canon(x.code))
+        .filter((code: string) => !!defs[code] && code !== currentFirst),
+    )];
+    const suggestions = availableCodes.slice(0, 3).map((x) => `Échanger en ${x} le ${dayLabel(first.date)}`);
     return {
       kind: "exchange", title: ds.label || "Échange de planning",
       text: workRows.length === 1 ? "Je connais ton shift ce jour-là. Choisis le shift souhaité et je te donnerai uniquement les collègues compatibles." : "Je te montre tes jours de travail sur la période. Indique le jour et le shift souhaité pour obtenir les collègues compatibles.",
