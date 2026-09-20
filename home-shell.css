@@ -2209,3 +2209,70 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+
+/* HOME ACCESS LAUNCHERS — image-only, no card/relief 20260920 */
+.hc-home-filters{
+  width:min(100%,520px)!important;
+  margin:16px auto 26px!important;
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:clamp(14px,5vw,30px)!important;
+  align-items:start!important;
+}
+.hc-home-filters>button{
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  outline-offset:5px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:7px!important;
+}
+.hc-home-filter-art{
+  width:clamp(72px,23vw,104px)!important;
+  height:clamp(72px,23vw,104px)!important;
+  flex:0 0 auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:visible!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+}
+.hc-home-filter-art img{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:contain!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:none!important;
+}
+.hc-home-filters>button>strong{
+  color:var(--stip-ink)!important;
+  font-size:clamp(.72rem,3vw,.9rem)!important;
+  line-height:1.05!important;
+  font-weight:950!important;
+  text-align:center!important;
+}
+.hc-home-filters>button.active .hc-home-filter-art,
+.hc-home-filters>button:active .hc-home-filter-art{
+  box-shadow:none!important;
+  transform:none!important;
+}
+@media(max-width:380px){
+  .hc-home-filters{gap:10px!important}
+  .hc-home-filter-art{width:74px!important;height:74px!important}
+}
+@media(min-width:700px){
+  .hc-home-filters{width:min(100%,620px)!important;gap:44px!important}
+  .hc-home-filter-art{width:108px!important;height:108px!important}
+}
