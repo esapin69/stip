@@ -816,7 +816,7 @@ body.team-page {
 @media(max-width:430px){
   .team-heading{padding:15px 15px}
   .team-tabs{margin-top:9px!important}
-  .team-tabs button{min-height:48px!important}
+  .team-tabs button{min-height:50px!important}
   .team-time-month{min-height:80px!important;padding:12px 14px!important}
   .team-time-month .stip-time-month-title{font-size:clamp(1.75rem,9.5vw,2.45rem)!important}
   .team-day>header h2{font-size:1.12rem!important}
