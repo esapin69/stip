@@ -134,6 +134,10 @@ check(!read('cadre.html').includes('assistant-presence.js'),'Cadre charge encore
 check(!read('responsable.html').includes('assistant-presence.js'),'Responsable charge encore l’ancien bandeau Assistant.');
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
+const profileHeaderSource=read('home-shell.js');
+check(profileHeaderSource.includes('const markup = \`${profile()}\${homeModeNav()}'),'La carte identité n’est plus placée au-dessus des accès rapides.');
+check(!/notificationsPane\(\)[\s\S]{0,900}\$\{profile\(\)\}/.test(profileHeaderSource),'La carte identité est dupliquée dans Notifications.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
