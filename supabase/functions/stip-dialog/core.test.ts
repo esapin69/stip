@@ -23,6 +23,7 @@ eq(parseDateScope("Et vendredi ?", base, ctx), { start: "2026-09-25", end: "2026
 eq(classifyIntent("Y a-t-il un système de chat ici ?"), "messaging_help", "chat intent");
 eq(classifyIntent("Je peux échanger avec qui la dernière semaine de septembre ?"), "exchange", "exchange intent");
 eq(classifyIntent("Qui est en J4 demain ?"), "shift_roster", "shift roster");
+eq(classifyIntent("Qui est sur le terrain demain ?"), "on_duty", "on duty roster");
 eq(classifyIntent("Combien on est en J4 demain ?"), "organization", "organization with shift routes later to roster");
 eq(classifyIntent("cette phrase ne veut rien dire"), "help", "unknown stays help");
 eq(selectionCount("Les 2"), 2, "two selection");
