@@ -857,7 +857,6 @@
         ["notifications", "Notifications", ICON.homeBell],
         ["planning", "Accueil", ICON.homeHome],
         ["apps", "Applications", ICON.homeApps],
-        ["favorites", "Raccourcis", ICON.homeRocket],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
@@ -940,8 +939,6 @@
   }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
-    if (state.homeMode === "favorites")
-      return `<section class="hc-home-pane hc-home-pane-favorites">${favoritesLauncher()}</section>`;
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps">${favoritesLauncher()}<div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
