@@ -154,7 +154,8 @@ check(homeCss.includes('CALENDAR-DRIVEN WEEK PLANNING')&&homeCss.includes('.hc-c
 check(home.includes('is-week-start')&&home.includes('is-week-end')&&home.includes('choisir cette semaine'),'Le calendrier doit exprimer une sélection de semaine, pas seulement de jour.');
 check(homeCss.includes('WEEK PICKER AFFORDANCE + EVENT BREATHING ROOM')&&homeCss.includes('.hc-date-jump-grid>button.is-week-start')&&homeCss.includes('box-shadow:')&&homeCss.includes('inset 0 -3px 0 rgba(12,135,158,.26)'),'Le regroupement visuel de la semaine sélectionnée a disparu.');
 check(homeCss.includes('height:37px!important')&&homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-number'),'Le calendrier fusionné doit rester légèrement plus compact que l’ancienne version.');
-check(homeCss.includes('.hc-days-landscape.has-week-events')&&homeCss.includes('padding-top:72px!important')&&homeCss.includes('.hc-day-event-markers i')&&homeCss.includes('font-size:35px!important'),'Les repères événement au-dessus des shifts ont perdu leur espace ou leur importance.');
+check(homeCss.includes('.hc-days-landscape.has-week-events')&&homeCss.includes('padding-top:78px!important')&&homeCss.includes('.hc-day-event-markers i')&&homeCss.includes('font-size:37px!important'),'Les repères événement au-dessus des shifts ont perdu leur espace ou leur importance.');
+check(homeCss.includes('PREMIUM CALENDAR → WEEK TRANSITION')&&homeCss.includes('content:none!important')&&homeCss.includes('border-radius:0 0 22px 22px!important'),'La transition premium entre calendrier et semaine a régressé.');
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
