@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-interactive1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-dayfocus1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -39,13 +39,6 @@
           leurs rôles.
         </p>
       </section>
-      <nav class="team-tabs" aria-label="Volets Esprit d’équipe">
-        <button type="button" class="active" data-team-tab="team">
-          Équipe
-        </button>
-        <button type="button" data-team-tab="activity">Activité</button>
-        <button type="button" data-team-tab="assistant">Assistant</button>
-      </nav>
       <section class="team-time-stack stip-time-stack" aria-label="Navigation temporelle">
         <section class="stip-time-month team-time-month" aria-label="Mois affiché">
           <div class="stip-time-month-head">
@@ -67,6 +60,11 @@
           class="team-days stip-time-days"
           aria-label="Accéder directement à une journée"
         ></nav>
+        <nav class="team-tabs" aria-label="Volets Esprit d’équipe">
+          <button type="button" class="active" data-team-tab="team">Équipe</button>
+          <button type="button" data-team-tab="activity">Activité</button>
+          <button type="button" data-team-tab="assistant">Assistant</button>
+        </nav>
       </section>
       <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
       <section
@@ -81,6 +79,6 @@
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
-    <script src="esprit-equipe.js?v=20260920-interactive1"></script>
+    <script src="esprit-equipe.js?v=20260920-dayfocus1"></script>
   </body>
 </html>
