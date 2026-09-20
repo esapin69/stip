@@ -203,7 +203,7 @@
   };
   const SPECS = [
     ["personal", "Planning perso", "personal"],
-    ["tomorrow", "Pour demain", "tomorrow"],
+    ["tomorrow", "Actions", "tomorrow"],
     ["team", "Esprit d’équipe", "team"],
     ["compare", "Comparer les plannings", "compare"],
     ["change", "Changement", "change"],
