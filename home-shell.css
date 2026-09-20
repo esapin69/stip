@@ -1246,7 +1246,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-profile-bell{
  position:absolute!important;
  top:50%!important;
- right:14px!important;
+ right:22px!important;
  transform:translateY(-50%)!important;
  z-index:3!important;
  width:auto!important;
