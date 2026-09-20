@@ -1820,3 +1820,59 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  position:relative!important;
  z-index:1!important;
 }
+
+
+/* airy-planning-month-action-v30-20260920 */
+.hc-planning-month-title{
+ padding-top:22px!important;
+ margin-top:12px!important;
+ gap:18px!important;
+}
+.hc-month-title-open{
+ appearance:none!important;
+ border:0!important;
+ background:transparent!important;
+ color:inherit!important;
+ margin:0 auto!important;
+ padding:8px 18px 12px!important;
+ display:flex!important;
+ flex-direction:column!important;
+ align-items:center!important;
+ justify-content:center!important;
+ border-radius:20px!important;
+ cursor:pointer!important;
+}
+.hc-month-title-open small{
+ display:block!important;
+ margin-bottom:5px!important;
+}
+.hc-month-title-name{
+ display:block!important;
+ font-size:2.35rem!important;
+ line-height:1!important;
+ font-weight:900!important;
+ letter-spacing:-.035em!important;
+}
+.hc-month-title-hint{
+ display:block!important;
+ margin-top:6px!important;
+ font-size:.68rem!important;
+ line-height:1!important;
+ font-weight:800!important;
+ letter-spacing:.045em!important;
+ text-transform:uppercase!important;
+ opacity:.52!important;
+}
+.hc-month-title-open:active{background:rgba(22,91,111,.055)!important}
+.hc-week-nav-global{margin-top:4px!important}
+.hc-planning-group.hc-planning-landscape{
+ margin-top:12px!important;
+ padding-top:22px!important;
+}
+.hc-days-landscape .hc-day-event-markers{
+ top:-14px!important;
+ transform:translate(-50%,-50%)!important;
+}
+.hc-planning-agenda-row{margin-top:18px!important}
+.hc-week-event-key-list{gap:12px 18px!important}
+.hc-week-event-key-item{padding:6px 3px!important}
