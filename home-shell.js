@@ -699,15 +699,32 @@
     return `<nav class="hc-home-week-days stip-time-days" aria-label="Jours de la semaine">${w
       .map((x) => {
         const label = x.d
-          .toLocaleDateString("fr-FR", { weekday: "short" })
-          .replace(".", "")
-          .toUpperCase();
+            .toLocaleDateString("fr-FR", { weekday: "short" })
+            .replace(".", "")
+            .toUpperCase(),
+          canonical = canonicalShift(x.code),
+          codeKey =
+            canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+          shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical || "",
+          events = weekEventsForDay(x).slice(0, 2),
+          eventMarks = events.length
+            ? `<span class="hc-home-day-events" aria-hidden="true">${events
+                .map((event) => `<i>${event.icon || "•"}</i>`)
+                .join("")}</span>`
+            : "",
+          shiftBadge =
+            canonical && canonical !== "—"
+              ? `<span class="hc-home-day-shift code-${esc(codeKey)}" title="${esc(shiftLabel)}">${esc(canonical)}</span>`
+              : "";
         return `<button type="button" data-home-day="${esc(x.iso)}" class="${[
           x.iso === today ? "today" : "",
           x.iso === selected ? "selected" : "",
+          `code-${codeKey}`,
         ]
           .filter(Boolean)
-          .join(" ")}" aria-pressed="${x.iso === selected}"><small>${esc(label)}</small><b>${x.d.getDate()}</b></button>`;
+          .join(" ")}" aria-pressed="${x.iso === selected}" aria-label="${esc(
+            `${label} ${x.d.getDate()}${shiftLabel ? `, ${shiftLabel}` : ""}`,
+          )}">${eventMarks}<small>${esc(label)}</small><b>${x.d.getDate()}</b>${shiftBadge}</button>`;
       })
       .join("")}</nav>`;
   }
@@ -726,8 +743,39 @@
     return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
   }
   function weekWidget() {
-    const w = selectedWeek();
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning">${weekDaysLandscape(w)}${planningStatus()}</section>`;
+    const w = navigationWeek(),
+      today = parisIso(),
+      focus =
+        w.find((x) => x.iso === state.dayFocus) ||
+        w.find((x) => x.iso === today) ||
+        w[0];
+    if (!focus)
+      return `<section class="hc-widget hc-widget-planning" data-widget="planning">${planningStatus()}</section>`;
+    const canonical = canonicalShift(focus.code),
+      codeKey =
+        canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+      shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical || "Planning",
+      time = shiftTime(canonical, focus.row),
+      dateLabel = cap(
+        focus.d
+          .toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          })
+          .replace(".", ""),
+      ),
+      events = weekEventsForDay(focus),
+      eventMarks = events.length
+        ? `<span class="hc-selected-day-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
+            .slice(0, 3)
+            .map(
+              (event) =>
+                `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`,
+            )
+            .join("")}</span>`
+        : "";
+    return `<section class="hc-widget hc-widget-planning hc-selected-day-widget" data-widget="planning"><article class="hc-selected-day-card code-${esc(codeKey)}"><div class="hc-selected-day-date"><small>JOUR SÉLECTIONNÉ</small><strong>${esc(dateLabel)}</strong></div><span class="hc-selected-day-shift">${esc(canonical || "—")}</span><div class="hc-selected-day-meta"><strong>${esc(shiftLabel)}</strong>${time ? `<span>${esc(time)}</span>` : ""}</div>${eventMarks}</article>${planningStatus()}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -942,29 +990,34 @@
       );
   }
   function futureWidget() {
-    const w = selectedWeek(),
-      weekStart = w[0]?.iso || "",
-      weekEnd = w[w.length - 1]?.iso || "",
-      items = futureItems().filter((x) => {
+    const w = navigationWeek(),
+      today = parisIso(),
+      focus =
+        w.find((x) => x.iso === state.dayFocus) ||
+        w.find((x) => x.iso === today) ||
+        w[0];
+    if (!focus) return "";
+    const items = futureItems().filter((x) => {
         const start = String(x.date || "").slice(0, 10),
           end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
-        return start <= weekEnd && end >= weekStart;
+        return start <= focus.iso && end >= focus.iso;
       }),
       rows = [];
     items.slice(0, 3).forEach((x) => {
-      const start = String(x.date || "").slice(0, 10),
-        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10),
-        time = String(x.time || "").trim(),
+      const time = String(x.time || "").trim(),
         place = String(x.place || "").trim();
-      w.forEach((day) => {
-        if (day.iso < start || day.iso > end) return;
-        rows.push({ event: x, day, time, place });
-      });
+      rows.push({ event: x, day: focus, time, place });
     });
     if (!rows.length) return "";
     return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${rows
-      .map(({ event:x, day, time, place }) => {
-        const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", "");
+      .map(({ event: x, day, time, place }) => {
+        const dayLabel = day.d
+          .toLocaleDateString("fr-FR", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          })
+          .replace(".", "");
         return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span></button>`;
       })
       .join("")}</div></section>`;
