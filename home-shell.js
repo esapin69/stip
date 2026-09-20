@@ -972,7 +972,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-month-row">${monthShortcut()}</div><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div class="hc-planning-month-row">${monthShortcut()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
