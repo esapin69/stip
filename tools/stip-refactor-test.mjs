@@ -79,15 +79,15 @@ const patterns=read('stip-patterns.css');
 const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
-check(home.includes('home-bell.webp')&&home.includes('homeBell')&&home.includes('["notifications", "Notifications"'),'La cloche de communication n’utilise plus son visuel validé.');
-check(home.includes('home-home.webp')&&home.includes('homeHome')&&home.includes('["planning", "Mon profil"'),'Le bouton central Mon profil n’utilise plus son visuel validé.');
+check(home.includes('class="hc-profile-bell"')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée au profil.');
+check(home.includes('["apps", "Applications", ICON.homeApps, "mode"]')&&home.includes('["planning", "Mon profil", ICON.homeHome, "mode"]')&&home.includes('["tomorrow", "Actions", ICON.tomorrow, "app"]'),'La navigation principale Applications / Mon profil / Actions n’est plus conforme.');
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
 check(!quick.includes('data-qs="public"')&&!quickUniversal.includes('data-u="public"'),'Le raccourci bas gauche supprimé est revenu.');
 check(!quick.includes('data-qs="profile"')&&!quickUniversal.includes('data-u="profile"'),'La maison basse supprimée est revenue.');
 check(!existsSync(join(root,'images/icone_app/quick-card.svg'))&&!existsSync(join(root,'images/icone_app/quick-home.svg'))&&!existsSync(join(root,'images/icone_app/home-planning.webp')),'Un ancien visuel de navigation supprimé existe encore.');
-check(existsSync(join(root,'images/icone_app/home-bell.webp'))&&existsSync(join(root,'images/icone_app/home-home.webp')),'Les visuels Cloche/Accueil validés sont absents.');
+check(existsSync(join(root,'images/icone_app/home-home.webp'))&&existsSync(join(root,'images/icone_app/home-apps.webp')),'Les visuels Mon profil/Applications validés sont absents.');
 check(!quick.includes('Suggestions selon votre usage')&&!quickUniversal.includes('Suggestions selon votre usage'),'Les suggestions automatiques de favoris sont revenues.');
 check(quick.includes('Parcourir les applications')&&quick.includes('+ Ajouter')&&quick.includes('Construisez votre STIP'),'Les états du panneau Applications ne suivent plus les libellés validés.');
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
