@@ -125,7 +125,7 @@ export async function answer(c: SessionCtx, body: any) {
         : "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
       cards: [], actions: [{ type: "open", label: "Ouvrir mon planning", url: "index.html?quick=personal" }],
       context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
-      suggestions: ["Mon planning sur cette période ?"],
+      suggestions: parsedScope ? ["Mon planning sur cette période ?"] : ["Mon planning cette semaine ?", "Mon planning semaine prochaine ?"],
     };
   }
     if (intent === "messaging_help") {
