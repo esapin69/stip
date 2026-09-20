@@ -9,7 +9,8 @@ const enc=new TextEncoder();
 const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,"0")).join("");
 async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
 function nick(a:any,p:any){return String(p?.nickname||a?.prenom||a?.nom||"Agent").trim()}
-function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}\nfunction teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
+function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}
+function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
 async function ctx(req:Request){
   const t=req.headers.get("x-stip-session")||"";if(!t)throw Error("Session STIP requise.");
   const{data:s,error:se}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at").eq("token_hash",await sha(t)).maybeSingle();
@@ -138,7 +139,8 @@ Deno.serve(async req=>{
   try{
     const c=await ctx(req),b=await req.json().catch(()=>({})),a=String(b.action||"home");
     if(a==="home")return J(await home(c));
-    if(a==="agents")return J({items:await agents(c,String(b.q||""))});\n    if(a==="on_duty")return J({items:await onDuty(c)});
+    if(a==="agents")return J({items:await agents(c,String(b.q||""))});
+    if(a==="on_duty")return J({items:await onDuty(c)});
     if(a==="direct")return J({conversation:await direct(c,String(b.agent_id||""))});
     if(a==="group")return J({conversation:await group(c,b)});
     if(a==="thread")return J(await thread(c,String(b.conversation_id||"")));
