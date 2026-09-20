@@ -9,6 +9,7 @@ export type DialogContext = {
   last_choice_ids?: string[];
   last_choice_kind?: "agent" | "option";
   offered_options?: string[];
+  suggestion_history?: string[];
   place_id?: string;
 };
 export type Intent =
