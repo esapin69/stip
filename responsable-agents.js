@@ -80,10 +80,18 @@
   }
 
   function avatar(agent, big = false) {
-    const url = String(agent.avatar_url || agent.profile_photo_url || "");
+    const url = String(agent.profile_photo_url || window.STIPBootCache?.media?.avatars?.[agent.source_key] || agent.avatar_signed_url || agent.avatar_url || "");
     const value = esc(initials(agent));
     return `<span class="ra-avatar${big ? " big" : ""}" data-initials="${value}">${/^https?:/i.test(url) ? `<img src="${esc(url)}" alt="" loading="lazy">` : value}</span>`;
   }
+
+  document.addEventListener("error", (event) => {
+    const img = event.target;
+    if (!(img instanceof HTMLImageElement)) return;
+    const host = img.closest?.(".ra-avatar");
+    if (!host) return;
+    host.textContent = host.dataset.initials || "ST";
+  }, true);
 
   function renderSelector() {
     const body = $("#respPanelBody");
