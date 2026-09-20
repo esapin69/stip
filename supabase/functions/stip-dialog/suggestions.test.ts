@@ -34,4 +34,11 @@ const exchange: DialogResponse = {
   context: { last_choice_ids: ["a", "b"], last_choice_kind: "agent" },
 };
 eq(adaptSuggestions(exchange, "Je peux échanger avec qui ?", c).suggestions?.[0], "Les 2", "two exchange candidates expose safe selection");
+
+const noLoop: DialogResponse = {
+  kind: "team", title: "J4", text: "3 agents", cards: [],
+  context: { date_scope: { start: "2026-09-21", end: "2026-09-21" }, suggestion_history: ["qui est sur le terrain ce jour la ?"] },
+};
+const noLoopSuggestions = adaptSuggestions(noLoop, "Qui est sur le terrain ce jour-là ?", c).suggestions || [];
+if (noLoopSuggestions.some((x) => x.toLowerCase().includes("sur le terrain"))) throw new Error("anti loop removes already-used rebound");
 console.log("suggestion tests: ok");
