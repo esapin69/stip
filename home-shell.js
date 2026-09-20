@@ -1220,7 +1220,7 @@
   function profile() {
     const a = state.boot?.agent || state.session?.agent || {},
       media = state.boot?.media || {},
-      avatar = media.avatars?.[a.source_key] || a.avatar_url || "",
+      avatar = a.profile_photo_url || media.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "",
       ghe = String(a.ghe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
@@ -1233,7 +1233,7 @@
         : "";
     return `<section class="hc-profile hc-profile-full hc-id-card">
       <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
-      <div class="hc-avatar">${avatar ? `<img src="${esc(avatar)}" alt="">` : `<span>${esc(ini)}</span>`}</div>
+      <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
       <div class="hc-profile-copy">
         <strong class="hc-profile-name">${esc(agentName(a))}</strong>
         ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
@@ -1963,10 +1963,10 @@
   };
   window.STIPAgentCard = (agent, media, label = "AGENT") => {
     const a = agent || {},
-      av = media?.avatars?.[a.source_key] || a.avatar_url || "";
-    return `<section class="hc-profile"><div class="hc-avatar">${av ? `<img src="${esc(av)}" alt="">` : ""}</div><div class="hc-profile-copy"><small>${esc(label)}</small><strong>${esc(agentName(a))}</strong></div></section>`;
+      av = a.profile_photo_url || media?.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "";
+    const ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "ST";\n    return `<section class="hc-profile"><div class="hc-avatar" data-avatar-fallback="${esc(ini)}">${av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>${esc(label)}</small><strong>${esc(agentName(a))}</strong></div></section>`;
   };
-  window.addEventListener("stip:session-ready", ready);
+  document.addEventListener("error", (event) => { const img = event.target; if (!(img instanceof HTMLImageElement)) return; const host = img.closest?.(".hc-avatar"); if (!host) return; host.textContent = host.dataset.avatarFallback || "ST"; }, true);\n  window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
