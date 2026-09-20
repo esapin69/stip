@@ -1073,8 +1073,11 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
+    const weeklyDetails = futureWidget(),
+      dialogAccess = has("dialog")
+        ? '<div class="hc-fixed-legend-divider" aria-hidden="true"></div><button class="ch-ask-entry" type="button" data-dialog-home><span>⌕</span><div><strong>Demander à STIP</strong><small>Planning, collègue, contact, lieu, effectif…</small></div><b>›</b></button>'
+        : "";
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${dialogAccess}</section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1105,6 +1108,9 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
+    root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
+      window.STIPCommunication?.openDialog?.(),
+    );
     root
       .querySelector("[data-open-month]")
       ?.addEventListener("click", (e) =>
