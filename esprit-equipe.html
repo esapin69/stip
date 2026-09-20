@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-final1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260920-time3calendar1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -49,12 +49,13 @@
         </section>
         <section class="team-week-nav stip-time-nav stip-time-week" aria-label="Changer de semaine">
           <button id="teamPrev" type="button" aria-label="Semaine précédente">‹</button>
-          <button id="teamToday" type="button">
+          <button id="teamToday" type="button" aria-controls="teamDateJumpPanel" aria-expanded="false" aria-label="Ouvrir le calendrier">
             <strong id="teamDateLabel">Cette semaine</strong>
             <small id="teamWeekLabel">Semaine en cours</small>
           </button>
           <button id="teamNext" type="button" aria-label="Semaine suivante">›</button>
         </section>
+        <div id="teamDateJumpPanel" class="team-date-jump-panel" hidden></div>
         <nav
           id="teamDays"
           class="team-days stip-time-days"
@@ -79,6 +80,6 @@
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
-    <script src="esprit-equipe.js?v=20260920-final1"></script>
+    <script src="esprit-equipe.js?v=20260920-time3calendar1"></script>
   </body>
 </html>

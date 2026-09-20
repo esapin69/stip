@@ -22,6 +22,7 @@
     actionFilter: "all",
     weekOffset: 0,
     weekFull: false,
+    dayFocus: parisIso(),
     homeMode: "planning",
     dateJumpOpen: false,
     dateJumpMonth: "",
@@ -201,6 +202,7 @@
       targetMonday = mondayOf(target);
     state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000);
     state.weekFull = iso !== parisIso();
+    state.dayFocus = iso;
     state.renderSig = "";
     render();
   }
@@ -248,7 +250,7 @@
       last = new Date(y, m + 1, 0, 12),
       leading = (first.getDay() + 6) % 7,
       todayIso = parisIso(),
-      week = selectedWeek(),
+      week = navigationWeek(),
       weekStart = week[0]?.iso || "",
       weekEnd = week.at(-1)?.iso || "",
       cells = [];
@@ -554,6 +556,13 @@
   function agendaFromToday(days) {
     return agendaRange(dateObj(parisIso()), days);
   }
+  function navigationWeek() {
+    const today = dateObj(parisIso()),
+      dow = today.getDay() || 7,
+      monday = new Date(today);
+    monday.setDate(today.getDate() - (dow - 1) + state.weekOffset * 7);
+    return agendaRange(monday, 7);
+  }
   function selectedWeek() {
     const today = dateObj(parisIso()),
       dow = today.getDay() || 7,
@@ -589,6 +598,13 @@
         state.weekFull = true;
       }
     }
+    const navWeek = navigationWeek(),
+      todayIso = parisIso();
+    state.dayFocus = navWeek.some((x) => x.iso === todayIso)
+      ? todayIso
+      : navWeek[0]?.iso || todayIso;
+    state.dateJumpOpen = false;
+    state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
     state.renderSig = "";
     render();
   }
@@ -678,12 +694,34 @@
       return `<div class="hc-planning-status error"><span>Planning non chargé.</span><button type="button" data-planning-retry>Réessayer</button></div>`;
     return "";
   }
+  function homeDayStrip(w = navigationWeek()) {
+    const today = parisIso(),
+      selected = w.some((x) => x.iso === state.dayFocus)
+        ? state.dayFocus
+        : w.some((x) => x.iso === today)
+          ? today
+          : w[0]?.iso || "";
+    return `<nav class="hc-home-week-days stip-time-days" aria-label="Jours de la semaine">${w
+      .map((x) => {
+        const label = x.d
+          .toLocaleDateString("fr-FR", { weekday: "short" })
+          .replace(".", "")
+          .toUpperCase();
+        return `<button type="button" data-home-day="${esc(x.iso)}" class="${[
+          x.iso === today ? "today" : "",
+          x.iso === selected ? "selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}" aria-pressed="${x.iso === selected}"><small>${esc(label)}</small><b>${x.d.getDate()}</b></button>`;
+      })
+      .join("")}</nav>`;
+  }
   function planningMonthTitle() {
-    const w = selectedWeek(),
+    const w = navigationWeek(),
       mi = weekMonthInfo(w),
       calendarKey = monthKeyOf(w[0]?.d || dateObj(parisIso())),
       jumpMonth = state.dateJumpMonth || calendarKey;
-    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-card" data-open-month="${esc(mi.targetKey)}" aria-label="Ouvrir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-title-top"><small>PLANNING · ${esc(mi.yearLabel)}</small><em>OUVRIR <b aria-hidden="true">›</b></em></span><strong class="hc-month-title-name">${esc(mi.heading)}</strong></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-controls="hcDateJumpPanel" aria-expanded="${state.dateJumpOpen ? "true" : "false"}" aria-label="${state.dateJumpOpen ? "Fermer l’aperçu du planning" : "Ouvrir l’aperçu du planning"}"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div id="hcDateJumpPanel" class="hc-date-jump-panel" data-date-jump-panel data-calendar-month="${esc(jumpMonth)}" ${state.dateJumpOpen ? "" : "hidden"}></div></header>`;
+    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-card" data-open-month="${esc(mi.targetKey)}" aria-label="Ouvrir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-title-top"><small>PLANNING · ${esc(mi.yearLabel)}</small><em>OUVRIR <b aria-hidden="true">›</b></em></span><strong class="hc-month-title-name">${esc(mi.heading)}</strong></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-controls="hcDateJumpPanel" aria-expanded="${state.dateJumpOpen ? "true" : "false"}" aria-label="${state.dateJumpOpen ? "Fermer l’aperçu du planning" : "Ouvrir l’aperçu du planning"}"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${homeDayStrip(w)}<div id="hcDateJumpPanel" class="hc-date-jump-panel" data-date-jump-panel data-calendar-month="${esc(jumpMonth)}" ${state.dateJumpOpen ? "" : "hidden"}></div></header>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -1264,6 +1302,14 @@
     root
       .querySelectorAll("[data-week-step]")
       .forEach((b) => (b.onclick = () => moveWeek(b.dataset.weekStep)));
+    root
+      .querySelectorAll("[data-home-day]")
+      .forEach((b) =>
+        (b.onclick = () => {
+          state.dateJumpOpen = false;
+          jumpToDate(b.dataset.homeDay);
+        }),
+      );
     root
       .querySelector("[data-planning-retry]")
       ?.addEventListener("click", () => {

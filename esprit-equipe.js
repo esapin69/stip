@@ -49,6 +49,8 @@
     request: 0,
     rendered: false,
     openShift: "",
+    dateJumpOpen: false,
+    dateJumpMonth: "",
   };
 
   function token() {
@@ -171,6 +173,95 @@
     });
     return `${left} – ${right}`;
   }
+  function monthKey(value) {
+    const date = dateObj(value);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function shiftMonthKey(key, step) {
+    const [year, month] = String(key || "").split("-").map(Number);
+    const date = new Date(
+      year || dateObj(state.weekStart).getFullYear(),
+      (month || dateObj(state.weekStart).getMonth() + 1) - 1 + Number(step || 0),
+      1,
+      12,
+    );
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function renderDateJumpCalendar(key = "") {
+    const panel = $("#teamDateJumpPanel");
+    if (!panel) return;
+    const basis = /^\d{4}-\d{2}$/.test(key)
+        ? dateObj(`${key}-01`)
+        : dateObj(state.weekStart),
+      year = basis.getFullYear(),
+      month = basis.getMonth(),
+      first = new Date(year, month, 1, 12),
+      last = new Date(year, month + 1, 0, 12),
+      leading = (first.getDay() + 6) % 7,
+      today = todayIso(),
+      weekEnd = addDays(state.weekStart, 6),
+      cells = [];
+    for (let i = 0; i < leading; i++)
+      cells.push('<span class="team-date-jump-empty" aria-hidden="true"></span>');
+    for (let day = 1; day <= last.getDate(); day++) {
+      const date = new Date(year, month, day, 12),
+        value = iso(date),
+        cls = [
+          value === today ? "is-today" : "",
+          value >= state.weekStart && value <= weekEnd ? "is-week" : "",
+          value === state.dayFocus ? "is-selected" : "",
+        ]
+          .filter(Boolean)
+          .join(" ");
+      cells.push(
+        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(dayTitle(value))}"><span>${day}</span></button>`,
+      );
+    }
+    state.dateJumpMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
+    panel.dataset.calendarMonth = state.dateJumpMonth;
+    panel.innerHTML =
+      `<div class="team-date-jump-head"><button type="button" data-team-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(
+        first
+          .toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+          .replace(/^./, (char) => char.toUpperCase()),
+      )}</strong><button type="button" data-team-cal-step="1" aria-label="Mois suivant">›</button></div>` +
+      '<div class="team-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>' +
+      `<div class="team-date-jump-grid">${cells.join("")}</div>` +
+      '<div class="team-date-jump-actions"><button type="button" data-team-cal-today>Aujourd’hui</button><button type="button" data-team-cal-close>Fermer</button></div>';
+  }
+
+  function setDateJumpOpen(open) {
+    const panel = $("#teamDateJumpPanel"),
+      trigger = $("#teamToday");
+    if (!panel || !trigger) return;
+    state.dateJumpOpen = Boolean(open);
+    panel.hidden = !state.dateJumpOpen;
+    trigger.setAttribute("aria-expanded", state.dateJumpOpen ? "true" : "false");
+    trigger.setAttribute(
+      "aria-label",
+      state.dateJumpOpen ? "Fermer le calendrier" : "Ouvrir le calendrier",
+    );
+    if (state.dateJumpOpen)
+      renderDateJumpCalendar(state.dateJumpMonth || monthKey(state.weekStart));
+  }
+
+  function chooseDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return;
+    state.weekStart = monday(value);
+    state.dayFocus = value;
+    state.openShift = "";
+    setDateJumpOpen(false);
+    window.STIPNav?.remember?.({
+      tab: state.tab,
+      weekStart: state.weekStart,
+      dayFocus: state.dayFocus,
+      scrollY: 0,
+    });
+    showWeek({ preserve: true });
+  }
+
 
   function allowed(key) {
     return Boolean(state.access?.permissions?.[key]);
@@ -589,6 +680,7 @@
   }
 
   function moveWeek(offset) {
+    setDateJumpOpen(false);
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
     window.STIPNav?.remember?.({
@@ -616,8 +708,29 @@
     });
     showWeek({ preserve: true });
   }
-  $("#teamToday").addEventListener("click", goToday);
-  $("#teamCurrent").addEventListener("click", goToday);
+  $("#teamToday").addEventListener("click", () =>
+    setDateJumpOpen(!state.dateJumpOpen),
+  );
+  $("#teamCurrent").addEventListener("click", () => {
+    setDateJumpOpen(false);
+    goToday();
+  });
+  $("#teamDateJumpPanel").addEventListener("click", (event) => {
+    const close = event.target.closest("[data-team-cal-close]"),
+      today = event.target.closest("[data-team-cal-today]"),
+      step = event.target.closest("[data-team-cal-step]"),
+      day = event.target.closest("[data-team-cal-day]");
+    if (close) return setDateJumpOpen(false);
+    if (today) return chooseDate(todayIso());
+    if (step) {
+      state.dateJumpMonth = shiftMonthKey(
+        $("#teamDateJumpPanel").dataset.calendarMonth,
+        step.dataset.teamCalStep,
+      );
+      return renderDateJumpCalendar(state.dateJumpMonth);
+    }
+    if (day) return chooseDate(day.dataset.teamCalDay);
+  });
   $("#teamRefresh").addEventListener("click", () =>
     showWeek({ force: true, preserve: true }),
   );

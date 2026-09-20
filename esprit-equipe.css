@@ -849,3 +849,96 @@ body.team-page {
 @media(prefers-reduced-motion:reduce){
   .team-content .team-day{animation:none}
 }
+
+/* Calendar attached to the canonical 3-row time navigation. */
+.team-date-jump-panel{
+ width:100%;
+ box-sizing:border-box;
+ padding:14px;
+ border:1px solid var(--stip-line);
+ border-radius:var(--stip-radius-xl);
+ background:linear-gradient(155deg,var(--stip-surface),var(--stip-surface-soft));
+ box-shadow:var(--stip-shadow);
+ transform-origin:top center;
+ animation:teamDateJumpIn .18s ease-out both;
+}
+.team-date-jump-panel[hidden]{display:none!important}
+@keyframes teamDateJumpIn{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:none}}
+.team-date-jump-head{
+ display:grid;
+ grid-template-columns:42px minmax(0,1fr) 42px;
+ align-items:center;
+ gap:8px;
+}
+.team-date-jump-head button{
+ width:42px;
+ height:42px;
+ border:1px solid var(--stip-line);
+ border-radius:50%;
+ background:var(--stip-surface);
+ color:var(--stip-ink);
+ box-shadow:var(--stip-shadow-soft);
+ font-size:1.5rem;
+ font-weight:900;
+ cursor:pointer;
+}
+.team-date-jump-head strong{text-align:center;color:var(--stip-ink);font-size:1rem;font-weight:950}
+.team-date-jump-weekdays,.team-date-jump-grid{
+ display:grid;
+ grid-template-columns:repeat(7,minmax(0,1fr));
+ gap:5px;
+}
+.team-date-jump-weekdays{
+ margin:12px 0 6px;
+ color:var(--stip-muted);
+ font-size:.62rem;
+ font-weight:950;
+ text-align:center;
+ text-transform:uppercase;
+}
+.team-date-jump-grid>button,.team-date-jump-empty{aspect-ratio:1/1;min-width:0}
+.team-date-jump-grid>button{
+ border:1px solid transparent;
+ border-radius:13px;
+ background:transparent;
+ color:var(--stip-ink-2);
+ display:grid;
+ place-items:center;
+ padding:2px;
+ font:inherit;
+ font-weight:950;
+ cursor:pointer;
+ touch-action:manipulation;
+}
+.team-date-jump-grid>button.is-week{
+ border-color:color-mix(in srgb,var(--stip-accent) 14%,transparent);
+ background:var(--stip-surface-active);
+ color:var(--stip-accent);
+}
+.team-date-jump-grid>button.is-today{box-shadow:inset 0 0 0 2px var(--stip-accent)}
+.team-date-jump-grid>button.is-selected{
+ border-color:var(--stip-accent);
+ background:color-mix(in srgb,var(--stip-accent-soft) 78%,var(--stip-surface));
+ box-shadow:inset 0 -4px 0 var(--stip-accent);
+}
+.team-date-jump-grid>button:active{transform:scale(.94)}
+.team-date-jump-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
+.team-date-jump-actions button{
+ min-height:42px;
+ padding:0 14px;
+ border:1px solid var(--stip-line);
+ border-radius:14px;
+ background:var(--stip-surface);
+ color:var(--stip-ink-2);
+ font-weight:900;
+ cursor:pointer;
+}
+.team-date-jump-actions [data-team-cal-today]{
+ background:var(--stip-surface-active);
+ color:var(--stip-accent);
+}
+@media(max-width:430px){
+ .team-date-jump-panel{padding:12px}
+ .team-date-jump-weekdays,.team-date-jump-grid{gap:4px}
+ .team-date-jump-grid>button{border-radius:11px;font-size:.84rem}
+}

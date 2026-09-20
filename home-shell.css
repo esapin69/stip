@@ -2453,3 +2453,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     grid-template-columns:repeat(2,minmax(0,1fr));
   }
 }
+
+/* Canonical 3rd temporal row on Home — uses stip-patterns.css for the visual contract. */
+.hc-home-week-days{
+ width:100%!important;
+ margin:0!important;
+ box-sizing:border-box!important;
+}
+.hc-home-week-days>button{
+ cursor:pointer!important;
+ touch-action:manipulation!important;
+}
+.hc-home-week-days>button:active{transform:scale(.95)!important}
