@@ -5,7 +5,9 @@ import type { Agent, SessionCtx, ShiftDef } from "./types.ts";
 
 export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects: Agent[], ds: DateScope, defs: Record<string, ShiftDef>) {
   if (!subjects.length) subjects = [c.agent];
-  const rows = await planningRows(subjects.map((a) => a.id), ds.start, ds.end);
+  const selectedDates = Array.isArray(ds.dates) && ds.dates.length ? new Set(ds.dates) : null;
+  const rawRows = await planningRows(subjects.map((a) => a.id), ds.start, ds.end);
+  const rows = selectedDates ? rawRows.filter((r: any) => selectedDates.has(String(r.date))) : rawRows;
   const singleDay = ds.start === ds.end;
   if (subjects.length === 1 && singleDay) {
     const a = subjects[0], r = rows.find((x: any) => String(x.agent_id) === String(a.id));
@@ -155,7 +157,9 @@ export async function organizationAnswer(c: SessionCtx, old: DialogContext, ds: 
 }
 
 export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: DateScope, desired: string | null, all: Agent[], defs: Record<string, ShiftDef>) {
-  const myRows = await planningRows([c.agent.id], ds.start, ds.end);
+  const selectedDates = Array.isArray(ds.dates) && ds.dates.length ? new Set(ds.dates) : null;
+  const rawMyRows = await planningRows([c.agent.id], ds.start, ds.end);
+  const myRows = selectedDates ? rawMyRows.filter((r: any) => selectedDates.has(String(r.date))) : rawMyRows;
   const workRows = myRows.filter((r: any) => defs[canon(r.code)]);
   if (!workRows.length) return { kind: "exchange", title: ds.label || "Échange", text: "Je ne trouve aucun shift de travail à échanger sur cette période.", cards: [], actions: [], context: baseContext(old, { date_scope: ds, last_intent: "exchange" }) };
   const team = c.team === "chefs" ? "jour" : c.team;
@@ -164,7 +168,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
   const by = new Map(all.map((a) => [String(a.id), a]));
   const eligibleRows = (data || []).filter((r: any) => {
     const a = by.get(String(r.agent_id));
-    return a && String(a.id) !== String(c.agent.id) && !isChief(a);
+    return (!selectedDates || selectedDates.has(String(r.date))) && a && String(a.id) !== String(c.agent.id) && !isChief(a);
   });
   if (!desired) {
     const cards = workRows.map((r: any) => {
