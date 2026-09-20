@@ -1266,43 +1266,42 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 /* HOME ACCESS LAUNCHERS — canonical
-   One source only: balanced app-style navigation, no surrounding cards. */
+   Two obvious home buttons: Applications + Mon profil. */
 .hc-home-filters{
-  width:min(100%,264px)!important;
-  min-height:118px!important;
-  margin:0 auto 4px!important;
-  padding:14px 0!important;
+  width:min(100%,360px)!important;
+  margin:12px auto 22px!important;
+  padding:0!important;
   display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:6px!important;
-  align-items:center!important;
-  justify-items:center!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:10px!important;
+  align-items:stretch!important;
 }
 .hc-home-filters>button{
   width:100%!important;
   min-width:0!important;
-  min-height:82px!important;
-  padding:5px 2px!important;
-  border:0!important;
-  border-radius:18px!important;
-  background:transparent!important;
-  box-shadow:none!important;
+  min-height:92px!important;
+  padding:11px 8px 10px!important;
+  border:1px solid var(--stip-line)!important;
+  border-radius:20px!important;
+  background:var(--stip-surface)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
   color:var(--stip-ink)!important;
-  display:grid!important;
-  grid-template-rows:56px auto!important;
-  place-items:center!important;
-  gap:3px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
   font:inherit!important;
   cursor:pointer!important;
   touch-action:manipulation!important;
   -webkit-tap-highlight-color:transparent!important;
 }
 .hc-home-filter-art{
-  width:46px!important;
-  height:46px!important;
+  width:50px!important;
+  height:50px!important;
+  flex:0 0 50px!important;
   display:grid!important;
   place-items:center!important;
-  align-self:center!important;
   overflow:hidden!important;
   border:0!important;
   border-radius:50%!important;
@@ -1312,8 +1311,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   transform:none!important;
 }
 .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{
-  width:54px!important;
-  height:54px!important;
+  width:56px!important;
+  height:56px!important;
+  flex-basis:56px!important;
 }
 .hc-home-filter-art img{
   width:100%!important;
@@ -1326,37 +1326,22 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   filter:none!important;
 }
 .hc-home-filters>button>strong{
-  position:relative!important;
   margin:0!important;
   max-width:100%!important;
   color:var(--stip-ink)!important;
-  font-size:.58rem!important;
+  font-size:.72rem!important;
   line-height:1.05!important;
   font-weight:950!important;
   text-align:center!important;
   white-space:nowrap!important;
 }
-.hc-home-filters>button[data-home-mode="planning"]>strong{
-  font-size:.61rem!important;
+.hc-home-filters>button.active{
+  border-color:color-mix(in srgb,var(--stip-accent) 42%,var(--stip-line))!important;
+  background:linear-gradient(180deg,var(--stip-surface),var(--stip-accent-soft))!important;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--stip-accent) 10%,transparent),var(--stip-shadow)!important;
 }
-.hc-home-filters>button.active>strong{
-  color:var(--stip-accent)!important;
-}
-.hc-home-filters>button.active>strong:after{
-  content:""!important;
-  position:absolute!important;
-  left:50%!important;
-  bottom:-7px!important;
-  width:16px!important;
-  height:3px!important;
-  border-radius:999px!important;
-  background:var(--stip-accent)!important;
-  transform:translateX(-50%)!important;
-}
-.hc-home-filters>button:active{
-  background:var(--stip-surface-soft)!important;
-  transform:scale(.96)!important;
-}
+.hc-home-filters>button.active>strong{color:var(--stip-accent)!important}
+.hc-home-filters>button:active{transform:scale(.97)!important}
 .hc-home-filters>button:focus-visible{
   outline:3px solid var(--stip-focus-ring)!important;
   outline-offset:2px!important;
@@ -1370,11 +1355,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-id-card .hc-avatar{height:130px!important}
   .hc-home-filters{
-    width:min(100%,252px)!important;
-    min-height:112px!important;
-    padding:12px 0!important;
-    gap:4px!important;
+    width:min(100%,340px)!important;
+    margin:10px auto 20px!important;
+    gap:8px!important;
   }
+  .hc-home-filters>button{min-height:88px!important;padding:10px 6px 9px!important}
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
@@ -1382,30 +1367,20 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-id-card .hc-profile-name{font-size:1.22rem!important}
   .hc-profile-ghe{font-size:1.42rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:.9rem!important}
-  .hc-home-filters{
-    width:min(100%,236px)!important;
-    min-height:106px!important;
-    gap:2px!important;
-  }
-  .hc-home-filters>button{grid-template-rows:52px auto!important;min-height:78px!important}
-  .hc-home-filter-art{width:43px!important;height:43px!important}
-  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:51px!important;height:51px!important}
-  .hc-home-filters>button>strong{font-size:.55rem!important}
-  .hc-home-filters>button[data-home-mode="planning"]>strong{font-size:.58rem!important}
+  .hc-home-filters{width:min(100%,318px)!important;gap:7px!important}
+  .hc-home-filters>button{min-height:82px!important}
+  .hc-home-filter-art{width:46px!important;height:46px!important;flex-basis:46px!important}
+  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:52px!important;height:52px!important;flex-basis:52px!important}
+  .hc-home-filters>button>strong{font-size:.66rem!important}
 }
 @media(min-width:700px){
-  .hc-home-filters{
-    width:292px!important;
-    min-height:132px!important;
-    padding:17px 0!important;
-    gap:8px!important;
-  }
-  .hc-home-filters>button{grid-template-rows:62px auto!important;min-height:90px!important}
-  .hc-home-filter-art{width:52px!important;height:52px!important}
-  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:61px!important;height:61px!important}
+  .hc-home-filters{width:430px!important;gap:14px!important;margin-top:16px!important}
+  .hc-home-filters>button{min-height:104px!important}
+  .hc-home-filter-art{width:58px!important;height:58px!important;flex-basis:58px!important}
+  .hc-home-filters>button[data-home-mode="planning"] .hc-home-filter-art{width:64px!important;height:64px!important;flex-basis:64px!important}
+  .hc-home-filters>button>strong{font-size:.8rem!important}
 }
 
-/* Keep the following planning section as the next canonical owner. */
 /* HOME PLANNING CORE — canonical */
 .hc-home-pane-planning{
  --premium-ink:#123e50;
