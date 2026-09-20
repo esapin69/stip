@@ -107,17 +107,20 @@
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
     try{home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost();if(currentMode()==="notifications"){let pending="";try{pending=sessionStorage.getItem("stip_message_open_v1")||"";if(pending)sessionStorage.removeItem("stip_message_open_v1")}catch{}if(pending)setTimeout(()=>openThread(pending),20)}}catch(e){const host=document.getElementById("hcCommunicationHub");if(host)host.innerHTML='<div class="ch-error">'+esc(e.message)+'</div>'}
   }
+  function dialogWelcome(){return {side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Mon horaire demain ?</button><button>Qui est avec moi vendredi ?</button><button>Où est l’IRM ?</button><button>Je peux échanger demain ?</button><button>Je veux poser un congé</button></div></article>'}}
   function dialogShell(){
     if(dialog)return dialog;
-    dialog=document.createElement("section");dialog.className="ch-dialog";dialog.hidden=true;dialog.innerHTML='<header><button type="button" data-close>‹</button><div><small>STIP IA</small><strong>Recherche intelligente</strong></div><span></span></header><main class="ch-dialog-body" data-dialog-body></main><form class="ch-dialog-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit">↑</button></form>';
+    dialog=document.createElement("section");dialog.className="ch-dialog";dialog.hidden=true;dialog.innerHTML='<header><button type="button" data-close>‹</button><div><small>STIP IA</small><strong>Recherche intelligente</strong></div><button type="button" data-dialog-reset title="Réinitialiser le dialogue" aria-label="Réinitialiser le dialogue">↻</button></header><main class="ch-dialog-body" data-dialog-body></main><form class="ch-dialog-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit">↑</button></form>';
     document.body.appendChild(dialog);
     bindKeyboardTracking(dialog);
     dialog.querySelector("[data-close]").addEventListener("click",closeDialog);
+    dialog.querySelector("[data-dialog-reset]").addEventListener("click",resetDialog);
     dialog.querySelector("form").addEventListener("submit",e=>{e.preventDefault();const input=e.currentTarget.elements.q,q=String(input.value||"").trim();if(!q)return;input.value="";submitAsk(q)});
     return dialog
   }
-  function openDialog(){if(!can("dialog"))return;const d=dialogShell();syncVisualViewport();d.hidden=false;document.documentElement.classList.add("ch-lock");if(!dialogHistory.length){dialogHistory.push({side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Mon horaire demain ?</button><button>Qui est avec moi vendredi ?</button><button>Où est l’IRM ?</button><button>Je peux échanger demain ?</button><button>Je veux poser un congé</button></div></article>'});renderDialog()}setTimeout(()=>{syncVisualViewport();const input=d.querySelector('input');try{input?.focus({preventScroll:true})}catch{input?.focus()}setTimeout(syncVisualViewport,80)},30)}
+  function openDialog(){if(!can("dialog"))return;const d=dialogShell();syncVisualViewport();d.hidden=false;document.documentElement.classList.add("ch-lock");if(!dialogHistory.length){dialogHistory.push(dialogWelcome());renderDialog()}setTimeout(()=>{syncVisualViewport();const input=d.querySelector('input');try{input?.focus({preventScroll:true})}catch{input?.focus()}setTimeout(syncVisualViewport,80)},30)}
   function closeDialog(){if(dialog)dialog.hidden=true;document.documentElement.classList.remove("ch-lock","ch-keyboard-open");syncVisualViewport(true)}
+  function resetDialog(){dialogContext={};dialogHistory=[dialogWelcome()];const input=dialog?.querySelector('input[name="q"]');if(input)input.value="";renderDialog();}
   function renderDialog(){
     const body=dialog?.querySelector("[data-dialog-body]");if(!body)return;
     body.innerHTML=dialogHistory.map(x=>'<div class="ch-msg '+x.side+'">'+x.html+'</div>').join("");
