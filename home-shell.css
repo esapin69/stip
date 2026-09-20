@@ -1369,10 +1369,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  align-items:center!important;
  justify-content:center!important;
  text-align:center!important;
- cursor:pointer!important;
+ cursor:default!important;
  user-select:none!important;
  -webkit-user-select:none!important;
- touch-action:manipulation!important;
 }
 .hc-month-title-open small{
  display:block!important;
@@ -1487,6 +1486,17 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-week-nav-global .hc-week-context{
  min-width:0!important;
  text-align:center!important;
+}
+.hc-week-context-jump{
+ cursor:pointer!important;
+ border-radius:14px!important;
+ padding:5px 8px!important;
+ user-select:none!important;
+ -webkit-user-select:none!important;
+ touch-action:manipulation!important;
+}
+.hc-week-context-jump:active{
+ background:rgba(22,130,151,.07)!important;
 }
 .hc-week-nav-global .hc-week-context strong{
  display:block!important;
