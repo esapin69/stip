@@ -960,7 +960,6 @@
       ghe = String(a.ghe || "").trim(),
       team = String(a.type_planning || a.equipe || "").trim(),
       tel = String(a.telephone || "").trim(),
-      mail = String(a.email || a.email_pro || "").trim(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       gheLabel = ghe
@@ -980,7 +979,6 @@
         </div>
         <div class="hc-profile-contacts">
           ${tel ? `<button class="hc-profile-contact" data-copy="${esc(tel)}" data-label="Numéro"><span>TÉLÉPHONE</span><strong>${esc(tel)}</strong></button>` : ""}
-          ${mail ? `<button class="hc-profile-contact" data-copy="${esc(mail)}" data-label="E-mail"><span>E-MAIL</span><strong>${esc(mail)}</strong></button>` : ""}
         </div>
       </div>
     </section>`;
