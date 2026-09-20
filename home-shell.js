@@ -591,7 +591,7 @@
       tomorrow = has("tomorrow")
         ? `<button type="button" class="hc-tomorrow-launch" data-app="tomorrow" aria-label="Ouvrir Pour demain"><span>${ICON.tomorrow}</span><strong>Pour demain</strong></button>`
         : "";
-    return `<header class="hc-planning-month-title"><div class="hc-month-title-block"><button type="button" class="hc-month-title-open" data-date-jump-toggle aria-label="Aller directement à une date"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span></button><div class="hc-date-jump-panel" data-date-jump-panel hidden><label><span>Aller à une date</span><input type="date" value="${esc(selectedIso)}" data-date-jump-input></label><button type="button" data-date-jump-today>Aujourd’hui</button></div><button type="button" class="hc-month-title-hint" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}">Ouvrir le planning du mois <b aria-hidden="true">›</b></button></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${back || tomorrow ? `<div class="hc-planning-tools">${back}${tomorrow}</div>` : ""}</header>`;
+    return `<header class="hc-planning-month-title"><div class="hc-month-title-block"><div class="hc-month-title-open"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span></div><button type="button" class="hc-month-title-hint" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}">Ouvrir le planning du mois <b aria-hidden="true">›</b></button></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-label="Choisir directement une date"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div class="hc-date-jump-panel" data-date-jump-panel hidden><label><span>Aller à une date</span><input type="date" value="${esc(selectedIso)}" data-date-jump-input></label><button type="button" data-date-jump-today>Aujourd’hui</button></div>${back || tomorrow ? `<div class="hc-planning-tools">${back}${tomorrow}</div>` : ""}</header>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -1083,17 +1083,24 @@
       ?.addEventListener("click", (e) =>
         openPlanningMonth(e.currentTarget.dataset.openMonth),
       );
-    root.querySelector("[data-date-jump-toggle]")?.addEventListener("click", () => {
-      const panel = root.querySelector("[data-date-jump-panel]"),
-        input = panel?.querySelector("[data-date-jump-input]");
-      if (!panel || !input) return;
-      panel.hidden = !panel.hidden;
-      if (!panel.hidden) {
-        requestAnimationFrame(() => {
-          try { input.showPicker?.(); }
-          catch { input.focus(); }
-        });
-      }
+    const dateJumpTrigger = root.querySelector("[data-date-jump-toggle]"),
+      toggleDateJump = () => {
+        const panel = root.querySelector("[data-date-jump-panel]"),
+          input = panel?.querySelector("[data-date-jump-input]");
+        if (!panel || !input) return;
+        panel.hidden = !panel.hidden;
+        if (!panel.hidden) {
+          requestAnimationFrame(() => {
+            try { input.showPicker?.(); }
+            catch { input.focus(); }
+          });
+        }
+      };
+    dateJumpTrigger?.addEventListener("click", toggleDateJump);
+    dateJumpTrigger?.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      toggleDateJump();
     });
     root.querySelector("[data-date-jump-input]")?.addEventListener("change", (e) => jumpToDate(e.currentTarget.value));
     root.querySelector("[data-date-jump-today]")?.addEventListener("click", () => jumpToDate(parisIso()));
