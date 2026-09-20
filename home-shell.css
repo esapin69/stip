@@ -3254,3 +3254,87 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:33px!important;
   }
 }
+
+/* PREMIUM CALENDAR → WEEK TRANSITION — 20260921 */
+/* Replace the improvised rule/center dash with a deliberate surface transition. */
+.hc-calendar-driven-planning>.hc-planning-calendar-block{
+  margin-bottom:0!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+  position:relative!important;
+  padding-bottom:10px!important;
+  border-bottom:0!important;
+  border-radius:0 0 22px 22px!important;
+  box-shadow:
+    0 12px 22px -22px rgba(18,73,92,.42),
+    inset 0 -1px 0 rgba(22,91,111,.07)!important;
+}
+.hc-calendar-driven-planning .hc-planning-week-row{
+  position:relative!important;
+  margin-top:18px!important;
+  padding-top:0!important;
+  border-top:0!important;
+}
+.hc-calendar-driven-planning .hc-planning-week-row::before{
+  content:none!important;
+}
+.hc-calendar-driven-planning .hc-widget-planning{
+  position:relative!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape.has-week-events{
+  padding-top:78px!important;
+}
+.hc-calendar-driven-planning .hc-day-event-markers{
+  top:-62px!important;
+  min-height:46px!important;
+  gap:8px!important;
+}
+.hc-calendar-driven-planning .hc-day-event-markers i{
+  font-size:37px!important;
+  line-height:1!important;
+  filter:
+    drop-shadow(0 5px 6px rgba(20,62,78,.13))
+    drop-shadow(0 1px 0 rgba(255,255,255,.8))!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape{
+  isolation:isolate!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape.has-week-events::before{
+  content:"";
+  position:absolute;
+  left:8%;
+  right:8%;
+  top:54px;
+  height:16px;
+  border-radius:999px;
+  background:radial-gradient(ellipse at center,rgba(21,132,153,.075),rgba(21,132,153,0) 72%);
+  pointer-events:none;
+  z-index:0;
+}
+.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape{
+  z-index:1;
+}
+@media(max-width:390px){
+  .hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+    padding-bottom:9px!important;
+    border-radius:0 0 20px 20px!important;
+  }
+  .hc-calendar-driven-planning .hc-planning-week-row{
+    margin-top:16px!important;
+  }
+  .hc-calendar-driven-planning .hc-days-landscape.has-week-events{
+    padding-top:73px!important;
+  }
+  .hc-calendar-driven-planning .hc-day-event-markers{
+    top:-58px!important;
+    min-height:43px!important;
+  }
+  .hc-calendar-driven-planning .hc-day-event-markers i{
+    font-size:35px!important;
+  }
+  .hc-calendar-driven-planning .hc-days-landscape.has-week-events::before{
+    top:50px;
+    left:9%;
+    right:9%;
+  }
+}
