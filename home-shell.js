@@ -23,6 +23,8 @@
     weekOffset: 0,
     weekFull: false,
     homeMode: "planning",
+    dateJumpOpen: false,
+    dateJumpMonth: "",
   };
   const REST = new Set([
     "RH",
@@ -207,12 +209,39 @@
   }
   function shiftMonthKey(key, step) {
     const [y, m] = String(key || "").split("-").map(Number),
-      d = new Date(y || new Date().getFullYear(), (m || 1) - 1 + Number(step || 0), 1, 12);
+      d = new Date(
+        y || new Date().getFullYear(),
+        (m || 1) - 1 + Number(step || 0),
+        1,
+        12,
+      );
     return monthKeyOf(d);
+  }
+  function calendarShiftForDate(iso) {
+    const row = (state.boot?.personal || []).find(
+        (item) => String(item?.date || "").slice(0, 10) === iso,
+      ),
+      raw = String(row?.code || row?.source_value || "").trim();
+    if (!raw) return null;
+    const code = canonicalShift(raw),
+      meta = SHIFT_BADGE_META[code] || ["other", code];
+    return {
+      code,
+      type: meta[0],
+      label: meta[1] || code,
+    };
+  }
+  function calendarShiftPill(iso) {
+    const shift = calendarShiftForDate(iso);
+    if (!shift) return "";
+    const len = Math.min(Math.max(shift.code.length, 1), 5);
+    return `<span class="hc-date-jump-shift shift-${esc(shift.type)} len-${len}" aria-hidden="true">${esc(shift.code)}</span>`;
   }
   function renderDateJumpCalendar(panel, key = "") {
     if (!panel) return;
-    const basis = key ? dateObj(`${key}-01`) : selectedWeek()[0]?.d || dateObj(parisIso()),
+    const basis = key
+        ? dateObj(`${key}-01`)
+        : selectedWeek()[0]?.d || dateObj(parisIso()),
       y = basis.getFullYear(),
       m = basis.getMonth(),
       first = new Date(y, m, 1, 12),
@@ -223,16 +252,38 @@
       weekStart = week[0]?.iso || "",
       weekEnd = week.at(-1)?.iso || "",
       cells = [];
-    for (let i = 0; i < leading; i++) cells.push('<span class="hc-date-jump-empty" aria-hidden="true"></span>');
+    for (let i = 0; i < leading; i++)
+      cells.push(
+        '<span class="hc-date-jump-empty" aria-hidden="true"></span>',
+      );
     for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(y, m, day, 12),
         iso = dateIsoLocal(d),
         inWeek = weekStart && weekEnd && iso >= weekStart && iso <= weekEnd,
-        cls = [iso === todayIso ? "is-today" : "", inWeek ? "is-week" : ""].filter(Boolean).join(" ");
-      cells.push(`<button type="button" class="${cls}" data-cal-day="${iso}">${day}</button>`);
+        shift = calendarShiftForDate(iso),
+        cls = [
+          iso === todayIso ? "is-today" : "",
+          inWeek ? "is-week" : "",
+          shift ? `has-shift shift-${shift.type}` : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+        dayLabel = d.toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        }),
+        aria = shift
+          ? `${dayLabel}, ${shift.label} ${shift.code}`
+          : dayLabel;
+      cells.push(
+        `<button type="button" class="${cls}" data-cal-day="${iso}" aria-label="${esc(aria)}"><span class="hc-date-jump-number">${day}</span>${calendarShiftPill(iso)}</button>`,
+      );
     }
-    panel.dataset.calendarMonth = monthKeyOf(first);
-    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1">‹</button><strong>${cap(first.toLocaleDateString("fr-FR",{month:"long"}))} ${y}</strong><button type="button" data-cal-step="1">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div><button type="button" class="hc-date-jump-today" data-cal-today>Aujourd’hui</button>`;
+    const monthKey = monthKeyOf(first);
+    state.dateJumpMonth = monthKey;
+    panel.dataset.calendarMonth = monthKey;
+    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div><div class="hc-date-jump-actions"><button type="button" class="hc-date-jump-today" data-cal-today>Aujourd’hui</button><button type="button" class="hc-date-jump-close" data-cal-close>Fermer</button></div>`;
   }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
@@ -630,8 +681,9 @@
   function planningMonthTitle() {
     const w = selectedWeek(),
       mi = weekMonthInfo(w),
-      calendarKey = monthKeyOf(w[0]?.d || dateObj(parisIso()));
-    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-card" data-open-month="${esc(mi.targetKey)}" aria-label="Ouvrir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-title-top"><small>PLANNING · ${esc(mi.yearLabel)}</small><em>OUVRIR <b aria-hidden="true">›</b></em></span><strong class="hc-month-title-name">${esc(mi.heading)}</strong></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-label="Choisir directement une date"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div class="hc-date-jump-panel" data-date-jump-panel data-calendar-month="${esc(calendarKey)}" hidden></div></header>`;
+      calendarKey = monthKeyOf(w[0]?.d || dateObj(parisIso())),
+      jumpMonth = state.dateJumpMonth || calendarKey;
+    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-card" data-open-month="${esc(mi.targetKey)}" aria-label="Ouvrir le planning complet de ${esc(mi.targetLabel)}"><span class="hc-month-title-top"><small>PLANNING · ${esc(mi.yearLabel)}</small><em>OUVRIR <b aria-hidden="true">›</b></em></span><strong class="hc-month-title-name">${esc(mi.heading)}</strong></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context hc-week-context-jump" data-date-jump-toggle role="button" tabindex="0" aria-controls="hcDateJumpPanel" aria-expanded="${state.dateJumpOpen ? "true" : "false"}" aria-label="${state.dateJumpOpen ? "Fermer l’aperçu du planning" : "Ouvrir l’aperçu du planning"}"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div><div id="hcDateJumpPanel" class="hc-date-jump-panel" data-date-jump-panel data-calendar-month="${esc(jumpMonth)}" ${state.dateJumpOpen ? "" : "hidden"}></div></header>`;
   }
   function weekWidget() {
     const w = selectedWeek();
@@ -1141,11 +1193,34 @@
       );
     const dateJumpTrigger = root.querySelector("[data-date-jump-toggle]"),
       dateJumpPanel = root.querySelector("[data-date-jump-panel]"),
-      toggleDateJump = () => {
+      setDateJumpOpen = (open) => {
         if (!dateJumpPanel) return;
-        dateJumpPanel.hidden = !dateJumpPanel.hidden;
-        if (!dateJumpPanel.hidden) renderDateJumpCalendar(dateJumpPanel, dateJumpPanel.dataset.calendarMonth || "");
-      };
+        state.dateJumpOpen = Boolean(open);
+        dateJumpPanel.hidden = !state.dateJumpOpen;
+        dateJumpTrigger?.setAttribute(
+          "aria-expanded",
+          state.dateJumpOpen ? "true" : "false",
+        );
+        dateJumpTrigger?.setAttribute(
+          "aria-label",
+          state.dateJumpOpen
+            ? "Fermer l’aperçu du planning"
+            : "Ouvrir l’aperçu du planning",
+        );
+        if (state.dateJumpOpen)
+          renderDateJumpCalendar(
+            dateJumpPanel,
+            state.dateJumpMonth ||
+              dateJumpPanel.dataset.calendarMonth ||
+              "",
+          );
+      },
+      toggleDateJump = () => setDateJumpOpen(!state.dateJumpOpen);
+    if (state.dateJumpOpen && dateJumpPanel)
+      renderDateJumpCalendar(
+        dateJumpPanel,
+        state.dateJumpMonth || dateJumpPanel.dataset.calendarMonth || "",
+      );
     dateJumpTrigger?.addEventListener("click", toggleDateJump);
     dateJumpTrigger?.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -1155,10 +1230,26 @@
     dateJumpPanel?.addEventListener("click", (e) => {
       const step = e.target.closest("[data-cal-step]"),
         day = e.target.closest("[data-cal-day]"),
-        today = e.target.closest("[data-cal-today]");
-      if (step) return renderDateJumpCalendar(dateJumpPanel, shiftMonthKey(dateJumpPanel.dataset.calendarMonth, step.dataset.calStep));
-      if (day) return jumpToDate(day.dataset.calDay);
-      if (today) return jumpToDate(parisIso());
+        today = e.target.closest("[data-cal-today]"),
+        close = e.target.closest("[data-cal-close]");
+      if (close) return setDateJumpOpen(false);
+      if (step) {
+        state.dateJumpMonth = shiftMonthKey(
+          dateJumpPanel.dataset.calendarMonth,
+          step.dataset.calStep,
+        );
+        return renderDateJumpCalendar(dateJumpPanel, state.dateJumpMonth);
+      }
+      if (day) {
+        state.dateJumpOpen = true;
+        state.dateJumpMonth = String(day.dataset.calDay || "").slice(0, 7);
+        return jumpToDate(day.dataset.calDay);
+      }
+      if (today) {
+        state.dateJumpOpen = true;
+        state.dateJumpMonth = parisIso().slice(0, 7);
+        return jumpToDate(parisIso());
+      }
     });
     root
       .querySelectorAll("[data-app]")
