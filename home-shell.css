@@ -2167,6 +2167,19 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-fixed-shift-item>i.shift-rh{
  width:auto!important;height:auto!important;flex:0 0 auto!important;border-radius:0!important;font-size:.86rem!important;line-height:1!important;
 }
+.hc-fixed-shift-item>i.hc-legend-symbol{
+ width:auto!important;
+ height:auto!important;
+ flex:0 0 auto!important;
+ border-radius:0!important;
+ background:transparent!important;
+ font-size:1.05rem!important;
+ line-height:1!important;
+}
+.hc-fixed-event-legend>b{
+ color:#365866!important;
+ font-weight:900!important;
+}
 .hc-fixed-shift-pending{
  margin-top:0!important;
  color:#82939a!important;
