@@ -811,14 +811,14 @@
     const active = state.homeMode || "planning",
       count = notifications().length,
       items = [
-        ["profile", "Mon profil", ICON.homeProfile],
-        ["planning", "Planning", ICON.homePlanning],
+        ["notifications", "Notifications", ICON.homeBell],
+        ["planning", "Accueil", ICON.homeHome],
         ["apps", "Applications", ICON.homeApps],
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
         ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "profile" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
+          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${label}</strong>${key === "notifications" && count ? `<span class="hc-home-filter-badge" aria-label="${count} élément${count > 1 ? "s" : ""} à traiter">${count}</span>` : ""}</button>`,
       )
       .join("")}</nav>`;
   }
@@ -887,12 +887,12 @@
     bindActionCenter(host, filter, true);
   }
 
-  function profilePane() {
-    return `<section class="hc-home-pane hc-home-pane-profile">${profile()}<section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></section>`;
+  function notificationsPane() {
+    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section><section id="hcProfileActions" class="hc-profile-actions stip-action-surface">${actionCenterMarkup(state.actionFilter, true)}</section><details class="hc-account-fold"><summary>Mon profil</summary><div>${profile()}<section class="hc-account-actions"><button type="button" id="hcLogout" class="hc-account-logout">Se déconnecter complètement</button></section></div></details></section>`;
   }
 
   function homeModeBody() {
-    if (state.homeMode === "profile") return profilePane();
+    if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><div class="hc-app-divider"><span>APPLICATIONS</span></div><section class="hc-apps">${apps()}</section></section>`;
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group">${weekWidget()}${futureWidget()}</section>${exchangeWidget()}${genericWidgets()}</main>`;
@@ -914,7 +914,7 @@
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
     );
-    if (state.homeMode === "profile") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
+    if (state.homeMode === "notifications") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
