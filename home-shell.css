@@ -1266,7 +1266,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 /* HOME ACCESS LAUNCHERS — canonical
-   Two primary cards + one slim full-width STIP IA card. */
+   Two premium primary buttons. STIP IA closes the page as a full-width footer entry. */
 .hc-home-filters{
   width:min(100%,368px)!important;
   margin:12px auto 22px!important;
@@ -1285,9 +1285,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   border:1px solid color-mix(in srgb,var(--stip-line) 88%,#fff)!important;
   border-radius:22px!important;
   background:linear-gradient(180deg,#fff 0%,color-mix(in srgb,var(--stip-surface-soft) 72%,#fff) 100%)!important;
-  box-shadow:
-    0 10px 22px rgba(20,62,78,.10),
-    inset 0 1px 0 rgba(255,255,255,.96)!important;
+  box-shadow:0 10px 22px rgba(20,62,78,.10),inset 0 1px 0 rgba(255,255,255,.96)!important;
   color:var(--stip-ink)!important;
   display:flex!important;
   flex-direction:column!important;
@@ -1309,10 +1307,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0))!important;
   pointer-events:none!important;
 }
-.hc-home-filter-art,
-.hc-home-ai-art{
+.hc-home-filter-art{
   position:relative!important;
   z-index:1!important;
+  width:min(100%,148px)!important;
+  aspect-ratio:16/9!important;
+  flex:0 0 auto!important;
   display:block!important;
   overflow:hidden!important;
   border:0!important;
@@ -1321,23 +1321,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-shadow:0 5px 12px rgba(20,62,78,.11)!important;
   transition:transform .16s ease,box-shadow .16s ease,filter .16s ease!important;
 }
-.hc-home-filter-art{
-  width:min(100%,148px)!important;
-  aspect-ratio:16/9!important;
-  flex:0 0 auto!important;
-}
-.hc-home-filter-art img,
-.hc-home-ai-art img{
+.hc-home-filter-art img{
   width:100%!important;
   height:100%!important;
   display:block!important;
+  object-fit:cover!important;
   object-position:center!important;
   border-radius:15px!important;
   background:transparent!important;
   transition:filter .16s ease!important;
 }
-.hc-home-filter-art img{object-fit:cover!important}
-.hc-home-ai-art img{object-fit:fill!important}
 .hc-home-filters>button>strong{
   position:relative!important;
   z-index:1!important;
@@ -1350,8 +1343,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   text-align:center!important;
   white-space:nowrap!important;
 }
-
-/* One premium selected state for all three home accesses. */
 .hc-home-filters>button.active{
   z-index:2!important;
   border:2px solid rgba(24,168,220,.95)!important;
@@ -1372,49 +1363,73 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   pointer-events:none!important;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.90)!important;
 }
-.hc-home-filters>button.active .hc-home-filter-art,
-.hc-home-filters>button.active .hc-home-ai-art{
+.hc-home-filters>button.active .hc-home-filter-art{
   transform:translateY(-1px) scale(1.025)!important;
-  box-shadow:
-    0 11px 23px rgba(20,62,78,.20),
-    0 0 0 2px rgba(255,255,255,.92),
-    0 0 0 5px rgba(56,173,220,.16)!important;
+  box-shadow:0 11px 23px rgba(20,62,78,.20),0 0 0 2px rgba(255,255,255,.92),0 0 0 5px rgba(56,173,220,.16)!important;
   filter:saturate(1.08) contrast(1.03)!important;
 }
-.hc-home-filters>button.active .hc-home-filter-art img,
-.hc-home-filters>button.active .hc-home-ai-art img{
+.hc-home-filters>button.active .hc-home-filter-art img{
   filter:saturate(1.08) contrast(1.04) brightness(1.01)!important;
 }
 .hc-home-filters>button.active>strong{
   color:#0b6e98!important;
   text-shadow:0 1px 0 rgba(255,255,255,.82)!important;
 }
-
-/* STIP IA uses the exact same outer relief, only the image ratio differs. */
-.hc-home-filters>.hc-home-ai{
-  grid-column:1 / -1!important;
-  width:100%!important;
-  justify-self:stretch!important;
-  min-height:0!important;
-  padding:7px 8px 9px!important;
-}
-.hc-home-ai-art{
-  width:100%!important;
-  aspect-ratio:5.2 / 1!important;
-  flex:0 0 auto!important;
-}
-.hc-home-filters>.hc-home-ai>strong{
-  font-size:.74rem!important;
-}
 .hc-home-filters>button:active{
   transform:translateY(1px) scale(.985)!important;
-  box-shadow:
-    0 4px 10px rgba(20,62,78,.10),
-    inset 0 2px 5px rgba(20,62,78,.08)!important;
+  box-shadow:0 4px 10px rgba(20,62,78,.10),inset 0 2px 5px rgba(20,62,78,.08)!important;
 }
-.hc-home-filters>button:focus-visible{
+.hc-home-filters>button:focus-visible,
+.hc-home-ai-footer:focus-visible{
   outline:3px solid var(--stip-focus-ring)!important;
   outline-offset:3px!important;
+}
+
+/* STIP IA — final signature at the bottom of the home page. */
+.hc-home-ai-footer{
+  width:min(100%,640px)!important;
+  margin:30px auto 12px!important;
+  padding:7px 7px 10px!important;
+  border:1px solid rgba(214,179,113,.48)!important;
+  border-radius:24px!important;
+  background:linear-gradient(180deg,#fff 0%,#f7f7f5 100%)!important;
+  box-shadow:0 14px 30px rgba(31,35,38,.11),inset 0 1px 0 rgba(255,255,255,.98)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  gap:8px!important;
+  color:var(--stip-ink)!important;
+  font:inherit!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hc-home-ai-footer-art{
+  width:100%!important;
+  display:block!important;
+  overflow:hidden!important;
+  border-radius:18px!important;
+  background:#050505!important;
+  box-shadow:0 8px 18px rgba(28,19,8,.18),0 0 0 1px rgba(221,184,111,.35)!important;
+}
+.hc-home-ai-footer-art img{
+  width:100%!important;
+  height:auto!important;
+  display:block!important;
+  object-fit:contain!important;
+  object-position:center!important;
+  border-radius:18px!important;
+}
+.hc-home-ai-footer>strong{
+  color:#173f52!important;
+  font-size:.78rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.02em!important;
+}
+.hc-home-ai-footer:active{
+  transform:translateY(1px) scale(.992)!important;
+  box-shadow:0 7px 16px rgba(31,35,38,.10),inset 0 2px 5px rgba(20,62,78,.07)!important;
 }
 
 @media(max-width:430px){
@@ -1429,11 +1444,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     margin:10px auto 20px!important;
     gap:8px!important;
   }
-  .hc-home-filters>button:not(.hc-home-ai){min-height:116px!important;padding:8px 7px 9px!important}
+  .hc-home-filters>button{min-height:116px!important;padding:8px 7px 9px!important}
   .hc-home-filter-art{width:min(100%,142px)!important}
-  .hc-home-filters>.hc-home-ai{width:100%!important;padding:7px 7px 9px!important}
-  .hc-home-ai-art{aspect-ratio:5.2 / 1!important}
-  .hc-home-filters>.hc-home-ai>strong{font-size:.68rem!important}
+  .hc-home-ai-footer{width:100%!important;margin-top:26px!important;padding:6px 6px 9px!important;border-radius:22px!important}
+  .hc-home-ai-footer-art{border-radius:16px!important}
+  .hc-home-ai-footer-art img{border-radius:16px!important}
 }
 @media(max-width:380px){
   .hc-id-card{grid-template-columns:92px minmax(0,1fr)!important;gap:10px!important}
@@ -1442,19 +1457,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-profile-ghe{font-size:1.42rem!important}
   .hc-id-card .hc-profile-contact strong{font-size:.9rem!important}
   .hc-home-filters{width:min(100%,326px)!important;gap:7px!important}
-  .hc-home-filters>button:not(.hc-home-ai){min-height:108px!important}
+  .hc-home-filters>button{min-height:108px!important}
   .hc-home-filter-art{width:min(100%,132px)!important}
-  .hc-home-filters>button:not(.hc-home-ai)>strong{font-size:.7rem!important}
-  .hc-home-filters>.hc-home-ai{width:100%!important}
+  .hc-home-filters>button>strong{font-size:.7rem!important}
 }
 @media(min-width:700px){
   .hc-home-filters{width:470px!important;gap:14px!important;margin-top:16px!important}
-  .hc-home-filters>button:not(.hc-home-ai){min-height:142px!important;padding:10px 10px 12px!important}
+  .hc-home-filters>button{min-height:142px!important;padding:10px 10px 12px!important}
   .hc-home-filter-art{width:min(100%,188px)!important}
-  .hc-home-filters>button:not(.hc-home-ai)>strong{font-size:.86rem!important}
-  .hc-home-filters>.hc-home-ai{width:100%!important;padding:8px 9px 10px!important}
-  .hc-home-ai-art{aspect-ratio:5.2 / 1!important}
-  .hc-home-filters>.hc-home-ai>strong{font-size:.76rem!important}
+  .hc-home-filters>button>strong{font-size:.86rem!important}
+  .hc-home-ai-footer{width:min(100%,680px)!important;margin-top:34px!important}
 }
 
 /* HOME PLANNING CORE — canonical */
