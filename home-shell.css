@@ -3008,3 +3008,123 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-selected-day-meta span{font-size:.66rem!important}
   .hc-selected-day-events i{font-size:1.05rem!important}
 }
+
+/* FUSED COMPACT SELECTOR PANEL — 20260920 */
+.hc-planning-primary-head{
+  margin-bottom:0!important;
+}
+.hc-planning-day-panel{
+  width:calc(100% + 24px)!important;
+  margin:0 -12px -16px!important;
+  padding:10px 12px 16px!important;
+  box-sizing:border-box!important;
+  border-top:1px solid rgba(22,91,111,.10)!important;
+  border-radius:0 0 28px 28px!important;
+  background:linear-gradient(180deg,#fff 0%,#f9fcfd 100%)!important;
+  overflow:hidden!important;
+}
+.hc-planning-day-panel .hc-home-week-days{
+  width:100%!important;
+  margin:0!important;
+  padding:5px!important;
+  gap:2px!important;
+  box-sizing:border-box!important;
+  border:1px solid rgba(22,91,111,.12)!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  box-shadow:0 7px 18px rgba(20,62,78,.07)!important;
+}
+.hc-planning-day-panel .hc-home-week-days>button{
+  position:relative!important;
+  min-height:56px!important;
+  padding:4px 1px 3px!important;
+  display:grid!important;
+  grid-template-rows:auto auto 13px!important;
+  align-items:center!important;
+  justify-items:center!important;
+  gap:1px!important;
+  border-radius:11px!important;
+  overflow:visible!important;
+}
+.hc-planning-day-panel .hc-home-week-days>button small{
+  margin:0!important;
+  font-size:.42rem!important;
+  line-height:1!important;
+  letter-spacing:.02em!important;
+}
+.hc-planning-day-panel .hc-home-week-days>button b{
+  margin:0!important;
+  font-size:.88rem!important;
+  line-height:1!important;
+}
+.hc-planning-day-panel .hc-home-day-shift{
+  min-width:20px!important;
+  height:13px!important;
+  padding:0 3px!important;
+  font-size:.42rem!important;
+}
+.hc-planning-day-panel .hc-home-day-events{
+  top:-7px!important;
+}
+.hc-planning-day-panel .hc-home-day-events i{
+  font-size:.66rem!important;
+}
+.hc-planning-day-panel .hc-home-week-days>button.selected{
+  transform:translateY(-2px)!important;
+  box-shadow:
+    inset 0 -4px 0 var(--stip-accent),
+    0 5px 10px rgba(9,112,137,.12)!important;
+}
+.hc-planning-day-panel .hc-planning-week-row{
+  margin:7px 0 0!important;
+  padding:0!important;
+}
+.hc-planning-day-panel .hc-selected-day-card{
+  width:100%!important;
+  min-height:66px!important;
+  margin:0!important;
+  padding:9px 10px!important;
+  box-sizing:border-box!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+.hc-planning-day-panel .hc-week-detail-divider{
+  margin:9px 8px 1px!important;
+}
+.hc-planning-day-panel .hc-planning-agenda-row{
+  margin:0!important;
+  padding:0 2px!important;
+}
+.hc-planning-day-panel .hc-week-event-key{
+  padding:4px 0 0!important;
+}
+.hc-planning-day-panel .hc-week-event-day-row{
+  min-height:74px!important;
+  padding:10px 8px!important;
+}
+.hc-planning-day-panel .hc-fixed-legend-divider{
+  margin:10px 8px 11px!important;
+}
+.hc-planning-day-panel .hc-fixed-shift-legend{
+  padding:0 4px 2px!important;
+}
+@media(max-width:390px){
+  .hc-planning-day-panel{
+    width:calc(100% + 20px)!important;
+    margin:0 -10px -16px!important;
+    padding:9px 9px 14px!important;
+  }
+  .hc-planning-day-panel .hc-home-week-days{
+    padding:4px!important;
+    gap:2px!important;
+    border-radius:16px!important;
+  }
+  .hc-planning-day-panel .hc-home-week-days>button{
+    min-height:54px!important;
+    padding:3px 1px 3px!important;
+  }
+  .hc-planning-day-panel .hc-selected-day-card{
+    min-height:64px!important;
+    padding:8px 8px!important;
+  }
+}
