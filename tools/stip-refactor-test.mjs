@@ -139,6 +139,14 @@ check(home.includes('const markup = `${profile()}${homeModeNav()}<section class=
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
 
+const espritHtml=read('esprit-equipe.html');
+const espritJs=read('esprit-equipe.js');
+check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
+check(espritHtml.includes('teamMonthLabel')&&espritHtml.includes('stip-time-days'),'Esprit d’équipe n’est plus la référence du filtre temporel à trois niveaux.');
+check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
+check(espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne navigue plus vers la journée choisie.');
+check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
