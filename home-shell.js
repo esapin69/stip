@@ -548,7 +548,7 @@
   function planningMonthTitle() {
     const w = selectedWeek(),
       mi = weekMonthInfo(w);
-    return `<header class="hc-planning-month-title"><div><small>PLANNING · ${esc(mi.yearLabel)}</small><h2>${esc(mi.heading)}</h2></div><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header>`;
+    return `<header class="hc-planning-month-title"><button type="button" class="hc-month-title-open" data-open-month="${esc(mi.targetKey)}" aria-label="Voir le planning complet de ${esc(mi.targetLabel)}"><small>PLANNING · ${esc(mi.yearLabel)}</small><span class="hc-month-title-name">${esc(mi.heading)}</span><span class="hc-month-title-hint">Voir le mois</span></button><div class="hc-week-nav hc-week-nav-global"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-context"><strong>${esc(weekRangeLabel(w))}</strong><small>Semaine ${weekNo(w[0].d)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div></header>`;
   }
   function monthShortcut() {
     const mi = weekMonthInfo(selectedWeek());
@@ -986,7 +986,7 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div class="hc-planning-month-row">${monthShortcut()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${planningMonthTitle()}<section class="hc-planning-group hc-planning-landscape"><div class="hc-planning-week-row">${weekWidget()}</div><div id="hcTomorrowDock"></div><div class="hc-planning-agenda-row">${futureWidget()}</div></section>${exchangeWidget()}${genericWidgets()}</main>`;
   }
   function render() {
     const root = $("#homeView .hs-home");
