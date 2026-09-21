@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260921-agentagenda2" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260921-submove1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -38,6 +38,9 @@
           Le planning équipe, l’activité et l’assistant réunis sans mélanger
           leurs rôles.
         </p>
+        <button id="teamSubscribe" class="team-calendar-subscribe" type="button" hidden>
+          <span>📅</span><strong>Ajouter à mon calendrier</strong>
+        </button>
       </section>
       <section class="team-time-stack stip-time-stack" aria-label="Navigation temporelle">
         <section class="stip-time-month team-time-month" aria-label="Mois affiché">
@@ -80,7 +83,8 @@
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
-    <script src="agent-agenda-view.js?v=20260921-calendarfinal2"></script>
-    <script src="esprit-equipe.js?v=20260921-agentagenda2"></script>
+    <script src="agent-agenda-view.js?v=20260921-submove1"></script>
+    <script src="calendar-subscriptions.js?v=20260921-submove1"></script>
+    <script src="esprit-equipe.js?v=20260921-submove1"></script>
   </body>
 </html>
