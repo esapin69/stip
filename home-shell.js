@@ -1315,8 +1315,9 @@
       ghe = String(a.ghe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
-      prenom = cap(a.prenom || ""),
-      nom = String(a.nom || "").trim().toUpperCase(),
+      prenom = cap(String(a.prenom || "").trim()),
+      nomRaw = String(a.nom || "").trim().toLowerCase(),
+      nom = nomRaw ? cap(nomRaw) : "",
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
       gheLabel = ghe
         ? ghe.toUpperCase().startsWith("GHE")
@@ -1326,14 +1327,15 @@
     return `<section class="hc-profile hc-profile-full hc-id-card">
       <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
       <div class="hc-profile-copy">
-        ${mail ? `<button class="hc-profile-contact hc-profile-email" data-copy="${esc(mail)}" data-label="E-mail" aria-label="Copier l’e-mail"><strong>${esc(mail)}</strong></button>` : ""}
         <div class="hc-profile-name-line">
-          ${nom ? `<strong class="hc-profile-surname">${esc(nom)}</strong>` : ""}
-          ${prenom ? `<span class="hc-profile-firstname">${esc(prenom)}</span>` : ""}
+          ${prenom ? `<strong class="hc-profile-firstname">${esc(prenom)}</strong>` : ""}
+          ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
         </div>
+        ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
+        <span class="hc-profile-breath" aria-hidden="true"></span>
         ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
-        ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
       </div>
+      ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
     </section>`;
   }
   function app(kind, title, cls, action) {
@@ -1757,8 +1759,9 @@
       return;
     }
 
-    const profileBreak = state.homeMode === "planning" ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    const markup = `${homeModeNav()}${profile()}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    const showProfile = state.homeMode === "planning",
+      profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
+    const markup = `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
