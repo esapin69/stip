@@ -727,6 +727,11 @@ input {
   background: #eaf4f6;
   color: var(--stip-ink);
 }
+#raOpenAgenda {
+  grid-column: 1 / -1;
+  background: var(--stip-ink);
+  color: #fff;
+}
 .ra-error {
   display: grid;
   gap: 8px;
