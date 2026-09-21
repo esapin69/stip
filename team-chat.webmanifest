@@ -4,7 +4,7 @@
   "short_name": "Fauteuils",
   "description": "Signalements de fauteuils du jour STIP",
   "lang": "fr",
-  "start_url": "/?quick=tableau&source=shortcut",
+  "start_url": "/#/fauteuils",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
