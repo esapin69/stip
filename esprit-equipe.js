@@ -417,10 +417,12 @@
       String(item.equipe || "").toLowerCase() === "chefs" ||
       String(agent.type_planning || "").toLowerCase() === "chefs" ||
       /chef/i.test(String(agent.role || ""));
+    const quotite = Number(agent.quotite);
+    const partTime = Number.isInteger(quotite) && quotite >= 1 && quotite < 100;
     return `<div class="team-agent ${isChef ? "is-chef" : ""}">
       <button class="team-agent-main" type="button" data-team-agent="${esc(key)}" ${key ? "" : "disabled"}>
         <span class="team-agent-ghe">GHE ${esc(ghe || "—")}</span>
-        <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}${adaptedShift(item.code) ? '<em class="team-adapted-mark" title="Horaire adapté">⏱</em>' : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
+        <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}${adaptedShift(item.code) ? '<em class="team-adapted-mark" title="Horaire adapté">⏱</em>' : ""}${partTime ? `<em class="team-part-mark" title="Temps partiel">◐ ${quotite}%</em>` : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
         <i aria-hidden="true">›</i>
       </button>
       ${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}
