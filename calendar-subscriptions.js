@@ -145,6 +145,40 @@
     window.STIPRouter?.set?.("planning/calendar");
   }
 
+  function quickTitle(kind) {
+    return ({
+      personal: "Mon planning",
+      team: "Esprit d’équipe",
+      formations: "Formations",
+      stagiaires: "Stagiaires",
+    })[kind] || "Calendrier";
+  }
+
+  async function quick(kind) {
+    document.getElementById("stipCalendarQuick")?.remove();
+    const wrap = document.createElement("div");
+    wrap.id = "stipCalendarQuick";
+    wrap.className = "cal-quick-backdrop";
+    wrap.innerHTML = `<section class="cal-quick" role="dialog" aria-modal="true" aria-label="${esc(quickTitle(kind))}">
+      <header><div><small>CALENDRIER</small><strong>${esc(quickTitle(kind))}</strong></div><button type="button" data-cal-quick-close aria-label="Fermer">×</button></header>
+      <div class="cal-status"><div class="cal-loading"><i></i><span>Préparation de l’abonnement…</span></div></div>
+    </section>`;
+    document.body.appendChild(wrap);
+    const close = () => wrap.remove();
+    wrap.querySelector("[data-cal-quick-close]")?.addEventListener("click", close);
+    wrap.addEventListener("click", (e) => {
+      if (e.target === wrap) close();
+    });
+    const status = wrap.querySelector(".cal-status");
+    try {
+      const j = await feed(kind);
+      methods(j, quickTitle(kind), status);
+    } catch (e) {
+      status.innerHTML = `<div class="cal-error"><strong>Impossible de préparer ce calendrier</strong><small>${esc(e?.message || "Réessaie dans quelques secondes.")}</small></div>`;
+    }
+    return true;
+  }
+
   async function writeClipboard(url) {
     try {
       await navigator.clipboard.writeText(url);
@@ -225,7 +259,10 @@
   window.STIPCalendars = {
     open,
     mount,
-    close() {},
+    quick,
+    close() {
+      document.getElementById("stipCalendarQuick")?.remove();
+    },
   };
 
   const st = document.createElement("style");
@@ -249,7 +286,14 @@
     .cal-open-google{display:flex;align-items:center;justify-content:center;min-height:46px;margin:7px 0 9px;border-radius:14px;background:#14728c;color:#fff!important;text-decoration:none;font-weight:900}
     .cal-url input{box-sizing:border-box;width:100%;padding:11px;border:1px solid #cfdfe3;border-radius:11px;background:#fff;color:#315866}.cal-url small{display:block;margin-top:6px;color:#607983}
     .cal-error{display:grid;gap:7px;padding:13px;border:1px solid #eccdcd;border-radius:16px;background:#fff8f8;color:#7e3030}.cal-error strong,.cal-error small{display:block}.cal-error small{line-height:1.4}.cal-error button{justify-self:start;border:0;border-radius:11px;background:#7e3030;color:#fff;padding:9px 12px;font-weight:900}
-    @media(min-width:620px){.cal-grid{grid-template-columns:1fr 1fr}}
+
+    .cal-quick-backdrop{position:fixed;inset:0;z-index:9999;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:rgba(13,42,52,.22);backdrop-filter:blur(4px)}
+    .cal-quick{width:min(100%,520px);box-sizing:border-box;border:1px solid #d7e6e9;border-radius:24px;background:#fff;padding:14px;box-shadow:0 24px 60px rgba(13,55,72,.22)}
+    .cal-quick>header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+    .cal-quick>header small,.cal-quick>header strong{display:block}.cal-quick>header small{color:#1688a1;font-size:.62rem;font-weight:950;letter-spacing:.1em}.cal-quick>header strong{margin-top:2px;color:#103f50;font-size:1.05rem}
+    .cal-quick>header button{width:36px;height:36px;border:1px solid #dbe7ea;border-radius:50%;background:#f5f9fa;color:#315866;font-size:1.3rem}
+    .cal-quick .cal-method-back{display:none}
+    @media(min-width:620px){.cal-grid{grid-template-columns:1fr 1fr}.cal-quick-backdrop{align-items:center}}
   `;
   document.head.appendChild(st);
   window.dispatchEvent(new CustomEvent("stip:calendar-ready"));
