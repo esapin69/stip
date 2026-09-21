@@ -3919,3 +3919,36 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:26px!important;
   }
 }
+
+
+/* WEEK EVENTS COMPACT — 20260921 */
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key{
+  padding:4px 6px 0!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-day-row{
+  min-height:70px!important;
+  padding:8px 8px!important;
+  gap:10px!important;
+  grid-template-columns:48px minmax(0,1fr)!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key-icon{
+  width:48px!important;
+  font-size:28px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-copy>strong{
+  font-size:1.02rem!important;
+  line-height:1.12!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-when{
+  gap:5px 8px!important;
+  margin-top:5px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-date,
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-time,
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-relation{
+  min-height:28px!important;
+  padding:3px 8px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-place{
+  margin-top:0!important;
+}
