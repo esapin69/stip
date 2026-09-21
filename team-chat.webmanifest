@@ -1,16 +1,29 @@
 {
   "id": "/tableau-stip",
   "name": "STIP · Tableau",
-  "short_name": "Tableau STIP",
+  "short_name": "Tableau",
   "description": "Accès direct au tableau du jour STIP",
   "lang": "fr",
-  "start_url": "/tableau-stip.html",
+  "start_url": "/?quick=tableau&source=shortcut",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f7fbfc",
   "theme_color": "#173d42",
+  "prefer_related_applications": false,
   "icons": [
+    {
+      "src": "https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
     {
       "src": "/images/icone_app/tableau-stip.svg",
       "sizes": "any",
