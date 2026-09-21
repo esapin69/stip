@@ -124,14 +124,17 @@
     return `<section class="aav-events">${rows.map(x=>`<article class="${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${x.icon}</span><div><strong>${esc(x.title)}</strong><p>${esc(fullDay(x.date))}${x.time?` · ${esc(x.time)}`:""}</p>${x.location?`<small>${esc(x.location)}</small>`:""}${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`).join("")}</section>`;
   }
   function legendHtml(){
-    const plan=state.data.items||[],seen=new Map();
+    const start=monday(state.selected),end=add(start,6),
+      plan=(state.data.items||[]).filter(r=>String(r.date||"")>=start&&String(r.date||"")<=end),
+      visibleEvents=state.events.filter(x=>x.date>=start&&x.date<=end),
+      seen=new Map();
     for(const r of plan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
-    const items=[...seen.values()].slice(0,10).map(i=>`<span>${i.family==="rh"||i.family==="off"||i.family==="other"?i.icon:`<i class="aav-dot aav-${i.family}"></i>`}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
+    const items=[...seen.values()].map(i=>`<span>${i.family==="rh"||i.family==="off"||i.family==="other"?i.icon:`<i class="aav-dot aav-${i.family}"></i>`}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
     if(plan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
     if(quotity())items.push(`<span>◐ <b>Temps partiel</b><small>· ${quotity()}%</small></span>`);
-    const kinds=new Map();for(const x of state.events)if(!kinds.has(x.kind))kinds.set(x.kind,x.icon);
+    const kinds=new Map();for(const x of visibleEvents)if(!kinds.has(x.kind))kinds.set(x.kind,x.icon);
     for(const [k,icon] of kinds)items.push(`<span>${icon} <b>${esc(k)}</b></span>`);
-    return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")}</div></section>`;
+    return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")||'<span><b>Aucun repère cette semaine</b></span>'}</div></section>`;
   }
   function contactHtml(){
     const c=state.data.contact||state.data.agent||{},tel=phoneHref(c.telephone),mail=c.email_pro||c.email||"";
