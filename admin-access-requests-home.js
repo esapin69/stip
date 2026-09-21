@@ -113,10 +113,12 @@
   }
   function listMarkup() {
     const req = data?.items || [],
-      sec = data?.security_items || [];
+      sec = data?.security_items || [],
+      manage =
+        '<div class="aar-list-tools"><button type="button" class="aar-manage-access" data-aar-manage>Gérer les accès</button></div>';
     if (!req.length && !sec.length)
-      return '<div class="aar-empty"><strong>Rien à traiter</strong><p>Tous les accès contrôlables sont actuellement reliés à une source.</p></div>';
-    return `<div class="aar-list">${sec.map((r, i) => `<button type="button" class="aar-alert" data-aar-security="${i}"><span><strong>${esc(r.agent?.prenom || "")} ${esc(r.agent?.nom || "")}</strong><small>Sécurité · absent du planning actuel · accès suspendu/revue</small></span><b>›</b></button>`).join("")}${req.map((r) => `<button type="button" data-aar-request="${esc(r.id)}"><span><strong>${esc(r.first_name)} ${esc(r.last_name)}</strong><small>${r.unresolved ? "Accès accordé mais non relié" : "Demande en attente"} · ${esc(fmtDate(r.created_at))}</small></span><b>›</b></button>`).join("")}</div>`;
+      return manage + '<div class="aar-empty"><strong>Rien à traiter</strong><p>Tous les accès contrôlables sont actuellement reliés à une source.</p></div>';
+    return manage + `<div class="aar-list">${sec.map((r, i) => `<button type="button" class="aar-alert" data-aar-security="${i}"><span><strong>${esc(r.agent?.prenom || "")} ${esc(r.agent?.nom || "")}</strong><small>Sécurité · absent du planning actuel · accès suspendu/revue</small></span><b>›</b></button>`).join("")}${req.map((r) => `<button type="button" data-aar-request="${esc(r.id)}"><span><strong>${esc(r.first_name)} ${esc(r.last_name)}</strong><small>${r.unresolved ? "Accès accordé mais non relié" : "Demande en attente"} · ${esc(fmtDate(r.created_at))}</small></span><b>›</b></button>`).join("")}</div>`;
   }
   async function openList() {
     const d = ensureDialog(),
@@ -127,6 +129,9 @@
       data = await api("list");
       renderCard();
       body.innerHTML = listMarkup();
+      body
+        .querySelectorAll("[data-aar-manage]")
+        .forEach((b) => (b.onclick = () => location.assign("access-manage.html")));
       body
         .querySelectorAll("[data-aar-request]")
         .forEach((b) => (b.onclick = () => openRequest(b.dataset.aarRequest)));
@@ -213,8 +218,14 @@
         document.getElementById("aarDecisionNote")?.value.trim() ||
         "Votre accès STIP est prêt.",
       m = document.getElementById("aarMessage"),
-      btn = document.getElementById("aarGrant");
+      btn = document.getElementById("aarGrant"),
+      reject = document.getElementById("aarReject"),
+      actions = btn?.closest(".aar-actions");
+    if (!btn || !m) return;
     btn.disabled = true;
+    if (reject) reject.disabled = true;
+    btn.textContent = "Validation…";
+    m.className = "aar-message is-working";
     m.textContent = "Création de l’accès…";
     try {
       const r = await api("grant", {
@@ -222,14 +233,24 @@
         role_key: role,
         decision_note: note,
       });
-      await refresh();
+      m.className = "aar-message is-success";
       m.textContent = r.unresolved
-        ? "Accès créé. Il reste dans cette fenêtre jusqu’à rattachement ou suppression."
-        : "Accès créé et relié à une source.";
-      setTimeout(openList, 700);
+        ? "Accès validé ✓ · créé, mais encore à rattacher."
+        : "Accès validé ✓ · créé et relié.";
+      if (actions) {
+        actions.innerHTML =
+          '<button type="button" class="aar-reject" id="aarDoneBack">Tous les contrôles</button><button type="button" class="aar-manage-access" id="aarDoneManage">Gérer les accès</button>';
+        document.getElementById("aarDoneBack").onclick = openList;
+        document.getElementById("aarDoneManage").onclick = () =>
+          location.assign("access-manage.html");
+      }
+      refresh();
     } catch (e) {
+      m.className = "aar-message";
       m.textContent = e.message;
       btn.disabled = false;
+      btn.textContent = "Valider l’accès";
+      if (reject) reject.disabled = false;
     }
   }
   async function linkRequest(id, agentId) {
