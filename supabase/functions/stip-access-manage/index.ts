@@ -95,6 +95,15 @@ function normalizePermissions(raw: any = {}, levels: any = {}, apps: any[]) {
           ? "pro"
           : "visitor";
   }
+  if (out.messages) {
+    const rawMode = String(raw?.team_chat_mode || "").toLowerCase();
+    out.team_chat_mode =
+      rawMode === "read" || rawMode === "write" || rawMode === "admin"
+        ? rawMode
+        : out.admin
+          ? "admin"
+          : "write";
+  }
   out.__levels = normalizedLevels;
   return out;
 }

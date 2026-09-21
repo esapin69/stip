@@ -1,8 +1,8 @@
 {
   "id": "/team-chat",
-  "name": "STIP · Chat équipe",
-  "short_name": "Chat équipe",
-  "description": "Accès direct au chat de l’équipe STIP",
+  "name": "STIP · Terrain",
+  "short_name": "Terrain",
+  "description": "Accès direct au fil Terrain de l’équipe STIP",
   "lang": "fr",
   "start_url": "/team-chat.html",
   "scope": "/",

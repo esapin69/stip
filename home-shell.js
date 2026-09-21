@@ -86,7 +86,7 @@
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeChat:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4v-14Z"/><path d="M8 9h8M8 12.5h5"/></svg>',
+      '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
@@ -362,6 +362,17 @@
   }
   function has(k) {
     return !!perms()[k];
+  }
+  function teamMode() {
+    const p = perms();
+    if (!p.messages) return "none";
+    const raw = String(p.team_chat_mode || "").toLowerCase();
+    if (p.admin || raw === "admin") return "admin";
+    if (raw === "read") return "read";
+    return "write";
+  }
+  function canTeamWrite() {
+    return teamMode() === "write" || teamMode() === "admin";
   }
   function publishBoot(d) {
     state.boot = d;
@@ -1318,14 +1329,17 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       items = [
-        ["apps", "Applications", ICON.homeApps],
-        ["planning", "Mon profil", ICON.homeHome],
-        ...(has("messages") ? [["chat", "Chat équipe", ICON.homeChat]] : []),
+        { key: "apps", label: "Applications", art: ICON.homeApps, kind: "mode" },
+        { key: "planning", label: "Mon profil", art: ICON.homeHome, kind: "mode" },
+        ...(canTeamWrite()
+          ? [{ key: "share", label: "Partager", art: ICON.homeChat, kind: "share" }]
+          : []),
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-      .map(
-        ([key, label, art]) =>
-          `<button type="button" data-home-mode="${key}" aria-pressed="${active === key}" class="${active === key ? "active" : ""}"><span class="hc-home-filter-art">${art}</span><strong>${esc(label)}</strong></button>`,
+      .map((item) =>
+        item.kind === "share"
+          ? `<button type="button" data-home-share aria-pressed="false"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`
+          : `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
       )
       .join("")}</nav>`;
   }
@@ -1744,8 +1758,9 @@
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "chat" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-chat"><section id="hcTeamChatHost"></section></section>`;
-    const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    const weeklyDetails = futureWidget(),
+      terrainPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
+    return `${terrainPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1776,8 +1791,18 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
-    if (state.homeMode === "chat") window.STIPTeamChat?.mount?.(root.querySelector("#hcTeamChatHost"));
-    else window.STIPTeamChat?.stop?.();
+    if (state.homeMode === "chat") {
+      window.STIPTeamChat?.unmountPreview?.();
+      window.STIPTeamChat?.mount?.(root.querySelector("#hcTeamChatHost"));
+    } else {
+      window.STIPTeamChat?.unmountFull?.();
+      if (state.homeMode === "planning" && has("messages"))
+        window.STIPTeamChat?.mountPreview?.(root.querySelector("#hcTeamBoardPreviewHost"));
+      else window.STIPTeamChat?.unmountPreview?.();
+    }
+    root.querySelector("[data-home-share]")?.addEventListener("click", () =>
+      window.STIPTeamChat?.openQuickComposer?.(),
+    );
     root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
       window.STIPCommunication?.openDialog?.(),
     );
@@ -2097,6 +2122,17 @@
     return `<section class="hc-profile"><div class="hc-avatar" data-avatar-fallback="${esc(ini)}">${av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>${esc(label)}</small><strong>${esc(agentName(a))}</strong></div></section>`;
   };
   document.addEventListener("error", (event) => { const img = event.target; if (!(img instanceof HTMLImageElement)) return; const host = img.closest?.(".hc-avatar"); if (!host) return; host.textContent = host.dataset.avatarFallback || "ST"; }, true);
+  window.addEventListener("stip:team-chat-open", () => {
+    if (!has("messages")) return;
+    state.homeMode = "chat";
+    state.renderSig = "";
+    render();
+  });
+  window.addEventListener("stip:team-chat-close", () => {
+    state.homeMode = "planning";
+    state.renderSig = "";
+    render();
+  });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });

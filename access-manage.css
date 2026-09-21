@@ -301,3 +301,14 @@
 .access-app:not(.is-enabled) .access-single{opacity:.38}
 .access-app:not(.is-enabled) .access-levels{pointer-events:none}
 .access-app.is-enabled{border-color:var(--stip-line-strong)!important}
+
+
+/* terrain-access-levels-20260921 */
+.access-terrain-levels{min-width:270px}
+.access-terrain-levels button{min-width:0!important;padding-inline:10px!important;white-space:nowrap}
+.access-terrain-levels button:nth-child(2){min-width:105px!important}
+@media(max-width:560px){
+  .access-terrain-levels{width:100%!important;min-width:0!important}
+  .access-terrain-levels button{padding-inline:7px!important;font-size:.72rem!important}
+  .access-terrain-levels button:nth-child(2){min-width:96px!important}
+}
