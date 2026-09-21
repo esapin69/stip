@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const URL=Deno.env.get("SUPABASE_URL")!,SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}});
-const TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat",TEAM_TTL_DAYS=15;
+const TABLEAU_PREFIX="__stip_tableau_day__:",LEGACY_TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
 
 const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
@@ -204,39 +204,131 @@ function teamAccessMode(ctx:any){
 }
 function requireTeamWrite(ctx:any){
   const mode=teamAccessMode(ctx);
-  if(mode==="read")throw Error("Terrain est en lecture seule pour cet accès.");
+  if(mode==="read")throw Error("Le Tableau STIP est en lecture seule pour cet accès.");
   return mode
 }
+function parisDayKey(value:Date|string|number=new Date()){
+  const d=value instanceof Date?value:new Date(value);
+  const parts=new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"
+  }).formatToParts(d),get=(type:string)=>parts.find(x=>x.type===type)?.value||"";
+  return get("year")+"-"+get("month")+"-"+get("day")
+}
+function tableauDayKey(){return TABLEAU_PREFIX+parisDayKey()}
 async function teamConversation(ctx:any){
-  let{data:conv,error}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("direct_key",TEAM_KEY).maybeSingle();
+  const key=tableauDayKey();
+  let{data:conv,error}=await db.from("stip_conversations")
+    .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+    .eq("direct_key",key).maybeSingle();
   if(error)throw error;
+
   if(!conv){
-    const created=await db.from("stip_conversations").insert({kind:"team_chat",direct_key:TEAM_KEY,title:"Équipe",created_by_agent_id:ctx.agent.id}).select("id,kind,title,created_by_agent_id,created_at,last_message_at").single();
+    const legacy=await db.from("stip_conversations")
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+      .eq("direct_key",LEGACY_TEAM_KEY).maybeSingle();
+    if(legacy.error)throw legacy.error;
+    if(legacy.data){
+      const moved=await db.from("stip_conversations")
+        .update({direct_key:key,title:"Tableau STIP",updated_at:new Date().toISOString()})
+        .eq("id",legacy.data.id)
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+        .single();
+      if(moved.error)throw moved.error;
+      conv=moved.data
+    }
+  }
+
+  if(!conv){
+    const created=await db.from("stip_conversations").insert({
+      kind:"team_chat",
+      direct_key:key,
+      title:"Tableau STIP",
+      created_by_agent_id:ctx.agent.id
+    }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at").single();
     if(created.error){
-      const again=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("direct_key",TEAM_KEY).maybeSingle();
+      const again=await db.from("stip_conversations")
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+        .eq("direct_key",key).maybeSingle();
       if(again.error||!again.data)throw created.error;
-      conv=again.data;
+      conv=again.data
     }else conv=created.data
+  }else if(String(conv.title||"")!=="Tableau STIP"){
+    const updated=await db.from("stip_conversations")
+      .update({title:"Tableau STIP",updated_at:new Date().toISOString()})
+      .eq("id",conv.id)
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+      .single();
+    if(updated.error)throw updated.error;
+    conv=updated.data
   }
   return conv
 }
+
 async function removeTeamPhotos(paths:string[]){
   const clean=[...new Set(paths.map(x=>String(x||"").trim()).filter(Boolean))];
   if(!clean.length)return;
   const r=await db.storage.from(TEAM_BUCKET).remove(clean);
   if(r.error)throw r.error
 }
-async function purgeExpiredTeamMessages(ctx:any){
-  const conv=await teamConversation(ctx),cutoff=new Date(Date.now()-TEAM_TTL_DAYS*86400000).toISOString();
-  const{data:old,error}=await db.from("stip_messages").select("id,payload").eq("conversation_id",conv.id).lt("created_at",cutoff);
-  if(error)throw error;
-  if(!old?.length)return 0;
-  await removeTeamPhotos(old.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
-  const ids=old.map((m:any)=>m.id);
-  const del=await db.from("stip_messages").delete().in("id",ids);
-  if(del.error)throw del.error;
-  return ids.length
+async function listTableauRows(conversationId:string){
+  const rows:any[]=[];
+  for(let from=0;;from+=1000){
+    const{data,error}=await db.from("stip_messages")
+      .select("id,payload,created_at")
+      .eq("conversation_id",conversationId)
+      .order("created_at")
+      .range(from,from+999);
+    if(error)throw error;
+    const batch=data||[];
+    rows.push(...batch);
+    if(batch.length<1000)break
+  }
+  return rows
 }
+async function removeTableauStorageTree(conversationId:string){
+  const root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
+  if(root.error)throw root.error;
+  const paths:string[]=[];
+  for(const folder of root.data||[]){
+    const name=String((folder as any)?.name||"").trim();
+    if(!name)continue;
+    if((folder as any)?.id){
+      paths.push(conversationId+"/"+name);
+      continue
+    }
+    const listed=await db.storage.from(TEAM_BUCKET).list(conversationId+"/"+name,{limit:1000,offset:0});
+    if(listed.error)throw listed.error;
+    for(const file of listed.data||[]){
+      if((file as any)?.id&&(file as any)?.name)paths.push(conversationId+"/"+name+"/"+String((file as any).name))
+    }
+  }
+  if(paths.length)await removeTeamPhotos(paths)
+}
+async function purgePreviousTableauDays(currentConversationId:string){
+  const{data:conversations,error}=await db.from("stip_conversations")
+    .select("id,direct_key")
+    .eq("kind","team_chat");
+  if(error)throw error;
+  const old=(conversations||[]).filter((x:any)=>String(x.id)!==String(currentConversationId));
+  let deleted=0;
+  for(const conversation of old){
+    const rows=await listTableauRows(String(conversation.id));
+    if(rows.length){
+      await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
+      const ids=rows.map((m:any)=>m.id);
+      for(let i=0;i<ids.length;i+=200){
+        const del=await db.from("stip_messages").delete().in("id",ids.slice(i,i+200));
+        if(del.error)throw del.error
+      }
+      deleted+=ids.length
+    }
+    await removeTableauStorageTree(String(conversation.id));
+    const gone=await db.from("stip_conversations").delete().eq("id",conversation.id);
+    if(gone.error)throw gone.error
+  }
+  return deleted
+}
+
 async function signedTeamPhotos(messages:any[]){
   const paths=[...new Set(messages.map((m:any)=>String(m?.payload?.photo_path||"")).filter(Boolean))];
   if(!paths.length)return messages;
@@ -250,21 +342,37 @@ async function signedTeamPhotos(messages:any[]){
   })
 }
 async function teamThread(ctx:any){
-  await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),cutoff=new Date(Date.now()-TEAM_TTL_DAYS*86400000).toISOString();
+  const conv=await teamConversation(ctx);
+  await purgePreviousTableauDays(String(conv.id));
   const{data:messages,error}=await db.from("stip_messages")
     .select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
-    .eq("conversation_id",conv.id).gte("created_at",cutoff).order("created_at").limit(300);
+    .eq("conversation_id",conv.id)
+    .order("created_at")
+    .limit(300);
   if(error)throw error;
   const senderIds=[...new Set((messages||[]).map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
-  const{data:profiles}=senderIds.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",senderIds):{data:[] as any[]};
+  const{data:profiles}=senderIds.length
+    ?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",senderIds)
+    :{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
-  const withNames=(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}));
+  const withNames=(messages||[]).map((m:any)=>({
+    ...m,
+    sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}
+  }));
   const signed=await signedTeamPhotos(withNames);
   const meProfile=await messageProfile(String(ctx.agent.id));
   const accessMode=teamAccessMode(ctx);
-  return{conversation:conv,me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},access_mode:accessMode,can_write:accessMode!=="read",admin:accessMode==="admin",messages:signed}
+  return{
+    conversation:conv,
+    day:parisDayKey(),
+    me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},
+    access_mode:accessMode,
+    can_write:accessMode!=="read",
+    admin:accessMode==="admin",
+    messages:signed
+  }
 }
+
 async function storeTeamPhoto(conv:any,body:any){
   const mime=String(body?.mime||"").toLowerCase(),raw=String(body?.data||"");
   if(!["image/jpeg","image/png","image/webp"].includes(mime))throw Error("Format d’image non pris en charge.");
@@ -276,7 +384,7 @@ async function storeTeamPhoto(conv:any,body:any){
   }catch{throw Error("Photo invalide.")}
   if(bytes.byteLength>3000000)throw Error("Photo trop lourde.");
   const ext=mime==="image/png"?"png":mime==="image/webp"?"webp":"jpg",
-    day=new Date().toISOString().slice(0,10),
+    day=parisDayKey(),
     path=String(conv.id)+"/"+day+"/"+crypto.randomUUID()+"."+ext;
   const up=await db.storage.from(TEAM_BUCKET).upload(path,bytes,{contentType:mime,upsert:false,cacheControl:"3600"});
   if(up.error)throw up.error;
@@ -284,15 +392,16 @@ async function storeTeamPhoto(conv:any,body:any){
 }
 async function teamPhotoUpload(ctx:any,body:any){
   requireTeamWrite(ctx);
-  await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),path=await storeTeamPhoto(conv,body);
+  const conv=await teamConversation(ctx);
+  await purgePreviousTableauDays(String(conv.id));
+  const path=await storeTeamPhoto(conv,body);
   return{ok:true,path}
 }
 async function teamSend(ctx:any,body:any){
   requireTeamWrite(ctx);
-  await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),
-    text=String(body.body||"").trim().slice(0,2000),
+  const conv=await teamConversation(ctx);
+  await purgePreviousTableauDays(String(conv.id));
+  const text=String(body.body||"").trim().slice(0,2000),
     legacyPhotoPath=String(body.photo_path||"").trim(),
     inlinePhoto=body.photo&&typeof body.photo==="object"?body.photo:null,
     replyTo=String(body.reply_to_id||"").trim();
@@ -331,9 +440,9 @@ async function teamSend(ctx:any,body:any){
 
 async function teamDelete(ctx:any,body:any){
   const mode=requireTeamWrite(ctx),admin=mode==="admin";
-  await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),
-    ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
+  const conv=await teamConversation(ctx);
+  await purgePreviousTableauDays(String(conv.id));
+  const ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
   if(!ids.length)throw Error("Aucun message sélectionné.");
   const{data:rows,error}=await db.from("stip_messages")
     .select("id,payload,sender_agent_id")
