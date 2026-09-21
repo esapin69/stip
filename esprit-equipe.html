@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260921-field3" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-final1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -38,17 +38,10 @@
           Le planning équipe, l’activité et l’assistant réunis sans mélanger
           leurs rôles.
         </p>
-        <button id="teamSubscribe" class="team-calendar-subscribe" type="button" hidden>
-          <span>📅</span><strong>Calendrier équipe</strong>
-        </button>
       </section>
       <section id="teamDutyChiefHost" class="team-duty-chief-host" aria-label="Chef d’équipe présent"></section>
-      <section class="team-time-stack stip-time-stack" aria-label="Navigation temporelle">
-        <section
-          id="teamDateJumpPanel"
-          class="team-date-jump-panel team-date-jump-permanent"
-          aria-label="Calendrier mensuel"
-        ></section>
+      <section id="teamWeekControls" class="team-time-stack stip-time-stack" aria-label="Semaine active">
+        <div class="team-week-section-label" aria-hidden="true"><span>SEMAINE ACTIVE</span></div>
         <nav
           id="teamDays"
           class="team-days stip-time-days"
@@ -70,6 +63,37 @@
         <div class="team-week-skeleton" aria-label="Chargement de la journée sélectionnée">
           <i></i>
         </div>
+      </section>
+
+      <section class="team-month-zone" aria-label="Vue mensuelle Esprit d’équipe">
+        <div class="team-month-separator" aria-hidden="true"><span>AU MOIS</span></div>
+        <section
+          id="teamDateJumpPanel"
+          class="team-date-jump-panel team-date-jump-permanent"
+          aria-label="Calendrier mensuel"
+        ></section>
+
+        <section class="team-month-legend" aria-label="Légende du mois">
+          <small>LÉGENDE DU MOIS</small>
+          <div>
+            <span><i class="status-ok" aria-hidden="true">✔</i><b>Rien ne coince</b></span>
+            <span><i class="status-warning" aria-hidden="true">⚠</i><b>À surveiller</b></span>
+            <span><i class="status-critical" aria-hidden="true">🛑</i><b>Ça coince</b></span>
+            <span><i class="status-unknown" aria-hidden="true">○</i><b>Pas encore analysé</b></span>
+          </div>
+        </section>
+
+        <details class="team-calendar-pocket">
+          <summary><span aria-hidden="true">⋯</span> Options du calendrier</summary>
+          <div>
+            <button id="teamSubscribe" class="team-calendar-subscribe" type="button" hidden>
+              <span aria-hidden="true">📅</span>
+              <strong>S’abonner au calendrier équipe</strong>
+              <small>Synchronisation avec le calendrier du téléphone</small>
+              <b aria-hidden="true">›</b>
+            </button>
+          </div>
+        </details>
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
