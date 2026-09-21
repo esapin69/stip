@@ -1294,7 +1294,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:18px auto 18px!important;
   padding:0!important;
   display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,108px))!important;
+  grid-template-columns:repeat(3,minmax(0,108px))!important;
   justify-content:center!important;
   gap:10px!important;
   align-items:stretch!important;
@@ -3932,3 +3932,44 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-calendar-driven-planning .hc-days-landscape .hc-shift-code{font-size:.96rem!important;line-height:16px!important}
 }
 
+
+
+/* Fauteuils — third primary launcher */
+.hc-wheelchair-icon{
+  width:100%!important;
+  height:100%!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:15px!important;
+  background:
+    radial-gradient(circle at 32% 25%,rgba(255,255,255,.28),transparent 30%),
+    linear-gradient(145deg,#0c6570 0%,#0a3d50 100%)!important;
+  color:#fff!important;
+  font-size:2.65rem!important;
+  line-height:1!important;
+  text-shadow:0 3px 10px rgba(0,0,0,.18)!important;
+}
+.hc-home-live-badge{
+  position:absolute!important;
+  z-index:4!important;
+  top:4px!important;
+  right:4px!important;
+  min-width:24px!important;
+  height:24px!important;
+  padding:0 6px!important;
+  border:2px solid #fff!important;
+  border-radius:999px!important;
+  background:#c72f34!important;
+  color:#fff!important;
+  display:grid!important;
+  place-items:center!important;
+  font-size:.65rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  box-shadow:0 4px 12px rgba(120,25,30,.28)!important;
+}
+.hc-home-live-badge[hidden]{display:none!important}
+.hc-home-filters>button.has-live{
+  border-color:rgba(199,47,52,.38)!important;
+  box-shadow:0 10px 22px rgba(20,62,78,.10),0 0 0 3px rgba(199,47,52,.055),inset 0 1px 0 rgba(255,255,255,.96)!important;
+}

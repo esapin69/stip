@@ -123,8 +123,8 @@
         if (app.key === "messages")
           return {
             ...app,
-            label: "Tableau STIP",
-            help: "Tableau partagé du jour visible sur l’accueil.",
+            label: "Fauteuils",
+            help: "Signalements de fauteuils du jour, avec suivi de récupération.",
             terrain_access: true,
           };
         return app;
@@ -152,12 +152,12 @@
         if (app.terrain_access) {
           const mode = terrainMode(permissions);
           control =
-            '<div class="access-levels access-terrain-levels" aria-label="Accès Tableau STIP">' +
+            '<div class="access-levels access-terrain-levels" aria-label="Accès Fauteuils">' +
             '<button type="button" data-team-mode="read" class="' + (mode === "read" ? "active" : "") + '">Lire</button>' +
             '<button type="button" data-team-mode="write" class="' + (mode === "write" ? "active" : "") + '">Lire + écrire</button>' +
             '<button type="button" data-team-mode="admin" class="' + (mode === "admin" ? "active" : "") + '">Admin</button>' +
             "</div>";
-          levelHelp = "Tableau STIP : Lire consulte seulement. Lire + écrire permet de publier. Admin peut aussi gérer et supprimer tous les messages.";
+          levelHelp = "Fauteuils : Lire consulte seulement. Lire + écrire permet de publier. Admin peut aussi gérer et supprimer tous les messages.";
         } else if (app.pro_only) {
           control = '<span class="access-single access-maxi-only">MAXI</span>';
           levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";

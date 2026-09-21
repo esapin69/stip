@@ -88,6 +88,8 @@
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
+    homeChair:
+      '<span class="hc-wheelchair-icon" aria-hidden="true">♿</span>',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
@@ -1349,10 +1351,12 @@
         { key: "apps", label: "Applications", art: ICON.homeApps },
         { key: "planning", label: "Mon profil", art: ICON.homeHome },
       ];
+    if (has("messages"))
+      items.push({ key: "tableau", label: "Fauteuils", art: ICON.homeChair, live: true });
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
         (item) =>
-          `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
+          `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
       )
       .join("")}</nav>`;
   }
@@ -1707,9 +1711,8 @@
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
-      legend = fixedShiftLegend(),
-      tableauPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
-    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-subblock hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+      legend = fixedShiftLegend();
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-subblock hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1749,10 +1752,11 @@
       state.tableauFocus = false;
     } else {
       window.STIPTableau?.unmountFull?.();
-      if (state.homeMode === "planning" && has("messages"))
-        window.STIPTableau?.mountPreview?.(root.querySelector("#hcTeamBoardPreviewHost"));
-      else window.STIPTableau?.unmountPreview?.();
+      window.STIPTableau?.unmountPreview?.();
     }
+    window.STIPTableau?.bindHomeButton?.(
+      root.querySelector('[data-home-mode="tableau"]'),
+    );
     root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
       window.STIPCommunication?.openDialog?.(),
     );
