@@ -776,7 +776,7 @@
     const selected=landscape&&x.iso===state.dayFocus,
       tag=landscape?"button":"span",
       attrs=landscape?` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"`:"";
-    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}>${landscape ? weekEventMarker(x) : ""}<span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
+    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
@@ -792,16 +792,27 @@
       return start <= iso && end >= iso;
     });
   }
-  function weekEventMarker(x) {
-    const events = weekEventsForDay(x);
-    if (!events.length) return "";
-    return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
-      .slice(0, 3)
+  function weekEventActions() {
+    const w = selectedWeek(),
+      start = w[0]?.iso || "",
+      end = w[w.length - 1]?.iso || "",
+      unique = new Map();
+    futureItems().forEach((event) => {
+      const eventStart = String(event.date || "").slice(0, 10),
+        eventEnd = String(event.endDate || event.end_date || event.date || "").slice(0, 10);
+      if (!eventStart || eventStart > end || eventEnd < start) return;
+      const id = String(event.id || `${event.type || "event"}:${eventStart}:${event.title || ""}`);
+      if (!unique.has(id)) unique.set(id, event);
+    });
+    const items = [...unique.values()].slice(0, 8);
+    if (!items.length) return "";
+    return `<section class="hc-planning-subblock hc-planning-event-actions" aria-label="Repères de la semaine"><div>${items
       .map((event) => {
-        const kind = futureTypeKey(event);
-        return `<i class="hc-event-marker type-${esc(kind)}" title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`;
+        const kind = futureTypeKey(event),
+          title = event.title || event.type || "Événement";
+        return `<button type="button" class="hc-week-event-action type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(event.id)}" aria-label="${esc(title)}" title="${esc(title)}"><span aria-hidden="true">${event.icon || "•"}</span></button>`;
       })
-      .join("")}</span>`;
+      .join("")}</div></section>`;
   }
   function weekDisplayModel(w = selectedWeek()) {
     const liveTail =
@@ -825,12 +836,11 @@
   }
   function weekDaysLandscape(w) {
     const model = weekDisplayModel(w),
-      { nextMonday, visualDays, slotCount } = model,
-      hasEvents = visualDays.some((x) => weekEventsForDay(x).length),
+      { nextMonday, slotCount } = model,
       bridge = nextMonday
         ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
         : "";
-    return `<div class="hc-days-landscape ${hasEvents ? "has-week-events" : "no-week-events"} ${nextMonday ? "has-next-monday" : ""}" style="--visible-days:${slotCount}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "hc-day hc-day-landscape hc-day-next-monday", true) : ""}</div>`;
+    return `<div class="hc-days-landscape ${nextMonday ? "has-next-monday" : ""}" style="--visible-days:${slotCount}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "hc-day hc-day-landscape hc-day-next-monday", true) : ""}</div>`;
   }
   function planningStatus() {
     if (state.bootStatus === "loading" && !(state.boot?.personal || []).length)
@@ -1682,74 +1692,9 @@
     return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcProfileActions" class="hc-profile-actions stip-action-surface${empty ? " is-empty" : ""}">${actionCenterMarkup(state.actionFilter, true)}</section><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section></section>`;
   }
 
-  function canManageAgendaOthers() {
-    return has("responsable") || has("admin");
-  }
   function planningCalendarPocket() {
     if(!has("calendar_subscribe"))return "";
     return `<details class="hc-calendar-pocket"><summary><span>⋯</span> Options du planning</summary><div><button type="button" data-home-calendar-subscribe><span>📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b>›</b></button></div></details>`;
-  }
-
-  function agendaAddButton() {
-    const a=state.boot?.agent||state.session?.agent||{};
-    if(!a?.id||(!has("planning_personal")&&!canManageAgendaOthers()))return"";
-    return `<section class="hc-agenda-add-wrap"><button type="button" class="hc-agenda-add-premium" data-home-agenda-add><span>＋</span><strong>Ajouter un événement</strong><small>À mon planning${canManageAgendaOthers()?" ou à celui d’un agent":""}</small><em>›</em></button></section>`;
-  }
-  async function openAgendaAdd() {
-    document.getElementById("hcAgendaEditor")?.remove();
-    const self=state.boot?.agent||state.session?.agent||{},
-      manager=canManageAgendaOthers(),
-      wrap=document.createElement("div");
-    wrap.id="hcAgendaEditor";
-    wrap.className="hc-agenda-editor-backdrop";
-    wrap.innerHTML=`<section class="hc-agenda-editor" role="dialog" aria-modal="true"><div class="hc-agenda-editor-grab"></div><header><div><small>AGENDA STIP</small><h3>Ajouter un événement</h3></div><button type="button" data-agenda-editor-close aria-label="Fermer">×</button></header><form><div class="hc-agenda-editor-grid">${manager?`<label class="wide">Planning<select name="target_agent_id"><option value="${esc(self.id)}">Moi · ${esc(agentName(self))}</option></select></label>`:`<input type="hidden" name="target_agent_id" value="${esc(self.id)}">`}<label class="wide">Titre<input name="title" maxlength="180" required placeholder="Ex. Réunion d’équipe"></label><label>Date<input name="event_date" type="date" value="${esc(state.dayFocus||parisIso())}" required></label><label>Type<select name="event_kind"><option value="rendezvous">Rendez-vous</option><option value="formation">Formation</option><option value="reunion">Réunion</option><option value="information">Information</option><option value="autre" selected>Autre</option></select></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="wide hc-agenda-icon-field">Icône <small>Facultatif · proposée automatiquement</small><div><input name="icon" maxlength="24" value="📌"><button type="button" data-agenda-icon-auto>Auto</button></div></label><label class="wide hc-agenda-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="wide">Lieu<input name="location" maxlength="240"></label><label class="wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="hc-agenda-editor-actions"><button type="button" data-agenda-editor-cancel>Annuler</button><button type="submit">Ajouter</button></div><p data-agenda-editor-status></p></form></section>`;
-    document.body.appendChild(wrap);
-    const close=()=>wrap.remove(),
-      form=wrap.querySelector("form"),
-      defaults={rendezvous:"📅",formation:"🎓",reunion:"👥",information:"ℹ️",autre:"📌"},
-      kind=form.elements.event_kind,
-      icon=form.elements.icon;
-    wrap.querySelector("[data-agenda-editor-close]").onclick=close;
-    wrap.querySelector("[data-agenda-editor-cancel]").onclick=close;
-    wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
-    kind?.addEventListener("change",()=>{if(icon&&!icon.dataset.custom)icon.value=defaults[kind.value]||"📌"});
-    icon?.addEventListener("input",()=>{icon.dataset.custom=icon.value.trim()?"1":""});
-    wrap.querySelector("[data-agenda-icon-auto]")?.addEventListener("click",()=>{if(icon){icon.dataset.custom="";icon.value=defaults[kind?.value]||"📌"}});
-    if(manager){
-      try{
-        const data=await call(ACTION_API,"manager_agents"),
-          select=form.elements.target_agent_id,
-          own=String(self.id||"");
-        for(const a of data.agents||[]){
-          if(String(a.id)===own)continue;
-          const o=document.createElement("option");
-          o.value=a.id;o.textContent=agentName(a);select.appendChild(o);
-        }
-      }catch{}
-    }
-    form.onsubmit=async e=>{
-      e.preventDefault();
-      const fd=new FormData(form),status=wrap.querySelector("[data-agenda-editor-status]"),all=fd.get("all_day")==="on";
-      status.textContent="Ajout…";
-      try{
-        await call(ACTION_API,"agenda_direct",{
-          target_agent_id:String(fd.get("target_agent_id")||self.id||""),
-          title:String(fd.get("title")||"").trim(),
-          body:String(fd.get("body")||"").trim(),
-          event_date:String(fd.get("event_date")||""),
-          display_mode:"event",
-          event_kind:String(fd.get("event_kind")||"autre"),
-          icon:String(fd.get("icon")||"").trim(),
-          all_day:all,
-          start_time:all?null:String(fd.get("start_time")||""),
-          end_time:all?null:String(fd.get("end_time")||""),
-          location:String(fd.get("location")||"").trim(),
-          importance:"normal"
-        });
-        status.textContent="Événement ajouté ✓";
-        setTimeout(()=>{close();refresh(true).catch(()=>{})},350);
-      }catch(err){status.textContent=err?.message||"Impossible d’ajouter l’événement."}
-    };
   }
 
   function homeModeBody() {
@@ -1759,8 +1704,10 @@
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
+      eventActions = weekEventActions(),
+      legend = fixedShiftLegend(),
       tableauPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
-    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${eventActions}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-subblock hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1835,9 +1782,6 @@
         return jumpToDate(day.dataset.calDay);
       }
     });
-    root
-      .querySelector("[data-home-agenda-add]")
-      ?.addEventListener("click", () => openAgendaAdd());
     root
       .querySelector("[data-home-calendar-subscribe]")
       ?.addEventListener("click", async () => {
