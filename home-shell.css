@@ -1656,7 +1656,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease!important;
 }
 .hc-date-jump-grid>button:active{transform:scale(.94)!important}
-.hc-date-jump-grid>button.is-week{
+.hc-date-jump-grid>button.is-selected{
  border-color:rgba(8,123,146,.13)!important;
  background:#e3f4f7!important;
  color:#087b92!important;
@@ -2622,7 +2622,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   color:#294f5e!important;
   overflow:visible!important;
 }
-.hc-date-jump-permanent .hc-date-jump-grid>button.is-week{
+.hc-date-jump-permanent .hc-date-jump-grid>button.is-selected{
   border-color:rgba(8,123,146,.15)!important;
   background:rgba(227,244,247,.76)!important;
 }
@@ -3159,7 +3159,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   height:28px!important;
   font-size:.78rem!important;
 }
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week{
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-selected{
   border-color:transparent!important;
   border-radius:5px!important;
   background:#e7f5f7!important;
@@ -3167,16 +3167,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     inset 0 1px 0 rgba(255,255,255,.78),
     inset 0 -3px 0 rgba(12,135,158,.26)!important;
 }
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-start{
-  border-radius:12px 5px 5px 12px!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-end{
-  border-radius:5px 12px 12px 5px!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week-start.is-week-end{
-  border-radius:12px!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-week:active{
+.hc-calendar-driven-planning .hc-date-jump-grid>button.is-selected:active{
   transform:translateY(1px) scale(.96)!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-grid>button.is-today{
