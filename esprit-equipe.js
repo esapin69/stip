@@ -404,10 +404,14 @@
     const phone = phoneHref(agent.telephone);
     const ghe = String(agent.ghe || "").replace(/^GHE\s*/i, "");
     const key = String(agent.source_key || "");
-    return `<div class="team-agent">
+    const isChef =
+      String(item.equipe || "").toLowerCase() === "chefs" ||
+      String(agent.type_planning || "").toLowerCase() === "chefs" ||
+      /chef/i.test(String(agent.role || ""));
+    return `<div class="team-agent ${isChef ? "is-chef" : ""}">
       <button class="team-agent-main" type="button" data-team-agent="${esc(key)}" ${key ? "" : "disabled"}>
         <span class="team-agent-ghe">GHE ${esc(ghe || "—")}</span>
-        <span><strong>${esc(displayName(agent))}</strong><small>${esc(agent.role || "Brancardier")}</small></span>
+        <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
         <i aria-hidden="true">›</i>
       </button>
       ${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}
