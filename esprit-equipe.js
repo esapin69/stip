@@ -49,8 +49,12 @@
     request: 0,
     rendered: false,
     openShift: "",
-    dateJumpOpen: false,
     dateJumpMonth: "",
+    personalCalendar: {
+      plan: new Map(),
+      events: new Map(),
+      loaded: false,
+    },
   };
 
   function token() {
@@ -189,12 +193,181 @@
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
   }
 
+  function firstMondayOfMonth(key) {
+    const date = dateObj(`${key}-01`);
+    const day = date.getDay() || 7;
+    if (day !== 1) date.setDate(date.getDate() + ((8 - day) % 7));
+    return iso(date);
+  }
+
+  const CAL_SHIFT_META = {
+    M: ["morning", "Matin"],
+    J: ["day", "Journée"],
+    J4: ["late", "J4"],
+    S: ["evening", "Soir"],
+    N: ["night", "Nuit"],
+    RH: ["rest", "Repos"],
+    CA: ["leave", "Congé annuel"],
+    CP: ["leave", "Congé payé"],
+    RTT: ["rest", "RTT"],
+    RTTA: ["rest", "RTTA"],
+    RTA: ["rest", "RTA"],
+    RC: ["rest", "Récupération"],
+    RF: ["rest", "Repos férié"],
+    FO: ["training", "Formation"],
+    ST: ["training", "Référent stagiaire"],
+    VM: ["medical", "Visite médicale"],
+    SYR: ["union", "Activité syndicale"],
+    MA: ["medical", "Maladie"],
+    AM: ["medical", "Arrêt médical"],
+    AA: ["absence", "Absence autorisée"],
+    ABS: ["absence", "Absence"],
+    OFF: ["rest", "Repos"],
+    REPOS: ["rest", "Repos"],
+  };
+  const CAL_SPECIAL_ICON = {
+    RH: "🏝️",
+    CA: "🌴",
+    CP: "🌴",
+    RTT: "⏱️",
+    RTTA: "⏱️",
+    RTA: "⏱️",
+    RC: "↻",
+    RF: "•",
+    FO: "🎓",
+    ST: "👶",
+    VM: "🩺",
+    SYR: "🤝",
+    MA: "•",
+    AM: "•",
+    AA: "•",
+    ABS: "•",
+    OFF: "🏝️",
+    REPOS: "🏝️",
+  };
+  const CAL_WORK_TYPE = {
+    M: "morning",
+    J: "day",
+    J4: "late",
+    S: "evening",
+    N: "night",
+  };
+
+  function canonicalCalendarShift(raw) {
+    const source = String(raw || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\*/g, "");
+    if (!source) return "";
+    if (/^M\d*$/.test(source)) return "M";
+    if (
+      source === "J0464" ||
+      source === "J" ||
+      (/^J\d+$/.test(source) && !/^J4/.test(source))
+    )
+      return "J";
+    if (source === "J4" || /^J4\d+$/.test(source)) return "J4";
+    if (/^S\d*$/.test(source)) return "S";
+    if (/^N\d*$/.test(source)) return "N";
+    return source;
+  }
+
+  function personalShiftForDate(value) {
+    const row = state.personalCalendar.plan.get(value);
+    if (!row) return null;
+    const code = canonicalCalendarShift(row.code || row.source_value);
+    if (!code) return null;
+    const meta = CAL_SHIFT_META[code] || ["other", code];
+    return {
+      code,
+      type: meta[0],
+      label: meta[1],
+      work: Boolean(CAL_WORK_TYPE[code]),
+      icon: CAL_SPECIAL_ICON[code] || (CAL_WORK_TYPE[code] ? "" : "•"),
+    };
+  }
+
+  function pushCalendarEvent(map, value, icon) {
+    const day = String(value || "").slice(0, 10);
+    const mark = String(icon || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !mark) return;
+    if (!map.has(day)) map.set(day, []);
+    const list = map.get(day);
+    if (!list.includes(mark) && list.length < 2) list.push(mark);
+  }
+
+  function expandCalendarRange(start, end, callback, max = 370) {
+    let day = String(start || "").slice(0, 10);
+    const last = String(end || start || "").slice(0, 10);
+    let count = 0;
+    while (day && day <= last && count++ < max) {
+      callback(day);
+      day = addDays(day, 1);
+    }
+  }
+
+  function setPersonalCalendar(data = {}) {
+    const plan = new Map();
+    for (const row of data.items || []) {
+      const day = String(row?.date || "").slice(0, 10);
+      if (day) plan.set(day, row);
+    }
+    const events = new Map();
+    for (const item of data.agenda_items || []) {
+      const sourceType = String(item?.source_type || "");
+      const medical = /medical|mobi_lit|visite/i.test(sourceType);
+      pushCalendarEvent(
+        events,
+        item?.event_date,
+        medical
+          ? "🩺"
+          : String(item?.icon || "").trim() ||
+              (item?.importance === "urgent"
+                ? "⚠️"
+                : item?.importance === "important"
+                  ? "❗"
+                  : "📌"),
+      );
+    }
+    for (const item of data.personal_formations || [])
+      expandCalendarRange(
+        item?.date_debut,
+        item?.date_fin || item?.date_debut,
+        (day) => pushCalendarEvent(events, day, "🎓"),
+        40,
+      );
+    for (const item of data.personal_stagiaires || [])
+      expandCalendarRange(
+        item?.date_debut,
+        item?.date_fin || item?.date_debut,
+        (day) => pushCalendarEvent(events, day, "👶"),
+      );
+    state.personalCalendar = { plan, events, loaded: true };
+  }
+
+  async function loadPersonalCalendar() {
+    const sourceKey = String(state.access?.agent?.source_key || "").trim();
+    if (!state.access?.agent_id || !sourceKey) {
+      state.personalCalendar.loaded = true;
+      return;
+    }
+    try {
+      const data = await post("stip-agent-planning", { source_key: sourceKey });
+      setPersonalCalendar(data);
+    } catch {
+      state.personalCalendar.loaded = true;
+    }
+    renderDateJumpCalendar(
+      state.dateJumpMonth || monthKey(state.dayFocus || todayIso()),
+    );
+  }
+
   function renderDateJumpCalendar(key = "") {
     const panel = $("#teamDateJumpPanel");
     if (!panel) return;
     const basis = /^\d{4}-\d{2}$/.test(key)
         ? dateObj(`${key}-01`)
-        : dateObj(state.weekStart),
+        : dateObj(state.dayFocus || state.weekStart),
       year = basis.getFullYear(),
       month = basis.getMonth(),
       first = new Date(year, month, 1, 12),
@@ -208,15 +381,33 @@
     for (let day = 1; day <= last.getDate(); day++) {
       const date = new Date(year, month, day, 12),
         value = iso(date),
+        shift = personalShiftForDate(value),
+        eventIcons = state.personalCalendar.events.get(value) || [],
         cls = [
           value === today ? "is-today" : "",
           value >= state.weekStart && value <= weekEnd ? "is-week" : "",
           value === state.dayFocus ? "is-selected" : "",
+          shift ? "has-shift" : "",
+          eventIcons.length ? "has-event" : "",
         ]
           .filter(Boolean)
-          .join(" ");
+          .join(" "),
+        marker = shift
+          ? shift.work
+            ? `<span class="team-cal-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
+            : `<span class="team-cal-icon" aria-hidden="true">${esc(shift.icon)}</span>`
+          : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
+        aria = [
+          dayTitle(value),
+          shift?.label || "",
+          eventIcons.length
+            ? `${eventIcons.length} événement${eventIcons.length > 1 ? "s" : ""}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
       cells.push(
-        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(dayTitle(value))}"><span>${day}</span></button>`,
+        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
     state.dateJumpMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -228,31 +419,15 @@
           .replace(/^./, (char) => char.toUpperCase()),
       )}</strong><button type="button" data-team-cal-step="1" aria-label="Mois suivant">›</button></div>` +
       '<div class="team-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>' +
-      `<div class="team-date-jump-grid">${cells.join("")}</div>` +
-      '<div class="team-date-jump-actions"><button type="button" data-team-cal-today>Aujourd’hui</button><button type="button" data-team-cal-close>Fermer</button></div>';
-  }
-
-  function setDateJumpOpen(open) {
-    const panel = $("#teamDateJumpPanel"),
-      trigger = $("#teamToday");
-    if (!panel || !trigger) return;
-    state.dateJumpOpen = Boolean(open);
-    panel.hidden = !state.dateJumpOpen;
-    trigger.setAttribute("aria-expanded", state.dateJumpOpen ? "true" : "false");
-    trigger.setAttribute(
-      "aria-label",
-      state.dateJumpOpen ? "Fermer le calendrier" : "Ouvrir le calendrier",
-    );
-    if (state.dateJumpOpen)
-      renderDateJumpCalendar(state.dateJumpMonth || monthKey(state.weekStart));
+      `<div class="team-date-jump-grid">${cells.join("")}</div>`;
   }
 
   function chooseDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return;
     state.weekStart = monday(value);
     state.dayFocus = value;
+    state.dateJumpMonth = monthKey(value);
     state.openShift = "";
-    setDateJumpOpen(false);
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
@@ -261,7 +436,6 @@
     });
     showWeek({ preserve: true });
   }
-
 
   function allowed(key) {
     return Boolean(state.access?.permissions?.[key]);
@@ -381,11 +555,9 @@
 
   function renderHeader() {
     normalizeDayFocus();
-    const context = monthContext();
-    $("#teamMonthLabel").textContent = context.month;
-    $("#teamYearLabel").textContent = context.year;
-    $("#teamDateLabel").textContent = weekRange();
-    $("#teamWeekLabel").textContent = `Semaine ${isoWeek(state.weekStart)}`;
+    if (!state.dateJumpMonth)
+      state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
+    renderDateJumpCalendar(state.dateJumpMonth);
     $$("[data-team-tab]").forEach((button) => {
       const active = button.dataset.teamTab === state.tab;
       button.classList.toggle("active", active);
@@ -653,7 +825,6 @@
   }
 
   function moveWeek(offset) {
-    setDateJumpOpen(false);
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
     window.STIPNav?.remember?.({
@@ -668,39 +839,20 @@
   $$("[data-team-tab]").forEach((button) =>
     button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
   );
-  $("#teamPrev").addEventListener("click", () => moveWeek(-1));
-  $("#teamNext").addEventListener("click", () => moveWeek(1));
-  function goToday() {
-    state.weekStart = monday(todayIso());
-    state.dayFocus = todayIso();
-    state.openShift = "";
-    window.STIPNav?.remember?.({
-      tab: state.tab,
-      weekStart: state.weekStart,
-      dayFocus: state.dayFocus,
-    });
-    showWeek({ preserve: true });
-  }
-  $("#teamToday").addEventListener("click", () =>
-    setDateJumpOpen(!state.dateJumpOpen),
-  );
-  $("#teamCurrent").addEventListener("click", () => {
-    setDateJumpOpen(false);
-    goToday();
-  });
   $("#teamDateJumpPanel").addEventListener("click", (event) => {
-    const close = event.target.closest("[data-team-cal-close]"),
-      today = event.target.closest("[data-team-cal-today]"),
-      step = event.target.closest("[data-team-cal-step]"),
+    const step = event.target.closest("[data-team-cal-step]"),
       day = event.target.closest("[data-team-cal-day]");
-    if (close) return setDateJumpOpen(false);
-    if (today) return chooseDate(todayIso());
     if (step) {
-      state.dateJumpMonth = shiftMonthKey(
+      const nextMonth = shiftMonthKey(
         $("#teamDateJumpPanel").dataset.calendarMonth,
         step.dataset.teamCalStep,
       );
-      return renderDateJumpCalendar(state.dateJumpMonth);
+      const now = todayIso();
+      const target = now.startsWith(nextMonth)
+        ? now
+        : firstMondayOfMonth(nextMonth);
+      state.dateJumpMonth = nextMonth;
+      return chooseDate(target);
     }
     if (day) return chooseDate(day.dataset.teamCalDay);
   });
@@ -717,16 +869,10 @@
     if (!nextDay || nextDay === state.dayFocus) return;
 
     state.dayFocus = nextDay;
+    state.dateJumpMonth = monthKey(nextDay);
     state.openShift = "";
 
-    $("#teamDays")
-      .querySelectorAll("[data-team-day]")
-      .forEach((item) => {
-        const selected = item.dataset.teamDay === state.dayFocus;
-        item.classList.toggle("selected", selected);
-        item.setAttribute("aria-pressed", String(selected));
-      });
-
+    renderHeader();
     renderContent(cacheEntry(state.weekStart));
 
     window.STIPNav?.remember?.({
@@ -755,6 +901,7 @@
     if (!token()) return location.replace("index.html");
     try {
       state.access = await post("stip-access", { action: "me" });
+      loadPersonalCalendar().catch(() => {});
       const teamSubscribe=$("#teamSubscribe");
       if(teamSubscribe)teamSubscribe.hidden=!(allowed("planning_team")&&allowed("calendar_subscribe"));
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
