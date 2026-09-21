@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260921-sharedmonth1";
+    V = "20260921-sharedmonth2";
   function load(src) {
     if (loaded.has(src)) return loaded.get(src);
     const p = new Promise((ok, ko) => {
