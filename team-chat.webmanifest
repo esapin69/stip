@@ -1,0 +1,21 @@
+{
+  "id": "/team-chat",
+  "name": "STIP · Chat équipe",
+  "short_name": "Chat équipe",
+  "description": "Accès direct au chat de l’équipe STIP",
+  "lang": "fr",
+  "start_url": "/team-chat.html",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7fbfc",
+  "theme_color": "#f7fbfc",
+  "icons": [
+    {
+      "src": "/images/icone_app/home-bell.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
