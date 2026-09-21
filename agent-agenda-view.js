@@ -9,7 +9,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav5";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav6";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -164,7 +164,13 @@
       const feed=await post(CALENDAR,body);
       if(isAndroid()){
         const ok=await clipboard(feed.https_url);
-        if(!ok)return manualCalendarUrl(feed.https_url,status);
+        if(!ok){
+          manualCalendarUrl(feed.https_url,status);
+          button.disabled=false;
+          button.classList.remove("is-loading");
+          button.innerHTML=old;
+          return;
+        }
         status.innerHTML=`<div class="aav-subscribe-done"><strong>✓ Adresse d’abonnement copiée</strong><a href="${GOOGLE_ADD_URL}" target="_blank" rel="noopener">Ouvrir Google Agenda</a><small>Dans Chrome, utilise « Version pour ordinateur » si nécessaire, puis Autres agendas → + → À partir de l’URL.</small></div>`;
       }else{
         status.innerHTML='<small class="aav-subscribe-working">Ouverture du calendrier…</small>';
