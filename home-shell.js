@@ -26,6 +26,7 @@
     dayFocus: parisIso(),
     homeMode: "planning",
     dateJumpMonth: "",
+    tableauFocus: false,
   };
   const REST = new Set([
     "RH",
@@ -1332,17 +1333,13 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       items = [
-        { key: "apps", label: "Applications", art: ICON.homeApps, kind: "mode" },
-        { key: "planning", label: "Mon profil", art: ICON.homeHome, kind: "mode" },
-        ...(canTeamWrite()
-          ? [{ key: "share", label: "Partager", art: ICON.homeChat, kind: "share" }]
-          : []),
+        { key: "apps", label: "Applications", art: ICON.homeApps },
+        { key: "planning", label: "Mon profil", art: ICON.homeHome },
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-      .map((item) =>
-        item.kind === "share"
-          ? `<button type="button" data-home-share aria-pressed="false"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`
-          : `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
+      .map(
+        (item) =>
+          `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
       )
       .join("")}</nav>`;
   }
@@ -1759,11 +1756,11 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    if (state.homeMode === "chat" && has("messages"))
-      return `<section class="hc-home-pane hc-home-pane-chat"><section id="hcTeamChatHost"></section></section>`;
+    if (state.homeMode === "tableau" && has("messages"))
+      return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
-      terrainPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
-    return `${terrainPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+      tableauPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
+    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1794,18 +1791,19 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
-    if (state.homeMode === "chat") {
-      window.STIPTeamChat?.unmountPreview?.();
-      window.STIPTeamChat?.mount?.(root.querySelector("#hcTeamChatHost"));
+    if (state.homeMode === "tableau") {
+      window.STIPTableau?.unmountPreview?.();
+      window.STIPTableau?.mount?.(
+        root.querySelector("#hcTableauStipHost"),
+        { focus: !!state.tableauFocus },
+      );
+      state.tableauFocus = false;
     } else {
-      window.STIPTeamChat?.unmountFull?.();
+      window.STIPTableau?.unmountFull?.();
       if (state.homeMode === "planning" && has("messages"))
-        window.STIPTeamChat?.mountPreview?.(root.querySelector("#hcTeamBoardPreviewHost"));
-      else window.STIPTeamChat?.unmountPreview?.();
+        window.STIPTableau?.mountPreview?.(root.querySelector("#hcTeamBoardPreviewHost"));
+      else window.STIPTableau?.unmountPreview?.();
     }
-    root.querySelector("[data-home-share]")?.addEventListener("click", () =>
-      window.STIPTeamChat?.openQuickComposer?.(),
-    );
     root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
       window.STIPCommunication?.openDialog?.(),
     );
@@ -2040,15 +2038,16 @@
         requested = sessionStorage.getItem("stip_home_mode_once");
       if (quick === "notifications" || quick === "exchange") {
         state.homeMode = "notifications";
-      } else if (quick === "teamchat" && has("messages")) {
-        state.homeMode = "chat";
-      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "chat") {
+      } else if ((quick === "tableau" || quick === "teamchat") && has("messages")) {
+        state.homeMode = "tableau";
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "tableau") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
     } catch {}
     state.bootStatus = "loading";
     state.bootError = "";
+    if (state.homeMode === "chat") state.homeMode = "tableau";
     state.renderSig = "";
     const a = state.session?.agent || {};
     publishBoot({
@@ -2125,14 +2124,16 @@
     return `<section class="hc-profile"><div class="hc-avatar" data-avatar-fallback="${esc(ini)}">${av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>${esc(label)}</small><strong>${esc(agentName(a))}</strong></div></section>`;
   };
   document.addEventListener("error", (event) => { const img = event.target; if (!(img instanceof HTMLImageElement)) return; const host = img.closest?.(".hc-avatar"); if (!host) return; host.textContent = host.dataset.avatarFallback || "ST"; }, true);
-  window.addEventListener("stip:team-chat-open", () => {
+  window.addEventListener("stip:tableau-open", (event) => {
     if (!has("messages")) return;
-    state.homeMode = "chat";
+    state.homeMode = "tableau";
+    state.tableauFocus = !!event?.detail?.focus;
     state.renderSig = "";
     render();
   });
-  window.addEventListener("stip:team-chat-close", () => {
+  window.addEventListener("stip:tableau-close", () => {
     state.homeMode = "planning";
+    state.tableauFocus = false;
     state.renderSig = "";
     render();
   });

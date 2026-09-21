@@ -1294,7 +1294,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:18px auto 18px!important;
   padding:0!important;
   display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-template-columns:repeat(2,minmax(0,108px))!important;
+  justify-content:center!important;
   gap:10px!important;
   align-items:stretch!important;
 }
@@ -1302,8 +1303,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   position:relative!important;
   width:100%!important;
   min-width:0!important;
-  min-height:122px!important;
-  padding:8px 8px 10px!important;
+  min-height:112px!important;
+  padding:7px 5px 9px!important;
   border:1px solid color-mix(in srgb,var(--stip-line) 88%,#fff)!important;
   border-radius:22px!important;
   background:linear-gradient(180deg,#fff 0%,color-mix(in srgb,var(--stip-surface-soft) 72%,#fff) 100%)!important;
@@ -1332,7 +1333,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-home-filter-art{
   position:relative!important;
   z-index:1!important;
-  width:min(100%,148px)!important;
+  width:100%!important;
+  max-width:108px!important;
   aspect-ratio:16/9!important;
   flex:0 0 auto!important;
   display:block!important;
@@ -3593,24 +3595,21 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* terrain-launcher-20260921 */
-.hc-home-filters:has(>button:nth-child(3)){
-  width:min(100%,368px)!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:8px!important;
-}
-.hc-home-filters:has(>button:nth-child(3))>button{
-  min-height:112px!important;
-  padding:7px 5px 9px!important;
-}
-.hc-home-filters:has(>button:nth-child(3)) .hc-home-filter-art{
-  width:100%!important;
-  max-width:108px!important;
-}
+/* HOME PRIMARY LAUNCHERS — two buttons, three-button proportions */
 @media(max-width:430px){
-  .hc-home-filters:has(>button:nth-child(3)){width:min(100%,350px)!important;gap:7px!important}
-  .hc-home-filters:has(>button:nth-child(3))>button{min-height:108px!important;padding-inline:4px!important}
-  .hc-home-filters:has(>button:nth-child(3))>button>strong{font-size:.72rem!important}
+  .hc-home-filters{
+    width:min(100%,350px)!important;
+    grid-template-columns:repeat(2,minmax(0,106px))!important;
+    justify-content:center!important;
+    gap:8px!important;
+  }
+  .hc-home-filters>button{
+    min-height:108px!important;
+    padding-inline:4px!important;
+  }
+  .hc-home-filters>button>strong{
+    font-size:.72rem!important;
+  }
 }
 
 /* HOME PLANNING — ONE AUTHORITATIVE LAYER — 20260921
