@@ -312,7 +312,7 @@
     const staffingRead = field()?.staffing?.(staff),
       fieldRead =
         staffingRead?.known
-          ? `<div class="field-read ${esc(staffingRead.level)}"><strong>${esc(staffingRead.symbol)} ${esc(staffingRead.headline)}</strong>${staffingRead.detail ? `<span>${esc(staffingRead.detail)}</span>` : ""}</div>`
+          ? `<div class="field-read ${esc(staffingRead.level)}"><strong>${esc(staffingRead.symbol)} ${esc(staffingRead.headline)}</strong>${staffingRead.detail ? `<span>${esc(staffingRead.detail)}</span>` : ""}${staffingRead.proposal ? `<small>${esc(staffingRead.proposal)}</small>` : ""}</div>`
           : "";
     $("#dayBody").innerHTML =
       `${fieldRead}<div class="coverage-caption"><span>Détail des références</span><strong>${staff?.available ? "Calcul STIP" : "Données partielles"}</strong></div><div class="coverage-state ${gap < 0 ? "under" : gap > 0 ? "over" : "balanced"}"><span>${gap == null ? "Couverture" : gap < 0 ? "Sous la référence" : gap > 0 ? "Marge disponible" : "Référence atteinte"}</span><strong>${gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`}</strong></div><div class="day-context"><div><strong>${planned}</strong><span>planifiés sur les créneaux suivis</span></div><div><strong>${target == null ? "—" : target}</strong><span>référence</span></div></div>${detailRows ? `<div class="coverage-rows">${detailRows}</div>` : ""}${special}${fresh}<div class="day-note">${events.length ? `${events.length} événement(s) connu(s) · ` : ""}${alerts.length ? `${alerts.length} alerte(s) · ` : ""}${ss.below_count ? `${ss.below_count} écart(s) utile(s) à regarder.` : "rien d’utile ne ressort côté effectif."}</div>`;
