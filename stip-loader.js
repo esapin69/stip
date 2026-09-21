@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260921-calendar-inline1";
+    V = "20260921-agentagenda1";
   function load(src) {
     if (loaded.has(src)) return loaded.get(src);
     const p = new Promise((ok, ko) => {
@@ -28,6 +28,7 @@
     else setTimeout(run, 900);
   }
   const personalCore = [
+    "agent-agenda-view.js",
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
     "planning-home.js",
@@ -42,7 +43,11 @@
     "day-workflow-leave.js",
     "day-workflow-home-bridge.js",
   ];
-  const teamCore = ["planning-home.js", "planning-hub-enhance.js"];
+  const teamCore = [
+    "agent-agenda-view.js",
+    "planning-home.js",
+    "planning-hub-enhance.js",
+  ];
   const teamExtras = [
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
