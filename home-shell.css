@@ -46,7 +46,7 @@
 /* week-badges-nav-20260918 */
 .hc-week-nav{grid-template-columns:46px auto 46px!important;gap:8px!important}
 .hc-week-nav button{width:46px!important;height:46px!important;border-width:1.5px!important;background:#f2f8f9!important;color:#0e4c61!important;font-size:2.15rem!important;font-weight:750!important;box-shadow:0 3px 9px rgba(15,73,91,.07)!important}
-.hc-week-nav b{font-size:.8rem!important;font-weight:950!important;letter-spacing:.025em!important;color:#4d6d78!important}
+.hc-week-nav b{font-size:.84rem!important;font-weight:950!important;letter-spacing:.025em!important;color:#4d6d78!important}
 .hc-days-seven .hc-day{grid-template-rows:20px 26px 34px 24px!important}
 .hc-days-seven .hc-day>.hc-week-visual{height:34px!important;min-height:34px!important;display:flex!important;align-items:center!important;justify-content:center!important}
 .hc-days-seven .hc-day>.hc-week-visual img{display:none!important}
@@ -345,7 +345,7 @@
 .hc-widget-future .hc-event-date{font-size:.68rem!important;font-weight:900!important}
 .hc-widget-future .hc-event-row>span>strong{font-size:1.08rem!important;line-height:1.08!important;font-weight:950!important}
 .hc-widget-future .hc-event-time{font-size:.98rem!important;line-height:1.08!important}
-.hc-widget-future .hc-event-place,.hc-widget-future .hc-event-fallback{font-size:.8rem!important;line-height:1.2!important}
+.hc-widget-future .hc-event-place,.hc-widget-future .hc-event-fallback{font-size:.84rem!important;line-height:1.2!important}
 .hc-widget-future .hc-event-row{padding-top:12px!important;padding-bottom:12px!important}
 
 /* Applications / fourth shortcut: rocket engine becomes an in-page launcher, never an overlay. */
@@ -690,7 +690,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-left .hc-days-vertical .hc-day-vertical>b{font-size:1.22rem!important}
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual{min-height:27px!important}
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-badge{
-  min-width:35px!important;min-height:24px!important;padding:3px 6px!important;border-radius:9px!important;font-size:.72rem!important
+  min-width:35px!important;min-height:27px!important;padding:3px 6px!important;border-radius:9px!important;font-size:.72rem!important
 }
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-status-icon{font-size:1.15rem!important}
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-shift-time{right:4px!important;bottom:2px!important;font-size:.48rem!important}
@@ -778,7 +778,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-planning-left .hc-weekend-row .hc-day-weekend>i{
   width:calc(100% + 8px)!important;
   margin:0 -4px!important;
-  padding:2px 1px 2px!important;
+  padding:5px 1px 4px!important;
   font-size:.72rem!important;
 }
 .hc-planning-left .hc-weekend-row .hc-day-weekend>b{font-size:1.52rem!important}
@@ -809,7 +809,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   align-self:center!important;
 }
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual{
-  min-height:24px!important;
+  min-height:27px!important;
   align-self:start!important;
 }
 .hc-planning-left .hc-days-vertical .hc-day-vertical>.hc-week-visual .hc-shift-name{
@@ -928,7 +928,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  align-items:center!important;
  justify-content:center!important;
  width:100%!important;
- min-height:24px!important;
+ min-height:27px!important;
 }
 .hc-planning-left .hc-rest-line{
  display:inline-flex!important;
@@ -1755,7 +1755,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-week-nav-global button{
  width:52px!important;
- height:44px!important;
+ height:52px!important;
  border-radius:50%!important;
  background:linear-gradient(145deg,#fff,#edf4f6)!important;
  border:1px solid rgba(26,84,102,.12)!important;
@@ -2637,7 +2637,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-week-nav-global.hc-week-nav-hero>button{
     width:52px!important;
-    height:44px!important;
+    height:52px!important;
     font-size:2rem!important;
   }
   .hc-week-nav-hero .hc-week-context>strong{
