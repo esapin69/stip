@@ -301,15 +301,10 @@
         `<button type="button" class="${cls} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
-    const monthKey = monthKeyOf(first),
-      currentMonthKey = parisIso().slice(0, 7),
-      returnToToday =
-        monthKey === currentMonthKey
-          ? ""
-          : '<div class="hc-date-jump-actions"><button type="button" class="hc-week-today hc-date-jump-today" data-cal-today>Aujourd’hui</button></div>';
+    const monthKey = monthKeyOf(first);
     state.dateJumpMonth = monthKey;
     panel.dataset.calendarMonth = monthKey;
-    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div>${returnToToday}`;
+    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div>`;
   }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
@@ -1782,8 +1777,7 @@
       );
     dateJumpPanel?.addEventListener("click", (e) => {
       const step = e.target.closest("[data-cal-step]"),
-        day = e.target.closest("[data-cal-day]"),
-        today = e.target.closest("[data-cal-today]");
+        day = e.target.closest("[data-cal-day]");
       if (step) {
         state.dateJumpMonth = shiftMonthKey(
           dateJumpPanel.dataset.calendarMonth,
@@ -1799,10 +1793,6 @@
           state.dateJumpMonth ||
           String(day.dataset.calDay || "").slice(0, 7);
         return jumpToDate(day.dataset.calDay);
-      }
-      if (today) {
-        state.dateJumpMonth = parisIso().slice(0, 7);
-        return jumpToDate(parisIso());
       }
     });
     root
