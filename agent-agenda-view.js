@@ -42,16 +42,22 @@
     N:{label:"Nuit",time:"21h00–06h50",icon:"●",family:"n"},
     RH:{label:"Repos",time:"",icon:"🏝️",family:"rh"},
     CA:{label:"Congé",time:"",icon:"🌴",family:"off"},
+    CP:{label:"Congé",time:"",icon:"🌴",family:"off"},
     RTT:{label:"RTT",time:"",icon:"⏱️",family:"off"},
     RTTA:{label:"RTTA",time:"",icon:"⏱️",family:"off"},
     RTA:{label:"RTA",time:"",icon:"⏱️",family:"off"},
     RC:{label:"Récupération",time:"",icon:"↻",family:"off"},
+    RF:{label:"Repos férié",time:"",icon:"•",family:"off"},
     FO:{label:"Formation",time:"",icon:"🎓",family:"off"},
+    ST:{label:"Référent stagiaire",time:"",icon:"👶",family:"off"},
+    VM:{label:"Visite médicale",time:"",icon:"🩺",family:"off"},
     SYR:{label:"Activité syndicale",time:"",icon:"🤝",family:"off"},
     MA:{label:"Absence",time:"",icon:"•",family:"off"},
     AM:{label:"Absence",time:"",icon:"•",family:"off"},
     AA:{label:"Absence autorisée",time:"",icon:"•",family:"off"},
-    ABS:{label:"Absence",time:"",icon:"•",family:"off"}
+    ABS:{label:"Absence",time:"",icon:"•",family:"off"},
+    OFF:{label:"Repos",time:"",icon:"🏝️",family:"off"},
+    REPOS:{label:"Repos",time:"",icon:"🏝️",family:"off"}
   };
   const SPECIAL={
     M0130:{base:"M",time:"3h45 · horaire adapté"},
