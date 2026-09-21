@@ -9,7 +9,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav7";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav8";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -24,6 +24,11 @@
   function add(v,n){const d=dobj(v);d.setDate(d.getDate()+n);return iso(d)}
   function monday(v){const d=dobj(v),x=d.getDay()||7;d.setDate(d.getDate()-x+1);return iso(d)}
   function monthKey(v){return String(v||today()).slice(0,7)}
+  function firstMondayInMonth(k){
+    const d=dobj(k+"-01"),day=d.getDay()||7;
+    if(day!==1)d.setDate(d.getDate()+(8-day)%7);
+    return iso(d);
+  }
   function fmtMonth(k){return dobj(k+"-01").toLocaleDateString("fr-FR",{month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
   function shortDay(v){return dobj(v).toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","").toUpperCase()}
   function fullDay(v){return dobj(v).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
@@ -204,11 +209,8 @@
     const [y,m]=state.month.split("-").map(Number),d=new Date(y,m-1+Number(step),1,12),k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
     if(k<state.bounds.min||k>state.bounds.max)return;
     state.month=k;
-    const todayKey=today(),candidates=[
-      ...(state.data.items||[]).map(x=>String(x.date||"").slice(0,10)),
-      ...state.events.map(x=>x.date)
-    ].filter(x=>x.startsWith(k)).sort();
-    state.selected=todayKey.startsWith(k)?todayKey:(candidates[0]||`${k}-01`);
+    const todayKey=today();
+    state.selected=todayKey.startsWith(k)?todayKey:firstMondayInMonth(k);
     render();
   }
   async function reload(){
