@@ -15,13 +15,14 @@ const d8=(d:string)=>String(d).replaceAll('-','')
 const dayShift=(d:string,n:number)=>{const x=new Date(String(d)+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)}
 const next=(d:string)=>dayShift(d,1)
 const stamp=(v:any)=>new Date(v||Date.now()).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')
-const CAL_REV=29
-const CAL_BUILD='2026-09-18T17:37:00Z'
+const CAL_REV=30
+const CAL_BUILD='2026-09-21T11:30:00Z'
 function eventStamp(v:any){const a=new Date(v||0),b=new Date(CAL_BUILD);return stamp(a>b?a:b)}
 const esc=(v:any)=>String(v??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')
 function fold(line:string,limit=73){const out:string[]=[];let cur='',bytes=0;for(const ch of line){const n=enc.encode(ch).length;if(cur&&bytes+n>limit){out.push(cur);cur=ch;bytes=n}else{cur+=ch;bytes+=n}}if(cur)out.push(cur);return out.join('\r\n ')}
 const head=(n:string)=>['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//STIP//GHE//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH',`X-WR-CALNAME:${esc(n)}`,'X-WR-TIMEZONE:Europe/Paris','REFRESH-INTERVAL;VALUE=DURATION:PT1H','X-PUBLISHED-TTL:PT1H']
 function ev(l:string[],u:string,d:string,s:string,x:string,t:any){const es=eventStamp(t);l.push('BEGIN:VEVENT',`UID:${esc(u)}`,`DTSTAMP:${es}`,`LAST-MODIFIED:${es}`,`SEQUENCE:${CAL_REV}`,`DTSTART;VALUE=DATE:${d8(d)}`,`DTEND;VALUE=DATE:${d8(next(d))}`,fold(`SUMMARY:${esc(s)}`),fold(`DESCRIPTION:${esc(x)}`),'TRANSP:TRANSPARENT','STATUS:CONFIRMED','END:VEVENT')}
+function evRange(l:string[],u:string,start:string,endExclusive:string,s:string,x:string,t:any){const es=eventStamp(t);l.push('BEGIN:VEVENT',`UID:${esc(u)}`,`DTSTAMP:${es}`,`LAST-MODIFIED:${es}`,`SEQUENCE:${CAL_REV}`,`DTSTART;VALUE=DATE:${d8(start)}`,`DTEND;VALUE=DATE:${d8(endExclusive)}`,fold(`SUMMARY:${esc(s)}`),fold(`DESCRIPTION:${esc(x)}`),'TRANSP:TRANSPARENT','STATUS:CONFIRMED','END:VEVENT')}
 function mins(t:string){const [h,m]=String(t).split(':').map(Number);return h*60+m}
 function evTimed(l:string[],u:string,d:string,a:string,b:string,s:string,x:string,t:any,alarm=false){let ed=d,sm=mins(a),em=mins(b);if(em<=sm)ed=next(d);const aa=a.replace(':','')+'00',bb=b.replace(':','')+'00',es=eventStamp(t);l.push('BEGIN:VEVENT',`UID:${esc(u)}`,`DTSTAMP:${es}`,`LAST-MODIFIED:${es}`,`SEQUENCE:${CAL_REV}`,`DTSTART;TZID=Europe/Paris:${d8(d)}T${aa}`,`DTEND;TZID=Europe/Paris:${d8(ed)}T${bb}`,fold(`SUMMARY:${esc(s)}`),fold(`DESCRIPTION:${esc(x)}`),'TRANSP:TRANSPARENT','STATUS:CONFIRMED');if(alarm)l.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',fold(`DESCRIPTION:${esc(s)}`),'END:VALARM');l.push('END:VEVENT')}
 
@@ -73,10 +74,117 @@ function resolveRef(ref:string,dir:any){const q=keyNorm(ref);let a=dir.agents.fi
 async function loadChiefPlan(dir:any,start:string,end:string){const chiefs=dir.agents.filter((a:any)=>String(a.equipe||a.type_planning||'').toLowerCase()==='chefs'||String(a.role||'').toLowerCase().includes('chef')),ids=chiefs.map((a:any)=>a.id),map=new Map();if(ids.length){const pp=await planningPaged('date,code,agent_id,imported_at',start,end,{ids});for(const p of pp)map.set(`${p.agent_id}|${p.date}`,p)}return{chiefs,map}}
 function chiefsAt(date:string,time:string,chiefData:any,dir:any){const out:any[]=[];for(const a of chiefData.chiefs){const p=chiefData.map.get(`${a.id}|${date}`),k=norm(p?.code);if(k&&SHIFT[k]&&withinShift(time,SHIFT[k]))out.push({a,c:contactFor(a,dir),k})}return out}
 
-async function personal(a:any,shared=false){const start=ymd(-60),end=ymd(370);const [{data:plan,error:pe},{data:manual,error:me},{data:frows,error:fe},{data:srows,error:se},dir]=await Promise.all([db.from('planning').select('date,code,observation,imported_at').eq('agent_id',a.id).gte('date',start).lte('date',end).order('date'),db.from('stip_agent_agenda_items').select('*').eq('agent_id',a.id).eq('status','active').gte('event_date',start).lte('event_date',end).order('event_date').order('start_time'),db.from('formations').select('id,source_key,agent_source_key,intitule,date_debut,date_fin,lieu,statut,updated_at,last_seen_at,horaire').gte('date_fin',start+'T00:00:00Z').lte('date_debut',end+'T23:59:59Z').order('date_debut'),db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at,last_seen_at').gte('date_fin',start).lte('date_debut',end).order('date_debut'),loadDirectory()]);if(pe)throw pe;if(me)throw me;if(fe)throw fe;if(se)throw se;const l=head(shared?sharedCalendarName(a):personalCalendarName(a)),notes=new Map(),baseMap=new Map();for(const r of manual||[]){if(r.display_mode==='day_note'){if(!notes.has(r.event_date))notes.set(r.event_date,[]);notes.get(r.event_date).push(r)}}for(const r of plan||[])baseMap.set(r.date,r);for(const r of plan||[]){const raw=String(r.code||'').trim().toUpperCase(),k=norm(raw);let sum='',desc='';if(k&&SHIFT[k]){const q=SHIFT[k],variant=raw&&raw!==k?raw:'';sum=`${q.personal} ${q.label} · ${q.text}`;desc=[`Horaire : ${q.text}`,variant?`Code planning : ${variant}`:'',!shared&&r.observation?`Info : ${r.observation}`:''].filter(Boolean).join('\n')}else if(SICK.has(raw)){sum=shared?'Absence':raw||'Absence';desc=shared?'Absence':`Absence : ${raw||'—'}`}else{sum=raw||'Repos';desc=`Repos : ${raw||'Repos'}`}const ns=notes.get(r.date)||[];for(const n of ns){const sensitive=shared&&sensitiveAgenda(n),title=sensitive?'Rendez-vous':n.title;desc+=`${desc?'\n\n•••\n\n':''}📌 ${title}${!sensitive&&n.body?`\n${n.body}`:''}${!sensitive&&n.location?`\n📍 ${n.location}`:''}`}ev(l,`stip-personal-${a.id}-${r.date}@esapin.com`,r.date,sum,desc,r.imported_at)}for(const [date,ns] of notes){if(baseMap.has(date))continue;const desc=ns.map((n:any)=>{const sensitive=shared&&sensitiveAgenda(n),title=sensitive?'Rendez-vous':n.title;return`📌 ${title}${!sensitive&&n.body?`\n${n.body}`:''}${!sensitive&&n.location?`\n📍 ${n.location}`:''}`}).join('\n\n•••\n\n');ev(l,`stip-personal-note-${a.id}-${date}@esapin.com`,date,'📌 Information STIP',desc,ns.map((x:any)=>x.updated_at).sort().at(-1))}for(const r of manual||[]){if(r.display_mode==='day_note')continue;const sensitive=shared&&sensitiveAgenda(r),icon=sensitive?'📅':(String(r.icon||'').trim()||(r.importance==='urgent'?'⚠️':r.importance==='important'?'❗':'📌')),title=sensitive?'Rendez-vous':r.title,desc=sensitive?'':[r.body||'',r.location?`📍 ${r.location}`:''].filter(Boolean).join('\n');if(r.all_day)ev(l,`stip-agenda-${r.id}@esapin.com`,r.event_date,`${icon} ${title}`,desc,r.updated_at);else evTimed(l,`stip-agenda-${r.id}@esapin.com`,r.event_date,String(r.start_time).slice(0,5),String(r.end_time).slice(0,5),`${icon} ${title}`,desc,r.updated_at,false)}const chiefData=await loadChiefPlan(dir,start,end),auto:any[]=[],fg=new Map();for(const r of frows||[]){const k=sessionKey(r);if(!fg.has(k))fg.set(k,[]);fg.get(k).push(r)}for(const rs of fg.values()){if(!rs.some((r:any)=>String(r.agent_source_key||'')===String(a.source_key||'')))continue;const f:any=rs[0],sd=parisDate(f.date_debut),ed=parisDate(f.date_fin),range=timeRange(f.horaire)||{start:parisTime(f.date_debut),end:parisTime(f.date_fin),text:`${parisTime(f.date_debut)}–${parisTime(f.date_fin)}`},days:string[]=[];let d=sd,g=0;while(d<=ed&&g++<40){days.push(d);d=next(d)}const places=splitFormationPlaces(f.lieu,days.length),colleagues=rs.filter((r:any)=>String(r.agent_source_key||'')!==String(a.source_key||'')).map((r:any)=>{const aa=dir.agents.find((x:any)=>x.source_key===r.agent_source_key);return{a:aa||{source_key:r.agent_source_key},c:contactFor(aa,dir)}});days.forEach((date:string,i:number)=>auto.push({type:'formation',date,start:range.start,end:range.end,time:range.text,title:String(f.intitule||'Formation'),place:places[i],colleagues,stamp:rs.map((x:any)=>x.updated_at||x.last_seen_at).filter(Boolean).sort().at(-1)}))}for(const r of srows||[]){const refs=splitRefs(r.referent);if(!refs.some(x=>refMatchesAgent(x,a)))continue;const range=timeRange(r.horaires);if(!range)continue;const colleagues=refs.filter(x=>!refMatchesAgent(x,a)).map(x=>{const z=resolveRef(x,dir);return{a:z?.a||{nom:x},c:z?.c}});let d=String(r.date_debut||''),ed=String(r.date_fin||r.date_debut||''),g=0;while(d&&d<=ed&&g++<370){if(d>=start&&d<=end)auto.push({type:'stagiaire',date:d,start:range.start,end:range.end,time:range.text,title:fullPerson(r.prenom,r.nom),place:'',colleagues,stamp:r.updated_at||r.last_seen_at});d=next(d)}}let autoEventCount=0;for(const x of auto){const p=baseMap.get(x.date),pk=norm(p?.code),shift=pk&&SHIFT[pk]?SHIFT[pk]:null;let strong=addMinutes(x.date,x.start,-60);if(shift&&strong.date===x.date&&mins(strong.time)<mins(shift.start))strong={date:x.date,time:shift.start};const simpleStart=shift?{date:x.date,time:shift.start}:null,strongEnd=plusDuration(strong.date,strong.time,15),chiefs=chiefsAt(x.date,x.start,chiefData,dir),lines=[x.type==='formation'?`🎓 ${x.title}`:`👶 ${x.title}`,`🕒 ${x.time}`];if(x.place)lines.push(`📍 ${x.place}`);if(!shared&&x.colleagues.length){lines.push('','•••','','👥 Collègues concernés','');for(const z of x.colleagues){lines.push(`👨‍⚕️ ${person(z.a||z.c)}`,...contactLines(z.a,z.c),'')}}if(!shared){lines.push('','•••','','👔 Chef d’équipe présent','');if(chiefs.length)for(const z of chiefs)lines.push(`👨‍⚕️ ${person(z.a)}`,...contactLines(z.a,z.c),'');else lines.push('⚠️ Chef d’équipe non retrouvé pour ce créneau')};const delta=strong.date===x.date?mins(x.start)-mins(strong.time):999,strongTitle=`⚠️ ${x.type==='formation'?'FORMATION':'STAGIAIRE'} ${delta===60?'DANS 1 H':delta>0&&delta<999?`DANS ${delta} MIN`:delta===0?'MAINTENANT':'À VENIR'} · ${x.start}`;evTimed(l,`stip-auto-${x.type}-strong-${a.id}-${x.date}-${keyNorm(x.title).replace(/\s+/g,'-')}-${x.start}@esapin.com`,strong.date,strong.time,strongEnd.time,strongTitle,lines.join('\n'),x.stamp,true);autoEventCount++;if(simpleStart&&!(simpleStart.date===strong.date&&simpleStart.time===strong.time)){const se=plusDuration(simpleStart.date,simpleStart.time,10),title=x.type==='formation'?`ℹ️ Formation aujourd’hui · ${x.start}`:`👶 Stagiaire aujourd’hui · ${x.start}`;evTimed(l,`stip-auto-${x.type}-start-${a.id}-${x.date}-${keyNorm(x.title).replace(/\s+/g,'-')}-${x.start}@esapin.com`,simpleStart.date,simpleStart.time,se.time,title,[x.type==='formation'?`🎓 ${x.title}`:`👶 ${x.title}`,`🕒 ${x.time}`,x.place?`📍 ${x.place}`:''].filter(Boolean).join('\n'),x.stamp,true);autoEventCount++}}l.push('END:VCALENDAR');return{ics:l.join('\r\n')+'\r\n',events:(plan||[]).length+(manual||[]).filter((x:any)=>x.display_mode!=='day_note').length+[...notes.keys()].filter(d=>!baseMap.has(d)).length+autoEventCount}}
+async function personal(a:any,shared=false){
+  const start=ymd(-60),end=ymd(370);
+  const [{data:plan,error:pe},{data:manual,error:me},{data:frows,error:fe},{data:srows,error:se}]=await Promise.all([
+    db.from('planning').select('date,code,observation,imported_at').eq('agent_id',a.id).gte('date',start).lte('date',end).order('date'),
+    db.from('stip_agent_agenda_items').select('*').eq('agent_id',a.id).eq('status','active').gte('event_date',start).lte('event_date',end).order('event_date').order('start_time'),
+    db.from('formations').select('id,source_key,agent_source_key,intitule,date_debut,date_fin,lieu,statut,updated_at,last_seen_at,horaire').gte('date_fin',start+'T00:00:00Z').lte('date_debut',end+'T23:59:59Z').order('date_debut'),
+    db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at,last_seen_at').gte('date_fin',start).lte('date_debut',end).order('date_debut')
+  ]);
+  if(pe)throw pe;if(me)throw me;if(fe)throw fe;if(se)throw se;
+  const l=head(shared?sharedCalendarName(a):personalCalendarName(a));
+  let events=0;
 
-async function team(a:any){const team=teamOf(a),start=ymd(0),end=ymd(370),dir=await loadDirectory(),rows=team==='chefs'?await planningPaged('date,code,agent_id,imported_at',start,end,{team:'chefs'}):[...await planningPaged('date,code,agent_id,imported_at',start,end,{team}),...await planningPaged('date,code,agent_id,imported_at',start,end,{team:'chefs'})];const days=new Map();for(const r of rows){if(!days.has(r.date))days.set(r.date,[]);days.get(r.date).push(r)}const l=head("Esprit d'équipe");let events=0;for(const [date,rs] of days){const groups=new Map(ORDER.map(k=>[k,[]]));for(const r of rs){const k=norm(r.code);if(!k||!SHIFT[k])continue;const ag=dir.byId.get(r.agent_id);if(ag)groups.get(k).push({a:ag,c:contactFor(ag,dir)})}for(const k of ORDER)groups.get(k).sort((x:any,y:any)=>gheNum(x.c?.ghe||x.a.ghe)-gheNum(y.c?.ghe||y.a.ghe)||person(x.a).localeCompare(person(y.a),'fr'));const total=ORDER.reduce((s,k)=>s+groups.get(k).length,0),latest=rs.map((r:any)=>r.imported_at).filter(Boolean).sort().at(-1),det=[`📅 ${frDate(date)}`,`↳ Mis à jour le : ${frUpdate(latest)}`,'','•••',''];for(const k of ORDER)det.push(`${SHIFT[k].dot} ${SHIFT[k].label} : ${groups.get(k).length} ${groups.get(k).length===1?'agent':'agents'}`);det.push('',`👥 Total : ${total} ${total===1?'agent':'agents'}`,'','•••','');const non=ORDER.filter(k=>groups.get(k).length);non.forEach((k,idx)=>{det.push(`${SHIFT[k].dot} • ${SHIFT[k].label.toLocaleUpperCase('fr-FR')} • ${SHIFT[k].text}`,'');for(const z of groups.get(k))det.push(`${SHIFT[k].dot} • ${gheText(z.c?.ghe||z.a?.ghe)} • ${person(z.a)}`);if(idx<non.length-1)det.push('','···','')});det.push('','•••','','🕒 Horaires','');for(const k of ORDER)det.push(`${SHIFT[k].dot} ${SHIFT[k].label} : ${SHIFT[k].text}`);det.push('','•••','','☎️ Contacts','');non.forEach((k,idx)=>{for(const z of groups.get(k)){const tel=z.c?.telephone||z.a?.telephone;det.push(`${SHIFT[k].dot} ${gheText(z.c?.ghe||z.a?.ghe)} • ${e164(tel)?phonePretty(tel):'—'}`)}if(idx<non.length-1)det.push('','···','')});ev(l,`stip-team-${team}-${date}@esapin.com`,date,"Esprit d'équipe",det.join('\n'),latest);events++}l.push('END:VCALENDAR');return{ics:l.join('\r\n')+'\r\n',events}}
+  // Planning natif : uniquement les shifts réellement travaillés.
+  // Les repos/RTT/congés ne sont volontairement pas créés dans le calendrier du téléphone :
+  // certains téléphones appliquent leurs propres alertes aux événements "toute la journée".
+  for(const r of plan||[]){
+    const raw=String(r.code||'').trim().toUpperCase(),k=norm(raw);
+    if(!k||!SHIFT[k])continue;
+    const q=SHIFT[k],variant=raw&&raw!==k?raw:'';
+    const summary=`${q.dot} ${q.label} · ${q.text}`;
+    const desc=[variant?`Code : ${variant}`:'',!shared&&r.observation?String(r.observation).trim():''].filter(Boolean).join('\n');
+    evTimed(l,`stip-work-${a.id}-${r.date}@esapin.com`,r.date,q.start,q.end,summary,desc,r.imported_at,false);
+    events++;
+  }
 
+  // Événements ajoutés dans STIP : le moteur reste générique pour accepter de futurs types.
+  for(const r of manual||[]){
+    const medical=sensitiveAgenda(r),
+      sensitive=shared&&medical,
+      icon=sensitive?'📅':medical?'🩺':(String(r.icon||'').trim()||(r.importance==='urgent'?'⚠️':r.importance==='important'?'❗':'📌')),
+      title=sensitive?'Rendez-vous':String(r.title||'Événement').trim(),
+      summary=`${icon} ${title}`,
+      desc=sensitive?'':[String(r.body||'').trim(),r.location?`📍 ${String(r.location).trim()}`:''].filter(Boolean).join('\n');
+    if(r.all_day||!r.start_time||!r.end_time)ev(l,`stip-agenda-${r.id}@esapin.com`,r.event_date,summary,desc,r.updated_at);
+    else evTimed(l,`stip-agenda-${r.id}@esapin.com`,r.event_date,String(r.start_time).slice(0,5),String(r.end_time).slice(0,5),summary,desc,r.updated_at,false);
+    events++;
+  }
+
+  // Formations : un rendez-vous horaire simple, sans alarme forcée par STIP.
+  const fg=new Map();
+  for(const r of frows||[]){const k=sessionKey(r);if(!fg.has(k))fg.set(k,[]);fg.get(k).push(r)}
+  for(const rs of fg.values()){
+    if(!rs.some((r:any)=>String(r.agent_source_key||'')===String(a.source_key||'')))continue;
+    const f:any=rs[0],
+      sd=parisDate(f.date_debut),ed=parisDate(f.date_fin),
+      range=timeRange(f.horaire)||{start:parisTime(f.date_debut),end:parisTime(f.date_fin),text:`${parisTime(f.date_debut)}–${parisTime(f.date_fin)}`},
+      stamp=rs.map((x:any)=>x.updated_at||x.last_seen_at).filter(Boolean).sort().at(-1),
+      title=String(f.intitule||'Formation').trim()||'Formation',
+      days:string[]=[];
+    let d=sd,g=0;while(d<=ed&&g++<40){days.push(d);d=next(d)}
+    const places=splitFormationPlaces(f.lieu,days.length);
+    days.forEach((date:string,i:number)=>{
+      const place=String(places[i]||'').trim(),
+        desc=place&&place!=='Non renseigné'?`📍 ${place}`:'';
+      evTimed(l,`stip-my-formation-${a.id}-${keyNorm(title).replace(/\s+/g,'-')}-${date}@esapin.com`,date,range.start,range.end,`🎓 Formation · ${title}`,desc,stamp,false);
+      events++;
+    });
+  }
+
+  // Stagiaire : repère visuel sur toute la période. Pas d'alarme STIP.
+  for(const r of srows||[]){
+    const refs=splitRefs(r.referent);
+    if(!refs.some(x=>refMatchesAgent(x,a)))continue;
+    const sd=String(r.date_debut||'').slice(0,10),ed=String(r.date_fin||r.date_debut||'').slice(0,10);
+    if(!sd||!ed)continue;
+    const name=fullPerson(r.prenom,r.nom),
+      summary=shared?'👶 Stagiaire':`👶 Stagiaire · ${name}`,
+      desc=shared?'':[r.horaires?`Horaires : ${String(r.horaires).trim()}`:''].filter(Boolean).join('\n');
+    evRange(l,`stip-my-stagiaire-${a.id}-${r.id}@esapin.com`,sd,next(ed),summary,desc,r.updated_at||r.last_seen_at);
+    events++;
+  }
+
+  l.push('END:VCALENDAR');
+  return{ics:l.join('\r\n')+'\r\n',events}
+}
+async function team(a:any){
+  const team=teamOf(a),start=ymd(0),end=ymd(370),dir=await loadDirectory(),
+    rows=team==='chefs'
+      ?await planningPaged('date,code,agent_id,imported_at',start,end,{team:'chefs'})
+      :[...await planningPaged('date,code,agent_id,imported_at',start,end,{team}),...await planningPaged('date,code,agent_id,imported_at',start,end,{team:'chefs'})],
+    days=new Map();
+  for(const r of rows){if(!days.has(r.date))days.set(r.date,[]);days.get(r.date).push(r)}
+  const l=head("Esprit d'équipe");let events=0;
+  for(const [date,rs] of days){
+    const groups=new Map(ORDER.map(k=>[k,[]]));
+    for(const r of rs){
+      const k=norm(r.code);if(!k||!SHIFT[k])continue;
+      const ag=dir.byId.get(r.agent_id);if(ag)groups.get(k).push({a:ag,c:contactFor(ag,dir)});
+    }
+    for(const k of ORDER)groups.get(k).sort((x:any,y:any)=>gheNum(x.c?.ghe||x.a.ghe)-gheNum(y.c?.ghe||y.a.ghe)||person(x.a).localeCompare(person(y.a),'fr'));
+    const total=ORDER.reduce((s,k)=>s+groups.get(k).length,0);
+    if(!total)continue;
+    const latest=rs.map((r:any)=>r.imported_at).filter(Boolean).sort().at(-1),
+      det=[`👥 ${total} ${total===1?'présent':'présents'}`,''];
+    for(const k of ORDER){
+      const n=groups.get(k).length;
+      if(n)det.push(`${SHIFT[k].dot} ${SHIFT[k].label} · ${n}`);
+    }
+    const active=ORDER.filter(k=>groups.get(k).length);
+    if(active.length)det.push('');
+    active.forEach((k,idx)=>{
+      det.push(`${SHIFT[k].dot} ${SHIFT[k].label} · ${SHIFT[k].text}`);
+      for(const z of groups.get(k))det.push(`• ${gheText(z.c?.ghe||z.a?.ghe)} · ${person(z.a)}`);
+      if(idx<active.length-1)det.push('');
+    });
+    ev(l,`stip-team-${team}-${date}@esapin.com`,date,`👥 Équipe · ${total} ${total===1?'présent':'présents'}`,det.join('\n'),latest);
+    events++;
+  }
+  l.push('END:VCALENDAR');
+  return{ics:l.join('\r\n')+'\r\n',events}
+}
 function missingCoverage(target:any,ranges:any[]){let s=mins(target.start),e=mins(target.end);if(e<=s)e+=1440;const rr=ranges.filter(Boolean).map(r=>{let a=mins(r.start),b=mins(r.end);if(b<=a)b+=1440;return[a,b]}).sort((a,b)=>a[0]-b[0]);let cur=s;const gaps:any[]=[];for(const [a,b] of rr){if(b<=cur||a>=e)continue;if(a>cur)gaps.push([cur,Math.min(a,e)]);cur=Math.max(cur,b);if(cur>=e)break}if(cur<e)gaps.push([cur,e]);const fmt=(m:number)=>`${String(Math.floor((m%1440)/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;return gaps.map(([a,b])=>`${fmt(a)}–${fmt(b)}`)}
 
 async function formations(){const start=ymd(-60),end=ymd(370),dir=await loadDirectory(),{data:rows,error}=await db.from('formations').select('id,source_key,agent_source_key,intitule,date_debut,date_fin,lieu,statut,updated_at,last_seen_at,horaire').gte('date_fin',start+'T00:00:00Z').lte('date_debut',end+'T23:59:59Z').order('date_debut');if(error)throw error;const groups=new Map();for(const r of rows||[]){const k=sessionKey(r);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)}const eventsRows:any[]=[];for(const rs of groups.values()){const f:any=rs[0],sd=parisDate(f.date_debut),ed=parisDate(f.date_fin),range=timeRange(f.horaire)||{start:parisTime(f.date_debut),end:parisTime(f.date_fin),text:`${parisTime(f.date_debut)}–${parisTime(f.date_fin)}`},days:string[]=[];let d=sd,g=0;while(d<=ed&&g++<40){days.push(d);d=next(d)}const places=splitFormationPlaces(f.lieu,days.length);days.forEach((day,i)=>eventsRows.push({day,title:String(f.intitule||'Formation'),range,place:places[i],participants:rs,key:keyNorm(`${f.intitule}-${f.date_debut}-${f.horaire}`).replace(/\s+/g,'-').toLowerCase().slice(0,120)}))}eventsRows.sort((a,b)=>a.day.localeCompare(b.day)||a.range.start.localeCompare(b.range.start));const allIds=dir.agents.map((a:any)=>a.id),plan=new Map(),planByDay=new Map();if(allIds.length&&eventsRows.length){const min=eventsRows[0].day,max=eventsRows.at(-1).day,pp=await planningPaged('date,code,agent_id,equipe,imported_at',min,max,{ids:allIds});for(const p of pp){plan.set(`${p.agent_id}|${p.date}`,p);if(!planByDay.has(p.date))planByDay.set(p.date,[]);planByDay.get(p.date).push(p)}}const byAgentDay=new Map();for(const e of eventsRows)for(const r of e.participants){const k=`${r.agent_source_key}|${e.day}`;if(!byAgentDay.has(k))byAgentDay.set(k,[]);byAgentDay.get(k).push(e)}const l=head('Formations');let events=0;for(const e of eventsRows){const ps=e.participants.slice().sort((x:any,y:any)=>person(dir.agents.find((a:any)=>a.source_key===x.agent_source_key)||{source_key:x.agent_source_key}).localeCompare(person(dir.agents.find((a:any)=>a.source_key===y.agent_source_key)||{source_key:y.agent_source_key}),'fr')),latest=ps.flatMap((r:any)=>[r.updated_at,r.last_seen_at]).filter(Boolean).sort().at(-1),det=[`🎓 ${e.title}`,`📅 ${frDate(e.day)}`,`🕘 ${e.range.text}`,`📍 ${e.place||'Lieu non renseigné'}`,'','•••','',`👥 ${ps.length} ${ps.length===1?'participant':'participants'}`,''],globalWarnings:string[]=[];const participantAgents:any[]=[];for(const r of ps){const ag=dir.agents.find((a:any)=>a.source_key===r.agent_source_key),c=contactFor(ag,dir),pr=ag?plan.get(`${ag.id}|${e.day}`):null,k=norm(pr?.code),work=k&&SHIFT[k]?SHIFT[k]:null;participantAgents.push(ag);det.push(`👨‍⚕️ ${person(ag||{source_key:r.agent_source_key})}`);if(work)det.push(`${work.personal} ${work.label} · ${work.text}`);det.push(...contactLines(ag,c));const w:string[]=[];if(String(r.statut||'').toUpperCase()!=='PLANIFIEE')w.push('Inscription à vérifier');if(!ag)w.push('Agent non retrouvé');else if(!pr)w.push('Planning non retrouvé');else if(!work)w.push(`Non planifié en travail ce jour (${String(pr.code||'—')})`);else if(!covers(work,e.range))w.push('Formation hors de son shift');const same=byAgentDay.get(`${r.agent_source_key}|${e.day}`)||[];if(same.some((o:any)=>o!==e&&overlap(o.range,e.range)))w.push('Conflit avec une autre formation');for(const x of [...new Set(w)])globalWarnings.push(`${person(ag||{source_key:r.agent_source_key})} : ${x}`);const tel=e164(c?.telephone||ag?.telephone);if(!tel)globalWarnings.push(`Téléphone manquant : ${person(ag||{source_key:r.agent_source_key})}`);if(!Number.isFinite(gheNum(c?.ghe||ag?.ghe)))globalWarnings.push(`GHE manquant : ${person(ag||{source_key:r.agent_source_key})}`);det.push('')}if(det.at(-1)==='')det.pop();const dayPlan=planByDay.get(e.day)||[],shiftCounts:any={};for(const k of ORDER)shiftCounts[k]={scheduled:0,mobilised:0,remaining:0};for(const p of dayPlan){const k=norm(p.code);if(k&&SHIFT[k]&&shiftCounts[k])shiftCounts[k].scheduled++}for(const ag of participantAgents.filter(Boolean)){const p=plan.get(`${ag.id}|${e.day}`),k=norm(p?.code);if(k&&shiftCounts[k])shiftCounts[k].mobilised++}for(const k of ORDER)shiftCounts[k].remaining=Math.max(0,shiftCounts[k].scheduled-shiftCounts[k].mobilised);const mobilised=ORDER.reduce((s,k)=>s+shiftCounts[k].mobilised,0),remaining=ORDER.reduce((s,k)=>s+shiftCounts[k].remaining,0);det.push('','•••','',`👥 IMPACT ÉQUIPE · ${e.range.start}–${e.range.end}`,`${mobilised} ${mobilised===1?'agent mobilisé':'agents mobilisés'} en formation`,`Effectif planifié restant : ${remaining}`);const impacted=ORDER.filter(k=>shiftCounts[k].mobilised>0);for(const k of impacted)det.push(`${SHIFT[k].personal} ${SHIFT[k].label} : ${shiftCounts[k].remaining} restant${shiftCounts[k].remaining>1?'s':''} / ${shiftCounts[k].scheduled}`);const low=impacted.slice().sort((a,b)=>shiftCounts[a].remaining-shiftCounts[b].remaining)[0],source=ORDER.filter(k=>k!=='N').sort((a,b)=>shiftCounts[b].remaining-shiftCounts[a].remaining)[0];if(low&&source&&source!==low&&shiftCounts[low].remaining<=2&&shiftCounts[source].remaining>=shiftCounts[low].remaining+4){det.push('',`💡 Piste à examiner : ${SHIFT[source].label} est nettement mieux couvert que ${SHIFT[low].label}. Un rééquilibrage de shift peut être envisagé si les contraintes terrain le permettent.`)}if(!e.place||e.place==='Non renseigné')globalWarnings.unshift('Lieu non renseigné');if(globalWarnings.length){det.push('','•••','','⚠️ À vérifier');for(const w of [...new Set(globalWarnings)])det.push(`• ${w}`)}det.push('','↳ Mis à jour le : '+frUpdate(latest));ev(l,`stip-formations-${e.key}-${e.day}@esapin.com`,e.day,`🎓 ${e.title} · ${ps.length} ${ps.length===1?'participant':'participants'}`,det.join('\n'),latest);events++}l.push('END:VCALENDAR');return{ics:l.join('\r\n')+'\r\n',events}}
