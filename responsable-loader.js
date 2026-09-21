@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260921-sharedmonth2",
+  const V = "20260921-calendar-clean1",
     m = new Map(),
     done = new Set();
   function load(src) {
