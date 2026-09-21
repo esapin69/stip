@@ -13,9 +13,9 @@
       content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'"
     />
     <title>Esprit d’équipe · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260922-sections1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-final1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-sections1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -41,7 +41,7 @@
       </section>
       <section id="teamDutyChiefHost" class="team-duty-chief-host" aria-label="Chef d’équipe présent"></section>
       <section id="teamWeekControls" class="team-time-stack stip-time-stack" aria-label="Semaine active">
-        <div class="team-week-section-label" aria-hidden="true"><span>SEMAINE ACTIVE</span></div>
+        <div class="team-week-section-label stip-section-separator" aria-hidden="true"><span>SEMAINE ACTIVE</span></div>
         <nav
           id="teamDays"
           class="team-days stip-time-days"
@@ -66,15 +66,17 @@
       </section>
 
       <section class="team-month-zone" aria-label="Vue mensuelle Esprit d’équipe">
-        <div class="team-month-separator" aria-hidden="true"><span>AU MOIS</span></div>
+        <div class="team-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div>
         <section
           id="teamDateJumpPanel"
           class="team-date-jump-panel team-date-jump-permanent"
           aria-label="Calendrier mensuel"
         ></section>
 
-        <section class="team-month-legend" aria-label="Légende du mois">
-          <small>LÉGENDE DU MOIS</small>
+        <div class="team-legend-separator stip-section-separator" aria-hidden="true">
+          <span>LÉGENDE DU MOIS</span>
+        </div>
+        <section class="team-month-legend stip-legend-surface" aria-label="Légende du mois">
           <div>
             <span><i class="status-ok" aria-hidden="true">✔</i><b>Rien ne coince</b></span>
             <span><i class="status-warning" aria-hidden="true">⚠</i><b>À surveiller</b></span>
@@ -83,10 +85,10 @@
           </div>
         </section>
 
-        <details class="team-calendar-pocket">
-          <summary><span aria-hidden="true">⋯</span> Options du calendrier</summary>
-          <div>
-            <button id="teamSubscribe" class="team-calendar-subscribe" type="button" hidden>
+        <details class="team-calendar-pocket stip-option-pocket" data-stip-option="calendar-team">
+          <summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary>
+          <div class="stip-option-pocket-body">
+            <button id="teamSubscribe" class="team-calendar-subscribe stip-option-action" type="button" hidden>
               <span aria-hidden="true">📅</span>
               <strong>S’abonner au calendrier équipe</strong>
               <small>Synchronisation avec le calendrier du téléphone</small>
