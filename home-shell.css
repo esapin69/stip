@@ -1640,12 +1640,29 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  min-width:0!important;
  min-height:44px!important;
 }
+.hc-date-jump-grid>button{
+ position:relative!important;
+ height:44px!important;
+ border:1px solid transparent!important;
+ border-radius:13px!important;
+ background:#f8fbfc!important;
+ color:#214d5c!important;
+ font:inherit!important;
+ display:grid!important;
+ grid-template-rows:11px 23px 6px!important;
+ align-items:center!important;
+ justify-items:center!important;
+ gap:1px!important;
+ padding:2px 1px!important;
+ overflow:hidden!important;
+ transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease!important;
+}
 
 .hc-date-jump-grid>button:active{transform:scale(.95)!important}
 .hc-date-jump-grid>button.is-selected{
  border-color:#0b8fa9!important;
  background:#e8f8fb!important;
- color:#075d70!important;
+ color:#214d5c!important;
  box-shadow:inset 0 0 0 2px #0b8fa9,0 5px 12px rgba(11,143,169,.14)!important;
 }
 .hc-date-jump-grid>button.is-today:not(.is-selected){
@@ -1661,6 +1678,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-date-jump-marker{
  min-height:23px!important;
+ height:23px!important;
  display:grid!important;
  place-items:center!important;
  line-height:1!important;
@@ -1689,12 +1707,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  transform:translateY(-1px)!important;
 }
 .hc-date-jump-events{
- min-height:5px!important;
+ min-height:6px!important;
  max-width:100%!important;
  display:block!important;
  overflow:hidden!important;
  color:#214d5c!important;
- font-size:.5rem!important;
+ font-size:.52rem!important;
  line-height:1!important;
  letter-spacing:-.18em!important;
  padding-right:.18em!important;
@@ -3080,13 +3098,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 
-.hc-date-jump-permanent .hc-date-jump-weekdays{
-  margin:0!important;
-  font-size:.52rem!important;
-}
-.hc-date-jump-permanent .hc-date-jump-weekdays>span{
-  padding:3px 0!important;
-}
+
+
 
 /* Cloche STIP — quiet empty state */
 .hc-home-pane-notifications>.hc-profile-actions.is-empty{
