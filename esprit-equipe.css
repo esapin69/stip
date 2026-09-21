@@ -850,20 +850,18 @@ body.team-page {
   .team-content .team-day{animation:none}
 }
 
-/* Calendar attached to the canonical 3-row time navigation. */
+/* Monthly calendar: canonical day selector for Esprit d’équipe. */
 .team-date-jump-panel{
  width:100%;
+ max-width:430px;
+ margin:0 auto;
  box-sizing:border-box;
- padding:14px;
- border:1px solid var(--stip-line);
- border-radius:var(--stip-radius-xl);
+ padding:11px;
+ border:1px solid rgba(22,91,111,.14);
+ border-radius:24px;
  background:linear-gradient(155deg,var(--stip-surface),var(--stip-surface-soft));
- box-shadow:var(--stip-shadow);
- transform-origin:top center;
- animation:teamDateJumpIn .18s ease-out both;
+ box-shadow:0 16px 34px rgba(20,62,78,.13);
 }
-.team-date-jump-panel[hidden]{display:none!important}
-@keyframes teamDateJumpIn{from{opacity:0;transform:translateY(-6px) scale(.985)}to{opacity:1;transform:none}}
 .team-date-jump-head{
  display:grid;
  grid-template-columns:42px minmax(0,1fr) 42px;
@@ -873,74 +871,129 @@ body.team-page {
 .team-date-jump-head button{
  width:42px;
  height:42px;
- border:1px solid var(--stip-line);
+ padding:0;
+ border:1px solid rgba(22,91,111,.11);
  border-radius:50%;
- background:var(--stip-surface);
+ background:linear-gradient(145deg,var(--stip-surface),var(--stip-surface-soft));
  color:var(--stip-ink);
- box-shadow:var(--stip-shadow-soft);
- font-size:1.5rem;
- font-weight:900;
+ box-shadow:0 4px 11px rgba(20,62,78,.07);
+ font-size:1.55rem;
+ font-weight:800;
+ line-height:1;
  cursor:pointer;
+ touch-action:manipulation;
 }
-.team-date-jump-head strong{text-align:center;color:var(--stip-ink);font-size:1rem;font-weight:950}
+.team-date-jump-head button:active{transform:scale(.93)}
+.team-date-jump-head strong{
+ text-align:center;
+ color:var(--stip-ink);
+ font-size:1rem;
+ font-weight:950;
+ text-transform:capitalize;
+}
 .team-date-jump-weekdays,.team-date-jump-grid{
  display:grid;
  grid-template-columns:repeat(7,minmax(0,1fr));
- gap:5px;
+ gap:3px;
 }
 .team-date-jump-weekdays{
- margin:12px 0 6px;
+ margin:8px 0 4px;
  color:var(--stip-muted);
- font-size:.62rem;
+ font-size:.63rem;
  font-weight:950;
  text-align:center;
  text-transform:uppercase;
 }
-.team-date-jump-grid>button,.team-date-jump-empty{aspect-ratio:1/1;min-width:0}
+.team-date-jump-grid>button,.team-date-jump-empty{
+ min-width:0;
+ min-height:46px;
+}
 .team-date-jump-grid>button{
+ position:relative;
+ height:46px;
+ padding:2px 1px 1px;
  border:1px solid transparent;
  border-radius:13px;
- background:transparent;
+ background:#f8fbfc;
  color:var(--stip-ink-2);
  display:grid;
- place-items:center;
- padding:2px;
+ grid-template-rows:14px 19px 9px;
+ align-items:center;
+ justify-items:center;
+ gap:1px;
+ overflow:hidden;
  font:inherit;
- font-weight:950;
  cursor:pointer;
  touch-action:manipulation;
+ transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease;
 }
 .team-date-jump-grid>button.is-week{
- border-color:color-mix(in srgb,var(--stip-accent) 14%,transparent);
- background:var(--stip-surface-active);
- color:var(--stip-accent);
+ border-color:color-mix(in srgb,var(--stip-accent) 12%,transparent);
+ background:color-mix(in srgb,var(--stip-accent-soft) 32%,#f8fbfc);
 }
-.team-date-jump-grid>button.is-today{box-shadow:inset 0 0 0 2px var(--stip-accent)}
+.team-date-jump-grid>button.is-today:not(.is-selected){
+ box-shadow:inset 0 0 0 2px var(--stip-accent);
+}
 .team-date-jump-grid>button.is-selected{
+ z-index:2;
  border-color:var(--stip-accent);
  background:color-mix(in srgb,var(--stip-accent-soft) 78%,var(--stip-surface));
- box-shadow:inset 0 -4px 0 var(--stip-accent);
+ box-shadow:inset 0 0 0 2px var(--stip-accent),0 5px 12px rgba(11,143,169,.14);
 }
-.team-date-jump-grid>button:active{transform:scale(.94)}
-.team-date-jump-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:12px}
-.team-date-jump-actions button{
- min-height:42px;
- padding:0 14px;
- border:1px solid var(--stip-line);
- border-radius:14px;
- background:var(--stip-surface);
+.team-date-jump-grid>button:active{transform:scale(.95)}
+.team-cal-day-number{
+ display:block;
+ color:inherit;
+ font-size:.98rem;
+ line-height:1;
+ font-weight:950;
+}
+.team-cal-marker{
+ min-height:19px;
+ height:19px;
+ display:grid;
+ place-items:center;
+ line-height:1;
+}
+.team-cal-marker-empty{
+ width:19px;
+ height:19px;
+ display:block;
+}
+.team-cal-dot{
+ width:18px;
+ height:18px;
+ display:block;
+ border-radius:50%;
+ box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(20,62,78,.08);
+}
+.team-cal-dot.shift-morning{background:#1689d8}
+.team-cal-dot.shift-day{background:#10a36e}
+.team-cal-dot.shift-late{background:#e76413}
+.team-cal-dot.shift-evening{background:#e6ae00}
+.team-cal-dot.shift-night{background:#2f4351}
+.team-cal-icon{
+ display:block;
+ font-size:1.05rem;
+ line-height:1;
+ transform:translateY(-1px);
+}
+.team-cal-events{
+ min-height:9px;
+ max-width:100%;
+ display:block;
+ overflow:hidden;
  color:var(--stip-ink-2);
- font-weight:900;
- cursor:pointer;
-}
-.team-date-jump-actions [data-team-cal-today]{
- background:var(--stip-surface-active);
- color:var(--stip-accent);
+ font-size:.76rem;
+ line-height:1;
+ letter-spacing:-.05em;
+ padding-right:.05em;
+ white-space:nowrap;
 }
 @media(max-width:430px){
- .team-date-jump-panel{padding:12px}
- .team-date-jump-weekdays,.team-date-jump-grid{gap:4px}
- .team-date-jump-grid>button{border-radius:11px;font-size:.84rem}
+ .team-date-jump-panel{padding:9px}
+ .team-date-jump-weekdays,.team-date-jump-grid{gap:3px}
+ .team-date-jump-grid>button{border-radius:11px}
 }
 
 /* chief-presence-20260921 */
