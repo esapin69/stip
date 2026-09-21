@@ -18,3 +18,24 @@ body.aav-open{overflow:hidden}.aav-overlay{position:fixed;inset:0;z-index:20000;
 .aav-subscribe-done input{box-sizing:border-box;width:100%;padding:8px;border:1px solid #cfe0e3;border-radius:10px;background:#fff;color:#315866;font-size:.65rem}
 .aav-subscribe-error{padding:9px 10px;border:1px solid #eccdcd;border-radius:12px;background:#fff7f7;color:#873b3b;font-size:.68rem;font-weight:850}
 .aav-week-day{cursor:pointer;transition:transform .14s ease,box-shadow .14s ease}.aav-cal-day{cursor:pointer}.aav-week-day.selected::after{content:"";position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);width:7px;height:7px;border-radius:50%;background:#0b8fa9;box-shadow:0 0 0 4px #fff}
+.aav-legend{
+  padding:15px 12px 10px!important;
+  background:transparent!important;
+  border:0!important;
+  border-top:1px solid #dfe8ea!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.aav-legend>div{
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  justify-items:center!important;
+  gap:9px!important;
+}
+.aav-legend span{
+  width:max-content!important;
+  max-width:100%!important;
+  margin:0 auto!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
