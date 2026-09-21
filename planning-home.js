@@ -48,7 +48,8 @@
     shiftAssets = {},
     availableMonths = [],
     currentKind = "personal",
-    loadingData = null;
+    loadingData = null,
+    selectedDate = "";
   async function call(action) {
     const r = await fetch(API, {
         method: "POST",
@@ -123,37 +124,62 @@
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(code)}">`;
     return `<span class="ph-shift-fallback" style="--shift:${FALLBACK[code] || "#277b86"}">${esc(code)}</span>`;
   }
-  function monthPanel(k) {
-    const [y, m] = k.split("-").map(Number),
-      by = new Map(
-        items
-          .filter((x) => String(x.date || "").startsWith(k))
-          .map((x) => [x.date, x]),
-      ),
-      first = new Date(y, m - 1, 1),
-      days = new Date(y, m, 0).getDate(),
-      pad = (first.getDay() + 6) % 7,
-      today = new Date().toISOString().slice(0, 10),
-      idx = availableMonths.indexOf(k);
-    let cells =
-      DAYS.map(
-        (d, i) =>
-          `<span class="ph-day-head ${i > 4 ? "weekend" : ""}">${d}</span>`,
-      ).join("") + '<span class="ph-empty" aria-hidden="true"></span>'.repeat(pad);
-    for (let i = 1; i <= days; i++) {
-      const dk = `${k}-${String(i).padStart(2, "0")}`,
-        it = by.get(dk),
-        code = String(it?.code || it?.source_value || "")
-          .trim()
-          .toUpperCase(),
-        dow = new Date(`${dk}T12:00:00`).getDay(),
-        weekend = dow === 0 || dow === 6;
-      cells += `<div class="ph-day-cell ${dk === today ? "today" : ""} ${weekend ? "weekend" : ""}" data-ph-date="${dk}" data-ph-month="${k}"><b>${i}</b><div class="ph-shift-slot">${shiftVisual(code)}</div></div>`;
+  function firstMondayInMonth(k) {
+    if (window.STIPMonthCalendar?.firstMondayInMonth)
+      return window.STIPMonthCalendar.firstMondayInMonth(k);
+    const [y, m] = String(k).split("-").map(Number),
+      d = new Date(y, m - 1, 1, 12),
+      day = d.getDay() || 7;
+    if (day !== 1) d.setDate(d.getDate() + ((8 - day) % 7));
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+  function ensureSelectedDate() {
+    const today = new Date().toISOString().slice(0, 10);
+    if (selectedDate && selectedDate.startsWith(monthKey)) return;
+    selectedDate = today.startsWith(monthKey)
+      ? today
+      : firstMondayInMonth(monthKey);
+  }
+  function personalMonthEvents() {
+    const b = window.STIPBootCache || {},
+      out = [];
+    for (const x of b.agenda_items || [])
+      if (x.event_date)
+        out.push({
+          date: String(x.event_date).slice(0, 10),
+          icon: /medical|mobi_lit|visite/i.test(String(x.source_type || ""))
+            ? "🩺"
+            : x.importance === "urgent"
+              ? "⚠️"
+              : x.importance === "important"
+                ? "❗"
+                : "📌",
+        });
+    for (const x of b.personal_formations || []) {
+      const d = String(x.date_debut || "").slice(0, 10);
+      if (d) out.push({ date: d, icon: "🎓" });
     }
-    const used = pad + days,
-      tail = (7 - (used % 7)) % 7;
-    cells += '<span class="ph-empty" aria-hidden="true"></span>'.repeat(tail);
-    return `<div class="ph-month-card" data-ph-month="${k}"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid">${cells}</div></div>`;
+    for (const x of b.personal_stagiaires || []) {
+      const d = String(x.date_debut || "").slice(0, 10);
+      if (d) out.push({ date: d, icon: "👶" });
+    }
+    return out;
+  }
+  function monthPanel(k) {
+    ensureSelectedDate();
+    const idx = availableMonths.indexOf(k);
+    if (window.STIPMonthCalendar?.render)
+      return window.STIPMonthCalendar.render({
+        month: k,
+        selected: selectedDate,
+        items,
+        events: personalMonthEvents(),
+        prev: idx > 0,
+        next: idx >= 0 && idx < availableMonths.length - 1,
+        navAttr: "data-month-nav",
+        dayAttr: "data-ph-date",
+      });
+    return `<section class="aav-month"><header><strong>${MONTHS[Number(k.slice(5, 7)) - 1]} ${k.slice(0, 4)}</strong></header></section>`;
   }
   function announceMonth() {
     window.dispatchEvent(
@@ -166,6 +192,7 @@
     const c = $("#phContent");
     if (!c) return;
     chooseMonth();
+    ensureSelectedDate();
     c.innerHTML = `<div class="ph-calendar-actions" aria-label="Actions du calendrier"><button type="button" class="ph-calendar-action primary" data-ph-print><span>▣</span><strong>Aperçu A4 paysage</strong></button><button type="button" class="ph-calendar-action" data-cal-subscribe><span>▦</span><strong>Synchroniser</strong></button></div>${monthPanel(monthKey)}`;
     c.querySelector("[data-cal-subscribe]")?.addEventListener("click", () =>
       window.STIPCalendars?.open?.("personal"),
@@ -292,6 +319,10 @@
       n = i + Number(step);
     if (i < 0 || n < 0 || n >= availableMonths.length) return;
     monthKey = availableMonths[n];
+    const today = new Date().toISOString().slice(0, 10);
+    selectedDate = today.startsWith(monthKey)
+      ? today
+      : firstMondayInMonth(monthKey);
     renderPersonal();
   }
   window.addEventListener("stip:route", (e) => {
@@ -302,6 +333,19 @@
     applyData(e.detail || window.STIPBootCache, currentKind === "personal"),
   );
   document.addEventListener("click", (e) => {
+    const day = e.target.closest?.("[data-ph-date]");
+    if (day) {
+      selectedDate = String(day.dataset.phDate || "");
+      if (selectedDate) {
+        renderPersonal();
+        window.dispatchEvent(
+          new CustomEvent("stip:day-selected", {
+            detail: { date: selectedDate, monthKey },
+          }),
+        );
+      }
+      return;
+    }
     const b = e.target.closest?.("[data-month-nav]");
     if (!b || b.disabled) return;
     moveMonth(Number(b.dataset.monthNav));
@@ -316,6 +360,10 @@
     window.STIPRequestedPlanningMonth = key;
     if (!availableMonths.includes(key)) return false;
     monthKey = key;
+    const today = new Date().toISOString().slice(0, 10);
+    selectedDate = today.startsWith(monthKey)
+      ? today
+      : firstMondayInMonth(monthKey);
     window.STIPRequestedPlanningMonth = "";
     if (
       currentKind === "personal" &&
