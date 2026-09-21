@@ -9,7 +9,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-agenda-events2";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-weektickets1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -119,12 +119,25 @@
     return Number.isInteger(q)&&q>=1&&q<100?q:0;
   }
   function weekHtml(){
-    const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[];
+    const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[],workIcon={m:"🔵",j:"🟢",j4:"🟠",s:"🟡",n:"⚫"};
+    let hasEvents=false;
     for(let i=0;i<7;i++){
-      const day=add(start,i),row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||"");
-      cards.push(`<button type="button" class="aav-week-day ${row?`shift-${info.family}`:""} ${day===state.selected?"selected":""}" data-aav-day="${day}"><small>${shortDay(day)}</small><b>${dobj(day).getDate()}</b><span class="aav-week-events">${ev.slice(0,2).map(x=>x.icon).join("")}</span><div class="aav-week-shift">${row?shiftToken(row,false):'<em>—</em>'}</div>${row&&info.time?`<em>${esc(info.time)}</em>`:""}${row&&info.adapted?'<i title="Horaire adapté">⏱</i>':""}${row&&quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
+      const day=add(start,i),row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),d=dobj(day),
+        dayName=d.toLocaleDateString("fr-FR",{weekday:"long"}).replace(".","").toUpperCase().slice(0,2),
+        family=info.family||"other",base=info.base||"—",pending=!row,
+        rest=family==="rh"||family==="off",
+        codeClass=["m","j","j4","s","n"].includes(family)?`code-${family}`:"",
+        statusClass=pending?"pending":rest?"rest":"work",
+        marker=ev.length?`<span class="hc-day-event-markers" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,3).map(x=>`<i title="${esc(x.title||x.kind||"Événement")}">${esc(x.icon||"•")}</i>`).join("")}</span>`:"",
+        visual=pending
+          ?'<span class="hc-pending-line"><span class="hc-pending-icon">🚫</span></span>'
+          :["m","j","j4","s","n"].includes(family)
+            ?`<span class="hc-work-line"><span class="hc-work-icon" aria-hidden="true">${workIcon[family]}</span><strong class="hc-shift-name">${esc(base)}</strong></span>`
+            :`<span class="hc-rest-line"><span class="hc-status-icon" aria-hidden="true">${esc(info.icon||"•")}</span><strong class="hc-status-code">${esc(base)}</strong></span>`;
+      if(ev.length)hasEvents=true;
+      cards.push(`<button type="button" class="hc-day hc-day-landscape ${statusClass} ${codeClass} ${day===state.selected?"selected":""}" data-aav-day="${day}" aria-pressed="${day===state.selected}">${marker}<span class="hc-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="hc-week-visual">${visual}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
     }
-    return `<section class="aav-week"><div class="aav-week-icons">${state.events.filter(x=>x.date>=start&&x.date<=add(start,6)).slice(0,5).map(x=>`<span>${x.icon}</span>`).join("")}</div><div class="aav-week-grid">${cards.join("")}</div></section>`;
+    return `<section class="aav-week aav-week-home"><div class="hc-days-landscape ${hasEvents?"has-week-events":"no-week-events"}" style="--visible-days:7">${cards.join("")}</div></section>`;
   }
   function eventHtml(){
     const start=monday(state.selected),end=add(start,6),rows=state.events.filter(x=>x.date>=start&&x.date<=end);
