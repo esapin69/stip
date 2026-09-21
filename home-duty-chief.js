@@ -130,6 +130,7 @@
   }
 
   async function fetchDuty(force = false) {
+    if (!document.querySelector("#teamDutyChiefHost")) return null;
     if (!localStorage.getItem(STORE)) return null;
     if (!force && data && Date.now() - lastFetch < 5 * 60 * 1000) return data;
     if (loading) return loading;
