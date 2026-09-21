@@ -1147,19 +1147,19 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* HOME TOP CORE — canonical */
 .hc-home-top-nav{
   width:min(100%,390px)!important;
-  margin:14px auto 18px!important;
+  margin:12px auto 10px!important;
 }
 .hc-home-top-tools{
-  min-height:58px!important;
+  min-height:52px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:space-between!important;
-  gap:28px!important;
-  margin-bottom:12px!important;
+  gap:34px!important;
+  margin-bottom:17px!important;
   padding:0 8px!important;
 }
 .hc-home-team-slot{
-  flex:0 1 228px!important;
+  flex:0 1 210px!important;
   width:auto!important;
   min-width:0!important;
   margin:0!important;
@@ -1389,7 +1389,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
    Two premium primary buttons. STIP IA closes the page as a full-width footer entry. */
 .hc-home-filters{
   width:min(100%,368px)!important;
-  margin:0 auto 16px!important;
+  margin:0 auto 10px!important;
   padding:0!important;
   display:grid!important;
   grid-template-columns:repeat(3,minmax(0,108px))!important;
@@ -1555,9 +1555,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 @media(max-width:430px){
-  .hc-home-top-nav{width:min(100%,360px)!important;margin:12px auto 17px!important}
-  .hc-home-top-tools{min-height:56px!important;gap:30px!important;margin-bottom:11px!important;padding:0 7px!important}
-  .hc-home-team-slot{flex:0 1 218px!important;width:auto!important;margin:0!important}
+  .hc-home-top-nav{width:min(100%,360px)!important;margin:10px auto 10px!important}
+  .hc-home-top-tools{min-height:50px!important;gap:30px!important;margin-bottom:16px!important;padding:0 7px!important}
+  .hc-home-team-slot{flex:0 1 205px!important;width:auto!important;margin:0!important}
   .hc-id-card{
     grid-template-columns:60px minmax(0,1fr) minmax(74px,86px)!important;
     gap:8px!important;
@@ -1570,7 +1570,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-profile-email{font-size:.69rem!important}
   .hc-id-card .hc-profile-phone strong{font-size:.96rem!important}
   .hc-profile-ghe-art>span{font-size:1.30rem!important}
-  .hc-home-filters{width:min(100%,350px)!important;margin:0 auto 15px!important;gap:8px!important}
+  .hc-home-filters{width:min(100%,350px)!important;margin:0 auto 10px!important;gap:8px!important}
   .hc-home-filters>button{min-height:102px!important;padding:6px 4px 8px!important}
   .hc-home-filter-art{width:100%!important;max-width:104px!important}
   .hc-home-ai-footer{width:100%!important;margin-top:26px!important;padding:6px 6px 9px!important;border-radius:22px!important}
@@ -1579,8 +1579,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:380px){
   .hc-home-top-nav{width:min(100%,334px)!important}
-  .hc-home-top-tools{gap:24px!important}
-  .hc-home-team-slot{flex-basis:202px!important}
+  .hc-home-top-tools{gap:26px!important}
+  .hc-home-team-slot{flex-basis:190px!important}
   .hc-id-card{grid-template-columns:55px minmax(0,1fr) minmax(68px,78px)!important;gap:7px!important;padding:7px 11px 7px 13px!important;min-height:74px!important}
   .hc-id-card .hc-avatar{width:42px!important;height:51px!important}
   .hc-profile-firstname{font-size:1.36rem!important}
@@ -3597,7 +3597,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-sizing:border-box!important;
   width:min(calc(100% - 28px),620px)!important;
   height:1px!important;
-  margin:24px auto 24px!important;
+  margin:12px auto 14px!important;
   background:linear-gradient(90deg,transparent,rgba(52,104,118,.28) 20%,rgba(52,104,118,.28) 80%,transparent)!important;
 }
 .hc-calendar-driven-planning .hc-planning-month-separator{
@@ -3628,12 +3628,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-team-shortcut{
   box-sizing:border-box!important;
   width:100%!important;
-  min-height:52px!important;
+  min-height:46px!important;
   display:grid!important;
-  grid-template-columns:38px minmax(0,1fr) 26px!important;
+  grid-template-columns:34px minmax(0,1fr) 24px!important;
   align-items:center!important;
-  gap:9px!important;
-  padding:6px 8px!important;
+  gap:8px!important;
+  padding:5px 8px!important;
   border:1.5px solid #afd9cf!important;
   border-radius:17px!important;
   background:linear-gradient(180deg,#fbfffe 0%,#edf8f5 100%)!important;
@@ -3648,8 +3648,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-shadow:0 1px 0 #d3e8e3,0 4px 9px rgba(31,98,83,.08),inset 0 1px 0 #fff!important;
 }
 .hc-team-shortcut-icon{
-  width:38px!important;
-  height:38px!important;
+  width:34px!important;
+  height:34px!important;
   display:block!important;
   overflow:hidden!important;
   border:1px solid rgba(24,121,103,.13)!important;
@@ -3674,7 +3674,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-team-shortcut-copy strong{
   color:#174c55!important;
-  font-size:.92rem!important;
+  font-size:.96rem!important;
   font-weight:950!important;
   line-height:1.05!important;
 }
@@ -3686,8 +3686,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   line-height:1.05!important;
 }
 .hc-team-shortcut-arrow{
-  width:26px!important;
-  height:26px!important;
+  width:24px!important;
+  height:24px!important;
   display:grid!important;
   place-items:center!important;
   justify-self:end!important;
@@ -3704,7 +3704,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-sizing:border-box!important;
   width:100%!important;
   display:grid!important;
-  gap:17px!important;
+  gap:14px!important;
   margin:0!important;
   padding:0!important;
   overflow:visible!important;
@@ -3995,7 +3995,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:0!important;padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;
 }
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-key-list{
-  display:grid!important;gap:13px!important;
+  display:grid!important;gap:10px!important;
 }
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-day-row{
   box-sizing:border-box!important;
@@ -4094,7 +4094,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filter-art{max-width:100px!important}
   .hc-home-filters>button>strong{font-size:.65rem!important}
 
-  .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{gap:16px!important}
+  .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{gap:14px!important}
   .hc-calendar-driven-planning .hc-planning-subblock{border-radius:20px!important}
   .hc-calendar-driven-planning .hc-planning-week-subblock{padding:9px 6px 11px!important}
   .hc-calendar-driven-planning .hc-planning-section-label{margin-left:3px!important}
