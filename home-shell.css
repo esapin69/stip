@@ -1294,7 +1294,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:18px auto 18px!important;
   padding:0!important;
   display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
   gap:10px!important;
   align-items:stretch!important;
 }
@@ -3701,4 +3701,25 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  content:""!important;position:absolute!important;left:50%!important;bottom:-9px!important;
  transform:translateX(-50%)!important;width:7px!important;height:7px!important;border-radius:50%!important;
  background:#0b8fa9!important;box-shadow:0 0 0 4px #fff!important;
+}
+
+
+/* terrain-launcher-20260921 */
+.hc-home-filters:has(>button:nth-child(3)){
+  width:min(100%,368px)!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:8px!important;
+}
+.hc-home-filters:has(>button:nth-child(3))>button{
+  min-height:112px!important;
+  padding:7px 5px 9px!important;
+}
+.hc-home-filters:has(>button:nth-child(3)) .hc-home-filter-art{
+  width:100%!important;
+  max-width:108px!important;
+}
+@media(max-width:430px){
+  .hc-home-filters:has(>button:nth-child(3)){width:min(100%,350px)!important;gap:7px!important}
+  .hc-home-filters:has(>button:nth-child(3))>button{min-height:108px!important;padding-inline:4px!important}
+  .hc-home-filters:has(>button:nth-child(3))>button>strong{font-size:.72rem!important}
 }

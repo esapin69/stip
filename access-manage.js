@@ -51,6 +51,11 @@
       .replace(/\bVisiteur\b/gi, "MINI")
       .replace(/\bPro\b/g, "MAXI");
   }
+  function terrainMode(permissions = {}) {
+    const raw = String(permissions.team_chat_mode || "").toLowerCase();
+    if (raw === "read" || raw === "write" || raw === "admin") return raw;
+    return permissions.admin ? "admin" : "write";
+  }
 
   async function load() {
     try {
@@ -105,18 +110,25 @@
   function productApps() {
     return (data.apps || [])
       .filter((app) => !["planning_team", "assistant_enabled"].includes(app.key))
-      .map((app) =>
-        app.key === "activity"
-          ? {
-              ...app,
-              label: "Esprit d’équipe",
-              help: "Planning équipe, activité et assistant réunis dans une même application.",
-              levels: false,
-              pro_only: false,
-              product_bundle: "esprit",
-            }
-          : app,
-      );
+      .map((app) => {
+        if (app.key === "activity")
+          return {
+            ...app,
+            label: "Esprit d’équipe",
+            help: "Planning équipe, activité et assistant réunis dans une même application.",
+            levels: false,
+            pro_only: false,
+            product_bundle: "esprit",
+          };
+        if (app.key === "messages")
+          return {
+            ...app,
+            label: "Messages & Terrain",
+            help: "Messagerie STIP et tableau Terrain visible sur l’accueil.",
+            terrain_access: true,
+          };
+        return app;
+      });
   }
   function renderApps(permissions = {}) {
     renderBasePermissions = JSON.parse(JSON.stringify(permissions || {}));
@@ -137,7 +149,16 @@
           app.product_bundle === "esprit"
             ? "MINI : l’accès unifié actuel. MAXI n’est pas proposé tant qu’aucune différence fonctionnelle réelle n’existe."
             : "MINI : accès disponible actuellement pour cette application.";
-        if (app.pro_only) {
+        if (app.terrain_access) {
+          const mode = terrainMode(permissions);
+          control =
+            '<div class="access-levels access-terrain-levels" aria-label="Accès Terrain">' +
+            '<button type="button" data-team-mode="read" class="' + (mode === "read" ? "active" : "") + '">Lire</button>' +
+            '<button type="button" data-team-mode="write" class="' + (mode === "write" ? "active" : "") + '">Lire + écrire</button>' +
+            '<button type="button" data-team-mode="admin" class="' + (mode === "admin" ? "active" : "") + '">Admin</button>' +
+            "</div>";
+          levelHelp = "Terrain : Lire consulte seulement. Lire + écrire permet de publier. Admin peut aussi gérer et supprimer tous les messages.";
+        } else if (app.pro_only) {
           control = '<span class="access-single access-maxi-only">MAXI</span>';
           levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";
         } else if (app.levels) {
@@ -161,13 +182,23 @@
           }),
       );
     $("apps")
+      .querySelectorAll("[data-team-mode]")
+      .forEach(
+        (b) =>
+          (b.onclick = () => {
+            $("apps")
+              .querySelectorAll("[data-team-mode]")
+              .forEach((x) => x.classList.toggle("active", x === b));
+          }),
+      );
+    $("apps")
       .querySelectorAll("[data-permission]")
       .forEach((input) => {
         const sync = () => {
           const row = input.closest(".access-app");
           row?.classList.toggle("is-enabled", input.checked);
           row
-            ?.querySelectorAll("[data-level]")
+            ?.querySelectorAll("[data-level],[data-team-mode]")
             .forEach((button) => (button.disabled = !input.checked));
         };
         input.addEventListener("change", () => {
@@ -205,6 +236,12 @@
       .forEach((x) => {
         if (!x.dataset.bundle) permissions[x.dataset.permission] = x.checked;
       });
+
+    if (permissions.messages) {
+      permissions.team_chat_mode =
+        $("apps").querySelector("[data-team-mode].active")?.dataset.teamMode ||
+        terrainMode(renderBasePermissions);
+    } else delete permissions.team_chat_mode;
 
     const esprit = $("apps").querySelector('[data-bundle="esprit"]');
     if (esprit?.dataset.dirty === "1") {

@@ -36,6 +36,15 @@ async function signAvatarPayload(value:any){
   return value;
 }
 const J=async(x:unknown,s=200)=>new Response(JSON.stringify(await signAvatarPayload(x)),{status:s,headers:H});
+function errMsg(e:any){
+  if(e instanceof Error&&e.message)return e.message;
+  if(e&&typeof e==="object"){
+    const parts=[e.message,e.details,e.hint,e.code].map((x:any)=>String(x||"").trim()).filter(Boolean);
+    if(parts.length)return [...new Set(parts)].join(" · ");
+  }
+  const s=String(e||"").trim();
+  return s&&s!=="[object Object]"?s:"Erreur serveur.";
+}
 const enc=new TextEncoder();
 const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,"0")).join("");
 async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
@@ -187,6 +196,17 @@ function isAdmin(ctx:any){
     (Array.isArray(ctx?.profile?.preset_roles)&&ctx.profile.preset_roles.some((x:any)=>String(x).toLowerCase()==="admin"))
   )
 }
+function teamAccessMode(ctx:any){
+  const raw=String(ctx?.profile?.permissions?.team_chat_mode||"").toLowerCase();
+  if(isAdmin(ctx)||raw==="admin")return "admin";
+  if(raw==="read")return "read";
+  return "write"
+}
+function requireTeamWrite(ctx:any){
+  const mode=teamAccessMode(ctx);
+  if(mode==="read")throw Error("Terrain est en lecture seule pour cet accès.");
+  return mode
+}
 async function teamConversation(ctx:any){
   let{data:conv,error}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("direct_key",TEAM_KEY).maybeSingle();
   if(error)throw error;
@@ -204,7 +224,7 @@ async function removeTeamPhotos(paths:string[]){
   const clean=[...new Set(paths.map(x=>String(x||"").trim()).filter(Boolean))];
   if(!clean.length)return;
   const r=await db.storage.from(TEAM_BUCKET).remove(clean);
-  if(r.error)console.error("team photo remove",r.error)
+  if(r.error)throw r.error
 }
 async function purgeExpiredTeamMessages(ctx:any){
   const conv=await teamConversation(ctx),cutoff=new Date(Date.now()-TEAM_TTL_DAYS*86400000).toISOString();
@@ -242,11 +262,11 @@ async function teamThread(ctx:any){
   const withNames=(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}));
   const signed=await signedTeamPhotos(withNames);
   const meProfile=await messageProfile(String(ctx.agent.id));
-  return{conversation:conv,me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},admin:isAdmin(ctx),messages:signed}
+  const accessMode=teamAccessMode(ctx);
+  return{conversation:conv,me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},access_mode:accessMode,can_write:accessMode!=="read",admin:accessMode==="admin",messages:signed}
 }
-async function teamPhotoUpload(ctx:any,body:any){
-  await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),mime=String(body.mime||"").toLowerCase(),raw=String(body.data||"");
+async function storeTeamPhoto(conv:any,body:any){
+  const mime=String(body?.mime||"").toLowerCase(),raw=String(body?.data||"");
   if(!["image/jpeg","image/png","image/webp"].includes(mime))throw Error("Format d’image non pris en charge.");
   if(!raw||raw.length>4000000)throw Error("Photo trop lourde.");
   let bytes:Uint8Array;
@@ -257,39 +277,82 @@ async function teamPhotoUpload(ctx:any,body:any){
   if(bytes.byteLength>3000000)throw Error("Photo trop lourde.");
   const ext=mime==="image/png"?"png":mime==="image/webp"?"webp":"jpg",
     day=new Date().toISOString().slice(0,10),
-    path=`${conv.id}/${day}/${crypto.randomUUID()}.${ext}`;
+    path=String(conv.id)+"/"+day+"/"+crypto.randomUUID()+"."+ext;
   const up=await db.storage.from(TEAM_BUCKET).upload(path,bytes,{contentType:mime,upsert:false,cacheControl:"3600"});
   if(up.error)throw up.error;
+  return path
+}
+async function teamPhotoUpload(ctx:any,body:any){
+  requireTeamWrite(ctx);
+  await purgeExpiredTeamMessages(ctx);
+  const conv=await teamConversation(ctx),path=await storeTeamPhoto(conv,body);
   return{ok:true,path}
 }
 async function teamSend(ctx:any,body:any){
+  requireTeamWrite(ctx);
   await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),text=String(body.body||"").trim().slice(0,2000),photoPath=String(body.photo_path||"").trim();
-  if(!text&&!photoPath)throw Error("Message vide.");
-  if(photoPath&&!photoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
+  const conv=await teamConversation(ctx),
+    text=String(body.body||"").trim().slice(0,2000),
+    legacyPhotoPath=String(body.photo_path||"").trim(),
+    inlinePhoto=body.photo&&typeof body.photo==="object"?body.photo:null,
+    replyTo=String(body.reply_to_id||"").trim();
+  if(!text&&!legacyPhotoPath&&!inlinePhoto)throw Error("Message vide.");
+  if(legacyPhotoPath&&!legacyPhotoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
+
+  if(replyTo){
+    const parent=await db.from("stip_messages").select("id").eq("id",replyTo).eq("conversation_id",conv.id).maybeSingle();
+    if(parent.error)throw parent.error;
+    if(!parent.data)throw Error("Le message auquel vous répondez n’est plus disponible.")
+  }
+
+  let photoPath=legacyPhotoPath,createdPhoto="";
+  if(inlinePhoto){
+    photoPath=await storeTeamPhoto(conv,inlinePhoto);
+    createdPhoto=photoPath
+  }
   const payload:any={};
   if(photoPath)payload.photo_path=photoPath;
-  const{data,error}=await db.from("stip_messages").insert({conversation_id:conv.id,sender_agent_id:ctx.agent.id,body:text,payload}).select("id,created_at").single();
-  if(error)throw error;
+  if(replyTo)payload.reply_to_id=replyTo;
+  const{data,error}=await db.from("stip_messages").insert({
+    conversation_id:conv.id,
+    sender_agent_id:ctx.agent.id,
+    body:text,
+    payload
+  }).select("id,created_at").single();
+  if(error){
+    if(createdPhoto){
+      try{await removeTeamPhotos([createdPhoto])}catch(cleanupError){console.error("team photo rollback",cleanupError)}
+    }
+    throw error
+  }
   await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",conv.id);
   return{ok:true,...data}
 }
+
 async function teamDelete(ctx:any,body:any){
-  if(!isAdmin(ctx))throw Error("Suppression admin requise.");
+  const mode=requireTeamWrite(ctx),admin=mode==="admin";
   await purgeExpiredTeamMessages(ctx);
-  const conv=await teamConversation(ctx),ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
+  const conv=await teamConversation(ctx),
+    ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
   if(!ids.length)throw Error("Aucun message sélectionné.");
-  const{data:rows,error}=await db.from("stip_messages").select("id,payload").eq("conversation_id",conv.id).in("id",ids);
+  const{data:rows,error}=await db.from("stip_messages")
+    .select("id,payload,sender_agent_id")
+    .eq("conversation_id",conv.id)
+    .in("id",ids);
   if(error)throw error;
   if(!rows?.length)return{ok:true,deleted:0};
+  if(!admin&&rows.some((m:any)=>String(m.sender_agent_id)!==String(ctx.agent.id)))
+    throw Error("Suppression non autorisée.");
   await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
-  const realIds=rows.map((m:any)=>m.id),del=await db.from("stip_messages").delete().in("id",realIds);
+  const realIds=rows.map((m:any)=>m.id),
+    del=await db.from("stip_messages").delete().in("id",realIds);
   if(del.error)throw del.error;
   const{data:last}=await db.from("stip_messages").select("created_at").eq("conversation_id",conv.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const stamp=last?.created_at||new Date().toISOString();
   await db.from("stip_conversations").update({last_message_at:stamp,updated_at:new Date().toISOString()}).eq("id",conv.id);
   return{ok:true,deleted:realIds.length}
 }
+
 
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:H});
@@ -310,5 +373,5 @@ Deno.serve(async req=>{
     if(a==="team_send")return J(await teamSend(c,b));
     if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
-  }catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
+  }catch(e){console.error(e);const m=errMsg(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
 });
