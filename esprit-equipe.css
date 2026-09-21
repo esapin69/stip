@@ -1065,3 +1065,73 @@ body.team-page {
 .team-calendar-subscribe>span{font-size:.82rem}
 .team-calendar-subscribe>strong{font-weight:850}
 .team-calendar-subscribe:active{transform:translateY(1px)}
+
+/* team-intelligence-calendar-20260921 */
+.team-cal-status{
+ display:grid;
+ place-items:center;
+ min-width:18px;
+ min-height:18px;
+ font-size:1.02rem;
+ line-height:1;
+ font-weight:1000;
+}
+.team-cal-status.status-ok{color:#159b62;font-size:1.18rem}
+.team-cal-status.status-warning{color:#c58b00}
+.team-cal-status.status-critical{color:#c33b3b}
+.team-date-jump-grid>button.status-ok:not(.is-selected){background:#f6fcf8}
+.team-date-jump-grid>button.status-warning:not(.is-selected){background:#fffaf0}
+.team-date-jump-grid>button.status-critical:not(.is-selected){background:#fff5f5}
+
+.team-days{
+ gap:4px!important;
+ padding:8px!important;
+ border:1px solid var(--stip-line)!important;
+ border-radius:18px!important;
+ background:var(--stip-surface)!important;
+ box-shadow:var(--stip-shadow-soft)!important;
+}
+.team-days>button{
+ min-height:76px!important;
+ padding:6px 1px 7px!important;
+ display:grid!important;
+ grid-template-rows:15px 24px 25px!important;
+ align-items:center!important;
+ justify-items:center!important;
+ border-radius:13px!important;
+}
+.team-days>button small{
+ margin:0!important;
+ font-size:.58rem!important;
+ line-height:1!important;
+ letter-spacing:.04em;
+}
+.team-days>button b{
+ margin:0!important;
+ font-size:1.16rem!important;
+ line-height:1!important;
+}
+.team-day-intel{
+ min-width:23px;
+ min-height:23px;
+ display:grid;
+ place-items:center;
+ font-size:1.08rem;
+ line-height:1;
+ font-weight:1000;
+}
+.team-day-intel.status-ok{color:#159b62;font-size:1.25rem}
+.team-day-intel.status-warning{color:#c58b00}
+.team-day-intel.status-critical{color:#c33b3b}
+.team-day-intel.status-unknown{opacity:0}
+.team-days>button.status-ok:not(.selected){background:#f7fcf9!important}
+.team-days>button.status-warning:not(.selected){background:#fffaf1!important}
+.team-days>button.status-critical:not(.selected){background:#fff5f5!important}
+@media(max-width:430px){
+ .team-days{gap:3px!important;padding:7px!important}
+ .team-days>button{min-height:72px!important;grid-template-rows:14px 23px 24px!important}
+ .team-days>button small{font-size:.53rem!important}
+ .team-days>button b{font-size:1.08rem!important}
+ .team-day-intel{font-size:1rem}
+ .team-day-intel.status-ok{font-size:1.18rem}
+}
