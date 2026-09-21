@@ -1177,7 +1177,7 @@
             kind = futureTypeKey(x);
           return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
         }).join("");
-      return `<div class="hc-week-event-date-group"><div class="hc-planning-period-separator hc-week-event-date-separator"><span>${esc(label)}</span></div>${buttons}</div>`;
+      return `<div class="hc-week-event-date-group"><div class="hc-planning-period-separator hc-week-event-date-separator stip-section-separator is-compact"><span>${esc(label)}</span></div>${buttons}</div>`;
     }).join("");
 
     return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${content}</div></section>`;
@@ -1282,7 +1282,7 @@
     }
 
     if (!items.length) return "";
-    return '<section class="hc-fixed-shift-legend" aria-label="Légende du mois"><small>LÉGENDE DU MOIS</small><div>' +
+    return '<section class="hc-fixed-shift-legend stip-legend-surface" aria-label="Légende du mois"><div>' +
       items.join("") +
       "</div></section>";
   }
@@ -1757,8 +1757,8 @@
   }
 
   function planningCalendarPocket() {
-    if(!has("calendar_subscribe"))return "";
-    return `<details class="hc-calendar-pocket"><summary><span>⋯</span> Options du planning</summary><div><button type="button" data-home-calendar-subscribe><span>📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b>›</b></button></div></details>`;
+    if (!has("calendar_subscribe")) return "";
+    return `<details class="hc-calendar-pocket stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
   }
 
   function teamShortcut() {
@@ -1774,7 +1774,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-week-separator" aria-hidden="true"><span>CETTE SEMAINE</span></div><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>CETTE SEMAINE</span></div><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
