@@ -239,20 +239,26 @@
   }
 
   function render() {
-    const root = document.querySelector("#homeView .hs-home"),
-      mode = root?.querySelector(".hc-home-mode-content");
-    root?.querySelector("[data-duty-chief]")?.remove();
-    root?.querySelector("[data-duty-chief-bubble]")?.remove();
-    if (!root || !mode || mode.dataset.homeModeCurrent !== "planning") return;
+    const oldHome = document.querySelector("#homeView .hs-home");
+    oldHome?.querySelector("[data-duty-chief]")?.remove();
+    oldHome?.querySelector("[data-duty-chief-bubble]")?.remove();
+    oldHome?.querySelector(".hc-duty-chief-host")?.remove();
+
+    const mount = document.querySelector("#teamDutyChiefHost");
+    if (!mount) return;
     const summary = summaryMarkup();
-    if (!summary) return;
-    mode.insertAdjacentHTML("afterbegin", `<div class="hc-duty-chief-host">${summary}${bubbleMarkup()}</div>`);
-    bind(mode.querySelector(".hc-duty-chief-host"));
+    if (!summary) {
+      mount.innerHTML = "";
+      return;
+    }
+    mount.innerHTML = `<div class="hc-duty-chief-host">${summary}${bubbleMarkup()}</div>`;
+    bind(mount.querySelector(".hc-duty-chief-host"));
   }
 
   const style = document.createElement("style");
   style.textContent = `
-    .hc-duty-chief-host{position:relative;margin:0 0 14px}
+    .team-duty-chief-host{margin:0 0 16px}
+    .hc-duty-chief-host{position:relative;margin:0}
     .hc-duty-chief-card{
       box-sizing:border-box;width:100%;min-height:78px;
       display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:11px;
@@ -327,19 +333,16 @@
   document.head.appendChild(style);
 
   document.addEventListener("click", (e) => {
-    const root = document.querySelector("#homeView .hs-home"),
-      host = root?.querySelector(".hc-duty-chief-host");
+    const host = document.querySelector("#teamDutyChiefHost .hc-duty-chief-host");
     if (!host || host.contains(e.target)) return;
-    closeBubble(root);
+    closeBubble(host);
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeBubble(document.querySelector("#homeView .hs-home"));
+    if (e.key === "Escape")
+      closeBubble(document.querySelector("#teamDutyChiefHost .hc-duty-chief-host"));
   });
 
-  window.addEventListener("stip:home-rendered", () => {
-    render();
-    fetchDuty();
-  });
+  window.addEventListener("stip:home-rendered", () => render());
   window.addEventListener("stip:session-ready", () => fetchDuty(true));
   window.addEventListener("stip:session-ended", () => {
     data = null;
@@ -349,6 +352,14 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) fetchDuty();
   });
+  const init = () => {
+    render();
+    fetchDuty();
+  };
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", init, { once: true });
+  else init();
+
   setInterval(() => {
     render();
     if (Date.now() - lastFetch > 5 * 60 * 1000) fetchDuty();
