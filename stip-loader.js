@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260921-agentagenda1";
+    V = "20260921-agentagenda2";
   function load(src) {
     if (loaded.has(src)) return loaded.get(src);
     const p = new Promise((ok, ko) => {
@@ -64,7 +64,7 @@
     if (!r) return;
     if (r.startsWith("contacts")) {
       window.STIPReadCache?.requestContacts?.();
-      await seq(["section-hubs.js"]);
+      await seq(["agent-agenda-view.js", "section-hubs.js"]);
       window.STIPHubs?.contactsRoute?.(r);
       return;
     }
@@ -137,7 +137,7 @@
       }
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
-        seq(["section-hubs.js"]).catch(() => {});
+        seq(["agent-agenda-view.js", "section-hubs.js"]).catch(() => {});
       }
       if (k === "personal") seq(personalCore).catch(() => {});
       if (k === "team") seq(teamCore).catch(() => {});
