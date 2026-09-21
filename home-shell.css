@@ -3534,31 +3534,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:12px auto 14px!important;
   background:linear-gradient(90deg,transparent,rgba(52,104,118,.28) 20%,rgba(52,104,118,.28) 80%,transparent)!important;
 }
-.hc-calendar-driven-planning .hc-planning-period-separator{
-  width:100%!important;
-  display:grid!important;
-  grid-template-columns:1fr auto 1fr!important;
-  align-items:center!important;
-  gap:10px!important;
-  margin:5px 0 2px!important;
-  color:#758991!important;
-}
-.hc-calendar-driven-planning .hc-planning-period-separator::before,
-.hc-calendar-driven-planning .hc-planning-period-separator::after{
-  content:""!important;
-  height:1px!important;
-  background:linear-gradient(90deg,transparent,rgba(52,104,118,.27))!important;
-}
-.hc-calendar-driven-planning .hc-planning-period-separator::after{
-  background:linear-gradient(90deg,rgba(52,104,118,.27),transparent)!important;
-}
-.hc-calendar-driven-planning .hc-planning-period-separator>span{
-  font-size:.58rem!important;
-  font-weight:950!important;
-  line-height:1!important;
-  letter-spacing:.14em!important;
-}
-
 .hc-team-shortcut{
   box-sizing:border-box!important;
   width:100%!important;
