@@ -963,3 +963,17 @@ body.team-page {
   line-height:1.1;
   vertical-align:middle;
 }
+
+.team-adapted-mark{
+  display:inline-flex!important;
+  align-items:center;
+  margin-left:6px;
+  padding:2px 6px;
+  border:1px solid rgba(15,126,149,.18);
+  border-radius:999px;
+  background:#edf8fa;
+  color:#0f7e95;
+  font-size:.58rem!important;
+  font-style:normal;
+  font-weight:950;
+}
