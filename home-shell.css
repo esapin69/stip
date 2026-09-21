@@ -3339,29 +3339,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
 }
 
-/* ADJACENT MONTH DAYS — 20260921 */
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month:not(.is-week){
-  background:rgba(236,243,245,.42)!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month:not(.is-week) .hc-date-jump-number{
-  color:#8fa1a8!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month .hc-date-jump-workday{
-  opacity:.74!important;
-  filter:saturate(.78) brightness(1.03)!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month.is-week{
-  background:#edf5f6!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month.is-week .hc-date-jump-number:not(.hc-date-jump-workday){
-  color:#6f858e!important;
-}
-.hc-calendar-driven-planning .hc-date-jump-grid>button.is-outside-month.is-week .hc-date-jump-workday{
-  opacity:.88!important;
-  filter:saturate(.88)!important;
-}
-
-
 /* Cloche STIP — quiet empty state */
 .hc-home-pane-notifications>.hc-profile-actions.is-empty{
   padding:14px 16px;
