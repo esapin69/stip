@@ -47,11 +47,11 @@
     }
   }
   function label(x) {
-    if (x.severity >= 4) return "🚨 CRITIQUE";
-    if (x.severity >= 3) return "⚠️ À DÉCIDER";
-    if (x.severity >= 2) return "⚠️ À ANTICIPER";
-    if (x.kind === "opportunity" || x.kind === "proposal") return "OPPORTUNITÉ";
-    return "INFORMATION";
+    if (x.severity >= 4) return "🛑 ÇA COINCE";
+    if (x.severity >= 3) return "⚠️ À REGARDER";
+    if (x.severity >= 2) return "⚠️ À SURVEILLER";
+    if (x.kind === "opportunity" || x.kind === "proposal") return "PISTE UTILE";
+    return "INFO";
   }
   function group(x) {
     if (x.severity >= 3) return "decision";
@@ -62,11 +62,11 @@
   }
   function confidence(x) {
     if (x.source_family === "strategy" || x.kind === "proposal")
-      return "Piste à vérifier";
+      return "Piste à vérifier sur le terrain";
     if (x.source_family === "staffing" || x.source_family === "compound")
-      return "Comparaison automatique avec la référence HCL";
-    if (x.context) return "Conclusion étayée";
-    return "Fait détecté";
+      return "Calcul sur la référence du planning";
+    if (x.context) return "Croisement de plusieurs données STIP";
+    return "Fait repéré dans STIP";
   }
   function normalizeShift(v) {
     const s = String(v || "")
