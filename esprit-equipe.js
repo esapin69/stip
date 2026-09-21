@@ -801,7 +801,7 @@
         allowed("planning_team") && allowed("calendar_subscribe");
       if (teamSubscribe) {
         teamSubscribe.hidden = !canSubscribe;
-        const pocket = teamSubscribe.closest(".team-calendar-pocket");
+        const pocket = teamSubscribe.closest(".stip-option-pocket");
         if (pocket) pocket.hidden = !canSubscribe;
       }
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
