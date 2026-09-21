@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260920-timefilter1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260921-calfeed2" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260921-calgrid3" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -43,22 +43,11 @@
         </button>
       </section>
       <section class="team-time-stack stip-time-stack" aria-label="Navigation temporelle">
-        <section class="stip-time-month team-time-month" aria-label="Mois affiché">
-          <div class="stip-time-month-head">
-            <span class="stip-time-month-kicker">ESPRIT D’ÉQUIPE · <b id="teamYearLabel">2026</b></span>
-            <button id="teamCurrent" class="stip-time-month-action" type="button">Aujourd’hui</button>
-          </div>
-          <strong id="teamMonthLabel" class="stip-time-month-title">SEPTEMBRE</strong>
-        </section>
-        <section class="team-week-nav stip-time-nav stip-time-week" aria-label="Changer de semaine">
-          <button id="teamPrev" type="button" aria-label="Semaine précédente">‹</button>
-          <button id="teamToday" type="button" aria-controls="teamDateJumpPanel" aria-expanded="false" aria-label="Ouvrir le calendrier">
-            <strong id="teamDateLabel">Cette semaine</strong>
-            <small id="teamWeekLabel">Semaine en cours</small>
-          </button>
-          <button id="teamNext" type="button" aria-label="Semaine suivante">›</button>
-        </section>
-        <div id="teamDateJumpPanel" class="team-date-jump-panel" hidden></div>
+        <section
+          id="teamDateJumpPanel"
+          class="team-date-jump-panel team-date-jump-permanent"
+          aria-label="Calendrier mensuel"
+        ></section>
         <nav
           id="teamDays"
           class="team-days stip-time-days"
@@ -83,8 +72,8 @@
       </section>
     </main>
     <script src="stip-navigation.js?v=20260920-context1"></script>
-    <script src="agent-agenda-view.js?v=20260921-calfeed2"></script>
+    <script src="agent-agenda-view.js?v=20260921-calgrid3"></script>
     <script src="calendar-subscriptions.js?v=20260921-calfeed2"></script>
-    <script src="esprit-equipe.js?v=20260921-calfeed2"></script>
+    <script src="esprit-equipe.js?v=20260921-calgrid3"></script>
   </body>
 </html>
