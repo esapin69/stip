@@ -1622,7 +1622,7 @@
   }
   function agendaAddButton() {
     const a=state.boot?.agent||state.session?.agent||{};
-    if(!a?.id)return"";
+    if(!a?.id||(!has("planning_personal")&&!canManageAgendaOthers()))return"";
     return `<section class="hc-agenda-add-wrap"><button type="button" class="hc-agenda-add-premium" data-home-agenda-add><span>＋</span><strong>Ajouter un événement</strong><small>À mon planning${canManageAgendaOthers()?" ou à celui d’un agent":""}</small><em>›</em></button></section>`;
   }
   async function openAgendaAdd() {
