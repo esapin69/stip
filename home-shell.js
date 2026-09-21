@@ -1055,6 +1055,14 @@
     if (d === 0) return "Aujourd’hui";
     if (d === 1) return "Demain";
     if (d === 2) return "Après-demain";
+    if (d > 2 && d < 7) return `Dans ${d} jours`;
+    return fmtDateRange({ date: iso, endDate: iso });
+  }
+  function planningDaySeparatorLabel(iso) {
+    const d = dayDelta(iso);
+    if (d === 0) return "Aujourd’hui";
+    if (d === 1) return "Demain";
+    if (d === 2) return "Après-demain";
     if (d > 2) return `Dans ${d} jours`;
     return fmtDateRange({ date: iso, endDate: iso });
   }
@@ -1163,7 +1171,7 @@
     });
 
     const content = groups.map((group) => {
-      const label = nextLabel(group.iso),
+      const label = planningDaySeparatorLabel(group.iso),
         buttons = group.rows.map(({ event:x, day, time, place }) => {
           const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", ""),
             kind = futureTypeKey(x);
