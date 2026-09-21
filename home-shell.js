@@ -239,20 +239,14 @@
       first = new Date(y, m, 1, 12),
       last = new Date(y, m + 1, 0, 12),
       leading = (first.getDay() + 6) % 7,
-      trailing = (7 - ((leading + last.getDate()) % 7)) % 7,
-      gridStart = new Date(y, m, 1 - leading, 12),
-      totalCells = leading + last.getDate() + trailing,
       todayIso = parisIso(),
       week = navigationWeek(),
       weekStart = week[0]?.iso || "",
       weekEnd = week.at(-1)?.iso || "",
       cells = [];
-    for (let i = 0; i < totalCells; i++) {
-      const d = new Date(gridStart);
-      d.setDate(gridStart.getDate() + i);
-      d.setHours(12, 0, 0, 0);
-      const iso = dateIsoLocal(d),
-        outsideMonth = d.getMonth() !== m,
+    for (let day = 1; day <= last.getDate(); day++) {
+      const d = new Date(y, m, day, 12),
+        iso = dateIsoLocal(d),
         inWeek = weekStart && weekEnd && iso >= weekStart && iso <= weekEnd,
         shift = calendarShiftForDate(iso),
         cls = [
@@ -260,7 +254,6 @@
           inWeek ? "is-week" : "",
           iso === weekStart ? "is-week-start" : "",
           iso === weekEnd ? "is-week-end" : "",
-          outsideMonth ? "is-outside-month" : "",
           shift ? "is-worked" : "",
         ]
           .filter(Boolean)
@@ -275,9 +268,10 @@
           : `${dayLabel}, choisir cette semaine`,
         numberClass = shift
           ? `hc-date-jump-number hc-date-jump-workday shift-${esc(shift.type)}`
-          : "hc-date-jump-number";
+          : "hc-date-jump-number",
+        gridStart = day === 1 ? ` style="grid-column-start:${leading + 1}"` : "";
       cells.push(
-        `<button type="button" class="${cls}" data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><span class="${numberClass}">${d.getDate()}</span></button>`,
+        `<button type="button" class="${cls}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><span class="${numberClass}">${day}</span></button>`,
       );
     }
     const monthKey = monthKeyOf(first),
