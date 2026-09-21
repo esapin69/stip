@@ -2,6 +2,8 @@
   "use strict";
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-planning",
         ACTIONS="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
+        CALENDAR="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-calendar",
+        GOOGLE_ADD_URL="https://calendar.google.com/calendar/u/0/r/settings/addbyurl",
         STORE="stip_session_v1";
   let overlay=null,state=null;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -136,6 +138,47 @@
     if(!tel&&!mail)return"";
     return `<div class="aav-contact">${tel?`<a href="${esc(tel)}">☎ ${esc(c.telephone)}</a>`:""}${mail?`<button type="button" data-aav-copy="${esc(mail)}">✉ ${esc(mail)}</button>`:""}</div>`;
   }
+  function isAndroid(){return /Android/i.test(navigator.userAgent||"")}
+  async function clipboard(v){try{await navigator.clipboard.writeText(v);return true}catch{return false}}
+  function subscribeHtml(){
+    const v=state.data.viewer||{};
+    if(!v.can_subscribe_target&&!v.can_subscribe_team)return"";
+    return `<section class="aav-subscribe">
+      ${v.can_subscribe_target?`<button type="button" class="aav-subscribe-main" data-aav-subscribe="agent"><span>📅</span><div><strong>S’abonner à ce planning</strong><small>Reste synchronisé si le planning change</small></div><b>›</b></button>`:""}
+      ${v.can_subscribe_team?`<button type="button" class="aav-subscribe-team" data-aav-subscribe="team"><span>👥</span><div><strong>Esprit d’équipe</strong><small>S’abonner aussi au planning de l’équipe</small></div><b>›</b></button>`:""}
+      <div class="aav-subscribe-status" aria-live="polite"></div>
+    </section>`;
+  }
+  function manualCalendarUrl(url,status){
+    status.innerHTML=`<div class="aav-subscribe-done"><strong>Adresse prête</strong><input readonly value="${esc(url)}"><small>Copie cette adresse dans « Ajouter à partir de l’URL » de ton calendrier.</small></div>`;
+    status.querySelector("input")?.select?.();
+  }
+  async function subscribe(kind,status,button){
+    if(!status||!button)return;
+    const old=button.innerHTML;
+    button.disabled=true;
+    button.classList.add("is-loading");
+    status.innerHTML='<small class="aav-subscribe-working">Préparation de l’abonnement…</small>';
+    try{
+      const body=kind==="agent"?{kind:"agent",source_key:state.sourceKey}:{kind:"team"};
+      const feed=await post(CALENDAR,body);
+      if(isAndroid()){
+        const ok=await clipboard(feed.https_url);
+        if(!ok)return manualCalendarUrl(feed.https_url,status);
+        status.innerHTML=`<div class="aav-subscribe-done"><strong>✓ Adresse d’abonnement copiée</strong><a href="${GOOGLE_ADD_URL}" target="_blank" rel="noopener">Ouvrir Google Agenda</a><small>Dans Chrome, utilise « Version pour ordinateur » si nécessaire, puis Autres agendas → + → À partir de l’URL.</small></div>`;
+      }else{
+        status.innerHTML='<small class="aav-subscribe-working">Ouverture du calendrier…</small>';
+        location.href=feed.webcal_url;
+        setTimeout(()=>{button.disabled=false;button.classList.remove("is-loading");button.innerHTML=old},1200);
+        return;
+      }
+    }catch(err){
+      status.innerHTML=`<div class="aav-subscribe-error">${esc(err?.message||"Abonnement indisponible.")}</div>`;
+    }
+    button.disabled=false;
+    button.classList.remove("is-loading");
+    button.innerHTML=old;
+  }
   function addForm(){
     if(!state.data.viewer?.can_manage)return"";
     return `<section class="aav-manage"><button type="button" class="aav-add" data-aav-add>＋ Ajouter un événement</button><form class="aav-form" data-aav-form hidden><div class="aav-form-grid"><label>Titre<input name="title" maxlength="180" required></label><label>Date<input name="event_date" type="date" value="${esc(state.selected)}" required></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="aav-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="aav-wide">Lieu<input name="location" maxlength="240"></label><label class="aav-wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="aav-form-actions"><button type="button" data-aav-cancel>Annuler</button><button type="submit">Ajouter à son agenda</button></div><p data-aav-form-status></p></form></section>`;
@@ -145,7 +188,7 @@
     const c=state.data.contact||state.data.agent||{},ghe=String(c.ghe||state.data.agent?.ghe||"").replace(/^GHE\s*/i,"");
     overlay.querySelector(".aav-title").textContent=person(c);
     overlay.querySelector(".aav-sub").textContent=[ghe?`GHE ${ghe}`:"",state.data.agent?.role||c.role_metier||"",quotity()?`◐ ${quotity()} %`:""].filter(Boolean).join(" · ");
-    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}`;
+    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${subscribeHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}`;
     wireBody();
   }
   function moveMonth(step){
@@ -160,6 +203,7 @@
     body.querySelectorAll("[data-aav-day]").forEach(b=>b.onclick=()=>{state.selected=b.dataset.aavDay;state.month=monthKey(state.selected);render()});
     body.querySelectorAll("[data-aav-month]").forEach(b=>b.onclick=()=>moveMonth(b.dataset.aavMonth));
     body.querySelector("[data-aav-copy]")?.addEventListener("click",async e=>{try{await navigator.clipboard.writeText(e.currentTarget.dataset.aavCopy||"")}catch{}});
+    body.querySelectorAll("[data-aav-subscribe]").forEach(btn=>btn.addEventListener("click",()=>subscribe(btn.dataset.aavSubscribe,body.querySelector(".aav-subscribe-status"),btn)));
     const addBtn=body.querySelector("[data-aav-add]"),form=body.querySelector("[data-aav-form]");
     if(addBtn&&form)addBtn.onclick=()=>{addBtn.hidden=true;form.hidden=false};
     body.querySelector("[data-aav-cancel]")?.addEventListener("click",()=>render());
