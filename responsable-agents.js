@@ -143,8 +143,11 @@
       .filter(Boolean)
       .join(" · ");
     $("#respPanelBody").innerHTML =
-      `<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour aux brancardiers</button><section class="ra-hero">${avatar(agent, true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(agent))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;
+      `<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour aux brancardiers</button><section class="ra-hero">${avatar(agent, true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(agent))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenAgenda">Planning complet</button><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;
     $("#raBackList")?.addEventListener("click", renderSelector);
+    $("#raOpenAgenda")?.addEventListener("click", () =>
+      window.STIPAgentAgenda?.open?.(agent.source_key, agent),
+    );
     $("#raOpenEval")?.addEventListener("click", () => openEvaluation(agent));
     $("#raOpenProfile")?.addEventListener("click", () => openReadonly(agent));
   }
