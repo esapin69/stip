@@ -119,10 +119,9 @@
     return `<section class="aav-week"><div class="aav-week-icons">${state.events.filter(x=>x.date>=start&&x.date<=add(start,6)).slice(0,5).map(x=>`<span>${x.icon}</span>`).join("")}</div><div class="aav-week-grid">${cards.join("")}</div></section>`;
   }
   function eventHtml(){
-    const rows=state.events.filter(x=>x.date===state.selected);
-    const selectedLabel=fullDay(state.selected);
-    if(!rows.length)return `<section class="aav-events aav-events-empty"><strong>${esc(selectedLabel)}</strong><span>Aucun événement ce jour.</span></section>`;
-    return `<section class="aav-events"><header class="aav-events-day"><small>JOUR SÉLECTIONNÉ</small><strong>${esc(selectedLabel)}</strong></header>${rows.map(x=>`<article><span class="aav-event-icon">${x.icon}</span><div><strong>${esc(x.title)}</strong><p>${x.time?esc(x.time):"Toute la journée"}</p>${x.location?`<small>${esc(x.location)}</small>`:""}${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`).join("")}</section>`;
+    const start=monday(state.selected),end=add(start,6),rows=state.events.filter(x=>x.date>=start&&x.date<=end);
+    if(!rows.length)return '<section class="aav-events aav-events-empty"><span>Aucun événement cette semaine.</span></section>';
+    return `<section class="aav-events">${rows.map(x=>`<article class="${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${x.icon}</span><div><strong>${esc(x.title)}</strong><p>${esc(fullDay(x.date))}${x.time?` · ${esc(x.time)}`:""}</p>${x.location?`<small>${esc(x.location)}</small>`:""}${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`).join("")}</section>`;
   }
   function legendHtml(){
     const plan=state.data.items||[],seen=new Map();
