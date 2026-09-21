@@ -38,18 +38,49 @@ function reorder(day,ids){const m=new Map(tasks(day).map(x=>[x.id,x]));write(day
 function moveNext(day,id){const rows=tasks(day),item=rows.find(x=>x.id===id);if(!item)return;remove(day,id);upsert(add(day,1),{...item,id:"td-"+Date.now()+"-"+Math.random().toString(36).slice(2,7),done:false})}
 function mins(t){const m=String(t||"").match(/^(\d{1,2}):(\d{2})/);return m?Number(m[1])*60+Number(m[2]):null}
 function range(t){const p=String(t||"").match(/(\d{1,2}):?(\d{2})?\s*[–-]\s*(\d{1,2}):?(\d{2})?/);return p?[Number(p[1])*60+Number(p[2]||0),Number(p[3])*60+Number(p[4]||0)]:null}
-function insights(day=tomorrow()){const sh=shiftFor(day),ev=events(day),ts=tasks(day),out=[],sr=range(sh.time);
-if(sh.rest)out.push({icon:"◷",title:"Journée sans poste détecté",text:ev.length||ts.length?"Tu as tout de même des éléments prévus pour cette journée.":"Aucun rendez-vous ni tâche personnelle n’est détecté.",level:"info"});
-else if(sh.code!=="—")out.push({icon:"↗",title:sh.label+" · "+(sh.time||"horaire à confirmer"),text:"Ton planning est déjà identifié pour cette journée.",level:"info"});
-else out.push({icon:"?",title:"Horaire à vérifier",text:"Aucun poste n’est renseigné dans le planning pour cette journée.",level:"warning"});
-const timed=ev.map(x=>({x,m:mins(x.start||String(x.time).slice(0,5))})).filter(x=>x.m!=null).sort((a,b)=>a.m-b.m);
-for(let i=1;i<timed.length;i++){if(timed[i].m-timed[i-1].m<30){out.push({icon:"⚠",title:"Enchaînement serré",text:timed[i-1].x.title+" puis "+timed[i].x.title+" à moins de 30 min d’intervalle.",level:"warning"});break}}
-if(sr){const inside=timed.filter(e=>e.m>=sr[0]&&e.m<=sr[1]);if(inside.length)out.push({icon:"◎",title:inside.length+" élément"+(inside.length>1?"s":"")+" pendant le service",text:inside.slice(0,2).map(e=>e.x.title).join(" · "),level:"info"});const before=timed.find(e=>e.m<sr[0]&&sr[0]-e.m<=45);if(before)out.push({icon:"!",title:"Avant la prise de poste",text:before.x.title+" est prévu peu avant ton horaire de travail.",level:"warning"})}
-const urgent=ev.filter(x=>String(x.importance).toLowerCase()==="urgent");if(urgent.length)out.push({icon:"⚠",title:"Priorité signalée",text:urgent.map(x=>x.title).join(" · "),level:"warning"});
-if(ev.some(x=>x.kind==="formation"))out.push({icon:"🎓",title:"Formation prévue",text:"Vérifie le lieu et l’horaire avant le départ.",level:"info"});
-if(ev.some(x=>x.type==="Visite médicale"))out.push({icon:"🩺",title:"Visite médicale prévue",text:"Vérifie l’heure, le lieu et les documents nécessaires.",level:"info"});
-const open=ts.filter(x=>!x.done).length;if(open)out.push({icon:"✓",title:open+" chose"+(open>1?"s":"")+" à faire",text:"Tes ajouts personnels sont regroupés ici et peuvent être réordonnés.",level:"info"});
-return out.slice(0,5)}
+function insights(day=tomorrow()){
+const sh=shiftFor(day),ev=events(day),ts=tasks(day),out=[],sr=range(sh.time);
+if(sh.rest&&(ev.length||ts.some(x=>!x.done))){
+  const what=[ev.length?ev.length+" événement"+(ev.length>1?"s":""):"",ts.some(x=>!x.done)?ts.filter(x=>!x.done).length+" chose"+(ts.filter(x=>!x.done).length>1?"s":"")+" à faire":""].filter(Boolean).join(" et ");
+  out.push({icon:"⚠",title:"Repos, mais la journée n’est pas vide",text:what+" sont prévus malgré le repos.",level:"warning"})
+}else if(sh.code==="—"){
+  out.push({icon:"?",title:"Planning à vérifier",text:"Aucun poste n’est renseigné pour cette journée.",level:"warning"})
+}
+const timed=[
+  ...ev.map(x=>({x,m:mins(x.start||String(x.time).slice(0,5)),kind:"event"})),
+  ...ts.filter(x=>!x.done&&x.time).map(x=>({x,m:mins(x.time),kind:"task"}))
+].filter(x=>x.m!=null).sort((a,b)=>a.m-b.m);
+for(let i=1;i<timed.length;i++){
+  const gap=timed[i].m-timed[i-1].m;
+  if(gap>=0&&gap<30){
+    out.push({icon:"⚠",title:"Deux choses presque en même temps",text:(timed[i-1].x.title||"Un élément")+" puis "+(timed[i].x.title||"un autre")+" à "+gap+" min d’intervalle.",level:"warning"});
+    break
+  }
+}
+if(sr&&!sh.rest){
+  const start=sr[0],end=sr[1]>=sr[0]?sr[1]:sr[1]+1440,
+    normalized=timed.map(e=>({...e,n:e.m<start&&end>1440?e.m+1440:e.m}));
+  const inside=normalized.filter(e=>e.n>=start&&e.n<=end);
+  if(inside.length){
+    const first=inside[0];
+    out.push({icon:"◎",title:"Quelque chose tombe pendant ton service",text:(first.x.title||"Un élément")+" est prévu "+(first.x.time?("à "+String(first.x.time).slice(0,5)):"pendant ton horaire")+(inside.length>1?" · "+inside.length+" éléments au total sur le service":""),level:"info"})
+  }
+  const before=timed.filter(e=>e.m<start&&start-e.m<=45).at(-1);
+  if(before)out.push({icon:"⚠",title:"Juste avant la prise de poste",text:(before.x.title||"Un élément")+" est prévu "+(start-before.m)+" min avant ton service.",level:"warning"});
+  const after=timed.find(e=>e.m>end&&e.m-end<=30);
+  if(after)out.push({icon:"!",title:"Juste après le service",text:(after.x.title||"Un élément")+" est prévu "+(after.m-end)+" min après la fin prévue.",level:"warning"})
+}
+const urgent=ev.filter(x=>String(x.importance).toLowerCase()==="urgent");
+if(urgent.length)out.push({icon:"⚠",title:"Priorité signalée",text:urgent.slice(0,2).map(x=>x.title).join(" · "),level:"warning"});
+for(const x of ev.filter(x=>x.kind==="formation"||x.type==="Visite médicale")){
+  const missing=[];
+  if(!String(x.time||"").trim())missing.push("l’horaire");
+  if(!String(x.place||"").trim())missing.push("le lieu");
+  if(missing.length)out.push({icon:x.kind==="formation"?"🎓":"🩺",title:(x.type||x.title)+" incomplet",text:"Il manque "+missing.join(" et ")+" dans STIP.",level:"warning"})
+}
+const seen=new Set();
+return out.filter(x=>{const k=x.title+"|"+x.text;if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>(b.level==="warning")-(a.level==="warning")).slice(0,5)}
+
 function snapshot(day=tomorrow()){return{day,shift:shiftFor(day),events:events(day),tasks:tasks(day),insights:insights(day),fullDate:fullDate(day),shortDate:shortDate(day),relation:relation(day)}}
 window.STIPTomorrow={iso,tomorrow,add,dateObj,fullDate,shortDate,relation,futureDays,canon,esc,shiftFor,events,localTasks,tasks,setRemoteTasks,clearRemoteTasks,clearLocal,write,upsert,remove,toggle,reorder,moveNext,insights,snapshot};
 window.addEventListener("stip:session-ended",clearRemoteTasks);
