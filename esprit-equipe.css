@@ -1135,3 +1135,20 @@ body.team-page {
  .team-day-intel{font-size:1rem}
  .team-day-intel.status-ok{font-size:1.18rem}
 }
+
+.team-intel-banner{
+ display:grid;
+ gap:4px;
+ margin:0 0 10px;
+ padding:10px 12px;
+ border:1px solid #ead39a;
+ border-radius:14px;
+ background:#fff8e7;
+}
+.team-intel-banner strong,.team-intel-banner span,.team-intel-banner small{display:block}
+.team-intel-banner strong{font-size:.86rem;color:#765316}
+.team-intel-banner span{font-size:.72rem;line-height:1.4;color:#675a3c;font-weight:780}
+.team-intel-banner small{font-size:.65rem;line-height:1.35;color:#786843;font-weight:850}
+.team-intel-banner.critical{border-color:#e3b0b0;background:#fdecec}
+.team-intel-banner.critical strong{color:#8b3030}
+.team-intel-banner.critical span,.team-intel-banner.critical small{color:#764747}
