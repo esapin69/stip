@@ -1156,6 +1156,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   justify-content:flex-end!important;
   padding:0 8px 4px!important;
 }
+.hc-home-team-slot{
+  width:min(100%,350px)!important;
+  margin:0 auto 11px!important;
+}
+.hc-home-team-slot:empty{display:none!important}
+
 .hc-profile-bell{
   position:relative!important;
   top:auto!important;
@@ -1211,17 +1217,18 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card{
   position:relative!important;
   display:grid!important;
-  grid-template-columns:46px minmax(0,1fr) minmax(78px,96px)!important;
+  grid-template-columns:64px minmax(0,1fr) minmax(84px,98px)!important;
   gap:10px!important;
   align-items:center!important;
-  padding:9px 12px!important;
+  padding:9px 16px 9px 18px!important;
   min-height:82px!important;
 }
 .hc-id-card .hc-avatar{
-  width:46px!important;
-  height:56px!important;
+  width:48px!important;
+  height:58px!important;
   min-height:0!important;
   align-self:center!important;
+  justify-self:center!important;
   border:0!important;
   outline:0!important;
   border-radius:14px!important;
@@ -1241,13 +1248,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   min-width:0!important;
   display:grid!important;
   align-content:center!important;
+  justify-items:center!important;
   gap:2px!important;
-  text-align:left!important;
+  text-align:center!important;
 }
 .hc-profile-name-line{
   min-width:0!important;
+  width:100%!important;
   display:flex!important;
   align-items:baseline!important;
+  justify-content:center!important;
   gap:7px!important;
   overflow:hidden!important;
   white-space:nowrap!important;
@@ -1276,7 +1286,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-profile-email{
   display:block!important;
+  width:100%!important;
   min-width:0!important;
+  text-align:center!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
@@ -1303,6 +1315,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card .hc-profile-phone{
   display:inline-flex!important;
   align-items:center!important;
+  justify-self:center!important;
   gap:6px!important;
   cursor:pointer!important;
 }
@@ -1540,13 +1553,14 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 @media(max-width:430px){
   .hc-home-top-nav{width:min(100%,360px)!important;margin-top:8px!important}
   .hc-home-top-tools{padding-right:7px!important}
+  .hc-home-team-slot{width:min(100%,350px)!important;margin-bottom:10px!important}
   .hc-id-card{
-    grid-template-columns:44px minmax(0,1fr) minmax(72px,88px)!important;
-    gap:9px!important;
-    padding:8px 10px!important;
+    grid-template-columns:60px minmax(0,1fr) minmax(74px,86px)!important;
+    gap:8px!important;
+    padding:8px 13px 8px 15px!important;
     min-height:78px!important;
   }
-  .hc-id-card .hc-avatar{width:44px!important;height:54px!important}
+  .hc-id-card .hc-avatar{width:45px!important;height:55px!important}
   .hc-profile-firstname{font-size:1.46rem!important}
   .hc-profile-surname{font-size:.94rem!important}
   .hc-profile-email{font-size:.69rem!important}
@@ -1561,8 +1575,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:380px){
   .hc-home-top-nav{width:min(100%,334px)!important}
-  .hc-id-card{grid-template-columns:41px minmax(0,1fr) minmax(67px,82px)!important;gap:7px!important;padding:7px 9px!important;min-height:74px!important}
-  .hc-id-card .hc-avatar{width:41px!important;height:50px!important}
+  .hc-home-team-slot{width:min(100%,326px)!important}
+  .hc-id-card{grid-template-columns:55px minmax(0,1fr) minmax(68px,78px)!important;gap:7px!important;padding:7px 11px 7px 13px!important;min-height:74px!important}
+  .hc-id-card .hc-avatar{width:42px!important;height:51px!important}
   .hc-profile-firstname{font-size:1.36rem!important}
   .hc-profile-surname{font-size:.88rem!important}
   .hc-profile-email{font-size:.65rem!important}
@@ -3570,8 +3585,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.68rem!important;
   }
 }
-/* HOME PLANNING — AUTHORITATIVE REBUILD V6 — 20260921
-   Page order: launchers -> profile -> Esprit shortcut -> this week -> agenda actions -> month -> legend.
+/* HOME PLANNING — AUTHORITATIVE REBUILD V7 — 20260921
+   Page order: Esprit shortcut -> launchers -> profile -> this week -> agenda actions -> month -> legend.
    The former unified planning card is visually split into independent surfaces. */
 .hc-home-major-separator{
   box-sizing:border-box!important;
