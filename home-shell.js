@@ -1282,7 +1282,7 @@
     }
 
     if (!items.length) return "";
-    return '<section class="hc-fixed-shift-legend stip-legend-surface" aria-label="Légende du mois"><div>' +
+    return '<section class="hc-fixed-shift-legend" aria-label="Légende du mois"><div>' +
       items.join("") +
       "</div></section>";
   }
@@ -1758,7 +1758,7 @@
 
   function planningCalendarPocket() {
     if (!has("calendar_subscribe")) return "";
-    return `<details class="hc-calendar-pocket stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
+    return `<details class="stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
   }
 
   function teamShortcut() {
