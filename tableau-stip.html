@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#173d42">
   <meta name="robots" content="noindex,nofollow">
   <title>Fauteuils STIP</title>
-  <link rel="manifest" href="/tableau-stip.webmanifest?v=3">
+  <link rel="manifest" href="/tableau-stip.webmanifest?v=4">
   <link rel="icon" type="image/svg+xml" href="/images/icone_app/tableau-stip.svg">
   <link rel="apple-touch-icon" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-192.png">
   <style>
@@ -27,7 +27,7 @@
     <img class="icon" src="/images/icone_app/tableau-stip.svg" alt="">
     <h1>Fauteuils</h1>
     <p>Accès direct aux signalements de fauteuils du jour.</p>
-    <a class="open" href="/?quick=tableau">Ouvrir Fauteuils</a>
+    <a class="open" href="/#/fauteuils">Ouvrir Fauteuils</a>
     <button id="shortcutBtn" class="shortcut" type="button">Ajouter un raccourci au téléphone</button>
     <div class="hint" id="hint" aria-live="polite"></div>
   </main>
@@ -35,7 +35,7 @@
     (() => {
       const KEY="stip_tableau_shortcut_installed_v1";
       const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
-      if(standalone){location.replace("/?quick=tableau");return}
+      if(standalone){location.replace("/#/fauteuils");return}
 
       const btn=document.getElementById("shortcutBtn");
       const hint=document.getElementById("hint");

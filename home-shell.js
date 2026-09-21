@@ -1785,6 +1785,13 @@
       (b) =>
         (b.onclick = () => {
           const next = b.dataset.homeMode || "planning";
+          if (next === "tableau") {
+            state.tableauFocus = false;
+            if (window.STIPRouter?.set) {
+              window.STIPRouter.set("fauteuils");
+              return;
+            }
+          }
           if (next === state.homeMode) return;
           state.homeMode = next;
           state.renderSig = "";
@@ -2125,16 +2132,45 @@
   document.addEventListener("error", (event) => { const img = event.target; if (!(img instanceof HTMLImageElement)) return; const host = img.closest?.(".hc-avatar"); if (!host) return; host.textContent = host.dataset.avatarFallback || "ST"; }, true);
   window.addEventListener("stip:tableau-open", (event) => {
     if (!has("messages")) return;
-    state.homeMode = "tableau";
     state.tableauFocus = !!event?.detail?.focus;
+    if (window.STIPRouter?.set) {
+      window.STIPRouter.set("fauteuils");
+      return;
+    }
+    state.homeMode = "tableau";
     state.renderSig = "";
     render();
   });
   window.addEventListener("stip:tableau-close", () => {
-    state.homeMode = "planning";
     state.tableauFocus = false;
+    if (window.STIPRouter?.back) {
+      window.STIPRouter.back("home");
+      return;
+    }
+    state.homeMode = "planning";
     state.renderSig = "";
     render();
+  });
+  window.addEventListener("stip:route", (event) => {
+    const route = String(event?.detail?.route || "home");
+    if (route === "fauteuils") {
+      if (!has("messages")) {
+        window.STIPRouter?.set?.("home", { replace: true });
+        return;
+      }
+      if (state.homeMode !== "tableau") {
+        state.homeMode = "tableau";
+        state.renderSig = "";
+        render();
+      }
+      return;
+    }
+    if (route === "home" && state.homeMode === "tableau") {
+      state.homeMode = "planning";
+      state.tableauFocus = false;
+      state.renderSig = "";
+      render();
+    }
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);

@@ -401,6 +401,7 @@
       setTimeout(() => {
         if (q === "public") showPublic();
         else if (q === "profile" || q === "notifications") showProfile();
+        else if (q === "tableau" || q === "teamchat") window.STIPRouter?.set?.("fauteuils", { replace: true });
         else if (allowed(q)) openKey(q);
       }, 40);
       return;
