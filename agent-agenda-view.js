@@ -80,7 +80,7 @@
       const sourceType=String(x.source_type||""),medical=/medical|mobi_lit|visite/i.test(sourceType),privateAppointment=sourceType==="private_appointment",
         labels={rendezvous:"Rendez-vous",formation:"Formation",reunion:"Réunion",information:"Information",autre:"Événement"},
         kind=medical||privateAppointment?"Rendez-vous":labels[String(x.event_kind||"")]||"Événement",
-        icon=medical?"🩺":privateAppointment?"📅":String(x.icon||"").trim()||x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌";
+        icon=medical?"🩺":privateAppointment?"📅":(String(x.icon||"").trim()||(x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌"));
       out.push({date:String(x.event_date||"").slice(0,10),icon,kind,title:x.title||"Événement",time:x.all_day?"Toute la journée":[String(x.start_time||"").slice(0,5),String(x.end_time||"").slice(0,5)].filter(Boolean).join("–"),detail:x.body||"",location:x.location||""});
     }
     for(const x of data.personal_formations||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"🎓",kind:"Formation",title:x.intitule||"Formation",time:x.horaire||"",detail:"",location:x.lieu||""}),40);
