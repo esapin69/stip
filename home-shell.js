@@ -1171,74 +1171,91 @@
     return { icon, label: type || "Événement" };
   }
   function fixedShiftLegend() {
-    const visible = weekDisplayModel().visualDays,
-      codes = [...new Set(visible.map((x) => canonicalShift(x.code)))],
+    const key =
+        state.dateJumpMonth ||
+        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      parts = key.split("-").map(Number),
+      year = parts[0],
+      month = parts[1],
+      last = new Date(year, month, 0, 12).getDate(),
       items = [],
       seen = new Set(),
-      add = (key, html) => {
-        if (!key || seen.has(key)) return;
-        seen.add(key);
+      add = (id, html) => {
+        if (!id || seen.has(id)) return;
+        seen.add(id);
         items.push(html);
       };
 
-    codes.forEach((code) => {
-      if (!code || code === "—") return;
-      const work = {
-        M: ["Matin", "shift-m"],
-        J: ["Journée", "shift-j"],
-        J4: ["J4", "shift-j4"],
-        S: ["Soir", "shift-s"],
-        N: ["Nuit", "shift-n"],
-      }[code];
-      if (work) {
-        const [label, cls] = work;
-        add(
-          `shift:${code}`,
-          `<span class="hc-fixed-shift-item"><i class="${cls}" aria-hidden="true"></i><b>${esc(label)}</b><em>•</em><strong>${esc(shiftTime(code))}</strong></span>`,
-        );
-        return;
-      }
-
-      const label = SHIFT_BADGE_META[code]?.[1] || code,
-        symbol = SPECIAL_SHIFT_ICON[code] || (DAY_OFF.has(code) ? "🏝️" : "");
-      if (symbol) {
-        add(
-          `symbol:${symbol}|${label}`,
-          `<span class="hc-fixed-shift-item"><i class="hc-legend-symbol" aria-hidden="true">${esc(symbol)}</i><b>${esc(code)}</b><em>•</em><strong>${esc(label)}</strong></span>`,
-        );
-        return;
-      }
-      add(
-        `status:${code}`,
-        `<span class="hc-fixed-shift-item"><b>${esc(code)}</b><em>•</em><strong>${esc(label)}</strong></span>`,
-      );
-    });
-
-    visible.forEach((day) => {
-      weekEventsForDay(day)
-        .slice(0, 3)
-        .forEach((event) => {
-          const { icon, label } = legendEventDescriptor(event);
+    for (let day = 1; day <= last; day++) {
+      const iso = key + "-" + String(day).padStart(2, "0"),
+        shift = calendarShiftForDate(iso);
+      if (shift?.code && shift.code !== "—") {
+        const code = shift.code,
+          work = {
+            M: ["Matin", "shift-m"],
+            J: ["Journée", "shift-j"],
+            J4: ["J4", "shift-j4"],
+            S: ["Soir", "shift-s"],
+            N: ["Nuit", "shift-n"],
+          }[code];
+        if (work) {
           add(
-            `symbol:${icon}|${label}`,
-            `<span class="hc-fixed-shift-item hc-fixed-event-legend"><i class="hc-legend-symbol" aria-hidden="true">${esc(icon)}</i><b>${esc(label)}</b></span>`,
+            "shift:" + code,
+            '<span class="hc-fixed-shift-item"><i class="' +
+              work[1] +
+              '" aria-hidden="true"></i><b>' +
+              esc(work[0]) +
+              '</b><em>•</em><strong>' +
+              esc(shiftTime(code)) +
+              "</strong></span>",
           );
-        });
-    });
+        } else {
+          const label = SHIFT_BADGE_META[code]?.[1] || code,
+            symbol =
+              SPECIAL_SHIFT_ICON[code] || (DAY_OFF.has(code) ? "🏝️" : "");
+          add(
+            "status:" + code,
+            '<span class="hc-fixed-shift-item">' +
+              (symbol
+                ? '<i class="hc-legend-symbol" aria-hidden="true">' +
+                  esc(symbol) +
+                  "</i>"
+                : "") +
+              "<b>" +
+              esc(code) +
+              "</b><em>•</em><strong>" +
+              esc(label) +
+              "</strong></span>",
+          );
+        }
+      }
 
-    if (
-      visible.some((x) => {
-        const code = canonicalShift(x.code);
-        return !code || code === "—";
-      })
-    )
-      add(
-        "pending",
-        '<span class="hc-fixed-shift-item hc-fixed-shift-pending"><i class="shift-pending" aria-hidden="true"></i><b>En attente du nouveau planning</b></span>',
-      );
+      calendarEventIcons(iso).forEach((icon) => {
+        const label =
+          {
+            "🩺": "Visite médicale",
+            "👶": "Stagiaire",
+            "🎓": "Formation",
+            "⚠️": "Urgent",
+            "❗": "Important",
+            "📌": "Événement",
+          }[icon] || "Événement";
+        add(
+          "event:" + icon + "|" + label,
+          '<span class="hc-fixed-shift-item hc-fixed-event-legend"><i class="hc-legend-symbol" aria-hidden="true">' +
+            esc(icon) +
+            "</i><b>" +
+            esc(label) +
+            "</b></span>",
+        );
+      });
+    }
 
     if (!items.length) return "";
-    return `<section class="hc-fixed-shift-legend" aria-label="Légende du planning"><small>LÉGENDE</small><div>${items.join("")}</div></section>`;
+    return '<section class="hc-fixed-shift-legend" aria-label="Légende du mois"><small>LÉGENDE DU MOIS</small><div>' +
+      items.join("") +
+      "</div></section>";
   }
   function nativeExchanges() {
     const b = state.boot || {},
@@ -1720,7 +1737,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1740,7 +1757,8 @@
       return;
     }
 
-    const markup = `${homeModeNav()}${profile()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    const profileBreak = state.homeMode === "planning" ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
+    const markup = `${homeModeNav()}${profile()}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
