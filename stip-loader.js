@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260921-agentagenda10";
+    V = "20260921-sharedmonth1";
   function load(src) {
     if (loaded.has(src)) return loaded.get(src);
     const p = new Promise((ok, ko) => {
@@ -32,7 +32,6 @@
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
     "planning-home.js",
-    "planning-month-hero.js",
     "planning-print-reference.js",
   ];
   const personalExtras = [
