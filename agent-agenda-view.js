@@ -104,11 +104,15 @@
     const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
     return `<section class="aav-month"><header><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar">${cells.join("")}</div></section>`;
   }
+  function quotity(){
+    const q=Number(state?.data?.agent?.quotite);
+    return Number.isInteger(q)&&q>=1&&q<100?q:0;
+  }
   function weekHtml(){
     const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[];
     for(let i=0;i<7;i++){
       const day=add(start,i),row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||"");
-      cards.push(`<button type="button" class="aav-week-day ${row?`shift-${info.family}`:""} ${day===state.selected?"selected":""}" data-aav-day="${day}"><small>${shortDay(day)}</small><b>${dobj(day).getDate()}</b><span class="aav-week-events">${ev.slice(0,2).map(x=>x.icon).join("")}</span><div class="aav-week-shift">${row?shiftToken(row,false):'<em>—</em>'}</div>${row&&info.time?`<em>${esc(info.time)}</em>`:""}${row&&info.adapted?'<i title="Horaire adapté">⏱</i>':""}</button>`);
+      cards.push(`<button type="button" class="aav-week-day ${row?`shift-${info.family}`:""} ${day===state.selected?"selected":""}" data-aav-day="${day}"><small>${shortDay(day)}</small><b>${dobj(day).getDate()}</b><span class="aav-week-events">${ev.slice(0,2).map(x=>x.icon).join("")}</span><div class="aav-week-shift">${row?shiftToken(row,false):'<em>—</em>'}</div>${row&&info.time?`<em>${esc(info.time)}</em>`:""}${row&&info.adapted?'<i title="Horaire adapté">⏱</i>':""}${row&&quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
     }
     return `<section class="aav-week"><div class="aav-week-icons">${state.events.filter(x=>x.date>=start&&x.date<=add(start,6)).slice(0,5).map(x=>`<span>${x.icon}</span>`).join("")}</div><div class="aav-week-grid">${cards.join("")}</div></section>`;
   }
@@ -122,6 +126,7 @@
     for(const r of plan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
     const items=[...seen.values()].slice(0,10).map(i=>`<span>${i.family==="rh"||i.family==="off"||i.family==="other"?i.icon:`<i class="aav-dot aav-${i.family}"></i>`}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
     if(plan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
+    if(quotity())items.push(`<span>◐ <b>Temps partiel</b><small>· ${quotity()}%</small></span>`);
     const kinds=new Map();for(const x of state.events)if(!kinds.has(x.kind))kinds.set(x.kind,x.icon);
     for(const [k,icon] of kinds)items.push(`<span>${icon} <b>${esc(k)}</b></span>`);
     return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")}</div></section>`;
@@ -139,7 +144,7 @@
     if(!overlay||!state)return;
     const c=state.data.contact||state.data.agent||{},ghe=String(c.ghe||state.data.agent?.ghe||"").replace(/^GHE\s*/i,"");
     overlay.querySelector(".aav-title").textContent=person(c);
-    overlay.querySelector(".aav-sub").textContent=[ghe?`GHE ${ghe}`:"",state.data.agent?.role||c.role_metier||""].filter(Boolean).join(" · ");
+    overlay.querySelector(".aav-sub").textContent=[ghe?`GHE ${ghe}`:"",state.data.agent?.role||c.role_metier||"",quotity()?`◐ ${quotity()} %`:""].filter(Boolean).join(" · ");
     overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}`;
     wireBody();
   }
