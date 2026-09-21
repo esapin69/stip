@@ -139,7 +139,7 @@
       DAYS.map(
         (d, i) =>
           `<span class="ph-day-head ${i > 4 ? "weekend" : ""}">${d}</span>`,
-      ).join("") + '<span class="ph-empty"></span>'.repeat(pad);
+      ).join("") + '<span class="ph-empty" aria-hidden="true"></span>'.repeat(pad);
     for (let i = 1; i <= days; i++) {
       const dk = `${k}-${String(i).padStart(2, "0")}`,
         it = by.get(dk),
@@ -148,9 +148,12 @@
           .toUpperCase(),
         dow = new Date(`${dk}T12:00:00`).getDay(),
         weekend = dow === 0 || dow === 6;
-      cells += `<div class="ph-day-cell ${dk === today ? "today" : ""} ${weekend ? "weekend" : ""}"><b>${i}</b><div class="ph-shift-slot">${shiftVisual(code)}</div></div>`;
+      cells += `<div class="ph-day-cell ${dk === today ? "today" : ""} ${weekend ? "weekend" : ""}" data-ph-date="${dk}" data-ph-month="${k}"><b>${i}</b><div class="ph-shift-slot">${shiftVisual(code)}</div></div>`;
     }
-    return `<div class="ph-month-card"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid">${cells}</div></div>`;
+    const used = pad + days,
+      tail = (7 - (used % 7)) % 7;
+    cells += '<span class="ph-empty" aria-hidden="true"></span>'.repeat(tail);
+    return `<div class="ph-month-card" data-ph-month="${k}"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid">${cells}</div></div>`;
   }
   function announceMonth() {
     window.dispatchEvent(
