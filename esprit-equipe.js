@@ -756,7 +756,7 @@
     try {
       state.access = await post("stip-access", { action: "me" });
       const teamSubscribe=$("#teamSubscribe");
-      if(teamSubscribe)teamSubscribe.hidden=!allowed("planning_team");
+      if(teamSubscribe)teamSubscribe.hidden=!(allowed("planning_team")&&allowed("calendar_subscribe"));
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
         return location.replace("index.html");
       const required =
