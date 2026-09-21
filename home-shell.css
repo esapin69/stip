@@ -3928,3 +3928,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-agenda-editor-backdrop{align-items:center!important}
   .hc-agenda-editor{border-radius:26px!important}
 }
+
+.hc-days-landscape .hc-day-landscape{appearance:none!important;-webkit-appearance:none!important;font:inherit!important;color:#153f50!important}
+.hc-days-landscape .hc-day-landscape.selected{
+ z-index:4!important;
+ box-shadow:0 0 0 3px #0b8fa9,0 9px 20px rgba(11,143,169,.18)!important;
+ transform:translateY(-2px)!important;
+}
+.hc-days-landscape .hc-day-landscape.selected::after{
+ content:""!important;position:absolute!important;left:50%!important;bottom:-9px!important;
+ transform:translateX(-50%)!important;width:7px!important;height:7px!important;border-radius:50%!important;
+ background:#0b8fa9!important;box-shadow:0 0 0 4px #fff!important;
+}
