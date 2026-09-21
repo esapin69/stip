@@ -578,6 +578,9 @@
       .join("");
   }
   function eventType(x = {}) {
+    const kind=String(x.event_kind||"").toLowerCase(),
+      kindLabel={rendezvous:"Rendez-vous",formation:"Formation",reunion:"Réunion",information:"Information",autre:"Événement"}[kind];
+    if(kindLabel)return kindLabel;
     const raw = [x.kind, x.category, x.type, x.source_type]
       .filter(Boolean)
       .join(" ")
@@ -848,13 +851,14 @@
           date: String(x.event_date || "").slice(0, 10),
           endDate: String(x.event_date || "").slice(0, 10),
           icon:
-            x.source_type === "mobi_lit_medical"
+            String(x.icon || "").trim() ||
+            (x.source_type === "mobi_lit_medical"
               ? "🩺"
               : x.importance === "urgent"
                 ? "⚠️"
                 : x.importance === "important"
                   ? "❗"
-                  : "📌",
+                  : "📌"),
           type: eventType(x),
           title: x.title || "Événement",
           time,
@@ -1613,12 +1617,77 @@
     return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcProfileActions" class="hc-profile-actions stip-action-surface${empty ? " is-empty" : ""}">${actionCenterMarkup(state.actionFilter, true)}</section><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section></section>`;
   }
 
+  function canManageAgendaOthers() {
+    return has("responsable") || has("admin");
+  }
+  function agendaAddButton() {
+    const a=state.boot?.agent||state.session?.agent||{};
+    if(!a?.id)return"";
+    return `<section class="hc-agenda-add-wrap"><button type="button" class="hc-agenda-add-premium" data-home-agenda-add><span>＋</span><strong>Ajouter un événement</strong><small>À mon planning${canManageAgendaOthers()?" ou à celui d’un agent":""}</small><em>›</em></button></section>`;
+  }
+  async function openAgendaAdd() {
+    document.getElementById("hcAgendaEditor")?.remove();
+    const self=state.boot?.agent||state.session?.agent||{},
+      manager=canManageAgendaOthers(),
+      wrap=document.createElement("div");
+    wrap.id="hcAgendaEditor";
+    wrap.className="hc-agenda-editor-backdrop";
+    wrap.innerHTML=`<section class="hc-agenda-editor" role="dialog" aria-modal="true"><div class="hc-agenda-editor-grab"></div><header><div><small>AGENDA STIP</small><h3>Ajouter un événement</h3></div><button type="button" data-agenda-editor-close aria-label="Fermer">×</button></header><form><div class="hc-agenda-editor-grid">${manager?`<label class="wide">Planning<select name="target_agent_id"><option value="${esc(self.id)}">Moi · ${esc(agentName(self))}</option></select></label>`:`<input type="hidden" name="target_agent_id" value="${esc(self.id)}">`}<label class="wide">Titre<input name="title" maxlength="180" required placeholder="Ex. Réunion d’équipe"></label><label>Date<input name="event_date" type="date" value="${esc(state.dayFocus||parisIso())}" required></label><label>Type<select name="event_kind"><option value="rendezvous">Rendez-vous</option><option value="formation">Formation</option><option value="reunion">Réunion</option><option value="information">Information</option><option value="autre" selected>Autre</option></select></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="wide hc-agenda-icon-field">Icône <small>Facultatif · proposée automatiquement</small><div><input name="icon" maxlength="24" value="📌"><button type="button" data-agenda-icon-auto>Auto</button></div></label><label class="wide hc-agenda-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="wide">Lieu<input name="location" maxlength="240"></label><label class="wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="hc-agenda-editor-actions"><button type="button" data-agenda-editor-cancel>Annuler</button><button type="submit">Ajouter</button></div><p data-agenda-editor-status></p></form></section>`;
+    document.body.appendChild(wrap);
+    const close=()=>wrap.remove(),
+      form=wrap.querySelector("form"),
+      defaults={rendezvous:"📅",formation:"🎓",reunion:"👥",information:"ℹ️",autre:"📌"},
+      kind=form.elements.event_kind,
+      icon=form.elements.icon;
+    wrap.querySelector("[data-agenda-editor-close]").onclick=close;
+    wrap.querySelector("[data-agenda-editor-cancel]").onclick=close;
+    wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    kind?.addEventListener("change",()=>{if(icon&&!icon.dataset.custom)icon.value=defaults[kind.value]||"📌"});
+    icon?.addEventListener("input",()=>{icon.dataset.custom=icon.value.trim()?"1":""});
+    wrap.querySelector("[data-agenda-icon-auto]")?.addEventListener("click",()=>{if(icon){icon.dataset.custom="";icon.value=defaults[kind?.value]||"📌"}});
+    if(manager){
+      try{
+        const data=await call(ACTION_API,"manager_agents"),
+          select=form.elements.target_agent_id,
+          own=String(self.id||"");
+        for(const a of data.agents||[]){
+          if(String(a.id)===own)continue;
+          const o=document.createElement("option");
+          o.value=a.id;o.textContent=agentName(a);select.appendChild(o);
+        }
+      }catch{}
+    }
+    form.onsubmit=async e=>{
+      e.preventDefault();
+      const fd=new FormData(form),status=wrap.querySelector("[data-agenda-editor-status]"),all=fd.get("all_day")==="on";
+      status.textContent="Ajout…";
+      try{
+        await call(ACTION_API,"agenda_direct",{
+          target_agent_id:String(fd.get("target_agent_id")||self.id||""),
+          title:String(fd.get("title")||"").trim(),
+          body:String(fd.get("body")||"").trim(),
+          event_date:String(fd.get("event_date")||""),
+          display_mode:"event",
+          event_kind:String(fd.get("event_kind")||"autre"),
+          icon:String(fd.get("icon")||"").trim(),
+          all_day:all,
+          start_time:all?null:String(fd.get("start_time")||""),
+          end_time:all?null:String(fd.get("end_time")||""),
+          location:String(fd.get("location")||"").trim(),
+          importance:"normal"
+        });
+        status.textContent="Événement ajouté ✓";
+        setTimeout(()=>{close();refresh(true).catch(()=>{})},350);
+      }catch(err){status.textContent=err?.message||"Impossible d’ajouter l’événement."}
+    };
+  }
+
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1683,6 +1752,9 @@
         return jumpToDate(parisIso());
       }
     });
+    root
+      .querySelector("[data-home-agenda-add]")
+      ?.addEventListener("click", () => openAgendaAdd());
     root
       .querySelectorAll("[data-app]")
       .forEach((b) => (b.onclick = () => openApp(b.dataset.app)));
