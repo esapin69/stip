@@ -39,27 +39,21 @@
       : ["team", "activity", "assistant"].includes(navigationState.tab)
         ? navigationState.tab
         : "team",
-    weekStart: /^\d{4}-\d{2}-\d{2}$/.test(navigationState.weekStart || "")
-      ? monday(navigationState.weekStart)
-      : monday(todayIso()),
-    dayFocus: /^\d{4}-\d{2}-\d{2}$/.test(navigationState.dayFocus || "")
-      ? navigationState.dayFocus
-      : todayIso(),
+    weekStart: monday(todayIso()),
+    dayFocus: todayIso(),
     weeks: new Map(),
     request: 0,
     rendered: false,
     openShift: "",
-    dateJumpMonth: "",
-    personalCalendar: {
-      plan: new Map(),
-      events: new Map(),
-      loaded: false,
-    },
+    dateJumpMonth: monthKey(todayIso()),
+    daySignals: new Map(),
   };
 
   function token() {
     return localStorage.getItem(STORE) || "";
   }
+
+  const field = () => window.STIPFieldIntel || null;
 
   async function post(fn, body) {
     const response = await fetch(ROOT + fn, {
@@ -200,166 +194,58 @@
     return iso(date);
   }
 
-  const CAL_SHIFT_META = {
-    M: ["morning", "Matin"],
-    J: ["day", "Journée"],
-    J4: ["late", "J4"],
-    S: ["evening", "Soir"],
-    N: ["night", "Nuit"],
-    RH: ["rest", "Repos"],
-    CA: ["leave", "Congé annuel"],
-    CP: ["leave", "Congé payé"],
-    RTT: ["rest", "RTT"],
-    RTTA: ["rest", "RTTA"],
-    RTA: ["rest", "RTA"],
-    RC: ["rest", "Récupération"],
-    RF: ["rest", "Repos férié"],
-    FO: ["training", "Formation"],
-    ST: ["training", "Référent stagiaire"],
-    VM: ["medical", "Visite médicale"],
-    SYR: ["union", "Activité syndicale"],
-    MA: ["medical", "Maladie"],
-    AM: ["medical", "Arrêt médical"],
-    AA: ["absence", "Absence autorisée"],
-    ABS: ["absence", "Absence"],
-    OFF: ["rest", "Repos"],
-    REPOS: ["rest", "Repos"],
-  };
-  const CAL_SPECIAL_ICON = {
-    RH: "🏝️",
-    CA: "🌴",
-    CP: "🌴",
-    RTT: "⏱️",
-    RTTA: "⏱️",
-    RTA: "⏱️",
-    RC: "↻",
-    RF: "•",
-    FO: "🎓",
-    ST: "👶",
-    VM: "🩺",
-    SYR: "🤝",
-    MA: "•",
-    AM: "•",
-    AA: "•",
-    ABS: "•",
-    OFF: "🏝️",
-    REPOS: "🏝️",
-  };
-  const CAL_WORK_TYPE = {
-    M: "morning",
-    J: "day",
-    J4: "late",
-    S: "evening",
-    N: "night",
-  };
-
-  function canonicalCalendarShift(raw) {
-    const source = String(raw || "")
-      .trim()
-      .toUpperCase()
-      .replace(/\*/g, "");
-    if (!source) return "";
-    if (/^M\d*$/.test(source)) return "M";
-    if (
-      source === "J0464" ||
-      source === "J" ||
-      (/^J\d+$/.test(source) && !/^J4/.test(source))
-    )
-      return "J";
-    if (source === "J4" || /^J4\d+$/.test(source)) return "J4";
-    if (/^S\d*$/.test(source)) return "S";
-    if (/^N\d*$/.test(source)) return "N";
-    return source;
+  function signalForDate(value) {
+    return state.daySignals.get(value) || null;
   }
 
-  function personalShiftForDate(value) {
-    const row = state.personalCalendar.plan.get(value);
-    if (!row) return null;
-    const code = canonicalCalendarShift(row.code || row.source_value);
-    if (!code) return null;
-    const meta = CAL_SHIFT_META[code] || ["other", code];
-    return {
-      code,
-      type: meta[0],
-      label: meta[1],
-      work: Boolean(CAL_WORK_TYPE[code]),
-      icon: CAL_SPECIAL_ICON[code] || (CAL_WORK_TYPE[code] ? "" : "•"),
-    };
-  }
-
-  function pushCalendarEvent(map, value, icon) {
-    const day = String(value || "").slice(0, 10);
-    const mark = String(icon || "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || !mark) return;
-    if (!map.has(day)) map.set(day, []);
-    const list = map.get(day);
-    if (!list.includes(mark) && list.length < 2) list.push(mark);
-  }
-
-  function expandCalendarRange(start, end, callback, max = 370) {
-    let day = String(start || "").slice(0, 10);
-    const last = String(end || start || "").slice(0, 10);
-    let count = 0;
-    while (day && day <= last && count++ < max) {
-      callback(day);
-      day = addDays(day, 1);
-    }
-  }
-
-  function setPersonalCalendar(data = {}) {
-    const plan = new Map();
-    for (const row of data.items || []) {
-      const day = String(row?.date || "").slice(0, 10);
-      if (day) plan.set(day, row);
-    }
-    const events = new Map();
-    for (const item of data.agenda_items || []) {
-      const sourceType = String(item?.source_type || "");
-      const medical = /medical|mobi_lit|visite/i.test(sourceType);
-      pushCalendarEvent(
-        events,
-        item?.event_date,
-        medical
-          ? "🩺"
-          : String(item?.icon || "").trim() ||
-              (item?.importance === "urgent"
-                ? "⚠️"
-                : item?.importance === "important"
-                  ? "❗"
-                  : "📌"),
-      );
-    }
-    for (const item of data.personal_formations || [])
-      expandCalendarRange(
-        item?.date_debut,
-        item?.date_fin || item?.date_debut,
-        (day) => pushCalendarEvent(events, day, "🎓"),
-        40,
-      );
-    for (const item of data.personal_stagiaires || [])
-      expandCalendarRange(
-        item?.date_debut,
-        item?.date_fin || item?.date_debut,
-        (day) => pushCalendarEvent(events, day, "👶"),
-      );
-    state.personalCalendar = { plan, events, loaded: true };
-  }
-
-  async function loadPersonalCalendar() {
-    const sourceKey = String(state.access?.agent?.source_key || "").trim();
-    if (!state.access?.agent_id || !sourceKey) {
-      state.personalCalendar.loaded = true;
-      return;
-    }
-    try {
-      const data = await post("stip-agent-planning", { source_key: sourceKey });
-      setPersonalCalendar(data);
-    } catch {
-      state.personalCalendar.loaded = true;
-    }
-    renderDateJumpCalendar(
-      state.dateJumpMonth || monthKey(state.dayFocus || todayIso()),
+  function assistantItemsForDate(bundle, value) {
+    return (bundle?.assistant?.items || []).filter(
+      (item) => String(item?.date || "").slice(0, 10) === value,
     );
+  }
+
+  async function loadWeekSignals(start, bundle, force = false) {
+    const cached = cacheEntry(start);
+    if (
+      !force &&
+      cached.signalLoaded &&
+      Date.now() - Number(cached.signalFetchedAt || 0) < CACHE_TTL
+    )
+      return;
+    if (cached.signalPromise && !force) return cached.signalPromise;
+    const days = daysOfWeek(start);
+    cached.signalPromise = Promise.allSettled(
+      days.map((date) => post("stip-staffing", { action: "day", date })),
+    ).then((rows) => {
+      rows.forEach((result, index) => {
+        const date = days[index],
+          staff = result.status === "fulfilled" ? result.value : null,
+          items = assistantItemsForDate(bundle, date),
+          status =
+            field()?.dayStatus?.({ staffing: staff, items }) ||
+            (() => {
+              const worst = Math.max(
+                0,
+                ...items.map((item) => Number(item?.severity || 0)),
+              );
+              return worst >= 4
+                ? { level: "critical", symbol: "🛑", label: "Ça coince" }
+                : worst >= 2
+                  ? { level: "warning", symbol: "⚠️", label: "À surveiller" }
+                  : staff?.available
+                    ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
+                    : { level: "unknown", symbol: "", label: "Pas assez de données" };
+            })();
+        state.daySignals.set(date, status);
+      });
+      cached.signalLoaded = true;
+      cached.signalFetchedAt = Date.now();
+      cached.signalPromise = null;
+      renderHeader();
+    }).catch(() => {
+      cached.signalPromise = null;
+    });
+    return cached.signalPromise;
   }
 
   function renderDateJumpCalendar(key = "") {
@@ -381,33 +267,22 @@
     for (let day = 1; day <= last.getDate(); day++) {
       const date = new Date(year, month, day, 12),
         value = iso(date),
-        shift = personalShiftForDate(value),
-        eventIcons = state.personalCalendar.events.get(value) || [],
+        signal = signalForDate(value),
         cls = [
           value === today ? "is-today" : "",
           value >= state.weekStart && value <= weekEnd ? "is-week" : "",
           value === state.dayFocus ? "is-selected" : "",
-          shift ? "has-shift" : "",
-          eventIcons.length ? "has-event" : "",
+          signal?.level ? `status-${signal.level}` : "",
         ]
           .filter(Boolean)
           .join(" "),
-        marker = shift
-          ? shift.work
-            ? `<span class="team-cal-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
-            : `<span class="team-cal-icon" aria-hidden="true">${esc(shift.icon)}</span>`
-          : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
-        aria = [
-          dayTitle(value),
-          shift?.label || "",
-          eventIcons.length
-            ? `${eventIcons.length} événement${eventIcons.length > 1 ? "s" : ""}`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(", ");
+        marker =
+          signal?.symbol
+            ? `<span class="team-cal-status status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
+            : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
+        aria = [dayTitle(value), signal?.label || ""].filter(Boolean).join(", ");
       cells.push(
-        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events">${eventIcons.map(esc).join("")}</small></button>`,
+        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events"></small></button>`,
       );
     }
     state.dateJumpMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -479,6 +354,9 @@
         activityPromise: null,
         corePromise: null,
         coreLoaded: false,
+        signalLoaded: false,
+        signalFetchedAt: 0,
+        signalPromise: null,
       });
     return state.weeks.get(start);
   }
@@ -565,13 +443,17 @@
     });
     const today = todayIso();
     $("#teamDays").innerHTML = daysOfWeek()
-      .map(
-        (day) =>
-          `<button type="button" data-team-day="${day}" class="${[
-            day === today ? "today" : "",
-            day === state.dayFocus ? "selected" : "",
-          ].filter(Boolean).join(" ")}" aria-pressed="${day === state.dayFocus}"><small>${shortDay(day)}</small><b>${dateObj(day).getDate()}</b></button>`,
-      )
+      .map((day) => {
+        const signal = signalForDate(day),
+          symbol = signal?.symbol
+            ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
+            : '<span class="team-day-intel status-unknown" aria-hidden="true"></span>';
+        return `<button type="button" data-team-day="${day}" class="${[
+          day === today ? "today" : "",
+          day === state.dayFocus ? "selected" : "",
+          signal?.level ? `status-${signal.level}` : "",
+        ].filter(Boolean).join(" ")}" aria-pressed="${day === state.dayFocus}" aria-label="${esc([shortDay(day), dateObj(day).getDate(), signal?.label || ""].filter(Boolean).join(" "))}"><small>${shortDay(day)}</small><b>${dateObj(day).getDate()}</b>${symbol}</button>`;
+      })
       .join("");
   }
 
@@ -779,6 +661,7 @@
       if (state.tab === "activity") await loadActivity(state.weekStart, force);
       if (request !== state.request) return;
       renderContent(bundle);
+      loadWeekSignals(state.weekStart, bundle, force).catch(() => {});
       const issue = bundle.coreError || bundle.activityError;
       clearBusy();
       if (issue)
@@ -901,7 +784,9 @@
     if (!token()) return location.replace("index.html");
     try {
       state.access = await post("stip-access", { action: "me" });
-      loadPersonalCalendar().catch(() => {});
+      state.weekStart = monday(todayIso());
+      state.dayFocus = todayIso();
+      state.dateJumpMonth = monthKey(todayIso());
       const teamSubscribe=$("#teamSubscribe");
       if(teamSubscribe)teamSubscribe.hidden=!(allowed("planning_team")&&allowed("calendar_subscribe"));
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
