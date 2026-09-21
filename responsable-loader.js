@@ -72,7 +72,7 @@
         ? savedNavigation.agentMode || "directory"
         : "";
   if (requestedAgents)
-    seq(["responsable-agents.js"])
+    seq(["agent-agenda-view.js", "responsable-agents.js"])
       .then(() =>
         requestAnimationFrame(() =>
           document
