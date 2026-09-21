@@ -796,8 +796,14 @@
       state.weekStart = monday(todayIso());
       state.dayFocus = todayIso();
       state.dateJumpMonth = monthKey(todayIso());
-      const teamSubscribe=$("#teamSubscribe");
-      if(teamSubscribe)teamSubscribe.hidden=!(allowed("planning_team")&&allowed("calendar_subscribe"));
+      const teamSubscribe = $("#teamSubscribe");
+      const canSubscribe =
+        allowed("planning_team") && allowed("calendar_subscribe");
+      if (teamSubscribe) {
+        teamSubscribe.hidden = !canSubscribe;
+        const pocket = teamSubscribe.closest(".team-calendar-pocket");
+        if (pocket) pocket.hidden = !canSubscribe;
+      }
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
         return location.replace("index.html");
       const required =
