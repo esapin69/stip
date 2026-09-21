@@ -12,7 +12,7 @@
   "theme_color": "#f7fbfc",
   "icons": [
     {
-      "src": "/images/icone_app/home-bell.svg",
+      "src": "/images/icone_app/team-chat.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
