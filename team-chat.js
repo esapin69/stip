@@ -492,10 +492,10 @@
     const messages = data?.messages || [];
     const canWrite =
       data?.can_write !== false && data?.access_mode !== "read";
-    const recent = messages.slice(-12);
+    const visible = messages;
     const count = messages.length;
 
-    const rows = recent
+    const rows = visible
       .map(
         (message) =>
           '<div class="tb-board-line">' +
