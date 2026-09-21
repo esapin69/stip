@@ -707,6 +707,9 @@
   $("#teamRefresh").addEventListener("click", () =>
     showWeek({ force: true, preserve: true }),
   );
+  $("#teamSubscribe")?.addEventListener("click", () =>
+    window.STIPCalendars?.quick?.("team"),
+  );
   $("#teamDays").addEventListener("click", (event) => {
     const button = event.target.closest("[data-team-day]");
     if (!button) return;
@@ -752,6 +755,8 @@
     if (!token()) return location.replace("index.html");
     try {
       state.access = await post("stip-access", { action: "me" });
+      const teamSubscribe=$("#teamSubscribe");
+      if(teamSubscribe)teamSubscribe.hidden=!allowed("planning_team");
       if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
         return location.replace("index.html");
       const required =
