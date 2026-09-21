@@ -17,6 +17,7 @@
     viewportHandler: null,
     viewportHeight: 0,
     draft: "",
+    locationFilter: "",
   };
 
   const homeState = {
@@ -60,7 +61,7 @@
       throw Error(
         typeof json.error === "string"
           ? json.error
-          : json.error?.message || "Tableau STIP indisponible.",
+          : json.error?.message || "Fauteuils indisponibles.",
       );
     }
     return json;
@@ -121,6 +122,81 @@
     );
   }
 
+  const WHEELCHAIR_AREAS = [
+    { key: "cardio", label: "Cardio", aliases: ["cardio", "pradel", "louis pradel", "hlp"] },
+    { key: "neuro", label: "Neuro", aliases: ["neuro", "wertheimer", "pierre wertheimer", "pw"] },
+    { key: "hfme", label: "HFME", aliases: ["hfme", "femme mère enfant", "femme mere enfant", "mère enfant", "mere enfant"] },
+    { key: "p8", label: "P8", aliases: ["p8", "p 8", "pavillon 8"] },
+  ];
+
+  function wheelchairArea(key) {
+    return WHEELCHAIR_AREAS.find((area) => area.key === key) || null;
+  }
+
+  function messageAreaKey(message = {}) {
+    const body = String(message.body || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    for (const area of WHEELCHAIR_AREAS) {
+      if (
+        area.aliases.some((alias) =>
+          body.includes(
+            alias
+              .toLowerCase()
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, ""),
+          ),
+        )
+      )
+        return area.key;
+    }
+    return "";
+  }
+
+  function activeWheelchairsForArea(data, key = "") {
+    return (data?.messages || []).filter((message) => {
+      if (message?.payload?.wheelchair?.status !== "active") return false;
+      return !key || messageAreaKey(message) === key;
+    }).length;
+  }
+
+  function filteredWheelchairMessages(data = {}) {
+    const messages = data.messages || [];
+    if (!state.locationFilter) return messages;
+    return messages.filter(
+      (message) =>
+        message?.payload?.wheelchair?.status === "active" &&
+        messageAreaKey(message) === state.locationFilter,
+    );
+  }
+
+  function renderLocationShortcuts(data = {}) {
+    const host = state.root?.querySelector("[data-location-shortcuts]");
+    if (!host) return;
+    host.innerHTML =
+      '<div class="tb-location-shortcuts-head"><strong>Chercher un fauteuil</strong><small>Filtre rapide par secteur</small></div>' +
+      '<div class="tb-location-shortcuts-grid">' +
+      WHEELCHAIR_AREAS.map((area) => {
+        const count = activeWheelchairsForArea(data, area.key),
+          active = state.locationFilter === area.key;
+        return (
+          '<button type="button" class="tb-location-shortcut' +
+          (active ? " active" : "") +
+          '" data-wheel-area="' +
+          esc(area.key) +
+          '" aria-pressed="' +
+          String(active) +
+          '"><strong>' +
+          esc(area.label) +
+          "</strong>" +
+          (count ? '<span>' + count + "</span>" : "") +
+          "</button>"
+        );
+      }).join("") +
+      "</div>";
+  }
+
   function pageMarkup() {
     return (
       '<section class="tb-page">' +
@@ -131,6 +207,7 @@
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</header>" +
       '<section class="tb-terrain-summary" data-terrain-summary aria-live="polite"></section>' +
+      '<section class="tb-location-shortcuts" data-location-shortcuts aria-label="Recherche rapide par secteur"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -250,6 +327,16 @@
         openPhoto(photo.dataset.photoUrl);
         return;
       }
+      const area = event.target.closest?.("[data-wheel-area]");
+      if (area) {
+        event.preventDefault();
+        const key = String(area.dataset.wheelArea || "");
+        state.locationFilter = state.locationFilter === key ? "" : key;
+        renderLocationShortcuts(state.data || {});
+        renderTerrainSummary(state.data || {});
+        renderMessages();
+        return;
+      }
       const resolve = event.target.closest?.("[data-resolve]");
       if (resolve) {
         event.preventDefault();
@@ -284,6 +371,7 @@
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
       renderTerrainSummary(data);
+      renderLocationShortcuts(data);
       const manage = state.root.querySelector("[data-select]");
       if (manage) manage.hidden = !data.admin || !messages.length;
 
@@ -331,32 +419,49 @@
   function renderTerrainSummary(data = {}) {
     const host = state.root?.querySelector("[data-terrain-summary]");
     if (!host) return;
-    const active = activeWheelchairs(data);
-    const strong = active
-      ? active + " point" + (active > 1 ? "s" : "") + " à vérifier"
-      : "Rien de signalé maintenant";
-    const sub = active
-      ? "Regarde les emplacements avant de partir."
-      : "Tu cherches ? Si tu croises un fauteuil, laisse le point ici.";
+    const area = wheelchairArea(state.locationFilter),
+      active = activeWheelchairsForArea(data, state.locationFilter),
+      strong = active
+        ? active +
+          " point" +
+          (active > 1 ? "s" : "") +
+          " à vérifier" +
+          (area ? " · " + area.label : "")
+        : area
+          ? "Aucun fauteuil signalé · " + area.label
+          : "Rien de signalé maintenant",
+      sub = active
+        ? "Ouvre le point utile avant de partir."
+        : area
+          ? "Touchez un autre secteur ou signalez-en un si vous en croisez."
+          : "Choisis un secteur pour voir tout de suite où chercher.";
     host.innerHTML =
-      '<div class="tb-terrain-frame">' +
-      '<span class="tb-terrain-plaque">POINT FAUTEUILS</span>' +
-      '<div class="tb-terrain-board ' + (active ? "has-active" : "is-clear") + '">' +
-      '<strong>' + esc(strong) + '</strong>' +
-      '<small>' + esc(sub) + '</small>' +
-      '</div></div>';
+      '<div class="tb-terrain-status ' +
+      (active ? "has-active" : "is-clear") +
+      '"><span class="tb-terrain-status-icon" aria-hidden="true">' +
+      (active ? "♿" : "✓") +
+      '</span><span><strong>' +
+      esc(strong) +
+      '</strong><small>' +
+      esc(sub) +
+      "</small></span></div>";
   }
 
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
 
-    const messages = state.data?.messages || [];
+    const messages = filteredWheelchairMessages(state.data || {});
     const me = String(state.data?.me?.id || "");
 
     if (!messages.length) {
+      const area = wheelchairArea(state.locationFilter);
       feed.innerHTML =
-        '<section class="tb-empty-state"><strong>Pas de point actif pour l’instant</strong><p>Tu cherches un fauteuil ? Regarde ici avant de partir. Si tu en croises un, signale simplement où il se trouve.</p></section>';
+        '<section class="tb-empty-state"><strong>' +
+        esc(area ? "Aucun point actif à " + area.label : "Pas de point actif pour l’instant") +
+        '</strong><p>' +
+        esc(area ? "Essaie un autre secteur ou signale un fauteuil si tu en croises." : "Choisis un secteur ci-dessus pour chercher plus vite.") +
+        "</p></section>";
       updateSelectionBar();
       return;
     }
