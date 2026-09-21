@@ -14,6 +14,7 @@
     refreshing: null,
     bootStatus: "idle",
     bootError: "",
+    planningSlow: false,
     renderSig: "",
     future: new Map(),
     exchanges: new Map(),
@@ -28,6 +29,29 @@
     dateJumpMonth: "",
     tableauFocus: false,
   };
+  let planningSlowTimer = 0;
+  function planningLoading() {
+    return (
+      state.bootStatus === "loading" &&
+      !(state.boot?.personal || []).length
+    );
+  }
+  function startPlanningLoading() {
+    clearTimeout(planningSlowTimer);
+    state.planningSlow = false;
+    planningSlowTimer = setTimeout(() => {
+      if (!planningLoading()) return;
+      state.planningSlow = true;
+      state.renderSig = "";
+      render();
+    }, 3000);
+  }
+  function stopPlanningLoading() {
+    clearTimeout(planningSlowTimer);
+    planningSlowTimer = 0;
+    state.planningSlow = false;
+  }
+
   const REST = new Set([
     "RH",
     "RTT",
@@ -277,6 +301,7 @@
       leading = (first.getDay() + 6) % 7,
       todayIso = parisIso(),
       selectedIso = state.dayFocus || todayIso,
+      loading = planningLoading(),
       cells = [];
     for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(y, m, day, 12),
@@ -298,20 +323,24 @@
           ? `${dayLabel}, ${shift.label}, choisir ce jour`
           : `${dayLabel}, choisir ce jour`,
         gridStart = day === 1 ? ` style="grid-column-start:${leading + 1}"` : "",
-        marker = shift
-          ? shift.work
-            ? `<span class="hc-date-jump-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
-            : `<span class="hc-date-jump-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
-          : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
-        eventIcons=calendarEventIcons(iso);
+        marker = loading
+          ? '<span class="hc-date-jump-skeleton" aria-hidden="true"></span>'
+          : shift
+            ? shift.work
+              ? `<span class="hc-date-jump-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
+              : `<span class="hc-date-jump-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
+            : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
+        eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="${cls} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events">${eventIcons.map(esc).join("")}</small></button>`,
+        `<button type="button" class="${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
     state.dateJumpMonth = monthKey;
     panel.dataset.calendarMonth = monthKey;
-    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent">‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant">›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div>`;
+    panel.classList.toggle("is-loading", loading);
+    panel.setAttribute("aria-busy", loading ? "true" : "false");
+    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent"${loading ? " disabled" : ""}>‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant"${loading ? " disabled" : ""}>›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid">${cells.join("")}</div>`;
   }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
@@ -776,7 +805,7 @@
               ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
               : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
       landscapeMain = loading
-        ? '<span class="hc-shift-main"><strong class="hc-shift-loading">…</strong></span>'
+        ? '<span class="hc-shift-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb"></span></span>'
         : pending
           ? '<span class="hc-shift-main"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
@@ -784,12 +813,16 @@
             : workIcon
               ? `<span class="hc-shift-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span></span>`
               : `<span class="hc-shift-main"><span class="hc-shift-fallback">${esc(shiftLabel || "—")}</span></span>`,
-      landscapeCode = loading ? "…" : pending ? "—" : canonical || "—",
+      landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       selected=landscape&&x.iso===state.dayFocus,
       tag=landscape?"button":"span",
-      attrs=landscape?` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"`:"",
+      attrs=landscape
+        ? ` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"${loading ? ' disabled aria-disabled="true"' : ""}`
+        : "",
       visual=landscape
-        ? `${landscapeMain}${weekEventBadges(x)}<strong class="hc-shift-code">${esc(landscapeCode)}</strong>`
+        ? loading
+          ? `${landscapeMain}<span class="hc-week-events-slot hc-loading-event-slot" aria-hidden="true"><span class="hc-loading-pill"></span></span><span class="hc-shift-code hc-loading-code" aria-hidden="true"></span>`
+          : `${landscapeMain}${weekEventBadges(x)}<strong class="hc-shift-code">${esc(landscapeCode)}</strong>`
         : normalVisual;
     return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
   }
@@ -848,8 +881,15 @@
     return `<div class="hc-days-landscape ${nextMonday ? "has-next-monday" : ""}" style="--visible-days:${slotCount}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "hc-day hc-day-landscape hc-day-next-monday", true) : ""}</div>`;
   }
   function planningStatus() {
-    if (state.bootStatus === "loading" && !(state.boot?.personal || []).length)
-      return '<p class="hc-planning-status">Chargement du planning…</p>';
+    if (planningLoading()) {
+      const title = state.planningSlow
+          ? "Synchronisation en cours…"
+          : "Chargement de votre planning…",
+        detail = state.planningSlow
+          ? "Encore quelques secondes. Le planning reste verrouillé."
+          : "Les jours s’activent dès que vos shifts sont prêts.";
+      return `<div class="hc-planning-loading-banner" role="status" aria-live="polite"><span class="hc-planning-loader" aria-hidden="true"></span><span><strong>${esc(title)}</strong><small>${esc(detail)}</small></span></div>`;
+    }
     if (state.bootStatus === "error")
       return `<div class="hc-planning-status error"><span>Planning non chargé.</span><button type="button" data-planning-retry>Réessayer</button></div>`;
     return "";
@@ -908,8 +948,9 @@
     return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
   }
   function weekWidget() {
-    const w = selectedWeek();
-    return `<section class="hc-widget hc-widget-planning" data-widget="planning">${weekDaysLandscape(w)}${planningStatus()}</section>`;
+    const w = selectedWeek(),
+      loading = planningLoading();
+    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}${weekDaysLandscape(w)}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -1855,6 +1896,7 @@
           "",
       );
     dateJumpPanel?.addEventListener("click", (e) => {
+      if (planningLoading()) return;
       const step = e.target.closest("[data-cal-step]"),
         day = e.target.closest("[data-cal-day]");
       if (step) {
@@ -1903,6 +1945,7 @@
       .querySelectorAll("[data-home-day]")
       .forEach((b) =>
         (b.onclick = () => {
+          if (planningLoading() || b.disabled) return;
           jumpToDate(b.dataset.homeDay);
         }),
       );
@@ -2041,6 +2084,7 @@
     if (state.refreshing && !force) return state.refreshing;
     state.bootStatus = "loading";
     state.bootError = "";
+    startPlanningLoading();
     state.renderSig = "";
     render();
     state.refreshing = (async () => {
@@ -2051,10 +2095,12 @@
         ]);
         if (boot.status === "fulfilled") {
           state.bootStatus = "ready";
+          stopPlanningLoading();
           publishBoot(boot.value);
           prefetchContacts();
         } else {
           state.bootStatus = "error";
+          stopPlanningLoading();
           state.bootError = boot.reason?.message || "Planning indisponible.";
         }
         if (home.status === "fulfilled") state.home = home.value;
@@ -2083,6 +2129,7 @@
     } catch {}
     state.bootStatus = "loading";
     state.bootError = "";
+    startPlanningLoading();
     if (state.homeMode === "chat") state.homeMode = "tableau";
     state.renderSig = "";
     const a = state.session?.agent || {};
@@ -2102,6 +2149,7 @@
     state.boot = null;
     state.bootStatus = "idle";
     state.bootError = "";
+    stopPlanningLoading();
     state.home = { actions: [], notifications: [] };
     state.externalActions.clear();
     state.actionPrefs = { tabs: [], moves: {}, dismissed: {} };
