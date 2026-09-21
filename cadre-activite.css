@@ -640,9 +640,9 @@ body {
   border-radius:15px;
   background:#f4f8f9;
 }
-.field-read strong,.field-read span{display:block}
+.field-read strong,.field-read span,.field-read small{display:block}
 .field-read strong{font-size:.92rem;color:#173f50}
-.field-read span{margin-top:5px;color:#536f78;font-size:.76rem;line-height:1.4;font-weight:750}
+.field-read span{margin-top:5px;color:#536f78;font-size:.76rem;line-height:1.4;font-weight:750}.field-read small{margin-top:6px;color:#496773;font-size:.68rem;line-height:1.35;font-weight:850}
 .field-read.warning{background:#fff6df;border-color:#ebd39a}
 .field-read.warning strong{color:#7a5411}
 .field-read.critical{background:#fdeaea;border-color:#e7b3b3}
