@@ -50,16 +50,16 @@ body.aav-open{overflow:hidden}.aav-overlay{position:fixed;inset:0;z-index:20000;
 .aav-week .hc-work-icon{font-size:1.28rem!important;line-height:1!important}
 .aav-week .hc-shift-name,.aav-week .hc-status-code{font-size:1.08rem!important;font-weight:950!important;line-height:1!important;letter-spacing:-.02em!important}
 .aav-week .hc-status-icon{font-size:1.42rem!important}
-.aav-week .code-m{background:#d7eaff!important;border-color:#0870d8!important}
-.aav-week .code-m .hc-day-head{background:#0870d8!important}
-.aav-week .code-j{background:#d8f7e5!important;border-color:#009c50!important}
-.aav-week .code-j .hc-day-head{background:#009c50!important}
+.aav-week .code-m{background:var(--stip-shift-m-soft)!important;border-color:var(--stip-shift-m)!important}
+.aav-week .code-m .hc-day-head{background:var(--stip-shift-m)!important}
+.aav-week .code-j{background:var(--stip-shift-j-soft)!important;border-color:var(--stip-shift-j)!important}
+.aav-week .code-j .hc-day-head{background:var(--stip-shift-j)!important}
 .aav-week .code-j4{background:var(--stip-shift-j4-soft)!important;border-color:var(--stip-shift-j4)!important}
 .aav-week .code-j4 .hc-day-head{background:var(--stip-shift-j4)!important}
-.aav-week .code-s{background:#fff0aa!important;border-color:#e0aa00!important}
-.aav-week .code-s .hc-day-head{background:#e0aa00!important}
-.aav-week .code-n{background:#e2e9ef!important;border-color:#2f4351!important}
-.aav-week .code-n .hc-day-head{background:#2f4351!important}
+.aav-week .code-s{background:var(--stip-shift-s-soft)!important;border-color:var(--stip-shift-s)!important}
+.aav-week .code-s .hc-day-head{background:var(--stip-shift-s)!important;color:var(--stip-shift-s-ink)!important}
+.aav-week .code-n{background:var(--stip-shift-n-soft)!important;border-color:var(--stip-shift-n)!important}
+.aav-week .code-n .hc-day-head{background:var(--stip-shift-n)!important}
 .aav-week .rest{background:#f4f6f7!important;border-color:#81909b!important}
 .aav-week .rest .hc-day-head{background:#81909b!important}
 .aav-week .pending{background:#f6f8f9!important;border-color:#9aa8af!important}
