@@ -341,3 +341,37 @@
     min-height: 52px;
   }
 }
+
+
+/* access-request-feedback-20260921 */
+.aar-list-tools{
+  display:flex;
+  justify-content:flex-end;
+  margin:2px 0 10px;
+}
+.aar-manage-access{
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid rgba(20,154,178,.22);
+  border-radius:13px;
+  background:linear-gradient(135deg,#eaf8fa,#f7fdfe);
+  color:#126779;
+  font-weight:900;
+}
+.aar-actions .aar-manage-access{
+  background:linear-gradient(135deg,#149ab2,#22bfd1);
+  color:#fff;
+  border:0;
+}
+.aar-message.is-working{
+  color:#177f91;
+  font-weight:800;
+}
+.aar-message.is-success{
+  color:#0b7a54;
+  font-weight:900;
+}
+.aar-actions button:disabled{
+  opacity:.55;
+  cursor:wait;
+}
