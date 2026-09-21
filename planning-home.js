@@ -142,7 +142,21 @@
   }
   function personalMonthEvents() {
     const b = window.STIPBootCache || {},
-      out = [];
+      out = [],
+      addDay = (value) => {
+        const d = new Date(String(value).slice(0, 10) + "T12:00:00Z");
+        d.setUTCDate(d.getUTCDate() + 1);
+        return d.toISOString().slice(0, 10);
+      },
+      expand = (start, end, icon, max = 370) => {
+        let d = String(start || "").slice(0, 10),
+          e = String(end || start || "").slice(0, 10),
+          n = 0;
+        while (d && d <= e && n++ < max) {
+          out.push({ date: d, icon });
+          d = addDay(d);
+        }
+      };
     for (const x of b.agenda_items || [])
       if (x.event_date)
         out.push({
@@ -155,14 +169,10 @@
                 ? "❗"
                 : "📌",
         });
-    for (const x of b.personal_formations || []) {
-      const d = String(x.date_debut || "").slice(0, 10);
-      if (d) out.push({ date: d, icon: "🎓" });
-    }
-    for (const x of b.personal_stagiaires || []) {
-      const d = String(x.date_debut || "").slice(0, 10);
-      if (d) out.push({ date: d, icon: "👶" });
-    }
+    for (const x of b.personal_formations || [])
+      expand(x.date_debut, x.date_fin || x.date_debut, "🎓", 40);
+    for (const x of b.personal_stagiaires || [])
+      expand(x.date_debut, x.date_fin || x.date_debut, "👶");
     return out;
   }
   function monthPanel(k) {
