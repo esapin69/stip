@@ -205,12 +205,12 @@
       '<div class="cal-loading"><i></i><span>Préparation de l’abonnement…</span></div>';
     try {
       const j = await feed(kind);
-      host.querySelector.classList.add("is-prepared");
+      host.querySelector(".cal-grid")?.classList.add("is-prepared");
       methods(j, title, status);
     } catch (e) {
       status.innerHTML = `<div class="cal-error"><strong>Impossible de préparer ce calendrier</strong><small>${esc(
         e?.message || "Réessaie dans quelques secondes.",
-      )}</small><button type="button" data-cal-retry>Réessayer</buttton></div>`;
+      )}</small><button type="button" data-cal-retry>Réessayer</button></div>`;
 
       status.querySelector("[data-cal-retry]")?.addEventListener("click", () =>
         prepare(kind, button, host),
@@ -252,4 +252,5 @@
     @media(min-width:620px){.cal-grid{grid-template-columns:1fr 1fr}}
   `;
   document.head.appendChild(st);
+  window.dispatchEvent(new CustomEvent("stip:calendar-ready"));
 })();
