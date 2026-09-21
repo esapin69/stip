@@ -438,7 +438,8 @@ async function teamSend(ctx:any,body:any){
   const text=String(body.body||"").trim().slice(0,2000),
     legacyPhotoPath=String(body.photo_path||"").trim(),
     inlinePhoto=body.photo&&typeof body.photo==="object"?body.photo:null,
-    replyTo=String(body.reply_to_id||"").trim();
+    replyTo=String(body.reply_to_id||"").trim(),
+    wheelchair=body.wheelchair&&typeof body.wheelchair==="object"?body.wheelchair:null;
   if(!text&&!legacyPhotoPath&&!inlinePhoto)throw Error("Message vide.");
   if(legacyPhotoPath&&!legacyPhotoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
 
@@ -456,6 +457,10 @@ async function teamSend(ctx:any,body:any){
   const payload:any={};
   if(photoPath)payload.photo_path=photoPath;
   if(replyTo)payload.reply_to_id=replyTo;
+  if(wheelchair)payload.wheelchair={
+    type:"spot",
+    status:"active"
+  };
   const{data,error}=await db.from("stip_messages").insert({
     conversation_id:conv.id,
     sender_agent_id:ctx.agent.id,
@@ -470,6 +475,42 @@ async function teamSend(ctx:any,body:any){
   }
   await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",conv.id);
   return{ok:true,...data}
+}
+
+async function teamResolve(ctx:any,body:any){
+  requireTeamWrite(ctx);
+  const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
+  await purgePreviousTableauDays(String(conv.id));
+  const messageId=String(body.message_id||"").trim();
+  if(!messageId)throw Error("Signalement invalide.");
+  const{data:row,error}=await db.from("stip_messages")
+    .select("id,payload")
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id)
+    .maybeSingle();
+  if(error)throw error;
+  if(!row)throw Error("Ce signalement n’est plus disponible.");
+  const wheelchair=row?.payload?.wheelchair;
+  if(!wheelchair)throw Error("Ce message n’est pas un signalement de fauteuil.");
+  if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
+  const profile=await messageProfile(String(ctx.agent.id)),
+    resolvedAt=new Date().toISOString(),
+    resolvedBy=nick(ctx.agent,profile),
+    payload={
+      ...(row.payload||{}),
+      wheelchair:{
+        ...wheelchair,
+        status:"resolved",
+        resolved_at:resolvedAt,
+        resolved_by_agent_id:String(ctx.agent.id),
+        resolved_by_name:resolvedBy
+      }
+    };
+  const update=await db.from("stip_messages").update({payload}).eq("id",messageId).eq("conversation_id",conv.id);
+  if(update.error)throw update.error;
+  return{ok:true,resolved_at:resolvedAt,resolved_by_name:resolvedBy}
 }
 
 async function teamDelete(ctx:any,body:any){
@@ -516,6 +557,7 @@ Deno.serve(async req=>{
     if(a==="team_thread")return J(await teamThread(c));
     if(a==="team_photo_upload")return J(await teamPhotoUpload(c,b));
     if(a==="team_send")return J(await teamSend(c,b));
+    if(a==="team_resolve")return J(await teamResolve(c,b));
     if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=errMsg(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}

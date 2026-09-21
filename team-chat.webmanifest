@@ -1,8 +1,8 @@
 {
   "id": "/tableau-stip",
-  "name": "STIP · Tableau",
-  "short_name": "Tableau",
-  "description": "Accès direct au tableau du jour STIP",
+  "name": "STIP · Fauteuils",
+  "short_name": "Fauteuils",
+  "description": "Signalements de fauteuils du jour STIP",
   "lang": "fr",
   "start_url": "/?quick=tableau&source=shortcut",
   "scope": "/",

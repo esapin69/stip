@@ -14,6 +14,14 @@
     selected: new Set(),
     lastSignature: "",
     focusAfterLoad: false,
+    viewportHandler: null,
+  };
+
+  const homeState = {
+    button: null,
+    timer: null,
+    loading: false,
+    data: null,
   };
 
   const previewState = {
@@ -104,6 +112,9 @@
         message.created_at,
         message.body,
         message.payload?.photo_url || "",
+        message.payload?.wheelchair?.status || "",
+        message.payload?.wheelchair?.resolved_at || "",
+        message.payload?.wheelchair?.resolved_by_name || "",
       ]),
     );
   }
@@ -113,7 +124,7 @@
       '<section class="tb-page">' +
       '<header class="tb-page-head">' +
       '<button type="button" class="tb-back" data-close aria-label="Retour">‹</button>' +
-      '<div class="tb-page-title"><small>AUJOURD’HUI</small><h2>Tableau STIP</h2></div>' +
+      '<div class="tb-page-title"><small>AUJOURD’HUI · TERRAIN</small><div class="tb-title-line"><h2>Fauteuils</h2><span class="tb-active-count" data-active-count hidden></span></div></div>' +
       '<span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</header>" +
@@ -125,8 +136,8 @@
       '<button type="button" data-selection-close>Annuler</button>' +
       "</section>" +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Écrire…" aria-label="Écrire au Tableau STIP"></textarea>' +
-      '<button type="submit" class="tb-send" aria-label="Envoyer">↑</button>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. 4 fauteuils · P8 couloir fond" aria-label="Signaler des fauteuils"></textarea>' +
+      '<button type="submit" class="tb-send" aria-label="Signaler">↑</button>' +
       "</form>" +
       "</section>"
     );
@@ -145,6 +156,8 @@
       bind(root);
     }
     state.focusAfterLoad = !!options.focus;
+    bindViewport();
+    syncViewport();
     loadFull(false);
     if (!state.timer) {
       state.timer = setInterval(() => {
@@ -160,6 +173,34 @@
   function stopFull() {
     if (state.timer) clearInterval(state.timer);
     state.timer = null;
+    unbindViewport();
+  }
+
+  function syncViewport() {
+    if (!state.root) return;
+    const height = Math.round(window.visualViewport?.height || window.innerHeight || 0);
+    if (height > 0) state.root.style.setProperty("--tb-viewport-height", height + "px");
+  }
+
+  function bindViewport() {
+    if (state.viewportHandler || !window.visualViewport) return;
+    state.viewportHandler = () => {
+      syncViewport();
+      requestAnimationFrame(() => {
+        const feed = state.root?.querySelector("[data-feed]");
+        if (feed && document.activeElement?.matches?.(".tb-composer textarea"))
+          feed.scrollTop = feed.scrollHeight;
+      });
+    };
+    window.visualViewport.addEventListener("resize", state.viewportHandler);
+    window.visualViewport.addEventListener("scroll", state.viewportHandler);
+  }
+
+  function unbindViewport() {
+    if (!state.viewportHandler || !window.visualViewport) return;
+    window.visualViewport.removeEventListener("resize", state.viewportHandler);
+    window.visualViewport.removeEventListener("scroll", state.viewportHandler);
+    state.viewportHandler = null;
   }
 
   function bind(root) {
@@ -182,12 +223,25 @@
 
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => autoGrow(textarea));
+    textarea?.addEventListener("focus", () => {
+      syncViewport();
+      setTimeout(() => {
+        const feed = root.querySelector("[data-feed]");
+        if (feed) feed.scrollTop = feed.scrollHeight;
+      }, 80);
+    });
 
     root.addEventListener("click", (event) => {
       const photo = event.target.closest?.("[data-photo-url]");
       if (photo) {
         event.stopPropagation();
         openPhoto(photo.dataset.photoUrl);
+        return;
+      }
+      const resolve = event.target.closest?.("[data-resolve]");
+      if (resolve) {
+        event.preventDefault();
+        resolveWheelchair(resolve.dataset.resolve);
       }
     });
   }
@@ -209,6 +263,14 @@
       const canWrite =
         data.can_write !== false && data.access_mode !== "read";
       const messages = data.messages || [];
+      homeState.data = data;
+      renderHomeStatus();
+      const active = activeWheelchairs(data);
+      const activeLabel = state.root.querySelector("[data-active-count]");
+      if (activeLabel) {
+        activeLabel.hidden = active < 1;
+        activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
+      }
       const manage = state.root.querySelector("[data-select]");
       if (manage) manage.hidden = !data.admin || !messages.length;
 
@@ -253,7 +315,8 @@
     const me = String(state.data?.me?.id || "");
 
     if (!messages.length) {
-      feed.innerHTML = "";
+      feed.innerHTML =
+        '<section class="tb-empty-state"><span>♿</span><strong>Aucun fauteuil signalé</strong><p>Un fauteuil repéré ou plusieurs fauteuils regroupés ? Indiquez simplement le lieu.</p></section>';
       updateSelectionBar();
       return;
     }
@@ -264,10 +327,15 @@
       const mine = String(message.sender_agent_id) === me;
       const checked = state.selected.has(id);
       const photo = message.payload?.photo_url || "";
+      const wheelchair = message.payload?.wheelchair || null;
+      const resolved = wheelchair?.status === "resolved";
+      const activeSignal = wheelchair?.status === "active";
 
       html.push(
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
+          (activeSignal ? " is-wheelchair" : "") +
+          (resolved ? " is-resolved" : "") +
           (checked ? " is-selected" : "") +
           '" data-message-id="' +
           esc(id) +
@@ -306,6 +374,20 @@
             '"><img src="' +
             esc(photo) +
             '" alt="Photo publiée"></button>',
+        );
+      }
+      if (activeSignal && !state.selection && state.data?.can_write !== false && state.data?.access_mode !== "read") {
+        html.push(
+          '<button type="button" class="tb-resolve" data-resolve="' +
+            esc(id) +
+            '"><span>✔️</span><strong>Récupéré</strong></button>',
+        );
+      } else if (resolved) {
+        html.push(
+          '<div class="tb-resolved-line">✔️ Récupéré' +
+            (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
+            (wheelchair.resolved_by_name ? " · " + esc(wheelchair.resolved_by_name) : "") +
+            "</div>",
         );
       }
       html.push("</div></article>");
@@ -426,15 +508,87 @@
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
     try {
-      await api("team_send", { body });
+      await api("team_send", { body, wheelchair: { type: "spot" } });
       textarea.value = "";
       autoGrow(textarea);
-      await Promise.all([loadFull(false), loadPreview(false)]);
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
       textarea.focus();
     } catch (error) {
       alert(error.message || "Publication impossible.");
     } finally {
       button.disabled = false;
+    }
+  }
+
+  async function resolveWheelchair(messageId) {
+    if (!messageId) return;
+    const button = state.root?.querySelector('[data-resolve="' + CSS.escape(String(messageId)) + '"]');
+    if (button) button.disabled = true;
+    try {
+      await api("team_resolve", { message_id: String(messageId) });
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+    } catch (error) {
+      alert(error.message || "Impossible de marquer ce fauteuil comme récupéré.");
+      if (button) button.disabled = false;
+    }
+  }
+
+  function activeWheelchairs(data) {
+    return (data?.messages || []).filter(
+      (message) => message?.payload?.wheelchair?.status === "active",
+    ).length;
+  }
+
+  function renderHomeStatus() {
+    const button = homeState.button;
+    if (!button?.isConnected) return;
+    const count = activeWheelchairs(homeState.data);
+    const badge = button.querySelector("[data-wheelchair-count]");
+    button.classList.toggle("has-live", count > 0);
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 9 ? "9+" : String(count);
+      badge.setAttribute(
+        "aria-label",
+        count + " signalement" + (count > 1 ? "s" : "") + " fauteuil actif" + (count > 1 ? "s" : ""),
+      );
+    }
+  }
+
+  async function loadHomeStatus(quiet = true) {
+    if (!homeState.button?.isConnected || homeState.loading) return;
+    homeState.loading = true;
+    try {
+      homeState.data = await api("team_thread");
+      renderHomeStatus();
+    } catch (error) {
+      if (!quiet) console.error(error);
+    } finally {
+      homeState.loading = false;
+    }
+  }
+
+  function stopHomeStatus() {
+    if (homeState.timer) clearInterval(homeState.timer);
+    homeState.timer = null;
+    homeState.button = null;
+    homeState.data = null;
+  }
+
+  function bindHomeButton(button) {
+    if (!button) {
+      stopHomeStatus();
+      return;
+    }
+    if (homeState.button !== button) {
+      if (homeState.timer) clearInterval(homeState.timer);
+      homeState.button = button;
+      renderHomeStatus();
+      loadHomeStatus(true);
+      homeState.timer = setInterval(() => {
+        if (!homeState.button?.isConnected) return stopHomeStatus();
+        if (!document.hidden) loadHomeStatus(true);
+      }, 5000);
     }
   }
 
@@ -627,6 +781,7 @@
   function stopAll() {
     unmountFull();
     unmountPreview();
+    stopHomeStatus();
   }
 
   function openPhoto(url) {
@@ -665,6 +820,7 @@
     mountPreview,
     unmountFull,
     unmountPreview,
+    bindHomeButton,
     refresh: () => loadFull(false),
     stop: stopAll,
   };
