@@ -107,13 +107,13 @@
     admin:
       '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M9 12h6M12 9v6"/></svg>',
     homeHome:
-      '<img src="images/icone_app/home-access-personal.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-personal.webp?v=20260922-homebuttons1" alt="" aria-hidden="true">',
     homeApps:
-      '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-applications.webp?v=20260922-homebuttons1" alt="" aria-hidden="true">',
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeChair:
-      '<span class="hc-wheelchair-icon" aria-hidden="true">♿</span>',
+      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-homebuttons1" alt="" aria-hidden="true">',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
@@ -1453,7 +1453,7 @@
       <nav class="hc-home-filters" aria-label="Accueil STIP">${items
         .map(
           (item) =>
-            `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
+            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
         )
         .join("")}</nav>
     </section>`;
