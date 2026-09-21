@@ -458,8 +458,14 @@
   }
 
   function dayContainer(day, summary, body, kind) {
-    const today = day === todayIso();
-    return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${body}</div></article>`;
+    const today = day === todayIso(),
+      signal = signalForDate(day),
+      reason = signal?.reasons?.[0] || null,
+      intel =
+        signal && ["warning", "critical"].includes(signal.level)
+          ? `<section class="team-intel-banner ${esc(signal.level)}"><strong>${esc(signal.symbol)} ${esc(reason?.headline || signal.label)}</strong>${reason?.detail ? `<span>${esc(reason.detail)}</span>` : ""}${reason?.proposal ? `<small>${esc(reason.proposal)}</small>` : ""}</section>`
+          : "";
+    return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${intel}${body}</div></article>`;
   }
 
   function agentRow(item) {
