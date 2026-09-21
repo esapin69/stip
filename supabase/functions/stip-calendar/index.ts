@@ -3,6 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const U=Deno.env.get('SUPABASE_URL')!, K=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const db=createClient(U,K)
+async function canonicalSourceKey(raw:string){const key=String(raw||'').trim();if(!key)return key;const {data:alias,error}=await db.from('stip_agent_identity_aliases').select('canonical_agent_id').eq('incoming_source_key',key).eq('active',true).maybeSingle();if(error)throw error;if(!alias?.canonical_agent_id)return key;const {data:agent,error:ae}=await db.from('agents').select('source_key').eq('id',alias.canonical_agent_id).maybeSingle();if(ae)throw ae;return String(agent?.source_key||key)}
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session','Access-Control-Allow-Methods':'GET,HEAD,POST,OPTIONS'}
 const J={...C,'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'}
 const I={...C,'Content-Type':'text/calendar; charset=utf-8','Cache-Control':'no-cache, no-store, must-revalidate','X-Content-Type-Options':'nosniff'}
@@ -65,7 +66,7 @@ function personalCalendarName(a:any){return`Mon planning · ${firstName(a)}`}
 function sharedCalendarName(a:any){return`Planning · ${niceName(a)}`}
 function sensitiveAgenda(r:any){return /medical|mobi_lit|visite|private_appointment/i.test(String(r?.source_type||''))}
 async function activeAgentById(id:string){const {data,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('id',id).eq('actif',true).maybeSingle();if(error)throw error;return data}
-async function activeAgentBySource(sourceKey:string){const {data,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('source_key',sourceKey).eq('actif',true).maybeSingle();if(error)throw error;return data}
+async function activeAgentBySource(sourceKey:string){sourceKey=await canonicalSourceKey(sourceKey);const {data,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('source_key',sourceKey).eq('actif',true).maybeSingle();if(error)throw error;return data}
 function canSubscribeAgent(p:any,a:any){return Boolean(a&&(String(p.agent?.id||'')===String(a.id)||p.permissions?.responsable||p.permissions?.admin))}
 
 async function loadDirectory(){const [{data:aa,error:ae},{data:cc,error:ce}]=await Promise.all([db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('actif',true),db.from('contacts_ghe').select('source_key,ghe,prenom,nom,telephone,equipe,role_metier').eq('actif',true).eq('categorie','personne')]);if(ae)throw ae;if(ce)throw ce;const agents=aa||[],contacts=cc||[],byId=new Map(agents.map((x:any)=>[x.id,x])),bySource=new Map(),byGhe=new Map();for(const c of contacts){if(c.source_key&&!bySource.has(c.source_key))bySource.set(c.source_key,c);const g=gheNum(c.ghe);if(Number.isFinite(g)&&!byGhe.has(String(g)))byGhe.set(String(g),c)}return{agents,contacts,byId,bySource,byGhe}}
