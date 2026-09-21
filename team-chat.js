@@ -17,7 +17,7 @@
     viewportHandler: null,
     viewportHeight: 0,
     draft: "",
-    buildingFilter: "",
+    draftKind: "spot",
   };
 
   const homeState = {
@@ -154,13 +154,11 @@
   function pageMarkup() {
     return (
       '<section class="tb-page">' +
-      '<header class="tb-page-head">' +
-      '<button type="button" class="tb-back" data-close aria-label="Retour">‹</button>' +
-      '<div class="tb-page-title"><small>SIGNALER · TROUVER · RÉCUPÉRER</small><div class="tb-title-line"><h2>Fauteuils</h2><span class="tb-active-count" data-active-count hidden></span></div></div>' +
-      '<span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
-      '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
-      "</header>" +
-      '<section class="tb-building-search" data-building-search aria-label="Rechercher un fauteuil par bâtiment"></section>' +
+      '<section class="tb-inline-head">' +
+      '<div><small>FAUTEUILS</small><h2>Recherche & signalements</h2><p>Fil terrain du jour</p></div>' +
+      '<div class="tb-inline-actions"><span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button></div>' +
+      "</section>" +
+      '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Recherche rapide par bâtiment"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -243,9 +241,6 @@
   }
 
   function bind(root) {
-    root.querySelector("[data-close]")?.addEventListener("click", () => {
-      window.dispatchEvent(new CustomEvent("stip:tableau-close"));
-    });
     root.querySelector("[data-select]")?.addEventListener("click", () =>
       toggleSelection(true),
     );
@@ -263,6 +258,7 @@
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => {
       state.draft = textarea.value;
+      if (!textarea.value.trim()) state.draftKind = "spot";
       autoGrow(textarea);
     });
     textarea?.addEventListener("focus", () => {
@@ -274,10 +270,10 @@
     });
 
     root.addEventListener("click", (event) => {
-      const building = event.target.closest?.("[data-building-filter]");
+      const building = event.target.closest?.("[data-building-compose]");
       if (building) {
         event.preventDefault();
-        selectBuilding(String(building.dataset.buildingFilter || ""));
+        composeSearch(String(building.dataset.buildingCompose || ""));
         return;
       }
       const photo = event.target.closest?.("[data-photo-url]");
@@ -319,8 +315,7 @@
         activeLabel.hidden = active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
-      renderBuildingSearch(data);
-      syncComposerHint();
+      renderSearchShortcuts();
       const manage = state.root.querySelector("[data-select]");
       if (manage) manage.hidden = !data.admin || !messages.length;
 
@@ -365,92 +360,46 @@
     return shorthand ? Number(shorthand[1]) > 1 : false;
   }
 
-  function renderBuildingSearch(data = {}) {
-    const host = state.root?.querySelector("[data-building-search]");
+  function renderSearchShortcuts() {
+    const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
-
-    const activeMessages = (data.messages || []).filter(
-      (message) => message?.payload?.wheelchair?.status === "active",
-    );
-    const counts = Object.fromEntries(
-      BUILDINGS.map((building) => [
-        building.key,
-        activeMessages.filter((message) => buildingForMessage(message) === building.key).length,
-      ]),
-    );
-    const selected = state.buildingFilter;
-
     host.innerHTML =
-      '<div class="tb-building-head"><div><strong>Où chercher ?</strong><small>1 touche pour voir les signalements du bâtiment</small></div>' +
-      (selected ? '<button type="button" class="tb-building-all" data-building-filter="">Tout voir</button>' : "") +
-      '</div><div class="tb-building-grid">' +
-      BUILDINGS.map((building) => {
-        const count = counts[building.key] || 0;
-        return (
-          '<button type="button" class="tb-building-button' +
-          (selected === building.key ? " active" : "") +
-          (count ? " has-count" : "") +
-          '" data-building-filter="' +
+      '<div class="tb-search-shortcuts-head"><strong>Je cherche un fauteuil</strong><small>Touche un bâtiment : le message est prêt.</small></div>' +
+      '<div class="tb-search-shortcuts-grid">' +
+      BUILDINGS.map(
+        (building) =>
+          '<button type="button" class="tb-search-shortcut" data-building-compose="' +
           esc(building.key) +
-          '" aria-pressed="' +
-          String(selected === building.key) +
           '"><strong>' +
           esc(building.label) +
-          '</strong><span>' +
-          (count ? count + " dispo" : "aucun signal") +
-          "</span></button>"
-        );
-      }).join("") +
+          "</strong></button>",
+      ).join("") +
       "</div>";
   }
 
-  function syncComposerHint() {
+  function composeSearch(key) {
+    const building = BUILDINGS.find((item) => item.key === key);
     const textarea = state.root?.querySelector(".tb-composer textarea");
-    if (!textarea) return;
-    const building = BUILDINGS.find((item) => item.key === state.buildingFilter);
-    textarea.placeholder = building
-      ? "Ex. 3 fauteuils · 2e étage, ascenseurs"
-      : "Ex. 4 fauteuils · P8 couloir fond";
-  }
-
-  function selectBuilding(key) {
-    const next = BUILDINGS.some((building) => building.key === key) ? key : "";
-    state.buildingFilter = state.buildingFilter === next ? "" : next;
-    renderBuildingSearch(state.data || {});
-    syncComposerHint();
-    renderMessages();
-  }
-
-  function visibleMessages(messages = []) {
-    const key = state.buildingFilter;
-    if (!key) return messages;
-    return messages.filter(
-      (message) =>
-        message?.payload?.wheelchair?.status === "active" &&
-        buildingForMessage(message) === key,
-    );
-  }
-
-  function applyBuildingToBody(body) {
-    const building = BUILDINGS.find((item) => item.key === state.buildingFilter);
-    if (!building) return body;
-    if (buildingForMessage({ body })) return body;
-    return building.label + " · " + body;
+    if (!building || !textarea) return;
+    const text = "Je cherche un fauteuil · " + building.label;
+    state.draftKind = "search";
+    state.draft = text;
+    textarea.value = text;
+    autoGrow(textarea);
+    textarea.focus();
+    textarea.setSelectionRange(text.length, text.length);
   }
 
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
 
-    const allMessages = state.data?.messages || [];
-    const messages = visibleMessages(allMessages);
+    const messages = state.data?.messages || [];
     const me = String(state.data?.me?.id || "");
 
     if (!messages.length) {
-      const building = BUILDINGS.find((item) => item.key === state.buildingFilter);
-      feed.innerHTML = building
-        ? '<section class="tb-empty-state"><strong>Aucun fauteuil signalé à ' + esc(building.label) + '</strong><p>Pas de signalement actif ici pour le moment. Reviens à Tout voir ou signale ce que tu croises.</p></section>'
-        : '<section class="tb-empty-state"><strong>Aucun fauteuil signalé pour l’instant</strong><p>Choisis un bâtiment pour chercher rapidement, ou signale simplement où tu viens d’en voir.</p></section>';
+      feed.innerHTML =
+        '<section class="tb-empty-state"><strong>Aucun message pour l’instant</strong><p>Signale un fauteuil, ou utilise un raccourci pour dire où tu en cherches un.</p></section>';
       updateSelectionBar();
       return;
     }
@@ -464,11 +413,13 @@
       const wheelchair = message.payload?.wheelchair || null;
       const resolved = wheelchair?.status === "resolved";
       const activeSignal = wheelchair?.status === "active";
+      const searchSignal = activeSignal && wheelchair?.type === "search";
 
       html.push(
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
           (activeSignal ? " is-wheelchair" : "") +
+          (searchSignal ? " is-search" : "") +
           (resolved ? " is-resolved" : "") +
           (checked ? " is-selected" : "") +
           '" data-message-id="' +
@@ -497,7 +448,13 @@
       );
 
       if (activeSignal) {
-        html.push('<span class="tb-status-chip">À récupérer</span>');
+        html.push(
+          '<span class="tb-status-chip' +
+            (searchSignal ? " is-search" : "") +
+            '">' +
+            (searchSignal ? "Recherche" : "À récupérer") +
+            "</span>",
+        );
       }
       if (message.body) {
         html.push(
@@ -517,15 +474,21 @@
       }
       if (activeSignal && !state.selection && state.data?.can_write !== false && state.data?.access_mode !== "read") {
         html.push(
-          '<button type="button" class="tb-resolve" data-resolve="' +
+          '<button type="button" class="tb-resolve' +
+            (searchSignal ? " is-search" : "") +
+            '" data-resolve="' +
             esc(id) +
             '"><span aria-hidden="true">✓</span><strong>' +
-            (isPluralSignal(message) ? "Je les prends" : "Je le prends") +
+            (searchSignal
+              ? "J’ai trouvé"
+              : (isPluralSignal(message) ? "Je les prends" : "Je le prends")) +
             "</strong></button>",
         );
       } else if (resolved) {
+        const wasSearch = wheelchair?.type === "search";
         html.push(
-          '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>Pris' +
+          '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>' +
+            (wasSearch ? "Trouvé" : "Pris") +
             (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
             "</strong>" +
             (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
@@ -643,9 +606,8 @@
     event.preventDefault();
     const form = event.currentTarget;
     const textarea = form.elements.body;
-    let body = String(textarea.value || "").trim();
+    const body = String(textarea.value || "").trim();
     if (!body) return;
-    body = applyBuildingToBody(body);
     if (!(await ensurePrivacy())) return;
 
     const button = form.querySelector('[type="submit"]');
@@ -653,10 +615,11 @@
     try {
       await api("team_send", {
         body,
-        wheelchair: { type: "spot", building: state.buildingFilter || "" },
+        wheelchair: { type: state.draftKind === "search" ? "search" : "spot" },
       });
       textarea.value = "";
       state.draft = "";
+      state.draftKind = "spot";
       autoGrow(textarea);
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
       textarea.focus();

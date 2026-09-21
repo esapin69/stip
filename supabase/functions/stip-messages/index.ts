@@ -458,7 +458,7 @@ async function teamSend(ctx:any,body:any){
   if(photoPath)payload.photo_path=photoPath;
   if(replyTo)payload.reply_to_id=replyTo;
   if(wheelchair)payload.wheelchair={
-    type:"spot",
+    type:wheelchair.type==="search"?"search":"spot",
     status:"active"
   };
   const{data,error}=await db.from("stip_messages").insert({
