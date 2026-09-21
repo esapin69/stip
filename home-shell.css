@@ -2915,117 +2915,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-selected-day-events i{font-size:1.05rem!important}
 }
 
-/* CALENDAR + WEEK — single authoritative layout, 20260921 */
-.hc-calendar-driven-planning{
-  padding:0 12px 16px!important;
-  overflow:hidden!important;
-}
-.hc-calendar-driven-planning>.hc-planning-calendar-block{
-  width:100%!important;
-  margin:0 auto 10px!important;
-  padding:0!important;
-  box-sizing:border-box!important;
-}
-.hc-date-jump-panel.hc-date-jump-permanent{
-  width:100%!important;
-  max-width:none!important;
-  margin:0!important;
-  padding:10px!important;
-  box-sizing:border-box!important;
-  border:1px solid #dbe8eb!important;
-  border-radius:22px!important;
-  background:#fff!important;
-  box-shadow:0 8px 22px rgba(20,70,88,.06)!important;
-  animation:none!important;
-}
-.hc-date-jump-permanent .hc-date-jump-head{
-  grid-template-columns:42px minmax(0,1fr) 42px!important;
-  gap:0!important;
-  margin-bottom:7px!important;
-}
-.hc-date-jump-permanent .hc-date-jump-head>button{
-  width:100%!important;
-  height:38px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:13px!important;
-  background:#f1f7f8!important;
-  color:#17556a!important;
-  font-size:1.35rem!important;
-  box-shadow:none!important;
-}
-.hc-date-jump-permanent .hc-date-jump-head>strong{
-  color:#153f50!important;
-  font-size:1.15rem!important;
-  font-weight:950!important;
-  text-align:center!important;
-  letter-spacing:0!important;
-}
-.hc-date-jump-permanent .hc-date-jump-weekdays{
-  margin:0!important;
-  color:#71868e!important;
-  font-size:.52rem!important;
-}
-.hc-date-jump-permanent .hc-date-jump-weekdays>span{padding:3px 0!important}
-.hc-calendar-driven-planning .hc-planning-week-row{
-  position:relative!important;
-  margin-top:18px!important;
-  margin-bottom:0!important;
-  padding-top:0!important;
-  border-top:0!important;
-}
-.hc-calendar-driven-planning .hc-planning-week-row::before{content:none!important}
-.hc-calendar-driven-planning .hc-widget-planning{
-  position:relative!important;
-  border:0!important;
-  box-shadow:none!important;
-  background:transparent!important;
-}
-.hc-calendar-driven-planning .hc-week-detail-divider{margin-top:9px!important}
-.hc-calendar-driven-planning .hc-days-landscape{isolation:isolate!important}
-.hc-calendar-driven-planning .hc-days-landscape.has-week-events{padding-top:78px!important}
-.hc-calendar-driven-planning .hc-day-event-markers{
-  top:-62px!important;
-  min-height:46px!important;
-  gap:8px!important;
-}
-.hc-calendar-driven-planning .hc-day-event-markers i{
-  font-size:37px!important;
-  line-height:1!important;
-  filter:
-    drop-shadow(0 5px 6px rgba(20,62,78,.13))
-    drop-shadow(0 1px 0 rgba(255,255,255,.8))!important;
-}
-.hc-calendar-driven-planning .hc-days-landscape.has-week-events::before{
-  content:"";
-  position:absolute;
-  left:8%;
-  right:8%;
-  top:54px;
-  height:16px;
-  border-radius:999px;
-  background:radial-gradient(ellipse at center,rgba(21,132,153,.075),rgba(21,132,153,0) 72%);
-  pointer-events:none;
-  z-index:0;
-}
-.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape{z-index:1}
-@media(max-width:390px){
-  .hc-calendar-driven-planning{padding-inline:10px!important}
-  .hc-calendar-driven-planning .hc-planning-week-row{margin-top:16px!important}
-  .hc-calendar-driven-planning .hc-days-landscape.has-week-events{padding-top:73px!important}
-  .hc-calendar-driven-planning .hc-day-event-markers{
-    top:-58px!important;
-    min-height:43px!important;
-  }
-  .hc-calendar-driven-planning .hc-day-event-markers i{font-size:35px!important}
-  .hc-calendar-driven-planning .hc-days-landscape.has-week-events::before{
-    top:50px;
-    left:9%;
-    right:9%;
-  }
-}
-
-
 /* DISCREET PLANNING CALENDAR OPTION — 20260921 */
 .hc-calendar-pocket{
   width:max-content;
@@ -3724,12 +3613,62 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters:has(>button:nth-child(3))>button>strong{font-size:.72rem!important}
 }
 
-
-/* HOME PLANNING POLISH — calendar breathing room + real action affordances — 20260921 */
-
-/* 1) Le calendrier mensuel ne doit plus écraser chiffre, shift et événement
-   dans 46 px. On lui rend juste assez de hauteur pour que les trois niveaux
-   restent lisibles sans transformer le bloc en grand calendrier. */
+/* HOME PLANNING — ONE AUTHORITATIVE LAYER — 20260921
+   Month → event controls → 7-day week → details → add → legend.
+   Keep all visual decisions for this home planning block here. */
+.hc-calendar-driven-planning{
+  padding:0 12px 16px!important;
+  overflow:hidden!important;
+}
+.hc-calendar-driven-planning>.hc-planning-calendar-block{
+  width:100%!important;
+  margin:0 auto 10px!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.hc-date-jump-permanent{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:10px!important;
+  box-sizing:border-box!important;
+  border:1px solid #dbe8eb!important;
+  border-radius:22px!important;
+  background:#fff!important;
+  box-shadow:0 8px 22px rgba(20,70,88,.06)!important;
+  animation:none!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-head{
+  grid-template-columns:42px minmax(0,1fr) 42px!important;
+  gap:0!important;
+  margin-bottom:7px!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-head>button{
+  width:100%!important;
+  height:38px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:13px!important;
+  background:#f1f7f8!important;
+  color:#17556a!important;
+  font-size:1.35rem!important;
+  box-shadow:none!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-head>strong{
+  color:#153f50!important;
+  font-size:1.15rem!important;
+  font-weight:950!important;
+  text-align:center!important;
+  letter-spacing:0!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-weekdays{
+  margin:0!important;
+  color:#71868e!important;
+  font-size:.52rem!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-weekdays>span{
+  padding:3px 0!important;
+}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid{
   gap:4px!important;
 }
@@ -3775,15 +3714,17 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   justify-content:center!important;
   gap:1px!important;
   overflow:visible!important;
+  padding:0!important;
   font-size:1rem!important;
   line-height:1!important;
   letter-spacing:-.08em!important;
-  padding:0!important;
 }
 
-/* 2) Vraie séparation entre le mois et les actions de la semaine. */
+/* Deliberate break: monthly overview above, interactive week below. */
 .hc-calendar-driven-planning .hc-planning-week-row{
+  position:relative!important;
   margin-top:18px!important;
+  margin-bottom:0!important;
   padding-top:18px!important;
   border-top:1px solid rgba(46,126,145,.20)!important;
 }
@@ -3794,48 +3735,105 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   left:22%!important;
   right:22%!important;
   height:1px!important;
-  background:linear-gradient(90deg,transparent,rgba(26,146,169,.30),transparent)!important;
+  background:linear-gradient(90deg,transparent,rgba(26,146,169,.32),transparent)!important;
   pointer-events:none!important;
 }
-
-/* 3) 🩺 / 👶 restent les repères visuels que l'utilisateur a validés,
-   mais leur nature cliquable devient évidente. Ils appartiennent au bouton
-   du jour : aucune nouvelle action ni nouvelle couche JS. */
+.hc-calendar-driven-planning .hc-widget-planning{
+  position:relative!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.hc-calendar-driven-planning .hc-week-detail-divider{
+  margin-top:9px!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape{
+  isolation:isolate!important;
+}
 .hc-calendar-driven-planning .hc-days-landscape.has-week-events{
-  padding-top:74px!important;
+  padding-top:82px!important;
 }
+
+/* Event controls above each day: deliberately button-like, not floating emoji. */
 .hc-calendar-driven-planning .hc-day-event-markers{
-  top:-59px!important;
-  min-height:46px!important;
-  gap:6px!important;
+  top:-67px!important;
+  min-height:54px!important;
+  gap:7px!important;
 }
-.hc-calendar-driven-planning .hc-day-event-markers i{
+.hc-calendar-driven-planning .hc-day-event-markers .hc-event-marker{
   box-sizing:border-box!important;
-  width:46px!important;
-  height:46px!important;
-  min-width:46px!important;
-  min-height:46px!important;
+  width:52px!important;
+  height:52px!important;
+  min-width:52px!important;
+  min-height:52px!important;
   display:grid!important;
   place-items:center!important;
   margin:0!important;
   padding:0!important;
-  border:1px solid #d2e4e8!important;
-  border-radius:15px!important;
-  background:linear-gradient(180deg,#fff 0%,#f0f7f8 100%)!important;
-  box-shadow:0 7px 16px rgba(20,62,78,.12),inset 0 1px 0 rgba(255,255,255,.96)!important;
-  font-size:28px!important;
+  border:2px solid #bfdbe2!important;
+  border-radius:17px!important;
+  background:linear-gradient(180deg,#fff 0%,#eaf4f6 100%)!important;
+  color:#153f50!important;
+  box-shadow:0 4px 0 #c9dde2,0 10px 18px rgba(20,62,78,.13),inset 0 1px 0 rgba(255,255,255,.98)!important;
+  font-style:normal!important;
+  font-size:29px!important;
   line-height:1!important;
   filter:none!important;
+  transform:translateY(0)!important;
+  transition:transform .10s ease,box-shadow .10s ease,border-color .10s ease!important;
 }
-.hc-calendar-driven-planning .hc-day-landscape:active .hc-day-event-markers i{
-  transform:translateY(1px) scale(.97)!important;
+.hc-calendar-driven-planning .hc-day-event-markers .hc-event-marker.type-medical{
+  border-color:#8fcbd6!important;
+  background:linear-gradient(180deg,#f9feff 0%,#e1f5f8 100%)!important;
+  box-shadow:0 4px 0 #b8dce3,0 10px 18px rgba(14,111,132,.14),inset 0 1px 0 #fff!important;
 }
-.hc-calendar-driven-planning .hc-day-landscape.selected .hc-day-event-markers i{
-  border-color:#77c8d6!important;
-  box-shadow:0 0 0 3px rgba(11,143,169,.11),0 7px 16px rgba(20,62,78,.12)!important;
+.hc-calendar-driven-planning .hc-day-event-markers .hc-event-marker.type-intern{
+  border-color:#e3c866!important;
+  background:linear-gradient(180deg,#fffdf7 0%,#fff3c9 100%)!important;
+  box-shadow:0 4px 0 #eadb9f,0 10px 18px rgba(141,109,12,.12),inset 0 1px 0 #fff!important;
+}
+.hc-calendar-driven-planning .hc-day-landscape:active .hc-day-event-markers .hc-event-marker{
+  transform:translateY(3px)!important;
+  box-shadow:0 1px 0 #c9dde2,0 4px 8px rgba(20,62,78,.10)!important;
+}
+.hc-calendar-driven-planning .hc-day-landscape.selected .hc-day-event-markers .hc-event-marker{
+  border-color:#1697ae!important;
+  box-shadow:0 0 0 3px rgba(11,143,169,.14),0 4px 0 #afd5dd,0 9px 18px rgba(20,62,78,.12)!important;
 }
 
-/* 4) L'ajout est une action intégrée au même bloc, pas une bannière externe. */
+/* Weekly details: dense enough to read quickly without wasting vertical space. */
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key{
+  padding:4px 6px 0!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-day-row{
+  min-height:70px!important;
+  padding:8px!important;
+  gap:10px!important;
+  grid-template-columns:48px minmax(0,1fr)!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key-icon{
+  width:48px!important;
+  font-size:28px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-copy>strong{
+  font-size:1.02rem!important;
+  line-height:1.12!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-when{
+  gap:5px 8px!important;
+  margin-top:5px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-date,
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-time,
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-relation{
+  min-height:28px!important;
+  padding:3px 8px!important;
+}
+.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-place{
+  margin-top:0!important;
+}
+
+/* Add is part of the same block: clear action, deliberately quieter than the week. */
 .hc-calendar-driven-planning .hc-agenda-add-wrap{
   margin:10px 4px 8px!important;
 }
@@ -3855,6 +3853,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   grid-row:1/3!important;
   width:36px!important;
   height:36px!important;
+  display:grid!important;
+  place-items:center!important;
   border:1px solid #bcdde4!important;
   border-radius:11px!important;
   background:#e4f3f6!important;
@@ -3889,6 +3889,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 @media(max-width:390px){
+  .hc-calendar-driven-planning{padding-inline:10px!important}
   .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button,
   .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-empty{
     height:56px!important;
@@ -3905,50 +3906,19 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     padding-top:16px!important;
   }
   .hc-calendar-driven-planning .hc-days-landscape.has-week-events{
-    padding-top:70px!important;
+    padding-top:76px!important;
   }
   .hc-calendar-driven-planning .hc-day-event-markers{
-    top:-56px!important;
+    top:-62px!important;
+    min-height:50px!important;
   }
-  .hc-calendar-driven-planning .hc-day-event-markers i{
-    width:42px!important;
-    height:42px!important;
-    min-width:42px!important;
-    min-height:42px!important;
-    border-radius:14px!important;
-    font-size:26px!important;
+  .hc-calendar-driven-planning .hc-day-event-markers .hc-event-marker{
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+    border-radius:16px!important;
+    font-size:27px!important;
   }
 }
 
-
-/* WEEK EVENTS COMPACT — 20260921 */
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key{
-  padding:4px 6px 0!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-day-row{
-  min-height:70px!important;
-  padding:8px 8px!important;
-  gap:10px!important;
-  grid-template-columns:48px minmax(0,1fr)!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-key-icon{
-  width:48px!important;
-  font-size:28px!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-copy>strong{
-  font-size:1.02rem!important;
-  line-height:1.12!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-when{
-  gap:5px 8px!important;
-  margin-top:5px!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-date,
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-time,
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-relation{
-  min-height:28px!important;
-  padding:3px 8px!important;
-}
-.hc-calendar-driven-planning .hc-planning-agenda-row .hc-week-event-place{
-  margin-top:0!important;
-}
