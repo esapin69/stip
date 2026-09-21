@@ -3524,7 +3524,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.68rem!important;
   }
 }
-/* HOME PLANNING — AUTHORITATIVE REBUILD V7 — 20260921
+/* HOME PLANNING — AUTHORITATIVE REBUILD V8 — 20260922
    Page order: Esprit shortcut -> launchers -> profile -> this week -> agenda actions -> month -> legend.
    The former unified planning card is visually split into independent surfaces. */
 .hc-home-major-separator{
@@ -3607,6 +3607,142 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   font-size:1.35rem!important;
   font-weight:950!important;
   line-height:1!important;
+}
+
+/* Planning loading UX: planning stays visible, but clearly unavailable until shifts arrive. */
+.hc-planning-loading-banner{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-height:52px!important;
+  display:grid!important;
+  grid-template-columns:30px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:10px!important;
+  margin:0 0 10px!important;
+  padding:9px 11px!important;
+  border:1px solid rgba(58,113,128,.14)!important;
+  border-radius:16px!important;
+  background:linear-gradient(180deg,#f8fbfc 0%,#eef5f7 100%)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9)!important;
+  color:#294f5e!important;
+}
+.hc-planning-loading-banner>span:last-child{
+  min-width:0!important;
+  display:block!important;
+}
+.hc-planning-loading-banner strong,
+.hc-planning-loading-banner small{
+  display:block!important;
+}
+.hc-planning-loading-banner strong{
+  font-size:.82rem!important;
+  font-weight:950!important;
+  line-height:1.05!important;
+}
+.hc-planning-loading-banner small{
+  margin-top:3px!important;
+  color:#789099!important;
+  font-size:.62rem!important;
+  font-weight:780!important;
+  line-height:1.15!important;
+}
+.hc-planning-loader{
+  width:24px!important;
+  height:24px!important;
+  display:block!important;
+  border:3px solid rgba(17,130,151,.16)!important;
+  border-top-color:#138ea6!important;
+  border-radius:50%!important;
+  animation:hcPlanningSpin .8s linear infinite!important;
+}
+@keyframes hcPlanningSpin{to{transform:rotate(360deg)}}
+@keyframes hcPlanningShimmer{
+  0%{background-position:200% 0}
+  100%{background-position:-200% 0}
+}
+.hc-calendar-driven-planning .hc-widget-planning.is-loading .hc-days-landscape{
+  pointer-events:none!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape.loading{
+  cursor:default!important;
+  pointer-events:none!important;
+  border-color:#c9d5d9!important;
+  background:#f4f7f8!important;
+  color:#7e929a!important;
+  box-shadow:0 3px 8px rgba(30,66,79,.045),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape.loading .hc-day-head{
+  background:#8799a2!important;
+  color:#fff!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape.loading.selected{
+  transform:none!important;
+  box-shadow:0 3px 8px rgba(30,66,79,.045),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape.loading.selected::after{
+  display:none!important;
+}
+.hc-loading-orb,
+.hc-loading-pill,
+.hc-loading-code,
+.hc-date-jump-skeleton{
+  display:block!important;
+  background:linear-gradient(90deg,#e5ecef 20%,#f8fbfc 42%,#e5ecef 64%)!important;
+  background-size:220% 100%!important;
+  animation:hcPlanningShimmer 1.25s ease-in-out infinite!important;
+}
+.hc-loading-orb{
+  width:18px!important;
+  height:18px!important;
+  border-radius:50%!important;
+}
+.hc-loading-pill{
+  width:24px!important;
+  height:10px!important;
+  border-radius:999px!important;
+}
+.hc-loading-code{
+  width:20px!important;
+  height:8px!important;
+  border-radius:999px!important;
+}
+.hc-calendar-driven-planning .hc-loading-event-slot{
+  visibility:visible!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading{
+  pointer-events:none!important;
+  opacity:.72!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading .hc-date-jump-head>button,
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading .hc-date-jump-grid>button{
+  cursor:default!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading .hc-date-jump-grid>button{
+  border-color:transparent!important;
+  background:#f5f8f9!important;
+  box-shadow:none!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading .hc-date-jump-grid>button.is-selected,
+.hc-calendar-driven-planning .hc-date-jump-panel.is-loading .hc-date-jump-grid>button.is-today{
+  box-shadow:none!important;
+  border-color:transparent!important;
+}
+.hc-date-jump-skeleton{
+  width:18px!important;
+  height:18px!important;
+  border-radius:50%!important;
+}
+@media(max-width:390px){
+  .hc-planning-loading-banner{
+    min-height:49px!important;
+    grid-template-columns:26px minmax(0,1fr)!important;
+    gap:9px!important;
+    padding:8px 9px!important;
+    border-radius:15px!important;
+  }
+  .hc-planning-loader{width:21px!important;height:21px!important}
+  .hc-planning-loading-banner strong{font-size:.78rem!important}
+  .hc-planning-loading-banner small{font-size:.59rem!important}
 }
 
 .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{
