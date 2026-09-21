@@ -225,12 +225,14 @@
       workIcon = WORK_SHIFT_ICON[code] || "",
       icon =
         workIcon ||
-        SPECIAL_SHIFT_ICON[code] ||
-        (DAY_OFF.has(code)
-          ? "🏝️"
-          : code === "—" || code === "-"
-            ? ""
-            : "•");
+        ({
+          RH:"🏝️",OFF:"🏝️",REPOS:"🏝️",
+          CA:"🌴",CP:"🌴",
+          RTT:"⏱️",RTTA:"⏱️",RTA:"⏱️",
+          RC:"↻",RF:"•",
+          FO:"🎓",ST:"👶",VM:"🩺",SYR:"🤝",
+          MA:"•",AM:"•",AA:"•",ABS:"•"
+        }[code] || (code === "—" || code === "-" ? "" : "•"));
     return {
       code,
       type: meta[0],
