@@ -186,37 +186,19 @@
     if (route.startsWith("contacts")) return "contacts";
     return "";
   }
-  function formatCode(v) {
-    const d = String(v || "")
-      .replace(/\D/g, "")
-      .slice(0, 6);
-    return d.length > 3 ? `${d.slice(0, 3)} • ${d.slice(3)}` : d;
-  }
   function prepareCode() {
     const i = $("#accessCode");
     if (!i) return;
     const saved = String(localStorage.getItem(CODE_STORE) || "")
       .replace(/\D/g, "")
       .slice(0, 6);
-    i.removeAttribute("pattern");
-    i.maxLength = 9;
-    i.classList.add("stip-code-visible");
+    i.setAttribute("pattern", "[0-9]{6}");
+    i.maxLength = 6;
+    i.classList.remove("stip-code-visible");
     if (saved && !String(i.value || "").replace(/\D/g, "")) {
-      i.value = formatCode(saved);
-      i.type = "text";
-      if ($("#toggleAccessCode"))
-        $("#toggleAccessCode").textContent = "Masquer";
+      i.value = saved;
+      i.dispatchEvent(new Event("input", { bubbles: true }));
     }
-    i.addEventListener(
-      "input",
-      () => {
-        const d = String(i.value || "")
-          .replace(/\D/g, "")
-          .slice(0, 6);
-        i.value = formatCode(d);
-      },
-      { passive: true },
-    );
   }
   function saveCode() {
     const i = $("#accessCode"),
