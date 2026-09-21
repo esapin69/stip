@@ -9,7 +9,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav6";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-aav7";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -119,9 +119,10 @@
     return `<section class="aav-week"><div class="aav-week-icons">${state.events.filter(x=>x.date>=start&&x.date<=add(start,6)).slice(0,5).map(x=>`<span>${x.icon}</span>`).join("")}</div><div class="aav-week-grid">${cards.join("")}</div></section>`;
   }
   function eventHtml(){
-    const start=monday(state.selected),end=add(start,6),rows=state.events.filter(x=>x.date>=start&&x.date<=end);
-    if(!rows.length)return '<section class="aav-events aav-events-empty"><span>Aucun événement cette semaine.</span></section>';
-    return `<section class="aav-events">${rows.map(x=>`<article><span class="aav-event-icon">${x.icon}</span><div><strong>${esc(x.title)}</strong><p>${esc(fullDay(x.date))}${x.time?` · ${esc(x.time)}`:""}</p>${x.location?`<small>${esc(x.location)}</small>`:""}${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`).join("")}</section>`;
+    const rows=state.events.filter(x=>x.date===state.selected);
+    const selectedLabel=fullDay(state.selected);
+    if(!rows.length)return `<section class="aav-events aav-events-empty"><strong>${esc(selectedLabel)}</strong><span>Aucun événement ce jour.</span></section>`;
+    return `<section class="aav-events"><header class="aav-events-day"><small>JOUR SÉLECTIONNÉ</small><strong>${esc(selectedLabel)}</strong></header>${rows.map(x=>`<article><span class="aav-event-icon">${x.icon}</span><div><strong>${esc(x.title)}</strong><p>${x.time?esc(x.time):"Toute la journée"}</p>${x.location?`<small>${esc(x.location)}</small>`:""}${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`).join("")}</section>`;
   }
   function legendHtml(){
     const plan=state.data.items||[],seen=new Map();
@@ -187,7 +188,7 @@
   }
   function addForm(){
     if(!state.data.viewer?.can_manage)return"";
-    return `<section class="aav-manage"><button type="button" class="aav-add" data-aav-add>＋ Ajouter un événement</button><form class="aav-form" data-aav-form hidden><div class="aav-form-grid"><label>Titre<input name="title" maxlength="180" required></label><label>Date<input name="event_date" type="date" value="${esc(state.selected)}" required></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="aav-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="aav-wide">Lieu<input name="location" maxlength="240"></label><label class="aav-wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="aav-form-actions"><button type="button" data-aav-cancel>Annuler</button><button type="submit">Ajouter à son agenda</button></div><p data-aav-form-status></p></form></section>`;
+    return `<section class="aav-manage"><button type="button" class="aav-add" data-aav-add><span>＋</span><strong>Ajouter un événement</strong><em>›</em></button><form class="aav-form" data-aav-form hidden><div class="aav-form-grid"><label>Titre<input name="title" maxlength="180" required></label><label>Date<input name="event_date" type="date" value="${esc(state.selected)}" required></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="aav-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="aav-wide">Lieu<input name="location" maxlength="240"></label><label class="aav-wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="aav-form-actions"><button type="button" data-aav-cancel>Annuler</button><button type="submit">Ajouter à son agenda</button></div><p data-aav-form-status></p></form></section>`;
   }
   function render(){
     if(!overlay||!state)return;
@@ -199,7 +200,14 @@
   }
   function moveMonth(step){
     const [y,m]=state.month.split("-").map(Number),d=new Date(y,m-1+Number(step),1,12),k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-    if(k<state.bounds.min||k>state.bounds.max)return;state.month=k;render();
+    if(k<state.bounds.min||k>state.bounds.max)return;
+    state.month=k;
+    const todayKey=today(),candidates=[
+      ...(state.data.items||[]).map(x=>String(x.date||"").slice(0,10)),
+      ...state.events.map(x=>x.date)
+    ].filter(x=>x.startsWith(k)).sort();
+    state.selected=todayKey.startsWith(k)?todayKey:(candidates[0]||`${k}-01`);
+    render();
   }
   async function reload(){
     const data=await post(API,{source_key:state.sourceKey});state.data=data;state.events=events(data);state.bounds=monthBounds(data);render();
