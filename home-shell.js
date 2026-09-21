@@ -764,7 +764,7 @@
       shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical,
       workIcon = WORK_SHIFT_ICON[canonical] || "",
       workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
-      visual = loading
+      normalVisual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : pending
           ? '<span class="hc-pending-line" aria-label="En attente du nouveau planning"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
@@ -772,10 +772,23 @@
             ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
             : workIcon
               ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
-              : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`;
-    const selected=landscape&&x.iso===state.dayFocus,
+              : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
+      landscapeMain = loading
+        ? '<span class="hc-shift-main"><strong class="hc-shift-loading">…</strong></span>'
+        : pending
+          ? '<span class="hc-shift-main"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
+          : statusIcon
+            ? `<span class="hc-shift-main hc-shift-main-special"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
+            : workIcon
+              ? `<span class="hc-shift-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span></span>`
+              : `<span class="hc-shift-main"><span class="hc-shift-fallback">${esc(shiftLabel || "—")}</span></span>`,
+      landscapeCode = loading ? "…" : pending ? "—" : canonical || "—",
+      selected=landscape&&x.iso===state.dayFocus,
       tag=landscape?"button":"span",
-      attrs=landscape?` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"`:"";
+      attrs=landscape?` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"`:"",
+      visual=landscape
+        ? `${landscapeMain}${weekEventBadges(x)}<strong class="hc-shift-code">${esc(landscapeCode)}</strong>`
+        : normalVisual;
     return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
   }
   function weekDaysVertical(w) {
@@ -792,27 +805,17 @@
       return start <= iso && end >= iso;
     });
   }
-  function weekEventActions() {
-    const w = selectedWeek(),
-      start = w[0]?.iso || "",
-      end = w[w.length - 1]?.iso || "",
-      unique = new Map();
-    futureItems().forEach((event) => {
-      const eventStart = String(event.date || "").slice(0, 10),
-        eventEnd = String(event.endDate || event.end_date || event.date || "").slice(0, 10);
-      if (!eventStart || eventStart > end || eventEnd < start) return;
-      const id = String(event.id || `${event.type || "event"}:${eventStart}:${event.title || ""}`);
-      if (!unique.has(id)) unique.set(id, event);
-    });
-    const items = [...unique.values()].slice(0, 8);
-    if (!items.length) return "";
-    return `<section class="hc-planning-subblock hc-planning-event-actions" aria-label="Repères de la semaine"><div>${items
+  function weekEventBadges(x) {
+    const events = weekEventsForDay(x).slice(0, 2);
+    if (!events.length)
+      return '<span class="hc-week-events-slot is-empty" aria-hidden="true"></span>';
+    return `<span class="hc-week-events-slot has-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .map((event) => {
         const kind = futureTypeKey(event),
           title = event.title || event.type || "Événement";
-        return `<button type="button" class="hc-week-event-action type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(event.id)}" aria-label="${esc(title)}" title="${esc(title)}"><span aria-hidden="true">${event.icon || "•"}</span></button>`;
+        return `<i class="hc-week-event-chip type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${event.icon || "•"}</i>`;
       })
-      .join("")}</div></section>`;
+      .join("")}</span>`;
   }
   function weekDisplayModel(w = selectedWeek()) {
     const liveTail =
@@ -1704,10 +1707,9 @@
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
-      eventActions = weekEventActions(),
       legend = fixedShiftLegend(),
       tableauPreview = has("messages") ? '<section id="hcTeamBoardPreviewHost"></section>' : "";
-    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${eventActions}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-subblock hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `${tableauPreview}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-subblock hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
