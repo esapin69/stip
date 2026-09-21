@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const URL=Deno.env.get("SUPABASE_URL")!,SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}});
+const TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat",TEAM_TTL_DAYS=15;
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
 
 const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
@@ -45,7 +46,7 @@ async function ctx(req:Request){
   const t=req.headers.get("x-stip-session")||"";if(!t)throw Error("Session STIP requise.");
   const{data:s,error:se}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at").eq("token_hash",await sha(t)).maybeSingle();
   if(se)throw se;if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error("Session expirée.");
-  const{data:p,error:pe}=await db.from("stip_access_profiles").select("agent_id,active,permissions,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url)").eq("id",s.profile_id).maybeSingle();
+  const{data:p,error:pe}=await db.from("stip_access_profiles").select("agent_id,active,permissions,role_key,preset_roles,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url)").eq("id",s.profile_id).maybeSingle();
   if(pe)throw pe;if(!p?.active||!p.agent_id||!p.agents)throw Error("Accès agent requis.");
   if(!p.permissions?.messages)throw Error("Messages non autorisés.");
   return{profile:p,agent:p.agents as any}
@@ -178,6 +179,118 @@ async function profileSet(ctx:any,body:any){
   const{error}=await db.from("stip_message_profiles").upsert({agent_id:ctx.agent.id,nickname,notification_preview:preview,updated_at:new Date().toISOString()},{onConflict:"agent_id"});if(error)throw error;
   return{ok:true,nickname:nickname||ctx.agent.prenom||ctx.agent.nom,notification_preview:preview}
 }
+
+function isAdmin(ctx:any){
+  return !!(
+    ctx?.profile?.permissions?.admin ||
+    String(ctx?.profile?.role_key||"").toLowerCase()==="admin" ||
+    (Array.isArray(ctx?.profile?.preset_roles)&&ctx.profile.preset_roles.some((x:any)=>String(x).toLowerCase()==="admin"))
+  )
+}
+async function teamConversation(ctx:any){
+  let{data:conv,error}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("direct_key",TEAM_KEY).maybeSingle();
+  if(error)throw error;
+  if(!conv){
+    const created=await db.from("stip_conversations").insert({kind:"team_chat",direct_key:TEAM_KEY,title:"Équipe",created_by_agent_id:ctx.agent.id}).select("id,kind,title,created_by_agent_id,created_at,last_message_at").single();
+    if(created.error){
+      const again=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("direct_key",TEAM_KEY).maybeSingle();
+      if(again.error||!again.data)throw created.error;
+      conv=again.data;
+    }else conv=created.data
+  }
+  return conv
+}
+async function removeTeamPhotos(paths:string[]){
+  const clean=[...new Set(paths.map(x=>String(x||"").trim()).filter(Boolean))];
+  if(!clean.length)return;
+  const r=await db.storage.from(TEAM_BUCKET).remove(clean);
+  if(r.error)console.error("team photo remove",r.error)
+}
+async function purgeExpiredTeamMessages(ctx:any){
+  const conv=await teamConversation(ctx),cutoff=new Date(Date.now()-TEAM_TTL_DAYS*86400000).toISOString();
+  const{data:old,error}=await db.from("stip_messages").select("id,payload").eq("conversation_id",conv.id).lt("created_at",cutoff);
+  if(error)throw error;
+  if(!old?.length)return 0;
+  await removeTeamPhotos(old.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
+  const ids=old.map((m:any)=>m.id);
+  const del=await db.from("stip_messages").delete().in("id",ids);
+  if(del.error)throw del.error;
+  return ids.length
+}
+async function signedTeamPhotos(messages:any[]){
+  const paths=[...new Set(messages.map((m:any)=>String(m?.payload?.photo_path||"")).filter(Boolean))];
+  if(!paths.length)return messages;
+  const{data,error}=await db.storage.from(TEAM_BUCKET).createSignedUrls(paths,3600);
+  if(error||!data)return messages;
+  const urls=new Map<string,string>();
+  paths.forEach((path,i)=>{const u=(data as any[])?.[i]?.signedUrl;if(u)urls.set(path,u)});
+  return messages.map((m:any)=>{
+    const path=String(m?.payload?.photo_path||"");
+    return path&&urls.has(path)?{...m,payload:{...(m.payload||{}),photo_url:urls.get(path)}}:m
+  })
+}
+async function teamThread(ctx:any){
+  await purgeExpiredTeamMessages(ctx);
+  const conv=await teamConversation(ctx),cutoff=new Date(Date.now()-TEAM_TTL_DAYS*86400000).toISOString();
+  const{data:messages,error}=await db.from("stip_messages")
+    .select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
+    .eq("conversation_id",conv.id).gte("created_at",cutoff).order("created_at").limit(300);
+  if(error)throw error;
+  const senderIds=[...new Set((messages||[]).map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
+  const{data:profiles}=senderIds.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",senderIds):{data:[] as any[]};
+  const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
+  const withNames=(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}));
+  const signed=await signedTeamPhotos(withNames);
+  const meProfile=await messageProfile(String(ctx.agent.id));
+  return{conversation:conv,me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},admin:isAdmin(ctx),messages:signed}
+}
+async function teamPhotoUpload(ctx:any,body:any){
+  await purgeExpiredTeamMessages(ctx);
+  const conv=await teamConversation(ctx),mime=String(body.mime||"").toLowerCase(),raw=String(body.data||"");
+  if(!["image/jpeg","image/png","image/webp"].includes(mime))throw Error("Format d’image non pris en charge.");
+  if(!raw||raw.length>4000000)throw Error("Photo trop lourde.");
+  let bytes:Uint8Array;
+  try{
+    const bin=atob(raw);bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i)
+  }catch{throw Error("Photo invalide.")}
+  if(bytes.byteLength>3000000)throw Error("Photo trop lourde.");
+  const ext=mime==="image/png"?"png":mime==="image/webp"?"webp":"jpg",
+    day=new Date().toISOString().slice(0,10),
+    path=`${conv.id}/${day}/${crypto.randomUUID()}.${ext}`;
+  const up=await db.storage.from(TEAM_BUCKET).upload(path,bytes,{contentType:mime,upsert:false,cacheControl:"3600"});
+  if(up.error)throw up.error;
+  return{ok:true,path}
+}
+async function teamSend(ctx:any,body:any){
+  await purgeExpiredTeamMessages(ctx);
+  const conv=await teamConversation(ctx),text=String(body.body||"").trim().slice(0,2000),photoPath=String(body.photo_path||"").trim();
+  if(!text&&!photoPath)throw Error("Message vide.");
+  if(photoPath&&!photoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
+  const payload:any={};
+  if(photoPath)payload.photo_path=photoPath;
+  const{data,error}=await db.from("stip_messages").insert({conversation_id:conv.id,sender_agent_id:ctx.agent.id,body:text,payload}).select("id,created_at").single();
+  if(error)throw error;
+  await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",conv.id);
+  return{ok:true,...data}
+}
+async function teamDelete(ctx:any,body:any){
+  if(!isAdmin(ctx))throw Error("Suppression admin requise.");
+  await purgeExpiredTeamMessages(ctx);
+  const conv=await teamConversation(ctx),ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
+  if(!ids.length)throw Error("Aucun message sélectionné.");
+  const{data:rows,error}=await db.from("stip_messages").select("id,payload").eq("conversation_id",conv.id).in("id",ids);
+  if(error)throw error;
+  if(!rows?.length)return{ok:true,deleted:0};
+  await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
+  const realIds=rows.map((m:any)=>m.id),del=await db.from("stip_messages").delete().in("id",realIds);
+  if(del.error)throw del.error;
+  const{data:last}=await db.from("stip_messages").select("created_at").eq("conversation_id",conv.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  const stamp=last?.created_at||new Date().toISOString();
+  await db.from("stip_conversations").update({last_message_at:stamp,updated_at:new Date().toISOString()}).eq("id",conv.id);
+  return{ok:true,deleted:realIds.length}
+}
+
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:H});
   if(req.method!=="POST")return J({error:"Méthode non autorisée."},405);
@@ -192,6 +305,10 @@ Deno.serve(async req=>{
     if(a==="send")return J(await send(c,b));
     if(a==="broadcast_update")return J(await broadcastUpdate(c,b));
     if(a==="profile_set")return J(await profileSet(c,b));
+    if(a==="team_thread")return J(await teamThread(c));
+    if(a==="team_photo_upload")return J(await teamPhotoUpload(c,b));
+    if(a==="team_send")return J(await teamSend(c,b));
+    if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
 });
