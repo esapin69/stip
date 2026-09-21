@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260921-agentagenda7",
+  const V = "20260921-agentagenda8",
     m = new Map(),
     done = new Set();
   function load(src) {
