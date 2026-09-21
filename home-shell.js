@@ -1718,6 +1718,21 @@
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
+
+    // The Fauteuils screen owns a live text composer. Background home refreshes
+    // must never replace its DOM while it is open, otherwise Android closes the
+    // keyboard and the draft disappears.
+    if (
+      state.homeMode === "tableau" &&
+      has("messages") &&
+      root.querySelector("#hcTableauStipHost")
+    ) {
+      window.STIPTableau?.bindHomeButton?.(
+        root.querySelector('[data-home-mode="tableau"]'),
+      );
+      return;
+    }
+
     const markup = `${homeModeNav()}${profile()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
