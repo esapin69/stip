@@ -165,14 +165,14 @@
     let out = "";
     for (const v of g.values()) {
       out +=
-        '<section class="da-month"><h2>' +
+        '<section class="da-month"><div class="stip-section-separator is-compact"><span>' +
         esc(
           dobj(v[0].date).toLocaleDateString("fr-FR", {
             month: "long",
             year: "numeric",
           }),
         ) +
-        "</h2><div>";
+        "</span></div><div>";
       for (const x of v) {
         const sourceFocus = focus ? focus.split(":").pop() : "",
           foc = !!focus && (x.id === focus || x.source_id === sourceFocus),
