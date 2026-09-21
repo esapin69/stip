@@ -51,11 +51,35 @@
       const names = (x.agents || []).slice(0, 4).map(name).join(" · ");
       return '<button type="button" class="tdn-shift" data-org-shift="'+k+'"><b>'+k+'</b><strong>'+x.count+'</strong><small>'+esc(names || "Personne")+'</small></button>';
     }).join("");
-    const alerts = (org.advice || []).filter((x) => x.status === "below_reference" || Number(x.severity || 0) >= 2).slice(0, 3);
+    const intel = window.STIPFieldIntel,
+      alerts = (org.advice || [])
+        .filter((x) => x.status === "below_reference" || Number(x.severity || 0) >= 2)
+        .slice(0, 3),
+      terrain = alerts.map((x) => {
+        const planned = Number(x.planned_count),
+          target = Number(x.target_count),
+          gap = Number.isFinite(planned) && Number.isFinite(target) ? planned - target : null;
+        return intel?.terrainItem?.({
+          severity: Number(x.severity || 2),
+          source_family: "staffing",
+          context: {
+            shift_code: x.shift_code || x.metric || "",
+            planned_count: x.planned_count,
+            target_count: x.target_count,
+            gap,
+          },
+          title: x.text || "Point effectif",
+          body: x.text || "",
+        }) || {
+          headline: x.text || "Point effectif",
+          detail: "",
+          level: Number(x.severity || 0) >= 4 ? "critical" : "warning",
+        };
+      });
     return '<details class="td-section tdn-org" open><summary>Organisation · MAXI</summary><div class="td-content">'+
       '<div class="tdn-org-head"><span><b>'+Number(org.total_working || 0)+'</b><small>agents prévus</small></span><button type="button" data-assign-note>+ Note pour un agent</button></div>'+
       '<div class="tdn-shifts">'+shifts+'</div>'+
-      (alerts.length ? '<div class="tdn-alerts">'+alerts.map((x) => '<article><b>'+esc(x.shift_code || x.metric || "Info")+'</b><div><strong>'+esc(String(x.planned_count ?? "—"))+' / '+esc(String(x.target_count ?? "—"))+'</strong><p>'+esc(x.text || "Sous la référence prévue.")+'</p></div></article>').join("")+'</div>' : '<p class="td-empty">Aucun écart organisationnel signalé pour cette journée.</p>')+
+      (terrain.length ? '<div class="tdn-alerts">'+terrain.map((x) => '<article><b>'+(x.level === "critical" ? "🛑" : "⚠️")+'</b><div><strong>'+esc(x.headline)+'</strong>'+(x.detail ? '<p>'+esc(x.detail)+'</p>' : '')+'</div></article>').join("")+'</div>' : '<p class="td-empty">✔ Rien ne coince côté organisation.</p>')+
       '</div></details>';
   }
   function render(data, day) {
