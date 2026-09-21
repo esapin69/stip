@@ -1583,7 +1583,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-date-jump-panel{
  width:min(100%,430px)!important;
  margin:10px auto 0!important;
- padding:14px!important;
+ padding:11px!important;
  box-sizing:border-box!important;
  border:1px solid rgba(22,91,111,.14)!important;
  border-radius:24px!important;
@@ -1625,10 +1625,10 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-date-jump-weekdays,.hc-date-jump-grid{
  display:grid!important;
  grid-template-columns:repeat(7,minmax(0,1fr))!important;
- gap:5px!important;
+ gap:3px!important;
 }
 .hc-date-jump-weekdays{
- margin:12px 0 6px!important;
+ margin:8px 0 4px!important;
  color:#82959d!important;
  font-size:.63rem!important;
  font-weight:950!important;
@@ -1636,78 +1636,73 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  text-transform:uppercase!important;
 }
 .hc-date-jump-grid>button,.hc-date-jump-empty{
- aspect-ratio:1/1!important;
  min-width:0!important;
+ min-height:52px!important;
 }
 .hc-date-jump-grid>button{
  position:relative!important;
+ height:52px!important;
  border:1px solid transparent!important;
  border-radius:13px!important;
- background:transparent!important;
+ background:#f7fafb!important;
  color:#294f5e!important;
  font:inherit!important;
- display:flex!important;
- flex-direction:column!important;
+ display:grid!important;
+ grid-template-rows:auto 1fr!important;
  align-items:center!important;
- justify-content:center!important;
- gap:3px!important;
- padding:3px 1px!important;
+ justify-items:center!important;
+ gap:1px!important;
+ padding:5px 1px 4px!important;
  overflow:hidden!important;
  transition:background .14s ease,border-color .14s ease,box-shadow .14s ease,transform .14s ease!important;
 }
-.hc-date-jump-grid>button:active{transform:scale(.94)!important}
+.hc-date-jump-grid>button:active{transform:scale(.95)!important}
 .hc-date-jump-grid>button.is-selected{
- border-color:rgba(8,123,146,.13)!important;
- background:#e3f4f7!important;
- color:#087b92!important;
+ border-color:#0b8fa9!important;
+ background:#e8f8fb!important;
+ color:#075d70!important;
+ box-shadow:inset 0 0 0 2px #0b8fa9,0 4px 10px rgba(11,143,169,.12)!important;
 }
-.hc-date-jump-grid>button.is-today{
+.hc-date-jump-grid>button.is-today:not(.is-selected){
  box-shadow:inset 0 0 0 2px #168297!important;
  color:#075d70!important;
 }
-.hc-date-jump-number{
+.hc-date-jump-day-number{
  display:block!important;
- min-width:0!important;
  color:inherit!important;
- font-size:.85rem!important;
+ font-size:.84rem!important;
  line-height:1!important;
  font-weight:950!important;
 }
-.hc-date-jump-shift{
- display:inline-flex!important;
- align-items:center!important;
- justify-content:center!important;
- min-width:20px!important;
- max-width:90%!important;
- height:15px!important;
- padding:0 4px!important;
- box-sizing:border-box!important;
- border-radius:999px!important;
- color:#fff!important;
- font-size:.52rem!important;
+.hc-date-jump-marker{
+ min-height:27px!important;
+ display:grid!important;
+ place-items:center!important;
  line-height:1!important;
- font-weight:950!important;
- letter-spacing:-.02em!important;
- white-space:nowrap!important;
- overflow:hidden!important;
- text-overflow:ellipsis!important;
- box-shadow:inset 0 -1px 0 rgba(0,0,0,.12),0 2px 5px rgba(20,62,78,.08)!important;
 }
-.hc-date-jump-shift.len-3{font-size:.48rem!important;padding-inline:3px!important}
-.hc-date-jump-shift.len-4,.hc-date-jump-shift.len-5{font-size:.43rem!important;padding-inline:2px!important}
-.hc-date-jump-shift.shift-morning{background:#0870d8!important}
-.hc-date-jump-shift.shift-day{background:#009c50!important}
-.hc-date-jump-shift.shift-late{background:#f27613!important}
-.hc-date-jump-shift.shift-evening{background:#e0aa00!important;color:#4b3600!important}
-.hc-date-jump-shift.shift-night{background:#2f4351!important}
-.hc-date-jump-shift.shift-rest{background:#758592!important}
-.hc-date-jump-shift.shift-leave{background:#1698aa!important}
-.hc-date-jump-shift.shift-training{background:#7759cf!important}
-.hc-date-jump-shift.shift-medical{background:#c75a6b!important}
-.hc-date-jump-shift.shift-absence{background:#9a5c61!important}
-.hc-date-jump-shift.shift-union{background:#456d7b!important}
-.hc-date-jump-shift.shift-other{background:#58737e!important}
-.hc-date-jump-shift.shift-none{background:#d8e1e3!important;color:#597079!important;box-shadow:none!important}
+.hc-date-jump-marker-empty{
+ width:25px!important;
+ height:25px!important;
+ display:block!important;
+}
+.hc-date-jump-dot{
+ width:25px!important;
+ height:25px!important;
+ display:block!important;
+ border-radius:50%!important;
+ box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(20,62,78,.08)!important;
+}
+.hc-date-jump-dot.shift-morning{background:#1689d8!important}
+.hc-date-jump-dot.shift-day{background:#10a36e!important}
+.hc-date-jump-dot.shift-late{background:#e76413!important}
+.hc-date-jump-dot.shift-evening{background:#e6ae00!important}
+.hc-date-jump-dot.shift-night{background:#475a67!important}
+.hc-date-jump-icon{
+ display:block!important;
+ font-size:1.48rem!important;
+ line-height:1!important;
+ transform:translateY(-1px)!important;
+}
 .hc-date-jump-actions{
  display:grid!important;
  grid-template-columns:minmax(0,1fr) auto!important;
@@ -1737,12 +1732,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-date-jump-today:active,.hc-date-jump-close:active{transform:scale(.97)!important}
 @media(max-width:390px){
- .hc-date-jump-panel{padding:11px!important;border-radius:21px!important}
- .hc-date-jump-weekdays,.hc-date-jump-grid{gap:4px!important}
- .hc-date-jump-number{font-size:.8rem!important}
- .hc-date-jump-shift{height:14px!important;min-width:18px!important;font-size:.49rem!important}
- .hc-date-jump-shift.len-3{font-size:.45rem!important}
- .hc-date-jump-shift.len-4,.hc-date-jump-shift.len-5{font-size:.4rem!important}
+ .hc-date-jump-panel{padding:10px!important;border-radius:21px!important}
+ .hc-date-jump-weekdays,.hc-date-jump-grid{gap:3px!important}
+ .hc-date-jump-grid>button{height:50px!important;min-height:50px!important}
+ .hc-date-jump-day-number{font-size:.8rem!important}
+ .hc-date-jump-dot{width:24px!important;height:24px!important}
+ .hc-date-jump-icon{font-size:1.4rem!important}
  .hc-date-jump-actions{gap:6px!important}
  .hc-date-jump-close{min-width:78px!important}
 }
