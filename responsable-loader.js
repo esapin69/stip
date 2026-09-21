@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260921-avatar1",
+  const V = "20260921-agentagenda1",
     m = new Map(),
     done = new Set();
   function load(src) {
@@ -30,7 +30,7 @@
     "pointerdown",
     (e) => {
       if (e.target.closest?.("[data-resp-agents]"))
-        seq(["responsable-agents.js"]).catch(() => {});
+        seq(["agent-agenda-view.js", "responsable-agents.js"]).catch(() => {});
       if (e.target.closest?.("[data-resp-agenda]"))
         seq(["responsable-agenda-entry.js"]).catch(() => {});
     },
@@ -43,7 +43,7 @@
       if (a && !done.has("responsable-agents.js")) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        await seq(["responsable-agents.js"]);
+        await seq(["agent-agenda-view.js", "responsable-agents.js"]);
         a.click();
         return;
       }
