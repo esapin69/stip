@@ -53,6 +53,8 @@
       return "";
     }
   }
+  const field = () => window.STIPFieldIntel || null;
+
   async function summary() {
     const host = document.querySelector("#respCoverage");
     if (!host) return;
@@ -68,16 +70,18 @@
         return;
       }
       const s = d.summary || {},
-        rows = (d.shifts || [])
+        read = field()?.staffing?.(d),
+        rows = (d.shifts || d.rows || [])
           .slice()
+          .filter((x) => x?.shift_code)
           .sort(
             (a, b) =>
               (({ M: 1, J: 2, J4: 3, S: 4, N: 5 })[a.shift_code] || 9) -
               ({ M: 1, J: 2, J4: 3, S: 4, N: 5 }[b.shift_code] || 9),
           );
       host.hidden = false;
-      host.className = `resp-operational rs-${esc(s.state || "ok")}`;
-      host.innerHTML = `<div class="rs-head"><div><strong>${esc(s.headline || "Couverture du jour")}</strong><small>Référence HCL · comparaison automatique</small></div><span>${esc(s.planned ?? "—")} / ${esc(s.target ?? "—")}</span></div><div class="rs-grid">${rows
+      host.className = `resp-operational rs-${esc(read?.level || s.state || "ok")}`;
+      host.innerHTML = `<div class="rs-head"><div><strong>${esc(read?.headline || s.headline || "Couverture du jour")}</strong><small>${esc(read?.detail || "Lecture des références du planning")}</small></div><span>${esc(s.planned ?? "—")} / ${esc(s.target ?? "—")}</span></div><div class="rs-grid">${rows
         .map((x) => {
           const g = Number(x.gap || 0),
             cl =
@@ -92,15 +96,7 @@
                   : "ok";
           return `<div class="rs-shift ${cl}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em>${esc(g === 0 ? "OK" : (g > 0 ? "+" : "") + g)}</em></div>`;
         })
-        .join("")}</div>${(s.guide || [])
-        .slice(0, 2)
-        .map(
-          (x) =>
-            `<div class="rs-guide ${esc(x.level || "attention")}"><strong>${x.level === "critical" ? "🚨" : "⚠️"} ${esc(x.shift_code || "Effectif")}</strong><span>${esc(x.text || "Écart sous la référence.")}</span>${x.suggested_from_shift ? `<small>Piste : ${esc(x.suggested_from_shift)} dispose de +${esc(x.suggested_from_surplus)}.</small>` : ""}</div>`,
-        )
-        .join(
-          "",
-        )}${s.special_count ? `<div class="rs-special">+ ${esc(s.special_count)} agent(s) sur horaires spécifiques, suivis séparément de M/J/J4/S.</div>` : ""}${d.freshness?.planning_imported_at ? `<div class="rs-fresh">Planning mis à jour ${esc(fmtFresh(d.freshness.planning_imported_at))}</div>` : ""}`;
+        .join("")}</div>${read?.known && read.level !== "ok" ? `<div class="rs-guide ${esc(read.level)}"><strong>${esc(read.symbol)} À retenir</strong><span>${esc(read.detail)}</span></div>` : ""}${s.special_count ? `<div class="rs-special">+ ${esc(s.special_count)} agent(s) sur horaires spécifiques, suivis séparément de M/J/J4/S.</div>` : ""}${d.freshness?.planning_imported_at ? `<div class="rs-fresh">Planning mis à jour ${esc(fmtFresh(d.freshness.planning_imported_at))}</div>` : ""}`;
       host.dataset.ready = "true";
     } catch {
       if (!host.dataset.ready) {
@@ -145,7 +141,7 @@
           dest = normalize(x.context?.target_shift || x.desired_code),
           a = (d.shifts || []).find((v) => v.shift_code === cur),
           b = (d.shifts || []).find((v) => v.shift_code === dest);
-        html = `<div class="rs-decision favorable"><strong>Impact effectif</strong><p>Échange entre deux agents le même jour : les nombres par créneau restent inchangés.</p>${a ? `<small>${esc(cur)} : ${a.planned_count}/${a.target_count}</small>` : ""}${b && dest !== cur ? `<small>${esc(dest)} : ${b.planned_count}/${b.target_count}</small>` : ""}<em>À considérer avec les autres contraintes terrain avant décision.</em></div>`;
+        html = `<div class="rs-decision favorable"><strong>✔ Pas d’effet sur le nombre d’agents</strong><p>C’est un échange le même jour : les effectifs restent identiques. Reste seulement à vérifier les contraintes terrain autour des deux agents.</p>${a ? `<small>${esc(cur)} : ${a.planned_count}/${a.target_count}</small>` : ""}${b && dest !== cur ? `<small>${esc(dest)} : ${b.planned_count}/${b.target_count}</small>` : ""}</div>`;
       } else {
         const d = await post(STAFF, {
           action: "request_impact",
