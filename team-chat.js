@@ -15,6 +15,8 @@
     lastSignature: "",
     focusAfterLoad: false,
     viewportHandler: null,
+    viewportHeight: 0,
+    draft: "",
   };
 
   const homeState = {
@@ -124,7 +126,7 @@
       '<section class="tb-page">' +
       '<header class="tb-page-head">' +
       '<button type="button" class="tb-back" data-close aria-label="Retour">‹</button>' +
-      '<div class="tb-page-title"><small>AUJOURD’HUI · TERRAIN</small><div class="tb-title-line"><h2>Fauteuils</h2><span class="tb-active-count" data-active-count hidden></span></div></div>' +
+      '<div class="tb-page-title"><small>SIGNALER · TROUVER · RÉCUPÉRER</small><div class="tb-title-line"><h2>Fauteuils</h2><span class="tb-active-count" data-active-count hidden></span></div></div>' +
       '<span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</header>" +
@@ -154,6 +156,11 @@
       state.lastSignature = "";
       root.innerHTML = pageMarkup();
       bind(root);
+      const textarea = root.querySelector("textarea");
+      if (textarea && state.draft) {
+        textarea.value = state.draft;
+        autoGrow(textarea);
+      }
     }
     state.focusAfterLoad = !!options.focus;
     bindViewport();
@@ -179,7 +186,9 @@
   function syncViewport() {
     if (!state.root) return;
     const height = Math.round(window.visualViewport?.height || window.innerHeight || 0);
-    if (height > 0) state.root.style.setProperty("--tb-viewport-height", height + "px");
+    if (height <= 0 || Math.abs(height - state.viewportHeight) < 3) return;
+    state.viewportHeight = height;
+    state.root.style.setProperty("--tb-viewport-height", height + "px");
   }
 
   function bindViewport() {
@@ -192,15 +201,14 @@
           feed.scrollTop = feed.scrollHeight;
       });
     };
-    window.visualViewport.addEventListener("resize", state.viewportHandler);
-    window.visualViewport.addEventListener("scroll", state.viewportHandler);
+    window.visualViewport.addEventListener("resize", state.viewportHandler, { passive: true });
   }
 
   function unbindViewport() {
     if (!state.viewportHandler || !window.visualViewport) return;
     window.visualViewport.removeEventListener("resize", state.viewportHandler);
-    window.visualViewport.removeEventListener("scroll", state.viewportHandler);
     state.viewportHandler = null;
+    state.viewportHeight = 0;
   }
 
   function bind(root) {
@@ -222,7 +230,10 @@
     root.querySelector("[data-form]")?.addEventListener("submit", send);
 
     const textarea = root.querySelector("textarea");
-    textarea?.addEventListener("input", () => autoGrow(textarea));
+    textarea?.addEventListener("input", () => {
+      state.draft = textarea.value;
+      autoGrow(textarea);
+    });
     textarea?.addEventListener("focus", () => {
       syncViewport();
       setTimeout(() => {
@@ -316,7 +327,7 @@
 
     if (!messages.length) {
       feed.innerHTML =
-        '<section class="tb-empty-state"><span>♿</span><strong>Aucun fauteuil signalé</strong><p>Un fauteuil repéré ou plusieurs fauteuils regroupés ? Indiquez simplement le lieu.</p></section>';
+        '<section class="tb-empty-state"><span>♿</span><strong>Aucun fauteuil signalé</strong><p>Pour chercher ou signaler, indiquez simplement le bâtiment, l’étage ou le lieu.</p></section>';
       updateSelectionBar();
       return;
     }
@@ -510,6 +521,7 @@
     try {
       await api("team_send", { body, wheelchair: { type: "spot" } });
       textarea.value = "";
+      state.draft = "";
       autoGrow(textarea);
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
       textarea.focus();
