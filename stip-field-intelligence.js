@@ -130,6 +130,14 @@
       planned != null && target != null
         ? `${planned} prévus pour ${target} : il manque ${missing}.`
         : `Il manque ${missing} sur ce créneau par rapport à la référence.`;
+    const guide = (summary.guide || []).find(
+        (item) =>
+          item &&
+          (String(item.shift_code || "").toUpperCase() ===
+            String(first.shift_code || "").toUpperCase() ||
+            item.suggested_from_shift),
+      ),
+      specialCount = number(summary.special_count);
 
     if (totalGap != null && totalGap >= 0 && bestSurplus) {
       headline = `${label.charAt(0).toUpperCase() + label.slice(1)} fragile malgré un total correct`;
@@ -138,13 +146,20 @@
       detail += ` ${String(second.shift_code).toUpperCase()} est aussi à ${rowGap(second)}.`;
     }
 
+    if (specialCount > 0)
+      detail += ` ${specialCount} horaire${specialCount > 1 ? "s" : ""} spécifique${specialCount > 1 ? "s" : ""} reste${specialCount > 1 ? "nt" : ""} compté${specialCount > 1 ? "s" : ""} à part.`;
+
     const reasons = deficits.slice(0, 3).map((row) => ({
-      shift: String(row.shift_code || "").toUpperCase(),
-      gap: rowGap(row),
-      severity: number(row.severity),
-      planned: row.planned_count,
-      target: row.target_count,
-    }));
+        shift: String(row.shift_code || "").toUpperCase(),
+        gap: rowGap(row),
+        severity: number(row.severity),
+        planned: row.planned_count,
+        target: row.target_count,
+      })),
+      proposal =
+        guide?.suggested_from_shift && number(guide?.suggested_from_surplus) > 0
+          ? `À regarder sur le terrain : ${String(guide.suggested_from_shift).toUpperCase()} a +${number(guide.suggested_from_surplus)} pendant que ${String(first.shift_code || "").toUpperCase()} est court.`
+          : "";
 
     return {
       ...meta,
@@ -152,8 +167,9 @@
       headline,
       detail,
       reasons,
+      proposal,
       totalGap,
-      specialCount: number(summary.special_count),
+      specialCount,
     };
   }
 
@@ -260,7 +276,7 @@
         level: staffRead.level,
         headline: staffRead.headline,
         detail: staffRead.detail,
-        proposal: "",
+        proposal: staffRead.proposal || "",
       });
     }
 
