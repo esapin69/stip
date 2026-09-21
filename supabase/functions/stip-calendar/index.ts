@@ -15,7 +15,7 @@ const d8=(d:string)=>String(d).replaceAll('-','')
 const dayShift=(d:string,n:number)=>{const x=new Date(String(d)+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)}
 const next=(d:string)=>dayShift(d,1)
 const stamp=(v:any)=>new Date(v||Date.now()).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')
-const CAL_REV=30
+const CAL_REV=31
 const CAL_BUILD='2026-09-21T11:30:00Z'
 function eventStamp(v:any){const a=new Date(v||0),b=new Date(CAL_BUILD);return stamp(a>b?a:b)}
 const esc=(v:any)=>String(v??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')
@@ -26,7 +26,7 @@ function evRange(l:string[],u:string,start:string,endExclusive:string,s:string,x
 function mins(t:string){const [h,m]=String(t).split(':').map(Number);return h*60+m}
 function evTimed(l:string[],u:string,d:string,a:string,b:string,s:string,x:string,t:any,alarm=false){let ed=d,sm=mins(a),em=mins(b);if(em<=sm)ed=next(d);const aa=a.replace(':','')+'00',bb=b.replace(':','')+'00',es=eventStamp(t);l.push('BEGIN:VEVENT',`UID:${esc(u)}`,`DTSTAMP:${es}`,`LAST-MODIFIED:${es}`,`SEQUENCE:${CAL_REV}`,`DTSTART;TZID=Europe/Paris:${d8(d)}T${aa}`,`DTEND;TZID=Europe/Paris:${d8(ed)}T${bb}`,fold(`SUMMARY:${esc(s)}`),fold(`DESCRIPTION:${esc(x)}`),'TRANSP:TRANSPARENT','STATUS:CONFIRMED');if(alarm)l.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',fold(`DESCRIPTION:${esc(s)}`),'END:VALARM');l.push('END:VEVENT')}
 
-const SHIFT:any={M:{dot:'🔵',personal:'🟦',label:'Matin',text:'06:50–14:40',start:'06:50',end:'14:40'},J:{dot:'🟢',personal:'🟩',label:'Jour',text:'08:30–16:20',start:'08:30',end:'16:20'},J4:{dot:'🟠',personal:'🟧',label:'J4',text:'10:10–18:00',start:'10:10',end:'18:00'},S:{dot:'🟡',personal:'🟨',label:'Soir',text:'13:30–21:00',start:'13:30',end:'21:00'},N:{dot:'⚫',personal:'⬛',label:'Nuit',text:'21:00–06:50',start:'21:00',end:'06:50'}}
+const SHIFT:any={M:{dot:'🔵',personal:'🟦',label:'Matin',text:'06:50–14:40',start:'06:50',end:'14:40'},J:{dot:'🟢',personal:'🟩',label:'Journée',text:'08:30–16:20',start:'08:30',end:'16:20'},J4:{dot:'🟠',personal:'🟧',label:'J4',text:'10:10–18:00',start:'10:10',end:'18:00'},S:{dot:'🟡',personal:'🟨',label:'Soir',text:'13:30–21:00',start:'13:30',end:'21:00'},N:{dot:'⚫',personal:'⬛',label:'Nuit',text:'21:00–06:50',start:'21:00',end:'06:50'}}
 const ORDER=['M','J','J4','S','N']
 const REST=new Set(['RH','RTT','RC','AA','MA','CA','RF','RTA','RTTA','SYR','OFF','REPOS','-',''])
 const SICK=new Set(['AR','AT'])
@@ -39,6 +39,8 @@ function addMinutes(date:string,time:string,delta:number){let x=mins(time)+delta
 const plusDuration=(date:string,time:string,duration=15)=>addMinutes(date,time,duration)
 const keyNorm=(v:any)=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('fr-FR').replace(/[^A-Z0-9]+/g,' ').trim()
 function cap(v:any){v=String(v||'').trim();return v?v.charAt(0).toLocaleUpperCase('fr-FR')+v.slice(1).toLocaleLowerCase('fr-FR'):''}
+function niceName(a:any){if(!a)return'Agent';const p=cap(a.prenom),n=cap(a.nom);if(p||n)return[p,n].filter(Boolean).join(' ');const k=String(a.source_key||'').split('_').filter(Boolean);return k.length?[cap(k.at(-1)),...k.slice(0,-1).map(cap)].join(' '):'Agent'}
+function niceFullName(prenom:any,nom:any){return[cap(prenom),cap(nom)].filter(Boolean).join(' ')||'Stagiaire'}
 function firstName(a:any){if(a?.prenom)return cap(a.prenom);const k=String(a?.source_key||'').split('_').filter(Boolean);if(k.length)return cap(k.at(-1));const w=String(a?.nom||'').trim().split(/\s+/).filter(Boolean);return cap(w.at(-1)||'Agent')}
 function frDate(d:string){return cap(new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'2-digit',month:'long',year:'numeric',timeZone:'Europe/Paris'}).format(new Date(d+'T12:00:00Z')))}
 function frUpdate(v:any){if(!v)return'—';const p=new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Paris'}).formatToParts(new Date(v)),g=(t:string)=>p.find(z=>z.type===t)?.value||'';return`${g('day')}/${g('month')} à ${g('hour')}:${g('minute')}`}
@@ -59,8 +61,8 @@ async function planningPaged(select:string,start:string,end:string,opts:any={}){
 async function prof(id:string){const {data:p}=await db.from('stip_access_profiles').select('id,agent_id,active,permissions').eq('id',id).maybeSingle();if(!p?.active||!(p.permissions?.calendar_subscribe||p.permissions?.calendriers))return null;const {data:a}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('id',p.agent_id).maybeSingle();return a?{...p,agent:a}:null}
 async function session(r:Request){const t=r.headers.get('x-stip-session')||'';if(!t)return null;const {data:s}=await db.from('stip_access_sessions').select('profile_id,expires_at,revoked_at').eq('token_hash',await sha(t)).maybeSingle();return !s||s.revoked_at||new Date(s.expires_at)<=new Date()?null:prof(s.profile_id)}
 async function ensure(id:string,k:string){const {data:o}=await db.from('stip_calendar_feeds').select('token').eq('profile_id',id).eq('kind',k).eq('active',true).maybeSingle();if(o?.token)return o.token;const {data,error}=await db.from('stip_calendar_feeds').upsert({profile_id:id,kind:k,active:true,updated_at:new Date().toISOString()},{onConflict:'profile_id,kind'}).select('token').single();if(error)throw error;return data.token}
-function personalCalendarName(a:any){return`Mon planning ${firstName(a).toLocaleUpperCase('fr-FR')}`}
-function sharedCalendarName(a:any){return`Planning ${person(a)}`}
+function personalCalendarName(a:any){return`Mon planning · ${firstName(a)}`}
+function sharedCalendarName(a:any){return`Planning · ${niceName(a)}`}
 function sensitiveAgenda(r:any){return /medical|mobi_lit|visite|private_appointment/i.test(String(r?.source_type||''))}
 async function activeAgentById(id:string){const {data,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('id',id).eq('actif',true).maybeSingle();if(error)throw error;return data}
 async function activeAgentBySource(sourceKey:string){const {data,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('source_key',sourceKey).eq('actif',true).maybeSingle();if(error)throw error;return data}
@@ -139,7 +141,7 @@ async function personal(a:any,shared=false){
     if(!refs.some(x=>refMatchesAgent(x,a)))continue;
     const sd=String(r.date_debut||'').slice(0,10),ed=String(r.date_fin||r.date_debut||'').slice(0,10);
     if(!sd||!ed)continue;
-    const name=fullPerson(r.prenom,r.nom),
+    const name=niceFullName(r.prenom,r.nom),
       summary=shared?'👶 Stagiaire':`👶 Stagiaire · ${name}`,
       desc=shared?'':[r.horaires?`Horaires : ${String(r.horaires).trim()}`:''].filter(Boolean).join('\n');
     evRange(l,`stip-my-stagiaire-${a.id}-${r.id}@esapin.com`,sd,next(ed),summary,desc,r.updated_at||r.last_seen_at);
@@ -176,7 +178,7 @@ async function team(a:any){
     if(active.length)det.push('');
     active.forEach((k,idx)=>{
       det.push(`${SHIFT[k].dot} ${SHIFT[k].label} · ${SHIFT[k].text}`);
-      for(const z of groups.get(k))det.push(`• ${gheText(z.c?.ghe||z.a?.ghe)} · ${person(z.a)}`);
+      for(const z of groups.get(k))det.push(`• ${gheText(z.c?.ghe||z.a?.ghe)} · ${niceName(z.a)}`);
       if(idx<active.length-1)det.push('');
     });
     ev(l,`stip-team-${team}-${date}@esapin.com`,date,`👥 Équipe · ${total} ${total===1?'présent':'présents'}`,det.join('\n'),latest);
