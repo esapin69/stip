@@ -268,11 +268,20 @@
   }
 
   function baseShift(value) {
-    const code = String(value || "").toUpperCase();
+    const code = String(value || "").trim().toUpperCase().replace(/\*/g, "");
     if (SHIFT[code]) return code;
-    if (code.endsWith("*") && SHIFT[code.slice(0, -1)])
-      return code.slice(0, -1);
+    if (code === "J0464" || /^J\d+$/.test(code)) return "J";
+    if (/^J4\d+$/.test(code)) return "J4";
+    if (/^M\d+$/.test(code)) return "M";
+    if (/^S\d+$/.test(code)) return "S";
+    if (/^N\d+$/.test(code)) return "N";
     return "";
+  }
+
+  function adaptedShift(value) {
+    const raw = String(value || "").trim().toUpperCase().replace(/\*/g, "");
+    const base = baseShift(raw);
+    return Boolean(base && raw !== base);
   }
 
   function displayName(agent) {
@@ -411,7 +420,7 @@
     return `<div class="team-agent ${isChef ? "is-chef" : ""}">
       <button class="team-agent-main" type="button" data-team-agent="${esc(key)}" ${key ? "" : "disabled"}>
         <span class="team-agent-ghe">GHE ${esc(ghe || "—")}</span>
-        <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
+        <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}${adaptedShift(item.code) ? '<em class="team-adapted-mark" title="Horaire adapté">⏱</em>' : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
         <i aria-hidden="true">›</i>
       </button>
       ${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}
@@ -441,10 +450,11 @@
     );
     const groups = new Map();
     items.forEach((item) => {
-      const original = String(item.code || "").toUpperCase();
-      if (!baseShift(original)) return;
-      if (!groups.has(original)) groups.set(original, []);
-      groups.get(original).push(item);
+      const original = String(item.code || "").toUpperCase(),
+        base = baseShift(original);
+      if (!base) return;
+      if (!groups.has(base)) groups.set(base, []);
+      groups.get(base).push(item);
     });
     const ordered = [...groups.entries()].sort(
       ([a], [b]) =>
@@ -518,6 +528,7 @@
   }
 
   function closeAgentSheet() {
+    window.STIPAgentAgenda?.close?.();
     document.getElementById("teamAgentOverlay")?.remove();
     document.body.classList.remove("team-sheet-open");
   }
@@ -535,54 +546,10 @@
     const planning = cacheEntry(state.weekStart)?.team?.planning || [];
     const fallback =
       planning.find((item) => item.agents?.source_key === sourceKey)?.agents || {};
-    closeAgentSheet();
-    const overlay = document.createElement("div");
-    overlay.id = "teamAgentOverlay";
-    overlay.className = "team-agent-overlay";
-    overlay.innerHTML = `<button class="team-agent-backdrop" type="button" aria-label="Fermer"></button>
-      <section class="team-agent-sheet" aria-modal="true" role="dialog">
-        <div class="team-sheet-handle"></div>
-        <header>
-          <div><small>PLANNING AGENT</small><strong>${esc(displayName(fallback))}</strong><span>${fallback.ghe ? `GHE ${esc(String(fallback.ghe).replace(/^GHE\\s*/i, ""))}` : ""}</span></div>
-          <button type="button" data-agent-close aria-label="Fermer">×</button>
-        </header>
-        <div class="team-agent-sheet-body"><div class="team-agent-loading">Chargement du planning…</div></div>
-      </section>`;
-    document.body.appendChild(overlay);
-    document.body.classList.add("team-sheet-open");
-    overlay.querySelector(".team-agent-backdrop")?.addEventListener("click", closeAgentSheet);
-    overlay.querySelector("[data-agent-close]")?.addEventListener("click", closeAgentSheet);
-    requestAnimationFrame(() => overlay.classList.add("open"));
-    const body = overlay.querySelector(".team-agent-sheet-body");
-    try {
-      const data = await post("stip-data", {
-        action: "agent_planning",
-        source_key: sourceKey,
-      });
-      const contact = data.contact || fallback;
-      const today = todayIso();
-      const rows = (data.items || [])
-        .filter((item) => String(item.date || "") >= today)
-        .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")))
-        .slice(0, 14);
-      const tel = phoneHref(contact.telephone);
-      const email = contact.email || contact.email_pro || "";
-      body.innerHTML = `
-        ${contact.telephone || email ? `<div class="team-agent-contact">
-          ${contact.telephone ? `<a href="${esc(tel)}">${esc(contact.telephone)}</a>` : ""}
-          ${email ? `<button type="button" data-agent-copy="${esc(email)}">${esc(email)}</button>` : ""}
-        </div>` : ""}
-        <div class="team-agent-plan">${rows.length ? rows.map((item) => {
-          const code = String(item.code || "—").toUpperCase();
-          const meta = SHIFT[baseShift(code)];
-          return `<div><span>${esc(formatAgentDate(item.date))}</span><strong>${esc(code)}</strong><small>${esc(meta?.label || "Planning")} ${meta?.time ? `· ${esc(meta.time)}` : ""}</small></div>`;
-        }).join("") : '<p>Aucun poste à venir trouvé.</p>'}</div>`;
-      body.querySelector("[data-agent-copy]")?.addEventListener("click", async (event) => {
-        try { await navigator.clipboard.writeText(event.currentTarget.dataset.agentCopy || ""); } catch {}
-      });
-    } catch (error) {
-      body.innerHTML = `<div class="team-agent-loading">${esc(error.message || "Planning indisponible.")}</div>`;
-    }
+    if (window.STIPAgentAgenda?.open)
+      return window.STIPAgentAgenda.open(sourceKey, fallback);
+    $("#teamError").textContent =
+      "Le nouvel agenda agent n’est pas encore chargé. Recharge la page.";
   }
 
   function renderContent(bundle) {
