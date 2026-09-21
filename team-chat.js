@@ -130,6 +130,7 @@
       '<span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</header>" +
+      '<section class="tb-terrain-summary" data-terrain-summary aria-live="polite"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -282,6 +283,7 @@
         activeLabel.hidden = active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
+      renderTerrainSummary(data);
       const manage = state.root.querySelector("[data-select]");
       if (manage) manage.hidden = !data.admin || !messages.length;
 
@@ -318,6 +320,33 @@
     }
   }
 
+  function isPluralSignal(message = {}) {
+    const body = String(message.body || "").trim();
+    const explicit = body.match(/^(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
+    if (explicit) return Number(explicit[1]) > 1;
+    const shorthand = body.match(/^(\d{1,2})\s+(?!(?:e|eme|ème|er)\b)/i);
+    return shorthand ? Number(shorthand[1]) > 1 : false;
+  }
+
+  function renderTerrainSummary(data = {}) {
+    const host = state.root?.querySelector("[data-terrain-summary]");
+    if (!host) return;
+    const active = activeWheelchairs(data);
+    const strong = active
+      ? active + " point" + (active > 1 ? "s" : "") + " à vérifier"
+      : "Rien de signalé maintenant";
+    const sub = active
+      ? "Regarde les emplacements avant de partir."
+      : "Tu cherches ? Si tu croises un fauteuil, laisse le point ici.";
+    host.innerHTML =
+      '<div class="tb-terrain-frame">' +
+      '<span class="tb-terrain-plaque">POINT FAUTEUILS</span>' +
+      '<div class="tb-terrain-board ' + (active ? "has-active" : "is-clear") + '">' +
+      '<strong>' + esc(strong) + '</strong>' +
+      '<small>' + esc(sub) + '</small>' +
+      '</div></div>';
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
@@ -327,7 +356,7 @@
 
     if (!messages.length) {
       feed.innerHTML =
-        '<section class="tb-empty-state"><span>♿</span><strong>Aucun fauteuil signalé</strong><p>Pour chercher ou signaler, indiquez simplement le bâtiment, l’étage ou le lieu.</p></section>';
+        '<section class="tb-empty-state"><strong>Pas de point actif pour l’instant</strong><p>Tu cherches un fauteuil ? Regarde ici avant de partir. Si tu en croises un, signale simplement où il se trouve.</p></section>';
       updateSelectionBar();
       return;
     }
@@ -373,9 +402,14 @@
           "</time></header>",
       );
 
+      if (activeSignal) {
+        html.push('<span class="tb-status-chip">À récupérer</span>');
+      }
       if (message.body) {
         html.push(
-          "<p>" + esc(message.body).replace(/\n/g, "<br>") + "</p>",
+          '<p class="' + (activeSignal || resolved ? "tb-location-line" : "") + '">' +
+            esc(message.body).replace(/\n/g, "<br>") +
+          "</p>",
         );
       }
       if (photo) {
@@ -391,13 +425,16 @@
         html.push(
           '<button type="button" class="tb-resolve" data-resolve="' +
             esc(id) +
-            '"><span>✔️</span><strong>Récupéré</strong></button>',
+            '"><span aria-hidden="true">✓</span><strong>' +
+            (isPluralSignal(message) ? "Je les prends" : "Je le prends") +
+            "</strong></button>",
         );
       } else if (resolved) {
         html.push(
-          '<div class="tb-resolved-line">✔️ Récupéré' +
+          '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>Pris' +
             (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
-            (wheelchair.resolved_by_name ? " · " + esc(wheelchair.resolved_by_name) : "") +
+            "</strong>" +
+            (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
             "</div>",
         );
       }
@@ -540,7 +577,7 @@
       await api("team_resolve", { message_id: String(messageId) });
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {
-      alert(error.message || "Impossible de marquer ce fauteuil comme récupéré.");
+      alert(error.message || "Impossible de confirmer la prise du fauteuil.");
       if (button) button.disabled = false;
     }
   }
