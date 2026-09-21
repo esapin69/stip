@@ -111,6 +111,44 @@ async function removeStorageTree(conversationId: string) {
   return removePaths(paths);
 }
 
+async function purgeCurrentConversation(conversation: any) {
+  if (!conversation?.id) return { messages: 0, photos: 0 };
+  const today = parisDayKey();
+  const rows = await allRows(String(conversation.id));
+  const stale = rows.filter(
+    (row: any) => parisDayKey(row.created_at) !== today,
+  );
+
+  const photos = await removePaths(
+    stale
+      .map((row: any) => String(row?.payload?.photo_path || "").trim())
+      .filter(Boolean),
+  );
+
+  const ids = stale.map((row: any) => String(row.id));
+  if (ids.length) await deleteMessages(ids);
+
+  const root = await listFolder(String(conversation.id));
+  const oldFolderPaths: string[] = [];
+  for (const entry of root) {
+    const name = String(entry?.name || "").trim();
+    if (!name || name === today) continue;
+    if (entry?.id) {
+      oldFolderPaths.push(String(conversation.id) + "/" + name);
+      continue;
+    }
+    const files = await listFolder(String(conversation.id) + "/" + name);
+    for (const file of files) {
+      if (file?.id && file?.name)
+        oldFolderPaths.push(
+          String(conversation.id) + "/" + name + "/" + String(file.name),
+        );
+    }
+  }
+  const orphanPhotos = await removePaths(oldFolderPaths);
+  return { messages: ids.length, photos: photos + orphanPhotos };
+}
+
 async function purgePreviousDays() {
   const todayKey = TABLEAU_PREFIX + parisDayKey();
   const { data: conversations, error } = await db
@@ -120,12 +158,16 @@ async function purgePreviousDays() {
 
   if (error) throw error;
 
+  const current = (conversations || []).find(
+    (conversation: any) => String(conversation.direct_key || "") === todayKey,
+  );
   const old = (conversations || []).filter(
     (conversation: any) => String(conversation.direct_key || "") !== todayKey,
   );
 
-  let deletedMessages = 0;
-  let deletedPhotos = 0;
+  const currentCleanup = await purgeCurrentConversation(current);
+  let deletedMessages = currentCleanup.messages;
+  let deletedPhotos = currentCleanup.photos;
   let deletedConversations = 0;
 
   for (const conversation of old) {

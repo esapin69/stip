@@ -304,6 +304,34 @@ async function removeTableauStorageTree(conversationId:string){
   }
   if(paths.length)await removeTeamPhotos(paths)
 }
+async function purgeCurrentTableauRows(conversationId:string){
+  const today=parisDayKey(),rows=await listTableauRows(conversationId),
+    stale=rows.filter((row:any)=>parisDayKey(row.created_at)!==today);
+  if(!stale.length)return 0;
+  await removeTeamPhotos(stale.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
+  const ids=stale.map((m:any)=>m.id);
+  for(let i=0;i<ids.length;i+=200){
+    const del=await db.from("stip_messages").delete().in("id",ids.slice(i,i+200));
+    if(del.error)throw del.error
+  }
+  return ids.length
+}
+async function purgePastStorageFolders(conversationId:string){
+  const today=parisDayKey(),root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
+  if(root.error)throw root.error;
+  const paths:string[]=[];
+  for(const folder of root.data||[]){
+    const name=String((folder as any)?.name||"").trim();
+    if(!name||name===today)continue;
+    if((folder as any)?.id){paths.push(conversationId+"/"+name);continue}
+    const listed=await db.storage.from(TEAM_BUCKET).list(conversationId+"/"+name,{limit:1000,offset:0});
+    if(listed.error)throw listed.error;
+    for(const file of listed.data||[]){
+      if((file as any)?.id&&(file as any)?.name)paths.push(conversationId+"/"+name+"/"+String((file as any).name))
+    }
+  }
+  if(paths.length)await removeTeamPhotos(paths)
+}
 async function purgePreviousTableauDays(currentConversationId:string){
   const{data:conversations,error}=await db.from("stip_conversations")
     .select("id,direct_key")
@@ -343,6 +371,8 @@ async function signedTeamPhotos(messages:any[]){
 }
 async function teamThread(ctx:any){
   const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
   const{data:messages,error}=await db.from("stip_messages")
     .select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
@@ -393,6 +423,8 @@ async function storeTeamPhoto(conv:any,body:any){
 async function teamPhotoUpload(ctx:any,body:any){
   requireTeamWrite(ctx);
   const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
   const path=await storeTeamPhoto(conv,body);
   return{ok:true,path}
@@ -400,6 +432,8 @@ async function teamPhotoUpload(ctx:any,body:any){
 async function teamSend(ctx:any,body:any){
   requireTeamWrite(ctx);
   const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
   const text=String(body.body||"").trim().slice(0,2000),
     legacyPhotoPath=String(body.photo_path||"").trim(),
@@ -441,6 +475,8 @@ async function teamSend(ctx:any,body:any){
 async function teamDelete(ctx:any,body:any){
   const mode=requireTeamWrite(ctx),admin=mode==="admin";
   const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
   const ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
   if(!ids.length)throw Error("Aucun message sélectionné.");
