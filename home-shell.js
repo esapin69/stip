@@ -240,20 +240,15 @@
       last = new Date(y, m + 1, 0, 12),
       leading = (first.getDay() + 6) % 7,
       todayIso = parisIso(),
-      week = navigationWeek(),
-      weekStart = week[0]?.iso || "",
-      weekEnd = week.at(-1)?.iso || "",
+      selectedIso = state.dayFocus || todayIso,
       cells = [];
     for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(y, m, day, 12),
         iso = dateIsoLocal(d),
-        inWeek = weekStart && weekEnd && iso >= weekStart && iso <= weekEnd,
         shift = calendarShiftForDate(iso),
         cls = [
           iso === todayIso ? "is-today" : "",
-          inWeek ? "is-week" : "",
-          iso === weekStart ? "is-week-start" : "",
-          iso === weekEnd ? "is-week-end" : "",
+          iso === selectedIso ? "is-selected" : "",
           shift ? "is-worked" : "",
         ]
           .filter(Boolean)
@@ -264,8 +259,8 @@
           month: "long",
         }),
         aria = shift
-          ? `${dayLabel}, ${shift.label}, choisir cette semaine`
-          : `${dayLabel}, choisir cette semaine`,
+          ? `${dayLabel}, ${shift.label}, choisir ce jour`
+          : `${dayLabel}, choisir ce jour`,
         numberClass = shift
           ? `hc-date-jump-number hc-date-jump-workday shift-${esc(shift.type)}`
           : "hc-date-jump-number",
