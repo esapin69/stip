@@ -54,3 +54,19 @@ Do not reverse an already validated product or design decision unless the user e
 
 ## 10. Prefer completion over commentary
 For implementation tasks, spend effort on executing and verifying the requested work rather than merely describing what could be done.
+
+## 11. Field intelligence doctrine
+Any STIP surface that analyses, summarizes, alerts, recommends, or republishes an analysis must follow the same product rule:
+
+**Reason deeply; speak like the field.**
+
+- Do not present a restatement of visible data as an insight.
+- Cross available signals before escalating: staffing by shift, totals, special schedules, events, formations, trainees, requests, and assistant signals when available.
+- Look for hidden imbalance, especially when a correct daily total masks a weak shift.
+- Prefer one concrete useful conclusion over several generic observations.
+- If nothing materially useful is found, say so briefly or stay silent.
+- Never turn missing data into a reassuring green state; use an unknown/neutral state.
+- Keep decisions human. A proposal is a terrain lead to verify, not an automatic instruction.
+- User-facing language has priority over administrative or consultant language: name the moment, the shift, the gap, and what changes in practice.
+- Reuse `stip-field-intelligence.js` for shared status, triage and terrain wording instead of creating page-specific scoring rules.
+- For the shared three-state signal: `🛑` = critical, `⚠️` = watch, green `✔` = checked/OK. Do not invent a second competing scale without an explicit product decision.
