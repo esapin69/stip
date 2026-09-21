@@ -32,7 +32,7 @@
   }
   function shell(){
     return '<section class="tc-shell">'+
-      '<header class="tc-head"><div><small>ÉQUIPE</small><h2>Chat équipe</h2></div><div class="tc-head-actions"><button type="button" data-refresh aria-label="Actualiser">↻</button><button type="button" data-select hidden>Sélectionner</button></div></header>'+
+      '<header class="tc-head"><div><small>ÉQUIPE</small><h2>Chat équipe</h2></div><div class="tc-head-actions"><button type="button" data-install aria-label="Ajouter le raccourci téléphone">📱</button><button type="button" data-refresh aria-label="Actualiser">↻</button><button type="button" data-select hidden>Sélectionner</button></div></header>'+
       '<main class="tc-feed" data-feed><p class="tc-loading">Chargement…</p></main>'+
       '<section class="tc-selection-bar" data-selection-bar hidden><button type="button" data-select-all>Tout sélectionner</button><strong data-selection-count>0</strong><button type="button" class="danger" data-delete-selected>Supprimer</button><button type="button" data-selection-close>Annuler</button></section>'+
       '<section class="tc-photo-preview" data-photo-preview hidden></section>'+
@@ -63,6 +63,7 @@
   }
   function stop(){if(state.timer)clearInterval(state.timer);state.timer=null}
   function bind(root){
+    root.querySelector("[data-install]")?.addEventListener("click",()=>{location.href="/team-chat.html"});
     root.querySelector("[data-refresh]")?.addEventListener("click",()=>load(false));
     root.querySelector("[data-select]")?.addEventListener("click",()=>toggleSelection(true));
     root.querySelector("[data-selection-close]")?.addEventListener("click",()=>toggleSelection(false));
