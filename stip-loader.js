@@ -28,6 +28,8 @@
     else setTimeout(run, 900);
   }
   const personalCore = [
+    "calendar-subscriptions.js",
+    "calendar-responsable-gate.js",
     "planning-home.js",
     "planning-month-hero.js",
     "planning-print-reference.js",
@@ -35,8 +37,6 @@
   const personalExtras = [
     "agent-week-view.js",
     "planning-agenda-extras.js",
-    "calendar-subscriptions.js",
-    "calendar-responsable-gate.js",
     "change-permission-gate.js",
     "day-workflow.js",
     "day-workflow-leave.js",
