@@ -1257,8 +1257,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   color:#143d4e!important;
-  font-size:1.28rem!important;
-  line-height:1!important;
+  font-size:1.58rem!important;
+  line-height:.94!important;
   font-weight:950!important;
   letter-spacing:-.03em!important;
 }
@@ -1269,7 +1269,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   text-overflow:ellipsis!important;
   color:#526d76!important;
   font-family:Georgia,"Times New Roman",serif!important;
-  font-size:.86rem!important;
+  font-size:1.02rem!important;
   line-height:1!important;
   font-style:italic!important;
   font-weight:700!important;
@@ -1281,7 +1281,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
   color:#748991!important;
-  font-size:.63rem!important;
+  font-size:.74rem!important;
   line-height:1.05!important;
   font-weight:760!important;
 }
@@ -1309,7 +1309,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card .hc-profile-phone strong{
   display:block!important;
   color:#244d5d!important;
-  font-size:.88rem!important;
+  font-size:1.02rem!important;
   line-height:1!important;
   font-weight:870!important;
 }
@@ -1356,8 +1356,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   display:block!important;
   color:#143d4e!important;
   font-family:Impact,Haettenschweiler,"Arial Narrow Bold",sans-serif!important;
-  font-size:1.18rem!important;
-  line-height:.95!important;
+  font-size:1.42rem!important;
+  line-height:.93!important;
   font-weight:900!important;
   letter-spacing:.035em!important;
   text-align:center!important;
@@ -1547,11 +1547,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     min-height:78px!important;
   }
   .hc-id-card .hc-avatar{width:44px!important;height:54px!important}
-  .hc-profile-firstname{font-size:1.20rem!important}
-  .hc-profile-surname{font-size:.80rem!important}
-  .hc-profile-email{font-size:.60rem!important}
-  .hc-id-card .hc-profile-phone strong{font-size:.84rem!important}
-  .hc-profile-ghe-art>span{font-size:1.08rem!important}
+  .hc-profile-firstname{font-size:1.46rem!important}
+  .hc-profile-surname{font-size:.94rem!important}
+  .hc-profile-email{font-size:.69rem!important}
+  .hc-id-card .hc-profile-phone strong{font-size:.96rem!important}
+  .hc-profile-ghe-art>span{font-size:1.30rem!important}
   .hc-home-filters{width:min(100%,350px)!important;margin:0 auto 10px!important;gap:8px!important}
   .hc-home-filters>button{min-height:102px!important;padding:6px 4px 8px!important}
   .hc-home-filter-art{width:100%!important;max-width:104px!important}
@@ -1563,11 +1563,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-top-nav{width:min(100%,334px)!important}
   .hc-id-card{grid-template-columns:41px minmax(0,1fr) minmax(67px,82px)!important;gap:7px!important;padding:7px 9px!important;min-height:74px!important}
   .hc-id-card .hc-avatar{width:41px!important;height:50px!important}
-  .hc-profile-firstname{font-size:1.12rem!important}
-  .hc-profile-surname{font-size:.75rem!important}
-  .hc-profile-email{font-size:.57rem!important}
-  .hc-id-card .hc-profile-phone strong{font-size:.80rem!important}
-  .hc-profile-ghe-art>span{font-size:1rem!important}
+  .hc-profile-firstname{font-size:1.36rem!important}
+  .hc-profile-surname{font-size:.88rem!important}
+  .hc-profile-email{font-size:.65rem!important}
+  .hc-id-card .hc-profile-phone strong{font-size:.91rem!important}
+  .hc-profile-ghe-art>span{font-size:1.22rem!important}
   .hc-home-filters{width:min(100%,326px)!important;gap:7px!important}
   .hc-home-filters>button{min-height:96px!important}
   .hc-home-filter-art{max-width:98px!important}
@@ -3570,8 +3570,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.68rem!important;
   }
 }
-/* HOME PLANNING — AUTHORITATIVE REBUILD V5 — 20260921
-   Page order: launchers -> profile -> duty chief -> this week -> month -> agenda actions -> legend.
+/* HOME PLANNING — AUTHORITATIVE REBUILD V6 — 20260921
+   Page order: launchers -> profile -> Esprit shortcut -> this week -> agenda actions -> month -> legend.
    The former unified planning card is visually split into independent surfaces. */
 .hc-home-major-separator{
   box-sizing:border-box!important;
@@ -3603,6 +3603,81 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   font-weight:950!important;
   line-height:1!important;
   letter-spacing:.14em!important;
+}
+
+.hc-team-shortcut{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-height:62px!important;
+  display:grid!important;
+  grid-template-columns:46px minmax(0,1fr) 30px!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding:8px 10px!important;
+  border:1.5px solid #afd9cf!important;
+  border-radius:19px!important;
+  background:linear-gradient(180deg,#fbfffe 0%,#edf8f5 100%)!important;
+  color:#173e4b!important;
+  text-align:left!important;
+  box-shadow:0 4px 0 #d3e8e3,0 11px 22px rgba(31,98,83,.09),inset 0 1px 0 #fff!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hc-team-shortcut:active{
+  transform:translateY(3px)!important;
+  box-shadow:0 1px 0 #d3e8e3,0 4px 9px rgba(31,98,83,.08),inset 0 1px 0 #fff!important;
+}
+.hc-team-shortcut-icon{
+  width:46px!important;
+  height:46px!important;
+  display:block!important;
+  overflow:hidden!important;
+  border:1px solid rgba(24,121,103,.13)!important;
+  border-radius:14px!important;
+  background:#e9f5f1!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.hc-team-shortcut-icon img,
+.hc-team-shortcut-icon svg{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:cover!important;
+}
+.hc-team-shortcut-copy{
+  min-width:0!important;
+  display:block!important;
+}
+.hc-team-shortcut-copy strong,
+.hc-team-shortcut-copy small{
+  display:block!important;
+}
+.hc-team-shortcut-copy strong{
+  color:#174c55!important;
+  font-size:1rem!important;
+  font-weight:950!important;
+  line-height:1.05!important;
+}
+.hc-team-shortcut-copy small{
+  margin-top:4px!important;
+  color:#71878b!important;
+  font-size:.67rem!important;
+  font-weight:800!important;
+  line-height:1.05!important;
+}
+.hc-team-shortcut-arrow{
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  justify-self:end!important;
+  border:1px solid #d3e5e1!important;
+  border-radius:50%!important;
+  background:#f4faf8!important;
+  color:#4b8f80!important;
+  font-size:1.35rem!important;
+  font-weight:950!important;
+  line-height:1!important;
 }
 
 .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{
@@ -3999,6 +4074,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filter-art{max-width:100px!important}
   .hc-home-filters>button>strong{font-size:.65rem!important}
 
+  .hc-team-shortcut{min-height:58px!important;grid-template-columns:42px minmax(0,1fr) 28px!important;gap:9px!important;padding:7px 9px!important;border-radius:18px!important}
+  .hc-team-shortcut-icon{width:42px!important;height:42px!important;border-radius:13px!important}
+  .hc-team-shortcut-copy strong{font-size:.94rem!important}
+  .hc-team-shortcut-copy small{font-size:.63rem!important}
+  .hc-team-shortcut-arrow{width:28px!important;height:28px!important;font-size:1.25rem!important}
   .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{gap:12px!important}
   .hc-calendar-driven-planning .hc-planning-subblock{border-radius:20px!important}
   .hc-calendar-driven-planning .hc-planning-week-subblock{padding:9px 6px 11px!important}
