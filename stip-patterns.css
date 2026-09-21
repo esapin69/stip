@@ -297,7 +297,8 @@
   letter-spacing:.14em;
   text-align:center;
   text-transform:uppercase;
-  white-space:nowrap;
+  white-space:normal;
+  overflow-wrap:anywhere;
 }
 .stip-section-separator.is-compact{
   margin:6px 0 5px;
