@@ -1211,16 +1211,16 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-id-card{
   position:relative!important;
   display:grid!important;
-  grid-template-columns:64px minmax(0,1fr)!important;
-  gap:12px!important;
+  grid-template-columns:48px minmax(0,1fr)!important;
+  gap:10px!important;
   justify-content:stretch!important;
   align-items:center!important;
-  padding:10px 14px!important;
-  min-height:96px!important;
+  padding:8px 13px!important;
+  min-height:78px!important;
 }
 .hc-id-card .hc-avatar{
-  width:64px!important;
-  height:72px!important;
+  width:48px!important;
+  height:56px!important;
   min-height:0!important;
   align-self:center!important;
   border:0!important;
@@ -1491,12 +1491,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-top-nav{width:min(100%,360px)!important;margin-top:8px!important}
   .hc-home-top-tools{padding-right:7px!important}
   .hc-id-card{
-    grid-template-columns:58px minmax(0,1fr)!important;
-    gap:10px!important;
-    padding:9px 12px!important;
-    min-height:90px!important;
+    grid-template-columns:46px minmax(0,1fr)!important;
+    gap:9px!important;
+    padding:8px 11px!important;
+    min-height:76px!important;
   }
-  .hc-id-card .hc-avatar{width:58px!important;height:66px!important}
+  .hc-id-card .hc-avatar{width:46px!important;height:54px!important}
   .hc-profile-surname{font-size:1.18rem!important}
   .hc-profile-firstname{font-size:.84rem!important}
   .hc-profile-ghe{font-size:1.10rem!important}
@@ -1511,8 +1511,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:380px){
   .hc-home-top-nav{width:min(100%,334px)!important}
-  .hc-id-card{grid-template-columns:54px minmax(0,1fr)!important;gap:9px!important;padding:8px 10px!important;min-height:86px!important}
-  .hc-id-card .hc-avatar{width:54px!important;height:62px!important}
+  .hc-id-card{grid-template-columns:43px minmax(0,1fr)!important;gap:8px!important;padding:7px 10px!important;min-height:72px!important}
+  .hc-id-card .hc-avatar{width:43px!important;height:50px!important}
   .hc-profile-surname{font-size:1.10rem!important}
   .hc-profile-firstname{font-size:.80rem!important}
   .hc-profile-ghe{font-size:1.04rem!important}
@@ -3520,9 +3520,41 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.68rem!important;
   }
 }
-/* HOME PLANNING — AUTHORITATIVE REBUILD V4 — 20260921
+/* HOME PLANNING — AUTHORITATIVE REBUILD V5 — 20260921
    Page order: launchers -> profile -> duty chief -> this week -> month -> agenda actions -> legend.
    The former unified planning card is visually split into independent surfaces. */
+.hc-home-major-separator{
+  box-sizing:border-box!important;
+  width:min(calc(100% - 28px),620px)!important;
+  height:1px!important;
+  margin:14px auto 14px!important;
+  background:linear-gradient(90deg,transparent,rgba(52,104,118,.28) 20%,rgba(52,104,118,.28) 80%,transparent)!important;
+}
+.hc-calendar-driven-planning .hc-planning-month-separator{
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:1fr auto 1fr!important;
+  align-items:center!important;
+  gap:10px!important;
+  margin:2px 0 0!important;
+  color:#758991!important;
+}
+.hc-calendar-driven-planning .hc-planning-month-separator::before,
+.hc-calendar-driven-planning .hc-planning-month-separator::after{
+  content:""!important;
+  height:1px!important;
+  background:linear-gradient(90deg,transparent,rgba(52,104,118,.27))!important;
+}
+.hc-calendar-driven-planning .hc-planning-month-separator::after{
+  background:linear-gradient(90deg,rgba(52,104,118,.27),transparent)!important;
+}
+.hc-calendar-driven-planning .hc-planning-month-separator>span{
+  font-size:.58rem!important;
+  font-weight:950!important;
+  line-height:1!important;
+  letter-spacing:.14em!important;
+}
+
 .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{
   box-sizing:border-box!important;
   width:100%!important;
@@ -3830,16 +3862,18 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   gap:11px!important;
   margin:0!important;
   padding:11px 12px!important;
-  border:1px solid rgba(49,100,115,.14)!important;
+  border:1.5px solid #c7dce1!important;
   border-radius:20px!important;
-  background:linear-gradient(145deg,#fff,#f7fbfc)!important;
+  background:linear-gradient(180deg,#fff 0%,#f4fafb 100%)!important;
   color:#173e4b!important;
   text-align:left!important;
-  box-shadow:0 10px 24px rgba(26,70,84,.09),inset 0 1px 0 rgba(255,255,255,.98)!important;
+  box-shadow:0 4px 0 #d9e6e9,0 12px 24px rgba(26,70,84,.11),inset 0 1px 0 rgba(255,255,255,.99)!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
 }
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-day-row:active{
-  transform:translateY(1px)!important;
-  box-shadow:0 4px 11px rgba(26,70,84,.09),inset 0 1px 0 #fff!important;
+  transform:translateY(3px)!important;
+  box-shadow:0 1px 0 #d9e6e9,0 4px 10px rgba(26,70,84,.09),inset 0 1px 0 #fff!important;
 }
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-key-icon{
   box-sizing:border-box!important;
@@ -3859,6 +3893,18 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning .hc-planning-details-subblock .type-training .hc-week-event-key-icon{
   border-color:#cfc3ec!important;background:#f2eefc!important;
 }
+.hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-day-row.type-medical{
+  border-color:#a9d4dc!important;
+  box-shadow:0 4px 0 #c9e1e6,0 12px 24px rgba(23,111,132,.10),inset 0 1px 0 #fff!important;
+}
+.hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-day-row.type-intern{
+  border-color:#e5ce72!important;
+  box-shadow:0 4px 0 #eee0a7,0 12px 24px rgba(141,109,12,.09),inset 0 1px 0 #fff!important;
+}
+.hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-day-row.type-training{
+  border-color:#c9bde8!important;
+  box-shadow:0 4px 0 #ddd5ef,0 12px 24px rgba(91,73,151,.09),inset 0 1px 0 #fff!important;
+}
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-copy{min-width:0!important}
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-copy>strong{
   display:block!important;font-size:1rem!important;line-height:1.12!important;font-weight:950!important;
@@ -3872,7 +3918,19 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   min-height:27px!important;padding:3px 8px!important;border-radius:9px!important;
 }
 .hc-calendar-driven-planning .hc-planning-details-subblock .hc-week-event-chevron{
-  display:block!important;color:#7b99a2!important;font-size:1.35rem!important;font-weight:900!important;line-height:1!important;
+  width:30px!important;
+  height:30px!important;
+  display:grid!important;
+  place-items:center!important;
+  justify-self:end!important;
+  border:1px solid #d8e6e9!important;
+  border-radius:50%!important;
+  background:#eef6f7!important;
+  color:#648b95!important;
+  font-size:1.28rem!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9)!important;
 }
 
 /* LEGEND */
