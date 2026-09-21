@@ -1660,12 +1660,10 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-date-jump-grid>button.is-selected{
  border-color:#0b8fa9!important;
  background:#e8f8fb!important;
- color:#075d70!important;
  box-shadow:inset 0 0 0 2px #0b8fa9,0 5px 12px rgba(11,143,169,.14)!important;
 }
 .hc-date-jump-grid>button.is-today:not(.is-selected){
- box-shadow:inset 0 0 0 2px #168297!important;
- color:#075d70!important;
+ box-shadow:inset 0 0 0 2px #118da6!important;
 }
 .hc-date-jump-day-number{
  display:block!important;
@@ -1696,7 +1694,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-date-jump-dot.shift-day{background:#10a36e!important}
 .hc-date-jump-dot.shift-late{background:#e76413!important}
 .hc-date-jump-dot.shift-evening{background:#e6ae00!important}
-.hc-date-jump-dot.shift-night{background:#475a67!important}
+.hc-date-jump-dot.shift-night{background:#7858c8!important}
 .hc-date-jump-icon{
  display:block!important;
  font-size:1.34rem!important;
@@ -2964,6 +2962,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-date-jump-permanent .hc-date-jump-weekdays{
   margin:0!important;
+  color:#71868e!important;
   font-size:.52rem!important;
 }
 .hc-date-jump-permanent .hc-date-jump-weekdays>span{padding:3px 0!important}
