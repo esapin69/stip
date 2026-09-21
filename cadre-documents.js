@@ -98,7 +98,7 @@
     box.innerHTML = [...groups.entries()]
       .map(
         ([category, docs]) =>
-          `<section class="doc-category"><div class="doc-category-title">${esc(category)}</div>${docs.map((d) => `<article class="doc-card"><div class="doc-card-main"><h3>${esc(d.title || "Document")}</h3>${d.description ? `<p>${esc(d.description)}</p>` : ""}<div class="doc-meta-row">${d.type ? `<span class="doc-meta">${esc(d.type)}</span>` : ""}${d.category ? `<span class="doc-meta">${esc(d.category)}</span>` : ""}</div></div><a class="doc-open" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir ${esc(d.title || "le document")}">↗</a></article>`).join("")}</section>`,
+          `<section class="doc-category"><div class="stip-section-separator is-compact"><span>${esc(category)}</span></div>${docs.map((d) => `<article class="doc-card"><div class="doc-card-main"><h3>${esc(d.title || "Document")}</h3>${d.description ? `<p>${esc(d.description)}</p>` : ""}<div class="doc-meta-row">${d.type ? `<span class="doc-meta">${esc(d.type)}</span>` : ""}${d.category ? `<span class="doc-meta">${esc(d.category)}</span>` : ""}</div></div><a class="doc-open" href="${esc(d.url)}" target="_blank" rel="noopener noreferrer" aria-label="Ouvrir ${esc(d.title || "le document")}">↗</a></article>`).join("")}</section>`,
       )
       .join("");
   }
