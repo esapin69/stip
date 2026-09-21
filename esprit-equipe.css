@@ -990,3 +990,25 @@ body.team-page {
   font-style:normal;
   font-weight:950;
 }
+/* Discreet calendar subscription entry — 20260921 */
+.team-calendar-subscribe{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  width:max-content;
+  min-height:30px;
+  margin-top:8px;
+  padding:4px 9px;
+  border:1px solid #dce8eb;
+  border-radius:999px;
+  background:#fff;
+  color:#5f7881;
+  font:inherit;
+  font-size:.66rem;
+  font-weight:850;
+  box-shadow:0 3px 10px rgba(20,70,88,.04);
+}
+.team-calendar-subscribe[hidden]{display:none!important}
+.team-calendar-subscribe>span{font-size:.82rem}
+.team-calendar-subscribe>strong{font-weight:850}
+.team-calendar-subscribe:active{transform:translateY(1px)}
