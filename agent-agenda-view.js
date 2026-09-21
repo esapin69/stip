@@ -99,41 +99,17 @@
     if(i.family==="off"||i.family==="other")return i.icon;
     return compact?`<span class="aav-dot aav-${i.family}"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
   }
-  function renderSharedMonth(opts={}){
-    const k=String(opts.month||today()).slice(0,7),
-      [y,m]=k.split("-").map(Number),
-      first=new Date(y,m-1,1,12),
-      last=new Date(y,m,0,12),
-      lead=(first.getDay()+6)%7,
-      plan=byDate(opts.items||[]),
-      emap=eventMap(opts.events||[]),
-      cells=[],
-      selected=String(opts.selected||""),
-      prev=opts.prev!==false,
-      next=opts.next!==false,
-      navAttr=opts.navAttr||"data-aav-month",
-      dayAttr=opts.dayAttr||"data-aav-day";
-    for(let i=0;i<lead;i++)cells.push('<span class="aav-cal-empty" aria-hidden="true"></span>');
+  function monthHtml(){
+    const k=state.month,[y,m]=k.split("-").map(Number),first=new Date(y,m-1,1,12),last=new Date(y,m,0,12),lead=(first.getDay()+6)%7,
+          plan=byDate(state.data.items),emap=eventMap(state.events),cells=[];
+    for(let i=0;i<lead;i++)cells.push('<span class="aav-cal-empty"></span>');
     for(let d=1;d<=last.getDate();d++){
       const day=`${k}-${String(d).padStart(2,"0")}`,row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),
-            cls=[day===today()?"today":"",day===selected?"selected":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
-      cells.push(`<button type="button" class="aav-cal-day ${cls}" ${dayAttr}="${day}"><b>${d}</b><span class="aav-cal-shift">${row?shiftToken(row,true):""}</span><small>${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
+            cls=[day===today()?"today":"",day===state.selected?"selected":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
+      cells.push(`<button type="button" class="aav-cal-day ${cls}" data-aav-day="${day}"><b>${d}</b><span class="aav-cal-shift">${row?shiftToken(row,true):""}</span><small>${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
     }
-    const used=lead+last.getDate(),tail=(7-(used%7))%7;
-    for(let i=0;i<tail;i++)cells.push('<span class="aav-cal-empty" aria-hidden="true"></span>');
-    return `<section class="aav-month" data-calendar-month="${k}"><header><button type="button" ${navAttr}="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" ${navAttr}="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar">${cells.join("")}</div></section>`;
-  }
-  function monthHtml(){
-    return renderSharedMonth({
-      month:state.month,
-      selected:state.selected,
-      items:state.data.items||[],
-      events:state.events,
-      prev:state.month>state.bounds.min,
-      next:state.month<state.bounds.max,
-      navAttr:"data-aav-month",
-      dayAttr:"data-aav-day"
-    });
+    const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
+    return `<section class="aav-month"><header><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar">${cells.join("")}</div></section>`;
   }
   function quotity(){
     const q=Number(state?.data?.agent?.quotite);
@@ -274,6 +250,5 @@
   }
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&overlay)close()});
   css();
-  window.STIPMonthCalendar={render:renderSharedMonth,firstMondayInMonth};
   window.STIPAgentAgenda={open,close,reload:()=>reload()};
 })();
