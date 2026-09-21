@@ -1043,29 +1043,6 @@ body.team-page {
   font-style:normal;
   font-weight:950;
 }
-/* Discreet calendar subscription entry — 20260921 */
-.team-calendar-subscribe{
-  display:inline-flex;
-  align-items:center;
-  gap:6px;
-  width:max-content;
-  min-height:30px;
-  margin-top:8px;
-  padding:4px 9px;
-  border:1px solid #dce8eb;
-  border-radius:999px;
-  background:#fff;
-  color:#5f7881;
-  font:inherit;
-  font-size:.66rem;
-  font-weight:850;
-  box-shadow:0 3px 10px rgba(20,70,88,.04);
-}
-.team-calendar-subscribe[hidden]{display:none!important}
-.team-calendar-subscribe>span{font-size:.82rem}
-.team-calendar-subscribe>strong{font-weight:850}
-.team-calendar-subscribe:active{transform:translateY(1px)}
-
 /* team-intelligence-calendar-20260921 */
 .team-cal-status{
  display:grid;
@@ -1274,92 +1251,6 @@ body.team-page {
 .team-month-legend .status-warning{color:#c58b00}
 .team-month-legend .status-critical{color:#c33b3b}
 .team-month-legend .status-unknown{color:#8b9aa0}
-
-/* Same discreet subscription affordance as the personal planning. */
-.team-calendar-pocket{
-  width:max-content;
-  max-width:calc(100% - 24px);
-  margin:0 auto 4px;
-  color:#72858d;
-  font-size:.66rem;
-}
-.team-calendar-pocket>summary{
-  list-style:none;
-  cursor:pointer;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:5px;
-  min-height:28px;
-  padding:0 7px;
-  border:0;
-  border-radius:999px;
-  background:transparent;
-  color:#71868e;
-  font-weight:850;
-}
-.team-calendar-pocket>summary::-webkit-details-marker{display:none}
-.team-calendar-pocket>summary>span{font-size:.9rem;letter-spacing:.08em}
-.team-calendar-pocket[open]{
-  width:min(100% - 20px,520px);
-  padding:7px;
-  border:1px solid #e0eaec;
-  border-radius:15px;
-  background:#fbfdfd;
-}
-.team-calendar-pocket[open]>summary{
-  display:flex;
-  width:max-content;
-  margin:0 auto 5px;
-}
-.team-calendar-pocket .team-calendar-subscribe{
-  width:100%!important;
-  min-height:54px!important;
-  display:grid!important;
-  grid-template-columns:38px minmax(0,1fr) 18px!important;
-  grid-template-rows:auto auto!important;
-  align-items:center!important;
-  gap:1px 9px!important;
-  margin:0!important;
-  padding:9px 10px!important;
-  border:0!important;
-  border-radius:13px!important;
-  background:#fff!important;
-  color:#274f5e!important;
-  text-align:left!important;
-  box-shadow:0 3px 10px rgba(20,70,88,.05)!important;
-  font-size:inherit!important;
-}
-.team-calendar-pocket .team-calendar-subscribe[hidden]{display:none!important}
-.team-calendar-pocket .team-calendar-subscribe>span{
-  grid-row:1/3;
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-  border-radius:10px;
-  background:#eef6f7;
-  font-size:1rem;
-}
-.team-calendar-pocket .team-calendar-subscribe>strong{
-  align-self:end;
-  color:#274f5e;
-  font-size:.74rem;
-  font-weight:900;
-}
-.team-calendar-pocket .team-calendar-subscribe>small{
-  display:block;
-  align-self:start;
-  color:#809198;
-  font-size:.58rem;
-  line-height:1.25;
-}
-.team-calendar-pocket .team-calendar-subscribe>b{
-  grid-column:3;
-  grid-row:1/3;
-  color:#8a9ba1;
-  font-size:1.05rem;
-}
 
 /* home-duty-chief.js injects its CSS inline, which this page's CSP blocks.
    Keep the component styled here as an external stylesheet. */
