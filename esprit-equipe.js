@@ -241,7 +241,10 @@
       cached.signalLoaded = true;
       cached.signalFetchedAt = Date.now();
       cached.signalPromise = null;
-      renderHeader();
+      if (start === state.weekStart) {
+        renderHeader();
+        if (state.rendered) renderContent(cached);
+      }
     }).catch(() => {
       cached.signalPromise = null;
     });
