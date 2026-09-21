@@ -33,7 +33,7 @@ async function allRows(conversationId: string) {
   for (let from = 0; ; from += 1000) {
     const { data, error } = await db
       .from("stip_messages")
-      .select("id,payload")
+      .select("id,payload,created_at")
       .eq("conversation_id", conversationId)
       .range(from, from + 999);
     if (error) throw error;
