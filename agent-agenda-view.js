@@ -57,7 +57,9 @@
     AA:{label:"Absence autorisée",time:"",icon:"•",family:"off"},
     ABS:{label:"Absence",time:"",icon:"•",family:"off"},
     OFF:{label:"Repos",time:"",icon:"🏝️",family:"off"},
-    REPOS:{label:"Repos",time:"",icon:"🏝️",family:"off"}
+    REPOS:{label:"Repos",time:"",icon:"🏝️",family:"off"},
+    "-":{label:"Aucun poste",time:"",icon:"",family:"other"},
+    "—":{label:"Aucun poste",time:"",icon:"",family:"other"}
   };
   const SPECIAL={
     M0130:{base:"M",time:"3h45 · horaire adapté"},
