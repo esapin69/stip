@@ -1298,23 +1298,24 @@
       ghe = String(a.ghe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
+      prenom = cap(a.prenom || ""),
+      nom = String(a.nom || "").trim().toUpperCase(),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
-      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       gheLabel = ghe
         ? ghe.toUpperCase().startsWith("GHE")
-          ? ghe
+          ? ghe.toUpperCase()
           : `GHE ${ghe}`
         : "";
     return `<section class="hc-profile hc-profile-full hc-id-card">
-      <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
       <div class="hc-profile-copy">
-        <strong class="hc-profile-name">${esc(agentName(a))}</strong>
-        ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
-        <div class="hc-profile-contacts">
-          ${tel ? `<button class="hc-profile-contact" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
-          ${mail ? `<button class="hc-profile-contact" data-copy="${esc(mail)}" data-label="E-mail" aria-label="Copier l’e-mail"><strong>${esc(mail)}</strong></button>` : ""}
+        ${mail ? `<button class="hc-profile-contact hc-profile-email" data-copy="${esc(mail)}" data-label="E-mail" aria-label="Copier l’e-mail"><strong>${esc(mail)}</strong></button>` : ""}
+        <div class="hc-profile-name-line">
+          ${nom ? `<strong class="hc-profile-surname">${esc(nom)}</strong>` : ""}
+          ${prenom ? `<span class="hc-profile-firstname">${esc(prenom)}</span>` : ""}
         </div>
+        ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
+        ${gheLabel ? `<strong class="hc-profile-ghe">${esc(gheLabel)}</strong>` : ""}
       </div>
     </section>`;
   }
@@ -1348,18 +1349,24 @@
   }
   function homeModeNav() {
     const active = state.homeMode || "planning",
+      count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps },
         { key: "planning", label: "Mon profil", art: ICON.homeHome },
       ];
     if (has("messages"))
       items.push({ key: "tableau", label: "Fauteuils", art: ICON.homeChair, live: true });
-    return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-      .map(
-        (item) =>
-          `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
-      )
-      .join("")}</nav>`;
+    return `<section class="hc-home-top-nav">
+      <div class="hc-home-top-tools">
+        <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+      </div>
+      <nav class="hc-home-filters" aria-label="Accueil STIP">${items
+        .map(
+          (item) =>
+            `<button type="button" data-home-mode="${item.key}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
+        )
+        .join("")}</nav>
+    </section>`;
   }
 
   function homeAIEntry() {
