@@ -32,15 +32,24 @@ function restore(){if(!session||restoring)return;restoring=true;try{if(!history.
 function isCadreFamily(d){return d?.role_key==='cadre'&&d?.permissions?.cadre_dashboard===true}
 function renderSession(d){window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}session=d;window.STIPSession=d;loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));restore()}
 loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{const d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
-const accessCodeToggle=$('#toggleAccessCode');
+const accessCodeToggle=$('#toggleAccessCode'),accessCodeMask=$('#accessCodeMask');
+function updateAccessCodeMask(){
+  if(!accessCode)return;
+  const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
+  if(accessCodeMask)accessCodeMask.textContent=accessCode.type==='text'?'':'★'.repeat(clean.length);
+  accessCode.classList.toggle('stip-code-revealed',accessCode.type==='text');
+  accessCode.classList.toggle('stip-code-masked',accessCode.type!=='text'&&clean.length>0);
+}
 function sanitizeAccessCode(){
   if(!accessCode)return;
   const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
   if(accessCode.value!==clean)accessCode.value=clean;
+  updateAccessCodeMask();
 }
 function hideAccessCode(){
   if(!accessCode)return;
   accessCode.type='password';
+  updateAccessCodeMask();
   accessCodeToggle?.setAttribute('aria-pressed','false');
   if(accessCodeToggle)accessCodeToggle.textContent='Voir';
 }
@@ -48,6 +57,7 @@ function showAccessCode(){
   if(!accessCode)return;
   sanitizeAccessCode();
   accessCode.type='text';
+  updateAccessCodeMask();
   accessCodeToggle?.setAttribute('aria-pressed','true');
   if(accessCodeToggle)accessCodeToggle.textContent='Relâcher';
 }
