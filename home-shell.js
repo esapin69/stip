@@ -796,7 +796,10 @@
     if (!events.length) return "";
     return `<span class="hc-day-event-markers" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .slice(0, 3)
-      .map((event) => `<i title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`)
+      .map((event) => {
+        const kind = futureTypeKey(event);
+        return `<i class="hc-event-marker type-${esc(kind)}" title="${esc(event.title || event.type || "Événement")}">${event.icon || "•"}</i>`;
+      })
       .join("")}</span>`;
   }
   function weekDisplayModel(w = selectedWeek()) {
