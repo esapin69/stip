@@ -1648,7 +1648,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  color:#214d5c!important;
  font:inherit!important;
  display:grid!important;
- grid-template-rows:10px 23px 5px!important;
+ grid-template-rows:11px 23px 6px!important;
  align-items:center!important;
  justify-items:center!important;
  gap:1px!important;
@@ -1674,6 +1674,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-date-jump-marker{
  min-height:23px!important;
+ height:23px!important;
  display:grid!important;
  place-items:center!important;
  line-height:1!important;
@@ -1702,12 +1703,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  transform:translateY(-1px)!important;
 }
 .hc-date-jump-events{
- min-height:5px!important;
+ min-height:6px!important;
  max-width:100%!important;
  display:block!important;
  overflow:hidden!important;
  color:#214d5c!important;
- font-size:.5rem!important;
+ font-size:.52rem!important;
  line-height:1!important;
  letter-spacing:-.18em!important;
  padding-right:.18em!important;
@@ -1745,9 +1746,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-date-jump-panel{padding:10px!important;border-radius:21px!important}
  .hc-date-jump-weekdays,.hc-date-jump-grid{gap:3px!important}
  .hc-date-jump-grid>button{height:44px!important;min-height:44px!important}
- .hc-date-jump-day-number{font-size:.78rem!important}
+ .hc-date-jump-day-number{font-size:.8rem!important}
  .hc-date-jump-dot{width:23px!important;height:23px!important}
- .hc-date-jump-icon{font-size:1.3rem!important}
+ .hc-date-jump-icon{font-size:1.34rem!important}
  .hc-date-jump-actions{gap:6px!important}
  .hc-date-jump-close{min-width:78px!important}
 }
