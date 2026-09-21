@@ -56,6 +56,8 @@
     weekStart = null,
     lastFeed = null,
     lastStaff = null;
+  const field = () => window.STIPFieldIntel || null;
+
   async function post(url, body) {
     const r = await fetch(url, {
         method: "POST",
@@ -165,29 +167,40 @@
     return "";
   }
   function renderBrief(j) {
-    const s = j?.summary || {},
-      critical = Number(s.critical_count || 0),
-      attention = Number(s.attention_count || 0),
-      opportunity = Number(s.opportunity_count || 0);
+    const source = j?.items || j?.summary?.top || [],
+      intel = field()?.brief?.(source),
+      rows = intel?.rows || source.filter(Boolean),
+      critical = intel?.critical ?? rows.filter((x) => Number(x.severity || 0) >= 4).length,
+      attention = intel?.warning ?? rows.filter((x) => Number(x.severity || 0) >= 2 && Number(x.severity || 0) < 4).length,
+      opportunity = intel?.opportunity ?? rows.filter((x) => ["opportunity", "proposal"].includes(String(x.kind || "").toLowerCase())).length;
     $("#briefHeadline").textContent =
       accessLevel === "pro"
-        ? s.headline || "Situation stable sur les prochains jours"
-        : "Vue de l’activité des prochains jours";
+        ? intel?.headline || "Rien d’utile à signaler"
+        : "Vue terrain des prochains jours";
     $("#briefMeta").textContent =
       accessLevel === "pro"
-        ? "Lecture par journée et par créneau quand l’information est disponible."
-        : "Lecture simple des événements et de la couverture disponible.";
+        ? intel?.meta || "STIP garde seulement les points qui changent réellement la lecture."
+        : "Les points importants sont regroupés sans jargon.";
     $("#summaryMetrics").innerHTML =
-      `<div class="summary-metric opportunity"><strong>${opportunity}</strong><span>Opportunités</span></div><div class="summary-metric anticipation"><strong>${attention}</strong><span>À anticiper</span></div>${accessLevel === "pro" ? `<div class="summary-metric decision"><strong>${critical}</strong><span>À décider</span></div>` : ""}`;
-    const top = (s.top || []).slice(0, accessLevel === "pro" ? 3 : 2);
+      `<div class="summary-metric opportunity"><strong>${opportunity}</strong><span>Pistes utiles</span></div><div class="summary-metric anticipation"><strong>${attention}</strong><span>À surveiller</span></div>${accessLevel === "pro" ? `<div class="summary-metric decision"><strong>${critical}</strong><span>Ça coince</span></div>` : ""}`;
+    const top = rows.slice(0, accessLevel === "pro" ? 3 : 2);
     $("#briefTop").innerHTML = top.length
       ? top
           .map((x) => {
-            const sc = scopeOf(x);
-            return `<button class="brief-item" data-brief-day="${esc(x.date)}" type="button"><time>${esc(fmtShort(x.date))}</time><span><strong>${esc(x.title)}</strong>${sc ? `<b class="brief-scope">${esc(sc)}</b>` : ""}<span>${esc(accessLevel === "pro" ? x.recommendation_text || x.body || familyLabel(x.source_family) : x.body || familyLabel(x.source_family))}</span></span></button>`;
+            const sc = scopeOf(x),
+              t = field()?.terrainItem?.(x) || {
+                headline: x.title || familyLabel(x.source_family),
+                detail: x.body || "",
+                proposal: x.recommendation_text || "",
+              },
+              text =
+                accessLevel === "pro"
+                  ? t.proposal || t.detail || familyLabel(x.source_family)
+                  : t.detail || familyLabel(x.source_family);
+            return `<button class="brief-item" data-brief-day="${esc(x.date)}" type="button"><time>${esc(fmtShort(x.date))}</time><span><strong>${esc(t.headline)}</strong>${sc ? `<b class="brief-scope">${esc(sc)}</b>` : ""}<span>${esc(text)}</span></span></button>`;
           })
           .join("")
-      : '<div class="empty">Aucun signal majeur sur la période affichée.</div>';
+      : '<div class="empty">Rien d’utile à signaler sur la période.</div>';
     document.querySelectorAll("[data-brief-day]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -235,22 +248,31 @@
     $("#dayEyebrow").textContent =
       d.date === ymd(new Date()) ? "Aujourd’hui" : "Journée sélectionnée";
     $("#dayLabel").textContent = fmt(d.date);
-    const sev = Math.max(
+    const status =
+        field()?.dayStatus?.({
+          staffing: staff,
+          items: selectedItems(),
+          alerts,
+        }) || null,
+      sev = Math.max(
         Number(ss.worst_severity || 0),
         0,
         ...selectedItems().map((x) => Number(x.severity || 0)),
         ...alerts.map((x) => Number(x.severity || 0)),
       ),
-      badge = $("#dayBadge");
+      badge = $("#dayBadge"),
+      level =
+        status?.level ||
+        (sev >= 4 ? "critical" : sev >= 2 ? "warning" : "ok");
     badge.textContent =
-      sev >= 4
-        ? "🚨 Critique"
-        : sev >= 3
-          ? "⚠️ Important"
+      status?.symbol && status?.label
+        ? `${status.symbol} ${status.label}`
+        : sev >= 4
+          ? "🛑 Ça coince"
           : sev >= 2
             ? "⚠️ À surveiller"
-            : "✓ Conforme";
-    badge.className = `badge ${sev >= 4 ? "critical" : sev >= 2 ? "warn" : "ok"}`;
+            : "✔ Rien ne coince";
+    badge.className = `badge ${level === "critical" ? "critical" : level === "warning" ? "warn" : level === "ok" ? "ok" : "neutral"}`;
     const planned = staff?.available
         ? Number(ss.planned || 0)
         : Number(ctx.planned_total ?? e.working ?? 0),
@@ -287,8 +309,13 @@
       ? `<div class="coverage-fresh">Planning mis à jour ${esc(fmtStamp(staff.freshness.planning_imported_at))}${staff.freshness.reference_file ? ` · Référence : ${esc(staff.freshness.reference_file)}` : ""}</div>`
       : "";
     $("#dayBody").classList.remove("loading");
+    const staffingRead = field()?.staffing?.(staff),
+      fieldRead =
+        staffingRead?.known
+          ? `<div class="field-read ${esc(staffingRead.level)}"><strong>${esc(staffingRead.symbol)} ${esc(staffingRead.headline)}</strong>${staffingRead.detail ? `<span>${esc(staffingRead.detail)}</span>` : ""}</div>`
+          : "";
     $("#dayBody").innerHTML =
-      `<div class="coverage-caption"><span>Référence HCL issue du planning</span><strong>${staff?.available ? "Comparaison automatique" : "Données partielles"}</strong></div><div class="coverage-state ${gap < 0 ? "under" : gap > 0 ? "over" : "balanced"}"><span>${gap == null ? "Couverture" : gap < 0 ? "Sous la référence" : gap > 0 ? "Marge disponible" : "Référence atteinte"}</span><strong>${gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`}</strong></div><div class="day-context"><div><strong>${planned}</strong><span>planifiés sur les créneaux de référence</span></div><div><strong>${target == null ? "—" : target}</strong><span>référence HCL</span></div></div>${detailRows ? `<div class="coverage-rows">${detailRows}</div>` : ""}${special}${fresh}<div class="day-note">${events.length ? `${events.length} événement(s) connu(s) · ` : ""}${alerts.length ? `${alerts.length} alerte(s) · ` : ""}${ss.below_count ? `${ss.below_count} écart(s) d’effectif détecté(s).` : "aucun écart d’effectif prioritaire détecté."}</div>`;
+      `${fieldRead}<div class="coverage-caption"><span>Détail des références</span><strong>${staff?.available ? "Calcul STIP" : "Données partielles"}</strong></div><div class="coverage-state ${gap < 0 ? "under" : gap > 0 ? "over" : "balanced"}"><span>${gap == null ? "Couverture" : gap < 0 ? "Sous la référence" : gap > 0 ? "Marge disponible" : "Référence atteinte"}</span><strong>${gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`}</strong></div><div class="day-context"><div><strong>${planned}</strong><span>planifiés sur les créneaux suivis</span></div><div><strong>${target == null ? "—" : target}</strong><span>référence</span></div></div>${detailRows ? `<div class="coverage-rows">${detailRows}</div>` : ""}${special}${fresh}<div class="day-note">${events.length ? `${events.length} événement(s) connu(s) · ` : ""}${alerts.length ? `${alerts.length} alerte(s) · ` : ""}${ss.below_count ? `${ss.below_count} écart(s) utile(s) à regarder.` : "rien d’utile ne ressort côté effectif."}</div>`;
   }
   function bucket(x) {
     if (x.source_family === "strategy" || x.kind === "proposal")
@@ -300,17 +327,22 @@
     return "context";
   }
   function card(x) {
-    const p =
+    const t = field()?.terrainItem?.(x) || {
+        headline: x.title || "Point à regarder",
+        detail: x.body || "",
+        proposal: x.recommendation_text || proposalText(x.recommendation),
+      },
+      p =
         accessLevel === "pro"
-          ? x.recommendation_text || proposalText(x.recommendation)
+          ? t.proposal || x.recommendation_text || proposalText(x.recommendation)
           : "",
       sc = scopeOf(x);
-    return `<article class="insight ${bucket(x)}"><div class="insight-top"><span class="insight-kind">${esc(familyLabel(x.source_family))}</span><span class="insight-sev">${Number(x.severity) >= 3 ? "Prioritaire" : Number(x.severity) === 2 ? "À surveiller" : "Information"}</span></div><h3>${esc(x.title || "Analyse")}</h3>${sc ? `<div class="insight-scope"><span>Créneau</span><strong>${esc(sc)}</strong></div>` : ""}${x.body ? `<p>${esc(x.body)}</p>` : ""}${p ? `<p class="proposal"><strong>Proposition</strong><span>${esc(p)}</span></p>` : ""}</article>`;
+    return `<article class="insight ${bucket(x)}"><div class="insight-top"><span class="insight-kind">${esc(familyLabel(x.source_family))}</span><span class="insight-sev">${Number(x.severity) >= 4 ? "Ça coince" : Number(x.severity) >= 2 ? "À surveiller" : "Piste"}</span></div><h3>${esc(t.headline)}</h3>${sc ? `<div class="insight-scope"><span>Créneau</span><strong>${esc(sc)}</strong></div>` : ""}${t.detail ? `<p>${esc(t.detail)}</p>` : ""}${p ? `<p class="proposal"><strong>Piste terrain</strong><span>${esc(p)}</span></p>` : ""}</article>`;
   }
   function renderInsights(j) {
     const box = $("#insightList");
     box.classList.remove("loading");
-    let items = selectedItems();
+    let items = field()?.meaningfulItems?.(selectedItems()) || selectedItems();
     if (accessLevel !== "pro")
       items = items.filter(
         (x) =>
@@ -320,8 +352,8 @@
       );
     $("#insightTitle").textContent =
       accessLevel === "pro"
-        ? "Analyse détaillée"
-        : "Informations de la journée";
+        ? "Ce qui change vraiment"
+        : "À retenir aujourd’hui";
     if (!items.length) {
       box.innerHTML =
         '<div class="empty">Rien de notable sur cette journée.</div>';
