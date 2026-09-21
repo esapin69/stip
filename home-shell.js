@@ -1379,6 +1379,7 @@
       <div class="hc-home-top-tools">
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
+      <div class="hc-home-team-slot">${teamShortcut()}</div>
       <nav class="hc-home-filters" aria-label="Accueil STIP">${items
         .map(
           (item) =>
@@ -1744,7 +1745,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${teamShortcut()}<section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
