@@ -23,6 +23,8 @@
             "'": "&#39;",
           })[c],
       );
+  const field = () => window.STIPFieldIntel || null;
+
   function iso(d) {
     return new Intl.DateTimeFormat("en-CA", {
       year: "numeric",
@@ -142,12 +144,19 @@
     return `<div class="as-coverage ${cls}"><span><small>Planifié</small><b>${esc(planned)}</b></span><span><small>Référence HCL</small><b>${esc(target)}</b></span><span><small>Écart</small><b>${esc((g > 0 ? "+" : "") + g)}</b></span></div>`;
   }
   function renderCard(x) {
-    const sc = scope(x);
-    return `<section class="as-card" data-group="${group(x)}"><header><div><span class="as-tag">${label(x)}</span><h3>${esc(x.title)}</h3></div></header>${sc ? `<div class="as-scope"><span>Créneau</span><strong>${esc(sc)}</strong></div>` : ""}<p class="body">${esc(x.body || "")}</p>${coverage(x)}${x.recommendation_text ? `<div class="as-rec"><strong>Proposition</strong><span>${esc(x.recommendation_text)}</span></div>` : ""}<span class="as-confidence">${confidence(x)}</span><details class="as-why"><summary>Pourquoi cette alerte ?</summary><p>${esc(why(x))}</p></details></section>`;
+    const sc = scope(x),
+      terrain = field()?.terrainItem?.(x) || {
+        headline: x.title || "Point à regarder",
+        detail: x.body || "",
+        proposal: x.recommendation_text || "",
+      },
+      proposal = terrain.proposal || x.recommendation_text || "";
+    return `<section class="as-card" data-group="${group(x)}"><header><div><span class="as-tag">${label(x)}</span><h3>${esc(terrain.headline)}</h3></div></header>${sc ? `<div class="as-scope"><span>Créneau</span><strong>${esc(sc)}</strong></div>` : ""}${terrain.detail ? `<p class="body">${esc(terrain.detail)}</p>` : ""}${coverage(x)}${proposal ? `<div class="as-rec"><strong>Piste terrain</strong><span>${esc(proposal)}</span></div>` : ""}<details class="as-why"><summary>Pourquoi STIP le remonte ?</summary><p>${esc(why(x))}</p></details></section>`;
   }
   function render(filter = "all") {
-    const list =
-        filter === "all" ? items : items.filter((x) => group(x) === filter),
+    const useful = field()?.meaningfulItems?.(items) || items,
+      list =
+        filter === "all" ? useful : useful.filter((x) => group(x) === filter),
       days = new Map();
     list.forEach((x) => {
       const key = String(x.date || "").slice(0, 10) || "sans-date";
@@ -194,21 +203,19 @@
         return;
       }
       items = j.items || [];
-      const s = j.summary || {};
+      const s = j.summary || {},
+        intel = field()?.brief?.(items);
       $("#headline").textContent =
-        s.headline || "Aucun point prioritaire détecté";
+        intel?.headline || s.headline || "Rien d’utile à signaler";
       document
         .querySelector(".as-hero")
-        ?.setAttribute("data-state", s.state || "ok");
-      const b = [];
-      if (s.critical_count) b.push(`${s.critical_count} à décider`);
-      if (s.attention_count) b.push(`${s.attention_count} à anticiper`);
-      if (s.opportunity_count)
-        b.push(
-          `${s.opportunity_count} opportunité${s.opportunity_count > 1 ? "s" : ""}`,
+        ?.setAttribute(
+          "data-state",
+          intel?.critical ? "critical" : intel?.warning ? "warning" : "ok",
         );
       $("#meta").textContent =
-        b.join(" · ") || "Situation normale : l’Assistant reste silencieux.";
+        intel?.meta ||
+        "STIP ne remonte que ce qui change vraiment la lecture de la situation.";
       render(activeFilter);
     } catch (e) {
       $("#error").textContent = e.message || String(e);
