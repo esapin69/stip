@@ -1731,6 +1731,11 @@
     return `<details class="hc-calendar-pocket"><summary><span>⋯</span> Options du planning</summary><div><button type="button" data-home-calendar-subscribe><span>📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b>›</b></button></div></details>`;
   }
 
+  function teamShortcut() {
+    if (!(has("planning_team") || has("activity") || has("assistant_enabled"))) return "";
+    return `<button type="button" class="hc-team-shortcut" data-app="team" aria-label="Ouvrir Esprit d’équipe"><span class="hc-team-shortcut-icon">${ICON.team}</span><span class="hc-team-shortcut-copy"><strong>Esprit d’équipe</strong><small>Chef du jour · équipe · activité</small></span><span class="hc-team-shortcut-arrow" aria-hidden="true">›</span></button>`;
+  }
+
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -1739,7 +1744,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${teamShortcut()}<section class="hc-planning-subblock hc-planning-week-subblock"><small class="hc-planning-section-label">CETTE SEMAINE</small>${weekWidget()}</section>${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-month-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
