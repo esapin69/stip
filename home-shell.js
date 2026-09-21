@@ -228,17 +228,9 @@
         SPECIAL_SHIFT_ICON[code] ||
         (DAY_OFF.has(code)
           ? "🏝️"
-          : code === "RTT" || code === "RTTA" || code === "RTA"
-            ? "⏱️"
-            : code === "VM"
-              ? "🩺"
-              : code === "SYR"
-                ? "🤝"
-                : ["MA", "AM", "AA", "ABS"].includes(code)
-                  ? "•"
-                  : code === "—" || code === "-"
-                    ? ""
-                    : "•");
+          : code === "—" || code === "-"
+            ? ""
+            : "•");
     return {
       code,
       type: meta[0],
@@ -246,6 +238,24 @@
       icon,
       work: Boolean(workIcon),
     };
+  }
+
+  function calendarEventIcons(iso) {
+    const b=state.boot||{},icons=[],
+      push=(icon)=>{icon=String(icon||"").trim();if(icon&&!icons.includes(icon))icons.push(icon)},
+      inside=(start,end)=>{start=String(start||"").slice(0,10);end=String(end||start||"").slice(0,10);return !!start&&start<=iso&&iso<=end};
+    for(const x of b.agenda_items||[]){
+      if(String(x.event_date||"").slice(0,10)!==iso)continue;
+      push(String(x.icon||"").trim()||(x.source_type==="mobi_lit_medical"?"🩺":x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌"));
+    }
+    for(const x of b.personal_formations||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push("🎓");
+    for(const x of b.personal_stagiaires||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push("👶");
+    return icons.slice(0,2);
+  }
+  function firstMondayOfMonth(key){
+    const d=dateObj(`${key}-01`),dow=d.getDay()||7;
+    if(dow!==1)d.setDate(d.getDate()+((8-dow)%7));
+    return dateIsoLocal(d);
   }
 
   function renderDateJumpCalendar(panel, key = "") {
@@ -285,9 +295,10 @@
           ? shift.work
             ? `<span class="hc-date-jump-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
             : `<span class="hc-date-jump-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
-          : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>';
+          : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
+        eventIcons=calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="${cls}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span></button>`,
+        `<button type="button" class="${cls} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first),
@@ -531,8 +542,24 @@
     "—": ["none", "Aucun poste"],
   };
   const SPECIAL_SHIFT_ICON = {
+    RH: "🏝️",
+    CA: "🌴",
+    CP: "🌴",
+    RTT: "⏱️",
+    RTTA: "⏱️",
+    RTA: "⏱️",
+    RC: "↻",
+    RF: "•",
     FO: "🎓",
     ST: "👶",
+    VM: "🩺",
+    SYR: "🤝",
+    MA: "•",
+    AM: "•",
+    AA: "•",
+    ABS: "•",
+    OFF: "🏝️",
+    REPOS: "🏝️",
   };
   const WORK_SHIFT_ICON = {
     M: "🔵",
@@ -722,7 +749,7 @@
       day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       dayOff = DAY_OFF.has(canonical),
-      statusIcon = dayOff ? "🏝️" : SPECIAL_SHIFT_ICON[canonical] || "",
+      statusIcon = SPECIAL_SHIFT_ICON[canonical] || (dayOff ? "🏝️" : ""),
       shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical,
       workIcon = WORK_SHIFT_ICON[canonical] || "",
       workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
@@ -1762,7 +1789,9 @@
           dateJumpPanel.dataset.calendarMonth,
           step.dataset.calStep,
         );
-        return renderDateJumpCalendar(dateJumpPanel, state.dateJumpMonth);
+        const todayIso=parisIso(),
+          target=todayIso.startsWith(state.dateJumpMonth)?todayIso:firstMondayOfMonth(state.dateJumpMonth);
+        return jumpToDate(target);
       }
       if (day) {
         state.dateJumpMonth =
