@@ -220,15 +220,34 @@
       ),
       raw = String(row?.code || row?.source_value || "").trim();
     if (!raw) return null;
-    const code = canonicalShift(raw);
-    if (!["M", "J", "J4", "S", "N"].includes(code)) return null;
-    const meta = SHIFT_BADGE_META[code] || ["other", code];
+    const code = canonicalShift(raw),
+      meta = SHIFT_BADGE_META[code] || ["other", code],
+      workIcon = WORK_SHIFT_ICON[code] || "",
+      icon =
+        workIcon ||
+        SPECIAL_SHIFT_ICON[code] ||
+        (DAY_OFF.has(code)
+          ? "🏝️"
+          : code === "RTT" || code === "RTTA" || code === "RTA"
+            ? "⏱️"
+            : code === "VM"
+              ? "🩺"
+              : code === "SYR"
+                ? "🤝"
+                : ["MA", "AM", "AA", "ABS"].includes(code)
+                  ? "•"
+                  : code === "—" || code === "-"
+                    ? ""
+                    : "•");
     return {
       code,
       type: meta[0],
       label: meta[1] || code,
+      icon,
+      work: Boolean(workIcon),
     };
   }
+
   function renderDateJumpCalendar(panel, key = "") {
     if (!panel) return;
     const basis = key
@@ -261,12 +280,14 @@
         aria = shift
           ? `${dayLabel}, ${shift.label}, choisir ce jour`
           : `${dayLabel}, choisir ce jour`,
-        numberClass = shift
-          ? `hc-date-jump-number hc-date-jump-workday shift-${esc(shift.type)}`
-          : "hc-date-jump-number",
-        gridStart = day === 1 ? ` style="grid-column-start:${leading + 1}"` : "";
+        gridStart = day === 1 ? ` style="grid-column-start:${leading + 1}"` : "",
+        marker = shift
+          ? shift.work
+            ? `<span class="hc-date-jump-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
+            : `<span class="hc-date-jump-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
+          : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>';
       cells.push(
-        `<button type="button" class="${cls}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><span class="${numberClass}">${day}</span></button>`,
+        `<button type="button" class="${cls}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span></button>`,
       );
     }
     const monthKey = monthKeyOf(first),
