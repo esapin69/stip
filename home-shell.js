@@ -85,6 +85,8 @@
       '<img src="images/icone_app/home-access-personal.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260920-homevisual1" alt="" aria-hidden="true">',
+    homeChat:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4v-14Z"/><path d="M8 9h8M8 12.5h5"/></svg>',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
@@ -1318,6 +1320,7 @@
       items = [
         ["apps", "Applications", ICON.homeApps],
         ["planning", "Mon profil", ICON.homeHome],
+        ...(has("messages") ? [["chat", "Chat équipe", ICON.homeChat]] : []),
       ];
     return `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
       .map(
@@ -1739,6 +1742,8 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
+    if (state.homeMode === "chat" && has("messages"))
+      return `<section class="hc-home-pane hc-home-pane-chat"><section id="hcTeamChatHost"></section></section>`;
     const weeklyDetails = futureWidget();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
@@ -1771,6 +1776,8 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
+    if (state.homeMode === "chat") window.STIPTeamChat?.mount?.(root.querySelector("#hcTeamChatHost"));
+    else window.STIPTeamChat?.stop?.();
     root.querySelector("[data-dialog-home]")?.addEventListener("click", () =>
       window.STIPCommunication?.openDialog?.(),
     );
@@ -2005,7 +2012,9 @@
         requested = sessionStorage.getItem("stip_home_mode_once");
       if (quick === "notifications" || quick === "exchange") {
         state.homeMode = "notifications";
-      } else if (requested === "notifications" || requested === "apps" || requested === "planning") {
+      } else if (quick === "teamchat" && has("messages")) {
+        state.homeMode = "chat";
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "chat") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
