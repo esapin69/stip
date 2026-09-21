@@ -1648,7 +1648,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  color:#214d5c!important;
  font:inherit!important;
  display:grid!important;
- grid-template-rows:11px 23px 6px!important;
+ grid-template-rows:10px 23px 5px!important;
  align-items:center!important;
  justify-items:center!important;
  gap:1px!important;
@@ -1703,12 +1703,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  transform:translateY(-1px)!important;
 }
 .hc-date-jump-events{
- min-height:6px!important;
+ min-height:5px!important;
  max-width:100%!important;
  display:block!important;
  overflow:hidden!important;
  color:#214d5c!important;
- font-size:.52rem!important;
+ font-size:.5rem!important;
  line-height:1!important;
  letter-spacing:-.18em!important;
  padding-right:.18em!important;
