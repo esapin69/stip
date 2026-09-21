@@ -258,7 +258,7 @@
 
   const style = document.createElement("style");
   style.textContent = `
-    .team-duty-chief-host{margin:0 0 16px}
+    .team-duty-chief-host{margin:14px 0 16px}
     .hc-duty-chief-host{position:relative;margin:0}
     .hc-duty-chief-card{
       box-sizing:border-box;width:100%;min-height:78px;
