@@ -1668,6 +1668,11 @@
   function canManageAgendaOthers() {
     return has("responsable") || has("admin");
   }
+  function planningCalendarPocket() {
+    if(!has("calendar_subscribe"))return "";
+    return `<details class="hc-calendar-pocket"><summary><span>⋯</span> Options du planning</summary><div><button type="button" data-home-calendar-subscribe><span>📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b>›</b></button></div></details>`;
+  }
+
   function agendaAddButton() {
     const a=state.boot?.agent||state.session?.agent||{};
     if(!a?.id||(!has("planning_personal")&&!canManageAgendaOthers()))return"";
@@ -1735,7 +1740,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     const weeklyDetails = futureWidget();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningCalendarOverview()}<div class="hc-planning-week-row">${weekWidget()}</div>${weeklyDetails ? `<div class="hc-week-detail-divider" aria-hidden="true"><span></span><i>◆</i><span></span></div><div class="hc-planning-agenda-row">${weeklyDetails}</div>` : ""}${agendaAddButton()}<div class="hc-fixed-legend-divider" aria-hidden="true"></div>${fixedShiftLegend()}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1800,6 +1805,15 @@
     root
       .querySelector("[data-home-agenda-add]")
       ?.addEventListener("click", () => openAgendaAdd());
+    root
+      .querySelector("[data-home-calendar-subscribe]")
+      ?.addEventListener("click", async () => {
+        try {
+          if(!window.STIPCalendars?.quick)
+            await window.STIPLoad?.script?.("calendar-subscriptions.js");
+          window.STIPCalendars?.quick?.("personal");
+        } catch {}
+      });
     root
       .querySelectorAll("[data-app]")
       .forEach((b) => (b.onclick = () => openApp(b.dataset.app)));
