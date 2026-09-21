@@ -70,8 +70,8 @@
   function events(data){
     const out=[];
     for(const x of data.agenda_items||[]){
-      const medical=/medical|mobi_lit|visite/i.test(String(x.source_type||""));
-      out.push({date:String(x.event_date||"").slice(0,10),icon:medical?"🩺":x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌",kind:medical?"Rendez-vous":"Événement",title:x.title||"Événement",time:x.all_day?"Toute la journée":[String(x.start_time||"").slice(0,5),String(x.end_time||"").slice(0,5)].filter(Boolean).join("–"),detail:x.body||"",location:x.location||""});
+      const sourceType=String(x.source_type||""),medical=/medical|mobi_lit|visite/i.test(sourceType),privateAppointment=sourceType==="private_appointment";
+      out.push({date:String(x.event_date||"").slice(0,10),icon:medical?"🩺":privateAppointment?"📅":x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌",kind:medical||privateAppointment?"Rendez-vous":"Événement",title:x.title||"Événement",time:x.all_day?"Toute la journée":[String(x.start_time||"").slice(0,5),String(x.end_time||"").slice(0,5)].filter(Boolean).join("–"),detail:x.body||"",location:x.location||""});
     }
     for(const x of data.personal_formations||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"🎓",kind:"Formation",title:x.intitule||"Formation",time:x.horaire||"",detail:"",location:x.lieu||""}),40);
     for(const x of data.personal_stagiaires||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"👶",kind:"Stagiaire",title:[x.prenom,x.nom].filter(Boolean).join(" ")||"Stagiaire",time:x.horaires||"",detail:x.observation||"",location:""}));
