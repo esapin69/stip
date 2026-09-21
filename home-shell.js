@@ -1734,7 +1734,7 @@
 
   function teamShortcut() {
     if (!(has("planning_team") || has("activity") || has("assistant_enabled"))) return "";
-    return `<button type="button" class="hc-team-shortcut" data-app="team" aria-label="Ouvrir Esprit d’équipe"><span class="hc-team-shortcut-icon">${ICON.team}</span><span class="hc-team-shortcut-copy"><strong>Esprit d’équipe</strong><small>Chef du jour · équipe · activité</small></span><span class="hc-team-shortcut-arrow" aria-hidden="true">›</span></button>`;
+    return `<button type="button" class="hc-team-shortcut" data-app="team" aria-label="Ouvrir Esprit d’équipe"><span class="hc-team-shortcut-icon">${ICON.team}</span><span class="hc-team-shortcut-copy"><strong>Esprit d’équipe</strong></span><span class="hc-team-shortcut-arrow" aria-hidden="true">›</span></button>`;
   }
 
   function homeModeBody() {
