@@ -2983,3 +2983,12 @@ body.team-page {
 .team-live-zone + .team-error + .team-content{
   margin-top:0;
 }
+
+
+/* today-only-chief-block-20260922 */
+.team-live-zone>.team-today-separator{
+  margin:2px 0 11px!important;
+}
+.team-live-zone .team-duty-chief-host + .team-live-wheelchair{
+  margin-top:9px;
+}
