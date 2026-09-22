@@ -50,7 +50,7 @@
     { key: "neuro", label: "Neuro", aliases: ["neuro", "pierre wertheimer", "wertheimer", "pw"] },
     { key: "cardio", label: "Cardio", aliases: ["cardio", "louis pradel", "pradel", "hlp"] },
     { key: "hfme", label: "HFME", aliases: ["hfme", "femme mere enfant", "femme mère enfant", "mere enfant", "mère enfant"] },
-    { key: "a1", label: "A1", aliases: ["a1", "batiment a1", "bâtiment a1"] },
+    { key: "a4", label: "Pape A4", aliases: ["a4", "pape a4", "batiment pape a4", "bâtiment pape a4"] },
   ];
 
   const norm = (value) =>
