@@ -1802,6 +1802,11 @@
     return `<details class="stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
   }
 
+  function planningCompareShortcut() {
+    if (!(has("planning_personal") && has("planning_team"))) return "";
+    return `<button type="button" class="hc-planning-compare-shortcut" data-app="compare" aria-label="Comparer mon planning avec un agent"><span class="hc-planning-compare-art" aria-hidden="true">⇄</span><span class="hc-planning-compare-copy"><strong>Comparer mon planning avec…</strong><small>Rechercher un agent</small></span><span class="hc-planning-compare-search" aria-hidden="true">⌕</span></button>`;
+  }
+
   function teamShortcut() {
     if (!(has("planning_team") || has("activity") || has("assistant_enabled"))) return "";
     return `<button type="button" class="hc-team-shortcut" data-app="team" aria-label="Ouvrir Esprit d’équipe"><span class="hc-team-shortcut-icon">${ICON.team}</span><span class="hc-team-shortcut-copy"><strong>Esprit d’équipe</strong></span><span class="hc-team-shortcut-arrow" aria-hidden="true">›</span></button>`;
@@ -1815,7 +1820,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>CETTE SEMAINE</span></div><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>CETTE SEMAINE</span></div><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -1988,6 +1993,7 @@
     if (k === "team") return (location.href = "esprit-equipe.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
+    if (k === "compare") return (location.href = "planning-compare-app.html?from=home");
     if (k === "dates") return (location.href = "agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.();
     if (k === "responsable") return (location.href = "responsable.html");
