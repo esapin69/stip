@@ -168,7 +168,7 @@
       '<button type="button" data-selection-close>Annuler</button>' +
       "</section>" +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. 4 fauteuils · P8 couloir fond" aria-label="Signaler des fauteuils"></textarea>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. je cherche un fauteuil au 2e étage" aria-label="Signaler des fauteuils"></textarea>' +
       '<button type="submit" class="tb-send" aria-label="Signaler">↑</button>' +
       "</form>" +
       "</section>"
@@ -408,8 +408,8 @@
     host.innerHTML =
       '<div class="tb-search-shortcuts-head"><strong>Que veux-tu faire ?</strong></div>' +
       '<div class="tb-compose-modes" role="group" aria-label="Type de signalement">' +
-        '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">⌕</span><strong>Je cherche</strong></button>' +
-        '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">♿</span><strong>J’en ai trouvé</strong></button>' +
+        '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Je cherche</strong></button>' +
+        '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>J’en ai trouvé</strong></button>' +
       "</div>" +
       '<small class="tb-compose-hint">' +
         (searchMode
@@ -440,6 +440,24 @@
       mode === "search"
         ? "Ex. je cherche un fauteuil au 2e étage"
         : "Ex. 2 fauteuils · P8 couloir du fond";
+
+    const current = String(textarea.value || "").trim();
+    const buildingKey = buildingForMessage({ body: current });
+    const generatedDraft =
+      /^(?:Je cherche un fauteuil|Fauteuil disponible)\s*·/i.test(current);
+    if (generatedDraft && buildingKey) {
+      const building = BUILDINGS.find((item) => item.key === buildingKey);
+      if (building) {
+        const text =
+          mode === "search"
+            ? "Je cherche un fauteuil · " + building.label
+            : "Fauteuil disponible · " + building.label + " · ";
+        state.draft = text;
+        textarea.value = text;
+        autoGrow(textarea);
+        textarea.setSelectionRange(text.length, text.length);
+      }
+    }
   }
 
   function composeBuilding(key) {
