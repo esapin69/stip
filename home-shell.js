@@ -473,10 +473,32 @@
     return "other";
   }
   function notifications() {
-    const p = new Set(pending().map((a) => String(a.id))),
+    const pendingActions = pending(),
+      byId = new Map(pendingActions.map((a) => [String(a.id), a])),
       native = (state.home.notifications || [])
-        .filter((n) => !n.action_id || p.has(String(n.action_id)))
-        .map((n) => ({ ...n, category: noteCategory(n), source: "stip" })),
+        .filter((n) => !n.action_id || byId.has(String(n.action_id)))
+        .map((n) => {
+          const action = n.action_id ? byId.get(String(n.action_id)) : null,
+            merged = {
+              ...(action || {}),
+              ...n,
+              metadata: {
+                ...(action?.metadata || {}),
+                ...(n.metadata || {}),
+              },
+              created_at:
+                n.created_at ||
+                n.occurred_at ||
+                action?.created_at ||
+                action?.occurred_at ||
+                "",
+              updated_at: n.updated_at || action?.updated_at || "",
+              status: n.status || action?.status || "pending",
+              source: "stip",
+            };
+          merged.category = noteCategory(merged);
+          return merged;
+        }),
       external = [...state.externalActions.values()].flat();
     return [...native, ...external].filter(
       (n) => !state.actionPrefs.dismissed[actionNoteKey(n)],
@@ -1575,6 +1597,10 @@
       n.target_name ||
       n.contact_name ||
       n.person_name ||
+      n.metadata?.recipient_name ||
+      n.metadata?.assignee_name ||
+      n.metadata?.target_name ||
+      n.metadata?.recipient ||
       "";
     if (String(direct).trim()) return String(direct).trim();
     const body = String(n.body || "");
@@ -1602,6 +1628,9 @@
         ...(Array.isArray(n.timeline) ? n.timeline : []),
         ...(Array.isArray(n.history) ? n.history : []),
         ...(Array.isArray(n.events) ? n.events : []),
+        ...(Array.isArray(n.metadata?.timeline) ? n.metadata.timeline : []),
+        ...(Array.isArray(n.metadata?.history) ? n.metadata.history : []),
+        ...(Array.isArray(n.metadata?.events) ? n.metadata.events : []),
       ];
     raw.forEach((x) => {
       if (typeof x === "string") add(x);
@@ -1625,6 +1654,8 @@
       ...(Array.isArray(n.messages) ? n.messages : []),
       ...(Array.isArray(n.communications) ? n.communications : []),
       ...(Array.isArray(n.exchanges) ? n.exchanges : []),
+      ...(Array.isArray(n.metadata?.messages) ? n.metadata.messages : []),
+      ...(Array.isArray(n.metadata?.communications) ? n.metadata.communications : []),
     ];
     if (typeof n.communication === "string" && n.communication.trim())
       raw.push(n.communication);
