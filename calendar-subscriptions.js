@@ -97,6 +97,12 @@
       "Stagiaires",
       "Périodes, horaires et référents",
       "stagiaires",
+    )}${choice(
+      "agent_dates",
+      "📅",
+      "Dates des agents",
+      "Visites, stagiaires et formations dans un calendrier vivant",
+      "agent_dates",
     )}</div><div class="cal-status" aria-live="polite"></div>`;
   }
 
@@ -151,6 +157,7 @@
       team: "Esprit d’équipe",
       formations: "Formations",
       stagiaires: "Stagiaires",
+      agent_dates: "Dates des agents",
     })[kind] || "Calendrier";
   }
 
@@ -273,7 +280,7 @@
     .cal-choice{width:100%;display:grid;grid-template-columns:48px minmax(0,1fr) 24px;align-items:center;gap:10px;text-align:left;border:1px solid #d9e7ea;background:#fff;border-radius:19px;padding:11px;color:#103f50;cursor:pointer}
     .cal-choice:disabled{opacity:.58;cursor:wait}
     .cal-choice>span{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;color:#fff;font-size:1.2rem}
-    .cal-choice.personal>span{background:#1688d3}.cal-choice.team>span{background:#6e55d8}.cal-choice.formations>span{background:#2d9d78}.cal-choice.stagiaires>span{background:#d98a2b}
+    .cal-choice.personal>span{background:#1688d3}.cal-choice.team>span{background:#6e55d8}.cal-choice.formations>span{background:#2d9d78}.cal-choice.stagiaires>span{background:#d98a2b}.cal-choice.agent_dates>span{background:#0b9db7}
     .cal-choice strong,.cal-choice small{display:block}.cal-choice small{margin-top:3px;color:#70858d}.cal-choice>b{font-size:1.25rem;color:#5c7780}
     .cal-status{color:#17708a}.cal-status:empty{display:none}
     .cal-loading{min-height:74px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid #d9e7ea;border-radius:17px;background:#f7fbfc;color:#607983;font-weight:850}
