@@ -13,8 +13,11 @@
     boot = null,
     accessLevel = "visitor";
   const navigationState = window.STIPNav?.read?.() || {};
-  const pageOpen = String(new URLSearchParams(location.search).get("open") || "").toLowerCase();
-  const trackingMode = pageOpen === "tracking" || pageOpen === "suivi";
+  const pageParams = new URLSearchParams(location.search),
+    pageOpen = String(pageParams.get("open") || "").toLowerCase(),
+    pageTab = String(pageParams.get("tab") || "").toLowerCase();
+  const trackingMode =
+    pageTab === "suivi" || pageOpen === "tracking" || pageOpen === "suivi";
 
   function errorText(e) {
     if (!e) return "Erreur inconnue";
@@ -258,6 +261,10 @@
   }
   $("#respPanelBack")?.addEventListener("click", closePanel);
   $("#respRefresh")?.addEventListener("click", load);
+  window.addEventListener("stip:responsable-tab", (event) => {
+    if (event.detail?.tab === "suivi") load();
+  });
+  window.STIPResponsableTracking = { load };
   (async () => {
     try {
       if (!(await initAccess())) return;
@@ -282,8 +289,8 @@
         "",
     }),
   });
-  if (trackingMode)
-    setInterval(() => {
-      if (!document.hidden) load();
-    }, 30000);
+  setInterval(() => {
+    if (!document.hidden && document.body.classList.contains("resp-tab-suivi"))
+      load();
+  }, 30000);
 })();
