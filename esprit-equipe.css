@@ -2861,52 +2861,6 @@ body.team-page {
   color:var(--stip-danger);
 }
 
-.team-live-wheelchair{
-  min-height:54px;
-  display:grid;
-  grid-template-columns:36px minmax(0,1fr) 14px;
-  align-items:center;
-  gap:9px;
-  margin-top:9px;
-  padding:8px 10px;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 18%,var(--stip-line));
-  border-radius:16px;
-  background:color-mix(in srgb,var(--stip-accent-soft) 32%,var(--stip-surface));
-  color:var(--stip-ink);
-  text-decoration:none;
-}
-.team-live-wheelchair:active{transform:scale(.992)}
-.team-live-wheelchair-icon{
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-  border-radius:11px;
-  background:var(--stip-accent);
-  color:var(--stip-on-accent);
-  font-size:1.08rem;
-  font-weight:1000;
-}
-.team-live-wheelchair strong,
-.team-live-wheelchair small{display:block}
-.team-live-wheelchair strong{
-  font-size:.76rem;
-  font-weight:950;
-}
-.team-live-wheelchair small{
-  margin-top:2px;
-  color:var(--stip-muted);
-  font-size:.59rem;
-  font-weight:780;
-  line-height:1.25;
-}
-.team-live-wheelchair>i{
-  color:var(--stip-accent);
-  font-size:1.05rem;
-  font-style:normal;
-  font-weight:1000;
-}
-
 #teamWeekControls{
   margin-top:0!important;
 }
@@ -2943,13 +2897,6 @@ body.team-page {
   .team-live-zone{
     padding:9px 8px 10px;
     border-radius:20px;
-  }
-  .team-live-wheelchair{
-    grid-template-columns:34px minmax(0,1fr) 13px;
-  }
-  .team-live-wheelchair-icon{
-    width:34px;
-    height:34px;
   }
 }
 
@@ -2988,7 +2935,4 @@ body.team-page {
 /* today-only-chief-block-20260922 */
 .team-live-zone>.team-today-separator{
   margin:2px 0 11px!important;
-}
-.team-live-zone .team-duty-chief-host + .team-live-wheelchair{
-  margin-top:9px;
 }
