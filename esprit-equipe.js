@@ -604,31 +604,11 @@
       button.classList.toggle("active", active);
       button.setAttribute("aria-selected", String(active));
     });
-    const today = todayIso();
-    $("#teamDays").innerHTML = daysOfWeek()
-      .map((day) => {
-        const signal = signalForDate(day),
-          symbol = signal?.symbol
-            ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
-            : '<span class="team-day-intel status-unknown" aria-hidden="true"></span>';
-        return `<button type="button" data-team-day="${day}" class="${[
-          day === today ? "today" : "",
-          day === state.dayFocus ? "selected" : "",
-          signal?.level ? `status-${signal.level}` : "",
-        ].filter(Boolean).join(" ")}" aria-pressed="${day === state.dayFocus}" aria-label="${esc([shortDay(day), dateObj(day).getDate(), signal?.label || ""].filter(Boolean).join(" "))}"><small>${shortDay(day)}</small><b>${dateObj(day).getDate()}</b>${symbol}</button>`;
-      })
-      .join("");
   }
 
   function dayContainer(day, summary, body, kind) {
-    const today = day === todayIso(),
-      signal = signalForDate(day),
-      reason = signal?.reasons?.[0] || null,
-      intel =
-        signal && ["warning", "critical"].includes(signal.level)
-          ? `<section class="team-intel-banner ${esc(signal.level)}"><strong>${esc(signal.symbol)} ${esc(reason?.headline || signal.label)}</strong>${reason?.detail ? `<span>${esc(reason.detail)}</span>` : ""}${reason?.proposal ? `<small>${esc(reason.proposal)}</small>` : ""}</section>`
-          : "";
-    return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${intel}${body}</div></article>`;
+    const today = day === todayIso();
+    return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${body}</div></article>`;
   }
 
   function staffingRows(staff) {
@@ -1001,26 +981,6 @@
   $("#teamSubscribe")?.addEventListener("click", () =>
     window.STIPCalendars?.quick?.("team"),
   );
-  $("#teamDays").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-team-day]");
-    if (!button) return;
-    const nextDay = button.dataset.teamDay;
-    if (!nextDay || nextDay === state.dayFocus) return;
-
-    state.dayFocus = nextDay;
-    state.dateJumpMonth = monthKey(nextDay);
-    state.openShift = "";
-
-    renderHeader();
-    renderContent(cacheEntry(state.weekStart));
-
-    window.STIPNav?.remember?.({
-      tab: state.tab,
-      weekStart: state.weekStart,
-      dayFocus: state.dayFocus,
-    });
-  });
-
   $("#teamContent").addEventListener("click", (event) => {
     const shift = event.target.closest("[data-team-shift]");
     if (shift) {
