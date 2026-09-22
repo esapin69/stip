@@ -305,3 +305,21 @@ if(failures.length){
   process.exit(1);
 }
 console.log('OK — invariants de refonte STIP vérifiés.');
+
+
+// Pending-work audit: agent calendar + Responsable shift drill-down
+const agentAgenda=read('agent-agenda-view.js');
+const calendarSubs=read('calendar-subscriptions.js');
+const respStaffing=read('responsable-staffing.js');
+check(
+  agentAgenda.includes('data-aav-subscribe') &&
+  agentAgenda.includes('tools.quickAgent') &&
+  calendarSubs.includes('async function quickAgent'),
+  'La fiche agent a reperdu l’abonnement individuel à son planning.'
+);
+check(
+  respStaffing.includes('data-rs-shift=') &&
+  respStaffing.includes('function openShiftAnalysis') &&
+  respStaffing.includes('rs-shift-overlay'),
+  'Les indicateurs de shift Responsable doivent rester cliquables avec leur analyse terrain.'
+);
