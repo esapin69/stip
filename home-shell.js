@@ -731,31 +731,10 @@
     return agendaRange(monday, 7);
   }
   function moveWeek(step) {
-    step = Number(step) || 0;
+    step = Math.sign(Number(step) || 0);
     if (!step) return;
-    if (step < 0) {
-      if (state.weekOffset === 0 && !state.weekFull) state.weekFull = true;
-      else if (state.weekOffset === 1) {
-        state.weekOffset = 0;
-        state.weekFull = false;
-      } else {
-        state.weekOffset -= 1;
-        state.weekFull = true;
-      }
-    } else {
-      if (state.weekOffset < 0) {
-        state.weekOffset += 1;
-        state.weekFull = true;
-      } else if (state.weekOffset === 0 && state.weekFull)
-        state.weekFull = false;
-      else if (state.weekOffset === 0) {
-        state.weekOffset = 1;
-        state.weekFull = true;
-      } else {
-        state.weekOffset += 1;
-        state.weekFull = true;
-      }
-    }
+    state.weekOffset += step;
+    state.weekFull = state.weekOffset !== 0;
     const navWeek = navigationWeek(),
       todayIso = parisIso();
     state.dayFocus = navWeek.some((x) => x.iso === todayIso)
@@ -920,6 +899,20 @@
       })
       .join("")}</nav>`;
   }
+  function planningWeekSeparator() {
+    const w = navigationWeek(),
+      label =
+        state.weekOffset === 0
+          ? "CETTE SEMAINE"
+          : state.weekOffset === 1
+            ? "SEMAINE PROCHAINE"
+            : state.weekOffset === -1
+              ? "SEMAINE PRÉCÉDENTE"
+              : `SEMAINE ${weekNo(w[0].d)}`,
+      range = weekRangeLabel(w);
+    return `<div class="hc-planning-period-separator hc-planning-week-separator hc-week-separator-nav stip-section-separator" role="group" aria-label="Navigation par semaine"><span class="hc-week-separator-controls"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-separator-copy"><b>${esc(label)}</b><small>${esc(range)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></span></div>`;
+  }
+
   function planningMonthTitle() {
     const w = navigationWeek(),
       mi = weekMonthInfo(w),
@@ -1966,7 +1959,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>CETTE SEMAINE</span></div><section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
