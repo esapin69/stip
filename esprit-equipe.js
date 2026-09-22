@@ -562,8 +562,8 @@
           .filter(Boolean)
           .join(" "),
         marker =
-          signal?.symbol
-            ? `<span class="team-cal-status status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
+          signal?.level && signal.level !== "unknown"
+            ? `<span class="team-cal-status status-${esc(signal.level)}" aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>`
             : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
         aria = [dayTitle(value), signal?.label || ""].filter(Boolean).join(", ");
       cells.push(
@@ -765,9 +765,11 @@
           .toLocaleDateString("fr-FR", { weekday: "short" })
           .replace(".", "")
           .toUpperCase();
-        const marker = signal.symbol
-          ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
-          : '<span class="team-day-intel status-unknown" aria-hidden="true">○</span>';
+        const symbol = statusSymbol(signal.level, signal.symbol);
+        const marker =
+          signal.level && signal.level !== "unknown"
+            ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(symbol)}</span>`
+            : '<span class="team-day-intel status-unknown" aria-hidden="true">○</span>';
         return `<button type="button" class="${cls}" data-team-day="${day}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><small>${esc(weekday)}</small><b>${d.getDate()}</b>${marker}</button>`;
       })
       .join("");
@@ -779,11 +781,7 @@
       state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
     renderWeekStrip();
     renderDateJumpCalendar(state.dateJumpMonth);
-    $$("[data-team-tab]").forEach((button) => {
-      const active = button.dataset.teamTab === state.tab;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-    });
+    renderMonthDigest(state.dateJumpMonth);
   }
 
   function dayContainer(day, summary, body, kind) {
@@ -1156,34 +1154,13 @@
 
   function renderContent(bundle) {
     const host = $("#teamContent");
-    const summaryHost = $("#teamWeekSummaryHost");
     normalizeDayFocus();
     const day = state.dayFocus;
-    if (summaryHost)
-      summaryHost.innerHTML = allowed("planning_team") ? weekSummaryBlock(bundle) : "";
-    const permitted = {
-      team: allowed("planning_team"),
-      activity: allowed("activity"),
-      assistant: allowed("assistant_enabled"),
-    }[state.tab];
-
-    if (!permitted) {
+    if (!allowed("planning_team")) {
       host.innerHTML =
-        '<div class="team-empty">Ce volet n’est pas inclus dans votre accès.</div>';
-    } else if (state.tab === "activity" && !bundle.activity) {
-      host.innerHTML = dayContainer(
-        day,
-        "Lecture…",
-        '<div class="stip-skeleton team-day-placeholder"></div>',
-        "activity",
-      );
+        '<div class="team-empty">La vue équipe n’est pas incluse dans votre accès.</div>';
     } else {
-      const renderer = {
-        team: teamDay,
-        activity: activityDay,
-        assistant: assistantDay,
-      }[state.tab];
-      host.innerHTML = renderer(bundle, day);
+      host.innerHTML = teamDay(bundle, day);
     }
     host.setAttribute("aria-busy", "false");
     state.rendered = true;
@@ -1207,7 +1184,7 @@
     try {
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
-      if (state.tab === "activity") await loadActivity(state.weekStart, force);
+      if (allowed("activity")) await loadActivity(state.weekStart, force);
       if (request !== state.request) return;
       renderContent(bundle);
       loadWeekSignals(state.weekStart, bundle, force)
@@ -1273,19 +1250,16 @@
     showWeek({ preserve: true });
   }
 
-  $$("[data-team-tab]").forEach((button) =>
-    button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
-  );
   $("#teamDays")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-day]");
     if (day) chooseDate(day.dataset.teamDay);
   });
   $("#teamPrevWeek")?.addEventListener("click", () => moveWeek(-1));
   $("#teamNextWeek")?.addEventListener("click", () => moveWeek(1));
-  $("#teamWeekSummaryHost")?.addEventListener("click", (event) => {
-    const day = event.target.closest("[data-team-week-summary-day]");
+  $("#teamMonthDigestHost")?.addEventListener("click", (event) => {
+    const day = event.target.closest("[data-team-month-day]");
     if (!day) return;
-    chooseDate(day.dataset.teamWeekSummaryDay);
+    chooseDate(day.dataset.teamMonthDay);
     document.querySelector(".team-day-section-label")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
