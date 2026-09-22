@@ -86,33 +86,63 @@ export async function shiftDefinitions() {
     S: { code: "S", label: "Soir", start_time: "13:30", end_time: "21:00" },
     N: { code: "N", label: "Nuit", start_time: "21:00", end_time: "06:50" },
   };
-  const { data, error } = await db.from("stip_shift_definitions").select("code,label,start_time,end_time").eq("active", true);
-  if (error || !(data || []).length) return fallback;
-  const out = { ...fallback };
-  for (const row of data || []) {
+  const [{ data, error }, { data: special, error: specialError }] = await Promise.all([
+    db.from("stip_shift_definitions").select("code,label,start_time,end_time").eq("active", true),
+    db.from("stip_special_shift_definitions").select("code,base_shift,schedule_mode,window_start,window_end,duration_minutes,source_label").eq("active", true),
+  ]);
+  const out: Record<string, ShiftDef> = { ...fallback };
+  if (!error) for (const row of data || []) {
     const code = String(row.code || "").toUpperCase();
     out[code] = { code, label: row.label || code, start_time: String(row.start_time || "").slice(0, 5), end_time: String(row.end_time || "").slice(0, 5) };
+  }
+  if (!specialError) for (const row of special || []) {
+    const code = String(row.code || "").toUpperCase(),
+      mode = String(row.schedule_mode || "") === "flexible" ? "flexible" : "fixed",
+      start = String(row.window_start || "").slice(0, 5),
+      end = String(row.window_end || "").slice(0, 5);
+    if (!code || !start || !end) continue;
+    out[code] = {
+      code,
+      label: code,
+      start_time: start,
+      end_time: end,
+      base_shift: String(row.base_shift || ""),
+      schedule_mode: mode,
+      duration_minutes: Number(row.duration_minutes || 0),
+      window_start: start,
+      window_end: end,
+      special: true,
+      exchangeable: false,
+    };
   }
   return out;
 }
 export function canon(v: unknown) {
   const s = String(v || "").trim().toUpperCase().replace(/\*/g, "");
-  if (/^J4\d*$/.test(s)) return "J4";
-  if (/^M\d*$/.test(s)) return "M";
-  if (s === "J0464" || s === "J" || /^J\d+$/.test(s)) return "J";
-  if (/^S\d*$/.test(s)) return "S";
-  if (/^N\d*$/.test(s)) return "N";
+  if (["M", "J", "J4", "S", "N"].includes(s)) return s;
+  if (/^(?:J4|M|J|S|N)\d+$/.test(s)) return s;
   if (["R", "RH", "REPOS"].includes(s)) return "RH";
   return s || "—";
 }
+export function shiftDetail(code: string, defs: Record<string, ShiftDef>) {
+  const d = defs[code];
+  if (!d) return code;
+  if (d.special && d.schedule_mode === "flexible") {
+    const minutes = Number(d.duration_minutes || 0),
+      hours = minutes ? `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}` : "durée spécifique";
+    return `${hours} · horaire libre · plage ${d.window_start || d.start_time}–${d.window_end || d.end_time}`;
+  }
+  if (d.special) return `${d.start_time} → ${d.end_time} · horaire spécifique fixe`;
+  return `${d.start_time} → ${d.end_time}`;
+}
 export function shiftText(code: string, defs: Record<string, ShiftDef>) {
   const d = defs[code];
-  return d ? `${d.label} · ${d.start_time} → ${d.end_time}` : code;
+  return d ? `${code} · ${d.special ? "Horaire spécifique" : d.label} · ${shiftDetail(code, defs)}` : code;
 }
 function minutes(v: string) { const [h, m] = v.split(":").map(Number); return h * 60 + m; }
 export function overlaps(a: string, b: string, defs: Record<string, ShiftDef>) {
   const A = defs[a], B = defs[b];
-  if (!A || !B) return false;
+  if (!A || !B || A.schedule_mode === "flexible" || B.schedule_mode === "flexible") return false;
   let as = minutes(A.start_time), ae = minutes(A.end_time), bs = minutes(B.start_time), be = minutes(B.end_time);
   if (ae <= as) ae += 1440;
   if (be <= bs) be += 1440;
