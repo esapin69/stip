@@ -2797,21 +2797,20 @@ body.team-page {
 }
 
 
-/* temporal-scope-layout-20260922
-   Une lecture simple : maintenant -> aujourd'hui -> cette semaine -> ce mois. */
-.team-scope-zone{
-  width:100%;
-  min-width:0;
-}
+/* merged-single-surface-20260922
+   Hiérarchie conservée : Maintenant / Aujourd'hui / Cette semaine / Ce mois.
+   Activity et Assistant alimentent désormais directement la vue équipe. */
 .team-live-zone{
-  margin:0 0 22px;
+  margin:0 0 24px;
   padding:10px 10px 12px;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 16%,var(--stip-line));
-  border-radius:24px;
-  background:
-    radial-gradient(circle at 92% 5%,color-mix(in srgb,#70409f 9%,transparent),transparent 38%),
-    linear-gradient(180deg,color-mix(in srgb,var(--stip-accent-soft) 36%,var(--stip-surface)),var(--stip-surface));
-  box-shadow:0 12px 28px rgba(29,72,86,.08),inset 0 1px 0 rgba(255,255,255,.96);
+  border:1px solid color-mix(in srgb,var(--stip-accent) 14%,var(--stip-line));
+  border-radius:22px;
+  background:linear-gradient(
+    180deg,
+    color-mix(in srgb,var(--stip-accent-soft) 34%,var(--stip-surface)),
+    var(--stip-surface)
+  );
+  box-shadow:var(--stip-shadow-soft);
 }
 .team-live-zone>.stip-section-separator{
   margin:2px 0 11px;
@@ -2823,463 +2822,133 @@ body.team-page {
   margin:0!important;
 }
 .team-duty-chief-host:empty{display:none}
-
-.hc-duty-chief-now-list,
-.hc-duty-chief-today-list{
+.team-chief-flat-list{
   display:grid;
   gap:8px;
 }
-.hc-duty-chief-flat{
+.team-chief-flat-card{
   position:relative;
-  width:100%;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  overflow:hidden;
-  border:1px solid rgba(112,64,159,.17);
-  border-radius:18px;
-  background:var(--stip-surface);
-  box-shadow:0 7px 18px rgba(50,57,75,.07),inset 0 1px 0 rgba(255,255,255,.95);
 }
-.hc-duty-chief-flat.is-now{
-  border:2px solid rgba(112,64,159,.31);
-  background:linear-gradient(135deg,#fff 0%,#f6edff 66%,#fcf9ff 100%);
-  box-shadow:inset 5px 0 0 #70409f,0 12px 25px rgba(70,45,102,.13);
-}
-.hc-duty-chief-flat.status-done{
+.team-chief-flat-card.status-done{
   opacity:.72;
-  background:color-mix(in srgb,var(--stip-muted) 4%,var(--stip-surface));
 }
-.hc-duty-chief-flat-main{
-  flex:1 1 auto;
-  min-width:0;
-  min-height:72px;
-  display:grid;
-  grid-template-columns:48px minmax(0,1fr) 15px;
-  align-items:center;
-  gap:10px;
-  padding:9px 4px 9px 11px;
-  border:0;
-  background:transparent;
-  color:var(--stip-ink);
-  text-align:left;
-  font:inherit;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+.team-chief-flat-card.status-done .hc-duty-chief-card{
+  box-shadow:inset 5px 0 0 color-mix(in srgb,#70409f 48%,#c7cdd0),0 6px 14px rgba(58,37,86,.07),inset 0 1px 0 #fff!important;
 }
-.hc-duty-chief-flat.is-today .hc-duty-chief-flat-main{
-  min-height:64px;
-}
-.hc-duty-chief-flat-main:active{
-  background:color-mix(in srgb,var(--stip-accent) 4%,transparent);
-}
-.hc-duty-chief-flat-main:disabled{cursor:default}
-.hc-duty-chief-flat .hc-duty-chief-icon{
-  width:46px!important;
-  height:46px!important;
-  display:grid;
-  place-items:center;
-  border:1px solid rgba(112,64,159,.14);
-  border-radius:14px;
-  background:#eee1fb;
-  font-size:1.35rem!important;
-}
-.hc-duty-chief-flat .hc-duty-chief-shift{
-  width:46px;
-  min-width:46px;
-  height:38px;
-  padding:0 5px;
-}
-.hc-duty-chief-flat .hc-duty-chief-shift>i{
-  width:16px;
-  height:16px;
-}
-.hc-duty-chief-flat .hc-duty-chief-copy{
-  min-width:0;
-  display:block;
-}
-.hc-duty-chief-flat .hc-duty-chief-copy small,
-.hc-duty-chief-flat .hc-duty-chief-copy strong,
-.hc-duty-chief-flat .hc-duty-chief-copy em{
-  display:block;
-}
-.hc-duty-chief-flat .hc-duty-chief-moment{
-  margin:0 0 2px;
-  color:#70409f;
-  font-size:.55rem;
-  font-weight:1000;
-  letter-spacing:.10em;
-  line-height:1;
-}
-.hc-duty-chief-flat.status-done .hc-duty-chief-moment{color:var(--stip-muted)}
-.hc-duty-chief-flat.status-next .hc-duty-chief-moment{color:var(--stip-accent)}
-.hc-duty-chief-flat .hc-duty-chief-copy strong{
-  overflow:hidden;
-  color:var(--stip-ink);
-  font-size:.9rem;
-  font-weight:950;
-  line-height:1.08;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-.hc-duty-chief-flat .hc-duty-chief-copy em{
-  margin-top:4px;
-  color:var(--stip-muted);
-  font-size:.64rem;
-  font-style:normal;
-  font-weight:820;
-  line-height:1.2;
-}
-.hc-duty-chief-flat .hc-duty-chief-row-chevron{
-  color:#8d75aa;
-  font-size:1.1rem;
-  font-style:normal;
-  font-weight:950;
-}
-.hc-duty-chief-flat .hc-duty-chief-call{
-  flex:0 0 42px;
-  width:42px;
-  height:42px;
-  margin-right:9px;
-  border-radius:13px;
-}
-.hc-duty-chief-now-state,
-.hc-duty-chief-empty-flat,
-.hc-duty-chief-loading{
-  padding:13px 14px;
+.team-chief-state{
+  padding:11px 13px;
   border:1px solid color-mix(in srgb,#70409f 13%,var(--stip-line));
-  border-radius:17px;
-  background:rgba(255,255,255,.76);
-}
-.hc-duty-chief-now-state strong,
-.hc-duty-chief-now-state span{
-  display:block;
-}
-.hc-duty-chief-now-state strong{
-  color:var(--stip-ink);
-  font-size:.82rem;
-  font-weight:950;
-}
-.hc-duty-chief-now-state span{
-  margin-top:4px;
-  color:var(--stip-muted);
-  font-size:.67rem;
-  font-weight:780;
-  line-height:1.35;
-}
-.hc-duty-chief-empty-flat,
-.hc-duty-chief-loading{
+  border-radius:15px;
+  background:rgba(255,255,255,.72);
   color:var(--stip-muted);
   font-size:.68rem;
   font-weight:820;
-  text-align:center;
+  line-height:1.35;
+}
+.team-chief-state strong,
+.team-chief-state span{
+  display:block;
+}
+.team-chief-state strong{
+  color:var(--stip-ink);
+  font-size:.76rem;
+  font-weight:950;
+}
+.team-chief-state span{margin-top:3px}
+.team-chief-state.is-quiet{text-align:center}
+.team-chief-state.is-error{
+  border-color:color-mix(in srgb,var(--stip-danger) 22%,var(--stip-line));
+  color:var(--stip-danger);
 }
 
 .team-live-wheelchair{
-  min-height:58px;
+  min-height:54px;
   display:grid;
-  grid-template-columns:38px minmax(0,1fr) 16px;
+  grid-template-columns:36px minmax(0,1fr) 14px;
   align-items:center;
   gap:9px;
   margin-top:9px;
-  padding:8px 11px;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 20%,var(--stip-line));
-  border-radius:17px;
-  background:color-mix(in srgb,var(--stip-accent-soft) 40%,var(--stip-surface));
+  padding:8px 10px;
+  border:1px solid color-mix(in srgb,var(--stip-accent) 18%,var(--stip-line));
+  border-radius:16px;
+  background:color-mix(in srgb,var(--stip-accent-soft) 32%,var(--stip-surface));
   color:var(--stip-ink);
   text-decoration:none;
-  box-shadow:0 6px 15px rgba(20,73,88,.06);
 }
 .team-live-wheelchair:active{transform:scale(.992)}
 .team-live-wheelchair-icon{
-  width:38px;
-  height:38px;
+  width:36px;
+  height:36px;
   display:grid;
   place-items:center;
-  border-radius:12px;
+  border-radius:11px;
   background:var(--stip-accent);
   color:var(--stip-on-accent);
-  font-size:1.15rem;
+  font-size:1.08rem;
   font-weight:1000;
 }
 .team-live-wheelchair strong,
 .team-live-wheelchair small{display:block}
 .team-live-wheelchair strong{
-  font-size:.78rem;
+  font-size:.76rem;
   font-weight:950;
 }
 .team-live-wheelchair small{
-  margin-top:3px;
+  margin-top:2px;
   color:var(--stip-muted);
-  font-size:.61rem;
+  font-size:.59rem;
   font-weight:780;
   line-height:1.25;
 }
 .team-live-wheelchair>i{
   color:var(--stip-accent);
-  font-size:1.1rem;
+  font-size:1.05rem;
   font-style:normal;
   font-weight:1000;
 }
 
-.team-week-zone{
-  margin:0 0 24px;
-  padding:10px 10px 12px;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 12%,var(--stip-line));
-  border-radius:24px;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--stip-accent-soft) 18%,var(--stip-surface)),var(--stip-surface) 24%,var(--stip-bg));
+#teamWeekControls{
+  margin-top:0!important;
 }
-.team-week-section-label{
-  margin:2px 0 13px!important;
+#teamWeekControls .team-week-section-label{
+  margin:0 0 13px!important;
 }
-.team-week-summary-host{
-  width:100%!important;
-  max-width:none!important;
-  margin:11px auto 0!important;
+#teamWeekControls .team-error:empty{
+  display:none;
 }
-.team-week-summary-loading{
-  padding:12px 13px;
-  border:1px dashed var(--stip-line);
-  border-radius:16px;
-  background:var(--stip-surface-soft);
-  color:var(--stip-muted);
-  font-size:.68rem;
-  font-weight:850;
-  text-align:center;
+#teamWeekControls .team-error:not(:empty){
+  margin-top:10px;
 }
-.team-week-summary{
-  overflow:hidden;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 18%,var(--stip-line));
-  border-radius:20px;
-  background:var(--stip-surface);
-  box-shadow:var(--stip-shadow-soft);
-}
-.team-week-summary>summary{
-  position:relative;
-  min-height:68px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto 16px;
-  align-items:center;
-  gap:8px;
-  padding:11px 12px;
-  list-style:none;
-  cursor:pointer;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--stip-accent-soft) 48%,var(--stip-surface)),var(--stip-surface));
-}
-.team-week-summary>summary::-webkit-details-marker{display:none}
-.team-week-summary>summary div{min-width:0}
-.team-week-summary>summary small,
-.team-week-summary>summary strong{display:block}
-.team-week-summary>summary small{
-  color:var(--stip-accent);
-  font-size:.56rem;
-  font-weight:1000;
-  letter-spacing:.09em;
-}
-.team-week-summary>summary strong{
-  margin-top:3px;
-  color:var(--stip-ink);
-  font-size:.82rem;
-  font-weight:950;
-}
-.team-week-summary>summary>span{
-  color:var(--stip-muted);
-  font-size:.55rem;
-  font-weight:900;
-  line-height:1.2;
-  text-align:right;
-}
-.team-week-summary>summary>i{
-  color:var(--stip-accent);
-  font-size:1rem;
-  font-style:normal;
-  font-weight:1000;
-  transition:transform var(--stip-motion);
-}
-.team-week-summary:not([open])>summary>i{transform:rotate(-90deg)}
-
-.team-range-metrics{
-  display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:5px;
-  padding:9px 9px 3px;
-}
-.team-range-metrics>span{
-  min-width:0;
-  min-height:55px;
-  display:grid;
-  place-items:center;
-  align-content:center;
-  gap:3px;
-  padding:6px 3px;
-  border:1px solid var(--stip-line-soft);
-  border-radius:13px;
-  background:var(--stip-surface-soft);
-  text-align:center;
-}
-.team-range-metrics b{
-  color:var(--stip-ink);
-  font-size:.92rem;
-  font-weight:1000;
-}
-.team-range-metrics small{
-  color:var(--stip-muted);
-  font-size:.5rem;
-  font-weight:850;
-  line-height:1.12;
-}
-.team-week-checklist{
-  padding:4px 10px 3px;
-}
-.team-week-check{
-  min-height:58px!important;
-}
-.team-range-actions{
-  margin:7px 9px 9px;
-  padding:10px;
-  border:1px solid color-mix(in srgb,var(--stip-accent) 16%,var(--stip-line));
-  border-radius:16px;
-  background:color-mix(in srgb,var(--stip-accent-soft) 21%,var(--stip-surface));
-}
-.team-range-actions>header{
-  display:grid;
-  grid-template-columns:28px minmax(0,1fr);
-  align-items:center;
-  gap:7px;
-  padding-bottom:7px;
-  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 8%,var(--stip-line-soft));
-}
-.team-range-actions>header>span{
-  display:grid;
-  place-items:center;
-  font-size:1rem;
-}
-.team-range-actions>header small,
-.team-range-actions>header strong{display:block}
-.team-range-actions>header small{
-  color:var(--stip-accent);
-  font-size:.52rem;
-  font-weight:1000;
-  letter-spacing:.08em;
-}
-.team-range-actions>header strong{
-  margin-top:2px;
-  color:var(--stip-ink);
-  font-size:.72rem;
-  font-weight:950;
-}
-.team-range-actions>div{display:grid}
-.team-range-actions article{
-  display:grid;
-  grid-template-columns:27px minmax(0,1fr);
-  gap:7px;
-  padding:8px 0;
-  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 7%,var(--stip-line-soft));
-}
-.team-range-actions article:last-child{border-bottom:0}
-.team-range-actions article>span{
-  display:grid;
-  place-items:start center;
-  padding-top:1px;
-  font-size:.95rem;
-}
-.team-range-actions article strong{
-  display:block;
-  color:var(--stip-ink);
-  font-size:.68rem;
-  font-weight:950;
-}
-.team-range-actions article p{
-  margin:3px 0 0;
-  color:var(--stip-ink-2);
-  font-size:.62rem;
-  font-weight:740;
-  line-height:1.38;
-}
-.team-range-actions article.status-critical>span{color:#ef3d39}
-.team-range-actions article.status-warning>span{color:#d7a20b}
-.team-range-actions article.status-opportunity>span{color:#159b62}
-.team-range-actions.is-clear{
-  color:var(--stip-ink-2);
-  text-align:left;
-}
-.team-range-actions.is-clear strong{
-  display:block;
-  font-size:.7rem;
-}
-.team-range-actions.is-clear p{
-  margin:4px 0 0;
-  color:var(--stip-muted);
-  font-size:.61rem;
-  font-weight:740;
-  line-height:1.35;
-}
-
-.team-day-section-label{
-  margin:18px 0 12px!important;
-}
-.team-week-zone .team-content{
+#teamWeekControls .team-content{
+  margin-top:14px;
   min-height:0;
 }
+.team-day-summary{
+  margin-top:4px!important;
+}
+.team-day-summary>header{
+  min-height:44px;
+}
+.team-day-summary .team-day-checklist:empty{
+  display:none;
+}
 .team-month-zone-secondary{
-  margin-top:0!important;
-  padding:10px 10px 12px;
-  border:1px solid color-mix(in srgb,var(--stip-ink) 9%,var(--stip-line));
-  border-radius:24px;
-  background:linear-gradient(180deg,var(--stip-surface),color-mix(in srgb,var(--stip-muted) 3%,var(--stip-bg)));
+  margin-top:24px!important;
 }
 .team-month-zone-secondary .team-calendar-section-label{
-  margin:2px 0 10px!important;
-}
-.team-month-digest-host{
-  margin-top:12px;
-}
-.team-month-digest-card>header small{
-  display:block;
-  margin-bottom:3px;
-  color:var(--stip-accent);
-  font-size:.52rem;
-  font-weight:1000;
-  letter-spacing:.075em;
-  text-transform:uppercase;
-}
-.team-month-actions{
-  margin-top:8px;
+  margin-bottom:10px!important;
 }
 
 @media(max-width:430px){
-  .team-live-zone,
-  .team-week-zone,
-  .team-month-zone-secondary{
+  .team-live-zone{
     padding:9px 8px 10px;
-    border-radius:21px;
+    border-radius:20px;
   }
-  .hc-duty-chief-flat-main{
-    grid-template-columns:44px minmax(0,1fr) 13px;
-    gap:8px;
-    padding-left:9px;
+  .team-live-wheelchair{
+    grid-template-columns:34px minmax(0,1fr) 13px;
   }
-  .hc-duty-chief-flat .hc-duty-chief-icon{
-    width:42px!important;
-    height:42px!important;
-  }
-  .hc-duty-chief-flat .hc-duty-chief-call{
-    flex-basis:39px;
-    width:39px;
-    height:39px;
-    margin-right:7px;
-  }
-  .hc-duty-chief-flat .hc-duty-chief-copy strong{font-size:.84rem}
-  .hc-duty-chief-flat .hc-duty-chief-copy em{font-size:.59rem}
-  .team-range-metrics{gap:4px;padding-inline:7px}
-  .team-range-metrics>span{min-height:52px;padding-inline:2px}
-  .team-range-metrics b{font-size:.84rem}
-  .team-range-metrics small{font-size:.46rem}
-  .team-week-summary>summary{
-    grid-template-columns:minmax(0,1fr) 16px;
-  }
-  .team-week-summary>summary>span{
-    grid-column:1/3;
-    text-align:left;
+  .team-live-wheelchair-icon{
+    width:34px;
+    height:34px;
   }
 }
