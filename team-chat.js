@@ -21,6 +21,8 @@
     composeMode: "spot",
     selectedBuilding: "",
     selectedQuantity: 0,
+    selectedLevel: "",
+    selectedLocation: "",
   };
 
   const homeState = {
@@ -55,6 +57,51 @@
     { key: "hfme", label: "HFME", aliases: ["hfme", "femme mere enfant", "femme mère enfant", "mere enfant", "mère enfant"] },
     { key: "a4", label: "POP (A4)", aliases: ["pop", "a4", "pop a4", "batiment pop", "bâtiment pop", "batiment a4", "bâtiment a4"] },
   ];
+
+  // Repères compacts issus du référentiel "Visiter les lieux" / 00 MASTER (09/2026).
+  // L'interface les révèle progressivement : bâtiment -> niveau -> repère.
+  const WHEELCHAIR_LOCATIONS = {
+    neuro: [
+      { level: "RDJ", places: ["SRPR / salon d’accueil", "Psychiatrie / addictologie", "Neuro-rééducation", "HDJ artériographie / neurochirurgie"] },
+      { level: "RDC", places: ["Entrée A", "Entrée B", "Hall / consultations", "Réanimation neurologique", "Radiologie / écho-Doppler", "Bureau des admissions"] },
+      { level: "1er", places: ["Ascenseur 28 / imagerie", "Scanner", "IRM VENUS", "IRM JUPITER / SATURNE", "Bloc / salle de réveil", "U100 / U101 / U102", "Plateforme AIT"] },
+      { level: "2e", places: ["U200 / U201 / U202", "Neuro-ophtalmo / ORL", "Service social"] },
+      { level: "3e", places: ["U300", "U301", "U302"] },
+      { level: "4e", places: ["U400", "U401", "U402"] },
+      { level: "5e", places: ["U500", "U501", "U502 / HDJ", "EEG / ENMG"] },
+      { level: "6e", places: ["Amphithéâtre Michel Jouvet", "Salle Lapras"] },
+    ],
+    cardio: [
+      { level: "RDC", places: ["Entrée principale / hall", "Ascenseurs visiteurs", "Urgences cardio / CCU", "Plateau explorations", "Service social", "Bureau des admissions"] },
+      { level: "TM", places: ["Consultations spécialisées", "Radiologie", "Scanner", "Coronarographie / PTI", "Fibroscopie", "Bloc / salle de réveil", "Réanimation adulte", "Unité d’abord vasculaire"] },
+      { level: "1er", places: ["U10", "U11"] },
+      { level: "2e", places: ["U20 / USIC", "U21 / soins continus"] },
+      { level: "3e", places: ["U30 / rythmologie", "U31 / SICAT-transplantation"] },
+      { level: "4e", places: ["U40 / Cardiologie A", "U41 / Cardiologie B"] },
+      { level: "5e", places: ["U50 / chirurgie cardio-vasculaire", "Salon d’accueil J0"] },
+      { level: "6e", places: ["U60 / chirurgie thoraco-pulmonaire", "U61 / HDJ cardiologie"] },
+      { level: "7e", places: ["U70 / Pneumologie B", "U71 / Pneumologie C"] },
+      { level: "8e", places: ["U81 / HDJ pneumologie"] },
+      { level: "9e", places: ["U90 / Endocrino B-C", "U91 / Endocrino A-HDJ"] },
+      { level: "10e", places: ["Salles / événements"] },
+      { level: "11e", places: ["Hélistation"] },
+    ],
+    hfme: [
+      { level: "RDJ", places: ["Urgences pédiatriques", "UHCD / USC", "Hospitalisation urgences pédiatriques", "IRM APOLLO / NEMO", "Scanner / radiologie / échographie", "Consultations gynécologie / CECOS", "Sénologie / service social"] },
+      { level: "RDC", places: ["Accueil principal", "Consultations pédiatriques", "UAPED", "Bloc gynécologie / maternité", "Salles d’accouchement", "Urgences gynéco-obstétricales"] },
+      { level: "1er", places: ["Réanimation pédiatrique", "Bloc pédiatrique", "Salon d’accueil de chirurgie", "ACHA / chirurgie pédiatrique"] },
+      { level: "2e", places: ["Espace brancardiers / chef d’équipe", "Biberonnerie / diététique"] },
+      { level: "3e", places: ["Hépato-gastro pédiatrique", "Pneumo / allergologie pédiatrique", "Pédiatrie générale", "Néonatologie / réanimation néonatale"] },
+      { level: "4e", places: ["Pédiatrie générale", "Endocrino / diabéto / métabolique", "UERTD", "Maternité / suites de naissance", "Unité Kangourou", "USAP"] },
+      { level: "5e", places: ["Dialyse pédiatrique", "Néphro / rhumato / dermato", "Neurologie pédiatrique", "EEG / EMG / sommeil", "Gynécologie / sénologie", "Gynécologie A-HDJ / B-ACHA", "Orthogénie / IVG"] },
+      { level: "6e", places: ["Psychopathologie enfant / adolescent", "Hématologie / oncologie pédiatrique", "Consultation douleur", "Grossesse pathologique"] },
+    ],
+    a4: [
+      { level: "RDC", places: ["POP / HDJ / chimiothérapie"] },
+      { level: "1er", places: ["SEP / neuro-inflammation — conventionnel / semaine"] },
+      { level: "2e", places: ["SEP / neuro-inflammation — HDJ"] },
+    ],
+  };
 
   const norm = (value) =>
     String(value ?? "")
@@ -161,9 +208,10 @@
     return (
       '<section class="tb-page">' +
       '<section class="tb-inline-head">' +
-      '<div><small>FAUTEUILS</small><h2>Recherche & signalements</h2><p>Fil terrain du jour</p></div>' +
+      '<div><small>FAUTEUILS</small><h2>Infos fauteuils</h2><p>Ce qui est disponible maintenant</p></div>' +
       '<div class="tb-inline-actions"><span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button></div>' +
       "</section>" +
+      '<section class="tb-building-pulse" data-building-pulse aria-label="Situation par hôpital"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -173,10 +221,13 @@
       "</section>" +
       '<section class="tb-input-dock" data-input-dock>' +
       '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
-      '<small class="tb-free-write-label">Précision ou message libre — facultatif</small>' +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Écrire librement si besoin…" aria-label="Précision ou message libre"></textarea>' +
-      '<button type="submit" class="tb-send" aria-label="Envoyer">↑</button>' +
+      '<div class="tb-composer-main">' +
+      '<div class="tb-draft-preview" data-draft-preview hidden></div>' +
+      '<button type="button" class="tb-free-toggle" data-free-toggle>✎ Écrire librement</button>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Écrire ou préciser…" aria-label="Précision ou message libre" hidden></textarea>' +
+      "</div>" +
+      '<button type="submit" class="tb-send" data-send disabled><span>Envoyer</span><b>↑</b></button>' +
       "</form>" +
       "</section>" +
       "</section>"
@@ -192,6 +243,8 @@
         state.composeMode = "spot";
         state.selectedBuilding = "";
         state.selectedQuantity = 0;
+        state.selectedLevel = "";
+        state.selectedLocation = "";
       }
       state.root = root;
       state.data = null;
@@ -297,6 +350,16 @@
       .querySelector("[data-delete-selected]")
       ?.addEventListener("click", deleteSelected);
     root.querySelector("[data-form]")?.addEventListener("submit", send);
+    root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
+      const textarea = root.querySelector(".tb-composer textarea");
+      if (!textarea) return;
+      textarea.hidden = false;
+      textarea.dataset.open = "1";
+      const toggle = root.querySelector("[data-free-toggle]");
+      if (toggle) toggle.textContent = "Précision / message libre";
+      textarea.focus();
+      requestAnimationFrame(syncViewport);
+    });
 
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => {
@@ -311,6 +374,7 @@
         renderSearchShortcuts();
       }
       autoGrow(textarea);
+      renderComposerState();
     });
     textarea?.addEventListener("focus", () => {
       root.classList.add("is-composing");
@@ -390,7 +454,9 @@
         activeLabel.hidden = active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
+      renderBuildingPulse();
       renderSearchShortcuts();
+      renderComposerState();
       const manage = state.root.querySelector("[data-select]");
       if (manage) manage.hidden = !data.admin || !messages.length;
 
@@ -433,6 +499,61 @@
     return String(value || "").replace(/\s*·\s*$/, "").trim();
   }
 
+  function buildingPulse(data = state.data) {
+    const rows = {
+      neuro: { requests: new Set(), available: 0, last: "" },
+      cardio: { requests: new Set(), available: 0, last: "" },
+      hfme: { requests: new Set(), available: 0, last: "" },
+    };
+
+    for (const message of data?.messages || []) {
+      const wheelchair = message?.payload?.wheelchair;
+      if (!wheelchair || wheelchair.status !== "active") continue;
+      const key = buildingForMessage(message);
+      const row = rows[key];
+      if (!row) continue;
+
+      if (wheelchair.type === "search") {
+        row.requests.add(String(message.sender_agent_id || message.id || ""));
+      } else {
+        row.available += wheelchairStock(message).remaining;
+      }
+
+      if (!row.last || new Date(message.created_at) > new Date(row.last)) {
+        row.last = message.created_at;
+      }
+    }
+
+    return rows;
+  }
+
+  function renderBuildingPulse() {
+    const host = state.root?.querySelector("[data-building-pulse]");
+    if (!host) return;
+    const rows = buildingPulse();
+    const cards = [
+      ["neuro", "Neuro"],
+      ["cardio", "Cardio"],
+      ["hfme", "HFME"],
+    ];
+
+    host.innerHTML = cards.map(([key, label]) => {
+      const row = rows[key];
+      const requests = row?.requests?.size || 0;
+      const available = row?.available || 0;
+      return (
+        '<article class="tb-pulse-card' + (available ? " has-stock" : "") + (requests ? " has-search" : "") + '">' +
+          '<strong>' + esc(label) + "</strong>" +
+          '<div class="tb-pulse-counts">' +
+            '<span class="tb-pulse-stock"><b>🦽</b><em>' + available + "</em><small>dispo</small></span>" +
+            '<span class="tb-pulse-search"><b>🔎</b><em>' + requests + "</em><small>demande" + (requests > 1 ? "s" : "") + "</small></span>" +
+          "</div>" +
+          '<time>' + (row?.last ? "maj " + esc(fmtTime(row.last)) : "aucune info") + "</time>" +
+        "</article>"
+      );
+    }).join("");
+  }
+
   function inferWheelchairQuantity(text = "") {
     const body = String(text || "").trim();
     const explicit = body.match(/(?:^|[·,:;\s])(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
@@ -456,23 +577,43 @@
     return { total, remaining };
   }
 
+  function renderComposerState() {
+    const root = state.root;
+    if (!root) return;
+    const textarea = root.querySelector(".tb-composer textarea");
+    const preview = root.querySelector("[data-draft-preview]");
+    const sendButton = root.querySelector("[data-send]");
+    const toggle = root.querySelector("[data-free-toggle]");
+    if (!textarea || !preview || !sendButton || !toggle) return;
+
+    const body = cleanWheelchairText(textarea.value);
+    preview.hidden = !body;
+    preview.textContent = body;
+    sendButton.disabled = !body;
+    sendButton.classList.toggle("is-ready", !!body);
+    toggle.textContent = body ? "＋ Ajouter une précision" : "✎ Écrire librement";
+
+    if (!textarea.dataset.open) textarea.hidden = true;
+    requestAnimationFrame(syncViewport);
+  }
+
   function renderSearchShortcuts() {
     const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
 
     const searchMode = state.composeMode === "search";
     const selected = BUILDINGS.find((building) => building.key === state.selectedBuilding);
-    const modeLabel = searchMode ? "Chercher un fauteuil" : "Signaler des fauteuils";
+    const modeLabel = searchMode ? "Je cherche 1" : "Donner l’info";
     const modeIcon = searchMode ? "🔎" : "🦽";
 
     host.innerHTML =
       '<div class="tb-shortcuts-full">' +
         '<div class="tb-search-shortcuts-head"><strong>Action</strong></div>' +
         '<div class="tb-compose-modes" role="group" aria-label="Que veux-tu faire ?">' +
-          '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Signaler des fauteuils</strong></button>' +
-          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Chercher un fauteuil</strong></button>' +
+          '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Donner l’info</strong><small>prioritaire</small></button>' +
+          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Je cherche 1</strong></button>' +
         "</div>" +
-        '<small class="tb-compose-hint">' + (searchMode ? "Choisis le bâtiment : le message est prêt." : "Choisis le bâtiment, puis le nombre de fauteuils.") + "</small>" +
+        '<small class="tb-compose-hint">' + (searchMode ? "Choisis où tu cherches. C’est tout." : "Choisis le bâtiment. Ensuite : nombre puis endroit précis.") + "</small>" +
         '<div class="tb-search-shortcuts-grid">' +
         BUILDINGS.map(
           (building) =>
@@ -514,81 +655,183 @@
     state.draftKind = mode;
     state.selectedBuilding = "";
     state.selectedQuantity = 0;
+    state.selectedLevel = "";
+    state.selectedLocation = "";
 
     if (textarea) {
       textarea.placeholder = "Écrire librement si besoin…";
       if (generatedDraft) {
         textarea.value = "";
         state.draft = "";
+        delete textarea.dataset.open;
+        textarea.hidden = true;
         autoGrow(textarea);
       }
     }
     renderSearchShortcuts();
+    renderComposerState();
   }
 
-  function chooseSpotQuantity(buildingLabel) {
+  function chooseSpotDetails(building) {
     return new Promise((resolve) => {
+      const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
+      let quantity = 0;
+      let level = "";
+
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap";
-      wrap.innerHTML =
-        '<section class="tb-confirm tb-quantity-picker">' +
-        '<div class="tb-confirm-icon">🦽</div>' +
-        "<h3>Combien de fauteuils ?</h3>" +
-        "<p>" + esc(buildingLabel) + "</p>" +
-        '<div class="tb-quantity-choices">' +
-          [1, 2, 3].map((quantity) =>
-            '<button type="button" data-spot-qty="' + quantity + '"><strong>' + quantity + "</strong></button>"
-          ).join("") +
-          '<button type="button" class="more" data-spot-more><strong>Plus</strong><small>4 à 20</small></button>' +
-        "</div>" +
-        '<div class="tb-quantity-more" data-spot-more-panel hidden>' +
-          '<label for="tbSpotQuantity">Nombre de fauteuils</label>' +
-          '<div><input id="tbSpotQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
-          '<button type="button" data-spot-more-ok>Valider</button></div>' +
-          '<small data-spot-qty-error aria-live="polite"></small>' +
-        "</div>" +
-        '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
-        "</section>";
-      document.body.appendChild(wrap);
 
-      const panel = wrap.querySelector("[data-spot-more-panel]");
-      const input = wrap.querySelector("#tbSpotQuantity");
-      const error = wrap.querySelector("[data-spot-qty-error]");
-
-      const done = (value) => {
+      const close = (value = null) => {
         wrap.remove();
         resolve(value);
       };
 
-      wrap.querySelectorAll("[data-spot-qty]").forEach((button) => {
-        button.addEventListener("click", () => done(Number(button.dataset.spotQty) || 0));
-      });
+      const shell = (title, subtitle, body, back = false) => {
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard">' +
+          '<div class="tb-wizard-head">' +
+            (back ? '<button type="button" class="tb-wizard-back" data-wizard-back aria-label="Retour">‹</button>' : "") +
+            '<div class="tb-confirm-icon">🦽</div>' +
+          "</div>" +
+          "<h3>" + esc(title) + "</h3>" +
+          "<p>" + esc(subtitle) + "</p>" +
+          body +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+        document.body.appendChild(wrap.firstElementChild);
+      };
 
-      wrap.querySelector("[data-spot-more]")?.addEventListener("click", () => {
-        if (panel) panel.hidden = false;
-        setTimeout(() => input?.focus(), 30);
-      });
+      const renderQuantity = () => {
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard">' +
+          '<div class="tb-confirm-icon">🦽</div>' +
+          "<h3>Combien de fauteuils ?</h3>" +
+          "<p>" + esc(building.label) + "</p>" +
+          '<div class="tb-quantity-choices">' +
+            [1, 2, 3].map((n) =>
+              '<button type="button" data-spot-qty="' + n + '"><strong>' + n + "</strong></button>"
+            ).join("") +
+            '<button type="button" class="more" data-spot-more><strong>Plus</strong><small>4 à 20</small></button>' +
+          "</div>" +
+          '<div class="tb-quantity-more" data-spot-more-panel hidden>' +
+            '<label for="tbSpotQuantity">Nombre de fauteuils</label>' +
+            '<div><input id="tbSpotQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
+            '<button type="button" data-spot-more-ok>Valider</button></div>' +
+            '<small data-spot-qty-error aria-live="polite"></small>' +
+          "</div>" +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+        bindQuantity();
+      };
 
-      wrap.querySelector("[data-spot-more-ok]")?.addEventListener("click", () => {
-        const quantity = Math.round(Number(input?.value) || 0);
-        if (quantity < 4 || quantity > 20) {
-          if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
-          input?.focus();
-          return;
-        }
-        done(quantity);
-      });
+      const renderLevels = () => {
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard">' +
+          '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-qty aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
+          "<h3>À quel niveau ?</h3>" +
+          "<p>" + quantity + " fauteuil" + (quantity > 1 ? "s" : "") + " · " + esc(building.label) + "</p>" +
+          '<div class="tb-level-choices">' +
+            levels.map((item) =>
+              '<button type="button" data-level="' + esc(item.level) + '"><strong>' + esc(item.level) + "</strong></button>"
+            ).join("") +
+          "</div>" +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+        wrap.querySelector("[data-back-qty]")?.addEventListener("click", renderQuantity);
+        wrap.querySelectorAll("[data-level]").forEach((button) => {
+          button.addEventListener("click", () => {
+            level = String(button.dataset.level || "");
+            renderPlaces();
+          });
+        });
+        wrap.querySelector("[data-no]")?.addEventListener("click", () => close());
+      };
 
-      input?.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter") return;
-        event.preventDefault();
-        wrap.querySelector("[data-spot-more-ok]")?.click();
-      });
+      const renderPlaces = () => {
+        const group = levels.find((item) => item.level === level);
+        const places = group?.places || [];
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard">' +
+          '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
+          "<h3>Où exactement ?</h3>" +
+          "<p>" + esc(building.label) + " · " + esc(level) + "</p>" +
+          '<div class="tb-place-choices">' +
+            places.map((place) =>
+              '<button type="button" data-place="' + esc(place) + '"><strong>' + esc(place) + "</strong></button>"
+            ).join("") +
+            '<button type="button" class="other" data-place-other><strong>Autre endroit</strong><small>préciser si besoin</small></button>' +
+          "</div>" +
+          '<div class="tb-place-other" data-place-other-panel hidden>' +
+            '<label for="tbSpotPlace">Repère</label>' +
+            '<div><input id="tbSpotPlace" type="text" maxlength="80" placeholder="Ex. près des ascenseurs">' +
+            '<button type="button" data-place-other-ok>Valider</button></div>' +
+          "</div>" +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+        wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
+        wrap.querySelectorAll("[data-place]").forEach((button) => {
+          button.addEventListener("click", () => close({
+            quantity,
+            level,
+            location: String(button.dataset.place || ""),
+          }));
+        });
+        const otherPanel = wrap.querySelector("[data-place-other-panel]");
+        const otherInput = wrap.querySelector("#tbSpotPlace");
+        wrap.querySelector("[data-place-other]")?.addEventListener("click", () => {
+          if (otherPanel) otherPanel.hidden = false;
+          setTimeout(() => otherInput?.focus(), 30);
+        });
+        wrap.querySelector("[data-place-other-ok]")?.addEventListener("click", () => {
+          const value = String(otherInput?.value || "").trim();
+          if (!value) return otherInput?.focus();
+          close({ quantity, level, location: value });
+        });
+        otherInput?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          wrap.querySelector("[data-place-other-ok]")?.click();
+        });
+        wrap.querySelector("[data-no]")?.addEventListener("click", () => close());
+      };
 
-      wrap.querySelector("[data-no]")?.addEventListener("click", () => done(0));
+      const bindQuantity = () => {
+        wrap.querySelectorAll("[data-spot-qty]").forEach((button) => {
+          button.addEventListener("click", () => {
+            quantity = Number(button.dataset.spotQty) || 0;
+            if (quantity) renderLevels();
+          });
+        });
+        const panel = wrap.querySelector("[data-spot-more-panel]");
+        const input = wrap.querySelector("#tbSpotQuantity");
+        const error = wrap.querySelector("[data-spot-qty-error]");
+        wrap.querySelector("[data-spot-more]")?.addEventListener("click", () => {
+          if (panel) panel.hidden = false;
+          setTimeout(() => input?.focus(), 30);
+        });
+        wrap.querySelector("[data-spot-more-ok]")?.addEventListener("click", () => {
+          const value = Math.round(Number(input?.value) || 0);
+          if (value < 4 || value > 20) {
+            if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
+            input?.focus();
+            return;
+          }
+          quantity = value;
+          renderLevels();
+        });
+        input?.addEventListener("keydown", (event) => {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+          wrap.querySelector("[data-spot-more-ok]")?.click();
+        });
+        wrap.querySelector("[data-no]")?.addEventListener("click", () => close());
+      };
+
       wrap.addEventListener("click", (event) => {
-        if (event.target === wrap) done(0);
+        if (event.target === wrap) close();
       });
+      document.body.appendChild(wrap);
+      renderQuantity();
     });
   }
 
@@ -598,27 +841,34 @@
     if (!building || !textarea) return;
 
     const searchMode = state.composeMode === "search";
-    let quantity = 0;
+    let details = null;
 
     if (!searchMode) {
-      quantity = await chooseSpotQuantity(building.label);
-      if (!quantity || !state.root?.isConnected) return;
+      details = await chooseSpotDetails(building);
+      if (!details || !state.root?.isConnected) return;
     }
 
-    const text = searchMode
-      ? "Je cherche un fauteuil · " + building.label
-      : quantity + " fauteuil" + (quantity > 1 ? "s" : "") + " disponible" + (quantity > 1 ? "s" : "") + " · " + building.label;
-
     state.selectedBuilding = key;
-    state.selectedQuantity = quantity;
+    state.selectedQuantity = searchMode ? 0 : details.quantity;
+    state.selectedLevel = searchMode ? "" : details.level;
+    state.selectedLocation = searchMode ? "" : details.location;
     state.draftKind = state.composeMode;
+
+    const text = searchMode
+      ? "Je cherche 1 fauteuil · " + building.label
+      : details.quantity + " fauteuil" + (details.quantity > 1 ? "s" : "") +
+        " disponible" + (details.quantity > 1 ? "s" : "") +
+        " · " + building.label +
+        " · " + details.level +
+        " · " + details.location;
+
     state.draft = text;
     textarea.value = text;
+    delete textarea.dataset.open;
+    textarea.hidden = true;
     autoGrow(textarea);
     renderSearchShortcuts();
-
-    // Le message est prêt sans ouvrir le clavier. L’agent peut envoyer directement
-    // avec la flèche, ou toucher le champ s’il veut ajouter une précision.
+    renderComposerState();
   }
 
   function renderMessages() {
@@ -673,9 +923,13 @@
       html.push(avatar(message.sender));
       html.push('<div class="tb-entry-body">');
       html.push(
-        '<header><strong>' +
+        '<header><div><strong>' +
           esc(agentName(message.sender)) +
-          "</strong><time>" +
+          "</strong>" +
+          (wheelchair
+            ? '<span class="tb-entry-role">' + (isSearchType ? "demande" : "signale") + "</span>"
+            : "") +
+          '</div><time><span aria-hidden="true">◷</span>' +
           esc(fmtTime(message.created_at)) +
           "</time></header>",
       );
@@ -686,8 +940,8 @@
             (searchSignal ? " is-search" : "") +
             '">' +
             (searchSignal
-              ? "Recherche"
-              : (stock.remaining > 1 ? stock.remaining + " disponibles" : "Disponible")) +
+              ? "Demande"
+              : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
             "</span>",
         );
       }
@@ -863,22 +1117,32 @@
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
     try {
+      const structured = !!state.selectedBuilding;
       const type = state.draftKind === "search" ? "search" : "spot";
       await api("team_send", {
         body,
-        wheelchair: {
-          type,
-          building: state.selectedBuilding || "",
-          quantity: type === "spot" ? (state.selectedQuantity || inferWheelchairQuantity(body)) : 1,
-        },
+        ...(structured ? {
+          wheelchair: {
+            type,
+            building: state.selectedBuilding,
+            quantity: type === "spot" ? (state.selectedQuantity || inferWheelchairQuantity(body)) : 1,
+            level: state.selectedLevel || "",
+            location: state.selectedLocation || "",
+          },
+        } : {}),
       });
       textarea.value = "";
       state.draft = "";
       state.draftKind = state.composeMode;
       state.selectedBuilding = "";
       state.selectedQuantity = 0;
+      state.selectedLevel = "";
+      state.selectedLocation = "";
+      delete textarea.dataset.open;
+      textarea.hidden = true;
       autoGrow(textarea);
       renderSearchShortcuts();
+      renderComposerState();
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {
       alert(error.message || "Publication impossible.");
