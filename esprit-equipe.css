@@ -1616,3 +1616,61 @@ body.team-page {
   }
   .team-shift-mini-status{width:26px;min-width:26px}
 }
+
+/* shift-status-spacing-20260922
+   Nombre -> statut centré dans son espace -> flèche clairement séparée. */
+.team-shift-head{
+  grid-template-columns:40px minmax(0,1fr) auto 48px 38px!important;
+  column-gap:7px!important;
+}
+.team-shift-mini-status{
+  width:48px!important;
+  min-width:48px!important;
+  height:38px!important;
+  justify-self:center!important;
+  align-self:center!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:1.18rem!important;
+  line-height:1!important;
+}
+.team-shift-head>i{
+  width:34px!important;
+  height:34px!important;
+  display:grid!important;
+  place-items:center!important;
+  justify-self:end!important;
+  border:1px solid color-mix(in srgb,var(--shift) 28%,var(--stip-line))!important;
+  border-radius:50%!important;
+  background:color-mix(in srgb,var(--shift) 10%,var(--stip-surface))!important;
+  color:var(--shift-ink)!important;
+  font-size:1.55rem!important;
+  font-weight:950!important;
+  line-height:1!important;
+  box-shadow:0 3px 8px color-mix(in srgb,var(--shift) 12%,transparent)!important;
+}
+.team-shift.open .team-shift-head>i{
+  transform:rotate(180deg)!important;
+  background:color-mix(in srgb,var(--shift) 18%,var(--stip-surface))!important;
+}
+.team-shift.shift-s .team-shift-head>i{
+  color:var(--stip-shift-s-text)!important;
+}
+@media(max-width:430px){
+  .team-shift-head{
+    grid-template-columns:40px minmax(0,1fr) auto 42px 34px!important;
+    column-gap:5px!important;
+  }
+  .team-shift-mini-status{
+    width:42px!important;
+    min-width:42px!important;
+    height:36px!important;
+  }
+  .team-shift-head>i{
+    width:32px!important;
+    height:32px!important;
+    font-size:1.45rem!important;
+  }
+}
