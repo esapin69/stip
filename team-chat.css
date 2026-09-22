@@ -3638,3 +3638,314 @@
   .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-avatar{grid-column:2!important}
   .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-entry-body{grid-column:3!important}
 }
+
+
+/* Chat STIP — canonical mobile UX 20260923 */
+.tb-inline-tools{
+  width:min(100%,690px);
+  min-height:28px;
+  margin:4px auto 0;
+  padding:0 12px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+}
+.tb-inline-tools:has([data-active-count][hidden]):has([data-readonly][hidden]):has([data-select][hidden]){
+  min-height:0;
+  margin:0;
+  padding:0;
+}
+.tb-inline-head{display:none!important}
+
+/* Two equal, compact mode tabs: obvious without looking like giant cards. */
+.tb-mode-tabs{
+  width:min(100%,690px);
+  margin:0 auto 8px;
+  padding:3px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:3px;
+  border:1px solid #d5e2e4;
+  border-radius:15px;
+  background:#edf3f4;
+}
+.tb-mode-tab{
+  min-height:42px;
+  padding:0 12px;
+  border:0;
+  border-radius:11px;
+  background:transparent;
+  color:#60777d;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font:inherit;
+  box-shadow:none;
+}
+.tb-mode-tab span{font-size:.88rem;line-height:1}
+.tb-mode-tab strong{
+  font-size:.76rem;
+  line-height:1;
+  font-weight:950;
+  white-space:nowrap;
+}
+.tb-mode-tab.is-active{
+  background:#fff;
+  color:#1e5662;
+  box-shadow:0 2px 8px rgba(28,72,82,.10),inset 0 0 0 1px rgba(54,123,136,.08);
+}
+.tb-action-current,.tb-mode-switch,.tb-mode-pills,.tb-compose-hint{display:none!important}
+
+/* Location chooser: terse copy, same five-zone logic. */
+.tb-place-deck-title{
+  margin:0 auto 5px!important;
+  display:block!important;
+}
+.tb-place-deck-title strong{
+  font-size:.72rem!important;
+  letter-spacing:.01em;
+}
+.tb-place-deck-title small{display:none!important}
+.tb-place-known{
+  width:80px!important;
+  height:80px!important;
+  border-width:3px!important;
+}
+.tb-place-known>strong{
+  font-size:.58rem!important;
+  line-height:1.06!important;
+}
+.tb-place-building{
+  min-height:50px!important;
+  box-shadow:0 3px 10px rgba(25,69,79,.055)!important;
+}
+.tb-place-building:active,
+.tb-place-building.is-active{
+  transform:scale(.985);
+}
+.tb-place-building.is-active{
+  border-color:#3c9eae!important;
+  background:#eaf8f8!important;
+}
+
+/* Building discovery should feel like choosing a destination, not reading a dashboard. */
+.tb-building-profile-system{
+  width:min(100%,690px)!important;
+  min-height:0!important;
+  margin:1px auto 10px!important;
+  padding:0!important;
+  display:block!important;
+  position:relative!important;
+  z-index:40!important;
+}
+.tb-building-profile-head{
+  padding:0 12px 5px;
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+}
+.tb-building-profile-head strong{
+  color:#274f58;
+  font-size:.72rem;
+  font-weight:950;
+}
+.tb-building-profile-head small{
+  color:#87999c;
+  font-size:.53rem;
+  font-weight:800;
+}
+.tb-building-profile-deck{
+  display:grid;
+  grid-auto-flow:column;
+  grid-auto-columns:minmax(138px,44%);
+  gap:9px;
+  padding:4px 12px 12px;
+  overflow-x:auto;
+  overflow-y:visible;
+  scroll-snap-type:x mandatory;
+  overscroll-behavior-inline:contain;
+  scrollbar-width:none;
+}
+.tb-building-profile-deck::-webkit-scrollbar{display:none}
+.tb-building-profile{
+  position:relative;
+  min-width:0;
+  min-height:94px;
+  padding:12px 11px;
+  scroll-snap-align:start;
+  overflow:hidden;
+  border:1px solid #d4e2e4;
+  border-radius:20px;
+  background:
+    radial-gradient(circle at 88% 12%,rgba(41,151,168,.13),transparent 34%),
+    linear-gradient(155deg,#fff 0%,#f5fafb 100%);
+  color:#28545d;
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr);
+  align-items:end;
+  gap:9px;
+  text-align:left;
+  font:inherit;
+  box-shadow:0 8px 18px rgba(24,65,75,.08);
+}
+.tb-building-profile.is-staggered{transform:translateY(8px)}
+.tb-building-profile-mark{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:16px;
+  background:linear-gradient(145deg,#dff2f4,#edf7f8);
+  color:#15798b;
+  font-size:1rem;
+  font-weight:1000;
+  box-shadow:inset 0 0 0 1px rgba(28,123,140,.08);
+}
+.tb-building-profile-copy{min-width:0}
+.tb-building-profile-copy>strong{
+  display:block;
+  overflow:hidden;
+  color:#214e58;
+  font-size:.82rem;
+  line-height:1;
+  font-weight:1000;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.tb-building-profile-copy>small{
+  margin-top:7px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.tb-building-profile-open{
+  color:#71898e;
+  font-size:.56rem;
+  font-weight:900;
+}
+.tb-building-profile-open b{font-size:.85rem}
+.tb-building-profile-signals span{
+  padding:4px 6px;
+  border-radius:999px;
+  font-size:.50rem;
+  line-height:1;
+  font-weight:900;
+}
+.tb-building-profile-signals .is-stock{background:#e7f6ef;color:#176a53}
+.tb-building-profile-signals .is-search{background:#eaf3fa;color:#2c6488}
+.tb-building-profile.has-live{
+  border-color:#b9d8dc;
+  background:
+    radial-gradient(circle at 88% 12%,rgba(35,151,168,.20),transparent 38%),
+    linear-gradient(155deg,#fff 0%,#eff9fa 100%);
+}
+.tb-building-profile.is-open{
+  border-color:#3598aa;
+  box-shadow:0 0 0 2px rgba(44,148,166,.13),0 10px 22px rgba(24,65,75,.12);
+}
+.tb-building-global-empty{
+  margin:-2px 12px 0;
+  color:#87989b;
+  font-size:.55rem;
+  font-weight:800;
+}
+.tb-building-edge-tabs,
+.tb-building-overview-trigger-wrap{display:none!important}
+.tb-building-drawer-empty{
+  padding:20px 10px;
+  color:#7a8f93;
+  font-size:.68rem;
+  line-height:1.35;
+  font-weight:800;
+  text-align:center;
+}
+
+/* Keyboard-safe location finder: modal follows the visual viewport, results scroll inside it. */
+.tb-location-search-modal{
+  inset:auto 0 auto 0!important;
+  top:var(--tb-modal-top,0px)!important;
+  height:var(--tb-modal-height,100dvh)!important;
+  min-height:0!important;
+  padding:10px 14px max(10px,env(safe-area-inset-bottom))!important;
+  place-items:start center!important;
+  overflow:hidden!important;
+}
+.tb-location-search-modal .tb-location-finder{
+  width:min(100%,610px)!important;
+  max-width:610px!important;
+  max-height:calc(var(--tb-modal-height,100dvh) - 20px)!important;
+  padding:14px 14px 12px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+  border-radius:22px!important;
+}
+.tb-location-search-modal .tb-location-finder .tb-wizard-head{
+  flex:0 0 auto;
+}
+.tb-location-search-modal .tb-location-finder h3{
+  margin-top:4px!important;
+}
+.tb-location-search-modal .tb-location-finder>p{
+  margin-bottom:0!important;
+}
+.tb-location-search-modal .tb-location-finder-input{
+  flex:0 0 auto;
+  margin-top:10px!important;
+}
+.tb-location-search-modal .tb-location-results{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  padding-bottom:2px;
+  overflow-y:auto!important;
+}
+.tb-location-search-modal.is-keyboard{
+  background:rgba(16,38,45,.30)!important;
+  backdrop-filter:blur(2px)!important;
+}
+
+/* Nested steps stay short: direct service/repère search lives at the first screen. */
+.tb-wizard-finish{
+  min-height:52px!important;
+}
+.tb-place-choices .other strong{
+  font-size:.72rem!important;
+}
+
+@media(max-width:430px){
+  .tb-search-shortcuts{padding:7px 9px 5px!important}
+  .tb-mode-tabs{margin-bottom:6px}
+  .tb-mode-tab{min-height:40px;padding-inline:8px}
+  .tb-place-deck{
+    grid-template-columns:minmax(0,1fr) 78px minmax(0,1fr)!important;
+    grid-template-rows:49px 49px!important;
+    min-height:105px!important;
+    gap:7px!important;
+  }
+  .tb-place-known{width:74px!important;height:74px!important}
+  .tb-building-profile-deck{
+    grid-auto-columns:minmax(140px,46%);
+    gap:8px;
+    padding-inline:10px;
+  }
+  .tb-building-profile{
+    min-height:90px;
+    padding:10px;
+    grid-template-columns:42px minmax(0,1fr);
+  }
+  .tb-building-profile-mark{width:42px;height:42px;border-radius:14px}
+  .tb-location-search-modal{padding:8px 10px!important}
+  .tb-location-search-modal .tb-location-finder{
+    max-height:calc(var(--tb-modal-height,100dvh) - 16px)!important;
+    padding:12px 11px 10px!important;
+  }
+}
+@media(max-width:360px){
+  .tb-mode-tab strong{font-size:.69rem}
+  .tb-building-profile-deck{grid-auto-columns:52%}
+}
