@@ -21,12 +21,12 @@ function parseSpecialShifts(rows:any[][],sn:string,fileName:string){
    const row=rows[r]||[];
    for(let col=0;col<Math.max(0,row.length-1);col++){
      const label=norm(row[col]),code=cleanCode(row[col+1]),m=label.match(re);
-     if(!m||!/^(?:M|J|S|N)\d{4}$/i.test(code))continue;
+     if(!m||!/^(?:J4|M|J|S|N)\d+$/i.test(code))continue;
      const start=`${String(+m[1]).padStart(2,'0')}:${m[2]}`,
        end=`${String(+m[3]).padStart(2,'0')}:${m[4]}`,
        duration=(+m[5])*60+(+m[6]),
        mode=/libre/i.test(m[7])?'flexible':'fixed',
-       base=code.startsWith('M')?'M':code.startsWith('J')?'J':code.startsWith('S')?'S':'N';
+       base=code.startsWith('J4')?'J4':code.startsWith('M')?'M':code.startsWith('J')?'J':code.startsWith('S')?'S':'N';
      out.push({code,base_shift:base,schedule_mode:mode,window_start:start,window_end:end,duration_minutes:duration,source_label:label,source_file:fileName,source_sheet:sn,active:true,source_row:r+1});
    }
  }
