@@ -446,7 +446,7 @@ async function teamSend(ctx:any,body:any){
   await purgeCurrentTableauRows(String(conv.id));
   await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
-  const text=String(body.body||"").trim().slice(0,2000),
+  const text=String(body.body||"").trim().replace(/\s*·\s*$/,"").trim().slice(0,2000),
     legacyPhotoPath=String(body.photo_path||"").trim(),
     inlinePhoto=body.photo&&typeof body.photo==="object"?body.photo:null,
     replyTo=String(body.reply_to_id||"").trim(),
