@@ -654,3 +654,104 @@ body:not(.resp-tracking-view) #respTrackingTool {
 .rr-option-status:empty {
   display: none;
 }
+
+
+/* 2026-09-22 — markers compactés : un symbole par type, compteur si plusieurs. */
+.rr-week-marks,
+.rr-month-grid > button > span {
+  overflow: visible;
+}
+
+.rr-month-grid > button {
+  grid-template-rows: 28px auto;
+  align-self: stretch;
+}
+
+.rr-month-grid > button > span {
+  min-height: 28px;
+  padding: 2px 0 5px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 3px;
+}
+
+.rr-marker {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  font-style: normal;
+  line-height: 1;
+}
+
+.rr-marker > span {
+  display: block;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.rr-marker-count {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -12px;
+  min-width: 18px !important;
+  height: 16px !important;
+  padding: 0 4px !important;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  display: grid !important;
+  place-items: center;
+  background: #0d4257 !important;
+  color: #fff !important;
+  font-size: 0.48rem !important;
+  font-style: normal;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 2px 5px rgba(13, 66, 87, 0.2);
+}
+
+.rr-week-marks .rr-marker {
+  width: 27px;
+  height: 27px;
+}
+
+.rr-week-marks .rr-marker > span {
+  font-size: 1.2rem;
+}
+
+.rr-week-marks .rr-marker-count {
+  top: -5px;
+  right: -12px;
+}
+
+@media (max-width: 430px) {
+  .rr-marker {
+    width: 22px;
+    height: 22px;
+  }
+
+  .rr-marker > span {
+    font-size: 1rem;
+  }
+
+  .rr-week-marks .rr-marker {
+    width: 24px;
+    height: 24px;
+  }
+
+  .rr-week-marks .rr-marker > span {
+    font-size: 1.05rem;
+  }
+
+  .rr-marker-count {
+    right: -11px;
+    min-width: 17px !important;
+    height: 15px !important;
+    font-size: 0.45rem !important;
+  }
+}
