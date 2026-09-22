@@ -859,28 +859,252 @@
     document.getElementById("teamShiftAnalysisOverlay")?.remove();
   }
 
+  function shiftStaffingRow(day, base) {
+    return staffingRows(state.staffingByDate.get(day)).find(
+      (item) =>
+        baseShift(item?.shift_code || item?.shift || item?.code) === base,
+    );
+  }
+
+  function shiftPlanningRows(day, base) {
+    const bundle = cacheEntry(monday(day));
+    return (bundle?.team?.planning || []).filter(
+      (item) => item.date === day && baseShift(item.code) === base,
+    );
+  }
+
+  function dayContextRows(day, base) {
+    const bundle = cacheEntry(monday(day)),
+      activity = bundle?.activity?.get(day) || {},
+      rows = [];
+
+    for (const item of activity.alerts || []) {
+      rows.push({
+        icon: Number(item?.severity || 0) >= 4 ? "🛑" : "⚠️",
+        title: item?.title || "Alerte",
+        detail: item?.body || item?.note || "",
+        type: "Alerte",
+      });
+    }
+    for (const item of activity.events?.formations || []) {
+      rows.push({
+        icon: "🎓",
+        title: item?.title || "Formation",
+        detail: [item?.horaire, item?.lieu].filter(Boolean).join(" · "),
+        type: "Formation",
+      });
+    }
+    for (const item of activity.events?.stagiaires || []) {
+      rows.push({
+        icon: "👶",
+        title: item?.name || "Stagiaire",
+        detail: [
+          item?.horaires,
+          item?.referent ? `Référent : ${item.referent}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        type: "Stagiaire",
+      });
+    }
+
+    for (const item of assistantItemsForDate(bundle, day)) {
+      const contextShift = baseShift(
+        item?.context?.shift_code ||
+          item?.context?.shift ||
+          item?.context?.code ||
+          "",
+      );
+      if (contextShift && contextShift !== base) continue;
+      if (
+        ["staffing", "compound"].includes(String(item?.source_family || "")) &&
+        !["formation", "trainee"].includes(String(item?.source_family || ""))
+      )
+        continue;
+      const terrain = field()?.terrainItem?.(item),
+        level =
+          terrain?.level ||
+          (Number(item?.severity || 0) >= 4
+            ? "critical"
+            : Number(item?.severity || 0) >= 2
+              ? "warning"
+              : item?.kind === "opportunity"
+                ? "opportunity"
+                : "info");
+      rows.push({
+        icon:
+          item?.source_family === "formation"
+            ? "🎓"
+            : item?.source_family === "trainee"
+              ? "👶"
+              : statusSymbol(level, ""),
+        title: terrain?.headline || item?.title || "Information",
+        detail:
+          terrain?.detail ||
+          item?.body ||
+          terrain?.proposal ||
+          item?.recommendation_text ||
+          "",
+        type:
+          item?.source_family === "formation"
+            ? "Formation"
+            : item?.source_family === "trainee"
+              ? "Stagiaire"
+              : "Analyse",
+      });
+    }
+
+    const seen = new Set();
+    return rows.filter((row) => {
+      const key = [row.type, row.title, row.detail].join("|").toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function openShiftAnalysis(day, code) {
     const base = baseShift(code);
-    const signal = shiftSignalForDate(day, base);
-    if (!signal || !["critical", "warning", "opportunity"].includes(signal.level))
-      return;
-    const meta = SHIFT[base] || { label: base, time: "" };
+    if (!base) return;
+    const signal = shiftSignalForDate(day, base) || {
+        level: "unknown",
+        label: "Pas encore analysé",
+        symbol: "○",
+      },
+      meta = SHIFT[base] || { label: base, time: "" },
+      planRows = shiftPlanningRows(day, base),
+      staffRow = shiftStaffingRow(day, base),
+      plannedValue = Number(staffRow?.planned_count),
+      targetValue = Number(staffRow?.target_count),
+      planned = Number.isFinite(plannedValue) ? plannedValue : planRows.length,
+      target = Number.isFinite(targetValue) ? targetValue : null,
+      gap =
+        staffRow?.gap != null && Number.isFinite(Number(staffRow.gap))
+          ? Number(staffRow.gap)
+          : target != null
+            ? planned - target
+            : null,
+      specialAgents = planRows.filter((item) => {
+        const q = Number(item?.agents?.quotite);
+        return adaptedShift(item?.code) || (Number.isInteger(q) && q < 100);
+      }),
+      contextRows = dayContextRows(day, base),
+      visibleContext = contextRows.slice(0, 10),
+      hiddenContext = Math.max(0, contextRows.length - visibleContext.length),
+      analysisText =
+        signal.detail ||
+        (signal.level === "ok"
+          ? "Aucun écart prioritaire détecté sur ce shift avec les données actuelles."
+          : signal.level === "unknown"
+            ? "Pas assez de données pour analyser ce shift correctement."
+            : signal.label || ""),
+      symbol = statusSymbol(signal.level, signal.symbol);
+
+    const stats =
+      '<div class="team-shift-analysis-stats">' +
+      '<span><small>PRÉVU</small><b>' +
+      esc(planned) +
+      "</b></span>" +
+      '<span><small>CIBLE</small><b>' +
+      esc(target == null ? "—" : target) +
+      "</b></span>" +
+      '<span class="' +
+      (gap == null ? "" : gap > 0 ? "positive" : gap < 0 ? "negative" : "neutral") +
+      '"><small>ÉCART</small><b>' +
+      esc(gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`) +
+      "</b></span>" +
+      "</div>";
+
+    const special =
+      specialAgents.length
+        ? '<section class="team-shift-analysis-block"><strong>Agents à repérer</strong><div class="team-shift-analysis-tags">' +
+          specialAgents
+            .map((item) => {
+              const agent = item?.agents || {},
+                q = Number(agent.quotite),
+                bits = [
+                  String(item?.code || "").toUpperCase(),
+                  adaptedShift(item?.code) ? "horaire spécifique" : "",
+                  Number.isInteger(q) && q < 100 ? `${q}%` : "",
+                ].filter(Boolean);
+              return '<span><b>' +
+                esc(displayName(agent)) +
+                "</b><small>" +
+                esc(bits.join(" · ")) +
+                "</small></span>";
+            })
+            .join("") +
+          "</div></section>"
+        : "";
+
+    const context =
+      visibleContext.length
+        ? '<section class="team-shift-analysis-block"><strong>Contexte de la journée</strong><div class="team-shift-context-list">' +
+          visibleContext
+            .map(
+              (row) =>
+                '<div><span aria-hidden="true">' +
+                esc(row.icon || "•") +
+                "</span><p><b>" +
+                esc(row.title) +
+                "</b>" +
+                (row.detail ? "<small>" + esc(row.detail) + "</small>" : "") +
+                "</p></div>",
+            )
+            .join("") +
+          (hiddenContext
+            ? '<p class="team-shift-context-more">+' +
+              hiddenContext +
+              " autre" +
+              (hiddenContext > 1 ? "s" : "") +
+              " point" +
+              (hiddenContext > 1 ? "s" : "") +
+              "</p>"
+            : "") +
+          "</div></section>"
+        : "";
+
     closeShiftAnalysis();
     const overlay = document.createElement("div");
     overlay.id = "teamShiftAnalysisOverlay";
     overlay.className = "team-shift-analysis-overlay";
     overlay.innerHTML =
       '<button class="team-shift-analysis-backdrop" type="button" aria-label="Fermer"></button>' +
-      '<section class="team-shift-analysis-sheet status-' + esc(signal.level) + '" role="dialog" aria-modal="true" aria-label="Détail ' + esc(meta.label || base) + '">' +
-        '<div class="team-shift-analysis-handle" aria-hidden="true"></div>' +
-        '<header><span aria-hidden="true">' + esc(signal.symbol || "") + '</span><div><small>' + esc(base) + ' · ' + esc(meta.time || "") + '</small><strong>' + esc(signal.label || "À regarder") + '</strong></div></header>' +
-        (signal.detail ? '<p>' + esc(signal.detail) + '</p>' : '') +
-        (signal.proposal ? '<div class="team-shift-analysis-proposal"><strong>Ce que STIP conseille</strong><p>' + esc(signal.proposal) + '</p></div>' : '') +
-        '<button class="team-shift-analysis-close" type="button">Fermer</button>' +
-      '</section>';
+      '<section class="team-shift-analysis-sheet status-' +
+      esc(signal.level || "unknown") +
+      '" role="dialog" aria-modal="true" aria-label="Détail ' +
+      esc(meta.label || base) +
+      '">' +
+      '<div class="team-shift-analysis-handle" aria-hidden="true"></div>' +
+      '<header><span class="team-shift-analysis-symbol" aria-hidden="true">' +
+      esc(symbol) +
+      "</span><div><small>" +
+      esc(base) +
+      " · " +
+      esc(meta.time || "") +
+      "</small><strong>" +
+      esc(signal.label || "À regarder") +
+      "</strong></div></header>" +
+      stats +
+      '<section class="team-shift-analysis-block"><strong>Lecture STIP</strong><p>' +
+      esc(analysisText) +
+      "</p></section>" +
+      (signal.proposal
+        ? '<div class="team-shift-analysis-proposal"><strong>Ce que STIP conseille</strong><p>' +
+          esc(signal.proposal) +
+          "</p></div>"
+        : "") +
+      special +
+      context +
+      '<button class="team-shift-analysis-close" type="button">Fermer</button>' +
+      "</section>";
     document.body.appendChild(overlay);
-    overlay.querySelector(".team-shift-analysis-backdrop")?.addEventListener("click", closeShiftAnalysis);
-    overlay.querySelector(".team-shift-analysis-close")?.addEventListener("click", closeShiftAnalysis);
+    overlay
+      .querySelector(".team-shift-analysis-backdrop")
+      ?.addEventListener("click", closeShiftAnalysis);
+    overlay
+      .querySelector(".team-shift-analysis-close")
+      ?.addEventListener("click", closeShiftAnalysis);
   }
 
   function weekSummaryBlock(bundle) {
