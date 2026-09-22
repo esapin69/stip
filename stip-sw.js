@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260922-fauteuils21";
+const STIP_SW_BUILD="20260922-final-audit1";
 self.addEventListener("install",()=>self.skipWaiting());
 self.addEventListener("activate",event=>{
   event.waitUntil((async()=>{
