@@ -258,7 +258,7 @@
   color: var(--stip-ink);
   overflow: hidden;
   display: grid;
-  grid-template-rows: 31px 43px 1fr;
+  grid-template-rows: 31px 43px auto;
   align-items: center;
   justify-items: center;
 }
@@ -297,10 +297,12 @@
 
 .rr-week-marks {
   min-height: 28px;
+  padding: 3px 0 4px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1px;
+  justify-content: flex-start;
+  gap: 2px;
 }
 
 .rr-week-marks i {
@@ -501,7 +503,7 @@
   .rr-week-days > button {
     min-height: 101px;
     border-radius: 15px;
-    grid-template-rows: 29px 39px 1fr;
+    grid-template-rows: 29px 39px auto;
   }
 
   .rr-week-days small {
@@ -559,4 +561,96 @@ body.resp-tracking-view #rrAgendaCanvas {
 
 body:not(.resp-tracking-view) #respTrackingTool {
   display: none !important;
+}
+
+
+/* Planning options — same compact pocket pattern used on the personal planning. */
+.rr-option-pocket {
+  margin: 28px 0 8px;
+  border: 0;
+}
+
+.rr-option-summary {
+  min-height: 46px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: #71858e;
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+  list-style: none;
+}
+
+.rr-option-summary::-webkit-details-marker {
+  display: none;
+}
+
+.rr-option-summary > span {
+  letter-spacing: 0.12em;
+}
+
+.rr-option-body {
+  padding: 4px 0 2px;
+}
+
+.rr-option-action {
+  width: 100%;
+  min-height: 72px;
+  padding: 11px 13px;
+  border: 1px solid #d8e6e9;
+  border-radius: 18px;
+  background: #fff;
+  color: var(--stip-ink);
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 22px;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  box-shadow: 0 8px 22px rgba(18, 72, 88, 0.06);
+}
+
+.rr-option-action > span:first-child {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #eaf7f9;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+}
+
+.rr-option-action strong,
+.rr-option-action small {
+  display: block;
+}
+
+.rr-option-action strong {
+  font-size: 0.86rem;
+}
+
+.rr-option-action small {
+  margin-top: 3px;
+  color: #71858e;
+  font-size: 0.67rem;
+  line-height: 1.3;
+}
+
+.rr-option-action > b {
+  color: #78949d;
+  font-size: 1.3rem;
+}
+
+.rr-option-status {
+  min-height: 0;
+  margin: 7px 4px 0;
+  color: #64808a;
+  font-size: 0.68rem;
+  text-align: center;
+}
+
+.rr-option-status:empty {
+  display: none;
 }
