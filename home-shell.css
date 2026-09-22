@@ -4266,26 +4266,40 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button>strong{font-size:.69rem!important}
 }
 
-/* Identity block is information, not a raised card/button. */
+/* Identity block is information, not a card/button.
+   Keep the layout, remove the physical surface. */
 .hc-profile-full,
 .hc-id-card{
   border:0!important;
+  border-radius:0!important;
   background:transparent!important;
   box-shadow:none!important;
   filter:none!important;
   transform:none!important;
   cursor:default!important;
 }
+.hc-id-card{
+  min-height:0!important;
+  margin:2px 0 8px!important;
+  padding:7px 8px 9px!important;
+}
 .hc-profile-full::before,
 .hc-profile-full::after,
 .hc-id-card::before,
 .hc-id-card::after{
   content:none!important;
+  display:none!important;
+  background:none!important;
   box-shadow:none!important;
 }
+.hc-id-card:hover,
+.hc-id-card:focus,
 .hc-id-card:active{
-  transform:none!important;
+  border:0!important;
+  background:transparent!important;
   box-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
 }
 .hc-id-card .hc-avatar{
   cursor:pointer!important;
