@@ -468,7 +468,9 @@
       return;
     }
     const q = new URLSearchParams(location.search),
-      f = q.get("filter");
+      f = q.get("filter"),
+      openMode = String(q.get("open") || "").toLowerCase(),
+      requestedDate = String(q.get("date") || "").slice(0, 10);
     if (["all", "medical", "intern", "training"].includes(f)) active = f;
     focusId = q.get("focus") || "";
     search = navigationState.search || "";
@@ -522,7 +524,9 @@
     $("#taAllDay").onchange = syncPlacement;
     $("#taForm").onsubmit = submit;
     const d = new Date(Date.now() + 86400000);
-    $("#taDate").value = iso(d);
+    $("#taDate").value = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+      ? requestedDate
+      : iso(d);
     setMode("direct");
     window.STIPNav?.register?.({
       capture: () => ({
@@ -537,7 +541,8 @@
     });
     load()
       .then(() => {
-        if (navigationState.panel === "taAddSheet") openSheet("#taAddSheet");
+        if (openMode === "add" || navigationState.panel === "taAddSheet")
+          openSheet("#taAddSheet");
         if (navigationState.panel === "taDetailSheet")
           openDetail(navigationState.eventId, navigationState.eventOrigin);
       })
