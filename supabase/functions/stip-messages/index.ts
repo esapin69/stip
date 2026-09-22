@@ -433,10 +433,10 @@ function inferWheelchairQuantity(text:string,raw:any=null){
   const explicitRaw=Number(raw);
   if(Number.isFinite(explicitRaw)&&explicitRaw>0)return Math.min(20,Math.max(1,Math.round(explicitRaw)));
   const source=String(text||"").trim();
-  const explicit=source.match(/(?:^|[·,:;\\s])(\\d{1,2})\\s*(?:fauteuils?|fauteuil|f\\b)/i);
+  const explicit=source.match(/(?:^|[·,:;\s])(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
   if(explicit)return Math.min(20,Math.max(1,Number(explicit[1])||1));
   const parts=source.split("·").map(x=>x.trim()).filter(Boolean),tail=parts.at(-1)||"";
-  const shorthand=tail.match(/^(\\d{1,2})\\s+(?:au\\b|à\\b|a\\b)/i);
+  const shorthand=tail.match(/^(\d{1,2})\s+(?:au\b|à\b|a\b)/i);
   return shorthand?Math.min(20,Math.max(1,Number(shorthand[1])||1)):1
 }
 
