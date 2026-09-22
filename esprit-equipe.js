@@ -1308,6 +1308,19 @@
     </section>`;
   }
 
+  function weekControlsMarkup() {
+    return `<section id="teamWeekControls" class="team-week-inline-block team-time-stack stip-time-stack" aria-label="Cette semaine">
+      <div class="team-week-section-label stip-section-separator" aria-hidden="true">
+        <span>CETTE SEMAINE</span>
+      </div>
+      <section class="team-week-picker" aria-label="Cette semaine">
+        <button class="team-week-step" type="button" data-team-week-step="-1" aria-label="Semaine précédente">‹</button>
+        <nav id="teamDays" class="team-days stip-time-days" aria-label="Jours de la semaine"></nav>
+        <button class="team-week-step" type="button" data-team-week-step="1" aria-label="Semaine suivante">›</button>
+      </section>
+    </section>`;
+  }
+
   function teamDay(bundle, day) {
     const items = (bundle?.team?.planning || []).filter(
       (item) => item.date === day,
@@ -1327,7 +1340,7 @@
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     const staffing =
         shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>',
-      body = staffing + teamDaySummary(bundle, day);
+      body = staffing + weekControlsMarkup() + teamDaySummary(bundle, day);
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
@@ -1420,6 +1433,7 @@
     }
     host.setAttribute("aria-busy", "false");
     state.rendered = true;
+    renderWeekStrip();
   }
 
   function setBusy(message = "Actualisation de la semaine…") {
@@ -1441,6 +1455,10 @@
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
 
+      window.STIPDutyChiefs?.hydrateFromPlanning?.(
+        bundle?.team?.planning || [],
+        todayIso(),
+      );
       renderContent(bundle);
 
       const activityPromise = allowed("activity")
@@ -1494,12 +1512,6 @@
     showWeek({ preserve: true });
   }
 
-  $("#teamDays")?.addEventListener("click", (event) => {
-    const day = event.target.closest("[data-team-day]");
-    if (day) chooseDate(day.dataset.teamDay);
-  });
-  $("#teamPrevWeek")?.addEventListener("click", () => moveWeek(-1));
-  $("#teamNextWeek")?.addEventListener("click", () => moveWeek(1));
   $("#teamMonthDigestHost")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-month-day]");
     if (!day) return;
@@ -1533,6 +1545,16 @@
     window.STIPCalendars?.quick?.("team"),
   );
   $("#teamContent").addEventListener("click", (event) => {
+    const weekStep = event.target.closest("[data-team-week-step]");
+    if (weekStep) {
+      moveWeek(Number(weekStep.dataset.teamWeekStep || 0));
+      return;
+    }
+    const weekDay = event.target.closest("[data-team-day]");
+    if (weekDay) {
+      chooseDate(weekDay.dataset.teamDay);
+      return;
+    }
     const analysis = event.target.closest("[data-team-shift-analysis]");
     if (analysis) {
       event.preventDefault();
