@@ -20,6 +20,7 @@
     draftKind: "spot",
     composeMode: "spot",
     selectedBuilding: "",
+    selectedQuantity: 0,
   };
 
   const homeState = {
@@ -172,8 +173,9 @@
       "</section>" +
       '<section class="tb-input-dock" data-input-dock>' +
       '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
+      '<small class="tb-free-write-label">Précision ou message libre — facultatif</small>' +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. 3 fauteuils · 4e étage, devant les ascenseurs" aria-label="Préciser le lieu du fauteuil"></textarea>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Écrire librement si besoin…" aria-label="Précision ou message libre"></textarea>' +
       '<button type="submit" class="tb-send" aria-label="Envoyer">↑</button>' +
       "</form>" +
       "</section>" +
@@ -189,6 +191,7 @@
         state.draftKind = "spot";
         state.composeMode = "spot";
         state.selectedBuilding = "";
+        state.selectedQuantity = 0;
       }
       state.root = root;
       state.data = null;
@@ -461,7 +464,7 @@
           '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Signaler des fauteuils</strong></button>' +
           '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Chercher un fauteuil</strong></button>' +
         "</div>" +
-        '<small class="tb-compose-hint">' + (searchMode ? "Où cherches-tu ?" : "Où sont-ils ?") + "</small>" +
+        '<small class="tb-compose-hint">' + (searchMode ? "Choisis le bâtiment : le message est prêt." : "Choisis le bâtiment, puis le nombre de fauteuils.") + "</small>" +
         '<div class="tb-search-shortcuts-grid">' +
         BUILDINGS.map(
           (building) =>
@@ -483,61 +486,131 @@
         esc(modeLabel) +
         "</strong><b>·</b><em>" +
         esc(selected?.label || "Bâtiment à choisir") +
-        "</em></div>";
+        "</em>" +
+        (!searchMode && state.selectedQuantity
+          ? "<b>·</b><em>" + esc(String(state.selectedQuantity)) + " fauteuil" + (state.selectedQuantity > 1 ? "s" : "") + "</em>"
+          : "") +
+        "</div>";
     requestAnimationFrame(syncViewport);
   }
 
   function setComposeMode(mode) {
     if (mode !== "search" && mode !== "spot") return;
-    state.composeMode = mode;
-    state.draftKind = mode;
-    renderSearchShortcuts();
 
     const textarea = state.root?.querySelector(".tb-composer textarea");
-    if (!textarea) return;
-    textarea.placeholder =
-      mode === "search"
-        ? "Ex. je cherche un fauteuil au 2e étage"
-        : "Ex. 2 fauteuils · P8 couloir du fond";
-
-    const current = String(textarea.value || "").trim();
-    const buildingKey = buildingForMessage({ body: current });
+    const current = String(textarea?.value || "").trim();
     const generatedDraft =
-      /^(?:Je cherche un fauteuil|Fauteuil disponible)\s*·/i.test(current);
-    if (generatedDraft && buildingKey) {
-      state.selectedBuilding = buildingKey;
-      const building = BUILDINGS.find((item) => item.key === buildingKey);
-      if (building) {
-        const text =
-          mode === "search"
-            ? "Je cherche un fauteuil · " + building.label
-            : "Fauteuil disponible · " + building.label + " · ";
-        state.draft = text;
-        textarea.value = text;
+      /^(?:Je cherche un fauteuil|\d{1,2}\s+fauteuils?\s+disponibles?)\s*·/i.test(current);
+
+    state.composeMode = mode;
+    state.draftKind = mode;
+    state.selectedBuilding = "";
+    state.selectedQuantity = 0;
+
+    if (textarea) {
+      textarea.placeholder = "Écrire librement si besoin…";
+      if (generatedDraft) {
+        textarea.value = "";
+        state.draft = "";
         autoGrow(textarea);
-        textarea.setSelectionRange(text.length, text.length);
       }
     }
+    renderSearchShortcuts();
   }
 
-  function composeBuilding(key) {
+  function chooseSpotQuantity(buildingLabel) {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-quantity-picker">' +
+        '<div class="tb-confirm-icon">🦽</div>' +
+        "<h3>Combien de fauteuils ?</h3>" +
+        "<p>" + esc(buildingLabel) + "</p>" +
+        '<div class="tb-quantity-choices">' +
+          [1, 2, 3].map((quantity) =>
+            '<button type="button" data-spot-qty="' + quantity + '"><strong>' + quantity + "</strong></button>"
+          ).join("") +
+          '<button type="button" class="more" data-spot-more><strong>Plus</strong><small>4 à 20</small></button>' +
+        "</div>" +
+        '<div class="tb-quantity-more" data-spot-more-panel hidden>' +
+          '<label for="tbSpotQuantity">Nombre de fauteuils</label>' +
+          '<div><input id="tbSpotQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
+          '<button type="button" data-spot-more-ok>Valider</button></div>' +
+          '<small data-spot-qty-error aria-live="polite"></small>' +
+        "</div>" +
+        '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        "</section>";
+      document.body.appendChild(wrap);
+
+      const panel = wrap.querySelector("[data-spot-more-panel]");
+      const input = wrap.querySelector("#tbSpotQuantity");
+      const error = wrap.querySelector("[data-spot-qty-error]");
+
+      const done = (value) => {
+        wrap.remove();
+        resolve(value);
+      };
+
+      wrap.querySelectorAll("[data-spot-qty]").forEach((button) => {
+        button.addEventListener("click", () => done(Number(button.dataset.spotQty) || 0));
+      });
+
+      wrap.querySelector("[data-spot-more]")?.addEventListener("click", () => {
+        if (panel) panel.hidden = false;
+        setTimeout(() => input?.focus(), 30);
+      });
+
+      wrap.querySelector("[data-spot-more-ok]")?.addEventListener("click", () => {
+        const quantity = Math.round(Number(input?.value) || 0);
+        if (quantity < 4 || quantity > 20) {
+          if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
+          input?.focus();
+          return;
+        }
+        done(quantity);
+      });
+
+      input?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        wrap.querySelector("[data-spot-more-ok]")?.click();
+      });
+
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => done(0));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) done(0);
+      });
+    });
+  }
+
+  async function composeBuilding(key) {
     const building = BUILDINGS.find((item) => item.key === key);
     const textarea = state.root?.querySelector(".tb-composer textarea");
     if (!building || !textarea) return;
 
     const searchMode = state.composeMode === "search";
+    let quantity = 0;
+
+    if (!searchMode) {
+      quantity = await chooseSpotQuantity(building.label);
+      if (!quantity || !state.root?.isConnected) return;
+    }
+
     const text = searchMode
-      ? "Je cherche un fauteuil · " + building.label + " · "
-      : "Fauteuil disponible · " + building.label + " · ";
+      ? "Je cherche un fauteuil · " + building.label
+      : quantity + " fauteuil" + (quantity > 1 ? "s" : "") + " disponible" + (quantity > 1 ? "s" : "") + " · " + building.label;
 
     state.selectedBuilding = key;
+    state.selectedQuantity = quantity;
     state.draftKind = state.composeMode;
-    renderSearchShortcuts();
     state.draft = text;
     textarea.value = text;
     autoGrow(textarea);
-    textarea.focus();
-    textarea.setSelectionRange(text.length, text.length);
+    renderSearchShortcuts();
+
+    // Le message est prêt sans ouvrir le clavier. L’agent peut envoyer directement
+    // avec la flèche, ou toucher le champ s’il veut ajouter une précision.
   }
 
   function renderMessages() {
@@ -788,15 +861,17 @@
         wheelchair: {
           type,
           building: state.selectedBuilding || "",
-          quantity: type === "spot" ? inferWheelchairQuantity(body) : 1,
+          quantity: type === "spot" ? (state.selectedQuantity || inferWheelchairQuantity(body)) : 1,
         },
       });
       textarea.value = "";
       state.draft = "";
       state.draftKind = state.composeMode;
+      state.selectedBuilding = "";
+      state.selectedQuantity = 0;
       autoGrow(textarea);
+      renderSearchShortcuts();
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
-      textarea.focus();
     } catch (error) {
       alert(error.message || "Publication impossible.");
     } finally {
