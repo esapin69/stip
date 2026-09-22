@@ -1711,3 +1711,11 @@ body.team-page {
 .team-month-zone-secondary .team-legend-separator{
   margin-top:0;
 }
+
+/* shared opportunity status — 20260922 */
+.team-month-legend .status-opportunity,
+.team-shift-mini-status.status-opportunity,
+.team-cal-status.status-opportunity,
+.team-day-intel.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
+.team-date-explanation.status-opportunity{border-left-color:var(--stip-opportunity,#7C3AED);background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface))}
+.team-subsections>section.status-opportunity{border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 25%,var(--stip-line));background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 5%,var(--stip-surface))}
