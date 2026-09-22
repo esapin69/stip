@@ -102,20 +102,28 @@
     if (!option) return "";
     const count = Math.max(1, number(option.count, 1));
     const noun = count > 1 ? `${count} renforts` : "1 renfort";
-    const verb = count > 1 ? "peuvent" : "peut";
-    const qualifier = option.minutes < 180 ? "ponctuel" : "sur une plage utile";
-    return `Piste faisable sur les horaires : ${option.fromShift} a +${option.fromSurplus} et recouvre ${option.toShift} de ${option.start} à ${option.end}. ${noun} ${verb} être positionné${count > 1 ? "s" : ""} en renfort ${qualifier}, après vérification terrain.`;
+    const action = count > 1 ? "peuvent être mobilisés" : "peut être mobilisé";
+    const timing = option.minutes < 180 ? " ponctuellement" : "";
+    return `Piste faisable sur les horaires : ${option.fromShift} a +${option.fromSurplus} et recouvre ${option.toShift} de ${option.start} à ${option.end}. ${noun} ${action} sur cette plage${timing}, après vérification terrain.`;
   }
 
   function opportunityContext(context = {}) {
-    return Boolean(
+    const fromShift = String(
+      context.shift_code || context.shift || context.code || "",
+    ).trim().toUpperCase();
+    const toShift = String(
       context.suggested_to_shift ||
       context.destination_shift ||
       context.deficit_shift ||
       context.shortage_shift ||
       context.transfer_to_shift ||
-      context.coverage_shift
-    );
+      context.coverage_shift ||
+      "",
+    ).trim().toUpperCase();
+    const from = SHIFT[fromShift];
+    const to = SHIFT[toShift];
+    if (!from || !to || fromShift === toShift) return false;
+    return Math.min(from.end, to.end) - Math.max(from.start, to.start) >= MIN_USEFUL_OVERLAP;
   }
 
   function staffing(staff) {
