@@ -523,7 +523,7 @@
   function openAdd(date = "") {
     const target = date || state.selectedDate || parisIso(),
       url =
-        "responsable-agenda.html?open=add&date=" + encodeURIComponent(target);
+        "responsable.html?tab=agenda&open=add&date=" + encodeURIComponent(target);
     if (window.STIPNav) window.STIPNav.go(url);
     else location.href = url;
   }
