@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260921-shiftboost1";
+    V = "20260922-opportunity1";
   function load(src) {
     if (loaded.has(src)) return loaded.get(src);
     const p = new Promise((ok, ko) => {
