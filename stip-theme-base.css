@@ -200,3 +200,5 @@ a.destination.primary[href="#/place/hfme"] .destination-arrow,a.destination.prim
 #detailView .detail-hero.irm-photo-hero .detail-meta{margin:0!important;color:#315866!important;font-size:.8rem!important;font-weight:900!important;text-shadow:none!important}
 #detailView .detail-hero.irm-photo-hero>p:not(.detail-official):not(.detail-meta){margin:7px 0 0!important;color:#5d7680!important;font-size:.79rem!important;line-height:1.4!important;font-weight:720!important;text-shadow:none!important}
 @media(max-width:430px){#detailView .detail-hero.irm-photo-hero{padding-left:14px!important;padding-right:14px!important}#detailView .detail-hero.irm-photo-hero:before{width:calc(100% + 28px);margin-left:-14px;margin-right:-14px}#detailView .detail-hero.irm-photo-hero .detail-type{margin-top:-88px!important}#detailView .detail-hero.irm-photo-hero h1{margin-bottom:47px!important}}
+
+:root{--stip-opportunity:#7C3AED;--stip-opportunity-soft:#F3EDFF}
