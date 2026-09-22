@@ -916,11 +916,8 @@
           "",
       );
       if (contextShift && contextShift !== base) continue;
-      if (
-        ["staffing", "compound"].includes(String(item?.source_family || "")) &&
-        !["formation", "trainee"].includes(String(item?.source_family || ""))
-      )
-        continue;
+      const family = String(item?.source_family || "");
+      if (["staffing", "compound"].includes(family) && !contextShift) continue;
       const terrain = field()?.terrainItem?.(item),
         level =
           terrain?.level ||
@@ -1204,7 +1201,7 @@
         );
       // Staffing and shift-scoped information already lives on the shift emoji,
       // where it can be read with the relevant headcount and agents.
-      if (contextShift || ["staffing", "compound"].includes(family)) continue;
+      if (contextShift) continue;
 
       const terrain = field()?.terrainItem?.(item),
         level = dayAssistantLevel(item),
