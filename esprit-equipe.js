@@ -330,6 +330,55 @@
     return cached.promise;
   }
 
+  function renderDateExplanation(value = state.dayFocus) {
+    const host = $("#teamDateExplanation");
+    if (!host) return;
+    const signal = signalForDate(value);
+    const level = signal?.level || "unknown";
+    const symbol = signal?.symbol || (level === "unknown" ? "○" : "");
+    const label = signal?.label || "Pas encore analysé";
+    const reasons = Array.isArray(signal?.reasons)
+      ? signal.reasons.filter(Boolean)
+      : [];
+    const staffing = signal?.staffing || null;
+    let details = reasons
+      .slice(0, 2)
+      .map((reason) =>
+        [reason?.headline, reason?.detail].filter(Boolean).join(" — "),
+      )
+      .filter(Boolean);
+
+    if (!details.length && staffing?.known)
+      details = [[staffing.headline, staffing.detail].filter(Boolean).join(" — ")];
+
+    if (!details.length) {
+      if (level === "ok")
+        details = [
+          "Les créneaux suivis sont au niveau attendu et aucun point prioritaire n’a été détecté.",
+        ];
+      else if (level === "unknown")
+        details = [
+          "STIP n’a pas encore assez de données pour expliquer correctement cette journée.",
+        ];
+      else
+        details = [
+          "STIP a détecté un point de vigilance dans les données de cette journée.",
+        ];
+    }
+
+    host.className = `team-date-explanation status-${esc(level)}`;
+    host.hidden = false;
+    host.innerHTML = `
+      <div class="team-date-explanation-head">
+        <span class="team-date-explanation-icon" aria-hidden="true">${esc(symbol)}</span>
+        <div>
+          <small>${esc(dayTitle(value))}</small>
+          <strong>${esc(label)}</strong>
+        </div>
+      </div>
+      <p>${esc(details.join(" "))}</p>`;
+  }
+
   function renderDateJumpCalendar(key = "") {
     const panel = $("#teamDateJumpPanel");
     if (!panel) return;
@@ -377,6 +426,7 @@
       )}</strong><button type="button" data-team-cal-step="1" aria-label="Mois suivant">›</button></div>` +
       '<div class="team-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>' +
       `<div class="team-date-jump-grid">${cells.join("")}</div>`;
+    renderDateExplanation(state.dayFocus);
   }
 
   function chooseDate(value) {
