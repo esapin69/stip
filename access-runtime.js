@@ -1,13 +1,18 @@
 (() => {
   "use strict";
-  const p = () => ({
-      ...(window.STIPSession?.permissions || {}),
-      ...(window.STIPBootCache?.permissions || {}),
-    }),
+  const p = () =>
+      window.STIPPreview?.active
+        ? { ...(window.STIPSession?.permissions || {}) }
+        : {
+            ...(window.STIPSession?.permissions || {}),
+            ...(window.STIPBootCache?.permissions || {}),
+          },
     depth = (k) =>
-      window.STIPBootCache?.depths?.[k] ||
-      window.STIPSession?.depths?.[k] ||
-      "none";
+      window.STIPPreview?.active
+        ? window.STIPSession?.depths?.[k] || "none"
+        : window.STIPBootCache?.depths?.[k] ||
+          window.STIPSession?.depths?.[k] ||
+          "none";
   function explicit(k) {
     const x = p();
     return Object.prototype.hasOwnProperty.call(x, k) ? !!x[k] : false;
@@ -40,6 +45,8 @@
   }
   let livePermRefresh = null;
   async function refreshLivePermissions() {
+    if (window.STIPPreview?.active)
+      return window.STIPSession?.permissions || null;
     if (livePermRefresh) return livePermRefresh;
     const token = localStorage.getItem("stip_session_v1") || "";
     if (!token) return null;
