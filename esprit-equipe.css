@@ -2952,3 +2952,34 @@ body.team-page {
     height:34px;
   }
 }
+
+
+/* order-fix-20260922
+   Les chefs restent avant les shifts; le bloc semaine commence juste après le dernier shift. */
+.team-error{
+  margin:2px 2px 8px!important;
+}
+.team-error:empty{display:none}
+.team-content{
+  min-height:0!important;
+}
+.team-week-inline-block{
+  width:100%;
+  margin:16px 0 4px!important;
+  padding:0!important;
+}
+.team-week-inline-block .team-week-section-label{
+  margin:0 0 11px!important;
+}
+.team-week-inline-block .team-week-picker{
+  margin:0;
+}
+.team-day-summary{
+  margin-top:14px!important;
+}
+.team-live-zone{
+  margin-bottom:14px!important;
+}
+.team-live-zone + .team-error + .team-content{
+  margin-top:0;
+}
