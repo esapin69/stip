@@ -157,14 +157,16 @@
           : ""}
 
         <div class="ad-actions">
-          <button type="button" class="primary" data-ad-full>
-            <span>Fiche complète</span>
-            <small>Planning, informations et outils autorisés</small>
-            <b>›</b>
-          </button>
-          <button type="button" data-ad-planning>
+          ${directory?.viewer?.can_full
+            ? `<button type="button" class="primary" data-ad-full>
+                <span>Fiche complète</span>
+                <small>Vue STIP autorisée pour l’encadrement</small>
+                <b>›</b>
+              </button>`
+            : ""}
+          <button type="button" class="${directory?.viewer?.can_full ? "" : "primary"}" data-ad-planning>
             <span>Planning complet</span>
-            <small>Agenda et événements de l’agent</small>
+            <small>Agenda et événements autorisés de l’agent</small>
             <b>›</b>
           </button>
         </div>
@@ -177,9 +179,13 @@
     root.querySelector("[data-ad-planning]")?.addEventListener("click", () => {
       if (window.STIPAgentAgenda?.open) {
         window.STIPAgentAgenda.open(agent.source_key, agent);
-      } else {
-        openFull(agent);
+        return;
       }
+      root.querySelector(".ad-error")?.remove();
+      root.querySelector(".ad-agent-card")?.insertAdjacentHTML(
+        "beforeend",
+        '<div class="ad-error"><strong>Planning indisponible</strong><span>Recharge la page pour réessayer.</span></div>',
+      );
     });
     root.querySelector("[data-ad-full]")?.addEventListener("click", () =>
       openFull(agent),
