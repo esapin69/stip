@@ -13,8 +13,8 @@ const loader=read('stip-loader.js');
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
 check(
-  homeModeBody.indexOf('CETTE SEMAINE') >= 0 &&
-  homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('CETTE SEMAINE') &&
+  homeModeBody.indexOf('planningWeekSeparator()') >= 0 &&
+  homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('planningWeekSeparator()') &&
   homeModeBody.indexOf('AU MOIS') > homeModeBody.indexOf('${weekWidget()}') &&
   homeModeBody.indexOf('${planningCalendarOverview()}') > homeModeBody.indexOf('AU MOIS'),
   'L’accueil doit conserver l’ordre validé : semaine puis vue mensuelle.'
@@ -164,7 +164,7 @@ check(!read('index.html').includes('quick-access-icons.css'),'index.html charge 
 
 check(
   home.includes('const showProfile = state.homeMode === "planning"') &&
-  home.includes('const markup = `${homeModeNav()}${showProfile ? profile() : ""}'),
+  home.includes('markup = `${homeModeNav()}${showProfile ? profile() : ""}'),
   'La carte identité doit rester sous les accès rapides et uniquement dans Mon profil.'
 );
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
@@ -192,7 +192,8 @@ check(
   homePlanningBlock.indexOf('hc-planning-legend-separator') > homePlanningBlock.indexOf('planningCalendarOverview()'),
   'La hiérarchie validée doit rester : semaine, mois, puis légende.'
 );
-check(/function weekWidget\(\)[\s\S]{0,500}weekDaysLandscape/.test(home),'Le bloc piloté par le calendrier doit conserver la vue complète de la semaine.');
+const weekWidgetBlock=home.slice(home.indexOf('function weekWidget()'),home.indexOf('function nativeFuture()',home.indexOf('function weekWidget()')));
+check(weekWidgetBlock.includes('weekDaysLandscape(w)'),'Le bloc piloté par le calendrier doit conserver la vue complète de la semaine.');
 check(home.includes('weekStart = w[0]?.iso')&&home.includes('return start <= weekEnd && end >= weekStart'),'Les événements doivent suivre la semaine sélectionnée par le calendrier.');
 check(
   !home.includes('data-cal-today') &&
@@ -264,7 +265,7 @@ check(
   espritHtml.includes('id="teamWeekControls"') &&
   espritHtml.includes('id="teamDays"') &&
   espritHtml.includes('stip-time-days') &&
-  espritHtml.includes('class="team-month-zone"') &&
+  /class="[^"]*\\bteam-month-zone\\b[^"]*"/.test(espritHtml) &&
   espritHtml.includes('id="teamDateJumpPanel"'),
   'Esprit d’équipe a perdu sa hiérarchie temporelle Semaine active / Jour / Mois.'
 );

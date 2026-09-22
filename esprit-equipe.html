@@ -48,9 +48,15 @@
 
         <section class="team-week-picker" aria-label="Semaine active">
           <button id="teamPrevWeek" class="team-week-step" type="button" aria-label="Semaine précédente">‹</button>
-          <nav id="teamDays" class="team-days" aria-label="Jours de la semaine"></nav>
+          <nav id="teamDays" class="team-days stip-time-days" aria-label="Jours de la semaine"></nav>
           <button id="teamNextWeek" class="team-week-step" type="button" aria-label="Semaine suivante">›</button>
         </section>
+
+        <nav class="team-tabs stip-levels" role="tablist" aria-label="Volets Esprit d’équipe">
+          <button type="button" role="tab" aria-selected="true" class="active" data-team-tab="team">Équipe</button>
+          <button type="button" role="tab" aria-selected="false" data-team-tab="activity">Activité</button>
+          <button type="button" role="tab" aria-selected="false" data-team-tab="assistant">Assistant</button>
+        </nav>
       </section>
 
       <div class="team-day-section-label stip-section-separator" aria-hidden="true">
@@ -116,6 +122,6 @@
     <script src="agent-agenda-view.js?v=20260922-headercall1"></script>
     <script src="calendar-subscriptions.js?v=20260921-calfeed2"></script>
     <script src="home-duty-chief.js?v=20260922-chiefcall3"></script>
-    <script src="esprit-equipe.js?v=20260922-mergedmonth1"></script>
+    <script src="esprit-equipe.js?v=20260922-tabsrestore1"></script>
   </body>
 </html>

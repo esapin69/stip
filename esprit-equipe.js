@@ -29,10 +29,16 @@
         })[char],
     );
 
+  const params = new URLSearchParams(location.search);
+  const requestedTab = params.get("tab") || params.get("view");
   const navigationState = window.STIPNav?.read?.() || {};
   const state = {
     access: null,
-    tab: "team",
+    tab: ["team", "activity", "assistant"].includes(requestedTab)
+      ? requestedTab
+      : ["team", "activity", "assistant"].includes(navigationState.tab)
+        ? navigationState.tab
+        : "team",
     weekStart: monday(todayIso()),
     dayFocus: todayIso(),
     weeks: new Map(),
@@ -782,6 +788,11 @@
     renderWeekStrip();
     renderDateJumpCalendar(state.dateJumpMonth);
     renderMonthDigest(state.dateJumpMonth);
+    $$("[data-team-tab]").forEach((button) => {
+      const active = button.dataset.teamTab === state.tab;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
   }
 
   function dayContainer(day, summary, body, kind) {
@@ -1158,6 +1169,68 @@
     );
   }
 
+  function activityDay(bundle, day) {
+    const data = bundle?.activity?.get(day) || {};
+    const rows = [
+      ...(data.alerts || []),
+      ...(data.events?.formations || []),
+      ...(data.events?.stagiaires || []),
+    ];
+    const body = rows.length
+      ? `<div class="team-subsections">${rows
+          .map(
+            (item) =>
+              `<section><span>${esc(item.type || item.kind || "Information")}</span><strong>${esc(item.title || item.label || "Information")}</strong>${item.body || item.note || item.description ? `<p>${esc(item.body || item.note || item.description)}</p>` : ""}</section>`,
+          )
+          .join("")}</div>`
+      : '<p class="team-empty-inline">Rien à signaler pour cette journée.</p>';
+    return dayContainer(
+      day,
+      `${rows.length} élément${rows.length > 1 ? "s" : ""}`,
+      body,
+      "activity",
+    );
+  }
+
+  function assistantDay(bundle, day) {
+    const rows = (bundle?.assistant?.items || []).filter(
+      (item) => item.date === day,
+    );
+    const body = rows.length
+      ? `<div class="team-subsections">${rows
+          .map((item) => {
+            const terrain = field()?.terrainItem?.(item);
+            const severity = Number(item.severity || 0);
+            const level =
+              terrain?.level ||
+              (severity >= 4 ? "critical" : severity >= 2 ? "warning" : "ok");
+            const tag =
+              level === "critical"
+                ? "🛑 À traiter"
+                : level === "warning"
+                  ? "⚠️ À surveiller"
+                  : level === "opportunity"
+                    ? "➕ Marge utile"
+                    : "✔ Information";
+            const headline = terrain?.headline || item.title || "Information";
+            const details = [
+              terrain?.detail || item.body,
+              terrain?.proposal || item.recommendation_text,
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return `<section class="status-${esc(level)}"><span>${esc(tag)}</span><strong>${esc(headline)}</strong>${details ? `<p>${esc(details)}</p>` : ""}</section>`;
+          })
+          .join("")}</div>`
+      : '<p class="team-empty-inline">Aucun point prioritaire détecté.</p>';
+    return dayContainer(
+      day,
+      `${rows.length} point${rows.length > 1 ? "s" : ""}`,
+      body,
+      "assistant",
+    );
+  }
+
   function syncShiftPanels() {
     $("#teamContent")
       ?.querySelectorAll("[data-team-shift]")
@@ -1234,11 +1307,29 @@
     const host = $("#teamContent");
     normalizeDayFocus();
     const day = state.dayFocus;
-    if (!allowed("planning_team")) {
+    const permitted = {
+      team: allowed("planning_team"),
+      activity: allowed("activity"),
+      assistant: allowed("assistant_enabled"),
+    }[state.tab];
+
+    if (!permitted) {
       host.innerHTML =
-        '<div class="team-empty">La vue équipe n’est pas incluse dans votre accès.</div>';
+        '<div class="team-empty">Ce volet n’est pas inclus dans votre accès.</div>';
+    } else if (state.tab === "activity" && !bundle.activity) {
+      host.innerHTML = dayContainer(
+        day,
+        "Lecture…",
+        '<div class="stip-skeleton team-day-placeholder"></div>',
+        "activity",
+      );
     } else {
-      host.innerHTML = teamDay(bundle, day);
+      const renderer = {
+        team: teamDay,
+        activity: activityDay,
+        assistant: assistantDay,
+      }[state.tab];
+      host.innerHTML = renderer(bundle, day);
     }
     host.setAttribute("aria-busy", "false");
     state.rendered = true;
@@ -1262,7 +1353,7 @@
     try {
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
-      if (allowed("activity")) await loadActivity(state.weekStart, force);
+      if (state.tab === "activity") await loadActivity(state.weekStart, force);
       if (request !== state.request) return;
       renderContent(bundle);
       loadWeekSignals(state.weekStart, bundle, force)
@@ -1295,6 +1386,29 @@
     else setTimeout(run, 500);
   }
 
+  async function selectTab(tab) {
+    if (!["team", "activity", "assistant"].includes(tab) || tab === state.tab)
+      return;
+    state.tab = tab;
+    renderHeader();
+    const bundle = cacheEntry(state.weekStart);
+    if (tab === "activity" && !bundle.activity) {
+      renderContent(bundle);
+      setBusy("Chargement de l’activité de la semaine…");
+      await loadActivity(state.weekStart);
+      clearBusy();
+    }
+    renderContent(bundle);
+    const url = new URL(location.href);
+    url.searchParams.set("tab", tab);
+    history.replaceState(
+      { ...(history.state || {}), stipTeamTab: tab },
+      "",
+      url.pathname + url.search + url.hash,
+    );
+    window.STIPNav?.remember?.({ tab, weekStart: state.weekStart });
+  }
+
   function moveWeek(offset) {
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
@@ -1308,6 +1422,9 @@
     showWeek({ preserve: true });
   }
 
+  $$("[data-team-tab]").forEach((button) =>
+    button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
+  );
   $("#teamDays")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-day]");
     if (day) chooseDate(day.dataset.teamDay);
@@ -1402,8 +1519,20 @@
         const pocket = teamSubscribe.closest(".stip-option-pocket");
         if (pocket) pocket.hidden = !canSubscribe;
       }
-      if (!allowed("planning_team")) return location.replace("index.html");
-      state.tab = "team";
+      if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
+        return location.replace("index.html");
+      const required =
+        state.tab === "team"
+          ? "planning_team"
+          : state.tab === "activity"
+            ? "activity"
+            : "assistant_enabled";
+      if (!allowed(required))
+        state.tab = allowed("planning_team")
+          ? "team"
+          : allowed("activity")
+            ? "activity"
+            : "assistant";
       renderHeader();
       await showWeek({ preserve: false });
       window.STIPNav?.restoreScroll?.();
