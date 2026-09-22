@@ -29,16 +29,10 @@
         })[char],
     );
 
-  const params = new URLSearchParams(location.search);
-  const requestedTab = params.get("tab") || params.get("view");
   const navigationState = window.STIPNav?.read?.() || {};
   const state = {
     access: null,
-    tab: ["team", "activity", "assistant"].includes(requestedTab)
-      ? requestedTab
-      : ["team", "activity", "assistant"].includes(navigationState.tab)
-        ? navigationState.tab
-        : "team",
+    tab: "team",
     weekStart: monday(todayIso()),
     dayFocus: todayIso(),
     weeks: new Map(),
@@ -447,235 +441,6 @@
       .filter(Boolean);
   }
 
-  function rangeDayFacts(days, assistantItems = [], bundle = null) {
-    return days.map((day) => {
-      const dayItems = assistantItems.filter(
-          (item) => String(item?.date || "").slice(0, 10) === day,
-        ),
-        activity = bundle?.activity?.get?.(day) || {},
-        signal = signalForDate(day) || {
-          level: "unknown",
-          symbol: "○",
-          label: "Pas encore analysé",
-        },
-        staff = state.staffingByDate.get(day),
-        staffRows = staffingRows(staff),
-        assistantFormation = dayItems.filter(
-          (item) => item?.source_family === "formation",
-        ).length,
-        assistantTrainee = dayItems.filter(
-          (item) => item?.source_family === "trainee",
-        ).length,
-        formationCount = Math.max(
-          assistantFormation,
-          Number(activity?.events?.formations?.length || 0),
-        ),
-        traineeCount = Math.max(
-          assistantTrainee,
-          Number(activity?.events?.stagiaires?.length || 0),
-        ),
-        significant = dayItems.filter(
-          (item) =>
-            Number(item?.severity || 0) >= 2 ||
-            ["anticipation", "warning", "opportunity", "proposal"].includes(
-              String(item?.kind || ""),
-            ) ||
-            ["changes", "onboarding", "strategy"].includes(
-              String(item?.source_family || ""),
-            ),
-        ),
-        gaps = staffRows
-          .map((row) => ({
-            code: baseShift(row?.shift_code || row?.shift || row?.code),
-            gap: staffingRowGap(row),
-          }))
-          .filter((row) => row.code && row.gap !== 0),
-        deficits = gaps.filter((row) => row.gap < 0).sort((a, b) => a.gap - b.gap),
-        margins = gaps.filter((row) => row.gap > 0).sort((a, b) => b.gap - a.gap),
-        lead = significant[0],
-        terrain = lead ? field()?.terrainItem?.(lead) : null;
-
-      const details = [];
-      deficits.slice(0, 2).forEach((row) =>
-        details.push(`${row.code} ${row.gap}`),
-      );
-      if (!deficits.length)
-        margins.slice(0, 1).forEach((row) =>
-          details.push(`${row.code} +${row.gap}`),
-        );
-      if (formationCount)
-        details.push(`🎓 ${formationCount} formation${formationCount > 1 ? "s" : ""}`);
-      if (traineeCount)
-        details.push(`👶 ${traineeCount} stagiaire${traineeCount > 1 ? "s" : ""}`);
-      const headline = terrain?.headline || lead?.title || "";
-      if (headline && !details.includes(headline)) details.push(headline);
-
-      return {
-        day,
-        signal,
-        formationCount,
-        traineeCount,
-        deficits,
-        margins,
-        significant,
-        details: details.slice(0, 4),
-      };
-    });
-  }
-
-  function rangeActionRows(facts = []) {
-    const actions = [];
-    const add = (action) => {
-      if (!action?.detail) return;
-      const key = `${action.title || ""}|${action.detail}`.toLowerCase();
-      if (actions.some((row) => row.key === key)) return;
-      actions.push({ ...action, key });
-    };
-
-    for (const fact of facts) {
-      for (const item of fact.significant || []) {
-        const terrain = field()?.terrainItem?.(item),
-          proposal =
-            terrain?.proposal ||
-            item?.recommendation_text ||
-            item?.proposal ||
-            "",
-          headline = terrain?.headline || item?.title || "Point à traiter";
-        if (!proposal) continue;
-        add({
-          icon: statusSymbol(fact.signal?.level, "💡"),
-          level: fact.signal?.level || "info",
-          title: `${shortDay(fact.day)} · ${headline}`,
-          detail: proposal,
-        });
-        if (actions.length >= 3) return actions;
-      }
-    }
-
-    const deficits = facts
-      .flatMap((fact) =>
-        fact.deficits.map((row) => ({ ...row, day: fact.day })),
-      )
-      .sort((a, b) => a.gap - b.gap);
-    for (const row of deficits.slice(0, 2)) {
-      add({
-        icon: row.gap <= -2 ? "🛑" : "⚠️",
-        level: row.gap <= -2 ? "critical" : "warning",
-        title: `${shortDay(row.day)} · ${row.code} à sécuriser`,
-        detail: `Déficit mesuré de ${Math.abs(row.gap)} par rapport à la cible. Vérifier un renfort ou une répartition compatible avant le début du shift.`,
-      });
-      if (actions.length >= 3) return actions;
-    }
-
-    const constrained = facts.find(
-      (fact) =>
-        (fact.formationCount || fact.traineeCount) &&
-        ["critical", "warning"].includes(fact.signal?.level),
-    );
-    if (constrained) {
-      add({
-        icon: "🧭",
-        level: "warning",
-        title: `${shortDay(constrained.day)} · Encadrement à protéger`,
-        detail:
-          "Formation ou stagiaire le même jour qu’un point de tension. Prévoir explicitement le référent et préserver l’effectif terrain.",
-      });
-    }
-
-    const margin = facts
-      .flatMap((fact) =>
-        fact.margins.map((row) => ({ ...row, day: fact.day })),
-      )
-      .sort((a, b) => b.gap - a.gap)[0];
-    if (actions.length < 3 && margin) {
-      add({
-        icon: "➕",
-        level: "opportunity",
-        title: `${shortDay(margin.day)} · Marge utile sur ${margin.code}`,
-        detail: `Marge mesurée de +${margin.gap} par rapport à la cible. Créneau à privilégier pour une tâche flexible si l’activité réelle le permet.`,
-      });
-    }
-
-    return actions.slice(0, 3);
-  }
-
-  function renderWeekSummary(bundle = cacheEntry(state.weekStart)) {
-    const host = $("#teamWeekSummaryHost");
-    if (!host) return;
-    if (!bundle?.signalLoaded) {
-      host.innerHTML =
-        '<div class="team-week-summary-loading">Analyse de la semaine…</div>';
-      return;
-    }
-
-    const facts = rangeDayFacts(
-        daysOfWeek(state.weekStart),
-        bundle?.assistant?.items || [],
-        bundle,
-      ),
-      known = facts.filter((fact) => fact.signal?.level !== "unknown").length,
-      critical = facts.filter((fact) => fact.signal?.level === "critical").length,
-      warning = facts.filter((fact) => fact.signal?.level === "warning").length,
-      opportunity = facts.filter((fact) => fact.signal?.level === "opportunity").length,
-      formations = facts.reduce((sum, fact) => sum + fact.formationCount, 0),
-      trainees = facts.reduce((sum, fact) => sum + fact.traineeCount, 0),
-      actions = rangeActionRows(facts);
-
-    const metrics = [
-      [known, "jours analysés"],
-      [critical + warning, "jours à surveiller"],
-      [opportunity, "marges utiles"],
-      [formations, "formations"],
-      [trainees, "stagiaires"],
-    ];
-
-    const rows = facts
-      .map((fact) => {
-        const label = fact.signal?.label || "Pas assez de données",
-          detail =
-            fact.details.join(" · ") ||
-            (fact.signal?.level === "ok"
-              ? "Aucun écart prioritaire détecté avec les données actuelles."
-              : "Données encore partielles.");
-        return `<button type="button" class="team-week-check status-${esc(fact.signal?.level || "unknown")}" data-team-week-day="${esc(fact.day)}">
-          <span aria-hidden="true">${esc(statusSymbol(fact.signal?.level, fact.signal?.symbol))}</span>
-          <div><strong>${esc(shortDay(fact.day))} · ${esc(label)}</strong><p>${esc(detail)}</p></div>
-          <i aria-hidden="true">›</i>
-        </button>`;
-      })
-      .join("");
-
-    const actionMarkup = actions.length
-      ? `<section class="team-range-actions"><header><span>🎯</span><div><small>ACTIONS CONCRÈTES</small><strong>À préparer sur cette semaine</strong></div></header><div>${actions
-          .map(
-            (action) =>
-              `<article class="status-${esc(action.level || "info")}"><span aria-hidden="true">${esc(action.icon)}</span><div><strong>${esc(action.title)}</strong><p>${esc(action.detail)}</p></div></article>`,
-          )
-          .join("")}</div></section>`
-      : '<section class="team-range-actions is-clear"><strong>✔ Aucun correctif prioritaire détecté</strong><p>Continuer la surveillance avec les données terrain au fil de la semaine.</p></section>';
-
-    host.innerHTML = `<details class="team-week-summary" open>
-      <summary>
-        <div><small>DÉBRIEF SEMAINE ${isoWeek(state.weekStart)}</small><strong>${esc(weekRange(state.weekStart))}</strong></div>
-        <span>Factuel · Mesurable · Actionnable</span>
-        <i aria-hidden="true">⌄</i>
-      </summary>
-      <div class="team-range-metrics">${metrics
-        .map(([value, label]) => `<span><b>${esc(value)}</b><small>${esc(label)}</small></span>`)
-        .join("")}</div>
-      <div class="team-week-checklist">${rows}</div>
-      ${actionMarkup}
-    </details>`;
-  }
-
-  function monthActionRows(key) {
-    const facts = rangeDayFacts(daysOfMonth(key), monthAssistantItems(key));
-    return {
-      facts,
-      actions: rangeActionRows(facts),
-    };
-  }
-
   function renderMonthDigest(key = state.dateJumpMonth) {
     const host = $("#teamMonthDigestHost");
     if (!host) return;
@@ -757,26 +522,14 @@
       })
       .join("");
 
-    const monthAnalysis = monthActionRows(key),
-      monthActions = monthAnalysis.actions,
-      actionMarkup = monthActions.length
-        ? `<section class="team-range-actions team-month-actions"><header><span>🎯</span><div><small>ACTIONS CONCRÈTES</small><strong>À préparer sur le mois</strong></div></header><div>${monthActions
-            .map(
-              (action) =>
-                `<article class="status-${esc(action.level || "info")}"><span aria-hidden="true">${esc(action.icon)}</span><div><strong>${esc(action.title)}</strong><p>${esc(action.detail)}</p></div></article>`,
-            )
-            .join("")}</div></section>`
-        : "";
-
     host.innerHTML =
       `<section class="team-month-digest-card">
-        <header><small>DÉBRIEF DU MOIS · Factuel · Mesurable · Actionnable</small><strong>${esc(
+        <header><strong>${esc(
           dateObj(key + "-01")
             .toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
             .replace(/^./, (char) => char.toUpperCase()),
         )}</strong><span>${esc(summary.join(" · "))}</span></header>
         <div class="team-month-weeks">${weeks}</div>
-        ${actionMarkup}
       </section>`;
   }
 
@@ -1027,14 +780,8 @@
     if (!state.dateJumpMonth)
       state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
     renderWeekStrip();
-    renderWeekSummary(cacheEntry(state.weekStart));
     renderDateJumpCalendar(state.dateJumpMonth);
     renderMonthDigest(state.dateJumpMonth);
-    $$("[data-team-tab]").forEach((button) => {
-      const active = button.dataset.teamTab === state.tab;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-    });
   }
 
   function dayContainer(day, summary, body, kind) {
@@ -1192,12 +939,13 @@
               ? "👶"
               : statusSymbol(level, ""),
         title: terrain?.headline || item?.title || "Information",
-        detail:
-          terrain?.detail ||
-          item?.body ||
-          terrain?.proposal ||
-          item?.recommendation_text ||
-          "",
+        detail: [
+          terrain?.detail || item?.body || "",
+          terrain?.proposal || item?.recommendation_text || item?.proposal || "",
+        ]
+          .filter(Boolean)
+          .filter((value, index, list) => list.indexOf(value) === index)
+          .join(" "),
         type:
           item?.source_family === "formation"
             ? "Formation"
@@ -1385,6 +1133,184 @@
     </section>`;
   }
 
+  function dayAssistantLevel(item) {
+    const terrain = field()?.terrainItem?.(item);
+    const severity = Number(item?.severity || 0);
+    return (
+      terrain?.level ||
+      (severity >= 4
+        ? "critical"
+        : severity >= 2
+          ? "warning"
+          : item?.kind === "opportunity"
+            ? "opportunity"
+            : "info")
+    );
+  }
+
+  function mergedDayRows(bundle, day) {
+    const activity = bundle?.activity?.get?.(day) || {},
+      rows = [],
+      add = (row) => {
+        const title = String(row?.title || "").trim();
+        const detail = String(row?.detail || "").trim();
+        if (!title && !detail) return;
+        const key = [row.type || "", title, detail].join("|").toLowerCase();
+        if (rows.some((item) => item.key === key)) return;
+        rows.push({ ...row, key });
+      };
+
+    for (const item of activity.alerts || []) {
+      const severity = Number(item?.severity || 0);
+      add({
+        type: "Alerte",
+        level: severity >= 4 ? "critical" : "warning",
+        icon: severity >= 4 ? "🛑" : "⚠️",
+        title: item?.title || "Alerte",
+        detail: item?.body || item?.note || item?.description || "",
+      });
+    }
+    for (const item of activity.events?.formations || []) {
+      add({
+        type: "Formation",
+        level: "info",
+        icon: "🎓",
+        title: item?.title || "Formation",
+        detail: [item?.horaire, item?.lieu].filter(Boolean).join(" · "),
+      });
+    }
+    for (const item of activity.events?.stagiaires || []) {
+      add({
+        type: "Stagiaire",
+        level: "info",
+        icon: "👶",
+        title: item?.name || item?.title || "Stagiaire",
+        detail: [
+          item?.horaires,
+          item?.referent ? `Référent : ${item.referent}` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      });
+    }
+
+    for (const item of assistantItemsForDate(bundle, day)) {
+      const family = String(item?.source_family || ""),
+        contextShift = baseShift(
+          item?.context?.shift_code ||
+            item?.context?.shift ||
+            item?.context?.code ||
+            "",
+        );
+      // Staffing and shift-scoped information already lives on the shift emoji,
+      // where it can be read with the relevant headcount and agents.
+      if (contextShift || ["staffing", "compound"].includes(family)) continue;
+
+      const terrain = field()?.terrainItem?.(item),
+        level = dayAssistantLevel(item),
+        detail = [
+          terrain?.detail || item?.body || "",
+          terrain?.proposal || item?.recommendation_text || item?.proposal || "",
+        ]
+          .filter(Boolean)
+          .filter((value, index, list) => list.indexOf(value) === index)
+          .join(" ");
+      add({
+        type:
+          family === "formation"
+            ? "Formation"
+            : family === "trainee"
+              ? "Stagiaire"
+              : "Analyse",
+        level,
+        icon:
+          family === "formation"
+            ? "🎓"
+            : family === "trainee"
+              ? "👶"
+              : statusSymbol(level, "•"),
+        title: terrain?.headline || item?.title || "Information",
+        detail,
+      });
+    }
+    return rows;
+  }
+
+  function dayAdvice(bundle, day) {
+    const assistant = assistantItemsForDate(bundle, day),
+      staff = state.staffingByDate.get(day),
+      proposals = assistant
+        .map((item) => {
+          const terrain = field()?.terrainItem?.(item);
+          return (
+            terrain?.proposal ||
+            item?.recommendation_text ||
+            item?.proposal ||
+            ""
+          );
+        })
+        .filter(Boolean),
+      gaps = staffingRows(staff)
+        .map((row) => ({
+          code: baseShift(row?.shift_code || row?.shift || row?.code),
+          gap: staffingRowGap(row),
+        }))
+        .filter((row) => row.code && row.gap !== 0),
+      deficits = gaps.filter((row) => row.gap < 0).sort((a, b) => a.gap - b.gap),
+      margins = gaps.filter((row) => row.gap > 0).sort((a, b) => b.gap - a.gap);
+
+    if (proposals.length) {
+      const maxSeverity = Math.max(0, ...assistant.map((item) => Number(item?.severity || 0)));
+      return {
+        text: proposals[0],
+        strength: maxSeverity >= 4 ? "strong" : maxSeverity >= 2 ? "moderate" : "suggestion",
+      };
+    }
+    if (deficits.length) {
+      const worst = deficits[0],
+        shifts = deficits.slice(0, 2).map((row) => `${row.code} ${row.gap}`).join(" · ");
+      return {
+        text: `Écart mesuré sur ${shifts}. Vérifier en priorité une répartition ou un renfort compatible avant les créneaux concernés.`,
+        strength: worst.gap <= -2 ? "strong" : "moderate",
+      };
+    }
+    if (margins.length) {
+      const best = margins[0];
+      return {
+        text: `Marge mesurée sur ${best.code} (+${best.gap}). Elle peut absorber une tâche flexible si l’activité réelle reste stable.`,
+        strength: "suggestion",
+      };
+    }
+    return null;
+  }
+
+  function teamDaySummary(bundle, day) {
+    const rows = mergedDayRows(bundle, day),
+      advice = dayAdvice(bundle, day);
+    if (!rows.length && !advice) return "";
+
+    const signal = signalForDate(day) || {
+        level: "info",
+        symbol: "•",
+        label: "Informations du jour",
+      },
+      level = signal.level === "unknown" ? "info" : signal.level,
+      checklist = rows.length
+        ? `<div class="team-day-checklist">${rows
+            .map(
+              (row) =>
+                `<div class="team-day-check status-${esc(row.level || "info")}"><span aria-hidden="true">${esc(row.icon || "•")}</span><div><strong>${esc(row.title)}</strong>${row.detail ? `<p>${esc(row.detail)}</p>` : ""}</div></div>`,
+            )
+            .join("")}</div>`
+        : "";
+
+    return `<section class="team-day-summary status-${esc(level)}">
+      <header><span aria-hidden="true">${esc(statusSymbol(level, signal.symbol))}</span><div><small>INFOS DU JOUR</small><strong>${esc(signal.label || "À retenir")}</strong></div></header>
+      ${checklist}
+      ${advice ? `<div class="team-day-advice strength-${esc(advice.strength)}"><strong>À faire</strong><p>${esc(advice.text)}</p></div>` : ""}
+    </section>`;
+  }
+
   function teamDay(bundle, day) {
     const items = (bundle?.team?.planning || []).filter(
       (item) => item.date === day,
@@ -1402,74 +1328,14 @@
         SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
     );
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
-    const body = shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>';
+    const staffing =
+        shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>',
+      body = staffing + teamDaySummary(bundle, day);
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
       body,
       "team",
-    );
-  }
-
-  function activityDay(bundle, day) {
-    const data = bundle?.activity?.get(day) || {};
-    const rows = [
-      ...(data.alerts || []),
-      ...(data.events?.formations || []),
-      ...(data.events?.stagiaires || []),
-    ];
-    const body = rows.length
-      ? `<div class="team-subsections">${rows
-          .map(
-            (item) =>
-              `<section><span>${esc(item.type || item.kind || "Information")}</span><strong>${esc(item.title || item.label || "Information")}</strong>${item.body || item.note || item.description ? `<p>${esc(item.body || item.note || item.description)}</p>` : ""}</section>`,
-          )
-          .join("")}</div>`
-      : '<p class="team-empty-inline">Rien à signaler pour cette journée.</p>';
-    return dayContainer(
-      day,
-      `${rows.length} élément${rows.length > 1 ? "s" : ""}`,
-      body,
-      "activity",
-    );
-  }
-
-  function assistantDay(bundle, day) {
-    const rows = (bundle?.assistant?.items || []).filter(
-      (item) => item.date === day,
-    );
-    const body = rows.length
-      ? `<div class="team-subsections">${rows
-          .map((item) => {
-            const terrain = field()?.terrainItem?.(item);
-            const severity = Number(item.severity || 0);
-            const level =
-              terrain?.level ||
-              (severity >= 4 ? "critical" : severity >= 2 ? "warning" : "ok");
-            const tag =
-              level === "critical"
-                ? "🛑 À traiter"
-                : level === "warning"
-                  ? "⚠️ À surveiller"
-                  : level === "opportunity"
-                    ? "➕ Marge utile"
-                    : "✔ Information";
-            const headline = terrain?.headline || item.title || "Information";
-            const details = [
-              terrain?.detail || item.body,
-              terrain?.proposal || item.recommendation_text,
-            ]
-              .filter(Boolean)
-              .join(" ");
-            return `<section class="status-${esc(level)}"><span>${esc(tag)}</span><strong>${esc(headline)}</strong>${details ? `<p>${esc(details)}</p>` : ""}</section>`;
-          })
-          .join("")}</div>`
-      : '<p class="team-empty-inline">Aucun point prioritaire détecté.</p>';
-    return dayContainer(
-      day,
-      `${rows.length} point${rows.length > 1 ? "s" : ""}`,
-      body,
-      "assistant",
     );
   }
 
@@ -1549,29 +1415,11 @@
     const host = $("#teamContent");
     normalizeDayFocus();
     const day = state.dayFocus;
-    const permitted = {
-      team: allowed("planning_team"),
-      activity: allowed("activity"),
-      assistant: allowed("assistant_enabled"),
-    }[state.tab];
-
-    if (!permitted) {
+    if (!allowed("planning_team")) {
       host.innerHTML =
-        '<div class="team-empty">Ce volet n’est pas inclus dans votre accès.</div>';
-    } else if (state.tab === "activity" && !bundle.activity) {
-      host.innerHTML = dayContainer(
-        day,
-        "Lecture…",
-        '<div class="stip-skeleton team-day-placeholder"></div>',
-        "activity",
-      );
+        '<div class="team-empty">Le planning équipe n’est pas inclus dans votre accès.</div>';
     } else {
-      const renderer = {
-        team: teamDay,
-        activity: activityDay,
-        assistant: assistantDay,
-      }[state.tab];
-      host.innerHTML = renderer(bundle, day);
+      host.innerHTML = teamDay(bundle, day);
     }
     host.setAttribute("aria-busy", "false");
     state.rendered = true;
@@ -1595,27 +1443,27 @@
     try {
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
+
+      renderContent(bundle);
+
       const activityPromise = allowed("activity")
         ? loadActivity(state.weekStart, force).catch(() => null)
         : Promise.resolve(null);
-      if (state.tab === "activity") await activityPromise;
-      if (request !== state.request) return;
-      renderContent(bundle);
-      if (state.tab !== "activity")
-        activityPromise.then(() => {
-          if (request === state.request) renderWeekSummary(bundle);
-        });
+
+      activityPromise.then(() => {
+        if (request === state.request) renderContent(bundle);
+      });
+
       loadWeekSignals(state.weekStart, bundle, force)
-        .then(() => renderWeekSummary(bundle))
+        .then(() => {
+          if (request === state.request) renderContent(bundle);
+        })
         .catch(() => {})
         .finally(() =>
           loadMonthSignals(state.dateJumpMonth, force).catch(() => {}),
         );
-      const issue = bundle.coreError || bundle.activityError;
+
       clearBusy();
-      if (issue)
-        $("#teamError").textContent =
-          "Certaines données n’ont pas pu être actualisées.";
       if (!force) prefetchAdjacentWeeks();
     } catch (error) {
       clearBusy();
@@ -1636,29 +1484,6 @@
     else setTimeout(run, 500);
   }
 
-  async function selectTab(tab) {
-    if (!["team", "activity", "assistant"].includes(tab) || tab === state.tab)
-      return;
-    state.tab = tab;
-    renderHeader();
-    const bundle = cacheEntry(state.weekStart);
-    if (tab === "activity" && !bundle.activity) {
-      renderContent(bundle);
-      setBusy("Chargement de l’activité de la semaine…");
-      await loadActivity(state.weekStart);
-      clearBusy();
-    }
-    renderContent(bundle);
-    const url = new URL(location.href);
-    url.searchParams.set("tab", tab);
-    history.replaceState(
-      { ...(history.state || {}), stipTeamTab: tab },
-      "",
-      url.pathname + url.search + url.hash,
-    );
-    window.STIPNav?.remember?.({ tab, weekStart: state.weekStart });
-  }
-
   function moveWeek(offset) {
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
@@ -1672,25 +1497,17 @@
     showWeek({ preserve: true });
   }
 
-  $$("[data-team-tab]").forEach((button) =>
-    button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
-  );
   $("#teamDays")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-day]");
     if (day) chooseDate(day.dataset.teamDay);
   });
   $("#teamPrevWeek")?.addEventListener("click", () => moveWeek(-1));
   $("#teamNextWeek")?.addEventListener("click", () => moveWeek(1));
-  $("#teamWeekSummaryHost")?.addEventListener("click", (event) => {
-    const day = event.target.closest("[data-team-week-day]");
-    if (!day) return;
-    chooseDate(day.dataset.teamWeekDay);
-  });
   $("#teamMonthDigestHost")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-month-day]");
     if (!day) return;
     chooseDate(day.dataset.teamMonthDay);
-    document.querySelector(".team-day-section-label")?.scrollIntoView({
+    document.querySelector("#teamContent")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -1774,20 +1591,9 @@
         const pocket = teamSubscribe.closest(".stip-option-pocket");
         if (pocket) pocket.hidden = !canSubscribe;
       }
-      if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
+      if (!allowed("planning_team"))
         return location.replace("index.html");
-      const required =
-        state.tab === "team"
-          ? "planning_team"
-          : state.tab === "activity"
-            ? "activity"
-            : "assistant_enabled";
-      if (!allowed(required))
-        state.tab = allowed("planning_team")
-          ? "team"
-          : allowed("activity")
-            ? "activity"
-            : "assistant";
+      state.tab = "team";
       renderHeader();
       await showWeek({ preserve: false });
       window.STIPNav?.restoreScroll?.();
@@ -1800,7 +1606,6 @@
 
   window.STIPNav?.register?.({
     capture: () => ({
-      tab: state.tab,
       weekStart: state.weekStart,
       dayFocus: state.dayFocus,
     }),
