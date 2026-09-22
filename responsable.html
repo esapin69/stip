@@ -126,6 +126,28 @@
           </div>
         </section>
         <div class="resp-dots" id="respDots"></div>
+
+        <details class="resp-request-compose" id="respRequestCompose">
+          <summary>
+            <span aria-hidden="true">✉️</span>
+            <span><b>Envoyer à un agent</b><small>Demande, validation, information ou notification</small></span>
+            <i aria-hidden="true">›</i>
+          </summary>
+          <div class="resp-request-body">
+            <label>Rechercher un agent<input id="search" placeholder="Nom ou prénom" /></label>
+            <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
+            <form id="form" hidden>
+              <input type="hidden" id="agentId" />
+              <label>Type<select id="kind"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
+              <div class="mode-note" id="modeNote"></div>
+              <label>Titre<input id="title" maxlength="180" required placeholder="Ex. Lire la nouvelle procédure" /></label>
+              <label>Message<textarea id="body" maxlength="1500" placeholder="Écris ton message"></textarea></label>
+              <label id="priorityLabel">Priorité<select id="priority"><option value="50">Normale</option><option value="75">Importante</option><option value="95">Urgente</option></select></label>
+              <button type="submit" id="sendBtn">Envoyer dans STIP</button>
+              <div class="status" id="status"></div>
+            </form>
+          </div>
+        </details>
       </section>
 
       <section class="resp-team-pane resp-tab-pane" data-resp-pane="equipe" hidden aria-label="Équipe Responsable">
