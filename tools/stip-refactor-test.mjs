@@ -189,7 +189,7 @@ check(!homePlanningBlock.includes('planningMonthTitle()')&&!homePlanningBlock.in
 check(
   homePlanningBlock.indexOf('weekWidget()') >= 0 &&
   homePlanningBlock.indexOf('planningCalendarOverview()') > homePlanningBlock.indexOf('weekWidget()') &&
-  homePlanningBlock.indexOf('fixedShiftLegend()') > homePlanningBlock.indexOf('planningCalendarOverview()'),
+  homePlanningBlock.indexOf('hc-planning-legend-separator') > homePlanningBlock.indexOf('planningCalendarOverview()'),
   'La hiérarchie validée doit rester : semaine, mois, puis légende.'
 );
 check(/function weekWidget\(\)[\s\S]{0,500}weekDaysLandscape/.test(home),'Le bloc piloté par le calendrier doit conserver la vue complète de la semaine.');
