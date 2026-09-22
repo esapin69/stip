@@ -53,7 +53,13 @@
     }).join("");
     const intel = window.STIPFieldIntel,
       alerts = (org.advice || [])
-        .filter((x) => x.status === "below_reference" || Number(x.severity || 0) >= 2)
+        .filter((x) =>
+          x.status === "below_reference" ||
+          x.status === "opportunity" ||
+          Number(x.severity || 0) >= 2 ||
+          x.suggested_to_shift ||
+          x.destination_shift
+        )
         .slice(0, 3),
       terrain = alerts.map((x) => {
         const planned = Number(x.planned_count),
@@ -67,6 +73,7 @@
             planned_count: x.planned_count,
             target_count: x.target_count,
             gap,
+            suggested_to_shift: x.suggested_to_shift || x.destination_shift || "",
           },
           title: x.text || "Point effectif",
           body: x.text || "",
@@ -79,7 +86,7 @@
     return '<details class="td-section tdn-org" open><summary>Organisation · MAXI</summary><div class="td-content">'+
       '<div class="tdn-org-head"><span><b>'+Number(org.total_working || 0)+'</b><small>agents prévus</small></span><button type="button" data-assign-note>+ Note pour un agent</button></div>'+
       '<div class="tdn-shifts">'+shifts+'</div>'+
-      (terrain.length ? '<div class="tdn-alerts">'+terrain.map((x) => '<article><b>'+(x.level === "critical" ? "🛑" : "⚠️")+'</b><div><strong>'+esc(x.headline)+'</strong>'+(x.detail ? '<p>'+esc(x.detail)+'</p>' : '')+'</div></article>').join("")+'</div>' : '<p class="td-empty">✔ Rien ne coince côté organisation.</p>')+
+      (terrain.length ? '<div class="tdn-alerts">'+terrain.map((x) => '<article class="status-'+esc(x.level)+'"><b>'+(intel?.statusMeta?.(x.level)?.symbol || (x.level === "critical" ? "🛑" : x.level === "opportunity" ? "➕" : "⚠️"))+'</b><div><strong>'+esc(x.headline)+'</strong>'+(x.detail ? '<p>'+esc(x.detail)+'</p>' : '')+(x.proposal ? '<small>'+esc(x.proposal)+'</small>' : '')+'</div></article>').join("")+'</div>' : '<p class="td-empty">✔ Rien ne coince côté organisation.</p>')+
       '</div></details>';
   }
   function render(data, day) {
