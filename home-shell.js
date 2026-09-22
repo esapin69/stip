@@ -21,7 +21,7 @@
     widgets: new Map(),
     externalActions: new Map(),
     actionFilter: "all",
-    actionPrefs: { tabs: [], moves: {}, dismissed: {} },
+    actionPrefs: { dismissed: {} },
     weekOffset: 0,
     weekFull: false,
     dayFocus: parisIso(),
@@ -425,20 +425,13 @@
   }
   function loadActionPrefs() {
     try {
-      const raw = JSON.parse(localStorage.getItem(actionPrefsKey()) || "{}"),
-        tabs = Array.isArray(raw.tabs)
-          ? raw.tabs
-              .filter((x) => x && typeof x.id === "string" && typeof x.label === "string")
-              .slice(0, 20)
-          : [];
+      const raw = JSON.parse(localStorage.getItem(actionPrefsKey()) || "{}");
       state.actionPrefs = {
-        tabs,
-        moves: raw.moves && typeof raw.moves === "object" ? raw.moves : {},
         dismissed:
           raw.dismissed && typeof raw.dismissed === "object" ? raw.dismissed : {},
       };
     } catch {
-      state.actionPrefs = { tabs: [], moves: {}, dismissed: {} };
+      state.actionPrefs = { dismissed: {} };
     }
   }
   function saveActionPrefs() {
@@ -454,7 +447,7 @@
     );
   }
   function displayNoteCategory(n = {}) {
-    return state.actionPrefs.moves[actionNoteKey(n)] || noteCategory(n);
+    return noteCategory(n);
   }
   function refreshActionCenterUi() {
     state.renderSig = "";
@@ -467,36 +460,6 @@
   }
   function dismissActionNote(n) {
     state.actionPrefs.dismissed[actionNoteKey(n)] = Date.now();
-    delete state.actionPrefs.moves[actionNoteKey(n)];
-    saveActionPrefs();
-    refreshActionCenterUi();
-  }
-  function moveActionNote(n, category) {
-    const key = actionNoteKey(n);
-    if (category && category !== noteCategory(n))
-      state.actionPrefs.moves[key] = category;
-    else delete state.actionPrefs.moves[key];
-    saveActionPrefs();
-    refreshActionCenterUi();
-  }
-  function addActionTab(label) {
-    label = String(label || "").trim().replace(/\s+/g, " ").slice(0, 24);
-    if (!label) return "";
-    const id =
-      "custom:" +
-      Date.now().toString(36) +
-      ":" +
-      Math.random().toString(36).slice(2, 7);
-    state.actionPrefs.tabs.push({ id, label });
-    saveActionPrefs();
-    return id;
-  }
-  function removeActionTab(id) {
-    state.actionPrefs.tabs = state.actionPrefs.tabs.filter((x) => x.id !== id);
-    Object.keys(state.actionPrefs.moves).forEach((k) => {
-      if (state.actionPrefs.moves[k] === id) state.actionPrefs.moves[k] = "other";
-    });
-    if (state.actionFilter === id) state.actionFilter = "all";
     saveActionPrefs();
     refreshActionCenterUi();
   }
@@ -1436,6 +1399,26 @@
       s += app("access", "Accès", "access", "access");
     return s || '<p class="hc-empty">Aucune application autorisée.</p>';
   }
+  function routeForHomeMode(mode = "planning") {
+    return (
+      {
+        planning: "home",
+        apps: "apps",
+        notifications: "notifications",
+        tableau: "fauteuils",
+      }[mode] || "home"
+    );
+  }
+  function homeModeForRoute(route = "home") {
+    return (
+      {
+        home: "planning",
+        apps: "apps",
+        notifications: "notifications",
+        fauteuils: "tableau",
+      }[String(route || "home")] || ""
+    );
+  }
   function homeModeNav() {
     const active = state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
@@ -1467,82 +1450,245 @@
   function actionCenterData(filter = state.actionFilter) {
     const ns = notifications(),
       cats = [
-        ["all", "Tout", false],
-        ["access", "Accès", false],
-        ["signatures", "Signatures", false],
-        ["reminders", "Rappels", false],
-        ["agenda", "Agenda", false],
-        ["other", "Autres", false],
-        ...state.actionPrefs.tabs.map((x) => [x.id, x.label, true]),
+        ["all", "Tout"],
+        ["access", "Accès"],
+        ["signatures", "Signatures"],
+        ["reminders", "Rappels"],
+        ["agenda", "Agenda"],
+        ["other", "Autres"],
       ],
       counts = Object.fromEntries(
         cats.map(([k]) => [
           k,
-          k === "all"
-            ? ns.length
-            : ns.filter((n) => displayNoteCategory(n) === k).length,
+          k === "all" ? ns.length : ns.filter((n) => noteCategory(n) === k).length,
         ]),
       ),
-      shown =
-        filter === "all"
-          ? ns
-          : ns.filter((n) => displayNoteCategory(n) === filter);
+      shown = filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
     return { ns, cats, counts, shown };
+  }
+  function noteIsNetworkError(n = {}) {
+    const s = `${n.title || ""} ${n.body || ""} ${n.technical_error || ""}`.toLowerCase();
+    return !!n.retryable || /failed to fetch|networkerror|network error|load failed|indisponible/.test(s);
+  }
+  function friendlyNoteBody(n = {}) {
+    if (noteIsNetworkError(n)) {
+      if (noteCategory(n) === "access")
+        return "STIP n’a pas pu vérifier les accès. Vous pouvez relancer le contrôle.";
+      return "STIP n’a pas réussi à récupérer cette information. Vous pouvez réessayer.";
+    }
+    return String(n.body || n.summary || n.description || "").trim();
+  }
+  function noteTimeValue(n = {}) {
+    return (
+      n.created_at ||
+      n.occurred_at ||
+      n.createdAt ||
+      n.sent_at ||
+      n.date ||
+      n.updated_at ||
+      ""
+    );
+  }
+  function formatNotificationTime(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Paris",
+      }).format(d);
+    } catch {
+      return d.toLocaleString("fr-FR");
+    }
+  }
+  function sinceNotification(n = {}) {
+    const value = noteTimeValue(n);
+    if (!value) return "Date non fournie";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return formatNotificationTime(value);
+    const ms = Date.now() - d.getTime();
+    const abs = Math.max(0, ms);
+    let rel = "";
+    if (abs < 60000) rel = "À l’instant";
+    else if (abs < 3600000) rel = `Depuis ${Math.floor(abs / 60000)} min`;
+    else if (abs < 86400000) {
+      const h = Math.floor(abs / 3600000),
+        m = Math.floor((abs % 3600000) / 60000);
+      rel = `Depuis ${h} h${m ? ` ${m} min` : ""}`;
+    } else {
+      const days = Math.floor(abs / 86400000);
+      rel = `Depuis ${days} jour${days > 1 ? "s" : ""}`;
+    }
+    return `${rel} · ${formatNotificationTime(value)}`;
+  }
+  function noteStatus(n = {}) {
+    if (noteIsNetworkError(n)) return "Indisponible";
+    const raw = String(n.status || n.statut || "").toLowerCase();
+    if (!raw || /pending|waiting|open|todo|à traiter|a traiter/.test(raw))
+      return "À traiter";
+    if (/done|resolved|complete|trait|valid/.test(raw)) return "Résolu";
+    if (/reject|refus|cancel|annul/.test(raw)) return "Clos";
+    if (/error|erreur|fail/.test(raw)) return "Erreur";
+    return cap(raw.replace(/[_-]+/g, " "));
+  }
+  function noteReason(n = {}) {
+    const cat = noteCategory(n);
+    if (noteIsNetworkError(n) && cat === "access")
+      return "Le contrôle automatique des accès n’a pas obtenu de réponse. Cette notification sert à vous signaler que la vérification n’a pas abouti.";
+    if (n.source === "admin-access")
+      return "Une demande ou un contrôle d’accès nécessite une décision ou une vérification.";
+    if (n.action_id)
+      return "Une action STIP est encore en attente et nécessite votre intervention.";
+    if (cat === "signatures")
+      return "Une signature attendue n’est pas encore finalisée.";
+    if (cat === "reminders")
+      return "Un rappel est arrivé à échéance ou demande votre attention.";
+    if (cat === "agenda")
+      return "Un élément lié au planning ou à l’agenda nécessite votre attention.";
+    if (cat === "access")
+      return "Un élément lié aux accès STIP nécessite votre attention.";
+    return "Cette information a été placée dans la Cloche STIP parce qu’elle demande votre attention.";
+  }
+  function noteSubject(n = {}) {
+    const cat = noteCategory(n);
+    if (n.request_id) return "Demande d’accès";
+    if (n.security_index != null) return "Contrôle d’accès";
+    return (
+      {
+        access: "Accès STIP",
+        signatures: "Signature",
+        reminders: "Rappel",
+        agenda: "Planning / agenda",
+        other: "Information STIP",
+      }[cat] || "Information STIP"
+    );
+  }
+  function noteParty(n = {}) {
+    const direct =
+      n.recipient_name ||
+      n.assignee_name ||
+      n.target_name ||
+      n.contact_name ||
+      n.person_name ||
+      "";
+    if (String(direct).trim()) return String(direct).trim();
+    const body = String(n.body || "");
+    const m = body.match(/\bà\s+([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+){1,2})(?:[.,]|$)/);
+    return m?.[1]?.trim() || "";
+  }
+  function noteCanManage(n = {}) {
+    return !!((n?.source && n.source !== "stip") || n?.action_id);
+  }
+  function notePrimaryLabel(n = {}) {
+    if (noteIsNetworkError(n) || n.retryable) return "Réessayer";
+    if (n.source === "admin-access" && (n.request_id || n.security_index != null))
+      return "Prendre en charge";
+    if (n.action_id) return "Ouvrir la demande";
+    return "Gérer";
+  }
+  function noteEventRows(n = {}) {
+    const rows = [],
+      add = (title, body = "", at = "") => {
+        const key = `${title}|${body}|${at}`;
+        if (!rows.some((x) => x.key === key))
+          rows.push({ key, title, body, at });
+      },
+      raw = [
+        ...(Array.isArray(n.timeline) ? n.timeline : []),
+        ...(Array.isArray(n.history) ? n.history : []),
+        ...(Array.isArray(n.events) ? n.events : []),
+      ];
+    raw.forEach((x) => {
+      if (typeof x === "string") add(x);
+      else if (x && typeof x === "object")
+        add(
+          x.title || x.label || x.action || x.status || "Mise à jour",
+          x.body || x.message || x.detail || "",
+          x.created_at || x.occurred_at || x.date || x.at || "",
+        );
+    });
+    const created = n.created_at || n.occurred_at || n.createdAt || n.sent_at || "";
+    const updated = n.updated_at || n.updatedAt || "";
+    if (created) add("Notification créée", "", created);
+    if (updated && String(updated) !== String(created))
+      add("Dernière mise à jour", "", updated);
+    if (!rows.length) add("État actuel", noteStatus(n));
+    return rows.slice(0, 12);
+  }
+  function noteMessageRows(n = {}) {
+    const raw = [
+      ...(Array.isArray(n.messages) ? n.messages : []),
+      ...(Array.isArray(n.communications) ? n.communications : []),
+      ...(Array.isArray(n.exchanges) ? n.exchanges : []),
+    ];
+    if (typeof n.communication === "string" && n.communication.trim())
+      raw.push(n.communication);
+    return raw
+      .map((x) => {
+        if (typeof x === "string") return { who: "", text: x, at: "" };
+        if (!x || typeof x !== "object") return null;
+        return {
+          who: x.author || x.sender || x.from || x.name || "",
+          text: x.body || x.message || x.text || x.content || "",
+          at: x.created_at || x.sent_at || x.date || x.at || "",
+        };
+      })
+      .filter((x) => x && x.text)
+      .slice(0, 12);
   }
   function actionCenterMarkup(filter = state.actionFilter, inline = false) {
     const { ns, cats, counts, shown } = actionCenterData(filter),
-      visibleCats = cats.filter(([k, , manual]) => manual || k === "all" || counts[k] > 0),
-      filterBar =
-        '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">' +
-        visibleCats
-          .map(([k, l, manual]) => {
-            const tab =
-              '<button type="button" role="tab" aria-selected="' +
-              (filter === k) +
-              '" data-action-filter="' +
-              esc(k) +
-              '">' +
-              esc(l) +
-              (counts[k] ? ' <span>' + counts[k] + "</span>" : "") +
-              "</button>";
-            return manual
-              ? '<span class="hc-action-filter-custom">' +
-                  tab +
-                  '<button type="button" class="hc-action-filter-close" data-action-tab-delete="' +
-                  esc(k) +
-                  '" aria-label="Supprimer l’onglet ' +
-                  esc(l) +
-                  '">×</button></span>'
-              : tab;
-          })
-          .join("") +
-        '<button type="button" class="hc-action-filter-add" data-action-tab-add aria-label="Ajouter un onglet">＋</button></div>';
-    const head = inline
-      ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
-      : "";
-    if (!ns.length) return state.actionPrefs.tabs.length ? head + filterBar : head;
+      visibleCats = cats.filter(([k]) => k === "all" || counts[k] > 0),
+      filterBar = ns.length
+        ? '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">' +
+          visibleCats
+            .map(
+              ([k, l]) =>
+                '<button type="button" role="tab" aria-selected="' +
+                (filter === k) +
+                '" data-action-filter="' +
+                esc(k) +
+                '">' +
+                esc(l) +
+                (counts[k] ? ' <span>' + counts[k] + "</span>" : "") +
+                "</button>",
+            )
+            .join("") +
+          "</div>"
+        : "",
+      head = inline
+        ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
+        : "";
+    if (!ns.length) return head;
     const cards = shown.length
       ? '<div class="hc-panel-list">' +
         shown
           .map((n, i) => {
-            const cat = displayNoteCategory(n),
-              catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres";
-            return '<div class="hc-note-swipe" data-note-index="' +
+            const cat = noteCategory(n),
+              catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
+              body = friendlyNoteBody(n);
+            return (
+              '<div class="hc-note-swipe" data-note-index="' +
               i +
-              '"><div class="hc-note-swipe-bg hc-note-delete"><span>✕</span><strong>Supprimer</strong></div><div class="hc-note-swipe-bg hc-note-move"><span>↔</span><strong>Déplacer</strong></div><button type="button" class="hs-note hc-note-card" data-note-open><small>' +
+              '"><div class="hc-note-swipe-bg hc-note-delete"><span>✕</span><strong>Supprimer</strong></div><div class="hc-note-swipe-bg hc-note-action"><span>✓</span><strong>Traiter</strong></div><button type="button" class="hs-note hc-note-card" data-note-open><small>' +
               esc(catLabel) +
               "</small><strong>" +
-              esc(n.title) +
+              esc(n.title || "Notification") +
               "</strong>" +
-              (n.body ? "<p>" + esc(n.body) + "</p>" : "") +
-              "</button></div>";
+              (body ? "<p>" + esc(body) + "</p>" : "") +
+              "</button></div>"
+            );
           })
           .join("") +
         "</div>"
-      : '<div class="hc-empty">Rien à traiter dans cet onglet.</div>';
+      : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>';
     return head + filterBar + cards;
   }
-
   function bigConfirm({ title, body = "", confirmLabel = "Confirmer" } = {}) {
     return new Promise((resolve) => {
       const wrap = document.createElement("div");
@@ -1567,82 +1713,62 @@
       });
     });
   }
-
-  function openActionTabSheet(note = null) {
-    const { cats } = actionCenterData(),
-      wrap = document.createElement("div");
-    wrap.className = "hc-action-sheet-backdrop";
-    wrap.innerHTML =
-      '<section class="hc-action-sheet"><header><div><small>ORGANISER</small><h3>' +
-      (note ? "Déplacer la notification" : "Ajouter un onglet") +
-      '</h3></div><button type="button" data-sheet-close>×</button></header>' +
-      (note
-        ? '<div class="hc-action-sheet-tabs">' +
-          cats
-            .filter(([k]) => k !== "all")
-            .map(
-              ([k, l]) =>
-                '<button type="button" data-move-category="' +
-                esc(k) +
-                '"><span>' +
-                esc(l) +
-                "</span><b>›</b></button>",
-            )
-            .join("") +
-          "</div>"
-        : "") +
-      '<form class="hc-action-tab-create"><label>Nouvel onglet<input name="label" maxlength="24" placeholder="Nom de l’onglet" autocomplete="off"></label><button type="submit">＋ Ajouter</button></form></section>';
-    document.body.appendChild(wrap);
-    const close = () => wrap.remove();
-    wrap.querySelector("[data-sheet-close]").onclick = close;
-    wrap.addEventListener("click", (e) => {
-      if (e.target === wrap) close();
-    });
-    wrap.querySelectorAll("[data-move-category]").forEach(
-      (b) =>
-        (b.onclick = () => {
-          if (note) moveActionNote(note, b.dataset.moveCategory);
-          close();
-        }),
-    );
-    wrap.querySelector("form").onsubmit = (e) => {
-      e.preventDefault();
-      const label = new FormData(e.currentTarget).get("label"),
-        id = addActionTab(label);
-      if (!id) return;
-      if (note) moveActionNote(note, id);
-      else {
-        state.actionFilter = id;
-        refreshActionCenterUi();
-      }
-      close();
-    };
-    setTimeout(() => wrap.querySelector("input")?.focus(), 30);
-  }
-
-  function openNotificationDetail(n) {
+  function openNotificationDetail(n, options = {}) {
     document.getElementById("hcNotificationDetail")?.remove();
-    const cat = displayNoteCategory(n),
+    const cat = noteCategory(n),
       { cats } = actionCenterData(),
       catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
-      manageable = (n?.source && n.source !== "stip") || n?.action_id;
+      manageable = noteCanManage(n),
+      body = friendlyNoteBody(n),
+      status = noteStatus(n),
+      since = sinceNotification(n),
+      subject = noteSubject(n),
+      party = noteParty(n) || "Non précisé dans la notification",
+      timeline = noteEventRows(n),
+      messages = noteMessageRows(n),
+      technical = String(n.technical_error || (noteIsNetworkError(n) ? n.body || "" : "")).trim();
+    const timelineHtml = timeline
+        .map(
+          (x) =>
+            `<li><span></span><div><strong>${esc(x.title)}</strong>${x.body ? `<p>${esc(x.body)}</p>` : ""}${x.at ? `<small>${esc(formatNotificationTime(x.at))}</small>` : ""}</div></li>`,
+        )
+        .join(""),
+      messagesHtml = messages.length
+        ? messages
+            .map(
+              (x) =>
+                `<article><div><strong>${esc(x.who || "Échange")}</strong>${x.at ? `<small>${esc(formatNotificationTime(x.at))}</small>` : ""}</div><p>${esc(x.text)}</p></article>`,
+            )
+            .join("")
+        : '<p class="hc-detail-empty">Aucun échange rattaché à cette notification.</p>';
     const page = document.createElement("section");
     page.id = "hcNotificationDetail";
     page.className = "hc-notification-detail";
-    page.innerHTML =
-      '<header><button type="button" data-detail-close aria-label="Retour">‹</button><div><small>NOTIFICATION</small><strong>' +
-      esc(catLabel) +
-      '</strong></div><span></span></header><main><span class="hc-detail-category">' +
-      esc(catLabel) +
-      "</span><h2>" +
-      esc(n.title || "Notification") +
-      "</h2>" +
-      (n.body ? "<p>" + esc(n.body) + "</p>" : "") +
-      '<div class="hc-detail-actions">' +
-      (manageable
-        ? '<button type="button" class="primary" data-detail-manage>Gérer cette notification</button>'
-        : "") +
-      '<button type="button" data-detail-move>Déplacer</button><button type="button" class="danger" data-detail-delete>Supprimer</button></div></main>';
+    page.innerHTML = `<header><button type="button" data-detail-close aria-label="Retour">‹</button><div><small>CLOCHE STIP</small><strong>${esc(catLabel)}</strong></div><span></span></header><main>
+      <section class="hc-detail-hero">
+        <div class="hc-detail-pills"><span class="hc-detail-category">${esc(catLabel)}</span><span class="hc-detail-status">${esc(status)}</span></div>
+        <h2>${esc(n.title || "Notification")}</h2>
+        ${body ? `<p>${esc(body)}</p>` : ""}
+      </section>
+      <section class="hc-detail-facts" aria-label="Résumé de la notification">
+        <article><small>ÉTAT ACTUEL</small><strong>${esc(status)}</strong></article>
+        <article><small>DEPUIS</small><strong>${esc(since)}</strong></article>
+        <article><small>CONCERNANT</small><strong>${esc(subject)}</strong></article>
+        <article><small>AVEC QUI</small><strong>${esc(party)}</strong></article>
+      </section>
+      <section class="hc-detail-section"><small>POURQUOI</small><h3>Pourquoi cette notification ?</h3><p>${esc(noteReason(n))}</p></section>
+      <section class="hc-detail-section"><small>SUIVI</small><h3>Historique</h3><ol class="hc-detail-timeline">${timelineHtml}</ol></section>
+      <section class="hc-detail-section"><small>COMMUNICATION</small><h3>Échanges liés</h3><div class="hc-detail-messages">${messagesHtml}</div></section>
+      ${technical ? `<details class="hc-detail-technical"><summary>Détails techniques</summary><code>${esc(technical)}</code></details>` : ""}
+      <div class="hc-detail-actions">
+        ${
+          manageable
+            ? `<button type="button" class="primary" data-detail-manage>${esc(notePrimaryLabel(n))}</button>`
+            : '<button type="button" class="primary" data-detail-done>Marquer comme traité</button>'
+        }
+        <button type="button" class="danger" data-detail-delete>Supprimer</button>
+      </div>
+    </main>`;
     document.body.appendChild(page);
     const close = () => page.remove();
     page.querySelector("[data-detail-close]").onclick = close;
@@ -1657,10 +1783,10 @@
         openAction(n.action_id);
       }
     });
-    page.querySelector("[data-detail-move]").onclick = () => {
+    page.querySelector("[data-detail-done]")?.addEventListener("click", () => {
       close();
-      openActionTabSheet(n);
-    };
+      dismissActionNote(n);
+    });
     page.querySelector("[data-detail-delete]").onclick = async () => {
       const ok = await bigConfirm({
         title: "Supprimer cette notification ?",
@@ -1671,8 +1797,13 @@
       close();
       dismissActionNote(n);
     };
+    if (options.focusAction)
+      requestAnimationFrame(() =>
+        page
+          .querySelector("[data-detail-manage],[data-detail-done]")
+          ?.focus({ preventScroll: false }),
+      );
   }
-
   function bindNoteSwipe(wrap, note) {
     const card = wrap.querySelector(".hc-note-card");
     if (!card) return;
@@ -1684,7 +1815,7 @@
       swiped = false;
     const reset = () => {
       card.style.transform = "";
-      wrap.classList.remove("is-delete", "is-move", "is-dragging");
+      wrap.classList.remove("is-delete", "is-action", "is-dragging");
     };
     card.addEventListener("pointerdown", (e) => {
       if (e.pointerType === "mouse" && e.button !== 0) return;
@@ -1717,7 +1848,7 @@
       swiped = Math.abs(dx) > 12;
       card.style.transform = "translate3d(" + dx + "px,0,0)";
       wrap.classList.toggle("is-delete", dx > 0);
-      wrap.classList.toggle("is-move", dx < 0);
+      wrap.classList.toggle("is-action", dx < 0);
     });
     const finish = async () => {
       if (!active && !horizontal) return;
@@ -1731,7 +1862,7 @@
           confirmLabel: "Confirmer",
         });
         if (ok) dismissActionNote(note);
-      } else if (finalDx < -72) openActionTabSheet(note);
+      } else if (finalDx < -72) openNotificationDetail(note, { focusAction: true });
       setTimeout(() => (swiped = false), 180);
     };
     card.addEventListener("pointerup", finish);
@@ -1751,7 +1882,7 @@
   }
   function bindActionCenter(scope, filter = state.actionFilter, inline = false) {
     if (!scope) return;
-    const { shown, cats } = actionCenterData(filter);
+    const { shown } = actionCenterData(filter);
     scope.querySelectorAll("[data-action-filter]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -1759,24 +1890,6 @@
           state.actionFilter = next;
           if (inline) renderProfileActions(next);
           else renderActionCenter(next);
-        }),
-    );
-    scope.querySelector("[data-action-tab-add]")?.addEventListener("click", () =>
-      openActionTabSheet(),
-    );
-    scope.querySelectorAll("[data-action-tab-delete]").forEach(
-      (b) =>
-        (b.onclick = async (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const id = b.dataset.actionTabDelete,
-            label = cats.find((x) => x[0] === id)?.[1] || "cet onglet",
-            ok = await bigConfirm({
-              title: "Supprimer l’onglet « " + label + " » ?",
-              body: "Les notifications qu’il contient retourneront dans Autres.",
-              confirmLabel: "Confirmer",
-            });
-          if (ok) removeActionTab(id);
         }),
     );
     scope.querySelectorAll("[data-note-index]").forEach((wrap) => {
@@ -1860,17 +1973,12 @@
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
-          const next = b.dataset.homeMode || "planning";
-          if (next === "tableau") {
-            state.tableauFocus = false;
-            if (window.STIPRouter?.set) {
-              window.STIPRouter.set("fauteuils");
-              return;
-            }
-          }
+          const next = b.dataset.homeMode || "planning",
+            targetRoute = routeForHomeMode(next);
           state.tableauFocus = false;
-          if ((window.STIPRouter?.get?.() || "home") === "fauteuils") {
-            window.STIPRouter?.set?.("home", { replace: true, keepScroll: true });
+          if (window.STIPRouter?.set) {
+            window.STIPRouter.set(targetRoute);
+            return;
           }
           if (next === state.homeMode) return;
           state.homeMode = next;
@@ -2125,6 +2233,8 @@
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
     loadActionPrefs();
+    const routedMode = homeModeForRoute(window.STIPRouter?.get?.() || "home");
+    if (routedMode) state.homeMode = routedMode;
     try {
       const quick = new URLSearchParams(location.search).get("quick") || "",
         requested = sessionStorage.getItem("stip_home_mode_once");
@@ -2162,7 +2272,7 @@
     stopPlanningLoading();
     state.home = { actions: [], notifications: [] };
     state.externalActions.clear();
-    state.actionPrefs = { tabs: [], moves: {}, dismissed: {} };
+    state.actionPrefs = { dismissed: {} };
     state.actionFilter = "all";
     state.weekOffset = 0;
     state.weekFull = false;
@@ -2240,25 +2350,18 @@
     render();
   });
   window.addEventListener("stip:route", (event) => {
-    const route = String(event?.detail?.route || "home");
-    if (route === "fauteuils") {
-      if (!has("messages")) {
-        window.STIPRouter?.set?.("home", { replace: true });
-        return;
-      }
-      if (state.homeMode !== "tableau") {
-        state.homeMode = "tableau";
-        state.renderSig = "";
-        render();
-      }
+    const route = String(event?.detail?.route || "home"),
+      next = homeModeForRoute(route);
+    if (!next) return;
+    if (next === "tableau" && !has("messages")) {
+      window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
-    if (route === "home" && state.homeMode === "tableau") {
-      state.homeMode = "planning";
-      state.tableauFocus = false;
-      state.renderSig = "";
-      render();
-    }
+    state.tableauFocus = false;
+    if (state.homeMode === next) return;
+    state.homeMode = next;
+    state.renderSig = "";
+    render();
   });
   window.addEventListener("stip:home-root", () => {
     state.homeMode = "planning";
