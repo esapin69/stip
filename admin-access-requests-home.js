@@ -152,7 +152,9 @@
             (b.onclick = () => openSecurity(Number(b.dataset.aarSecurity))),
         );
     } catch (e) {
-      body.innerHTML = `<div class="aar-error">${esc(e.message)}</div>`;
+      body.innerHTML =
+        '<div class="aar-error"><strong>Vérification impossible</strong><p>STIP n’a pas pu joindre le service des accès.</p><button type="button" data-aar-retry>Réessayer</button></div>';
+      body.querySelector("[data-aar-retry]")?.addEventListener("click", openList);
     }
   }
   function evidenceMarkup(ev = {}) {
@@ -316,6 +318,10 @@
   window.addEventListener("stip:action-center-open", async (e) => {
     const detail = e.detail || {};
     if (detail.source !== "admin-access" || !isAdmin()) return;
+    if (detail.retryable) {
+      openList();
+      return;
+    }
     try {
       if (!data) data = await api("list");
       renderCard();
