@@ -116,7 +116,14 @@ check(!quick.includes('data-qs="profile"')&&!quickUniversal.includes('data-u="pr
 check(!existsSync(join(root,'images/icone_app/quick-card.svg'))&&!existsSync(join(root,'images/icone_app/quick-home.svg'))&&!existsSync(join(root,'images/icone_app/home-planning.webp')),'Un ancien visuel de navigation supprimé existe encore.');
 check(existsSync(join(root,'images/icone_app/home-home.webp'))&&existsSync(join(root,'images/icone_app/home-apps.webp')),'Les visuels Mon profil/Applications validés sont absents.');
 check(!quick.includes('Suggestions selon votre usage')&&!quickUniversal.includes('Suggestions selon votre usage'),'Les suggestions automatiques de favoris sont revenues.');
-check(quick.includes('Parcourir les applications')&&quick.includes('+ Ajouter')&&quick.includes('Construisez votre STIP'),'Les états du panneau Applications ne suivent plus les libellés validés.');
+check(
+  quick.includes('Parcourir les applications') &&
+  quick.includes('Construisez votre STIP') &&
+  quick.includes('aria-label="Ajouter une application"') &&
+  quick.includes('stip-store-browse-plus') &&
+  quick.includes('<strong>Ajouter</strong>'),
+  'Les états du panneau Applications ne suivent plus les libellés validés.'
+);
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
 check(accessManage.includes('sortPeople'),'La liste Accès n’est plus triée alphabétiquement côté interface.');
 check(['stip-time-surface','stip-person-surface','stip-action-surface','stip-catalog-surface','stip-cockpit-surface'].every(key=>patterns.includes(key)),'Une famille visuelle commune STIP a disparu.');
@@ -163,7 +170,7 @@ check(!read('responsable.html').includes('assistant-presence.js'),'Responsable c
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
 check(
-  home.includes('const showProfile = state.homeMode === "planning"') &&
+  /\bshowProfile\s*=\s*state\.homeMode\s*===\s*"planning"/.test(home) &&
   home.includes('markup = `${homeModeNav()}${showProfile ? profile() : ""}'),
   'La carte identité doit rester sous les accès rapides et uniquement dans Mon profil.'
 );
@@ -265,7 +272,7 @@ check(
   espritHtml.includes('id="teamWeekControls"') &&
   espritHtml.includes('id="teamDays"') &&
   espritHtml.includes('stip-time-days') &&
-  /class="[^"]*\\bteam-month-zone\\b[^"]*"/.test(espritHtml) &&
+  /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) &&
   espritHtml.includes('id="teamDateJumpPanel"'),
   'Esprit d’équipe a perdu sa hiérarchie temporelle Semaine active / Jour / Mois.'
 );
