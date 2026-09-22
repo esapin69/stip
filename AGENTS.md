@@ -85,3 +85,12 @@ Current non-negotiable invariants:
 - Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
 - Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
 - Keep `team-chat.js`, `team-chat.css`, `home-shell.js` and the index asset versions coherent. Mixed versions must self-heal rather than rendering a degraded UI.
+
+## 13. Legend completeness contract
+Any STIP surface that contains a legend must explain every informational icon, badge, color marker, or semantic symbol visible on that surface, including symbols that appear in its week, month, digest, or detail sections.
+
+- Do not leave a semantic symbol visible without a matching legend entry.
+- Prefer deriving legend entries from the data currently rendered so the legend cannot drift from the page.
+- If the same concept appears in multiple sections, explain it once in the page legend.
+- Navigation and action controls that are already self-explanatory or labelled (back, refresh, chevrons, phone, calendar action buttons) are controls, not legend entries.
+- Keep complete legends compact; completeness must not turn them into oversized one-column blocks.

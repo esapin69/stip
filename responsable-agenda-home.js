@@ -282,6 +282,33 @@
     return parts.join(" · ") || "Aucune date particulière cette semaine";
   }
 
+  function pageLegendHtml() {
+    const today = parisIso(),
+      week = new Set(weekDays().map((x) => x.iso)),
+      month = state.monthKey || today.slice(0, 7),
+      upcoming = sortedItems().filter((x) => x.date >= today).slice(0, 4),
+      visible = [
+        ...upcoming,
+        ...state.items.filter((x) => week.has(x.date) || x.date.startsWith(month)),
+      ],
+      categories = new Set(visible.map((x) => categoryClass(x.category))),
+      items = [];
+
+    for (const category of ["medical", "intern", "training", "other"]) {
+      if (!categories.has(category)) continue;
+      items.push(
+        `<span><i>${esc(categoryIcon(category))}</i><b>${esc(categoryLabel(category))}</b></span>`,
+      );
+    }
+    if (weekDays().some(({ iso }) => impactFor(iso)?.level)) {
+      items.push("<span><i>⚠️</i><b>Point à surveiller</b></span>");
+    }
+    return (
+      items.join("") ||
+      '<span><i>○</i><b>Aucun repère affiché</b></span>'
+    );
+  }
+
   function impactFor(date) {
     return state.impactByDate[date] || null;
   }
@@ -348,6 +375,7 @@
       }),
     );
     renderWeek();
+    renderMonth();
   }
 
   function syncProControls() {
@@ -418,7 +446,7 @@
       );
     }
 
-    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid">${cells.join("")}</div></section><div class="rr-period-separator rr-legend-separator"><span>LÉGENDE DU MOIS</span></div><section class="rr-legend"><span><i>🩺</i><b>Visite médicale</b></span><span><i>👶</i><b>Stagiaire</b></span><span><i>🎓</i><b>Formation</b></span></section>`;
+    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid">${cells.join("")}</div></section><div class="rr-period-separator rr-legend-separator"><span>LÉGENDE</span></div><section class="rr-legend" aria-label="Légende des repères de la page">${pageLegendHtml()}</section>`;
   }
 
   function renderSelectedDay() {

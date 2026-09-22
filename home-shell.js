@@ -1306,8 +1306,19 @@
       });
     }
 
+    const visibleWeekHasPending = navigationWeek().some((day) => {
+      const shift = calendarShiftForDate(day?.iso || "");
+      return !shift?.code || shift.code === "—";
+    });
+    if (visibleWeekHasPending) {
+      add(
+        "planning:pending",
+        '<span class="hc-fixed-shift-item hc-fixed-event-legend"><i class="hc-legend-symbol" aria-hidden="true">🚫</i><b>Planning non renseigné</b></span>',
+      );
+    }
+
     if (!items.length) return "";
-    return '<section class="hc-fixed-shift-legend" aria-label="Légende du mois"><div>' +
+    return '<section class="hc-fixed-shift-legend" aria-label="Légende des repères de la page"><div>' +
       items.join("") +
       "</div></section>";
   }
@@ -1966,7 +1977,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
