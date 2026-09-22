@@ -302,6 +302,14 @@
     textarea?.addEventListener("input", () => {
       state.draft = textarea.value;
       if (!textarea.value.trim()) state.draftKind = state.composeMode;
+      if (
+        state.composeMode === "spot" &&
+        state.selectedBuilding &&
+        state.selectedQuantity
+      ) {
+        state.selectedQuantity = inferWheelchairQuantity(textarea.value);
+        renderSearchShortcuts();
+      }
       autoGrow(textarea);
     });
     textarea?.addEventListener("focus", () => {
