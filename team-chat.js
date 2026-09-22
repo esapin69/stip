@@ -211,7 +211,6 @@
       '<div><small>FAUTEUILS</small><h2>Infos fauteuils</h2><p>Ce qui est disponible maintenant</p></div>' +
       '<div class="tb-inline-actions"><span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button></div>' +
       "</section>" +
-      '<section class="tb-building-pulse" data-building-pulse aria-label="Situation par hôpital"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -397,6 +396,12 @@
     });
 
     root.addEventListener("click", (event) => {
+      const modeToggle = event.target.closest?.("[data-mode-toggle]");
+      if (modeToggle) {
+        event.preventDefault();
+        setComposeMode(state.composeMode === "spot" ? "search" : "spot");
+        return;
+      }
       const mode = event.target.closest?.("[data-compose-mode]");
       if (mode) {
         event.preventDefault();
@@ -454,7 +459,6 @@
         activeLabel.hidden = active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
-      renderBuildingPulse();
       renderSearchShortcuts();
       renderComposerState();
       const manage = state.root.querySelector("[data-select]");
@@ -504,60 +508,6 @@
     return String(value || "").replace(/\s*·\s*$/, "").trim();
   }
 
-  function buildingPulse(data = state.data) {
-    const rows = {
-      neuro: { requests: new Set(), available: 0, last: "" },
-      cardio: { requests: new Set(), available: 0, last: "" },
-      hfme: { requests: new Set(), available: 0, last: "" },
-    };
-
-    for (const message of data?.messages || []) {
-      const wheelchair = message?.payload?.wheelchair;
-      if (!wheelchair || wheelchair.status !== "active") continue;
-      const key = buildingForMessage(message);
-      const row = rows[key];
-      if (!row) continue;
-
-      if (wheelchair.type === "search") {
-        row.requests.add(String(message.sender_agent_id || message.id || ""));
-      } else {
-        row.available += wheelchairStock(message).remaining;
-      }
-
-      if (!row.last || new Date(message.created_at) > new Date(row.last)) {
-        row.last = message.created_at;
-      }
-    }
-
-    return rows;
-  }
-
-  function renderBuildingPulse() {
-    const host = state.root?.querySelector("[data-building-pulse]");
-    if (!host) return;
-    const rows = buildingPulse();
-    const cards = [
-      ["neuro", "Neuro"],
-      ["cardio", "Cardio"],
-      ["hfme", "HFME"],
-    ];
-
-    host.innerHTML = cards.map(([key, label]) => {
-      const row = rows[key];
-      const requests = row?.requests?.size || 0;
-      const available = row?.available || 0;
-      return (
-        '<article class="tb-pulse-card' + (available ? " has-stock" : "") + (requests ? " has-search" : "") + '">' +
-          '<strong>' + esc(label) + "</strong>" +
-          '<div class="tb-pulse-counts">' +
-            '<span class="tb-pulse-stock"><b>🦽</b><em>' + available + "</em><small>dispo</small></span>" +
-            '<span class="tb-pulse-search"><b>🔎</b><em>' + requests + "</em><small>demande" + (requests > 1 ? "s" : "") + "</small></span>" +
-          "</div>" +
-          '<time>' + (row?.last ? "maj " + esc(fmtTime(row.last)) : "aucune info") + "</time>" +
-        "</article>"
-      );
-    }).join("");
-  }
 
   function inferWheelchairQuantity(text = "") {
     const body = String(text || "").trim();
@@ -608,17 +558,21 @@
 
     const searchMode = state.composeMode === "search";
     const selected = BUILDINGS.find((building) => building.key === state.selectedBuilding);
-    const modeLabel = searchMode ? "Je cherche 1" : "Donner l’info";
-    const modeIcon = searchMode ? "🔎" : "🦽";
+    const modeLabel = searchMode ? "Je cherche 1 fauteuil" : "J’ai vu / rangé des fauteuils";
+    const switchLabel = searchMode ? "Passer à : j’ai vu / rangé" : "Passer à : je cherche 1";
 
     host.innerHTML =
       '<div class="tb-shortcuts-full">' +
-        '<div class="tb-search-shortcuts-head"><strong>Action</strong></div>' +
-        '<div class="tb-compose-modes" role="group" aria-label="Que veux-tu faire ?">' +
-          '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Donner l’info</strong><small>prioritaire</small></button>' +
-          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Je cherche 1</strong></button>' +
-        "</div>" +
-        '<small class="tb-compose-hint">' + (searchMode ? "Choisis où tu cherches. C’est tout." : "Choisis le bâtiment. Ensuite : nombre puis endroit précis.") + "</small>" +
+        '<button type="button" class="tb-mode-toggle' + (searchMode ? " is-search" : " is-spot") + '" data-mode-toggle aria-label="' + esc(switchLabel) + '">' +
+          '<span class="tb-mode-toggle-icon" aria-hidden="true">' + (searchMode ? "🔎" : "🦽") + "</span>" +
+          '<span class="tb-mode-toggle-copy"><strong>' + esc(modeLabel) + '</strong><small>' + esc(switchLabel) + "</small></span>" +
+          '<span class="tb-mode-toggle-switch" aria-hidden="true"><i></i></span>' +
+        "</button>" +
+        '<small class="tb-compose-hint">' +
+          (searchMode
+            ? "Choisis l’hôpital : la demande est prête."
+            : "Choisis l’hôpital → nombre → endroit précis.") +
+        "</small>" +
         '<div class="tb-search-shortcuts-grid">' +
         BUILDINGS.map(
           (building) =>
@@ -635,11 +589,11 @@
         "</div>" +
       "</div>" +
       '<div class="tb-compose-summary" aria-live="polite"><span aria-hidden="true">' +
-        modeIcon +
+        (searchMode ? "🔎" : "🦽") +
         "</span><strong>" +
         esc(modeLabel) +
         "</strong><b>·</b><em>" +
-        esc(selected?.label || "Bâtiment à choisir") +
+        esc(selected?.label || "Hôpital à choisir") +
         "</em>" +
         (!searchMode && state.selectedQuantity
           ? "<b>·</b><em>" + esc(String(state.selectedQuantity)) + " fauteuil" + (state.selectedQuantity > 1 ? "s" : "") + "</em>"
@@ -885,7 +839,7 @@
 
     if (!messages.length) {
       feed.innerHTML =
-        '<section class="tb-empty-state"><strong>Aucun message pour l’instant</strong><p>Tu peux chercher un fauteuil ou signaler où il y en a un de disponible.</p></section>';
+        '<section class="tb-empty-state"><strong>Aucune info fauteuil pour l’instant</strong><p>Quand tu vois ou ranges des fauteuils, indique simplement où ils sont. Une demande reste possible si besoin.</p></section>';
       updateSelectionBar();
       return;
     }
