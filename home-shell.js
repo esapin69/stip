@@ -1997,16 +1997,17 @@
     const isTableau = state.homeMode === "tableau" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    const markup = isTableau
-      ? `<section class="hc-tableau-standalone" aria-label="Fauteuils">
+    let markup = `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    if (isTableau) {
+      markup = `<section class="hc-tableau-standalone" aria-label="Fauteuils">
           <header class="hc-tableau-standalone-head">
             <button type="button" class="hc-tableau-back" data-home-mode="planning" aria-label="Retour à l’accueil"><span aria-hidden="true">‹</span><strong>Accueil</strong></button>
             <div class="hc-tableau-standalone-title"><strong>Fauteuils</strong><small>Terrain</small></div>
             <button type="button" class="hc-profile-bell hc-tableau-bell" data-home-mode="notifications" aria-pressed="false" aria-label="Notifications${notifications().length + Number(window.STIPMessagesUnread || 0) ? ` : ${notifications().length + Number(window.STIPMessagesUnread || 0)} à traiter` : ""}"><span aria-hidden="true">🔔</span>${notifications().length + Number(window.STIPMessagesUnread || 0) ? `<b>${notifications().length + Number(window.STIPMessagesUnread || 0)}</b>` : ""}</button>
           </header>
           <section class="hc-tableau-standalone-body">${homeModeBody()}</section>
-        </section>`
-      : `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+        </section>`;
+    }
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
@@ -2416,6 +2417,10 @@
     render();
   });
   window.addEventListener("stip:home-root", () => {
+    if ((window.STIPRouter?.get?.() || "home") === "fauteuils") {
+      window.STIPRouter?.set?.("home", { replace: true, keepScroll: true });
+      return;
+    }
     state.homeMode = "planning";
     state.tableauFocus = false;
     state.renderSig = "";
