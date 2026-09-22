@@ -12,7 +12,8 @@
     };
   let data = null,
     loading = null,
-    lastFetch = 0;
+    lastFetch = 0,
+    loadError = "";
 
   const esc = (v) =>
     String(v ?? "").replace(
@@ -142,71 +143,84 @@
     return `<span class="hc-duty-chief-shift tone-${esc(tone)}" aria-label="${esc(shiftText(item))}"><i aria-hidden="true"></i><b>${esc(code)}</b></span>`;
   }
 
-  function shiftRange(item) {
-    const meta = SHIFT[baseCode(item?.code)];
-    if (!meta) return "";
-    return `${meta.start.replace(":", "h")} – ${meta.end.replace(":", "h")}`;
-  }
-
-  function itemMoment(item, now) {
+  function statusForToday(item, now) {
     if (isCurrent(item, now)) return "now";
-    const date = String(item?.date || "").slice(0, 10);
-    const startKey = nextStartKey(item);
-    const key = currentKey(now);
-    if (date === now.date && startKey && startKey > key) return "next";
-    if (date <= now.date) return "done";
-    return "next";
+    const start = nextStartKey(item),
+      current = currentKey(now);
+    return start && start > current ? "next" : "done";
   }
 
-  function momentLabel(moment) {
-    return moment === "now" ? "MAINTENANT" : moment === "done" ? "TERMINÉ" : "À VENIR";
+  function statusLabel(status) {
+    return status === "now"
+      ? "PRÉSENT MAINTENANT"
+      : status === "next"
+        ? "À VENIR"
+        : "TERMINÉ";
   }
 
-  function flatChiefCard(item, scope = "today", now = parisParts()) {
+  function callMarkup(item) {
     const a = item?.agents || {},
       phone = digits(a.telephone),
+      label = personName(a);
+    if (!phone)
+      return `<button class="hc-duty-chief-summary-call is-disabled" type="button" disabled aria-label="Numéro indisponible pour ${esc(label)}"><span aria-hidden="true">☎</span></button>`;
+    return `<button class="hc-duty-chief-summary-call" type="button" data-duty-chief-call="${esc(phone)}" data-duty-chief-call-name="${esc(label)}" aria-label="Appeler ${esc(label)}"><span aria-hidden="true">☎</span></button>`;
+  }
+
+  function flatCard(item, status) {
+    const a = item?.agents || {},
       key = String(a.source_key || ""),
-      label = personName(a),
-      moment = itemMoment(item, now),
-      code = baseCode(item?.code),
-      meta = SHIFT[code] || {},
-      nowCard = scope === "now";
-    return `<article class="hc-duty-chief-flat ${nowCard ? "is-now" : "is-today"} status-${esc(moment)}">
-      <button class="hc-duty-chief-flat-main" type="button" data-duty-chief-agent="${esc(key)}" ${key ? "" : "disabled"} aria-label="Voir le planning de ${esc(label)}">
-        ${nowCard ? '<span class="hc-duty-chief-icon" aria-hidden="true">🎨</span>' : shiftBadge(item)}
-        <span class="hc-duty-chief-copy">
-          <small class="hc-duty-chief-moment">${esc(momentLabel(moment))}</small>
+      label = personName(a);
+    return `<div class="hc-duty-chief-summary-shell team-chief-flat-card status-${esc(status)}">
+      <button type="button" class="hc-duty-chief-card ${status === "now" ? "is-present" : "is-next"}" data-duty-chief-agent="${esc(key)}" ${key ? "" : "disabled"} aria-label="Voir le planning de ${esc(label)}">
+        <span class="hc-duty-chief-icon" aria-hidden="true">🎨</span>
+        <span class="hc-duty-chief-summary">
+          <small>${esc(statusLabel(status))}</small>
           <strong>${esc(label)}</strong>
-          <em>${esc([code, meta.label, shiftRange(item)].filter(Boolean).join(" · "))}</em>
+          <em>${esc(shiftText(item))}</em>
         </span>
-        <i class="hc-duty-chief-row-chevron" aria-hidden="true">›</i>
+        <span class="hc-duty-chief-chevron" aria-hidden="true">›</span>
       </button>
-      ${phone ? `<button class="hc-duty-chief-call" type="button" data-duty-chief-call="${esc(phone)}" data-duty-chief-call-name="${esc(label)}" aria-label="Appeler ${esc(label)}"><span aria-hidden="true">☎</span></button>` : `<button class="hc-duty-chief-call is-disabled" type="button" disabled aria-label="Numéro indisponible pour ${esc(label)}"><span aria-hidden="true">☎</span></button>`}
-    </article>`;
+      ${callMarkup(item)}
+    </div>`;
   }
 
   function nowMarkup() {
-    if (!data) return '<div class="hc-duty-chief-loading">Actualisation du terrain…</div>';
+    if (loading && !data)
+      return '<div class="team-chief-state">Actualisation du terrain…</div>';
+    if (loadError && !data)
+      return `<div class="team-chief-state is-error">${esc(loadError)}</div>`;
+    if (!data) return "";
+
     const { current, next, now } = dutyState();
     if (current.length)
-      return `<div class="hc-duty-chief-now-list">${current.map((item) => flatChiefCard(item, "now", now)).join("")}</div>`;
+      return `<div class="team-chief-flat-list">${current
+        .map((item) => flatCard(item, "now"))
+        .join("")}</div>`;
 
     const nextText = next
-      ? `<span>Prochain : <b>${esc(personName(next.agents || {}))}</b> · ${esc(dayLabel(next.date, now.date))} · ${esc(shiftText(next))}</span>`
-      : "<span>Aucune présence chef planifiée dans les données disponibles.</span>";
-    return `<div class="hc-duty-chief-now-state"><strong>Aucun chef présent maintenant</strong>${nextText}</div>`;
+      ? `Prochain : ${personName(next.agents || {})} · ${dayLabel(next.date, now.date)} · ${shiftText(next)}`
+      : "Aucune présence chef planifiée trouvée.";
+    return `<div class="team-chief-state"><strong>Aucun chef présent maintenant</strong><span>${esc(nextText)}</span></div>`;
   }
 
   function todayMarkup() {
-    if (!data) return '<div class="hc-duty-chief-loading">Chargement des chefs du jour…</div>';
-    const { current, today, now } = dutyState();
-    const rows = today.filter((item) => !current.includes(item));
+    if (loading && !data)
+      return '<div class="team-chief-state">Chargement des chefs du jour…</div>';
+    if (loadError && !data) return "";
+    if (!data) return "";
+
+    const { current, today, now } = dutyState(),
+      currentSet = new Set(current),
+      rows = today.filter((item) => !currentSet.has(item));
     if (!rows.length) {
       if (current.length)
-        return '<div class="hc-duty-chief-empty-flat">Le ou les chefs actuellement sur le terrain sont affichés dans « Maintenant ».</div>';
-      return '<div class="hc-duty-chief-empty-flat">Aucun chef planifié aujourd’hui.</div>';
+        return '<div class="team-chief-state is-quiet">Le chef actuellement sur le terrain est affiché dans « Maintenant ».</div>';
+      return '<div class="team-chief-state is-quiet">Aucun autre chef planifié aujourd’hui.</div>';
     }
-    return `<div class="hc-duty-chief-today-list">${rows.map((item) => flatChiefCard(item, "today", now)).join("")}</div>`;
+    return `<div class="team-chief-flat-list">${rows
+      .map((item) => flatCard(item, statusForToday(item, now)))
+      .join("")}</div>`;
   }
 
   function closeCallChoice() {
@@ -269,8 +283,8 @@
     oldHome?.querySelector("[data-duty-chief-bubble]")?.remove();
     oldHome?.querySelector(".hc-duty-chief-host")?.remove();
 
-    const nowHost = document.querySelector("#teamDutyChiefNowHost");
-    const todayHost = document.querySelector("#teamDutyChiefTodayHost");
+    const nowHost = document.querySelector("#teamDutyChiefNowHost"),
+      todayHost = document.querySelector("#teamDutyChiefTodayHost");
     if (!nowHost && !todayHost) return;
 
     if (nowHost) {
@@ -430,6 +444,7 @@
   window.addEventListener("stip:session-ready", () => fetchDuty(true));
   window.addEventListener("stip:session-ended", () => {
     data = null;
+    loadError = "";
     lastFetch = 0;
     render();
   });
