@@ -1,3 +1,86 @@
+
+/* 2026-09-22 — Reconstruction non destructive de la page Responsable.
+   La nouvelle zone reste volontairement vierge. L'ancienne page est conservée
+   intégralement plus bas, séparée visuellement, tant que la refonte n'est pas validée. */
+.resp-rebuild {
+  width: 100%;
+}
+
+.resp-new-page {
+  width: 100%;
+  max-width: 700px;
+  min-height: calc(62svh - 64px);
+  margin: 0 auto;
+  padding: 26px clamp(14px, 4vw, 22px) 32px;
+}
+
+.resp-new-page-head {
+  margin: 4px 0 0;
+}
+
+.resp-new-page-head .kicker {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--stip-accent);
+  font-size: 0.65rem;
+  font-weight: 950;
+  letter-spacing: 0.13em;
+}
+
+.resp-new-page-head h1 {
+  margin: 0;
+  color: var(--stip-ink);
+  font-size: 2rem;
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.resp-legacy-separator {
+  width: min(100% - 28px, 700px);
+  margin: 0 auto;
+  padding: 42px 0 34px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+  color: var(--stip-muted);
+}
+
+.resp-legacy-separator::before,
+.resp-legacy-separator::after {
+  content: "";
+  height: 1px;
+  background: var(--stip-line);
+}
+
+.resp-legacy-separator span {
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+}
+
+.resp-legacy-page {
+  width: 100%;
+}
+
+.resp-home-legacy {
+  padding-top: 0;
+}
+
+@media (min-width: 700px) {
+  .resp-new-page {
+    max-width: 1040px;
+    min-height: calc(54svh - 64px);
+    padding: 34px 30px 42px;
+  }
+
+  .resp-legacy-separator {
+    width: min(100% - 60px, 1040px);
+    padding: 56px 0 42px;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
