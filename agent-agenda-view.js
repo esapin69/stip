@@ -62,11 +62,11 @@
     "—":{label:"Aucun poste",time:"",icon:"",family:"other"}
   };
   const SPECIAL={
-    M0130:{base:"M",time:"3h45 · horaire adapté"},
-    M0131:{base:"M",time:"7h30 · horaire adapté"},
-    M0177:{base:"M",time:"7h30 · horaire adapté"},
-    J0464:{base:"J",time:"08h30–16h20"},
-    S0113:{base:"S",time:"13h30–21h00"}
+    M0130:{base:"M",time:"3h45 · libre entre 06h00 et 21h30"},
+    M0131:{base:"M",time:"7h30 · libre entre 06h30 et 21h15"},
+    M0177:{base:"M",time:"7h30 · libre entre 06h25 et 21h35"},
+    J0464:{base:"J",time:"08h30–16h20 · fixe"},
+    S0113:{base:"S",time:"13h30–21h00 · fixe"}
   };
   function shiftInfo(raw){
     const src=String(raw||"").trim().toUpperCase(),star=src.includes("*"),clean=src.replace(/\*/g,"");
