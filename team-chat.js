@@ -1507,7 +1507,7 @@
           '<div class="tb-confirm-icon">⚠️</div>' +
           "<h3>Rien trouvé ici ?</h3>" +
           '<p class="tb-missing-parent">' + esc(parentBody) + "</p>" +
-          '<div class="tb-missing-note"><strong>Le signalement d’origine reste visible.</strong><span>Tu ajoutes une réponse terrain pour prévenir les autres.</span></div>' +
+          '<div class="tb-missing-note"><strong>Ta réponse restera attachée à ce signalement.</strong><span>Même avec plusieurs signalements, on voit immédiatement auquel tu réponds.</span></div>' +
           '<label class="tb-precision-field"><span>Ajouter un détail <em>facultatif</em></span>' +
             '<textarea rows="3" maxlength="180" placeholder="Ex. j’ai vérifié tout le couloir, aucun fauteuil…"></textarea>' +
           "</label>" +
