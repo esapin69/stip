@@ -974,9 +974,8 @@
       meta = SHIFT[base] || { label: base, time: "" },
       planRows = shiftPlanningRows(day, base),
       staffRow = shiftStaffingRow(day, base),
-      plannedValue = Number(staffRow?.planned_count),
       targetValue = Number(staffRow?.target_count),
-      planned = Number.isFinite(plannedValue) ? plannedValue : planRows.length,
+      present = planRows.length,
       target = Number.isFinite(targetValue) ? targetValue : null,
       gap =
         staffRow?.gap != null && Number.isFinite(Number(staffRow.gap))
@@ -1002,15 +1001,15 @@
 
     const stats =
       '<div class="team-shift-analysis-stats">' +
-      '<span><small>PRÉVU</small><b>' +
-      esc(planned) +
+      '<span><small>PRÉSENTS</small><b>' +
+      esc(present) +
       "</b></span>" +
-      '<span><small>CIBLE</small><b>' +
+      '<span><small>CIBLE FIXE</small><b>' +
       esc(target == null ? "—" : target) +
       "</b></span>" +
       '<span class="' +
       (gap == null ? "" : gap > 0 ? "positive" : gap < 0 ? "negative" : "neutral") +
-      '"><small>ÉCART</small><b>' +
+      '"><small>ÉCART FIXE</small><b>' +
       esc(gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`) +
       "</b></span>" +
       "</div>";
