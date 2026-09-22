@@ -1868,6 +1868,10 @@
               return;
             }
           }
+          state.tableauFocus = false;
+          if ((window.STIPRouter?.get?.() || "home") === "fauteuils") {
+            window.STIPRouter?.set?.("home", { replace: true, keepScroll: true });
+          }
           if (next === state.homeMode) return;
           state.homeMode = next;
           state.renderSig = "";
@@ -2255,6 +2259,12 @@
       state.renderSig = "";
       render();
     }
+  });
+  window.addEventListener("stip:home-root", () => {
+    state.homeMode = "planning";
+    state.tableauFocus = false;
+    state.renderSig = "";
+    render();
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
