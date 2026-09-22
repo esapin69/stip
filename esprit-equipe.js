@@ -694,8 +694,8 @@
       <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
         <b>${esc(code)}</b>
         <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-        <em>${sortedItems.length}</em>
         <span class="team-shift-mini-status status-${esc(signal.level)}" title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(signal.symbol)}</span>
+        <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
       <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
