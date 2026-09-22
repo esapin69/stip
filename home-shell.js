@@ -2199,8 +2199,9 @@
         a = r.action,
         url = a?.metadata?.url || a?.metadata?.target_url || "";
       body.innerHTML = `<div class="hs-sign-card"><h3>${esc(a.title || "À traiter")}</h3><p>${esc(a.body || "")}</p>${url ? `<a class="hc-panel-primary" href="${esc(url)}">Ouvrir</a>` : '<p class="hs-sign-meta">Ouvre la demande depuis son écran d’origine.</p>'}</div>`;
-    } catch (e) {
-      body.innerHTML = `<div class="hs-note"><strong>Demande indisponible</strong><p>${esc(e.message)}</p></div>`;
+    } catch {
+      body.innerHTML = '<div class="hs-note"><strong>Demande indisponible</strong><p>STIP n’a pas réussi à charger cette demande.</p><button type="button" class="hc-panel-primary" data-action-retry>Réessayer</button></div>';
+      body.querySelector("[data-action-retry]")?.addEventListener("click", () => openAction(id));
     }
   }
   function saveContacts(d) {
