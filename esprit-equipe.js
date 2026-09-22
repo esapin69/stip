@@ -1107,94 +1107,6 @@
       ?.addEventListener("click", closeShiftAnalysis);
   }
 
-  function weekSummaryBlock(bundle) {
-    const intel = field();
-    if (!intel?.dayChecklist) return "";
-    const days = daysOfWeek(state.weekStart);
-    const rows = days.map((day) => {
-      const staff = state.staffingByDate.get(day);
-      const items = assistantItemsForDate(bundle, day);
-      const read = intel.dayChecklist({ staffing: staff, items });
-      const meaningful = (read?.points || []).filter(
-        (point) => !["info", "ok"].includes(point.level),
-      );
-      const detail =
-        meaningful
-          .slice(0, 2)
-          .map((point) => point.detail || point.title)
-          .filter(Boolean)
-          .join(" · ") ||
-        (read?.points || [])
-          .slice(0, 1)
-          .map((point) => point.detail || point.title)
-          .filter(Boolean)
-          .join(" · ") ||
-        "Pas assez de données pour cette journée.";
-      return { day, read, detail };
-    });
-
-    const rank = { critical: 5, warning: 4, opportunity: 3, ok: 2, unknown: 1 };
-    const strengthRank = { strong: 5, moderate: 4, suggestion: 3, none: 2, unknown: 1 };
-    const strongest = rows
-      .slice()
-      .sort(
-        (a, b) =>
-          (rank[b.read?.level] || 0) - (rank[a.read?.level] || 0) ||
-          (strengthRank[b.read?.strength] || 0) - (strengthRank[a.read?.strength] || 0),
-      )[0];
-
-    const overallLevel = strongest?.read?.level || "unknown";
-    const overallMeta =
-      intel.statusMeta?.(overallLevel) || {
-        symbol: overallLevel === "warning" ? "⚠️" : "",
-        label: "Lecture de la semaine",
-      };
-    const adviceSource = rows
-      .slice()
-      .sort(
-        (a, b) =>
-          (strengthRank[b.read?.strength] || 0) - (strengthRank[a.read?.strength] || 0) ||
-          (rank[b.read?.level] || 0) - (rank[a.read?.level] || 0),
-      )
-      .find((row) => row.read?.advice);
-    const strength = adviceSource?.read?.strength || "unknown";
-    const strengthLabel = {
-      strong: "Conseil fort",
-      moderate: "Conseil",
-      suggestion: "Suggestion",
-      none: "Aucune action particulière",
-      unknown: "Données insuffisantes",
-    }[strength] || "Conseil";
-    const advice = adviceSource?.read?.advice || "Pas assez de données pour recommander un ajustement fiable.";
-
-    const checks = rows
-      .map(({ day, read, detail }) => {
-        const meta =
-          intel.statusMeta?.(read?.level || "unknown") || {
-            symbol: "",
-            label: "Pas assez de données",
-          };
-        const label = dateObj(day)
-          .toLocaleDateString("fr-FR", { weekday: "long", day: "numeric" })
-          .replace(/^./, (char) => char.toUpperCase());
-        return '<button type="button" class="team-week-check status-' + esc(read?.level || "unknown") + '" data-team-week-summary-day="' + esc(day) + '">' +
-          '<span aria-hidden="true">' + esc(meta.symbol || "○") + '</span>' +
-          '<div><strong>' + esc(label) + ' · ' + esc(meta.label || "") + '</strong>' +
-          '<p>' + esc(detail) + '</p></div>' +
-          '<i aria-hidden="true">›</i></button>';
-      })
-      .join("");
-
-    return '<section class="team-day-summary team-week-summary status-' + esc(overallLevel) + '">' +
-      '<header><span aria-hidden="true">' + esc(overallMeta.symbol || "○") + '</span>' +
-      '<div><small>BILAN DE LA SEMAINE ' + esc(isoWeek(state.weekStart)) + '</small>' +
-      '<strong>' + esc(weekRange(state.weekStart)) + '</strong></div></header>' +
-      '<div class="team-week-checklist">' + checks + '</div>' +
-      '<div class="team-day-advice strength-' + esc(strength) + '">' +
-      '<strong>' + esc(strengthLabel) + '</strong><p>' + esc(advice) + '</p></div>' +
-      '</section>';
-  }
-
   function shiftBlock(day, code, items) {
     const base = baseShift(code);
     const meta = SHIFT[base];
@@ -1244,63 +1156,6 @@
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
       body,
       "team",
-    );
-  }
-
-  function activityDay(bundle, day) {
-    const data = bundle?.activity?.get(day) || {};
-    const rows = [
-      ...(data.alerts || []),
-      ...(data.events?.formations || []),
-      ...(data.events?.stagiaires || []),
-    ];
-    const body = rows.length
-      ? `<div class="team-subsections">${rows
-          .map(
-            (item) =>
-              `<section><span>${esc(item.type || item.kind || "Information")}</span><strong>${esc(item.title || item.label || "Information")}</strong>${item.body || item.note || item.description ? `<p>${esc(item.body || item.note || item.description)}</p>` : ""}</section>`,
-          )
-          .join("")}</div>`
-      : '<p class="team-empty-inline">Rien à signaler pour cette journée.</p>';
-    return dayContainer(
-      day,
-      `${rows.length} élément${rows.length > 1 ? "s" : ""}`,
-      body,
-      "activity",
-    );
-  }
-
-  function assistantDay(bundle, day) {
-    const rows = (bundle?.assistant?.items || []).filter(
-      (item) => item.date === day,
-    );
-    const body = rows.length
-      ? `<div class="team-subsections">${rows
-          .map((item) => {
-            const terrain = field()?.terrainItem?.(item);
-            const severity = Number(item.severity || 0);
-            const level = terrain?.level || (severity >= 4 ? "critical" : severity >= 2 ? "warning" : "ok");
-            const tag =
-              level === "critical"
-                ? "🛑 À traiter"
-                : level === "warning"
-                  ? "⚠️ À surveiller"
-                  : level === "opportunity"
-                    ? "➕ Marge utile"
-                    : "✔ Information";
-            const headline = terrain?.headline || item.title || "Information";
-            const details = [terrain?.detail || item.body, terrain?.proposal || item.recommendation_text]
-              .filter(Boolean)
-              .join(" ");
-            return `<section class="status-${esc(level)}"><span>${esc(tag)}</span><strong>${esc(headline)}</strong>${details ? `<p>${esc(details)}</p>` : ""}</section>`;
-          })
-          .join("")}</div>`
-      : '<p class="team-empty-inline">Aucun point prioritaire détecté.</p>';
-    return dayContainer(
-      day,
-      `${rows.length} point${rows.length > 1 ? "s" : ""}`,
-      body,
-      "assistant",
     );
   }
 
@@ -1441,26 +1296,6 @@
     else setTimeout(run, 500);
   }
 
-  async function selectTab(tab) {
-    if (tab === state.tab) return;
-    state.tab = tab;
-    renderHeader();
-    const bundle = cacheEntry(state.weekStart);
-    if (tab === "activity" && !bundle.activity) {
-      renderContent(bundle);
-      setBusy("Chargement de l’activité de la semaine…");
-      await loadActivity(state.weekStart);
-      clearBusy();
-    }
-    renderContent(bundle);
-    history.replaceState(
-      { ...(history.state || {}), stipTeamTab: tab },
-      "",
-      `${location.pathname}?tab=${encodeURIComponent(tab)}`,
-    );
-    window.STIPNav?.remember?.({ tab, weekStart: state.weekStart });
-  }
-
   function moveWeek(offset) {
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
@@ -1568,20 +1403,8 @@
         const pocket = teamSubscribe.closest(".stip-option-pocket");
         if (pocket) pocket.hidden = !canSubscribe;
       }
-      if (!["planning_team", "activity", "assistant_enabled"].some(allowed))
-        return location.replace("index.html");
-      const required =
-        state.tab === "team"
-          ? "planning_team"
-          : state.tab === "activity"
-            ? "activity"
-            : "assistant_enabled";
-      if (!allowed(required))
-        state.tab = allowed("planning_team")
-          ? "team"
-          : allowed("activity")
-            ? "activity"
-            : "assistant";
+      if (!allowed("planning_team")) return location.replace("index.html");
+      state.tab = "team";
       renderHeader();
       await showWeek({ preserve: false });
       window.STIPNav?.restoreScroll?.();
