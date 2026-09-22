@@ -95,6 +95,7 @@
   }
 
   function isWorking(agent) {
+    if (typeof agent?.is_working === "boolean") return agent.is_working;
     return Boolean(baseShift(agent?.today_code));
   }
 
@@ -104,16 +105,33 @@
     return `<span class="sas-avatar" data-initials="${value}">${/^https?:/i.test(url) ? `<img src="${esc(url)}" alt="" loading="lazy">` : value}</span>`;
   }
 
+  function specialText(agent, code) {
+    const source = agent?.today_special_schedule;
+    if (source && String(source.code || "").toUpperCase() === code) {
+      const minutes = Number(source.duration_minutes || 0),
+        duration = minutes
+          ? `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}`
+          : "",
+        start = String(source.window_start || "").slice(0, 5).replace(":", "h"),
+        end = String(source.window_end || "").slice(0, 5).replace(":", "h");
+      return String(source.schedule_mode || "") === "flexible"
+        ? `${duration || "Durée spécifique"} · libre entre ${start} et ${end}`
+        : `${start}–${end} · fixe`;
+    }
+    return SPECIAL_SHIFT[code]?.text || "";
+  }
+
   function row(agent) {
     const code = String(agent.today_code || "").toUpperCase(),
       base = baseShift(code),
       shift = SHIFT[base],
-      standardCode = code === base || code === `${base}*`;
+      standardCode = code === base || code === `${base}*`,
+      special = specialText(agent, code);
     const status = shift
       ? standardCode
         ? `${code} · ${shift.time}`
-        : SPECIAL_SHIFT[code]
-          ? `Présent · ${code} · ${SPECIAL_SHIFT[code].text}`
+        : special
+          ? `Présent · ${code} · ${special}`
           : `Présent · ${code} · horaire spécifique`
       : `Absent · ${code || "motif non renseigné"}`;
     const meta = [status, agent.ghe ? `GHE ${agent.ghe}` : ""]
