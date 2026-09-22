@@ -627,16 +627,32 @@
   }
 
 
-  function shiftAnalysis(signal) {
+  function closeShiftAnalysis() {
+    document.getElementById("teamShiftAnalysisOverlay")?.remove();
+  }
+
+  function openShiftAnalysis(day, code) {
+    const base = baseShift(code);
+    const signal = shiftSignalForDate(day, base);
     if (!signal || !["critical", "warning", "opportunity"].includes(signal.level))
-      return "";
-    if (!signal.detail && !signal.proposal) return "";
-    return '<section class="team-shift-analysis status-' + esc(signal.level) + '" aria-label="' + esc(signal.label || "Analyse du shift") + '">' +
-      '<span class="team-shift-analysis-icon" aria-hidden="true">' + esc(signal.symbol || "") + '</span>' +
-      '<div><strong>' + esc(signal.label || "À regarder") + '</strong>' +
-      (signal.detail ? '<p>' + esc(signal.detail) + '</p>' : '') +
-      (signal.proposal ? '<small>' + esc(signal.proposal) + '</small>' : '') +
-      '</div></section>';
+      return;
+    const meta = SHIFT[base] || { label: base, time: "" };
+    closeShiftAnalysis();
+    const overlay = document.createElement("div");
+    overlay.id = "teamShiftAnalysisOverlay";
+    overlay.className = "team-shift-analysis-overlay";
+    overlay.innerHTML =
+      '<button class="team-shift-analysis-backdrop" type="button" aria-label="Fermer"></button>' +
+      '<section class="team-shift-analysis-sheet status-' + esc(signal.level) + '" role="dialog" aria-modal="true" aria-label="Détail ' + esc(meta.label || base) + '">' +
+        '<div class="team-shift-analysis-handle" aria-hidden="true"></div>' +
+        '<header><span aria-hidden="true">' + esc(signal.symbol || "") + '</span><div><small>' + esc(base) + ' · ' + esc(meta.time || "") + '</small><strong>' + esc(signal.label || "À regarder") + '</strong></div></header>' +
+        (signal.detail ? '<p>' + esc(signal.detail) + '</p>' : '') +
+        (signal.proposal ? '<div class="team-shift-analysis-proposal"><strong>Ce que STIP conseille</strong><p>' + esc(signal.proposal) + '</p></div>' : '') +
+        '<button class="team-shift-analysis-close" type="button">Fermer</button>' +
+      '</section>';
+    document.body.appendChild(overlay);
+    overlay.querySelector(".team-shift-analysis-backdrop")?.addEventListener("click", closeShiftAnalysis);
+    overlay.querySelector(".team-shift-analysis-close")?.addEventListener("click", closeShiftAnalysis);
   }
 
   function daySummaryBlock(bundle, day) {
@@ -690,11 +706,10 @@
       <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
         <b>${esc(code)}</b>
         <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-        <span class="team-shift-mini-status status-${esc(signal.level)}" title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(signal.symbol)}</span>
+        <span class="team-shift-mini-status status-${esc(signal.level)} ${["critical","warning","opportunity"].includes(signal.level) ? "is-clickable" : ""}" ${["critical","warning","opportunity"].includes(signal.level) ? `data-team-shift-analysis="${esc(day)}|${esc(base)}"` : ""} title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(signal.symbol)}</span>
         <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
-      ${shiftAnalysis(signal)}
       <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
     </section>`;
   }
@@ -716,8 +731,7 @@
         SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
     );
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
-    const summary = daySummaryBlock(bundle, day);
-    const body = (shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>') + summary;
+    const body = shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>';
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
@@ -857,8 +871,11 @@
 
   function renderContent(bundle) {
     const host = $("#teamContent");
+    const summaryHost = $("#teamDaySummaryHost");
     normalizeDayFocus();
     const day = state.dayFocus;
+    if (summaryHost)
+      summaryHost.innerHTML = state.tab === "team" ? daySummaryBlock(bundle, day) : "";
     const permitted = {
       team: allowed("planning_team"),
       activity: allowed("activity"),
@@ -997,6 +1014,14 @@
     window.STIPCalendars?.quick?.("team"),
   );
   $("#teamContent").addEventListener("click", (event) => {
+    const analysis = event.target.closest("[data-team-shift-analysis]");
+    if (analysis) {
+      event.preventDefault();
+      event.stopPropagation();
+      const [day, code] = String(analysis.dataset.teamShiftAnalysis || "").split("|");
+      openShiftAnalysis(day || state.dayFocus, code || "");
+      return;
+    }
     const shift = event.target.closest("[data-team-shift]");
     if (shift) {
       const key = shift.dataset.teamShift || "";
@@ -1025,6 +1050,7 @@
     if (event.key === "Escape") {
       closeAgentSheet();
       closeCallSheet();
+      closeShiftAnalysis();
     }
   });
 
