@@ -17,7 +17,8 @@
     <link rel="stylesheet" href="stip-shell.css?v=20260920-context1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260920-common1" />
-    <link rel="stylesheet" href="responsable-home.css?v=20260922-clean1" />
+    <link rel="stylesheet" href="responsable-agenda.css?v=20260918-premium1" />
+    <link rel="stylesheet" href="responsable-home.css?v=20260922-tabs1" />
     <link rel="stylesheet" href="responsable-agenda-home.css?v=20260922-pilotage1" />
     <link
       rel="stylesheet"
@@ -29,8 +30,22 @@
       <div class="brand"><b>STIP</b><span>RESPONSABLE</span></div>
       <a class="home" href="index.html">Accueil STIP</a>
     </header>
+    <nav class="resp-tabs" role="tablist" aria-label="Espace Responsable">
+      <button type="button" role="tab" data-resp-tab="dates" aria-selected="true">
+        <span aria-hidden="true">📅</span><b>Dates</b>
+      </button>
+      <button type="button" role="tab" data-resp-tab="suivi" aria-selected="false">
+        <span aria-hidden="true">✓</span><b>Suivi</b>
+      </button>
+      <button type="button" role="tab" data-resp-tab="equipe" aria-selected="false">
+        <span aria-hidden="true">👥</span><b>Équipe</b>
+      </button>
+      <button type="button" role="tab" data-resp-tab="agenda" aria-selected="false">
+        <span aria-hidden="true">▦</span><b>Agenda</b>
+      </button>
+    </nav>
     <main class="resp-home resp-home-clean">
-      <section id="rrAgendaCanvas" class="rr-agenda-canvas" aria-label="Dates des agents">
+      <section id="rrAgendaCanvas" class="rr-agenda-canvas resp-tab-pane" data-resp-pane="dates" aria-label="Dates des agents">
         <div id="rrStatus" class="rr-status loading" role="status" aria-live="polite">
           <span class="rr-spinner" aria-hidden="true"></span>
           <strong>Chargement des dates de l’équipe…</strong>
@@ -58,7 +73,7 @@
         </details>
       </section>
 
-      <section id="respTrackingTool" class="resp-tracking-tool" hidden aria-label="Suivi Responsable">
+      <section id="respTrackingTool" class="resp-tracking-tool resp-tab-pane" data-resp-pane="suivi" hidden aria-label="Suivi Responsable">
         <div class="resp-head">
           <div>
             <span class="kicker">AUJOURD’HUI</span>
@@ -113,11 +128,125 @@
         <div class="resp-dots" id="respDots"></div>
       </section>
 
-      <div class="resp-tool-hooks" hidden aria-hidden="true">
-        <button type="button" data-resp-agents="evaluation"></button>
-        <button type="button" data-resp-official="1"></button>
-        <button type="button" data-resp-agents="directory"></button>
-      </div>
+      <section class="resp-team-pane resp-tab-pane" data-resp-pane="equipe" hidden aria-label="Équipe Responsable">
+        <div class="resp-tab-intro">
+          <div>
+            <span>ÉQUIPE</span>
+            <h1>Agents</h1>
+            <p>Rechercher un agent, ouvrir sa fiche ou travailler sur son évaluation.</p>
+          </div>
+        </div>
+        <div class="resp-team-actions" aria-label="Outils équipe">
+          <button type="button" data-resp-agents="directory">
+            <span aria-hidden="true">👥</span><b>Brancardiers</b>
+          </button>
+          <button type="button" data-resp-agents="evaluation" data-team-pro>
+            <span aria-hidden="true">✓</span><b>Évaluation</b>
+          </button>
+          <button type="button" data-resp-official="1" data-team-pro>
+            <span aria-hidden="true">📄</span><b>Document officiel</b>
+          </button>
+        </div>
+      </section>
+
+      <section class="resp-agenda-inline resp-tab-pane" data-resp-pane="agenda" hidden aria-label="Agenda Responsable">
+        <div class="ta-shell">
+          <header class="ta-head resp-agenda-head">
+            <div class="ta-title">
+              <h1>Agenda équipe</h1>
+              <p>Toute l’activité utile de l’équipe en un coup d’œil</p>
+            </div>
+            <button
+              class="ta-round ta-search-toggle"
+              id="taSearchToggle"
+              type="button"
+              aria-label="Rechercher"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="6"></circle>
+                <path d="m16 16 4 4"></path>
+              </svg>
+            </button>
+          </header>
+
+          <div class="ta-search" id="taSearchWrap" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="11" cy="11" r="6"></circle>
+              <path d="m16 16 4 4"></path>
+            </svg>
+            <input id="taSearch" type="search" autocomplete="off" placeholder="Rechercher un agent, une formation, un lieu…" />
+            <button id="taSearchClear" type="button" aria-label="Effacer">×</button>
+          </div>
+
+          <section class="ta-hero" aria-live="polite">
+            <span class="ta-hero-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="16" rx="3"></rect>
+                <path d="M8 3v4M16 3v4M3 10h18"></path>
+              </svg>
+            </span>
+            <div>
+              <strong id="taUpcoming">— à venir</strong>
+              <p><b id="taWeekCount">—</b> cette semaine <i>•</i> <b id="taMonthCount">—</b> ce mois</p>
+            </div>
+            <span class="ta-hero-arrow">›</span>
+          </section>
+
+          <nav class="ta-tabs" aria-label="Filtrer l’agenda">
+            <button type="button" data-filter="all" class="active">Tout <b id="countAll">0</b></button>
+            <button type="button" data-filter="medical">Visites <b id="countMedical">0</b></button>
+            <button type="button" data-filter="intern">Stagiaires <b id="countIntern">0</b></button>
+            <button type="button" data-filter="training">Formations <b id="countTraining">0</b></button>
+          </nav>
+
+          <section class="ta-week" id="taWeek" aria-label="Semaine"></section>
+          <section class="ta-timeline" id="taTimeline">
+            <div class="ta-empty">Chargement de l’agenda…</div>
+          </section>
+        </div>
+
+        <button class="ta-add" id="taAdd" type="button" aria-label="Ajouter un élément">+</button>
+
+        <section class="ta-sheet" id="taDetailSheet" aria-hidden="true">
+          <div class="ta-sheet-card">
+            <header>
+              <button type="button" data-close-sheet aria-label="Fermer">×</button>
+              <div><small id="taDetailType">ÉVÉNEMENT</small><h2 id="taDetailTitle">Détail</h2></div>
+            </header>
+            <div id="taDetailBody"></div>
+          </div>
+        </section>
+
+        <section class="ta-sheet ta-add-sheet" id="taAddSheet" aria-hidden="true">
+          <div class="ta-sheet-card">
+            <header>
+              <button type="button" data-close-add aria-label="Fermer">×</button>
+              <div><small>AGENDA ÉQUIPE</small><h2>Ajouter</h2></div>
+            </header>
+            <div class="ta-mode-tabs">
+              <button class="active" data-mode="direct" type="button">Ajouter</button>
+              <button data-mode="proposal" type="button">Proposer</button>
+              <button data-mode="notify" type="button">Notifier</button>
+            </div>
+            <form id="taForm" class="ta-form">
+              <label>Agent<select id="taAgent" required><option value="">Chargement…</option></select></label>
+              <label>Titre<input id="taTitle" maxlength="180" required placeholder="Ex. Réunion d’équipe" /></label>
+              <label>Message<textarea id="taBody" maxlength="1500" placeholder="Information utile pour l’agent"></textarea></label>
+              <div class="ta-form-grid ta-schedule">
+                <label>Date<input id="taDate" type="date" /></label>
+                <label>Placement<select id="taDisplay"><option value="event">Créer un événement</option><option value="day_note">Description du jour</option></select></label>
+                <label id="taAllDayWrap">Format<span class="ta-check"><input id="taAllDay" type="checkbox" checked /> Toute la journée</span></label>
+                <label id="taStartWrap">Début<input id="taStart" type="time" /></label>
+                <label id="taEndWrap">Fin<input id="taEnd" type="time" /></label>
+                <label>Lieu<input id="taLocation" maxlength="240" placeholder="Optionnel" /></label>
+                <label>Importance<select id="taImportance"><option value="normal">Normale</option><option value="important">Importante</option><option value="urgent">Urgente</option></select></label>
+              </div>
+              <button class="ta-submit" id="taSubmit" type="submit">Ajouter à son agenda</button>
+              <p class="ta-feedback" id="taFeedback"></p>
+            </form>
+          </div>
+        </section>
+      </section>
     </main>
     <section class="resp-panel" id="respPanel" aria-hidden="true">
       <header class="resp-panel-head">
@@ -138,7 +267,7 @@
     <script src="responsable-loader.js?v=20260922-clean1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="responsable-staffing.js?v=20260922-opportunity1"></script>
-    <script src="responsable-tool-router.js?v=20260922-final1"></script>
+    <script src="responsable-tabs.js?v=20260922-tabs1"></script>
     <script src="quick-access-universal.js?v=20260920-tomorrowapp1"></script>
   </body>
 </html>
