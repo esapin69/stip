@@ -1590,3 +1590,140 @@
   transform-origin:top center;
 }
 
+
+/* Fauteuils V12 — formulaire terrain unique */
+.tb-building-pulse{display:none!important}
+.tb-input-dock{
+  left:10px!important;
+  right:10px!important;
+  bottom:max(10px,env(safe-area-inset-bottom))!important;
+  width:auto!important;
+  transform:none!important;
+  border:1px solid #d3e2e4!important;
+  border-radius:22px!important;
+  overflow:hidden!important;
+  box-shadow:0 16px 38px rgba(18,58,68,.18),0 2px 8px rgba(18,58,68,.08)!important;
+}
+.tb-search-shortcuts{
+  padding:11px 12px 9px!important;
+  border-bottom:1px solid #e0e9ea!important;
+  background:linear-gradient(180deg,#fbfdfd 0%,#f4f8f8 100%)!important;
+}
+.tb-search-shortcuts-head{display:none!important}
+.tb-compose-modes{display:none!important}
+.tb-mode-toggle{
+  width:min(100%,690px)!important;
+  min-height:60px!important;
+  margin:0 auto 9px!important;
+  padding:8px 10px!important;
+  border:1px solid #bddbd5!important;
+  border-radius:18px!important;
+  background:linear-gradient(180deg,#fff 0%,#eef8f4 100%)!important;
+  color:#225f50!important;
+  display:grid!important;
+  grid-template-columns:42px minmax(0,1fr) 54px!important;
+  align-items:center!important;
+  gap:9px!important;
+  text-align:left!important;
+  box-shadow:0 7px 16px rgba(25,90,73,.09)!important;
+  font:inherit!important;
+}
+.tb-mode-toggle.is-search{
+  border-color:#c5dbea!important;
+  background:linear-gradient(180deg,#fff 0%,#eff6fb 100%)!important;
+  color:#2f6385!important;
+}
+.tb-mode-toggle-icon{
+  width:42px!important;
+  height:42px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:13px!important;
+  background:rgba(255,255,255,.88)!important;
+  font-size:1.25rem!important;
+  box-shadow:0 3px 8px rgba(30,70,76,.07)!important;
+}
+.tb-mode-toggle-copy{min-width:0!important;display:block!important}
+.tb-mode-toggle-copy strong{
+  display:block!important;
+  font-size:.8rem!important;
+  line-height:1.08!important;
+  font-weight:950!important;
+}
+.tb-mode-toggle-copy small{
+  display:block!important;
+  margin-top:4px!important;
+  color:#7a8e92!important;
+  font-size:.55rem!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+}
+.tb-mode-toggle-switch{
+  width:50px!important;
+  height:28px!important;
+  padding:3px!important;
+  border-radius:999px!important;
+  background:#a9d7c7!important;
+  display:block!important;
+}
+.tb-mode-toggle-switch i{
+  width:22px!important;
+  height:22px!important;
+  display:block!important;
+  border-radius:50%!important;
+  background:#fff!important;
+  box-shadow:0 2px 6px rgba(23,72,76,.18)!important;
+  transform:translateX(22px)!important;
+  transition:transform .16s ease!important;
+}
+.tb-mode-toggle.is-search .tb-mode-toggle-switch{
+  background:#b6cfe1!important;
+}
+.tb-mode-toggle.is-search .tb-mode-toggle-switch i{
+  transform:translateX(0)!important;
+}
+.tb-compose-hint{
+  margin:0 auto 8px!important;
+  padding:0 2px!important;
+  color:#617a80!important;
+  font-size:.62rem!important;
+  font-weight:850!important;
+}
+.tb-composer{
+  padding:9px 10px max(10px,env(safe-area-inset-bottom))!important;
+  background:#fff!important;
+  align-items:center!important;
+}
+.tb-send{
+  min-width:108px!important;
+  min-height:54px!important;
+  border-radius:16px!important;
+}
+.tb-send span{font-size:.72rem!important}
+.tb-free-toggle{
+  min-height:32px!important;
+  padding:0 6px!important;
+  font-size:.61rem!important;
+}
+.tb-draft-preview{
+  padding:9px 10px!important;
+  font-size:.7rem!important;
+}
+.tb-page{
+  padding-bottom:calc(var(--tb-composer-height,244px) + 18px)!important;
+}
+@media(max-width:430px){
+  .tb-input-dock{
+    left:8px!important;
+    right:8px!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    border-radius:20px!important;
+  }
+  .tb-search-shortcuts{padding:10px 9px 8px!important}
+  .tb-mode-toggle{min-height:58px!important;grid-template-columns:40px minmax(0,1fr) 50px!important}
+  .tb-mode-toggle-icon{width:40px!important;height:40px!important}
+  .tb-search-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  .tb-search-shortcut{min-height:50px!important}
+  .tb-composer{padding-inline:9px!important}
+  .tb-send{min-width:104px!important}
+}
