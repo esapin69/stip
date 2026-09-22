@@ -5,7 +5,7 @@
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
     STORE = "stip_session_v1",
-    TABLEAU_BUILD = "20260922-fauteuils21",
+    TABLEAU_BUILD = "20260922-fauteuils22",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -2104,7 +2104,7 @@
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
-      if (runtime?.build !== TABLEAU_BUILD) {
+      if (!runtime || typeof runtime.mount !== "function") {
         if (tableauHost) {
           tableauHost.innerHTML =
             '<div class="tb-runtime-refresh">Mise à jour de Fauteuils…</div>';
