@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="stip-shell.css?v=20260920-context1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260920-common1" />
-    <link rel="stylesheet" href="responsable-home.css?v=20260921-agentagenda1" />
+    <link rel="stylesheet" href="responsable-home.css?v=20260922-rebuild1" />
     <link
       rel="stylesheet"
       href="responsable-agents-native.css?v=20260827-native5"
@@ -28,7 +28,24 @@
       <div class="brand"><b>STIP</b><span>RESPONSABLE</span></div>
       <a class="home" href="index.html">Accueil STIP</a>
     </header>
-    <main class="resp-home">
+    <main class="resp-rebuild">
+      <section class="resp-new-page" aria-label="Nouvelle page Responsable">
+        <div class="resp-new-page-head">
+          <span class="kicker">RESPONSABLE</span>
+          <h1>Responsable</h1>
+        </div>
+      </section>
+
+      <div
+        class="resp-legacy-separator"
+        role="separator"
+        aria-label="Ancienne page Responsable"
+      >
+        <span>ANCIENNE PAGE</span>
+      </div>
+
+      <section class="resp-legacy-page" aria-label="Ancienne page Responsable">
+        <div class="resp-home resp-home-legacy">
       <div class="resp-head">
         <div>
           <span class="kicker">MON STIP</span>
@@ -125,6 +142,8 @@
         </div>
       </section>
       <div class="resp-dots" id="respDots"></div>
+        </div>
+      </section>
     </main>
     <section class="resp-panel" id="respPanel" aria-hidden="true">
       <header class="resp-panel-head">
