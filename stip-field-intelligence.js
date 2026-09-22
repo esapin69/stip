@@ -98,6 +98,35 @@
     );
   }
 
+
+  function recommendedTransfers(rows) {
+    const options = transferOptions(rows).slice().sort(
+      (a, b) =>
+        b.severity - a.severity ||
+        b.minutes - a.minutes ||
+        b.count - a.count,
+    );
+    const donorLeft = new Map();
+    const targetLeft = new Map();
+    (Array.isArray(rows) ? rows : []).forEach((row) => {
+      const code = String(row?.shift_code || "").trim().toUpperCase();
+      const gap = rowGap(row);
+      if (gap > 0) donorLeft.set(code, gap);
+      if (gap < 0) targetLeft.set(code, Math.abs(gap));
+    });
+    const selected = [];
+    for (const option of options) {
+      const donor = number(donorLeft.get(option.fromShift));
+      const need = number(targetLeft.get(option.toShift));
+      const count = Math.min(number(option.count), donor, need);
+      if (count <= 0) continue;
+      selected.push({ ...option, count });
+      donorLeft.set(option.fromShift, donor - count);
+      targetLeft.set(option.toShift, need - count);
+    }
+    return selected;
+  }
+
   function transferProposal(option) {
     if (!option) return "";
     const count = Math.max(1, number(option.count, 1));
@@ -165,7 +194,8 @@
       ...rows.map((row) => number(row?.severity)),
     );
 
-    const transfers = transferOptions(shiftRows);
+    const transferOptionsAll = transferOptions(shiftRows);
+    const transfers = recommendedTransfers(shiftRows);
     let level = deficits.some((row) => number(row?.severity) >= 4)
       ? "critical"
       : deficits.length
@@ -190,7 +220,8 @@
             : "Les créneaux suivis sont au niveau attendu.",
         reasons: [],
         totalGap,
-        transferOptions: transfers,
+        transferOptions: transferOptionsAll,
+        recommendedTransfers: transfers,
       };
     }
 
@@ -242,7 +273,8 @@
       proposal,
       totalGap,
       specialCount,
-      transferOptions: transfers,
+      transferOptions: transferOptionsAll,
+      recommendedTransfers: transfers,
     };
   }
 
@@ -259,8 +291,9 @@
     const gap = rowGap(row);
     const planned = row?.planned_count;
     const target = row?.target_count;
-    const support = transferOptions(rows).find((item) => item.toShift === base);
-    const donor = transferOptions(rows).find((item) => item.fromShift === base);
+    const allocated = recommendedTransfers(rows);
+    const support = allocated.find((item) => item.toShift === base);
+    const donor = allocated.find((item) => item.fromShift === base);
 
     if (severity >= 4 || gap < 0) {
       const level = severity >= 4 ? "critical" : "warning";
@@ -611,6 +644,7 @@
     staffing,
     shiftStatus,
     transferOptions,
+    recommendedTransfers,
     isMeaningful,
     meaningfulItems,
     terrainItem,
