@@ -84,17 +84,22 @@
       host.innerHTML = `<div class="rs-head"><div><strong>${esc(read?.headline || s.headline || "Couverture du jour")}</strong><small>${esc(read?.detail || "Lecture des références du planning")}</small></div><span>${esc(s.planned ?? "—")} / ${esc(s.target ?? "—")}</span></div><div class="rs-grid">${rows
         .map((x) => {
           const g = Number(x.gap || 0),
+            signal = field()?.shiftStatus?.(d, x.shift_code),
             cl =
-              g < 0
-                ? Number(x.severity) >= 4
-                  ? "critical"
-                  : Number(x.severity) >= 3
-                    ? "warning"
-                    : "attention"
-                : g > 0
-                  ? "over"
-                  : "ok";
-          return `<div class="rs-shift ${cl}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em>${esc(g === 0 ? "OK" : (g > 0 ? "+" : "") + g)}</em></div>`;
+              signal?.level === "opportunity"
+                ? "opportunity"
+                : g < 0
+                  ? Number(x.severity) >= 4
+                    ? "critical"
+                    : Number(x.severity) >= 3
+                      ? "warning"
+                      : "attention"
+                  : g > 0
+                    ? "over"
+                    : "ok",
+            delta = g === 0 ? "OK" : (g > 0 ? "+" : "") + g,
+            mark = signal?.level === "opportunity" ? `${signal.symbol} ${delta}` : delta;
+          return `<div class="rs-shift ${cl}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em title="${esc(signal?.label || "")}">${esc(mark)}</em></div>`;
         })
         .join("")}</div>${read?.known && read.level !== "ok" ? `<div class="rs-guide ${esc(read.level)}"><strong>${esc(read.symbol)} À retenir</strong><span>${esc(read.detail)}</span>${read.proposal ? `<small>${esc(read.proposal)}</small>` : ""}</div>` : ""}${s.special_count ? `<div class="rs-special">+ ${esc(s.special_count)} agent(s) sur horaires spécifiques, suivis séparément de M/J/J4/S.</div>` : ""}${d.freshness?.planning_imported_at ? `<div class="rs-fresh">Planning mis à jour ${esc(fmtFresh(d.freshness.planning_imported_at))}</div>` : ""}`;
       host.dataset.ready = "true";
@@ -165,6 +170,9 @@
   sx.textContent =
     ".resp-operational{margin:10px 0;padding:12px;border:1px solid #d9e7ea;border-radius:16px;background:#fff}.rs-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.rs-head>div strong,.rs-head>div small{display:block}.rs-head>div small{margin-top:2px;font-size:.64rem;color:#71858d}.rs-head>span{font-weight:950;font-size:1rem}.rs-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:9px}.rs-shift{padding:8px 6px;border-radius:11px;background:#f1f6f7;text-align:center}.rs-shift b,.rs-shift span,.rs-shift em{display:block}.rs-shift b{font-size:.72rem}.rs-shift span{margin-top:2px;font-size:.72rem;font-weight:900}.rs-shift em{margin-top:2px;font-size:.6rem;font-style:normal}.rs-shift.attention,.rs-shift.warning{background:#fff4df}.rs-shift.critical{background:#fde8e8}.rs-shift.over{background:#edf8f1}.rs-guide{margin-top:8px;padding:9px 10px;border-radius:12px;background:#fff6e6}.rs-guide.critical{background:#fde8e8}.rs-guide strong,.rs-guide span,.rs-guide small{display:block}.rs-guide strong{font-size:.7rem}.rs-guide span{margin-top:3px;font-size:.67rem;line-height:1.35}.rs-guide small{margin-top:3px;font-size:.62rem;color:#7b632f}.rs-special,.rs-fresh{margin-top:7px;font-size:.61rem;color:#71858d}.resp-operational.rs-critical{border-color:#e4b2b2}.resp-operational.rs-warning,.resp-operational.rs-attention{border-color:#ead09a}@media(max-width:430px){.rs-grid{grid-template-columns:repeat(4,minmax(58px,1fr));overflow-x:auto}.rs-shift{min-width:58px}}";
   document.head.appendChild(sx);
+  const opportunityStyle = document.createElement("style");
+  opportunityStyle.textContent = ".rs-shift.opportunity{background:#f3edff;color:#6d28d9}.rs-shift.opportunity em{color:var(--stip-opportunity,#7C3AED);font-weight:950}";
+  document.head.appendChild(opportunityStyle);
   summary();
   setInterval(() => {
     if (!document.hidden) summary();
