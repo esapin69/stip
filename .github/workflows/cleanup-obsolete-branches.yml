@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git fetch origin --prune
+          git fetch origin '+refs/heads/*:refs/remotes/origin/*' --prune
           branches=(
             "backup/places-before-rebuild-2026-08-29"
             "backup/pre-account-exchanges-20260921"
