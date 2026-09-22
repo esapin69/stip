@@ -5,6 +5,8 @@ const STORE='stip_session_v1';
 const MONTHS=['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
 const DAYS=['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
 const SHIFT={M:{label:'Matin',tone:'blue'},J:{label:'Jour',tone:'green'},J4:{label:'J4',tone:'orange'},S:{label:'Soir',tone:'yellow'},N:{label:'Nuit',tone:'night'},RH:{label:'Repos',tone:'rest'},RTT:{label:'RTT',tone:'rest'},RTTA:{label:'RTTA',tone:'rest'},RC:{label:'RC',tone:'rest'},CA:{label:'Congé',tone:'rest'},RF:{label:'RF',tone:'rest'},AA:{label:'AA',tone:'rest'},MA:{label:'Maladie',tone:'rest'},RTA:{label:'Repos',tone:'rest'},SYR:{label:'Repos',tone:'rest'}};
+const SPECIAL_SHIFT={J0464:{base:'J',label:'08h30–16h20 · fixe'},M0130:{base:'M',label:'3h45 · horaire libre'},M0131:{base:'M',label:'7h30 · horaire libre'},M0177:{base:'M',label:'7h30 · horaire libre'},S0113:{base:'S',label:'13h30–21h00 · fixe'}};
+function shiftMeta(raw){const code=String(raw||'').trim().toUpperCase(),clean=code.replace(/\*+$/,'');if(SPECIAL_SHIFT[clean]){const x=SPECIAL_SHIFT[clean],base=SHIFT[x.base]||{tone:'neutral'};return{label:x.label,tone:base.tone,special:true}}return SHIFT[clean]||{label:clean||'—',tone:'neutral'}}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function call(action,body={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORE)||''},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);return j}
 function currentWeekStart(){const d=new Date();d.setHours(12,0,0,0);const n=d.getDay()||7;d.setDate(d.getDate()-n+1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -15,7 +17,7 @@ function avatar(c,m){const u=m?.avatars?.[c?.source_key];return u?`<img src="${e
 function dateKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function mondayOf(d){const x=new Date(d);x.setHours(12,0,0,0);const n=x.getDay()||7;x.setDate(x.getDate()-n+1);return x}
 function sundayOf(d){const x=mondayOf(d);x.setDate(x.getDate()+6);return x}
-function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=SHIFT[code]||{label:code,tone:'neutral'};return`<div class="pui-day tone-${s.tone}${isToday?' today':''}"><strong>${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
+function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=shiftMeta(code);return`<div class="pui-day tone-${s.tone}${isToday?' today':''}"><strong>${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
 function monthSection(y,m,monthItems){
   const sorted=[...monthItems].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const byDate=new Map(sorted.map(x=>[String(x.date),x]));
