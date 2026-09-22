@@ -23,6 +23,10 @@
       label: "Esprit d’équipe",
       open: () => (location.href = "esprit-equipe.html"),
     },
+    agents: {
+      label: "Agents",
+      open: () => (location.href = "agent-directory.html"),
+    },
     compare: {
       label: "Comparer les plannings",
       open: () => (location.href = "planning-compare-app.html"),
@@ -101,6 +105,7 @@
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
+    agents: ["Agents", "Rechercher une personne et ouvrir sa fiche en un coup d’œil.", "Équipe"],
     compare: ["Comparer les plannings", "Comparer rapidement plusieurs plannings.", "Organisation"],
     change: ["Changement", "Gérer les demandes de changement.", "Organisation"],
     calendar: ["Synchroniser mon calendrier", "Retrouver vos horaires dans votre calendrier.", "Organisation"],
@@ -142,6 +147,7 @@
         personal: "planning_personal",
         tomorrow: "tomorrow",
         team: "planning_team",
+        agents: "agent_directory",
         compare: "planning_team",
         change: "change_app",
         calendar: "calendar_subscribe",
@@ -297,6 +303,8 @@
       '<img src="images/icone_app/quick-rocket.svg?v=20260920-appicons2" alt="" aria-hidden="true">',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
+    agents:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
     compare:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="7" height="14" rx="2"/><rect x="13.5" y="5" width="7" height="14" rx="2"/><path d="M7 9h0M17 9h0M7 13h0M17 13h0"/></svg>',
     change:
