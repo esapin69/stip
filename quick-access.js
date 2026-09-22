@@ -48,6 +48,30 @@
       label: "Responsable",
       open: () => (location.href = "responsable.html"),
     },
+    resp_tracking: {
+      label: "Suivi",
+      open: () => (location.href = "responsable.html?open=tracking"),
+    },
+    resp_evaluation: {
+      label: "Évaluation",
+      open: () => (location.href = "responsable.html?open=evaluation"),
+    },
+    resp_official: {
+      label: "Extraire un fichier officiel",
+      open: () => (location.href = "responsable.html?open=official"),
+    },
+    resp_requests: {
+      label: "Demandes",
+      open: () => (location.href = "responsable-demandes.html"),
+    },
+    resp_directory: {
+      label: "Brancardiers",
+      open: () => (location.href = "responsable.html?open=directory"),
+    },
+    resp_agenda: {
+      label: "Agenda agents",
+      open: () => (location.href = "responsable-agenda.html"),
+    },
     assistant: {
       label: "Assistant STIP",
       open: () => (location.href = "esprit-equipe.html?tab=assistant"),
@@ -83,7 +107,13 @@
     dates: ["Date des agents", "Consulter les dates utiles de l’équipe.", "Équipe"],
     contacts: ["Contacts", "Annuaire et numéros utiles.", "Communication"],
     places: ["Visiter les lieux", "Repères et informations pour se déplacer.", "Terrain"],
-    responsable: ["Responsable", "Outils réservés aux responsables autorisés.", "Encadrement"],
+    responsable: ["Responsable", "Dates utiles et espace Responsable.", "Encadrement"],
+    resp_tracking: ["Suivi", "Couverture du jour, points à traiter et demandes en cours.", "Responsable"],
+    resp_evaluation: ["Évaluation", "Ouvrir ou poursuivre l’évaluation d’un agent.", "Responsable"],
+    resp_official: ["Extraire un fichier officiel", "Contrôler puis générer le document officiel.", "Responsable"],
+    resp_requests: ["Demandes", "Envoyer une demande ou une information à un agent.", "Responsable"],
+    resp_directory: ["Brancardiers", "Rechercher un agent et ouvrir sa fiche.", "Responsable"],
+    resp_agenda: ["Agenda agents", "Consulter et gérer les dates utiles de l’équipe.", "Responsable"],
     assistant: ["Assistant STIP", "Assistant pour les outils et données STIP.", "Outils"],
     activity: ["Activité", "Suivi d’activité pour les profils autorisés.", "Encadrement"],
     access: ["Accès", "Gérer les accès selon vos autorisations.", "Sécurité"],
@@ -95,9 +125,15 @@
     lastTouch = { key: "", at: 0 };
   function allowed(k) {
     if (!META[k]) return false;
+    const p = window.STIPSession?.permissions || {};
+    if (k.startsWith("resp_")) {
+      if (!p.responsable) return false;
+      if (k === "resp_evaluation" || k === "resp_official")
+        return String(p.__levels?.responsable || "visitor").toLowerCase() === "pro";
+      return true;
+    }
     if (window.STIPAccess?.app) return !!window.STIPAccess.app(k);
-    const p = window.STIPSession?.permissions || {},
-      map = {
+    const map = {
         personal: "planning_personal",
         tomorrow: "tomorrow",
         team: "planning_team",
@@ -143,6 +179,25 @@
         FAV_STORE,
         JSON.stringify([...new Set(v)].filter((k) => META[k])),
       );
+    } catch {}
+  }
+  const RESPONSABLE_APP_KEYS = [
+    "resp_tracking",
+    "resp_evaluation",
+    "resp_official",
+    "resp_requests",
+    "resp_directory",
+    "resp_agenda",
+  ];
+  function ensureResponsibleApps() {
+    if (!allowed("responsable")) return;
+    const marker = "stip_responsable_apps_migrated_v1";
+    try {
+      if (localStorage.getItem(marker)) return;
+      const current = readFav(),
+        additions = RESPONSABLE_APP_KEYS.filter(allowed);
+      writeFav([...current, ...additions]);
+      localStorage.setItem(marker, "1");
     } catch {}
   }
   function touch(key) {
@@ -251,6 +306,18 @@
       '<img src="images/icone_app/visiter-les-lieux.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
     responsable:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>',
+    resp_tracking:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h4l2-5 4 10 2-5h4"/><path d="M5 4h14v16H5z"/></svg>',
+    resp_evaluation:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9l2 2 5-5M8 15h8"/></svg>',
+    resp_official:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v5h5M9 13h6M9 17h6M9 9h2"/></svg>',
+    resp_requests:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>',
+    resp_directory:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    resp_agenda:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg>',
     assistant:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>',
     activity:
@@ -293,6 +360,7 @@
   }
   function renderApps(host) {
     if (!host) return;
+    ensureResponsibleApps();
     const chosen=readFav().filter(allowed);
     host.innerHTML = chosen.length
       ? `<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div><button type="button" class="stip-store-browse" data-store-browse>+ Ajouter</button></header><div class="stip-my-app-grid">${chosen.map(k=>`<button type="button" class="stip-my-app" data-my-app="${k}">${appStoreIcon(k)}<strong>${META[k].label}</strong></button>`).join("")}</div></section>`
