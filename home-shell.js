@@ -21,7 +21,7 @@
     widgets: new Map(),
     externalActions: new Map(),
     actionFilter: "all",
-    actionPrefs: { dismissed: {} },
+    dismissedNotifications: {},
     weekOffset: 0,
     weekFull: false,
     dayFocus: parisIso(),
@@ -420,23 +420,28 @@
     const a = state.session?.agent || state.boot?.agent || window.STIPSession?.agent || {};
     return String(a.id || a.source_key || "local");
   }
-  function actionPrefsKey() {
-    return "stip_action_center_prefs_v1:" + actionOwnerKey();
+  function notificationDismissedKey() {
+    return "stip_notification_dismissed_v1:" + actionOwnerKey();
   }
-  function loadActionPrefs() {
+  function loadDismissedNotifications() {
     try {
-      const raw = JSON.parse(localStorage.getItem(actionPrefsKey()) || "{}");
-      state.actionPrefs = {
-        dismissed:
-          raw.dismissed && typeof raw.dismissed === "object" ? raw.dismissed : {},
-      };
+      const raw = JSON.parse(
+        localStorage.getItem(notificationDismissedKey()) || "{}",
+      );
+      state.dismissedNotifications =
+        raw && typeof raw === "object" ? raw : {};
+      // Purge the obsolete tabs/moves preference store instead of loading it.
+      localStorage.removeItem("stip_action_center_prefs_v1:" + actionOwnerKey());
     } catch {
-      state.actionPrefs = { dismissed: {} };
+      state.dismissedNotifications = {};
     }
   }
-  function saveActionPrefs() {
+  function saveDismissedNotifications() {
     try {
-      localStorage.setItem(actionPrefsKey(), JSON.stringify(state.actionPrefs));
+      localStorage.setItem(
+        notificationDismissedKey(),
+        JSON.stringify(state.dismissedNotifications),
+      );
     } catch {}
   }
   function actionNoteKey(n = {}) {
@@ -445,9 +450,6 @@
         n.action_id ||
         [n.source || "stip", n.title || "", n.body || ""].join(":"),
     );
-  }
-  function displayNoteCategory(n = {}) {
-    return noteCategory(n);
   }
   function refreshActionCenterUi() {
     state.renderSig = "";
@@ -459,8 +461,8 @@
       renderActionCenter(state.actionFilter);
   }
   function dismissActionNote(n) {
-    state.actionPrefs.dismissed[actionNoteKey(n)] = Date.now();
-    saveActionPrefs();
+    state.dismissedNotifications[actionNoteKey(n)] = Date.now();
+    saveDismissedNotifications();
     refreshActionCenterUi();
   }
   function noteCategory(n = {}) {
@@ -501,7 +503,7 @@
         }),
       external = [...state.externalActions.values()].flat();
     return [...native, ...external].filter(
-      (n) => !state.actionPrefs.dismissed[actionNoteKey(n)],
+      (n) => !state.dismissedNotifications[actionNoteKey(n)],
     );
   }
   function agentName(a = {}) {
@@ -2264,7 +2266,7 @@
   function ready(e) {
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
-    loadActionPrefs();
+    loadDismissedNotifications();
     const routedMode = homeModeForRoute(window.STIPRouter?.get?.() || "home");
     if (routedMode) state.homeMode = routedMode;
     try {
@@ -2304,7 +2306,7 @@
     stopPlanningLoading();
     state.home = { actions: [], notifications: [] };
     state.externalActions.clear();
-    state.actionPrefs = { dismissed: {} };
+    state.dismissedNotifications = {};
     state.actionFilter = "all";
     state.weekOffset = 0;
     state.weekFull = false;
