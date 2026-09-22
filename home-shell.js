@@ -1446,17 +1446,20 @@
       ];
     if (has("messages"))
       items.push({ key: "tableau", label: "Fauteuils", art: ICON.homeChair, live: true });
-    return `<section class="hc-home-top-nav">
+    const tableauCompact = active === "tableau";
+    return `<section class="hc-home-top-nav${tableauCompact ? " is-tableau-compact" : ""}">
       <div class="hc-home-top-tools">
         <div class="hc-home-team-slot">${teamShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
-      <nav class="hc-home-filters" aria-label="Accueil STIP">${items
-        .map(
-          (item) =>
-            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
-        )
-        .join("")}</nav>
+      ${tableauCompact
+        ? '<nav class="hc-tableau-compact-nav" aria-label="Navigation fauteuils"><button type="button" data-home-mode="planning">‹ Accueil</button></nav>'
+        : `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
+            .map(
+              (item) =>
+                `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
+            )
+            .join("")}</nav>`}
     </section>`;
   }
 
