@@ -5,6 +5,7 @@
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
     STORE = "stip_session_v1",
+    TABLEAU_BUILD = "20260922-fauteuils21",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -2044,9 +2045,27 @@
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
     if (state.homeMode === "tableau") {
-      window.STIPTableau?.unmountPreview?.();
-      window.STIPTableau?.mount?.(
-        root.querySelector("#hcTableauStipHost"),
+      const tableauHost = root.querySelector("#hcTableauStipHost");
+      const runtime = window.STIPTableau;
+      if (runtime?.build !== TABLEAU_BUILD) {
+        if (tableauHost) {
+          tableauHost.innerHTML =
+            '<div class="tb-runtime-refresh">Mise à jour de Fauteuils…</div>';
+        }
+        try {
+          const refreshKey = "stip_tableau_runtime_refresh_" + TABLEAU_BUILD;
+          if (!sessionStorage.getItem(refreshKey)) {
+            sessionStorage.setItem(refreshKey, "1");
+            const url = new URL(location.href);
+            url.searchParams.set("__stip_build", TABLEAU_BUILD);
+            setTimeout(() => location.replace(url.pathname + url.search + url.hash), 60);
+          }
+        } catch {}
+        return;
+      }
+      runtime.unmountPreview?.();
+      runtime.mount?.(
+        tableauHost,
         { focus: !!state.tableauFocus },
       );
       state.tableauFocus = false;
