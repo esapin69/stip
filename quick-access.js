@@ -125,7 +125,12 @@
     lastTouch = { key: "", at: 0 };
   function allowed(k) {
     if (!META[k]) return false;
-    const p = window.STIPSession?.permissions || {};
+    const p = window.STIPPreview?.active
+      ? { ...(window.STIPSession?.permissions || {}) }
+      : {
+          ...(window.STIPSession?.permissions || {}),
+          ...(window.STIPBootCache?.permissions || {}),
+        };
     if (k.startsWith("resp_")) {
       if (!p.responsable) return false;
       if (k === "resp_evaluation" || k === "resp_official")
