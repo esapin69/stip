@@ -438,6 +438,12 @@
         takeWheelchair(String(take.dataset.take || ""));
         return;
       }
+      const missing = event.target.closest?.("[data-report-missing]");
+      if (missing) {
+        event.preventDefault();
+        reportWheelchairMissing(String(missing.dataset.reportMissing || ""));
+        return;
+      }
       const photo = event.target.closest?.("[data-photo-url]");
       if (photo) {
         event.stopPropagation();
@@ -1455,11 +1461,77 @@
     await chooseSpotDetails(building);
   }
 
+  function reportWheelchairMissing(messageId) {
+    return new Promise((resolve) => {
+      const message = (state.data?.messages || []).find(
+        (item) => String(item.id) === String(messageId),
+      );
+      if (!message) {
+        resolve(false);
+        return;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      const parentBody = cleanWheelchairText(message.body || "");
+
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-missing-report">' +
+          '<div class="tb-confirm-icon">⚠️</div>' +
+          "<h3>Rien trouvé ici ?</h3>" +
+          '<p class="tb-missing-parent">' + esc(parentBody) + "</p>" +
+          '<div class="tb-missing-note"><strong>Le signalement d’origine reste visible.</strong><span>Tu ajoutes une réponse terrain pour prévenir les autres.</span></div>' +
+          '<label class="tb-precision-field"><span>Ajouter un détail <em>facultatif</em></span>' +
+            '<textarea rows="3" maxlength="180" placeholder="Ex. j’ai vérifié tout le couloir, aucun fauteuil…"></textarea>' +
+          "</label>" +
+          '<button type="button" class="tb-missing-send" data-missing-send><span>⚠️ Rien trouvé ici</span><b>↑</b></button>' +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        "</section>";
+
+      const close = (value = false) => {
+        wrap.remove();
+        resolve(value);
+      };
+      const input = wrap.querySelector("textarea");
+
+      wrap.querySelector("[data-missing-send]")?.addEventListener("click", async (event) => {
+        const button = event.currentTarget;
+        const detail = String(input?.value || "").trim();
+        const body = "⚠️ Je n’ai trouvé aucun fauteuil à cet endroit." +
+          (detail ? " " + detail : "");
+        button.disabled = true;
+        try {
+          if (!(await ensurePrivacy())) {
+            button.disabled = false;
+            return;
+          }
+          await api("team_send", {
+            body,
+            reply_to_id: String(messageId),
+          });
+          await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+          close(true);
+        } catch (error) {
+          alert(error.message || "Réponse impossible.");
+          button.disabled = false;
+        }
+      });
+
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) close(false);
+      });
+      document.body.appendChild(wrap);
+      setTimeout(() => input?.focus(), 40);
+    });
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
 
     const messages = state.data?.messages || [];
+    const byId = new Map(messages.map((message) => [String(message.id), message]));
     const me = String(state.data?.me?.id || "");
 
     if (!messages.length) {
@@ -1475,6 +1547,8 @@
       const mine = String(message.sender_agent_id) === me;
       const checked = state.selected.has(id);
       const photo = message.payload?.photo_url || "";
+      const replyToId = String(message.payload?.reply_to_id || "");
+      const replyParent = replyToId ? byId.get(replyToId) : null;
       const wheelchair = message.payload?.wheelchair || null;
       const resolved = wheelchair?.status === "resolved";
       const activeSignal = wheelchair?.status === "active";
@@ -1529,10 +1603,21 @@
             "</span>",
         );
       }
+      if (replyParent) {
+        const parentWheelchair = replyParent.payload?.wheelchair || null;
+        const parentLabel = parentWheelchair?.type === "search" ? "Demande" : "Signalement";
+        html.push(
+          '<div class="tb-reply-context"><span aria-hidden="true">↪</span><div><strong>' +
+            esc(parentLabel + " de " + agentName(replyParent.sender)) +
+            '</strong><small>' +
+            esc(cleanWheelchairText(replyParent.body || "")).slice(0, 150) +
+            '</small></div></div>',
+        );
+      }
       if (message.body) {
         const visibleBody = wheelchair ? cleanWheelchairText(message.body) : String(message.body);
         html.push(
-          '<p class="' + (activeSignal || resolved ? "tb-location-line" : "") + '">' +
+          '<p class="' + (activeSignal || resolved ? "tb-location-line" : "") + (replyParent ? " tb-reply-body" : "") + '">' +
             esc(visibleBody).replace(/\n/g, "<br>") +
           "</p>",
         );
@@ -1555,9 +1640,14 @@
           );
         } else {
           html.push(
-            '<button type="button" class="tb-resolve is-take" data-take="' +
-              esc(id) +
-              '"><span aria-hidden="true">↘</span><strong>Prendre</strong></button>',
+            '<div class="tb-wheelchair-actions">' +
+              '<button type="button" class="tb-resolve is-take" data-take="' +
+                esc(id) +
+                '"><span aria-hidden="true">↘</span><strong>Prendre</strong></button>' +
+              '<button type="button" class="tb-report-missing" data-report-missing="' +
+                esc(id) +
+                '"><span aria-hidden="true">⚠️</span><strong>Rien trouvé ici</strong></button>' +
+            "</div>",
           );
           const takes = Array.isArray(wheelchair?.takes) ? wheelchair.takes : [];
           if (takes.length && stock.remaining > 0) {
