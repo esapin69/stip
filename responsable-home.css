@@ -838,3 +838,28 @@ body.resp-dashboard-mode .resp-carousel {
     grid-template-columns: repeat(3, 1fr);
   }
 }
+
+
+/* Responsable workspace — 4 onglets persistants */
+.resp-tabs{position:sticky;top:64px;z-index:29;width:100%;min-height:58px;padding:7px max(10px,env(safe-area-inset-left)) 7px max(10px,env(safe-area-inset-right));border-bottom:1px solid #d9e7ea;background:rgba(247,251,252,.97);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.resp-tabs button{min-width:0;min-height:44px;padding:5px 3px;border:1px solid transparent;border-radius:14px;background:transparent;color:#6b8189;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:900}
+.resp-tabs button span{font-size:.9rem;line-height:1}.resp-tabs button b{min-width:0;font-size:.72rem;white-space:nowrap}
+.resp-tabs button.active{border-color:#bfe1e7;background:#fff;color:#0b7890;box-shadow:0 5px 15px rgba(18,72,88,.09)}
+.resp-tab-pane[hidden]{display:none!important}
+.resp-tab-intro{margin:4px 0 14px}.resp-tab-intro span{color:var(--stip-accent);font-size:.62rem;font-weight:950;letter-spacing:.12em}.resp-tab-intro h1{margin:3px 0 0;font-size:1.65rem;line-height:1;letter-spacing:-.03em}.resp-tab-intro p{margin:7px 0 0;color:var(--stip-muted);font-size:.78rem;line-height:1.4}
+.resp-team-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-bottom:4px}
+.resp-team-actions button{min-width:0;min-height:66px;padding:8px 4px;border:1px solid #d8e6e9;border-radius:17px;background:#fff;color:var(--stip-ink);box-shadow:0 6px 17px rgba(18,72,88,.06);display:grid;place-items:center;align-content:center;gap:5px}
+.resp-team-actions button span{font-size:1.15rem;line-height:1}.resp-team-actions button b{font-size:.68rem;line-height:1.15}
+html:not([data-responsable-level="pro"]) [data-team-pro]{display:none!important}
+body.resp-tab-equipe #respPanel{position:static;z-index:auto;inset:auto;width:100%;max-width:1040px;min-height:0;margin:-28px auto 0;background:transparent;transform:none;transition:none;overflow:visible}
+body.resp-tab-equipe #respPanel:not(.open){display:none}
+body.resp-tab-equipe #respPanel .resp-panel-head{display:none}
+body.resp-tab-equipe #respPanel .resp-panel-body{width:100%;max-width:700px;margin:auto;padding:0 clamp(14px,4vw,22px) 40px}
+body.resp-tab-equipe .ra-search{top:122px}
+.resp-agenda-inline .ta-shell{width:100%;max-width:none;margin:0;padding:2px 0 92px}
+.resp-agenda-inline .resp-agenda-head{grid-template-columns:minmax(0,1fr) 46px;margin-bottom:12px}
+.resp-agenda-inline .resp-agenda-head .ta-title{text-align:left}
+.resp-agenda-inline .resp-agenda-head .ta-title h1{font-size:1.65rem}
+.resp-agenda-inline .ta-add{bottom:calc(22px + env(safe-area-inset-bottom))}
+.resp-agenda-inline .ta-sheet{z-index:90}
+@media(max-width:430px){.resp-tabs{top:64px;min-height:55px;padding-inline:7px;gap:3px}.resp-tabs button{min-height:41px;gap:3px;border-radius:12px}.resp-tabs button b{font-size:.66rem}.resp-tabs button span{font-size:.82rem}.resp-team-actions{gap:5px}.resp-team-actions button{min-height:62px;border-radius:15px}body.resp-tab-equipe #respPanel{margin-top:-28px}body.resp-tab-equipe #respPanel .resp-panel-body{padding-inline:12px}.resp-agenda-inline .resp-agenda-head .ta-title h1{font-size:1.42rem}}
