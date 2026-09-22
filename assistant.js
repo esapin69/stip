@@ -47,8 +47,13 @@
     }
   }
   function label(x) {
+    const terrain = field()?.terrainItem?.(x);
+    if (terrain?.level === "critical") return "🛑 ÇA COINCE";
+    if (terrain?.level === "warning") return "⚠️ À SURVEILLER";
+    if (terrain?.level === "opportunity") return "➕ MARGE UTILE";
+    if (terrain?.level === "ok" && ["staffing", "compound"].includes(String(x.source_family || "").toLowerCase()))
+      return "✔ TOUT VA BIEN";
     if (x.severity >= 4) return "🛑 ÇA COINCE";
-    if (x.severity >= 3) return "⚠️ À REGARDER";
     if (x.severity >= 2) return "⚠️ À SURVEILLER";
     if (x.kind === "opportunity" || x.kind === "proposal") return "PISTE UTILE";
     return "INFO";
