@@ -32,7 +32,6 @@ const FALLBACK: any = {
   brancardier: {
     planning_personal: true,
     planning_team: true,
-    agent_directory: true,
     change_app: true,
     calendar_subscribe: true,
     contacts: true,
