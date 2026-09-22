@@ -4585,73 +4585,21 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* home-week-navigation-20260922 */
-.hc-week-separator-nav{
-  margin:7px 0 8px!important;
+
+/* home-week-navigation-homogeneous-20260922 */
+.hc-calendar-driven-planning .hc-week-jump-head{
+  margin:0 2px 11px!important;
 }
-.hc-week-separator-nav>.hc-week-separator-controls{
-  min-width:min(280px,72vw);
-  display:grid!important;
-  grid-template-columns:36px minmax(0,1fr) 36px!important;
-  align-items:center!important;
-  gap:8px!important;
-  letter-spacing:0!important;
-  white-space:nowrap!important;
-  overflow-wrap:normal!important;
-}
-.hc-week-separator-controls>button{
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-  padding:0;
-  border:1px solid rgba(13,98,119,.18);
-  border-radius:12px;
-  background:#f3f9fa;
-  color:#0d6277;
-  box-shadow:0 4px 10px rgba(13,66,87,.07);
-  font-size:1.65rem;
-  font-weight:800;
-  line-height:1;
-  cursor:pointer;
-}
-.hc-week-separator-controls>button:active{
-  transform:translateY(1px);
-  background:#e8f5f7;
-}
-.hc-week-separator-copy{
-  min-width:0;
-  display:grid;
-  justify-items:center;
-  gap:3px;
-  text-align:center;
-}
-.hc-week-separator-copy>b{
-  color:#6f838b;
-  font-size:.68rem;
-  font-weight:950;
-  line-height:1;
-  letter-spacing:.13em;
-  text-transform:uppercase;
-}
-.hc-week-separator-copy>small{
-  max-width:100%;
-  overflow:hidden;
-  color:#8b9ba1;
-  font-size:.58rem;
-  font-weight:850;
-  line-height:1;
-  letter-spacing:.015em;
-  text-overflow:ellipsis;
-  text-transform:none;
+.hc-calendar-driven-planning .hc-week-jump-head>strong{
+  font-size:1rem!important;
+  color:#173f52!important;
 }
 @media(max-width:380px){
-  .hc-week-separator-nav>.hc-week-separator-controls{
-    min-width:min(248px,76vw);
-    grid-template-columns:33px minmax(0,1fr) 33px!important;
-    gap:6px!important;
+  .hc-calendar-driven-planning .hc-week-jump-head{
+    margin-inline:1px!important;
+    margin-bottom:9px!important;
   }
-  .hc-week-separator-controls>button{width:33px;height:33px;border-radius:11px;font-size:1.5rem}
-  .hc-week-separator-copy>b{font-size:.63rem}
-  .hc-week-separator-copy>small{font-size:.54rem}
+  .hc-calendar-driven-planning .hc-week-jump-head>strong{
+    font-size:.92rem!important;
+  }
 }
