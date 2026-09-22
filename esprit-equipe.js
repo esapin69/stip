@@ -47,6 +47,8 @@
     openShift: "",
     dateJumpMonth: monthKey(todayIso()),
     daySignals: new Map(),
+    signalMonths: new Map(),
+    openShifts: new Map(),
   };
 
   function token() {
@@ -194,6 +196,16 @@
     return iso(date);
   }
 
+  function daysOfMonth(key) {
+    if (!/^\d{4}-\d{2}$/.test(String(key || ""))) return [];
+    const [year, month] = key.split("-").map(Number);
+    const last = new Date(year, month, 0, 12).getDate();
+    return Array.from(
+      { length: last },
+      (_, index) => `${key}-${String(index + 1).padStart(2, "0")}`,
+    );
+  }
+
   function signalForDate(value) {
     return state.daySignals.get(value) || null;
   }
@@ -201,6 +213,25 @@
   function assistantItemsForDate(bundle, value) {
     return (bundle?.assistant?.items || []).filter(
       (item) => String(item?.date || "").slice(0, 10) === value,
+    );
+  }
+
+  function signalStatus(staff, items = []) {
+    return (
+      field()?.dayStatus?.({ staffing: staff, items }) ||
+      (() => {
+        const worst = Math.max(
+          0,
+          ...items.map((item) => Number(item?.severity || 0)),
+        );
+        return worst >= 4
+          ? { level: "critical", symbol: "🛑", label: "Ça coince" }
+          : worst >= 2
+            ? { level: "warning", symbol: "⚠️", label: "À surveiller" }
+            : staff?.available
+              ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
+              : { level: "unknown", symbol: "", label: "Pas assez de données" };
+      })()
     );
   }
 
@@ -221,21 +252,7 @@
         const date = days[index],
           staff = result.status === "fulfilled" ? result.value : null,
           items = assistantItemsForDate(bundle, date),
-          status =
-            field()?.dayStatus?.({ staffing: staff, items }) ||
-            (() => {
-              const worst = Math.max(
-                0,
-                ...items.map((item) => Number(item?.severity || 0)),
-              );
-              return worst >= 4
-                ? { level: "critical", symbol: "🛑", label: "Ça coince" }
-                : worst >= 2
-                  ? { level: "warning", symbol: "⚠️", label: "À surveiller" }
-                  : staff?.available
-                    ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
-                    : { level: "unknown", symbol: "", label: "Pas assez de données" };
-            })();
+          status = signalStatus(staff, items);
         state.daySignals.set(date, status);
       });
       cached.signalLoaded = true;
@@ -249,6 +266,68 @@
       cached.signalPromise = null;
     });
     return cached.signalPromise;
+  }
+
+  async function loadMonthSignals(key, force = false) {
+    const days = daysOfMonth(key);
+    if (!days.length) return;
+    let cached = state.signalMonths.get(key);
+    if (!cached) {
+      cached = { loaded: false, fetchedAt: 0, promise: null };
+      state.signalMonths.set(key, cached);
+    }
+    if (
+      !force &&
+      cached.loaded &&
+      Date.now() - Number(cached.fetchedAt || 0) < CACHE_TTL
+    )
+      return;
+    if (cached.promise && !force) return cached.promise;
+
+    cached.promise = (async () => {
+      const assistant = allowed("assistant_enabled")
+        ? await post("stip-assistant", {
+            action: "feed",
+            start_date: days[0],
+            end_date: days.at(-1),
+          }).catch(() => null)
+        : null;
+      const assistantItems = assistant?.items || [];
+      const targetDays = force
+        ? days
+        : days.filter((date) => !state.daySignals.has(date));
+      let cursor = 0;
+      let completed = 0;
+      const workers = Array.from(
+        { length: Math.min(6, Math.max(1, targetDays.length)) },
+        async () => {
+          while (cursor < targetDays.length) {
+            const date = targetDays[cursor++];
+            let staff = null;
+            try {
+              staff = await post("stip-staffing", { action: "day", date });
+            } catch {}
+            const items = assistantItems.filter(
+              (item) => String(item?.date || "").slice(0, 10) === date,
+            );
+            state.daySignals.set(date, signalStatus(staff, items));
+            completed += 1;
+            if (
+              state.dateJumpMonth === key &&
+              (completed % 4 === 0 || completed === targetDays.length)
+            )
+              renderDateJumpCalendar(key);
+          }
+        },
+      );
+      await Promise.all(workers);
+      cached.loaded = true;
+      cached.fetchedAt = Date.now();
+      if (state.dateJumpMonth === key) renderDateJumpCalendar(key);
+    })().finally(() => {
+      cached.promise = null;
+    });
+    return cached.promise;
   }
 
   function renderDateJumpCalendar(key = "") {
@@ -499,15 +578,21 @@
     return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${intel}${body}</div></article>`;
   }
 
+  function isChefItem(item) {
+    const agent = item?.agents || {};
+    return (
+      String(item?.equipe || "").toLowerCase() === "chefs" ||
+      String(agent.type_planning || "").toLowerCase() === "chefs" ||
+      /chef/i.test(String(agent.role || ""))
+    );
+  }
+
   function agentRow(item) {
     const agent = item.agents || {};
     const phone = phoneDigits(agent.telephone);
     const ghe = String(agent.ghe || "").replace(/^GHE\s*/i, "");
     const key = String(agent.source_key || "");
-    const isChef =
-      String(item.equipe || "").toLowerCase() === "chefs" ||
-      String(agent.type_planning || "").toLowerCase() === "chefs" ||
-      /chef/i.test(String(agent.role || ""));
+    const isChef = isChefItem(item);
     const quotite = Number(agent.quotite);
     const partTime = Number.isInteger(quotite) && quotite >= 1 && quotite < 100;
     return `<div class="team-agent ${isChef ? "is-chef" : ""}">
@@ -525,8 +610,14 @@
     const meta = SHIFT[base];
     if (!meta || !items.length) return "";
     const sortedItems = items.slice().sort(compareAgentGhe);
+    const chefs = sortedItems.filter(isChefItem);
+    const team = sortedItems.filter((item) => !isChefItem(item));
     const key = `${day}|${code}`;
-    const open = state.openShift === key;
+    const open = state.openShifts.get(day) === key;
+    const group = (rows, label, className) =>
+      rows.length
+        ? `<section class="team-agent-group ${className}"><div class="team-agent-group-label">${esc(label)}</div>${rows.map(agentRow).join("")}</section>`
+        : "";
     return `<section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
       <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
         <b>${esc(code)}</b>
@@ -534,7 +625,7 @@
         <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
-      <div class="team-shift-agents" ${open ? "" : "hidden"}>${sortedItems.map(agentRow).join("")}</div>
+      <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
     </section>`;
   }
 
@@ -554,8 +645,6 @@
       ([a], [b]) =>
         SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
     );
-    if (!state.openShift && day === state.dayFocus && ordered[0])
-      state.openShift = `${day}|${ordered[0][0]}`;
     const body = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     return dayContainer(
       day,
@@ -612,7 +701,9 @@
     $("#teamContent")
       ?.querySelectorAll("[data-team-shift]")
       .forEach((button) => {
-        const active = button.dataset.teamShift === state.openShift;
+        const key = button.dataset.teamShift || "";
+        const day = key.split("|")[0] || state.dayFocus;
+        const active = state.openShifts.get(day) === key;
         button.setAttribute("aria-expanded", String(active));
         const section = button.closest(".team-shift");
         section?.classList.toggle("open", active);
@@ -731,7 +822,11 @@
       if (state.tab === "activity") await loadActivity(state.weekStart, force);
       if (request !== state.request) return;
       renderContent(bundle);
-      loadWeekSignals(state.weekStart, bundle, force).catch(() => {});
+      loadWeekSignals(state.weekStart, bundle, force)
+        .catch(() => {})
+        .finally(() =>
+          loadMonthSignals(state.dateJumpMonth, force).catch(() => {}),
+        );
       const issue = bundle.coreError || bundle.activityError;
       clearBusy();
       if (issue)
@@ -839,7 +934,9 @@
     const shift = event.target.closest("[data-team-shift]");
     if (shift) {
       const key = shift.dataset.teamShift || "";
-      state.openShift = state.openShift === key ? "" : key;
+      const day = key.split("|")[0] || state.dayFocus;
+      if (state.openShifts.get(day) === key) state.openShifts.delete(day);
+      else state.openShifts.set(day, key);
       syncShiftPanels();
       return;
     }
