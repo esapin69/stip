@@ -17,8 +17,8 @@
     viewportHandler: null,
     viewportHeight: 0,
     draft: "",
-    draftKind: "search",
-    composeMode: "search",
+    draftKind: "spot",
+    composeMode: "spot",
     selectedBuilding: "",
   };
 
@@ -173,7 +173,7 @@
       '<section class="tb-input-dock" data-input-dock>' +
       '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. je cherche un fauteuil au 2e étage" aria-label="Préciser le lieu du fauteuil"></textarea>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. 3 fauteuils · 4e étage, devant les ascenseurs" aria-label="Préciser le lieu du fauteuil"></textarea>' +
       '<button type="submit" class="tb-send" aria-label="Envoyer">↑</button>' +
       "</form>" +
       "</section>" +
@@ -185,6 +185,11 @@
     if (!root) return;
     if (state.root !== root) {
       stopFull();
+      if (!state.draft) {
+        state.draftKind = "spot";
+        state.composeMode = "spot";
+        state.selectedBuilding = "";
+      }
       state.root = root;
       state.data = null;
       state.selection = false;
@@ -413,6 +418,10 @@
     }
   }
 
+  function cleanWheelchairText(value = "") {
+    return String(value || "").replace(/\s*·\s*$/, "").trim();
+  }
+
   function inferWheelchairQuantity(text = "") {
     const body = String(text || "").trim();
     const explicit = body.match(/(?:^|[·,:;\s])(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
@@ -449,8 +458,8 @@
       '<div class="tb-shortcuts-full">' +
         '<div class="tb-search-shortcuts-head"><strong>Action</strong></div>' +
         '<div class="tb-compose-modes" role="group" aria-label="Que veux-tu faire ?">' +
-          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Chercher un fauteuil</strong></button>' +
           '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Signaler des fauteuils</strong></button>' +
+          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Chercher un fauteuil</strong></button>' +
         "</div>" +
         '<small class="tb-compose-hint">' + (searchMode ? "Où cherches-tu ?" : "Où sont-ils ?") + "</small>" +
         '<div class="tb-search-shortcuts-grid">' +
@@ -602,9 +611,10 @@
         );
       }
       if (message.body) {
+        const visibleBody = wheelchair ? cleanWheelchairText(message.body) : String(message.body);
         html.push(
           '<p class="' + (activeSignal || resolved ? "tb-location-line" : "") + '">' +
-            esc(message.body).replace(/\n/g, "<br>") +
+            esc(visibleBody).replace(/\n/g, "<br>") +
           "</p>",
         );
       }
@@ -765,7 +775,7 @@
     event.preventDefault();
     const form = event.currentTarget;
     const textarea = form.elements.body;
-    const body = String(textarea.value || "").trim();
+    const body = cleanWheelchairText(textarea.value);
     if (!body) return;
     if (!(await ensurePrivacy())) return;
 
@@ -966,7 +976,9 @@
   }
 
   function previewText(message) {
-    const body = String(message?.body || "").trim();
+    const body = message?.payload?.wheelchair
+      ? cleanWheelchairText(message?.body || "")
+      : String(message?.body || "").trim();
     if (body) return body;
     if (message?.payload?.photo_url) return "Photo";
     return "";
