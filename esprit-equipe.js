@@ -1063,6 +1063,7 @@
   function moveWeek(offset) {
     state.weekStart = addDays(state.weekStart, offset * 7);
     state.dayFocus = state.weekStart;
+    state.dateJumpMonth = monthKey(state.dayFocus);
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
