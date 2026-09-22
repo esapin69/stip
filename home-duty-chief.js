@@ -143,6 +143,44 @@
     return `<span class="hc-duty-chief-shift tone-${esc(tone)}" aria-label="${esc(shiftText(item))}"><i aria-hidden="true"></i><b>${esc(code)}</b></span>`;
   }
 
+  async function fetchDuty(force = false) {
+    if (!document.querySelector("#teamDutyChiefNowHost") && !document.querySelector("#teamDutyChiefTodayHost"))
+      return null;
+    if (!localStorage.getItem(STORE)) return null;
+    if (!force && data && Date.now() - lastFetch < 5 * 60 * 1000) return data;
+    if (loading) return loading;
+
+    loading = fetch(API, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+        "X-STIP-Session": localStorage.getItem(STORE) || "",
+      },
+      body: JSON.stringify({ action: "duty_chiefs" }),
+    })
+      .then(async (response) => {
+        const json = await response.json().catch(() => ({}));
+        if (!response.ok || json.error)
+          throw Error(json.error || "Chefs indisponibles.");
+        data = json;
+        loadError = "";
+        lastFetch = Date.now();
+        return json;
+      })
+      .catch((error) => {
+        loadError = error?.message || "Informations chefs indisponibles.";
+        return null;
+      })
+      .finally(() => {
+        loading = null;
+        render();
+      });
+
+    render();
+    return loading;
+  }
+
   function statusForToday(item, now) {
     if (isCurrent(item, now)) return "now";
     const start = nextStartKey(item),
@@ -296,6 +334,28 @@
       bind(todayHost);
     }
   }
+
+  window.STIPDutyChiefs = {
+    hydrateFromPlanning(items = [], date = "") {
+      const chiefs = (Array.isArray(items) ? items : []).filter(
+        (item) => String(item?.equipe || "").toLowerCase() === "chefs",
+      );
+      if (!chiefs.length) return false;
+      data = {
+        date: /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))
+          ? String(date)
+          : parisParts().date,
+        items: chiefs,
+      };
+      loadError = "";
+      lastFetch = Date.now();
+      render();
+      return true;
+    },
+    refresh() {
+      return fetchDuty(true);
+    },
+  };
 
   const style = document.createElement("style");
   style.textContent = `
