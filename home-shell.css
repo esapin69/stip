@@ -4640,3 +4640,17 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.92rem!important;
   }
 }
+
+/* HOME IDENTITY — visual avatar centering 2026-09-22
+   The left rail is narrower than the perceived free area because the center
+   copy extends into it. Shift the avatar itself, not the whole identity grid. */
+@media(max-width:560px){
+  .hc-id-card .hc-avatar{
+    transform:translateX(clamp(11px,3.4vw,15px))!important;
+  }
+}
+@media(max-width:380px){
+  .hc-id-card .hc-avatar{
+    transform:translateX(11px)!important;
+  }
+}
