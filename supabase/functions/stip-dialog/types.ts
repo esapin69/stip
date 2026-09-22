@@ -28,6 +28,13 @@ export type ShiftDef = {
   label: string;
   start_time: string;
   end_time: string;
+  base_shift?: string;
+  schedule_mode?: "fixed" | "flexible";
+  duration_minutes?: number;
+  window_start?: string;
+  window_end?: string;
+  special?: boolean;
+  exchangeable?: boolean;
 };
 
 export type Card = Record<string, unknown>;
