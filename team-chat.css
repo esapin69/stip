@@ -2624,3 +2624,72 @@
 @media(max-width:380px){
   .tb-wheelchair-actions{grid-template-columns:1fr!important}
 }
+
+/* Fauteuils V17 — standalone building cards */
+.hc-tableau-standalone .tb-building-pulse{
+  width:min(100%,690px)!important;
+  margin:4px auto 12px!important;
+}
+@media(max-width:640px){
+  .hc-tableau-standalone .tb-building-pulse{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:10px!important;
+    padding-inline:14px!important;
+  }
+  .hc-tableau-standalone .tb-pulse-card{
+    position:relative!important;
+    min-height:132px!important;
+    padding:11px 10px!important;
+    border-radius:18px!important;
+    overflow:hidden!important;
+  }
+  .hc-tableau-standalone .tb-pulse-card>strong{
+    position:relative!important;
+    z-index:2!important;
+    margin:0!important;
+    font-size:.84rem!important;
+    text-align:left!important;
+  }
+  .hc-tableau-standalone .tb-pulse-counts{
+    position:absolute!important;
+    inset:0!important;
+    display:block!important;
+    margin:0!important;
+  }
+  .hc-tableau-standalone .tb-pulse-counts>span{
+    position:absolute!important;
+    width:60%!important;
+    min-height:42px!important;
+    padding:5px 8px!important;
+    grid-template-columns:20px 28px minmax(0,1fr)!important;
+    border-radius:12px!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.72)!important;
+  }
+  .hc-tableau-standalone .tb-pulse-stock{
+    top:40px!important;
+    right:9px!important;
+  }
+  .hc-tableau-standalone .tb-pulse-search{
+    left:9px!important;
+    bottom:9px!important;
+  }
+  .hc-tableau-standalone .tb-pulse-counts b{
+    font-size:.76rem!important;
+  }
+  .hc-tableau-standalone .tb-pulse-counts em{
+    font-size:1rem!important;
+  }
+  .hc-tableau-standalone .tb-pulse-counts small{
+    font-size:.58rem!important;
+  }
+}
+@media(min-width:641px){
+  .hc-tableau-standalone .tb-building-pulse{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:10px!important;
+    padding-inline:14px!important;
+  }
+  .hc-tableau-standalone .tb-pulse-card{
+    min-height:118px!important;
+  }
+}

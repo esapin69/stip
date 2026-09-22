@@ -1446,20 +1446,17 @@
       ];
     if (has("messages"))
       items.push({ key: "tableau", label: "Fauteuils", art: ICON.homeChair, live: true });
-    const tableauCompact = active === "tableau";
-    return `<section class="hc-home-top-nav${tableauCompact ? " is-tableau-compact" : ""}">
+    return `<section class="hc-home-top-nav">
       <div class="hc-home-top-tools">
         <div class="hc-home-team-slot">${teamShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
-      ${tableauCompact
-        ? '<nav class="hc-tableau-compact-nav" aria-label="Navigation fauteuils"><button type="button" data-home-mode="planning">‹ Accueil</button></nav>'
-        : `<nav class="hc-home-filters" aria-label="Accueil STIP">${items
-            .map(
-              (item) =>
-                `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
-            )
-            .join("")}</nav>`}
+      <nav class="hc-home-filters" aria-label="Accueil STIP">${items
+        .map(
+          (item) =>
+            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
+        )
+        .join("")}</nav>
     </section>`;
   }
 
@@ -1983,9 +1980,19 @@
       return;
     }
 
-    const showProfile = state.homeMode === "planning",
+    const isTableau = state.homeMode === "tableau" && has("messages"),
+      showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    const markup = `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    const markup = isTableau
+      ? `<section class="hc-tableau-standalone" aria-label="Fauteuils">
+          <header class="hc-tableau-standalone-head">
+            <button type="button" class="hc-tableau-back" data-home-mode="planning" aria-label="Retour à l’accueil"><span aria-hidden="true">‹</span><strong>Accueil</strong></button>
+            <div class="hc-tableau-standalone-title"><strong>Fauteuils</strong><small>Terrain</small></div>
+            <span class="hc-tableau-head-spacer" aria-hidden="true"></span>
+          </header>
+          <section class="hc-tableau-standalone-body">${homeModeBody()}</section>
+        </section>`
+      : `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (state.renderSig === markup && root.childElementCount) return;
     const onHome = (window.STIPRouter?.get?.() || "home") === "home",
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
