@@ -1205,92 +1205,451 @@ body.team-page {
 .team-month-legend .status-critical{color:#c33b3b}
 .team-month-legend .status-unknown{color:#8b9aa0}
 
-/* home-duty-chief.js injects its CSS inline, which this page's CSP blocks.
-   Keep the component styled here as an external stylesheet. */
+/* Chef d’équipe — styles externes obligatoires : la CSP de cette page bloque
+   les styles injectés par home-duty-chief.js. */
 .team-duty-chief-host{margin:14px 0 16px}
 .team-duty-chief-host .hc-duty-chief-host{position:relative;margin:0}
+.team-duty-chief-host .hc-duty-chief-summary-shell{position:relative}
+
+/* Carte principale : davantage mise en avant, sans devenir criarde. */
 .team-duty-chief-host .hc-duty-chief-card{
-  box-sizing:border-box;width:100%;min-height:78px;
-  display:grid;grid-template-columns:48px minmax(0,1fr) 18px;align-items:center;gap:11px;
-  padding:11px 12px;border:1px solid rgba(104,64,159,.20);border-radius:20px;
-  background:linear-gradient(145deg,#fff,#f8f3ff);color:#173e4b;text-align:left;
-  box-shadow:0 10px 24px rgba(58,37,86,.09),inset 0 1px 0 rgba(255,255,255,.98);
-  font:inherit;-webkit-tap-highlight-color:transparent;
+  box-sizing:border-box;
+  width:100%;
+  min-height:84px;
+  display:grid;
+  grid-template-columns:50px minmax(0,1fr) 18px;
+  align-items:center;
+  gap:11px;
+  padding:11px 12px;
+  border:2px solid rgba(112,64,159,.30);
+  border-radius:22px;
+  background:linear-gradient(135deg,#ffffff 0%,#f7efff 63%,#fcf9ff 100%);
+  color:#173e4b;
+  text-align:left;
+  box-shadow:
+    inset 5px 0 0 #70409f,
+    0 14px 30px rgba(58,37,86,.15),
+    inset 0 1px 0 rgba(255,255,255,.98);
+  font:inherit;
+  -webkit-tap-highlight-color:transparent;
 }
 .team-duty-chief-host .hc-duty-chief-card:active{
   transform:translateY(1px);
-  box-shadow:0 4px 11px rgba(58,37,86,.09),inset 0 1px 0 #fff;
+  box-shadow:
+    inset 5px 0 0 #70409f,
+    0 7px 16px rgba(58,37,86,.13),
+    inset 0 1px 0 #fff;
 }
 .team-duty-chief-host .hc-duty-chief-icon{
-  box-sizing:border-box;width:48px;height:48px;display:grid;place-items:center;
-  border:1px solid rgba(112,64,159,.13);border-radius:15px;background:#efe4fb;
-  font-size:1.45rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.64);
+  box-sizing:border-box;
+  width:50px;
+  height:50px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(112,64,159,.17);
+  border-radius:16px;
+  background:#eee1fb;
+  font-size:1.5rem;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.72);
 }
-.team-duty-chief-host .hc-duty-chief-summary{min-width:0;display:block}
+.team-duty-chief-host .hc-duty-chief-summary{
+  min-width:0;
+  display:grid;
+  align-content:center;
+  padding-right:48px;
+}
 .team-duty-chief-host .hc-duty-chief-summary small,
 .team-duty-chief-host .hc-duty-chief-summary strong,
 .team-duty-chief-host .hc-duty-chief-summary em{display:block}
 .team-duty-chief-host .hc-duty-chief-summary small{
-  color:#70409f;font-size:.61rem;font-weight:950;line-height:1.05;letter-spacing:.08em;
+  color:#70409f;
+  font-size:.62rem;
+  font-weight:950;
+  line-height:1.08;
+  letter-spacing:.08em;
 }
 .team-duty-chief-host .hc-duty-chief-summary strong{
-  margin-top:3px;color:#173e4b;font-size:.96rem;font-weight:950;line-height:1.08;
+  margin-top:3px;
+  color:#173e4b;
+  font-size:1rem;
+  font-weight:950;
+  line-height:1.08;
 }
 .team-duty-chief-host .hc-duty-chief-summary em{
-  margin-top:4px;color:#74878e;font-size:.7rem;font-style:normal;font-weight:850;line-height:1.08;
+  margin-top:4px;
+  color:#74878e;
+  font-size:.71rem;
+  font-style:normal;
+  font-weight:850;
+  line-height:1.1;
 }
-.team-duty-chief-host .hc-duty-chief-chevron{color:#8d75aa;font-size:1.35rem;font-weight:900;line-height:1}
-.team-duty-chief-host .hc-duty-chief-card[aria-expanded="true"] .hc-duty-chief-chevron{transform:rotate(90deg)}
+.team-duty-chief-host .hc-duty-chief-chevron{
+  color:#8d75aa;
+  font-size:1.35rem;
+  font-weight:900;
+  line-height:1;
+}
+.team-duty-chief-host .hc-duty-chief-card[aria-expanded="true"] .hc-duty-chief-chevron{
+  transform:rotate(90deg);
+}
+
+/* Téléphone visible directement sur la carte du chef sélectionné. */
+.team-duty-chief-host .hc-duty-chief-summary-call{
+  position:absolute;
+  z-index:4;
+  top:50%;
+  right:40px;
+  transform:translateY(-50%);
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:14px;
+  background:#70409f;
+  color:#fff;
+  box-shadow:0 7px 17px rgba(112,64,159,.25);
+  font:inherit;
+  font-size:1.05rem;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.team-duty-chief-host .hc-duty-chief-summary-call:active{
+  transform:translateY(-50%) scale(.94);
+}
+.team-duty-chief-host .hc-duty-chief-summary-call.is-disabled{
+  background:#e7e9ec;
+  color:#98a2a8;
+  box-shadow:none;
+  cursor:default;
+}
+
+/* Panneau ouvert : dans le flux, sous la carte, jamais par-dessus les shifts. */
 .team-duty-chief-host .hc-duty-chief-bubble{
-  position:absolute;z-index:30;left:10px;right:10px;top:calc(100% + 8px);
-  box-sizing:border-box;padding:12px;border:1px solid rgba(104,64,159,.18);border-radius:20px;
-  background:rgba(255,255,255,.98);box-shadow:0 18px 42px rgba(43,34,59,.19),inset 0 1px 0 #fff;
-  backdrop-filter:blur(10px);
+  position:relative;
+  z-index:2;
+  left:auto;
+  right:auto;
+  top:auto;
+  box-sizing:border-box;
+  width:100%;
+  margin-top:9px;
+  padding:12px;
+  border:1px solid rgba(104,64,159,.18);
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 12px 30px rgba(43,34,59,.12),inset 0 1px 0 #fff;
+  backdrop-filter:none;
 }
 .team-duty-chief-host .hc-duty-chief-bubble[hidden]{display:none}
 .team-duty-chief-host .hc-duty-chief-bubble>header{
-  display:grid;grid-template-columns:minmax(0,1fr) 34px;align-items:center;gap:8px;margin-bottom:9px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 36px;
+  align-items:center;
+  gap:8px;
+  margin-bottom:10px;
 }
 .team-duty-chief-host .hc-duty-chief-bubble>header small{
-  display:block;color:#70409f;font-size:.57rem;font-weight:950;letter-spacing:.1em;
+  display:block;
+  color:#70409f;
+  font-size:.58rem;
+  font-weight:950;
+  letter-spacing:.1em;
 }
 .team-duty-chief-host .hc-duty-chief-bubble>header strong{
-  display:block;margin-top:2px;color:#173e4b;font-size:.95rem;
+  display:block;
+  margin-top:2px;
+  color:#173e4b;
+  font-size:.98rem;
 }
 .team-duty-chief-host .hc-duty-chief-bubble>header button{
-  width:34px;height:34px;border:0;border-radius:50%;background:#f2edf8;color:#70409f;font-size:1.2rem;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:#f2edf8;
+  color:#70409f;
+  font-size:1.2rem;
 }
-.team-duty-chief-host .hc-duty-chief-list{display:grid;gap:7px}
+.team-duty-chief-host .hc-duty-chief-list{
+  display:grid;
+  gap:8px;
+}
+
+/* Une vraie ligne chef : shift | identité | accès fiche | téléphone. */
 .team-duty-chief-host .hc-duty-chief-person{
-  display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px;
-  padding:8px;border:1px solid rgba(112,64,159,.11);border-radius:14px;background:#fff;
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:8px 9px;
+  border:1px solid rgba(112,64,159,.13);
+  border-radius:15px;
+  background:#fff;
 }
+.team-duty-chief-host .hc-duty-chief-person-main{
+  flex:1 1 auto;
+  width:100%;
+  min-width:0;
+  min-height:54px;
+  display:grid;
+  grid-template-columns:50px minmax(0,1fr) 16px;
+  align-items:center;
+  gap:9px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#173e4b;
+  text-align:left;
+  font:inherit;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.team-duty-chief-host .hc-duty-chief-person-main:active{
+  transform:scale(.992);
+  background:#fafcff;
+  border-radius:11px;
+}
+.team-duty-chief-host .hc-duty-chief-person-main:disabled{cursor:default}
 .team-duty-chief-host .hc-duty-chief-shift{
-  width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#f0e7f8;
-  color:#70409f;font-size:.78rem;font-weight:950;
+  --shift-color:#81909b;
+  min-width:48px;
+  height:40px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  padding:0 7px;
+  border:1px solid color-mix(in srgb,var(--shift-color) 28%,#dce7e9);
+  border-radius:12px;
+  background:color-mix(in srgb,var(--shift-color) 9%,#fff);
+  color:#173e4b;
+  font-size:.75rem;
+  font-weight:950;
 }
-.team-duty-chief-host .hc-duty-chief-copy{min-width:0}
+.team-duty-chief-host .hc-duty-chief-shift>i{
+  width:17px;
+  height:17px;
+  display:block;
+  border-radius:50%;
+  background:var(--shift-color);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(20,62,78,.10);
+}
+.team-duty-chief-host .hc-duty-chief-shift.tone-m{--shift-color:var(--stip-shift-m)}
+.team-duty-chief-host .hc-duty-chief-shift.tone-j{--shift-color:var(--stip-shift-j)}
+.team-duty-chief-host .hc-duty-chief-shift.tone-j4{--shift-color:var(--stip-shift-j4)}
+.team-duty-chief-host .hc-duty-chief-shift.tone-s{--shift-color:var(--stip-shift-s)}
+.team-duty-chief-host .hc-duty-chief-shift.tone-n{--shift-color:var(--stip-shift-n)}
+.team-duty-chief-host .hc-duty-chief-copy{
+  min-width:0;
+}
 .team-duty-chief-host .hc-duty-chief-copy strong,
 .team-duty-chief-host .hc-duty-chief-copy small{display:block}
-.team-duty-chief-host .hc-duty-chief-copy strong{font-size:.82rem;line-height:1.05}
+.team-duty-chief-host .hc-duty-chief-copy strong{
+  color:#173e4b;
+  font-size:.84rem;
+  font-weight:950;
+  line-height:1.08;
+  overflow-wrap:anywhere;
+}
 .team-duty-chief-host .hc-duty-chief-copy small{
-  margin-top:3px;color:#778991;font-size:.65rem;font-weight:800;line-height:1.05;
+  margin-top:3px;
+  color:#778991;
+  font-size:.66rem;
+  font-weight:800;
+  line-height:1.08;
+}
+.team-duty-chief-host .hc-duty-chief-row-chevron{
+  color:#8799a0;
+  font-size:1.15rem;
+  font-style:normal;
+  font-weight:900;
 }
 .team-duty-chief-host .hc-duty-chief-call{
-  min-height:38px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border-radius:11px;
-  background:#70409f;color:#fff!important;text-decoration:none!important;font-size:.68rem;font-weight:950;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:0;
+  border-radius:13px;
+  background:#70409f;
+  color:#fff;
+  box-shadow:0 5px 14px rgba(112,64,159,.20);
+  font:inherit;
+  font-size:1rem;
+  font-weight:950;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
-.team-duty-chief-host .hc-duty-chief-no-phone{color:#8b999e;font-size:.61rem;font-weight:800}
-.team-duty-chief-host .hc-duty-chief-empty{margin:4px 2px;color:#71858d;font-size:.72rem;font-weight:800}
+.team-duty-chief-host .hc-duty-chief-call:active{transform:scale(.94)}
+.team-duty-chief-host .hc-duty-chief-call.is-disabled{
+  background:#edf0f2;
+  color:#9aa5aa;
+  box-shadow:none;
+  cursor:default;
+}
+.team-duty-chief-host .hc-duty-chief-empty{
+  margin:4px 2px;
+  color:#71858d;
+  font-size:.72rem;
+  font-weight:800;
+}
 .team-duty-chief-host .hc-duty-chief-next{
-  margin-top:8px;padding:9px;border-radius:14px;background:#f7f3fb;border:1px solid rgba(112,64,159,.10);
+  margin-top:8px;
+  padding:9px;
+  border:1px solid rgba(112,64,159,.10);
+  border-radius:14px;
+  background:#f7f3fb;
 }
 .team-duty-chief-host .hc-duty-chief-next small,
 .team-duty-chief-host .hc-duty-chief-next strong,
 .team-duty-chief-host .hc-duty-chief-next span{display:block}
-.team-duty-chief-host .hc-duty-chief-next small{color:#70409f;font-size:.55rem;font-weight:950;letter-spacing:.08em}
+.team-duty-chief-host .hc-duty-chief-next small{
+  color:#70409f;
+  font-size:.55rem;
+  font-weight:950;
+  letter-spacing:.08em;
+}
 .team-duty-chief-host .hc-duty-chief-next strong{margin-top:3px;font-size:.82rem}
-.team-duty-chief-host .hc-duty-chief-next span{margin-top:3px;color:#778991;font-size:.66rem;font-weight:800}
+.team-duty-chief-host .hc-duty-chief-next span{
+  margin-top:3px;
+  color:#778991;
+  font-size:.66rem;
+  font-weight:800;
+}
+
+/* Choix d’appel : normal ou numéro masqué (#31#). */
+.hc-duty-chief-call-overlay{
+  position:fixed;
+  inset:0;
+  z-index:1600;
+  display:grid;
+  align-items:end;
+}
+.hc-duty-chief-call-backdrop{
+  position:absolute;
+  inset:0;
+  border:0;
+  background:rgba(8,22,31,.46);
+  backdrop-filter:blur(3px);
+}
+.hc-duty-chief-call-sheet{
+  position:relative;
+  z-index:1;
+  display:grid;
+  gap:9px;
+  padding:9px 16px calc(16px + env(safe-area-inset-bottom));
+  border-radius:24px 24px 0 0;
+  background:#fff;
+  box-shadow:0 -18px 48px rgba(10,24,35,.24);
+}
+.hc-duty-chief-call-handle{
+  width:44px;
+  height:5px;
+  justify-self:center;
+  border-radius:99px;
+  background:#cad4d8;
+}
+.hc-duty-chief-call-sheet>small{
+  margin-top:2px;
+  color:#70409f;
+  font-size:.58rem;
+  font-weight:950;
+  letter-spacing:.11em;
+}
+.hc-duty-chief-call-sheet>strong{
+  color:#173e4b;
+  font-size:1.08rem;
+}
+.hc-duty-chief-call-option{
+  min-height:50px;
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+  padding:0 13px;
+  border:1px solid #dce5e8;
+  border-radius:15px;
+  background:#f8fbfc;
+  color:#173e4b;
+  text-decoration:none;
+  font-size:.78rem;
+  font-weight:950;
+}
+.hc-duty-chief-call-option.primary{
+  border-color:#70409f;
+  background:#70409f;
+  color:#fff;
+}
+.hc-duty-chief-call-option>span{
+  display:grid;
+  place-items:center;
+  font-size:1rem;
+}
+.hc-duty-chief-call-cancel{
+  min-height:42px;
+  border:0;
+  background:transparent;
+  color:#687d85;
+  font:inherit;
+  font-size:.74rem;
+  font-weight:900;
+}
+
+@media(max-width:430px){
+  .team-duty-chief-host .hc-duty-chief-card{
+    min-height:80px;
+    grid-template-columns:44px minmax(0,1fr) 16px;
+    gap:9px;
+    padding:10px;
+  }
+  .team-duty-chief-host .hc-duty-chief-icon{
+    width:44px;
+    height:44px;
+    border-radius:14px;
+    font-size:1.35rem;
+  }
+  .team-duty-chief-host .hc-duty-chief-summary{padding-right:44px}
+  .team-duty-chief-host .hc-duty-chief-summary strong{font-size:.94rem}
+  .team-duty-chief-host .hc-duty-chief-summary-call{
+    right:34px;
+    width:39px;
+    height:39px;
+    border-radius:13px;
+  }
+  .team-duty-chief-host .hc-duty-chief-bubble{margin-top:8px}
+  .team-duty-chief-host .hc-duty-chief-person{
+    gap:7px;
+    padding:7px;
+  }
+  .team-duty-chief-host .hc-duty-chief-person-main{
+    grid-template-columns:47px minmax(0,1fr) 13px;
+    gap:7px;
+  }
+  .team-duty-chief-host .hc-duty-chief-shift{
+    min-width:44px;
+    padding-inline:4px;
+  }
+  .team-duty-chief-host .hc-duty-chief-call{
+    flex-basis:39px;
+    width:39px;
+    height:39px;
+  }
+}
+@media(min-width:700px){
+  .hc-duty-chief-call-sheet{
+    width:min(520px,calc(100% - 32px));
+    justify-self:center;
+    margin-bottom:16px;
+    border-radius:24px;
+  }
+}
 
 /* calendar-subscriptions.js also injects inline CSS; duplicate the quick-sheet
    rules here so the team page remains styled under its strict CSP. */
