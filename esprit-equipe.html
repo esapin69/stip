@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260922-opportunity1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-mergedsingle1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-orderfix1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -55,28 +55,16 @@
         <section id="teamDutyChiefTodayHost" class="team-duty-chief-host" aria-label="Chefs d’équipe de la journée"></section>
       </section>
 
-      <section id="teamWeekControls" class="team-time-stack stip-time-stack" aria-label="Cette semaine">
-        <div class="team-week-section-label stip-section-separator" aria-hidden="true">
-          <span>CETTE SEMAINE</span>
+      <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
+      <section
+        id="teamContent"
+        class="team-content"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div class="team-week-skeleton" aria-label="Chargement de la journée sélectionnée">
+          <i></i>
         </div>
-
-        <section class="team-week-picker" aria-label="Cette semaine">
-          <button id="teamPrevWeek" class="team-week-step" type="button" aria-label="Semaine précédente">‹</button>
-          <nav id="teamDays" class="team-days stip-time-days" aria-label="Jours de la semaine"></nav>
-          <button id="teamNextWeek" class="team-week-step" type="button" aria-label="Semaine suivante">›</button>
-        </section>
-
-        <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
-        <section
-          id="teamContent"
-          class="team-content"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div class="team-week-skeleton" aria-label="Chargement de la journée sélectionnée">
-            <i></i>
-          </div>
-        </section>
       </section>
 
       <section class="team-month-zone team-month-zone-secondary" aria-label="Calendrier, synthèse mensuelle, repères et options">
@@ -125,7 +113,7 @@
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="agent-agenda-view.js?v=20260922-agentcalendar1"></script>
     <script src="calendar-subscriptions.js?v=20260922-agentplanning1"></script>
-    <script src="home-duty-chief.js?v=20260922-flatcorrect1"></script>
-    <script src="esprit-equipe.js?v=20260922-mergedsingle1"></script>
+    <script src="home-duty-chief.js?v=20260922-flatcorrect2"></script>
+    <script src="esprit-equipe.js?v=20260922-orderfix1"></script>
   </body>
 </html>
