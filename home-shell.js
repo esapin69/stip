@@ -5,7 +5,7 @@
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
     STORE = "stip_session_v1",
-    TABLEAU_BUILD = "20260922-fauteuils22",
+    TABLEAU_BUILD = "20260923-chatstip1",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -2060,10 +2060,10 @@
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
     let markup = `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isTableau) {
-      markup = `<section class="hc-tableau-standalone" aria-label="Fauteuils">
+      markup = `<section class="hc-tableau-standalone" aria-label="Chat STIP — Fauteuils">
           <header class="hc-tableau-standalone-head">
             <button type="button" class="hc-tableau-back" data-home-mode="planning" aria-label="Retour à l’accueil"><span aria-hidden="true">‹</span><strong>Accueil</strong></button>
-            <div class="hc-tableau-standalone-title"><strong>Fauteuils</strong><small>Terrain</small></div>
+            <div class="hc-tableau-standalone-title"><strong>Chat STIP</strong><small>Fauteuils</small></div>
             <button type="button" class="hc-profile-bell hc-tableau-bell" data-home-mode="notifications" aria-pressed="false" aria-label="Notifications${notifications().length + Number(window.STIPMessagesUnread || 0) ? ` : ${notifications().length + Number(window.STIPMessagesUnread || 0)} à traiter` : ""}"><span aria-hidden="true">🔔</span>${notifications().length + Number(window.STIPMessagesUnread || 0) ? `<b>${notifications().length + Number(window.STIPMessagesUnread || 0)}</b>` : ""}</button>
           </header>
           <section class="hc-tableau-standalone-body">${homeModeBody()}</section>
