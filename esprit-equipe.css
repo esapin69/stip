@@ -1495,3 +1495,56 @@ body.team-page {
   background:color-mix(in srgb,#8c55c7 5%,var(--stip-surface));
 }
 .team-agent-group.is-chefs .team-agent-group-label{color:#70409f}
+
+/* team-day-explanation-20260922 */
+.team-date-explanation{
+  width:100%;
+  max-width:430px;
+  box-sizing:border-box;
+  margin:10px auto 2px;
+  padding:13px 14px 14px;
+  border:1px solid var(--stip-line);
+  border-left:5px solid var(--stip-muted);
+  border-radius:17px;
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+  animation:teamDateReasonIn .16s ease-out;
+}
+.team-date-explanation[hidden]{display:none!important}
+.team-date-explanation.status-ok{border-left-color:#18a56d;background:color-mix(in srgb,#18a56d 5%,var(--stip-surface))}
+.team-date-explanation.status-warning{border-left-color:#d7a20b;background:color-mix(in srgb,#f0bd25 7%,var(--stip-surface))}
+.team-date-explanation.status-critical{border-left-color:#ef3d39;background:color-mix(in srgb,#ef3d39 5%,var(--stip-surface))}
+.team-date-explanation.status-unknown{border-left-color:#a4b2b7}
+.team-date-explanation-head{display:flex;align-items:center;gap:10px}
+.team-date-explanation-icon{
+  flex:0 0 auto;
+  min-width:34px;
+  text-align:center;
+  font-size:1.55rem;
+  line-height:1;
+}
+.team-date-explanation-head>div{min-width:0;display:grid;gap:2px}
+.team-date-explanation-head small{
+  color:var(--stip-muted);
+  font-size:.6rem;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.team-date-explanation-head strong{
+  color:var(--stip-ink);
+  font-size:.9rem;
+}
+.team-date-explanation p{
+  margin:8px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.76rem;
+  font-weight:700;
+  line-height:1.45;
+}
+@keyframes teamDateReasonIn{
+  from{opacity:.55;transform:translateY(-3px)}
+  to{opacity:1;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .team-date-explanation{animation:none}
+}
