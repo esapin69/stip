@@ -481,7 +481,12 @@
 
       if (state.focusAfterLoad && canWrite) {
         state.focusAfterLoad = false;
-        requestAnimationFrame(() => state.root?.querySelector("textarea")?.focus());
+        requestAnimationFrame(() => {
+          state.root?.querySelector("[data-input-dock]")?.scrollIntoView({
+            block: "end",
+            behavior: "smooth",
+          });
+        });
       }
     } catch (error) {
       if (!quiet && state.root) {
@@ -649,7 +654,7 @@
     const textarea = state.root?.querySelector(".tb-composer textarea");
     const current = String(textarea?.value || "").trim();
     const generatedDraft =
-      /^(?:Je cherche un fauteuil|\d{1,2}\s+fauteuils?\s+disponibles?)\s*·/i.test(current);
+      /^(?:Je cherche(?: 1)? un? fauteuil|Je cherche 1 fauteuil|\d{1,2}\s+fauteuils?\s+disponibles?)\s*·/i.test(current);
 
     state.composeMode = mode;
     state.draftKind = mode;
@@ -1147,7 +1152,7 @@
     } catch (error) {
       alert(error.message || "Publication impossible.");
     } finally {
-      button.disabled = false;
+      renderComposerState();
     }
   }
 
