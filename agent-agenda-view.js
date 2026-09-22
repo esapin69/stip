@@ -61,16 +61,33 @@
     "-":{label:"Aucun poste",time:"",icon:"",family:"other"},
     "—":{label:"Aucun poste",time:"",icon:"",family:"other"}
   };
-  const SPECIAL={
+  const FALLBACK_SPECIAL={
     M0130:{base:"M",time:"3h45 · libre entre 06h00 et 21h30"},
     M0131:{base:"M",time:"7h30 · libre entre 06h30 et 21h15"},
     M0177:{base:"M",time:"7h30 · libre entre 06h25 et 21h35"},
     J0464:{base:"J",time:"08h30–16h20 · fixe"},
     S0113:{base:"S",time:"13h30–21h00 · fixe"}
   };
+  function durationText(v){
+    const n=Number(v||0);if(!n)return"";
+    const h=Math.floor(n/60),m=n%60;
+    return m?`${h}h${String(m).padStart(2,"0")}`:`${h}h`;
+  }
+  function specialShift(code){
+    const server=(state?.data?.special_shifts||[]).find(x=>String(x.code||"").toUpperCase()===code);
+    if(server){
+      const base=String(server.base_shift||"").toUpperCase(),
+        start=String(server.window_start||"").slice(0,5).replace(":","h"),
+        end=String(server.window_end||"").slice(0,5).replace(":","h"),
+        flexible=String(server.schedule_mode||"")==="flexible",
+        duration=durationText(server.duration_minutes);
+      return{base,time:flexible?`${duration||"Durée spécifique"} · libre entre ${start} et ${end}`:`${start}–${end} · fixe`};
+    }
+    return FALLBACK_SPECIAL[code]||null;
+  }
   function shiftInfo(raw){
-    const src=String(raw||"").trim().toUpperCase(),star=src.includes("*"),clean=src.replace(/\*/g,"");
-    if(SPECIAL[clean]){const s=SPECIAL[clean],m=META[s.base];return{...m,base:s.base,raw:src,time:s.time,adapted:true,star}}
+    const src=String(raw||"").trim().toUpperCase(),star=src.includes("*"),clean=src.replace(/\*/g,""),special=specialShift(clean);
+    if(special){const s=special,m=META[s.base];return{...m,base:s.base,raw:src,time:s.time,adapted:true,star}}
     if(META[clean])return{...META[clean],base:clean,raw:src,star};
     let base="";
     if(/^M\d+$/.test(clean))base="M";
