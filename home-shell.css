@@ -4458,3 +4458,144 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   height:27px!important;
   justify-self:center!important;
 }
+
+/* HOME BUTTONS V3 — unified shell selection */
+/* Image + title behave as one physical control.
+   Selection halo wraps the whole launcher, not only the artwork. */
+.hc-home-filters{
+  width:min(100%,378px)!important;
+  gap:7px!important;
+  align-items:stretch!important;
+}
+.hc-home-filters>button{
+  box-sizing:border-box!important;
+  position:relative!important;
+  min-height:102px!important;
+  padding:6px 5px 8px!important;
+  border:1px solid rgba(42,91,108,.12)!important;
+  border-radius:21px!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.98) 0%,rgba(247,251,252,.98) 100%)!important;
+  box-shadow:
+    0 4px 0 rgba(28,72,87,.10),
+    0 10px 20px rgba(20,62,78,.08),
+    inset 0 1px 0 rgba(255,255,255,.98)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  overflow:visible!important;
+  transition:
+    transform .16s ease,
+    box-shadow .16s ease,
+    border-color .16s ease,
+    background .16s ease!important;
+}
+.hc-home-filters>button::before{
+  content:""!important;
+  position:absolute!important;
+  inset:2px!important;
+  border-radius:18px!important;
+  pointer-events:none!important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.72)!important;
+}
+.hc-home-filters>button::after{
+  content:none!important;
+}
+.hc-home-filter-art{
+  position:relative!important;
+  z-index:1!important;
+  width:100%!important;
+  max-width:none!important;
+  aspect-ratio:16/9!important;
+  border:0!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  background:transparent!important;
+  box-shadow:
+    0 3px 8px rgba(20,62,78,.10),
+    inset 0 0 0 1px rgba(18,80,101,.08)!important;
+  transform:none!important;
+}
+.hc-home-filter-art img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:14px!important;
+}
+.hc-home-filters>button>strong{
+  position:relative!important;
+  z-index:1!important;
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  color:#173f50!important;
+  font-size:.76rem!important;
+  line-height:1.02!important;
+  font-weight:950!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+
+/* Selected state: old-style cyan shell around image + label together. */
+.hc-home-filters>button.active{
+  z-index:3!important;
+  border:2px solid #27a9d8!important;
+  background:linear-gradient(180deg,#ffffff 0%,#eefaff 100%)!important;
+  transform:translateY(-3px) scale(1.018)!important;
+  box-shadow:
+    0 5px 0 rgba(15,113,148,.28),
+    0 16px 28px rgba(16,84,111,.23),
+    0 0 0 3px rgba(255,255,255,.95),
+    0 0 0 7px rgba(39,169,216,.22),
+    0 0 28px rgba(39,169,216,.30),
+    inset 0 1px 0 rgba(255,255,255,1)!important;
+}
+.hc-home-filters>button.active::before{
+  inset:3px!important;
+  border-radius:16px!important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.94),
+    inset 0 0 16px rgba(61,192,232,.08)!important;
+}
+.hc-home-filters>button.active .hc-home-filter-art{
+  border:0!important;
+  transform:none!important;
+  box-shadow:
+    0 4px 10px rgba(20,62,78,.12),
+    inset 0 0 0 1px rgba(31,149,188,.14)!important;
+  filter:saturate(1.05) contrast(1.02)!important;
+}
+.hc-home-filters>button.active>strong{
+  color:#0d607d!important;
+  text-shadow:0 1px 0 #fff!important;
+}
+.hc-home-filters>button:active{
+  transform:translateY(1px) scale(.987)!important;
+  box-shadow:
+    0 2px 0 rgba(28,72,87,.11),
+    0 5px 10px rgba(20,62,78,.09),
+    inset 0 2px 4px rgba(20,62,78,.05)!important;
+}
+.hc-home-filters>button.active:active{
+  transform:translateY(0) scale(.995)!important;
+}
+
+/* Badge remains attached to the whole Fauteuils control. */
+.hc-home-live-badge{
+  z-index:5!important;
+  top:-6px!important;
+  right:-6px!important;
+}
+
+@media(max-width:430px){
+  .hc-home-filters{width:min(100%,366px)!important;gap:6px!important}
+  .hc-home-filters>button{min-height:99px!important;padding:5px 4px 7px!important}
+  .hc-home-filters>button>strong{font-size:.73rem!important}
+}
+@media(max-width:380px){
+  .hc-home-filters{width:min(100%,340px)!important;gap:5px!important}
+  .hc-home-filters>button{min-height:93px!important;padding:5px 4px 7px!important}
+  .hc-home-filters>button>strong{font-size:.69rem!important}
+}
