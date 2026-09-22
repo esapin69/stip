@@ -60,7 +60,7 @@
         id: `access-request-${r.id}`,
         source: "admin-access",
         category: "access",
-        status: r.status || "pending",
+        status: r.unresolved ? "pending" : r.status || "pending",
         title:
           `${r.unresolved ? "Accès non relié" : "Demande d’accès"} · ${r.first_name || ""} ${r.last_name || ""}`.trim(),
         body: r.evidence?.note || r.comment || "Décision requise.",
