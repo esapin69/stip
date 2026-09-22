@@ -1472,3 +1472,26 @@ body.team-page {
     border-radius:24px;
   }
 }
+
+/* team-separated-chiefs-20260922 */
+.team-agent-group{display:grid}
+.team-agent-group+.team-agent-group{
+  margin-top:9px;
+  padding-top:9px;
+  border-top:1px dashed color-mix(in srgb,var(--stip-ink) 16%,var(--stip-line-soft));
+}
+.team-agent-group-label{
+  padding:5px 4px 4px;
+  color:var(--stip-muted);
+  font-size:.56rem;
+  font-weight:950;
+  letter-spacing:.11em;
+}
+.team-agent-group.is-chefs{
+  margin-top:5px;
+  padding:4px 6px 2px;
+  border:1px solid color-mix(in srgb,#8c55c7 20%,var(--stip-line));
+  border-radius:14px;
+  background:color-mix(in srgb,#8c55c7 5%,var(--stip-surface));
+}
+.team-agent-group.is-chefs .team-agent-group-label{color:#70409f}
