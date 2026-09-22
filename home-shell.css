@@ -4599,3 +4599,61 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button{min-height:93px!important;padding:5px 4px 7px!important}
   .hc-home-filters>button>strong{font-size:.69rem!important}
 }
+
+
+/* HOME PLANNING COMPARE SHORTCUT */
+.hc-planning-compare-shortcut{
+  width:calc(100% - 12px);
+  min-height:48px;
+  margin:5px 6px 2px;
+  padding:6px 10px 6px 7px;
+  border:1px solid #d6e5e8;
+  border-radius:15px;
+  background:#f8fbfc;
+  color:#244b5b;
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) 28px;
+  align-items:center;
+  gap:8px;
+  text-align:left;
+  box-shadow:none;
+}
+.hc-planning-compare-art{
+  width:34px;
+  height:34px;
+  border-radius:11px;
+  display:grid;
+  place-items:center;
+  background:#e7f4f6;
+  color:#0d4257;
+  font-size:1.05rem;
+  font-weight:950;
+}
+.hc-planning-compare-copy{min-width:0;display:grid;gap:1px}
+.hc-planning-compare-copy strong{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.73rem;
+  font-weight:900;
+  color:#244b5b;
+}
+.hc-planning-compare-copy small{
+  font-size:.61rem;
+  font-weight:750;
+  color:#7c9097;
+}
+.hc-planning-compare-search{
+  width:28px;
+  height:28px;
+  border-radius:10px;
+  display:grid;
+  place-items:center;
+  color:#557782;
+  font-size:1.05rem;
+}
+.hc-planning-compare-shortcut:active{transform:translateY(1px);background:#f0f8f9}
+@media(max-width:380px){
+  .hc-planning-compare-shortcut{width:calc(100% - 8px);margin-inline:4px}
+  .hc-planning-compare-copy strong{font-size:.69rem}
+}
