@@ -231,13 +231,12 @@
     host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
-          icons = events.slice(0, 2).map((e) => e.icon),
-          extra = Math.max(0, events.length - icons.length),
+          icons = events.map((e) => e.icon),
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
             .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${icons.map((i) => `<i>${esc(i)}</i>`).join("")}${extra ? `<em>+${extra}</em>` : ""}</span></button>`;
+        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${icons.map((i) => `<i>${esc(i)}</i>`).join("")}</span></button>`;
       })
       .join("")}</nav></section>`;
   }
@@ -282,8 +281,15 @@
   function renderSelectedDay() {
     const host = $("#rrSelectedDay");
     if (!host) return;
-    const rows = itemsForDate(state.selectedDate);
-    if (!rows.length) {
+    const today = parisIso(),
+      upcomingDates = new Set(
+        sortedItems()
+          .filter((x) => x.date >= today)
+          .slice(0, 4)
+          .map((x) => x.date),
+      ),
+      rows = itemsForDate(state.selectedDate);
+    if (!rows.length || upcomingDates.has(state.selectedDate)) {
       host.innerHTML = "";
       return;
     }
@@ -373,6 +379,95 @@
     }
   }
 
+  function icsText(value) {
+    return String(value ?? "")
+      .replace(/\\/g, "\\\\")
+      .replace(/\r?\n/g, "\\n")
+      .replace(/,/g, "\\,")
+      .replace(/;/g, "\\;");
+  }
+
+  function icsDate(iso) {
+    return String(iso || "").replaceAll("-", "");
+  }
+
+  function icsStamp() {
+    return new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+  }
+
+  function exportAgentDates() {
+    const status = $("#rrOptionStatus"),
+      rows = sortedItems().filter((x) => x.date >= parisIso());
+    if (!rows.length) {
+      if (status) status.textContent = "Aucune date à importer.";
+      return;
+    }
+
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//STIP//Dates agents//FR",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
+      "X-WR-CALNAME:STIP · Dates des agents",
+      "X-WR-TIMEZONE:Europe/Paris",
+    ],
+      stamp = icsStamp();
+
+    rows.forEach((x, index) => {
+      const uid = `stip-agent-date-${icsDate(x.date)}-${index}-${String(x.id || x.source_id || "event").replace(/[^a-z0-9_-]/gi, "")}@esapin.com`,
+        title = `${x.icon} ${categoryLabel(x.category)} · ${x.person_name}`,
+        details = [
+          x.time ? `Horaire : ${x.time}` : "",
+          x.referent ? `Référent : ${x.referent}` : "",
+          x.location ? `Lieu : ${x.location}` : "",
+          x.title && x.title !== categoryLabel(x.category) ? x.title : "",
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        pureTime = String(x.time || "").match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+
+      lines.push(
+        "BEGIN:VEVENT",
+        `UID:${icsText(uid)}`,
+        `DTSTAMP:${stamp}`,
+      );
+
+      if (pureTime) {
+        const hh = String(pureTime[1]).padStart(2, "0"),
+          mm = pureTime[2];
+        lines.push(
+          `DTSTART;TZID=Europe/Paris:${icsDate(x.date)}T${hh}${mm}00`,
+        );
+      } else {
+        lines.push(`DTSTART;VALUE=DATE:${icsDate(x.date)}`);
+      }
+
+      lines.push(
+        `SUMMARY:${icsText(title)}`,
+        `DESCRIPTION:${icsText(details)}`,
+        "TRANSP:TRANSPARENT",
+        "STATUS:CONFIRMED",
+        "END:VEVENT",
+      );
+    });
+
+    lines.push("END:VCALENDAR");
+    const blob = new Blob([lines.join("\r\n") + "\r\n"], {
+        type: "text/calendar;charset=utf-8",
+      }),
+      url = URL.createObjectURL(blob),
+      a = document.createElement("a");
+    a.href = url;
+    a.download = `stip-dates-agents-${parisIso()}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+    if (status)
+      status.textContent = `${rows.length} date${rows.length > 1 ? "s" : ""} préparée${rows.length > 1 ? "s" : ""} pour le calendrier.`;
+  }
+
   function openEvent(id) {
     const x = state.items.find((v) => String(v.id) === String(id));
     if (!x) return;
@@ -396,6 +491,11 @@
   }
 
   document.addEventListener("click", (e) => {
+    const exportButton = e.target.closest?.("[data-rr-export-ics]");
+    if (exportButton) {
+      exportAgentDates();
+      return;
+    }
     const event = e.target.closest?.("[data-rr-event]");
     if (event) {
       openEvent(event.dataset.rrEvent);
