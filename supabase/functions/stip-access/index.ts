@@ -94,6 +94,7 @@ const FALLBACK: any = {
 const DEFS = [
   ["planning_personal", "Planning perso"],
   ["planning_team", "Planning équipe"],
+  ["agent_directory", "Agents"],
   ["change_app", "Changement"],
   ["calendar_subscribe", "Mon agenda"],
   ["agent_dates", "Date des agents"],
