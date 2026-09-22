@@ -2693,3 +2693,199 @@
     min-height:118px!important;
   }
 }
+
+
+/* Fauteuils V18 — situation terrain compacte, sans cartes fixes */
+.tb-situation-now{
+  width:min(100%,690px)!important;
+  margin:4px auto 10px!important;
+  padding:0 14px!important;
+  display:block!important;
+}
+.tb-situation-clear{
+  min-height:54px;
+  padding:8px 10px;
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+  border:1px solid rgba(37,111,91,.16);
+  border-radius:15px;
+  background:linear-gradient(180deg,#f7fbf9,#f0f8f4);
+  box-shadow:0 4px 12px rgba(25,76,63,.045);
+}
+.tb-situation-check{
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#dff3e8;
+  color:#177454;
+  font-size:1rem;
+  font-weight:950;
+}
+.tb-situation-clear>div{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.tb-situation-clear strong{
+  color:#214f4b;
+  font-size:.76rem;
+  line-height:1.05;
+  font-weight:950;
+}
+.tb-situation-clear small{
+  color:#728985;
+  font-size:.55rem;
+  line-height:1.2;
+  font-weight:750;
+}
+.tb-situation-clear button,
+.tb-situation-head button{
+  min-height:32px;
+  padding:0 9px;
+  border:0;
+  border-radius:10px;
+  background:#fff;
+  color:#477078;
+  font:inherit;
+  font-size:.55rem;
+  font-weight:900;
+  box-shadow:inset 0 0 0 1px #d9e5e4;
+}
+.tb-situation-head{
+  min-height:42px;
+  padding:0 2px 6px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.tb-situation-head>div{
+  min-width:0;
+  display:grid;
+  gap:1px;
+}
+.tb-situation-head small{
+  color:#2c8da0;
+  font-size:.48rem;
+  line-height:1;
+  font-weight:950;
+  letter-spacing:.1em;
+}
+.tb-situation-head strong{
+  color:#244f58;
+  font-size:.76rem;
+  line-height:1.05;
+  font-weight:950;
+}
+.tb-situation-list{
+  overflow:hidden;
+  border:1px solid #dce7e8;
+  border-radius:15px;
+  background:#fff;
+  box-shadow:0 5px 14px rgba(24,65,75,.045);
+}
+.tb-situation-row{
+  min-height:48px;
+  padding:7px 10px;
+  display:grid;
+  grid-template-columns:minmax(76px,.42fr) minmax(0,1fr);
+  align-items:center;
+  gap:9px;
+  border-bottom:1px solid #edf2f2;
+}
+.tb-situation-row:last-child{border-bottom:0}
+.tb-situation-row.is-live{background:linear-gradient(90deg,#fff 0%,#fbfefe 100%)}
+.tb-situation-building{
+  min-width:0;
+  overflow:hidden;
+  color:#244f58;
+  font-size:.76rem;
+  line-height:1.05;
+  font-weight:950;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.tb-situation-signals{
+  min-width:0;
+  display:flex;
+  justify-content:flex-end;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.tb-situation-signal{
+  min-height:31px;
+  padding:4px 8px;
+  display:inline-grid;
+  grid-template-columns:auto auto auto;
+  align-items:center;
+  gap:4px;
+  border-radius:10px;
+}
+.tb-situation-signal.is-search{
+  background:#edf5fb;
+  color:#2d6587;
+}
+.tb-situation-signal.is-stock{
+  background:#edf8f3;
+  color:#176b54;
+}
+.tb-situation-signal b{font-size:.64rem}
+.tb-situation-signal strong{
+  font-size:.78rem;
+  line-height:1;
+  font-weight:950;
+}
+.tb-situation-signal small{
+  font-size:.52rem;
+  line-height:1;
+  font-weight:850;
+}
+.tb-situation-none{
+  color:#91a09d;
+  font-size:.56rem;
+  font-weight:800;
+}
+.tb-page.is-feed-empty{
+  grid-template-rows:auto auto 0 auto auto!important;
+}
+.tb-dialogue.is-empty{
+  min-height:0!important;
+  height:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border:0!important;
+  background:transparent!important;
+}
+.hc-tableau-standalone .tb-situation-now{
+  margin-top:3px!important;
+  margin-bottom:8px!important;
+}
+@media(max-width:430px){
+  .tb-situation-now{padding-inline:10px!important}
+  .tb-situation-clear{
+    grid-template-columns:30px minmax(0,1fr) auto;
+    gap:7px;
+    padding:7px 8px;
+  }
+  .tb-situation-clear small{
+    max-width:205px;
+  }
+  .tb-situation-row{
+    grid-template-columns:minmax(70px,.38fr) minmax(0,1fr);
+    padding:7px 9px;
+  }
+  .tb-situation-signal{
+    padding-inline:7px;
+  }
+}
+@media(max-width:360px){
+  .tb-situation-clear button{padding-inline:7px;font-size:.50rem}
+  .tb-situation-clear small{font-size:.51rem}
+  .tb-situation-building{font-size:.70rem}
+  .tb-situation-signal small{font-size:.48rem}
+}
