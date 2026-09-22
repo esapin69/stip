@@ -277,15 +277,22 @@
     if (!days.length) return;
     let cached = state.signalMonths.get(key);
     if (!cached) {
-      cached = { loaded: false, fetchedAt: 0, promise: null };
+      cached = {
+        loaded: false,
+        fetchedAt: 0,
+        promise: null,
+        assistantItems: [],
+      };
       state.signalMonths.set(key, cached);
     }
     if (
       !force &&
       cached.loaded &&
       Date.now() - Number(cached.fetchedAt || 0) < CACHE_TTL
-    )
+    ) {
+      if (state.dateJumpMonth === key) renderMonthDigest(key);
       return;
+    }
     if (cached.promise && !force) return cached.promise;
 
     cached.promise = (async () => {
@@ -297,6 +304,7 @@
           }).catch(() => null)
         : null;
       const assistantItems = assistant?.items || [];
+      cached.assistantItems = assistantItems;
       const targetDays = force
         ? days
         : days.filter((date) => !state.daySignals.has(date));
@@ -321,14 +329,20 @@
               state.dateJumpMonth === key &&
               (completed % 4 === 0 || completed === targetDays.length)
             )
-              renderDateJumpCalendar(key);
+              {
+                renderDateJumpCalendar(key);
+                renderMonthDigest(key);
+              }
           }
         },
       );
       await Promise.all(workers);
       cached.loaded = true;
       cached.fetchedAt = Date.now();
-      if (state.dateJumpMonth === key) renderDateJumpCalendar(key);
+      if (state.dateJumpMonth === key) {
+        renderDateJumpCalendar(key);
+        renderMonthDigest(key);
+      }
     })().finally(() => {
       cached.promise = null;
     });
