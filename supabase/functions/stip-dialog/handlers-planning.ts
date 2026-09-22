@@ -1,6 +1,6 @@
 import { normalize, type DateScope, type DialogContext } from "./core.ts";
 import { baseContext, personActions, personCard } from "./presentation.ts";
-import { canon, dayLabel, db, isChief, overlaps, planningRows, shiftText, shortDay, teamOf } from "./runtime.ts";
+import { canon, dayLabel, db, isChief, overlaps, planningRows, shiftDetail, shiftText, shortDay, teamOf } from "./runtime.ts";
 import type { Agent, SessionCtx, ShiftDef } from "./types.ts";
 
 export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects: Agent[], ds: DateScope, defs: Record<string, ShiftDef>) {
@@ -19,8 +19,8 @@ export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects
     const code = canon(r.code), def = defs[code];
     return {
       kind: "planning", title: `${a.nickname || a.prenom || a.nom} · ${dayLabel(ds.start)}`,
-      text: def ? `${code} · ${def.label} · ${def.start_time} → ${def.end_time}` : code === "RH" ? "RH · Repos" : code,
-      cards: [personCard(a, { badge: code, detail: def ? `${def.start_time} → ${def.end_time}` : code === "RH" ? "Repos" : "" })],
+      text: def ? shiftText(code, defs) : code === "RH" ? "RH · Repos" : code,
+      cards: [personCard(a, { badge: code, detail: def ? shiftDetail(code, defs) : code === "RH" ? "Repos" : "" })],
       actions: personActions(c, a), suggestions: ["Et vendredi ?", "Qui travaille avec lui ?"],
       context: baseContext(old, { subject_agent_ids: [a.id], agent_id: a.id, date_scope: ds, last_intent: "planning" }),
     };
@@ -28,7 +28,7 @@ export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects
   const by = new Map(subjects.map((a) => [String(a.id), a]));
   const cards = rows.map((r: any) => {
     const a = by.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), code = canon(r.code), def = defs[code];
-    return { type: "metric", title: `${a.nickname || a.prenom || a.nom || "Agent"} · ${shortDay(r.date)}`, subtitle: code, detail: def ? `${def.start_time} → ${def.end_time}` : code === "RH" ? "Repos" : "" };
+    return { type: "metric", title: `${a.nickname || a.prenom || a.nom || "Agent"} · ${shortDay(r.date)}`, subtitle: code, detail: def ? shiftDetail(code, defs) : code === "RH" ? "Repos" : "" };
   });
   return {
     kind: "planning", title: ds.label || `${shortDay(ds.start)} → ${shortDay(ds.end)}`,
@@ -63,7 +63,7 @@ export async function colleaguesAnswer(c: SessionCtx, old: DialogContext, subjec
   if (ds.start === ds.end) return {
     kind: "team", title: `${shiftText(ownByDate.get(ds.start) || "", defs)} · ${dayLabel(ds.start)}`,
     text: mode === "start" ? `${matches.length} collègue${matches.length > 1 ? "s" : ""} commence${matches.length > 1 ? "nt" : ""} à la même heure.` : mode === "end" ? `${matches.length} collègue${matches.length > 1 ? "s" : ""} termine${matches.length > 1 ? "nt" : ""} à la même heure.` : `${matches.length} collègue${matches.length > 1 ? "s" : ""} croise${matches.length > 1 ? "nt" : ""} ce service.`,
-    cards: matches.slice(0, 20).map((r: any) => personCard(personBy.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: canon(r.code), detail: defs[canon(r.code)] ? `${defs[canon(r.code)].start_time} → ${defs[canon(r.code)].end_time}` : "" })),
+    cards: matches.slice(0, 20).map((r: any) => personCard(personBy.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: canon(r.code), detail: defs[canon(r.code)] ? shiftDetail(canon(r.code), defs) : "" })),
     actions: [], context: baseContext(old, { subject_agent_ids: [subject.id], agent_id: subject.id, date_scope: ds, last_intent: "colleagues" }),
     suggestions: ["Qui commence avec moi ?", "Combien on est en J4 ?"],
   };
@@ -91,7 +91,7 @@ export async function shiftRoster(c: SessionCtx, old: DialogContext, ds: DateSco
   const by = new Map(all.map((a) => [String(a.id), a]));
   if (ds.start === ds.end) return {
     kind: "team", title: `${shift} · ${dayLabel(ds.start)}`, text: `${rows.length} agent${rows.length > 1 ? "s" : ""} prévu${rows.length > 1 ? "s" : ""} en ${shift}.`,
-    cards: rows.slice(0, 24).map((r: any) => personCard(by.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: shift, detail: defs[shift] ? `${defs[shift].start_time} → ${defs[shift].end_time}` : "" })),
+    cards: rows.slice(0, 24).map((r: any) => personCard(by.get(String(r.agent_id)) || ({ id: r.agent_id } as Agent), { badge: shift, detail: defs[shift] ? shiftDetail(shift, defs) : "" })),
     actions: [], context: baseContext(old, { date_scope: ds, last_intent: "shift_roster" }), suggestions: ["Et en J4 ?", "Qui est avec moi ?"],
   };
   const agg = new Map<string, { a: Agent; days: string[] }>();
@@ -175,7 +175,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
       const current = canon(r.code), counts = new Map<string, number>();
       for (const x of eligibleRows.filter((y: any) => y.date === r.date)) {
         const code = canon(x.code);
-        if (!defs[code] || code === current) continue;
+        if (!defs[code] || defs[code].exchangeable === false || code === current) continue;
         counts.set(code, (counts.get(code) || 0) + 1);
       }
       const detail = [...counts.entries()].map(([code, n]) => `${code}: ${n}`).join(" · ") || "Aucun autre shift disponible";
@@ -184,7 +184,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
     const first = workRows[0], currentFirst = canon(first.code);
     const availableCodes = [...new Set(
       eligibleRows.filter((x: any) => x.date === first.date).map((x: any) => canon(x.code))
-        .filter((code: string) => !!defs[code] && code !== currentFirst),
+        .filter((code: string) => !!defs[code] && defs[code].exchangeable !== false && code !== currentFirst),
     )];
     const suggestions = availableCodes.slice(0, 3).map((x) => `Échanger en ${x} le ${dayLabel(first.date)}`);
     return {
@@ -198,7 +198,7 @@ export async function exchangeAnswer(c: SessionCtx, old: DialogContext, ds: Date
   if (!daysToExchange.length) return { kind: "exchange", title: "Échange", text: `Tu es déjà en ${desired} sur les jours concernés.`, cards: [], actions: [], context: baseContext(old, { date_scope: ds, last_intent: "exchange" }) };
   const candidateMap = new Map<string, { a: Agent; days: Set<string> }>();
   for (const r of eligibleRows as any[]) {
-    if (!daysToExchange.includes(r.date) || canon(r.code) !== desired) continue;
+    if (!daysToExchange.includes(r.date) || canon(r.code) !== desired || defs[desired]?.exchangeable === false) continue;
     const a = by.get(String(r.agent_id))!;
     const x = candidateMap.get(String(a.id)) || { a, days: new Set<string>() };
     x.days.add(r.date); candidateMap.set(String(a.id), x);
