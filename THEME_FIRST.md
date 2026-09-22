@@ -180,6 +180,10 @@ Principes :
 - cible tactile recommandée : au moins 44 px ;
 - aucune information essentielle uniquement par couleur ;
 - texte lisible sans zoom ;
+- les informations métier et actions principales ne doivent jamais être reléguées dans la plus petite taille typographique ;
+- lorsqu’il faut gagner de la place, réduire d’abord wrappers, marges, doublons, sous-titres et surfaces inutiles avant de réduire le texte ;
+- une hausse de lisibilité ne doit pas augmenter mécaniquement la hauteur de page : récupérer l’espace par la hiérarchie, la révélation progressive et la suppression des éléments redondants ;
+- réserver les tailles les plus petites aux métadonnées réellement secondaires (heure, aide, précision courte) ;
 - pas de débordement horizontal involontaire ;
 - `prefers-reduced-motion` respecté ;
 - safe areas iOS/Android respectées ;
