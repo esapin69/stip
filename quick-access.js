@@ -62,7 +62,7 @@
     },
     resp_requests: {
       label: "Demandes",
-      open: () => (location.href = "responsable-demandes.html"),
+      open: () => (location.href = "responsable.html?tab=suivi&tool=requests"),
     },
     resp_directory: {
       label: "Brancardiers",
