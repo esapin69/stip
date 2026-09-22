@@ -46,19 +46,19 @@
     },
     responsable: {
       label: "Responsable",
-      open: () => (location.href = "responsable.html"),
+      open: () => (location.href = "responsable.html?tab=dates"),
     },
     resp_tracking: {
       label: "Suivi",
-      open: () => (location.href = "responsable.html?open=tracking"),
+      open: () => (location.href = "responsable.html?tab=suivi"),
     },
     resp_evaluation: {
       label: "Évaluation",
-      open: () => (location.href = "responsable.html?open=evaluation"),
+      open: () => (location.href = "responsable.html?tab=equipe&mode=evaluation"),
     },
     resp_official: {
       label: "Extraire un fichier officiel",
-      open: () => (location.href = "responsable.html?open=official"),
+      open: () => (location.href = "responsable.html?tab=equipe&tool=official"),
     },
     resp_requests: {
       label: "Demandes",
@@ -66,11 +66,11 @@
     },
     resp_directory: {
       label: "Brancardiers",
-      open: () => (location.href = "responsable.html?open=directory"),
+      open: () => (location.href = "responsable.html?tab=equipe"),
     },
     resp_agenda: {
       label: "Agenda agents",
-      open: () => (location.href = "responsable-agenda.html"),
+      open: () => (location.href = "responsable.html?tab=agenda"),
     },
     assistant: {
       label: "Assistant STIP",
