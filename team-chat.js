@@ -24,6 +24,7 @@
     selectedLevel: "",
     selectedLocation: "",
     buildingOverviewExpanded: false,
+    buildingOverviewKey: "",
   };
 
   const homeState = {
@@ -427,10 +428,30 @@
         openComposerLocationSearch();
         return;
       }
+      const overviewKey = event.target.closest?.("[data-building-overview-key]");
+      if (overviewKey) {
+        event.preventDefault();
+        const key = String(overviewKey.dataset.buildingOverviewKey || "");
+        const sameOpen = state.buildingOverviewExpanded && state.buildingOverviewKey === key;
+        state.buildingOverviewExpanded = !sameOpen;
+        state.buildingOverviewKey = sameOpen ? "" : key;
+        renderBuildingPulse();
+        return;
+      }
+      const overviewClose = event.target.closest?.("[data-building-overview-close]");
+      if (overviewClose) {
+        event.preventDefault();
+        state.buildingOverviewExpanded = false;
+        state.buildingOverviewKey = "";
+        renderBuildingPulse();
+        return;
+      }
       const overviewToggle = event.target.closest?.("[data-building-overview-toggle]");
       if (overviewToggle) {
         event.preventDefault();
-        state.buildingOverviewExpanded = !state.buildingOverviewExpanded;
+        const wasAllOpen = state.buildingOverviewExpanded && !state.buildingOverviewKey;
+        state.buildingOverviewExpanded = !wasAllOpen;
+        state.buildingOverviewKey = "";
         renderBuildingPulse();
         return;
       }
@@ -901,63 +922,61 @@
 
     const searchMode = state.composeMode === "search";
     const selected = BUILDINGS.find((building) => building.key === state.selectedBuilding);
-    const modeLabel = searchMode ? "Je cherche un fauteuil" : "J’ai vu / rangé";
-    const directTitle = searchMode ? "Préciser ma zone" : "Indiquer directement l’endroit";
-    const directSub = searchMode
-      ? "U202, étage, service, ascenseur…"
-      : "U202, étage, ascenseur, repère…";
+    const currentLabel = searchMode ? "Je cherche" : "J’ai vu / rangé";
+    const currentSub = searchMode ? "un fauteuil" : "je donne l’info";
+    const switchMode = searchMode ? "spot" : "search";
+    const switchLabel = searchMode ? "J’ai vu / rangé" : "Je cherche";
+    const switchIcon = searchMode ? "👀" : "🔎";
+    const hint = searchMode
+      ? "Choisis une zone, ou ouvre le repère précis si tu connais déjà le service."
+      : "Choisis le bâtiment → nombre → niveau. Si tu connais déjà le service ou le repère, passe par le bouton central.";
+
+    const buildingButton = (key, area) => {
+      const building = BUILDINGS.find((item) => item.key === key);
+      if (!building) return "";
+      const active = building.key === state.selectedBuilding;
+      return (
+        '<button type="button" class="tb-place-building is-' + area + (active ? " is-active" : "") +
+        '" data-building-compose="' + esc(building.key) + '" aria-pressed="' + (active ? "true" : "false") + '">' +
+          '<strong>' + esc(building.label) + '</strong>' +
+        '</button>'
+      );
+    };
 
     host.innerHTML =
       '<div class="tb-shortcuts-full">' +
-        '<div class="tb-action-choice-title"><small>ACTION</small><strong>Que veux-tu faire ?</strong></div>' +
-        '<div class="tb-mode-pills" role="group" aria-label="Type d’action fauteuil">' +
-          '<button type="button" class="tb-mode-pill spot' + (!searchMode ? " is-active" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '">' +
-            '<span class="tb-mode-orb" aria-hidden="true">👀</span>' +
-            '<span><strong>J’ai vu / rangé</strong><small>je donne l’info</small></span>' +
-            '<i aria-hidden="true">✓</i>' +
-          "</button>" +
-          '<button type="button" class="tb-mode-pill search' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '">' +
-            '<span class="tb-mode-orb" aria-hidden="true">🔎</span>' +
-            '<span><strong>Je cherche</strong><small>un fauteuil</small></span>' +
-            '<i aria-hidden="true">✓</i>' +
-          "</button>" +
-        "</div>" +
-        '<button type="button" class="tb-location-search-launch' + (searchMode ? " is-search" : " is-spot") + '" data-location-search>' +
-          '<span class="tb-location-search-icon" aria-hidden="true">📍</span>' +
-          '<span><strong>' + esc(directTitle) + '</strong><small>' + esc(directSub) + '</small></span>' +
-          '<b aria-hidden="true">›</b>' +
-        "</button>" +
-        '<small class="tb-compose-hint">' +
-          (searchMode
-            ? "Choisis le bâtiment. Tu peux préciser la zone tout de suite ou continuer ensuite."
-            : "Choisis le bâtiment → nombre → niveau. Arrête-toi dès que l’endroit est assez précis.") +
-        "</small>" +
-        '<div class="tb-search-shortcuts-grid">' +
-        BUILDINGS.map(
-          (building) =>
-            '<button type="button" class="tb-search-shortcut' +
-            (building.key === state.selectedBuilding ? " is-active" : "") +
-            '" data-building-compose="' +
-            esc(building.key) +
-            '" aria-pressed="' +
-            (building.key === state.selectedBuilding ? "true" : "false") +
-            '"><strong>' +
-            esc(building.label) +
-            "</strong></button>",
-        ).join("") +
-        "</div>" +
-      "</div>" +
+        '<div class="tb-action-current">' +
+          '<div class="tb-action-current-copy"><small>ACTION</small><span aria-hidden="true">' + (searchMode ? "🔎" : "👀") + '</span>' +
+            '<div><strong>' + esc(currentLabel) + '</strong><small>' + esc(currentSub) + '</small></div>' +
+          '</div>' +
+          '<button type="button" class="tb-mode-switch" data-compose-mode="' + switchMode + '">' +
+            '<span aria-hidden="true">' + switchIcon + '</span><strong>' + esc(switchLabel) + '</strong><b aria-hidden="true">›</b>' +
+          '</button>' +
+        '</div>' +
+        '<div class="tb-place-deck-title">' +
+          '<strong>Je connais le service ou le repère à côté</strong>' +
+          '<small>Unité, service, ascenseur ou repère au plus près des fauteuils</small>' +
+        '</div>' +
+        '<div class="tb-place-deck" role="group" aria-label="Choisir un bâtiment ou un repère précis">' +
+          buildingButton("cardio", "cardio") +
+          buildingButton("hfme", "hfme") +
+          buildingButton("neuro", "neuro") +
+          buildingButton("a4", "a4") +
+          '<button type="button" class="tb-place-known' + (state.selectedLocation ? " is-active" : "") + '" data-location-search>' +
+            '<span aria-hidden="true">📍</span><strong>Repère<br>connu</strong>' +
+          '</button>' +
+        '</div>' +
+        '<small class="tb-compose-hint">' + esc(hint) + '</small>' +
+      '</div>' +
       '<div class="tb-compose-summary" aria-live="polite"><span aria-hidden="true">' +
         (searchMode ? "🔎" : "🦽") +
-        "</span><strong>" +
-        esc(modeLabel) +
-        "</strong><b>·</b><em>" +
-        esc(selected?.label || "Bâtiment à choisir") +
-        "</em>" +
+        '</span><strong>' + esc(currentLabel) + '</strong><b>·</b><em>' +
+        esc(selected?.label || (state.selectedLocation ? "Repère précis" : "Lieu à choisir")) +
+        '</em>' +
         (!searchMode && state.selectedQuantity
-          ? "<b>·</b><em>" + esc(String(state.selectedQuantity)) + " fauteuil" + (state.selectedQuantity > 1 ? "s" : "") + "</em>"
-          : "") +
-        "</div>";
+          ? '<b>·</b><em>' + esc(String(state.selectedQuantity)) + ' fauteuil' + (state.selectedQuantity > 1 ? 's' : '') + '</em>'
+          : '') +
+        '</div>';
     requestAnimationFrame(syncViewport);
   }
 
@@ -1542,6 +1561,31 @@
     const byId = new Map(messages.map((message) => [String(message.id), message]));
     const me = String(state.data?.me?.id || "");
 
+    const rootIdFor = (message) => {
+      let current = message;
+      const seen = new Set([String(message?.id || "")]);
+      while (current?.payload?.reply_to_id) {
+        const parentId = String(current.payload.reply_to_id || "");
+        if (!parentId || seen.has(parentId) || !byId.has(parentId)) break;
+        seen.add(parentId);
+        current = byId.get(parentId);
+      }
+      return String(current?.id || message?.id || "");
+    };
+    const repliesByRoot = new Map();
+    const rootMessages = [];
+    for (const message of messages) {
+      const ownId = String(message.id || "");
+      const rootId = rootIdFor(message);
+      if (rootId && rootId !== ownId && byId.has(rootId)) {
+        const list = repliesByRoot.get(rootId) || [];
+        list.push(message);
+        repliesByRoot.set(rootId, list);
+      } else {
+        rootMessages.push(message);
+      }
+    }
+
     const page = state.root?.querySelector(".tb-page");
     page?.classList.toggle("is-feed-empty", !messages.length);
     feed.classList.toggle("is-empty", !messages.length);
@@ -1553,7 +1597,7 @@
     }
 
     const html = [];
-    for (const message of messages) {
+    for (const message of rootMessages) {
       const id = String(message.id);
       const mine = String(message.sender_agent_id) === me;
       const checked = state.selected.has(id);
@@ -1683,6 +1727,35 @@
             (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
             "</div>",
         );
+      }
+      const linkedReplies = repliesByRoot.get(id) || [];
+      if (linkedReplies.length) {
+        html.push('<section class="tb-thread-replies" aria-label="Réponses liées à ce signalement">');
+        for (const reply of linkedReplies) {
+          const replyId = String(reply.id || "");
+          const replyChecked = state.selected.has(replyId);
+          const replyBody = cleanWheelchairText(reply.body || "");
+          html.push(
+            '<article class="tb-thread-reply' + (replyChecked ? ' is-selected' : '') + '" data-message-id="' + esc(replyId) + '">'
+          );
+          if (state.selection) {
+            html.push(
+              '<label class="tb-check tb-thread-check"><input type="checkbox" data-message-check="' +
+                esc(replyId) + '"' + (replyChecked ? ' checked' : '') +
+                '><span>✓</span></label>'
+            );
+          }
+          html.push(avatar(reply.sender));
+          html.push(
+            '<div class="tb-thread-reply-body">' +
+              '<header><strong>' + esc(agentName(reply.sender)) + '</strong><time><span aria-hidden="true">◷</span>' +
+                esc(fmtTime(reply.created_at)) + '</time></header>' +
+              '<small class="tb-thread-link">↪ Réponse à ce signalement</small>' +
+              (replyBody ? '<p>' + esc(replyBody).replace(/\n/g, "<br>") + '</p>' : '') +
+            '</div></article>'
+          );
+        }
+        html.push("</section>");
       }
       html.push("</div></article>");
     }
@@ -1936,9 +2009,20 @@
     const host = state.root?.querySelector("[data-building-pulse]");
     if (!host) return;
     const stats = buildingPulseStats();
+    const activeMessages = (state.data?.messages || []).filter(
+      (message) => message?.payload?.wheelchair?.status === "active",
+    );
     const rows = BUILDINGS.map((building) => {
       const item = stats[building.key] || { stock: 0, requests: 0 };
-      return { ...building, ...item, active: item.stock > 0 || item.requests > 0 };
+      const messages = activeMessages
+        .filter((message) => buildingForMessage(message) === building.key)
+        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      return {
+        ...building,
+        ...item,
+        messages,
+        active: item.stock > 0 || item.requests > 0,
+      };
     });
     const activeRows = rows
       .filter((item) => item.active)
@@ -1949,60 +2033,72 @@
         a.label.localeCompare(b.label, "fr"),
       );
 
-    if (!activeRows.length && !state.buildingOverviewExpanded) {
-      host.className = "tb-building-pulse tb-situation-now is-clear";
-      host.innerHTML =
-        '<div class="tb-situation-clear">' +
-          '<span class="tb-situation-check" aria-hidden="true">✓</span>' +
-          '<div><strong>Rien à signaler</strong><small>4 bâtiments · aucun fauteuil signalé · aucune recherche en cours</small></div>' +
-          '<button type="button" data-building-overview-toggle>Voir les bâtiments</button>' +
-        '</div>';
-      return;
+    if (state.buildingOverviewKey && !rows.some((item) => item.key === state.buildingOverviewKey)) {
+      state.buildingOverviewKey = "";
     }
 
-    const visible = state.buildingOverviewExpanded ? rows : activeRows;
-    host.className =
-      "tb-building-pulse tb-situation-now" +
-      (state.buildingOverviewExpanded ? " is-expanded" : " is-active");
+    const focused = state.buildingOverviewKey
+      ? rows.find((item) => item.key === state.buildingOverviewKey) || null
+      : null;
+    const drawerOpen = !!state.buildingOverviewExpanded;
+    const drawerRows = focused ? [focused] : rows;
+
+    const tabs = activeRows.map((item) => {
+      const count = item.requests || item.stock;
+      const icon = item.requests ? "🔎" : "🦽";
+      return (
+        '<button type="button" class="tb-building-edge-tab' +
+          (drawerOpen && state.buildingOverviewKey === item.key ? ' is-open' : '') +
+          '" data-building-overview-key="' + esc(item.key) + '" aria-label="' +
+          esc(item.label + " : " + (item.requests ? item.requests + " recherche" + (item.requests > 1 ? "s" : "") : item.stock + " disponible" + (item.stock > 1 ? "s" : ""))) + '">' +
+          '<span aria-hidden="true">' + icon + '</span><strong>' + esc(item.label) + '</strong><b>' + count + '</b>' +
+        '</button>'
+      );
+    }).join("");
+
+    const drawerContent = drawerRows.map((item) => {
+      const signals = [];
+      if (item.requests > 0) signals.push('<span class="is-search">🔎 <b>' + item.requests + '</b> recherche' + (item.requests > 1 ? 's' : '') + '</span>');
+      if (item.stock > 0) signals.push('<span class="is-stock">🦽 <b>' + item.stock + '</b> dispo</span>');
+      if (!signals.length) signals.push('<span class="is-none">Rien à signaler</span>');
+
+      const details = item.messages.length
+        ? '<div class="tb-building-drawer-messages">' +
+            item.messages.slice(0, 6).map((message) => {
+              const wheelchair = message.payload?.wheelchair || {};
+              const kind = wheelchair.type === "search" ? "Je cherche" : "J’ai vu / rangé";
+              return (
+                '<div class="tb-building-drawer-message">' +
+                  '<span aria-hidden="true">' + (wheelchair.type === "search" ? "🔎" : "🦽") + '</span>' +
+                  '<div><strong>' + esc(kind) + ' · ' + esc(agentName(message.sender)) + '</strong>' +
+                  '<small>' + esc(cleanWheelchairText(message.body || "")) + ' · ' + esc(fmtTime(message.created_at)) + '</small></div>' +
+                '</div>'
+              );
+            }).join("") +
+          '</div>'
+        : '';
+
+      return (
+        '<section class="tb-building-drawer-section">' +
+          '<div class="tb-building-drawer-row"><strong>' + esc(item.label) + '</strong><div>' + signals.join("") + '</div></div>' +
+          details +
+        '</section>'
+      );
+    }).join("");
+
+    host.className = "tb-building-pulse tb-building-edge-system" + (drawerOpen ? " is-open" : "");
     host.innerHTML =
-      '<div class="tb-situation-head">' +
-        '<div><small>MAINTENANT</small><strong>' +
-          (activeRows.length
-            ? activeRows.length + " bâtiment" + (activeRows.length > 1 ? "s" : "") + " à regarder"
-            : "Tous les bâtiments") +
-        '</strong></div>' +
-        '<button type="button" data-building-overview-toggle>' +
-          (state.buildingOverviewExpanded ? "Réduire" : "Voir les 4") +
+      '<div class="tb-building-overview-trigger-wrap">' +
+        '<button type="button" class="tb-building-overview-trigger" data-building-overview-toggle aria-expanded="' + drawerOpen + '">' +
+          '<span aria-hidden="true">▤</span><strong>Voir les bâtiments</strong><b aria-hidden="true">' + (drawerOpen && !focused ? "›" : "‹") + '</b>' +
         '</button>' +
       '</div>' +
-      '<div class="tb-situation-list">' +
-        visible.map((item) => {
-          const signals = [];
-          if (item.requests > 0) {
-            signals.push(
-              '<span class="tb-situation-signal is-search"><b aria-hidden="true">🔎</b><strong>' +
-                item.requests +
-              '</strong><small>recherche' + (item.requests > 1 ? 's' : '') + '</small></span>',
-            );
-          }
-          if (item.stock > 0) {
-            signals.push(
-              '<span class="tb-situation-signal is-stock"><b aria-hidden="true">🦽</b><strong>' +
-                item.stock +
-              '</strong><small>dispo</small></span>',
-            );
-          }
-          if (!signals.length) {
-            signals.push('<span class="tb-situation-none">rien à signaler</span>');
-          }
-          return (
-            '<div class="tb-situation-row' + (item.active ? ' is-live' : '') + '">' +
-              '<strong class="tb-situation-building">' + esc(item.label) + '</strong>' +
-              '<div class="tb-situation-signals">' + signals.join("") + '</div>' +
-            '</div>'
-          );
-        }).join("") +
-      '</div>';
+      (tabs ? '<nav class="tb-building-edge-tabs" aria-label="Bâtiments avec activité">' + tabs + '</nav>' : '') +
+      '<aside class="tb-building-drawer" aria-hidden="' + (!drawerOpen) + '">' +
+        '<header><div><small>BÂTIMENTS</small><strong>' + esc(focused?.label || "Vue terrain") + '</strong></div>' +
+          '<button type="button" data-building-overview-close aria-label="Refermer">×</button></header>' +
+        '<div class="tb-building-drawer-content">' + drawerContent + '</div>' +
+      '</aside>';
   }
 
   function activeWheelchairs(data) {
