@@ -1109,7 +1109,8 @@
     const meta = SHIFT[base];
     if (!meta || !items.length) return "";
     const sortedItems = items.slice().sort(compareAgentGhe);
-    const chefs = sortedItems.filter(isChefItem);
+    // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
+    // On les conserve dans les données et le total du shift, mais on ne les répète pas dans la liste dépliée.
     const team = sortedItems.filter((item) => !isChefItem(item));
     const key = `${day}|${code}`;
     const open = state.openShifts.get(day) === key;
@@ -1126,7 +1127,7 @@
         <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
-      <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
+      <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
     </section>`;
   }
 
