@@ -27,6 +27,11 @@
       "DIMANCHE",
     ],
     FALLBACK = {
+      M0130: "var(--stip-shift-m)",
+      M0131: "var(--stip-shift-m)",
+      M0177: "var(--stip-shift-m)",
+      J0464: "var(--stip-shift-j)",
+      S0113: "var(--stip-shift-s)",
       M: "var(--stip-shift-m)",
       J: "var(--stip-shift-j)",
       J4: "var(--stip-shift-j4)",
