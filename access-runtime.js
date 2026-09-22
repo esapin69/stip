@@ -24,6 +24,7 @@
     messages: () => explicit("messages"),
     team: () =>
       explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
+    agents: () => explicit("agent_directory"),
     compare: () => explicit("planning_team"),
     change: () => explicit("change_app"),
     calendar: () => explicit("calendar_subscribe"),
@@ -159,6 +160,7 @@
     }
     const checks = [
       ["/agent-dates.html", "dates"],
+      ["/agent-directory.html", "agents"],
       ["/responsable.html", "responsable"],
       ["/assistant.html", "assistant"],
       ["/cadre-activite.html", "activity"],
@@ -181,6 +183,7 @@
     tomorrow:
       '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
     team: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
+    agents: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
     compare:
       '<svg viewBox="0 0 24 24"><path d="M4 7h13l-3-3M20 17H7l3 3"/><path d="M17 7l-3 3M7 17l3-3"/></svg>',
     change:
@@ -212,6 +215,7 @@
     ["personal", "Planning perso", "personal"],
     ["tomorrow", "Actions", "tomorrow"],
     ["team", "Esprit d’équipe", "team"],
+    ["agents", "Agents", "agents"],
     ["compare", "Comparer les plannings", "compare"],
     ["change", "Changement", "change"],
     ["calendar", "Synchroniser mon calendrier", "calendar"],
@@ -232,6 +236,7 @@
     if (k === "personal") return (location.href = "index.html?quick=personal");
     if (k === "tomorrow") return (location.href = "index.html?quick=tomorrow");
     if (k === "team") return (location.href = "esprit-equipe.html?tab=team");
+    if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "compare") return (location.href = "planning-compare-app.html");
     if (k === "change") return (location.href = "index.html?quick=change");
     if (k === "calendar") return (location.href = "index.html?quick=calendar");
