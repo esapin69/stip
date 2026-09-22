@@ -13,6 +13,8 @@
     boot = null,
     accessLevel = "visitor";
   const navigationState = window.STIPNav?.read?.() || {};
+  const pageOpen = String(new URLSearchParams(location.search).get("open") || "").toLowerCase();
+  const trackingMode = pageOpen === "tracking" || pageOpen === "suivi";
 
   function errorText(e) {
     if (!e) return "Erreur inconnue";
@@ -225,7 +227,7 @@
     const h = $(".resp-head h1"),
       p = $(".resp-head p"),
       k = $(".resp-head .kicker");
-    if (h) h.textContent = "Responsable";
+    if (h) h.textContent = "Suivi";
     if (k) k.textContent = "AUJOURD’HUI";
     if (p)
       p.textContent = pro()
@@ -260,7 +262,8 @@
     try {
       if (!(await initAccess())) return;
       await GHEAuth.ready;
-      await load();
+      if (trackingMode || navigationState.panelKind === "change" || navigationState.panelKind === "action")
+        await load();
       if (navigationState.panelKind === "change")
         openChange(navigationState.panelItemId);
       if (navigationState.panelKind === "action")
@@ -279,7 +282,8 @@
         "",
     }),
   });
-  setInterval(() => {
-    if (!document.hidden) load();
-  }, 30000);
+  if (trackingMode)
+    setInterval(() => {
+      if (!document.hidden) load();
+    }, 30000);
 })();
