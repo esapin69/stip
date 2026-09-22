@@ -12,6 +12,34 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
+    <meta name="stip-ui-build" content="20260922-fauteuils21" />
+    <script id="stip-asset-self-heal">
+      (() => {
+        const heal = async () => {
+          try {
+            const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
+              cache: "no-store",
+              headers: { "cache-control": "no-cache" }
+            });
+            if (!response.ok) return;
+            const html = await response.text();
+            const latest = html.match(/team-chat\.js\?v=([^"&<]+)/)?.[1] || "";
+            const current = document
+              .querySelector('script[src*="team-chat.js?v="]')
+              ?.getAttribute("src")
+              ?.match(/team-chat\.js\?v=([^&]+)/)?.[1] || "";
+            if (!latest || !current || latest === current) return;
+            const key = "stip_asset_heal_" + latest;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, "1");
+            const url = new URL(location.href);
+            url.searchParams.set("__stip_build", latest);
+            location.replace(url.pathname + url.search + url.hash);
+          } catch {}
+        };
+        addEventListener("load", () => setTimeout(heal, 80), { once: true });
+      })();
+    </script>
     <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -40,7 +68,7 @@
     <link rel="stylesheet" href="home-shell.css?v=20260922-fauteuils-standalone2" />
     <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
     <link rel="stylesheet" href="communication-hub.css?v=20260921-cloche1" />
-    <link rel="stylesheet" href="team-chat.css?v=20260922-fauteuils20" />
+    <link rel="stylesheet" href="team-chat.css?v=20260922-fauteuils21" />
     <link rel="stylesheet" href="stip-theme.css?v=20260922-opportunity1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
@@ -300,8 +328,8 @@
     <script src="app.js?v=20260922-fauteuils-route1"></script>
     <script src="quick-access.js?v=20260922-agents1"></script>
     <script src="public-access-request.js?v=20260831-access4"></script>
-    <script src="team-chat.js?v=20260922-fauteuils20"></script>
-    <script src="home-shell.js?v=20260922-agents1"></script>
+    <script src="team-chat.js?v=20260922-fauteuils21"></script>
+    <script src="home-shell.js?v=20260922-fauteuils21"></script>
     <script src="home-duty-chief.js?v=20260921-teamchief3"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
@@ -312,5 +340,15 @@
     <script src="profile-photo.js?v=20260920-account1"></script>
     <script src="stip-loader.js?v=20260922-specialshifts2"></script>
     <script src="admin-access-requests-home.js?v=20260922-cloche4"></script>
+    <script id="stip-sw-register">
+      if ("serviceWorker" in navigator) {
+        addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/stip-sw.js?v=20260922-fauteuils21", { updateViaCache: "none" })
+            .then((registration) => registration.update())
+            .catch(() => {});
+        }, { once: true });
+      }
+    </script>
   </body>
 </html>
