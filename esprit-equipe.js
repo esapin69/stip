@@ -341,10 +341,38 @@
     return [agent?.prenom, agent?.nom].filter(Boolean).join(" ") || "Agent";
   }
 
+  function phoneDigits(value) {
+    return String(value || "").replace(/\D/g, "");
+  }
+
   function phoneHref(value) {
-    const digits = String(value || "").replace(/\D/g, "");
+    const digits = phoneDigits(value);
     if (!digits) return "";
     return digits.startsWith("33") ? `tel:+${digits}` : `tel:${digits}`;
+  }
+
+  function hiddenPhoneHref(value) {
+    let digits = phoneDigits(value);
+    if (!digits) return "";
+    if (digits.startsWith("33")) digits = `0${digits.slice(2)}`;
+    return `tel:%2331%23${digits}`;
+  }
+
+  function gheNumber(item) {
+    const raw = String(item?.agents?.ghe || "").replace(/^GHE\s*/i, "");
+    const match = raw.match(/\d+/);
+    return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+  }
+
+  function compareAgentGhe(a, b) {
+    const byGhe = gheNumber(a) - gheNumber(b);
+    if (Number.isFinite(byGhe) && byGhe !== 0) return byGhe;
+    if (gheNumber(a) !== gheNumber(b)) return gheNumber(a) - gheNumber(b);
+    return displayName(a?.agents || {}).localeCompare(
+      displayName(b?.agents || {}),
+      "fr",
+      { sensitivity: "base" },
+    );
   }
 
   function cacheEntry(start) {
@@ -473,7 +501,7 @@
 
   function agentRow(item) {
     const agent = item.agents || {};
-    const phone = phoneHref(agent.telephone);
+    const phone = phoneDigits(agent.telephone);
     const ghe = String(agent.ghe || "").replace(/^GHE\s*/i, "");
     const key = String(agent.source_key || "");
     const isChef =
@@ -488,7 +516,7 @@
         <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}${adaptedShift(item.code) ? '<em class="team-adapted-mark" title="Horaire adapté">⏱</em>' : ""}${partTime ? `<em class="team-part-mark" title="Temps partiel">◐ ${quotite}%</em>` : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
         <i aria-hidden="true">›</i>
       </button>
-      ${phone ? `<a href="${esc(phone)}" aria-label="Appeler ${esc(displayName(agent))}">☎</a>` : ""}
+      ${phone ? `<button class="team-agent-call" type="button" data-team-call="${esc(phone)}" data-team-call-name="${esc(displayName(agent))}" aria-label="Choisir comment appeler ${esc(displayName(agent))}">☎</button>` : ""}
     </div>`;
   }
 
@@ -496,16 +524,17 @@
     const base = baseShift(code);
     const meta = SHIFT[base];
     if (!meta || !items.length) return "";
+    const sortedItems = items.slice().sort(compareAgentGhe);
     const key = `${day}|${code}`;
     const open = state.openShift === key;
     return `<section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
       <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
         <b>${esc(code)}</b>
         <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-        <em>${items.length}</em>
+        <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
-      <div class="team-shift-agents" ${open ? "" : "hidden"}>${items.map(agentRow).join("")}</div>
+      <div class="team-shift-agents" ${open ? "" : "hidden"}>${sortedItems.map(agentRow).join("")}</div>
     </section>`;
   }
 
@@ -590,6 +619,38 @@
         const agents = section?.querySelector(".team-shift-agents");
         if (agents) agents.hidden = !active;
       });
+  }
+
+  function closeCallSheet() {
+    document.getElementById("teamCallOverlay")?.remove();
+  }
+
+  function openCallSheet(phone, person) {
+    const normal = phoneHref(phone);
+    const hidden = hiddenPhoneHref(phone);
+    if (!normal || !hidden) return;
+    closeCallSheet();
+    const overlay = document.createElement("div");
+    overlay.id = "teamCallOverlay";
+    overlay.className = "team-call-overlay";
+    overlay.innerHTML = `
+      <button class="team-call-backdrop" type="button" aria-label="Fermer"></button>
+      <section class="team-call-sheet" role="dialog" aria-modal="true" aria-label="Choisir le type d’appel">
+        <div class="team-call-handle" aria-hidden="true"></div>
+        <small>APPELER</small>
+        <strong>${esc(person || "Agent")}</strong>
+        <div class="team-call-actions">
+          <a class="primary" href="${esc(normal)}"><span aria-hidden="true">☎</span><b>Appeler</b></a>
+          <a href="${esc(hidden)}"><span aria-hidden="true">◉</span><b>Appeler en inconnu</b></a>
+        </div>
+        <button class="team-call-cancel" type="button">Annuler</button>
+      </section>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector(".team-call-backdrop")?.addEventListener("click", closeCallSheet);
+    overlay.querySelector(".team-call-cancel")?.addEventListener("click", closeCallSheet);
+    overlay.querySelectorAll("a").forEach((link) =>
+      link.addEventListener("click", () => setTimeout(closeCallSheet, 250)),
+    );
   }
 
   function closeAgentSheet() {
@@ -782,11 +843,19 @@
       syncShiftPanels();
       return;
     }
+    const call = event.target.closest("[data-team-call]");
+    if (call) {
+      openCallSheet(call.dataset.teamCall, call.dataset.teamCallName);
+      return;
+    }
     const agent = event.target.closest("[data-team-agent]");
     if (agent) openAgentSheet(agent.dataset.teamAgent);
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") closeAgentSheet();
+    if (event.key === "Escape") {
+      closeAgentSheet();
+      closeCallSheet();
+    }
   });
 
   async function boot() {
