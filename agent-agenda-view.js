@@ -7,7 +7,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260921-shiftboost1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260922-headercall1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -31,7 +31,9 @@
   function shortDay(v){return dobj(v).toLocaleDateString("fr-FR",{weekday:"short"}).replace(".","").toUpperCase()}
   function fullDay(v){return dobj(v).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).replace(/^./,c=>c.toUpperCase())}
   function person(a={}){return window.STIPName?.format?.(a)||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||a.nom||"Agent"}
-  function phoneHref(v){const d=String(v||"").replace(/\D/g,"");if(!d)return"";return d.startsWith("33")?`tel:+${d}`:`tel:${d}`}
+  function phoneDigits(v){return String(v||"").replace(/\D/g,"")}
+  function phoneHref(v){const d=phoneDigits(v);if(!d)return"";return d.startsWith("33")?`tel:+${d}`:`tel:${d}`}
+  function hiddenPhoneHref(v){let d=phoneDigits(v);if(!d)return"";if(d.startsWith("33"))d="0"+d.slice(2);return `tel:%2331%23${d}`}
   const META={
     M:{label:"Matin",time:"06h50–14h40",icon:"●",family:"m"},
     J:{label:"Journée",time:"08h30–16h20",icon:"●",family:"j"},
@@ -166,6 +168,19 @@
     for(const [k,icon] of kinds)items.push(`<span>${icon} <b>${esc(k)}</b></span>`);
     return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")||'<span><b>Aucun repère cette semaine</b></span>'}</div></section>`;
   }
+  function closeCallChoice(){document.getElementById("aavCallOverlay")?.remove()}
+  function openCallChoice(phone,name){
+    const normal=phoneHref(phone),hidden=hiddenPhoneHref(phone);
+    if(!normal||!hidden)return;
+    closeCallChoice();
+    const o=document.createElement("div");
+    o.id="aavCallOverlay";o.className="aav-call-overlay";
+    o.innerHTML=`<button class="aav-call-backdrop" type="button" aria-label="Fermer"></button><section class="aav-call-sheet" role="dialog" aria-modal="true" aria-label="Choisir le type d’appel"><div class="aav-call-handle" aria-hidden="true"></div><small>APPELER</small><strong>${esc(name||"Agent")}</strong><div class="aav-call-actions"><a class="primary" href="${esc(normal)}"><span aria-hidden="true">☎</span><b>Appeler</b></a><a href="${esc(hidden)}"><span aria-hidden="true">◉</span><b>Appeler en inconnu</b></a></div><button class="aav-call-cancel" type="button">Annuler</button></section>`;
+    document.body.appendChild(o);
+    o.querySelector(".aav-call-backdrop").onclick=closeCallChoice;
+    o.querySelector(".aav-call-cancel").onclick=closeCallChoice;
+    o.querySelectorAll("a").forEach(a=>a.addEventListener("click",()=>setTimeout(closeCallChoice,250)));
+  }
   function contactHtml(){
     const c=state.data.contact||state.data.agent||{},tel=phoneHref(c.telephone),mail=c.email_pro||c.email||"";
     if(!tel&&!mail)return"";
@@ -182,6 +197,13 @@
     const c=state.data.contact||state.data.agent||{},ghe=String(c.ghe||state.data.agent?.ghe||"").replace(/^GHE\s*/i,"");
     overlay.querySelector(".aav-title").textContent=person(c);
     overlay.querySelector(".aav-sub").textContent=[ghe?`GHE ${ghe}`:"",state.data.agent?.role||c.role_metier||"",quotity()?`◐ ${quotity()} %`:""].filter(Boolean).join(" · ");
+    const call=overlay.querySelector("[data-aav-call]"),phone=c.telephone||state.data.agent?.telephone||"";
+    if(call){
+      call.hidden=!phone;
+      call.dataset.aavCall=phoneDigits(phone);
+      call.dataset.aavCallName=person(c);
+      call.setAttribute("aria-label",phone?`Choisir comment appeler ${person(c)}`:"Appel indisponible");
+    }
     overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}`;
     wireBody();
   }
@@ -220,12 +242,13 @@
       }catch(err){status.textContent=err.message||"Impossible d’ajouter l’événement."}
     });
   }
-  function close(){overlay?.remove();overlay=null;state=null;document.body.classList.remove("aav-open")}
+  function close(){closeCallChoice();overlay?.remove();overlay=null;state=null;document.body.classList.remove("aav-open")}
   async function open(sourceKey,fallback={}){
     if(!sourceKey)return;css();close();
-    overlay=document.createElement("div");overlay.className="aav-overlay";overlay.innerHTML=`<button class="aav-backdrop" type="button" aria-label="Fermer"></button><section class="aav-panel" role="dialog" aria-modal="true"><header class="aav-head"><button type="button" data-aav-close aria-label="Fermer">‹</button><div><small>AGENDA AGENT</small><strong class="aav-title">${esc(person(fallback))}</strong><span class="aav-sub"></span></div><button type="button" data-aav-refresh aria-label="Actualiser">↻</button></header><main class="aav-body"><div class="aav-loading">Chargement de l’agenda…</div></main></section>`;
+    overlay=document.createElement("div");overlay.className="aav-overlay";overlay.innerHTML=`<button class="aav-backdrop" type="button" aria-label="Fermer"></button><section class="aav-panel" role="dialog" aria-modal="true"><header class="aav-head"><button type="button" data-aav-close aria-label="Fermer">‹</button><div class="aav-head-copy"><small>AGENDA AGENT</small><div class="aav-title-row"><strong class="aav-title">${esc(person(fallback))}</strong><button type="button" class="aav-title-call" data-aav-call hidden aria-label="Appeler">☎</button></div><span class="aav-sub"></span></div><button type="button" data-aav-refresh aria-label="Actualiser">↻</button></header><main class="aav-body"><div class="aav-loading">Chargement de l’agenda…</div></main></section>`;
     document.body.appendChild(overlay);document.body.classList.add("aav-open");
     overlay.querySelector(".aav-backdrop").onclick=close;overlay.querySelector("[data-aav-close]").onclick=close;overlay.querySelector("[data-aav-refresh]").onclick=()=>reload().catch(()=>{});
+    overlay.querySelector("[data-aav-call]").onclick=e=>openCallChoice(e.currentTarget.dataset.aavCall,e.currentTarget.dataset.aavCallName);
     try{
       const data=await post(API,{source_key:sourceKey});
       state={sourceKey,data,events:events(data),selected:today(),month:monthKey(today()),bounds:monthBounds(data)};
@@ -234,7 +257,7 @@
       overlay.querySelector(".aav-body").innerHTML=`<div class="aav-error"><strong>Planning indisponible</strong><span>${esc(err.message||"Erreur")}</span></div>`;
     }
   }
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&overlay)close()});
+  document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.getElementById("aavCallOverlay"))return closeCallChoice();if(overlay)close()});
   css();
   window.STIPAgentAgenda={open,close,reload:()=>reload()};
 })();
