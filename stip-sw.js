@@ -1,3 +1,27 @@
+const STIP_SW_BUILD="20260922-fauteuils21";
+self.addEventListener("install",()=>self.skipWaiting());
+self.addEventListener("activate",event=>{
+  event.waitUntil((async()=>{
+    const keys=await caches.keys();
+    await Promise.all(keys.filter(key=>/^stip/i.test(key)).map(key=>caches.delete(key)));
+    await clients.claim();
+  })());
+});
+self.addEventListener("fetch",event=>{
+  const request=event.request;
+  if(request.method!=="GET")return;
+  const url=new URL(request.url);
+  if(url.origin!==self.location.origin)return;
+  const fresh =
+    request.mode==="navigate" ||
+    /\.(?:html?|js|css|webmanifest)$/i.test(url.pathname) ||
+    url.pathname==="/";
+  if(!fresh)return;
+  event.respondWith(
+    fetch(new Request(request,{cache:"no-store"}))
+      .catch(()=>fetch(request))
+  );
+});
 self.addEventListener("push",event=>{
   let data={};try{data=event.data?event.data.json():{}}catch{data={body:event.data?.text?.()||""}}
   const title=data.title||"STIP",options={
