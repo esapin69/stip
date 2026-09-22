@@ -2,12 +2,13 @@
   "use strict";
 
   const SHIFT = {
-    M: "matin",
-    J: "journée",
-    J4: "J4",
-    S: "soir",
-    N: "nuit",
+    M: { label: "matin", start: 6 * 60 + 50, end: 14 * 60 + 40 },
+    J: { label: "journée", start: 8 * 60 + 30, end: 16 * 60 + 20 },
+    J4: { label: "J4", start: 10 * 60 + 10, end: 18 * 60 },
+    S: { label: "soir", start: 13 * 60 + 30, end: 21 * 60 },
+    N: { label: "nuit", start: 21 * 60, end: 24 * 60 + 6 * 60 + 50 },
   };
+  const MIN_USEFUL_OVERLAP = 60;
 
   const number = (value, fallback = 0) => {
     const n = Number(value);
@@ -16,7 +17,7 @@
 
   function shiftLabel(code) {
     const key = String(code || "").trim().toUpperCase();
-    return SHIFT[key] || key || "créneau";
+    return SHIFT[key]?.label || key || "créneau";
   }
 
   function levelFromSeverity(value) {
@@ -31,6 +32,8 @@
       return { level, symbol: "🛑", label: "Ça coince" };
     if (level === "warning")
       return { level, symbol: "⚠️", label: "À surveiller" };
+    if (level === "opportunity")
+      return { level, symbol: "➕", label: "Marge utile" };
     if (level === "ok")
       return { level, symbol: "✔", label: "Rien ne coince" };
     return { level: "unknown", symbol: "", label: "Pas assez de données" };
@@ -49,6 +52,70 @@
     return Number.isFinite(planned) && Number.isFinite(target)
       ? planned - target
       : 0;
+  }
+
+  function minuteLabel(value) {
+    const minute = ((Number(value) % 1440) + 1440) % 1440;
+    return `${String(Math.floor(minute / 60)).padStart(2, "0")}h${String(minute % 60).padStart(2, "0")}`;
+  }
+
+  function transferOptions(rows) {
+    const shiftRows = (Array.isArray(rows) ? rows : []).filter((row) => row?.shift_code);
+    const deficits = shiftRows.filter((row) => rowGap(row) < 0);
+    const donors = shiftRows.filter((row) => rowGap(row) > 0);
+    const out = [];
+    for (const target of deficits) {
+      const toShift = String(target.shift_code || "").toUpperCase();
+      const toMeta = SHIFT[toShift];
+      if (!toMeta) continue;
+      for (const source of donors) {
+        const fromShift = String(source.shift_code || "").toUpperCase();
+        const fromMeta = SHIFT[fromShift];
+        if (!fromMeta || fromShift === toShift) continue;
+        const start = Math.max(fromMeta.start, toMeta.start);
+        const end = Math.min(fromMeta.end, toMeta.end);
+        const minutes = end - start;
+        if (minutes < MIN_USEFUL_OVERLAP) continue;
+        const count = Math.min(rowGap(source), Math.abs(rowGap(target)));
+        if (count <= 0) continue;
+        out.push({
+          fromShift,
+          toShift,
+          count,
+          fromSurplus: rowGap(source),
+          toGap: rowGap(target),
+          severity: number(target?.severity),
+          start: minuteLabel(start),
+          end: minuteLabel(end),
+          minutes,
+        });
+      }
+    }
+    return out.sort((a, b) =>
+      b.severity - a.severity ||
+      b.count - a.count ||
+      b.minutes - a.minutes
+    );
+  }
+
+  function transferProposal(option) {
+    if (!option) return "";
+    const count = Math.max(1, number(option.count, 1));
+    const noun = count > 1 ? `${count} renforts` : "1 renfort";
+    const verb = count > 1 ? "peuvent" : "peut";
+    const qualifier = option.minutes < 180 ? "ponctuel" : "sur une plage utile";
+    return `Piste faisable sur les horaires : ${option.fromShift} a +${option.fromSurplus} et recouvre ${option.toShift} de ${option.start} à ${option.end}. ${noun} ${verb} être positionné${count > 1 ? "s" : ""} en renfort ${qualifier}, après vérification terrain.`;
+  }
+
+  function opportunityContext(context = {}) {
+    return Boolean(
+      context.suggested_to_shift ||
+      context.destination_shift ||
+      context.deficit_shift ||
+      context.shortage_shift ||
+      context.transfer_to_shift ||
+      context.coverage_shift
+    );
   }
 
   function staffing(staff) {
@@ -90,7 +157,12 @@
       ...rows.map((row) => number(row?.severity)),
     );
 
-    let level = worstSeverity >= 4 ? "critical" : deficits.length ? "warning" : "ok";
+    const transfers = transferOptions(shiftRows);
+    let level = deficits.some((row) => number(row?.severity) >= 4)
+      ? "critical"
+      : deficits.length
+        ? "warning"
+        : "ok";
     const meta = statusMeta(level);
     const totalGap =
       summary.gap != null
@@ -110,6 +182,7 @@
             : "Les créneaux suivis sont au niveau attendu.",
         reasons: [],
         totalGap,
+        transferOptions: transfers,
       };
     }
 
@@ -130,14 +203,7 @@
       planned != null && target != null
         ? `${planned} prévus pour ${target} : il manque ${missing}.`
         : `Il manque ${missing} sur ce créneau par rapport à la référence.`;
-    const guide = (summary.guide || []).find(
-        (item) =>
-          item &&
-          (String(item.shift_code || "").toUpperCase() ===
-            String(first.shift_code || "").toUpperCase() ||
-            item.suggested_from_shift),
-      ),
-      specialCount = number(summary.special_count);
+    const specialCount = number(summary.special_count);
 
     if (totalGap != null && totalGap >= 0 && bestSurplus) {
       headline = `${label.charAt(0).toUpperCase() + label.slice(1)} fragile malgré un total correct`;
@@ -155,11 +221,9 @@
         severity: number(row.severity),
         planned: row.planned_count,
         target: row.target_count,
-      })),
-      proposal =
-        guide?.suggested_from_shift && number(guide?.suggested_from_surplus) > 0
-          ? `À regarder sur le terrain : ${String(guide.suggested_from_shift).toUpperCase()} a +${number(guide.suggested_from_surplus)} pendant que ${String(first.shift_code || "").toUpperCase()} est court.`
-          : "";
+      }));
+    const bestTransfer = transfers[0] || null;
+    const proposal = transferProposal(bestTransfer);
 
     return {
       ...meta,
@@ -170,7 +234,35 @@
       proposal,
       totalGap,
       specialCount,
+      transferOptions: transfers,
     };
+  }
+
+  function shiftStatus(staff, code) {
+    const base = String(code || "").trim().toUpperCase();
+    const rows = rowsOf(staff);
+    const row = rows.find(
+      (item) => String(item?.shift_code || item?.shift || item?.code || "").trim().toUpperCase() === base,
+    );
+    if (!staff || staff?.available === false || !row)
+      return { ...statusMeta("unknown"), symbol: "○" };
+
+    const severity = number(row?.severity);
+    const gap = rowGap(row);
+    if (severity >= 4) return { ...statusMeta("critical"), gap };
+    if (gap < 0 || severity >= 2) return { ...statusMeta("warning"), gap };
+
+    const transfer = transferOptions(rows).find((item) => item.fromShift === base);
+    if (gap > 0 && transfer) {
+      return {
+        ...statusMeta("opportunity"),
+        gap,
+        detail: `${base} a +${gap} de marge et recouvre ${transfer.toShift} de ${transfer.start} à ${transfer.end}.`,
+        proposal: transferProposal(transfer),
+        transfer,
+      };
+    }
+    return { ...statusMeta("ok"), gap };
   }
 
   function contextGap(item) {
@@ -222,6 +314,15 @@
             planned != null && target != null
               ? `${planned} prévus pour ${target} : il manque ${missing}.`
               : `Il manque ${missing} par rapport à la référence.`,
+          proposal: String(item?.recommendation_text || "").trim(),
+          source: item,
+        };
+      }
+      if (gap > 0 && opportunityContext(context)) {
+        return {
+          level: "opportunity",
+          headline: "Marge utile disponible",
+          detail: `+${gap} par rapport à la référence sur ce créneau.`,
           proposal: String(item?.recommendation_text || "").trim(),
           source: item,
         };
@@ -317,6 +418,8 @@
     levelFromSeverity,
     statusMeta,
     staffing,
+    shiftStatus,
+    transferOptions,
     isMeaningful,
     meaningfulItems,
     terrainItem,
