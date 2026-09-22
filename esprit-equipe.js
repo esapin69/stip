@@ -29,16 +29,10 @@
         })[char],
     );
 
-  const params = new URLSearchParams(location.search);
-  const requestedTab = params.get("tab") || params.get("view");
   const navigationState = window.STIPNav?.read?.() || {};
   const state = {
     access: null,
-    tab: ["team", "activity", "assistant"].includes(requestedTab)
-      ? requestedTab
-      : ["team", "activity", "assistant"].includes(navigationState.tab)
-        ? navigationState.tab
-        : "team",
+    tab: "team",
     weekStart: monday(todayIso()),
     dayFocus: todayIso(),
     weeks: new Map(),
@@ -209,6 +203,14 @@
 
   function signalForDate(value) {
     return state.daySignals.get(value) || null;
+  }
+
+  function statusSymbol(level, fallback = "") {
+    if (level === "opportunity") return "+";
+    if (level === "ok") return "✔";
+    if (level === "warning") return "⚠️";
+    if (level === "critical") return "🛑";
+    return fallback || "○";
   }
 
   function assistantItemsForDate(bundle, value) {
