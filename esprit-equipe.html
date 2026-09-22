@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260922-opportunity1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-analysispopup1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-weeksummary1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -48,13 +48,11 @@
           <span>SEMAINE ACTIVE</span>
         </div>
 
-        <section
-          id="teamDateJumpPanel"
-          class="team-date-jump-panel team-date-jump-permanent"
-          aria-label="Calendrier mensuel — choisir une journée"
-        ></section>
-
-        <section id="teamDaySummaryHost" class="team-day-summary-host" aria-live="polite"></section>
+        <section class="team-week-picker" aria-label="Semaine active">
+          <button id="teamPrevWeek" class="team-week-step" type="button" aria-label="Semaine précédente">‹</button>
+          <nav id="teamDays" class="team-days" aria-label="Jours de la semaine"></nav>
+          <button id="teamNextWeek" class="team-week-step" type="button" aria-label="Semaine suivante">›</button>
+        </section>
       </section>
 
       <div class="team-day-section-label stip-section-separator" aria-hidden="true">
@@ -73,7 +71,19 @@
         </div>
       </section>
 
-      <section class="team-month-zone team-month-zone-secondary" aria-label="Repères et options">
+      <section class="team-month-zone team-month-zone-secondary" aria-label="Calendrier, bilan hebdomadaire, repères et options">
+        <div class="team-calendar-section-label stip-section-separator" aria-hidden="true">
+          <span>CALENDRIER DE L’ÉQUIPE</span>
+        </div>
+
+        <section
+          id="teamDateJumpPanel"
+          class="team-date-jump-panel team-date-jump-permanent"
+          aria-label="Calendrier mensuel — choisir une journée"
+        ></section>
+
+        <section id="teamWeekSummaryHost" class="team-week-summary-host" aria-live="polite"></section>
+
         <div class="team-legend-separator stip-section-separator" aria-hidden="true">
           <span>LÉGENDE</span>
         </div>
@@ -105,6 +115,6 @@
     <script src="agent-agenda-view.js?v=20260922-headercall1"></script>
     <script src="calendar-subscriptions.js?v=20260921-calfeed2"></script>
     <script src="home-duty-chief.js?v=20260922-chiefrow2"></script>
-    <script src="esprit-equipe.js?v=20260922-analysispopup1"></script>
+    <script src="esprit-equipe.js?v=20260922-weeksummary1"></script>
   </body>
 </html>
