@@ -2093,3 +2093,319 @@ body.team-page {
   .team-day-intel{font-size:.94rem!important}
   .team-day-intel.status-ok{font-size:1.08rem!important}
 }
+
+
+/* merged-team-surface-and-month-digest-20260922
+   Une seule vue terrain : shifts > calendrier > synthèse utile du mois. */
+.team-time-stack{margin-top:10px!important}
+.team-week-section-label{margin-top:0!important}
+
+/* Statuts terrain : + vert, validation noire. */
+.team-shift-mini-status.status-ok,
+.team-cal-status.status-ok,
+.team-day-intel.status-ok,
+.team-month-legend .status-ok,
+.team-month-line.status-ok .team-month-line-status{
+  color:#172126!important;
+}
+.team-shift-mini-status.status-opportunity,
+.team-cal-status.status-opportunity,
+.team-day-intel.status-opportunity,
+.team-month-legend .status-opportunity,
+.team-month-line.status-opportunity .team-month-line-status{
+  color:#159b62!important;
+}
+.team-month-legend .status-opportunity{
+  font-size:1.35rem!important;
+  font-weight:1000!important;
+}
+.team-days>button.status-opportunity:not(.selected),
+.team-date-jump-grid>button.status-opportunity:not(.is-selected){
+  background:#f2fbf6!important;
+}
+.team-shift-analysis-sheet.status-opportunity>header{
+  border-left-color:#159b62!important;
+  background:#f2fbf6!important;
+}
+.team-shift-analysis-sheet.status-ok>header{
+  border-left-color:#172126!important;
+  background:#f7f9fa!important;
+}
+.team-shift-analysis-symbol{
+  font-family:inherit;
+  font-weight:1000;
+}
+
+/* Le pop du statut regroupe l'effectif, l'analyse et le contexte utile. */
+.team-shift-analysis-sheet{
+  max-height:min(88vh,760px);
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.team-shift-analysis-stats{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:7px;
+  margin-top:11px;
+}
+.team-shift-analysis-stats>span{
+  min-width:0;
+  min-height:62px;
+  display:grid;
+  place-items:center;
+  align-content:center;
+  gap:3px;
+  padding:8px 5px;
+  border:1px solid var(--stip-line);
+  border-radius:14px;
+  background:var(--stip-surface-soft);
+}
+.team-shift-analysis-stats small{
+  color:var(--stip-muted);
+  font-size:.55rem;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.team-shift-analysis-stats b{
+  color:var(--stip-ink);
+  font-size:1.12rem;
+  line-height:1;
+}
+.team-shift-analysis-stats .positive b{color:#159b62}
+.team-shift-analysis-stats .negative b{color:#c24a43}
+.team-shift-analysis-stats .neutral b{color:#172126}
+.team-shift-analysis-block{
+  margin-top:11px;
+  padding:11px 12px;
+  border:1px solid var(--stip-line);
+  border-radius:14px;
+  background:var(--stip-surface-soft);
+}
+.team-shift-analysis-block>strong{
+  display:block;
+  color:var(--stip-ink);
+  font-size:.71rem;
+  font-weight:950;
+}
+.team-shift-analysis-block>p{
+  margin:5px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.72rem;
+  font-weight:760;
+  line-height:1.45;
+}
+.team-shift-analysis-tags{
+  display:grid;
+  gap:6px;
+  margin-top:8px;
+}
+.team-shift-analysis-tags>span{
+  display:grid;
+  gap:2px;
+  padding:8px 9px;
+  border:1px solid color-mix(in srgb,var(--stip-accent) 12%,var(--stip-line));
+  border-radius:11px;
+  background:var(--stip-surface);
+}
+.team-shift-analysis-tags b{
+  color:var(--stip-ink);
+  font-size:.69rem;
+}
+.team-shift-analysis-tags small{
+  color:var(--stip-muted);
+  font-size:.62rem;
+  font-weight:820;
+}
+.team-shift-context-list{
+  display:grid;
+  margin-top:6px;
+}
+.team-shift-context-list>div{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  gap:7px;
+  align-items:start;
+  padding:8px 0;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 8%,var(--stip-line-soft));
+}
+.team-shift-context-list>div:last-of-type{border-bottom:0}
+.team-shift-context-list>div>span{
+  min-height:25px;
+  display:grid;
+  place-items:center;
+  font-size:1rem;
+  line-height:1;
+}
+.team-shift-context-list p{margin:0;min-width:0}
+.team-shift-context-list p b,
+.team-shift-context-list p small{display:block}
+.team-shift-context-list p b{
+  color:var(--stip-ink);
+  font-size:.69rem;
+}
+.team-shift-context-list p small{
+  margin-top:2px;
+  color:var(--stip-muted);
+  font-size:.62rem;
+  font-weight:760;
+  line-height:1.35;
+}
+.team-shift-context-more{
+  margin:7px 0 0!important;
+  color:var(--stip-muted)!important;
+  font-size:.62rem!important;
+  font-weight:850!important;
+}
+
+/* Synthèse du mois : uniquement les jours qui apportent une information. */
+.team-month-digest-separator{
+  margin:8px 0 0!important;
+}
+.team-month-digest-host{
+  width:100%;
+  max-width:100%;
+}
+.team-month-digest-host:empty{display:none}
+.team-month-digest-loading,
+.team-month-digest-empty{
+  padding:15px 14px;
+  border:1px dashed var(--stip-line);
+  border-radius:17px;
+  background:var(--stip-surface-soft);
+  color:var(--stip-muted);
+  font-size:.72rem;
+  font-weight:820;
+  text-align:center;
+}
+.team-month-digest-empty strong,
+.team-month-digest-empty span{display:block}
+.team-month-digest-empty strong{
+  color:var(--stip-ink);
+  font-size:.78rem;
+}
+.team-month-digest-empty span{margin-top:4px}
+.team-month-digest-card{
+  overflow:hidden;
+  border:1px solid var(--stip-line);
+  border-radius:20px;
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+}
+.team-month-digest-card>header{
+  padding:12px 13px 11px;
+  border-bottom:1px solid var(--stip-line-soft);
+  background:linear-gradient(180deg,var(--stip-surface),var(--stip-surface-soft));
+}
+.team-month-digest-card>header strong,
+.team-month-digest-card>header span{display:block}
+.team-month-digest-card>header strong{
+  color:var(--stip-ink);
+  font-size:.88rem;
+  font-weight:950;
+}
+.team-month-digest-card>header span{
+  margin-top:3px;
+  color:var(--stip-muted);
+  font-size:.62rem;
+  font-weight:820;
+  line-height:1.35;
+}
+.team-month-weeks{display:grid}
+.team-month-week{
+  border-bottom:1px solid var(--stip-line-soft);
+}
+.team-month-week:last-child{border-bottom:0}
+.team-month-week>summary{
+  min-height:43px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:9px;
+  padding:0 13px;
+  list-style:none;
+  cursor:pointer;
+  color:var(--stip-ink-2);
+  background:#fbfdfd;
+}
+.team-month-week>summary::-webkit-details-marker{display:none}
+.team-month-week>summary span{
+  font-size:.67rem;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.045em;
+}
+.team-month-week>summary b{
+  min-width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#edf4f5;
+  color:#55727c;
+  font-size:.61rem;
+}
+.team-month-week[open]>summary{
+  color:var(--stip-accent);
+  background:#f5fbfc;
+}
+.team-month-week>div{padding:0 10px 5px}
+.team-month-line{
+  width:100%;
+  min-height:52px;
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) 14px;
+  gap:8px;
+  align-items:center;
+  padding:8px 2px;
+  border:0;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 7%,var(--stip-line-soft));
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.team-month-line:last-child{border-bottom:0}
+.team-month-line-status{
+  min-height:28px;
+  display:grid;
+  place-items:center;
+  font-size:1.05rem;
+  line-height:1;
+  font-weight:1000;
+}
+.team-month-line.status-warning .team-month-line-status{color:#c58b00}
+.team-month-line.status-critical .team-month-line-status{color:#c33b3b}
+.team-month-line>div{min-width:0}
+.team-month-line strong,
+.team-month-line small{display:block}
+.team-month-line strong{
+  color:var(--stip-ink);
+  font-size:.7rem;
+  font-weight:950;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.team-month-line small{
+  margin-top:3px;
+  color:var(--stip-muted);
+  font-size:.62rem;
+  font-weight:760;
+  line-height:1.35;
+}
+.team-month-line>i{
+  color:var(--stip-muted);
+  font-size:1rem;
+  font-style:normal;
+}
+.team-month-line:active{opacity:.68}
+
+@media(max-width:430px){
+  .team-shift-analysis-sheet{
+    max-height:91vh;
+    padding-inline:13px;
+  }
+  .team-shift-analysis-stats>span{min-height:58px}
+  .team-month-digest-card{border-radius:18px}
+  .team-month-line{grid-template-columns:27px minmax(0,1fr) 12px}
+}
