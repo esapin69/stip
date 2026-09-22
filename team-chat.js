@@ -19,6 +19,7 @@
     draft: "",
     draftKind: "search",
     composeMode: "search",
+    selectedBuilding: "",
   };
 
   const homeState = {
@@ -148,6 +149,9 @@
         message.payload?.wheelchair?.status || "",
         message.payload?.wheelchair?.resolved_at || "",
         message.payload?.wheelchair?.resolved_by_name || "",
+        message.payload?.wheelchair?.quantity_total || "",
+        message.payload?.wheelchair?.quantity_remaining || "",
+        JSON.stringify(message.payload?.wheelchair?.takes || []),
       ]),
     );
   }
@@ -159,7 +163,6 @@
       '<div><small>FAUTEUILS</small><h2>Recherche & signalements</h2><p>Fil terrain du jour</p></div>' +
       '<div class="tb-inline-actions"><span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button></div>' +
       "</section>" +
-      '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Recherche rapide par bâtiment"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -167,10 +170,13 @@
       '<button type="button" class="danger" data-delete-selected>Supprimer</button>' +
       '<button type="button" data-selection-close>Annuler</button>' +
       "</section>" +
+      '<section class="tb-input-dock" data-input-dock>' +
+      '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
       '<form class="tb-composer" data-form>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. je cherche un fauteuil au 2e étage" aria-label="Signaler des fauteuils"></textarea>' +
-      '<button type="submit" class="tb-send" aria-label="Signaler">↑</button>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="Ex. je cherche un fauteuil au 2e étage" aria-label="Préciser le lieu du fauteuil"></textarea>' +
+      '<button type="submit" class="tb-send" aria-label="Envoyer">↑</button>' +
       "</form>" +
+      "</section>" +
       "</section>"
     );
   }
@@ -215,7 +221,7 @@
 
   function syncComposerDock() {
     if (!state.root) return;
-    const composer = state.root.querySelector(".tb-composer");
+    const composer = state.root.querySelector(".tb-input-dock");
     if (!composer || !state.root.classList.contains("is-composing")) return;
 
     const viewport = window.visualViewport;
@@ -317,6 +323,12 @@
         composeBuilding(String(building.dataset.buildingCompose || ""));
         return;
       }
+      const take = event.target.closest?.("[data-take]");
+      if (take) {
+        event.preventDefault();
+        takeWheelchair(String(take.dataset.take || ""));
+        return;
+      }
       const photo = event.target.closest?.("[data-photo-url]");
       if (photo) {
         event.stopPropagation();
@@ -362,6 +374,8 @@
 
       const form = state.root.querySelector("[data-form]");
       if (form) form.hidden = !canWrite;
+      const inputDock = state.root.querySelector("[data-input-dock]");
+      if (inputDock) inputDock.hidden = !canWrite;
       const readonly = state.root.querySelector("[data-readonly]");
       if (readonly) readonly.hidden = canWrite;
 
@@ -393,39 +407,68 @@
     }
   }
 
-  function isPluralSignal(message = {}) {
-    const body = String(message.body || "").trim();
-    const explicit = body.match(/^(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
-    if (explicit) return Number(explicit[1]) > 1;
-    const shorthand = body.match(/^(\d{1,2})\s+(?!(?:e|eme|ème|er)\b)/i);
-    return shorthand ? Number(shorthand[1]) > 1 : false;
+  function inferWheelchairQuantity(text = "") {
+    const body = String(text || "").trim();
+    const explicit = body.match(/(?:^|[·,:;\s])(\d{1,2})\s*(?:fauteuils?|fauteuil|f\b)/i);
+    if (explicit) return Math.min(20, Math.max(1, Number(explicit[1]) || 1));
+
+    const tail = body.split("·").map((part) => part.trim()).filter(Boolean).at(-1) || "";
+    const shorthand = tail.match(/^(\d{1,2})\s+(?:au\b|à\b|a\b)/i);
+    return shorthand ? Math.min(20, Math.max(1, Number(shorthand[1]) || 1)) : 1;
+  }
+
+  function wheelchairStock(message = {}) {
+    const wheelchair = message?.payload?.wheelchair || {};
+    const total = Math.min(
+      20,
+      Math.max(1, Number(wheelchair.quantity_total) || inferWheelchairQuantity(message.body || "")),
+    );
+    const remainingRaw = Number(wheelchair.quantity_remaining);
+    const remaining = Number.isFinite(remainingRaw)
+      ? Math.min(total, Math.max(0, remainingRaw))
+      : (wheelchair.status === "resolved" ? 0 : total);
+    return { total, remaining };
   }
 
   function renderSearchShortcuts() {
     const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
+
     const searchMode = state.composeMode === "search";
+    const selected = BUILDINGS.find((building) => building.key === state.selectedBuilding);
+    const modeLabel = searchMode ? "Chercher un fauteuil" : "Signaler des fauteuils";
+    const modeIcon = searchMode ? "🔎" : "🦽";
+
     host.innerHTML =
-      '<div class="tb-search-shortcuts-head"><strong>Que veux-tu faire ?</strong></div>' +
-      '<div class="tb-compose-modes" role="group" aria-label="Type de signalement">' +
-        '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Je cherche</strong></button>' +
-        '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>J’en ai trouvé</strong></button>' +
+      '<div class="tb-shortcuts-full">' +
+        '<div class="tb-search-shortcuts-head"><strong>Action</strong></div>' +
+        '<div class="tb-compose-modes" role="group" aria-label="Que veux-tu faire ?">' +
+          '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">🔎</span><strong>Chercher un fauteuil</strong></button>' +
+          '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">🦽</span><strong>Signaler des fauteuils</strong></button>' +
+        "</div>" +
+        '<small class="tb-compose-hint">' + (searchMode ? "Où cherches-tu ?" : "Où sont-ils ?") + "</small>" +
+        '<div class="tb-search-shortcuts-grid">' +
+        BUILDINGS.map(
+          (building) =>
+            '<button type="button" class="tb-search-shortcut' +
+            (building.key === state.selectedBuilding ? " is-active" : "") +
+            '" data-building-compose="' +
+            esc(building.key) +
+            '" aria-pressed="' +
+            (building.key === state.selectedBuilding ? "true" : "false") +
+            '"><strong>' +
+            esc(building.label) +
+            "</strong></button>",
+        ).join("") +
+        "</div>" +
       "</div>" +
-      '<small class="tb-compose-hint">' +
-        (searchMode
-          ? "Choisis le bâtiment où tu cherches."
-          : "Choisis le bâtiment, puis précise l’étage ou l’endroit.") +
-      "</small>" +
-      '<div class="tb-search-shortcuts-grid">' +
-      BUILDINGS.map(
-        (building) =>
-          '<button type="button" class="tb-search-shortcut" data-building-compose="' +
-          esc(building.key) +
-          '"><strong>' +
-          esc(building.label) +
-          "</strong></button>",
-      ).join("") +
-      "</div>";
+      '<div class="tb-compose-summary" aria-live="polite"><span aria-hidden="true">' +
+        modeIcon +
+        "</span><strong>" +
+        esc(modeLabel) +
+        "</strong><b>·</b><em>" +
+        esc(selected?.label || "Bâtiment à choisir") +
+        "</em></div>";
   }
 
   function setComposeMode(mode) {
@@ -446,6 +489,7 @@
     const generatedDraft =
       /^(?:Je cherche un fauteuil|Fauteuil disponible)\s*·/i.test(current);
     if (generatedDraft && buildingKey) {
+      state.selectedBuilding = buildingKey;
       const building = BUILDINGS.find((item) => item.key === buildingKey);
       if (building) {
         const text =
@@ -467,10 +511,12 @@
 
     const searchMode = state.composeMode === "search";
     const text = searchMode
-      ? "Je cherche un fauteuil · " + building.label
+      ? "Je cherche un fauteuil · " + building.label + " · "
       : "Fauteuil disponible · " + building.label + " · ";
 
+    state.selectedBuilding = key;
     state.draftKind = state.composeMode;
+    renderSearchShortcuts();
     state.draft = text;
     textarea.value = text;
     autoGrow(textarea);
@@ -501,7 +547,9 @@
       const wheelchair = message.payload?.wheelchair || null;
       const resolved = wheelchair?.status === "resolved";
       const activeSignal = wheelchair?.status === "active";
-      const searchSignal = activeSignal && wheelchair?.type === "search";
+      const isSearchType = wheelchair?.type === "search";
+      const searchSignal = activeSignal && isSearchType;
+      const stock = isSearchType ? { total: 1, remaining: 1 } : wheelchairStock(message);
 
       html.push(
         '<article class="tb-entry ' +
@@ -540,7 +588,9 @@
           '<span class="tb-status-chip' +
             (searchSignal ? " is-search" : "") +
             '">' +
-            (searchSignal ? "Recherche" : "Disponible") +
+            (searchSignal
+              ? "Recherche"
+              : (stock.remaining > 1 ? stock.remaining + " disponibles" : "Disponible")) +
             "</span>",
         );
       }
@@ -561,22 +611,36 @@
         );
       }
       if (activeSignal && !state.selection && state.data?.can_write !== false && state.data?.access_mode !== "read") {
-        html.push(
-          '<button type="button" class="tb-resolve' +
-            (searchSignal ? " is-search" : "") +
-            '" data-resolve="' +
-            esc(id) +
-            '"><span aria-hidden="true">✓</span><strong>' +
-            (searchSignal
-              ? "J’ai trouvé"
-              : (isPluralSignal(message) ? "Je les prends" : "Je le prends")) +
-            "</strong></button>",
-        );
+        if (searchSignal) {
+          html.push(
+            '<button type="button" class="tb-resolve is-search" data-resolve="' +
+              esc(id) +
+              '"><span aria-hidden="true">✓</span><strong>J’ai trouvé</strong></button>',
+          );
+        } else {
+          html.push(
+            '<button type="button" class="tb-resolve is-take" data-take="' +
+              esc(id) +
+              '"><span aria-hidden="true">↘</span><strong>Prendre</strong></button>',
+          );
+          const takes = Array.isArray(wheelchair?.takes) ? wheelchair.takes : [];
+          if (takes.length && stock.remaining > 0) {
+            const lastTake = takes[takes.length - 1] || {};
+            html.push(
+              '<div class="tb-take-note"><strong>' +
+                esc(String(lastTake.quantity || 1)) +
+                " pris</strong>" +
+                (lastTake.taken_by_name ? "<span>" + esc(lastTake.taken_by_name) + "</span>" : "") +
+                (lastTake.taken_at ? "<time>" + esc(fmtTime(lastTake.taken_at)) + "</time>" : "") +
+              "</div>",
+            );
+          }
+        }
       } else if (resolved) {
         const wasSearch = wheelchair?.type === "search";
         html.push(
           '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>' +
-            (wasSearch ? "Trouvé" : "Pris") +
+            (wasSearch ? "Trouvé" : (stock.total > 1 ? "Tous pris" : "Pris")) +
             (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
             "</strong>" +
             (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
@@ -701,9 +765,14 @@
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
     try {
+      const type = state.draftKind === "search" ? "search" : "spot";
       await api("team_send", {
         body,
-        wheelchair: { type: state.draftKind === "search" ? "search" : "spot" },
+        wheelchair: {
+          type,
+          building: state.selectedBuilding || "",
+          quantity: type === "spot" ? inferWheelchairQuantity(body) : 1,
+        },
       });
       textarea.value = "";
       state.draft = "";
@@ -726,7 +795,70 @@
       await api("team_resolve", { message_id: String(messageId) });
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {
-      alert(error.message || "Impossible de confirmer la prise du fauteuil.");
+      alert(error.message || "Impossible de confirmer que le fauteuil a été trouvé.");
+      if (button) button.disabled = false;
+    }
+  }
+
+  function chooseTakeQuantity(remaining) {
+    return new Promise((resolve) => {
+      const available = Math.max(1, Math.min(20, Number(remaining) || 1));
+      const singles = [];
+      for (let n = 1; n <= Math.min(3, available - 1); n += 1) singles.push(n);
+
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-take-picker">' +
+        '<div class="tb-confirm-icon">🦽</div>' +
+        "<h3>Combien tu prends ?</h3>" +
+        "<p>Il y en a " + available + " de disponibles.</p>" +
+        '<div class="tb-take-choices">' +
+          singles.map((quantity) =>
+            '<button type="button" data-take-qty="' + quantity + '"><strong>' + quantity + "</strong></button>"
+          ).join("") +
+          '<button type="button" class="all" data-take-qty="' + available + '"><strong>Tous</strong><small>' + available + "</small></button>" +
+        "</div>" +
+        '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        "</section>";
+      document.body.appendChild(wrap);
+
+      const done = (value) => {
+        wrap.remove();
+        resolve(value);
+      };
+      wrap.querySelectorAll("[data-take-qty]").forEach((button) => {
+        button.addEventListener("click", () => done(Number(button.dataset.takeQty) || 0));
+      });
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => done(0));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) done(0);
+      });
+    });
+  }
+
+  async function takeWheelchair(messageId) {
+    if (!messageId) return;
+    const message = (state.data?.messages || []).find((item) => String(item.id) === String(messageId));
+    if (!message) return;
+    const stock = wheelchairStock(message);
+    if (stock.remaining < 1) return;
+
+    const quantity = stock.remaining > 1
+      ? await chooseTakeQuantity(stock.remaining)
+      : 1;
+    if (!quantity) return;
+
+    const button = state.root?.querySelector('[data-take="' + CSS.escape(String(messageId)) + '"]');
+    if (button) button.disabled = true;
+    try {
+      await api("team_take", {
+        message_id: String(messageId),
+        quantity,
+      });
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+    } catch (error) {
+      alert(error.message || "Impossible d’enregistrer la prise.");
       if (button) button.disabled = false;
     }
   }
