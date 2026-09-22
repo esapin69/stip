@@ -4,7 +4,8 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access-manage";
   const DATES_API =
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates-admin";
-  const STORE = "stip_session_v1";\n  const PREVIEW_STORE = "stip_admin_preview_v1";
+  const STORE = "stip_session_v1";
+  const PREVIEW_STORE = "stip_admin_preview_v1";
   const $ = (id) => document.getElementById(id);
   const esc = (s) =>
     String(s ?? "").replace(
