@@ -1082,6 +1082,100 @@
 }
 .tb-take-note span{margin-left:auto}
 .tb-take-note time{color:#92a29d}
+
+.tb-free-write-label{
+  width:min(100%,690px);
+  margin:6px auto -2px;
+  padding:0 12px;
+  display:block;
+  color:#8a9b9f;
+  font-size:.56rem;
+  line-height:1.2;
+  font-weight:800;
+}
+.tb-quantity-picker{max-width:360px}
+.tb-quantity-choices{
+  margin-top:16px;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;
+}
+.tb-quantity-choices button{
+  min-height:60px;
+  border:1px solid #bcd9cf;
+  border-radius:14px;
+  background:#f0faf6;
+  color:#176b54;
+  font:inherit;
+}
+.tb-quantity-choices button strong{
+  display:block;
+  font-size:1.05rem;
+  font-weight:950;
+}
+.tb-quantity-choices button small{
+  display:block;
+  margin-top:2px;
+  color:#748b84;
+  font-size:.55rem;
+  font-weight:850;
+}
+.tb-quantity-choices button.more{
+  border-color:#8fc7b3;
+  background:#e8f8f1;
+}
+.tb-quantity-more{
+  margin-top:10px;
+  padding:10px;
+  border:1px solid #d5e4df;
+  border-radius:13px;
+  background:#f8fbfa;
+  text-align:left;
+}
+.tb-quantity-more[hidden]{display:none!important}
+.tb-quantity-more label{
+  display:block;
+  margin-bottom:6px;
+  color:#526f68;
+  font-size:.64rem;
+  font-weight:900;
+}
+.tb-quantity-more>div{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:7px;
+}
+.tb-quantity-more input{
+  min-width:0;
+  height:44px;
+  padding:0 11px;
+  border:1px solid #cbded8;
+  border-radius:11px;
+  background:#fff;
+  color:#234d46;
+  font:inherit;
+  font-size:1rem;
+}
+.tb-quantity-more button{
+  min-height:44px;
+  padding:0 13px;
+  border:1px solid #83bea8;
+  border-radius:11px;
+  background:#e6f6ef;
+  color:#176b54;
+  font:inherit;
+  font-size:.68rem;
+  font-weight:950;
+}
+.tb-quantity-more>small{
+  min-height:14px;
+  margin-top:5px;
+  display:block;
+  color:#a34343;
+  font-size:.56rem;
+  font-weight:800;
+}
+
 .tb-take-picker{max-width:360px}
 .tb-take-choices{
   margin-top:16px;
@@ -1174,6 +1268,7 @@
   bottom:var(--tb-keyboard-inset,0px)!important;
 }
 .tb-page.is-composing .tb-shortcuts-full{display:none!important}
+.tb-page.is-composing .tb-free-write-label{display:none!important}
 .tb-page.is-composing .tb-search-shortcuts{padding:6px 10px 5px}
 .tb-page.is-composing .tb-compose-summary{
   min-height:31px;
