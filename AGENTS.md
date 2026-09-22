@@ -70,3 +70,17 @@ Any STIP surface that analyses, summarizes, alerts, recommends, or republishes a
 - User-facing language has priority over administrative or consultant language: name the moment, the shift, the gap, and what changes in practice.
 - Reuse `stip-field-intelligence.js` for shared status, triage and terrain wording instead of creating page-specific scoring rules.
 - For the shared three-state signal: `🛑` = critical, `⚠️` = watch, green `✔` = checked/OK. Do not invent a second competing scale without an explicit product decision.
+
+
+## 12. Fauteuils — canonical UI contract
+The Fauteuils page is a dedicated routed surface and must not regress to earlier V12–V18 layouts.
+
+Non-negotiable invariants:
+- Never render the old two-button `J’ai vu / rangé` + `Je cherche` pair. The active mode is shown as state; only the opposite mode appears as the switch shortcut.
+- Never render the old four large building cards or the old four large rectangular building buttons.
+- The location chooser is the compact five-zone layout: four buildings around the central `Repère connu` action.
+- The building disclosure label stays `Voir les bâtiments`; never use `Voir les 4`.
+- Building activity uses edge tabs / a sliding drawer, not a permanent vertical dashboard.
+- Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
+- Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
+- Keep `team-chat.js`, `team-chat.css`, `home-shell.js` and the index asset versions coherent. Mixed versions must self-heal rather than rendering a degraded UI.
