@@ -4305,6 +4305,23 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   cursor:pointer!important;
 }
 
+/* Flat identity alignment: balance the left avatar zone with the GHE zone,
+   so the avatar is visually centered in its available space. */
+@media(max-width:560px){
+  .hc-id-card{
+    grid-template-columns:82px minmax(0,1fr) 82px!important;
+    gap:8px!important;
+    padding-left:8px!important;
+    padding-right:8px!important;
+  }
+}
+@media(max-width:380px){
+  .hc-id-card{
+    grid-template-columns:74px minmax(0,1fr) 74px!important;
+    gap:7px!important;
+  }
+}
+
 /* Esprit d'équipe: truly centered copy with balanced side columns. */
 .hc-team-shortcut{
   min-height:52px!important;
