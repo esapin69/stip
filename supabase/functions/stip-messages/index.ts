@@ -471,11 +471,15 @@ async function teamSend(ctx:any,body:any){
   if(wheelchair){
     const type=wheelchair.type==="search"?"search":"spot",
       quantity=type==="spot"?inferWheelchairQuantity(text,wheelchair.quantity):1,
-      building=String(wheelchair.building||"").trim().slice(0,32);
+      building=String(wheelchair.building||"").trim().slice(0,32),
+      level=String(wheelchair.level||"").trim().slice(0,24),
+      location=String(wheelchair.location||"").trim().slice(0,120);
     payload.wheelchair={
       type,
       status:"active",
       ...(building?{building}:{}),
+      ...(level?{level}:{}),
+      ...(location?{location}:{}),
       ...(type==="spot"?{quantity_total:quantity,quantity_remaining:quantity,takes:[]}:{})
     }
   }
