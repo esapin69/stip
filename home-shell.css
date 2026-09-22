@@ -4654,3 +4654,53 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     transform:translateX(11px)!important;
   }
 }
+
+/* HOME BUTTONS V4 — square artwork */
+/* Square artwork gives each launcher more readable visual area while preserving one-row navigation. */
+.hc-home-filters{
+  width:min(100%,378px)!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px!important;
+  align-items:start!important;
+}
+.hc-home-filters>button{
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:5px 5px 8px!important;
+  gap:7px!important;
+  border-radius:21px!important;
+}
+.hc-home-filter-art{
+  width:100%!important;
+  aspect-ratio:1/1!important;
+  border-radius:16px!important;
+}
+.hc-home-filter-art img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:16px!important;
+}
+.hc-home-filters>button>strong{
+  font-size:.77rem!important;
+  line-height:1.03!important;
+  min-height:1.03em!important;
+}
+.hc-home-filters>button.active{
+  transform:translateY(-3px) scale(1.018)!important;
+}
+.hc-home-filters>button.active::before{
+  border-radius:17px!important;
+}
+@media(max-width:430px){
+  .hc-home-filters{width:min(100%,366px)!important;gap:6px!important}
+  .hc-home-filters>button{padding:5px 4px 7px!important;gap:6px!important}
+  .hc-home-filters>button>strong{font-size:.74rem!important}
+}
+@media(max-width:380px){
+  .hc-home-filters{width:min(100%,340px)!important;gap:5px!important}
+  .hc-home-filters>button{padding:4px 4px 7px!important;gap:5px!important}
+  .hc-home-filters>button>strong{font-size:.70rem!important}
+}
