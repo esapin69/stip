@@ -1506,59 +1506,6 @@ body.team-page {
 }
 .team-agent-group.is-chefs .team-agent-group-label{color:#70409f}
 
-/* team-day-explanation-20260922 */
-.team-date-explanation{
-  width:100%;
-  max-width:430px;
-  box-sizing:border-box;
-  margin:10px auto 2px;
-  padding:13px 14px 14px;
-  border:1px solid var(--stip-line);
-  border-left:5px solid var(--stip-muted);
-  border-radius:17px;
-  background:var(--stip-surface);
-  box-shadow:var(--stip-shadow-soft);
-  animation:teamDateReasonIn .16s ease-out;
-}
-.team-date-explanation[hidden]{display:none!important}
-.team-date-explanation.status-ok{border-left-color:#18a56d;background:color-mix(in srgb,#18a56d 5%,var(--stip-surface))}
-.team-date-explanation.status-warning{border-left-color:#d7a20b;background:color-mix(in srgb,#f0bd25 7%,var(--stip-surface))}
-.team-date-explanation.status-critical{border-left-color:#ef3d39;background:color-mix(in srgb,#ef3d39 5%,var(--stip-surface))}
-.team-date-explanation.status-unknown{border-left-color:#a4b2b7}
-.team-date-explanation-head{display:flex;align-items:center;gap:10px}
-.team-date-explanation-icon{
-  flex:0 0 auto;
-  min-width:34px;
-  text-align:center;
-  font-size:1.55rem;
-  line-height:1;
-}
-.team-date-explanation-head>div{min-width:0;display:grid;gap:2px}
-.team-date-explanation-head small{
-  color:var(--stip-muted);
-  font-size:.6rem;
-  font-weight:900;
-  text-transform:uppercase;
-}
-.team-date-explanation-head strong{
-  color:var(--stip-ink);
-  font-size:.9rem;
-}
-.team-date-explanation p{
-  margin:8px 0 0;
-  color:var(--stip-ink-2);
-  font-size:.76rem;
-  font-weight:700;
-  line-height:1.45;
-}
-@keyframes teamDateReasonIn{
-  from{opacity:.55;transform:translateY(-3px)}
-  to{opacity:1;transform:none}
-}
-@media(prefers-reduced-motion:reduce){
-  .team-date-explanation{animation:none}
-}
-
 /* shift-status-and-canonical-colors-20260922 */
 .team-shift{
   --shift-ink:var(--shift);
@@ -1702,9 +1649,6 @@ body.team-page {
 .team-date-jump-panel{
   margin-inline:auto!important;
 }
-.team-date-explanation{
-  margin-top:12px!important;
-}
 .team-month-zone-secondary{
   margin-top:22px;
 }
@@ -1717,7 +1661,6 @@ body.team-page {
 .team-shift-mini-status.status-opportunity,
 .team-cal-status.status-opportunity,
 .team-day-intel.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
-.team-date-explanation.status-opportunity{border-left-color:var(--stip-opportunity,#7C3AED);background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface))}
 .team-subsections>section.status-opportunity{border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 25%,var(--stip-line));background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 5%,var(--stip-surface))}
 
 /* shift-status-before-count-20260922 */
@@ -1749,4 +1692,188 @@ body.team-page {
     width:46px!important;
     min-width:46px!important;
   }
+}
+
+
+/* shift-analysis-and-day-checklist-20260922 */
+.team-shift-analysis{
+  margin:0 10px 9px;
+  padding:10px 11px;
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+  border:1px solid var(--stip-line);
+  border-left:4px solid var(--stip-muted);
+  border-radius:13px;
+  background:var(--stip-surface-soft);
+}
+.team-shift-analysis-icon{
+  display:grid;
+  place-items:center;
+  min-height:28px;
+  font-size:1.15rem;
+  line-height:1;
+}
+.team-shift-analysis strong,
+.team-shift-analysis p,
+.team-shift-analysis small{display:block}
+.team-shift-analysis strong{
+  color:var(--stip-ink);
+  font-size:.73rem;
+  font-weight:950;
+}
+.team-shift-analysis p{
+  margin:3px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.68rem;
+  font-weight:760;
+  line-height:1.4;
+}
+.team-shift-analysis small{
+  margin-top:5px;
+  color:var(--stip-muted);
+  font-size:.62rem;
+  font-weight:760;
+  line-height:1.4;
+}
+.team-shift-analysis.status-warning{
+  border-color:color-mix(in srgb,#d7a20b 35%,var(--stip-line));
+  border-left-color:#d7a20b;
+  background:color-mix(in srgb,#f0bd25 8%,var(--stip-surface));
+}
+.team-shift-analysis.status-critical{
+  border-color:color-mix(in srgb,#ef3d39 30%,var(--stip-line));
+  border-left-color:#ef3d39;
+  background:color-mix(in srgb,#ef3d39 6%,var(--stip-surface));
+}
+.team-shift-analysis.status-opportunity{
+  border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 28%,var(--stip-line));
+  border-left-color:var(--stip-opportunity,#7C3AED);
+  background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface));
+}
+
+.team-day-summary{
+  margin-top:3px;
+  padding:13px 14px 14px;
+  border:1px solid var(--stip-line);
+  border-left:6px solid var(--stip-muted);
+  border-radius:17px;
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow-soft);
+}
+.team-day-summary.status-warning{
+  border-color:color-mix(in srgb,#d7a20b 35%,var(--stip-line));
+  border-left-color:#d7a20b;
+  background:color-mix(in srgb,#f0bd25 8%,var(--stip-surface));
+}
+.team-day-summary.status-critical{
+  border-color:color-mix(in srgb,#ef3d39 32%,var(--stip-line));
+  border-left-color:#ef3d39;
+  background:color-mix(in srgb,#ef3d39 6%,var(--stip-surface));
+}
+.team-day-summary.status-opportunity{
+  border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 30%,var(--stip-line));
+  border-left-color:var(--stip-opportunity,#7C3AED);
+  background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface));
+}
+.team-day-summary.status-ok{
+  border-color:color-mix(in srgb,#18a56d 30%,var(--stip-line));
+  border-left-color:#18a56d;
+  background:color-mix(in srgb,#18a56d 5%,var(--stip-surface));
+}
+.team-day-summary>header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 0 10px;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 10%,var(--stip-line));
+}
+.team-day-summary>header>span{
+  flex:0 0 32px;
+  display:grid;
+  place-items:center;
+  font-size:1.28rem;
+}
+.team-day-summary>header>div{display:grid;gap:1px}
+.team-day-summary>header small{
+  color:var(--stip-muted);
+  font-size:.57rem;
+  font-weight:950;
+  letter-spacing:.1em;
+}
+.team-day-summary>header strong{
+  color:var(--stip-ink);
+  font-size:.84rem;
+}
+.team-day-checklist{display:grid}
+.team-day-check{
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+  padding:9px 0;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 9%,var(--stip-line-soft));
+}
+.team-day-check:last-child{border-bottom:0}
+.team-day-check>span{
+  display:grid;
+  place-items:center;
+  min-height:24px;
+  font-size:1rem;
+  line-height:1;
+}
+.team-day-check>div>strong{
+  display:block;
+  color:var(--stip-ink);
+  font-size:.72rem;
+  font-weight:950;
+}
+.team-day-check>div>p{
+  margin:3px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.66rem;
+  font-weight:720;
+  line-height:1.4;
+}
+.team-day-check.status-critical>span{color:#ef3d39}
+.team-day-check.status-warning>span{color:#d7a20b}
+.team-day-check.status-opportunity>span{color:var(--stip-opportunity,#7C3AED)}
+.team-day-check.status-ok>span{color:#18a56d}
+.team-day-check.status-info>span{color:var(--stip-muted)}
+.team-day-advice{
+  margin-top:10px;
+  padding:10px 11px;
+  border-radius:12px;
+  background:color-mix(in srgb,var(--stip-surface) 76%,transparent);
+  border:1px solid color-mix(in srgb,var(--stip-ink) 10%,var(--stip-line));
+}
+.team-day-advice strong{
+  display:block;
+  color:var(--stip-ink);
+  font-size:.7rem;
+  font-weight:950;
+}
+.team-day-advice p{
+  margin:4px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.68rem;
+  font-weight:760;
+  line-height:1.45;
+}
+.team-day-advice.strength-strong{
+  border-color:color-mix(in srgb,#ef3d39 30%,var(--stip-line));
+  background:color-mix(in srgb,#ef3d39 5%,var(--stip-surface));
+}
+.team-day-advice.strength-moderate{
+  border-color:color-mix(in srgb,#d7a20b 32%,var(--stip-line));
+  background:color-mix(in srgb,#f0bd25 7%,var(--stip-surface));
+}
+.team-day-advice.strength-suggestion{
+  border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 28%,var(--stip-line));
+  background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 5%,var(--stip-surface));
+}
+@media(max-width:430px){
+  .team-shift-analysis{margin-inline:8px;padding:9px 10px}
+  .team-day-summary{padding:12px}
 }
