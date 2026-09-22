@@ -3474,3 +3474,167 @@
     grid-template-columns:30px 34px minmax(0,1fr)!important;
   }
 }
+
+/* Fauteuils V22 — hard stop against collapsed message columns */
+/*
+  A stale/mixed asset pair could leave the message body in an implicit
+  shrink-to-content grid track, producing one-letter-per-line messages.
+  These rules make the canonical standalone route self-contained.
+*/
+.hc-tableau-standalone,
+.hc-tableau-standalone .hc-tableau-standalone-body,
+.hc-tableau-standalone .hc-home-pane-tableau,
+.hc-tableau-standalone .tb-page,
+.hc-tableau-standalone .tb-dialogue{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+}
+
+.hc-tableau-standalone .tb-page{
+  display:block!important;
+  overflow:visible!important;
+}
+
+.hc-tableau-standalone .tb-dialogue{
+  display:block!important;
+  min-height:0!important;
+  height:auto!important;
+  overflow:visible!important;
+  padding-left:12px!important;
+  padding-right:12px!important;
+}
+
+.hc-tableau-standalone .tb-entry{
+  box-sizing:border-box!important;
+  width:min(100%,690px)!important;
+  min-width:0!important;
+  max-width:690px!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+  display:grid!important;
+  grid-template-columns:38px minmax(0,1fr)!important;
+  align-items:start!important;
+  gap:9px!important;
+}
+
+.hc-tableau-standalone .tb-entry>.tb-avatar{
+  grid-column:1!important;
+  min-width:0!important;
+}
+
+.hc-tableau-standalone .tb-entry>.tb-entry-body{
+  grid-column:2!important;
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  writing-mode:horizontal-tb!important;
+}
+
+.hc-tableau-standalone .tb-entry:has(> .tb-check){
+  grid-template-columns:30px 36px minmax(0,1fr)!important;
+}
+
+.hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-check{
+  grid-column:1!important;
+}
+
+.hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-avatar{
+  grid-column:2!important;
+}
+
+.hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-entry-body{
+  grid-column:3!important;
+}
+
+.hc-tableau-standalone .tb-entry-body>header,
+.hc-tableau-standalone .tb-entry-body>p,
+.hc-tableau-standalone .tb-entry-body>.tb-location-line,
+.hc-tableau-standalone .tb-entry-body>.tb-status-chip,
+.hc-tableau-standalone .tb-entry-body>.tb-wheelchair-actions,
+.hc-tableau-standalone .tb-entry-body>.tb-thread-replies,
+.hc-tableau-standalone .tb-entry-body>.tb-resolved-line,
+.hc-tableau-standalone .tb-entry-body>.tb-take-note{
+  min-width:0!important;
+  width:auto!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+
+.hc-tableau-standalone .tb-entry-body p,
+.hc-tableau-standalone .tb-thread-reply-body p,
+.hc-tableau-standalone .tb-reply-context small{
+  writing-mode:horizontal-tb!important;
+  white-space:normal!important;
+  word-break:normal!important;
+  overflow-wrap:break-word!important;
+  hyphens:none!important;
+}
+
+.hc-tableau-standalone .tb-entry-body>header{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:baseline!important;
+  gap:4px 7px!important;
+}
+
+.hc-tableau-standalone .tb-entry-body>header>div{
+  min-width:0!important;
+  flex:1 1 160px!important;
+}
+
+.hc-tableau-standalone .tb-entry-body>header time{
+  flex:0 0 auto!important;
+  margin-left:auto!important;
+}
+
+.hc-tableau-standalone .tb-thread-reply{
+  width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+
+.hc-tableau-standalone .tb-thread-reply-body{
+  min-width:0!important;
+  width:auto!important;
+  max-width:none!important;
+}
+
+.hc-tableau-standalone .tb-input-dock{
+  box-sizing:border-box!important;
+  max-width:740px!important;
+}
+
+/* Keep enough scroll room above the fixed composer without manufacturing
+   a tall empty feed. */
+.hc-tableau-standalone .tb-page{
+  padding-bottom:calc(var(--tb-composer-height,250px) + 18px)!important;
+}
+.hc-tableau-standalone .tb-dialogue:empty{
+  display:none!important;
+}
+
+@media(max-width:430px){
+  .hc-tableau-standalone .tb-dialogue{
+    padding-left:10px!important;
+    padding-right:10px!important;
+  }
+  .hc-tableau-standalone .tb-entry{
+    grid-template-columns:34px minmax(0,1fr)!important;
+    gap:8px!important;
+  }
+  .hc-tableau-standalone .tb-entry>.tb-avatar{
+    grid-column:1!important;
+  }
+  .hc-tableau-standalone .tb-entry>.tb-entry-body{
+    grid-column:2!important;
+  }
+  .hc-tableau-standalone .tb-entry:has(> .tb-check){
+    grid-template-columns:28px 34px minmax(0,1fr)!important;
+  }
+  .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-check{grid-column:1!important}
+  .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-avatar{grid-column:2!important}
+  .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-entry-body{grid-column:3!important}
+}

@@ -2386,7 +2386,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260922-fauteuils21",
+    build: "20260922-fauteuils22",
     mount,
     mountPreview,
     unmountFull,
