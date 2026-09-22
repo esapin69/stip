@@ -908,9 +908,8 @@
             ? "SEMAINE PROCHAINE"
             : state.weekOffset === -1
               ? "SEMAINE PRÉCÉDENTE"
-              : `SEMAINE ${weekNo(w[0].d)}`,
-      range = weekRangeLabel(w);
-    return `<div class="hc-planning-period-separator hc-planning-week-separator hc-week-separator-nav stip-section-separator" role="group" aria-label="Navigation par semaine"><span class="hc-week-separator-controls"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><span class="hc-week-separator-copy"><b>${esc(label)}</b><small>${esc(range)}</small></span><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></span></div>`;
+              : `SEMAINE ${weekNo(w[0].d)}`;
+    return `<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
   }
 
   function planningMonthTitle() {
@@ -929,8 +928,10 @@
   }
   function weekWidget() {
     const w = selectedWeek(),
-      loading = planningLoading();
-    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}${weekDaysLandscape(w)}</section>`;
+      navWeek = navigationWeek(),
+      loading = planningLoading(),
+      range = weekRangeLabel(navWeek);
+    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
