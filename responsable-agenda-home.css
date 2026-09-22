@@ -555,11 +555,8 @@
   width: 100%;
 }
 
-body.resp-tracking-view #rrAgendaCanvas {
-  display: none !important;
-}
-
-body:not(.resp-tracking-view) #respTrackingTool {
+#rrAgendaCanvas[hidden],
+#respTrackingTool[hidden] {
   display: none !important;
 }
 
