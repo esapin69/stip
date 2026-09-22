@@ -4704,3 +4704,28 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button{padding:4px 4px 7px!important;gap:5px!important}
   .hc-home-filters>button>strong{font-size:.70rem!important}
 }
+
+/* Fauteuils: compact navigation instead of the three image launchers */
+.hc-home-top-nav.is-tableau-compact{
+  margin-bottom:4px!important;
+}
+.hc-home-top-nav.is-tableau-compact .hc-home-top-tools{
+  margin-bottom:8px!important;
+}
+.hc-tableau-compact-nav{
+  width:min(100%,360px)!important;
+  margin:0 auto!important;
+  padding:0 8px!important;
+}
+.hc-tableau-compact-nav button{
+  min-height:38px!important;
+  padding:0 13px!important;
+  border:1px solid #d5e3e5!important;
+  border-radius:999px!important;
+  background:#f7fafb!important;
+  color:#315b65!important;
+  font:inherit!important;
+  font-size:.68rem!important;
+  font-weight:900!important;
+  box-shadow:0 3px 9px rgba(20,62,78,.05)!important;
+}
