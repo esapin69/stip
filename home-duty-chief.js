@@ -144,8 +144,7 @@
   }
 
   async function fetchDuty(force = false) {
-    if (!document.querySelector("#teamDutyChiefNowHost") && !document.querySelector("#teamDutyChiefTodayHost"))
-      return null;
+    if (!document.querySelector("#teamDutyChiefTodayHost")) return null;
     if (!localStorage.getItem(STORE)) return null;
     if (!force && data && Date.now() - lastFetch < 5 * 60 * 1000) return data;
     if (loading) return loading;
@@ -245,18 +244,15 @@
   function todayMarkup() {
     if (loading && !data)
       return '<div class="team-chief-state">Chargement des chefs du jour…</div>';
-    if (loadError && !data) return "";
+    if (loadError && !data)
+      return `<div class="team-chief-state is-error">${esc(loadError)}</div>`;
     if (!data) return "";
 
-    const { current, today, now } = dutyState(),
-      currentSet = new Set(current),
-      rows = today.filter((item) => !currentSet.has(item));
-    if (!rows.length) {
-      if (current.length)
-        return '<div class="team-chief-state is-quiet">Le chef actuellement sur le terrain est affiché dans « Maintenant ».</div>';
-      return '<div class="team-chief-state is-quiet">Aucun autre chef planifié aujourd’hui.</div>';
-    }
-    return `<div class="team-chief-flat-list">${rows
+    const { today, now } = dutyState();
+    if (!today.length)
+      return '<div class="team-chief-state is-quiet">Aucun chef planifié aujourd’hui.</div>';
+
+    return `<div class="team-chief-flat-list">${today
       .map((item) => flatCard(item, statusForToday(item, now)))
       .join("")}</div>`;
   }
@@ -321,18 +317,10 @@
     oldHome?.querySelector("[data-duty-chief-bubble]")?.remove();
     oldHome?.querySelector(".hc-duty-chief-host")?.remove();
 
-    const nowHost = document.querySelector("#teamDutyChiefNowHost"),
-      todayHost = document.querySelector("#teamDutyChiefTodayHost");
-    if (!nowHost && !todayHost) return;
-
-    if (nowHost) {
-      nowHost.innerHTML = nowMarkup();
-      bind(nowHost);
-    }
-    if (todayHost) {
-      todayHost.innerHTML = todayMarkup();
-      bind(todayHost);
-    }
+    const todayHost = document.querySelector("#teamDutyChiefTodayHost");
+    if (!todayHost) return;
+    todayHost.innerHTML = todayMarkup();
+    bind(todayHost);
   }
 
   window.STIPDutyChiefs = {
