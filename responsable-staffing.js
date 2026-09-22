@@ -54,6 +54,64 @@
     }
   }
   const field = () => window.STIPFieldIntel || null;
+  let lastStaffing = null;
+
+  function closeShiftAnalysis() {
+    document.getElementById("rsShiftAnalysis")?.remove();
+  }
+
+  function shiftFallback(row, signal) {
+    const gap = Number(row?.gap || 0);
+    if (signal?.detail) return signal.detail;
+    if (gap < 0)
+      return `Il manque ${Math.abs(gap)} agent${Math.abs(gap) > 1 ? "s" : ""} par rapport à la cible.`;
+    if (gap > 0)
+      return `${gap} agent${gap > 1 ? "s" : ""} de marge par rapport à la cible.`;
+    return "L’effectif prévu correspond à la cible.";
+  }
+
+  function openShiftAnalysis(code) {
+    const data = lastStaffing,
+      row = (data?.shifts || data?.rows || []).find(
+        (x) => String(x.shift_code || "") === String(code || ""),
+      );
+    if (!row) return;
+    closeShiftAnalysis();
+    const signal = field()?.shiftStatus?.(data, code),
+      gap = Number(row.gap || 0),
+      level =
+        signal?.level ||
+        (gap < 0
+          ? Number(row.severity) >= 4
+            ? "critical"
+            : "warning"
+          : gap > 0
+            ? "opportunity"
+            : "ok"),
+      symbol =
+        signal?.symbol ||
+        (level === "critical"
+          ? "🛑"
+          : level === "warning"
+            ? "⚠️"
+            : level === "opportunity"
+              ? "+"
+              : "✔"),
+      label =
+        signal?.label ||
+        (gap < 0
+          ? "Sous la cible"
+          : gap > 0
+            ? "Marge disponible"
+            : "Effectif conforme"),
+      wrap = document.createElement("div");
+    wrap.id = "rsShiftAnalysis";
+    wrap.className = "rs-shift-overlay";
+    wrap.innerHTML = `<button type="button" class="rs-shift-backdrop" aria-label="Fermer"></button><section class="rs-shift-sheet rs-${esc(level)}" role="dialog" aria-modal="true" aria-label="Analyse du shift ${esc(code)}"><header><div><small>ANALYSE TERRAIN</small><strong>${esc(code)}</strong></div><button type="button" data-rs-shift-close aria-label="Fermer">×</button></header><div class="rs-shift-verdict"><span aria-hidden="true">${esc(symbol)}</span><div><strong>${esc(label)}</strong><small>${esc(row.planned_count)} prévu${Number(row.planned_count) > 1 ? "s" : ""} · cible ${esc(row.target_count)}</small></div></div><p>${esc(shiftFallback(row, signal))}</p>${signal?.proposal ? `<div class="rs-shift-proposal"><strong>Conseil terrain</strong><span>${esc(signal.proposal)}</span></div>` : ""}</section>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector(".rs-shift-backdrop")?.addEventListener("click", closeShiftAnalysis);
+    wrap.querySelector("[data-rs-shift-close]")?.addEventListener("click", closeShiftAnalysis);
+  }
 
   async function summary() {
     const host = document.querySelector("#respCoverage");
@@ -69,6 +127,7 @@
         host.dataset.ready = "true";
         return;
       }
+      lastStaffing = d;
       const s = d.summary || {},
         read = field()?.staffing?.(d),
         rows = (d.shifts || d.rows || [])
@@ -99,7 +158,7 @@
                     : "ok",
             delta = g === 0 ? "OK" : (g > 0 ? "+" : "") + g,
             mark = signal?.level === "opportunity" ? `${signal.symbol} ${delta}` : delta;
-          return `<div class="rs-shift ${cl}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em title="${esc(signal?.label || "")}">${esc(mark)}</em></div>`;
+          return `<button type="button" class="rs-shift ${cl}" data-rs-shift="${esc(x.shift_code || "")}" aria-label="Ouvrir l’analyse ${esc(x.shift_code || "")}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em title="${esc(signal?.label || "")}">${esc(mark)}</em></button>`;
         })
         .join("")}</div>${read?.known && read.level !== "ok" ? `<div class="rs-guide ${esc(read.level)}"><strong>${esc(read.symbol)} À retenir</strong><span>${esc(read.detail)}</span>${read.proposal ? `<small>${esc(read.proposal)}</small>` : ""}</div>` : ""}${s.special_count ? `<div class="rs-special">+ ${esc(s.special_count)} agent(s) sur horaires spécifiques, suivis séparément de M/J/J4/S.</div>` : ""}${d.freshness?.planning_imported_at ? `<div class="rs-fresh">Planning mis à jour ${esc(fmtFresh(d.freshness.planning_imported_at))}</div>` : ""}`;
       host.dataset.ready = "true";
@@ -159,8 +218,17 @@
     } catch {}
   }
   document.addEventListener("click", (e) => {
+    const shift = e.target.closest?.("[data-rs-shift]");
+    if (shift?.dataset.rsShift) {
+      openShiftAnalysis(shift.dataset.rsShift);
+      return;
+    }
     const b = e.target.closest?.("[data-change-id]");
     if (b?.dataset.changeId) decision(b.dataset.changeId);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && document.getElementById("rsShiftAnalysis"))
+      closeShiftAnalysis();
   });
   const st = document.createElement("style");
   st.textContent =
@@ -173,6 +241,11 @@
   const opportunityStyle = document.createElement("style");
   opportunityStyle.textContent = ".rs-shift.opportunity{background:#f3edff;color:#6d28d9}.rs-shift.opportunity em{color:var(--stip-opportunity,#7C3AED);font-weight:950}";
   document.head.appendChild(opportunityStyle);
+  const shiftAnalysisStyle = document.createElement("style");
+  shiftAnalysisStyle.textContent =
+    "/* Responsable shift analysis drawer */.rs-shift{border:0;font:inherit;cursor:pointer}.rs-shift:focus-visible{outline:3px solid rgba(20,139,160,.22);outline-offset:2px}.rs-shift-overlay{position:fixed;z-index:9995;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:rgba(14,38,45,.30);backdrop-filter:blur(4px)}.rs-shift-backdrop{position:absolute;inset:0;border:0;background:transparent}.rs-shift-sheet{position:relative;width:min(100%,460px);padding:16px;border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(13,44,52,.25)}.rs-shift-sheet>header{display:flex;align-items:center;justify-content:space-between;gap:10px}.rs-shift-sheet>header small,.rs-shift-sheet>header strong{display:block}.rs-shift-sheet>header small{color:#148ba0;font-size:.58rem;font-weight:950;letter-spacing:.10em}.rs-shift-sheet>header strong{margin-top:2px;color:#173f49;font-size:1.25rem}.rs-shift-sheet>header button{width:38px;height:38px;border:0;border-radius:12px;background:#eef4f5;color:#476a72;font-size:1.25rem}.rs-shift-verdict{margin-top:12px;padding:12px;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px;border-radius:16px;background:#f3f8f8}.rs-shift-verdict>span{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#fff;font-size:1.1rem}.rs-shift-verdict strong,.rs-shift-verdict small{display:block}.rs-shift-verdict strong{color:#214f58;font-size:.84rem}.rs-shift-verdict small{margin-top:2px;color:#73898f;font-size:.66rem}.rs-shift-sheet>p{margin:11px 2px 0;color:#365b63;font-size:.76rem;line-height:1.45}.rs-shift-proposal{margin-top:10px;padding:10px 11px;border-radius:14px;background:#edf7f4;color:#225d50}.rs-shift-proposal strong,.rs-shift-proposal span{display:block}.rs-shift-proposal strong{font-size:.65rem}.rs-shift-proposal span{margin-top:3px;font-size:.73rem;line-height:1.4}@media(min-width:620px){.rs-shift-overlay{align-items:center}}";
+  document.head.appendChild(shiftAnalysisStyle);
+
   summary();
   setInterval(() => {
     if (!document.hidden) summary();
