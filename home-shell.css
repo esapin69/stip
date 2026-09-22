@@ -4316,3 +4316,145 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 @media(min-width:700px){
   .hc-home-filters{width:520px!important;gap:14px!important;margin:20px auto!important}
 }
+
+/* HOME BUTTONS V2 — no-text art + labels + flat identity + centered team */
+
+/* Three home launchers: image is visual only, label stays crisp HTML text. */
+.hc-home-filters{
+  width:min(100%,372px)!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px!important;
+  align-items:stretch!important;
+  margin-bottom:12px!important;
+}
+.hc-home-filters>button{
+  min-height:94px!important;
+  padding:0 1px 4px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  line-height:1!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-home-filter-art{
+  width:100%!important;
+  max-width:none!important;
+  aspect-ratio:16/9!important;
+  border-radius:15px!important;
+  border:1px solid rgba(13,74,96,.18)!important;
+  background:transparent!important;
+  box-shadow:
+    0 4px 0 rgba(19,70,88,.17),
+    0 9px 16px rgba(20,62,78,.15),
+    inset 0 1px 0 rgba(255,255,255,.90)!important;
+}
+.hc-home-filter-art img{
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:14px!important;
+}
+.hc-home-filters>button>strong{
+  display:block!important;
+  width:100%!important;
+  margin:0!important;
+  color:#173f50!important;
+  font-size:.76rem!important;
+  line-height:1.02!important;
+  font-weight:950!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+.hc-home-filters>button.active{
+  transform:none!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-home-filters>button.active .hc-home-filter-art{
+  border:2px solid #23a7d9!important;
+  transform:translateY(-2px)!important;
+  box-shadow:
+    0 5px 0 rgba(16,105,135,.27),
+    0 13px 24px rgba(20,62,78,.21),
+    0 0 0 3px rgba(255,255,255,.92),
+    0 0 0 6px rgba(35,167,217,.18),
+    0 0 22px rgba(35,167,217,.25)!important;
+}
+.hc-home-filters>button.active>strong{
+  color:#0d607d!important;
+  text-shadow:0 1px 0 #fff!important;
+}
+.hc-home-filters>button:active .hc-home-filter-art{
+  transform:translateY(2px) scale(.985)!important;
+}
+.hc-home-live-badge{
+  top:-4px!important;
+  right:-4px!important;
+}
+@media(max-width:430px){
+  .hc-home-filters{width:min(100%,360px)!important;gap:6px!important}
+  .hc-home-filters>button{min-height:91px!important}
+  .hc-home-filters>button>strong{font-size:.73rem!important}
+}
+@media(max-width:380px){
+  .hc-home-filters{width:min(100%,334px)!important;gap:5px!important}
+  .hc-home-filters>button{min-height:86px!important}
+  .hc-home-filters>button>strong{font-size:.69rem!important}
+}
+
+/* Identity card should read as information, not a giant button. */
+.hc-profile-full,
+.hc-id-card{
+  box-shadow:none!important;
+  transform:none!important;
+  cursor:default!important;
+}
+.hc-profile-full{
+  border:1px solid rgba(22,91,111,.09)!important;
+  background:rgba(255,255,255,.72)!important;
+}
+.hc-id-card:active{
+  transform:none!important;
+  box-shadow:none!important;
+}
+.hc-id-card .hc-avatar{
+  cursor:pointer!important;
+}
+
+/* Esprit d'équipe: truly centered copy with balanced side columns. */
+.hc-team-shortcut{
+  min-height:52px!important;
+  grid-template-columns:42px minmax(0,1fr) 42px!important;
+  gap:7px!important;
+  padding:5px 7px!important;
+  text-align:center!important;
+}
+.hc-team-shortcut-icon{
+  width:40px!important;
+  height:40px!important;
+  justify-self:center!important;
+  border-radius:15px!important;
+}
+.hc-team-shortcut-copy{
+  width:100%!important;
+  display:grid!important;
+  place-items:center!important;
+  text-align:center!important;
+}
+.hc-team-shortcut-copy strong{
+  width:100%!important;
+  font-size:1rem!important;
+  line-height:1.02!important;
+  text-align:center!important;
+}
+.hc-team-shortcut-arrow{
+  width:27px!important;
+  height:27px!important;
+  justify-self:center!important;
+}
