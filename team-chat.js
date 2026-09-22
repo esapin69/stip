@@ -64,8 +64,8 @@
     neuro: [
       { level: "RDJ", places: ["SRPR / salon d’accueil", "Psychiatrie / addictologie", "Neuro-rééducation", "HDJ artériographie / neurochirurgie"] },
       { level: "RDC", places: ["Entrée A", "Entrée B", "Hall / consultations", "Réanimation neurologique", "Radiologie / écho-Doppler", "Bureau des admissions"] },
-      { level: "1er", places: ["Ascenseur 28 / imagerie", "Scanner", "IRM VENUS", "IRM JUPITER / SATURNE", "Bloc / salle de réveil", "U100 / U101 / U102", "Plateforme AIT"] },
-      { level: "2e", places: ["U200 / U201 / U202", "Neuro-ophtalmo / ORL", "Service social"] },
+      { level: "1er", places: ["Ascenseur 28 / imagerie", "Scanner", "IRM VENUS", "IRM JUPITER / SATURNE", "Bloc / salle de réveil", "U100", "U101", "U102", "Plateforme AIT"] },
+      { level: "2e", places: ["U200", "U201", "U202", "Neuro-ophtalmo / ORL", "Service social"] },
       { level: "3e", places: ["U300", "U301", "U302"] },
       { level: "4e", places: ["U400", "U401", "U402"] },
       { level: "5e", places: ["U500", "U501", "U502 / HDJ", "EEG / ENMG"] },
@@ -352,11 +352,22 @@
     root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
       const textarea = root.querySelector(".tb-composer textarea");
       if (!textarea) return;
+      const current = cleanWheelchairText(textarea.value);
       textarea.hidden = false;
       textarea.dataset.open = "1";
-      const toggle = root.querySelector("[data-free-toggle]");
-      if (toggle) toggle.textContent = "Précision / message libre";
+      if (current && !/\s·\s$/.test(textarea.value)) {
+        textarea.value = current + " · ";
+        state.draft = textarea.value;
+      }
+      textarea.placeholder = current
+        ? "Ex. caché derrière l’escalier, près des ascenseurs…"
+        : "Écris directement ton info…";
+      autoGrow(textarea);
       textarea.focus();
+      try {
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      } catch {}
+      renderComposerState();
       requestAnimationFrame(syncViewport);
     });
 
@@ -406,6 +417,12 @@
       if (mode) {
         event.preventDefault();
         setComposeMode(String(mode.dataset.composeMode || ""));
+        return;
+      }
+      const locationSearch = event.target.closest?.("[data-location-search]");
+      if (locationSearch) {
+        event.preventDefault();
+        openComposerLocationSearch();
         return;
       }
       const building = event.target.closest?.("[data-building-compose]");
@@ -546,10 +563,313 @@
     preview.textContent = body;
     sendButton.disabled = !body;
     sendButton.classList.toggle("is-ready", !!body);
-    toggle.textContent = body ? "＋ Ajouter une précision" : "✎ Écrire librement";
+    toggle.textContent = body
+      ? "✎ Ajouter un repère / une précision"
+      : "✎ Écrire directement";
+    toggle.setAttribute(
+      "aria-label",
+      body
+        ? "Ajouter un repère ou une précision au signalement"
+        : "Écrire directement sans passer par le questionnaire",
+    );
 
     if (!textarea.dataset.open) textarea.hidden = true;
     requestAnimationFrame(syncViewport);
+  }
+
+  function levelSearchAliases(level = "") {
+    const clean = String(level || "").trim();
+    const n = clean.match(/^(\d{1,2})(?:er|e)?$/i)?.[1] || "";
+    if (/^RDC$/i.test(clean)) return "rdc rez de chaussee rez-de-chaussee";
+    if (/^RDJ$/i.test(clean)) return "rdj rez de jardin rez-de-jardin";
+    if (/^TM$/i.test(clean)) return "tm";
+    if (!n) return clean;
+    return [clean, n, n + "e", n + "eme", n + "ème", n === "1" ? "premier" : ""].filter(Boolean).join(" ");
+  }
+
+  function locationSearchTargets({ buildingKey = "", level = "" } = {}) {
+    const targets = [];
+    for (const building of BUILDINGS) {
+      if (buildingKey && building.key !== buildingKey) continue;
+      const groups = WHEELCHAIR_LOCATIONS[building.key] || [];
+      for (const group of groups) {
+        if (level && group.level !== level) continue;
+        const baseSearch = [
+          building.label,
+          ...(building.aliases || []),
+          group.level,
+          levelSearchAliases(group.level),
+        ].join(" ");
+
+        targets.push({
+          buildingKey: building.key,
+          buildingLabel: building.label,
+          level: group.level,
+          location: "",
+          label: building.label + " · " + group.level,
+          hint: "Valider au niveau",
+          search: norm(baseSearch + " niveau etage étage"),
+        });
+
+        for (const place of group.places || []) {
+          const unit = String(place).match(/\bU\s*(\d{2,3})\b/i)?.[1] || "";
+          targets.push({
+            buildingKey: building.key,
+            buildingLabel: building.label,
+            level: group.level,
+            location: String(place),
+            label: String(place),
+            hint: building.label + " · " + group.level,
+            search: norm(
+              baseSearch + " " + place +
+              (unit ? " unite " + unit + " unité " + unit + " u" + unit : ""),
+            ),
+          });
+        }
+      }
+    }
+    return targets;
+  }
+
+  function findLocationMatches(query, options = {}) {
+    const q = norm(query);
+    const targets = locationSearchTargets(options);
+    if (!q) return targets.slice(0, 10);
+
+    const words = q.split(/\s+/).filter(Boolean);
+    return targets
+      .map((target) => {
+        const hay = target.search;
+        if (!words.every((word) => hay.includes(word))) return null;
+        let score = 0;
+        if (hay === q) score += 100;
+        if (hay.startsWith(q)) score += 50;
+        if (norm(target.label).startsWith(q)) score += 35;
+        if (norm(target.label).includes(q)) score += 20;
+        score -= target.label.length / 100;
+        return { ...target, score };
+      })
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 12);
+  }
+
+  function chooseLocationShortcut(options = {}) {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+
+      const context = [
+        options.buildingKey
+          ? BUILDINGS.find((item) => item.key === options.buildingKey)?.label
+          : "",
+        options.level || "",
+      ].filter(Boolean).join(" · ");
+
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-location-finder">' +
+          '<div class="tb-wizard-head">' +
+            '<button type="button" class="tb-wizard-back" data-finder-close aria-label="Fermer">‹</button>' +
+            '<div class="tb-confirm-icon">🔎</div>' +
+          "</div>" +
+          "<h3>Recherche rapide</h3>" +
+          "<p>" + esc(context || "Bâtiment, étage, unité ou repère") + "</p>" +
+          '<label class="tb-location-finder-input">' +
+            '<span aria-hidden="true">⌕</span>' +
+            '<input type="search" inputmode="search" autocomplete="off" spellcheck="false" placeholder="Ex. U202, 6e cardio, ascenseur…">' +
+          "</label>" +
+          '<div class="tb-location-results" data-location-results></div>' +
+        "</section>";
+
+      const done = (value = null) => {
+        wrap.remove();
+        resolve(value);
+      };
+
+      const input = wrap.querySelector("input");
+      const results = wrap.querySelector("[data-location-results]");
+
+      const paint = () => {
+        const query = String(input?.value || "").trim();
+        let matches = findLocationMatches(query, options);
+
+        // Generic terrain landmarks become available when searched explicitly.
+        const landmark = norm(query);
+        if (landmark && options.buildingKey && options.level) {
+          const building = BUILDINGS.find((item) => item.key === options.buildingKey);
+          if (building) {
+            if (landmark.includes("ascenseur")) {
+              matches.unshift({
+                buildingKey: building.key,
+                buildingLabel: building.label,
+                level: options.level,
+                location: "Près des ascenseurs",
+                label: "🛗 Près des ascenseurs",
+                hint: building.label + " · " + options.level,
+              });
+            }
+            if (landmark.includes("escalier")) {
+              matches.unshift({
+                buildingKey: building.key,
+                buildingLabel: building.label,
+                level: options.level,
+                location: "Près de l’escalier",
+                label: "↕ Près de l’escalier",
+                hint: building.label + " · " + options.level,
+              });
+            }
+          }
+        }
+
+        results.innerHTML = matches.length
+          ? matches.slice(0, 12).map((item, index) =>
+              '<button type="button" data-location-result="' + index + '">' +
+                '<strong>' + esc(item.label) + "</strong>" +
+                '<small>' + esc(item.hint || "") + "</small>" +
+              "</button>"
+            ).join("")
+          : '<div class="tb-location-no-result"><strong>Aucun repère trouvé</strong><small>Tu peux revenir au formulaire et écrire le repère toi-même.</small></div>';
+
+        results.querySelectorAll("[data-location-result]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const item = matches[Number(button.dataset.locationResult) || 0];
+            if (item) done(item);
+          });
+        });
+      };
+
+      wrap.querySelector("[data-finder-close]")?.addEventListener("click", () => done());
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) done();
+      });
+      input?.addEventListener("input", paint);
+      document.body.appendChild(wrap);
+      paint();
+      setTimeout(() => input?.focus(), 40);
+    });
+  }
+
+  function chooseQuantityOnly(buildingLabel = "") {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-quantity-picker">' +
+          '<div class="tb-confirm-icon">🦽</div>' +
+          "<h3>Combien de fauteuils ?</h3>" +
+          "<p>" + esc(buildingLabel) + "</p>" +
+          '<div class="tb-quantity-choices">' +
+            [1, 2, 3].map((n) =>
+              '<button type="button" data-qty="' + n + '"><strong>' + n + "</strong></button>"
+            ).join("") +
+            '<button type="button" class="more" data-qty-more><strong>Plus</strong><small>4 à 20</small></button>' +
+          "</div>" +
+          '<div class="tb-quantity-more" data-qty-more-panel hidden>' +
+            '<label for="tbQuickQuantity">Nombre de fauteuils</label>' +
+            '<div><input id="tbQuickQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
+            '<button type="button" data-qty-more-ok>Valider</button></div>' +
+            '<small data-qty-error aria-live="polite"></small>' +
+          "</div>" +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        "</section>";
+
+      const done = (value = 0) => {
+        wrap.remove();
+        resolve(value);
+      };
+      wrap.querySelectorAll("[data-qty]").forEach((button) => {
+        button.addEventListener("click", () => done(Number(button.dataset.qty) || 0));
+      });
+      const panel = wrap.querySelector("[data-qty-more-panel]");
+      const input = wrap.querySelector("#tbQuickQuantity");
+      const error = wrap.querySelector("[data-qty-error]");
+      wrap.querySelector("[data-qty-more]")?.addEventListener("click", () => {
+        if (panel) panel.hidden = false;
+        setTimeout(() => input?.focus(), 30);
+      });
+      const validateMore = () => {
+        const value = Math.round(Number(input?.value) || 0);
+        if (value < 4 || value > 20) {
+          if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
+          input?.focus();
+          return;
+        }
+        done(value);
+      };
+      wrap.querySelector("[data-qty-more-ok]")?.addEventListener("click", validateMore);
+      input?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        validateMore();
+      });
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => done(0));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) done(0);
+      });
+      document.body.appendChild(wrap);
+    });
+  }
+
+  function structuredDraft({ type, building, quantity = 1, level = "", location = "" }) {
+    const parts = [];
+    if (type === "search") {
+      parts.push("Je cherche 1 fauteuil");
+    } else {
+      parts.push(
+        quantity + " fauteuil" + (quantity > 1 ? "s" : "") +
+        " disponible" + (quantity > 1 ? "s" : ""),
+      );
+    }
+    if (building?.label) parts.push(building.label);
+    if (level) parts.push(level);
+    if (location) parts.push(location);
+    return parts.join(" · ");
+  }
+
+  function applyComposeDetails({ buildingKey, quantity = 1, level = "", location = "" }) {
+    const building = BUILDINGS.find((item) => item.key === buildingKey);
+    const textarea = state.root?.querySelector(".tb-composer textarea");
+    if (!building || !textarea) return;
+
+    const type = state.composeMode === "search" ? "search" : "spot";
+    state.selectedBuilding = building.key;
+    state.selectedQuantity = type === "spot" ? quantity : 0;
+    state.selectedLevel = level || "";
+    state.selectedLocation = location || "";
+    state.draftKind = type;
+
+    const text = structuredDraft({
+      type,
+      building,
+      quantity,
+      level,
+      location,
+    });
+    state.draft = text;
+    textarea.value = text;
+    delete textarea.dataset.open;
+    textarea.hidden = true;
+    autoGrow(textarea);
+    renderSearchShortcuts();
+    renderComposerState();
+  }
+
+  async function openComposerLocationSearch() {
+    const result = await chooseLocationShortcut();
+    if (!result || !state.root?.isConnected) return;
+
+    let quantity = 1;
+    if (state.composeMode === "spot") {
+      quantity = await chooseQuantityOnly(result.buildingLabel);
+      if (!quantity || !state.root?.isConnected) return;
+    }
+
+    applyComposeDetails({
+      buildingKey: result.buildingKey,
+      quantity,
+      level: result.level,
+      location: result.location,
+    });
   }
 
   function renderSearchShortcuts() {
@@ -558,20 +878,29 @@
 
     const searchMode = state.composeMode === "search";
     const selected = BUILDINGS.find((building) => building.key === state.selectedBuilding);
-    const modeLabel = searchMode ? "Je cherche 1 fauteuil" : "J’ai vu / rangé des fauteuils";
-    const switchLabel = searchMode ? "Passer à : j’ai vu / rangé" : "Passer à : je cherche 1";
+    const modeLabel = searchMode ? "Je cherche" : "J’ai vu / rangé";
 
     host.innerHTML =
       '<div class="tb-shortcuts-full">' +
-        '<button type="button" class="tb-mode-toggle' + (searchMode ? " is-search" : " is-spot") + '" data-mode-toggle aria-label="' + esc(switchLabel) + '">' +
-          '<span class="tb-mode-toggle-icon" aria-hidden="true">' + (searchMode ? "🔎" : "🦽") + "</span>" +
-          '<span class="tb-mode-toggle-copy"><strong>' + esc(modeLabel) + '</strong><small>' + esc(switchLabel) + "</small></span>" +
-          '<span class="tb-mode-toggle-switch" aria-hidden="true"><i></i></span>' +
+        '<div class="tb-mode-pills" role="group" aria-label="Type d’action fauteuil">' +
+          '<button type="button" class="tb-mode-pill spot' + (!searchMode ? " is-active" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '">' +
+            '<span class="tb-mode-orb" aria-hidden="true">🦽</span>' +
+            '<span><strong>J’ai vu / rangé</strong><small>signaler des fauteuils</small></span>' +
+          "</button>" +
+          '<button type="button" class="tb-mode-pill search' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '">' +
+            '<span class="tb-mode-orb" aria-hidden="true">🔎</span>' +
+            '<span><strong>Je cherche</strong><small>1 fauteuil</small></span>' +
+          "</button>" +
+        "</div>" +
+        '<button type="button" class="tb-location-search-launch" data-location-search>' +
+          '<span class="tb-location-search-icon" aria-hidden="true">⌕</span>' +
+          '<span><strong>Recherche rapide</strong><small>unité, étage, ascenseur…</small></span>' +
+          '<b aria-hidden="true">›</b>' +
         "</button>" +
         '<small class="tb-compose-hint">' +
           (searchMode
-            ? "Choisis l’hôpital : la demande est prête."
-            : "Choisis l’hôpital → nombre → endroit précis.") +
+            ? "Choisis l’hôpital, ou utilise Recherche rapide."
+            : "Choisis l’hôpital → nombre → lieu. Tu peux valider dès que c’est assez précis.") +
         "</small>" +
         '<div class="tb-search-shortcuts-grid">' +
         BUILDINGS.map(
@@ -618,7 +947,7 @@
     state.selectedLocation = "";
 
     if (textarea) {
-      textarea.placeholder = "Écrire librement si besoin…";
+      textarea.placeholder = "Écrire directement si besoin…";
       if (generatedDraft) {
         textarea.value = "";
         state.draft = "";
@@ -645,19 +974,14 @@
         resolve(value);
       };
 
-      const shell = (title, subtitle, body, back = false) => {
-        wrap.innerHTML =
-          '<section class="tb-confirm tb-spot-wizard">' +
-          '<div class="tb-wizard-head">' +
-            (back ? '<button type="button" class="tb-wizard-back" data-wizard-back aria-label="Retour">‹</button>' : "") +
-            '<div class="tb-confirm-icon">🦽</div>' +
-          "</div>" +
-          "<h3>" + esc(title) + "</h3>" +
-          "<p>" + esc(subtitle) + "</p>" +
-          body +
-          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
-          "</section>";
-        document.body.appendChild(wrap.firstElementChild);
+      const searchHere = async () => {
+        const result = await chooseLocationShortcut({
+          buildingKey: building.key,
+          ...(level ? { level } : {}),
+        });
+        if (!result || !wrap.isConnected) return;
+        level = result.level || level;
+        renderPrecision(result.location || "");
       };
 
       const renderQuantity = () => {
@@ -689,6 +1013,7 @@
           '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-qty aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
           "<h3>À quel niveau ?</h3>" +
           "<p>" + quantity + " fauteuil" + (quantity > 1 ? "s" : "") + " · " + esc(building.label) + "</p>" +
+          '<button type="button" class="tb-wizard-search" data-wizard-search><span>🔎</span><strong>Rechercher un lieu</strong><small>raccourci du même formulaire</small></button>' +
           '<div class="tb-level-choices">' +
             levels.map((item) =>
               '<button type="button" data-level="' + esc(item.level) + '"><strong>' + esc(item.level) + "</strong></button>"
@@ -697,6 +1022,7 @@
           '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
         wrap.querySelector("[data-back-qty]")?.addEventListener("click", renderQuantity);
+        wrap.querySelector("[data-wizard-search]")?.addEventListener("click", searchHere);
         wrap.querySelectorAll("[data-level]").forEach((button) => {
           button.addEventListener("click", () => {
             level = String(button.dataset.level || "");
@@ -714,42 +1040,80 @@
           '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
           "<h3>Où exactement ?</h3>" +
           "<p>" + esc(building.label) + " · " + esc(level) + "</p>" +
+          '<button type="button" class="tb-wizard-finish" data-finish-level>' +
+            '<span aria-hidden="true">✓</span><span><strong>Le niveau suffit</strong><small>Valider maintenant ou ajouter un repère</small></span>' +
+          "</button>" +
+          '<button type="button" class="tb-wizard-search" data-wizard-search><span>🔎</span><strong>Rechercher dans ' + esc(level) + '</strong><small>unité, ascenseur, service…</small></button>' +
           '<div class="tb-place-choices">' +
             places.map((place) =>
               '<button type="button" data-place="' + esc(place) + '"><strong>' + esc(place) + "</strong></button>"
             ).join("") +
-            '<button type="button" class="other" data-place-other><strong>Autre endroit</strong><small>préciser si besoin</small></button>' +
-          "</div>" +
-          '<div class="tb-place-other" data-place-other-panel hidden>' +
-            '<label for="tbSpotPlace">Repère</label>' +
-            '<div><input id="tbSpotPlace" type="text" maxlength="80" placeholder="Ex. près des ascenseurs">' +
-            '<button type="button" data-place-other-ok>Valider</button></div>' +
+            '<button type="button" class="other" data-place-other><strong>✎ Décrire moi-même</strong><small>si aucun bouton ne correspond</small></button>' +
           "</div>" +
           '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
         wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
+        wrap.querySelector("[data-finish-level]")?.addEventListener("click", () => renderPrecision(""));
+        wrap.querySelector("[data-wizard-search]")?.addEventListener("click", searchHere);
         wrap.querySelectorAll("[data-place]").forEach((button) => {
-          button.addEventListener("click", () => close({
+          button.addEventListener("click", () => renderPrecision(String(button.dataset.place || "")));
+        });
+        wrap.querySelector("[data-place-other]")?.addEventListener("click", () => renderPrecision(""));
+        wrap.querySelector("[data-no]")?.addEventListener("click", () => close());
+      };
+
+      const renderPrecision = (baseLocation = "") => {
+        const base = String(baseLocation || "").trim();
+        const subtitle = [building.label, level, base].filter(Boolean).join(" · ");
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard tb-precision-step">' +
+          '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-place aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
+          "<h3>Repère facultatif</h3>" +
+          "<p>" + esc(subtitle) + "</p>" +
+          '<button type="button" class="tb-wizard-done" data-location-done>' +
+            '<span aria-hidden="true">✓</span><span><strong>Il est là</strong><small>valider sans aller plus loin</small></span>' +
+          "</button>" +
+          '<div class="tb-landmark-pills" aria-label="Repères rapides">' +
+            '<button type="button" data-landmark="près des ascenseurs">🛗 Ascenseurs</button>' +
+            '<button type="button" data-landmark="près de l’escalier">↕ Escalier</button>' +
+            '<button type="button" data-landmark="dans le couloir">↔ Couloir</button>' +
+            '<button type="button" data-landmark="à l’entrée de l’unité">🚪 Entrée</button>' +
+          "</div>" +
+          '<label class="tb-precision-field"><span>Ajouter une précision</span>' +
+            '<textarea rows="3" maxlength="120" placeholder="Ex. caché derrière l’escalier, près des ascenseurs…"></textarea>' +
+          "</label>" +
+          '<button type="button" class="tb-wizard-search compact" data-wizard-search><span>🔎</span><strong>Rechercher un autre lieu</strong><small>toujours dans ce formulaire</small></button>' +
+          '<button type="button" class="tb-precision-submit" data-precision-submit>Valider avec ce repère</button>' +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+
+        const input = wrap.querySelector(".tb-precision-field textarea");
+        const finish = (precision = "") => {
+          const clean = String(precision || "").trim();
+          close({
             quantity,
             level,
-            location: String(button.dataset.place || ""),
-          }));
+            location: [base, clean].filter(Boolean).join(" · "),
+          });
+        };
+
+        wrap.querySelector("[data-back-place]")?.addEventListener("click", renderPlaces);
+        wrap.querySelector("[data-location-done]")?.addEventListener("click", () => finish(""));
+        wrap.querySelectorAll("[data-landmark]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!input) return;
+            const value = String(button.dataset.landmark || "");
+            input.value = input.value.trim()
+              ? input.value.trim().replace(/[.,;:]?$/, "") + ", " + value
+              : value;
+            input.focus();
+          });
         });
-        const otherPanel = wrap.querySelector("[data-place-other-panel]");
-        const otherInput = wrap.querySelector("#tbSpotPlace");
-        wrap.querySelector("[data-place-other]")?.addEventListener("click", () => {
-          if (otherPanel) otherPanel.hidden = false;
-          setTimeout(() => otherInput?.focus(), 30);
-        });
-        wrap.querySelector("[data-place-other-ok]")?.addEventListener("click", () => {
-          const value = String(otherInput?.value || "").trim();
-          if (!value) return otherInput?.focus();
-          close({ quantity, level, location: value });
-        });
-        otherInput?.addEventListener("keydown", (event) => {
-          if (event.key !== "Enter") return;
-          event.preventDefault();
-          wrap.querySelector("[data-place-other-ok]")?.click();
+        wrap.querySelector("[data-wizard-search]")?.addEventListener("click", searchHere);
+        wrap.querySelector("[data-precision-submit]")?.addEventListener("click", () => {
+          const value = String(input?.value || "").trim();
+          if (!value && !base) return input?.focus();
+          finish(value);
         });
         wrap.querySelector("[data-no]")?.addEventListener("click", () => close());
       };
@@ -796,38 +1160,27 @@
 
   async function composeBuilding(key) {
     const building = BUILDINGS.find((item) => item.key === key);
-    const textarea = state.root?.querySelector(".tb-composer textarea");
-    if (!building || !textarea) return;
+    if (!building) return;
 
-    const searchMode = state.composeMode === "search";
-    let details = null;
-
-    if (!searchMode) {
-      details = await chooseSpotDetails(building);
-      if (!details || !state.root?.isConnected) return;
+    if (state.composeMode === "search") {
+      applyComposeDetails({
+        buildingKey: building.key,
+        quantity: 1,
+        level: "",
+        location: "",
+      });
+      return;
     }
 
-    state.selectedBuilding = key;
-    state.selectedQuantity = searchMode ? 0 : details.quantity;
-    state.selectedLevel = searchMode ? "" : details.level;
-    state.selectedLocation = searchMode ? "" : details.location;
-    state.draftKind = state.composeMode;
+    const details = await chooseSpotDetails(building);
+    if (!details || !state.root?.isConnected) return;
 
-    const text = searchMode
-      ? "Je cherche 1 fauteuil · " + building.label
-      : details.quantity + " fauteuil" + (details.quantity > 1 ? "s" : "") +
-        " disponible" + (details.quantity > 1 ? "s" : "") +
-        " · " + building.label +
-        " · " + details.level +
-        " · " + details.location;
-
-    state.draft = text;
-    textarea.value = text;
-    delete textarea.dataset.open;
-    textarea.hidden = true;
-    autoGrow(textarea);
-    renderSearchShortcuts();
-    renderComposerState();
+    applyComposeDetails({
+      buildingKey: building.key,
+      quantity: details.quantity,
+      level: details.level,
+      location: details.location,
+    });
   }
 
   function renderMessages() {
