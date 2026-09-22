@@ -429,6 +429,17 @@ async function teamPhotoUpload(ctx:any,body:any){
   const path=await storeTeamPhoto(conv,body);
   return{ok:true,path}
 }
+function inferWheelchairQuantity(text:string,raw:any=null){
+  const explicitRaw=Number(raw);
+  if(Number.isFinite(explicitRaw)&&explicitRaw>0)return Math.min(20,Math.max(1,Math.round(explicitRaw)));
+  const source=String(text||"").trim();
+  const explicit=source.match(/(?:^|[·,:;\\s])(\\d{1,2})\\s*(?:fauteuils?|fauteuil|f\\b)/i);
+  if(explicit)return Math.min(20,Math.max(1,Number(explicit[1])||1));
+  const parts=source.split("·").map(x=>x.trim()).filter(Boolean),tail=parts.at(-1)||"";
+  const shorthand=tail.match(/^(\\d{1,2})\\s+(?:au\\b|à\\b|a\\b)/i);
+  return shorthand?Math.min(20,Math.max(1,Number(shorthand[1])||1)):1
+}
+
 async function teamSend(ctx:any,body:any){
   requireTeamWrite(ctx);
   const conv=await teamConversation(ctx);
@@ -457,10 +468,17 @@ async function teamSend(ctx:any,body:any){
   const payload:any={};
   if(photoPath)payload.photo_path=photoPath;
   if(replyTo)payload.reply_to_id=replyTo;
-  if(wheelchair)payload.wheelchair={
-    type:wheelchair.type==="search"?"search":"spot",
-    status:"active"
-  };
+  if(wheelchair){
+    const type=wheelchair.type==="search"?"search":"spot",
+      quantity=type==="spot"?inferWheelchairQuantity(text,wheelchair.quantity):1,
+      building=String(wheelchair.building||"").trim().slice(0,32);
+    payload.wheelchair={
+      type,
+      status:"active",
+      ...(building?{building}:{}),
+      ...(type==="spot"?{quantity_total:quantity,quantity_remaining:quantity,takes:[]}:{})
+    }
+  }
   const{data,error}=await db.from("stip_messages").insert({
     conversation_id:conv.id,
     sender_agent_id:ctx.agent.id,
@@ -513,6 +531,77 @@ async function teamResolve(ctx:any,body:any){
   return{ok:true,resolved_at:resolvedAt,resolved_by_name:resolvedBy}
 }
 
+async function teamTake(ctx:any,body:any){
+  requireTeamWrite(ctx);
+  const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
+  await purgePreviousTableauDays(String(conv.id));
+
+  const messageId=String(body.message_id||"").trim();
+  if(!messageId)throw Error("Signalement invalide.");
+
+  const{data:row,error}=await db.from("stip_messages")
+    .select("id,body,payload")
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id)
+    .maybeSingle();
+  if(error)throw error;
+  if(!row)throw Error("Ce signalement n’est plus disponible.");
+
+  const wheelchair=row?.payload?.wheelchair;
+  if(!wheelchair||wheelchair.type==="search")throw Error("Ce message n’est pas un fauteuil disponible.");
+  if(wheelchair.status==="resolved")return{ok:true,already_resolved:true,remaining:0};
+
+  const total=inferWheelchairQuantity(String(row.body||""),wheelchair.quantity_total),
+    currentRaw=Number(wheelchair.quantity_remaining),
+    remaining=Number.isFinite(currentRaw)?Math.min(total,Math.max(0,currentRaw)):total,
+    requested=Math.max(1,Math.round(Number(body.quantity)||1)),
+    taken=Math.min(remaining,requested);
+
+  if(remaining<1)return{ok:true,already_resolved:true,remaining:0};
+
+  const profile=await messageProfile(String(ctx.agent.id)),
+    takenAt=new Date().toISOString(),
+    takenBy=nick(ctx.agent,profile),
+    nextRemaining=Math.max(0,remaining-taken),
+    takes=Array.isArray(wheelchair.takes)?wheelchair.takes.slice(-19):[],
+    nextWheelchair={
+      ...wheelchair,
+      type:"spot",
+      quantity_total:total,
+      quantity_remaining:nextRemaining,
+      takes:[...takes,{
+        quantity:taken,
+        taken_at:takenAt,
+        taken_by_agent_id:String(ctx.agent.id),
+        taken_by_name:takenBy
+      }],
+      last_taken_at:takenAt,
+      last_taken_by_agent_id:String(ctx.agent.id),
+      last_taken_by_name:takenBy,
+      ...(nextRemaining===0?{
+        status:"resolved",
+        resolved_at:takenAt,
+        resolved_by_agent_id:String(ctx.agent.id),
+        resolved_by_name:takenBy
+      }:{status:"active"})
+    },
+    payload={...(row.payload||{}),wheelchair:nextWheelchair};
+
+  const update=await db.from("stip_messages")
+    .update({payload})
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id);
+  if(update.error)throw update.error;
+
+  await db.from("stip_conversations")
+    .update({updated_at:takenAt})
+    .eq("id",conv.id);
+
+  return{ok:true,taken,remaining:nextRemaining,total,taken_by_name:takenBy,taken_at:takenAt}
+}
+
 async function teamDelete(ctx:any,body:any){
   const mode=requireTeamWrite(ctx),admin=mode==="admin";
   const conv=await teamConversation(ctx);
@@ -558,6 +647,7 @@ Deno.serve(async req=>{
     if(a==="team_photo_upload")return J(await teamPhotoUpload(c,b));
     if(a==="team_send")return J(await teamSend(c,b));
     if(a==="team_resolve")return J(await teamResolve(c,b));
+    if(a==="team_take")return J(await teamTake(c,b));
     if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=errMsg(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
