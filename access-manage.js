@@ -4,7 +4,7 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access-manage";
   const DATES_API =
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates-admin";
-  const STORE = "stip_session_v1";
+  const STORE = "stip_session_v1";\n  const PREVIEW_STORE = "stip_admin_preview_v1";
   const $ = (id) => document.getElementById(id);
   const esc = (s) =>
     String(s ?? "").replace(
@@ -270,6 +270,34 @@
     }
     return { permissions, levels };
   }
+  function previewCurrent() {
+    if (!current || creating) return;
+    const agent = current.agents || {};
+    const preview = {
+      version: 1,
+      profile_id: current.id || "",
+      role_key: current.role_key || selectedRole || "",
+      agent: {
+        id: agent.id || current.agent_id || "",
+        source_key: agent.source_key || "",
+        nom: agent.nom || "",
+        prenom: agent.prenom || "",
+        ghe: agent.ghe || "",
+        equipe: agent.equipe || "",
+        type_planning: agent.type_planning || "",
+      },
+      permissions: JSON.parse(JSON.stringify(current.permissions || {})),
+      created_at: new Date().toISOString(),
+    };
+    try {
+      sessionStorage.setItem(PREVIEW_STORE, JSON.stringify(preview));
+    } catch {
+      message("Impossible d’ouvrir l’aperçu sur cet appareil.");
+      return;
+    }
+    location.assign("index.html?preview=1");
+  }
+
   function openEditor() {
     $("editor").classList.remove("hidden");
     presetUI();
@@ -289,6 +317,7 @@
     $("setCode").textContent = "Changer";
     $("save").textContent = "Enregistrer";
     renderApps(profile.permissions || {});
+    $("preview").disabled = false;
     openEditor();
   }
   function editNew(agent) {
@@ -305,6 +334,7 @@
       (x) => x.role_key === selectedRole,
     );
     renderApps(preset?.permissions || {});
+    $("preview").disabled = true;
     openEditor();
   }
   async function save() {
@@ -371,8 +401,10 @@
     selectedRole = "";
     $("editor").classList.add("hidden");
     $("code").value = "";
+    $("preview").disabled = true;
   }
 
+  $("preview").onclick = previewCurrent;
   $("save").onclick = save;
   $("savePreset").onclick = savePreset;
   $("cancel").onclick = closeEditor;
