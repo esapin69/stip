@@ -47,18 +47,25 @@
         id: `access-security-${r.profile_id || i}`,
         source: "admin-access",
         category: "access",
+        status: "pending",
         title:
           `Accès à vérifier · ${r.agent?.prenom || ""} ${r.agent?.nom || ""}`.trim(),
         body: r.evidence?.note || "La preuve planning doit être contrôlée.",
+        created_at:
+          r.created_at || r.evidence?.checked_at || r.evidence?.created_at || "",
+        updated_at: r.updated_at || r.evidence?.updated_at || "",
         security_index: i,
       })),
       ...(data?.items || []).map((r) => ({
         id: `access-request-${r.id}`,
         source: "admin-access",
         category: "access",
+        status: r.status || "pending",
         title:
           `${r.unresolved ? "Accès non relié" : "Demande d’accès"} · ${r.first_name || ""} ${r.last_name || ""}`.trim(),
         body: r.evidence?.note || r.comment || "Décision requise.",
+        created_at: r.created_at || "",
+        updated_at: r.updated_at || "",
         request_id: r.id,
       })),
     ];
@@ -77,7 +84,10 @@
           source: "admin-access",
           category: "access",
           title: "Contrôle des accès indisponible",
-          body: e.message,
+          body: "STIP n’a pas pu vérifier les accès. Touchez pour réessayer.",
+          technical_error: e.message,
+          retryable: true,
+          occurred_at: new Date().toISOString(),
         },
       ]);
     } finally {
