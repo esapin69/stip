@@ -1719,3 +1719,34 @@ body.team-page {
 .team-day-intel.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
 .team-date-explanation.status-opportunity{border-left-color:var(--stip-opportunity,#7C3AED);background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface))}
 .team-subsections>section.status-opportunity{border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 25%,var(--stip-line));background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 5%,var(--stip-surface))}
+
+/* shift-status-before-count-20260922 */
+.team-shift-head{
+  grid-template-columns:40px minmax(0,1fr) 52px auto 38px!important;
+  column-gap:7px!important;
+}
+.team-shift-mini-status{
+  grid-column:3!important;
+  width:52px!important;
+  min-width:52px!important;
+  justify-self:center!important;
+  place-self:center!important;
+}
+.team-shift-head>em{
+  grid-column:4!important;
+  justify-self:center!important;
+}
+.team-shift-head>i{
+  grid-column:5!important;
+  justify-self:end!important;
+}
+@media(max-width:430px){
+  .team-shift-head{
+    grid-template-columns:40px minmax(0,1fr) 46px auto 34px!important;
+    column-gap:5px!important;
+  }
+  .team-shift-mini-status{
+    width:46px!important;
+    min-width:46px!important;
+  }
+}
