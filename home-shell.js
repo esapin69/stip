@@ -100,7 +100,7 @@
     contacts:
       '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
     responsable:
-      '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>',
+      '<img src="images/icone_app/responsable.webp?v=20260922-responsable2" alt="" aria-hidden="true">',
     newagent:
       '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M18 8v6M15 11h6"/></svg>',
     upload:
@@ -110,13 +110,13 @@
     admin:
       '<svg viewBox="0 0 24 24"><path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="M9 12h6M12 9v6"/></svg>',
     homeHome:
-      '<img src="images/icone_app/home-access-personal.webp?v=20260922-homebuttons-square1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-personal.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
     homeApps:
-      '<img src="images/icone_app/home-access-applications.webp?v=20260922-homebuttons-square1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-applications.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeChair:
-      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-homebuttons-square1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:

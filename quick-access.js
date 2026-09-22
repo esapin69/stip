@@ -318,7 +318,7 @@
     places:
       '<img src="images/icone_app/visiter-les-lieux.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
     responsable:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 7v5c0 5 3.4 8 8 9 4.6-1 8-4 8-9V7z"/><path d="m9 12 2 2 4-4"/></svg>',
+      '<img src="images/icone_app/responsable.webp?v=20260922-responsable2" alt="" aria-hidden="true">',
     resp_tracking:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h4l2-5 4 10 2-5h4"/><path d="M5 4h14v16H5z"/></svg>',
     resp_evaluation:
@@ -376,7 +376,7 @@
     ensureResponsibleApps();
     const chosen=readFav().filter(allowed);
     host.innerHTML = chosen.length
-      ? `<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div><button type="button" class="stip-store-browse" data-store-browse>+ Ajouter</button></header><div class="stip-my-app-grid">${chosen.map(k=>`<button type="button" class="stip-my-app" data-my-app="${k}">${appStoreIcon(k)}<strong>${META[k].label}</strong></button>`).join("")}</div></section>`
+      ? `<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div><button type="button" class="stip-store-browse stip-store-browse-add" data-store-browse aria-label="Ajouter une application"><span class="stip-store-browse-plus" aria-hidden="true"></span><strong>Ajouter</strong></button></header><div class="stip-my-app-grid">${chosen.map(k=>`<button type="button" class="stip-my-app" data-my-app="${k}">${appStoreIcon(k)}<strong>${META[k].label}</strong></button>`).join("")}</div></section>`
       : `<section class="stip-app-empty-state"><div class="stip-empty-orb">＋</div><h2>Vos applications</h2><p>Votre écran est vide. Choisissez les applications STIP que vous souhaitez retrouver ici.</p><button type="button" class="stip-store-browse" data-store-browse>Parcourir les applications</button></section>`;
     host.querySelector("[data-store-browse]")?.addEventListener("click",()=>renderStore(host));
     host.querySelectorAll("[data-my-app]").forEach(b=>b.addEventListener("click",()=>openKey(b.dataset.myApp)));
