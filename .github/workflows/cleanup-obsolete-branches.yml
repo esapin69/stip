@@ -1,21 +1,22 @@
 name: Cleanup obsolete branches
 
 on:
-  push:
+  pull_request:
     branches: [main]
-    paths:
-      - ".github/workflows/cleanup-obsolete-branches.yml"
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   cleanup:
+    if: github.head_ref == 'cleanup/obsolete-branches-run'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout full history
+      - name: Checkout main with full history
         uses: actions/checkout@v4
         with:
+          ref: main
           fetch-depth: 0
 
       - name: Delete only branches already merged into main
@@ -63,7 +64,6 @@ jobs:
               echo "Already absent: $branch"
               continue
             fi
-
             if git merge-base --is-ancestor "origin/$branch" "origin/main"; then
               echo "Deleting merged branch: $branch"
               git push origin --delete "$branch"
@@ -76,3 +76,11 @@ jobs:
 
           echo "Deleted: $deleted"
           echo "Skipped: $skipped"
+
+      - name: Remove temporary trigger branch
+        if: always()
+        shell: bash
+        run: |
+          if [ "${GITHUB_HEAD_REF:-}" = "cleanup/obsolete-branches-run" ]; then
+            git push origin --delete "cleanup/obsolete-branches-run" || true
+          fi
