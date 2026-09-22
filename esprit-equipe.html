@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260922-opportunity1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-titlehierarchy2" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-scope1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -35,49 +35,65 @@
         <h1 id="teamPageTitle">Esprit d’équipe</h1>
       </section>
 
-      <div class="stip-section-separator" aria-hidden="true">
-        <span>AUJOURD’HUI</span>
-      </div>
-
-      <section id="teamDutyChiefHost" class="team-duty-chief-host" aria-label="Chef d’équipe présent"></section>
-
-      <section id="teamWeekControls" class="team-time-stack stip-time-stack" aria-label="Navigation de la semaine active">
-        <div class="team-week-section-label stip-section-separator" aria-hidden="true">
-          <span>SEMAINE ACTIVE</span>
+      <section class="team-live-zone team-scope-zone" aria-label="Informations immédiates et du jour">
+        <div class="stip-section-separator" aria-hidden="true">
+          <span>MAINTENANT</span>
         </div>
 
-        <section class="team-week-picker" aria-label="Semaine active">
+        <section id="teamDutyChiefNowHost" class="team-duty-chief-host" aria-label="Chef d’équipe présent maintenant"></section>
+
+        <a class="team-live-wheelchair" href="index.html#/fauteuils" aria-label="Ouvrir les informations fauteuils">
+          <span class="team-live-wheelchair-icon" aria-hidden="true">♿</span>
+          <span><strong>Fauteuils</strong><small>Voir ou signaler une disponibilité maintenant</small></span>
+          <i aria-hidden="true">›</i>
+        </a>
+
+        <div class="stip-section-separator team-today-separator" aria-hidden="true">
+          <span>AUJOURD’HUI</span>
+        </div>
+
+        <section id="teamDutyChiefTodayHost" class="team-duty-chief-host team-duty-chief-today-host" aria-label="Chefs d’équipe de la journée"></section>
+      </section>
+
+      <section id="teamWeekControls" class="team-time-stack stip-time-stack team-scope-zone team-week-zone" aria-label="Cette semaine">
+        <div class="team-week-section-label stip-section-separator" aria-hidden="true">
+          <span>CETTE SEMAINE</span>
+        </div>
+
+        <section class="team-week-picker" aria-label="Cette semaine">
           <button id="teamPrevWeek" class="team-week-step" type="button" aria-label="Semaine précédente">‹</button>
           <nav id="teamDays" class="team-days stip-time-days" aria-label="Jours de la semaine"></nav>
           <button id="teamNextWeek" class="team-week-step" type="button" aria-label="Semaine suivante">›</button>
         </section>
+
+        <section id="teamWeekSummaryHost" class="team-week-summary-host" aria-live="polite"></section>
 
         <nav class="team-tabs stip-levels" role="tablist" aria-label="Volets Esprit d’équipe">
           <button type="button" role="tab" aria-selected="true" class="active" data-team-tab="team">Équipe</button>
           <button type="button" role="tab" aria-selected="false" data-team-tab="activity">Activité</button>
           <button type="button" role="tab" aria-selected="false" data-team-tab="assistant">Assistant</button>
         </nav>
-      </section>
 
-      <div class="team-day-section-label stip-section-separator" aria-hidden="true">
-        <span>JOURNÉE SÉLECTIONNÉE</span>
-      </div>
-
-      <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
-      <section
-        id="teamContent"
-        class="team-content"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <div class="team-week-skeleton" aria-label="Chargement de la journée sélectionnée">
-          <i></i>
+        <div class="team-day-section-label stip-section-separator" aria-hidden="true">
+          <span>JOUR SÉLECTIONNÉ</span>
         </div>
+
+        <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
+        <section
+          id="teamContent"
+          class="team-content"
+          aria-live="polite"
+          aria-busy="true"
+        >
+          <div class="team-week-skeleton" aria-label="Chargement de la journée sélectionnée">
+            <i></i>
+          </div>
+        </section>
       </section>
 
-      <section class="team-month-zone team-month-zone-secondary" aria-label="Calendrier, synthèse mensuelle, repères et options">
+      <section class="team-month-zone team-month-zone-secondary team-scope-zone" aria-label="Ce mois">
         <div class="team-calendar-section-label stip-section-separator" aria-hidden="true">
-          <span>CALENDRIER DE L’ÉQUIPE</span>
+          <span>CE MOIS</span>
         </div>
 
         <section
@@ -86,9 +102,6 @@
           aria-label="Calendrier mensuel — choisir une journée"
         ></section>
 
-        <div class="team-month-digest-separator stip-section-separator" aria-hidden="true">
-          <span>À RETENIR CE MOIS</span>
-        </div>
         <section id="teamMonthDigestHost" class="team-month-digest-host" aria-live="polite"></section>
 
         <div class="team-legend-separator stip-section-separator" aria-hidden="true">
@@ -121,7 +134,7 @@
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="agent-agenda-view.js?v=20260922-agentcalendar1"></script>
     <script src="calendar-subscriptions.js?v=20260922-agentplanning1"></script>
-    <script src="home-duty-chief.js?v=20260922-chiefcall3"></script>
-    <script src="esprit-equipe.js?v=20260922-tabsrestore1"></script>
+    <script src="home-duty-chief.js?v=20260922-flat1"></script>
+    <script src="esprit-equipe.js?v=20260922-weekintel1"></script>
   </body>
 </html>
