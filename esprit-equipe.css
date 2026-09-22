@@ -1953,3 +1953,143 @@ body.team-page {
     border-radius:24px;
   }
 }
+
+
+/* week-strip-and-week-summary-20260922 */
+.team-week-picker{
+  width:100%;
+  display:grid;
+  grid-template-columns:34px minmax(0,1fr) 34px;
+  align-items:center;
+  gap:7px;
+}
+.team-week-step{
+  width:34px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:1px solid color-mix(in srgb,var(--stip-accent) 22%,var(--stip-line));
+  border-radius:14px;
+  background:var(--stip-surface);
+  color:var(--stip-ink);
+  box-shadow:var(--stip-shadow-soft);
+  font-size:1.45rem;
+  font-weight:900;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.team-week-step:active{transform:scale(.93)}
+.team-days{
+  min-width:0;
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+}
+.team-days>button{
+  min-width:0;
+  border:1px solid var(--stip-line)!important;
+  background:var(--stip-surface)!important;
+  color:var(--stip-ink-2)!important;
+  cursor:pointer;
+}
+.team-days>button.today:not(.selected){
+  box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--stip-accent) 28%,transparent)!important;
+}
+.team-days>button.status-opportunity:not(.selected){
+  background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,var(--stip-surface))!important;
+}
+.team-day-intel.status-opportunity{
+  color:var(--stip-opportunity,#7C3AED);
+}
+.team-calendar-section-label{
+  margin:0 0 2px!important;
+}
+.team-week-summary-host{
+  width:100%;
+  max-width:430px;
+  margin:0 auto;
+}
+.team-week-summary-host:empty{display:none}
+.team-week-summary{
+  margin-top:0!important;
+}
+.team-week-checklist{
+  display:grid;
+}
+.team-week-check{
+  width:100%;
+  min-height:62px;
+  display:grid;
+  grid-template-columns:30px minmax(0,1fr) 16px;
+  gap:9px;
+  align-items:center;
+  padding:10px 0;
+  border:0;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-ink) 9%,var(--stip-line-soft));
+  background:transparent;
+  color:inherit;
+  text-align:left;
+  cursor:pointer;
+}
+.team-week-check:last-child{border-bottom:0}
+.team-week-check>span{
+  display:grid;
+  place-items:center;
+  min-height:28px;
+  font-size:1.05rem;
+  line-height:1;
+}
+.team-week-check>div{min-width:0}
+.team-week-check strong{
+  display:block;
+  color:var(--stip-ink);
+  font-size:.73rem;
+  font-weight:950;
+}
+.team-week-check p{
+  margin:3px 0 0;
+  color:var(--stip-ink-2);
+  font-size:.66rem;
+  font-weight:720;
+  line-height:1.42;
+}
+.team-week-check>i{
+  color:var(--stip-muted);
+  font-size:1rem;
+  font-style:normal;
+}
+.team-week-check.status-critical>span{color:#ef3d39}
+.team-week-check.status-warning>span{color:#d7a20b}
+.team-week-check.status-opportunity>span{color:var(--stip-opportunity,#7C3AED)}
+.team-week-check.status-ok>span{color:#18a56d}
+.team-week-check.status-unknown>span{color:#9aa8af}
+.team-week-check:active{
+  opacity:.72;
+}
+.team-month-zone-secondary{
+  gap:12px!important;
+}
+.team-month-zone-secondary .team-legend-separator{
+  margin-top:8px!important;
+}
+@media(max-width:430px){
+  .team-week-picker{
+    grid-template-columns:30px minmax(0,1fr) 30px;
+    gap:5px;
+  }
+  .team-week-step{
+    width:30px;
+    height:42px;
+    border-radius:12px;
+    font-size:1.3rem;
+  }
+  .team-days{padding:6px!important;gap:2px!important}
+  .team-days>button{
+    min-height:68px!important;
+    padding-inline:0!important;
+  }
+  .team-days>button small{font-size:.49rem!important}
+  .team-days>button b{font-size:1rem!important}
+  .team-day-intel{font-size:.94rem!important}
+  .team-day-intel.status-ok{font-size:1.08rem!important}
+}
