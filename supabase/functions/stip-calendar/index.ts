@@ -16,8 +16,8 @@ const d8=(d:string)=>String(d).replaceAll('-','')
 const dayShift=(d:string,n:number)=>{const x=new Date(String(d)+'T12:00:00Z');x.setUTCDate(x.getUTCDate()+n);return x.toISOString().slice(0,10)}
 const next=(d:string)=>dayShift(d,1)
 const stamp=(v:any)=>new Date(v||Date.now()).toISOString().replace(/[-:]/g,'').replace(/\.\d{3}Z$/,'Z')
-const CAL_REV=31
-const CAL_BUILD='2026-09-21T11:30:00Z'
+const CAL_REV=32
+const CAL_BUILD='2026-09-22T16:20:00Z'
 function eventStamp(v:any){const a=new Date(v||0),b=new Date(CAL_BUILD);return stamp(a>b?a:b)}
 const esc=(v:any)=>String(v??'').replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;')
 function fold(line:string,limit=73){const out:string[]=[];let cur='',bytes=0;for(const ch of line){const n=enc.encode(ch).length;if(cur&&bytes+n>limit){out.push(cur);cur=ch;bytes=n}else{cur+=ch;bytes+=n}}if(cur)out.push(cur);return out.join('\r\n ')}
@@ -194,6 +194,47 @@ async function formations(){const start=ymd(-60),end=ymd(370),dir=await loadDire
 
 async function stagiaires(){const start=ymd(-60),end=ymd(370),dir=await loadDirectory(),{data:rows,error}=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at,last_seen_at').gte('date_fin',start).lte('date_debut',end).order('date_debut');if(error)throw error;const expanded=new Map();let minDate='',maxDate='';for(const r of rows||[]){let d=String(r.date_debut||''),ed=String(r.date_fin||r.date_debut||''),g=0;while(d&&d<=ed&&g++<370){if(d>=start&&d<=end){if(!expanded.has(d))expanded.set(d,[]);expanded.get(d).push(r);if(!minDate||d<minDate)minDate=d;if(!maxDate||d>maxDate)maxDate=d}d=next(d)}}const resolved=new Map();for(const rs of expanded.values())for(const r of rs)for(const ref of splitRefs(r.referent)){const k=keyNorm(ref);if(k&&!resolved.has(k))resolved.set(k,resolveRef(ref,dir))}const ids=[...new Set([...resolved.values()].map((z:any)=>z?.a?.id).filter(Boolean))],plan=new Map();if(ids.length&&minDate&&maxDate){const pp=await planningPaged('date,code,agent_id,imported_at',minDate,maxDate,{ids});for(const p of pp)plan.set(`${p.agent_id}|${p.date}`,p)}const l=head('Stagiaires');let events=0;for(const [date,rs0] of [...expanded.entries()].sort((a:any,b:any)=>a[0].localeCompare(b[0]))){const rs:any[]=rs0,latest=rs.flatMap(r=>[r.updated_at,r.last_seen_at]).filter(Boolean).sort().at(-1),det=[`📅 ${frDate(date)}`,`👶 ${rs.length} ${rs.length===1?'stagiaire':'stagiaires'}`,'','•••',''];rs.sort((a,b)=>fullPerson(a.prenom,a.nom).localeCompare(fullPerson(b.prenom,b.nom),'fr'));rs.forEach((r,idx)=>{const st=timeRange(r.horaires),refs=splitRefs(r.referent),rr=refs.map(ref=>{const z=resolved.get(keyNorm(ref)),ag=z?.a,c=z?.c,pr=ag?plan.get(`${ag.id}|${date}`):null,k=norm(pr?.code),range=k&&SHIFT[k]?SHIFT[k]:null;return{raw:ref,ag,c,pr,k,range}}),warnings:string[]=[];det.push(`👶 ${fullPerson(r.prenom,r.nom)}`,`🕘 ${st?.text||String(r.horaires||'Horaire non renseigné')}`,'',refs.length>1?'👥 Référents':'👨‍⚕️ Référent','');if(!refs.length)warnings.push('Référent non renseigné');rr.forEach((z,j)=>{det.push(`👨‍⚕️ ${z.ag||z.c?person(z.ag||z.c):String(z.raw).toLocaleUpperCase('fr-FR')}`);if(z.range)det.push(`${z.range.personal} ${z.range.label} · ${z.range.text}`);det.push(...contactLines(z.ag,z.c));if(!z.ag&&!z.c)warnings.push(`Référent non retrouvé : ${z.raw}`);else if(!z.pr)warnings.push(`Planning non retrouvé : ${person(z.ag||z.c)}`);else if(!z.range)warnings.push(`${person(z.ag||z.c)} non planifié en travail (${String(z.pr.code||'—')})`);if(!e164(z.c?.telephone||z.ag?.telephone))warnings.push(`Téléphone manquant : ${person(z.ag||z.c)}`);if(!Number.isFinite(gheNum(z.c?.ghe||z.ag?.ghe)))warnings.push(`GHE manquant : ${person(z.ag||z.c)}`);if(j<rr.length-1)det.push('')});if(st){const gaps=missingCoverage(st,rr.map(z=>z.range).filter(Boolean));if(gaps.length)warnings.push(`Couverture stagiaire manquante : ${gaps.join(', ')}`)}if(warnings.length){det.push('','⚠️ À vérifier');for(const w of [...new Set(warnings)])det.push(`• ${w}`)}if(idx<rs.length-1)det.push('','•••','')});det.push('','↳ Mis à jour le : '+frUpdate(latest));ev(l,`stip-stagiaires-${date}@esapin.com`,date,`Stagiaires · ${rs.length} ${rs.length===1?'présent':'présents'}`,det.join('\n'),latest);events++}l.push('END:VCALENDAR');return{ics:l.join('\r\n')+'\r\n',events}}
 
-async function feed(t:string){const {data:f}=await db.from('stip_calendar_feeds').select('profile_id,kind,active').eq('token',t).maybeSingle();if(!f?.active)return null;const p=await prof(f.profile_id);if(!p)return null;if(f.kind==='personal')return personal(p.agent);if(String(f.kind||'').startsWith('agent:')){const target=await activeAgentById(String(f.kind).slice(6));if(!target||!canSubscribeAgent(p,target))return null;return personal(target,String(target.id)!==String(p.agent.id))}if(f.kind==='team'){if(!p.permissions?.planning_team)return null;return team(p.agent);}if(f.kind==='formations'){if(!p.permissions?.responsable)return null;return formations()}if(f.kind==='stagiaires'){if(!p.permissions?.responsable)return null;return stagiaires()}return null}
 
-Deno.serve(async r=>{if(r.method==='OPTIONS')return new Response('ok',{headers:C});try{const u=new URL(r.url);if(r.method==='GET'||r.method==='HEAD'){const z=await feed(u.searchParams.get('token')||'');if(!z)return new Response('Flux désactivé',{status:404,headers:C});return new Response(r.method==='HEAD'?null:z.ics,{headers:{...I,'X-STIP-Events':String(z.events),'Content-Disposition':'inline; filename="stip.ics"'}})}if(r.method==='POST'){const p=await session(r);if(!p)return json({error:'Accès Import au calendrier non autorisé.'},401);const b=await r.json().catch(()=>({})),q=String(b.kind||'personal');let k=q==='team'?'team':q==='formations'?'formations':q==='stagiaires'?'stagiaires':'personal',calendarName='';if(q==='agent'){const sourceKey=String(b.source_key||'').trim(),agentId=String(b.agent_id||'').trim(),target=sourceKey?await activeAgentBySource(sourceKey):agentId?await activeAgentById(agentId):null;if(!target)return json({error:'Agent introuvable.'},404);if(!canSubscribeAgent(p,target))return json({error:'Abonnement à ce planning réservé au responsable ou à l’administrateur.'},403);k=`agent:${target.id}`;calendarName=sharedCalendarName(target)}if(k==='team'&&!p.permissions?.planning_team)return json({error:'Accès au planning équipe requis pour ce calendrier.'},403);if((k==='formations'||k==='stagiaires')&&!p.permissions?.responsable)return json({error:'Accès Responsable requis pour ce calendrier.'},403);const t=await ensure(p.id,k),h=`${U}/functions/v1/stip-calendar?token=${t}`;return json({kind:k,calendar_name:calendarName|| (k==='personal'?personalCalendarName(p.agent):k==='team'?"Esprit d'équipe":k==='formations'?'Formations':'Stagiaires'),https_url:h,webcal_url:h.replace(/^https:/,'webcal:')})}return json({error:'Méthode non autorisée.'},405)}catch(e){console.error(e);return json({error:e instanceof Error?e.message:String(e)},500)}})
+function extractVevents(ics:string){return String(ics||'').match(/BEGIN:VEVENT[\s\S]*?END:VEVENT/g)||[]}
+
+async function agentDates(){
+  const start=ymd(-60),end=ymd(370),dir=await loadDirectory();
+  const [{data:manual,error:me},formationCal,stagiaireCal]=await Promise.all([
+    db.from('stip_agent_agenda_items')
+      .select('id,agent_id,event_date,start_time,end_time,all_day,title,body,location,source_type,updated_at,status')
+      .eq('status','active')
+      .gte('event_date',start)
+      .lte('event_date',end)
+      .order('event_date')
+      .order('start_time'),
+    formations(),
+    stagiaires()
+  ]);
+  if(me)throw me;
+  const l=head('Dates des agents');
+  let events=0;
+  for(const r of manual||[]){
+    if(!sensitiveAgenda(r))continue;
+    const ag=dir.byId.get(r.agent_id),
+      name=niceName(ag),
+      title=String(r.title||'Visite médicale').trim(),
+      summary=`🩺 Visite médicale · ${name}`,
+      desc=[title&&title!=='Visite médicale'?title:'',r.location?`📍 ${String(r.location).trim()}`:''].filter(Boolean).join('\n'),
+      date=String(r.event_date||'').slice(0,10);
+    if(!date)continue;
+    if(r.all_day||!r.start_time||!r.end_time)
+      ev(l,`stip-agent-medical-${r.id}@esapin.com`,date,summary,desc,r.updated_at);
+    else
+      evTimed(l,`stip-agent-medical-${r.id}@esapin.com`,date,String(r.start_time).slice(0,5),String(r.end_time).slice(0,5),summary,desc,r.updated_at,false);
+    events++;
+  }
+  for(const block of extractVevents(formationCal.ics))l.push(block);
+  for(const block of extractVevents(stagiaireCal.ics))l.push(block);
+  events+=Number(formationCal.events||0)+Number(stagiaireCal.events||0);
+  l.push('END:VCALENDAR');
+  return{ics:l.join('\r\n')+'\r\n',events}
+}
+
+async function feed(t:string){const {data:f}=await db.from('stip_calendar_feeds').select('profile_id,kind,active').eq('token',t).maybeSingle();if(!f?.active)return null;const p=await prof(f.profile_id);if(!p)return null;if(f.kind==='personal')return personal(p.agent);if(String(f.kind||'').startsWith('agent:')){const target=await activeAgentById(String(f.kind).slice(6));if(!target||!canSubscribeAgent(p,target))return null;return personal(target,String(target.id)!==String(p.agent.id))}if(f.kind==='team'){if(!p.permissions?.planning_team)return null;return team(p.agent);}if(f.kind==='formations'){if(!p.permissions?.responsable)return null;return formations()}if(f.kind==='stagiaires'){if(!p.permissions?.responsable)return null;return stagiaires()}if(f.kind==='agent_dates'){if(!p.permissions?.responsable)return null;return agentDates()}return null}
+
+Deno.serve(async r=>{if(r.method==='OPTIONS')return new Response('ok',{headers:C});try{const u=new URL(r.url);if(r.method==='GET'||r.method==='HEAD'){const z=await feed(u.searchParams.get('token')||'');if(!z)return new Response('Flux désactivé',{status:404,headers:C});return new Response(r.method==='HEAD'?null:z.ics,{headers:{...I,'X-STIP-Events':String(z.events),'Content-Disposition':'inline; filename="stip.ics"'}})}if(r.method==='POST'){const p=await session(r);if(!p)return json({error:'Accès Import au calendrier non autorisé.'},401);const b=await r.json().catch(()=>({})),q=String(b.kind||'personal');let k=q==='team'?'team':q==='formations'?'formations':q==='stagiaires'?'stagiaires':q==='agent_dates'?'agent_dates':'personal',calendarName='';if(q==='agent'){const sourceKey=String(b.source_key||'').trim(),agentId=String(b.agent_id||'').trim(),target=sourceKey?await activeAgentBySource(sourceKey):agentId?await activeAgentById(agentId):null;if(!target)return json({error:'Agent introuvable.'},404);if(!canSubscribeAgent(p,target))return json({error:'Abonnement à ce planning réservé au responsable ou à l’administrateur.'},403);k=`agent:${target.id}`;calendarName=sharedCalendarName(target)}if(k==='team'&&!p.permissions?.planning_team)return json({error:'Accès au planning équipe requis pour ce calendrier.'},403);if((k==='formations'||k==='stagiaires'||k==='agent_dates')&&!p.permissions?.responsable)return json({error:'Accès Responsable requis pour ce calendrier.'},403);const t=await ensure(p.id,k),h=`${U}/functions/v1/stip-calendar?token=${t}`;return json({kind:k,calendar_name:calendarName|| (k==='personal'?personalCalendarName(p.agent):k==='team'?"Esprit d'équipe":k==='formations'?'Formations':k==='stagiaires'?'Stagiaires':'Dates des agents'),https_url:h,webcal_url:h.replace(/^https:/,'webcal:')})}return json({error:'Méthode non autorisée.'},405)}catch(e){console.error(e);return json({error:e instanceof Error?e.message:String(e)},500)}})
