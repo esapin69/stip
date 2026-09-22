@@ -131,7 +131,7 @@
     bind(host);
     const kind = initial || requestedKind();
     if (kind) {
-      const safeKind = String(kind).replace(/[^a-z]/gi, "");
+      const safeKind = String(kind).replace(/[^a-z_]/gi, "");
       const b = host.querySelector(`[data-cal-kind="${safeKind}"]`);
       if (b) setTimeout(() => prepare(kind, b, host), 0);
     }
