@@ -333,55 +333,6 @@
     return cached.promise;
   }
 
-  function renderDateExplanation(value = state.dayFocus) {
-    const host = $("#teamDateExplanation");
-    if (!host) return;
-    const signal = signalForDate(value);
-    const level = signal?.level || "unknown";
-    const symbol = signal?.symbol || (level === "unknown" ? "○" : "");
-    const label = signal?.label || "Pas encore analysé";
-    const reasons = Array.isArray(signal?.reasons)
-      ? signal.reasons.filter(Boolean)
-      : [];
-    const staffing = signal?.staffing || null;
-    let details = reasons
-      .slice(0, 2)
-      .map((reason) =>
-        [reason?.headline, reason?.detail].filter(Boolean).join(" — "),
-      )
-      .filter(Boolean);
-
-    if (!details.length && staffing?.known)
-      details = [[staffing.headline, staffing.detail].filter(Boolean).join(" — ")];
-
-    if (!details.length) {
-      if (level === "ok")
-        details = [
-          "Les créneaux suivis sont au niveau attendu et aucun point prioritaire n’a été détecté.",
-        ];
-      else if (level === "unknown")
-        details = [
-          "STIP n’a pas encore assez de données pour expliquer correctement cette journée.",
-        ];
-      else
-        details = [
-          "STIP a détecté un point de vigilance dans les données de cette journée.",
-        ];
-    }
-
-    host.className = `team-date-explanation status-${esc(level)}`;
-    host.hidden = false;
-    host.innerHTML = `
-      <div class="team-date-explanation-head">
-        <span class="team-date-explanation-icon" aria-hidden="true">${esc(symbol)}</span>
-        <div>
-          <small>${esc(dayTitle(value))}</small>
-          <strong>${esc(label)}</strong>
-        </div>
-      </div>
-      <p>${esc(details.join(" "))}</p>`;
-  }
-
   function renderDateJumpCalendar(key = "") {
     const panel = $("#teamDateJumpPanel");
     if (!panel) return;
@@ -429,7 +380,6 @@
       )}</strong><button type="button" data-team-cal-step="1" aria-label="Mois suivant">›</button></div>` +
       '<div class="team-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>' +
       `<div class="team-date-jump-grid">${cells.join("")}</div>`;
-    renderDateExplanation(state.dayFocus);
   }
 
   function chooseDate(value) {
@@ -676,6 +626,52 @@
     </div>`;
   }
 
+
+  function shiftAnalysis(signal) {
+    if (!signal || !["critical", "warning", "opportunity"].includes(signal.level))
+      return "";
+    if (!signal.detail && !signal.proposal) return "";
+    return '<section class="team-shift-analysis status-' + esc(signal.level) + '" aria-label="' + esc(signal.label || "Analyse du shift") + '">' +
+      '<span class="team-shift-analysis-icon" aria-hidden="true">' + esc(signal.symbol || "") + '</span>' +
+      '<div><strong>' + esc(signal.label || "À regarder") + '</strong>' +
+      (signal.detail ? '<p>' + esc(signal.detail) + '</p>' : '') +
+      (signal.proposal ? '<small>' + esc(signal.proposal) + '</small>' : '') +
+      '</div></section>';
+  }
+
+  function daySummaryBlock(bundle, day) {
+    const intel = field();
+    if (!intel?.dayChecklist) return "";
+    const staff = state.staffingByDate.get(day);
+    const items = assistantItemsForDate(bundle, day);
+    const read = intel.dayChecklist({ staffing: staff, items });
+    if (!read?.points?.length) return "";
+
+    const strengthLabel = {
+      strong: "Conseil fort",
+      moderate: "Conseil",
+      suggestion: "Suggestion",
+      none: "Aucune action particulière",
+      unknown: "Données insuffisantes",
+    }[read.strength] || "Conseil";
+
+    const points = read.points.map((point) =>
+      '<div class="team-day-check status-' + esc(point.level || "info") + '">' +
+        '<span aria-hidden="true">' + esc(point.symbol || "•") + '</span>' +
+        '<div><strong>' + esc(point.title || "Point à regarder") + '</strong>' +
+        (point.detail ? '<p>' + esc(point.detail) + '</p>' : '') +
+        '</div></div>'
+    ).join("");
+
+    return '<section class="team-day-summary status-' + esc(read.level || "unknown") + '">' +
+      '<header><span aria-hidden="true">' + esc(read.symbol || "") + '</span>' +
+      '<div><small>BILAN DE LA JOURNÉE</small><strong>' + esc(read.label || "Lecture globale") + '</strong></div></header>' +
+      '<div class="team-day-checklist">' + points + '</div>' +
+      '<div class="team-day-advice strength-' + esc(read.strength || "none") + '">' +
+      '<strong>' + esc(strengthLabel) + '</strong><p>' + esc(read.advice || "Aucune recommandation particulière.") + '</p>' +
+      '</div></section>';
+  }
+
   function shiftBlock(day, code, items) {
     const base = baseShift(code);
     const meta = SHIFT[base];
@@ -698,6 +694,7 @@
         <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
+      ${shiftAnalysis(signal)}
       <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
     </section>`;
   }
@@ -718,11 +715,13 @@
       ([a], [b]) =>
         SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
     );
-    const body = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
+    const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
+    const summary = daySummaryBlock(bundle, day);
+    const body = (shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>') + summary;
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
-      body || '<p class="team-empty-inline">Aucun agent planifié.</p>',
+      body,
       "team",
     );
   }
