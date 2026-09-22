@@ -151,6 +151,19 @@
       .join("");
   }
 
+  function weekMarkerMarkup(events = []) {
+    return events
+      .map((event) => {
+        const category = categoryClass(event.category),
+          label = categoryLabel(category),
+          icon = event.icon || categoryIcon(category),
+          person = String(event.person_name || "").trim(),
+          title = person ? `${label} · ${person}` : label;
+        return `<i class="rr-marker type-${esc(category)}" title="${esc(title)}"><span aria-hidden="true">${esc(icon)}</span></i>`;
+      })
+      .join("");
+  }
+
   function dayDelta(iso) {
     return Math.round((dateObj(iso) - dateObj(parisIso())) / DAY_MS);
   }
@@ -262,7 +275,7 @@
     host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
-          markers = markerMarkup(events),
+          markers = weekMarkerMarkup(events),
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
