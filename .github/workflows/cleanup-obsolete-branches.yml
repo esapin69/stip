@@ -1,0 +1,78 @@
+name: Cleanup obsolete branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cleanup-obsolete-branches.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Delete only branches already merged into main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin --prune
+          branches=(
+            "backup/places-before-rebuild-2026-08-29"
+            "backup/pre-account-exchanges-20260921"
+            "backup/pre-agent-special-shift-fix-20260922"
+            "backup/pre-duty-chief-call-ui-20260922"
+            "backup/pre-duty-chief-css-fix-20260922"
+            "backup/pre-esprit-merged-month-20260922"
+            "backup/pre-finalisation-20260920-main-latest"
+            "backup/pre-finalisation-20260920"
+            "backup/pre-notification-swipe-20260921"
+            "backup/pre-responsable-final-rebuild-20260922"
+            "backup/pre-responsable-icon-badges-20260922"
+            "backup/pre-responsable-pilotage-livecal-20260922"
+            "backup/pre-responsable-tabs-20260922"
+            "backup/pre-responsable-week-options-20260922"
+            "backup/pre-special-schedules-full-update-20260922"
+            "chatgpt-agenda-safe-20260918"
+            "feat/cermep-guide-link"
+            "feat/nested-waypoint-pilot-v2"
+            "feat/places-visual-first-jet-v2"
+            "feature/visiter-les-lieux"
+            "fix/cermep-procedure"
+            "fix/esprit-interaction-visual-20260920"
+            "fix/routes-destination-only"
+            "fix/routes-destination-only-v2"
+            "fix/routes-destination-only-v3"
+            "fix/routes-destination-only-v4"
+            "fix-places-reperes"
+            "noop"
+            "refactor/stip-reprise-a-g"
+            "refactor/stip-unified-experience"
+          )
+
+          deleted=0
+          skipped=0
+          for branch in "${branches[@]}"; do
+            if ! git show-ref --verify --quiet "refs/remotes/origin/$branch"; then
+              echo "Already absent: $branch"
+              continue
+            fi
+
+            if git merge-base --is-ancestor "origin/$branch" "origin/main"; then
+              echo "Deleting merged branch: $branch"
+              git push origin --delete "$branch"
+              deleted=$((deleted+1))
+            else
+              echo "::warning::Skipped because branch has commits not in main: $branch"
+              skipped=$((skipped+1))
+            fi
+          done
+
+          echo "Deleted: $deleted"
+          echo "Skipped: $skipped"
