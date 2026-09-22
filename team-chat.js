@@ -17,7 +17,8 @@
     viewportHandler: null,
     viewportHeight: 0,
     draft: "",
-    draftKind: "spot",
+    draftKind: "search",
+    composeMode: "search",
   };
 
   const homeState = {
@@ -280,7 +281,7 @@
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => {
       state.draft = textarea.value;
-      if (!textarea.value.trim()) state.draftKind = "spot";
+      if (!textarea.value.trim()) state.draftKind = state.composeMode;
       autoGrow(textarea);
     });
     textarea?.addEventListener("focus", () => {
@@ -304,10 +305,16 @@
     });
 
     root.addEventListener("click", (event) => {
+      const mode = event.target.closest?.("[data-compose-mode]");
+      if (mode) {
+        event.preventDefault();
+        setComposeMode(String(mode.dataset.composeMode || ""));
+        return;
+      }
       const building = event.target.closest?.("[data-building-compose]");
       if (building) {
         event.preventDefault();
-        composeSearch(String(building.dataset.buildingCompose || ""));
+        composeBuilding(String(building.dataset.buildingCompose || ""));
         return;
       }
       const photo = event.target.closest?.("[data-photo-url]");
@@ -397,8 +404,18 @@
   function renderSearchShortcuts() {
     const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
+    const searchMode = state.composeMode === "search";
     host.innerHTML =
-      '<div class="tb-search-shortcuts-head"><strong>Où cherches-tu le fauteuil ?</strong><small>Choisis le bâtiment : le message se prépare, puis appuie sur ↑.</small></div>' +
+      '<div class="tb-search-shortcuts-head"><strong>Que veux-tu faire ?</strong></div>' +
+      '<div class="tb-compose-modes" role="group" aria-label="Type de signalement">' +
+        '<button type="button" class="tb-compose-mode' + (searchMode ? " is-active" : "") + '" data-compose-mode="search" aria-pressed="' + (searchMode ? "true" : "false") + '"><span aria-hidden="true">⌕</span><strong>Je cherche</strong></button>' +
+        '<button type="button" class="tb-compose-mode' + (!searchMode ? " is-active is-spot" : "") + '" data-compose-mode="spot" aria-pressed="' + (!searchMode ? "true" : "false") + '"><span aria-hidden="true">♿</span><strong>J’en ai trouvé</strong></button>' +
+      "</div>" +
+      '<small class="tb-compose-hint">' +
+        (searchMode
+          ? "Choisis le bâtiment où tu cherches."
+          : "Choisis le bâtiment, puis précise l’étage ou l’endroit.") +
+      "</small>" +
       '<div class="tb-search-shortcuts-grid">' +
       BUILDINGS.map(
         (building) =>
@@ -411,12 +428,31 @@
       "</div>";
   }
 
-  function composeSearch(key) {
+  function setComposeMode(mode) {
+    if (mode !== "search" && mode !== "spot") return;
+    state.composeMode = mode;
+    state.draftKind = mode;
+    renderSearchShortcuts();
+
+    const textarea = state.root?.querySelector(".tb-composer textarea");
+    if (!textarea) return;
+    textarea.placeholder =
+      mode === "search"
+        ? "Ex. je cherche un fauteuil au 2e étage"
+        : "Ex. 2 fauteuils · P8 couloir du fond";
+  }
+
+  function composeBuilding(key) {
     const building = BUILDINGS.find((item) => item.key === key);
     const textarea = state.root?.querySelector(".tb-composer textarea");
     if (!building || !textarea) return;
-    const text = "Je cherche un fauteuil · " + building.label;
-    state.draftKind = "search";
+
+    const searchMode = state.composeMode === "search";
+    const text = searchMode
+      ? "Je cherche un fauteuil · " + building.label
+      : "Fauteuil disponible · " + building.label + " · ";
+
+    state.draftKind = state.composeMode;
     state.draft = text;
     textarea.value = text;
     autoGrow(textarea);
@@ -433,7 +469,7 @@
 
     if (!messages.length) {
       feed.innerHTML =
-        '<section class="tb-empty-state"><strong>Aucun message pour l’instant</strong><p>Signale un fauteuil, ou utilise un raccourci pour dire où tu en cherches un.</p></section>';
+        '<section class="tb-empty-state"><strong>Aucun message pour l’instant</strong><p>Tu peux chercher un fauteuil ou signaler où il y en a un de disponible.</p></section>';
       updateSelectionBar();
       return;
     }
@@ -486,7 +522,7 @@
           '<span class="tb-status-chip' +
             (searchSignal ? " is-search" : "") +
             '">' +
-            (searchSignal ? "Recherche" : "À récupérer") +
+            (searchSignal ? "Recherche" : "Disponible") +
             "</span>",
         );
       }
@@ -653,7 +689,7 @@
       });
       textarea.value = "";
       state.draft = "";
-      state.draftKind = "spot";
+      state.draftKind = state.composeMode;
       autoGrow(textarea);
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
       textarea.focus();
