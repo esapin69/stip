@@ -47,6 +47,7 @@
     openShift: "",
     dateJumpMonth: monthKey(todayIso()),
     daySignals: new Map(),
+    staffingByDate: new Map(),
     signalMonths: new Map(),
     openShifts: new Map(),
   };
@@ -253,6 +254,7 @@
           staff = result.status === "fulfilled" ? result.value : null,
           items = assistantItemsForDate(bundle, date),
           status = signalStatus(staff, items);
+        state.staffingByDate.set(date, staff);
         state.daySignals.set(date, status);
       });
       cached.signalLoaded = true;
@@ -310,6 +312,7 @@
             const items = assistantItems.filter(
               (item) => String(item?.date || "").slice(0, 10) === date,
             );
+            state.staffingByDate.set(date, staff);
             state.daySignals.set(date, signalStatus(staff, items));
             completed += 1;
             if (
@@ -628,6 +631,42 @@
     return `<article id="team-day-${day}" class="team-day stip-time-surface ${today ? "is-today" : ""}" data-day-kind="${kind}"><header><div><span>${today ? "AUJOURD’HUI" : shortDay(day)}</span><h2>${esc(dayTitle(day))}</h2></div><strong>${esc(summary)}</strong></header><div class="team-day-body">${intel}${body}</div></article>`;
   }
 
+  function staffingRows(staff) {
+    const rows = staff?.rows || staff?.shifts || [];
+    return Array.isArray(rows) ? rows.filter(Boolean) : [];
+  }
+
+  function staffingRowGap(row) {
+    if (row?.gap != null && Number.isFinite(Number(row.gap)))
+      return Number(row.gap);
+    const planned = Number(row?.planned_count);
+    const target = Number(row?.target_count);
+    return Number.isFinite(planned) && Number.isFinite(target)
+      ? planned - target
+      : 0;
+  }
+
+  function shiftSignalForDate(day, code) {
+    const staff = state.staffingByDate.get(day);
+    if (!staff || staff?.available === false)
+      return { level: "unknown", symbol: "○", label: "Pas encore analysé" };
+
+    const base = baseShift(code);
+    const row = staffingRows(staff).find(
+      (item) => baseShift(item?.shift_code || item?.shift || item?.code) === base,
+    );
+    if (!row)
+      return { level: "unknown", symbol: "○", label: "Pas encore analysé" };
+
+    const severity = Number(row?.severity || 0);
+    const gap = staffingRowGap(row);
+    if (severity >= 4)
+      return { level: "critical", symbol: "🛑", label: "Ça coince" };
+    if (gap < 0 || severity >= 2)
+      return { level: "warning", symbol: "⚠️", label: "À surveiller" };
+    return { level: "ok", symbol: "✔", label: "Rien ne coince" };
+  }
+
   function isChefItem(item) {
     const agent = item?.agents || {};
     return (
@@ -664,6 +703,7 @@
     const team = sortedItems.filter((item) => !isChefItem(item));
     const key = `${day}|${code}`;
     const open = state.openShifts.get(day) === key;
+    const signal = shiftSignalForDate(day, base);
     const group = (rows, label, className) =>
       rows.length
         ? `<section class="team-agent-group ${className}"><div class="team-agent-group-label">${esc(label)}</div>${rows.map(agentRow).join("")}</section>`
@@ -673,6 +713,7 @@
         <b>${esc(code)}</b>
         <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
         <em>${sortedItems.length}</em>
+        <span class="team-shift-mini-status status-${esc(signal.level)}" title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(signal.symbol)}</span>
         <i aria-hidden="true">⌄</i>
       </button>
       <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(chefs, chefs.length > 1 ? "CHEFS D’ÉQUIPE" : "CHEF D’ÉQUIPE", "is-chefs")}${group(team, "ÉQUIPE", "is-team")}</div>
@@ -985,9 +1026,16 @@
     if (shift) {
       const key = shift.dataset.teamShift || "";
       const day = key.split("|")[0] || state.dayFocus;
+      const beforeTop = shift.getBoundingClientRect().top;
       if (state.openShifts.get(day) === key) state.openShifts.delete(day);
       else state.openShifts.set(day, key);
       syncShiftPanels();
+      requestAnimationFrame(() => {
+        const afterTop = shift.getBoundingClientRect().top;
+        const delta = afterTop - beforeTop;
+        if (Math.abs(delta) > 1) window.scrollTo(0, window.scrollY + delta);
+        shift.blur?.();
+      });
       return;
     }
     const call = event.target.closest("[data-team-call]");
