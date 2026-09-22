@@ -116,6 +116,30 @@
     document.body.appendChild(script);
   }
 
+  function ensureRequests() {
+    if (window.STIPResponsableRequestsLoaded) return;
+    if (document.querySelector('script[data-resp-inline-requests="1"]')) return;
+    const script = document.createElement("script");
+    script.src = "responsable-demandes.js?v=20260922-tabs1";
+    script.dataset.respInlineRequests = "1";
+    script.onload = () => {
+      window.STIPResponsableRequestsLoaded = true;
+    };
+    document.body.appendChild(script);
+  }
+
+  function maybeOpenRequestTool() {
+    const params = new URLSearchParams(location.search);
+    if (String(params.get("tool") || "").toLowerCase() !== "requests") return;
+    const details = $("#respRequestCompose");
+    if (!details) return;
+    details.open = true;
+    ensureRequests();
+    requestAnimationFrame(() =>
+      details.scrollIntoView({ behavior: "smooth", block: "start" }),
+    );
+  }
+
   function activate(tab, options = {}) {
     if (!VALID.has(tab)) tab = "dates";
     const previous = current;
@@ -150,6 +174,7 @@
       window.dispatchEvent(
         new CustomEvent("stip:responsable-tab", { detail: { tab: "suivi" } }),
       );
+      maybeOpenRequestTool();
     } else if (tab === "equipe") {
       ensureTeam();
     } else if (tab === "agenda") {
@@ -163,6 +188,9 @@
   }
 
   document.addEventListener("click", (event) => {
+    const requestSummary = event.target.closest?.("#respRequestCompose > summary");
+    if (requestSummary) ensureRequests();
+
     const button = event.target.closest?.("[data-resp-tab]");
     if (!button) return;
     event.preventDefault();
