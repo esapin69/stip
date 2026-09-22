@@ -50,7 +50,7 @@
     { key: "neuro", label: "Neuro", aliases: ["neuro", "pierre wertheimer", "wertheimer", "pw"] },
     { key: "cardio", label: "Cardio", aliases: ["cardio", "louis pradel", "pradel", "hlp"] },
     { key: "hfme", label: "HFME", aliases: ["hfme", "femme mere enfant", "femme mère enfant", "mere enfant", "mère enfant"] },
-    { key: "a4", label: "Pape A4", aliases: ["a4", "pape a4", "batiment pape a4", "bâtiment pape a4"] },
+    { key: "a4", label: "POP (A4)", aliases: ["pop", "a4", "pop a4", "batiment pop", "bâtiment pop", "batiment a4", "bâtiment a4"] },
   ];
 
   const norm = (value) =>
@@ -212,30 +212,52 @@
     unbindViewport();
   }
 
+  function syncComposerDock() {
+    if (!state.root) return;
+    const composer = state.root.querySelector(".tb-composer");
+    if (!composer || !state.root.classList.contains("is-composing")) return;
+
+    const viewport = window.visualViewport;
+    const layoutHeight = Math.max(
+      Math.round(document.documentElement?.clientHeight || 0),
+      Math.round(window.innerHeight || 0),
+    );
+    const visualBottom = viewport
+      ? Math.round(viewport.offsetTop + viewport.height)
+      : layoutHeight;
+    const hiddenByKeyboard = Math.max(0, layoutHeight - visualBottom);
+    const keyboardInset = hiddenByKeyboard > 140 ? hiddenByKeyboard : 0;
+
+    state.root.style.setProperty("--tb-keyboard-inset", keyboardInset + "px");
+    state.root.style.setProperty(
+      "--tb-composer-height",
+      Math.ceil(composer.getBoundingClientRect().height) + "px",
+    );
+  }
+
   function syncViewport() {
     if (!state.root) return;
     const height = Math.round(window.visualViewport?.height || window.innerHeight || 0);
-    if (height <= 0 || Math.abs(height - state.viewportHeight) < 3) return;
-    state.viewportHeight = height;
-    state.root.style.setProperty("--tb-viewport-height", height + "px");
+    if (height > 0 && Math.abs(height - state.viewportHeight) >= 3) {
+      state.viewportHeight = height;
+      state.root.style.setProperty("--tb-viewport-height", height + "px");
+    }
+    syncComposerDock();
   }
 
   function bindViewport() {
     if (state.viewportHandler || !window.visualViewport) return;
     state.viewportHandler = () => {
       syncViewport();
-      requestAnimationFrame(() => {
-        const feed = state.root?.querySelector("[data-feed]");
-        if (feed && document.activeElement?.matches?.(".tb-composer textarea"))
-          feed.scrollTop = feed.scrollHeight;
-      });
     };
     window.visualViewport.addEventListener("resize", state.viewportHandler, { passive: true });
+    window.visualViewport.addEventListener("scroll", state.viewportHandler, { passive: true });
   }
 
   function unbindViewport() {
     if (!state.viewportHandler || !window.visualViewport) return;
     window.visualViewport.removeEventListener("resize", state.viewportHandler);
+    window.visualViewport.removeEventListener("scroll", state.viewportHandler);
     state.viewportHandler = null;
     state.viewportHeight = 0;
   }
@@ -262,11 +284,23 @@
       autoGrow(textarea);
     });
     textarea?.addEventListener("focus", () => {
+      root.classList.add("is-composing");
       syncViewport();
+      [60, 180, 360].forEach((delay) => {
+        setTimeout(() => {
+          if (!root.isConnected || document.activeElement !== textarea) return;
+          syncViewport();
+        }, delay);
+      });
+    });
+    textarea?.addEventListener("blur", () => {
       setTimeout(() => {
-        const feed = root.querySelector("[data-feed]");
-        if (feed) feed.scrollTop = feed.scrollHeight;
-      }, 80);
+        const composer = root.querySelector(".tb-composer");
+        if (!root.isConnected || composer?.contains(document.activeElement)) return;
+        root.classList.remove("is-composing");
+        root.style.removeProperty("--tb-keyboard-inset");
+        root.style.removeProperty("--tb-composer-height");
+      }, 220);
     });
 
     root.addEventListener("click", (event) => {
@@ -364,7 +398,7 @@
     const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
     host.innerHTML =
-      '<div class="tb-search-shortcuts-head"><strong>Je cherche un fauteuil</strong><small>Touche un bâtiment : le message est prêt.</small></div>' +
+      '<div class="tb-search-shortcuts-head"><strong>Où cherches-tu le fauteuil ?</strong><small>Choisis le bâtiment : le message se prépare, puis appuie sur ↑.</small></div>' +
       '<div class="tb-search-shortcuts-grid">' +
       BUILDINGS.map(
         (building) =>
