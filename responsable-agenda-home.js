@@ -120,6 +120,37 @@
     return sortedItems().filter((x) => x.date === iso);
   }
 
+  function markerGroups(events = []) {
+    const order = ["medical", "intern", "training", "other"],
+      grouped = new Map();
+    for (const event of events) {
+      const key = categoryClass(event.category);
+      if (!grouped.has(key))
+        grouped.set(key, {
+          category: key,
+          icon: event.icon || categoryIcon(key),
+          count: 0,
+        });
+      grouped.get(key).count += 1;
+    }
+    return [...grouped.values()].sort(
+      (a, b) => order.indexOf(a.category) - order.indexOf(b.category),
+    );
+  }
+
+  function markerMarkup(events = []) {
+    return markerGroups(events)
+      .map(({ category, icon, count }) => {
+        const label = categoryLabel(category),
+          badge =
+            count > 1
+              ? `<em class="rr-marker-count" aria-hidden="true">×${count}</em>`
+              : "";
+        return `<i class="rr-marker type-${esc(category)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
+      })
+      .join("");
+  }
+
   function dayDelta(iso) {
     return Math.round((dateObj(iso) - dateObj(parisIso())) / DAY_MS);
   }
@@ -231,12 +262,12 @@
     host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
-          icons = events.map((e) => e.icon),
+          markers = markerMarkup(events),
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
             .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${icons.map((i) => `<i>${esc(i)}</i>`).join("")}</span></button>`;
+        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${markers}</span></button>`;
       })
       .join("")}</nav></section>`;
   }
@@ -264,14 +295,13 @@
       const d = new Date(y, m - 1, day, 12),
         iso = localIso(d),
         events = itemsForDate(iso),
-        icons = [...new Set(events.map((e) => e.icon))].slice(0, 2),
-        extra = Math.max(0, events.length - icons.length),
+        markers = markerMarkup(events),
         gridStart =
           day === 1
             ? ` style="grid-column-start:${leading + 1}"`
             : "";
       cells.push(
-        `<button type="button" class="${iso === today ? "today" : ""} ${iso === state.selectedDate ? "selected" : ""} ${events.length ? "has-event" : ""}"${gridStart} data-rr-cal-day="${iso}"><b>${day}</b><span>${icons.map((i) => `<i>${esc(i)}</i>`).join("")}${extra ? `<em>+${extra}</em>` : ""}</span></button>`,
+        `<button type="button" class="${iso === today ? "today" : ""} ${iso === state.selectedDate ? "selected" : ""} ${events.length ? "has-event" : ""}"${gridStart} data-rr-cal-day="${iso}"><b>${day}</b><span>${markers}</span></button>`,
       );
     }
 
