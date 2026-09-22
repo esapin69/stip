@@ -23,6 +23,13 @@
     "RF",
     "SYR",
   ];
+  const SPECIAL_SHIFT = {
+    J0464: { base: "J", text: "08h30–16h20 · fixe" },
+    M0130: { base: "M", text: "3h45 · libre entre 06h00 et 21h30" },
+    M0131: { base: "M", text: "7h30 · libre entre 06h30 et 21h15" },
+    M0177: { base: "M", text: "7h30 · libre entre 06h25 et 21h35" },
+    S0113: { base: "S", text: "13h30–21h00 · fixe" },
+  };
   const esc = (value) =>
     String(value ?? "").replace(
       /[&<>"']/g,
@@ -105,7 +112,9 @@
     const status = shift
       ? standardCode
         ? `${code} · ${shift.time}`
-        : `Présent · ${code}`
+        : SPECIAL_SHIFT[code]
+          ? `Présent · ${code} · ${SPECIAL_SHIFT[code].text}`
+          : `Présent · ${code} · horaire spécifique`
       : `Absent · ${code || "motif non renseigné"}`;
     const meta = [status, agent.ghe ? `GHE ${agent.ghe}` : ""]
       .filter(Boolean)
