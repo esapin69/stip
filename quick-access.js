@@ -351,15 +351,14 @@
     mount();
     window.scrollTo({ top: 0, behavior: "auto" });
   }
-  function showProfile() {
+  function showProfile(target = "home") {
     if (!requireSession()) return;
     closeFavorites();
     publicPreview = false;
     $("#loginView")?.classList.add("hidden");
     $("#appView")?.classList.remove("hidden");
-    window.STIPRouter?.set?.("home");
+    window.STIPRouter?.set?.(target);
     mount();
-    setTimeout(() => document.querySelector('[data-home-mode="notifications"]')?.click(), 0);
     window.scrollTo({ top: 0, behavior: "auto" });
   }
   function openKey(key) {
@@ -400,7 +399,8 @@
       history.replaceState(null, "", location.pathname + location.hash);
       setTimeout(() => {
         if (q === "public") showPublic();
-        else if (q === "profile" || q === "notifications") showProfile();
+        else if (q === "profile") showProfile("home");
+        else if (q === "notifications") showProfile("notifications");
         else if (q === "tableau" || q === "teamchat") window.STIPRouter?.set?.("fauteuils", { replace: true });
         else if (allowed(q)) openKey(q);
       }, 40);
