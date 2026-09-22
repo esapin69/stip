@@ -32,6 +32,7 @@ const FALLBACK: any = {
   brancardier: {
     planning_personal: true,
     planning_team: true,
+    agent_directory: true,
     change_app: true,
     calendar_subscribe: true,
     contacts: true,
@@ -94,6 +95,7 @@ const FALLBACK: any = {
 const DEFS = [
   ["planning_personal", "Planning perso"],
   ["planning_team", "Planning équipe"],
+  ["agent_directory", "Agents"],
   ["change_app", "Changement"],
   ["calendar_subscribe", "Mon agenda"],
   ["agent_dates", "Date des agents"],
