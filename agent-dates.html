@@ -10,7 +10,7 @@
     <meta name="robots" content="noindex,nofollow" />
     <title>Date des agents · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260922-sections3" />
-    <link rel="stylesheet" href="agent-dates.css?v=20260922-sections2" />
+    <link rel="stylesheet" href="agent-dates.css?v=20260922-dayfilter1" />
   </head>
   <body>
     <main class="da-shell">
@@ -65,6 +65,10 @@
         ><button data-filter="intern">Stagiaires</button
         ><button data-filter="training">Formations</button>
       </nav>
+      <div class="da-scope" id="daScope" hidden>
+        <span id="daScopeText"></span>
+        <button id="daScopeClear" type="button">Voir toutes les dates</button>
+      </div>
       <div class="stip-section-separator"><span>DATES À VENIR</span></div>
       <section class="da-list" id="daList">
         <div class="da-empty">Chargement…</div>
@@ -83,6 +87,6 @@
       </div>
     </section>
     <script src="stip-navigation.js?v=20260920-context2"></script>
-    <script src="agent-dates.js?v=20260922-sections1"></script>
+    <script src="agent-dates.js?v=20260922-dayfilter1"></script>
   </body>
 </html>
