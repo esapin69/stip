@@ -12,7 +12,13 @@ const loader=read('stip-loader.js');
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
-check(homeModeBody.indexOf('${planningMonthTitle()}')<homeModeBody.indexOf('${weekWidget()}'),'Le mois complet doit précéder la ligne des jours.');
+check(
+  homeModeBody.indexOf('CETTE SEMAINE') >= 0 &&
+  homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('CETTE SEMAINE') &&
+  homeModeBody.indexOf('AU MOIS') > homeModeBody.indexOf('${weekWidget()}') &&
+  homeModeBody.indexOf('${planningCalendarOverview()}') > homeModeBody.indexOf('AU MOIS'),
+  'L’accueil doit conserver l’ordre validé : semaine puis vue mensuelle.'
+);
 check(!loader.includes('signature-success-ui.js'),'Le chargeur référence encore le script absent signature-success-ui.js.');
 check(!responsable.includes('dashboardMode'),'Le chargement Responsable dépend encore du paramètre dashboard.');
 check(responsable.includes('await load()'),'Le cockpit Responsable ne déclenche pas son chargement principal.');
@@ -48,6 +54,17 @@ check(!read('assistant.css').trimStart().startsWith(':root'),'Assistant recrée 
 check(!read('responsable-home.css').trimStart().startsWith(':root'),'Responsable recrée une palette locale.');
 
 const navigation=read('stip-navigation.js');
+const appRuntime=read('app.js');
+check(
+  appRuntime.includes("if(route()===target){restore();return}") &&
+  appRuntime.includes("if(r==='fauteuils'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}"),
+  'Le routeur principal peut de nouveau ignorer une ré-entrée ou perdre la route Fauteuils.'
+);
+check(
+  home.includes('if ((window.STIPRouter?.get?.() || "home") === "fauteuils")') &&
+  home.includes('window.STIPRouter?.set?.("home", { replace: true, keepScroll: true })'),
+  'Quitter Fauteuils ne resynchronise plus la route avec le mode d’accueil.'
+);
 check(navigation.includes('stip_navigation_context_v2'),'Le contrat de navigation contextualisée est absent.');
 check(['scrollY','fields','panel','register','remember'].every(key=>navigation.includes(key)),'Le contrat de navigation ne couvre plus tous les contextes validés.');
 check(spirit.includes('weekStart: state.weekStart'),'Esprit d’équipe ne mémorise plus la semaine courante.');
@@ -71,7 +88,7 @@ for(const file of ['home-shell.js','responsable-home.js','access-runtime.js','ad
 }
 
 
-/* Décisions finales 20/09/2026 */
+/* Décisions validées 20–22/09/2026 */
 const quick=read('quick-access.js');
 const quickUniversal=read('quick-access-universal.js');
 const accessManage=read('access-manage.js');
@@ -79,10 +96,20 @@ const patterns=read('stip-patterns.css');
 const loadingCss=read('stip-loading.css');
 const loadingJs=read('stip-loading.js');
 
-check(home.includes('class="hc-profile-bell"')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée au profil.');
-check(home.includes('["apps", "Applications", ICON.homeApps]')&&home.includes('["planning", "Mon profil", ICON.homeHome]')&&home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),'La navigation principale Applications / Mon profil et l’accès Actions ne sont plus conformes.');
+check(home.includes('hc-profile-bell')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée à la barre d’accueil.');
+check(
+  home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps }') &&
+  home.includes('{ key: "planning", label: "Mon profil", art: ICON.homeHome }') &&
+  home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
+  'La navigation principale Applications / Mon profil et l’accès Actions ne sont plus conformes.'
+);
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
-check(home.includes('hcProfileActions')&&home.includes('Se déconnecter complètement')&&home.includes('hcCommunicationHub'),'La Cloche ne conserve plus le centre À traiter, le profil secondaire ou le hub de communication.');
+check(
+  home.includes('function notificationsPane()') &&
+  home.includes('id="hcProfileActions"') &&
+  home.includes('id="hcCommunicationHub"'),
+  'La Cloche ne conserve plus le centre À traiter ou le hub de communication.'
+);
 check(!home.includes('id="cpBell"'),'La cloche est revenue dans l’en-tête de l’accueil.');
 check(!quick.includes('data-qs="public"')&&!quickUniversal.includes('data-u="public"'),'Le raccourci bas gauche supprimé est revenu.');
 check(!quick.includes('data-qs="profile"')&&!quickUniversal.includes('data-u="profile"'),'La maison basse supprimée est revenue.');
@@ -135,36 +162,112 @@ check(!read('cadre.html').includes('assistant-presence.js'),'Cadre charge encore
 check(!read('responsable.html').includes('assistant-presence.js'),'Responsable charge encore l’ancien bandeau Assistant.');
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
-check(home.includes('const markup = `${profile()}${homeModeNav()}<section class="hc-home-mode-content"'),'La carte identité n’est plus placée au-dessus des trois accès rapides.');
+check(
+  home.includes('const showProfile = state.homeMode === "planning"') &&
+  home.includes('const markup = `${homeModeNav()}${showProfile ? profile() : ""}'),
+  'La carte identité doit rester sous les accès rapides et uniquement dans Mon profil.'
+);
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
 const homeCss=read('home-shell.css');
 check(home.includes('function planningCalendarOverview')&&home.includes('hc-date-jump-permanent'),'Le calendrier mensuel permanent a disparu du planning.');
 check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),'Le calendrier mensuel ne doit plus fonctionner comme un pop-up refermable.');
-check(home.includes('if (!["M", "J", "J4", "S", "N"].includes(code)) return null;'),'Seuls les jours réellement travaillés doivent recevoir un repère coloré dans le calendrier.');
-check(home.includes('hc-date-jump-number hc-date-jump-workday')&&!home.includes('function calendarShiftPill'),'Le numéro du jour travaillé doit être directement gravé dans la pastille, sans afficher le code du shift.');
+check(
+  home.includes('work: Boolean(workIcon)') &&
+  home.includes('shift.work') &&
+  home.includes('hc-date-jump-dot shift-${esc(shift.type)}'),
+  'Le calendrier doit réserver la pastille colorée aux shifts réellement travaillés.'
+);
+check(
+  home.includes('hc-date-jump-day-number') &&
+  home.includes('hc-date-jump-marker') &&
+  !home.includes('function calendarShiftPill'),
+  'Le calendrier doit garder le numéro du jour lisible et le repère de shift séparé.'
+);
 const homePlanningBlock=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()'));
 check(!homePlanningBlock.includes('planningMonthTitle()')&&!homePlanningBlock.includes('homeDayStrip('),'L’ancien bloc semaine/jours doit avoir disparu de la page d’accueil.');
-check(homePlanningBlock.indexOf('planningCalendarOverview()') < homePlanningBlock.indexOf('weekWidget()')&&homePlanningBlock.indexOf('weekWidget()') < homePlanningBlock.indexOf('fixedShiftLegend()'),'Le calendrier doit piloter le bloc semaine en restant fusionné au-dessus de lui.');
+check(
+  homePlanningBlock.indexOf('weekWidget()') >= 0 &&
+  homePlanningBlock.indexOf('planningCalendarOverview()') > homePlanningBlock.indexOf('weekWidget()') &&
+  homePlanningBlock.indexOf('fixedShiftLegend()') > homePlanningBlock.indexOf('planningCalendarOverview()'),
+  'La hiérarchie validée doit rester : semaine, mois, puis légende.'
+);
 check(/function weekWidget\(\)[\s\S]{0,500}weekDaysLandscape/.test(home),'Le bloc piloté par le calendrier doit conserver la vue complète de la semaine.');
 check(home.includes('weekStart = w[0]?.iso')&&home.includes('return start <= weekEnd && end >= weekStart'),'Les événements doivent suivre la semaine sélectionnée par le calendrier.');
-check(home.includes('monthKey === currentMonthKey')&&home.includes('hc-week-today hc-date-jump-today'),'Le bouton Aujourd’hui doit rester absent sur le mois courant et revenir sur les autres mois.');
-check(homeCss.includes('.hc-date-jump-workday.shift-morning')&&homeCss.includes('.hc-date-jump-workday.shift-night'),'Les couleurs des pastilles de jours travaillés ont disparu.');
-check(homeCss.includes('CALENDAR-DRIVEN WEEK PLANNING')&&homeCss.includes('.hc-calendar-driven-planning>.hc-planning-calendar-block'),'Le raccord visuel calendrier/planning a disparu.');
-check(home.includes('is-week-start')&&home.includes('is-week-end')&&home.includes('choisir cette semaine'),'Le calendrier doit exprimer une sélection de semaine, pas seulement de jour.');
-check(homeCss.includes('WEEK PICKER AFFORDANCE + EVENT BREATHING ROOM')&&homeCss.includes('.hc-date-jump-grid>button.is-week-start')&&homeCss.includes('box-shadow:')&&homeCss.includes('inset 0 -3px 0 rgba(12,135,158,.26)'),'Le regroupement visuel de la semaine sélectionnée a disparu.');
-check(homeCss.includes('height:37px!important')&&homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-number'),'Le calendrier fusionné doit rester légèrement plus compact que l’ancienne version.');
-check(homeCss.includes('.hc-days-landscape.has-week-events')&&homeCss.includes('padding-top:78px!important')&&homeCss.includes('.hc-day-event-markers i')&&homeCss.includes('font-size:37px!important'),'Les repères événement au-dessus des shifts ont perdu leur espace ou leur importance.');
-check(homeCss.includes('PREMIUM CALENDAR → WEEK TRANSITION')&&homeCss.includes('content:none!important')&&homeCss.includes('border-radius:0 0 22px 22px!important'),'La transition premium entre calendrier et semaine a régressé.');
-check(home.includes('gridStart = new Date(y, m, 1 - leading, 12)')&&home.includes('totalCells = leading + last.getDate() + trailing'),'Le calendrier doit compléter les lignes avec les jours des mois précédent et suivant.');
-check(home.includes('outsideMonth ? "is-outside-month" : ""')&&home.includes('data-cal-month'),'Les jours hors du mois courant doivent rester identifiables et sélectionnables.');
+check(
+  !home.includes('data-cal-today') &&
+  home.includes('firstMondayOfMonth(state.dateJumpMonth)'),
+  'Le calendrier mensuel ne doit plus afficher le bouton Aujourd’hui redondant ; les flèches doivent recaler la semaine.'
+);
+check(
+  homeCss.includes('.hc-date-jump-dot.shift-morning') &&
+  homeCss.includes('.hc-date-jump-dot.shift-night'),
+  'Les couleurs des pastilles de shifts du calendrier ont disparu.'
+);
+check(
+  homeCss.includes('.hc-calendar-driven-planning .hc-planning-week-subblock') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-planning-month-subblock'),
+  'Les surfaces Semaine et Mois du planning ne sont plus reliées par la hiérarchie commune.'
+);
+check(
+  home.includes('state.dayFocus = iso') &&
+  home.includes('state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000)') &&
+  home.includes('data-cal-day='),
+  'Choisir un jour du calendrier doit recaler la semaine affichée et mémoriser le jour sélectionné.'
+);
+check(
+  homeCss.includes('.hc-days-landscape .hc-day-landscape.selected') &&
+  homeCss.includes('.hc-days-landscape .hc-day-landscape.selected::after'),
+  'Le jour actif de la semaine a perdu son regroupement visuel.'
+);
+check(
+  homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-day-number'),
+  'Le calendrier mensuel permanent a perdu son gabarit dédié.'
+);
+check(
+  home.includes('hc-week-events-slot') &&
+  home.includes('hc-week-event-chip') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip'),
+  'Les repères événement intégrés dans les cartes de shift ont disparu.'
+);
+check(
+  home.includes('hc-planning-week-separator stip-section-separator') &&
+  home.includes('hc-planning-month-separator stip-section-separator') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-planning-week-subblock') &&
+  homeCss.includes('.hc-calendar-driven-planning .hc-planning-month-subblock'),
+  'La séparation visuelle Semaine / Mois a régressé.'
+);
+check(
+  home.includes('leading = (first.getDay() + 6) % 7') &&
+  home.includes('gridStart = day === 1 ?') &&
+  home.includes('grid-column-start:${leading + 1}'),
+  'Le calendrier mensuel doit aligner correctement le premier jour sur la semaine.'
+);
+check(
+  home.includes('data-cal-month="${monthKeyOf(d)}"') &&
+  home.includes('data-cal-day="${iso}"'),
+  'Chaque jour du mois doit conserver ses métadonnées de navigation.'
+);
 check(home.includes('dateJumpPanel.dataset.calendarMonth ||')&&home.includes('return jumpToDate(day.dataset.calDay)'),'Sélectionner une semaine via un jour du mois voisin ne doit pas faire sauter le calendrier vers ce mois.');
-check(homeCss.includes('ADJACENT MONTH DAYS')&&homeCss.includes('.is-outside-month:not(.is-week)')&&homeCss.includes('filter:saturate(.78) brightness(1.03)'),'La différenciation visuelle des jours des mois voisins a disparu.');
+check(
+  homeCss.includes('.hc-date-jump-grid>button.is-selected') &&
+  homeCss.includes('.hc-date-jump-grid>button.is-today:not(.is-selected)'),
+  'Le calendrier doit distinguer visuellement le jour sélectionné et aujourd’hui.'
+);
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
 check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
-check(espritHtml.includes('teamMonthLabel')&&espritHtml.includes('stip-time-days'),'Esprit d’équipe n’est plus la référence du filtre temporel à trois niveaux.');
+check(
+  espritHtml.includes('id="teamWeekControls"') &&
+  espritHtml.includes('id="teamDays"') &&
+  espritHtml.includes('stip-time-days') &&
+  espritHtml.includes('class="team-month-zone"') &&
+  espritHtml.includes('id="teamDateJumpPanel"'),
+  'Esprit d’équipe a perdu sa hiérarchie temporelle Semaine active / Jour / Mois.'
+);
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
 check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
 check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
@@ -172,7 +275,11 @@ check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le con
 const espritInteractiveHtml=read('esprit-equipe.html');
 const espritInteractiveJs=read('esprit-equipe.js');
 const espritInteractiveCss=read('esprit-equipe.css');
-check(espritInteractiveHtml.includes('id="teamCurrent"'),'Esprit d’équipe a perdu le raccourci Aujourd’hui.');
+check(
+  !espritInteractiveHtml.includes('id="teamCurrent"') &&
+  espritInteractiveJs.includes('day === today ? "today" : ""'),
+  'Esprit d’équipe doit signaler Aujourd’hui dans la ligne des jours sans bouton redondant.'
+);
 check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.includes('aria-expanded'),'Les shifts Esprit d’équipe ne sont plus interactifs.');
 check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
 check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
