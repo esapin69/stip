@@ -1,0 +1,53 @@
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+const URL=Deno.env.get('SUPABASE_URL')!, SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, db=createClient(URL,SERVICE)
+const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session,x-stip-view-grant','Access-Control-Allow-Methods':'POST,OPTIONS'}
+
+const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
+async function signAvatarPayload(value:any){
+  const rawToPath=new Map<string,string>();
+  const collect=(v:any)=>{
+    if(!v||typeof v!=="object")return;
+    if(Array.isArray(v)){for(const x of v)collect(x);return}
+    const raw=typeof v.avatar_url==="string"?v.avatar_url:"";
+    if(raw.includes(LEGACY_AVATAR_MARKER)){
+      const path=raw.split(LEGACY_AVATAR_MARKER)[1]?.split("?")[0]||"";
+      if(path)rawToPath.set(raw,decodeURIComponent(path));
+    }
+    for(const x of Object.values(v))collect(x);
+  };
+  collect(value);
+  if(!rawToPath.size)return value;
+  const raws=[...rawToPath.keys()],paths=raws.map(x=>rawToPath.get(x)!);
+  const {data,error}=await db.storage.from("planning-pdf").createSignedUrls(paths,3600);
+  if(error||!data)return value;
+  const signed=new Map<string,string>();
+  raws.forEach((raw,i)=>{const url=(data as any[])?.[i]?.signedUrl;if(url)signed.set(raw,url)});
+  const rewrite=(v:any)=>{
+    if(!v||typeof v!=="object")return;
+    if(Array.isArray(v)){for(const x of v)rewrite(x);return}
+    if(typeof v.avatar_url==="string"&&signed.has(v.avatar_url))v.avatar_url=signed.get(v.avatar_url);
+    for(const x of Object.values(v))rewrite(x);
+  };
+  rewrite(value);
+  return value;
+}
+const J=async(b:unknown,s=200)=>new Response(JSON.stringify(await signAvatarPayload(b)),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}})
+const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,'0')).join('')
+async function sha256(s:string){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))}
+function randomToken(){const a=new Uint8Array(32);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function parisToday(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()),g=(k:string)=>parts.find(x=>x.type===k)?.value||'';return`${g('year')}-${g('month')}-${g('day')}`}
+function parisDay(offset=0){const base=parisToday();if(!offset)return base;const d=new Date(base+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+offset);return d.toISOString().slice(0,10)}
+async function viewer(req:Request){const token=req.headers.get('x-stip-session')||'';if(!token)throw Error('Session STIP requise.');const h=await sha256(token);const {data:s,error}=await db.from('stip_access_sessions').select('profile_id,expires_at,revoked_at').eq('token_hash',h).maybeSingle();if(error)throw error;if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error('Session expirée.');const {data:p,error:pe}=await db.from('stip_access_profiles').select('id,agent_id,active,permissions,agents(id,nom,prenom,role)').eq('id',s.profile_id).maybeSingle();if(pe)throw pe;if(!p?.active)throw Error('Accès désactivé.');if(!p.permissions?.responsable&&!/chef|responsable|cadre/i.test(String((p as any).agents?.role||'')))throw Error('Accès Responsable non autorisé.');return p}
+async function grant(req:Request){const raw=req.headers.get('x-stip-view-grant')||'';if(!raw)throw Error('Laissez-passer lecture requis.');const h=await sha256(raw);const {data:g,error}=await db.from('stip_readonly_grants').select('id,viewer_profile_id,target_agent_id,expires_at,revoked_at').eq('token_hash',h).maybeSingle();if(error)throw error;if(!g||g.revoked_at||new Date(g.expires_at)<=new Date())throw Error('Laissez-passer expiré.');const {data:p}=await db.from('stip_access_profiles').select('id,active,permissions').eq('id',g.viewer_profile_id).maybeSingle();if(!p?.active)throw Error('Accès du responsable désactivé.');return{...g,viewer_permissions:p.permissions||{}}}
+function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||'jour').toLowerCase();return /chef/.test(t)?'chefs':t==='nuit'?'nuit':'jour'}
+async function media(){const {data,error}=await db.from('media_assets').select('kind,agent_source_key,code,storage_path,metadata').eq('active',true).in('kind',['avatar_agent','shift']);if(error)throw error;const avatars:Record<string,string>={},shifts:Record<string,string>={};for(const x of data||[]){const {data:s}=await db.storage.from(String(x?.metadata?.bucket||'ghe-media')).createSignedUrl(x.storage_path,3600);if(!s?.signedUrl)continue;if(x.kind==='avatar_agent'&&x.agent_source_key)avatars[x.agent_source_key]=s.signedUrl;if(x.kind==='shift'&&x.code)shifts[String(x.code).toUpperCase()]=s.signedUrl}return{avatars,shifts}}
+async function target(id:string){const {data:a,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,ghe,telephone,email,avatar_url,role,actif').eq('id',id).eq('actif',true).maybeSingle();if(error)throw error;if(!a)throw Error('Agent introuvable.');const {data:p}=await db.from('stip_access_profiles').select('permissions,active').eq('agent_id',id).maybeSingle();return{agent:a,permissions:p?.active===false?{}:(p?.permissions||{})}}
+async function boot(id:string,viewer_permissions:any){const t=await target(id),a=t.agent,[pl,m,ag,fr,st]=await Promise.all([db.from('planning').select('date,code,observation,equipe,source_value').eq('agent_id',id).order('date'),media(),db.from('stip_agent_agenda_items').select('id,title,body,event_date,all_day,start_time,end_time,location,importance').eq('agent_id',id).eq('status','active').order('event_date'),db.from('formations').select('id,intitule,date_debut,date_fin,lieu,horaire,statut').eq('agent_source_key',a.source_key).order('date_debut'),db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').order('date_debut')]);if(pl.error)throw pl.error;return{agent:a,target_permissions:t.permissions,viewer_permissions,team:teamOf(a),personal:pl.data||[],media:m,agenda_items:ag.data||[],personal_formations:fr.data||[],personal_stagiaires:(st.data||[]).filter((x:any)=>String(x.referent||'').toLowerCase().includes(String(a.prenom||'').toLowerCase())||String(x.referent||'').toLowerCase().includes(String(a.nom||'').toLowerCase()))}}
+async function team(id:string,viewer_permissions:any){const t=await target(id),team=teamOf(t.agent),today=parisDay(),end=parisDay(62);let q=db.from('planning').select('date,code,observation,equipe,agent_id,agent_source_key,agents(id,nom,prenom,source_key,ghe,telephone,avatar_url)').gte('date',today).lte('date',end).order('date');q=team==='chefs'?q.in('equipe',['jour','nuit','chefs']):q.eq('equipe',team);const {data,error}=await q;if(error)throw error;return{team,planning:data||[],viewer_permissions}}
+async function contacts(viewer_permissions:any){if(!viewer_permissions?.equipe_contacts)throw Error('Accès Contacts non autorisé.');const {data,error}=await db.from('contacts_ghe').select('source_key,categorie,ghe,nom,prenom,telephone,email_pro,role_metier').eq('actif',true).order('nom');if(error)throw error;return{people:(data||[]).filter((x:any)=>x.categorie!=='service')}}
+const WORK_BASE=new Set(['M','J','J4','S','N']);
+function standardWorkCode(raw:any){const c=String(raw||'').trim().toUpperCase().replace(/\*+$/,'');return WORK_BASE.has(c)}
+async function specialShiftMap(){const {data,error}=await db.from('stip_special_shift_definitions').select('code,base_shift,schedule_mode,window_start,window_end,duration_minutes,source_label').eq('active',true);if(error){console.warn('special shifts',error.message);return new Map()}return new Map((data||[]).map((x:any)=>[String(x.code||'').toUpperCase(),x]))}
+async function directory(){const today=parisDay();const [aq,pq,specials]=await Promise.all([db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,ghe,telephone,email,avatar_url,role,actif').eq('actif',true).order('nom'),db.from('planning').select('date,code,observation,equipe,agent_id,agent_source_key').eq('date',today),specialShiftMap()]);if(aq.error)throw aq.error;if(pq.error)throw pq.error;const byId=new Map<string,any>(),byKey=new Map<string,any>();for(const p of pq.data||[]){if(p.agent_id)byId.set(String(p.agent_id),p);if(p.agent_source_key)byKey.set(String(p.agent_source_key),p)}const items=(aq.data||[]).map((a:any)=>{const row=byId.get(String(a.id))||byKey.get(String(a.source_key)),code=String(row?.code||'').toUpperCase()||null,special=code?specials.get(code)||null:null;return{...a,today_code:code,today_observation:row?.observation||null,today_team:row?.equipe||null,today_special_schedule:special,is_working:!!code&&(standardWorkCode(code)||!!special)}});return{date:today,items,counts:{total:items.length,working:items.filter((x:any)=>x.is_working).length,not_working:items.filter((x:any)=>!x.is_working).length}}}
+Deno.serve(async req=>{if(req.method==='OPTIONS')return new Response('ok',{headers:C});if(req.method!=='POST')return J({error:'Méthode non autorisée.'},405);try{const b=await req.json().catch(()=>({})),action=String(b.action||'');if(action==='directory'){const v:any=await viewer(req);return J({...await directory(),viewer_permissions:v.permissions||{}})}if(action==='issue_grant'){const v:any=await viewer(req),id=String(b.agent_id||'');if(!id)throw Error('Agent manquant.');await target(id);const raw=randomToken(),hash=await sha256(raw),expires=new Date(Date.now()+30*60*1000).toISOString();await db.from('stip_readonly_grants').delete().eq('viewer_profile_id',v.id).lt('expires_at',new Date().toISOString());const {error}=await db.from('stip_readonly_grants').insert({token_hash:hash,viewer_profile_id:v.id,target_agent_id:id,expires_at:expires});if(error)throw error;return J({grant:raw,expires_at:expires})}const g:any=await grant(req);if(action==='grant_boot')return J(await boot(g.target_agent_id,g.viewer_permissions));if(action==='grant_team')return J(await team(g.target_agent_id,g.viewer_permissions));if(action==='grant_contacts')return J(await contacts(g.viewer_permissions));return J({error:'Action invalide.'},400)}catch(e){console.error(e);return J({error:e instanceof Error?e.message:String(e)},400)}})
