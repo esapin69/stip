@@ -95,6 +95,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 .stip-store-icon-assistant{background:linear-gradient(145deg,#13b4cb,#0a8ab7)}
 .stip-store-icon-activity{background:linear-gradient(145deg,#ff6d72,#e24d5f)}
 .stip-store-icon-responsable{background:linear-gradient(145deg,#5b7c93,#314a5d)}
+.stip-store-icon-resp_tracking{background:linear-gradient(145deg,#55d45d,#29a947)}
+.stip-store-icon-resp_evaluation{background:linear-gradient(145deg,#2a96e2,#6558db)}
+.stip-store-icon-resp_official{background:linear-gradient(145deg,#397fdc,#5d55d8)}
+.stip-store-icon-resp_requests{background:linear-gradient(145deg,#9b78ee,#7755dd)}
+.stip-store-icon-resp_directory{background:linear-gradient(145deg,#f2a04a,#de772b)}
+.stip-store-icon-resp_agenda{background:linear-gradient(145deg,#1da8c6,#0b8fa7)}
 .stip-store-icon-newagent{background-color:transparent}
 .stip-store-back{width:44px!important;height:44px!important;min-width:44px!important;border:0!important;border-radius:14px!important;background:#edf5f6!important;color:#0d4257!important;font-size:1.65rem!important}
 .stip-app-store>header{justify-content:flex-start}.stip-app-store>header p{margin:4px 0 0;color:#72858c;font-size:.78rem}
