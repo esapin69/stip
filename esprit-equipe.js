@@ -1213,7 +1213,7 @@
       <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
         <b>${esc(code)}</b>
         <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-        <span class="team-shift-mini-status status-${esc(signal.level)} ${["critical","warning","opportunity"].includes(signal.level) ? "is-clickable" : ""}" ${["critical","warning","opportunity"].includes(signal.level) ? `data-team-shift-analysis="${esc(day)}|${esc(base)}"` : ""} title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(signal.symbol)}</span>
+        <span class="team-shift-mini-status status-${esc(signal.level)} is-clickable" data-team-shift-analysis="${esc(day)}|${esc(base)}" title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(statusSymbol(signal.level, signal.symbol))}</span>
         <em>${sortedItems.length}</em>
         <i aria-hidden="true">⌄</i>
       </button>
