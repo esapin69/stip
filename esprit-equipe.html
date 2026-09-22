@@ -15,7 +15,7 @@
     <title>Esprit d’équipe · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260922-opportunity1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-orderfix1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260922-todayonly1" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -35,24 +35,18 @@
         <h1 id="teamPageTitle">Esprit d’équipe</h1>
       </section>
 
-      <section class="team-live-zone" aria-label="Informations immédiates et chefs du jour">
-        <div class="stip-section-separator" aria-hidden="true">
-          <span>MAINTENANT</span>
-        </div>
-
-        <section id="teamDutyChiefNowHost" class="team-duty-chief-host" aria-label="Chef d’équipe présent maintenant"></section>
-
-        <a class="team-live-wheelchair" href="index.html#/fauteuils" aria-label="Ouvrir le chat fauteuils">
-          <span class="team-live-wheelchair-icon" aria-hidden="true">♿</span>
-          <span><strong>Chat fauteuils</strong><small>Voir ou signaler une disponibilité maintenant</small></span>
-          <i aria-hidden="true">›</i>
-        </a>
-
+      <section class="team-live-zone" aria-label="Chefs et informations du jour">
         <div class="stip-section-separator team-today-separator" aria-hidden="true">
           <span>AUJOURD’HUI</span>
         </div>
 
         <section id="teamDutyChiefTodayHost" class="team-duty-chief-host" aria-label="Chefs d’équipe de la journée"></section>
+
+        <a class="team-live-wheelchair" href="index.html#/fauteuils" aria-label="Ouvrir le chat fauteuils">
+          <span class="team-live-wheelchair-icon" aria-hidden="true">♿</span>
+          <span><strong>Chat fauteuils</strong><small>Voir ou signaler une disponibilité aujourd’hui</small></span>
+          <i aria-hidden="true">›</i>
+        </a>
       </section>
 
       <p id="teamError" class="team-error" role="status" aria-live="polite"></p>
@@ -113,7 +107,7 @@
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="agent-agenda-view.js?v=20260922-agentcalendar1"></script>
     <script src="calendar-subscriptions.js?v=20260922-agentplanning1"></script>
-    <script src="home-duty-chief.js?v=20260922-flatcorrect2"></script>
+    <script src="home-duty-chief.js?v=20260922-todayonly1"></script>
     <script src="esprit-equipe.js?v=20260922-noduplicatechief1"></script>
   </body>
 </html>
