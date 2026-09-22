@@ -7,7 +7,7 @@
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   function css(){
     if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260922-headercall1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260922-agentcalendar1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
@@ -203,6 +203,47 @@
     if(!tel&&!mail)return"";
     return `<div class="aav-contact">${tel?`<a href="${esc(tel)}">☎ ${esc(c.telephone)}</a>`:""}${mail?`<button type="button" data-aav-copy="${esc(mail)}">✉ ${esc(mail)}</button>`:""}</div>`;
   }
+  function calendarAccess(){
+    const viewer=state?.data?.viewer||{};
+    return Boolean(viewer.is_self||viewer.can_manage);
+  }
+  function calendarHtml(){
+    if(!calendarAccess()||(!state?.data?.agent?.id&&!state?.sourceKey))return"";
+    return `<section class="aav-calendar-option"><button type="button" class="aav-subscribe" data-aav-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à ce planning</strong><small>Shifts et événements · mise à jour automatique</small><em aria-hidden="true">›</em></button><p data-aav-calendar-status aria-live="polite"></p></section>`;
+  }
+  let calendarLoader=null;
+  function ensureCalendarTools(){
+    if(window.STIPCalendars?.quickAgent)return Promise.resolve(window.STIPCalendars);
+    if(calendarLoader)return calendarLoader;
+    calendarLoader=new Promise((resolve,reject)=>{
+      const script=document.createElement("script");
+      script.src="calendar-subscriptions.js?v=20260922-agentplanning1";
+      script.async=false;
+      script.onload=()=>window.STIPCalendars?.quickAgent?resolve(window.STIPCalendars):reject(Error("Outil calendrier indisponible."));
+      script.onerror=()=>reject(Error("Chargement du calendrier impossible."));
+      document.body.appendChild(script);
+    }).catch(err=>{calendarLoader=null;throw err});
+    return calendarLoader;
+  }
+  async function subscribeAgent(button,status){
+    if(!button||!state)return;
+    button.disabled=true;
+    if(status)status.textContent="Préparation du calendrier…";
+    try{
+      const tools=await ensureCalendarTools(),
+        c=state.data.contact||state.data.agent||{};
+      await tools.quickAgent({
+        agentId:state.data.agent?.id||"",
+        sourceKey:state.sourceKey||state.data.agent?.source_key||"",
+        name:person(c),
+      });
+      if(status)status.textContent="";
+    }catch(err){
+      if(status)status.textContent=err?.message||"Abonnement indisponible.";
+    }finally{
+      button.disabled=false;
+    }
+  }
   function addForm(){
     const viewer=state.data.viewer||{};
     if(!viewer.can_manage&&!viewer.is_self)return"";
@@ -221,7 +262,7 @@
       call.dataset.aavCallName=person(c);
       call.setAttribute("aria-label",phone?`Choisir comment appeler ${person(c)}`:"Appel indisponible");
     }
-    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}`;
+    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}${calendarHtml()}`;
     wireBody();
   }
   function moveMonth(step){
@@ -240,6 +281,8 @@
     body.querySelectorAll("[data-aav-day]").forEach(b=>b.onclick=()=>{state.selected=b.dataset.aavDay;state.month=monthKey(state.selected);render()});
     body.querySelectorAll("[data-aav-month]").forEach(b=>b.onclick=()=>moveMonth(b.dataset.aavMonth));
     body.querySelector("[data-aav-copy]")?.addEventListener("click",async e=>{try{await navigator.clipboard.writeText(e.currentTarget.dataset.aavCopy||"")}catch{}});
+    const subscribe=body.querySelector("[data-aav-subscribe]");
+    subscribe?.addEventListener("click",()=>subscribeAgent(subscribe,body.querySelector("[data-aav-calendar-status]")));
     const addBtn=body.querySelector("[data-aav-add]"),form=body.querySelector("[data-aav-form]");
     if(addBtn&&form)addBtn.onclick=()=>{addBtn.hidden=true;form.hidden=false};
     body.querySelector("[data-aav-cancel]")?.addEventListener("click",()=>render());

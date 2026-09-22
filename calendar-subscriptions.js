@@ -24,7 +24,7 @@
     return /Android/i.test(navigator.userAgent || "");
   }
 
-  async function feed(kind) {
+  async function feed(kind, payload = {}) {
     let lastError = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       const controller = new AbortController();
@@ -37,7 +37,7 @@
               "Content-Type": "application/json",
               "X-STIP-Session": localStorage.getItem(STORE) || "",
             },
-            body: JSON.stringify({ kind }),
+            body: JSON.stringify({ kind, ...payload }),
             signal: controller.signal,
           }),
           j = await r.json().catch(() => ({}));
@@ -158,16 +158,24 @@
       formations: "Formations",
       stagiaires: "Stagiaires",
       agent_dates: "Dates des agents",
+      agent: "Planning agent",
     })[kind] || "Calendrier";
   }
 
-  async function quick(kind) {
+  async function quick(kind, options = {}) {
+    const config =
+        typeof options === "string" ? { title: options } : options || {},
+      title = String(config.title || quickTitle(kind)),
+      payload =
+        config.payload && typeof config.payload === "object"
+          ? config.payload
+          : {};
     document.getElementById("stipCalendarQuick")?.remove();
     const wrap = document.createElement("div");
     wrap.id = "stipCalendarQuick";
     wrap.className = "cal-quick-backdrop";
-    wrap.innerHTML = `<section class="cal-quick" role="dialog" aria-modal="true" aria-label="${esc(quickTitle(kind))}">
-      <header><div><small>CALENDRIER</small><strong>${esc(quickTitle(kind))}</strong></div><button type="button" data-cal-quick-close aria-label="Fermer">×</button></header>
+    wrap.innerHTML = `<section class="cal-quick" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <header><div><small>CALENDRIER</small><strong>${esc(title)}</strong></div><button type="button" data-cal-quick-close aria-label="Fermer">×</button></header>
       <div class="cal-status"><div class="cal-loading"><i></i><span>Préparation de l’abonnement…</span></div></div>
     </section>`;
     document.body.appendChild(wrap);
@@ -178,8 +186,8 @@
     });
     const status = wrap.querySelector(".cal-status");
     try {
-      const j = await feed(kind);
-      methods(j, quickTitle(kind), status);
+      const j = await feed(kind, payload);
+      methods(j, j.calendar_name || title, status);
     } catch (e) {
       status.innerHTML = `<div class="cal-error"><strong>Impossible de préparer ce calendrier</strong><small>${esc(e?.message || "Réessaie dans quelques secondes.")}</small></div>`;
     }
@@ -263,10 +271,22 @@
     }
   }
 
+  async function quickAgent({ agentId = "", sourceKey = "", name = "" } = {}) {
+    if (!agentId && !sourceKey) throw Error("Agent introuvable.");
+    return quick("agent", {
+      title: name ? `Planning · ${name}` : "Planning agent",
+      payload: {
+        agent_id: String(agentId || ""),
+        source_key: String(sourceKey || ""),
+      },
+    });
+  }
+
   window.STIPCalendars = {
     open,
     mount,
     quick,
+    quickAgent,
     close() {
       document.getElementById("stipCalendarQuick")?.remove();
     },
