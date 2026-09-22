@@ -2001,6 +2001,32 @@
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
 
+    // Esprit d'équipe is an embedded live page. Keep it mounted during background
+    // notification/action refreshes so its scroll, open shifts and sheets are never reset.
+    if (
+      state.homeMode === "team" &&
+      root.querySelector("#hcTeamFrame")
+    ) {
+      const bell = root.querySelector(".hc-profile-bell"),
+        count = notifications().length + Number(window.STIPMessagesUnread || 0);
+      if (bell) {
+        bell.setAttribute(
+          "aria-label",
+          `Notifications${count ? ` : ${count} à traiter` : ""}`,
+        );
+        let badge = bell.querySelector("b");
+        if (count && !badge) {
+          badge = document.createElement("b");
+          bell.appendChild(badge);
+        }
+        if (badge) {
+          badge.textContent = count ? String(count) : "";
+          badge.hidden = !count;
+        }
+      }
+      return;
+    }
+
     // The Fauteuils screen owns a live text composer. Background home refreshes
     // must never replace its DOM while it is open, otherwise Android closes the
     // keyboard and the draft disappears.
