@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const V = "20260922-specialshifts2",
+  const V = "20260922-specialshifts3",
     m = new Map(),
     done = new Set();
   function load(src) {
