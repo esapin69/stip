@@ -33,7 +33,12 @@ check(read('planning-print-reference.js').includes('@page{size:A4 landscape'),'L
 
 const spiritHtml=read('esprit-equipe.html');
 const spirit=read('esprit-equipe.js');
-check(spiritHtml.indexOf('data-team-tab="team"')<spiritHtml.indexOf('data-team-tab="activity"'),'Esprit d’équipe ne présente plus Équipe en premier.');
+check(
+  !spiritHtml.includes('data-team-tab=') &&
+  spirit.includes('function mergedDayRows') &&
+  spirit.includes('function teamDaySummary'),
+  'Esprit d’équipe doit rester une vue unique qui fusionne Équipe, Activité et Assistant.'
+);
 check(spirit.includes('action: "spirit_week"'),'Esprit d’équipe ne réutilise plus le moteur de planning équipe.');
 check(spirit.includes('Array.from({ length: 7 }'),'Esprit d’équipe ne construit plus les sept journées.');
 check(spirit.includes('loadCore(addDays(state.weekStart, -7))')&&spirit.includes('loadCore(addDays(state.weekStart, 7))'),'Le préchargement des semaines adjacentes a disparu.');
@@ -98,10 +103,11 @@ const loadingJs=read('stip-loading.js');
 
 check(home.includes('hc-profile-bell')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée à la barre d’accueil.');
 check(
-  home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps }') &&
-  home.includes('{ key: "planning", label: "Mon profil", art: ICON.homeHome }') &&
+  home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" }') &&
+  home.includes('{ key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" }') &&
+  home.includes('{ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" }') &&
   home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
-  'La navigation principale Applications / Mon profil et l’accès Actions ne sont plus conformes.'
+  'La navigation principale Applications / Mon profil / Esprit d’équipe et l’accès Actions ne sont plus conformes.'
 );
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(
@@ -269,12 +275,14 @@ const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
 check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
 check(
-  espritHtml.includes('id="teamWeekControls"') &&
-  espritHtml.includes('id="teamDays"') &&
-  espritHtml.includes('stip-time-days') &&
+  espritHtml.includes('id="teamDutyChiefTodayHost"') &&
+  espritJs.includes('function weekControlsMarkup()') &&
+  espritJs.includes('id="teamWeekControls"') &&
+  espritJs.includes('id="teamDays"') &&
+  espritJs.includes('body = staffing + weekControlsMarkup() + teamDaySummary(bundle, day)') &&
   /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) &&
   espritHtml.includes('id="teamDateJumpPanel"'),
-  'Esprit d’équipe a perdu sa hiérarchie temporelle Semaine active / Jour / Mois.'
+  'Esprit d’équipe a perdu la hiérarchie validée Aujourd’hui / shifts / Cette semaine / Ce mois.'
 );
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
 check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
@@ -290,15 +298,35 @@ check(
 );
 check(espritInteractiveJs.includes('data-team-shift')&&espritInteractiveJs.includes('aria-expanded'),'Les shifts Esprit d’équipe ne sont plus interactifs.');
 check(espritInteractiveJs.includes('data-team-agent')&&espritInteractiveJs.includes('openAgentSheet'),'Les agents Esprit d’équipe ne sont plus ouvrables.');
+check(!espritInteractiveHtml.includes('team-live-wheelchair'),'Le raccourci Fauteuils ne doit plus être forcé dans Esprit d’équipe.');
 check(espritInteractiveCss.includes('.team-shift-head')&&espritInteractiveCss.includes('.team-agent-overlay'),'Le relief interactif Esprit d’équipe a disparu.');
 
-check(espritHtml.indexOf('id="teamDays"') < espritHtml.indexOf('class="team-tabs stip-levels"'),'Les filtres Équipe / Activité / Assistant doivent rester sous le sélecteur de jour et réutiliser le segmented control STIP.');
+check(
+  !espritInteractiveHtml.includes('data-team-tab=') &&
+  !espritInteractiveHtml.includes('team-tabs stip-levels') &&
+  espritInteractiveJs.includes('function mergedDayRows') &&
+  espritInteractiveJs.includes('function teamDaySummary'),
+  'Les anciens onglets Équipe / Activité / Assistant ne doivent plus réapparaître : leurs informations sont fusionnées dans la vue unique.'
+);
 check(!espritHtml.includes('<i></i><i></i>')&&espritHtml.includes('Chargement de la journée sélectionnée'),'Le chargement Esprit d’équipe ne doit plus simuler plusieurs journées.');
 check(espritJs.includes('const day = state.dayFocus') && !espritJs.includes('.map((day) => renderer(bundle, day))'),'Esprit d’équipe doit afficher uniquement la journée sélectionnée.');
-check(/tab:[\s\S]{0,500}navigationState\.tab[\s\S]{0,300}: "team"/.test(espritJs),'Équipe doit rester l’onglet par défaut quand aucun onglet mémorisé ou demandé n’existe.');
-check(espritJs.includes('window.STIPNav?.remember?.({ tab, weekStart: state.weekStart })'),'L’onglet Esprit d’équipe ouvert doit être mémorisé pendant la navigation.');
+check(
+  espritJs.includes('tab: "team"') &&
+  !espritJs.includes('function activityDay') &&
+  !espritJs.includes('function assistantDay'),
+  'Esprit d’équipe doit rester sur sa vue unique sans restaurer les anciens onglets.'
+);
+check(
+  espritJs.includes('capture: () => ({') &&
+  espritJs.includes('weekStart: state.weekStart') &&
+  espritJs.includes('dayFocus: state.dayFocus'),
+  'Esprit d’équipe doit mémoriser la semaine et le jour sélectionnés pendant la navigation.'
+);
 check(espritInteractiveCss.includes('background:var(--shift);')&&espritInteractiveCss.includes('color:#fff;')&&espritInteractiveCss.includes('color-mix(in srgb,var(--shift) 32%'),'Les shifts Esprit d’équipe ont perdu leur contraste fort.');
-check(espritInteractiveCss.includes('.team-tabs button.active')&&espritInteractiveCss.includes('inset 0 1px 0 rgba(255,255,255,.28)'),'Le segmented control premium Esprit d’équipe a régressé.');
+check(
+  !espritInteractiveHtml.includes('team-tabs stip-levels'),
+  'Le segmented control obsolète Équipe / Activité / Assistant est revenu dans Esprit d’équipe.'
+);
 
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
