@@ -1428,6 +1428,7 @@
         planning: "home",
         apps: "apps",
         notifications: "notifications",
+        team: "team",
         tableau: "fauteuils",
       }[mode] || "home"
     );
@@ -1438,6 +1439,7 @@
         home: "planning",
         apps: "apps",
         notifications: "notifications",
+        team: "team",
         fauteuils: "tableau",
       }[String(route || "home")] || ""
     );
@@ -1450,16 +1452,14 @@
         { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
       ];
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
-      items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "app" });
+      items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     return `<section class="hc-home-top-nav">
       <div class="hc-home-top-tools">
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
       <nav class="hc-home-filters" aria-label="Accueil STIP">${items
-        .map((item) => item.mode === "app"
-          ? `<button type="button" data-app="${item.key}" aria-label="${esc(item.label)}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`
-          : `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
+        .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
     </section>`;
   }
@@ -1960,12 +1960,43 @@
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
+    if (state.homeMode === "team")
+      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v1" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE DU MOIS</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
+  function bindEmbeddedTeam(root) {
+    const frame = root?.querySelector?.("#hcTeamFrame");
+    if (!frame || frame.dataset.stipBound === "1") return;
+    frame.dataset.stipBound = "1";
+    const setup = () => {
+      try {
+        const doc = frame.contentDocument;
+        if (!doc) return;
+        doc.querySelector(".team-top")?.setAttribute("hidden", "");
+        const shell = doc.querySelector(".team-shell");
+        if (shell) {
+          shell.style.paddingTop = "10px";
+          shell.style.paddingBottom = "28px";
+        }
+        doc.documentElement.style.scrollPaddingTop = "10px";
+        const chair = doc.querySelector(".team-live-wheelchair");
+        if (chair && chair.dataset.parentRouteBound !== "1") {
+          chair.dataset.parentRouteBound = "1";
+          chair.addEventListener("click", (event) => {
+            event.preventDefault();
+            window.STIPRouter?.set?.("fauteuils");
+          });
+        }
+      } catch {}
+    };
+    frame.addEventListener("load", setup);
+    setTimeout(setup, 0);
+  }
+
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
@@ -2043,6 +2074,7 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
+    if (state.homeMode === "team") bindEmbeddedTeam(root);
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
@@ -2176,7 +2208,7 @@
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
-    if (k === "team") return (location.href = "esprit-equipe.html");
+    if (k === "team") return window.STIPRouter?.set?.("team");
     if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
@@ -2318,7 +2350,7 @@
         state.homeMode = "notifications";
       } else if ((quick === "tableau" || quick === "teamchat") && has("messages")) {
         state.homeMode = "tableau";
-      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "tableau") {
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "team" || requested === "tableau") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
@@ -2430,6 +2462,10 @@
       next = homeModeForRoute(route);
     if (!next) return;
     if (next === "tableau" && !has("messages")) {
+      window.STIPRouter?.set?.("home", { replace: true });
+      return;
+    }
+    if (next === "team" && !(has("planning_team") || has("activity") || has("assistant_enabled"))) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }

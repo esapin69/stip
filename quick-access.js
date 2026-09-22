@@ -21,7 +21,7 @@
     },
     team: {
       label: "Esprit d’équipe",
-      open: () => (location.href = "esprit-equipe.html"),
+      open: () => window.STIPRouter?.set?.("team"),
     },
     agents: {
       label: "Agents",
@@ -242,6 +242,7 @@
   function routeKey(route) {
     route = String(route || "");
     if (route.startsWith("planning/personal")) return "personal";
+    if (route === "team") return "team";
     if (
       route.startsWith("planning/team") ||
       route.startsWith("planning/spirit")

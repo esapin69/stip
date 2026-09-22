@@ -5276,3 +5276,36 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-wheelchair-shortcut-icon{width:36px!important;height:36px!important;}
   .hc-wheelchair-shortcut-copy strong{font-size:.88rem!important;}
 }
+
+
+/* ESPRIT D'EQUIPE — FIRST-CLASS HOME MODE — 2026-09-22 */
+.hc-home-pane-team{
+  width:min(100%,760px)!important;
+  margin:0 auto!important;
+  padding:0!important;
+}
+.hc-team-frame{
+  display:block!important;
+  width:100%!important;
+  height:max(520px,calc(100dvh - 304px))!important;
+  min-height:520px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:var(--stip-bg,#f6fbfc)!important;
+  box-shadow:none!important;
+}
+.hc-home-filters>button[data-home-mode="team"]{
+  order:3!important;
+}
+.hc-home-filters>button[data-home-mode="team"] .hc-home-filter-art{
+  background:transparent!important;
+}
+.hc-home-filters>button[data-home-mode="team"] .hc-home-filter-art img{
+  object-fit:cover!important;
+}
+@media(max-width:430px){
+  .hc-team-frame{
+    height:max(500px,calc(100dvh - 292px))!important;
+    min-height:500px!important;
+  }
+}
