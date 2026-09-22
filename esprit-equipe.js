@@ -447,6 +447,235 @@
       .filter(Boolean);
   }
 
+  function rangeDayFacts(days, assistantItems = [], bundle = null) {
+    return days.map((day) => {
+      const dayItems = assistantItems.filter(
+          (item) => String(item?.date || "").slice(0, 10) === day,
+        ),
+        activity = bundle?.activity?.get?.(day) || {},
+        signal = signalForDate(day) || {
+          level: "unknown",
+          symbol: "○",
+          label: "Pas encore analysé",
+        },
+        staff = state.staffingByDate.get(day),
+        staffRows = staffingRows(staff),
+        assistantFormation = dayItems.filter(
+          (item) => item?.source_family === "formation",
+        ).length,
+        assistantTrainee = dayItems.filter(
+          (item) => item?.source_family === "trainee",
+        ).length,
+        formationCount = Math.max(
+          assistantFormation,
+          Number(activity?.events?.formations?.length || 0),
+        ),
+        traineeCount = Math.max(
+          assistantTrainee,
+          Number(activity?.events?.stagiaires?.length || 0),
+        ),
+        significant = dayItems.filter(
+          (item) =>
+            Number(item?.severity || 0) >= 2 ||
+            ["anticipation", "warning", "opportunity", "proposal"].includes(
+              String(item?.kind || ""),
+            ) ||
+            ["changes", "onboarding", "strategy"].includes(
+              String(item?.source_family || ""),
+            ),
+        ),
+        gaps = staffRows
+          .map((row) => ({
+            code: baseShift(row?.shift_code || row?.shift || row?.code),
+            gap: staffingRowGap(row),
+          }))
+          .filter((row) => row.code && row.gap !== 0),
+        deficits = gaps.filter((row) => row.gap < 0).sort((a, b) => a.gap - b.gap),
+        margins = gaps.filter((row) => row.gap > 0).sort((a, b) => b.gap - a.gap),
+        lead = significant[0],
+        terrain = lead ? field()?.terrainItem?.(lead) : null;
+
+      const details = [];
+      deficits.slice(0, 2).forEach((row) =>
+        details.push(`${row.code} ${row.gap}`),
+      );
+      if (!deficits.length)
+        margins.slice(0, 1).forEach((row) =>
+          details.push(`${row.code} +${row.gap}`),
+        );
+      if (formationCount)
+        details.push(`🎓 ${formationCount} formation${formationCount > 1 ? "s" : ""}`);
+      if (traineeCount)
+        details.push(`👶 ${traineeCount} stagiaire${traineeCount > 1 ? "s" : ""}`);
+      const headline = terrain?.headline || lead?.title || "";
+      if (headline && !details.includes(headline)) details.push(headline);
+
+      return {
+        day,
+        signal,
+        formationCount,
+        traineeCount,
+        deficits,
+        margins,
+        significant,
+        details: details.slice(0, 4),
+      };
+    });
+  }
+
+  function rangeActionRows(facts = []) {
+    const actions = [];
+    const add = (action) => {
+      if (!action?.detail) return;
+      const key = `${action.title || ""}|${action.detail}`.toLowerCase();
+      if (actions.some((row) => row.key === key)) return;
+      actions.push({ ...action, key });
+    };
+
+    for (const fact of facts) {
+      for (const item of fact.significant || []) {
+        const terrain = field()?.terrainItem?.(item),
+          proposal =
+            terrain?.proposal ||
+            item?.recommendation_text ||
+            item?.proposal ||
+            "",
+          headline = terrain?.headline || item?.title || "Point à traiter";
+        if (!proposal) continue;
+        add({
+          icon: statusSymbol(fact.signal?.level, "💡"),
+          level: fact.signal?.level || "info",
+          title: `${shortDay(fact.day)} · ${headline}`,
+          detail: proposal,
+        });
+        if (actions.length >= 3) return actions;
+      }
+    }
+
+    const deficits = facts
+      .flatMap((fact) =>
+        fact.deficits.map((row) => ({ ...row, day: fact.day })),
+      )
+      .sort((a, b) => a.gap - b.gap);
+    for (const row of deficits.slice(0, 2)) {
+      add({
+        icon: row.gap <= -2 ? "🛑" : "⚠️",
+        level: row.gap <= -2 ? "critical" : "warning",
+        title: `${shortDay(row.day)} · ${row.code} à sécuriser`,
+        detail: `Déficit mesuré de ${Math.abs(row.gap)} par rapport à la cible. Vérifier un renfort ou une répartition compatible avant le début du shift.`,
+      });
+      if (actions.length >= 3) return actions;
+    }
+
+    const constrained = facts.find(
+      (fact) =>
+        (fact.formationCount || fact.traineeCount) &&
+        ["critical", "warning"].includes(fact.signal?.level),
+    );
+    if (constrained) {
+      add({
+        icon: "🧭",
+        level: "warning",
+        title: `${shortDay(constrained.day)} · Encadrement à protéger`,
+        detail:
+          "Formation ou stagiaire le même jour qu’un point de tension. Prévoir explicitement le référent et préserver l’effectif terrain.",
+      });
+    }
+
+    const margin = facts
+      .flatMap((fact) =>
+        fact.margins.map((row) => ({ ...row, day: fact.day })),
+      )
+      .sort((a, b) => b.gap - a.gap)[0];
+    if (actions.length < 3 && margin) {
+      add({
+        icon: "➕",
+        level: "opportunity",
+        title: `${shortDay(margin.day)} · Marge utile sur ${margin.code}`,
+        detail: `Marge mesurée de +${margin.gap} par rapport à la cible. Créneau à privilégier pour une tâche flexible si l’activité réelle le permet.`,
+      });
+    }
+
+    return actions.slice(0, 3);
+  }
+
+  function renderWeekSummary(bundle = cacheEntry(state.weekStart)) {
+    const host = $("#teamWeekSummaryHost");
+    if (!host) return;
+    if (!bundle?.signalLoaded) {
+      host.innerHTML =
+        '<div class="team-week-summary-loading">Analyse de la semaine…</div>';
+      return;
+    }
+
+    const facts = rangeDayFacts(
+        daysOfWeek(state.weekStart),
+        bundle?.assistant?.items || [],
+        bundle,
+      ),
+      known = facts.filter((fact) => fact.signal?.level !== "unknown").length,
+      critical = facts.filter((fact) => fact.signal?.level === "critical").length,
+      warning = facts.filter((fact) => fact.signal?.level === "warning").length,
+      opportunity = facts.filter((fact) => fact.signal?.level === "opportunity").length,
+      formations = facts.reduce((sum, fact) => sum + fact.formationCount, 0),
+      trainees = facts.reduce((sum, fact) => sum + fact.traineeCount, 0),
+      actions = rangeActionRows(facts);
+
+    const metrics = [
+      [known, "jours analysés"],
+      [critical + warning, "jours à surveiller"],
+      [opportunity, "marges utiles"],
+      [formations, "formations"],
+      [trainees, "stagiaires"],
+    ];
+
+    const rows = facts
+      .map((fact) => {
+        const label = fact.signal?.label || "Pas assez de données",
+          detail =
+            fact.details.join(" · ") ||
+            (fact.signal?.level === "ok"
+              ? "Aucun écart prioritaire détecté avec les données actuelles."
+              : "Données encore partielles.");
+        return `<button type="button" class="team-week-check status-${esc(fact.signal?.level || "unknown")}" data-team-week-day="${esc(fact.day)}">
+          <span aria-hidden="true">${esc(statusSymbol(fact.signal?.level, fact.signal?.symbol))}</span>
+          <div><strong>${esc(shortDay(fact.day))} · ${esc(label)}</strong><p>${esc(detail)}</p></div>
+          <i aria-hidden="true">›</i>
+        </button>`;
+      })
+      .join("");
+
+    const actionMarkup = actions.length
+      ? `<section class="team-range-actions"><header><span>🎯</span><div><small>ACTIONS CONCRÈTES</small><strong>À préparer sur cette semaine</strong></div></header><div>${actions
+          .map(
+            (action) =>
+              `<article class="status-${esc(action.level || "info")}"><span aria-hidden="true">${esc(action.icon)}</span><div><strong>${esc(action.title)}</strong><p>${esc(action.detail)}</p></div></article>`,
+          )
+          .join("")}</div></section>`
+      : '<section class="team-range-actions is-clear"><strong>✔ Aucun correctif prioritaire détecté</strong><p>Continuer la surveillance avec les données terrain au fil de la semaine.</p></section>';
+
+    host.innerHTML = `<details class="team-week-summary" open>
+      <summary>
+        <div><small>DÉBRIEF SEMAINE ${isoWeek(state.weekStart)}</small><strong>${esc(weekRange(state.weekStart))}</strong></div>
+        <span>Factuel · Mesurable · Actionnable</span>
+        <i aria-hidden="true">⌄</i>
+      </summary>
+      <div class="team-range-metrics">${metrics
+        .map(([value, label]) => `<span><b>${esc(value)}</b><small>${esc(label)}</small></span>`)
+        .join("")}</div>
+      <div class="team-week-checklist">${rows}</div>
+      ${actionMarkup}
+    </details>`;
+  }
+
+  function monthActionRows(key) {
+    const facts = rangeDayFacts(daysOfMonth(key), monthAssistantItems(key));
+    return {
+      facts,
+      actions: rangeActionRows(facts),
+    };
+  }
+
   function renderMonthDigest(key = state.dateJumpMonth) {
     const host = $("#teamMonthDigestHost");
     if (!host) return;
@@ -528,14 +757,26 @@
       })
       .join("");
 
+    const monthAnalysis = monthActionRows(key),
+      monthActions = monthAnalysis.actions,
+      actionMarkup = monthActions.length
+        ? `<section class="team-range-actions team-month-actions"><header><span>🎯</span><div><small>ACTIONS CONCRÈTES</small><strong>À préparer sur le mois</strong></div></header><div>${monthActions
+            .map(
+              (action) =>
+                `<article class="status-${esc(action.level || "info")}"><span aria-hidden="true">${esc(action.icon)}</span><div><strong>${esc(action.title)}</strong><p>${esc(action.detail)}</p></div></article>`,
+            )
+            .join("")}</div></section>`
+        : "";
+
     host.innerHTML =
       `<section class="team-month-digest-card">
-        <header><strong>${esc(
+        <header><small>DÉBRIEF DU MOIS · Factuel · Mesurable · Actionnable</small><strong>${esc(
           dateObj(key + "-01")
             .toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
             .replace(/^./, (char) => char.toUpperCase()),
         )}</strong><span>${esc(summary.join(" · "))}</span></header>
         <div class="team-month-weeks">${weeks}</div>
+        ${actionMarkup}
       </section>`;
   }
 
@@ -786,6 +1027,7 @@
     if (!state.dateJumpMonth)
       state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
     renderWeekStrip();
+    renderWeekSummary(cacheEntry(state.weekStart));
     renderDateJumpCalendar(state.dateJumpMonth);
     renderMonthDigest(state.dateJumpMonth);
     $$("[data-team-tab]").forEach((button) => {
@@ -811,7 +1053,7 @@
     const planned = Number(row?.planned_count);
     const target = Number(row?.target_count);
     return Number.isFinite(planned) && Number.isFinite(target)
-      ? planned - target
+      ? present - target
       : 0;
   }
 
@@ -1353,10 +1595,18 @@
     try {
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
-      if (state.tab === "activity") await loadActivity(state.weekStart, force);
+      const activityPromise = allowed("activity")
+        ? loadActivity(state.weekStart, force).catch(() => null)
+        : Promise.resolve(null);
+      if (state.tab === "activity") await activityPromise;
       if (request !== state.request) return;
       renderContent(bundle);
+      if (state.tab !== "activity")
+        activityPromise.then(() => {
+          if (request === state.request) renderWeekSummary(bundle);
+        });
       loadWeekSignals(state.weekStart, bundle, force)
+        .then(() => renderWeekSummary(bundle))
         .catch(() => {})
         .finally(() =>
           loadMonthSignals(state.dateJumpMonth, force).catch(() => {}),
@@ -1431,6 +1681,11 @@
   });
   $("#teamPrevWeek")?.addEventListener("click", () => moveWeek(-1));
   $("#teamNextWeek")?.addEventListener("click", () => moveWeek(1));
+  $("#teamWeekSummaryHost")?.addEventListener("click", (event) => {
+    const day = event.target.closest("[data-team-week-day]");
+    if (!day) return;
+    chooseDate(day.dataset.teamWeekDay);
+  });
   $("#teamMonthDigestHost")?.addEventListener("click", (event) => {
     const day = event.target.closest("[data-team-month-day]");
     if (!day) return;
