@@ -5309,3 +5309,86 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     min-height:500px!important;
   }
 }
+
+
+/* HOME TOP SHORTCUTS — FLAT + WIDE 2026-09-22
+   Fauteuils and notifications sit apart inside a wider line, without card relief. */
+.hc-home-top-nav{
+  width:100%!important;
+  max-width:none!important;
+}
+.hc-home-top-tools{
+  width:min(calc(100vw - 24px),520px)!important;
+  min-height:52px!important;
+  margin:0 auto 18px!important;
+  padding:0 clamp(22px,8vw,46px)!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:18px!important;
+  align-items:center!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-home-wheelchair-slot{
+  justify-self:start!important;
+  width:auto!important;
+}
+.hc-wheelchair-shortcut{
+  width:auto!important;
+  min-height:46px!important;
+  padding:3px 0!important;
+  grid-template-columns:40px auto!important;
+  gap:10px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.hc-wheelchair-shortcut:hover,
+.hc-wheelchair-shortcut:active,
+.hc-wheelchair-shortcut.active{
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+.hc-wheelchair-shortcut-icon{
+  width:40px!important;
+  height:40px!important;
+  border-radius:11px!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-wheelchair-shortcut-copy strong{
+  font-size:.96rem!important;
+}
+.hc-wheelchair-shortcut-arrow{
+  display:none!important;
+}
+.hc-home-top-tools .hc-profile-bell{
+  justify-self:end!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  min-height:48px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-home-top-tools .hc-profile-bell:active,
+.hc-home-top-tools .hc-profile-bell.active{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+@media(max-width:370px){
+  .hc-home-top-tools{
+    width:calc(100vw - 16px)!important;
+    padding-inline:20px!important;
+    gap:14px!important;
+  }
+  .hc-wheelchair-shortcut{
+    grid-template-columns:36px auto!important;
+    gap:8px!important;
+  }
+}
