@@ -59,11 +59,31 @@
     );
   }
 
+  const ABSENCE_CODES = new Set([
+    ...ABSENCE_ORDER,
+    "ABS",
+    "OFF",
+    "REPOS",
+    "-",
+    "",
+  ]);
+
   function baseShift(value) {
-    const code = String(value || "").toUpperCase();
+    let code = String(value || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "");
+    if (!code || ABSENCE_CODES.has(code)) return "";
+    if (code.endsWith("*")) code = code.slice(0, -1);
     if (SHIFT[code]) return code;
-    if (code.endsWith("*") && SHIFT[code.slice(0, -1)])
-      return code.slice(0, -1);
+
+    // Certains codes planning gardent le shift en préfixe et ajoutent
+    // un identifiant numérique (ex. M0130, J0464). Ils restent travaillés.
+    if (/^J4\d+$/.test(code)) return "J4";
+    if (/^M\d+$/.test(code)) return "M";
+    if (/^J\d+$/.test(code)) return "J";
+    if (/^S\d+$/.test(code)) return "S";
+    if (/^N\d+$/.test(code)) return "N";
     return "";
   }
 
@@ -78,10 +98,14 @@
   }
 
   function row(agent) {
-    const code = String(agent.today_code || "").toUpperCase();
-    const shift = SHIFT[baseShift(code)];
+    const code = String(agent.today_code || "").toUpperCase(),
+      base = baseShift(code),
+      shift = SHIFT[base],
+      standardCode = code === base || code === `${base}*`;
     const status = shift
-      ? `${code} · ${shift.time}`
+      ? standardCode
+        ? `${code} · ${shift.time}`
+        : `Présent · ${code}`
       : `Absent · ${code || "motif non renseigné"}`;
     const meta = [status, agent.ghe ? `GHE ${agent.ghe}` : ""]
       .filter(Boolean)
