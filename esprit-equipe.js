@@ -579,7 +579,7 @@
       state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
     renderWeekStrip();
     renderDateJumpCalendar(state.dateJumpMonth);
-    $("[data-team-tab]").forEach((button) => {
+    $$("[data-team-tab]").forEach((button) => {
       const active = button.dataset.teamTab === state.tab;
       button.classList.toggle("active", active);
       button.setAttribute("aria-selected", String(active));
@@ -1073,7 +1073,7 @@
     showWeek({ preserve: true });
   }
 
-  $("[data-team-tab]").forEach((button) =>
+  $$("[data-team-tab]").forEach((button) =>
     button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
   );
   $("#teamDays")?.addEventListener("click", (event) => {
