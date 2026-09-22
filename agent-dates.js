@@ -15,6 +15,7 @@
       : "all",
     query = navigationState.search || "",
     focus = "",
+    scopeDate = "",
     refreshing = false;
   const esc = (v) =>
     String(v ?? "").replace(
@@ -115,6 +116,7 @@
   function filtered() {
     let a =
       active === "all" ? items : items.filter((x) => x.category === active);
+    if (scopeDate) a = a.filter((x) => String(x.date).slice(0, 10) === scopeDate);
     if (query) {
       const q = query.toLocaleLowerCase("fr-FR");
       a = a.filter((x) =>
@@ -140,7 +142,9 @@
       start = monday(),
       end = new Date(start);
     end.setDate(end.getDate() + 6);
-    $("#daUpcoming").textContent = src.length + " à venir";
+    $("#daUpcoming").textContent = scopeDate
+      ? filtered().length + " ce jour"
+      : src.length + " à venir";
     $("#daWeekCount").textContent = src.filter((x) => {
       const y = dobj(x.date);
       return y >= start && y <= end;
@@ -230,8 +234,22 @@
           ?.scrollIntoView({ behavior: "smooth", block: "center" }),
       );
   }
+  function renderScope() {
+    const box = $("#daScope"),
+      txt = $("#daScopeText");
+    if (!box || !txt) return;
+    box.hidden = !scopeDate;
+    if (!scopeDate) return;
+    txt.textContent = dobj(scopeDate).toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  }
   function render() {
     counts();
+    renderScope();
     renderList();
     $("[data-filter]").forEach((b) =>
       b.classList.toggle("active", b.dataset.filter === active),
@@ -298,8 +316,10 @@
       return;
     }
     const p = new URLSearchParams(location.search),
-      f = p.get("filter");
+      f = p.get("filter"),
+      requestedDate = String(p.get("date") || "").slice(0, 10);
     if (["all", "medical", "intern", "training"].includes(f)) active = f;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(requestedDate)) scopeDate = requestedDate;
     focus = p.get("focus") || "";
     if (
       !f &&
@@ -326,6 +346,13 @@
       window.STIPNav?.remember?.({ search: "" });
       renderList();
     };
+    $("#daScopeClear").onclick = () => {
+      scopeDate = "";
+      const next = new URL(location.href);
+      next.searchParams.delete("date");
+      history.replaceState(history.state, "", next.pathname + next.search + next.hash);
+      render();
+    };
     all("[data-filter]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -347,6 +374,7 @@
     window.STIPNav?.register?.({
       capture: () => ({
         filter: active,
+        date: scopeDate,
         search: query,
         searchOpen: !$("#daSearchWrap").hidden,
       }),
