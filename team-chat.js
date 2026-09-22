@@ -759,14 +759,14 @@
           "<h3>Combien de fauteuils ?</h3>" +
           "<p>" + esc(buildingLabel) + "</p>" +
           '<div class="tb-quantity-choices">' +
-            [1, 2, 3].map((n) =>
+            [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
               '<button type="button" data-qty="' + n + '"><strong>' + n + "</strong></button>"
             ).join("") +
-            '<button type="button" class="more" data-qty-more><strong>Plus</strong><small>4 à 20</small></button>' +
+            '<button type="button" class="more" data-qty-more><strong>10+</strong><small>10 à 20</small></button>' +
           "</div>" +
           '<div class="tb-quantity-more" data-qty-more-panel hidden>' +
             '<label for="tbQuickQuantity">Nombre de fauteuils</label>' +
-            '<div><input id="tbQuickQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
+            '<div><input id="tbQuickQuantity" type="number" inputmode="numeric" min="10" max="20" step="1" value="10">' +
             '<button type="button" data-qty-more-ok>Valider</button></div>' +
             '<small data-qty-error aria-live="polite"></small>' +
           "</div>" +
@@ -789,8 +789,8 @@
       });
       const validateMore = () => {
         const value = Math.round(Number(input?.value) || 0);
-        if (value < 4 || value > 20) {
-          if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
+        if (value < 10 || value > 20) {
+          if (error) error.textContent = "Choisis un nombre entre 10 et 20.";
           input?.focus();
           return;
         }
@@ -991,14 +991,14 @@
           "<h3>Combien de fauteuils ?</h3>" +
           "<p>" + esc(building.label) + "</p>" +
           '<div class="tb-quantity-choices">' +
-            [1, 2, 3].map((n) =>
+            [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
               '<button type="button" data-spot-qty="' + n + '"><strong>' + n + "</strong></button>"
             ).join("") +
-            '<button type="button" class="more" data-spot-more><strong>Plus</strong><small>4 à 20</small></button>' +
+            '<button type="button" class="more" data-spot-more><strong>10+</strong><small>10 à 20</small></button>' +
           "</div>" +
           '<div class="tb-quantity-more" data-spot-more-panel hidden>' +
             '<label for="tbSpotQuantity">Nombre de fauteuils</label>' +
-            '<div><input id="tbSpotQuantity" type="number" inputmode="numeric" min="4" max="20" step="1" value="4">' +
+            '<div><input id="tbSpotQuantity" type="number" inputmode="numeric" min="10" max="20" step="1" value="10">' +
             '<button type="button" data-spot-more-ok>Valider</button></div>' +
             '<small data-spot-qty-error aria-live="polite"></small>' +
           "</div>" +
@@ -1134,8 +1134,8 @@
         });
         wrap.querySelector("[data-spot-more-ok]")?.addEventListener("click", () => {
           const value = Math.round(Number(input?.value) || 0);
-          if (value < 4 || value > 20) {
-            if (error) error.textContent = "Choisis un nombre entre 4 et 20.";
+          if (value < 10 || value > 20) {
+            if (error) error.textContent = "Choisis un nombre entre 10 et 20.";
             input?.focus();
             return;
           }

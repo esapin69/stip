@@ -2068,3 +2068,41 @@
   .tb-composer textarea:not([hidden]){min-height:96px!important}
   .tb-send{min-height:58px!important}
 }
+
+/* Fauteuils V14 — quantité 1 à 9 + 10+ */
+.tb-quantity-picker{max-width:390px}
+.tb-spot-wizard .tb-quantity-choices,
+.tb-quantity-picker .tb-quantity-choices{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.tb-spot-wizard .tb-quantity-choices button,
+.tb-quantity-picker .tb-quantity-choices button{
+  min-width:0!important;
+  min-height:58px!important;
+  padding:5px 3px!important;
+  border-radius:13px!important;
+}
+.tb-spot-wizard .tb-quantity-choices button strong,
+.tb-quantity-picker .tb-quantity-choices button strong{
+  font-size:1rem!important;
+}
+.tb-spot-wizard .tb-quantity-choices button.more strong,
+.tb-quantity-picker .tb-quantity-choices button.more strong{
+  font-size:.88rem!important;
+}
+.tb-spot-wizard .tb-quantity-choices button.more small,
+.tb-quantity-picker .tb-quantity-choices button.more small{
+  font-size:.48rem!important;
+  white-space:nowrap;
+}
+@media(max-width:360px){
+  .tb-spot-wizard .tb-quantity-choices,
+  .tb-quantity-picker .tb-quantity-choices{
+    gap:5px!important;
+  }
+  .tb-spot-wizard .tb-quantity-choices button,
+  .tb-quantity-picker .tb-quantity-choices button{
+    min-height:54px!important;
+  }
+}
