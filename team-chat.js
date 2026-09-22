@@ -222,7 +222,17 @@
   function syncComposerDock() {
     if (!state.root) return;
     const composer = state.root.querySelector(".tb-input-dock");
-    if (!composer || !state.root.classList.contains("is-composing")) return;
+    if (!composer) return;
+
+    state.root.style.setProperty(
+      "--tb-composer-height",
+      Math.ceil(composer.getBoundingClientRect().height) + "px",
+    );
+
+    if (!state.root.classList.contains("is-composing")) {
+      state.root.style.removeProperty("--tb-keyboard-inset");
+      return;
+    }
 
     const viewport = window.visualViewport;
     const layoutHeight = Math.max(
@@ -236,10 +246,6 @@
     const keyboardInset = hiddenByKeyboard > 140 ? hiddenByKeyboard : 0;
 
     state.root.style.setProperty("--tb-keyboard-inset", keyboardInset + "px");
-    state.root.style.setProperty(
-      "--tb-composer-height",
-      Math.ceil(composer.getBoundingClientRect().height) + "px",
-    );
   }
 
   function syncViewport() {
@@ -306,7 +312,7 @@
         if (!root.isConnected || composer?.contains(document.activeElement)) return;
         root.classList.remove("is-composing");
         root.style.removeProperty("--tb-keyboard-inset");
-        root.style.removeProperty("--tb-composer-height");
+        requestAnimationFrame(syncViewport);
       }, 220);
     });
 
@@ -469,6 +475,7 @@
         "</strong><b>·</b><em>" +
         esc(selected?.label || "Bâtiment à choisir") +
         "</em></div>";
+    requestAnimationFrame(syncViewport);
   }
 
   function setComposeMode(mode) {
