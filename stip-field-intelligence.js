@@ -253,24 +253,67 @@
       (item) => String(item?.shift_code || item?.shift || item?.code || "").trim().toUpperCase() === base,
     );
     if (!staff || staff?.available === false || !row)
-      return { ...statusMeta("unknown"), symbol: "○" };
+      return { ...statusMeta("unknown"), symbol: "○", gap: null, detail: "", proposal: "" };
 
     const severity = number(row?.severity);
     const gap = rowGap(row);
-    if (severity >= 4) return { ...statusMeta("critical"), gap };
-    if (gap < 0 || severity >= 2) return { ...statusMeta("warning"), gap };
+    const planned = row?.planned_count;
+    const target = row?.target_count;
+    const support = transferOptions(rows).find((item) => item.toShift === base);
+    const donor = transferOptions(rows).find((item) => item.fromShift === base);
 
-    const transfer = transferOptions(rows).find((item) => item.fromShift === base);
-    if (gap > 0 && transfer) {
+    if (severity >= 4 || gap < 0) {
+      const level = severity >= 4 ? "critical" : "warning";
+      const missing = Math.abs(gap);
+      const detail =
+        planned != null && target != null
+          ? `${planned} prévus pour ${target} : il manque ${missing}.`
+          : `Il manque ${missing} par rapport à la référence.`;
+      return {
+        ...statusMeta(level),
+        gap,
+        planned,
+        target,
+        detail,
+        proposal: support ? transferProposal(support) : "",
+        support: support || null,
+      };
+    }
+
+    if (severity >= 2) {
+      return {
+        ...statusMeta("warning"),
+        gap,
+        planned,
+        target,
+        detail: "Ce créneau demande une vigilance particulière.",
+        proposal: "",
+      };
+    }
+
+    if (gap > 0 && donor) {
       return {
         ...statusMeta("opportunity"),
         gap,
-        detail: `${base} a +${gap} de marge et recouvre ${transfer.toShift} de ${transfer.start} à ${transfer.end}.`,
-        proposal: transferProposal(transfer),
-        transfer,
+        planned,
+        target,
+        detail: `${base} a +${gap} de marge et recouvre ${donor.toShift} de ${donor.start} à ${donor.end}.`,
+        proposal: transferProposal(donor),
+        transfer: donor,
       };
     }
-    return { ...statusMeta("ok"), gap };
+
+    return {
+      ...statusMeta("ok"),
+      gap,
+      planned,
+      target,
+      detail:
+        planned != null && target != null
+          ? `${planned} prévus pour ${target} : niveau attendu.`
+          : "",
+      proposal: "",
+    };
   }
 
   function contextGap(item) {
@@ -397,6 +440,146 @@
     };
   }
 
+  function dayChecklist({ staffing: staff = null, items = [], alerts = [] } = {}) {
+    const rows = rowsOf(staff).filter((row) => row?.shift_code);
+    const staffRead = staffing(staff);
+    const all = [...(items || []), ...(alerts || [])].filter(Boolean);
+    const points = [];
+    const seen = new Set();
+
+    const push = (point) => {
+      const key = [point.level, point.title, point.detail].join("|");
+      if (!point.title || seen.has(key)) return;
+      seen.add(key);
+      points.push(point);
+    };
+
+    rows.forEach((row) => {
+      const code = String(row.shift_code || "").trim().toUpperCase();
+      const status = shiftStatus(staff, code);
+      if (!["critical", "warning", "opportunity"].includes(status.level)) return;
+      push({
+        level: status.level,
+        symbol: status.symbol,
+        title: `${code} · ${status.label}`,
+        detail: status.detail || "",
+        proposal: status.proposal || "",
+        shift: code,
+      });
+    });
+
+    const summary = staff?.summary || {};
+    const totalGap =
+      summary.gap != null
+        ? number(summary.gap)
+        : summary.planned != null && summary.target != null
+          ? number(summary.planned) - number(summary.target)
+          : null;
+    if (staffRead.known && totalGap != null && totalGap < 0) {
+      push({
+        level: staffRead.level,
+        symbol: staffRead.symbol,
+        title: "Total de la journée",
+        detail:
+          summary.planned != null && summary.target != null
+            ? `${summary.planned} prévus · cible ${summary.target} · écart ${totalGap}.`
+            : `Écart global ${totalGap} par rapport à la référence.`,
+        proposal: "",
+        shift: "",
+      });
+    }
+
+    if (number(staffRead.specialCount) > 0) {
+      const n = number(staffRead.specialCount);
+      push({
+        level: "info",
+        symbol: "•",
+        title: "Horaires spécifiques",
+        detail: `${n} horaire${n > 1 ? "s" : ""} spécifique${n > 1 ? "s" : ""} reste${n > 1 ? "nt" : ""} compté${n > 1 ? "s" : ""} à part.`,
+        proposal: "",
+        shift: "",
+      });
+    }
+
+    meaningfulItems(all).forEach((item) => {
+      const family = String(item?.source_family || "").toLowerCase();
+      if (family === "staffing") return;
+      const terrain = terrainItem(item);
+      const shift = String(
+        item?.context?.shift_code ||
+        item?.context?.shift ||
+        item?.context?.code ||
+        "",
+      ).trim().toUpperCase();
+      push({
+        level: terrain.level,
+        symbol: statusMeta(terrain.level).symbol || "•",
+        title: terrain.headline,
+        detail: terrain.detail || "",
+        proposal: terrain.proposal || "",
+        shift,
+      });
+    });
+
+    if (!points.length && staffRead.known) {
+      push({
+        level: "ok",
+        symbol: "✔",
+        title: "Effectif au niveau attendu",
+        detail: staffRead.detail || "Aucun point prioritaire détecté.",
+        proposal: "",
+        shift: "",
+      });
+    }
+
+    const critical = points.filter((p) => p.level === "critical");
+    const warning = points.filter((p) => p.level === "warning");
+    const opportunity = points.filter((p) => p.level === "opportunity");
+    const proposals = [...critical, ...warning, ...opportunity]
+      .map((p) => p.proposal)
+      .filter(Boolean);
+
+    let level = critical.length
+      ? "critical"
+      : warning.length
+        ? "warning"
+        : opportunity.length
+          ? "opportunity"
+          : staffRead.known
+            ? "ok"
+            : "unknown";
+    let strength = "none";
+    let advice = "Aucune modification particulière n’est recommandée.";
+
+    if (critical.length) {
+      strength = "strong";
+      advice = proposals[0]
+        ? `Conseil fort : traiter d’abord le ou les créneaux en manque. ${proposals[0]}`
+        : "Conseil fort : traiter d’abord le ou les créneaux en manque réel avant les autres ajustements.";
+    } else if (warning.length) {
+      strength = "moderate";
+      advice = proposals[0]
+        ? `Conseil : un ajustement est utile. ${proposals[0]}`
+        : "Conseil : surveiller ces écarts et ajuster l’organisation si le terrain se tend.";
+    } else if (opportunity.length) {
+      strength = "suggestion";
+      advice = proposals[0]
+        ? `Suggestion : la marge peut être utilisée utilement. ${proposals[0]}`
+        : "Suggestion : une marge existe ; l’utiliser seulement si un besoin réel apparaît ailleurs.";
+    } else if (!staffRead.known) {
+      strength = "unknown";
+      advice = "Pas assez de données pour recommander un ajustement fiable.";
+    }
+
+    return {
+      ...statusMeta(level),
+      level,
+      strength,
+      points,
+      advice,
+    };
+  }
+
   function brief(items) {
     const rows = meaningfulItems(items);
     const terrain = rows.map(terrainItem);
@@ -432,6 +615,7 @@
     meaningfulItems,
     terrainItem,
     dayStatus,
+    dayChecklist,
     brief,
   };
 })();
