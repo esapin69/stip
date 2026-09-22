@@ -28,7 +28,7 @@
     else setTimeout(run, 900);
   }
   const personalCore = [
-    "agent-agenda-view.js",
+    "agent-agenda-view.js?v=20260923-legend1",
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
     "planning-home.js",
@@ -44,7 +44,7 @@
     "day-workflow-home-bridge.js",
   ];
   const teamCore = [
-    "agent-agenda-view.js",
+    "agent-agenda-view.js?v=20260923-legend1",
     "planning-home.js",
     "planning-hub-enhance.js",
   ];
@@ -64,7 +64,7 @@
     if (!r) return;
     if (r.startsWith("contacts")) {
       window.STIPReadCache?.requestContacts?.();
-      await seq(["agent-agenda-view.js", "section-hubs.js"]);
+      await seq(["agent-agenda-view.js?v=20260923-legend1", "section-hubs.js"]);
       window.STIPHubs?.contactsRoute?.(r);
       return;
     }
@@ -137,7 +137,7 @@
       }
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
-        seq(["agent-agenda-view.js", "section-hubs.js"]).catch(() => {});
+        seq(["agent-agenda-view.js?v=20260923-legend1", "section-hubs.js"]).catch(() => {});
       }
       if (k === "personal") seq(personalCore).catch(() => {});
       if (k === "team") seq(teamCore).catch(() => {});

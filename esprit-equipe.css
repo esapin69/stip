@@ -1161,7 +1161,7 @@ body.team-page {
   margin:0;
 }
 
-/* The month legend explains only the shared field-intelligence states. */
+/* Page legend: every informational symbol visible on this surface must be explained here. */
 .team-month-legend{
   width:100%;
   padding:16px 16px 17px;
@@ -1172,19 +1172,19 @@ body.team-page {
 }
 .team-month-legend>div{
   display:grid;
-  grid-template-columns:1fr;
-  gap:10px;
-  justify-items:center;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 10px;
+  justify-items:stretch;
 }
 .team-month-legend>div>span{
-  width:max-content;
-  max-width:100%;
+  width:100%;
+  min-width:0;
   display:flex;
   align-items:center;
-  justify-content:center;
-  gap:9px;
+  justify-content:flex-start;
+  gap:7px;
   color:#667b84;
-  font-size:.94rem;
+  font-size:.84rem;
   line-height:1.15;
 }
 .team-month-legend i{
@@ -2936,3 +2936,5 @@ body.team-page {
 .team-live-zone>.team-today-separator{
   margin:2px 0 11px!important;
 }
+
+@media(max-width:350px){.team-month-legend>div{grid-template-columns:1fr}}

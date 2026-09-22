@@ -174,16 +174,26 @@
   }
   function legendHtml(){
     const start=monday(state.selected),end=add(start,6),
-      plan=(state.data.items||[]).filter(r=>String(r.date||"")>=start&&String(r.date||"")<=end),
-      visibleEvents=state.events.filter(x=>x.date>=start&&x.date<=end),
+      pagePlan=(state.data.items||[]).filter(r=>{
+        const d=String(r.date||"").slice(0,10);
+        return d.startsWith(state.month)||(d>=start&&d<=end);
+      }),
+      pageEvents=state.events.filter(x=>String(x.date||"").startsWith(state.month)||(x.date>=start&&x.date<=end)),
+      weekPlan=byDate((state.data.items||[]).filter(r=>String(r.date||"")>=start&&String(r.date||"")<=end)),
+      hasPending=Array.from({length:7},(_,i)=>add(start,i)).some(day=>!weekPlan.has(day)),
       seen=new Map();
-    for(const r of plan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
+    for(const r of pagePlan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
     const items=[...seen.values()].map(i=>`<span>${i.family==="rh"||i.family==="off"||i.family==="other"?i.icon:`<i class="aav-dot aav-${i.family}"></i>`}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
-    if(plan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
+    if(hasPending)items.push('<span>🚫 <b>Planning non renseigné</b></span>');
+    if(pagePlan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
     if(quotity())items.push(`<span>◐ <b>Temps partiel</b><small>· ${quotity()}%</small></span>`);
-    const kinds=new Map();for(const x of visibleEvents)if(!kinds.has(x.kind))kinds.set(x.kind,x.icon);
-    for(const [k,icon] of kinds)items.push(`<span>${icon} <b>${esc(k)}</b></span>`);
-    return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")||'<span><b>Aucun repère cette semaine</b></span>'}</div></section>`;
+    const kinds=new Map();
+    for(const x of pageEvents){
+      const icon=String(x.icon||"•").trim()||"•",kind=String(x.kind||"Événement").trim()||"Événement",key=icon+"|"+kind;
+      if(!kinds.has(key))kinds.set(key,{icon,kind});
+    }
+    for(const {icon,kind} of kinds.values())items.push(`<span>${esc(icon)} <b>${esc(kind)}</b></span>`);
+    return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")||'<span><b>Aucun repère sur la page</b></span>'}</div></section>`;
   }
   function closeCallChoice(){document.getElementById("aavCallOverlay")?.remove()}
   function openCallChoice(phone,name){
