@@ -1974,9 +1974,23 @@
       has("messages") &&
       root.querySelector("#hcTableauStipHost")
     ) {
-      window.STIPTableau?.bindHomeButton?.(
-        root.querySelector('[data-home-mode="tableau"]'),
-      );
+      const bell = root.querySelector(".hc-tableau-bell"),
+        count = notifications().length + Number(window.STIPMessagesUnread || 0);
+      if (bell) {
+        bell.setAttribute(
+          "aria-label",
+          `Notifications${count ? ` : ${count} à traiter` : ""}`,
+        );
+        let badge = bell.querySelector("b");
+        if (count && !badge) {
+          badge = document.createElement("b");
+          bell.appendChild(badge);
+        }
+        if (badge) {
+          badge.textContent = count ? String(count) : "";
+          badge.hidden = !count;
+        }
+      }
       return;
     }
 
@@ -1988,7 +2002,7 @@
           <header class="hc-tableau-standalone-head">
             <button type="button" class="hc-tableau-back" data-home-mode="planning" aria-label="Retour à l’accueil"><span aria-hidden="true">‹</span><strong>Accueil</strong></button>
             <div class="hc-tableau-standalone-title"><strong>Fauteuils</strong><small>Terrain</small></div>
-            <span class="hc-tableau-head-spacer" aria-hidden="true"></span>
+            <button type="button" class="hc-profile-bell hc-tableau-bell" data-home-mode="notifications" aria-pressed="false" aria-label="Notifications${notifications().length + Number(window.STIPMessagesUnread || 0) ? ` : ${notifications().length + Number(window.STIPMessagesUnread || 0)} à traiter` : ""}"><span aria-hidden="true">🔔</span>${notifications().length + Number(window.STIPMessagesUnread || 0) ? `<b>${notifications().length + Number(window.STIPMessagesUnread || 0)}</b>` : ""}</button>
           </header>
           <section class="hc-tableau-standalone-body">${homeModeBody()}</section>
         </section>`
