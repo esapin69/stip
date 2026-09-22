@@ -1053,7 +1053,7 @@
     const planned = Number(row?.planned_count);
     const target = Number(row?.target_count);
     return Number.isFinite(planned) && Number.isFinite(target)
-      ? present - target
+      ? planned - target
       : 0;
   }
 
@@ -1234,7 +1234,7 @@
         staffRow?.gap != null && Number.isFinite(Number(staffRow.gap))
           ? Number(staffRow.gap)
           : target != null
-            ? planned - target
+            ? present - target
             : null,
       specialAgents = planRows.filter((item) => {
         const q = Number(item?.agents?.quotite);
