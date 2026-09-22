@@ -43,7 +43,7 @@ function readScrolls(){try{return JSON.parse(sessionStorage.getItem(SCROLL_STORE
 function saveScroll(r=route()){const m=readScrolls();m[clean(r)]=Math.max(0,Math.round(window.scrollY||0));try{sessionStorage.setItem(SCROLL_STORE,JSON.stringify(m))}catch{}}
 function setScroll(r,y){const m=readScrolls();m[clean(r)]=Math.max(0,Number(y)||0);try{sessionStorage.setItem(SCROLL_STORE,JSON.stringify(m))}catch{}}
 function restoreScroll(r=route()){const y=Number(readScrolls()[clean(r)]||0);requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo({top:y,behavior:'auto'})))}
-function setRoute(next,opt={}){const target=clean(next);if(route()===target){if(opt.force)restore();return}saveScroll();if(!opt.keepScroll)setScroll(target,0);const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
+function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}saveScroll();if(!opt.keepScroll)setScroll(target,0);const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
 function back(fallback='home'){saveScroll();if(history.state?.panel){history.back();return}if(route()!=='home'&&history.length>1&&history.state?.stip){history.back();return}setRoute(fallback,{replace:true,keepScroll:true})}
 function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden')}
 function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
@@ -110,7 +110,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hideAccessC
 sanitizeAccessCode();
 hideAccessCode();
 logoutBtn?.addEventListener('click',async()=>{try{await access('logout')}catch{}localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
-$('#homeBtn')?.addEventListener('click',()=>setRoute('home'));document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
+$('#homeBtn')?.addEventListener('click',()=>{setRoute('home');window.dispatchEvent(new CustomEvent('stip:home-root'))});document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
 window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});
 const panel=$('#hsPanel');if(panel)new MutationObserver(syncPanelHistory).observe(panel,{attributes:true,attributeFilter:['class']});
 $('#hsPanelBack')?.addEventListener('click',e=>{if(history.state?.panel){e.preventDefault();e.stopImmediatePropagation();back()}},true);
