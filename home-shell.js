@@ -1446,21 +1446,20 @@
     const active = state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
-        { key: "apps", label: "Applications", art: ICON.homeApps },
-        { key: "planning", label: "Mon profil", art: ICON.homeHome },
+        { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
+        { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
       ];
-    if (has("messages"))
-      items.push({ key: "tableau", label: "Fauteuils", art: ICON.homeChair, live: true });
+    if (has("planning_team") || has("activity") || has("assistant_enabled"))
+      items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "app" });
     return `<section class="hc-home-top-nav">
       <div class="hc-home-top-tools">
-        <div class="hc-home-team-slot">${teamShortcut()}</div>
+        <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
       <nav class="hc-home-filters" aria-label="Accueil STIP">${items
-        .map(
-          (item) =>
-            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong>${item.live ? '<span class="hc-home-live-badge" data-wheelchair-count hidden></span>' : ""}</button>`,
-        )
+        .map((item) => item.mode === "app"
+          ? `<button type="button" data-app="${item.key}" aria-label="${esc(item.label)}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`
+          : `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
     </section>`;
   }
@@ -1952,9 +1951,9 @@
     return `<button type="button" class="hc-planning-compare-shortcut" data-app="compare" aria-label="Comparer mon planning avec un agent"><span class="hc-planning-compare-art" aria-hidden="true">⇄</span><span class="hc-planning-compare-copy"><strong>Comparer mon planning avec…</strong><small>Rechercher un agent</small></span><span class="hc-planning-compare-search" aria-hidden="true">⌕</span></button>`;
   }
 
-  function teamShortcut() {
-    if (!(has("planning_team") || has("activity") || has("assistant_enabled"))) return "";
-    return `<button type="button" class="hc-team-shortcut" data-app="team" aria-label="Ouvrir Esprit d’équipe"><span class="hc-team-shortcut-icon">${ICON.team}</span><span class="hc-team-shortcut-copy"><strong>Esprit d’équipe</strong></span><span class="hc-team-shortcut-arrow" aria-hidden="true">›</span></button>`;
+  function wheelchairShortcut() {
+    if (!has("messages")) return "";
+    return `<button type="button" class="hc-wheelchair-shortcut${state.homeMode === "tableau" ? " active" : ""}" data-home-mode="tableau" aria-pressed="${state.homeMode === "tableau"}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}</span><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils</strong></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span><span class="hc-home-live-badge" data-wheelchair-count hidden></span></button>`;
   }
 
   function homeModeBody() {

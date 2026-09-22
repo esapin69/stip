@@ -5139,3 +5139,140 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   font-weight:950!important;
   box-shadow:0 3px 8px rgba(130,28,34,.22)!important;
 }
+
+
+/* HOME HEADER — FINAL SWAP 2026-09-22
+   Row 1: compact Fauteuils + notification bell.
+   Row 2: Applications / Mon profil / Esprit d'équipe, with Esprit on the right. */
+.hc-home-top-tools{
+  box-sizing:border-box!important;
+  width:min(100%,368px)!important;
+  min-height:54px!important;
+  margin:0 auto 16px!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 52px!important;
+  align-items:center!important;
+  gap:12px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.hc-home-wheelchair-slot{
+  min-width:0!important;
+  display:block!important;
+}
+.hc-home-wheelchair-slot:empty{display:none!important;}
+.hc-wheelchair-shortcut{
+  position:relative!important;
+  width:100%!important;
+  min-height:50px!important;
+  margin:0!important;
+  padding:5px 10px 5px 6px!important;
+  display:grid!important;
+  grid-template-columns:40px minmax(0,1fr) 20px!important;
+  align-items:center!important;
+  gap:9px!important;
+  border:1px solid #d7e6e9!important;
+  border-radius:17px!important;
+  background:#fff!important;
+  color:var(--stip-ink)!important;
+  box-shadow:0 6px 16px rgba(20,62,78,.06)!important;
+  text-align:left!important;
+  font:inherit!important;
+  cursor:pointer!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hc-wheelchair-shortcut.active{
+  border-color:#8dd7e5!important;
+  background:#f3fcfe!important;
+  box-shadow:0 6px 16px rgba(20,123,146,.08),inset 0 0 0 1px rgba(59,180,207,.12)!important;
+}
+.hc-wheelchair-shortcut-icon{
+  width:40px!important;
+  height:40px!important;
+  display:block!important;
+  overflow:hidden!important;
+  border-radius:12px!important;
+  background:#eef7f8!important;
+}
+.hc-wheelchair-shortcut-icon img,
+.hc-wheelchair-shortcut-icon svg{
+  width:100%!important;
+  height:100%!important;
+  display:block!important;
+  object-fit:cover!important;
+}
+.hc-wheelchair-shortcut-copy{
+  min-width:0!important;
+  display:block!important;
+}
+.hc-wheelchair-shortcut-copy strong{
+  display:block!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+  color:var(--stip-ink)!important;
+  font-size:.94rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+}
+.hc-wheelchair-shortcut-arrow{
+  color:#76909a!important;
+  font-size:1.35rem!important;
+  line-height:1!important;
+  font-weight:800!important;
+  text-align:center!important;
+}
+.hc-wheelchair-shortcut .hc-home-live-badge{
+  top:-5px!important;
+  right:-5px!important;
+}
+.hc-home-top-tools .hc-profile-bell{
+  position:relative!important;
+  width:52px!important;
+  height:52px!important;
+  min-width:52px!important;
+  min-height:52px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  display:grid!important;
+  place-items:center!important;
+  color:inherit!important;
+}
+.hc-home-top-tools .hc-profile-bell>span{
+  position:static!important;
+  font-size:1.72rem!important;
+  line-height:1!important;
+  filter:none!important;
+}
+.hc-home-top-tools .hc-profile-bell>b{
+  top:-2px!important;
+  right:-2px!important;
+}
+.hc-home-filters{
+  width:min(100%,368px)!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+.hc-home-filters>button[data-app="team"]{
+  order:3!important;
+}
+.hc-home-filters>button[data-app="team"] .hc-home-filter-art{
+  background:transparent!important;
+}
+.hc-home-filters>button[data-app="team"] .hc-home-filter-art img{
+  object-fit:cover!important;
+}
+@media(max-width:370px){
+  .hc-home-top-tools{grid-template-columns:minmax(0,1fr) 48px!important;gap:9px!important;}
+  .hc-home-top-tools .hc-profile-bell{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;}
+  .hc-wheelchair-shortcut{min-height:48px!important;grid-template-columns:36px minmax(0,1fr) 18px!important;gap:8px!important;}
+  .hc-wheelchair-shortcut-icon{width:36px!important;height:36px!important;}
+  .hc-wheelchair-shortcut-copy strong{font-size:.88rem!important;}
+}
