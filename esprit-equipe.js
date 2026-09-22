@@ -628,10 +628,12 @@
 
   function shiftSignalForDate(day, code) {
     const staff = state.staffingByDate.get(day);
+    const base = baseShift(code);
+    const shared = field()?.shiftStatus?.(staff, base);
+    if (shared) return shared;
     if (!staff || staff?.available === false)
       return { level: "unknown", symbol: "○", label: "Pas encore analysé" };
 
-    const base = baseShift(code);
     const row = staffingRows(staff).find(
       (item) => baseShift(item?.shift_code || item?.shift || item?.code) === base,
     );
@@ -755,8 +757,22 @@
     const body = rows.length
       ? `<div class="team-subsections">${rows
           .map((item) => {
+            const terrain = field()?.terrainItem?.(item);
             const severity = Number(item.severity || 0);
-            return `<section class="severity-${Math.min(4, severity)}"><span>${severity >= 3 ? "À décider" : severity >= 2 ? "À anticiper" : "Information"}</span><strong>${esc(item.title || "Information")}</strong>${item.body || item.recommendation_text ? `<p>${esc(item.body || item.recommendation_text)}</p>` : ""}</section>`;
+            const level = terrain?.level || (severity >= 4 ? "critical" : severity >= 2 ? "warning" : "ok");
+            const tag =
+              level === "critical"
+                ? "🛑 À traiter"
+                : level === "warning"
+                  ? "⚠️ À surveiller"
+                  : level === "opportunity"
+                    ? "➕ Marge utile"
+                    : "✔ Information";
+            const headline = terrain?.headline || item.title || "Information";
+            const details = [terrain?.detail || item.body, terrain?.proposal || item.recommendation_text]
+              .filter(Boolean)
+              .join(" ");
+            return `<section class="status-${esc(level)}"><span>${esc(tag)}</span><strong>${esc(headline)}</strong>${details ? `<p>${esc(details)}</p>` : ""}</section>`;
           })
           .join("")}</div>`
       : '<p class="team-empty-inline">Aucun point prioritaire détecté.</p>';
