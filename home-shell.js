@@ -116,7 +116,7 @@
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeChair:
-      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-vipchair1" alt="" aria-hidden="true">',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
