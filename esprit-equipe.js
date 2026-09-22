@@ -349,6 +349,190 @@
     return cached.promise;
   }
 
+  function monthAssistantItems(key) {
+    return state.signalMonths.get(key)?.assistantItems || [];
+  }
+
+  function monthDigestRows(key) {
+    const items = monthAssistantItems(key);
+    return daysOfMonth(key)
+      .map((day) => {
+        const dayItems = items.filter(
+          (item) => String(item?.date || "").slice(0, 10) === day,
+        );
+        const signal = signalForDate(day) || {
+          level: "unknown",
+          label: "Pas encore analysé",
+          symbol: "",
+        };
+        const staff = state.staffingByDate.get(day);
+        const formationCount = dayItems.filter(
+          (item) => item?.source_family === "formation",
+        ).length;
+        const traineeCount = dayItems.filter(
+          (item) => item?.source_family === "trainee",
+        ).length;
+        const significant = dayItems.filter(
+          (item) =>
+            Number(item?.severity || 0) >= 2 ||
+            ["anticipation", "warning", "opportunity", "proposal"].includes(
+              String(item?.kind || ""),
+            ) ||
+            ["changes", "onboarding", "strategy"].includes(
+              String(item?.source_family || ""),
+            ),
+        );
+        const gaps = staffingRows(staff)
+          .map((row) => ({
+            code: baseShift(row?.shift_code || row?.shift || row?.code),
+            gap: staffingRowGap(row),
+          }))
+          .filter((row) => row.code && row.gap !== 0)
+          .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
+        const meaningful =
+          ["critical", "warning", "opportunity"].includes(signal.level) ||
+          formationCount > 0 ||
+          traineeCount > 0 ||
+          significant.length > 0;
+        if (!meaningful) return null;
+
+        const details = [];
+        if (formationCount)
+          details.push(
+            `🎓 ${formationCount} formation${formationCount > 1 ? "s" : ""}`,
+          );
+        if (traineeCount)
+          details.push(
+            `👶 ${traineeCount} stagiaire${traineeCount > 1 ? "s" : ""}`,
+          );
+        if (gaps.length) {
+          const useful = gaps
+            .filter((row) =>
+              ["critical", "warning"].includes(signal.level)
+                ? row.gap < 0
+                : signal.level === "opportunity"
+                  ? row.gap > 0
+                  : true,
+            )
+            .slice(0, 2);
+          for (const row of useful)
+            details.push(
+              `${row.code} ${row.gap > 0 ? "+" : ""}${row.gap}`,
+            );
+        }
+        const lead = significant[0];
+        const leadText =
+          field()?.terrainItem?.(lead)?.headline ||
+          lead?.title ||
+          "";
+        if (leadText && !details.some((part) => part.includes(leadText)))
+          details.push(leadText);
+
+        return {
+          day,
+          level: signal.level || "unknown",
+          symbol: statusSymbol(signal.level, signal.symbol),
+          label: signal.label || "À regarder",
+          details: details.slice(0, 4),
+          formationCount,
+          traineeCount,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function renderMonthDigest(key = state.dateJumpMonth) {
+    const host = $("#teamMonthDigestHost");
+    if (!host) return;
+    const cache = state.signalMonths.get(key);
+    if (!cache?.loaded) {
+      host.innerHTML =
+        '<div class="team-month-digest-loading">Analyse du mois…</div>';
+      return;
+    }
+    const rows = monthDigestRows(key);
+    if (!rows.length) {
+      host.innerHTML =
+        '<div class="team-month-digest-empty"><strong>Rien à signaler ce mois</strong><span>Les journées sans point utile ne sont pas répétées ici.</span></div>';
+      return;
+    }
+
+    const formationTotal = rows.reduce(
+        (sum, row) => sum + row.formationCount,
+        0,
+      ),
+      traineeTotal = rows.reduce((sum, row) => sum + row.traineeCount, 0),
+      alertDays = rows.filter((row) =>
+        ["critical", "warning"].includes(row.level),
+      ).length,
+      groups = new Map();
+
+    for (const row of rows) {
+      const start = monday(row.day);
+      if (!groups.has(start)) groups.set(start, []);
+      groups.get(start).push(row);
+    }
+
+    const summary = [
+      `${rows.length} jour${rows.length > 1 ? "s" : ""} à retenir`,
+      alertDays
+        ? `${alertDays} à surveiller`
+        : "",
+      formationTotal
+        ? `${formationTotal} formation${formationTotal > 1 ? "s" : ""}`
+        : "",
+      traineeTotal
+        ? `${traineeTotal} stagiaire${traineeTotal > 1 ? "s" : ""}`
+        : "",
+    ].filter(Boolean);
+
+    const weeks = [...groups.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([start, weekRows]) => {
+        const end = addDays(start, 6),
+          inSelectedWeek =
+            state.dayFocus >= start && state.dayFocus <= end,
+          label =
+            dateObj(start)
+              .toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+              .replace(".", "") +
+            " → " +
+            dateObj(end)
+              .toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
+              .replace(".", "");
+        return `<details class="team-month-week" ${inSelectedWeek ? "open" : ""}>
+          <summary><span>${esc(label)}</span><b>${weekRows.length}</b></summary>
+          <div>${weekRows
+            .map((row) => {
+              const d = dateObj(row.day),
+                labelDay = d
+                  .toLocaleDateString("fr-FR", {
+                    weekday: "short",
+                    day: "numeric",
+                  })
+                  .replace(".", "");
+              return `<button type="button" class="team-month-line status-${esc(row.level)}" data-team-month-day="${esc(row.day)}">
+                <span class="team-month-line-status" aria-hidden="true">${esc(row.symbol)}</span>
+                <div><strong>${esc(labelDay)} · ${esc(row.label)}</strong><small>${esc(row.details.join(" · ") || "Point utile détecté")}</small></div>
+                <i aria-hidden="true">›</i>
+              </button>`;
+            })
+            .join("")}</div>
+        </details>`;
+      })
+      .join("");
+
+    host.innerHTML =
+      `<section class="team-month-digest-card">
+        <header><strong>${esc(
+          dateObj(key + "-01")
+            .toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+            .replace(/^./, (char) => char.toUpperCase()),
+        )}</strong><span>${esc(summary.join(" · "))}</span></header>
+        <div class="team-month-weeks">${weeks}</div>
+      </section>`;
+  }
+
   function renderDateJumpCalendar(key = "") {
     const panel = $("#teamDateJumpPanel");
     if (!panel) return;
