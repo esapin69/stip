@@ -128,6 +128,13 @@
       meta = SHIFT[code];
     return [code, meta?.label].filter(Boolean).join(" · ");
   }
+  function shiftBadge(item) {
+    const code = baseCode(item?.code),
+      meta = SHIFT[code];
+    if (!code || !meta) return "";
+    const tone = code.toLowerCase();
+    return `<span class="hc-duty-chief-shift tone-${esc(tone)}" aria-label="${esc(shiftText(item))}"><i aria-hidden="true"></i><b>${esc(code)}</b></span>`;
+  }
 
   async function fetchDuty(force = false) {
     if (!document.querySelector("#teamDutyChiefHost")) return null;
@@ -194,10 +201,14 @@
 
   function todayRow(item) {
     const a = item?.agents || {},
-      href = tel(a.telephone);
+      href = tel(a.telephone),
+      key = String(a.source_key || "");
     return `<div class="hc-duty-chief-person">
-      <span class="hc-duty-chief-shift">${esc(baseCode(item.code))}</span>
-      <span class="hc-duty-chief-copy"><strong>${esc(personName(a))}</strong><small>${esc(shiftText(item))}</small></span>
+      <button class="hc-duty-chief-person-main" type="button" data-duty-chief-agent="${esc(key)}" ${key ? "" : "disabled"} aria-label="Voir le planning de ${esc(personName(a))}">
+        ${shiftBadge(item)}
+        <span class="hc-duty-chief-copy"><strong>${esc(personName(a))}</strong><small>${esc(SHIFT[baseCode(item.code)]?.label || shiftText(item))}</small></span>
+        <i class="hc-duty-chief-row-chevron" aria-hidden="true">›</i>
+      </button>
       ${href ? `<a class="hc-duty-chief-call" href="${esc(href)}" aria-label="Appeler ${esc(personName(a))}"><span>☎</span><b>Appeler</b></a>` : '<span class="hc-duty-chief-no-phone">N° indisponible</span>'}
     </div>`;
   }
@@ -237,6 +248,17 @@
     bubble.querySelector("[data-duty-chief-close]")?.addEventListener("click", () =>
       closeBubble(root),
     );
+    bubble.querySelectorAll("[data-duty-chief-agent]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = String(button.dataset.dutyChiefAgent || "");
+        if (!key) return;
+        const item = (data?.items || []).find(
+          (row) => String(row?.agents?.source_key || "") === key,
+        );
+        closeBubble(root);
+        window.STIPAgentAgenda?.open?.(key, item?.agents || {});
+      });
+    });
   }
 
   function render() {
@@ -274,7 +296,7 @@
       border:1px solid rgba(112,64,159,.13);border-radius:15px;background:#efe4fb;
       font-size:1.45rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.64)
     }
-    .hc-duty-chief-summary{min-width:0;display:block}
+    .hc-duty-chief-summary{min-width:0;display:grid;align-content:center;text-align:left}
     .hc-duty-chief-summary small,.hc-duty-chief-summary strong,.hc-duty-chief-summary em{display:block}
     .hc-duty-chief-summary small{
       color:#70409f;font-size:.61rem;font-weight:950;line-height:1.05;letter-spacing:.08em
@@ -298,13 +320,35 @@
     }
     .hc-duty-chief-list{display:grid;gap:7px}
     .hc-duty-chief-person{
-      display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:8px;
-      padding:8px;border:1px solid rgba(112,64,159,.11);border-radius:14px;background:#fff
+      display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;
+      padding:7px 8px;border:1px solid rgba(112,64,159,.11);border-radius:14px;background:#fff
     }
+    .hc-duty-chief-person-main{
+      min-width:0;min-height:52px;display:grid;grid-template-columns:54px minmax(0,1fr) 16px;
+      align-items:center;gap:9px;padding:0;border:0;background:transparent;color:#173e4b;
+      text-align:left;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent
+    }
+    .hc-duty-chief-person-main:active{transform:scale(.992);background:#fafcff;border-radius:11px}
+    .hc-duty-chief-person-main:disabled{cursor:default}
     .hc-duty-chief-shift{
-      width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:#f0e7f8;
-      color:#70409f;font-size:.78rem;font-weight:950
+      --shift-color:#81909b;
+      min-width:48px;height:38px;display:flex;align-items:center;justify-content:center;gap:5px;
+      padding:0 7px;border-radius:12px;
+      border:1px solid color-mix(in srgb,var(--shift-color) 28%,#dce7e9);
+      background:color-mix(in srgb,var(--shift-color) 9%,#fff);
+      color:#173e4b;font-size:.75rem;font-weight:950
     }
+    .hc-duty-chief-shift>i{
+      width:18px;height:18px;display:block;border-radius:50%;
+      background:var(--shift-color);
+      box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(20,62,78,.10)
+    }
+    .hc-duty-chief-shift.tone-m{--shift-color:var(--stip-shift-m)}
+    .hc-duty-chief-shift.tone-j{--shift-color:var(--stip-shift-j)}
+    .hc-duty-chief-shift.tone-j4{--shift-color:var(--stip-shift-j4)}
+    .hc-duty-chief-shift.tone-s{--shift-color:var(--stip-shift-s)}
+    .hc-duty-chief-shift.tone-n{--shift-color:var(--stip-shift-n)}
+    .hc-duty-chief-row-chevron{color:#8799a0;font-size:1.15rem;font-style:normal;font-weight:900}
     .hc-duty-chief-copy{min-width:0}
     .hc-duty-chief-copy strong,.hc-duty-chief-copy small{display:block}
     .hc-duty-chief-copy strong{font-size:.82rem;line-height:1.05}
@@ -327,6 +371,8 @@
       .hc-duty-chief-icon{width:44px;height:44px;border-radius:14px;font-size:1.35rem}
       .hc-duty-chief-summary strong{font-size:.92rem}
       .hc-duty-chief-bubble{left:4px;right:4px}
+      .hc-duty-chief-person-main{grid-template-columns:50px minmax(0,1fr) 14px;gap:7px}
+      .hc-duty-chief-shift{min-width:46px;padding-inline:5px}
       .hc-duty-chief-call b{display:none}
       .hc-duty-chief-call{width:38px;padding:0;justify-content:center}
     }
