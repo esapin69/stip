@@ -49,18 +49,16 @@
         month: "short",
       })
       .replace(".", "");
-  function sevText(n) {
-    return n >= 4
-      ? "Urgent"
-      : n === 3
-        ? "Important"
-        : n === 2
-          ? "À vérifier"
-          : "Information";
+  function sevText(n, x = null) {
+    const terrain = x ? window.STIPFieldIntel?.terrainItem?.(x) : null;
+    if (terrain?.level === "opportunity") return "Marge utile";
+    return n >= 4 ? "Urgent" : n === 3 ? "Important" : n === 2 ? "À vérifier" : "Information";
   }
   function icon(x) {
-    if (x.severity >= 4) return "⛔";
-    if (x.severity >= 3) return "⚠️";
+    const terrain = window.STIPFieldIntel?.terrainItem?.(x);
+    if (terrain?.level === "critical") return "🛑";
+    if (terrain?.level === "warning") return "⚠️";
+    if (terrain?.level === "opportunity") return "➕";
     if (x.recommendation && Object.keys(x.recommendation).length) return "💡";
     return "•";
   }
@@ -120,7 +118,7 @@
       if (!days.has(key)) days.set(key, []);
       days.get(key).push(x);
     });
-    h.innerHTML = `<div class="op-head"><div><span class="op-kicker">SITUATION</span><b>${list.length} point${list.length > 1 ? "s" : ""} à regarder</b></div><span class="op-date">7 jours</span></div><div class="op-days">${[...days.entries()].map(([date, signals]) => `<section class="op-day stip-time-surface"><header><strong>${esc(fmt(date))}</strong><span>${signals.length} sujet${signals.length > 1 ? "s" : ""}</span></header><div class="op-list">${signals.map((x) => `<button class="op-card sev-${Number(x.severity) || 1}" data-op-id="${esc(x.id)}" type="button"><span class="op-icon">${icon(x)}</span><span class="op-main"><strong>${esc(x.title)}</strong><small>${x.window_start ? `${esc(String(x.window_start).slice(0, 5))}${x.window_end ? "–" + esc(String(x.window_end).slice(0, 5)) : ""}` : "Toute la journée"}</small></span><span class="op-sev">${esc(sevText(Number(x.severity) || 1))}</span></button>`).join("")}</div></section>`).join("")}</div>${list.length > 4 ? `<div class="op-more">+ ${list.length - 4} autre${list.length - 4 > 1 ? "s" : ""}</div>` : ""}`;
+    h.innerHTML = `<div class="op-head"><div><span class="op-kicker">SITUATION</span><b>${list.length} point${list.length > 1 ? "s" : ""} à regarder</b></div><span class="op-date">7 jours</span></div><div class="op-days">${[...days.entries()].map(([date, signals]) => `<section class="op-day stip-time-surface"><header><strong>${esc(fmt(date))}</strong><span>${signals.length} sujet${signals.length > 1 ? "s" : ""}</span></header><div class="op-list">${signals.map((x) => `<button class="op-card sev-${Number(x.severity) || 1}" data-op-id="${esc(x.id)}" type="button"><span class="op-icon">${icon(x)}</span><span class="op-main"><strong>${esc(x.title)}</strong><small>${x.window_start ? `${esc(String(x.window_start).slice(0, 5))}${x.window_end ? "–" + esc(String(x.window_end).slice(0, 5)) : ""}` : "Toute la journée"}</small></span><span class="op-sev">${esc(sevText(Number(x.severity) || 1, x))}</span></button>`).join("")}</div></section>`).join("")}</div>${list.length > 4 ? `<div class="op-more">+ ${list.length - 4} autre${list.length - 4 > 1 ? "s" : ""}</div>` : ""}`;
     h.dataset.ready = "true";
     h.querySelectorAll("[data-op-id]").forEach((b) =>
       b.addEventListener("click", () => openSignal(b.dataset.opId)),
@@ -135,7 +133,7 @@
     if (!p || !b) return;
     t.textContent = "Analyse STIP";
     const rec = recommendation(x);
-    b.innerHTML = `<div class="resp-detail op-detail"><span class="resp-status">${esc(sevText(Number(x.severity) || 1))}</span><h3>${esc(x.title)}</h3><p><strong>${esc(fmt(x.event_date))}</strong>${x.window_start ? ` · ${esc(String(x.window_start).slice(0, 5))}${x.window_end ? "–" + esc(String(x.window_end).slice(0, 5)) : ""}` : ""}</p>${bodyText(x) ? `<p>${esc(bodyText(x))}</p>` : ""}${rec ? `<div class="op-rec"><strong>Suggestion</strong><p>${esc(rec)}</p></div>` : ""}<div class="resp-actions"><button class="primary" data-op-decision="treated" type="button">Traité</button><button data-op-decision="not_needed" type="button">Pas d’action nécessaire</button></div><div class="resp-feedback" id="opFeedback"></div></div>`;
+    b.innerHTML = `<div class="resp-detail op-detail"><span class="resp-status">${esc(sevText(Number(x.severity) || 1, x))}</span><h3>${esc(x.title)}</h3><p><strong>${esc(fmt(x.event_date))}</strong>${x.window_start ? ` · ${esc(String(x.window_start).slice(0, 5))}${x.window_end ? "–" + esc(String(x.window_end).slice(0, 5)) : ""}` : ""}</p>${bodyText(x) ? `<p>${esc(bodyText(x))}</p>` : ""}${rec ? `<div class="op-rec"><strong>Suggestion</strong><p>${esc(rec)}</p></div>` : ""}<div class="resp-actions"><button class="primary" data-op-decision="treated" type="button">Traité</button><button data-op-decision="not_needed" type="button">Pas d’action nécessaire</button></div><div class="resp-feedback" id="opFeedback"></div></div>`;
     p.classList.add("open");
     p.setAttribute("aria-hidden", "false");
     b.querySelectorAll("[data-op-decision]").forEach((btn) =>
