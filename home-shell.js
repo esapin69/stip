@@ -88,6 +88,8 @@
       '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
+    agents:
+      '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
     change:
       '<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>',
     calendar:
@@ -1400,6 +1402,8 @@
       s += app("tomorrow", "Actions", "tomorrow", "tomorrow");
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
+    if (has("agent_directory"))
+      s += app("agents", "Agents", "agents", "agents");
     if (has("change_app")) s += app("change", "Changement", "change", "change");
     if (has("calendar_subscribe"))
       s += app("calendar", "Synchroniser mon calendrier", "calendar", "calendar");
@@ -2155,6 +2159,7 @@
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
     if (k === "team") return (location.href = "esprit-equipe.html");
+    if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
     if (k === "compare") return (location.href = "planning-compare-app.html?from=home");
