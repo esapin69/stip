@@ -3,6 +3,8 @@
 
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates",
+    STAFF_API =
+      "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-staffing",
     STORE = "stip_session_v1",
     $ = (s) => document.querySelector(s),
     DAY_MS = 86400000;
@@ -14,6 +16,7 @@
     weekOffset: 0,
     selectedDate: "",
     monthKey: "",
+    impactByDate: {},
   };
 
   const esc = (v) =>
@@ -138,7 +141,7 @@
     );
   }
 
-  function markerMarkup(events = []) {
+  function markerMarkup(events = [], date = "") {
     return markerGroups(events)
       .map(({ category, icon, count }) => {
         const label = categoryLabel(category),
@@ -146,12 +149,12 @@
             count > 1
               ? `<em class="rr-marker-count" aria-hidden="true">×${count}</em>`
               : "";
-        return `<i class="rr-marker type-${esc(category)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
+        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
       })
       .join("");
   }
 
-  function weekMarkerMarkup(events = []) {
+  function weekMarkerMarkup(events = [], date = "") {
     return events
       .map((event) => {
         const category = categoryClass(event.category),
@@ -159,7 +162,7 @@
           icon = event.icon || categoryIcon(category),
           person = String(event.person_name || "").trim(),
           title = person ? `${label} · ${person}` : label;
-        return `<i class="rr-marker type-${esc(category)}" title="${esc(title)}"><span aria-hidden="true">${esc(icon)}</span></i>`;
+        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(title)}"><span aria-hidden="true">${esc(icon)}</span></i>`;
       })
       .join("");
   }
@@ -260,6 +263,101 @@
       .join("");
   }
 
+  function weekCounts(days = weekDays()) {
+    const dates = new Set(days.map((x) => x.iso)),
+      counts = { medical: 0, intern: 0, training: 0 };
+    for (const item of state.items) {
+      if (dates.has(item.date) && Object.hasOwn(counts, item.category))
+        counts[item.category] += 1;
+    }
+    return counts;
+  }
+
+  function weekSummary(days = weekDays()) {
+    const c = weekCounts(days),
+      parts = [];
+    if (c.medical) parts.push(`🩺 ${c.medical} visite${c.medical > 1 ? "s" : ""}`);
+    if (c.intern) parts.push(`👶 ${c.intern} stagiaire${c.intern > 1 ? "s" : ""}`);
+    if (c.training) parts.push(`🎓 ${c.training} formation${c.training > 1 ? "s" : ""}`);
+    return parts.join(" · ") || "Aucune date particulière cette semaine";
+  }
+
+  function impactFor(date) {
+    return state.impactByDate[date] || null;
+  }
+
+  function impactFromStaff(date, staff) {
+    const events = itemsForDate(date),
+      training = events.filter((x) => x.category === "training").length,
+      medical = events.filter((x) => x.category === "medical").length,
+      shifts = Array.isArray(staff?.shifts)
+        ? staff.shifts
+        : Array.isArray(staff?.rows)
+          ? staff.rows
+          : [],
+      deficits = shifts.filter((x) => Number(x?.gap || 0) < 0),
+      critical = shifts.some((x) => Number(x?.severity || 0) >= 4),
+      globalGap = Number(staff?.summary?.gap ?? 0),
+      planningFragile = deficits.length > 0 || globalGap < 0,
+      load = training * 2 + medical;
+
+    let level = "";
+    if (critical && load > 0) level = "critical";
+    else if ((planningFragile && load > 0) || training >= 4 || medical >= 3)
+      level = "watch";
+    else if (training >= 3 || (training >= 2 && medical >= 1))
+      level = "attention";
+
+    if (!level) return { level: "", title: "" };
+    const reasons = [];
+    if (training) reasons.push(`${training} formation${training > 1 ? "s" : ""}`);
+    if (medical) reasons.push(`${medical} visite${medical > 1 ? "s" : ""}`);
+    if (planningFragile) reasons.push("planning déjà fragile");
+    return {
+      level,
+      title: `À surveiller · ${reasons.join(" · ")}`,
+    };
+  }
+
+  async function loadWeekImpact() {
+    const days = weekDays().filter((x) => itemsForDate(x.iso).length);
+    const missing = days.filter(
+      (x) => !Object.prototype.hasOwnProperty.call(state.impactByDate, x.iso),
+    );
+    if (!missing.length) return;
+    await Promise.all(
+      missing.map(async ({ iso }) => {
+        try {
+          const r = await fetch(STAFF_API, {
+              method: "POST",
+              cache: "no-store",
+              headers: {
+                "content-type": "application/json",
+                "x-stip-session": localStorage.getItem(STORE) || "",
+              },
+              body: JSON.stringify({ action: "day", date: iso }),
+            }),
+            data = await r.json().catch(() => null);
+          state.impactByDate[iso] =
+            r.ok && data && data.available !== false
+              ? impactFromStaff(iso, data)
+              : { level: "", title: "" };
+        } catch {
+          state.impactByDate[iso] = { level: "", title: "" };
+        }
+      }),
+    );
+    renderWeek();
+  }
+
+  function syncProControls() {
+    const pro =
+      String(document.documentElement.dataset.responsableLevel || "") === "pro";
+    document
+      .querySelectorAll("[data-rr-add]")
+      .forEach((button) => (button.hidden = !pro));
+  }
+
   function renderWeek() {
     const host = $("#rrWeek");
     if (!host) return;
@@ -272,17 +370,19 @@
           : days[0]?.iso || "";
     state.selectedDate = selected;
 
-    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
+    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add" type="button" data-rr-add hidden aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
-          markers = weekMarkerMarkup(events),
+          markers = weekMarkerMarkup(events, x.iso),
+          impact = impactFor(x.iso),
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
             .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${markers}</span></button>`;
+        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""} ${impact?.level ? `impact-${esc(impact.level)}` : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}" title="${esc(impact?.title || "")}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b>${impact?.level ? '<span class="rr-impact-dot" aria-hidden="true">⚠️</span>' : ""}<span class="rr-week-marks">${markers}</span></button>`;
       })
       .join("")}</nav></section>`;
+    syncProControls();
   }
 
   function shiftMonth(key, step) {
@@ -308,7 +408,7 @@
       const d = new Date(y, m - 1, day, 12),
         iso = localIso(d),
         events = itemsForDate(iso),
-        markers = markerMarkup(events),
+        markers = markerMarkup(events, iso),
         gridStart =
           day === 1
             ? ` style="grid-column-start:${leading + 1}"`
@@ -323,20 +423,7 @@
 
   function renderSelectedDay() {
     const host = $("#rrSelectedDay");
-    if (!host) return;
-    const today = parisIso(),
-      upcomingDates = new Set(
-        sortedItems()
-          .filter((x) => x.date >= today)
-          .slice(0, 4)
-          .map((x) => x.date),
-      ),
-      rows = itemsForDate(state.selectedDate);
-    if (!rows.length || upcomingDates.has(state.selectedDate)) {
-      host.innerHTML = "";
-      return;
-    }
-    host.innerHTML = `<div class="rr-period-separator rr-selected-separator"><span>${esc(relativeLabel(state.selectedDate))}</span></div>${rows.map(eventCard).join("")}`;
+    if (host) host.innerHTML = "";
   }
 
   function renderStatus() {
@@ -419,96 +506,38 @@
     } finally {
       state.loading = false;
       render();
+      loadWeekImpact();
     }
   }
 
-  function icsText(value) {
-    return String(value ?? "")
-      .replace(/\\/g, "\\\\")
-      .replace(/\r?\n/g, "\\n")
-      .replace(/,/g, "\\,")
-      .replace(/;/g, "\\;");
+  function openDatesPage(date, filter = "all") {
+    const url =
+      "agent-dates.html?date=" +
+      encodeURIComponent(date) +
+      "&filter=" +
+      encodeURIComponent(filter);
+    if (window.STIPNav) window.STIPNav.go(url);
+    else location.href = url;
   }
 
-  function icsDate(iso) {
-    return String(iso || "").replaceAll("-", "");
+  function openAdd(date = "") {
+    const target = date || state.selectedDate || parisIso(),
+      url =
+        "responsable-agenda.html?open=add&date=" + encodeURIComponent(target);
+    if (window.STIPNav) window.STIPNav.go(url);
+    else location.href = url;
   }
 
-  function icsStamp() {
-    return new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-  }
-
-  function exportAgentDates() {
-    const status = $("#rrOptionStatus"),
-      rows = sortedItems().filter((x) => x.date >= parisIso());
-    if (!rows.length) {
-      if (status) status.textContent = "Aucune date à importer.";
+  function openLiveCalendar() {
+    const status = $("#rrOptionStatus");
+    if (window.STIPCalendars?.quick) {
+      if (status) status.textContent = "";
+      window.STIPCalendars.quick("agent_dates");
       return;
     }
-
-    const lines = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//STIP//Dates agents//FR",
-      "CALSCALE:GREGORIAN",
-      "METHOD:PUBLISH",
-      "X-WR-CALNAME:STIP · Dates des agents",
-      "X-WR-TIMEZONE:Europe/Paris",
-    ],
-      stamp = icsStamp();
-
-    rows.forEach((x, index) => {
-      const uid = `stip-agent-date-${icsDate(x.date)}-${index}-${String(x.id || x.source_id || "event").replace(/[^a-z0-9_-]/gi, "")}@esapin.com`,
-        title = `${x.icon} ${categoryLabel(x.category)} · ${x.person_name}`,
-        details = [
-          x.time ? `Horaire : ${x.time}` : "",
-          x.referent ? `Référent : ${x.referent}` : "",
-          x.location ? `Lieu : ${x.location}` : "",
-          x.title && x.title !== categoryLabel(x.category) ? x.title : "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        pureTime = String(x.time || "").match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
-
-      lines.push(
-        "BEGIN:VEVENT",
-        `UID:${icsText(uid)}`,
-        `DTSTAMP:${stamp}`,
-      );
-
-      if (pureTime) {
-        const hh = String(pureTime[1]).padStart(2, "0"),
-          mm = pureTime[2];
-        lines.push(
-          `DTSTART;TZID=Europe/Paris:${icsDate(x.date)}T${hh}${mm}00`,
-        );
-      } else {
-        lines.push(`DTSTART;VALUE=DATE:${icsDate(x.date)}`);
-      }
-
-      lines.push(
-        `SUMMARY:${icsText(title)}`,
-        `DESCRIPTION:${icsText(details)}`,
-        "TRANSP:TRANSPARENT",
-        "STATUS:CONFIRMED",
-        "END:VEVENT",
-      );
-    });
-
-    lines.push("END:VCALENDAR");
-    const blob = new Blob([lines.join("\r\n") + "\r\n"], {
-        type: "text/calendar;charset=utf-8",
-      }),
-      url = URL.createObjectURL(blob),
-      a = document.createElement("a");
-    a.href = url;
-    a.download = `stip-dates-agents-${parisIso()}.ics`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1500);
     if (status)
-      status.textContent = `${rows.length} date${rows.length > 1 ? "s" : ""} préparée${rows.length > 1 ? "s" : ""} pour le calendrier.`;
+      status.textContent =
+        "Le moteur d’abonnement calendrier n’est pas encore disponible.";
   }
 
   function openEvent(id) {
@@ -534,9 +563,21 @@
   }
 
   document.addEventListener("click", (e) => {
-    const exportButton = e.target.closest?.("[data-rr-export-ics]");
-    if (exportButton) {
-      exportAgentDates();
+    const liveCalendar = e.target.closest?.("[data-rr-live-calendar]");
+    if (liveCalendar) {
+      openLiveCalendar();
+      return;
+    }
+    const add = e.target.closest?.("[data-rr-add]");
+    if (add) {
+      openAdd();
+      return;
+    }
+    const filterMarker = e.target.closest?.("[data-rr-filter][data-rr-date]");
+    if (filterMarker) {
+      e.preventDefault();
+      e.stopPropagation();
+      openDatesPage(filterMarker.dataset.rrDate, filterMarker.dataset.rrFilter);
       return;
     }
     const event = e.target.closest?.("[data-rr-event]");
@@ -554,16 +595,13 @@
       renderWeek();
       renderSelectedDay();
       renderMonth();
+      loadWeekImpact();
       return;
     }
     const day = e.target.closest?.("[data-rr-day]");
     if (day) {
-      state.selectedDate = day.dataset.rrDay || state.selectedDate;
-      state.monthKey =
-        String(state.selectedDate).slice(0, 7) || state.monthKey;
-      renderWeek();
-      renderSelectedDay();
-      renderMonth();
+      const iso = day.dataset.rrDay || "";
+      if (iso) openDatesPage(iso, "all");
       return;
     }
     const monthStep = e.target.closest?.("[data-rr-month-step]");
@@ -578,22 +616,16 @@
     const calDay = e.target.closest?.("[data-rr-cal-day]");
     if (calDay) {
       const iso = calDay.dataset.rrCalDay || "";
-      if (!iso) return;
-      state.selectedDate = iso;
-      const targetMonday = mondayOf(dateObj(iso)),
-        currentMonday = mondayOf(dateObj(parisIso()));
-      state.weekOffset = Math.round(
-        (targetMonday - currentMonday) / (7 * DAY_MS),
-      );
-      state.monthKey = iso.slice(0, 7);
-      renderWeek();
-      renderSelectedDay();
-      renderMonth();
-      $("#rrWeek")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (iso) openDatesPage(iso, "all");
     }
   });
 
   state.selectedDate = parisIso();
   state.monthKey = state.selectedDate.slice(0, 7);
+  new MutationObserver(syncProControls).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ["data-responsable-level"],
+  });
+  syncProControls();
   load();
 })();
