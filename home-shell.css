@@ -4266,16 +4266,22 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-home-filters>button>strong{font-size:.69rem!important}
 }
 
-/* Identity card should read as information, not a giant button. */
+/* Identity block is information, not a raised card/button. */
 .hc-profile-full,
 .hc-id-card{
+  border:0!important;
+  background:transparent!important;
   box-shadow:none!important;
+  filter:none!important;
   transform:none!important;
   cursor:default!important;
 }
-.hc-profile-full{
-  border:1px solid rgba(22,91,111,.09)!important;
-  background:rgba(255,255,255,.72)!important;
+.hc-profile-full::before,
+.hc-profile-full::after,
+.hc-id-card::before,
+.hc-id-card::after{
+  content:none!important;
+  box-shadow:none!important;
 }
 .hc-id-card:active{
   transform:none!important;
