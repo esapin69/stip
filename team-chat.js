@@ -23,6 +23,7 @@
     selectedQuantity: 0,
     selectedLevel: "",
     selectedLocation: "",
+    buildingOverviewExpanded: false,
   };
 
   const homeState = {
@@ -424,6 +425,13 @@
       if (locationSearch) {
         event.preventDefault();
         openComposerLocationSearch();
+        return;
+      }
+      const overviewToggle = event.target.closest?.("[data-building-overview-toggle]");
+      if (overviewToggle) {
+        event.preventDefault();
+        state.buildingOverviewExpanded = !state.buildingOverviewExpanded;
+        renderBuildingPulse();
         return;
       }
       const building = event.target.closest?.("[data-building-compose]");
@@ -1534,9 +1542,12 @@
     const byId = new Map(messages.map((message) => [String(message.id), message]));
     const me = String(state.data?.me?.id || "");
 
+    const page = state.root?.querySelector(".tb-page");
+    page?.classList.toggle("is-feed-empty", !messages.length);
+    feed.classList.toggle("is-empty", !messages.length);
+
     if (!messages.length) {
-      feed.innerHTML =
-        '<section class="tb-empty-state"><strong>Aucune info fauteuil pour l’instant</strong><p>Quand tu vois ou ranges des fauteuils, indique simplement où ils sont. Une demande reste possible si besoin.</p></section>';
+      feed.innerHTML = "";
       updateSelectionBar();
       return;
     }
@@ -1925,19 +1936,73 @@
     const host = state.root?.querySelector("[data-building-pulse]");
     if (!host) return;
     const stats = buildingPulseStats();
-
-    host.innerHTML = BUILDINGS.map((building) => {
+    const rows = BUILDINGS.map((building) => {
       const item = stats[building.key] || { stock: 0, requests: 0 };
-      return (
-        '<article class="tb-pulse-card">' +
-          '<strong>' + esc(building.label) + '</strong>' +
-          '<div class="tb-pulse-counts">' +
-            '<span class="tb-pulse-stock"><b aria-hidden="true">🦽</b><em>' + item.stock + '</em><small>dispo</small></span>' +
-            '<span class="tb-pulse-search"><b aria-hidden="true">🔎</b><em>' + item.requests + '</em><small>demande' + (item.requests > 1 ? 's' : '') + '</small></span>' +
-          '</div>' +
-        '</article>'
+      return { ...building, ...item, active: item.stock > 0 || item.requests > 0 };
+    });
+    const activeRows = rows
+      .filter((item) => item.active)
+      .sort((a, b) =>
+        (b.requests > 0) - (a.requests > 0) ||
+        b.requests - a.requests ||
+        b.stock - a.stock ||
+        a.label.localeCompare(b.label, "fr"),
       );
-    }).join("");
+
+    if (!activeRows.length && !state.buildingOverviewExpanded) {
+      host.className = "tb-building-pulse tb-situation-now is-clear";
+      host.innerHTML =
+        '<div class="tb-situation-clear">' +
+          '<span class="tb-situation-check" aria-hidden="true">✓</span>' +
+          '<div><strong>Rien à signaler</strong><small>4 bâtiments · aucun fauteuil signalé · aucune recherche en cours</small></div>' +
+          '<button type="button" data-building-overview-toggle>Voir les bâtiments</button>' +
+        '</div>';
+      return;
+    }
+
+    const visible = state.buildingOverviewExpanded ? rows : activeRows;
+    host.className =
+      "tb-building-pulse tb-situation-now" +
+      (state.buildingOverviewExpanded ? " is-expanded" : " is-active");
+    host.innerHTML =
+      '<div class="tb-situation-head">' +
+        '<div><small>MAINTENANT</small><strong>' +
+          (activeRows.length
+            ? activeRows.length + " bâtiment" + (activeRows.length > 1 ? "s" : "") + " à regarder"
+            : "Tous les bâtiments") +
+        '</strong></div>' +
+        '<button type="button" data-building-overview-toggle>' +
+          (state.buildingOverviewExpanded ? "Réduire" : "Voir les 4") +
+        '</button>' +
+      '</div>' +
+      '<div class="tb-situation-list">' +
+        visible.map((item) => {
+          const signals = [];
+          if (item.requests > 0) {
+            signals.push(
+              '<span class="tb-situation-signal is-search"><b aria-hidden="true">🔎</b><strong>' +
+                item.requests +
+              '</strong><small>recherche' + (item.requests > 1 ? 's' : '') + '</small></span>',
+            );
+          }
+          if (item.stock > 0) {
+            signals.push(
+              '<span class="tb-situation-signal is-stock"><b aria-hidden="true">🦽</b><strong>' +
+                item.stock +
+              '</strong><small>dispo</small></span>',
+            );
+          }
+          if (!signals.length) {
+            signals.push('<span class="tb-situation-none">rien à signaler</span>');
+          }
+          return (
+            '<div class="tb-situation-row' + (item.active ? ' is-live' : '') + '">' +
+              '<strong class="tb-situation-building">' + esc(item.label) + '</strong>' +
+              '<div class="tb-situation-signals">' + signals.join("") + '</div>' +
+            '</div>'
+          );
+        }).join("") +
+      '</div>';
   }
 
   function activeWheelchairs(data) {
