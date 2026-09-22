@@ -544,12 +544,42 @@
       state.dayFocus = days.includes(today) ? today : days[0];
   }
 
+  function renderWeekStrip() {
+    const host = $("#teamDays");
+    if (!host) return;
+    const today = todayIso();
+    host.innerHTML = daysOfWeek(state.weekStart)
+      .map((day) => {
+        const d = dateObj(day);
+        const signal = signalForDate(day) || {
+          level: "unknown",
+          symbol: "",
+          label: "Pas encore analysé",
+        };
+        const cls = [
+          day === state.dayFocus ? "selected" : "",
+          day === today ? "today" : "",
+          signal.level ? `status-${signal.level}` : "",
+        ].filter(Boolean).join(" ");
+        const weekday = d
+          .toLocaleDateString("fr-FR", { weekday: "short" })
+          .replace(".", "")
+          .toUpperCase();
+        const marker = signal.symbol
+          ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(signal.symbol)}</span>`
+          : '<span class="team-day-intel status-unknown" aria-hidden="true">○</span>';
+        return `<button type="button" class="${cls}" data-team-day="${day}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><small>${esc(weekday)}</small><b>${d.getDate()}</b>${marker}</button>`;
+      })
+      .join("");
+  }
+
   function renderHeader() {
     normalizeDayFocus();
     if (!state.dateJumpMonth)
       state.dateJumpMonth = monthKey(state.dayFocus || state.weekStart);
+    renderWeekStrip();
     renderDateJumpCalendar(state.dateJumpMonth);
-    $$("[data-team-tab]").forEach((button) => {
+    $("[data-team-tab]").forEach((button) => {
       const active = button.dataset.teamTab === state.tab;
       button.classList.toggle("active", active);
       button.setAttribute("aria-selected", String(active));
@@ -655,37 +685,92 @@
     overlay.querySelector(".team-shift-analysis-close")?.addEventListener("click", closeShiftAnalysis);
   }
 
-  function daySummaryBlock(bundle, day) {
+  function weekSummaryBlock(bundle) {
     const intel = field();
     if (!intel?.dayChecklist) return "";
-    const staff = state.staffingByDate.get(day);
-    const items = assistantItemsForDate(bundle, day);
-    const read = intel.dayChecklist({ staffing: staff, items });
-    if (!read?.points?.length) return "";
+    const days = daysOfWeek(state.weekStart);
+    const rows = days.map((day) => {
+      const staff = state.staffingByDate.get(day);
+      const items = assistantItemsForDate(bundle, day);
+      const read = intel.dayChecklist({ staffing: staff, items });
+      const meaningful = (read?.points || []).filter(
+        (point) => !["info", "ok"].includes(point.level),
+      );
+      const detail =
+        meaningful
+          .slice(0, 2)
+          .map((point) => point.detail || point.title)
+          .filter(Boolean)
+          .join(" · ") ||
+        (read?.points || [])
+          .slice(0, 1)
+          .map((point) => point.detail || point.title)
+          .filter(Boolean)
+          .join(" · ") ||
+        "Pas assez de données pour cette journée.";
+      return { day, read, detail };
+    });
 
+    const rank = { critical: 5, warning: 4, opportunity: 3, ok: 2, unknown: 1 };
+    const strengthRank = { strong: 5, moderate: 4, suggestion: 3, none: 2, unknown: 1 };
+    const strongest = rows
+      .slice()
+      .sort(
+        (a, b) =>
+          (rank[b.read?.level] || 0) - (rank[a.read?.level] || 0) ||
+          (strengthRank[b.read?.strength] || 0) - (strengthRank[a.read?.strength] || 0),
+      )[0];
+
+    const overallLevel = strongest?.read?.level || "unknown";
+    const overallMeta =
+      intel.statusMeta?.(overallLevel) || {
+        symbol: overallLevel === "warning" ? "⚠️" : "",
+        label: "Lecture de la semaine",
+      };
+    const adviceSource = rows
+      .slice()
+      .sort(
+        (a, b) =>
+          (strengthRank[b.read?.strength] || 0) - (strengthRank[a.read?.strength] || 0) ||
+          (rank[b.read?.level] || 0) - (rank[a.read?.level] || 0),
+      )
+      .find((row) => row.read?.advice);
+    const strength = adviceSource?.read?.strength || "unknown";
     const strengthLabel = {
       strong: "Conseil fort",
       moderate: "Conseil",
       suggestion: "Suggestion",
       none: "Aucune action particulière",
       unknown: "Données insuffisantes",
-    }[read.strength] || "Conseil";
+    }[strength] || "Conseil";
+    const advice = adviceSource?.read?.advice || "Pas assez de données pour recommander un ajustement fiable.";
 
-    const points = read.points.map((point) =>
-      '<div class="team-day-check status-' + esc(point.level || "info") + '">' +
-        '<span aria-hidden="true">' + esc(point.symbol || "•") + '</span>' +
-        '<div><strong>' + esc(point.title || "Point à regarder") + '</strong>' +
-        (point.detail ? '<p>' + esc(point.detail) + '</p>' : '') +
-        '</div></div>'
-    ).join("");
+    const checks = rows
+      .map(({ day, read, detail }) => {
+        const meta =
+          intel.statusMeta?.(read?.level || "unknown") || {
+            symbol: "",
+            label: "Pas assez de données",
+          };
+        const label = dateObj(day)
+          .toLocaleDateString("fr-FR", { weekday: "long", day: "numeric" })
+          .replace(/^./, (char) => char.toUpperCase());
+        return '<button type="button" class="team-week-check status-' + esc(read?.level || "unknown") + '" data-team-week-summary-day="' + esc(day) + '">' +
+          '<span aria-hidden="true">' + esc(meta.symbol || "○") + '</span>' +
+          '<div><strong>' + esc(label) + ' · ' + esc(meta.label || "") + '</strong>' +
+          '<p>' + esc(detail) + '</p></div>' +
+          '<i aria-hidden="true">›</i></button>';
+      })
+      .join("");
 
-    return '<section class="team-day-summary status-' + esc(read.level || "unknown") + '">' +
-      '<header><span aria-hidden="true">' + esc(read.symbol || "") + '</span>' +
-      '<div><small>BILAN DE LA JOURNÉE</small><strong>' + esc(read.label || "Lecture globale") + '</strong></div></header>' +
-      '<div class="team-day-checklist">' + points + '</div>' +
-      '<div class="team-day-advice strength-' + esc(read.strength || "none") + '">' +
-      '<strong>' + esc(strengthLabel) + '</strong><p>' + esc(read.advice || "Aucune recommandation particulière.") + '</p>' +
-      '</div></section>';
+    return '<section class="team-day-summary team-week-summary status-' + esc(overallLevel) + '">' +
+      '<header><span aria-hidden="true">' + esc(overallMeta.symbol || "○") + '</span>' +
+      '<div><small>BILAN DE LA SEMAINE ' + esc(isoWeek(state.weekStart)) + '</small>' +
+      '<strong>' + esc(weekRange(state.weekStart)) + '</strong></div></header>' +
+      '<div class="team-week-checklist">' + checks + '</div>' +
+      '<div class="team-day-advice strength-' + esc(strength) + '">' +
+      '<strong>' + esc(strengthLabel) + '</strong><p>' + esc(advice) + '</p></div>' +
+      '</section>';
   }
 
   function shiftBlock(day, code, items) {
@@ -871,11 +956,11 @@
 
   function renderContent(bundle) {
     const host = $("#teamContent");
-    const summaryHost = $("#teamDaySummaryHost");
+    const summaryHost = $("#teamWeekSummaryHost");
     normalizeDayFocus();
     const day = state.dayFocus;
     if (summaryHost)
-      summaryHost.innerHTML = state.tab === "team" ? daySummaryBlock(bundle, day) : "";
+      summaryHost.innerHTML = allowed("planning_team") ? weekSummaryBlock(bundle) : "";
     const permitted = {
       team: allowed("planning_team"),
       activity: allowed("activity"),
@@ -987,9 +1072,24 @@
     showWeek({ preserve: true });
   }
 
-  $$("[data-team-tab]").forEach((button) =>
+  $("[data-team-tab]").forEach((button) =>
     button.addEventListener("click", () => selectTab(button.dataset.teamTab)),
   );
+  $("#teamDays")?.addEventListener("click", (event) => {
+    const day = event.target.closest("[data-team-day]");
+    if (day) chooseDate(day.dataset.teamDay);
+  });
+  $("#teamPrevWeek")?.addEventListener("click", () => moveWeek(-1));
+  $("#teamNextWeek")?.addEventListener("click", () => moveWeek(1));
+  $("#teamWeekSummaryHost")?.addEventListener("click", (event) => {
+    const day = event.target.closest("[data-team-week-summary-day]");
+    if (!day) return;
+    chooseDate(day.dataset.teamWeekSummaryDay);
+    document.querySelector(".team-day-section-label")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  });
   $("#teamDateJumpPanel").addEventListener("click", (event) => {
     const step = event.target.closest("[data-team-cal-step]"),
       day = event.target.closest("[data-team-cal-day]");
