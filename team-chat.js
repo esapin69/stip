@@ -1722,6 +1722,33 @@
     document.body.appendChild(wrap);
   }
 
+  async function deleteMessageFromSwipe(messageId) {
+    const id = String(messageId || "");
+    if (!id || state.deleteBusy) return;
+
+    const message = messageById(id);
+    const me = String(state.data?.me?.id || "");
+    const canDelete =
+      !!state.data?.admin ||
+      String(message?.sender_agent_id || "") === me;
+    if (!canDelete) return;
+
+    const confirmed = await confirmDelete(1);
+    if (!confirmed || state.deleteBusy) return;
+
+    state.deleteBusy = true;
+    try {
+      await api("team_delete", { message_ids: [id] });
+      state.selected.delete(id);
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+    } catch (error) {
+      alert(error.message || "Suppression impossible.");
+    } finally {
+      state.deleteBusy = false;
+      updateSelectionBar();
+    }
+  }
+
   function bindMessageGestures(root) {
     if (!root || root.dataset.reactionGestures === "1") return;
     root.dataset.reactionGestures = "1";
@@ -1729,15 +1756,36 @@
     let timer = 0;
     let startX = 0;
     let startY = 0;
+    let dx = 0;
     let targetId = "";
     let pointerId = null;
+    let active = false;
+    let horizontal = false;
+    let swiped = false;
     let longPressOpened = false;
+    let swipeWrap = null;
+    let swipeCard = null;
 
-    const clear = () => {
+    const resetSwipe = () => {
+      if (swipeCard) swipeCard.style.transform = "";
+      swipeWrap?.classList.remove("is-delete", "is-dragging");
+      swipeWrap = null;
+      swipeCard = null;
+      dx = 0;
+      horizontal = false;
+    };
+
+    const clearTimer = () => {
       if (timer) clearTimeout(timer);
       timer = 0;
+    };
+
+    const clear = () => {
+      clearTimer();
       targetId = "";
       pointerId = null;
+      active = false;
+      resetSwipe();
     };
 
     root.addEventListener("pointerdown", (event) => {
@@ -1750,15 +1798,24 @@
 
       clear();
       longPressOpened = false;
+      swiped = false;
+      active = true;
       targetId = String(item.dataset.messageId || "");
       pointerId = event.pointerId;
       startX = Number(event.clientX || 0);
       startY = Number(event.clientY || 0);
+      dx = 0;
+      swipeCard = item;
+      swipeWrap = item.closest(".tb-message-swipe");
+
+      try {
+        item.setPointerCapture?.(event.pointerId);
+      } catch {}
 
       timer = window.setTimeout(() => {
         const id = targetId;
         timer = 0;
-        if (!id) return;
+        if (!id || horizontal) return;
         longPressOpened = true;
         try { navigator.vibrate?.(14); } catch {}
         openReactionPicker(id);
@@ -1766,32 +1823,95 @@
     }, { passive: true });
 
     root.addEventListener("pointermove", (event) => {
-      if (!timer || (pointerId != null && event.pointerId !== pointerId)) return;
-      const dx = Math.abs(Number(event.clientX || 0) - startX);
-      const dy = Math.abs(Number(event.clientY || 0) - startY);
-      if (dx > 26 || dy > 26) clear();
-    }, { passive: true });
+      if (!active || (pointerId != null && event.pointerId !== pointerId)) return;
 
-    root.addEventListener("pointerup", (event) => {
-      if (pointerId != null && event.pointerId !== pointerId) return;
-      clear();
-    }, { passive: true });
+      const x = Number(event.clientX || 0) - startX;
+      const y = Number(event.clientY || 0) - startY;
 
-    root.addEventListener("pointercancel", clear, { passive: true });
+      if (!horizontal) {
+        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
+        if (Math.abs(y) > Math.abs(x) * 1.1) {
+          clearTimer();
+          active = false;
+          resetSwipe();
+          return;
+        }
+
+        const canDelete = swipeCard?.dataset.canDelete === "1";
+        if (!canDelete || x <= 0) {
+          if (Math.abs(x) > 26) clearTimer();
+          return;
+        }
+
+        horizontal = true;
+        clearTimer();
+        swipeWrap?.classList.add("is-dragging");
+      }
+
+      if (!horizontal || !swipeCard) return;
+      event.preventDefault();
+      dx = Math.max(0, Math.min(122, x));
+      swiped = dx > 12;
+      swipeCard.style.transform = "translate3d(" + dx + "px,0,0)";
+      swipeWrap?.classList.toggle("is-delete", dx > 0);
+    }, { passive: false });
+
+    const finish = async (event) => {
+      if (pointerId != null && event?.pointerId != null && event.pointerId !== pointerId) return;
+
+      clearTimer();
+      const id = targetId;
+      const finalDx = dx;
+      const hadHorizontalSwipe = horizontal;
+      active = false;
+      targetId = "";
+      pointerId = null;
+      resetSwipe();
+
+      if (hadHorizontalSwipe && finalDx > 72 && id) {
+        swiped = true;
+        try { navigator.vibrate?.(10); } catch {}
+        await deleteMessageFromSwipe(id);
+      }
+
+      window.setTimeout(() => {
+        swiped = false;
+        longPressOpened = false;
+      }, 180);
+    };
+
+    root.addEventListener("pointerup", finish);
+    root.addEventListener("pointercancel", (event) => {
+      clearTimer();
+      active = false;
+      targetId = "";
+      pointerId = null;
+      resetSwipe();
+      window.setTimeout(() => {
+        swiped = false;
+        longPressOpened = false;
+      }, 180);
+    });
 
     root.addEventListener("contextmenu", (event) => {
-      if (state.selection) return;
+      if (state.selection || swiped) return;
       if (event.target.closest?.("button,input,textarea,label,a")) return;
       const item = event.target.closest?.("[data-message-id]");
       if (!item) return;
       event.preventDefault();
       const id = String(item.dataset.messageId || "");
-      clear();
+      clearTimer();
       if (!longPressOpened) openReactionPicker(id);
       longPressOpened = false;
     });
 
     root.addEventListener("click", (event) => {
+      if (swiped) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+
       const open = event.target.closest?.("[data-reaction-open]");
       if (open) {
         event.preventDefault();
@@ -1915,6 +2035,7 @@
     for (const message of rootMessages) {
       const id = String(message.id);
       const mine = String(message.sender_agent_id) === me;
+      const canDeleteMessage = !!state.data?.admin || mine;
       const checked = state.selected.has(id);
       const photo = message.payload?.photo_url || "";
       const replyToId = String(message.payload?.reply_to_id || "");
@@ -1927,6 +2048,8 @@
       const stock = isSearchType ? { total: 1, remaining: 1 } : wheelchairStock(message);
 
       html.push(
+        '<div class="tb-message-swipe' + (canDeleteMessage ? " can-delete" : "") + '">' +
+          '<div class="tb-message-delete-bg" aria-hidden="true"><span>✕</span><strong>Supprimer</strong></div>' +
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
           (activeSignal ? " is-wheelchair" : "") +
@@ -1935,6 +2058,7 @@
           (checked ? " is-selected" : "") +
           '" data-message-id="' +
           esc(id) +
+          '" data-can-delete="' + (canDeleteMessage ? "1" : "0") +
           '">',
       );
 
@@ -2091,10 +2215,16 @@
         html.push('<section class="tb-thread-replies" aria-label="Réponses liées à ce signalement">');
         for (const reply of linkedReplies) {
           const replyId = String(reply.id || "");
+          const replyMine = String(reply.sender_agent_id || "") === me;
+          const replyCanDelete = !!state.data?.admin || replyMine;
           const replyChecked = state.selected.has(replyId);
           const replyBody = cleanWheelchairText(reply.body || "");
           html.push(
-            '<article class="tb-thread-reply' + (replyChecked ? ' is-selected' : '') + '" data-message-id="' + esc(replyId) + '">'
+            '<div class="tb-message-swipe tb-thread-swipe' + (replyCanDelete ? ' can-delete' : '') + '">' +
+              '<div class="tb-message-delete-bg" aria-hidden="true"><span>✕</span><strong>Supprimer</strong></div>' +
+              '<article class="tb-thread-reply' + (replyChecked ? ' is-selected' : '') +
+              '" data-message-id="' + esc(replyId) +
+              '" data-can-delete="' + (replyCanDelete ? '1' : '0') + '">'
           );
           if (state.selection) {
             html.push(
@@ -2113,12 +2243,12 @@
               '<small class="tb-thread-link">↪ Réponse à ce signalement</small>' +
               (replyBody ? '<p>' + esc(replyBody).replace(/\n/g, "<br>") + '</p>' : '') +
               reactionMarkup(reply) +
-            '</div></article>'
+            '</div></article></div>'
           );
         }
         html.push("</section>");
       }
-      html.push("</div></article>");
+      html.push("</div></article></div>");
     }
 
     feed.innerHTML = html.join("");
@@ -2657,7 +2787,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-cards1",
+    build: "20260923-swipe1",
     mount,
     mountPreview,
     unmountFull,
