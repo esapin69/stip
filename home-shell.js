@@ -2070,7 +2070,43 @@
           shell.style.paddingTop = "10px";
           shell.style.paddingBottom = "28px";
         }
+
+        // Esprit d'équipe must scroll with the parent home page, exactly like
+        // Applications and Mon profil. No nested iframe scroll / fixed home header.
         doc.documentElement.style.scrollPaddingTop = "10px";
+        doc.documentElement.style.overflow = "hidden";
+        if (doc.body) {
+          doc.body.style.overflow = "hidden";
+          doc.body.style.minHeight = "0";
+        }
+
+        const syncFrameHeight = () => {
+          const body = doc.body,
+            html = doc.documentElement;
+          if (!body || !html) return;
+          const height = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.scrollHeight,
+            html.offsetHeight,
+            shell?.scrollHeight || 0,
+          );
+          if (height > 0)
+            frame.style.setProperty("height", `${Math.ceil(height)}px`, "important");
+        };
+
+        frame._stipTeamResizeObserver?.disconnect?.();
+        if (window.ResizeObserver) {
+          const observer = new ResizeObserver(syncFrameHeight);
+          observer.observe(doc.documentElement);
+          if (doc.body) observer.observe(doc.body);
+          if (shell) observer.observe(shell);
+          frame._stipTeamResizeObserver = observer;
+        }
+        requestAnimationFrame(syncFrameHeight);
+        setTimeout(syncFrameHeight, 80);
+        setTimeout(syncFrameHeight, 350);
+
         const chair = doc.querySelector(".team-live-wheelchair");
         if (chair && chair.dataset.parentRouteBound !== "1") {
           chair.dataset.parentRouteBound = "1";
