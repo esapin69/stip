@@ -508,7 +508,7 @@
       ? "Tout s’est bien déroulé"
       : "Rendez-vous terminé sans problème";
     const ratingBlock = profile.rating
-      ? \`<section class="hc-feedback-rating hc-feedback-rating-hero" hidden>
+      ? `<section class="hc-feedback-rating hc-feedback-rating-hero" hidden>
           <div class="hc-feedback-rating-title"><span>APPRÉCIATION DE L’ÉVÉNEMENT</span><strong>Comment l’évaluer ?</strong></div>
           <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
             <button type="button" data-rating="1" aria-label="1 sur 5"><b>1</b></button>
@@ -519,24 +519,24 @@
           </div>
           <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
           <small class="hc-feedback-rating-hint">Choisis une note, puis ce qui l’explique.</small>
-        </section>\`
+        </section>`
       : "";
-    const reasonBlock = \`<section class="hc-feedback-reason" hidden>
-      <span>\${esc(profile.reasonTitle)}</span>
+    const reasonBlock = `<section class="hc-feedback-reason" hidden>
+      <span>${esc(profile.reasonTitle)}</span>
       <div class="hc-feedback-reason-options">
-        \${profile.reasons
+        ${profile.reasons
           .map(
             ([code, label]) =>
-              \`<button type="button" data-reason="\${esc(code)}">\${esc(label)}</button>\`,
+              `<button type="button" data-reason="${esc(code)}">${esc(label)}</button>`,
           )
           .join("")}
       </div>
-    </section>\`;
+    </section>`;
     const medicalBlock = profile.rating
       ? ""
       : '<section class="hc-feedback-medical-summary"><strong>Suivi administratif</strong><span>Aucune note ni information médicale n’est demandée.</span></section>';
 
-    modal.innerHTML = \`<div class="hc-feedback-dialog">
+    modal.innerHTML = `<div class="hc-feedback-dialog">
       <header class="hc-feedback-head">
         <div><small>RETOUR RAPIDE</small><h2 id="hcFeedbackTitle">Faire mon retour</h2></div>
         <button type="button" class="hc-feedback-close" aria-label="Fermer">×</button>
