@@ -5366,12 +5366,13 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-team-frame{
   display:block!important;
   width:100%!important;
-  height:max(520px,calc(100dvh - 304px))!important;
-  min-height:520px!important;
+  height:520px!important;
+  min-height:0!important;
   border:0!important;
   border-radius:0!important;
   background:var(--stip-bg,#f6fbfc)!important;
   box-shadow:none!important;
+  overflow:hidden!important;
 }
 .hc-home-filters>button[data-home-mode="team"]{
   order:3!important;
@@ -5384,8 +5385,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:430px){
   .hc-team-frame{
-    height:max(500px,calc(100dvh - 292px))!important;
-    min-height:500px!important;
+    height:500px!important;
+    min-height:0!important;
   }
 }
 
