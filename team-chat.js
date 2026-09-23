@@ -204,6 +204,7 @@
         message.payload?.wheelchair?.quantity_total || "",
         message.payload?.wheelchair?.quantity_remaining || "",
         message.payload?.wheelchair?.last_seen_at || "",
+        message.payload?.wheelchair?.persistence || "",
         JSON.stringify(message.payload?.wheelchair?.sightings || []),
         JSON.stringify(message.payload?.wheelchair?.takes || []),
         JSON.stringify(message.payload?.reactions || []),
@@ -1073,6 +1074,24 @@
     renderComposerState();
   }
 
+  function normalizeWheelchairPersistence(value = "", quantity = 1) {
+    if (Math.max(1, Number(quantity) || 1) >= 6) return "normal";
+    const key = String(value || "").trim().toLowerCase();
+    return ["fast", "normal", "sheltered"].includes(key) ? key : "normal";
+  }
+
+  function inferWheelchairPersistence({ quantity = 1, location = "", precision = "" } = {}) {
+    if (Math.max(1, Number(quantity) || 1) >= 6) return "normal";
+    const text = norm([location, precision].filter(Boolean).join(" "));
+    if (/cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]/.test(text)) {
+      return "sheltered";
+    }
+    if (/ascenseur|entree|entrée|couloir|hall|passage|accueil/.test(text)) {
+      return "fast";
+    }
+    return "normal";
+  }
+
   async function publishStructuredWheelchair({
     type,
     buildingKey,
@@ -1080,6 +1099,7 @@
     level = "",
     location = "",
     precision = "",
+    persistence = "normal",
   }) {
     const building = BUILDINGS.find((item) => item.key === buildingKey);
     if (!building) throw Error("Bâtiment inconnu.");
@@ -1104,6 +1124,9 @@
         quantity: type === "spot" ? Math.max(1, Number(quantity) || 1) : 1,
         level: level || "",
         location: finalLocation,
+        ...(type === "spot"
+          ? { persistence: normalizeWheelchairPersistence(persistence, quantity) }
+          : {}),
       },
     });
 
@@ -1116,7 +1139,13 @@
     const building = BUILDINGS.find((item) => item.key === payload.buildingKey);
     if (!building) return;
     const type = payload.type === "search" ? "search" : "spot";
+    const quantity = Math.max(1, Number(payload.quantity) || 1);
     let location = String(payload.location || "").trim();
+    let persistence = normalizeWheelchairPersistence(
+      payload.persistence || inferWheelchairPersistence({ quantity, location }),
+      quantity,
+    );
+    let persistenceTouched = payload.persistenceTouched === true;
     const summary = structuredDraft({
       type,
       building,
@@ -1136,11 +1165,20 @@
         '<button type="button" class="tb-wizard-search compact" data-review-location>' +
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
-        '<div class="tb-landmark-pills" aria-label="Repères rapides">' +
-          '<button type="button" data-review-landmark="près des ascenseurs">🛗 Ascenseurs</button>' +
-          '<button type="button" data-review-landmark="près de l’escalier">↕ Escalier</button>' +
-          '<button type="button" data-review-landmark="dans le couloir">↔ Couloir</button>' +
-          '<button type="button" data-review-landmark="à l’entrée de l’unité">🚪 Entrée</button>' +
+        '<div class="tb-review-context">' +
+          '<div class="tb-landmark-pills" aria-label="Repères rapides">' +
+            '<button type="button" data-review-landmark="près des ascenseurs" data-persistence-hint="fast">🛗 Ascenseurs</button>' +
+            '<button type="button" data-review-landmark="près de l’escalier" data-persistence-hint="normal">↕ Escalier</button>' +
+            '<button type="button" data-review-landmark="dans le couloir" data-persistence-hint="fast">↔ Couloir</button>' +
+            '<button type="button" data-review-landmark="à l’entrée de l’unité" data-persistence-hint="fast">🚪 Entrée</button>' +
+          "</div>" +
+          (type === "spot" && quantity < 6
+            ? '<div class="tb-persistence-pills" aria-label="Tenue probable">' +
+                '<button type="button" class="is-hot' + (persistence === "fast" ? " is-selected" : "") + '" data-review-persistence="fast" aria-pressed="' + (persistence === "fast" ? "true" : "false") + '"><span>🔥</span><strong>Passage</strong></button>' +
+                '<button type="button" class="is-warm' + (persistence === "normal" ? " is-selected" : "") + '" data-review-persistence="normal" aria-pressed="' + (persistence === "normal" ? "true" : "false") + '"><span>●</span><strong>Visible</strong></button>' +
+                '<button type="button" class="is-cold' + (persistence === "sheltered" ? " is-selected" : "") + '" data-review-persistence="sheltered" aria-pressed="' + (persistence === "sheltered" ? "true" : "false") + '"><span>🧊</span><strong>À l’écart</strong></button>' +
+              "</div>"
+            : "") +
         "</div>" +
         '<label class="tb-precision-field"><span>Ajouter une précision <em>facultatif</em></span>' +
           '<textarea rows="3" maxlength="160" placeholder="Ex. caché derrière l’escalier, près des ascenseurs…"></textarea>' +
@@ -1152,6 +1190,35 @@
       "</section>";
 
     const input = wrap.querySelector(".tb-precision-field textarea");
+
+    const syncPersistenceButtons = () => {
+      wrap.querySelectorAll("[data-review-persistence]").forEach((button) => {
+        const selected = String(button.dataset.reviewPersistence || "") === persistence;
+        button.classList.toggle("is-selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+    };
+
+    wrap.querySelectorAll("[data-review-persistence]").forEach((button) => {
+      button.addEventListener("click", () => {
+        persistence = normalizeWheelchairPersistence(button.dataset.reviewPersistence, quantity);
+        persistenceTouched = true;
+        payload.persistence = persistence;
+        payload.persistenceTouched = true;
+        syncPersistenceButtons();
+      });
+    });
+
+    input?.addEventListener("input", () => {
+      if (persistenceTouched || type !== "spot" || quantity >= 6) return;
+      persistence = inferWheelchairPersistence({
+        quantity,
+        location,
+        precision: String(input.value || ""),
+      });
+      syncPersistenceButtons();
+    });
+
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
 
     wrap.querySelectorAll("[data-review-landmark]").forEach((button) => {
@@ -1161,6 +1228,14 @@
         input.value = input.value.trim()
           ? input.value.trim().replace(/[.,;:]?$/, "") + ", " + value
           : value;
+        if (!persistenceTouched && type === "spot" && quantity < 6) {
+          persistence = normalizeWheelchairPersistence(
+            button.dataset.persistenceHint ||
+              inferWheelchairPersistence({ quantity, location, precision: input.value }),
+            quantity,
+          );
+          syncPersistenceButtons();
+        }
         input.focus();
       });
     });
@@ -1174,6 +1249,10 @@
       payload.level = found.level || payload.level || "";
       location = found.location || "";
       payload.location = location;
+      payload.persistence = persistenceTouched
+        ? persistence
+        : inferWheelchairPersistence({ quantity, location });
+      payload.persistenceTouched = persistenceTouched;
       renderStructuredReview(wrap, payload, { back, close });
     });
 
@@ -1186,6 +1265,15 @@
           ...payload,
           location,
           precision: String(input?.value || "").trim(),
+          persistence: quantity >= 6
+            ? "normal"
+            : (persistenceTouched
+              ? persistence
+              : inferWheelchairPersistence({
+                  quantity,
+                  location,
+                  precision: String(input?.value || "").trim(),
+                })),
         });
         if (sent) close?.(true);
         else {
@@ -2147,13 +2235,41 @@
     return { hospital, level, service, landmark };
   }
 
-  const WHEELCHAIR_FRESHNESS_WINDOW_MS = 90 * 60 * 1000;
+  function wheelchairFreshnessWindowMs(wheelchair = {}) {
+    const remaining = Math.max(
+      1,
+      Number(wheelchair?.quantity_remaining) ||
+        Number(wheelchair?.quantity_total) ||
+        1,
+    );
+    const persistence = normalizeWheelchairPersistence(
+      wheelchair?.persistence || "normal",
+      remaining,
+    );
+
+    if (remaining >= 6) return 180 * 60 * 1000;
+
+    const baseMinutes =
+      persistence === "fast"
+        ? 45
+        : persistence === "sheltered"
+          ? 180
+          : 90;
+
+    const quantityFactor =
+      remaining >= 4 ? 1.35 :
+      remaining >= 2 ? 1.15 :
+      1;
+
+    return Math.round(baseMinutes * quantityFactor * 60 * 1000);
+  }
 
   function wheelchairFreshness(message = {}, wheelchair = {}, now = Date.now()) {
     const rawSeenAt = wheelchair?.last_seen_at || message?.created_at || "";
     const seenAt = Date.parse(String(rawSeenAt));
-    const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : WHEELCHAIR_FRESHNESS_WINDOW_MS;
-    const progress = Math.min(1, age / WHEELCHAIR_FRESHNESS_WINDOW_MS);
+    const windowMs = wheelchairFreshnessWindowMs(wheelchair);
+    const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : windowMs;
+    const progress = Math.min(1, age / windowMs);
     const position = Math.round(progress * 100);
 
     if (progress < 0.24) {
@@ -2202,7 +2318,9 @@
     const freshness = wheelchairFreshness(message, wheelchair);
     return (
       '<div class="tb-wheelchair-freshness is-' + freshness.stage +
-        '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) + '">' +
+        '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) +
+        '" data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) +
+        '" data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) + '">' +
         '<div class="tb-freshness-copy">' +
           (freshness.icon ? '<span aria-hidden="true">' + freshness.icon + '</span>' : '') +
           '<strong>' + esc(freshness.label) + '</strong>' +
@@ -2222,7 +2340,13 @@
       const seenAt = String(node.dataset.freshnessAt || "");
       const freshness = wheelchairFreshness(
         { created_at: seenAt },
-        { status: "active", type: "spot", last_seen_at: seenAt },
+        {
+          status: "active",
+          type: "spot",
+          last_seen_at: seenAt,
+          persistence: String(node.dataset.freshnessPersistence || "normal"),
+          quantity_remaining: Math.max(1, Number(node.dataset.freshnessQuantity) || 1),
+        },
       );
 
       node.classList.remove("is-hot", "is-warm", "is-cooling", "is-cold", "is-frozen");
