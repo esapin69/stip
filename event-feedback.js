@@ -511,7 +511,7 @@
         customAnswer = "";
         modal
           .querySelectorAll("[data-rating],[data-custom]")
-          .forEach((b) => b.classList.remove("selected"));
+          .forEach((b) => b.classList.remove("selected", "current"));
       }
       const valid =
         !!attendance &&
@@ -544,10 +544,9 @@
       button.onclick = () => {
         rating = Number(button.dataset.rating || 0);
         modal.querySelectorAll("[data-rating]").forEach((b) => {
-          b.classList.toggle(
-            "selected",
-            Number(b.dataset.rating || 0) <= rating,
-          );
+          const value = Number(b.dataset.rating || 0);
+          b.classList.toggle("selected", value <= rating);
+          b.classList.toggle("current", value === rating);
         });
         sync();
       };
