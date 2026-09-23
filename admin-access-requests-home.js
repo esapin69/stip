@@ -78,18 +78,10 @@
       data = await api("list");
       renderCard();
     } catch (e) {
-      window.STIPActionCenter?.publish("admin-access", [
-        {
-          id: "access-load-error",
-          source: "admin-access",
-          category: "access",
-          title: "Contrôle des accès indisponible",
-          body: "STIP n’a pas pu vérifier les accès. Touchez pour réessayer.",
-          technical_error: e.message,
-          retryable: true,
-          occurred_at: new Date().toISOString(),
-        },
-      ]);
+      // Une panne technique n'est pas une notification utilisateur.
+      // On retire l'état synthétique de la cloche et on garde l'erreur hors du centre d'attention.
+      window.STIPActionCenter?.remove("admin-access");
+      console.warn("STIP access check unavailable", e);
     } finally {
       busy = false;
     }
