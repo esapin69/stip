@@ -1357,7 +1357,9 @@
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     const staffing =
         shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>',
-      body = weekControlsMarkup() + staffing + teamDaySummary(bundle, day);
+      selectedDayLabel = day === todayIso() ? "AUJOURD’HUI" : "JOUR SÉLECTIONNÉ",
+      daySeparator = `<div class="team-selected-day-separator stip-section-separator" aria-hidden="true"><span>${selectedDayLabel}</span></div>`,
+      body = weekControlsMarkup() + daySeparator + staffing + teamDaySummary(bundle, day);
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
