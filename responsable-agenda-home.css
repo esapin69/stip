@@ -765,3 +765,27 @@
 .rr-week-days>button.impact-watch{border-color:#e0a43a;box-shadow:0 0 0 2px rgba(224,164,58,.12)}
 .rr-week-days>button.impact-critical{border-color:#d56a6a;box-shadow:0 0 0 2px rgba(213,106,106,.13)}
 .rr-marker[data-rr-filter]{cursor:pointer}
+
+
+/* Shared week intelligence: Responsable uses the same day-status engine as Esprit d'équipe. */
+.rr-week-days > button{
+  grid-template-rows:31px 38px 23px minmax(26px,auto);
+}
+.rr-week-signal{
+  min-width:22px;
+  min-height:22px;
+  display:grid;
+  place-items:center;
+  font-size:1rem;
+  font-weight:950;
+  line-height:1;
+}
+.rr-week-signal.status-ok{color:#159b62}
+.rr-week-signal.status-warning{color:#c58b00}
+.rr-week-signal.status-critical{color:#c33b3b}
+.rr-week-signal.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
+.rr-week-days > button.status-warning:not(.selected){background:#fffaf1}
+.rr-week-days > button.status-critical:not(.selected){background:#fff5f5}
+.rr-week-days > button.status-opportunity:not(.selected){background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,#fff)}
+.rr-week-days > button.status-ok:not(.selected){background:#f7fcf9}
+.rr-week-marks{min-height:26px;padding-top:1px}
