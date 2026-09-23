@@ -1449,8 +1449,10 @@
     </section>`;
   }
   function responsableAccessBlock() {
-    if (!(has("responsable") || has("admin"))) return "";
-    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div><div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div></section>`;
+    const canResponsable = has("responsable") || has("admin"),
+      canAccess = has("access_manage") || has("admin");
+    if (!(canResponsable || canAccess)) return "";
+    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div>${canResponsable ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}${canAccess ? '<div class="hc-profile-responsable-row hc-profile-access-row"><button type="button" class="hc-responsable-tab" data-app="access" aria-label="Ouvrir la gestion des accès"><span>Accès</span><b aria-hidden="true">›</b></button></div>' : ""}</section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
