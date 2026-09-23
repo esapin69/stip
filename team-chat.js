@@ -1607,8 +1607,77 @@
     }
   }
 
-  const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
+  const DEFAULT_QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
   const MORE_REACTIONS = ["👍","❤️","😂","😮","😢","🙏","👏","🔥","✅","💪","🎉","🤝","👀","😅","😭","😡","🤔","💯","🚀","🫶","🤲","👌","🙌","⭐"];
+  const REACTION_USAGE_STORAGE = "stip:team-chat:reaction-usage:v1";
+
+  function reactionUsageKey() {
+    const me = String(state.data?.me?.id || "anonymous");
+    return REACTION_USAGE_STORAGE + ":" + me;
+  }
+
+  function loadReactionUsage() {
+    try {
+      const raw = localStorage.getItem(reactionUsageKey());
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  function saveReactionUsage(usage) {
+    try {
+      localStorage.setItem(reactionUsageKey(), JSON.stringify(usage || {}));
+    } catch {
+      // Le classement fréquent reste simplement sur les valeurs par défaut.
+    }
+  }
+
+  function rememberReactionUse(emoji) {
+    const value = String(emoji || "").trim();
+    if (!value || !MORE_REACTIONS.includes(value)) return;
+
+    const usage = loadReactionUsage();
+    const previous = usage[value] && typeof usage[value] === "object"
+      ? usage[value]
+      : {};
+
+    usage[value] = {
+      count: Math.max(0, Number(previous.count) || 0) + 1,
+      last_used: Date.now(),
+    };
+    saveReactionUsage(usage);
+  }
+
+  function quickReactions() {
+    const usage = loadReactionUsage();
+    const defaultRank = new Map(
+      DEFAULT_QUICK_REACTIONS.map((emoji, index) => [emoji, index]),
+    );
+
+    return MORE_REACTIONS
+      .map((emoji, catalogRank) => {
+        const saved = usage[emoji] && typeof usage[emoji] === "object"
+          ? usage[emoji]
+          : {};
+        return {
+          emoji,
+          count: Math.max(0, Number(saved.count) || 0),
+          lastUsed: Math.max(0, Number(saved.last_used) || 0),
+          defaultRank: defaultRank.has(emoji) ? defaultRank.get(emoji) : 999,
+          catalogRank,
+        };
+      })
+      .sort((a, b) =>
+        (b.count - a.count) ||
+        (b.lastUsed - a.lastUsed) ||
+        (a.defaultRank - b.defaultRank) ||
+        (a.catalogRank - b.catalogRank)
+      )
+      .slice(0, DEFAULT_QUICK_REACTIONS.length)
+      .map((item) => item.emoji);
+  }
 
   function messageById(messageId) {
     return (state.data?.messages || []).find(
@@ -1668,12 +1737,13 @@
     if (!message || state.selection) return;
     document.querySelector(".tb-reaction-wrap")?.remove();
 
+    const visibleReactions = quickReactions();
     const wrap = document.createElement("div");
     wrap.className = "tb-reaction-wrap";
     wrap.innerHTML =
       '<section class="tb-reaction-sheet" role="dialog" aria-label="Réagir au message">' +
         '<div class="tb-reaction-quick">' +
-          QUICK_REACTIONS.map((emoji) =>
+          visibleReactions.map((emoji) =>
             '<button type="button" data-reaction-pick="' + esc(emoji) + '" aria-label="' + esc(emoji) + '">' +
               esc(emoji) +
             '</button>'
@@ -1700,6 +1770,7 @@
     wrap.querySelectorAll("[data-reaction-pick]").forEach((button) => {
       button.addEventListener("click", async () => {
         const emoji = String(button.dataset.reactionPick || "");
+        rememberReactionUse(emoji);
         close();
         await reactToMessage(messageId, emoji);
       });
