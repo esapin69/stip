@@ -13,6 +13,9 @@
     selection: false,
     selected: new Set(),
     deleteBusy: false,
+    interacting: false,
+    interactionReleaseTimer: 0,
+    scrollToLatestPending: true,
     lastSignature: "",
     focusAfterLoad: false,
     viewportHandler: null,
@@ -194,7 +197,7 @@
         message.id,
         message.created_at,
         message.body,
-        message.payload?.photo_url || "",
+        message.payload?.photo_path || "",
         message.payload?.wheelchair?.status || "",
         message.payload?.wheelchair?.resolved_at || "",
         message.payload?.wheelchair?.resolved_by_name || "",
@@ -252,6 +255,10 @@
       state.data = null;
       state.selection = false;
       state.selected.clear();
+      state.interacting = false;
+      if (state.interactionReleaseTimer) clearTimeout(state.interactionReleaseTimer);
+      state.interactionReleaseTimer = 0;
+      state.scrollToLatestPending = true;
       state.lastSignature = "";
       root.innerHTML = pageMarkup();
       bind(root);
@@ -339,6 +346,22 @@
   }
 
   function bind(root) {
+    const interactionStart = () => {
+      if (state.interactionReleaseTimer) clearTimeout(state.interactionReleaseTimer);
+      state.interactionReleaseTimer = 0;
+      state.interacting = true;
+    };
+    const interactionEnd = () => {
+      if (state.interactionReleaseTimer) clearTimeout(state.interactionReleaseTimer);
+      state.interactionReleaseTimer = window.setTimeout(() => {
+        state.interacting = false;
+        state.interactionReleaseTimer = 0;
+      }, 220);
+    };
+    root.addEventListener("pointerdown", interactionStart, { capture: true, passive: true });
+    root.addEventListener("pointerup", interactionEnd, { capture: true, passive: true });
+    root.addEventListener("pointercancel", interactionEnd, { capture: true, passive: true });
+
     root.querySelector("[data-form]")?.addEventListener("submit", send);
     bindMessageGestures(root);
     root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
@@ -516,10 +539,12 @@
         activeLabel.hidden = active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
-      renderSearchShortcuts();
-      renderComposerState();
+      if (!quiet) {
+        renderSearchShortcuts();
+        renderComposerState();
+      }
       const manage = state.root.querySelector("[data-select]");
-      if (manage) manage.hidden = !data.admin || !messages.length;
+      if (manage) manage.hidden = !data.admin || !messages.length || state.selection;
 
       const form = state.root.querySelector("[data-form]");
       if (form) form.hidden = !canWrite;
@@ -535,7 +560,8 @@
 
       const signature =
         dataSignature(data) + "|" + String(data.access_mode || "");
-      if (!quiet || signature !== state.lastSignature) {
+      const changed = signature !== state.lastSignature;
+      if (!quiet || (changed && !state.interacting)) {
         state.lastSignature = signature;
         renderMessages();
       }
@@ -1761,6 +1787,21 @@
     });
   }
 
+  function scrollPageToLatest() {
+    if (!state.root?.isConnected || state.selection) return;
+    const apply = () => {
+      if (!state.root?.isConnected || state.selection) return;
+      syncComposerDock();
+      const scroller = document.scrollingElement || document.documentElement;
+      const maxTop = Math.max(0, scroller.scrollHeight - window.innerHeight);
+      scroller.scrollTop = maxTop;
+      window.scrollTo(0, maxTop);
+    };
+
+    requestAnimationFrame(() => requestAnimationFrame(apply));
+    window.setTimeout(apply, 90);
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
@@ -1903,9 +1944,7 @@
               '"><span aria-hidden="true">✓</span><strong>J’ai trouvé</strong></button>',
           );
         } else {
-          const takeLabel = stock.remaining > 1
-            ? "J’ai récupéré des fauteuils"
-            : "J’ai récupéré un fauteuil";
+          const takeLabel = "Je récupère";
           html.push(
             '<div class="tb-wheelchair-actions">' +
               '<button type="button" class="tb-resolve is-take tb-take-primary" data-take="' +
@@ -1994,10 +2033,9 @@
     feed.innerHTML = html.join("");
 
     updateSelectionBar();
-    if (!state.selection) {
-      requestAnimationFrame(() => {
-        feed.scrollTop = feed.scrollHeight;
-      });
+    if (state.scrollToLatestPending && !state.selection) {
+      state.scrollToLatestPending = false;
+      scrollPageToLatest();
     }
   }
 
@@ -2152,6 +2190,7 @@
       autoGrow(textarea);
       renderSearchShortcuts();
       renderComposerState();
+      state.scrollToLatestPending = true;
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {
       alert(error.message || "Publication impossible.");
@@ -2481,6 +2520,10 @@
     state.selection = false;
     state.selected.clear();
     state.deleteBusy = false;
+    state.interacting = false;
+    if (state.interactionReleaseTimer) clearTimeout(state.interactionReleaseTimer);
+    state.interactionReleaseTimer = 0;
+    state.scrollToLatestPending = true;
     state.lastSignature = "";
     state.focusAfterLoad = false;
   }
@@ -2523,7 +2566,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-selection1",
+    build: "20260923-touch1",
     mount,
     mountPreview,
     unmountFull,
