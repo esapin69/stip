@@ -19,14 +19,14 @@
   /* Shifts — palette métier unique, volontairement très distincte */
   --stip-shift-m:#087cff;
   --stip-shift-j:#00b85a;
-  --stip-shift-j4:#ff5a00;
+  --stip-shift-j4:#ff9500;
   --stip-shift-s:#ffd500;
-  --stip-shift-n:#283748;
-  --stip-shift-m-soft:#dcecff;
+  --stip-shift-n:#000000;
+  --stip-shift-m-soft:#dcebff;
   --stip-shift-j-soft:#dcf8e8;
-  --stip-shift-j4-soft:#ffe5d6;
+  --stip-shift-j4-soft:#fff0d6;
   --stip-shift-s-soft:#fff3a3;
-  --stip-shift-n-soft:#e4eaf0;
+  --stip-shift-n-soft:#eceff1;
   --stip-shift-s-ink:#3a2b00;
   --stip-shift-s-text:#8a6500;
   --stip-radius-xs:8px;
