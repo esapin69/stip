@@ -279,10 +279,10 @@ check(
   espritJs.includes('function weekControlsMarkup()') &&
   espritJs.includes('id="teamWeekControls"') &&
   espritJs.includes('id="teamDays"') &&
-  espritJs.includes('body = staffing + weekControlsMarkup() + teamDaySummary(bundle, day)') &&
+  espritJs.includes('body = weekControlsMarkup() + staffing + teamDaySummary(bundle, day)') &&
   /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) &&
   espritHtml.includes('id="teamDateJumpPanel"'),
-  'Esprit d’équipe a perdu la hiérarchie validée Aujourd’hui / shifts / Cette semaine / Ce mois.'
+  'Esprit d’équipe a perdu la hiérarchie validée Aujourd’hui / Cette semaine / shifts / Ce mois.'
 );
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
 check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
