@@ -5172,3 +5172,79 @@
 .tb-field-spot-choices .tb-place-toggle.is-featured .tb-place-confidence{
   font-size:.78rem!important;
 }
+
+
+/* 20260924-confidence-override1 — automatic by default, manual 🧊/🔥 always available */
+.tb-confidence-override{
+  margin-top:9px;
+  padding:7px 8px;
+  border:1px solid #d7e5e6;
+  border-radius:13px;
+  background:#f8fbfb;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+}
+.tb-confidence-label{
+  min-width:0;
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+}
+.tb-confidence-label strong{
+  color:#315a62;
+  font-size:.62rem;
+  line-height:1;
+  font-weight:950;
+}
+.tb-confidence-label small{
+  color:#82979b;
+  font-size:.50rem;
+  line-height:1;
+  font-weight:800;
+}
+.tb-confidence-actions{
+  display:grid;
+  grid-template-columns:auto 36px 36px;
+  gap:4px;
+}
+.tb-confidence-actions button{
+  min-width:36px;
+  height:34px;
+  padding:0 7px;
+  border:1px solid #d4e2e4;
+  border-radius:10px;
+  background:#fff;
+  color:#5b747a;
+  display:grid;
+  place-items:center;
+  font:inherit;
+  font-size:.88rem;
+  font-weight:900;
+  box-shadow:none;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.tb-confidence-actions button[data-confidence="auto"]{
+  min-width:46px;
+  font-size:.54rem;
+}
+.tb-confidence-actions button.is-auto-selected{
+  border-color:#aacbd0;
+  background:#edf7f8;
+}
+.tb-confidence-actions button.is-selected[data-confidence="fast"]{
+  border-color:#7fc9eb;
+  background:#dff5ff;
+  box-shadow:0 0 0 2px rgba(127,201,235,.12);
+}
+.tb-confidence-actions button.is-selected[data-confidence="sheltered"]{
+  border-color:#ef9d43;
+  background:#fff0c8;
+  box-shadow:0 0 0 2px rgba(239,157,67,.12);
+}
+.tb-confidence-actions button.is-selected[data-confidence="auto"]{
+  border-color:#8db7be;
+  background:#eaf4f5;
+}
