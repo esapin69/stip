@@ -1983,7 +1983,7 @@
 
   function planningCompareShortcut() {
     if (!(has("planning_personal") && has("planning_team"))) return "";
-    return `<button type="button" class="hc-planning-compare-shortcut" data-app="compare" aria-label="Comparer mon planning avec un agent"><span class="hc-planning-compare-art" aria-hidden="true">⇄</span><span class="hc-planning-compare-copy"><strong>Comparer mon planning avec…</strong><small>Rechercher un agent</small></span><span class="hc-planning-compare-search" aria-hidden="true">⌕</span></button>`;
+    return `<div class="hc-profile-responsable-row hc-planning-compare-row"><button type="button" class="hc-responsable-tab" data-app="compare" aria-label="Comparer mon planning avec un agent"><span>Comparer mon planning</span><b aria-hidden="true">›</b></button></div>`;
   }
 
   function wheelchairShortcut() {
