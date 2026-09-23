@@ -2938,3 +2938,12 @@ body.team-page {
 }
 
 @media(max-width:350px){.team-month-legend>div{grid-template-columns:1fr}}
+
+
+/* Explicit boundary between the 7-day selector and the selected day's colleagues. */
+.team-selected-day-separator{
+  margin:18px 0 12px!important;
+}
+.team-selected-day-separator span{
+  letter-spacing:.16em;
+}
