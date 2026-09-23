@@ -4283,3 +4283,65 @@
 .hc-tableau-standalone .tb-input-dock{
   z-index:30!important;
 }
+
+
+/* 20260923-reactions2 — reliable long-press reactions */
+.hc-tableau-standalone .tb-entry,
+.hc-tableau-standalone .tb-thread-reply{
+  touch-action:pan-y!important;
+  -webkit-touch-callout:none!important;
+}
+.hc-tableau-standalone .tb-entry-body,
+.hc-tableau-standalone .tb-thread-reply-body{
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+.tb-reactions{
+  min-height:24px;
+}
+.tb-reactions.is-empty{
+  margin-top:3px;
+  justify-content:flex-end;
+}
+.tb-reaction-open{
+  width:28px;
+  height:28px;
+  min-width:28px;
+  min-height:28px;
+  padding:0;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:transparent;
+  color:#7d9297;
+  display:grid;
+  place-items:center;
+  font:inherit;
+  box-shadow:none;
+  opacity:.68;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.tb-reaction-open span{
+  font-size:.82rem;
+  line-height:1;
+}
+.tb-reaction-open:active{
+  border-color:#d4e2e4;
+  background:#edf5f6;
+  color:#38656e;
+  opacity:1;
+  transform:scale(.95);
+}
+.tb-reactions:not(.is-empty) .tb-reaction-open{
+  width:26px;
+  height:26px;
+  min-width:26px;
+  min-height:26px;
+}
+.tb-reaction-wrap{
+  touch-action:manipulation!important;
+}
+.tb-reaction-sheet button{
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
