@@ -5538,3 +5538,34 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.84rem!important;
   }
 }
+
+
+/* 20260923-header-swap1 — bell left, wheelchair right, explicit arrow */
+.hc-home-top-tools{
+  grid-template-columns:auto minmax(0,1fr)!important;
+}
+.hc-home-top-tools .hc-profile-bell{
+  justify-self:start!important;
+}
+.hc-home-wheelchair-slot{
+  justify-self:end!important;
+}
+.hc-wheelchair-shortcut{
+  grid-template-columns:40px auto 18px!important;
+}
+.hc-wheelchair-shortcut-arrow{
+  display:block!important;
+  color:#76909a!important;
+  font-size:1.35rem!important;
+  line-height:1!important;
+  font-weight:800!important;
+  text-align:center!important;
+}
+@media(max-width:370px){
+  .hc-home-top-tools{
+    grid-template-columns:auto minmax(0,1fr)!important;
+  }
+  .hc-wheelchair-shortcut{
+    grid-template-columns:36px auto 18px!important;
+  }
+}
