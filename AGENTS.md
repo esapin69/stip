@@ -90,6 +90,8 @@ Current non-negotiable invariants:
 - In `Je cherche` mode, selecting a building is sufficient and makes the message ready to send; do not force a level/service/location step.
 - Active availability cards use one dominant recovery action plus two compact secondary actions: `Toujours là` and `Pas trouvé`. `Toujours là` stores a timestamped sighting history and shows only the latest sighting inline.
 - Wheelchair card visual hierarchy is strict: building/hospital first, time second, quantity/status pill third, then floor, service, and optional landmark. Do not repeat the generated sentence when structured wheelchair fields already exist.
+- Hospital/building labels are uppercase and visually dominant; the time is intentionally large and immediately readable.
+- Swipe-to-delete follows the Cloche STIP gesture: horizontal right swipe, reveal red delete affordance, threshold confirmation, then explicit confirmation dialog. Everyone can swipe-delete their own messages; admins can swipe-delete any message. Reuse `team_delete`; do not create a second delete backend.
 - Keep wheelchair cards compact and use stronger contrast/saturation. The primary `Je récupère` action must dominate; the two secondary actions stay visually quiet but remain comfortably readable.
 - Every chat message and linked reply supports long-press reactions. Offer a compact quick row (`👍 ❤️ 😂 😮 😢 🙏`) plus an explicit “more” chooser. One reaction per agent per message; choosing the same emoji again removes it, choosing another replaces it.
 - Keep reactions on the single canonical reaction mechanism. Long-press is primary, with one discreet smile trigger as a mobile fallback; do not create a second reaction store or API.
