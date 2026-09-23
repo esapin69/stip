@@ -5,7 +5,7 @@
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
     STORE = "stip_session_v1",
-    TABLEAU_BUILD = "20260923-chatstip2",
+    TABLEAU_BUILD = "20260923-chatstip3",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
