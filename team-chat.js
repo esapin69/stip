@@ -278,6 +278,7 @@
           unmountFull();
           return;
         }
+        updateWheelchairFreshnessIndicators();
         if (!document.hidden) loadFull(true);
       }, 3000);
     }
@@ -2146,6 +2147,99 @@
     return { hospital, level, service, landmark };
   }
 
+  const WHEELCHAIR_FRESHNESS_WINDOW_MS = 90 * 60 * 1000;
+
+  function wheelchairFreshness(message = {}, wheelchair = {}, now = Date.now()) {
+    const rawSeenAt = wheelchair?.last_seen_at || message?.created_at || "";
+    const seenAt = Date.parse(String(rawSeenAt));
+    const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : WHEELCHAIR_FRESHNESS_WINDOW_MS;
+    const progress = Math.min(1, age / WHEELCHAIR_FRESHNESS_WINDOW_MS);
+    const position = Math.round(progress * 100);
+
+    if (progress < 0.24) {
+      return {
+        position,
+        stage: "hot",
+        icon: "🔥",
+        label: "Très fortes chances qu’il soit encore là",
+      };
+    }
+    if (progress < 0.50) {
+      return {
+        position,
+        stage: "warm",
+        icon: "🔥",
+        label: "Fortes chances qu’il soit encore là",
+      };
+    }
+    if (progress < 0.72) {
+      return {
+        position,
+        stage: "cooling",
+        icon: "",
+        label: "Il peut encore être là",
+      };
+    }
+    if (progress < 0.90) {
+      return {
+        position,
+        stage: "cold",
+        icon: "🧊",
+        label: "Peu de chances qu’il soit encore là",
+      };
+    }
+    return {
+      position,
+      stage: "frozen",
+      icon: "🧊",
+      label: "Très peu de chances qu’il soit encore là",
+    };
+  }
+
+  function wheelchairFreshnessMarkup(message, wheelchair) {
+    if (!wheelchair || wheelchair.type === "search" || wheelchair.status !== "active") return "";
+    const seenAt = String(wheelchair.last_seen_at || message.created_at || "");
+    const freshness = wheelchairFreshness(message, wheelchair);
+    return (
+      '<div class="tb-wheelchair-freshness is-' + freshness.stage +
+        '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) + '">' +
+        '<div class="tb-freshness-copy">' +
+          (freshness.icon ? '<span aria-hidden="true">' + freshness.icon + '</span>' : '') +
+          '<strong>' + esc(freshness.label) + '</strong>' +
+        '</div>' +
+        '<div class="tb-freshness-track" aria-hidden="true">' +
+          '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%"></i>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function updateWheelchairFreshnessIndicators() {
+    const root = state.root;
+    if (!root?.isConnected) return;
+
+    root.querySelectorAll("[data-wheelchair-freshness]").forEach((node) => {
+      const seenAt = String(node.dataset.freshnessAt || "");
+      const freshness = wheelchairFreshness(
+        { created_at: seenAt },
+        { status: "active", type: "spot", last_seen_at: seenAt },
+      );
+
+      node.classList.remove("is-hot", "is-warm", "is-cooling", "is-cold", "is-frozen");
+      node.classList.add("is-" + freshness.stage);
+
+      const copy = node.querySelector(".tb-freshness-copy");
+      if (copy) {
+        copy.innerHTML =
+          (freshness.icon ? '<span aria-hidden="true">' + freshness.icon + '</span>' : '') +
+          '<strong>' + esc(freshness.label) + '</strong>';
+      }
+
+      const marker = node.querySelector(".tb-freshness-marker");
+      marker?.style.setProperty("--freshness-position", freshness.position + "%");
+    });
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
@@ -2276,6 +2370,9 @@
             (isSearchType ? " cherche" : " · signalé") +
           '</small>',
         );
+        if (activeSignal && !isSearchType) {
+          html.push(wheelchairFreshnessMarkup(message, wheelchair));
+        }
       } else {
         html.push(
           '<header><div><strong>' +
