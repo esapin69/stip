@@ -202,6 +202,7 @@
         message.payload?.wheelchair?.last_seen_at || "",
         JSON.stringify(message.payload?.wheelchair?.sightings || []),
         JSON.stringify(message.payload?.wheelchair?.takes || []),
+        JSON.stringify(message.payload?.reactions || []),
       ]),
     );
   }
@@ -350,6 +351,7 @@
       .querySelector("[data-delete-selected]")
       ?.addEventListener("click", deleteSelected);
     root.querySelector("[data-form]")?.addEventListener("submit", send);
+    bindMessageGestures(root);
     root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
       const textarea = root.querySelector(".tb-composer textarea");
       if (!textarea) return;
@@ -1554,6 +1556,186 @@
     }
   }
 
+  const QUICK_REACTIONS = ["👍","❤️","😂","😮","😢","🙏"];
+  const MORE_REACTIONS = ["👍","❤️","😂","😮","😢","🙏","👏","🔥","✅","💪","🎉","🤝","👀","😅","😭","😡","🤔","💯","🚀","🫶","🤲","👌","🙌","⭐"];
+
+  function messageById(messageId) {
+    return (state.data?.messages || []).find(
+      (item) => String(item.id) === String(messageId),
+    ) || null;
+  }
+
+  function reactionMarkup(message) {
+    const reactions = Array.isArray(message?.payload?.reactions)
+      ? message.payload.reactions
+      : [];
+    if (!reactions.length) return "";
+
+    const me = String(state.data?.me?.id || "");
+    const grouped = new Map();
+    for (const reaction of reactions) {
+      const emoji = String(reaction?.emoji || "").trim();
+      if (!emoji) continue;
+      const row = grouped.get(emoji) || { emoji, count: 0, mine: false };
+      row.count += 1;
+      if (String(reaction?.agent_id || "") === me) row.mine = true;
+      grouped.set(emoji, row);
+    }
+
+    return (
+      '<div class="tb-reactions" aria-label="Réactions">' +
+      [...grouped.values()].map((row) =>
+        '<button type="button" class="tb-reaction-chip' + (row.mine ? " is-mine" : "") +
+          '" data-react-quick="' + esc(String(message.id || "")) +
+          '" data-reaction-emoji="' + esc(row.emoji) +
+          '" aria-label="Réagir ' + esc(row.emoji) + '">' +
+          '<span>' + esc(row.emoji) + '</span>' +
+          (row.count > 1 ? '<b>' + row.count + '</b>' : '') +
+        '</button>'
+      ).join("") +
+      "</div>"
+    );
+  }
+
+  async function reactToMessage(messageId, emoji) {
+    if (!messageId || !emoji) return;
+    try {
+      await api("team_react", {
+        message_id: String(messageId),
+        emoji: String(emoji),
+      });
+      await Promise.all([loadFull(false), loadPreview(false)]);
+    } catch (error) {
+      alert(error.message || "Réaction impossible.");
+    }
+  }
+
+  function openReactionPicker(messageId) {
+    const message = messageById(messageId);
+    if (!message || state.selection) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "tb-reaction-wrap";
+    wrap.innerHTML =
+      '<section class="tb-reaction-sheet" role="dialog" aria-label="Réagir au message">' +
+        '<div class="tb-reaction-quick">' +
+          QUICK_REACTIONS.map((emoji) =>
+            '<button type="button" data-reaction-pick="' + esc(emoji) + '" aria-label="' + esc(emoji) + '">' +
+              esc(emoji) +
+            '</button>'
+          ).join("") +
+          '<button type="button" class="tb-reaction-more-toggle" data-reaction-more aria-label="Plus de réactions">＋</button>' +
+        '</div>' +
+        '<div class="tb-reaction-more" data-reaction-more-grid hidden>' +
+          MORE_REACTIONS.map((emoji) =>
+            '<button type="button" data-reaction-pick="' + esc(emoji) + '" aria-label="' + esc(emoji) + '">' +
+              esc(emoji) +
+            '</button>'
+          ).join("") +
+        '</div>' +
+        (state.data?.admin
+          ? '<button type="button" class="tb-reaction-delete" data-reaction-delete><span aria-hidden="true">🗑</span><strong>Supprimer ce message</strong></button>'
+          : '') +
+      '</section>';
+
+    const close = () => wrap.remove();
+    wrap.querySelector("[data-reaction-more]")?.addEventListener("click", () => {
+      const grid = wrap.querySelector("[data-reaction-more-grid]");
+      if (grid) grid.hidden = !grid.hidden;
+    });
+    wrap.querySelectorAll("[data-reaction-pick]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const emoji = String(button.dataset.reactionPick || "");
+        close();
+        await reactToMessage(messageId, emoji);
+      });
+    });
+    wrap.querySelector("[data-reaction-delete]")?.addEventListener("click", async () => {
+      close();
+      const confirmed = await confirmDelete(1);
+      if (!confirmed) return;
+      try {
+        await api("team_delete", { message_ids: [String(messageId)] });
+        state.selected.delete(String(messageId));
+        await Promise.all([loadFull(false), loadPreview(false)]);
+      } catch (error) {
+        alert(error.message || "Suppression impossible.");
+      }
+    });
+    wrap.addEventListener("click", (event) => {
+      if (event.target === wrap) close();
+    });
+    document.body.appendChild(wrap);
+  }
+
+  function bindMessageGestures(root) {
+    if (!root || root.dataset.reactionGestures === "1") return;
+    root.dataset.reactionGestures = "1";
+
+    let timer = 0;
+    let startX = 0;
+    let startY = 0;
+    let targetId = "";
+
+    const clear = () => {
+      if (timer) clearTimeout(timer);
+      timer = 0;
+      targetId = "";
+    };
+
+    root.addEventListener("pointerdown", (event) => {
+      if (state.selection) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      if (event.target.closest?.("button,input,textarea,label,a")) return;
+      const item = event.target.closest?.("[data-message-id]");
+      if (!item) return;
+
+      targetId = String(item.dataset.messageId || "");
+      startX = Number(event.clientX || 0);
+      startY = Number(event.clientY || 0);
+      timer = window.setTimeout(() => {
+        const id = targetId;
+        clear();
+        if (!id) return;
+        try { navigator.vibrate?.(12); } catch {}
+        openReactionPicker(id);
+      }, 520);
+    }, { passive: true });
+
+    root.addEventListener("pointermove", (event) => {
+      if (!timer) return;
+      if (
+        Math.abs(Number(event.clientX || 0) - startX) > 12 ||
+        Math.abs(Number(event.clientY || 0) - startY) > 12
+      ) clear();
+    }, { passive: true });
+
+    ["pointerup","pointercancel","pointerleave"].forEach((name) => {
+      root.addEventListener(name, clear, { passive: true });
+    });
+
+    root.addEventListener("contextmenu", (event) => {
+      if (state.selection) return;
+      if (event.target.closest?.("button,input,textarea,label,a")) return;
+      const item = event.target.closest?.("[data-message-id]");
+      if (!item) return;
+      event.preventDefault();
+      clear();
+      openReactionPicker(String(item.dataset.messageId || ""));
+    });
+
+    root.addEventListener("click", (event) => {
+      const chip = event.target.closest?.("[data-react-quick]");
+      if (!chip) return;
+      event.preventDefault();
+      event.stopPropagation();
+      reactToMessage(
+        String(chip.dataset.reactQuick || ""),
+        String(chip.dataset.reactionEmoji || ""),
+      );
+    });
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
@@ -1687,6 +1869,7 @@
             '" alt="Photo publiée"></button>',
         );
       }
+      html.push(reactionMarkup(message));
       if (activeSignal && !state.selection && state.data?.can_write !== false && state.data?.access_mode !== "read") {
         if (searchSignal) {
           html.push(
@@ -1772,6 +1955,7 @@
                 esc(fmtTime(reply.created_at)) + '</time></header>' +
               '<small class="tb-thread-link">↪ Réponse à ce signalement</small>' +
               (replyBody ? '<p>' + esc(replyBody).replace(/\n/g, "<br>") + '</p>' : '') +
+              reactionMarkup(reply) +
             '</div></article>'
           );
         }
@@ -1861,8 +2045,7 @@
         count +
         " message" +
         (count > 1 ? "s" : "") +
-        " sera" +
-        (count > 1 ? "ont" : "") +
+        (count > 1 ? " seront" : " sera") +
         " effacé" +
         (count > 1 ? "s" : "") +
         ".</p>" +
@@ -2291,7 +2474,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-chatstip3",
+    build: "20260923-reactions1",
     mount,
     mountPreview,
     unmountFull,
