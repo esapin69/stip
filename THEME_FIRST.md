@@ -121,6 +121,8 @@ Deux variantes sont autorisées :
 
 La page **Esprit d’équipe** est la référence officielle de la variante complète à 3 niveaux. Toute autre page qui a besoin des trois niveaux doit réutiliser les classes partagées `.stip-time-stack`, `.stip-time-month`, `.stip-time-week` et `.stip-time-days`, et ne pas recréer sa propre version locale.
 
+Sur **Esprit d’équipe**, la ligne **Cette semaine / 7 jours** est placée avant les cartes de shifts. Les informations destinées aux agents utilisent un langage terrain ; les cibles, écarts chiffrés et consignes de pilotage restent dans l’espace Responsable.
+
 Le clic sur un jour doit produire un état sélectionné visible, être mémorisé dans le contexte de navigation quand cela est pertinent et rester cohérent avec la semaine affichée.
 
 ## Structure d’une page STIP
