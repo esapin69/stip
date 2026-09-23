@@ -103,7 +103,7 @@ async function eventMailCandidates(c:any,ev:any){
   const cq=await db.from('contacts_ghe').select('source_key,categorie,ghe,nom,prenom,email_pro,role_metier').eq('actif',true);if(cq.error)throw cq.error;
   for(const x of cq.data||[]){
     const role=text(x.role_metier,180),cat=text(x.categorie,80).toLowerCase();
-    if(!(cat==='chef'||cat==='administration'||/cadre|responsable|chef/i.test(role)))continue;
+    if(!(cat==='chef'||/cadre|responsable|chef/i.test(role)))continue;
     const sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
     add({email:x.email_pro,name:personName(x,role||'Encadrement'),role:role||(/chef/.test(cat)?'Chef d’équipe':'Encadrement'),kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':/responsable/i.test(role)?'Responsable':cat==='chef'?'Chef d’équipe':'Encadrement',recommended:sameGhe});
   }
