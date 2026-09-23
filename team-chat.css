@@ -4623,3 +4623,97 @@
   .tb-wheelchair-hospital{font-size:1.12rem!important}
   .tb-wheelchair-head time{font-size:1rem!important}
 }
+
+
+/* 20260923-swipe2 — two-way message swipe */
+.tb-message-right-bg,
+.tb-message-reply-bg{
+  position:absolute!important;
+  z-index:0!important;
+  inset:4px 2px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:0 18px!important;
+  color:#fff!important;
+  opacity:0!important;
+  transition:opacity .12s ease!important;
+  pointer-events:none!important;
+  border-radius:17px!important;
+}
+.tb-message-right-bg{
+  justify-content:flex-start!important;
+}
+.tb-message-reply-bg{
+  justify-content:flex-end!important;
+  background:linear-gradient(90deg,#14758a,#1195ad)!important;
+}
+.tb-message-right-bg.is-delete-bg{
+  background:linear-gradient(90deg,#b92d35,#dc4f4f)!important;
+}
+.tb-message-right-bg.is-react-bg{
+  background:linear-gradient(90deg,#5b7f8a,#3d9aae)!important;
+}
+.tb-message-right-bg span,
+.tb-message-reply-bg span{
+  width:38px!important;
+  height:38px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  background:rgba(255,255,255,.17)!important;
+  font-size:1.12rem!important;
+  font-weight:1000!important;
+}
+.tb-message-right-bg strong,
+.tb-message-reply-bg strong{
+  font-size:.78rem!important;
+  font-weight:1000!important;
+}
+.tb-message-swipe.is-delete .tb-message-right-bg.is-delete-bg,
+.tb-message-swipe.is-react .tb-message-right-bg.is-react-bg,
+.tb-message-swipe.is-reply .tb-message-reply-bg{
+  opacity:1!important;
+}
+/* Legacy background is superseded by the two-way gesture. */
+.tb-message-delete-bg{display:none!important}
+
+.tb-free-reply{
+  width:min(100%,390px)!important;
+}
+.tb-free-reply-parent{
+  margin:8px 0 0!important;
+  padding:9px 10px!important;
+  border-left:3px solid #1590a4!important;
+  border-radius:9px!important;
+  background:#eff7f8!important;
+  color:#54737a!important;
+  font-size:.68rem!important;
+  line-height:1.32!important;
+  font-weight:800!important;
+  text-align:left!important;
+}
+.tb-free-reply .tb-precision-field{
+  margin-top:10px!important;
+}
+.tb-free-reply .tb-precision-field textarea{
+  min-height:88px!important;
+}
+.tb-reply-send{
+  width:100%!important;
+  min-height:44px!important;
+  margin-top:9px!important;
+  padding:0 14px!important;
+  border:0!important;
+  border-radius:12px!important;
+  background:#168da3!important;
+  color:#fff!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  font:inherit!important;
+  font-size:.70rem!important;
+  font-weight:950!important;
+}
+.tb-reply-send:disabled{opacity:.55!important}
