@@ -85,6 +85,7 @@ Current non-negotiable invariants:
 - Active availability cards use one dominant recovery action plus two compact secondary actions: `Toujours là` and `Pas trouvé`. `Toujours là` stores a timestamped sighting history and shows only the latest sighting inline.
 - Every chat message and linked reply supports long-press reactions. Offer a compact quick row (`👍 ❤️ 😂 😮 😢 🙏`) plus an explicit “more” chooser. One reaction per agent per message; choosing the same emoji again removes it, choosing another replaces it.
 - Admins can delete any message, regardless of author, through bulk selection and the long-press message sheet. Non-admin server rules remain unchanged.
+- Message selection is model-driven: use delegated button controls keyed by message ID, never native checkbox/label state that can race with a rerender. While selection is active, hide the composer and keep the selection bar fixed and tappable above all content.
 - The location finder must follow `visualViewport` so the Android/iOS keyboard never covers the search field or traps the results below it.
 - Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
 - Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
