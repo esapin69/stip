@@ -5092,3 +5092,63 @@
   }
   .tb-freshness-copy small{display:none!important}
 }
+
+
+/* 20260924-confirmation1 — explicit confirmation without overpowering the primary action */
+.hc-tableau-standalone .tb-still-there{
+  border-color:#72baa7!important;
+  background:#e7f7f1!important;
+  color:#165f50!important;
+}
+.hc-tableau-standalone .tb-wheelchair-secondary .tb-still-there strong{
+  font-size:.65rem!important;
+  line-height:1.08!important;
+  font-weight:1000!important;
+}
+.tb-last-seen{
+  margin-top:6px!important;
+  padding:6px 8px!important;
+  border:1px solid #9fd5c7!important;
+  border-radius:10px!important;
+  background:#edf9f5!important;
+  color:#1d6858!important;
+  display:grid!important;
+  grid-template-columns:24px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:7px!important;
+  font-size:inherit!important;
+  line-height:1.1!important;
+  font-weight:inherit!important;
+}
+.tb-last-seen-check{
+  width:24px!important;
+  height:24px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  background:#159879!important;
+  color:#fff!important;
+  font-size:.72rem!important;
+  font-weight:1000!important;
+}
+.tb-last-seen>div{
+  min-width:0!important;
+  display:grid!important;
+  gap:2px!important;
+}
+.tb-last-seen strong{
+  color:#155d4f!important;
+  font-size:.65rem!important;
+  line-height:1.05!important;
+  font-weight:1000!important;
+}
+.tb-last-seen small{
+  color:#527c73!important;
+  font-size:.53rem!important;
+  line-height:1.05!important;
+  font-weight:850!important;
+}
+.tb-missing-report textarea,
+.tb-free-reply textarea{
+  scroll-margin-bottom:18px;
+}
