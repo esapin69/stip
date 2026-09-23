@@ -1440,6 +1440,7 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
+        responsable: "responsable",
         tableau: "fauteuils",
       }[mode] || "home"
     );
@@ -1451,6 +1452,7 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
+        responsable: "responsable",
         fauteuils: "tableau",
       }[String(route || "home")] || ""
     );
@@ -1462,14 +1464,16 @@
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
       ];
+    if (has("responsable"))
+      items.push({ key: "responsable", label: "Responsable", art: ICON.responsable, mode: "home" });
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
-    return `<section class="hc-home-top-nav">
+    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
       <div class="hc-home-top-tools">
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
       </div>
-      <nav class="hc-home-filters" aria-label="Accueil STIP">${items
+      <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
     </section>`;
@@ -1973,6 +1977,8 @@
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
       return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v1" loading="eager"></iframe></section>`;
+    if (state.homeMode === "responsable" && has("responsable"))
+      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="responsable.html?embed=home-v1" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
@@ -2008,16 +2014,60 @@
     setTimeout(setup, 0);
   }
 
+  function bindEmbeddedResponsable(root) {
+    const frame = root?.querySelector?.("#hcResponsableFrame");
+    if (!frame || frame.dataset.stipBound === "1") return;
+    frame.dataset.stipBound = "1";
+    let observer = null;
+    const setup = () => {
+      try {
+        const doc = frame.contentDocument,
+          win = frame.contentWindow;
+        if (!doc || !win) return;
+        if (!/\/responsable\.html$/i.test(win.location.pathname)) {
+          location.href = win.location.href;
+          return;
+        }
+        const top = doc.querySelector(".resp-top");
+        if (top) {
+          top.hidden = true;
+          top.style.display = "none";
+        }
+        doc.body?.classList.add("stip-home-embedded");
+        const fit = () => {
+          const height = Math.max(
+            doc.body?.scrollHeight || 0,
+            doc.documentElement?.scrollHeight || 0,
+          );
+          frame.style.height = `${Math.max(680, height + 4)}px`;
+        };
+        fit();
+        observer?.disconnect?.();
+        if ("ResizeObserver" in window && doc.body) {
+          observer = new ResizeObserver(fit);
+          observer.observe(doc.body);
+        }
+        setTimeout(fit, 100);
+        setTimeout(fit, 600);
+      } catch {}
+    };
+    frame.addEventListener("load", setup);
+    setTimeout(setup, 0);
+  }
+
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
 
-    // Esprit d'équipe is an embedded live page. Keep it mounted during background
-    // notification/action refreshes so its scroll, open shifts and sheets are never reset.
-    if (
-      state.homeMode === "team" &&
-      root.querySelector("#hcTeamFrame")
-    ) {
+    // Embedded live pages stay mounted during background refreshes so their
+    // current tab, scroll position and open sheets are not reset.
+    const embeddedFrame =
+      state.homeMode === "team"
+        ? root.querySelector("#hcTeamFrame")
+        : state.homeMode === "responsable"
+          ? root.querySelector("#hcResponsableFrame")
+          : null;
+    if (embeddedFrame) {
       const bell = root.querySelector(".hc-profile-bell"),
         count = notifications().length + Number(window.STIPMessagesUnread || 0);
       if (bell) {
@@ -2112,6 +2162,7 @@
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
     if (state.homeMode === "team") bindEmbeddedTeam(root);
+    if (state.homeMode === "responsable") bindEmbeddedResponsable(root);
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
@@ -2387,7 +2438,7 @@
         state.homeMode = "notifications";
       } else if ((quick === "tableau" || quick === "teamchat") && has("messages")) {
         state.homeMode = "tableau";
-      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "team" || requested === "tableau") {
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "team" || requested === "responsable" || requested === "tableau") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
@@ -2503,6 +2554,10 @@
       return;
     }
     if (next === "team" && !(has("planning_team") || has("activity") || has("assistant_enabled"))) {
+      window.STIPRouter?.set?.("home", { replace: true });
+      return;
+    }
+    if (next === "responsable" && !has("responsable")) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
