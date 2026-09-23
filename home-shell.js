@@ -25,6 +25,7 @@
     dismissedNotifications: {},
     weekOffset: 0,
     weekFull: false,
+    weekPast: false,
     dayFocus: parisIso(),
     homeMode: "planning",
     dateJumpMonth: "",
@@ -228,7 +229,13 @@
       currentMonday = mondayOf(today),
       targetMonday = mondayOf(target);
     state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000);
-    state.weekFull = iso !== parisIso();
+    if (state.weekOffset === 0) {
+      state.weekPast = iso < parisIso();
+      state.weekFull = false;
+    } else {
+      state.weekPast = false;
+      state.weekFull = true;
+    }
     state.dayFocus = iso;
     state.renderSig = "";
     render();
@@ -729,8 +736,15 @@
       dow = today.getDay() || 7,
       monday = new Date(today);
     monday.setDate(today.getDate() - (dow - 1) + state.weekOffset * 7);
-    if (state.weekOffset === 0 && !state.weekFull)
+
+    if (state.weekOffset === 0) {
+      if (state.weekPast) {
+        const pastCount = Math.max(0, dow - 1);
+        return pastCount ? agendaRange(monday, pastCount) : agendaRange(today, 8 - dow);
+      }
       return agendaRange(today, 8 - dow);
+    }
+
     return agendaRange(monday, 7);
   }
   function moveWeek(step) {
@@ -741,22 +755,35 @@
         document.querySelector(".hc-planning-week-subblock") ||
         document.querySelector(".hc-planning-week-separator"),
       anchorTop = anchor?.getBoundingClientRect?.().top,
-      todayIso = parisIso();
+      today = dateObj(parisIso()),
+      todayIso = parisIso(),
+      dow = today.getDay() || 7;
 
-    // Sur la semaine en cours, la flèche gauche révèle d'abord les jours déjà
-    // passés (lu/ma, puis lu/ma/me le jeudi, etc.) au lieu de sauter directement
-    // à la semaine précédente.
-    if (step < 0 && state.weekOffset === 0 && !state.weekFull) {
-      state.weekFull = true;
+    // La semaine courante est volontairement coupée en deux vues :
+    // restant (aujourd'hui → dimanche) et passé (lundi → hier).
+    if (state.weekOffset === 0 && step < 0 && !state.weekPast && dow > 1) {
+      state.weekPast = true;
+      state.weekFull = false;
+    } else if (state.weekOffset === 0 && step > 0 && state.weekPast) {
+      state.weekPast = false;
+      state.weekFull = false;
     } else {
       state.weekOffset += step;
+      state.weekPast = false;
       state.weekFull = state.weekOffset !== 0;
     }
 
-    const navWeek = navigationWeek();
-    state.dayFocus = navWeek.some((x) => x.iso === todayIso)
-      ? todayIso
-      : navWeek[0]?.iso || todayIso;
+    const navWeek = navigationWeek(),
+      visibleWeek = selectedWeek();
+
+    if (state.weekOffset === 0) {
+      state.dayFocus = state.weekPast
+        ? visibleWeek[visibleWeek.length - 1]?.iso || todayIso
+        : todayIso;
+    } else {
+      state.dayFocus = visibleWeek[0]?.iso || navWeek[0]?.iso || todayIso;
+    }
+
     state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
     state.renderSig = "";
     render();
@@ -851,6 +878,7 @@
     const liveTail =
         state.weekOffset === 0 &&
         !state.weekFull &&
+        !state.weekPast &&
         w[0]?.today &&
         w[0]?.dow >= 5,
       nextMonday = liveTail
@@ -932,7 +960,9 @@
     const w = navigationWeek(),
       label =
         state.weekOffset === 0
-          ? "CETTE SEMAINE"
+          ? state.weekPast
+            ? "DÉBUT DE SEMAINE"
+            : "CETTE SEMAINE"
           : state.weekOffset === 1
             ? "SEMAINE PROCHAINE"
             : state.weekOffset === -1
@@ -2477,6 +2507,7 @@
     state.actionFilter = "all";
     state.weekOffset = 0;
     state.weekFull = false;
+    state.weekPast = false;
     state.renderSig = "";
     window.STIPBootCache = null;
     panel(false);
