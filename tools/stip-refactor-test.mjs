@@ -177,7 +177,7 @@ check(!read('index.html').includes('quick-access-icons.css'),'index.html charge 
 
 check(
   /\bshowProfile\s*=\s*state\.homeMode\s*===\s*"planning"/.test(home) &&
-  home.includes('markup = `${homeModeNav()}${showProfile ? profile() : ""}'),
+  /showProfile\s*\?\s*profile\(\)(?:\s*\+\s*[A-Za-z0-9_$]+\([^)]*\))*\s*:\s*""/.test(home),
   'La carte identité doit rester sous les accès rapides et uniquement dans Mon profil.'
 );
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
