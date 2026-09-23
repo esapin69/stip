@@ -721,3 +721,100 @@
     max-width:200px;
   }
 }
+
+
+/* 20260923-feedback-context1 — operational first, contextual rating */
+.hc-feedback-medical-summary{
+  margin:0 16px 12px;
+  padding:11px 12px;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  border:1px solid #cfe5e9;
+  border-radius:15px;
+  background:#eef9fa;
+  color:#315b68;
+}
+.hc-feedback-medical-summary strong{
+  flex:0 0 auto;
+  color:#087d93;
+  font-size:.7rem;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.hc-feedback-medical-summary span{
+  font-size:.7rem;
+  line-height:1.35;
+  font-weight:750;
+}
+.hc-feedback-following>.hc-feedback-rating-hero{
+  position:relative;
+  overflow:hidden;
+  margin:0;
+  padding:14px 12px 12px;
+  border:0;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 88% 10%,rgba(255,255,255,.22),transparent 31%),
+    linear-gradient(145deg,#123f4f 0%,#0d7187 58%,#0d93ac 100%);
+  color:#fff;
+  box-shadow:0 8px 20px rgba(13,100,119,.17),inset 0 1px 0 rgba(255,255,255,.16);
+}
+.hc-feedback-following>.hc-feedback-rating-hero[hidden],
+.hc-feedback-reason[hidden],
+.hc-feedback-question[data-follow-section][hidden]{
+  display:none!important;
+}
+.hc-feedback-reason{
+  padding:12px;
+  border:1px solid #d8e7ea;
+  border-radius:17px;
+  background:#fff;
+  box-shadow:0 4px 12px rgba(19,60,74,.04);
+}
+.hc-feedback-reason>span{
+  display:block;
+  margin-bottom:9px;
+  color:#0b879f;
+  font-size:.62rem;
+  font-weight:950;
+  letter-spacing:.1em;
+}
+.hc-feedback-reason-options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.hc-feedback-reason-options button{
+  min-height:38px;
+  padding:7px 10px;
+  border:1px solid #d4e4e7;
+  border-radius:12px;
+  background:#f8fbfc;
+  color:#365d6a;
+  font:inherit;
+  font-size:.72rem;
+  line-height:1.1;
+  font-weight:850;
+}
+.hc-feedback-reason-options button.selected{
+  border-color:#27a4b9;
+  background:#e8f8fa;
+  color:#076d80;
+  box-shadow:0 0 0 2px rgba(39,164,185,.09);
+}
+@media(max-width:560px){
+  .hc-feedback-medical-summary{
+    margin-left:13px;
+    margin-right:13px;
+    display:block;
+  }
+  .hc-feedback-medical-summary strong{
+    display:block;
+    margin-bottom:3px;
+  }
+  .hc-feedback-reason-options button{
+    flex:1 1 calc(50% - 7px);
+  }
+}
