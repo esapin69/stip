@@ -1075,21 +1075,45 @@
   }
 
   function normalizeWheelchairPersistence(value = "", quantity = 1) {
-    if (Math.max(1, Number(quantity) || 1) >= 6) return "normal";
     const key = String(value || "").trim().toLowerCase();
     return ["fast", "normal", "sheltered"].includes(key) ? key : "normal";
   }
 
+  function wheelchairPlacementText({ location = "", precision = "" } = {}) {
+    return norm([location, precision].filter(Boolean).join(" "));
+  }
+
+  function hasStrongWheelchairPlacementClue({ location = "", precision = "" } = {}) {
+    const text = wheelchairPlacementText({ location, precision });
+    return /fond du couloir|fond de couloir|au fond|bout du couloir|fin du couloir|fin de couloir|cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]|ascenseur|entree|entrée|hall|passage|accueil|escalier/.test(text);
+  }
+
   function inferWheelchairPersistence({ quantity = 1, location = "", precision = "" } = {}) {
-    if (Math.max(1, Number(quantity) || 1) >= 6) return "normal";
-    const text = norm([location, precision].filter(Boolean).join(" "));
-    if (/cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]/.test(text)) {
+    const text = wheelchairPlacementText({ location, precision });
+
+    if (/fond du couloir|fond de couloir|au fond|bout du couloir|fin du couloir|fin de couloir|cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]/.test(text)) {
       return "sheltered";
     }
-    if (/ascenseur|entree|entrée|couloir|hall|passage|accueil/.test(text)) {
+    if (/ascenseur|entree|entrée|hall|passage|accueil/.test(text)) {
       return "fast";
     }
+    if (/escalier|couloir/.test(text)) {
+      return "normal";
+    }
     return "normal";
+  }
+
+  function shouldAskWheelchairPersistence({
+    quantity = 1,
+    location = "",
+    precision = "",
+  } = {}) {
+    const count = Math.max(1, Number(quantity) || 1);
+    if (count >= 4) return false;
+    if (count === 3 && hasStrongWheelchairPlacementClue({ location, precision })) {
+      return false;
+    }
+    return true;
   }
 
   async function publishStructuredWheelchair({
@@ -1172,7 +1196,7 @@
             '<button type="button" data-review-landmark="dans le couloir" data-persistence-hint="fast">↔ Couloir</button>' +
             '<button type="button" data-review-landmark="à l’entrée de l’unité" data-persistence-hint="fast">🚪 Entrée</button>' +
           "</div>" +
-          (type === "spot" && quantity < 6
+          (type === "spot" && shouldAskWheelchairPersistence({ quantity, location })
             ? '<div class="tb-persistence-pills" aria-label="Tenue probable">' +
                 '<button type="button" class="is-hot' + (persistence === "fast" ? " is-selected" : "") + '" data-review-persistence="fast" aria-pressed="' + (persistence === "fast" ? "true" : "false") + '"><span>🔥</span><strong>Passage</strong></button>' +
                 '<button type="button" class="is-warm' + (persistence === "normal" ? " is-selected" : "") + '" data-review-persistence="normal" aria-pressed="' + (persistence === "normal" ? "true" : "false") + '"><span>●</span><strong>Visible</strong></button>' +
@@ -1210,13 +1234,23 @@
     });
 
     input?.addEventListener("input", () => {
-      if (persistenceTouched || type !== "spot" || quantity >= 6) return;
+      if (persistenceTouched || type !== "spot") return;
+      const precision = String(input.value || "");
       persistence = inferWheelchairPersistence({
         quantity,
         location,
-        precision: String(input.value || ""),
+        precision,
       });
       syncPersistenceButtons();
+
+      const pills = wrap.querySelector(".tb-persistence-pills");
+      if (pills && quantity === 3) {
+        pills.hidden = !shouldAskWheelchairPersistence({
+          quantity,
+          location,
+          precision,
+        });
+      }
     });
 
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
@@ -1228,13 +1262,22 @@
         input.value = input.value.trim()
           ? input.value.trim().replace(/[.,;:]?$/, "") + ", " + value
           : value;
-        if (!persistenceTouched && type === "spot" && quantity < 6) {
+        if (!persistenceTouched && type === "spot") {
           persistence = normalizeWheelchairPersistence(
             button.dataset.persistenceHint ||
               inferWheelchairPersistence({ quantity, location, precision: input.value }),
             quantity,
           );
           syncPersistenceButtons();
+
+          const pills = wrap.querySelector(".tb-persistence-pills");
+          if (pills && quantity === 3) {
+            pills.hidden = !shouldAskWheelchairPersistence({
+              quantity,
+              location,
+              precision: input.value,
+            });
+          }
         }
         input.focus();
       });
@@ -1265,15 +1308,13 @@
           ...payload,
           location,
           precision: String(input?.value || "").trim(),
-          persistence: quantity >= 6
-            ? "normal"
-            : (persistenceTouched
-              ? persistence
-              : inferWheelchairPersistence({
-                  quantity,
-                  location,
-                  precision: String(input?.value || "").trim(),
-                })),
+          persistence: persistenceTouched
+            ? persistence
+            : inferWheelchairPersistence({
+                quantity,
+                location,
+                precision: String(input?.value || "").trim(),
+              }),
         });
         if (sent) close?.(true);
         else {
@@ -2247,21 +2288,42 @@
       remaining,
     );
 
-    if (remaining >= 6) return 180 * 60 * 1000;
+    const quantityBand =
+      remaining >= 6 ? "many" :
+      remaining >= 4 ? "four" :
+      remaining === 3 ? "three" :
+      remaining === 2 ? "two" :
+      "one";
 
-    const baseMinutes =
-      persistence === "fast"
-        ? 45
-        : persistence === "sheltered"
-          ? 180
-          : 90;
+    const minutesByPlacement = {
+      fast: {
+        one: 40,
+        two: 55,
+        three: 75,
+        four: 100,
+        many: 120,
+      },
+      normal: {
+        one: 80,
+        two: 105,
+        three: 135,
+        four: 180,
+        many: 210,
+      },
+      sheltered: {
+        one: 180,
+        two: 210,
+        three: 240,
+        four: 285,
+        many: 330,
+      },
+    };
 
-    const quantityFactor =
-      remaining >= 4 ? 1.35 :
-      remaining >= 2 ? 1.15 :
-      1;
+    const minutes =
+      minutesByPlacement[persistence]?.[quantityBand] ||
+      minutesByPlacement.normal[quantityBand];
 
-    return Math.round(baseMinutes * quantityFactor * 60 * 1000);
+    return minutes * 60 * 1000;
   }
 
   function wheelchairFreshness(message = {}, wheelchair = {}, now = Date.now()) {
