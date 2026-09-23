@@ -1707,11 +1707,11 @@
                 '<button type="button" class="tb-still-there" data-still-there="' +
                   esc(id) +
                   '"><span aria-hidden="true">👁</span><strong>' +
-                  (stock.remaining > 1 ? "Toujours là" : "Toujours là") +
+                  (stock.remaining > 1 ? "Ils sont toujours là" : "Il est toujours là") +
                   '</strong></button>' +
                 '<button type="button" class="tb-report-missing" data-report-missing="' +
                   esc(id) +
-                  '"><span aria-hidden="true">⚠️</span><strong>Pas trouvé</strong></button>' +
+                  '"><span aria-hidden="true">⚠️</span><strong>Je n’ai pas trouvé</strong></button>' +
               '</div>' +
             "</div>",
           );
@@ -2291,7 +2291,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-chatstip2",
+    build: "20260923-chatstip3",
     mount,
     mountPreview,
     unmountFull,
