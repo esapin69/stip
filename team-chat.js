@@ -12,6 +12,7 @@
     loading: false,
     selection: false,
     selected: new Set(),
+    deleteBusy: false,
     lastSignature: "",
     focusAfterLoad: false,
     viewportHandler: null,
@@ -338,18 +339,6 @@
   }
 
   function bind(root) {
-    root.querySelector("[data-select]")?.addEventListener("click", () =>
-      toggleSelection(true),
-    );
-    root
-      .querySelector("[data-selection-close]")
-      ?.addEventListener("click", () => toggleSelection(false));
-    root
-      .querySelector("[data-select-all]")
-      ?.addEventListener("click", selectAll);
-    root
-      .querySelector("[data-delete-selected]")
-      ?.addEventListener("click", deleteSelected);
     root.querySelector("[data-form]")?.addEventListener("submit", send);
     bindMessageGestures(root);
     root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
@@ -410,6 +399,42 @@
     });
 
     root.addEventListener("click", (event) => {
+      const selectOpen = event.target.closest?.("[data-select]");
+      if (selectOpen) {
+        event.preventDefault();
+        toggleSelection(true);
+        return;
+      }
+      const selectClose = event.target.closest?.("[data-selection-close]");
+      if (selectClose) {
+        event.preventDefault();
+        toggleSelection(false);
+        return;
+      }
+      const selectAllButton = event.target.closest?.("[data-select-all]");
+      if (selectAllButton) {
+        event.preventDefault();
+        selectAll();
+        return;
+      }
+      const deleteSelectedButton = event.target.closest?.("[data-delete-selected]");
+      if (deleteSelectedButton) {
+        event.preventDefault();
+        deleteSelected();
+        return;
+      }
+      const messageSelect = event.target.closest?.("[data-message-select]");
+      if (messageSelect) {
+        event.preventDefault();
+        if (!state.selection || state.deleteBusy) return;
+        const id = String(messageSelect.dataset.messageSelect || "");
+        if (!id) return;
+        if (state.selected.has(id)) state.selected.delete(id);
+        else state.selected.add(id);
+        renderMessages();
+        return;
+      }
+
       const modeToggle = event.target.closest?.("[data-mode-toggle]");
       if (modeToggle) {
         event.preventDefault();
@@ -1808,11 +1833,11 @@
 
       if (state.selection) {
         html.push(
-          '<label class="tb-check"><input type="checkbox" data-message-check="' +
-            esc(id) +
-            '"' +
-            (checked ? " checked" : "") +
-            '><span>✓</span></label>',
+          '<button type="button" class="tb-check' + (checked ? " is-checked" : "") +
+            '" data-message-select="' + esc(id) +
+            '" aria-pressed="' + (checked ? "true" : "false") +
+            '" aria-label="' + (checked ? "Retirer de la sélection" : "Sélectionner ce message") + '">' +
+            '<span>✓</span></button>',
         );
       }
 
@@ -1943,9 +1968,11 @@
           );
           if (state.selection) {
             html.push(
-              '<label class="tb-check tb-thread-check"><input type="checkbox" data-message-check="' +
-                esc(replyId) + '"' + (replyChecked ? ' checked' : '') +
-                '><span>✓</span></label>'
+              '<button type="button" class="tb-check tb-thread-check' + (replyChecked ? ' is-checked' : '') +
+                '" data-message-select="' + esc(replyId) +
+                '" aria-pressed="' + (replyChecked ? 'true' : 'false') +
+                '" aria-label="' + (replyChecked ? 'Retirer de la sélection' : 'Sélectionner ce message') + '">' +
+                '<span>✓</span></button>'
             );
           }
           html.push(avatar(reply.sender));
@@ -1966,15 +1993,6 @@
 
     feed.innerHTML = html.join("");
 
-    feed.querySelectorAll("[data-message-check]").forEach((input) => {
-      input.addEventListener("change", () => {
-        const id = String(input.dataset.messageCheck || "");
-        if (input.checked) state.selected.add(id);
-        else state.selected.delete(id);
-        renderMessages();
-      });
-    });
-
     updateSelectionBar();
     if (!state.selection) {
       requestAnimationFrame(() => {
@@ -1984,13 +2002,15 @@
   }
 
   function toggleSelection(enabled) {
-    if (!state.data?.admin) return;
+    if (!state.data?.admin || state.deleteBusy) return;
     state.selection = !!enabled;
     if (!enabled) state.selected.clear();
+    state.root?.querySelector(".tb-page")?.classList.toggle("is-selecting", state.selection);
     renderMessages();
   }
 
   function selectAll() {
+    if (!state.selection || state.deleteBusy) return;
     const messages = state.data?.messages || [];
     if (state.selected.size === messages.length) state.selected.clear();
     else messages.forEach((message) => state.selected.add(String(message.id)));
@@ -2001,35 +2021,63 @@
     const bar = state.root?.querySelector("[data-selection-bar]");
     const count = state.root?.querySelector("[data-selection-count]");
     const manage = state.root?.querySelector("[data-select]");
+    const page = state.root?.querySelector(".tb-page");
     if (!bar || !count) return;
 
-    const total = state.data?.messages?.length || 0;
+    const messages = state.data?.messages || [];
+    const validIds = new Set(messages.map((message) => String(message.id)));
+    for (const id of [...state.selected]) {
+      if (!validIds.has(id)) state.selected.delete(id);
+    }
+
+    const total = messages.length;
+    page?.classList.toggle("is-selecting", !!state.selection);
     bar.hidden = !state.selection;
     count.textContent = String(state.selected.size);
 
     if (manage) {
-      manage.hidden = !state.data?.admin || !total;
-      manage.textContent = state.selection ? "Sélection" : "Gérer";
+      manage.hidden = !state.data?.admin || !total || state.selection;
+      manage.textContent = "Gérer";
+    }
+
+    const allButton = bar.querySelector("[data-select-all]");
+    if (allButton) {
+      allButton.disabled = state.deleteBusy || !total;
+      allButton.textContent =
+        total > 0 && state.selected.size === total ? "Tout retirer" : "Tout sélectionner";
     }
 
     const deleteButton = bar.querySelector("[data-delete-selected]");
-    if (deleteButton) deleteButton.disabled = !state.selected.size;
+    if (deleteButton) {
+      deleteButton.disabled = state.deleteBusy || !state.selected.size;
+      deleteButton.textContent = state.deleteBusy ? "Suppression…" : "Supprimer";
+    }
+
+    const closeButton = bar.querySelector("[data-selection-close]");
+    if (closeButton) closeButton.disabled = state.deleteBusy;
   }
 
   async function deleteSelected() {
+    if (state.deleteBusy) return;
     const ids = [...state.selected];
-    if (!ids.length) return;
+    if (!ids.length || !state.data?.admin) return;
 
     const confirmed = await confirmDelete(ids.length);
-    if (!confirmed) return;
+    if (!confirmed || state.deleteBusy) return;
 
+    state.deleteBusy = true;
+    updateSelectionBar();
     try {
       await api("team_delete", { message_ids: ids });
       state.selected.clear();
       state.selection = false;
-      await Promise.all([loadFull(false), loadPreview(false)]);
+      state.root?.querySelector(".tb-page")?.classList.remove("is-selecting");
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {
       alert(error.message || "Suppression impossible.");
+    } finally {
+      state.deleteBusy = false;
+      updateSelectionBar();
     }
   }
 
@@ -2432,6 +2480,7 @@
     state.data = null;
     state.selection = false;
     state.selected.clear();
+    state.deleteBusy = false;
     state.lastSignature = "";
     state.focusAfterLoad = false;
   }
@@ -2474,7 +2523,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-reactions1",
+    build: "20260923-selection1",
     mount,
     mountPreview,
     unmountFull,
