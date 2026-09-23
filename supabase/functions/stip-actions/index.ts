@@ -55,17 +55,66 @@ function lastClock(v:any){const s=String(v||''),out:string[]=[];for(const m of s
 function localPlus(date:string,clock:string,minutes=60){const safe=/^\d{2}:\d{2}$/.test(clock)?clock:'18:00',d=new Date(`${date}T${safe}:00Z`);d.setUTCMinutes(d.getUTCMinutes()+minutes);return d.toISOString().slice(0,16)}
 const refNorm=(v:any)=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('fr-FR').replace(/[^A-Z0-9]+/g,' ').trim()
 function referentMatches(v:any,a:any){const q=refNorm(v);if(!q)return false;const vals=[a?.source_key,a?.prenom,a?.nom,[a?.prenom,a?.nom].filter(Boolean).join(' '),[a?.nom,a?.prenom].filter(Boolean).join(' ')].map(refNorm);const parts=String(a?.source_key||'').split('_').filter(Boolean);if(parts.length)vals.push(refNorm(parts.at(-1)));return String(v||'').split(/\s*(?:\+|\/|;|&|\bet\b)\s*/i).map(refNorm).filter(Boolean).some((x:string)=>vals.includes(x))}
-async function eventFeedbackList(c:any){const q=await db.from('stip_event_feedback').select('event_key,attendance,rating,follow_up,custom_answer,submitted_at').eq('agent_id',c.agent.id).order('submitted_at',{ascending:false}).limit(200);if(q.error)throw q.error;return q.data||[]}
+async function eventFeedbackList(c:any){const q=await db.from('stip_event_feedback').select('event_key,attendance,rating,reason_code,follow_up,custom_answer,submitted_at').eq('agent_id',c.agent.id).order('submitted_at',{ascending:false}).limit(200);if(q.error)throw q.error;return q.data||[]}
+function feedbackKindOf(v:any){
+  const s=[v?.source_type,v?.event_kind,v?.type,v?.title,v?.intitule].filter(Boolean).join(' ').toLowerCase();
+  if(/mobi_lit_medical|visite|médical|medical/.test(s))return'medical';
+  if(/formation|training/.test(s))return'training';
+  if(/stagiaire|stage/.test(s))return'intern';
+  if(/réunion|reunion|briefing|staff/.test(s))return'meeting';
+  return'other';
+}
+function feedbackReasonCodes(kind:string){
+  const map:Record<string,string[]>={
+    medical:['cancelled','delay','location','convocation','organization'],
+    training:['content','facilitator','organization','schedule','usefulness','other'],
+    intern:['reception','supervision','autonomy','organization','communication','other'],
+    meeting:['organization','schedule','usefulness','communication','clarity','other'],
+    other:['organization','schedule','communication','usefulness','process','other']
+  };
+  return map[kind]||map.other;
+}
 async function feedbackEvent(c:any,eventKey:string){
   const m=eventKey.match(/^(agenda|formation|stagiaire):([0-9a-f-]{36})$/i);if(!m)throw Error('EVENEMENT_RETOUR_INVALIDE');
   const kind=m[1].toLowerCase(),id=m[2];
   if(kind==='agenda'){
-    const q=await db.from('stip_agent_agenda_items').select('id,title,event_date,start_time,end_time,all_day,location,event_kind,source_type,feedback_enabled,feedback_question,status').eq('id',id).eq('agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||x.status!=='active')throw Error('EVENEMENT_INTROUVABLE');if(x.feedback_enabled===false)throw Error('RETOUR_NON_REQUIS');const date=String(x.event_date||'').slice(0,10),clock=x.all_day?'18:00':text(x.end_time,8).slice(0,5)||text(x.start_time,8).slice(0,5)||'18:00';return{key:eventKey,type:'agenda',title:text(x.title,180),date,endDate:date,time:x.all_day?'Toute la journée':[text(x.start_time,8).slice(0,5),text(x.end_time,8).slice(0,5)].filter(Boolean).join('–'),location:text(x.location,240),question:text(x.feedback_question,240),sensitive:x.source_type==='mobi_lit_medical'||/médical|medical/i.test(String(x.title||'')),due:localPlus(date,clock,60)}}
+    const q=await db.from('stip_agent_agenda_items').select('id,title,event_date,start_time,end_time,all_day,location,event_kind,source_type,feedback_enabled,feedback_question,status').eq('id',id).eq('agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||x.status!=='active')throw Error('EVENEMENT_INTROUVABLE');if(x.feedback_enabled===false)throw Error('RETOUR_NON_REQUIS');
+    const date=String(x.event_date||'').slice(0,10),clock=x.all_day?'18:00':text(x.end_time,8).slice(0,5)||text(x.start_time,8).slice(0,5)||'18:00',feedbackKind=feedbackKindOf(x),sensitive=feedbackKind==='medical';
+    return{key:eventKey,type:'agenda',title:text(x.title,180),date,endDate:date,time:x.all_day?'Toute la journée':[text(x.start_time,8).slice(0,5),text(x.end_time,8).slice(0,5)].filter(Boolean).join('–'),location:text(x.location,240),question:sensitive?'':text(x.feedback_question,240),sensitive,feedbackKind,due:localPlus(date,clock,60)}
+  }
   if(kind==='formation'){
-    const q=await db.from('formations').select('id,agent_source_key,intitule,date_debut,date_fin,lieu,horaire,statut').eq('id',id).eq('agent_source_key',c.agent.source_key).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x)throw Error('EVENEMENT_INTROUVABLE');const date=parisDateOf(x.date_debut),endDate=parisDateOf(x.date_fin||x.date_debut),fromTs=parisTimeOf(x.date_fin||'');const clock=lastClock(x.horaire)||(fromTs&&fromTs!=='00:00'?fromTs:'18:00');return{key:eventKey,type:'formation',title:text(x.intitule,180)||'Formation',date,endDate,time:text(x.horaire,120),location:text(x.lieu,240),question:'',due:localPlus(endDate,clock,60)}}
-  const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',due:localPlus(endDate,clock,60)}
+    const q=await db.from('formations').select('id,agent_source_key,intitule,date_debut,date_fin,lieu,horaire,statut').eq('id',id).eq('agent_source_key',c.agent.source_key).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x)throw Error('EVENEMENT_INTROUVABLE');const date=parisDateOf(x.date_debut),endDate=parisDateOf(x.date_fin||x.date_debut),fromTs=parisTimeOf(x.date_fin||''),clock=lastClock(x.horaire)||(fromTs&&fromTs!=='00:00'?fromTs:'18:00');
+    return{key:eventKey,type:'formation',title:text(x.intitule,180)||'Formation',date,endDate,time:text(x.horaire,120),location:text(x.lieu,240),question:'',sensitive:false,feedbackKind:'training',due:localPlus(endDate,clock,60)}
+  }
+  const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';
+  return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',sensitive:false,feedbackKind:'intern',due:localPlus(endDate,clock,60)}
 }
-async function submitEventFeedback(c:any,b:any){const eventKey=text(b.event_key,180),attendance=text(b.attendance,20),rating=attendance==='absent'?null:Number(b.rating),follow=typeof b.follow_up==='boolean'?b.follow_up:null,custom=text(b.custom_answer,20)||null,note=text(b.note,500)||null;if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');if(attendance!=='absent'&&(!Number.isInteger(rating)||rating<1||rating>5))throw Error('RETOUR_NOTE_REQUISE');if(follow===null)throw Error('RETOUR_SUIVI_REQUIS');const ev=await feedbackEvent(c,eventKey);if(parisStamp()<ev.due)throw Error('RETOUR_TROP_TOT');if(attendance!=='absent'&&ev.question&&!['yes','no'].includes(custom||''))throw Error('RETOUR_QUESTION_REQUISE');const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,follow_up:follow,custom_answer:custom,note:ev.sensitive?null:note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,follow_up,custom_answer,note,submitted_at').single();if(q.error)throw q.error;return q.data}
+async function submitEventFeedback(c:any,b:any){
+  const eventKey=text(b.event_key,180),attendance=text(b.attendance,20),follow=typeof b.follow_up==='boolean'?b.follow_up:null,rawRating=Number(b.rating),incomingReason=text(b.reason_code,48)||null,rawCustom=text(b.custom_answer,20)||null,rawNote=text(b.note,500)||null;
+  if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');
+  if(follow===null)throw Error('RETOUR_SUIVI_REQUIS');
+  const ev=await feedbackEvent(c,eventKey);if(parisStamp()<ev.due)throw Error('RETOUR_TROP_TOT');
+  const rated=ev.feedbackKind!=='medical',allowed=feedbackReasonCodes(ev.feedbackKind);
+  let rating:any=null,reasonCode:string|null=null,custom:string|null=null,note:string|null=null;
+  if(attendance!=='absent'){
+    if(rated){
+      if(!Number.isInteger(rawRating)||rawRating<1||rawRating>5)throw Error('RETOUR_NOTE_REQUISE');
+      if(!incomingReason||!allowed.includes(incomingReason))throw Error('RETOUR_MOTIF_REQUIS');
+      rating=rawRating;
+      reasonCode=incomingReason;
+      if(ev.question){
+        if(!['yes','no'].includes(rawCustom||''))throw Error('RETOUR_QUESTION_REQUISE');
+        custom=rawCustom;
+      }
+      note=rawNote;
+    }else if(attendance==='problem'){
+      if(!incomingReason||!allowed.includes(incomingReason))throw Error('RETOUR_MOTIF_REQUIS');
+      reasonCode=incomingReason;
+    }
+  }
+  if(ev.sensitive){rating=null;custom=null;note=null;if(attendance!=='problem')reasonCode=null}
+  const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,reason_code:reasonCode,follow_up:follow,custom_answer:custom,note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type,feedback_kind:ev.feedbackKind,feedback_mode:rated?'rated':'administrative'},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,reason_code,follow_up,custom_answer,note,submitted_at').single();if(q.error)throw q.error;return q.data
+}
 
 function validEmail(v:any){const s=text(v,320).toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:''}
 function shiftBase(v:any){const c=text(v,24).toUpperCase().replace(/\*+$/,'');if(/^J4/.test(c))return'J4';if(/^M/.test(c))return'M';if(/^J/.test(c))return'J';if(/^S/.test(c))return'S';if(/^N/.test(c))return'N';return c}
@@ -151,7 +200,7 @@ async function sendEventMail(c:any,b:any){
   const feedback=await submitEventFeedback(c,{...b,follow_up:true});
   return{ok:true,id:j.id,to,cc,from:STIP_MAIL_FROM,reply_to:context.sender.reply_to||null,feedback};
 }
-async function managerEventFeedback(c:any){requireResp(c);const q=await db.from('stip_event_feedback').select('id,event_key,event_type,attendance,rating,follow_up,custom_answer,note,event_snapshot,submitted_at,agent:agents!stip_event_feedback_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').order('submitted_at',{ascending:false}).limit(160);if(q.error)throw q.error;return q.data||[]}
+async function managerEventFeedback(c:any){requireResp(c);const q=await db.from('stip_event_feedback').select('id,event_key,event_type,attendance,rating,reason_code,follow_up,custom_answer,note,event_snapshot,submitted_at,agent:agents!stip_event_feedback_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').order('submitted_at',{ascending:false}).limit(160);if(q.error)throw q.error;return q.data||[]}
 async function managerAgents(c:any){requireResp(c);const q=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('actif',true).order('nom');if(q.error)throw q.error;return q.data||[]}
 async function managerAgendaList(c:any){requireResp(c);const q=await db.from('stip_agent_agenda_items').select('*,agent:agents!stip_agent_agenda_items_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').eq('created_by_agent_id',c.agent.id).eq('status','active').gte('event_date',parisDay(-1)).order('event_date').order('start_time').limit(120);if(q.error)throw q.error;return q.data||[]}
 async function managerAgendaCancel(c:any,b:any){requireResp(c);const id=text(b.id,80),now=new Date().toISOString();const q=await db.from('stip_agent_agenda_items').update({status:'cancelled',updated_at:now}).eq('id',id).eq('created_by_agent_id',c.agent.id).eq('status','active').select('id').maybeSingle();if(q.error)throw q.error;if(!q.data)throw Error('ELEMENT_INTROUVABLE');return{ok:true}}
