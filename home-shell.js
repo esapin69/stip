@@ -1401,7 +1401,7 @@
         ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
       </div>
       ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
-    </section>`;
+    </section>${has("responsable") ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -1464,9 +1464,6 @@
       ];
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
-    const responsableTab = has("responsable")
-      ? '<div class="hc-responsable-tab-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>'
-      : "";
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
       <div class="hc-home-top-tools">
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
@@ -1475,7 +1472,6 @@
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
-      ${responsableTab}
     </section>`;
   }
 
