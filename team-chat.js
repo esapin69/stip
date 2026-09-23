@@ -23,8 +23,6 @@
     selectedQuantity: 0,
     selectedLevel: "",
     selectedLocation: "",
-    buildingOverviewExpanded: false,
-    buildingOverviewKey: "",
   };
 
   const homeState = {
@@ -201,6 +199,8 @@
         message.payload?.wheelchair?.resolved_by_name || "",
         message.payload?.wheelchair?.quantity_total || "",
         message.payload?.wheelchair?.quantity_remaining || "",
+        message.payload?.wheelchair?.last_seen_at || "",
+        JSON.stringify(message.payload?.wheelchair?.sightings || []),
         JSON.stringify(message.payload?.wheelchair?.takes || []),
       ]),
     );
@@ -212,7 +212,6 @@
       '<section class="tb-inline-tools" aria-label="Outils du chat">' +
       '<span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</section>" +
-      '<section class="tb-building-pulse" data-building-pulse aria-label="État des fauteuils par bâtiment"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -427,33 +426,6 @@
         openComposerLocationSearch();
         return;
       }
-      const overviewKey = event.target.closest?.("[data-building-overview-key]");
-      if (overviewKey) {
-        event.preventDefault();
-        const key = String(overviewKey.dataset.buildingOverviewKey || "");
-        const sameOpen = state.buildingOverviewExpanded && state.buildingOverviewKey === key;
-        state.buildingOverviewExpanded = !sameOpen;
-        state.buildingOverviewKey = sameOpen ? "" : key;
-        renderBuildingPulse();
-        return;
-      }
-      const overviewClose = event.target.closest?.("[data-building-overview-close]");
-      if (overviewClose) {
-        event.preventDefault();
-        state.buildingOverviewExpanded = false;
-        state.buildingOverviewKey = "";
-        renderBuildingPulse();
-        return;
-      }
-      const overviewToggle = event.target.closest?.("[data-building-overview-toggle]");
-      if (overviewToggle) {
-        event.preventDefault();
-        const wasAllOpen = state.buildingOverviewExpanded && !state.buildingOverviewKey;
-        state.buildingOverviewExpanded = !wasAllOpen;
-        state.buildingOverviewKey = "";
-        renderBuildingPulse();
-        return;
-      }
       const building = event.target.closest?.("[data-building-compose]");
       if (building) {
         event.preventDefault();
@@ -470,6 +442,12 @@
       if (missing) {
         event.preventDefault();
         reportWheelchairMissing(String(missing.dataset.reportMissing || ""));
+        return;
+      }
+      const stillThere = event.target.closest?.("[data-still-there]");
+      if (stillThere) {
+        event.preventDefault();
+        confirmWheelchairStillThere(String(stillThere.dataset.stillThere || ""));
         return;
       }
       const photo = event.target.closest?.("[data-photo-url]");
@@ -505,7 +483,6 @@
       const messages = data.messages || [];
       homeState.data = data;
       renderHomeStatus();
-      renderBuildingPulse();
       const active = activeWheelchairs(data);
       const activeLabel = state.root.querySelector("[data-active-count]");
       if (activeLabel) {
@@ -1489,7 +1466,12 @@
     const building = BUILDINGS.find((item) => item.key === key);
     if (!building) return;
     if (state.composeMode === "search") {
-      await chooseSearchDetails(building);
+      applyComposeDetails({
+        buildingKey: building.key,
+        quantity: 1,
+        level: "",
+        location: "",
+      });
       return;
     }
     await chooseSpotDetails(building);
@@ -1512,13 +1494,12 @@
       wrap.innerHTML =
         '<section class="tb-confirm tb-missing-report">' +
           '<div class="tb-confirm-icon">⚠️</div>' +
-          "<h3>Rien trouvé ici ?</h3>" +
+          "<h3>Je n’ai pas trouvé</h3>" +
           '<p class="tb-missing-parent">' + esc(parentBody) + "</p>" +
-          '<div class="tb-missing-note"><strong>Ta réponse restera attachée à ce signalement.</strong><span>Même avec plusieurs signalements, on voit immédiatement auquel tu réponds.</span></div>' +
-          '<label class="tb-precision-field"><span>Ajouter un détail <em>facultatif</em></span>' +
-            '<textarea rows="3" maxlength="180" placeholder="Ex. j’ai vérifié tout le couloir, aucun fauteuil…"></textarea>' +
+          '<label class="tb-precision-field"><span>Précision <em>facultative</em></span>' +
+            '<textarea rows="2" maxlength="180" placeholder="Ajouter un détail si utile…"></textarea>' +
           "</label>" +
-          '<button type="button" class="tb-missing-send" data-missing-send><span>⚠️ Rien trouvé ici</span><b>↑</b></button>' +
+          '<button type="button" class="tb-missing-send" data-missing-send><span>Envoyer</span><b>↑</b></button>' +
           '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
         "</section>";
 
@@ -1558,6 +1539,19 @@
       document.body.appendChild(wrap);
       setTimeout(() => input?.focus(), 40);
     });
+  }
+
+  async function confirmWheelchairStillThere(messageId) {
+    if (!messageId) return;
+    const button = state.root?.querySelector('[data-still-there="' + CSS.escape(String(messageId)) + '"]');
+    if (button) button.disabled = true;
+    try {
+      await api("team_still_there", { message_id: String(messageId) });
+      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+    } catch (error) {
+      alert(error.message || "Impossible d’enregistrer la vérification.");
+      if (button) button.disabled = false;
+    }
   }
 
   function renderMessages() {
@@ -1701,16 +1695,35 @@
               '"><span aria-hidden="true">✓</span><strong>J’ai trouvé</strong></button>',
           );
         } else {
+          const takeLabel = stock.remaining > 1
+            ? "J’ai récupéré des fauteuils"
+            : "J’ai récupéré un fauteuil";
           html.push(
             '<div class="tb-wheelchair-actions">' +
-              '<button type="button" class="tb-resolve is-take" data-take="' +
+              '<button type="button" class="tb-resolve is-take tb-take-primary" data-take="' +
                 esc(id) +
-                '"><span aria-hidden="true">↘</span><strong>Prendre</strong></button>' +
-              '<button type="button" class="tb-report-missing" data-report-missing="' +
-                esc(id) +
-                '"><span aria-hidden="true">⚠️</span><strong>Rien trouvé ici</strong></button>' +
+                '"><span aria-hidden="true">🦽</span><strong>' + esc(takeLabel) + '</strong></button>' +
+              '<div class="tb-wheelchair-secondary">' +
+                '<button type="button" class="tb-still-there" data-still-there="' +
+                  esc(id) +
+                  '"><span aria-hidden="true">👁</span><strong>' +
+                  (stock.remaining > 1 ? "Toujours là" : "Toujours là") +
+                  '</strong></button>' +
+                '<button type="button" class="tb-report-missing" data-report-missing="' +
+                  esc(id) +
+                  '"><span aria-hidden="true">⚠️</span><strong>Pas trouvé</strong></button>' +
+              '</div>' +
             "</div>",
           );
+          if (wheelchair?.last_seen_at) {
+            html.push(
+              '<div class="tb-last-seen"><span aria-hidden="true">👁</span><strong>Vu à ' +
+                esc(fmtTime(wheelchair.last_seen_at)) +
+                '</strong>' +
+                (wheelchair.last_seen_by_name ? '<small>· ' + esc(wheelchair.last_seen_by_name) + '</small>' : '') +
+              '</div>',
+            );
+          }
           const takes = Array.isArray(wheelchair?.takes) ? wheelchair.takes : [];
           if (takes.length && stock.remaining > 0) {
             const lastTake = takes[takes.length - 1] || {};
@@ -1992,101 +2005,6 @@
     }
   }
 
-  function buildingPulseStats(data = state.data) {
-    const stats = Object.fromEntries(
-      BUILDINGS.map((building) => [building.key, { stock: 0, requests: 0 }]),
-    );
-
-    for (const message of data?.messages || []) {
-      const wheelchair = message?.payload?.wheelchair;
-      if (!wheelchair || wheelchair.status !== "active") continue;
-      const key = buildingForMessage(message);
-      if (!key || !stats[key]) continue;
-
-      if (wheelchair.type === "search") {
-        stats[key].requests += 1;
-      } else {
-        stats[key].stock += wheelchairStock(message).remaining;
-      }
-    }
-    return stats;
-  }
-
-  function renderBuildingPulse() {
-    const host = state.root?.querySelector("[data-building-pulse]");
-    if (!host) return;
-    const stats = buildingPulseStats();
-    const activeMessages = (state.data?.messages || []).filter(
-      (message) => message?.payload?.wheelchair?.status === "active",
-    );
-    const rows = BUILDINGS.map((building) => {
-      const item = stats[building.key] || { stock: 0, requests: 0 };
-      const messages = activeMessages
-        .filter((message) => buildingForMessage(message) === building.key)
-        .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-      return {
-        ...building,
-        ...item,
-        messages,
-        active: item.stock > 0 || item.requests > 0,
-      };
-    });
-
-    if (state.buildingOverviewKey && !rows.some((item) => item.key === state.buildingOverviewKey)) {
-      state.buildingOverviewKey = "";
-    }
-
-    const focused = state.buildingOverviewKey
-      ? rows.find((item) => item.key === state.buildingOverviewKey) || null
-      : null;
-    const drawerOpen = !!state.buildingOverviewExpanded && !!focused;
-    const anyActive = rows.some((item) => item.active);
-    const monograms = { neuro: "N", cardio: "C", hfme: "H", a4: "A4" };
-
-    const cards = rows.map((item, index) => {
-      const signals = [];
-      if (item.stock > 0) signals.push('<span class="is-stock">🦽 <b>' + item.stock + '</b> dispo</span>');
-      if (item.requests > 0) signals.push('<span class="is-search">🔎 <b>' + item.requests + '</b> recherche' + (item.requests > 1 ? 's' : '') + '</span>');
-      return (
-        '<button type="button" class="tb-building-profile' + (item.active ? ' has-live' : '') + (drawerOpen && focused?.key === item.key ? ' is-open' : '') + (index % 2 ? ' is-staggered' : '') +
-          '" data-building-overview-key="' + esc(item.key) + '" aria-label="Ouvrir ' + esc(item.label) + '">' +
-          '<span class="tb-building-profile-mark" aria-hidden="true">' + esc(monograms[item.key] || item.label.slice(0, 1)) + '</span>' +
-          '<span class="tb-building-profile-copy"><strong>' + esc(item.label) + '</strong>' +
-            (signals.length
-              ? '<small class="tb-building-profile-signals">' + signals.join("") + '</small>'
-              : '<small class="tb-building-profile-open">Ouvrir <b aria-hidden="true">›</b></small>') +
-          '</span>' +
-        '</button>'
-      );
-    }).join("");
-
-    const details = focused?.messages?.length
-      ? '<div class="tb-building-drawer-messages">' +
-          focused.messages.slice(0, 8).map((message) => {
-            const wheelchair = message.payload?.wheelchair || {};
-            const kind = wheelchair.type === "search" ? "Je cherche" : "J’ai vu";
-            return (
-              '<div class="tb-building-drawer-message">' +
-                '<span aria-hidden="true">' + (wheelchair.type === "search" ? "🔎" : "🦽") + '</span>' +
-                '<div><strong>' + esc(kind) + ' · ' + esc(agentName(message.sender)) + '</strong>' +
-                '<small>' + esc(cleanWheelchairText(message.body || "")) + ' · ' + esc(fmtTime(message.created_at)) + '</small></div>' +
-              '</div>'
-            );
-          }).join("") +
-        '</div>'
-      : '<div class="tb-building-drawer-empty">Aucune info récente pour ce bâtiment.</div>';
-
-    host.className = "tb-building-pulse tb-building-profile-system" + (drawerOpen ? " is-open" : "");
-    host.innerHTML =
-      '<div class="tb-building-profile-head"><strong>Bâtiments</strong><small>Ouvre celui qui t’intéresse</small></div>' +
-      '<div class="tb-building-profile-deck" role="list" aria-label="Bâtiments">' + cards + '</div>' +
-      (!anyActive ? '<p class="tb-building-global-empty">Aucune info récente</p>' : '') +
-      '<aside class="tb-building-drawer" aria-hidden="' + (!drawerOpen) + '">' +
-        '<header><div><small>BÂTIMENT</small><strong>' + esc(focused?.label || "") + '</strong></div>' +
-          '<button type="button" data-building-overview-close aria-label="Refermer">×</button></header>' +
-        '<div class="tb-building-drawer-content">' + details + '</div>' +
-      '</aside>';
-  }
 
   function activeWheelchairs(data) {
     return (data?.messages || []).filter(
@@ -2373,7 +2291,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-chatstip1",
+    build: "20260923-chatstip2",
     mount,
     mountPreview,
     unmountFull,
