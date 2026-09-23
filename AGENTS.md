@@ -90,6 +90,7 @@ Current non-negotiable invariants:
 - In `Je cherche` mode, selecting a building is sufficient and makes the message ready to send; do not force a level/service/location step.
 - Active availability cards use one dominant recovery action plus two compact secondary actions: `Toujours là` and `Pas trouvé`. `Toujours là` stores a timestamped sighting history and shows only the latest sighting inline.
 - Every chat message and linked reply supports long-press reactions. Offer a compact quick row (`👍 ❤️ 😂 😮 😢 🙏`) plus an explicit “more” chooser. One reaction per agent per message; choosing the same emoji again removes it, choosing another replaces it.
+- Keep reactions on the single canonical reaction mechanism. Long-press is primary, with one discreet smile trigger as a mobile fallback; do not create a second reaction store or API.
 - Admins can delete any message, regardless of author, through bulk selection and the long-press message sheet. Non-admin server rules remain unchanged.
 - Message selection is model-driven: use delegated button controls keyed by message ID, never native checkbox/label state that can race with a rerender. While selection is active, hide the composer and keep the selection bar fixed and tappable above all content.
 - Mobile taps must remain stable during live refreshes: signatures use stable stored identifiers (never expiring signed URLs), quiet polling must not rebuild unchanged composer/feed DOM, and a pointer interaction blocks background rerenders until release.
