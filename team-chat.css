@@ -5028,3 +5028,67 @@
   }
   .tb-persistence-pills.is-mirror button strong{font-size:.62rem!important}
 }
+
+
+/* 20260924-fieldspots2 — concise field shortcuts + visible automatic fire/ice timer */
+.tb-wheelchair-freshness{
+  margin-top:6px!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(72px,1fr)!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+.tb-freshness-copy{
+  min-height:28px!important;
+  padding:3px 7px!important;
+  border:1px solid rgba(36,74,82,.12)!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.78)!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:4px!important;
+  white-space:nowrap!important;
+}
+.tb-freshness-copy span{
+  font-size:1rem!important;
+}
+.tb-freshness-copy strong{
+  color:inherit!important;
+  font-size:.72rem!important;
+  line-height:1!important;
+  font-weight:1000!important;
+}
+.tb-freshness-copy small{
+  color:inherit!important;
+  font-size:.50rem!important;
+  line-height:1!important;
+  font-weight:850!important;
+  opacity:.82!important;
+}
+.tb-wheelchair-freshness.is-hot .tb-freshness-copy,
+.tb-wheelchair-freshness.is-warm .tb-freshness-copy{
+  border-color:#ef9a39!important;
+  background:#fff1c8!important;
+  color:#8b3d08!important;
+}
+.tb-wheelchair-freshness.is-cooling .tb-freshness-copy,
+.tb-wheelchair-freshness.is-cold .tb-freshness-copy,
+.tb-wheelchair-freshness.is-frozen .tb-freshness-copy{
+  border-color:#93cfee!important;
+  background:#eaf8ff!important;
+  color:#17648e!important;
+}
+.tb-freshness-track{
+  height:7px!important;
+  margin-top:0!important;
+}
+.tb-field-spot-choices{
+  align-items:stretch!important;
+}
+@media(max-width:380px){
+  .tb-wheelchair-freshness{
+    grid-template-columns:auto minmax(58px,1fr)!important;
+    gap:6px!important;
+  }
+  .tb-freshness-copy small{display:none!important}
+}
