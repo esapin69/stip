@@ -5770,19 +5770,23 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 
-/* 20260923-wheelchair-left-badge2 — icon left, label center, live badge overlaps label upper-right */
+/* 20260923-wheelchair-left-badge3 — icon matches bell size; badge overlaps the middle of Fauteuils */
 .hc-wheelchair-shortcut{
-  grid-template-columns:40px minmax(0,1fr) 20px!important;
-  padding:5px 10px 5px 7px!important;
+  grid-template-columns:48px minmax(0,1fr) 20px!important;
+  min-height:48px!important;
+  padding:0 10px 0 3px!important;
   gap:9px!important;
 }
 .hc-wheelchair-shortcut-icon{
   grid-column:1!important;
   grid-row:1!important;
   position:relative!important;
-  width:40px!important;
-  height:40px!important;
+  width:48px!important;
+  height:48px!important;
   overflow:hidden!important;
+  border-radius:12px!important;
+  background:transparent!important;
+  box-shadow:none!important;
 }
 .hc-wheelchair-shortcut-icon img,
 .hc-wheelchair-shortcut-icon svg{
@@ -5808,7 +5812,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-wheelchair-shortcut-copy strong>.hc-home-live-badge{
   top:-11px!important;
-  right:-14px!important;
+  left:58%!important;
+  right:auto!important;
+  transform:translateX(-50%)!important;
   z-index:6!important;
 }
 .hc-wheelchair-shortcut-arrow{
@@ -5817,15 +5823,18 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:370px){
   .hc-wheelchair-shortcut{
-    grid-template-columns:36px minmax(0,1fr) 18px!important;
-    padding-left:6px!important;
+    grid-template-columns:48px minmax(0,1fr) 18px!important;
+    min-height:48px!important;
+    padding-left:3px!important;
   }
   .hc-wheelchair-shortcut-icon{
-    width:36px!important;
-    height:36px!important;
+    width:48px!important;
+    height:48px!important;
   }
   .hc-wheelchair-shortcut-copy strong>.hc-home-live-badge{
     top:-10px!important;
-    right:-12px!important;
+    left:58%!important;
+    right:auto!important;
+    transform:translateX(-50%)!important;
   }
 }
