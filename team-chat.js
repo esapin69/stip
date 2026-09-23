@@ -1300,7 +1300,14 @@
     const type = payload.type === "search" ? "search" : "spot";
     const quantity = Math.max(1, Number(payload.quantity) || 1);
     let location = String(payload.location || "").trim();
-    let persistence = inferWheelchairPersistence({ quantity, location });
+    let persistenceOverride = ["fast", "sheltered"].includes(
+      String(payload.persistenceOverride || "").trim(),
+    )
+      ? String(payload.persistenceOverride)
+      : "";
+    const inferredPersistence = (precision = "") =>
+      inferWheelchairPersistence({ quantity, location, precision });
+    let persistence = persistenceOverride || inferredPersistence();
     const summary = structuredDraft({
       type,
       building,
@@ -1320,6 +1327,16 @@
         '<button type="button" class="tb-wizard-search compact" data-review-location>' +
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
+        (type === "spot"
+          ? '<div class="tb-confidence-override" aria-label="Fiabilité du repère">' +
+              '<div class="tb-confidence-label"><strong>Fiabilité</strong><small data-confidence-mode></small></div>' +
+              '<div class="tb-confidence-actions">' +
+                '<button type="button" data-confidence="auto" aria-label="Automatique">Auto</button>' +
+                '<button type="button" data-confidence="fast" aria-label="Peut partir vite">🧊</button>' +
+                '<button type="button" data-confidence="sheltered" aria-label="Endroit plutôt stable">🔥</button>' +
+              '</div>' +
+            '</div>'
+          : '') +
 
         '<label class="tb-precision-field"><span>Ajouter une précision <em>facultatif</em></span>' +
           '<textarea rows="3" maxlength="160" placeholder="Ex. caché derrière l’escalier, près des ascenseurs…"></textarea>' +
@@ -1332,14 +1349,48 @@
 
     const input = wrap.querySelector(".tb-precision-field textarea");
 
-    input?.addEventListener("input", () => {
+    const syncConfidence = () => {
       if (type !== "spot") return;
-      persistence = inferWheelchairPersistence({
-        quantity,
-        location,
-        precision: String(input.value || ""),
+      const inferred = inferredPersistence(String(input?.value || ""));
+      persistence = persistenceOverride || inferred;
+      wrap.querySelectorAll("[data-confidence]").forEach((button) => {
+        const value = String(button.dataset.confidence || "");
+        const active =
+          value === "auto"
+            ? !persistenceOverride
+            : persistenceOverride
+              ? value === persistenceOverride
+              : value === inferred && inferred !== "normal";
+        button.classList.toggle("is-selected", active);
+        button.classList.toggle(
+          "is-auto-selected",
+          !persistenceOverride && value === inferred && value !== "auto" && inferred !== "normal",
+        );
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+      });
+      const mode = wrap.querySelector("[data-confidence-mode]");
+      if (mode) {
+        mode.textContent = persistenceOverride
+          ? "Choix manuel"
+          : inferred === "fast"
+            ? "Auto · 🧊"
+            : inferred === "sheltered"
+              ? "Auto · 🔥"
+              : "Auto";
+      }
+    };
+
+    input?.addEventListener("input", syncConfidence);
+
+    wrap.querySelectorAll("[data-confidence]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const value = String(button.dataset.confidence || "");
+        persistenceOverride = value === "fast" || value === "sheltered" ? value : "";
+        payload.persistenceOverride = persistenceOverride;
+        syncConfidence();
       });
     });
+    syncConfidence();
 
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
 
@@ -1353,6 +1404,7 @@
       location = found.location || "";
       payload.location = location;
       payload.persistence = inferWheelchairPersistence({ quantity, location });
+      payload.persistenceOverride = persistenceOverride;
       renderStructuredReview(wrap, payload, { back, close });
     });
 
@@ -1365,11 +1417,13 @@
           ...payload,
           location,
           precision: String(input?.value || "").trim(),
-          persistence: inferWheelchairPersistence({
-            quantity,
-            location,
-            precision: String(input?.value || "").trim(),
-          }),
+          persistence:
+            persistenceOverride ||
+            inferWheelchairPersistence({
+              quantity,
+              location,
+              precision: String(input?.value || "").trim(),
+            }),
         });
         if (sent) close?.(true);
         else {
@@ -1564,6 +1618,7 @@
               level,
               location:locations.join(" | "),
               persistence,
+              persistenceOverride:"",
             },
             { back:renderPlaces, close },
           );
@@ -3351,7 +3406,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-hfme-lifts1",
+    build: "20260924-confidence-override1",
     mount,
     mountPreview,
     unmountFull,
