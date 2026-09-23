@@ -107,6 +107,57 @@
     ],
   };
 
+  // Repères terrain réellement utiles au signalement fauteuil.
+  // Les boutons sont multi-sélectionnables : un même lot peut être dispersé.
+  const WHEELCHAIR_FIELD_SPOTS = {
+    cardio: {
+      common: [
+        { label: "Ascenseur", value: "Ascenseur", icon: "🛗", persistence: "fast" },
+        { label: "Tout au fond du couloir", value: "Tout au fond du couloir", icon: "↔", persistence: "sheltered" },
+        { label: "Escalier", value: "Escalier", icon: "↕", persistence: "normal" },
+        { label: "Entrée / hall", value: "Entrée / hall", icon: "🚪", persistence: "fast" },
+      ],
+      featured: {
+        RDC: [
+          { label: "Local à fauteuils", value: "Local à fauteuils", icon: "🦽", persistence: "sheltered" },
+        ],
+      },
+    },
+    neuro: {
+      common: [
+        { label: "Couloir isolé", value: "Couloir isolé", icon: "↔", persistence: "sheltered" },
+        { label: "Couloir de passage", value: "Couloir de passage", icon: "↔", persistence: "fast" },
+        { label: "Ascenseur", value: "Ascenseur", icon: "🛗", persistence: "fast" },
+        { label: "Bas escalier escargot · salle de pose", value: "Bas escalier escargot · salle de pose", icon: "↕", persistence: "sheltered" },
+      ],
+      featured: {
+        "1er": [
+          { label: "Local à fauteuils · côté imagerie", value: "Local à fauteuils · côté imagerie", icon: "🦽", persistence: "sheltered" },
+        ],
+      },
+    },
+    hfme: {
+      common: [],
+      featured: {
+        "2e": [
+          { label: "Ascenseurs · salle de pose STIP", value: "Ascenseurs · salle de pose STIP", icon: "🛗", persistence: "fast" },
+          { label: "Ascenseurs · accouchées / bloc gynéco", value: "Ascenseurs · accouchées / bloc gynéco", icon: "🛗", persistence: "fast" },
+          { label: "Passerelle · partie isolée", value: "Passerelle · partie isolée", icon: "↔", persistence: "sheltered" },
+        ],
+      },
+    },
+  };
+
+  function wheelchairFieldSpots(buildingKey = "", level = "") {
+    const config = WHEELCHAIR_FIELD_SPOTS[String(buildingKey || "")] || {};
+    const featured = Array.isArray(config.featured?.[level]) ? config.featured[level] : [];
+    const common = Array.isArray(config.common) ? config.common : [];
+    return [
+      ...featured.map((item) => ({ ...item, featured: true })),
+      ...common.map((item) => ({ ...item, featured: false })),
+    ];
+  }
+
   const norm = (value) =>
     String(value ?? "")
       .normalize("NFD")
@@ -1091,7 +1142,7 @@
   function inferWheelchairPersistence({ quantity = 1, location = "", precision = "" } = {}) {
     const text = wheelchairPlacementText({ location, precision });
 
-    if (/fond du couloir|fond de couloir|au fond|bout du couloir|fin du couloir|fin de couloir|cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]/.test(text)) {
+    if (/fond du couloir|fond de couloir|au fond|bout du couloir|fin du couloir|fin de couloir|cache|caché|derriere|derrière|recoin|alcove|à l ecart|a l ecart|discret|isol[eé]|passerelle|local a fauteuil|local à fauteuil/.test(text)) {
       return "sheltered";
     }
     if (/ascenseur|entree|entrée|hall|passage|accueil/.test(text)) {
@@ -1190,17 +1241,10 @@
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
         '<div class="tb-review-context">' +
-          '<div class="tb-landmark-pills" aria-label="Repères rapides">' +
-            '<button type="button" data-review-landmark="près des ascenseurs" data-persistence-hint="fast">🛗 Ascenseurs</button>' +
-            '<button type="button" data-review-landmark="près de l’escalier" data-persistence-hint="normal">↕ Escalier</button>' +
-            '<button type="button" data-review-landmark="dans le couloir" data-persistence-hint="fast">↔ Couloir</button>' +
-            '<button type="button" data-review-landmark="à l’entrée de l’unité" data-persistence-hint="fast">🚪 Entrée</button>' +
-          "</div>" +
-          (type === "spot" && shouldAskWheelchairPersistence({ quantity, location })
-            ? '<div class="tb-persistence-pills" aria-label="Tenue probable">' +
-                '<button type="button" class="is-hot' + (persistence === "fast" ? " is-selected" : "") + '" data-review-persistence="fast" aria-pressed="' + (persistence === "fast" ? "true" : "false") + '"><span>🔥</span><strong>Passage</strong></button>' +
-                '<button type="button" class="is-warm' + (persistence === "normal" ? " is-selected" : "") + '" data-review-persistence="normal" aria-pressed="' + (persistence === "normal" ? "true" : "false") + '"><span>●</span><strong>Visible</strong></button>' +
-                '<button type="button" class="is-cold' + (persistence === "sheltered" ? " is-selected" : "") + '" data-review-persistence="sheltered" aria-pressed="' + (persistence === "sheltered" ? "true" : "false") + '"><span>🧊</span><strong>À l’écart</strong></button>' +
+          (type === "spot"
+            ? '<div class="tb-persistence-pills is-mirror" aria-label="Confiance probable">' +
+                '<button type="button" class="is-cold' + (persistence === "fast" ? " is-selected" : "") + '" data-review-persistence="fast" aria-pressed="' + (persistence === "fast" ? "true" : "false") + '"><span>🧊</span><strong>Peut partir vite</strong></button>' +
+                '<button type="button" class="is-hot' + (persistence === "sheltered" ? " is-selected" : "") + '" data-review-persistence="sheltered" aria-pressed="' + (persistence === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Valeur sûre · isolé</strong></button>' +
               "</div>"
             : "") +
         "</div>" +
@@ -1225,7 +1269,9 @@
 
     wrap.querySelectorAll("[data-review-persistence]").forEach((button) => {
       button.addEventListener("click", () => {
-        persistence = normalizeWheelchairPersistence(button.dataset.reviewPersistence, quantity);
+        const next = normalizeWheelchairPersistence(button.dataset.reviewPersistence, quantity);
+        const wasSelected = persistenceTouched && persistence === next;
+        persistence = wasSelected ? "normal" : next;
         persistenceTouched = true;
         payload.persistence = persistence;
         payload.persistenceTouched = true;
@@ -1242,46 +1288,9 @@
         precision,
       });
       syncPersistenceButtons();
-
-      const pills = wrap.querySelector(".tb-persistence-pills");
-      if (pills && quantity === 3) {
-        pills.hidden = !shouldAskWheelchairPersistence({
-          quantity,
-          location,
-          precision,
-        });
-      }
     });
 
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
-
-    wrap.querySelectorAll("[data-review-landmark]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (!input) return;
-        const value = String(button.dataset.reviewLandmark || "");
-        input.value = input.value.trim()
-          ? input.value.trim().replace(/[.,;:]?$/, "") + ", " + value
-          : value;
-        if (!persistenceTouched && type === "spot") {
-          persistence = normalizeWheelchairPersistence(
-            button.dataset.persistenceHint ||
-              inferWheelchairPersistence({ quantity, location, precision: input.value }),
-            quantity,
-          );
-          syncPersistenceButtons();
-
-          const pills = wrap.querySelector(".tb-persistence-pills");
-          if (pills && quantity === 3) {
-            pills.hidden = !shouldAskWheelchairPersistence({
-              quantity,
-              location,
-              precision: input.value,
-            });
-          }
-        }
-        input.focus();
-      });
-    });
 
     wrap.querySelector("[data-review-location]")?.addEventListener("click", async () => {
       const found = await chooseLocationShortcut({
@@ -1352,6 +1361,7 @@
       const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
       let quantity = 0;
       let level = "";
+      const selectedPlaces = new Set();
 
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap";
@@ -1420,6 +1430,7 @@
         wrap.querySelectorAll("[data-level]").forEach((button) => {
           button.addEventListener("click", () => {
             level = String(button.dataset.level || "");
+            selectedPlaces.clear();
             renderPlaces();
           });
         });
@@ -1427,55 +1438,80 @@
       };
 
       const renderPlaces = () => {
-        const group = levels.find((item) => item.level === level);
-        const places = group?.places || [];
+        const quickPlaces = wheelchairFieldSpots(building.key, level);
+        const wholeSelected = selectedPlaces.has("__whole__");
+        const selectedValues = [...selectedPlaces].filter((value) => value !== "__whole__");
+
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
             '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
             "<h3>Où exactement ?</h3>" +
             "<p>" + esc(building.label) + " · " + esc(level) + "</p>" +
-            '<button type="button" class="tb-wizard-finish" data-finish-level>' +
+            '<button type="button" class="tb-wizard-finish tb-place-toggle' + (wholeSelected ? " is-selected" : "") + '" data-finish-level aria-pressed="' + (wholeSelected ? "true" : "false") + '">' +
               '<span aria-hidden="true">✓</span><span><strong>Tout le ' + esc(level) + '</strong></span>' +
             "</button>" +
-            '<div class="tb-place-choices">' +
-              places.map((place) =>
-                '<button type="button" data-place="' + esc(place) + '"><strong>' + esc(place) + "</strong></button>"
-              ).join("") +
+            '<div class="tb-place-choices tb-field-spot-choices">' +
+              quickPlaces.map((place) => {
+                const selected = selectedPlaces.has(place.value);
+                return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" data-place-persistence="' + esc(place.persistence || "normal") + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
+                  '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span><strong>' + esc(place.label) + "</strong></button>";
+              }).join("") +
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
+            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
+              '<span>Continuer' + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "") + '</span><b>›</b>' +
+            "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
 
+        const selectedPersistence = () => {
+          if (selectedPlaces.has("__whole__")) return "normal";
+          const selected = quickPlaces.filter((place) => selectedPlaces.has(place.value));
+          const modes = [...new Set(selected.map((place) => place.persistence || "normal"))];
+          return modes.length === 1 ? modes[0] : "normal";
+        };
+
         wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
+
         wrap.querySelector("[data-finish-level]")?.addEventListener("click", () => {
-          renderStructuredReview(
-            wrap,
-            { type:"spot", buildingKey:building.key, quantity, level, location:"" },
-            { back:renderPlaces, close },
-          );
+          if (selectedPlaces.has("__whole__")) selectedPlaces.delete("__whole__");
+          else {
+            selectedPlaces.clear();
+            selectedPlaces.add("__whole__");
+          }
+          renderPlaces();
         });
+
         wrap.querySelectorAll("[data-place]").forEach((button) => {
           button.addEventListener("click", () => {
-            renderStructuredReview(
-              wrap,
-              {
-                type:"spot",
-                buildingKey:building.key,
-                quantity,
-                level,
-                location:String(button.dataset.place || ""),
-              },
-              { back:renderPlaces, close },
-            );
+            const value = String(button.dataset.place || "");
+            selectedPlaces.delete("__whole__");
+            if (selectedPlaces.has(value)) selectedPlaces.delete(value);
+            else selectedPlaces.add(value);
+            renderPlaces();
           });
         });
-        wrap.querySelector("[data-place-other]")?.addEventListener("click", () => {
+
+        wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
+          if (!selectedPlaces.size) return;
+          const locations = [...selectedPlaces].filter((value) => value !== "__whole__");
+          const persistence = selectedPersistence();
           renderStructuredReview(
             wrap,
-            { type:"spot", buildingKey:building.key, quantity, level, location:"" },
+            {
+              type:"spot",
+              buildingKey:building.key,
+              quantity,
+              level,
+              location:locations.join(" | "),
+              persistence,
+              persistenceTouched:false,
+            },
             { back:renderPlaces, close },
           );
         });
+
+        wrap.querySelector("[data-place-other]")?.addEventListener("click", searchHere);
         wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
       };
 
@@ -2245,10 +2281,15 @@
 
     const level = String(wheelchair?.level || "").trim();
     const rawLocation = String(wheelchair?.location || "").trim();
-    const locationParts = rawLocation
-      .split("·")
-      .map((part) => part.trim())
-      .filter(Boolean);
+    const distributedLocations = rawLocation.includes("|")
+      ? rawLocation.split("|").map((part) => part.trim()).filter(Boolean)
+      : [];
+    const locationParts = distributedLocations.length
+      ? []
+      : rawLocation
+          .split("·")
+          .map((part) => part.trim())
+          .filter(Boolean);
 
     let service = locationParts.shift() || "";
     let landmark = locationParts.join(" · ");
@@ -2273,7 +2314,7 @@
       }
     }
 
-    return { hospital, level, service, landmark };
+    return { hospital, level, service, landmark, locations: distributedLocations };
   }
 
   function wheelchairFreshnessWindowMs(wheelchair = {}) {
@@ -2548,6 +2589,15 @@
         if (detail.landmark) {
           html.push(
             '<span class="tb-wheelchair-landmark">' + esc(detail.landmark) + '</span>',
+          );
+        }
+        if (Array.isArray(detail.locations) && detail.locations.length) {
+          html.push(
+            '<div class="tb-wheelchair-locations">' +
+              detail.locations.map((place) =>
+                '<span><b aria-hidden="true">•</b>' + esc(place) + '</span>'
+              ).join("") +
+            '</div>',
           );
         }
         html.push(
