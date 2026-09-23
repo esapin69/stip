@@ -3639,7 +3639,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-shadow:none!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape{
-  --week-card-h:110px;
+  --week-card-h:120px;
   --week-emoji-size:1.15rem;
   display:grid!important;
   grid-template-columns:repeat(var(--visible-days,7),minmax(0,1fr))!important;
@@ -3659,7 +3659,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   min-width:0!important;
   min-height:var(--week-card-h)!important;
   display:grid!important;
-  grid-template-rows:40px minmax(0,1fr)!important;
+  grid-template-rows:44px 76px!important;
   padding:0!important;
   overflow:visible!important;
   border:1.5px solid #c8d6da!important;
@@ -3677,12 +3677,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning .hc-days-landscape .hc-day-head{
   box-sizing:border-box!important;
   width:100%!important;
-  height:40px!important;
-  display:flex!important;
-  flex-direction:column!important;
+  height:44px!important;
+  display:grid!important;
+  grid-template-rows:17px 27px!important;
   align-items:center!important;
-  justify-content:center!important;
-  gap:1px!important;
+  justify-items:center!important;
+  gap:0!important;
   margin:0!important;
   border-radius:14px 14px 0 0!important;
   border:0!important;
@@ -3693,36 +3693,34 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   font-style:italic!important;
   font-size:.74rem!important;
   font-weight:900!important;
-  line-height:1!important;
+  line-height:17px!important;
   letter-spacing:.03em!important;
+  align-self:end!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-day-head b{
   font-size:1.48rem!important;
   font-weight:950!important;
-  line-height:.95!important;
+  line-height:27px!important;
+  align-self:start!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-visual{
   box-sizing:border-box!important;
   min-width:0!important;
   display:grid!important;
-  grid-template-rows:34px 1px 20px!important;
+  grid-template-rows:23px 18px 1px 24px!important;
   align-content:center!important;
   justify-items:center!important;
-  gap:3px!important;
-  padding:3px 1px 4px!important;
+  gap:2px!important;
+  padding:3px 1px 3px!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-core{
   width:100%!important;
-  height:34px!important;
-  display:grid!important;
-  grid-template-rows:18px 15px!important;
-  align-content:center!important;
-  justify-items:center!important;
-  gap:1px!important;
+  height:auto!important;
+  display:contents!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main{
   width:100%!important;
-  height:18px!important;
+  height:23px!important;
   display:grid!important;
   place-items:center!important;
   line-height:1!important;
@@ -3736,13 +3734,14 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   filter:none!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-extra-separator{
-  width:58%!important;
+  width:74%!important;
   height:1px!important;
   border-radius:999px!important;
-  background:#d8e1e4!important;
+  background:color-mix(in srgb,var(--week-shift-accent) 34%,#cbd7da)!important;
+  opacity:.82!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-extra-separator.is-empty{
-  visibility:hidden!important;
+  visibility:visible!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main .hc-shift-loading,
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-fallback{
@@ -3753,8 +3752,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot{
   box-sizing:border-box!important;
   width:calc(100% - 8px)!important;
-  height:20px!important;
-  min-height:20px!important;
+  height:24px!important;
+  min-height:24px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -3765,7 +3764,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   background:rgba(255,255,255,.92)!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot.is-empty{
-  visibility:hidden!important;
+  visibility:visible!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip{
   box-sizing:border-box!important;
@@ -3798,7 +3797,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   color:#173f50!important;
   font-size:.96rem!important;
   font-weight:950!important;
-  line-height:15px!important;
+  line-height:18px!important;
   letter-spacing:-.02em!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
@@ -4077,20 +4076,20 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   .hc-planning-group.hc-planning-landscape.hc-calendar-driven-planning{gap:14px!important}
   .hc-calendar-driven-planning .hc-planning-subblock{border-radius:20px!important}
   .hc-calendar-driven-planning .hc-planning-week-subblock{padding:9px 6px 11px!important}
-  .hc-calendar-driven-planning .hc-days-landscape{gap:4px!important;--week-card-h:106px}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape{grid-template-rows:38px minmax(0,1fr)!important;border-radius:15px!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head{height:38px!important;border-radius:13px 13px 0 0!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head i{font-size:.7rem!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head b{font-size:1.38rem!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-week-visual{grid-template-rows:34px 1px 20px!important;gap:3px!important;padding:3px 0 4px!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-core{height:34px!important;grid-template-rows:18px 15px!important;gap:1px!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main{height:18px!important}
+  .hc-calendar-driven-planning .hc-days-landscape{gap:4px!important;--week-card-h:116px}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape{grid-template-rows:42px 74px!important;border-radius:15px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head{height:42px!important;grid-template-rows:16px 26px!important;border-radius:13px 13px 0 0!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head i{font-size:.7rem!important;line-height:16px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-day-head b{font-size:1.38rem!important;line-height:26px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-week-visual{grid-template-rows:22px 18px 1px 23px!important;gap:2px!important;padding:3px 0 3px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-core{display:contents!important;height:auto!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main{height:22px!important}
   .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main .hc-work-icon,
   .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main .hc-status-icon,
   .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main .hc-pending-icon{font-size:var(--week-emoji-size)!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot{height:20px!important;min-height:20px!important;gap:2px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot{height:23px!important;min-height:23px!important;gap:2px!important}
   .hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip{width:20px!important;height:20px!important;min-width:20px!important;border-radius:0!important;font-size:var(--week-emoji-size)!important}
-  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-code{font-size:.94rem!important;line-height:15px!important}
+  .hc-calendar-driven-planning .hc-days-landscape .hc-shift-code{font-size:.94rem!important;line-height:18px!important}
 
   .hc-calendar-driven-planning .hc-planning-month-subblock{padding:8px!important}
   .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button,
