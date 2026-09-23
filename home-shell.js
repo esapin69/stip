@@ -1092,14 +1092,25 @@
     return fmtDateRange({ date: iso, endDate: iso });
   }
   function todayFullDateSeparator() {
-    const raw = dateObj(parisIso()).toLocaleDateString("fr-FR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-    const label = raw.charAt(0).toUpperCase() + raw.slice(1);
-    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="Date du jour"><span>${esc(label)}</span></div>`;
+    const date = dateObj(parisIso()),
+      formatter = new Intl.DateTimeFormat("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      parts = Object.fromEntries(
+        formatter
+          .formatToParts(date)
+          .filter((part) => part.type !== "literal")
+          .map((part) => [part.type, part.value]),
+      ),
+      raw = formatter.format(date),
+      weekday = String(parts.weekday || "").toUpperCase(),
+      day = String(parts.day || ""),
+      month = String(parts.month || "").toUpperCase(),
+      year = String(parts.year || "");
+    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span><span>${esc(year)}</span></span></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
