@@ -1734,7 +1734,6 @@
         if (event.target === wrap) close(false);
       });
       document.body.appendChild(wrap);
-      setTimeout(() => input?.focus(), 40);
     });
   }
 
@@ -2005,7 +2004,6 @@
       });
 
       document.body.appendChild(wrap);
-      setTimeout(() => input?.focus(), 40);
     });
   }
 
@@ -2591,6 +2589,17 @@
         );
         if (activeSignal && !isSearchType) {
           html.push(wheelchairFreshnessMarkup(message, wheelchair));
+          if (wheelchair?.last_seen_at) {
+            html.push(
+              '<div class="tb-last-seen">' +
+                '<span class="tb-last-seen-check" aria-hidden="true">✓</span>' +
+                '<div><strong>Toujours là à ' + esc(fmtTime(wheelchair.last_seen_at)) + '</strong>' +
+                '<small>Confirmé' +
+                  (wheelchair.last_seen_by_name ? ' par ' + esc(wheelchair.last_seen_by_name) : '') +
+                  ' · chrono relancé</small></div>' +
+              '</div>',
+            );
+          }
         }
       } else {
         html.push(
@@ -2648,7 +2657,7 @@
                 '<button type="button" class="tb-still-there" data-still-there="' +
                   esc(id) +
                   '"><span aria-hidden="true">👁</span><strong>' +
-                  (stock.remaining > 1 ? "Ils sont toujours là" : "Il est toujours là") +
+                  (stock.remaining > 1 ? "Je confirme qu’ils sont là" : "Je confirme qu’il est là") +
                   '</strong></button>' +
                 '<button type="button" class="tb-report-missing" data-report-missing="' +
                   esc(id) +
@@ -2656,15 +2665,6 @@
               '</div>' +
             "</div>",
           );
-          if (wheelchair?.last_seen_at) {
-            html.push(
-              '<div class="tb-last-seen"><span aria-hidden="true">👁</span><strong>Vu à ' +
-                esc(fmtTime(wheelchair.last_seen_at)) +
-                '</strong>' +
-                (wheelchair.last_seen_by_name ? '<small>· ' + esc(wheelchair.last_seen_by_name) + '</small>' : '') +
-              '</div>',
-            );
-          }
           const takes = Array.isArray(wheelchair?.takes) ? wheelchair.takes : [];
           if (takes.length && stock.remaining > 0) {
             const lastTake = takes[takes.length - 1] || {};
@@ -3271,7 +3271,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-fieldspots2",
+    build: "20260924-confirmation1",
     mount,
     mountPreview,
     unmountFull,
