@@ -5838,3 +5838,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     transform:translateX(-50%)!important;
   }
 }
+
+/* 20260923-pilotage-access-shortcut1 — Access directly under Responsable */
+.hc-responsable-access-block .hc-profile-responsable-row + .hc-profile-responsable-row{
+  margin-top:-3px!important;
+}
+.hc-responsable-access-block .hc-profile-access-row{
+  margin-bottom:8px!important;
+}
+
