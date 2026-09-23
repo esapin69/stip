@@ -5574,7 +5574,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 
-/* 20260923-today-separator2 — full date in chronological stream */
+/* 20260923-today-separator3 — tall uppercase date with accented day */
 .hc-calendar-driven-planning>.hc-home-today-separator{
   box-sizing:border-box!important;
   width:100%!important;
@@ -5596,28 +5596,42 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning>.hc-home-today-separator::after{
   background:linear-gradient(90deg,#cbd8dc,transparent)!important;
 }
-.hc-calendar-driven-planning>.hc-home-today-separator>span{
-  display:block!important;
+.hc-calendar-driven-planning>.hc-home-today-separator>.hc-home-today-label{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:center!important;
+  gap:.32em!important;
   max-width:calc(100vw - 70px)!important;
   overflow:hidden!important;
   white-space:nowrap!important;
-  text-overflow:clip!important;
-  color:#315866!important;
-  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif!important;
+  color:#244f5f!important;
+  font-family:"Avenir Next Condensed","Roboto Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif!important;
   font-size:clamp(.94rem,3vw,1.08rem)!important;
-  line-height:1.1!important;
-  font-weight:700!important;
-  letter-spacing:.012em!important;
-  text-transform:none!important;
+  line-height:1!important;
+  font-weight:800!important;
+  font-stretch:condensed!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
   text-align:center!important;
+  transform:scaleY(1.10)!important;
+  transform-origin:center!important;
+}
+.hc-calendar-driven-planning>.hc-home-today-separator .hc-home-today-day{
+  color:#148ca5!important;
+  font:inherit!important;
+  font-size:1.18em!important;
+  font-weight:950!important;
+  letter-spacing:.02em!important;
+  line-height:.9!important;
 }
 @media(max-width:370px){
   .hc-calendar-driven-planning>.hc-home-today-separator{
     gap:8px!important;
   }
-  .hc-calendar-driven-planning>.hc-home-today-separator>span{
+  .hc-calendar-driven-planning>.hc-home-today-separator>.hc-home-today-label{
     max-width:calc(100vw - 50px)!important;
     font-size:.90rem!important;
-    letter-spacing:0!important;
+    letter-spacing:.04em!important;
+    gap:.26em!important;
   }
 }
