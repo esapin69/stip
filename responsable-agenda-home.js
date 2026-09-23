@@ -5,6 +5,8 @@
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates",
     STAFF_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-staffing",
+    ASSIST_API =
+      "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-assistant",
     STORE = "stip_session_v1",
     $ = (s) => document.querySelector(s),
     DAY_MS = 86400000;
@@ -16,7 +18,9 @@
     weekOffset: 0,
     selectedDate: "",
     monthKey: "",
-    impactByDate: {},
+    daySignalByDate: {},
+    signalWeekLoaded: {},
+    signalWeekPromises: {},
   };
 
   const esc = (v) =>
@@ -282,9 +286,18 @@
     return parts.join(" · ") || "Aucune date particulière cette semaine";
   }
 
+  function statusSymbol(level, fallback = "") {
+    if (level === "opportunity") return "+";
+    if (level === "ok") return "✔";
+    if (level === "warning") return "⚠️";
+    if (level === "critical") return "🛑";
+    return fallback || "○";
+  }
+
   function pageLegendHtml() {
     const today = parisIso(),
-      week = new Set(weekDays().map((x) => x.iso)),
+      weekDaysNow = weekDays(),
+      week = new Set(weekDaysNow.map((x) => x.iso)),
       month = state.monthKey || today.slice(0, 7),
       upcoming = sortedItems().filter((x) => x.date >= today).slice(0, 4),
       visible = [
@@ -292,6 +305,11 @@
         ...state.items.filter((x) => week.has(x.date) || x.date.startsWith(month)),
       ],
       categories = new Set(visible.map((x) => categoryClass(x.category))),
+      signalLevels = new Set(
+        weekDaysNow
+          .map(({ iso }) => signalForDate(iso)?.level)
+          .filter((level) => level && level !== "unknown"),
+      ),
       items = [];
 
     for (const category of ["medical", "intern", "training", "other"]) {
@@ -300,82 +318,96 @@
         `<span><i>${esc(categoryIcon(category))}</i><b>${esc(categoryLabel(category))}</b></span>`,
       );
     }
-    if (weekDays().some(({ iso }) => impactFor(iso)?.level)) {
-      items.push("<span><i>⚠️</i><b>Point à surveiller</b></span>");
-    }
+    if (signalLevels.has("critical"))
+      items.push("<span><i>🛑</i><b>Journée tendue</b></span>");
+    if (signalLevels.has("warning"))
+      items.push("<span><i>⚠️</i><b>À surveiller</b></span>");
+    if (signalLevels.has("opportunity"))
+      items.push("<span><i>+</i><b>Présence plus large</b></span>");
+    if (signalLevels.has("ok"))
+      items.push("<span><i>✔</i><b>Rien ne coince</b></span>");
     return (
       items.join("") ||
       '<span><i>○</i><b>Aucun repère affiché</b></span>'
     );
   }
 
-  function impactFor(date) {
-    return state.impactByDate[date] || null;
+  function signalForDate(date) {
+    return state.daySignalByDate[date] || null;
   }
 
-  function impactFromStaff(date, staff) {
-    const events = itemsForDate(date),
-      training = events.filter((x) => x.category === "training").length,
-      medical = events.filter((x) => x.category === "medical").length,
-      shifts = Array.isArray(staff?.shifts)
-        ? staff.shifts
-        : Array.isArray(staff?.rows)
-          ? staff.rows
-          : [],
-      deficits = shifts.filter((x) => Number(x?.gap || 0) < 0),
-      critical = shifts.some((x) => Number(x?.severity || 0) >= 4),
-      globalGap = Number(staff?.summary?.gap ?? 0),
-      planningFragile = deficits.length > 0 || globalGap < 0,
-      load = training * 2 + medical;
-
-    let level = "";
-    if (critical && load > 0) level = "critical";
-    else if ((planningFragile && load > 0) || training >= 4 || medical >= 3)
-      level = "watch";
-    else if (training >= 3 || (training >= 2 && medical >= 1))
-      level = "attention";
-
-    if (!level) return { level: "", title: "" };
-    const reasons = [];
-    if (training) reasons.push(`${training} formation${training > 1 ? "s" : ""}`);
-    if (medical) reasons.push(`${medical} visite${medical > 1 ? "s" : ""}`);
-    if (planningFragile) reasons.push("planning déjà fragile");
-    return {
-      level,
-      title: `À surveiller · ${reasons.join(" · ")}`,
-    };
+  async function postWeekJson(url, body) {
+    const response = await fetch(url, {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "content-type": "application/json",
+        "x-stip-session": localStorage.getItem(STORE) || "",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data?.error)
+      throw Error(
+        typeof data?.error === "string"
+          ? data.error
+          : data?.error?.message || `Erreur ${response.status}`,
+      );
+    return data;
   }
 
   async function loadWeekImpact() {
-    const days = weekDays().filter((x) => itemsForDate(x.iso).length);
-    const missing = days.filter(
-      (x) => !Object.prototype.hasOwnProperty.call(state.impactByDate, x.iso),
-    );
-    if (!missing.length) return;
-    await Promise.all(
-      missing.map(async ({ iso }) => {
-        try {
-          const r = await fetch(STAFF_API, {
-              method: "POST",
-              cache: "no-store",
-              headers: {
-                "content-type": "application/json",
-                "x-stip-session": localStorage.getItem(STORE) || "",
-              },
-              body: JSON.stringify({ action: "day", date: iso }),
-            }),
-            data = await r.json().catch(() => null);
-          state.impactByDate[iso] =
-            r.ok && data && data.available !== false
-              ? impactFromStaff(iso, data)
-              : { level: "", title: "" };
-        } catch {
-          state.impactByDate[iso] = { level: "", title: "" };
-        }
-      }),
-    );
-    renderWeek();
-    renderMonth();
+    const days = weekDays(),
+      start = days[0]?.iso || "",
+      end = days.at(-1)?.iso || "",
+      key = `${start}|${end}`;
+    if (!start || !end || state.signalWeekLoaded[key]) return;
+    if (state.signalWeekPromises[key]) return state.signalWeekPromises[key];
+
+    state.signalWeekPromises[key] = (async () => {
+      let assistantItems = [];
+      try {
+        const assistant = await postWeekJson(ASSIST_API, {
+          action: "feed",
+          start_date: start,
+          end_date: end,
+        });
+        assistantItems = Array.isArray(assistant?.items) ? assistant.items : [];
+      } catch {
+        assistantItems = [];
+      }
+
+      await Promise.all(
+        days.map(async ({ iso }) => {
+          let staff = null;
+          try {
+            staff = await postWeekJson(STAFF_API, { action: "day", date: iso });
+          } catch {
+            staff = null;
+          }
+          const items = assistantItems.filter(
+              (item) => String(item?.date || "").slice(0, 10) === iso,
+            ),
+            shared = window.STIPFieldIntel?.dayStatus?.({
+              staffing: staff,
+              items,
+            });
+          state.daySignalByDate[iso] =
+            shared ||
+            (staff?.available
+              ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
+              : { level: "unknown", symbol: "", label: "Pas assez de données" });
+        }),
+      );
+      state.signalWeekLoaded[key] = true;
+      delete state.signalWeekPromises[key];
+      renderWeek();
+      renderMonth();
+    })().catch(() => {
+      delete state.signalWeekPromises[key];
+    });
+
+    return state.signalWeekPromises[key];
   }
 
   function syncProControls() {
@@ -402,12 +434,17 @@
       .map((x) => {
         const events = itemsForDate(x.iso),
           markers = weekMarkerMarkup(events, x.iso),
-          impact = impactFor(x.iso),
+          signal = signalForDate(x.iso),
+          signalLevel = signal?.level || "unknown",
+          signalMark =
+            signalLevel !== "unknown"
+              ? `<span class="rr-week-signal status-${esc(signalLevel)}" aria-hidden="true">${esc(statusSymbol(signalLevel, signal?.symbol || ""))}</span>`
+              : "",
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
             .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""} ${impact?.level ? `impact-${esc(impact.level)}` : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}" title="${esc(impact?.title || "")}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b>${impact?.level ? '<span class="rr-impact-dot" aria-hidden="true">⚠️</span>' : ""}<span class="rr-week-marks">${markers}</span></button>`;
+        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""} status-${esc(signalLevel)}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}" title="${esc(signal?.label || "")}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b>${signalMark}<span class="rr-week-marks">${markers}</span></button>`;
       })
       .join("")}</nav></section>`;
     syncProControls();
