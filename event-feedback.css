@@ -56,3 +56,41 @@
 .hc-feedback-card:active{
   background:rgba(255,235,174,.34)!important;
 }
+
+
+/* 20260923-feedback-rating-first1 — rating visible in first step */
+.hc-feedback-dialog>.hc-feedback-rating{
+  margin:0 16px 14px;
+  padding:12px;
+}
+.hc-feedback-rating.is-waiting,
+.hc-feedback-rating.is-na{
+  background:#f6f9fa;
+}
+.hc-feedback-rating.is-waiting .hc-feedback-rating-bar,
+.hc-feedback-rating.is-na .hc-feedback-rating-bar{
+  opacity:.46;
+}
+.hc-feedback-rating-bar button:disabled{
+  cursor:default;
+  color:#8ea0a6;
+  background:#eef3f4;
+  border-color:#dce5e7;
+}
+.hc-feedback-rating-hint{
+  display:block;
+  margin-top:7px;
+  color:#7b8f96;
+  font-size:.66rem;
+  font-weight:800;
+  line-height:1.25;
+}
+.hc-feedback-rating.is-na .hc-feedback-rating-hint{
+  color:#8a6c36;
+}
+@media(max-width:560px){
+  .hc-feedback-dialog>.hc-feedback-rating{
+    margin-left:14px;
+    margin-right:14px;
+  }
+}
