@@ -839,8 +839,8 @@
         : "",
       visual=landscape
         ? loading
-          ? `<span class="hc-shift-core"><span class="hc-shift-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
-          : `<span class="hc-shift-core"><strong class="hc-shift-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator" aria-hidden="true"></span>${weekEventBadges(x)}`
+          ? `<span class="hc-shift-core"><span class="hc-shift-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator is-empty" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
+          : `<span class="hc-shift-core"><strong class="hc-shift-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
     return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
   }
