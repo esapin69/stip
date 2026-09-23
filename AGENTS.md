@@ -122,3 +122,5 @@ Any STIP surface that contains a legend must explain every informational icon, b
 - The secondary presence check is phrased as an action (`Je confirme qu’il/ils sont là`). A successful check must show a visible confirmation beside the freshness timer with the confirmation time, author and `chrono relancé`, because `last_seen_at` resets the freshness reference.
 
 - HFME must always expose two distinct elevator shortcuts on every floor: `Ascenseurs · côté STIP` and `Ascenseurs · côté bloc`. They are separate landmarks and must never be deduplicated into one generic ascenseur choice.
+
+- Confidence stays automatic by default, but a manual 🧊/🔥 override remains available on every wheelchair spot review regardless of building, floor, shortcut, free-text location, or number of selected places. `Auto` restores inference. The override applies to the whole signalement and must survive location edits until the user resets it.
