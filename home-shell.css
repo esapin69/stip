@@ -5506,3 +5506,35 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   outline:3px solid var(--stip-focus-ring)!important;
   outline-offset:3px!important;
 }
+
+
+/* Responsable below identity — right aligned */
+.hc-profile-responsable-row{
+  width:100%!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  justify-content:flex-end!important;
+  padding:0 18px 0 0!important;
+  margin:-5px 0 9px!important;
+}
+.hc-profile-responsable-row .hc-responsable-tab{
+  min-width:166px!important;
+  min-height:41px!important;
+  padding:0 15px 2px!important;
+  font-size:.86rem!important;
+  gap:10px!important;
+}
+.hc-profile-responsable-row .hc-responsable-tab>b{
+  font-size:1.12rem!important;
+}
+@media(max-width:430px){
+  .hc-profile-responsable-row{
+    padding-right:14px!important;
+    margin-top:-6px!important;
+  }
+  .hc-profile-responsable-row .hc-responsable-tab{
+    min-width:160px!important;
+    min-height:40px!important;
+    font-size:.84rem!important;
+  }
+}
