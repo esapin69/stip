@@ -659,6 +659,63 @@ async function teamStillThere(ctx:any,body:any){
   return{ok:true,seen_at:seenAt,seen_by_name:seenBy}
 }
 
+
+function cleanReactionEmoji(value:any){
+  const emoji=String(value||"").trim();
+  if(!emoji||emoji.length>16)throw Error("Réaction invalide.");
+  if(/[\r\n<>]/.test(emoji))throw Error("Réaction invalide.");
+  return emoji
+}
+
+async function teamReact(ctx:any,body:any){
+  requireTeamWrite(ctx);
+  const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
+  await purgePreviousTableauDays(String(conv.id));
+
+  const messageId=String(body.message_id||"").trim(),
+    emoji=cleanReactionEmoji(body.emoji);
+  if(!messageId)throw Error("Message invalide.");
+
+  const{data:row,error}=await db.from("stip_messages")
+    .select("id,payload")
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id)
+    .maybeSingle();
+  if(error)throw error;
+  if(!row)throw Error("Ce message n’est plus disponible.");
+
+  const profile=await messageProfile(String(ctx.agent.id)),
+    agentId=String(ctx.agent.id),
+    reactedAt=new Date().toISOString(),
+    reactedBy=nick(ctx.agent,profile),
+    existing=Array.isArray(row?.payload?.reactions)?row.payload.reactions:[],
+    mine=existing.find((reaction:any)=>String(reaction?.agent_id||"")===agentId),
+    others=existing.filter((reaction:any)=>String(reaction?.agent_id||"")!==agentId),
+    next=mine&&String(mine.emoji||"")===emoji
+      ? others
+      : [...others,{
+          agent_id:agentId,
+          agent_name:reactedBy,
+          emoji,
+          reacted_at:reactedAt
+        }],
+    payload={...(row.payload||{}),reactions:next.slice(-100)};
+
+  const update=await db.from("stip_messages")
+    .update({payload})
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id);
+  if(update.error)throw update.error;
+
+  await db.from("stip_conversations")
+    .update({updated_at:reactedAt})
+    .eq("id",conv.id);
+
+  return{ok:true,reactions:next}
+}
+
 async function teamDelete(ctx:any,body:any){
   const mode=requireTeamWrite(ctx),admin=mode==="admin";
   const conv=await teamConversation(ctx);
@@ -706,6 +763,7 @@ Deno.serve(async req=>{
     if(a==="team_resolve")return J(await teamResolve(c,b));
     if(a==="team_take")return J(await teamTake(c,b));
     if(a==="team_still_there")return J(await teamStillThere(c,b));
+    if(a==="team_react")return J(await teamReact(c,b));
     if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=errMsg(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
