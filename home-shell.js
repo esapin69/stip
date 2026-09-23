@@ -116,7 +116,7 @@
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeChair:
-      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260922-vipchair2" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/home-access-wheelchairs.webp?v=20260923-wheelchair-left-badge2" alt="" aria-hidden="true">',
     homeAI:
       '<img src="images/icone_app/home-access-stip-ai.webp?v=20260920-ai-restored2" alt="" aria-hidden="true">',
     homeBell:
@@ -1988,7 +1988,7 @@
 
   function wheelchairShortcut() {
     if (!has("messages")) return "";
-    return `<button type="button" class="hc-wheelchair-shortcut${state.homeMode === "tableau" ? " active" : ""}" data-home-mode="tableau" aria-pressed="${state.homeMode === "tableau"}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils</strong></span><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}<span class="hc-home-live-badge" data-wheelchair-count hidden></span></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span></button>`;
+    return `<button type="button" class="hc-wheelchair-shortcut${state.homeMode === "tableau" ? " active" : ""}" data-home-mode="tableau" aria-pressed="${state.homeMode === "tableau"}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}</span><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils<span class="hc-home-live-badge" data-wheelchair-count hidden></span></strong></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span></button>`;
   }
 
   function homeModeBody() {
