@@ -1620,10 +1620,9 @@
     const reactions = Array.isArray(message?.payload?.reactions)
       ? message.payload.reactions
       : [];
-    if (!reactions.length) return "";
-
     const me = String(state.data?.me?.id || "");
     const grouped = new Map();
+
     for (const reaction of reactions) {
       const emoji = String(reaction?.emoji || "").trim();
       if (!emoji) continue;
@@ -1634,7 +1633,7 @@
     }
 
     return (
-      '<div class="tb-reactions" aria-label="Réactions">' +
+      '<div class="tb-reactions' + (grouped.size ? "" : " is-empty") + '" aria-label="Réactions">' +
       [...grouped.values()].map((row) =>
         '<button type="button" class="tb-reaction-chip' + (row.mine ? " is-mine" : "") +
           '" data-react-quick="' + esc(String(message.id || "")) +
@@ -1644,6 +1643,9 @@
           (row.count > 1 ? '<b>' + row.count + '</b>' : '') +
         '</button>'
       ).join("") +
+      '<button type="button" class="tb-reaction-open" data-reaction-open="' +
+        esc(String(message.id || "")) +
+        '" aria-label="Ajouter une réaction"><span aria-hidden="true">☺</span></button>' +
       "</div>"
     );
   }
@@ -1664,6 +1666,7 @@
   function openReactionPicker(messageId) {
     const message = messageById(messageId);
     if (!message || state.selection) return;
+    document.querySelector(".tb-reaction-wrap")?.remove();
 
     const wrap = document.createElement("div");
     wrap.className = "tb-reaction-wrap";
@@ -1727,43 +1730,54 @@
     let startX = 0;
     let startY = 0;
     let targetId = "";
+    let pointerId = null;
+    let longPressOpened = false;
 
     const clear = () => {
       if (timer) clearTimeout(timer);
       timer = 0;
       targetId = "";
+      pointerId = null;
     };
 
     root.addEventListener("pointerdown", (event) => {
       if (state.selection) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       if (event.target.closest?.("button,input,textarea,label,a")) return;
+
       const item = event.target.closest?.("[data-message-id]");
       if (!item) return;
 
+      clear();
+      longPressOpened = false;
       targetId = String(item.dataset.messageId || "");
+      pointerId = event.pointerId;
       startX = Number(event.clientX || 0);
       startY = Number(event.clientY || 0);
+
       timer = window.setTimeout(() => {
         const id = targetId;
-        clear();
+        timer = 0;
         if (!id) return;
-        try { navigator.vibrate?.(12); } catch {}
+        longPressOpened = true;
+        try { navigator.vibrate?.(14); } catch {}
         openReactionPicker(id);
-      }, 520);
+      }, 420);
     }, { passive: true });
 
     root.addEventListener("pointermove", (event) => {
-      if (!timer) return;
-      if (
-        Math.abs(Number(event.clientX || 0) - startX) > 12 ||
-        Math.abs(Number(event.clientY || 0) - startY) > 12
-      ) clear();
+      if (!timer || (pointerId != null && event.pointerId !== pointerId)) return;
+      const dx = Math.abs(Number(event.clientX || 0) - startX);
+      const dy = Math.abs(Number(event.clientY || 0) - startY);
+      if (dx > 26 || dy > 26) clear();
     }, { passive: true });
 
-    ["pointerup","pointercancel","pointerleave"].forEach((name) => {
-      root.addEventListener(name, clear, { passive: true });
-    });
+    root.addEventListener("pointerup", (event) => {
+      if (pointerId != null && event.pointerId !== pointerId) return;
+      clear();
+    }, { passive: true });
+
+    root.addEventListener("pointercancel", clear, { passive: true });
 
     root.addEventListener("contextmenu", (event) => {
       if (state.selection) return;
@@ -1771,11 +1785,21 @@
       const item = event.target.closest?.("[data-message-id]");
       if (!item) return;
       event.preventDefault();
+      const id = String(item.dataset.messageId || "");
       clear();
-      openReactionPicker(String(item.dataset.messageId || ""));
+      if (!longPressOpened) openReactionPicker(id);
+      longPressOpened = false;
     });
 
     root.addEventListener("click", (event) => {
+      const open = event.target.closest?.("[data-reaction-open]");
+      if (open) {
+        event.preventDefault();
+        event.stopPropagation();
+        openReactionPicker(String(open.dataset.reactionOpen || ""));
+        return;
+      }
+
       const chip = event.target.closest?.("[data-react-quick]");
       if (!chip) return;
       event.preventDefault();
@@ -2566,7 +2590,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-touch1",
+    build: "20260923-reactions2",
     mount,
     mountPreview,
     unmountFull,
