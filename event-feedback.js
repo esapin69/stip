@@ -462,6 +462,36 @@
             <button type="button" data-follow="no">Non</button>
           </div>
         </section>
+        <section class="hc-feedback-mail-actions" hidden>
+          <div class="hc-feedback-section-separator"><span>COMMENT POURSUIVRE ?</span></div>
+          <div class="hc-feedback-mail-paths">
+            <button type="button" data-mail-flow="prepare"><span aria-hidden="true">✉</span><div><strong>Préparer le mail ici</strong><small>Destinataires, objet et texte déjà préparés</small></div><b>›</b></button>
+            <button type="button" data-mail-flow="native"><span aria-hidden="true">↗</span><div><strong>Ouvrir ma boîte mail</strong><small>STIP remplit le mail avant l’ouverture</small></div><b>›</b></button>
+          </div>
+        </section>
+        <section class="hc-feedback-mail-compose" hidden>
+          <header class="hc-feedback-mail-compose-head">
+            <div><small>MAIL DE SUIVI</small><strong>Prêt à envoyer</strong></div>
+            <button type="button" data-mail-back aria-label="Retour">‹</button>
+          </header>
+          <div class="hc-feedback-mail-sender" data-mail-sender>Préparation des destinataires…</div>
+          <div class="hc-feedback-mail-recipient-group">
+            <div class="hc-feedback-mail-recipient-title"><strong>À</strong><small>Destinataire principal</small></div>
+            <div class="hc-feedback-mail-recipient-list" data-mail-to-list></div>
+          </div>
+          <div class="hc-feedback-mail-recipient-group">
+            <div class="hc-feedback-mail-recipient-title"><strong>Cc</strong><small>Copie rapide</small></div>
+            <div class="hc-feedback-mail-recipient-list compact" data-mail-cc-list></div>
+          </div>
+          <label class="hc-feedback-mail-field"><span>Objet</span><input type="text" maxlength="180" data-mail-subject></label>
+          <label class="hc-feedback-mail-field"><span>Message</span><textarea rows="8" maxlength="5000" data-mail-body></textarea></label>
+          <p class="hc-feedback-mail-privacy" data-mail-privacy hidden>Événement sensible : les collègues du shift ne sont pas proposés comme destinataires.</p>
+          <p class="hc-feedback-mail-status" data-mail-status aria-live="polite"></p>
+          <div class="hc-feedback-mail-buttons">
+            <button type="button" class="hc-feedback-mail-send" data-mail-send>Envoyer depuis STIP</button>
+            <button type="button" class="hc-feedback-mail-native" data-mail-native>Ouvrir dans ma boîte mail</button>
+          </div>
+        </section>
         ${custom}
         ${noteBlock}
         <p class="hc-feedback-error" aria-live="polite"></p>
@@ -475,18 +505,180 @@
     let attendance = "",
       rating = 0,
       followUp = null,
-      customAnswer = "";
+      customAnswer = "",
+      mailContext = null,
+      mailContextAttendance = "",
+      mailMode = "",
+      nativeOpened = false,
+      mailLoading = false;
+    const mailTo = new Set(),
+      mailCc = new Set();
 
     const following = modal.querySelector(".hc-feedback-following"),
       ratingBox = modal.querySelector(".hc-feedback-rating"),
       customBox = modal.querySelector(".hc-feedback-custom"),
       submit = modal.querySelector(".hc-feedback-submit"),
       error = modal.querySelector(".hc-feedback-error"),
-      note = modal.querySelector("#hcFeedbackNote");
+      note = modal.querySelector("#hcFeedbackNote"),
+      mailActions = modal.querySelector(".hc-feedback-mail-actions"),
+      mailCompose = modal.querySelector(".hc-feedback-mail-compose"),
+      mailSender = modal.querySelector("[data-mail-sender]"),
+      mailToList = modal.querySelector("[data-mail-to-list]"),
+      mailCcList = modal.querySelector("[data-mail-cc-list]"),
+      mailSubject = modal.querySelector("[data-mail-subject]"),
+      mailBody = modal.querySelector("[data-mail-body]"),
+      mailPrivacy = modal.querySelector("[data-mail-privacy]"),
+      mailStatus = modal.querySelector("[data-mail-status]"),
+      mailSend = modal.querySelector("[data-mail-send]"),
+      mailNative = modal.querySelector("[data-mail-native]");
 
     const close = () => {
       modal.remove();
       document.body.classList.remove("hc-feedback-modal-open");
+    };
+
+    const coreValid = () =>
+      !!attendance &&
+      (attendance === "absent" || rating > 0) &&
+      (attendance === "absent" || !event.question || !!customAnswer);
+
+    const feedbackBody = () => ({
+      event_key: event.eventKey,
+      attendance,
+      rating: attendance === "absent" ? null : rating,
+      follow_up: followUp,
+      custom_answer:
+        attendance === "absent" ? null : customAnswer || null,
+      note: note ? String(note.value || "").trim() || null : null,
+    });
+
+    const finish = (message) => {
+      state.done.add(event.eventKey);
+      state.loadedAt = Date.now();
+      close();
+      render();
+      toast(message);
+    };
+
+    const resetMailFlow = () => {
+      mailContext = null;
+      mailContextAttendance = "";
+      mailMode = "";
+      nativeOpened = false;
+      mailLoading = false;
+      mailTo.clear();
+      mailCc.clear();
+      if (mailCompose) mailCompose.hidden = true;
+      if (mailStatus) mailStatus.textContent = "";
+    };
+
+    const syncMailSelections = () => {
+      if (!mailContext) return;
+      mailToList?.querySelectorAll("[data-mail-address]").forEach((b) => {
+        const email = b.dataset.mailAddress || "";
+        b.classList.toggle("selected", mailTo.has(email));
+      });
+      mailCcList?.querySelectorAll("[data-mail-address]").forEach((b) => {
+        const email = b.dataset.mailAddress || "";
+        b.classList.toggle("selected", mailCc.has(email));
+      });
+      if (mailNative) mailNative.disabled = !mailTo.size;
+      if (mailSend)
+        mailSend.disabled =
+          !mailContext.direct_send || !mailTo.size || !coreValid();
+    };
+
+    const recipientMarkup = (candidate, bucket) => {
+      const selected = bucket === "to" ? mailTo.has(candidate.email) : mailCc.has(candidate.email);
+      return `<button type="button" class="hc-feedback-mail-recipient${selected ? " selected" : ""}" data-mail-bucket="${bucket}" data-mail-address="${esc(candidate.email)}"><span><strong>${esc(candidate.name)}</strong><small>${esc(candidate.role || candidate.reason || "")}</small></span><em>${esc(candidate.reason || "")}</em></button>`;
+    };
+
+    const renderMailContext = (ctx) => {
+      const candidates = Array.isArray(ctx?.candidates) ? ctx.candidates : [];
+      if (!mailTo.size && candidates.length) {
+        const preferred =
+          candidates.find((x) => x.recommended && x.kind === "encadrement") ||
+          candidates.find((x) => x.recommended) ||
+          candidates[0];
+        if (preferred?.email) mailTo.add(preferred.email);
+      }
+      if (mailToList)
+        mailToList.innerHTML =
+          candidates.map((x) => recipientMarkup(x, "to")).join("") ||
+          '<span class="hc-feedback-mail-empty">Aucun destinataire avec adresse professionnelle n’a été trouvé.</span>';
+      if (mailCcList)
+        mailCcList.innerHTML =
+          candidates.map((x) => recipientMarkup(x, "cc")).join("") ||
+          '<span class="hc-feedback-mail-empty">Aucune copie proposée.</span>';
+      if (mailSubject) mailSubject.value = ctx?.draft?.subject || "";
+      if (mailBody) mailBody.value = ctx?.draft?.body || "";
+      if (mailPrivacy) mailPrivacy.hidden = !ctx?.event?.sensitive;
+      if (mailSender) {
+        const reply = ctx?.sender?.reply_to
+          ? ` · réponses vers ${ctx.sender.reply_to}`
+          : "";
+        mailSender.textContent = ctx?.direct_send
+          ? `Envoi : ${ctx.sender.from || "STIP"}${reply}`
+          : `Envoi direct STIP à activer${reply}. La boîte mail native reste disponible.`;
+      }
+      if (mailSend) {
+        mailSend.textContent = ctx?.direct_send
+          ? "Envoyer depuis STIP"
+          : "Envoi direct STIP à activer";
+      }
+      syncMailSelections();
+    };
+
+    const loadMailContext = async (mode) => {
+      if (!coreValid() || mailLoading) return;
+      mailMode = mode;
+      nativeOpened = false;
+      mailActions.hidden = true;
+      mailCompose.hidden = false;
+      if (mailContext && mailContextAttendance === attendance) {
+        renderMailContext(mailContext);
+        mailCompose.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        return;
+      }
+      mailLoading = true;
+      mailStatus.textContent = "STIP cherche les destinataires utiles…";
+      mailTo.clear();
+      mailCc.clear();
+      try {
+        const ctx = await post("event_mail_context", {
+          event_key: event.eventKey,
+          attendance,
+        });
+        mailContext = ctx;
+        mailContextAttendance = attendance;
+        renderMailContext(ctx);
+        mailStatus.textContent = "";
+      } catch (e) {
+        mailContext = null;
+        mailStatus.textContent =
+          "Impossible de préparer les destinataires pour le moment.";
+      } finally {
+        mailLoading = false;
+        mailCompose.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    };
+
+    const openNativeMail = () => {
+      if (!mailContext || !mailTo.size) return;
+      const subject = String(mailSubject?.value || "").trim(),
+        body = String(mailBody?.value || "").trim(),
+        to = [...mailTo],
+        cc = [...mailCc].filter((x) => !mailTo.has(x)),
+        path = to.map((x) => encodeURIComponent(x)).join(","),
+        params = new URLSearchParams();
+      if (cc.length) params.set("cc", cc.join(","));
+      if (subject) params.set("subject", subject);
+      if (body) params.set("body", body);
+      nativeOpened = true;
+      mailStatus.textContent =
+        "La boîte mail va s’ouvrir. Au retour, finalise simplement le retour dans STIP.";
+      sync();
+      window.location.href = `mailto:${path}?${params.toString()}`;
     };
 
     const sync = () => {
@@ -513,12 +705,17 @@
           .querySelectorAll("[data-rating],[data-custom]")
           .forEach((b) => b.classList.remove("selected", "current"));
       }
-      const valid =
-        !!attendance &&
-        followUp !== null &&
-        (attendance === "absent" || rating > 0) &&
-        (attendance === "absent" || !event.question || !!customAnswer);
-      submit.disabled = !valid;
+      const valid = coreValid() && followUp !== null;
+      mailActions.hidden = !(valid && followUp === true) || !mailCompose.hidden;
+      if (followUp !== true && !mailCompose.hidden) resetMailFlow();
+      submit.hidden = followUp === true && !nativeOpened;
+      submit.textContent =
+        followUp === true ? "Finaliser mon retour" : "Valider mon retour";
+      submit.disabled = !valid || (followUp === true && !nativeOpened);
+      modal.querySelectorAll("[data-mail-flow]").forEach((b) => {
+        b.disabled = !coreValid();
+      });
+      syncMailSelections();
     };
 
     modal.querySelector(".hc-feedback-close").onclick = close;
@@ -532,7 +729,9 @@
 
     modal.querySelectorAll("[data-attendance]").forEach((button) => {
       button.onclick = () => {
-        attendance = button.dataset.attendance || "";
+        const next = button.dataset.attendance || "";
+        if (attendance && attendance !== next) resetMailFlow();
+        attendance = next;
         modal
           .querySelectorAll("[data-attendance]")
           .forEach((b) => b.classList.toggle("selected", b === button));
@@ -558,6 +757,7 @@
         modal
           .querySelectorAll("[data-follow]")
           .forEach((b) => b.classList.toggle("selected", b === button));
+        if (!followUp) resetMailFlow();
         sync();
       };
     });
@@ -572,29 +772,81 @@
       };
     });
 
+    modal.querySelectorAll("[data-mail-flow]").forEach((button) => {
+      button.onclick = () => loadMailContext(button.dataset.mailFlow || "prepare");
+    });
+
+    modal.querySelector("[data-mail-back]")?.addEventListener("click", () => {
+      mailCompose.hidden = true;
+      mailActions.hidden = false;
+      nativeOpened = false;
+      sync();
+    });
+
+    mailCompose?.addEventListener("click", (eventClick) => {
+      const b = eventClick.target.closest("[data-mail-address]");
+      if (!b) return;
+      const email = b.dataset.mailAddress || "",
+        bucket = b.dataset.mailBucket || "to";
+      if (!email) return;
+      if (bucket === "to") {
+        if (mailTo.has(email)) mailTo.delete(email);
+        else {
+          mailTo.add(email);
+          mailCc.delete(email);
+        }
+      } else {
+        if (mailCc.has(email)) mailCc.delete(email);
+        else {
+          mailCc.add(email);
+          mailTo.delete(email);
+        }
+      }
+      syncMailSelections();
+    });
+
+    mailNative?.addEventListener("click", openNativeMail);
+
+    mailSend?.addEventListener("click", async () => {
+      if (!mailContext?.direct_send || !mailTo.size || !coreValid()) return;
+      mailSend.disabled = true;
+      mailNative.disabled = true;
+      mailStatus.textContent = "Envoi du mail…";
+      try {
+        await post("event_mail_send", {
+          ...feedbackBody(),
+          follow_up: true,
+          to: [...mailTo],
+          cc: [...mailCc].filter((x) => !mailTo.has(x)),
+          subject: String(mailSubject?.value || "").trim(),
+          body: String(mailBody?.value || "").trim(),
+        });
+        finish("Mail envoyé · retour clôturé");
+      } catch (e) {
+        mailStatus.textContent =
+          e?.message === "ENVOI_MAIL_STIP_NON_CONFIGURE"
+            ? "L’envoi direct STIP n’est pas encore activé. Utilise la boîte mail native."
+            : "Le mail n’a pas été envoyé. Vérifie les destinataires puis réessaie.";
+        syncMailSelections();
+      }
+    });
+
     submit.onclick = async () => {
       if (submit.disabled) return;
       submit.disabled = true;
       error.textContent = "";
       submit.textContent = "Enregistrement…";
       try {
-        await post("event_feedback_submit", {
-          event_key: event.eventKey,
-          attendance,
-          rating: attendance === "absent" ? null : rating,
-          follow_up: followUp,
-          custom_answer:
-            attendance === "absent" ? null : customAnswer || null,
-          note: note ? String(note.value || "").trim() || null : null,
-        });
-        state.done.add(event.eventKey);
-        state.loadedAt = Date.now();
-        close();
-        render();
-        toast("Retour enregistré");
+        await post("event_feedback_submit", feedbackBody());
+        finish(
+          followUp === true
+            ? "Retour clôturé"
+            : "Retour enregistré",
+        );
       } catch (e) {
         submit.disabled = false;
-        submit.textContent = "Valider mon retour";
+        submit.textContent =
+          followUp === true ? "Finaliser mon retour" : "Valider mon retour";
         error.textContent =
           e?.message === "RETOUR_TROP_TOT"
             ? "Ce retour sera disponible une heure après la fin prévue."
@@ -602,6 +854,7 @@
       }
     };
 
+    sync();
     modal.querySelector("[data-attendance]")?.focus();
   }
 
