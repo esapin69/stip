@@ -403,18 +403,19 @@
           <button type="button" data-attendance="ok">Tout s’est bien déroulé</button>
         </div>
       </section>
+      <section class="hc-feedback-rating is-waiting" aria-disabled="true">
+        <span>APPRÉCIATION GLOBALE</span>
+        <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
+          <button type="button" data-rating="1" aria-label="1 sur 5" disabled>1</button>
+          <button type="button" data-rating="2" aria-label="2 sur 5" disabled>2</button>
+          <button type="button" data-rating="3" aria-label="3 sur 5" disabled>3</button>
+          <button type="button" data-rating="4" aria-label="4 sur 5" disabled>4</button>
+          <button type="button" data-rating="5" aria-label="5 sur 5" disabled>5</button>
+        </div>
+        <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
+        <small class="hc-feedback-rating-hint">Choisis d’abord comment ça s’est passé.</small>
+      </section>
       <div class="hc-feedback-following" hidden>
-        <section class="hc-feedback-rating" hidden>
-          <span>APPRÉCIATION GLOBALE</span>
-          <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
-            <button type="button" data-rating="1" aria-label="1 sur 5">1</button>
-            <button type="button" data-rating="2" aria-label="2 sur 5">2</button>
-            <button type="button" data-rating="3" aria-label="3 sur 5">3</button>
-            <button type="button" data-rating="4" aria-label="4 sur 5">4</button>
-            <button type="button" data-rating="5" aria-label="5 sur 5">5</button>
-          </div>
-          <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
-        </section>
         <section class="hc-feedback-question">
           <span>SUITE</span>
           <strong>Une suite est-elle nécessaire ?</strong>
@@ -451,7 +452,20 @@
 
     const sync = () => {
       following.hidden = !attendance;
-      ratingBox.hidden = !attendance || attendance === "absent";
+      const ratingDisabled = !attendance || attendance === "absent";
+      ratingBox.classList.toggle("is-waiting", !attendance);
+      ratingBox.classList.toggle("is-na", attendance === "absent");
+      ratingBox.setAttribute("aria-disabled", ratingDisabled ? "true" : "false");
+      ratingBox.querySelectorAll("[data-rating]").forEach((b) => {
+        b.disabled = ratingDisabled;
+      });
+      const ratingHint = ratingBox.querySelector(".hc-feedback-rating-hint");
+      if (ratingHint)
+        ratingHint.textContent = !attendance
+          ? "Choisis d’abord comment ça s’est passé."
+          : attendance === "absent"
+            ? "Pas de note si tu n’étais pas présent."
+            : "Choisis une note de 1 à 5.";
       if (customBox)
         customBox.hidden = !attendance || attendance === "absent";
       if (attendance === "absent") {
