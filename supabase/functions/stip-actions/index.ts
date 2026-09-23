@@ -17,7 +17,23 @@ async function ctx(req:Request){const raw=req.headers.get('x-stip-session')||'';
 function canManage(c:any){return Boolean(c.profile.permissions?.responsable||c.profile.permissions?.admin)}
 function requireResp(c:any){if(!canManage(c))throw Error('ACCES_RESPONSABLE_REQUIS')}
 async function ensureTarget(id:string){const q=await db.from('agents').select('id,source_key,nom,prenom,equipe,ghe,telephone,role').eq('id',id).eq('actif',true).maybeSingle();if(q.error)throw q.error;if(!q.data)throw Error('AGENT_INTROUVABLE');return q.data}
-async function notifications(c:any){const q=await db.from('stip_notifications').select('*').eq('agent_id',c.agent.id).order('created_at',{ascending:false}).limit(80);if(q.error)throw q.error;return q.data||[]}
+async function notifications(c:any){
+  const q=await db.from('stip_notifications').select('*').eq('agent_id',c.agent.id).order('created_at',{ascending:false}).limit(120);
+  if(q.error)throw q.error;
+  const cutoff=Date.now()-14*86400000,seen=new Set<string>(),out:any[]=[];
+  for(const n of q.data||[]){
+    const created=new Date(n.created_at||0).getTime();
+    if(!n.action_id&&(!created||created<cutoff))continue;
+    if(n.source_type==='stip_change'&&n.source_ref){
+      const key=`stip_change:${n.source_ref}`;
+      if(seen.has(key))continue;
+      seen.add(key);
+    }
+    out.push(n);
+    if(out.length>=80)break;
+  }
+  return out;
+}
 async function listActions(c:any){const q=await db.from('stip_action_requests').select('*').eq('target_agent_id',c.agent.id).eq('status','pending').order('priority',{ascending:false}).order('created_at',{ascending:false}).limit(40);if(q.error)throw q.error;return q.data||[]}
 async function actionDetail(c:any,id:string){const q=await db.from('stip_action_requests').select('*').eq('id',id).eq('target_agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;if(!q.data||q.data.status!=='pending')throw Error('ACTION_INTROUVABLE');const a:any=q.data;if(!a.seen_at){const now=new Date().toISOString();await db.from('stip_action_requests').update({seen_at:now,updated_at:now}).eq('id',id).is('seen_at',null);a.seen_at=now;await db.from('stip_notifications').update({read_at:now}).eq('agent_id',c.agent.id).eq('action_id',id).is('read_at',null)}if(a.source_type==='evaluation_signature'&&a.source_ref){const r=await db.from('stip_evaluation_signature_requests').select('*').eq('id',a.source_ref).maybeSingle();if(r.error)throw r.error;const e=await db.from('stip_agent_evaluations').select('*').eq('id',r.data?.evaluation_id).maybeSingle();if(e.error)throw e.error;a.evaluation=e.data;a.signature_request=r.data}return a}
 function png(v:unknown){const s=text(v,450000);if(!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(s))throw Error('SIGNATURE_INVALIDE');const raw=atob(s.split(',')[1]),b=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)b[i]=raw.charCodeAt(i);return b}
