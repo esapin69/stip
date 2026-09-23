@@ -773,16 +773,11 @@
       state.weekFull = state.weekOffset !== 0;
     }
 
-    const navWeek = navigationWeek(),
-      visibleWeek = selectedWeek();
+    const navWeek = navigationWeek();
 
-    if (state.weekOffset === 0) {
-      state.dayFocus = state.weekPast
-        ? visibleWeek[visibleWeek.length - 1]?.iso || todayIso
-        : todayIso;
-    } else {
-      state.dayFocus = visibleWeek[0]?.iso || navWeek[0]?.iso || todayIso;
-    }
+    // Une navigation par flèche change seulement la période affichée.
+    // Aucune journée n'est sélectionnée tant que l'utilisateur n'en touche pas une.
+    state.dayFocus = "";
 
     state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
     state.renderSig = "";
