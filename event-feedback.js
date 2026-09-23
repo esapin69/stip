@@ -367,10 +367,10 @@
     modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-labelledby", "hcFeedbackTitle");
 
-    const medicalNote =
+    const noteBlock =
       event.kind === "medical"
-        ? '<p class="hc-feedback-privacy">Informations pratiques uniquement — aucun détail médical.</p>'
-        : "";
+        ? '<section class="hc-feedback-note hc-feedback-medical-safe"><strong>Retour administratif uniquement</strong><p class="hc-feedback-privacy">Aucun commentaire libre n’est demandé ni enregistré pour une visite médicale.</p></section>'
+        : '<section class="hc-feedback-note"><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Une information utile, si nécessaire"></textarea></section>';
     const custom = event.question
       ? `<section class="hc-feedback-question hc-feedback-custom" hidden><span>QUESTION LIÉE À CET ÉVÉNEMENT</span><strong>${esc(
           event.question,
@@ -419,11 +419,7 @@
           </div>
         </section>
         ${custom}
-        <section class="hc-feedback-note">
-          <label for="hcFeedbackNote">Précision <small>facultative</small></label>
-          <textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Une information utile, si nécessaire"></textarea>
-          ${medicalNote}
-        </section>
+        ${noteBlock}
         <p class="hc-feedback-error" aria-live="polite"></p>
         <button type="button" class="hc-feedback-submit" disabled>Valider mon retour</button>
       </div>
@@ -526,7 +522,7 @@
           follow_up: followUp,
           custom_answer:
             attendance === "absent" ? null : customAnswer || null,
-          note: String(note.value || "").trim() || null,
+          note: note ? String(note.value || "").trim() || null : null,
         });
         state.done.add(event.eventKey);
         state.loadedAt = Date.now();
