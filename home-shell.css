@@ -5392,3 +5392,22 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     gap:8px!important;
   }
 }
+
+
+/* 20260923-touch1 — standalone header must always win the tap */
+.hc-tableau-standalone-head{
+  isolation:isolate!important;
+  pointer-events:auto!important;
+}
+.hc-tableau-back,
+.hc-tableau-bell{
+  position:relative!important;
+  z-index:3!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+  user-select:none!important;
+}
+.hc-tableau-back{
+  min-width:88px!important;
+}
