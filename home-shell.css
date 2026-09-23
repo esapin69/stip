@@ -5571,26 +5571,53 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* 20260923-today-date1 — full current date on home */
-.hc-home-today-date{
-  width:min(calc(100vw - 32px),520px)!important;
-  margin:0 auto 14px!important;
-  padding:0 4px!important;
+
+
+
+/* 20260923-today-separator2 — full date in chronological stream */
+.hc-calendar-driven-planning>.hc-home-today-separator{
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin:13px 0 12px!important;
+  padding:0 2px!important;
+  display:grid!important;
+  grid-template-columns:minmax(18px,1fr) auto minmax(18px,1fr)!important;
+  align-items:center!important;
+  gap:12px!important;
+  background:transparent!important;
+}
+.hc-calendar-driven-planning>.hc-home-today-separator::before,
+.hc-calendar-driven-planning>.hc-home-today-separator::after{
+  content:""!important;
+  display:block!important;
+  height:1px!important;
+  background:linear-gradient(90deg,transparent,#cbd8dc)!important;
+}
+.hc-calendar-driven-planning>.hc-home-today-separator::after{
+  background:linear-gradient(90deg,#cbd8dc,transparent)!important;
+}
+.hc-calendar-driven-planning>.hc-home-today-separator>span{
+  display:block!important;
+  max-width:calc(100vw - 70px)!important;
   overflow:hidden!important;
   white-space:nowrap!important;
-  text-align:center!important;
+  text-overflow:clip!important;
   color:#315866!important;
   font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif!important;
-  font-size:clamp(.98rem,3.1vw,1.16rem)!important;
-  line-height:1.15!important;
-  font-weight:650!important;
-  letter-spacing:.015em!important;
-  text-wrap:nowrap!important;
+  font-size:clamp(.94rem,3vw,1.08rem)!important;
+  line-height:1.1!important;
+  font-weight:700!important;
+  letter-spacing:.012em!important;
+  text-transform:none!important;
+  text-align:center!important;
 }
 @media(max-width:370px){
-  .hc-home-today-date{
-    width:calc(100vw - 22px)!important;
-    font-size:.94rem!important;
+  .hc-calendar-driven-planning>.hc-home-today-separator{
+    gap:8px!important;
+  }
+  .hc-calendar-driven-planning>.hc-home-today-separator>span{
+    max-width:calc(100vw - 50px)!important;
+    font-size:.90rem!important;
     letter-spacing:0!important;
   }
 }
