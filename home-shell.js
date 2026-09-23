@@ -1091,6 +1091,16 @@
     if (d > 2) return `Dans ${d} jours`;
     return fmtDateRange({ date: iso, endDate: iso });
   }
+  function todayFullDateSeparator() {
+    const raw = dateObj(parisIso()).toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const label = raw.charAt(0).toUpperCase() + raw.slice(1);
+    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="Date du jour"><span>${esc(label)}</span></div>`;
+  }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
     if (!body) return;
@@ -1458,14 +1468,6 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
-      todayRaw = new Intl.DateTimeFormat("fr-FR", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        timeZone: "Europe/Paris",
-      }).format(new Date()),
-      todayLabel = todayRaw.charAt(0).toUpperCase() + todayRaw.slice(1),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
@@ -1477,7 +1479,6 @@
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
-      <div class="hc-home-today-date" aria-label="Date du jour">${esc(todayLabel)}</div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
@@ -1986,7 +1987,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
