@@ -159,20 +159,85 @@
     },
   };
 
+  function wheelchairSpotKind(value = "") {
+    const text = norm(value);
+    if (/local a fauteuil|local fauteuil/.test(text)) return "wheelchair-local";
+    if (/tout au fond|fond du couloir|fond de couloir/.test(text)) return "corridor-deep";
+    if (/couloir isole/.test(text)) return "corridor-isolated";
+    if (/couloir de passage/.test(text)) return "corridor-passage";
+    if (/couloir/.test(text)) return "corridor";
+    if (/ascenseur/.test(text)) return "lift";
+    if (/salon d accueil|accueil principal|salon accueil/.test(text)) return "welcome";
+    if (/hall/.test(text)) return "hall";
+    if (/passerelle/.test(text)) return "bridge";
+    if (/escalier escargot/.test(text)) return "spiral-stairs";
+    if (/escalier/.test(text)) return "stairs";
+    return text;
+  }
+
+  function sourcedWheelchairSpot(place = "") {
+    const label = String(place || "").trim();
+    const text = norm(label);
+    if (!label) return null;
+
+    if (/local a fauteuil|local fauteuil/.test(text)) {
+      return { label, value:label, icon:"🦽", persistence:"sheltered", sourced:true };
+    }
+    if (/ascenseur/.test(text)) {
+      return { label, value:label, icon:"🛗", persistence:"fast", sourced:true };
+    }
+    if (/hall/.test(text)) {
+      return { label, value:label, icon:"🚪", persistence:"fast", sourced:true };
+    }
+    if (/salon d accueil|accueil principal|salon accueil/.test(text)) {
+      return { label, value:label, icon:"🏥", persistence:"fast", sourced:true };
+    }
+    if (/passerelle/.test(text)) {
+      return { label, value:label, icon:"↔", persistence:"sheltered", sourced:true };
+    }
+    if (/escalier escargot/.test(text)) {
+      return { label, value:label, icon:"↕", persistence:"sheltered", sourced:true };
+    }
+    return null;
+  }
+
   function wheelchairFieldSpots(buildingKey = "", level = "") {
-    const config = WHEELCHAIR_FIELD_SPOTS[String(buildingKey || "")] || {};
+    const key = String(buildingKey || "");
+    const config = WHEELCHAIR_FIELD_SPOTS[key] || {};
     const featured = Array.isArray(config.featured?.[level]) ? config.featured[level] : [];
     const common = Array.isArray(config.common) ? config.common : [];
-    const seen = new Set();
-    return [
-      ...featured.map((item) => ({ ...item, featured: true })),
-      ...common.map((item) => ({ ...item, featured: false })),
-    ].filter((item) => {
-      const key = String(item.value || item.label || "");
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).slice(0, 4);
+    const sourceLevel = (WHEELCHAIR_LOCATIONS[key] || []).find(
+      (item) => String(item.level || "") === String(level || ""),
+    );
+    const sourced = Array.isArray(sourceLevel?.places)
+      ? sourceLevel.places.map(sourcedWheelchairSpot).filter(Boolean)
+      : [];
+
+    const candidates = [
+      ...featured.map((item) => ({ ...item, featured:true })),
+      ...sourced.map((item) => ({ ...item, featured:false })),
+      ...common.map((item) => ({ ...item, featured:false })),
+    ];
+
+    const seenValues = new Set();
+    const seenKinds = new Set();
+    const result = [];
+
+    for (const item of candidates) {
+      const valueKey = norm(item.value || item.label || "");
+      const kind = wheelchairSpotKind(item.value || item.label || "");
+      if (!valueKey || seenValues.has(valueKey)) continue;
+
+      // A sourced, more precise lift/hall/accueil replaces the generic version.
+      if (seenKinds.has(kind)) continue;
+
+      seenValues.add(valueKey);
+      seenKinds.add(kind);
+      result.push(item);
+      if (result.length >= 5) break;
+    }
+
+    return result;
   }
 
   const norm = (value) =>
@@ -1432,8 +1497,21 @@
             '<div class="tb-place-choices tb-field-spot-choices">' +
               quickPlaces.map((place) => {
                 const selected = selectedPlaces.has(place.value);
+                const confidenceIcon =
+                  place.persistence === "fast" ? "🧊" :
+                  place.persistence === "sheltered" ? "🔥" :
+                  "";
+                const confidenceLabel =
+                  place.persistence === "fast" ? "Peut partir vite" :
+                  place.persistence === "sheltered" ? "Endroit plus stable" :
+                  "";
                 return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" data-place-persistence="' + esc(place.persistence || "normal") + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
-                  '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span><strong>' + esc(place.label) + "</strong></button>";
+                  '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span>' +
+                  '<strong>' + esc(place.label) + '</strong>' +
+                  (confidenceIcon
+                    ? '<small class="tb-place-confidence" title="' + esc(confidenceLabel) + '" aria-label="' + esc(confidenceLabel) + '">' + confidenceIcon + '</small>'
+                    : '') +
+                "</button>";
               }).join("") +
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
@@ -3271,7 +3349,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-confirmation1",
+    build: "20260924-sourced-spots1",
     mount,
     mountPreview,
     unmountFull,
