@@ -1421,7 +1421,11 @@
         ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
       </div>
       ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
-    </section>${has("responsable") ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}`;
+    </section>`;
+  }
+  function responsableAccessBlock() {
+    if (!(has("responsable") || has("admin"))) return "";
+    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div><div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div></section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -1443,7 +1447,7 @@
       s += app("dates", "Date des agents", "dates", "dates");
     if (has("contacts"))
       s += app("contacts", "Contacts", "contacts", "contacts");
-    if (has("responsable"))
+    if (has("responsable") || has("admin"))
       s += app("responsable", "Responsable", "responsable", "responsable");
     if (has("nouveaux_arrivants"))
       s += app("newagent", "Nouvel agent", "newagent", "newagent");
@@ -2089,7 +2093,7 @@
     const isTableau = state.homeMode === "tableau" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    let markup = `${homeModeNav()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${homeModeNav()}${showProfile ? profile() + responsableAccessBlock() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isTableau) {
       markup = `<section class="hc-tableau-standalone" aria-label="Chat STIP — Fauteuils">
           <header class="hc-tableau-standalone-head">
