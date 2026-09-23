@@ -4045,3 +4045,16 @@
   .tb-wheelchair-actions{grid-template-columns:1fr!important}
   .tb-wheelchair-secondary{grid-template-columns:1fr 1fr!important}
 }
+
+/* 20260923-chatstip3 — keep both secondary confirmations compact even with full wording */
+.tb-wheelchair-secondary .tb-still-there,
+.tb-wheelchair-secondary .tb-report-missing{
+  min-width:0!important;
+  padding-inline:6px!important;
+}
+.tb-wheelchair-secondary .tb-still-there strong,
+.tb-wheelchair-secondary .tb-report-missing strong{
+  font-size:.54rem!important;
+  line-height:1.05!important;
+  text-align:center!important;
+}
