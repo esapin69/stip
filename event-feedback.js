@@ -708,7 +708,7 @@
       const valid = coreValid() && followUp !== null;
       mailActions.hidden = !(valid && followUp === true) || !mailCompose.hidden;
       if (followUp !== true && !mailCompose.hidden) resetMailFlow();
-      submit.hidden = followUp === true && !nativeOpened;
+      submit.hidden = followUp === null || (followUp === true && !nativeOpened);
       submit.textContent =
         followUp === true ? "Finaliser mon retour" : "Valider mon retour";
       submit.disabled = !valid || (followUp === true && !nativeOpened);
