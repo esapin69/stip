@@ -5152,3 +5152,23 @@
 .tb-free-reply textarea{
   scroll-margin-bottom:18px;
 }
+
+
+/* 20260924-sourced-spots1 — sourced terrain shortcuts + automatic ice/fire clue */
+.tb-field-spot-choices .tb-place-toggle{
+  padding-bottom:14px!important;
+}
+.tb-place-confidence{
+  position:absolute!important;
+  right:8px!important;
+  bottom:5px!important;
+  display:block!important;
+  font-size:.72rem!important;
+  line-height:1!important;
+  font-weight:900!important;
+  pointer-events:none!important;
+  filter:saturate(1.08)!important;
+}
+.tb-field-spot-choices .tb-place-toggle.is-featured .tb-place-confidence{
+  font-size:.78rem!important;
+}
