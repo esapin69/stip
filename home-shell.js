@@ -1466,8 +1466,8 @@
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
       <div class="hc-home-top-tools">
-        <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+        <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
