@@ -1,3 +1,9 @@
+## Règle de déploiement et de modification
+- Travailler uniquement dans le dépôt GitHub existant et modifier les fichiers/mécanismes déjà en place quand ils couvrent le besoin.
+- Ne pas lancer d’action directe sur Vercel, ne pas déclencher de déploiement manuel et ne pas modifier la configuration Vercel.
+- Éviter de recréer un second système lorsqu’un composant, flux ou mécanisme existant peut être étendu proprement.
+- Toute évolution doit passer par le code source GitHub et préserver l’architecture existante sauf nécessité démontrée.
+
 # STIP — Completion discipline
 
 These rules apply to every substantial task in this repository.
