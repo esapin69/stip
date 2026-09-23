@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 
-const URL=Deno.env.get('SUPABASE_URL')!, SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const URL=Deno.env.get('SUPABASE_URL')!, SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, RESEND_API_KEY=Deno.env.get('RESEND_API_KEY')||'', STIP_MAIL_FROM=Deno.env.get('STIP_MAIL_FROM')||''
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}})
 const ORIGINS=new Set(['https://stip.esapin.com','https://esapin69.github.io'])
 const BUCKET='stip-onboarding-documents'
@@ -66,6 +66,89 @@ async function feedbackEvent(c:any,eventKey:string){
   const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',due:localPlus(endDate,clock,60)}
 }
 async function submitEventFeedback(c:any,b:any){const eventKey=text(b.event_key,180),attendance=text(b.attendance,20),rating=attendance==='absent'?null:Number(b.rating),follow=typeof b.follow_up==='boolean'?b.follow_up:null,custom=text(b.custom_answer,20)||null,note=text(b.note,500)||null;if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');if(attendance!=='absent'&&(!Number.isInteger(rating)||rating<1||rating>5))throw Error('RETOUR_NOTE_REQUISE');if(follow===null)throw Error('RETOUR_SUIVI_REQUIS');const ev=await feedbackEvent(c,eventKey);if(parisStamp()<ev.due)throw Error('RETOUR_TROP_TOT');if(attendance!=='absent'&&ev.question&&!['yes','no'].includes(custom||''))throw Error('RETOUR_QUESTION_REQUISE');const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,follow_up:follow,custom_answer:custom,note:ev.sensitive?null:note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,follow_up,custom_answer,note,submitted_at').single();if(q.error)throw q.error;return q.data}
+
+function validEmail(v:any){const s=text(v,320).toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:''}
+function shiftBase(v:any){const c=text(v,24).toUpperCase().replace(/\*+$/,'');if(/^J4/.test(c))return'J4';if(/^M/.test(c))return'M';if(/^J/.test(c))return'J';if(/^S/.test(c))return'S';if(/^N/.test(c))return'N';return c}
+function mailDate(v:any){const s=text(v,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s;return new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(s+'T12:00:00+02:00'))}
+function personName(a:any,f='Agent'){return [text(a?.prenom,80),text(a?.nom,120)].filter(Boolean).join(' ').trim()||f}
+function mailDraft(c:any,ev:any,attendance:string){
+  const date=mailDate(ev.endDate||ev.date),name=personName(c.agent),sensitive=!!ev.sensitive;
+  let subject='',body='';
+  if(sensitive){
+    subject=`Suite administrative · ${date}`;
+    if(attendance==='absent')body=`Bonjour,\n\nJe n’ai pas pu être présent au rendez-vous prévu le ${date}. Pouvez-vous m’indiquer la démarche à suivre pour régulariser la situation ou le reprogrammer si nécessaire ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+    else if(attendance==='problem')body=`Bonjour,\n\nÀ la suite de mon rendez-vous du ${date}, une suite administrative est nécessaire. Pouvez-vous m’indiquer la prochaine démarche à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+    else body=`Bonjour,\n\nMon rendez-vous du ${date} s’est bien déroulé. Une suite administrative reste toutefois nécessaire. Pouvez-vous m’indiquer la prochaine étape à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+  }else{
+    subject=`Suite · ${text(ev.title,120)||'Événement'} · ${date}`;
+    if(attendance==='absent')body=`Bonjour,\n\nJe n’ai pas pu être présent à « ${text(ev.title,180)} » prévu le ${date}. Je souhaite savoir quelle démarche effectuer pour régulariser la situation ou reprogrammer si nécessaire.\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+    else if(attendance==='problem')body=`Bonjour,\n\nÀ la suite de « ${text(ev.title,180)} » du ${date}, un point nécessite un suivi. Pouvez-vous m’indiquer la démarche à effectuer ou la personne à contacter pour finaliser la suite ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+    else body=`Bonjour,\n\n« ${text(ev.title,180)} » du ${date} s’est bien déroulé. Une suite reste toutefois nécessaire. Pouvez-vous m’indiquer la prochaine étape à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+  }
+  return{subject,body};
+}
+async function eventMailCandidates(c:any,ev:any){
+  const current=await db.from('agents').select('id,source_key,nom,prenom,email,ghe,role').eq('id',c.agent.id).maybeSingle();if(current.error)throw current.error;
+  let replyTo=validEmail(current.data?.email);
+  if(!replyTo){
+    const ownContact=await db.from('contacts_ghe').select('email_pro').eq('source_key',c.agent.source_key).eq('actif',true).maybeSingle();
+    replyTo=validEmail(ownContact.data?.email_pro);
+  }
+  const byEmail=new Map<string,any>(),add=(x:any)=>{
+    const email=validEmail(x.email);if(!email||email===replyTo)return;
+    const old=byEmail.get(email);
+    if(old){old.recommended=old.recommended||!!x.recommended;if(!old.reason.includes(x.reason))old.reason+=` · ${x.reason}`;return}
+    byEmail.set(email,{email,name:text(x.name,180)||email,role:text(x.role,180),kind:text(x.kind,40),reason:text(x.reason,180),recommended:!!x.recommended});
+  };
+  const cq=await db.from('contacts_ghe').select('source_key,categorie,ghe,nom,prenom,email_pro,role_metier').eq('actif',true);if(cq.error)throw cq.error;
+  for(const x of cq.data||[]){
+    const role=text(x.role_metier,180),cat=text(x.categorie,80).toLowerCase();
+    if(!(cat==='chef'||cat==='administration'||/cadre|responsable|chef/i.test(role)))continue;
+    const sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
+    add({email:x.email_pro,name:personName(x,role||'Encadrement'),role:role||(/chef/.test(cat)?'Chef d’équipe':'Encadrement'),kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':/responsable/i.test(role)?'Responsable':cat==='chef'?'Chef d’équipe':'Encadrement',recommended:sameGhe});
+  }
+  const aq=await db.from('agents').select('id,source_key,nom,prenom,email,ghe,role').eq('actif',true);if(aq.error)throw aq.error;
+  for(const x of aq.data||[]){
+    const role=text(x.role,180);
+    if(!/cadre|responsable|chef/i.test(role))continue;
+    const sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
+    add({email:x.email,name:personName(x),role,kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':/responsable/i.test(role)?'Responsable':'Chef d’équipe',recommended:sameGhe});
+  }
+  if(!ev.sensitive){
+    const date=text(ev.endDate||ev.date,10),selfPlan=await db.from('planning').select('code,equipe').eq('agent_id',c.agent.id).eq('date',date).maybeSingle();if(selfPlan.error)throw selfPlan.error;
+    const base=shiftBase(selfPlan.data?.code),team=text(selfPlan.data?.equipe,80);
+    if(base||team){
+      const pq=await db.from('planning').select('code,equipe,agent_id,agents(id,source_key,nom,prenom,email,ghe,role)').eq('date',date);if(pq.error)throw pq.error;
+      for(const row of pq.data||[]){
+        const a:any=row.agents;if(!a||String(a.id)===String(c.agent.id))continue;
+        const sameBase=base&&shiftBase(row.code)===base,sameTeam=team&&String(row.equipe||'')===team;
+        if(!sameBase&&!sameTeam)continue;
+        add({email:a.email,name:personName(a),role:text(a.role,180)||'Agent',kind:'shift',reason:sameBase?`Même shift ${base}`:'Même équipe',recommended:!!sameBase});
+      }
+    }
+  }
+  const order=(x:any)=>x.kind==='encadrement'?(x.recommended?0:1):(x.recommended?2:3);
+  return{reply_to:replyTo,candidates:[...byEmail.values()].sort((a,b)=>order(a)-order(b)||a.name.localeCompare(b.name,'fr')).slice(0,24)};
+}
+async function eventMailContext(c:any,b:any){
+  const eventKey=text(b.event_key,180),attendance=text(b.attendance,20);
+  if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');
+  const ev=await feedbackEvent(c,eventKey),recipients=await eventMailCandidates(c,ev),draft=mailDraft(c,ev,attendance);
+  return{event:{event_key:eventKey,title:ev.title,date:ev.date,end_date:ev.endDate,sensitive:!!ev.sensitive},sender:{display_name:personName(c.agent),reply_to:recipients.reply_to||null,from:STIP_MAIL_FROM||null},direct_send:Boolean(RESEND_API_KEY&&STIP_MAIL_FROM),candidates:recipients.candidates,draft};
+}
+async function sendEventMail(c:any,b:any){
+  if(!RESEND_API_KEY||!STIP_MAIL_FROM)throw Error('ENVOI_MAIL_STIP_NON_CONFIGURE');
+  const context=await eventMailContext(c,b),allowed=new Map((context.candidates||[]).map((x:any)=>[String(x.email).toLowerCase(),x]));
+  const cleanList=(v:any)=>[...new Set((Array.isArray(v)?v:[]).map(validEmail).filter(Boolean))].filter(x=>allowed.has(x)).slice(0,12);
+  const to=cleanList(b.to),cc=cleanList(b.cc).filter(x=>!to.includes(x));if(!to.length)throw Error('DESTINATAIRE_REQUIS');
+  const subject=text(b.subject,180),body=text(b.body,5000);if(!subject||!body)throw Error('MAIL_INCOMPLET');
+  const payload:any={from:STIP_MAIL_FROM,to,subject,text:body,headers:{'X-STIP-Event':text(b.event_key,180)}};
+  if(cc.length)payload.cc=cc;
+  if(context.sender.reply_to)payload.reply_to=context.sender.reply_to;
+  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${RESEND_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(payload)}),j=await r.json().catch(()=>({}));
+  if(!r.ok||!j?.id)throw Error(`MAIL_PROVIDER_${r.status}`);
+  return{ok:true,id:j.id,to,cc,from:STIP_MAIL_FROM,reply_to:context.sender.reply_to||null};
+}
 async function managerEventFeedback(c:any){requireResp(c);const q=await db.from('stip_event_feedback').select('id,event_key,event_type,attendance,rating,follow_up,custom_answer,note,event_snapshot,submitted_at,agent:agents!stip_event_feedback_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').order('submitted_at',{ascending:false}).limit(160);if(q.error)throw q.error;return q.data||[]}
 async function managerAgents(c:any){requireResp(c);const q=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('actif',true).order('nom');if(q.error)throw q.error;return q.data||[]}
 async function managerAgendaList(c:any){requireResp(c);const q=await db.from('stip_agent_agenda_items').select('*,agent:agents!stip_agent_agenda_items_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').eq('created_by_agent_id',c.agent.id).eq('status','active').gte('event_date',parisDay(-1)).order('event_date').order('start_time').limit(120);if(q.error)throw q.error;return q.data||[]}
@@ -74,4 +157,4 @@ async function managerList(c:any){requireResp(c);const q=await db.from('stip_act
 async function managerRemind(c:any,b:any){requireResp(c);const id=text(b.action_id,80),q=await db.from('stip_action_requests').select('*').eq('id',id).eq('requester_agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;if(!q.data||q.data.status!=='pending')throw Error('ACTION_NON_RELANCABLE');const now=new Date().toISOString(),count=Number(q.data.reminder_count||0)+1,u=await db.from('stip_action_requests').update({reminder_count:count,last_reminded_at:now,updated_at:now}).eq('id',id).select('*').single();if(u.error)throw u.error;await db.from('stip_notifications').insert({agent_id:q.data.target_agent_id,type:'action_reminder',title:'Rappel',body:q.data.title,action_id:id,source_type:q.data.source_type,source_ref:q.data.source_ref});return u.data}
 async function managerCancel(c:any,b:any){requireResp(c);const id=text(b.action_id,80),q=await db.from('stip_action_requests').select('*').eq('id',id).eq('requester_agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;if(!q.data||q.data.status!=='pending')throw Error('ACTION_NON_ANNULABLE');const now=new Date().toISOString();if(q.data.source_type==='evaluation_signature'&&q.data.source_ref){const r=await db.from('stip_evaluation_signature_requests').update({status:'cancelled',cancelled_at:now,updated_at:now}).eq('id',q.data.source_ref).eq('status','pending').select('id').maybeSingle();if(r.error)throw r.error}else{const u=await db.from('stip_action_requests').update({status:'cancelled',cancelled_at:now,updated_at:now}).eq('id',id).eq('status','pending').select('id').maybeSingle();if(u.error)throw u.error}await db.from('stip_notifications').delete().eq('action_id',id);return{ok:true}}
 
-Deno.serve(async req=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors(req).h});try{const c=await ctx(req),b=await req.json().catch(()=>({})),a=text(b.action,80);if(a==='home')return json(req,{agent:c.agent,permissions:c.profile.permissions,actions:await listActions(c),notifications:await notifications(c),event_feedback:await eventFeedbackList(c)});if(a==='list')return json(req,{actions:await listActions(c)});if(a==='get')return json(req,{action:await actionDetail(c,text(b.action_id,80))});if(a==='submit_signature')return json(req,{ok:true,signature:await submitSignature(c,b)});if(a==='notifications')return json(req,{notifications:await notifications(c)});if(a==='dismiss_notification')return json(req,{ok:true,result:await dismissNotification(c,b)});if(a==='event_feedback_list')return json(req,{items:await eventFeedbackList(c)});if(a==='event_feedback_submit')return json(req,{ok:true,item:await submitEventFeedback(c,b)});if(a==='accept_agenda')return json(req,{ok:true,item:await acceptAgenda(c,b)});if(a==='decline_agenda')return json(req,{ok:true,result:await declineAgenda(c,b)});if(a==='create')return json(req,{ok:true,action:await createAction(c,b)});if(a==='send_notification')return json(req,{ok:true,notification:await sendNotification(c,b)});if(a==='agenda_direct')return json(req,{ok:true,item:await agendaDirect(c,b)});if(a==='agenda_propose')return json(req,{ok:true,action:await agendaPropose(c,b)});if(a==='manager_agents')return json(req,{agents:await managerAgents(c)});if(a==='manager_agenda_list')return json(req,{items:await managerAgendaList(c)});if(a==='manager_agenda_cancel')return json(req,{ok:true,result:await managerAgendaCancel(c,b)});if(a==='manager_list')return json(req,{actions:await managerList(c)});if(a==='manager_remind')return json(req,{ok:true,action:await managerRemind(c,b)});if(a==='manager_cancel')return json(req,{ok:true,action:await managerCancel(c,b)});if(a==='manager_event_feedback')return json(req,{items:await managerEventFeedback(c)});return json(req,{error:'ACTION_INVALIDE'},400)}catch(e){const m=errText(e);return json(req,{error:m},/SESSION/.test(m)?401:/ACCES/.test(m)?403:400)}})
+Deno.serve(async req=>{if(req.method==='OPTIONS')return new Response('ok',{headers:cors(req).h});try{const c=await ctx(req),b=await req.json().catch(()=>({})),a=text(b.action,80);if(a==='home')return json(req,{agent:c.agent,permissions:c.profile.permissions,actions:await listActions(c),notifications:await notifications(c),event_feedback:await eventFeedbackList(c)});if(a==='list')return json(req,{actions:await listActions(c)});if(a==='get')return json(req,{action:await actionDetail(c,text(b.action_id,80))});if(a==='submit_signature')return json(req,{ok:true,signature:await submitSignature(c,b)});if(a==='notifications')return json(req,{notifications:await notifications(c)});if(a==='dismiss_notification')return json(req,{ok:true,result:await dismissNotification(c,b)});if(a==='event_feedback_list')return json(req,{items:await eventFeedbackList(c)});if(a==='event_feedback_submit')return json(req,{ok:true,item:await submitEventFeedback(c,b)});if(a==='event_mail_context')return json(req,{ok:true,...await eventMailContext(c,b)});if(a==='event_mail_send')return json(req,{ok:true,result:await sendEventMail(c,b)});if(a==='accept_agenda')return json(req,{ok:true,item:await acceptAgenda(c,b)});if(a==='decline_agenda')return json(req,{ok:true,result:await declineAgenda(c,b)});if(a==='create')return json(req,{ok:true,action:await createAction(c,b)});if(a==='send_notification')return json(req,{ok:true,notification:await sendNotification(c,b)});if(a==='agenda_direct')return json(req,{ok:true,item:await agendaDirect(c,b)});if(a==='agenda_propose')return json(req,{ok:true,action:await agendaPropose(c,b)});if(a==='manager_agents')return json(req,{agents:await managerAgents(c)});if(a==='manager_agenda_list')return json(req,{items:await managerAgendaList(c)});if(a==='manager_agenda_cancel')return json(req,{ok:true,result:await managerAgendaCancel(c,b)});if(a==='manager_list')return json(req,{actions:await managerList(c)});if(a==='manager_remind')return json(req,{ok:true,action:await managerRemind(c,b)});if(a==='manager_cancel')return json(req,{ok:true,action:await managerCancel(c,b)});if(a==='manager_event_feedback')return json(req,{items:await managerEventFeedback(c)});return json(req,{error:'ACTION_INVALIDE'},400)}catch(e){const m=errText(e);return json(req,{error:m},/SESSION/.test(m)?401:/ACCES/.test(m)?403:400)}})
