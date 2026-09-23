@@ -4345,3 +4345,194 @@
   touch-action:manipulation!important;
   -webkit-tap-highlight-color:transparent!important;
 }
+
+
+/* 20260923-cards1 — compact, high-signal wheelchair cards */
+.hc-tableau-standalone .tb-entry{
+  margin:4px auto!important;
+  padding:2px!important;
+}
+.hc-tableau-standalone .tb-entry.is-wheelchair .tb-entry-body{
+  padding:9px 10px 10px!important;
+  border:1.5px solid #63bfa9!important;
+  background:
+    linear-gradient(180deg,#ffffff 0%,#e5f8f1 100%)!important;
+  box-shadow:0 7px 16px rgba(11,111,91,.13)!important;
+}
+.hc-tableau-standalone .tb-entry.is-search .tb-entry-body{
+  border-color:#68acd3!important;
+  background:linear-gradient(180deg,#ffffff 0%,#e8f4fc 100%)!important;
+  box-shadow:0 7px 16px rgba(38,105,150,.11)!important;
+}
+.tb-wheelchair-head{
+  min-width:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:8px;
+}
+.tb-wheelchair-hospital{
+  min-width:0;
+  overflow:hidden;
+  color:#075c68;
+  font-size:1.08rem;
+  line-height:1;
+  font-weight:1000;
+  letter-spacing:-.02em;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.tb-entry.is-search .tb-wheelchair-hospital{color:#185f8a}
+.tb-wheelchair-head time{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  color:#355f67;
+  font-size:.76rem;
+  line-height:1;
+  font-weight:1000;
+}
+.tb-wheelchair-head time span{font-size:.68rem}
+.tb-wheelchair-priority{
+  margin-top:6px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.hc-tableau-standalone .tb-status-chip{
+  margin:0!important;
+  padding:5px 9px!important;
+  border:1px solid #f0aa19!important;
+  background:#ffd669!important;
+  color:#7a4900!important;
+  font-size:.68rem!important;
+  line-height:1!important;
+  font-weight:1000!important;
+  letter-spacing:.035em!important;
+  box-shadow:0 2px 6px rgba(175,105,0,.12)!important;
+}
+.hc-tableau-standalone .tb-status-chip.is-search{
+  border-color:#55a6d2!important;
+  background:#bfe6fb!important;
+  color:#145c85!important;
+}
+.tb-wheelchair-level{
+  color:#0b6470;
+  font-size:.88rem;
+  line-height:1;
+  font-weight:1000;
+}
+.tb-entry.is-search .tb-wheelchair-level{color:#276b94}
+.tb-wheelchair-service{
+  display:block;
+  margin-top:7px;
+  color:#123f48;
+  font-size:.94rem;
+  line-height:1.12;
+  font-weight:1000;
+}
+.tb-wheelchair-landmark{
+  display:block;
+  margin-top:3px;
+  color:#456a70;
+  font-size:.76rem;
+  line-height:1.18;
+  font-weight:850;
+}
+.tb-wheelchair-author{
+  display:block;
+  margin-top:4px;
+  color:#789095;
+  font-size:.55rem;
+  line-height:1;
+  font-weight:800;
+}
+.hc-tableau-standalone .tb-wheelchair-actions{
+  margin-top:8px!important;
+  gap:7px!important;
+}
+.hc-tableau-standalone .tb-take-primary{
+  min-height:46px!important;
+  border:1px solid #078065!important;
+  border-radius:13px!important;
+  background:linear-gradient(180deg,#12a985,#078267)!important;
+  color:#fff!important;
+  box-shadow:0 6px 13px rgba(4,111,86,.21)!important;
+}
+.hc-tableau-standalone .tb-take-primary span{
+  font-size:1rem!important;
+}
+.hc-tableau-standalone .tb-take-primary strong{
+  font-size:.86rem!important;
+  font-weight:1000!important;
+  letter-spacing:-.01em;
+}
+.hc-tableau-standalone .tb-wheelchair-secondary{
+  gap:7px!important;
+}
+.hc-tableau-standalone .tb-still-there,
+.hc-tableau-standalone .tb-report-missing{
+  min-height:34px!important;
+  padding:0 8px!important;
+  border-radius:10px!important;
+  box-shadow:none!important;
+}
+.hc-tableau-standalone .tb-still-there{
+  border-color:#9dcdc1!important;
+  background:#edf8f4!important;
+  color:#29665a!important;
+}
+.hc-tableau-standalone .tb-report-missing{
+  border-color:#e5c66f!important;
+  background:#fff8df!important;
+  color:#785a05!important;
+}
+.hc-tableau-standalone .tb-wheelchair-secondary .tb-still-there strong,
+.hc-tableau-standalone .tb-wheelchair-secondary .tb-report-missing strong{
+  font-size:.63rem!important;
+  line-height:1.08!important;
+  font-weight:950!important;
+}
+.hc-tableau-standalone .tb-wheelchair-secondary button>span{
+  font-size:.72rem!important;
+}
+.hc-tableau-standalone .tb-reactions.is-empty{
+  position:absolute!important;
+  top:37px!important;
+  right:8px!important;
+  min-height:0!important;
+  margin:0!important;
+  z-index:4!important;
+}
+.hc-tableau-standalone .tb-reactions.is-empty .tb-reaction-open{
+  width:24px!important;
+  height:24px!important;
+  min-width:24px!important;
+  min-height:24px!important;
+  opacity:.48!important;
+}
+.hc-tableau-standalone .tb-entry.is-resolved .tb-entry-body{
+  padding:7px 9px!important;
+}
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-hospital{
+  font-size:.92rem!important;
+}
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-priority{
+  margin-top:4px!important;
+}
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-service{
+  margin-top:4px!important;
+  font-size:.82rem!important;
+}
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-landmark,
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-author{
+  font-size:.56rem!important;
+}
+
+@media(max-width:430px){
+  .tb-wheelchair-hospital{font-size:1.02rem}
+  .tb-wheelchair-head time{font-size:.72rem}
+  .tb-wheelchair-service{font-size:.90rem}
+  .tb-wheelchair-landmark{font-size:.73rem}
+}
