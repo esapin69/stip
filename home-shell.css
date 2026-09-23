@@ -5727,3 +5727,41 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
 }
 
+
+
+/* 20260923-wheelchair-order1 — label, image, arrow; live badge anchored to image */
+.hc-wheelchair-shortcut{
+  grid-template-columns:minmax(0,1fr) 40px 20px!important;
+  padding:5px 10px 5px 12px!important;
+}
+.hc-wheelchair-shortcut-copy{
+  grid-column:1!important;
+  grid-row:1!important;
+}
+.hc-wheelchair-shortcut-icon{
+  grid-column:2!important;
+  grid-row:1!important;
+  position:relative!important;
+  overflow:visible!important;
+}
+.hc-wheelchair-shortcut-icon img,
+.hc-wheelchair-shortcut-icon svg{
+  border-radius:inherit!important;
+}
+.hc-wheelchair-shortcut-arrow{
+  grid-column:3!important;
+  grid-row:1!important;
+}
+.hc-wheelchair-shortcut-icon>.hc-home-live-badge{
+  top:-5px!important;
+  right:-5px!important;
+}
+@media(max-width:370px){
+  .hc-wheelchair-shortcut{
+    grid-template-columns:minmax(0,1fr) 36px 18px!important;
+  }
+  .hc-wheelchair-shortcut-icon{
+    width:36px!important;
+    height:36px!important;
+  }
+}
