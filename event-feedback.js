@@ -154,17 +154,94 @@
       .join(" ")
       .toLowerCase();
     if (/mobi_lit_medical|visite|médical|medical/.test(s)) return "medical";
-    if (/formation/.test(s)) return "training";
-    if (/stagiaire/.test(s)) return "intern";
+    if (/formation|training/.test(s)) return "training";
+    if (/stagiaire|stage/.test(s)) return "intern";
+    if (/réunion|reunion|briefing|staff/.test(s)) return "meeting";
     return "other";
   }
 
   function iconOf(kind, x = {}) {
     return (
       String(x.icon || "").trim() ||
-      { medical: "🩺", training: "🎓", intern: "👶", other: "📌" }[kind] ||
+      {
+        medical: "🩺",
+        training: "🎓",
+        intern: "👶",
+        meeting: "👥",
+        other: "📌",
+      }[kind] ||
       "📌"
     );
+  }
+
+  function feedbackProfile(kind) {
+    const profiles = {
+      medical: {
+        mode: "administrative",
+        rating: false,
+        reasonTitle: "PROBLÈME RENCONTRÉ",
+        reasons: [
+          ["cancelled", "Rendez-vous annulé"],
+          ["delay", "Retard important"],
+          ["location", "Lieu / adresse incorrecte"],
+          ["convocation", "Convocation manquante"],
+          ["organization", "Autre problème d’organisation"],
+        ],
+      },
+      training: {
+        mode: "rated",
+        rating: true,
+        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
+        reasons: [
+          ["content", "Contenu"],
+          ["facilitator", "Formateur"],
+          ["organization", "Organisation"],
+          ["schedule", "Horaires"],
+          ["usefulness", "Utilité"],
+          ["other", "Autre"],
+        ],
+      },
+      intern: {
+        mode: "rated",
+        rating: true,
+        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
+        reasons: [
+          ["reception", "Accueil"],
+          ["supervision", "Encadrement"],
+          ["autonomy", "Autonomie"],
+          ["organization", "Organisation"],
+          ["communication", "Communication"],
+          ["other", "Autre"],
+        ],
+      },
+      meeting: {
+        mode: "rated",
+        rating: true,
+        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
+        reasons: [
+          ["organization", "Organisation"],
+          ["schedule", "Horaires"],
+          ["usefulness", "Utilité"],
+          ["communication", "Communication"],
+          ["clarity", "Clarté"],
+          ["other", "Autre"],
+        ],
+      },
+      other: {
+        mode: "rated",
+        rating: true,
+        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
+        reasons: [
+          ["organization", "Organisation"],
+          ["schedule", "Horaires"],
+          ["communication", "Communication"],
+          ["usefulness", "Utilité"],
+          ["process", "Déroulement"],
+          ["other", "Autre"],
+        ],
+      },
+    };
+    return profiles[kind] || profiles.other;
   }
 
   function normalizeEvents() {
@@ -188,7 +265,10 @@
         endDate: date,
         time: allDay ? "Toute la journée" : [start, end].filter(Boolean).join("–"),
         location: String(x.location || "").trim(),
-        question: String(x.feedback_question || "").trim(),
+        question:
+          kind === "medical"
+            ? ""
+            : String(x.feedback_question || "").trim(),
         kind,
         icon: iconOf(kind, x),
         due: plusLocalMinutes(date, clock, 60),
@@ -403,6 +483,7 @@
     document.getElementById("hcEventFeedbackModal")?.remove();
     document.body.classList.add("hc-feedback-modal-open");
 
+    const profile = feedbackProfile(event.kind);
     const modal = document.createElement("div");
     modal.id = "hcEventFeedbackModal";
     modal.className = "hc-feedback-modal";
@@ -412,31 +493,54 @@
 
     const noteBlock =
       event.kind === "medical"
-        ? '<section class="hc-feedback-note hc-feedback-medical-safe"><strong>Retour administratif uniquement</strong><p class="hc-feedback-privacy">Aucun commentaire libre n’est demandé ni enregistré pour une visite médicale.</p></section>'
+        ? ""
         : '<section class="hc-feedback-note"><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Une information utile, si nécessaire"></textarea></section>';
-    const custom = event.question
+    const custom = event.question && event.kind !== "medical"
       ? `<section class="hc-feedback-question hc-feedback-custom" hidden><span>QUESTION LIÉE À CET ÉVÉNEMENT</span><strong>${esc(
           event.question,
         )}</strong><div class="hc-feedback-pair"><button type="button" data-custom="yes">Oui</button><button type="button" data-custom="no">Non</button></div></section>`
       : "";
 
-    modal.innerHTML = `<div class="hc-feedback-dialog">
+    const attendanceProblemLabel = profile.rating
+      ? "J’étais présent, mais…"
+      : "J’ai rencontré un problème";
+    const attendanceOkLabel = profile.rating
+      ? "Tout s’est bien déroulé"
+      : "Rendez-vous terminé sans problème";
+    const ratingBlock = profile.rating
+      ? \`<section class="hc-feedback-rating hc-feedback-rating-hero" hidden>
+          <div class="hc-feedback-rating-title"><span>APPRÉCIATION DE L’ÉVÉNEMENT</span><strong>Comment l’évaluer ?</strong></div>
+          <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
+            <button type="button" data-rating="1" aria-label="1 sur 5"><b>1</b></button>
+            <button type="button" data-rating="2" aria-label="2 sur 5"><b>2</b></button>
+            <button type="button" data-rating="3" aria-label="3 sur 5"><b>3</b></button>
+            <button type="button" data-rating="4" aria-label="4 sur 5"><b>4</b></button>
+            <button type="button" data-rating="5" aria-label="5 sur 5"><b>5</b></button>
+          </div>
+          <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
+          <small class="hc-feedback-rating-hint">Choisis une note, puis ce qui l’explique.</small>
+        </section>\`
+      : "";
+    const reasonBlock = \`<section class="hc-feedback-reason" hidden>
+      <span>\${esc(profile.reasonTitle)}</span>
+      <div class="hc-feedback-reason-options">
+        \${profile.reasons
+          .map(
+            ([code, label]) =>
+              \`<button type="button" data-reason="\${esc(code)}">\${esc(label)}</button>\`,
+          )
+          .join("")}
+      </div>
+    </section>\`;
+    const medicalBlock = profile.rating
+      ? ""
+      : '<section class="hc-feedback-medical-summary"><strong>Suivi administratif</strong><span>Aucune note ni information médicale n’est demandée.</span></section>';
+
+    modal.innerHTML = \`<div class="hc-feedback-dialog">
       <header class="hc-feedback-head">
         <div><small>RETOUR RAPIDE</small><h2 id="hcFeedbackTitle">Faire mon retour</h2></div>
         <button type="button" class="hc-feedback-close" aria-label="Fermer">×</button>
       </header>
-      <section class="hc-feedback-rating hc-feedback-rating-hero" aria-disabled="false">
-        <div class="hc-feedback-rating-title"><span>APPRÉCIATION GLOBALE</span><strong>Quelle note lui donner ?</strong></div>
-        <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
-          <button type="button" data-rating="1" aria-label="1 sur 5"><b>1</b></button>
-          <button type="button" data-rating="2" aria-label="2 sur 5"><b>2</b></button>
-          <button type="button" data-rating="3" aria-label="3 sur 5"><b>3</b></button>
-          <button type="button" data-rating="4" aria-label="4 sur 5"><b>4</b></button>
-          <button type="button" data-rating="5" aria-label="5 sur 5"><b>5</b></button>
-        </div>
-        <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
-        <small class="hc-feedback-rating-hint">Si tu étais présent, choisis une note.</small>
-      </section>
       <section class="hc-feedback-event">
         <span class="hc-feedback-event-icon" aria-hidden="true">${esc(event.icon)}</span>
         <div><strong>${esc(event.title)}</strong><p>${esc(
@@ -445,16 +549,19 @@
             .join(" · "),
         )}</p></div>
       </section>
+      ${medicalBlock}
       <div class="hc-feedback-section-separator"><span>COMMENT ÇA S’EST PASSÉ ?</span></div>
       <section class="hc-feedback-presence">
         <div class="hc-feedback-presence-options">
           <button type="button" data-attendance="absent"><span class="hc-feedback-choice-mark" aria-hidden="true">×</span><strong>Je n’étais pas présent</strong></button>
-          <button type="button" data-attendance="problem"><span class="hc-feedback-choice-mark" aria-hidden="true">!</span><strong>J’étais présent, mais…</strong></button>
-          <button type="button" data-attendance="ok"><span class="hc-feedback-choice-mark" aria-hidden="true">✓</span><strong>Tout s’est bien déroulé</strong></button>
+          <button type="button" data-attendance="problem"><span class="hc-feedback-choice-mark" aria-hidden="true">!</span><strong>${esc(attendanceProblemLabel)}</strong></button>
+          <button type="button" data-attendance="ok"><span class="hc-feedback-choice-mark" aria-hidden="true">✓</span><strong>${esc(attendanceOkLabel)}</strong></button>
         </div>
       </section>
       <div class="hc-feedback-following" hidden>
-        <section class="hc-feedback-question">
+        ${ratingBlock}
+        ${reasonBlock}
+        <section class="hc-feedback-question" data-follow-section hidden>
           <span>SUITE</span>
           <strong>Une suite est-elle nécessaire ?</strong>
           <div class="hc-feedback-pair">
@@ -504,6 +611,7 @@
 
     let attendance = "",
       rating = 0,
+      reasonCode = "",
       followUp = null,
       customAnswer = "",
       mailContext = null,
@@ -516,6 +624,8 @@
 
     const following = modal.querySelector(".hc-feedback-following"),
       ratingBox = modal.querySelector(".hc-feedback-rating"),
+      reasonBox = modal.querySelector(".hc-feedback-reason"),
+      followSection = modal.querySelector("[data-follow-section]"),
       customBox = modal.querySelector(".hc-feedback-custom"),
       submit = modal.querySelector(".hc-feedback-submit"),
       error = modal.querySelector(".hc-feedback-error"),
@@ -537,19 +647,35 @@
       document.body.classList.remove("hc-feedback-modal-open");
     };
 
-    const coreValid = () =>
-      !!attendance &&
-      (attendance === "absent" || rating > 0) &&
-      (attendance === "absent" || !event.question || !!customAnswer);
+    const coreValid = () => {
+      if (!attendance) return false;
+      if (attendance === "absent") return true;
+      if (profile.rating && (!rating || !reasonCode)) return false;
+      if (!profile.rating && attendance === "problem" && !reasonCode)
+        return false;
+      if (event.question && !customAnswer) return false;
+      return true;
+    };
 
     const feedbackBody = () => ({
       event_key: event.eventKey,
       attendance,
-      rating: attendance === "absent" ? null : rating,
+      rating:
+        attendance === "absent" || !profile.rating ? null : rating,
+      reason_code:
+        attendance === "absent" ||
+        (!profile.rating && attendance !== "problem")
+          ? null
+          : reasonCode || null,
       follow_up: followUp,
       custom_answer:
-        attendance === "absent" ? null : customAnswer || null,
-      note: note ? String(note.value || "").trim() || null : null,
+        attendance === "absent" || !profile.rating
+          ? null
+          : customAnswer || null,
+      note:
+        !profile.rating || !note
+          ? null
+          : String(note.value || "").trim() || null,
     });
 
     const finish = (message) => {
@@ -683,37 +809,58 @@
 
     const sync = () => {
       following.hidden = !attendance;
-      const ratingDisabled = attendance === "absent";
-      ratingBox.classList.toggle("is-na", ratingDisabled);
-      ratingBox.setAttribute("aria-disabled", ratingDisabled ? "true" : "false");
-      ratingBox.querySelectorAll("[data-rating]").forEach((b) => {
-        b.disabled = ratingDisabled;
-      });
-      const ratingHint = ratingBox.querySelector(".hc-feedback-rating-hint");
-      if (ratingHint)
-        ratingHint.textContent = ratingDisabled
-          ? "Pas de note si tu n’étais pas présent."
-          : rating
-            ? `Note sélectionnée : ${rating}/5`
-            : "Si tu étais présent, choisis une note.";
+
+      if (ratingBox)
+        ratingBox.hidden =
+          !profile.rating || !attendance || attendance === "absent";
+
+      const showReason =
+        !!attendance &&
+        attendance !== "absent" &&
+        ((profile.rating && rating > 0) ||
+          (!profile.rating && attendance === "problem"));
+      if (reasonBox) reasonBox.hidden = !showReason;
+
       if (customBox)
-        customBox.hidden = !attendance || attendance === "absent";
+        customBox.hidden =
+          !attendance ||
+          attendance === "absent" ||
+          !profile.rating ||
+          !rating ||
+          !reasonCode;
+
       if (attendance === "absent") {
         rating = 0;
+        reasonCode = "";
         customAnswer = "";
         modal
-          .querySelectorAll("[data-rating],[data-custom]")
+          .querySelectorAll("[data-rating],[data-reason],[data-custom]")
           .forEach((b) => b.classList.remove("selected", "current"));
       }
-      const valid = coreValid() && followUp !== null;
+
+      if (ratingBox) {
+        const ratingHint = ratingBox.querySelector(
+          ".hc-feedback-rating-hint",
+        );
+        if (ratingHint)
+          ratingHint.textContent = rating
+            ? `Note sélectionnée : ${rating}/5 · choisis ce qui l’explique.`
+            : "Choisis une note, puis ce qui l’explique.";
+      }
+
+      const validCore = coreValid();
+      if (followSection) followSection.hidden = !validCore;
+
+      const valid = validCore && followUp !== null;
       mailActions.hidden = !(valid && followUp === true) || !mailCompose.hidden;
-      if (followUp !== true && !mailCompose.hidden) resetMailFlow();
+      if ((!validCore || followUp !== true) && !mailCompose.hidden)
+        resetMailFlow();
       submit.hidden = followUp === null || (followUp === true && !nativeOpened);
       submit.textContent =
         followUp === true ? "Finaliser mon retour" : "Valider mon retour";
       submit.disabled = !valid || (followUp === true && !nativeOpened);
       modal.querySelectorAll("[data-mail-flow]").forEach((b) => {
-        b.disabled = !coreValid();
+        b.disabled = !validCore;
       });
       syncMailSelections();
     };
@@ -730,7 +877,18 @@
     modal.querySelectorAll("[data-attendance]").forEach((button) => {
       button.onclick = () => {
         const next = button.dataset.attendance || "";
-        if (attendance && attendance !== next) resetMailFlow();
+        if (attendance && attendance !== next) {
+          resetMailFlow();
+          rating = 0;
+          reasonCode = "";
+          customAnswer = "";
+          followUp = null;
+          modal
+            .querySelectorAll(
+              "[data-rating],[data-reason],[data-custom],[data-follow]",
+            )
+            .forEach((b) => b.classList.remove("selected", "current"));
+        }
         attendance = next;
         modal
           .querySelectorAll("[data-attendance]")
@@ -747,6 +905,16 @@
           b.classList.toggle("selected", value <= rating);
           b.classList.toggle("current", value === rating);
         });
+        sync();
+      };
+    });
+
+    modal.querySelectorAll("[data-reason]").forEach((button) => {
+      button.onclick = () => {
+        reasonCode = button.dataset.reason || "";
+        modal
+          .querySelectorAll("[data-reason]")
+          .forEach((b) => b.classList.toggle("selected", b === button));
         sync();
       };
     });
@@ -850,7 +1018,9 @@
         error.textContent =
           e?.message === "RETOUR_TROP_TOT"
             ? "Ce retour sera disponible une heure après la fin prévue."
-            : "Impossible d’enregistrer le retour. Réessaie.";
+            : e?.message === "RETOUR_MOTIF_REQUIS"
+              ? "Choisis ce qui explique ton retour."
+              : "Impossible d’enregistrer le retour. Réessaie.";
       }
     };
 
