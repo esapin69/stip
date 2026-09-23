@@ -473,14 +473,16 @@ async function teamSend(ctx:any,body:any){
       quantity=type==="spot"?inferWheelchairQuantity(text,wheelchair.quantity):1,
       building=String(wheelchair.building||"").trim().slice(0,32),
       level=String(wheelchair.level||"").trim().slice(0,24),
-      location=String(wheelchair.location||"").trim().slice(0,120);
+      location=String(wheelchair.location||"").trim().slice(0,120),
+      rawPersistence=String(wheelchair.persistence||"").trim().toLowerCase(),
+      persistence=["fast","normal","sheltered"].includes(rawPersistence)?rawPersistence:"normal";
     payload.wheelchair={
       type,
       status:"active",
       ...(building?{building}:{}),
       ...(level?{level}:{}),
       ...(location?{location}:{}),
-      ...(type==="spot"?{quantity_total:quantity,quantity_remaining:quantity,takes:[]}:{})
+      ...(type==="spot"?{quantity_total:quantity,quantity_remaining:quantity,takes:[],persistence}:{})
     }
   }
   const{data,error}=await db.from("stip_messages").insert({
