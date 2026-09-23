@@ -3741,7 +3741,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   opacity:.82!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-extra-separator.is-empty{
-  visibility:visible!important;
+  visibility:hidden!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-main .hc-shift-loading,
 .hc-calendar-driven-planning .hc-days-landscape .hc-shift-fallback{
@@ -3764,7 +3764,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   background:rgba(255,255,255,.92)!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot.is-empty{
-  visibility:visible!important;
+  visibility:hidden!important;
+  background:transparent!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip{
   box-sizing:border-box!important;
