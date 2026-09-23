@@ -86,6 +86,8 @@ Current non-negotiable invariants:
 - Every chat message and linked reply supports long-press reactions. Offer a compact quick row (`👍 ❤️ 😂 😮 😢 🙏`) plus an explicit “more” chooser. One reaction per agent per message; choosing the same emoji again removes it, choosing another replaces it.
 - Admins can delete any message, regardless of author, through bulk selection and the long-press message sheet. Non-admin server rules remain unchanged.
 - Message selection is model-driven: use delegated button controls keyed by message ID, never native checkbox/label state that can race with a rerender. While selection is active, hide the composer and keep the selection bar fixed and tappable above all content.
+- Mobile taps must remain stable during live refreshes: signatures use stable stored identifiers (never expiring signed URLs), quiet polling must not rebuild unchanged composer/feed DOM, and a pointer interaction blocks background rerenders until release.
+- Opening Chat STIP / Fauteuils lands at the bottom of the conversation so the latest messages are visible above the fixed composer. The primary stock action label is `Je récupère`.
 - The location finder must follow `visualViewport` so the Android/iOS keyboard never covers the search field or traps the results below it.
 - Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
 - Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
