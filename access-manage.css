@@ -312,3 +312,56 @@
   .access-terrain-levels button{padding-inline:7px!important;font-size:.72rem!important}
   .access-terrain-levels button:nth-child(2){min-width:96px!important}
 }
+
+/* 20260923-responsable-shortcut1 — same compact visual as the home Responsable shortcut */
+.access-responsable-shortcut-row{
+  width:100%;
+  display:flex;
+  justify-content:flex-end;
+  margin:10px 0 0;
+}
+.access-responsable-shortcut{
+  min-width:166px;
+  min-height:41px;
+  padding:0 15px 2px;
+  border:0;
+  border-bottom:3px solid #148ca5;
+  border-radius:0;
+  background:transparent;
+  color:#244f5f;
+  box-shadow:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font:inherit;
+  font-size:.86rem;
+  font-weight:950;
+  letter-spacing:.01em;
+  text-decoration:none;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.access-responsable-shortcut>b{
+  color:#148ca5;
+  font-size:1.12rem;
+  line-height:1;
+  transform:translateY(-1px);
+}
+.access-responsable-shortcut:active{
+  transform:translateY(1px);
+  opacity:.78;
+}
+.access-responsable-shortcut:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:3px;
+}
+@media(max-width:430px){
+  .access-responsable-shortcut{
+    min-width:160px;
+    min-height:40px;
+    font-size:.84rem;
+  }
+}
+
