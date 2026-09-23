@@ -8,6 +8,8 @@
   const state = {
     boot: window.STIPBootCache || null,
     done: new Set(),
+    hidden: new Set(),
+    hiddenOwner: "",
     doneLoaded: false,
     loadedAt: 0,
     loading: false,
@@ -28,6 +30,39 @@
 
   function token() {
     return localStorage.getItem(STORE) || "";
+  }
+
+  function hiddenOwner() {
+    const a = state.boot?.agent || window.STIPBootCache?.agent || {};
+    return String(a.id || a.source_key || "session");
+  }
+
+  function hiddenStoreKey() {
+    return `stip_event_feedback_hidden_v1:${hiddenOwner()}`;
+  }
+
+  function loadHidden() {
+    const owner = hiddenOwner();
+    if (state.hiddenOwner === owner) return;
+    state.hiddenOwner = owner;
+    try {
+      const raw = JSON.parse(localStorage.getItem(hiddenStoreKey()) || "[]");
+      state.hidden = new Set(Array.isArray(raw) ? raw.map(String) : []);
+    } catch {
+      state.hidden = new Set();
+    }
+  }
+
+  function saveHidden() {
+    try {
+      localStorage.setItem(hiddenStoreKey(), JSON.stringify([...state.hidden]));
+    } catch {}
+  }
+
+  function hideFeedbackCard(eventKey) {
+    loadHidden();
+    state.hidden.add(String(eventKey || ""));
+    saveHidden();
   }
 
   function parisStamp(d = new Date()) {
@@ -310,11 +345,14 @@
     if (!planning) return;
 
     if (!state.doneLoaded) return;
+    loadHidden();
 
     const passed = passedEvents();
     suppressMovedCards(passed);
 
-    const pending = passed.filter((x) => !state.done.has(x.eventKey));
+    const pending = passed.filter(
+      (x) => !state.done.has(x.eventKey) && !state.hidden.has(x.eventKey),
+    );
     let host = document.getElementById("hcEventFeedbackHost");
     if (!pending.length) {
       host?.remove();
@@ -387,6 +425,18 @@
         <div><small>RETOUR RAPIDE</small><h2 id="hcFeedbackTitle">Faire mon retour</h2></div>
         <button type="button" class="hc-feedback-close" aria-label="Fermer">×</button>
       </header>
+      <section class="hc-feedback-rating hc-feedback-rating-hero" aria-disabled="false">
+        <div class="hc-feedback-rating-title"><span>APPRÉCIATION GLOBALE</span><strong>Quelle note lui donner ?</strong></div>
+        <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
+          <button type="button" data-rating="1" aria-label="1 sur 5"><b>1</b></button>
+          <button type="button" data-rating="2" aria-label="2 sur 5"><b>2</b></button>
+          <button type="button" data-rating="3" aria-label="3 sur 5"><b>3</b></button>
+          <button type="button" data-rating="4" aria-label="4 sur 5"><b>4</b></button>
+          <button type="button" data-rating="5" aria-label="5 sur 5"><b>5</b></button>
+        </div>
+        <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
+        <small class="hc-feedback-rating-hint">Si tu étais présent, choisis une note.</small>
+      </section>
       <section class="hc-feedback-event">
         <span class="hc-feedback-event-icon" aria-hidden="true">${esc(event.icon)}</span>
         <div><strong>${esc(event.title)}</strong><p>${esc(
@@ -395,25 +445,13 @@
             .join(" · "),
         )}</p></div>
       </section>
+      <div class="hc-feedback-section-separator"><span>COMMENT ÇA S’EST PASSÉ ?</span></div>
       <section class="hc-feedback-presence">
-        <span>COMMENT ÇA S’EST PASSÉ ?</span>
         <div class="hc-feedback-presence-options">
-          <button type="button" data-attendance="absent">Je n’étais pas présent</button>
-          <button type="button" data-attendance="problem">J’étais présent, mais…</button>
-          <button type="button" data-attendance="ok">Tout s’est bien déroulé</button>
+          <button type="button" data-attendance="absent"><span class="hc-feedback-choice-mark" aria-hidden="true">×</span><strong>Je n’étais pas présent</strong></button>
+          <button type="button" data-attendance="problem"><span class="hc-feedback-choice-mark" aria-hidden="true">!</span><strong>J’étais présent, mais…</strong></button>
+          <button type="button" data-attendance="ok"><span class="hc-feedback-choice-mark" aria-hidden="true">✓</span><strong>Tout s’est bien déroulé</strong></button>
         </div>
-      </section>
-      <section class="hc-feedback-rating is-waiting" aria-disabled="true">
-        <span>APPRÉCIATION GLOBALE</span>
-        <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
-          <button type="button" data-rating="1" aria-label="1 sur 5" disabled>1</button>
-          <button type="button" data-rating="2" aria-label="2 sur 5" disabled>2</button>
-          <button type="button" data-rating="3" aria-label="3 sur 5" disabled>3</button>
-          <button type="button" data-rating="4" aria-label="4 sur 5" disabled>4</button>
-          <button type="button" data-rating="5" aria-label="5 sur 5" disabled>5</button>
-        </div>
-        <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
-        <small class="hc-feedback-rating-hint">Choisis d’abord comment ça s’est passé.</small>
       </section>
       <div class="hc-feedback-following" hidden>
         <section class="hc-feedback-question">
@@ -429,6 +467,7 @@
         <p class="hc-feedback-error" aria-live="polite"></p>
         <button type="button" class="hc-feedback-submit" disabled>Valider mon retour</button>
       </div>
+      <button type="button" class="hc-feedback-dismiss" data-feedback-dismiss>Masquer cette carte</button>
     </div>`;
 
     document.body.appendChild(modal);
@@ -452,20 +491,19 @@
 
     const sync = () => {
       following.hidden = !attendance;
-      const ratingDisabled = !attendance || attendance === "absent";
-      ratingBox.classList.toggle("is-waiting", !attendance);
-      ratingBox.classList.toggle("is-na", attendance === "absent");
+      const ratingDisabled = attendance === "absent";
+      ratingBox.classList.toggle("is-na", ratingDisabled);
       ratingBox.setAttribute("aria-disabled", ratingDisabled ? "true" : "false");
       ratingBox.querySelectorAll("[data-rating]").forEach((b) => {
         b.disabled = ratingDisabled;
       });
       const ratingHint = ratingBox.querySelector(".hc-feedback-rating-hint");
       if (ratingHint)
-        ratingHint.textContent = !attendance
-          ? "Choisis d’abord comment ça s’est passé."
-          : attendance === "absent"
-            ? "Pas de note si tu n’étais pas présent."
-            : "Choisis une note de 1 à 5.";
+        ratingHint.textContent = ratingDisabled
+          ? "Pas de note si tu n’étais pas présent."
+          : rating
+            ? `Note sélectionnée : ${rating}/5`
+            : "Si tu étais présent, choisis une note.";
       if (customBox)
         customBox.hidden = !attendance || attendance === "absent";
       if (attendance === "absent") {
@@ -484,6 +522,13 @@
     };
 
     modal.querySelector(".hc-feedback-close").onclick = close;
+    modal.querySelector("[data-feedback-dismiss]")?.addEventListener("click", () => {
+      if (!confirm("Masquer cette carte sans envoyer de retour ?")) return;
+      hideFeedbackCard(event.eventKey);
+      close();
+      render();
+      toast("Carte masquée");
+    });
 
     modal.querySelectorAll("[data-attendance]").forEach((button) => {
       button.onclick = () => {
@@ -579,6 +624,8 @@
   });
   window.addEventListener("stip:session-ended", () => {
     state.done.clear();
+    state.hidden.clear();
+    state.hiddenOwner = "";
     state.doneLoaded = false;
     state.boot = null;
     state.loadedAt = 0;
