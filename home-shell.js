@@ -736,16 +736,42 @@
   function moveWeek(step) {
     step = Math.sign(Number(step) || 0);
     if (!step) return;
-    state.weekOffset += step;
-    state.weekFull = state.weekOffset !== 0;
-    const navWeek = navigationWeek(),
+
+    const anchor =
+        document.querySelector(".hc-planning-week-subblock") ||
+        document.querySelector(".hc-planning-week-separator"),
+      anchorTop = anchor?.getBoundingClientRect?.().top,
       todayIso = parisIso();
+
+    // Sur la semaine en cours, la flèche gauche révèle d'abord les jours déjà
+    // passés (lu/ma, puis lu/ma/me le jeudi, etc.) au lieu de sauter directement
+    // à la semaine précédente.
+    if (step < 0 && state.weekOffset === 0 && !state.weekFull) {
+      state.weekFull = true;
+    } else {
+      state.weekOffset += step;
+      state.weekFull = state.weekOffset !== 0;
+    }
+
+    const navWeek = navigationWeek();
     state.dayFocus = navWeek.some((x) => x.iso === todayIso)
       ? todayIso
       : navWeek[0]?.iso || todayIso;
     state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
     state.renderSig = "";
     render();
+
+    if (Number.isFinite(anchorTop))
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          const next =
+            document.querySelector(".hc-planning-week-subblock") ||
+            document.querySelector(".hc-planning-week-separator");
+          if (!next) return;
+          const delta = next.getBoundingClientRect().top - anchorTop;
+          if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: "auto" });
+        }),
+      );
   }
   function dayCard(x, cls = "hc-day", compact = false) {
     const canonical = canonicalShift(x.code),
@@ -931,9 +957,8 @@
   }
   function weekWidget() {
     const w = selectedWeek(),
-      navWeek = navigationWeek(),
       loading = planningLoading(),
-      range = weekRangeLabel(navWeek);
+      range = weekRangeLabel(w);
     return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
   }
   function nativeFuture() {
@@ -2001,7 +2026,7 @@
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
