@@ -4058,3 +4058,123 @@
   line-height:1.05!important;
   text-align:center!important;
 }
+
+
+/* Chat STIP 20260923-reactions1 — WhatsApp-like reactions */
+.tb-reactions{
+  margin-top:6px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  flex-wrap:wrap;
+}
+.tb-reaction-chip{
+  min-height:26px;
+  padding:2px 7px;
+  border:1px solid #d7e3e5;
+  border-radius:999px;
+  background:#f7fafb;
+  color:#486b73;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  font:inherit;
+  box-shadow:none;
+}
+.tb-reaction-chip span{font-size:.78rem;line-height:1}
+.tb-reaction-chip b{
+  font-size:.52rem;
+  line-height:1;
+  font-weight:950;
+}
+.tb-reaction-chip.is-mine{
+  border-color:#9fd0d8;
+  background:#eaf7f8;
+  color:#176d7c;
+}
+
+.tb-reaction-wrap{
+  position:fixed;
+  z-index:9980;
+  inset:0;
+  padding:0 12px calc(14px + env(safe-area-inset-bottom));
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  background:rgba(11,30,36,.28);
+  backdrop-filter:blur(2px);
+}
+.tb-reaction-sheet{
+  width:min(100%,430px);
+  padding:10px;
+  border:1px solid rgba(42,91,101,.10);
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 18px 50px rgba(14,41,49,.24);
+}
+.tb-reaction-quick{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:4px;
+}
+.tb-reaction-quick button,
+.tb-reaction-more button{
+  min-width:0;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-radius:13px;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  font:inherit;
+  font-size:1.35rem;
+}
+.tb-reaction-quick button:active,
+.tb-reaction-more button:active{
+  background:#eef5f6;
+  transform:scale(.96);
+}
+.tb-reaction-more-toggle{
+  color:#56747b!important;
+  background:#f0f5f6!important;
+  font-size:1.2rem!important;
+  font-weight:900!important;
+}
+.tb-reaction-more{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid #e4ecee;
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:4px;
+  max-height:220px;
+  overflow:auto;
+}
+.tb-reaction-more[hidden]{display:none!important}
+.tb-reaction-delete{
+  width:100%;
+  min-height:42px;
+  margin-top:8px;
+  padding:0 12px;
+  border:0;
+  border-radius:12px;
+  background:#fff1f2;
+  color:#9e3038;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font:inherit;
+}
+.tb-reaction-delete strong{
+  font-size:.66rem;
+  font-weight:950;
+}
+
+@media(max-width:360px){
+  .tb-reaction-quick button,
+  .tb-reaction-more button{font-size:1.2rem}
+  .tb-reaction-more{grid-template-columns:repeat(5,minmax(0,1fr))}
+}
