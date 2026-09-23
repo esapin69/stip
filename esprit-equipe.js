@@ -417,7 +417,7 @@
             .slice(0, 2);
           for (const row of useful)
             details.push(
-              `${row.code} ${row.gap > 0 ? "+" : ""}${row.gap}`,
+              `${row.code} · ${row.gap < 0 ? "équipe plus légère" : "présence plus large"}`,
             );
         }
         const lead = significant[0];
@@ -432,7 +432,14 @@
           day,
           level: signal.level || "unknown",
           symbol: statusSymbol(signal.level, signal.symbol),
-          label: signal.label || "À regarder",
+          label:
+            signal.level === "critical"
+              ? "Point important"
+              : signal.level === "warning"
+                ? "À anticiper"
+                : signal.level === "ok"
+                  ? "Journée habituelle"
+                  : "À retenir",
           details: details.slice(0, 4),
           formationCount,
           traineeCount,
@@ -808,7 +815,20 @@
     const staff = state.staffingByDate.get(day);
     const base = baseShift(code);
     const shared = field()?.shiftStatus?.(staff, base);
-    if (shared) return shared;
+    if (shared)
+      return {
+        ...shared,
+        label:
+          shared.level === "critical"
+            ? "Équipe très légère"
+            : shared.level === "warning"
+              ? "Équipe plus légère"
+              : shared.level === "opportunity"
+                ? "Présence plus large"
+                : shared.level === "ok"
+                  ? "Présence habituelle"
+                  : "Pas encore analysé",
+      };
     if (!staff || staff?.available === false)
       return { level: "unknown", symbol: "○", label: "Pas encore analysé" };
 
@@ -821,10 +841,12 @@
     const severity = Number(row?.severity || 0);
     const gap = staffingRowGap(row);
     if (severity >= 4)
-      return { level: "critical", symbol: "🛑", label: "Ça coince" };
+      return { level: "critical", symbol: "🛑", label: "Équipe très légère" };
     if (gap < 0 || severity >= 2)
-      return { level: "warning", symbol: "⚠️", label: "À surveiller" };
-    return { level: "ok", symbol: "✔", label: "Rien ne coince" };
+      return { level: "warning", symbol: "⚠️", label: "Équipe plus légère" };
+    if (gap > 0)
+      return { level: "opportunity", symbol: "+", label: "Présence plus large" };
+    return { level: "ok", symbol: "✔", label: "Présence habituelle" };
   }
 
   function isChefItem(item) {
@@ -971,16 +993,7 @@
       },
       meta = SHIFT[base] || { label: base, time: "" },
       planRows = shiftPlanningRows(day, base),
-      staffRow = shiftStaffingRow(day, base),
-      targetValue = Number(staffRow?.target_count),
       present = planRows.length,
-      target = Number.isFinite(targetValue) ? targetValue : null,
-      gap =
-        staffRow?.gap != null && Number.isFinite(Number(staffRow.gap))
-          ? Number(staffRow.gap)
-          : target != null
-            ? present - target
-            : null,
       specialAgents = planRows.filter((item) => {
         const q = Number(item?.agents?.quotite);
         return adaptedShift(item?.code) || (Number.isInteger(q) && q < 100);
@@ -989,12 +1002,15 @@
       visibleContext = contextRows.slice(0, 10),
       hiddenContext = Math.max(0, contextRows.length - visibleContext.length),
       analysisText =
-        signal.detail ||
-        (signal.level === "ok"
-          ? "Aucun écart prioritaire détecté sur ce shift avec les données actuelles."
-          : signal.level === "unknown"
-            ? "Pas assez de données pour analyser ce shift correctement."
-            : signal.label || ""),
+        signal.level === "critical"
+          ? "La présence est nettement plus légère sur ce créneau. Le rythme peut être plus soutenu."
+          : signal.level === "warning"
+            ? "La présence est un peu plus légère sur ce créneau. Le rythme peut être plus soutenu."
+            : signal.level === "opportunity"
+              ? "Davantage de collègues sont prévus sur ce créneau si le planning reste inchangé."
+              : signal.level === "ok"
+                ? "La présence prévue est habituelle sur ce créneau."
+                : "Pas assez de données pour donner un repère fiable sur ce créneau.",
       symbol = statusSymbol(signal.level, signal.symbol);
 
     const stats =
@@ -1002,13 +1018,11 @@
       '<span><small>PRÉSENTS</small><b>' +
       esc(present) +
       "</b></span>" +
-      '<span><small>CIBLE FIXE</small><b>' +
-      esc(target == null ? "—" : target) +
+      '<span><small>REPÈRE</small><b>' +
+      esc(symbol) +
       "</b></span>" +
-      '<span class="' +
-      (gap == null ? "" : gap > 0 ? "positive" : gap < 0 ? "negative" : "neutral") +
-      '"><small>ÉCART FIXE</small><b>' +
-      esc(gap == null ? "—" : `${gap > 0 ? "+" : ""}${gap}`) +
+      '<span><small>À REPÉRER</small><b>' +
+      esc(specialAgents.length) +
       "</b></span>" +
       "</div>";
 
@@ -1200,9 +1214,9 @@
             item?.context?.code ||
             "",
         );
-      // Staffing and shift-scoped information already lives on the shift emoji,
-      // where it can be read with the relevant headcount and agents.
-      if (contextShift) continue;
+      // Internal staffing/compound wording belongs to the Responsable page.
+      // Esprit d'équipe keeps only an agent-facing translation of the situation.
+      if (["staffing", "compound"].includes(family) || contextShift) continue;
 
       const terrain = field()?.terrainItem?.(item),
         level = dayAssistantLevel(item),
@@ -1231,55 +1245,57 @@
         detail,
       });
     }
+    const staffingGaps = staffingRows(state.staffingByDate.get(day))
+      .map((row) => ({
+        code: baseShift(row?.shift_code || row?.shift || row?.code),
+        gap: staffingRowGap(row),
+      }))
+      .filter((row) => row.code && row.gap !== 0);
+    const lighter = staffingGaps.filter((row) => row.gap < 0);
+    const wider = staffingGaps.filter((row) => row.gap > 0);
+
+    if (lighter.length) {
+      const shifts = lighter.slice(0, 2).map((row) => row.code).join(" · ");
+      add({
+        type: "Effectif",
+        level:
+          Math.min(...lighter.map((row) => row.gap)) <= -2
+            ? "critical"
+            : "warning",
+        icon: "⚠️",
+        title: `Équipe plus légère${shifts ? ` sur ${shifts}` : ""}`,
+        detail: "Le rythme peut être plus soutenu sur ce créneau.",
+      });
+    } else if (wider.length) {
+      const shifts = wider.slice(0, 2).map((row) => row.code).join(" · ");
+      add({
+        type: "Effectif",
+        level: "opportunity",
+        icon: "+",
+        title: `Présence plus large${shifts ? ` sur ${shifts}` : ""}`,
+        detail: "Davantage de collègues sont prévus sur ce créneau.",
+      });
+    }
+
     return rows;
   }
 
   function dayAdvice(bundle, day) {
-    const assistant = assistantItemsForDate(bundle, day),
-      staff = state.staffingByDate.get(day),
-      proposals = assistant
-        .map((item) => {
-          const terrain = field()?.terrainItem?.(item);
-          return (
-            terrain?.proposal ||
-            item?.recommendation_text ||
-            item?.proposal ||
-            ""
-          );
-        })
-        .filter(Boolean),
-      gaps = staffingRows(staff)
+    const staff = state.staffingByDate.get(day),
+      deficits = staffingRows(staff)
         .map((row) => ({
           code: baseShift(row?.shift_code || row?.shift || row?.code),
           gap: staffingRowGap(row),
         }))
-        .filter((row) => row.code && row.gap !== 0),
-      deficits = gaps.filter((row) => row.gap < 0).sort((a, b) => a.gap - b.gap),
-      margins = gaps.filter((row) => row.gap > 0).sort((a, b) => b.gap - a.gap);
+        .filter((row) => row.code && row.gap < 0)
+        .sort((a, b) => a.gap - b.gap);
 
-    if (proposals.length) {
-      const maxSeverity = Math.max(0, ...assistant.map((item) => Number(item?.severity || 0)));
-      return {
-        text: proposals[0],
-        strength: maxSeverity >= 4 ? "strong" : maxSeverity >= 2 ? "moderate" : "suggestion",
-      };
-    }
-    if (deficits.length) {
-      const worst = deficits[0],
-        shifts = deficits.slice(0, 2).map((row) => `${row.code} ${row.gap}`).join(" · ");
-      return {
-        text: `Écart mesuré sur ${shifts}. Vérifier en priorité une répartition ou un renfort compatible avant les créneaux concernés.`,
-        strength: worst.gap <= -2 ? "strong" : "moderate",
-      };
-    }
-    if (margins.length) {
-      const best = margins[0];
-      return {
-        text: `Marge mesurée sur ${best.code} (+${best.gap}). Elle peut absorber une tâche flexible si l’activité réelle reste stable.`,
-        strength: "suggestion",
-      };
-    }
-    return null;
+    if (!deficits.length) return null;
+    const shifts = deficits.slice(0, 2).map((row) => row.code).join(" · ");
+    return {
+      text: `Si la charge devient difficile à absorber${shifts ? ` sur ${shifts}` : ""}, signale le point au chef d’équipe présent : son bouton d’appel est disponible plus haut.`,
+      strength: "moderate",
+    };
   }
 
   function teamDaySummary(bundle, day) {
@@ -1303,9 +1319,9 @@
         : "";
 
     return `<section class="team-day-summary status-${esc(level)}">
-      <header><span aria-hidden="true">${esc(statusSymbol(level, signal.symbol))}</span><div><small>INFOS DU JOUR</small><strong>${esc(signal.label || "À retenir")}</strong></div></header>
+      <header><span aria-hidden="true">${esc(statusSymbol(level, signal.symbol))}</span><div><small>REPÈRES DU JOUR</small><strong>À retenir aujourd’hui</strong></div></header>
       ${checklist}
-      ${advice ? `<div class="team-day-advice strength-${esc(advice.strength)}"><strong>À faire</strong><p>${esc(advice.text)}</p></div>` : ""}
+      ${advice ? `<div class="team-day-advice strength-${esc(advice.strength)}"><strong>Si besoin</strong><p>${esc(advice.text)}</p></div>` : ""}
     </section>`;
   }
 
@@ -1341,7 +1357,7 @@
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     const staffing =
         shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>',
-      body = staffing + weekControlsMarkup() + teamDaySummary(bundle, day);
+      body = weekControlsMarkup() + staffing + teamDaySummary(bundle, day);
     return dayContainer(
       day,
       `${items.length} présent${items.length > 1 ? "s" : ""}`,
