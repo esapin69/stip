@@ -1458,6 +1458,14 @@
   function homeModeNav() {
     const active = state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
+      todayRaw = new Intl.DateTimeFormat("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "Europe/Paris",
+      }).format(new Date()),
+      todayLabel = todayRaw.charAt(0).toUpperCase() + todayRaw.slice(1),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
@@ -1469,6 +1477,7 @@
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
+      <div class="hc-home-today-date" aria-label="Date du jour">${esc(todayLabel)}</div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
