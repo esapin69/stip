@@ -114,9 +114,9 @@ Any STIP surface that contains a legend must explain every informational icon, b
 - Keep complete legends compact; completeness must not turn them into oversized one-column blocks.
 
 
-- Terrain shortcut rules are curated by the app, not by asking the user to configure every floor. Keep at most four quick spots per level and prefer repeatable physical landmarks over exhaustive service lists.
-- Neuro `Bas escalier escargot · salle de pose` exists only on RDC. Cardio uses `Couloir` instead of `Entrée / hall` in the common shortcuts. HFME exposes both elevator sides on every floor; the isolated passerelle stays a 2e shortcut.
-- Ice/fire confidence is automatic. Do not ask the user to choose 🧊/🔥 in the publishing flow. Infer persistence from the selected shortcut/free text, then show the existing time-based freshness indicator on the active card; `Toujours là` resets its reference time.
+- Terrain shortcuts are curated automatically from the existing sourced `WHEELCHAIR_LOCATIONS` referential, then enriched by true field-only landmarks. Do not make the user configure every floor. Prefer a precise sourced hall/accueil/ascenseur over its generic equivalent and keep the visible set concise (up to five).
+- Neuro `Bas escalier escargot · salle de pose` exists only on RDC. HFME exposes both elevator sides on every floor; the isolated passerelle stays a 2e shortcut. Cardio RDC must retain its sourced `Entrée principale / hall`.
+- Ice/fire confidence is automatic. Do not ask the user to choose 🧊/🔥. Show 🧊 directly on fast/exposed shortcuts and 🔥 on sheltered/reliable shortcuts, infer persistence automatically, and keep the time-based freshness indicator on the active card; confirmation that the chairs are still there resets its reference time.
 
 - Optional note dialogs must never autofocus their textarea. Opening `Je n’ai pas trouvé` or the free-reply sheet must not open the mobile keyboard; the keyboard appears only after the user taps the free-text field.
 - The secondary presence check is phrased as an action (`Je confirme qu’il/ils sont là`). A successful check must show a visible confirmation beside the freshness timer with the confirmation time, author and `chrono relancé`, because `last_seen_at` resets the freshness reference.
