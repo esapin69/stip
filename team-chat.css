@@ -4863,3 +4863,168 @@
   .tb-persistence-pills{gap:6px}
   .tb-persistence-pills button{font-size:.64rem;padding-inline:3px}
 }
+
+
+/* 20260923-field-spots1 — multi-select terrain spots + mirrored confidence */
+.tb-field-spot-choices{
+  max-height:none!important;
+  overflow:visible!important;
+}
+.tb-field-spot-choices .tb-place-toggle{
+  position:relative;
+  display:grid!important;
+  grid-template-columns:30px minmax(0,1fr)!important;
+  align-items:center!important;
+  gap:8px!important;
+  min-height:58px!important;
+  padding:8px 10px!important;
+  border:1.5px solid #cbdfe0!important;
+  background:#f8fbfb!important;
+  color:#234f58!important;
+  transition:transform .12s ease,border-color .12s ease,background .12s ease,box-shadow .12s ease!important;
+}
+.tb-field-spot-choices .tb-place-toggle::after{
+  content:"";
+  position:absolute;
+  top:8px;
+  right:8px;
+  width:16px;
+  height:16px;
+  border:1.5px solid #b9ced1;
+  border-radius:50%;
+  background:#fff;
+}
+.tb-field-spot-choices .tb-place-toggle.is-selected{
+  border-color:#168f78!important;
+  background:linear-gradient(180deg,#f7fffc 0%,#e2f7f0 100%)!important;
+  box-shadow:0 5px 12px rgba(12,118,94,.12)!important;
+  transform:translateY(-1px);
+}
+.tb-field-spot-choices .tb-place-toggle.is-selected::after{
+  content:"✓";
+  display:grid;
+  place-items:center;
+  border-color:#168f78;
+  background:#168f78;
+  color:#fff;
+  font-size:.66rem;
+  font-weight:1000;
+}
+.tb-field-spot-choices .tb-place-toggle.is-featured{
+  grid-column:1 / -1;
+  min-height:64px!important;
+  border-color:#69b6a6!important;
+  background:linear-gradient(180deg,#ffffff 0%,#e9faf5 100%)!important;
+  box-shadow:0 5px 13px rgba(12,118,94,.10)!important;
+}
+.tb-field-spot-choices .tb-place-toggle.is-featured strong{
+  font-size:.75rem!important;
+  font-weight:1000!important;
+}
+.tb-place-icon{
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  border-radius:10px;
+  background:#eef5f5;
+  font-size:1.05rem;
+}
+.tb-place-toggle.is-featured .tb-place-icon{
+  background:#dff5ee;
+  font-size:1.18rem;
+}
+.tb-wizard-finish.tb-place-toggle{
+  position:relative;
+}
+.tb-wizard-finish.tb-place-toggle.is-selected{
+  border-color:#168f78!important;
+  background:#e7f7f2!important;
+}
+.tb-place-continue{
+  margin-top:10px!important;
+}
+.tb-place-continue:disabled{
+  opacity:.42!important;
+  pointer-events:none!important;
+}
+
+/* The questionnaire mirrors the user's mental model:
+   ice = may disappear quickly, fire = isolated / reliable. */
+.tb-persistence-pills.is-mirror{
+  grid-template-columns:1fr 1fr!important;
+  margin-top:2px;
+}
+.tb-persistence-pills.is-mirror button{
+  min-height:58px!important;
+  padding:8px 7px!important;
+}
+.tb-persistence-pills.is-mirror button span{
+  font-size:1.22rem!important;
+}
+.tb-persistence-pills.is-mirror button strong{
+  font-size:.68rem!important;
+  line-height:1.12!important;
+}
+.tb-persistence-pills.is-mirror .is-cold{
+  background:linear-gradient(135deg,#f5fdff 0%,#d5f2ff 58%,#f9feff 100%)!important;
+  border-color:#9edaf3!important;
+  color:#17648e!important;
+}
+.tb-persistence-pills.is-mirror .is-cold.is-selected{
+  background:linear-gradient(135deg,#dff7ff 0%,#82d5ff 58%,#f7feff 100%)!important;
+}
+.tb-persistence-pills.is-mirror .is-hot{
+  background:linear-gradient(135deg,#fff7d8 0%,#ffd46f 52%,#ff9b55 100%)!important;
+  border-color:#ffc276!important;
+  color:#8a310b!important;
+}
+.tb-persistence-pills.is-mirror .is-hot.is-selected{
+  background:linear-gradient(135deg,#ffe57a 0%,#ff9e44 58%,#ef4f35 100%)!important;
+  color:#6f2107!important;
+}
+
+/* Several selected locations stay visibly separate in the chat card. */
+.tb-wheelchair-locations{
+  display:grid;
+  gap:4px;
+  margin-top:7px;
+}
+.tb-wheelchair-locations span{
+  display:grid;
+  grid-template-columns:10px minmax(0,1fr);
+  align-items:start;
+  gap:4px;
+  padding:4px 7px;
+  border-radius:9px;
+  background:rgba(255,255,255,.72);
+  border:1px solid rgba(42,116,101,.12);
+  color:#315d64;
+  font-size:.70rem;
+  line-height:1.15;
+  font-weight:850;
+}
+.tb-wheelchair-locations b{
+  color:#12866f;
+  font-size:.76rem;
+  line-height:1;
+}
+
+@media(max-width:380px){
+  .tb-field-spot-choices{
+    grid-template-columns:1fr 1fr!important;
+    gap:6px!important;
+  }
+  .tb-field-spot-choices .tb-place-toggle{
+    min-height:56px!important;
+    padding-inline:7px!important;
+    grid-template-columns:26px minmax(0,1fr)!important;
+    gap:6px!important;
+  }
+  .tb-place-icon{
+    width:26px;
+    height:26px;
+    font-size:.94rem;
+  }
+  .tb-persistence-pills.is-mirror button strong{font-size:.62rem!important}
+}
