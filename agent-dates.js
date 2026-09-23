@@ -154,12 +154,22 @@
     ).length;
   }
   function renderList() {
-    const a = filtered(),
-      g = new Map();
+    const a = filtered()
+        .slice()
+        .sort(
+          (a, b) =>
+            String(a.date).localeCompare(String(b.date)) ||
+            String(a.time || "99:99").localeCompare(String(b.time || "99:99")) ||
+            String(a.person_name || "").localeCompare(
+              String(b.person_name || ""),
+              "fr",
+            ),
+        ),
+      months = new Map();
     a.forEach((x) => {
       const k = String(x.date).slice(0, 7);
-      if (!g.has(k)) g.set(k, []);
-      g.get(k).push(x);
+      if (!months.has(k)) months.set(k, []);
+      months.get(k).push(x);
     });
     if (!a.length) {
       $("#daList").innerHTML =
@@ -167,59 +177,75 @@
       return;
     }
     let out = "";
-    for (const v of g.values()) {
+    for (const monthItems of months.values()) {
+      const days = new Map();
+      monthItems.forEach((x) => {
+        const k = String(x.date).slice(0, 10);
+        if (!days.has(k)) days.set(k, []);
+        days.get(k).push(x);
+      });
       out +=
         '<section class="da-month"><div class="stip-section-separator is-compact"><span>' +
         esc(
-          dobj(v[0].date).toLocaleDateString("fr-FR", {
+          dobj(monthItems[0].date).toLocaleDateString("fr-FR", {
             month: "long",
             year: "numeric",
           }),
         ) +
-        "</span></div><div>";
-      for (const x of v) {
-        const sourceFocus = focus ? focus.split(":").pop() : "",
-          foc = !!focus && (x.id === focus || x.source_id === sourceFocus),
-          referent =
-            x.category === "intern" && x.meta?.referent
-              ? String(x.meta.referent).trim()
-              : "",
-          sub = referent ? "" : x.location || x.title || "";
+        '</span></div><div class="da-month-days">';
+      for (const [dayIso, dayItems] of days) {
+        const d = dobj(dayIso);
         out +=
-          '<button class="da-item ' +
-          (foc ? "focus" : "") +
-          '" data-id="' +
-          esc(x.id) +
-          '"><span class="da-date"><small>' +
+          '<section class="da-day-group"><span class="da-date da-date-group"><small>' +
           esc(
-            dobj(x.date)
+            d
               .toLocaleDateString("fr-FR", { weekday: "short" })
               .replace(".", ""),
           ) +
           "</small><b>" +
-          String(dobj(x.date).getDate()).padStart(2, "0") +
+          String(d.getDate()).padStart(2, "0") +
           "</b><em>" +
           esc(
-            dobj(x.date)
+            d
               .toLocaleDateString("fr-FR", { month: "short" })
               .replace(".", ""),
           ) +
-          '</em></span><span class="da-icon ' +
-          esc(x.category) +
-          '">' +
-          icon(x.category) +
-          '</span><span class="da-copy"><span class="da-top"><strong>' +
-          esc(x.person_name) +
-          '</strong><span class="da-tag ' +
-          esc(x.category) +
-          '">' +
-          esc(label(x.category)) +
-          "</span></span><p>" +
-          esc(x.time || x.title || "") +
-          "</p>" +
-          (referent ? '<span class="da-referent"><em>Référent</em><b>' + esc(referent) + "</b></span>" : "") +
-          (sub ? "<small>" + esc(sub) + "</small>" : "") +
-          '</span><span class="da-chev">›</span></button>';
+          '</em></span><div class="da-day-events">';
+        for (const x of dayItems) {
+          const sourceFocus = focus ? focus.split(":").pop() : "",
+            foc = !!focus && (x.id === focus || x.source_id === sourceFocus),
+            referent =
+              x.category === "intern" && x.meta?.referent
+                ? String(x.meta.referent).trim()
+                : "",
+            sub = referent ? "" : x.location || x.title || "";
+          out +=
+            '<button class="da-item da-item-event ' +
+            (foc ? "focus" : "") +
+            '" data-id="' +
+            esc(x.id) +
+            '"><span class="da-icon ' +
+            esc(x.category) +
+            '">' +
+            icon(x.category) +
+            '</span><span class="da-copy"><span class="da-top"><strong>' +
+            esc(x.person_name) +
+            '</strong><span class="da-tag ' +
+            esc(x.category) +
+            '">' +
+            esc(label(x.category)) +
+            "</span></span><p>" +
+            esc(x.time || x.title || "") +
+            "</p>" +
+            (referent
+              ? '<span class="da-referent"><em>Référent</em><b>' +
+                esc(referent) +
+                "</b></span>"
+              : "") +
+            (sub ? "<small>" + esc(sub) + "</small>" : "") +
+            '</span><span class="da-chev">›</span></button>';
+        }
+        out += "</div></section>";
       }
       out += "</div></section>";
     }
