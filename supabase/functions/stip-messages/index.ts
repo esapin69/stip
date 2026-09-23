@@ -606,6 +606,59 @@ async function teamTake(ctx:any,body:any){
   return{ok:true,taken,remaining:nextRemaining,total,taken_by_name:takenBy,taken_at:takenAt}
 }
 
+
+async function teamStillThere(ctx:any,body:any){
+  requireTeamWrite(ctx);
+  const conv=await teamConversation(ctx);
+  await purgeCurrentTableauRows(String(conv.id));
+  await purgePastStorageFolders(String(conv.id));
+  await purgePreviousTableauDays(String(conv.id));
+
+  const messageId=String(body.message_id||"").trim();
+  if(!messageId)throw Error("Signalement invalide.");
+
+  const{data:row,error}=await db.from("stip_messages")
+    .select("id,payload")
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id)
+    .maybeSingle();
+  if(error)throw error;
+  if(!row)throw Error("Ce signalement n’est plus disponible.");
+
+  const wheelchair=row?.payload?.wheelchair;
+  if(!wheelchair||wheelchair.type==="search")throw Error("Ce message n’est pas un fauteuil disponible.");
+  if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
+
+  const profile=await messageProfile(String(ctx.agent.id)),
+    seenAt=new Date().toISOString(),
+    seenBy=nick(ctx.agent,profile),
+    sightings=Array.isArray(wheelchair.sightings)?wheelchair.sightings.slice(-29):[],
+    nextWheelchair={
+      ...wheelchair,
+      sightings:[...sightings,{
+        seen_at:seenAt,
+        seen_by_agent_id:String(ctx.agent.id),
+        seen_by_name:seenBy
+      }],
+      last_seen_at:seenAt,
+      last_seen_by_agent_id:String(ctx.agent.id),
+      last_seen_by_name:seenBy
+    },
+    payload={...(row.payload||{}),wheelchair:nextWheelchair};
+
+  const update=await db.from("stip_messages")
+    .update({payload})
+    .eq("id",messageId)
+    .eq("conversation_id",conv.id);
+  if(update.error)throw update.error;
+
+  await db.from("stip_conversations")
+    .update({updated_at:seenAt})
+    .eq("id",conv.id);
+
+  return{ok:true,seen_at:seenAt,seen_by_name:seenBy}
+}
+
 async function teamDelete(ctx:any,body:any){
   const mode=requireTeamWrite(ctx),admin=mode==="admin";
   const conv=await teamConversation(ctx);
@@ -652,6 +705,7 @@ Deno.serve(async req=>{
     if(a==="team_send")return J(await teamSend(c,b));
     if(a==="team_resolve")return J(await teamResolve(c,b));
     if(a==="team_take")return J(await teamTake(c,b));
+    if(a==="team_still_there")return J(await teamStillThere(c,b));
     if(a==="team_delete")return J(await teamDelete(c,b));
     return J({error:"Action inconnue."},400)
   }catch(e){console.error(e);const m=errMsg(e);return J({error:m},/Session|autorisé|accès/i.test(m)?403:400)}
