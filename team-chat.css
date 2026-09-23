@@ -4240,3 +4240,46 @@
   opacity:.48!important;
   pointer-events:none!important;
 }
+
+
+/* 20260923-touch1 — stable mobile hit targets */
+.hc-tableau-standalone .tb-wheelchair-actions{
+  position:relative!important;
+  z-index:3!important;
+  isolation:isolate!important;
+  gap:10px!important;
+}
+.hc-tableau-standalone .tb-take-primary{
+  position:relative!important;
+  z-index:3!important;
+  min-height:54px!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+  user-select:none!important;
+}
+.hc-tableau-standalone .tb-wheelchair-secondary{
+  position:relative!important;
+  z-index:2!important;
+  gap:8px!important;
+}
+.hc-tableau-standalone .tb-still-there,
+.hc-tableau-standalone .tb-report-missing{
+  position:relative!important;
+  z-index:2!important;
+  min-height:38px!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+  user-select:none!important;
+}
+.hc-tableau-standalone button,
+.hc-tableau-standalone [role="button"]{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.hc-tableau-standalone .tb-entry-body{
+  position:relative!important;
+  isolation:isolate!important;
+}
+.hc-tableau-standalone .tb-input-dock{
+  z-index:30!important;
+}
