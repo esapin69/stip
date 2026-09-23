@@ -145,9 +145,11 @@ async function sendEventMail(c:any,b:any){
   const payload:any={from:STIP_MAIL_FROM,to,subject,text:body,headers:{'X-STIP-Event':text(b.event_key,180)}};
   if(cc.length)payload.cc=cc;
   if(context.sender.reply_to)payload.reply_to=context.sender.reply_to;
-  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${RESEND_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(payload)}),j=await r.json().catch(()=>({}));
+  const idem='stip-event-'+(await sha([String(c.agent.id),text(b.event_key,180),to.join(','),cc.join(','),subject,body].join('|'))).slice(0,48);
+  const r=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:`Bearer ${RESEND_API_KEY}`,'Content-Type':'application/json','Idempotency-Key':idem},body:JSON.stringify(payload)}),j=await r.json().catch(()=>({}));
   if(!r.ok||!j?.id)throw Error(`MAIL_PROVIDER_${r.status}`);
-  return{ok:true,id:j.id,to,cc,from:STIP_MAIL_FROM,reply_to:context.sender.reply_to||null};
+  const feedback=await submitEventFeedback(c,{...b,follow_up:true});
+  return{ok:true,id:j.id,to,cc,from:STIP_MAIL_FROM,reply_to:context.sender.reply_to||null,feedback};
 }
 async function managerEventFeedback(c:any){requireResp(c);const q=await db.from('stip_event_feedback').select('id,event_key,event_type,attendance,rating,follow_up,custom_answer,note,event_snapshot,submitted_at,agent:agents!stip_event_feedback_agent_id_fkey(id,source_key,nom,prenom,equipe,ghe)').order('submitted_at',{ascending:false}).limit(160);if(q.error)throw q.error;return q.data||[]}
 async function managerAgents(c:any){requireResp(c);const q=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,role,ghe,telephone').eq('actif',true).order('nom');if(q.error)throw q.error;return q.data||[]}
