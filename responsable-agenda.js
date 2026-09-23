@@ -191,6 +191,7 @@
     return [...m.values()].sort(
       (a, b) =>
         a.date.localeCompare(b.date) ||
+        String(a.time || "99:99").localeCompare(String(b.time || "99:99")) ||
         a.agentName.localeCompare(b.agentName, "fr"),
     );
   }
@@ -269,19 +270,42 @@
     );
   }
   function renderTimeline() {
-    const a = visibleEvents(),
-      groups = new Map();
+    const a = visibleEvents()
+        .slice()
+        .sort(
+          (a, b) =>
+            a.date.localeCompare(b.date) ||
+            String(a.time || "99:99").localeCompare(String(b.time || "99:99")) ||
+            a.agentName.localeCompare(b.agentName, "fr"),
+        ),
+      months = new Map();
     a.forEach((x) => {
       const k = x.date.slice(0, 7);
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k).push(x);
+      if (!months.has(k)) months.set(k, []);
+      months.get(k).push(x);
     });
     $("#taTimeline").innerHTML = a.length
-      ? [...groups.values()]
-          .map(
-            (group) =>
-              `<section class="ta-month"><h2>${esc(fmtMonth(group[0].date))}</h2><div class="ta-month-list">${group.map((x) => `<button type="button" class="ta-item ${String(x.id) === focusId ? "focus" : ""}" data-event="${esc(x.id)}" data-origin="${esc(x.origin)}"><span class="ta-item-date"><small>${esc(fmtDay(x.date))}</small><b>${dateObj(x.date).getDate().toString().padStart(2, "0")}</b><em>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""))}</em></span><span class="ta-item-icon ${x.type}">${x.icon}</span><span class="ta-item-main"><span class="ta-item-top"><strong>${esc(x.agentName)}</strong><span class="ta-tag ${x.type}">${esc(typeLabel(x.type))}</span></span><p>${esc(x.time || x.title)}</p>${x.place ? `<small>${esc(x.place)}</small>` : x.title && x.time ? `<small>${esc(x.title)}</small>` : ""}</span><span class="ta-chevron">›</span></button>`).join("")}</div></section>`,
-          )
+      ? [...months.values()]
+          .map((monthItems) => {
+            const days = new Map();
+            monthItems.forEach((x) => {
+              if (!days.has(x.date)) days.set(x.date, []);
+              days.get(x.date).push(x);
+            });
+            const dayHtml = [...days.entries()]
+              .map(([date, dayItems]) => {
+                const d = dateObj(date);
+                const eventsHtml = dayItems
+                  .map(
+                    (x) =>
+                      `<button type="button" class="ta-item ta-item-event ${String(x.id) === focusId ? "focus" : ""}" data-event="${esc(x.id)}" data-origin="${esc(x.origin)}"><span class="ta-item-icon ${x.type}">${x.icon}</span><span class="ta-item-main"><span class="ta-item-top"><strong>${esc(x.agentName)}</strong><span class="ta-tag ${x.type}">${esc(typeLabel(x.type))}</span></span><p>${esc(x.time || x.title)}</p>${x.place ? `<small>${esc(x.place)}</small>` : x.title && x.time ? `<small>${esc(x.title)}</small>` : ""}</span><span class="ta-chevron">›</span></button>`,
+                  )
+                  .join("");
+                return `<section class="ta-day-group"><span class="ta-item-date ta-day-date"><small>${esc(fmtDay(date))}</small><b>${d.getDate().toString().padStart(2, "0")}</b><em>${esc(d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""))}</em></span><div class="ta-day-items">${eventsHtml}</div></section>`;
+              })
+              .join("");
+            return `<section class="ta-month"><h2>${esc(fmtMonth(monthItems[0].date))}</h2><div class="ta-month-list">${dayHtml}</div></section>`;
+          })
           .join("")
       : '<div class="ta-empty">Aucune date à afficher avec ce filtre.</div>';
     $$("[data-event]").forEach(
