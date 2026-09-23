@@ -5,15 +5,16 @@
 .da-scope button{flex:0 0 auto;border:0;border-radius:10px;background:#fff;color:#087e96;padding:8px 9px;font-size:.65rem;font-weight:900;box-shadow:0 3px 9px rgba(18,72,88,.06)}
 @media(max-width:430px){.da-scope{align-items:flex-start;flex-direction:column}.da-scope button{align-self:flex-start}}
 
-/* Chronologie: une seule date visible par jour, tous les thèmes mélangés dessous. */
+/* Chronologie: chaque jour commence par le séparateur STIP canonique.
+   La date n'est plus centrée verticalement sur plusieurs événements. */
 .da-month-days{display:grid}
-.da-day-group{display:grid;grid-template-columns:54px minmax(0,1fr);gap:8px;align-items:stretch;border-top:1px solid #e4edef}
-.da-day-group:first-child{border-top:0}
-.da-date.da-date-group{height:auto;min-height:76px;align-self:stretch}
+.da-day-group{display:block;min-width:0}
+.da-day-separator{margin:12px 0 5px}
+.da-day-group:first-child .da-day-separator{margin-top:5px}
 .da-day-events{display:grid;min-width:0}
 .da-item.da-item-event{grid-template-columns:40px minmax(0,1fr) 18px;gap:8px;border-top:1px solid #e4edef}
 .da-item.da-item-event:first-child{border-top:0}
 @media(max-width:430px){
-  .da-day-group{grid-template-columns:50px minmax(0,1fr);gap:6px}
+  .da-day-separator{margin:10px 0 4px}
   .da-item.da-item-event{grid-template-columns:36px minmax(0,1fr) 16px;gap:6px}
 }
