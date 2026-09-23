@@ -113,9 +113,9 @@
     cardio: {
       common: [
         { label: "Ascenseur", value: "Ascenseur", icon: "🛗", persistence: "fast" },
+        { label: "Couloir", value: "Couloir", icon: "↔", persistence: "normal" },
         { label: "Tout au fond du couloir", value: "Tout au fond du couloir", icon: "↔", persistence: "sheltered" },
         { label: "Escalier", value: "Escalier", icon: "↕", persistence: "normal" },
-        { label: "Entrée / hall", value: "Entrée / hall", icon: "🚪", persistence: "fast" },
       ],
       featured: {
         RDC: [
@@ -128,23 +128,34 @@
         { label: "Couloir isolé", value: "Couloir isolé", icon: "↔", persistence: "sheltered" },
         { label: "Couloir de passage", value: "Couloir de passage", icon: "↔", persistence: "fast" },
         { label: "Ascenseur", value: "Ascenseur", icon: "🛗", persistence: "fast" },
-        { label: "Bas escalier escargot · salle de pose", value: "Bas escalier escargot · salle de pose", icon: "↕", persistence: "sheltered" },
       ],
       featured: {
+        RDC: [
+          { label: "Bas escalier escargot · salle de pose", value: "Bas escalier escargot · salle de pose", icon: "↕", persistence: "sheltered" },
+        ],
         "1er": [
           { label: "Local à fauteuils · côté imagerie", value: "Local à fauteuils · côté imagerie", icon: "🦽", persistence: "sheltered" },
         ],
       },
     },
     hfme: {
-      common: [],
+      common: [
+        { label: "Ascenseurs · côté salle de pose STIP", value: "Ascenseurs · côté salle de pose STIP", icon: "🛗", persistence: "fast" },
+        { label: "Ascenseurs · côté accouchées / bloc gynéco", value: "Ascenseurs · côté accouchées / bloc gynéco", icon: "🛗", persistence: "fast" },
+        { label: "Couloir", value: "Couloir", icon: "↔", persistence: "normal" },
+      ],
       featured: {
         "2e": [
-          { label: "Ascenseurs · salle de pose STIP", value: "Ascenseurs · salle de pose STIP", icon: "🛗", persistence: "fast" },
-          { label: "Ascenseurs · accouchées / bloc gynéco", value: "Ascenseurs · accouchées / bloc gynéco", icon: "🛗", persistence: "fast" },
           { label: "Passerelle · partie isolée", value: "Passerelle · partie isolée", icon: "↔", persistence: "sheltered" },
         ],
       },
+    },
+    a4: {
+      common: [
+        { label: "Ascenseur", value: "Ascenseur", icon: "🛗", persistence: "fast" },
+        { label: "Couloir", value: "Couloir", icon: "↔", persistence: "normal" },
+      ],
+      featured: {},
     },
   };
 
@@ -152,10 +163,16 @@
     const config = WHEELCHAIR_FIELD_SPOTS[String(buildingKey || "")] || {};
     const featured = Array.isArray(config.featured?.[level]) ? config.featured[level] : [];
     const common = Array.isArray(config.common) ? config.common : [];
+    const seen = new Set();
     return [
       ...featured.map((item) => ({ ...item, featured: true })),
       ...common.map((item) => ({ ...item, featured: false })),
-    ];
+    ].filter((item) => {
+      const key = String(item.value || item.label || "");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, 4);
   }
 
   const norm = (value) =>
@@ -1216,11 +1233,7 @@
     const type = payload.type === "search" ? "search" : "spot";
     const quantity = Math.max(1, Number(payload.quantity) || 1);
     let location = String(payload.location || "").trim();
-    let persistence = normalizeWheelchairPersistence(
-      payload.persistence || inferWheelchairPersistence({ quantity, location }),
-      quantity,
-    );
-    let persistenceTouched = payload.persistenceTouched === true;
+    let persistence = inferWheelchairPersistence({ quantity, location });
     const summary = structuredDraft({
       type,
       building,
@@ -1240,14 +1253,7 @@
         '<button type="button" class="tb-wizard-search compact" data-review-location>' +
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
-        '<div class="tb-review-context">' +
-          (type === "spot"
-            ? '<div class="tb-persistence-pills is-mirror" aria-label="Confiance probable">' +
-                '<button type="button" class="is-cold' + (persistence === "fast" ? " is-selected" : "") + '" data-review-persistence="fast" aria-pressed="' + (persistence === "fast" ? "true" : "false") + '"><span>🧊</span><strong>Peut partir vite</strong></button>' +
-                '<button type="button" class="is-hot' + (persistence === "sheltered" ? " is-selected" : "") + '" data-review-persistence="sheltered" aria-pressed="' + (persistence === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Valeur sûre · isolé</strong></button>' +
-              "</div>"
-            : "") +
-        "</div>" +
+
         '<label class="tb-precision-field"><span>Ajouter une précision <em>facultatif</em></span>' +
           '<textarea rows="3" maxlength="160" placeholder="Ex. caché derrière l’escalier, près des ascenseurs…"></textarea>' +
         "</label>" +
@@ -1259,35 +1265,13 @@
 
     const input = wrap.querySelector(".tb-precision-field textarea");
 
-    const syncPersistenceButtons = () => {
-      wrap.querySelectorAll("[data-review-persistence]").forEach((button) => {
-        const selected = String(button.dataset.reviewPersistence || "") === persistence;
-        button.classList.toggle("is-selected", selected);
-        button.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
-    };
-
-    wrap.querySelectorAll("[data-review-persistence]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const next = normalizeWheelchairPersistence(button.dataset.reviewPersistence, quantity);
-        const wasSelected = persistenceTouched && persistence === next;
-        persistence = wasSelected ? "normal" : next;
-        persistenceTouched = true;
-        payload.persistence = persistence;
-        payload.persistenceTouched = true;
-        syncPersistenceButtons();
-      });
-    });
-
     input?.addEventListener("input", () => {
-      if (persistenceTouched || type !== "spot") return;
-      const precision = String(input.value || "");
+      if (type !== "spot") return;
       persistence = inferWheelchairPersistence({
         quantity,
         location,
-        precision,
+        precision: String(input.value || ""),
       });
-      syncPersistenceButtons();
     });
 
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
@@ -1301,10 +1285,7 @@
       payload.level = found.level || payload.level || "";
       location = found.location || "";
       payload.location = location;
-      payload.persistence = persistenceTouched
-        ? persistence
-        : inferWheelchairPersistence({ quantity, location });
-      payload.persistenceTouched = persistenceTouched;
+      payload.persistence = inferWheelchairPersistence({ quantity, location });
       renderStructuredReview(wrap, payload, { back, close });
     });
 
@@ -1317,13 +1298,11 @@
           ...payload,
           location,
           precision: String(input?.value || "").trim(),
-          persistence: persistenceTouched
-            ? persistence
-            : inferWheelchairPersistence({
-                quantity,
-                location,
-                precision: String(input?.value || "").trim(),
-              }),
+          persistence: inferWheelchairPersistence({
+            quantity,
+            location,
+            precision: String(input?.value || "").trim(),
+          }),
         });
         if (sent) close?.(true);
         else {
@@ -1505,7 +1484,6 @@
               level,
               location:locations.join(" | "),
               persistence,
-              persistenceTouched:false,
             },
             { back:renderPlaces, close },
           );
@@ -2367,6 +2345,15 @@
     return minutes * 60 * 1000;
   }
 
+  function wheelchairFreshnessTimeLabel(ms = 0) {
+    const minutes = Math.max(0, Math.ceil(Number(ms || 0) / 60000));
+    if (minutes <= 0) return "à vérifier";
+    if (minutes < 60) return minutes + " min";
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    return rest ? hours + " h " + String(rest).padStart(2, "0") : hours + " h";
+  }
+
   function wheelchairFreshness(message = {}, wheelchair = {}, now = Date.now()) {
     const rawSeenAt = wheelchair?.last_seen_at || message?.created_at || "";
     const seenAt = Date.parse(String(rawSeenAt));
@@ -2374,44 +2361,36 @@
     const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : windowMs;
     const progress = Math.min(1, age / windowMs);
     const position = Math.round(progress * 100);
+    const remainingMs = Math.max(0, windowMs - age);
+
+    let stage = "frozen";
+    let icon = "🧊";
+    let label = "Très peu probable";
 
     if (progress < 0.24) {
-      return {
-        position,
-        stage: "hot",
-        icon: "🔥",
-        label: "Très fortes chances qu’il soit encore là",
-      };
+      stage = "hot";
+      icon = "🔥";
+      label = "Très probable";
+    } else if (progress < 0.50) {
+      stage = "warm";
+      icon = "🔥";
+      label = "Probable";
+    } else if (progress < 0.72) {
+      stage = "cooling";
+      icon = "🧊";
+      label = "À surveiller";
+    } else if (progress < 0.90) {
+      stage = "cold";
+      icon = "🧊";
+      label = "Peu probable";
     }
-    if (progress < 0.50) {
-      return {
-        position,
-        stage: "warm",
-        icon: "🔥",
-        label: "Fortes chances qu’il soit encore là",
-      };
-    }
-    if (progress < 0.72) {
-      return {
-        position,
-        stage: "cooling",
-        icon: "",
-        label: "Il peut encore être là",
-      };
-    }
-    if (progress < 0.90) {
-      return {
-        position,
-        stage: "cold",
-        icon: "🧊",
-        label: "Peu de chances qu’il soit encore là",
-      };
-    }
+
     return {
       position,
-      stage: "frozen",
-      icon: "🧊",
-      label: "Très peu de chances qu’il soit encore là",
+      stage,
+      icon,
+      label,
+      timeLabel: wheelchairFreshnessTimeLabel(remainingMs),
     };
   }
 
@@ -2423,10 +2402,12 @@
       '<div class="tb-wheelchair-freshness is-' + freshness.stage +
         '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) +
         '" data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) +
-        '" data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) + '">' +
+        '" data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) +
+        '" title="' + esc(freshness.label) + '">' +
         '<div class="tb-freshness-copy">' +
-          (freshness.icon ? '<span aria-hidden="true">' + freshness.icon + '</span>' : '') +
-          '<strong>' + esc(freshness.label) + '</strong>' +
+          '<span aria-hidden="true">' + freshness.icon + '</span>' +
+          '<strong>' + esc(freshness.timeLabel) + '</strong>' +
+          '<small>' + esc(freshness.label) + '</small>' +
         '</div>' +
         '<div class="tb-freshness-track" aria-hidden="true">' +
           '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%"></i>' +
@@ -2458,9 +2439,11 @@
       const copy = node.querySelector(".tb-freshness-copy");
       if (copy) {
         copy.innerHTML =
-          (freshness.icon ? '<span aria-hidden="true">' + freshness.icon + '</span>' : '') +
-          '<strong>' + esc(freshness.label) + '</strong>';
+          '<span aria-hidden="true">' + freshness.icon + '</span>' +
+          '<strong>' + esc(freshness.timeLabel) + '</strong>' +
+          '<small>' + esc(freshness.label) + '</small>';
       }
+      node.title = freshness.label;
 
       const marker = node.querySelector(".tb-freshness-marker");
       marker?.style.setProperty("--freshness-position", freshness.position + "%");
@@ -3288,7 +3271,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-swipe2",
+    build: "20260924-fieldspots2",
     mount,
     mountPreview,
     unmountFull,
