@@ -445,38 +445,8 @@
     padding-inline: 12px;
   }
 
-  .rr-event-card {
-    min-height: 108px;
-    grid-template-columns: 68px minmax(0, 1fr) 38px;
-    gap: 9px;
-    padding: 12px 10px;
-    border-radius: 22px;
-  }
-
-  .rr-event-icon {
-    width: 62px;
-    height: 62px;
-    border-radius: 18px;
-    font-size: 2rem;
-  }
-
-  .rr-event-copy > strong {
-    font-size: 1.02rem;
-  }
-
-  .rr-event-meta b,
-  .rr-event-referent {
-    min-height: 31px;
-    padding-inline: 8px;
-    font-size: 0.75rem;
-  }
-
-  .rr-event-chevron {
-    width: 36px;
-    height: 36px;
-    font-size: 1.45rem;
-  }
-
+  /* Les événements secondaires du planning gardent exactement le même
+     composant visuel sur mobile et grand écran. Ne pas les compacter. */
   .rr-week-card {
     padding-inline: 8px;
   }
