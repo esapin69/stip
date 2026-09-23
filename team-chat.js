@@ -1826,6 +1826,48 @@
     window.setTimeout(apply, 90);
   }
 
+  function wheelchairDisplayParts(message, wheelchair) {
+    const building = BUILDINGS.find(
+      (item) => item.key === String(wheelchair?.building || ""),
+    );
+    const hospital =
+      building?.label ||
+      String(wheelchair?.building || "").trim() ||
+      "STIP";
+
+    const level = String(wheelchair?.level || "").trim();
+    const rawLocation = String(wheelchair?.location || "").trim();
+    const locationParts = rawLocation
+      .split("·")
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    let service = locationParts.shift() || "";
+    let landmark = locationParts.join(" · ");
+
+    // Backward compatibility for older structured messages whose location
+    // only exists in the generated body.
+    if (!service && message?.body) {
+      const parts = cleanWheelchairText(message.body)
+        .split("·")
+        .map((part) => part.trim())
+        .filter(Boolean);
+      const hospitalIndex = parts.findIndex(
+        (part) => norm(part) === norm(hospital),
+      );
+      if (hospitalIndex >= 0) {
+        const afterHospital = parts.slice(hospitalIndex + 1);
+        if (level && afterHospital[0] && norm(afterHospital[0]) === norm(level)) {
+          afterHospital.shift();
+        }
+        service = afterHospital.shift() || "";
+        landmark = afterHospital.join(" · ");
+      }
+    }
+
+    return { hospital, level, service, landmark };
+  }
+
   function renderMessages() {
     const feed = state.root?.querySelector("[data-feed]");
     if (!feed) return;
@@ -1908,29 +1950,55 @@
 
       html.push(avatar(message.sender));
       html.push('<div class="tb-entry-body">');
-      html.push(
-        '<header><div><strong>' +
-          esc(agentName(message.sender)) +
-          "</strong>" +
-          (wheelchair
-            ? '<span class="tb-entry-role">' + (isSearchType ? "demande" : "signale") + "</span>"
-            : "") +
-          '</div><time><span aria-hidden="true">◷</span>' +
-          esc(fmtTime(message.created_at)) +
-          "</time></header>",
-      );
 
-      if (activeSignal) {
+      if (wheelchair) {
+        const detail = wheelchairDisplayParts(message, wheelchair);
         html.push(
-          '<span class="tb-status-chip' +
-            (searchSignal ? " is-search" : "") +
-            '">' +
-            (searchSignal
-              ? "Demande"
-              : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
-            "</span>",
+          '<div class="tb-wheelchair-head">' +
+            '<strong class="tb-wheelchair-hospital">' + esc(detail.hospital) + '</strong>' +
+            '<time><span aria-hidden="true">◷</span>' + esc(fmtTime(message.created_at)) + '</time>' +
+          '</div>',
+        );
+
+        html.push(
+          '<div class="tb-wheelchair-priority">' +
+            '<span class="tb-status-chip' + (searchSignal ? " is-search" : "") + '">' +
+              (isSearchType
+                ? "Je cherche"
+                : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
+            '</span>' +
+            (detail.level
+              ? '<strong class="tb-wheelchair-level">' + esc(detail.level) + '</strong>'
+              : '') +
+          '</div>',
+        );
+
+        if (detail.service) {
+          html.push(
+            '<strong class="tb-wheelchair-service">' + esc(detail.service) + '</strong>',
+          );
+        }
+        if (detail.landmark) {
+          html.push(
+            '<span class="tb-wheelchair-landmark">' + esc(detail.landmark) + '</span>',
+          );
+        }
+        html.push(
+          '<small class="tb-wheelchair-author">' +
+            esc(agentName(message.sender)) +
+            (isSearchType ? " cherche" : " · signalé") +
+          '</small>',
+        );
+      } else {
+        html.push(
+          '<header><div><strong>' +
+            esc(agentName(message.sender)) +
+            '</strong></div><time><span aria-hidden="true">◷</span>' +
+            esc(fmtTime(message.created_at)) +
+            '</time></header>',
         );
       }
+
       if (replyParent) {
         const parentWheelchair = replyParent.payload?.wheelchair || null;
         const parentLabel = parentWheelchair?.type === "search" ? "Demande" : "Signalement";
@@ -1942,11 +2010,10 @@
             '</small></div></div>',
         );
       }
-      if (message.body) {
-        const visibleBody = wheelchair ? cleanWheelchairText(message.body) : String(message.body);
+      if (message.body && !wheelchair) {
         html.push(
-          '<p class="' + (activeSignal || resolved ? "tb-location-line" : "") + (replyParent ? " tb-reply-body" : "") + '">' +
-            esc(visibleBody).replace(/\n/g, "<br>") +
+          '<p class="' + (replyParent ? "tb-reply-body" : "") + '">' +
+            esc(String(message.body)).replace(/\n/g, "<br>") +
           "</p>",
         );
       }
@@ -2590,7 +2657,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-reactions2",
+    build: "20260923-cards1",
     mount,
     mountPreview,
     unmountFull,
