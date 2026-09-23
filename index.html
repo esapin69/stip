@@ -12,9 +12,18 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260923-week-split-nav2" />
+    <meta name="stip-ui-build" content="20260924-week-split-live1" />
     <script id="stip-asset-self-heal">
       (() => {
+        let probeTimer = 0;
+        const isEditing = () => {
+          const el = document.activeElement;
+          return !!(
+            el &&
+            (el.matches?.("input, textarea, [contenteditable='true']") ||
+              document.body.classList.contains("hc-feedback-modal-open"))
+          );
+        };
         const heal = async () => {
           try {
             const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
@@ -22,12 +31,17 @@
               headers: { "cache-control": "no-cache" }
             });
             if (!response.ok) return;
-            const html = await response.text();
+            const source = await response.text();
             const latest =
-              html.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/i)?.[1] || "";
+              source.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/i)?.[1] || "";
             const current =
               document.querySelector('meta[name="stip-ui-build"]')?.content || "";
             if (!latest || !current || latest === current) return;
+            if (isEditing()) {
+              clearTimeout(probeTimer);
+              probeTimer = setTimeout(heal, 15000);
+              return;
+            }
             const key = "stip_asset_heal_" + latest;
             if (sessionStorage.getItem(key)) return;
             sessionStorage.setItem(key, "1");
@@ -36,7 +50,19 @@
             location.replace(url.pathname + url.search + url.hash);
           } catch {}
         };
-        addEventListener("load", () => setTimeout(heal, 80), { once: true });
+        const scheduleHeal = (delay = 120) => {
+          clearTimeout(probeTimer);
+          probeTimer = setTimeout(heal, delay);
+        };
+        addEventListener("load", () => scheduleHeal(80), { once: true });
+        addEventListener("pageshow", () => scheduleHeal(120));
+        addEventListener("focus", () => scheduleHeal(180));
+        document.addEventListener("visibilitychange", () => {
+          if (!document.hidden) scheduleHeal(180);
+        });
+        setInterval(() => {
+          if (!document.hidden) heal();
+        }, 300000);
       })();
     </script>
     <title>STIP — Portail équipe</title>
@@ -329,7 +355,7 @@
     <script src="quick-access.js?v=20260922-teamtab1"></script>
     <script src="public-access-request.js?v=20260831-access4"></script>
     <script src="team-chat.js?v=20260923-fieldspots1"></script>
-    <script src="home-shell.js?v=20260923-week-split-nav2"></script>
+    <script src="home-shell.js?v=20260924-week-split-live1"></script>
     <script src="event-feedback.js?v=20260923-week-nav-anchor1"></script>
     <script src="home-duty-chief.js?v=20260921-teamchief3"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
@@ -345,7 +371,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260923-week-split-nav2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260924-week-split-live1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
