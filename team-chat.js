@@ -140,8 +140,8 @@
     },
     hfme: {
       common: [
-        { label: "Ascenseurs · côté salle de pose STIP", value: "Ascenseurs · côté salle de pose STIP", icon: "🛗", persistence: "fast" },
-        { label: "Ascenseurs · côté accouchées / bloc gynéco", value: "Ascenseurs · côté accouchées / bloc gynéco", icon: "🛗", persistence: "fast" },
+        { label: "Ascenseurs · côté STIP", value: "Ascenseurs · côté STIP", icon: "🛗", persistence: "fast" },
+        { label: "Ascenseurs · côté bloc", value: "Ascenseurs · côté bloc", icon: "🛗", persistence: "fast" },
         { label: "Couloir", value: "Couloir", icon: "↔", persistence: "normal" },
       ],
       featured: {
@@ -166,6 +166,8 @@
     if (/couloir isole/.test(text)) return "corridor-isolated";
     if (/couloir de passage/.test(text)) return "corridor-passage";
     if (/couloir/.test(text)) return "corridor";
+    if (/ascenseur/.test(text) && /stip/.test(text)) return "lift-stip";
+    if (/ascenseur/.test(text) && /bloc/.test(text)) return "lift-bloc";
     if (/ascenseur/.test(text)) return "lift";
     if (/salon d accueil|accueil principal|salon accueil/.test(text)) return "welcome";
     if (/hall/.test(text)) return "hall";
@@ -3349,7 +3351,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-sourced-spots1",
+    build: "20260924-hfme-lifts1",
     mount,
     mountPreview,
     unmountFull,
