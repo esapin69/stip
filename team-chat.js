@@ -1793,6 +1793,78 @@
     document.body.appendChild(wrap);
   }
 
+  function openFreeReply(messageId) {
+    return new Promise((resolve) => {
+      const id = String(messageId || "");
+      const message = messageById(id);
+      if (!message || state.data?.can_write === false || state.data?.access_mode === "read") {
+        resolve(false);
+        return;
+      }
+
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      const preview = cleanWheelchairText(message.body || "") ||
+        (message.payload?.wheelchair ? "Signalement fauteuil" : "Message");
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-free-reply">' +
+          '<div class="tb-confirm-icon">↩</div>' +
+          '<h3>Répondre à ' + esc(agentName(message.sender)) + '</h3>' +
+          '<p class="tb-free-reply-parent">' + esc(preview).slice(0, 180) + '</p>' +
+          '<label class="tb-precision-field"><span>Réponse libre</span>' +
+            '<textarea rows="3" maxlength="500" placeholder="Écrire une réponse…"></textarea>' +
+          '</label>' +
+          '<button type="button" class="tb-reply-send" data-reply-send><span>Envoyer</span><b>↑</b></button>' +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        '</section>';
+
+      const close = (value = false) => {
+        wrap.remove();
+        resolve(value);
+      };
+      const input = wrap.querySelector("textarea");
+
+      wrap.querySelector("[data-reply-send]")?.addEventListener("click", async (event) => {
+        const button = event.currentTarget;
+        const body = String(input?.value || "").trim();
+        if (!body) {
+          input?.focus();
+          return;
+        }
+        button.disabled = true;
+        try {
+          if (!(await ensurePrivacy())) {
+            button.disabled = false;
+            return;
+          }
+          await api("team_send", {
+            body,
+            reply_to_id: id,
+          });
+          state.scrollToLatestPending = true;
+          await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+          close(true);
+        } catch (error) {
+          alert(error.message || "Réponse impossible.");
+          button.disabled = false;
+        }
+      });
+
+      input?.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" || event.shiftKey) return;
+        event.preventDefault();
+        wrap.querySelector("[data-reply-send]")?.click();
+      });
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) close(false);
+      });
+
+      document.body.appendChild(wrap);
+      setTimeout(() => input?.focus(), 40);
+    });
+  }
+
   async function deleteMessageFromSwipe(messageId) {
     const id = String(messageId || "");
     if (!id || state.deleteBusy) return;
@@ -1839,7 +1911,7 @@
 
     const resetSwipe = () => {
       if (swipeCard) swipeCard.style.transform = "";
-      swipeWrap?.classList.remove("is-delete", "is-dragging");
+      swipeWrap?.classList.remove("is-delete", "is-react", "is-reply", "is-dragging");
       swipeWrap = null;
       swipeCard = null;
       dx = 0;
@@ -1908,8 +1980,8 @@
           return;
         }
 
-        const canDelete = swipeCard?.dataset.canDelete === "1";
-        if (!canDelete || x <= 0) {
+        const canReply = swipeCard?.dataset.canReply === "1";
+        if (x < 0 && !canReply) {
           if (Math.abs(x) > 26) clearTimer();
           return;
         }
@@ -1921,10 +1993,15 @@
 
       if (!horizontal || !swipeCard) return;
       event.preventDefault();
-      dx = Math.max(0, Math.min(122, x));
-      swiped = dx > 12;
+
+      dx = Math.max(-122, Math.min(122, x));
+      swiped = Math.abs(dx) > 12;
       swipeCard.style.transform = "translate3d(" + dx + "px,0,0)";
-      swipeWrap?.classList.toggle("is-delete", dx > 0);
+
+      const canDelete = swipeCard.dataset.canDelete === "1";
+      swipeWrap?.classList.toggle("is-reply", dx < 0);
+      swipeWrap?.classList.toggle("is-delete", dx > 0 && canDelete);
+      swipeWrap?.classList.toggle("is-react", dx > 0 && !canDelete);
     }, { passive: false });
 
     const finish = async (event) => {
@@ -1934,15 +2011,25 @@
       const id = targetId;
       const finalDx = dx;
       const hadHorizontalSwipe = horizontal;
+      const canDelete = swipeCard?.dataset.canDelete === "1";
+      const canReply = swipeCard?.dataset.canReply === "1";
+
       active = false;
       targetId = "";
       pointerId = null;
       resetSwipe();
 
-      if (hadHorizontalSwipe && finalDx > 72 && id) {
-        swiped = true;
-        try { navigator.vibrate?.(10); } catch {}
-        await deleteMessageFromSwipe(id);
+      if (hadHorizontalSwipe && id) {
+        if (finalDx < -72 && canReply) {
+          swiped = true;
+          try { navigator.vibrate?.(10); } catch {}
+          await openFreeReply(id);
+        } else if (finalDx > 72) {
+          swiped = true;
+          try { navigator.vibrate?.(10); } catch {}
+          if (canDelete) await deleteMessageFromSwipe(id);
+          else openReactionPicker(id);
+        }
       }
 
       window.setTimeout(() => {
@@ -1952,7 +2039,7 @@
     };
 
     root.addEventListener("pointerup", finish);
-    root.addEventListener("pointercancel", (event) => {
+    root.addEventListener("pointercancel", () => {
       clearTimer();
       active = false;
       targetId = "";
@@ -2107,6 +2194,7 @@
       const id = String(message.id);
       const mine = String(message.sender_agent_id) === me;
       const canDeleteMessage = !!state.data?.admin || mine;
+      const canReplyMessage = state.data?.can_write !== false && state.data?.access_mode !== "read";
       const checked = state.selected.has(id);
       const photo = message.payload?.photo_url || "";
       const replyToId = String(message.payload?.reply_to_id || "");
@@ -2119,8 +2207,11 @@
       const stock = isSearchType ? { total: 1, remaining: 1 } : wheelchairStock(message);
 
       html.push(
-        '<div class="tb-message-swipe' + (canDeleteMessage ? " can-delete" : "") + '">' +
-          '<div class="tb-message-delete-bg" aria-hidden="true"><span>✕</span><strong>Supprimer</strong></div>' +
+        '<div class="tb-message-swipe' + (canDeleteMessage ? " can-delete" : " can-react") + (canReplyMessage ? " can-reply" : "") + '">' +
+          '<div class="tb-message-right-bg ' + (canDeleteMessage ? "is-delete-bg" : "is-react-bg") + '" aria-hidden="true">' +
+            '<span>' + (canDeleteMessage ? "✕" : "☺") + '</span><strong>' + (canDeleteMessage ? "Supprimer" : "Réagir") + '</strong>' +
+          '</div>' +
+          '<div class="tb-message-reply-bg" aria-hidden="true"><strong>Répondre</strong><span>↩</span></div>' +
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
           (activeSignal ? " is-wheelchair" : "") +
@@ -2130,6 +2221,7 @@
           '" data-message-id="' +
           esc(id) +
           '" data-can-delete="' + (canDeleteMessage ? "1" : "0") +
+          '" data-can-reply="' + (canReplyMessage ? "1" : "0") +
           '">',
       );
 
@@ -2288,14 +2380,19 @@
           const replyId = String(reply.id || "");
           const replyMine = String(reply.sender_agent_id || "") === me;
           const replyCanDelete = !!state.data?.admin || replyMine;
+          const replyCanReply = state.data?.can_write !== false && state.data?.access_mode !== "read";
           const replyChecked = state.selected.has(replyId);
           const replyBody = cleanWheelchairText(reply.body || "");
           html.push(
-            '<div class="tb-message-swipe tb-thread-swipe' + (replyCanDelete ? ' can-delete' : '') + '">' +
-              '<div class="tb-message-delete-bg" aria-hidden="true"><span>✕</span><strong>Supprimer</strong></div>' +
+            '<div class="tb-message-swipe tb-thread-swipe' + (replyCanDelete ? ' can-delete' : ' can-react') + (replyCanReply ? ' can-reply' : '') + '">' +
+              '<div class="tb-message-right-bg ' + (replyCanDelete ? 'is-delete-bg' : 'is-react-bg') + '" aria-hidden="true">' +
+                '<span>' + (replyCanDelete ? '✕' : '☺') + '</span><strong>' + (replyCanDelete ? 'Supprimer' : 'Réagir') + '</strong>' +
+              '</div>' +
+              '<div class="tb-message-reply-bg" aria-hidden="true"><strong>Répondre</strong><span>↩</span></div>' +
               '<article class="tb-thread-reply' + (replyChecked ? ' is-selected' : '') +
               '" data-message-id="' + esc(replyId) +
-              '" data-can-delete="' + (replyCanDelete ? '1' : '0') + '">'
+              '" data-can-delete="' + (replyCanDelete ? '1' : '0') +
+              '" data-can-reply="' + (replyCanReply ? '1' : '0') + '">'
           );
           if (state.selection) {
             html.push(
@@ -2858,7 +2955,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260923-swipe1",
+    build: "20260923-swipe2",
     mount,
     mountPreview,
     unmountFull,
