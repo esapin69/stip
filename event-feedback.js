@@ -444,10 +444,10 @@
       host.id = "hcEventFeedbackHost";
       host.className = "hc-feedback-pending";
       const before =
-        planning.querySelector(".hc-planning-week-separator") ||
         planning.querySelector(".hc-home-date-kicker") ||
         planning.querySelector(".hc-home-today-separator") ||
-        planning.querySelector(".hc-planning-details-subblock");
+        planning.querySelector(".hc-planning-details-subblock") ||
+        planning.querySelector(".hc-planning-week-separator");
       if (before) planning.insertBefore(host, before);
       else planning.prepend(host);
     }
