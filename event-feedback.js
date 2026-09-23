@@ -8,6 +8,7 @@
   const state = {
     boot: window.STIPBootCache || null,
     done: new Set(),
+    doneLoaded: false,
     loadedAt: 0,
     loading: false,
   };
@@ -256,6 +257,7 @@
       state.done = new Set(
         (r.items || []).map((x) => String(x.event_key || "")).filter(Boolean),
       );
+      state.doneLoaded = true;
       state.loadedAt = Date.now();
     } catch {
       return;
@@ -306,6 +308,8 @@
       ".hc-home-pane-planning .hc-planning-group",
     );
     if (!planning) return;
+
+    if (!state.doneLoaded) return;
 
     const passed = passedEvents();
     suppressMovedCards(passed);
@@ -560,6 +564,7 @@
   });
   window.addEventListener("stip:session-ended", () => {
     state.done.clear();
+    state.doneLoaded = false;
     state.boot = null;
     state.loadedAt = 0;
     document.getElementById("hcEventFeedbackHost")?.remove();
