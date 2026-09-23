@@ -194,23 +194,16 @@
         ) +
         '</span></div><div class="da-month-days">';
       for (const [dayIso, dayItems] of days) {
-        const d = dobj(dayIso);
+        const d = dobj(dayIso),
+          dayLabel = d.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          });
         out +=
-          '<section class="da-day-group"><span class="da-date da-date-group"><small>' +
-          esc(
-            d
-              .toLocaleDateString("fr-FR", { weekday: "short" })
-              .replace(".", ""),
-          ) +
-          "</small><b>" +
-          String(d.getDate()).padStart(2, "0") +
-          "</b><em>" +
-          esc(
-            d
-              .toLocaleDateString("fr-FR", { month: "short" })
-              .replace(".", ""),
-          ) +
-          '</em></span><div class="da-day-events">';
+          '<section class="da-day-group"><div class="stip-section-separator da-day-separator"><span>' +
+          esc(dayLabel) +
+          '</span></div><div class="da-day-events">';
         for (const x of dayItems) {
           const sourceFocus = focus ? focus.split(":").pop() : "",
             foc = !!focus && (x.id === focus || x.source_id === sourceFocus),
