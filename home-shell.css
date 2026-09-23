@@ -3752,7 +3752,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot{
   box-sizing:border-box!important;
-  width:100%!important;
+  width:calc(100% - 8px)!important;
   height:20px!important;
   min-height:20px!important;
   display:flex!important;
@@ -3760,6 +3760,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   justify-content:center!important;
   gap:3px!important;
   overflow:visible!important;
+  margin-inline:auto!important;
+  border-radius:7px!important;
+  background:rgba(255,255,255,.92)!important;
 }
 .hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot.is-empty{
   visibility:hidden!important;
@@ -3800,17 +3803,48 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
 }
-.hc-calendar-driven-planning .hc-days-landscape .code-m{--week-shift-accent:var(--stip-shift-m)}
-.hc-calendar-driven-planning .hc-days-landscape .code-j{--week-shift-accent:var(--stip-shift-j)}
-.hc-calendar-driven-planning .hc-days-landscape .code-j4{--week-shift-accent:var(--stip-shift-j4)}
-.hc-calendar-driven-planning .hc-days-landscape .code-s{--week-shift-accent:var(--stip-shift-s)}
-.hc-calendar-driven-planning .hc-days-landscape .code-n{--week-shift-accent:var(--stip-shift-n)}
-.hc-calendar-driven-planning .hc-days-landscape .rest{--week-shift-accent:#8797a1}
-.hc-calendar-driven-planning .hc-days-landscape .pending{--week-shift-accent:#9ba8ae}
-.hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape .hc-day-head{
-  background:#f2f5f6!important;
-  color:#153f50!important;
+.hc-calendar-driven-planning .hc-days-landscape .code-m{
+  --week-shift-accent:var(--stip-shift-m);
+  background:var(--stip-shift-m-soft)!important;
+  border-color:var(--stip-shift-m)!important;
 }
+.hc-calendar-driven-planning .hc-days-landscape .code-m .hc-day-head{background:var(--stip-shift-m)!important;color:#fff!important}
+.hc-calendar-driven-planning .hc-days-landscape .code-j{
+  --week-shift-accent:var(--stip-shift-j);
+  background:var(--stip-shift-j-soft)!important;
+  border-color:var(--stip-shift-j)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .code-j .hc-day-head{background:var(--stip-shift-j)!important;color:#fff!important}
+.hc-calendar-driven-planning .hc-days-landscape .code-j4{
+  --week-shift-accent:var(--stip-shift-j4);
+  background:var(--stip-shift-j4-soft)!important;
+  border-color:var(--stip-shift-j4)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .code-j4 .hc-day-head{background:var(--stip-shift-j4)!important;color:#fff!important}
+.hc-calendar-driven-planning .hc-days-landscape .code-s{
+  --week-shift-accent:var(--stip-shift-s);
+  background:var(--stip-shift-s-soft)!important;
+  border-color:var(--stip-shift-s)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .code-s .hc-day-head{background:var(--stip-shift-s)!important;color:var(--stip-shift-s-ink)!important}
+.hc-calendar-driven-planning .hc-days-landscape .code-n{
+  --week-shift-accent:var(--stip-shift-n);
+  background:var(--stip-shift-n-soft)!important;
+  border-color:var(--stip-shift-n)!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .code-n .hc-day-head{background:var(--stip-shift-n)!important;color:#fff!important}
+.hc-calendar-driven-planning .hc-days-landscape .rest{
+  --week-shift-accent:#8797a1;
+  background:#f1f4f5!important;
+  border-color:#8797a1!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .rest .hc-day-head{background:#84939d!important;color:#fff!important}
+.hc-calendar-driven-planning .hc-days-landscape .pending{
+  --week-shift-accent:#9ba8ae;
+  background:#f5f7f8!important;
+  border-color:#9ba8ae!important;
+}
+.hc-calendar-driven-planning .hc-days-landscape .pending .hc-day-head{background:#8d9aa2!important;color:#fff!important}
 .hc-calendar-driven-planning .hc-days-landscape .hc-day-landscape.selected{
   z-index:6!important;
   transform:translateY(-4px) scale(1.10)!important;
