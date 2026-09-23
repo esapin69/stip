@@ -112,3 +112,8 @@ Any STIP surface that contains a legend must explain every informational icon, b
 - If the same concept appears in multiple sections, explain it once in the page legend.
 - Navigation and action controls that are already self-explanatory or labelled (back, refresh, chevrons, phone, calendar action buttons) are controls, not legend entries.
 - Keep complete legends compact; completeness must not turn them into oversized one-column blocks.
+
+
+- Terrain shortcut rules are curated by the app, not by asking the user to configure every floor. Keep at most four quick spots per level and prefer repeatable physical landmarks over exhaustive service lists.
+- Neuro `Bas escalier escargot · salle de pose` exists only on RDC. Cardio uses `Couloir` instead of `Entrée / hall` in the common shortcuts. HFME exposes both elevator sides on every floor; the isolated passerelle stays a 2e shortcut.
+- Ice/fire confidence is automatic. Do not ask the user to choose 🧊/🔥 in the publishing flow. Infer persistence from the selected shortcut/free text, then show the existing time-based freshness indicator on the active card; `Toujours là` resets its reference time.
