@@ -1440,7 +1440,6 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
-        responsable: "responsable",
         tableau: "fauteuils",
       }[mode] || "home"
     );
@@ -1452,7 +1451,6 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
-        responsable: "responsable",
         fauteuils: "tableau",
       }[String(route || "home")] || ""
     );
@@ -1464,10 +1462,11 @@
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
       ];
-    if (has("responsable"))
-      items.push({ key: "responsable", label: "Responsable", art: ICON.responsable, mode: "home" });
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
+    const responsableTab = has("responsable")
+      ? '<div class="hc-responsable-tab-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>'
+      : "";
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
       <div class="hc-home-top-tools">
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
@@ -1476,6 +1475,7 @@
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`)
         .join("")}</nav>
+      ${responsableTab}
     </section>`;
   }
 
@@ -1977,8 +1977,6 @@
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
       return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v1" loading="eager"></iframe></section>`;
-    if (state.homeMode === "responsable" && has("responsable"))
-      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="responsable.html?embed=home-v1" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
@@ -2014,46 +2012,6 @@
     setTimeout(setup, 0);
   }
 
-  function bindEmbeddedResponsable(root) {
-    const frame = root?.querySelector?.("#hcResponsableFrame");
-    if (!frame || frame.dataset.stipBound === "1") return;
-    frame.dataset.stipBound = "1";
-    let observer = null;
-    const setup = () => {
-      try {
-        const doc = frame.contentDocument,
-          win = frame.contentWindow;
-        if (!doc || !win) return;
-        if (!/\/responsable\.html$/i.test(win.location.pathname)) {
-          location.href = win.location.href;
-          return;
-        }
-        const top = doc.querySelector(".resp-top");
-        if (top) {
-          top.hidden = true;
-          top.style.display = "none";
-        }
-        doc.body?.classList.add("stip-home-embedded");
-        const fit = () => {
-          const height = Math.max(
-            doc.body?.scrollHeight || 0,
-            doc.documentElement?.scrollHeight || 0,
-          );
-          frame.style.height = `${Math.max(680, height + 4)}px`;
-        };
-        fit();
-        observer?.disconnect?.();
-        if ("ResizeObserver" in window && doc.body) {
-          observer = new ResizeObserver(fit);
-          observer.observe(doc.body);
-        }
-        setTimeout(fit, 100);
-        setTimeout(fit, 600);
-      } catch {}
-    };
-    frame.addEventListener("load", setup);
-    setTimeout(setup, 0);
-  }
 
   function render() {
     const root = $("#homeView .hs-home");
@@ -2062,11 +2020,7 @@
     // Embedded live pages stay mounted during background refreshes so their
     // current tab, scroll position and open sheets are not reset.
     const embeddedFrame =
-      state.homeMode === "team"
-        ? root.querySelector("#hcTeamFrame")
-        : state.homeMode === "responsable"
-          ? root.querySelector("#hcResponsableFrame")
-          : null;
+      state.homeMode === "team" ? root.querySelector("#hcTeamFrame") : null;
     if (embeddedFrame) {
       const bell = root.querySelector(".hc-profile-bell"),
         count = notifications().length + Number(window.STIPMessagesUnread || 0);
@@ -2162,7 +2116,6 @@
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
     if (state.homeMode === "team") bindEmbeddedTeam(root);
-    if (state.homeMode === "responsable") bindEmbeddedResponsable(root);
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
@@ -2429,7 +2382,12 @@
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
     loadDismissedNotifications();
-    const routedMode = homeModeForRoute(window.STIPRouter?.get?.() || "home");
+    const routedRoute = window.STIPRouter?.get?.() || "home";
+    if (routedRoute === "responsable") {
+      location.replace("responsable.html");
+      return;
+    }
+    const routedMode = homeModeForRoute(routedRoute);
     if (routedMode) state.homeMode = routedMode;
     try {
       const quick = new URLSearchParams(location.search).get("quick") || "",
@@ -2546,8 +2504,12 @@
     render();
   });
   window.addEventListener("stip:route", (event) => {
-    const route = String(event?.detail?.route || "home"),
-      next = homeModeForRoute(route);
+    const route = String(event?.detail?.route || "home");
+    if (route === "responsable") {
+      location.href = "responsable.html";
+      return;
+    }
+    const next = homeModeForRoute(route);
     if (!next) return;
     if (next === "tableau" && !has("messages")) {
       window.STIPRouter?.set?.("home", { replace: true });
