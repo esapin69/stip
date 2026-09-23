@@ -80,7 +80,9 @@ Current non-negotiable invariants:
 - The composer exposes two equal compact mode tabs: `J’ai vu` and `Je cherche`. Do not add an `ACTION` heading or explanatory subtitles under those tabs.
 - The location chooser stays compact: four building choices around one central `Service / repère` action.
 - Do not duplicate direct service/repère search inside every later wizard step. Nested steps are building → quantity/level → place, with short labels.
-- Building discovery uses large tappable, horizontally scrollable profile-style cards with a slight stagger. Do not repeat `Rien à signaler` on every building; show one global empty state and one focused empty state only when a building is opened.
+- Do not render a separate building dashboard above the feed. Building selection exists only in the composer.
+- In `Je cherche` mode, selecting a building is sufficient and makes the message ready to send; do not force a level/service/location step.
+- Active availability cards use one dominant recovery action plus two compact secondary actions: `Toujours là` and `Pas trouvé`. `Toujours là` stores a timestamped sighting history and shows only the latest sighting inline.
 - The location finder must follow `visualViewport` so the Android/iOS keyboard never covers the search field or traps the results below it.
 - Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
 - Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
