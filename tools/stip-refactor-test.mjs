@@ -284,9 +284,11 @@ check(
   'Le jour actif de la semaine a perdu son regroupement visuel.'
 );
 check(
-  homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button') &&
-  homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-day-number'),
-  'Le calendrier mensuel permanent a perdu son gabarit dédié.'
+  home.includes('stip-month-calendar') &&
+  home.includes('hc-date-jump-grid stip-month-grid') &&
+  patterns.includes('.stip-month-calendar .stip-month-day{') &&
+  patterns.includes('.stip-month-calendar .stip-month-day-number'),
+  'Le calendrier mensuel permanent a quitté le gabarit mensuel commun.'
 );
 check(
   home.includes('hc-week-events-slot') &&
