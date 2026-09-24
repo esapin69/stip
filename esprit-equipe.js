@@ -9,14 +9,6 @@
   const ROOT = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/";
   const STORE = "stip_session_v1";
   const CACHE_TTL = 5 * 60 * 1000;
-  const SHIFT_ORDER = ["M", "J", "J4", "S", "N"];
-  const SHIFT = {
-    M: { label: "Matin", time: "06h50 – 14h40" },
-    J: { label: "Journée", time: "08h30 – 16h20" },
-    J4: { label: "J4", time: "10h10 – 18h00" },
-    S: { label: "Soir", time: "13h30 – 21h00" },
-    N: { label: "Nuit", time: "21h00 – 06h50" },
-  };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [
     ...root.querySelectorAll(selector),
@@ -631,21 +623,48 @@
     return Boolean(state.access?.permissions?.[key]);
   }
 
+  function shiftDefinition(value) {
+    return window.STIPShiftRegistry?.resolve?.(value) || null;
+  }
+
+  function workShiftDefinitions() {
+    const seen = new Set();
+    return (window.STIPShiftRegistry?.all?.() || [])
+      .filter((row) => {
+        const code = String(row?.code || "").toUpperCase(),
+          base = String(row?.base_code || row?.code || "").toUpperCase();
+        if (!row?.is_working || code !== base || seen.has(code)) return false;
+        seen.add(code);
+        return true;
+      })
+      .sort((a, b) => Number(a?.sort_order || 999) - Number(b?.sort_order || 999));
+  }
+
+  function shiftMeta(value) {
+    const def = shiftDefinition(value),
+      base = window.STIPShiftRegistry?.baseCode?.(value) || "";
+    return def?.is_working
+      ? {
+          definition: def,
+          code: base,
+          label: String(def.label || base),
+          time: window.STIPShiftRegistry?.time?.(value) || "",
+        }
+      : null;
+  }
+
   function baseShift(value) {
-    const code = String(value || "").trim().toUpperCase().replace(/\*/g, "");
-    if (SHIFT[code]) return code;
-    if (code === "J0464" || /^J\d+$/.test(code)) return "J";
-    if (/^J4\d+$/.test(code)) return "J4";
-    if (/^M\d+$/.test(code)) return "M";
-    if (/^S\d+$/.test(code)) return "S";
-    if (/^N\d+$/.test(code)) return "N";
-    return "";
+    return shiftMeta(value)?.code || "";
   }
 
   function adaptedShift(value) {
-    const raw = String(value || "").trim().toUpperCase().replace(/\*/g, "");
-    const base = baseShift(raw);
-    return Boolean(base && raw !== base);
+    const raw = String(value || "").trim().toUpperCase().replace(/\*+$/, ""),
+      meta = shiftMeta(raw);
+    return Boolean(
+      meta?.code &&
+        (raw !== meta.code ||
+          String(meta.definition?.schedule_mode || "standard") !== "standard"),
+    );
   }
 
   function displayName(agent) {
@@ -731,6 +750,8 @@
         : Promise.resolve(null),
     ]).then((results) => {
       cached.team = results[0].status === "fulfilled" ? results[0].value : null;
+      if (cached.team?.shift_definitions)
+        window.STIPShiftRegistry?.set?.(cached.team.shift_definitions);
       cached.assistant =
         results[1].status === "fulfilled" ? results[1].value : null;
       cached.fetchedAt = Date.now();
@@ -1032,7 +1053,7 @@
         label: "Pas encore analysé",
         symbol: "○",
       },
-      meta = SHIFT[base] || { label: base, time: "" },
+      meta = shiftMeta(base) || { label: base, time: "" },
       planRows = shiftPlanningRows(day, base),
       present = planRows.length,
       specialAgents = planRows.filter((item) => {
@@ -1161,7 +1182,7 @@
 
   function shiftBlock(day, code, items) {
     const base = baseShift(code);
-    const meta = SHIFT[base];
+    const meta = shiftMeta(base);
     if (!meta || !items.length) return "";
     const sortedItems = items.slice().sort(compareAgentGhe);
     // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
@@ -1391,9 +1412,14 @@
       if (!groups.has(base)) groups.set(base, []);
       groups.get(base).push(item);
     });
+    const order = new Map(
+      workShiftDefinitions().map((row, index) => [
+        String(row.code || "").toUpperCase(),
+        index,
+      ]),
+    );
     const ordered = [...groups.entries()].sort(
-      ([a], [b]) =>
-        SHIFT_ORDER.indexOf(baseShift(a)) - SHIFT_ORDER.indexOf(baseShift(b)),
+      ([a], [b]) => (order.get(baseShift(a)) ?? 999) - (order.get(baseShift(b)) ?? 999),
     );
     const shifts = ordered.map(([code, rows]) => shiftBlock(day, code, rows)).join("");
     const staffing =
