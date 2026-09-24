@@ -59,7 +59,9 @@
     renderBasePermissions = {},
     historyMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     historyData = null,
-    historySelectedDay = "";
+    historySelectedDay = "",
+    sortMode = "nom",
+    candidateCache = [];
 
   function parisDay(iso) {
     const parts = Object.fromEntries(
@@ -314,6 +316,7 @@
       data = await call("list", { q: $("q").value });
       if (peopleMode === "with") renderPeople();
       else await renderCandidates();
+      message("");
       $("accessHistoryTab").hidden = !data.can_history;
       if (!data.can_history && document.body.classList.contains("access-history-mode"))
         setAccessMode("manage");
@@ -321,14 +324,56 @@
       message(e.message);
     }
   }
-  function alphaName(value = {}) {
-    const a = value.agents || value;
-    return [a.nom, a.prenom].filter(Boolean).join(" ").trim() || "Profil externe";
+  function agentOf(value = {}) {
+    return value.agents || value;
+  }
+  function cleanGhe(value = "") {
+    return String(value || "").replace(/^GHE\s*/i, "").trim();
+  }
+  function compareText(a = "", b = "") {
+    return String(a || "").localeCompare(String(b || ""), "fr", {
+      sensitivity: "base",
+      numeric: true,
+    });
   }
   function sortPeople(items = []) {
-    return [...items].sort((a, b) =>
-      alphaName(a).localeCompare(alphaName(b), "fr", { sensitivity: "base" }),
-    );
+    return [...items].sort((left, right) => {
+      const a = agentOf(left),
+        b = agentOf(right),
+        aGhe = cleanGhe(a.ghe),
+        bGhe = cleanGhe(b.ghe);
+      if (sortMode === "prenom")
+        return (
+          compareText(a.prenom, b.prenom) ||
+          compareText(a.nom, b.nom) ||
+          compareText(aGhe, bGhe)
+        );
+      if (sortMode === "ghe")
+        return (
+          compareText(aGhe || "ZZZ", bGhe || "ZZZ") ||
+          compareText(a.nom, b.nom) ||
+          compareText(a.prenom, b.prenom)
+        );
+      return (
+        compareText(a.nom, b.nom) ||
+        compareText(a.prenom, b.prenom) ||
+        compareText(aGhe, bGhe)
+      );
+    });
+  }
+  function personCardText(value = {}, fallback = "Profil externe") {
+    const a = agentOf(value),
+      nom = String(a.nom || "").trim(),
+      prenom = String(a.prenom || "").trim(),
+      ghe = cleanGhe(a.ghe) || "—";
+
+    if (sortMode === "prenom")
+      return `<strong><span class="access-person-focus">${esc(prenom || fallback)}</span>${nom ? ` <span class="access-person-secondary">${esc(nom)}</span>` : ""}</strong><small>GHE ${esc(ghe)}</small>`;
+
+    if (sortMode === "ghe")
+      return `<strong><span class="access-person-focus access-person-ghe">GHE ${esc(ghe)}</span></strong><small class="access-person-name-secondary">${esc([prenom, nom].filter(Boolean).join(" ") || fallback)}</small>`;
+
+    return `<strong><span class="access-person-focus">${esc(nom || fallback)}</span>${prenom ? ` <span class="access-person-secondary">${esc(prenom)}</span>` : ""}</strong><small>GHE ${esc(ghe)}</small>`;
   }
   function renderPeople() {
     const people = sortPeople(data.people || []);
@@ -336,7 +381,7 @@
       people
         .map(
           (p, i) =>
-            `<button class="access-person" data-person="${i}" type="button"><strong>${esc(p.agents?.prenom || "")} ${esc(p.agents?.nom || "Profil externe")}</strong><small>GHE ${esc(String(p.agents?.ghe || p.role_key || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
+            `<button class="access-person" data-person="${i}" type="button">${personCardText(p)}</button>`,
         )
         .join("") || '<p class="access-help">Aucun profil trouvé.</p>';
     $("people")
@@ -345,16 +390,13 @@
         (b) => (b.onclick = () => edit(people[Number(b.dataset.person)])),
       );
   }
-  async function renderCandidates() {
-    $("people").innerHTML =
-      '<p class="access-help">Recherche des agents sans accès…</p>';
-    const j = await call("find_new", { q: $("q").value });
-    const candidates = sortPeople(j.candidates || []);
+  function renderCandidateList() {
+    const candidates = sortPeople(candidateCache);
     $("people").innerHTML =
       candidates
         .map(
           (a, i) =>
-            `<button class="access-person" data-candidate="${i}" type="button"><strong>${esc(a.prenom || "")} ${esc(a.nom || "")}</strong><small>GHE ${esc(String(a.ghe || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
+            `<button class="access-person" data-candidate="${i}" type="button">${personCardText(a, "Agent")}</button>`,
         )
         .join("") ||
       '<p class="access-help">Aucun agent sans accès trouvé.</p>';
@@ -366,6 +408,13 @@
             editNew(candidates[Number(b.dataset.candidate)])),
       );
   }
+  async function renderCandidates() {
+    $("people").innerHTML =
+      '<p class="access-help">Chargement des agents sans accès…</p>';
+    const j = await call("find_new", { q: $("q").value });
+    candidateCache = j.candidates || [];
+    renderCandidateList();
+  }
   function setPeopleMode(mode) {
     peopleMode = mode === "without" ? "without" : "with";
     const withAccess = peopleMode === "with";
@@ -374,6 +423,20 @@
     $("withAccessBtn").setAttribute("aria-selected", String(withAccess));
     $("withoutAccessBtn").setAttribute("aria-selected", String(!withAccess));
     load();
+  }
+  function setSortMode(mode) {
+    sortMode = mode === "prenom" || mode === "ghe" ? mode : "nom";
+    const states = {
+      sortNomBtn: sortMode === "nom",
+      sortPrenomBtn: sortMode === "prenom",
+      sortGheBtn: sortMode === "ghe",
+    };
+    for (const [id, active] of Object.entries(states)) {
+      $(id).classList.toggle("active", active);
+      $(id).setAttribute("aria-selected", String(active));
+    }
+    if (peopleMode === "with") renderPeople();
+    else renderCandidateList();
   }
   function presetUI() {
     $("presetRows").innerHTML = (data.presets || [])
@@ -737,6 +800,9 @@
   };
   $("withAccessBtn").onclick = () => setPeopleMode("with");
   $("withoutAccessBtn").onclick = () => setPeopleMode("without");
+  $("sortNomBtn").onclick = () => setSortMode("nom");
+  $("sortPrenomBtn").onclick = () => setSortMode("prenom");
+  $("sortGheBtn").onclick = () => setSortMode("ghe");
   let searchTimer;
   $("q").oninput = () => {
     clearTimeout(searchTimer);
