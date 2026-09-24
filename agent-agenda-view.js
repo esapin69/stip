@@ -19,7 +19,7 @@
     cssLoader=new Promise(resolve=>{
       const l=document.createElement("link");
       l.rel="stylesheet";
-      l.href="agent-agenda-view.css?v=20260924-month-contract1";
+      l.href="agent-agenda-view.css?v=20260924-legend1";
       l.dataset.agentAgendaCss="1";
       l.onload=()=>resolve(l);
       l.onerror=()=>resolve(l);
@@ -189,6 +189,9 @@
       return `<article class="aav-event-row ${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${esc(x.icon||"•")}</span><div class="aav-event-copy"><strong>${esc(x.title)}</strong><span class="aav-event-when"><b>${esc(dateLabel)}</b>${x.time?`<b>${esc(x.time)}</b>`:""}${x.location?`<em>${esc(x.location)}</em>`:""}</span>${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`;
     }).join("")}</div></section>`;
   }
+  function legendItem(iconHtml,label,meta=""){
+    return `<button type="button" class="stip-legend-item" data-aav-legend-key="${esc(label)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${iconHtml}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b>${meta?`<small>${esc(meta)}</small>`:""}</button>`;
+  }
   function legendHtml(){
     const start=monday(state.selected),end=add(start,6),
       pagePlan=(state.data.items||[]).filter(r=>{
@@ -200,17 +203,18 @@
       hasPending=Array.from({length:7},(_,i)=>add(start,i)).some(day=>!weekPlan.has(day)),
       seen=new Map();
     for(const r of pagePlan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
-    const items=[...seen.values()].map(i=>`<span>${i.isWorking?`<i class="aav-dot aav-${esc(i.family)}"></i>`:esc(i.icon||"•")}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
-    if(hasPending)items.push('<span>🚫 <b>Planning non renseigné</b></span>');
-    if(pagePlan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
-    if(quotity())items.push(`<span>◐ <b>Temps partiel</b><small>· ${quotity()}%</small></span>`);
+    const items=[...seen.values()].map(i=>legendItem(i.isWorking?`<i class="aav-dot aav-${esc(i.family)}"></i>`:esc(i.icon||"•"),i.label,i.time?`· ${i.time}`:""));
+    if(hasPending)items.push(legendItem("🚫","Planning non renseigné"));
+    if(pagePlan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push(legendItem("⏱","Horaire adapté"));
+    if(quotity())items.push(legendItem("◐","Temps partiel",`· ${quotity()}%`));
     const kinds=new Map();
     for(const x of pageEvents){
       const icon=String(x.icon||"•").trim()||"•",kind=String(x.kind||"Événement").trim()||"Événement",key=icon+"|"+kind;
       if(!kinds.has(key))kinds.set(key,{icon,kind});
     }
-    for(const {icon,kind} of kinds.values())items.push(`<span>${esc(icon)} <b>${esc(kind)}</b></span>`);
-    return `<section class="aav-legend"><h3>LÉGENDE</h3><div>${items.join("")||'<span><b>Aucun repère sur la page</b></span>'}</div></section>`;
+    for(const {icon,kind} of kinds.values())items.push(legendItem(esc(icon),kind));
+    const body=items.join("")||legendItem("•","Aucun repère sur la page");
+    return `<section class="aav-legend stip-legend"><div class="stip-section-separator"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${body}</div></div></section>`;
   }
   function closeCallChoice(){document.getElementById("aavCallOverlay")?.remove()}
   function openCallChoice(phone,name){
@@ -312,6 +316,12 @@
     body.querySelectorAll("[data-aav-day]").forEach(b=>b.onclick=()=>{state.selected=b.dataset.aavDay;state.month=monthKey(state.selected);render()});
     body.querySelectorAll("[data-aav-week-step]").forEach(b=>b.onclick=()=>{state.selected=add(monday(state.selected),Number(b.dataset.aavWeekStep||0)*7);state.month=monthKey(state.selected);render()});
     body.querySelectorAll("[data-aav-month]").forEach(b=>b.onclick=()=>moveMonth(b.dataset.aavMonth));
+    body.querySelectorAll("[data-aav-legend-key]").forEach(b=>b.addEventListener("click",()=>{
+      const next=b.getAttribute("aria-pressed")!=="true";
+      body.querySelectorAll("[data-aav-legend-key]").forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed",next?"true":"false");
+      b.dispatchEvent(new CustomEvent("stip:legend-select",{bubbles:true,detail:{key:b.dataset.aavLegendKey||"",selected:next}}));
+    }));
     body.querySelector("[data-aav-copy]")?.addEventListener("click",async e=>{try{await navigator.clipboard.writeText(e.currentTarget.dataset.aavCopy||"")}catch{}});
     const subscribe=body.querySelector("[data-aav-subscribe]");
     subscribe?.addEventListener("click",()=>subscribeAgent(subscribe,body.querySelector("[data-aav-calendar-status]")));
