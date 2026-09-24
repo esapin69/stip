@@ -151,7 +151,7 @@
       if (standardCode) status = `${base} · ${shift.time}`;
       else {
         status = special || "Horaire particulier";
-        marker = '<span class="sas-status-chip is-adapted" title="Horaire adapté">⏱ Horaire adapté</span>';
+        marker = `<span class="sas-status-chip is-adapted" title="Horaire adapté">⏱ Horaire adapté${full ? ` · ${esc(code)}` : ""}</span>`;
       }
     } else if (full) {
       status = `Absent · ${code || "motif non renseigné"}`;
