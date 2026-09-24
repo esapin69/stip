@@ -1,5 +1,12 @@
 (() => {
   "use strict";
+  if (!window.__STIPWorkspaceRequested) {
+    window.__STIPWorkspaceRequested = true;
+    const workspaceScript = document.createElement("script");
+    workspaceScript.src = "/stip-workspace.js?v=20260924-workspace1";
+    workspaceScript.async = true;
+    document.head.appendChild(workspaceScript);
+  }
   if (!window.__STIPActivityRuntimeRequested) {
     window.__STIPActivityRuntimeRequested = true;
     const activityScript = document.createElement("script");
