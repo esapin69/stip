@@ -27,31 +27,47 @@ function evRange(l:string[],u:string,start:string,endExclusive:string,s:string,x
 function mins(t:string){const [h,m]=String(t).split(':').map(Number);return h*60+m}
 function evTimed(l:string[],u:string,d:string,a:string,b:string,s:string,x:string,t:any,alarm=false){let ed=d,sm=mins(a),em=mins(b);if(em<=sm)ed=next(d);const aa=a.replace(':','')+'00',bb=b.replace(':','')+'00',es=eventStamp(t);l.push('BEGIN:VEVENT',`UID:${esc(u)}`,`DTSTAMP:${es}`,`LAST-MODIFIED:${es}`,`SEQUENCE:${CAL_REV}`,`DTSTART;TZID=Europe/Paris:${d8(d)}T${aa}`,`DTEND;TZID=Europe/Paris:${d8(ed)}T${bb}`,fold(`SUMMARY:${esc(s)}`),fold(`DESCRIPTION:${esc(x)}`),'TRANSP:TRANSPARENT','STATUS:CONFIRMED');if(alarm)l.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY',fold(`DESCRIPTION:${esc(s)}`),'END:VALARM');l.push('END:VEVENT')}
 
-const SHIFT:any={M:{dot:'🔵',personal:'🟦',label:'Matin',text:'06:50–14:40',start:'06:50',end:'14:40'},J:{dot:'🟢',personal:'🟩',label:'Journée',text:'08:30–16:20',start:'08:30',end:'16:20'},J4:{dot:'🟠',personal:'🟧',label:'J4',text:'10:10–18:00',start:'10:10',end:'18:00'},S:{dot:'🟡',personal:'🟨',label:'Soir',text:'13:30–21:00',start:'13:30',end:'21:00'},N:{dot:'⚫',personal:'⬛',label:'Nuit',text:'21:00–06:50',start:'21:00',end:'06:50'}}
-const ORDER=['M','J','J4','S','N']
-const REST=new Set(['RH','RTT','RC','AA','MA','CA','RF','RTA','RTTA','SYR','OFF','REPOS','-',''])
-const SICK=new Set(['AR','AT'])
-function norm(v:any){let c=String(v??'').trim().toUpperCase();if(REST.has(c)||SICK.has(c)||!c)return null;c=c.replace(/\*+$/,'');return SHIFT[c]?c:c}
-let specialScheduleCache:any=null
-async function specialSchedules(){
-  if(specialScheduleCache)return specialScheduleCache;
-  const {data,error}=await db.from('stip_special_shift_definitions').select('code,base_shift,schedule_mode,window_start,window_end,duration_minutes,source_label').eq('active',true);
-  if(error){console.warn('special schedules',error.message);specialScheduleCache=new Map();return specialScheduleCache}
-  specialScheduleCache=new Map((data||[]).map((x:any)=>[String(x.code||'').toUpperCase(),x]));
-  return specialScheduleCache
+let SHIFT:any={}
+let ORDER:string[]=[]
+let SHIFT_REGISTRY=new Map<string,any>()
+function cleanShiftCode(v:any){return String(v??'').trim().toUpperCase().replace(/\*+$/,'')}
+function inferredBase(code:string){if(/^J4\d+$/.test(code))return'J4';if(/^M\d+$/.test(code))return'M';if(/^J\d+$/.test(code))return'J';if(/^S\d+$/.test(code))return'S';if(/^N\d+$/.test(code))return'N';return''}
+async function loadShiftRegistry(){
+  const {data,error}=await db.from('stip_shift_registry').select('code,base_code,label,start_time,end_time,icon,sort_order,color_hex,soft_color_hex,on_color_hex,kind,family,is_working,schedule_mode,window_start,window_end,duration_minutes,source_label').order('sort_order').order('code')
+  if(error)throw error
+  const rows=data||[]
+  SHIFT_REGISTRY=new Map(rows.map((x:any)=>[String(x.code||'').toUpperCase(),x]))
+  SHIFT={}
+  ORDER=[]
+  for(const x of rows){
+    const code=String(x.code||'').toUpperCase(),base=String(x.base_code||code).toUpperCase()
+    if(!x.is_working||code!==base)continue
+    const start=String(x.start_time||'').slice(0,5),end=String(x.end_time||'').slice(0,5)
+    SHIFT[code]={dot:String(x.icon||'•'),personal:String(x.icon||'•'),label:String(x.label||code),text:start&&end?`${start}–${end}`:'',start,end}
+    ORDER.push(code)
+  }
 }
+function norm(v:any){const raw=cleanShiftCode(v);if(!raw)return null;const row=SHIFT_REGISTRY.get(raw);if(row)return row.is_working?String(row.base_code||row.code).toUpperCase():null;const base=inferredBase(raw);return base&&SHIFT[base]?base:null}
+async function specialSchedules(){return new Map([...SHIFT_REGISTRY.entries()].filter(([,x]:any)=>x?.is_working&&String(x?.schedule_mode||'standard')!=='standard'))}
 function durationText(minutesValue:any){const n=Number(minutesValue||0);if(!n)return'';const h=Math.floor(n/60),m=n%60;return m?`${h}h${String(m).padStart(2,'0')}`:`${h}h`}
 function workInfo(v:any,specials:any){
-  const raw=String(v??'').trim().toUpperCase().replace(/\*+$/,'');
-  if(!raw||REST.has(raw)||SICK.has(raw))return null;
-  const sp=specials?.get?.(raw);
+  const raw=cleanShiftCode(v);if(!raw)return null
+  const row=SHIFT_REGISTRY.get(raw)
+  if(row&&!row.is_working)return null
+  const sp=row&&String(row.schedule_mode||'standard')!=='standard'?row:specials?.get?.(raw)
   if(sp){
-    const base=String(sp.base_shift||''),tone=SHIFT[base]||{dot:'🟣',personal:'🟪',label:'Horaire spécifique'},
+    const base=String(sp.base_code||sp.base_shift||''),tone=SHIFT[base]||{dot:String(sp.icon||'•'),personal:String(sp.icon||'•'),label:String(sp.label||'Horaire spécifique')},
       start=String(sp.window_start||'').slice(0,5),end=String(sp.window_end||'').slice(0,5),
-      flexible=String(sp.schedule_mode||'')==='flexible',duration=durationText(sp.duration_minutes);
-    return{...tone,code:raw,base,special:true,flexible,start,end,text:flexible?`${duration||'Durée spécifique'} libre · plage ${start}–${end}`:`${start}–${end} · fixe`}
+      flexible=String(sp.schedule_mode||'')==='flexible',duration=durationText(sp.duration_minutes),hasRange=Boolean(start&&end),
+      text=flexible?(hasRange?`${duration||'Durée spécifique'} libre · plage ${start}–${end}`:(sp.source_label||'Horaire adapté')):(hasRange?`${start}–${end} · fixe`:(sp.source_label||'Horaire adapté'))
+    return{...tone,code:raw,base,special:true,flexible,start,end,text}
   }
-  const k=norm(raw);return k&&SHIFT[k]?{...SHIFT[k],code:k,base:k,special:false,flexible:false}:null
+  const k=norm(raw)
+  if(k&&SHIFT[k]){
+    if(raw!==k)return{...SHIFT[k],code:raw,base:k,special:true,flexible:false,text:'Horaire adapté'}
+    return{...SHIFT[k],code:k,base:k,special:false,flexible:false}
+  }
+  return null
 }
 function timeRange(v:any){const s=String(v||'').replace(/[hH]/g,':'),m=s.match(/(\d{1,2})\s*:\s*(\d{2})\D+(\d{1,2})\s*:\s*(\d{2})/);if(!m)return null;const a=`${m[1].padStart(2,'0')}:${m[2]}`,b=`${m[3].padStart(2,'0')}:${m[4]}`;return{start:a,end:b,text:`${a}–${b}`}}
 function covers(ref:any,target:any){if(!ref||!target)return true;let rs=mins(ref.start),re=mins(ref.end),ts=mins(target.start),te=mins(target.end);if(re<=rs)re+=1440;if(te<=ts)te+=1440;return rs<=ts&&re>=te}
@@ -265,4 +281,4 @@ async function agentDates(){
 
 async function feed(t:string){const {data:f}=await db.from('stip_calendar_feeds').select('profile_id,kind,active').eq('token',t).maybeSingle();if(!f?.active)return null;const p=await prof(f.profile_id);if(!p)return null;if(f.kind==='personal')return personal(p.agent);if(String(f.kind||'').startsWith('agent:')){const target=await activeAgentById(String(f.kind).slice(6));if(!target||!canSubscribeAgent(p,target))return null;return personal(target,String(target.id)!==String(p.agent.id))}if(f.kind==='team'){if(!p.permissions?.planning_team)return null;return team(p.agent);}if(f.kind==='formations'){if(!p.permissions?.responsable)return null;return formations()}if(f.kind==='stagiaires'){if(!p.permissions?.responsable)return null;return stagiaires()}if(f.kind==='agent_dates'){if(!p.permissions?.responsable)return null;return agentDates()}return null}
 
-Deno.serve(async r=>{if(r.method==='OPTIONS')return new Response('ok',{headers:C});try{const u=new URL(r.url);if(r.method==='GET'||r.method==='HEAD'){const z=await feed(u.searchParams.get('token')||'');if(!z)return new Response('Flux désactivé',{status:404,headers:C});return new Response(r.method==='HEAD'?null:z.ics,{headers:{...I,'X-STIP-Events':String(z.events),'Content-Disposition':'inline; filename="stip.ics"'}})}if(r.method==='POST'){const p=await session(r);if(!p)return json({error:'Accès Import au calendrier non autorisé.'},401);const b=await r.json().catch(()=>({})),q=String(b.kind||'personal');let k=q==='team'?'team':q==='formations'?'formations':q==='stagiaires'?'stagiaires':q==='agent_dates'?'agent_dates':'personal',calendarName='';if(q==='agent'){const sourceKey=String(b.source_key||'').trim(),agentId=String(b.agent_id||'').trim(),target=sourceKey?await activeAgentBySource(sourceKey):agentId?await activeAgentById(agentId):null;if(!target)return json({error:'Agent introuvable.'},404);if(!canSubscribeAgent(p,target))return json({error:'Abonnement à ce planning réservé au responsable ou à l’administrateur.'},403);k=`agent:${target.id}`;calendarName=sharedCalendarName(target)}if(k==='team'&&!p.permissions?.planning_team)return json({error:'Accès au planning équipe requis pour ce calendrier.'},403);if((k==='formations'||k==='stagiaires'||k==='agent_dates')&&!p.permissions?.responsable)return json({error:'Accès Responsable requis pour ce calendrier.'},403);const t=await ensure(p.id,k),h=`${U}/functions/v1/stip-calendar?token=${t}`;return json({kind:k,calendar_name:calendarName|| (k==='personal'?personalCalendarName(p.agent):k==='team'?"Esprit d'équipe":k==='formations'?'Formations':k==='stagiaires'?'Stagiaires':'Dates des agents'),https_url:h,webcal_url:h.replace(/^https:/,'webcal:')})}return json({error:'Méthode non autorisée.'},405)}catch(e){console.error(e);return json({error:e instanceof Error?e.message:String(e)},500)}})
+Deno.serve(async r=>{if(r.method==='OPTIONS')return new Response('ok',{headers:C});try{await loadShiftRegistry();const u=new URL(r.url);if(r.method==='GET'||r.method==='HEAD'){const z=await feed(u.searchParams.get('token')||'');if(!z)return new Response('Flux désactivé',{status:404,headers:C});return new Response(r.method==='HEAD'?null:z.ics,{headers:{...I,'X-STIP-Events':String(z.events),'Content-Disposition':'inline; filename="stip.ics"'}})}if(r.method==='POST'){const p=await session(r);if(!p)return json({error:'Accès Import au calendrier non autorisé.'},401);const b=await r.json().catch(()=>({})),q=String(b.kind||'personal');let k=q==='team'?'team':q==='formations'?'formations':q==='stagiaires'?'stagiaires':q==='agent_dates'?'agent_dates':'personal',calendarName='';if(q==='agent'){const sourceKey=String(b.source_key||'').trim(),agentId=String(b.agent_id||'').trim(),target=sourceKey?await activeAgentBySource(sourceKey):agentId?await activeAgentById(agentId):null;if(!target)return json({error:'Agent introuvable.'},404);if(!canSubscribeAgent(p,target))return json({error:'Abonnement à ce planning réservé au responsable ou à l’administrateur.'},403);k=`agent:${target.id}`;calendarName=sharedCalendarName(target)}if(k==='team'&&!p.permissions?.planning_team)return json({error:'Accès au planning équipe requis pour ce calendrier.'},403);if((k==='formations'||k==='stagiaires'||k==='agent_dates')&&!p.permissions?.responsable)return json({error:'Accès Responsable requis pour ce calendrier.'},403);const t=await ensure(p.id,k),h=`${U}/functions/v1/stip-calendar?token=${t}`;return json({kind:k,calendar_name:calendarName|| (k==='personal'?personalCalendarName(p.agent):k==='team'?"Esprit d'équipe":k==='formations'?'Formations':k==='stagiaires'?'Stagiaires':'Dates des agents'),https_url:h,webcal_url:h.replace(/^https:/,'webcal:')})}return json({error:'Méthode non autorisée.'},405)}catch(e){console.error(e);return json({error:e instanceof Error?e.message:String(e)},500)}})
