@@ -1,6 +1,29 @@
 (() => {
   "use strict";
-  const V = "20260924-team-unified1",
+
+  // Responsable is a first-class STIP workspace: direct/deep links are routed
+  // through the main home shell so the canonical Applications / Mon profil /
+  // Esprit d'équipe header, notification bell and shortcuts stay consistent.
+  if (window.self === window.top) {
+    try {
+      const source = new URLSearchParams(location.search),
+        keep = new URLSearchParams();
+      for (const key of ["tab", "mode", "tool", "open"]) {
+        const value = source.get(key);
+        if (value) keep.set(key, value);
+      }
+      if ([...keep].length)
+        sessionStorage.setItem(
+          "stip_responsable_entry_search_v1",
+          keep.toString(),
+        );
+      else sessionStorage.removeItem("stip_responsable_entry_search_v1");
+    } catch {}
+    location.replace("index.html#/responsable");
+    return;
+  }
+
+  const V = "20260924-responsable-shared-head1",
     m = new Map(),
     done = new Set();
   function load(src) {
