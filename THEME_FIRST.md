@@ -134,6 +134,36 @@ La hiérarchie reste :
 
 
 
+## Filtres et onglets — template 6B officiel
+
+Les filtres, onglets de vue et sélecteurs courts utilisent désormais le composant partagé **6B** défini dans `stip-patterns.css`.
+
+Classes canoniques :
+
+- conteneur : `.stip-filter-bubbles` avec `data-count="2|3|4|5|6"` ;
+- choix : `.stip-filter-choice` ;
+- visuel : `.stip-filter-visual` ;
+- petit indice visuel éventuel : `.stip-filter-visual-badge` ;
+- texte : `.stip-filter-copy` ;
+- état actif : `aria-selected="true"` ; la classe `.active` reste tolérée pour compatibilité avec les moteurs existants.
+
+Règles visuelles obligatoires :
+
+1. Un filtre doit ressembler à une **bulle cliquable**, jamais à un bouton rectangulaire banal.
+2. L’ensemble reste discret dans la page, mais jamais timide : présence nette, contour, profondeur légère et état sélectionné visible.
+3. Chaque choix possède son propre univers visuel. Deux choix opposés ne réutilisent pas mécaniquement le même dessin.
+4. Le pictogramme doit apporter du sens. Exemple : « Avec accès » peut montrer une clé ; « Sans accès » peut ajouter un signe d’interdiction discret.
+5. Un nouvel univers fonctionnel appelle un visuel original : historique, calendrier, suivi, équipe, notification, proposition, etc. ne sont pas représentés par le même symbole générique.
+6. La composition dépend du nombre de choix :
+   - 2 choix : visuels placés vers les extrémités ;
+   - 3 choix : centre différencié, extrémités miroir ;
+   - 4 choix : composition symétrique alternée ;
+   - 5/6 choix : grille plus compacte et composition adaptée, sans recopier six fois le même bouton.
+7. La couleur suit le contexte. Le composant utilise `--stip-filter-accent` et peut recevoir un accent métier par choix via `data-tone`, sans créer une nouvelle identité graphique.
+8. Une page ne redéfinit pas localement couleurs, rayons, ombres, états actifs ou iconographie de base du composant. Elle ne conserve que son positionnement et sa logique métier.
+9. Les filtres restent tactiles, lisibles au pouce, sans débordement horizontal et sans information portée uniquement par la couleur.
+10. Quand un ancien filtre est migré vers 6B, supprimer ses anciennes règles visuelles locales au lieu d’empiler une nouvelle couche.
+
 ## Navigation temporelle canonique
 
 Le visuel de référence pour les filtres temporels STIP est un empilement de cartes interactives de la famille **Temps**.
