@@ -5,16 +5,43 @@
         STORE="stip_session_v1";
   let overlay=null,state=null;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  let cssLoader=null;
   function css(){
-    if(document.querySelector('link[data-agent-agenda-css]'))return;
-    const l=document.createElement("link");l.rel="stylesheet";l.href="agent-agenda-view.css?v=20260922-agentcalendar1";l.dataset.agentAgendaCss="1";document.head.appendChild(l);
+    const existing=document.querySelector('link[data-agent-agenda-css]');
+    if(existing){
+      if(existing.sheet)return Promise.resolve(existing);
+      return new Promise(resolve=>{
+        existing.addEventListener("load",()=>resolve(existing),{once:true});
+        existing.addEventListener("error",()=>resolve(existing),{once:true});
+      });
+    }
+    if(cssLoader)return cssLoader;
+    cssLoader=new Promise(resolve=>{
+      const l=document.createElement("link");
+      l.rel="stylesheet";
+      l.href="agent-agenda-view.css?v=20260924-agent-agenda-repair1";
+      l.dataset.agentAgendaCss="1";
+      l.onload=()=>resolve(l);
+      l.onerror=()=>resolve(l);
+      document.head.appendChild(l);
+    });
+    return cssLoader;
   }
   function token(){return localStorage.getItem(STORE)||""}
   async function post(url,body){
-    const r=await fetch(url,{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json","X-STIP-Session":token()},body:JSON.stringify(body)}),
-          j=await r.json().catch(()=>({}));
-    if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);
-    return j;
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),12000);
+    try{
+      const r=await fetch(url,{method:"POST",cache:"no-store",signal:controller.signal,headers:{"Content-Type":"application/json","X-STIP-Session":token()},body:JSON.stringify(body)}),
+            j=await r.json().catch(()=>({}));
+      if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);
+      return j;
+    }catch(err){
+      if(err?.name==="AbortError")throw Error("Le planning met trop de temps à répondre. Réessaie.");
+      throw err;
+    }finally{
+      clearTimeout(timeout);
+    }
   }
   function iso(d){return d.toISOString().slice(0,10)}
   function dobj(v){return new Date(String(v).slice(0,10)+"T12:00:00")}
@@ -314,8 +341,11 @@
   }
   function close(){closeCallChoice();overlay?.remove();overlay=null;state=null;document.body.classList.remove("aav-open")}
   async function open(sourceKey,fallback={}){
-    if(!sourceKey)return;css();close();
-    overlay=document.createElement("div");overlay.className="aav-overlay";overlay.innerHTML=`<button class="aav-backdrop" type="button" aria-label="Fermer"></button><section class="aav-panel" role="dialog" aria-modal="true"><header class="aav-head"><button type="button" data-aav-close aria-label="Fermer">‹</button><div class="aav-head-copy"><small>AGENDA AGENT</small><div class="aav-title-row"><strong class="aav-title">${esc(person(fallback))}</strong><button type="button" class="aav-title-call" data-aav-call hidden aria-label="Appeler">☎</button></div><span class="aav-sub"></span></div><button type="button" data-aav-refresh aria-label="Actualiser">↻</button></header><main class="aav-body"><div class="aav-loading">Chargement de l’agenda…</div></main></section>`;
+    sourceKey=String(sourceKey||fallback?.source_key||"").trim();
+    if(!sourceKey)return;
+    await css();
+    close();
+    overlay=document.createElement("div");overlay.className="aav-overlay";overlay.innerHTML=`<button class="aav-backdrop" type="button" aria-label="Fermer"></button><section class="aav-panel" role="dialog" aria-modal="true"><header class="aav-head"><button type="button" data-aav-close aria-label="Fermer">‹</button><div class="aav-head-copy"><small>AGENDA AGENT</small><div class="aav-title-row"><strong class="aav-title">${esc(person(fallback))}</strong><button type="button" class="aav-title-call" data-aav-call hidden aria-label="Appeler">☎</button></div><span class="aav-sub"></span></div><button type="button" data-aav-refresh aria-label="Actualiser">↻</button></header><main class="aav-body"><div class="aav-loading"><strong>Chargement de l’agenda…</strong></div></main></section>`;
     document.body.appendChild(overlay);document.body.classList.add("aav-open");
     overlay.querySelector(".aav-backdrop").onclick=close;overlay.querySelector("[data-aav-close]").onclick=close;overlay.querySelector("[data-aav-refresh]").onclick=()=>reload().catch(()=>{});
     overlay.querySelector("[data-aav-call]").onclick=e=>openCallChoice(e.currentTarget.dataset.aavCall,e.currentTarget.dataset.aavCallName);
