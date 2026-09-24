@@ -169,14 +169,15 @@ body.aav-open{overflow:hidden}.aav-overlay{position:fixed;inset:0;z-index:20000;
   box-shadow:0 0 0 3px rgba(11,143,169,.11),0 7px 16px rgba(20,62,78,.12)!important;
 }
 
-/* Le calendrier du mois respire davantage sans devenir beaucoup plus haut. */
-.aav-cal-empty{min-height:56px!important}
+/* Le calendrier du mois réserve assez de hauteur au pictogramme commun.
+   La taille des pictogrammes vient exclusivement du contrat stip-month-calendar. */
+.aav-cal-empty{min-height:62px!important}
 .aav-cal-day{
   box-sizing:border-box!important;
-  height:56px!important;
-  min-height:56px!important;
+  height:62px!important;
+  min-height:62px!important;
   padding:1px!important;
-  grid-template-rows:17px 20px 13px!important;
+  grid-template-rows:18px 21px 19px!important;
   gap:1px!important;
   border-radius:14px!important;
 }
@@ -185,20 +186,18 @@ body.aav-open{overflow:hidden}.aav-overlay{position:fixed;inset:0;z-index:20000;
   line-height:1!important;
 }
 .aav-cal-shift{
-  height:20px!important;
-  min-height:20px!important;
-  font-size:1.12rem!important;
+  height:21px!important;
+  min-height:21px!important;
 }
 .aav-cal-shift .aav-dot{
   width:20px!important;
   height:20px!important;
 }
 .aav-cal-day small{
-  min-height:13px!important;
+  min-height:19px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
-  font-size:1rem!important;
   line-height:1!important;
   letter-spacing:0!important;
   overflow:visible!important;
