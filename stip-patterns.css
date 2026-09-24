@@ -571,6 +571,14 @@
 .stip-month-calendar .stip-month-day-number{
   transform:translateY(var(--stip-month-number-lift))!important;
 }
+.stip-month-calendar .stip-month-day:not(.ph-day-cell){
+  min-height:var(--stip-month-cell-min-height)!important;
+  grid-template-rows:
+    var(--stip-month-number-row)
+    var(--stip-month-visual-row)
+    var(--stip-month-events-row)!important;
+  row-gap:var(--stip-month-internal-gap)!important;
+}
 .stip-month-calendar .stip-month-grid{
   column-gap:var(--stip-month-grid-column-gap)!important;
   row-gap:var(--stip-month-grid-row-gap)!important;
