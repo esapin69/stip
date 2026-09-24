@@ -31,16 +31,17 @@
   --stip-shift-s-text:#8a6500;
   /* Calendriers 1 mois — taille canonique des pictogrammes (référence ✈️). */
   --stip-month-icon-size:1.32rem;
-  --stip-month-number-lift:-2px;
+  --stip-month-number-lift:0px;
   --stip-month-event-gap:6px;
   --stip-month-event-offset:0px;
   --stip-month-grid-column-gap:5px;
-  --stip-month-grid-row-gap:8px;
-  --stip-month-cell-min-height:84px;
-  --stip-month-number-row:20px;
+  --stip-month-grid-row-gap:10px;
+  --stip-month-cell-min-height:88px;
+  --stip-month-cell-height:88px;
+  --stip-month-number-row:22px;
   --stip-month-visual-row:22px;
   --stip-month-events-row:24px;
-  --stip-month-internal-gap:7px;
+  --stip-month-internal-gap:6px;
   --stip-radius-xs:8px;
   --stip-radius-sm:12px;
   --stip-radius-md:18px;
