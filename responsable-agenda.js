@@ -357,19 +357,38 @@
     s.setAttribute("aria-hidden", "true");
     window.STIPNav?.remember?.({ panel: "", eventId: "", eventOrigin: "" });
   }
+  function agentGhe(a) {
+    const raw = String(a?.ghe || "").replace(/^GHE\s*/i, "").trim();
+    const match = raw.match(/\d+/);
+    return match ? `GHE ${Number(match[0])}` : raw ? `GHE ${raw}` : "";
+  }
+  function syncAgentPicker() {
+    const id = $("#taAgent").value;
+    const selected = agents.find((a) => String(a.id) === String(id));
+    $("#taAgentLabel").textContent = selected
+      ? `${person(selected)}${agentGhe(selected) ? ` · ${agentGhe(selected)}` : ""}`
+      : "Choisir un agent…";
+    $("#taAgentPicker").classList.toggle("has-agent", Boolean(selected));
+  }
   function renderAgents() {
-    const sel = $("#taAgent"),
-      sorted = agents
-        .slice()
-        .sort((a, b) => person(a).localeCompare(person(b), "fr"));
-    sel.innerHTML =
-      '<option value="">Choisir un agent…</option>' +
-      sorted
-        .map(
-          (a) =>
-            `<option value="${esc(a.id)}">${esc(person(a))}${a.ghe ? ` · ${esc(a.ghe)}` : ""}</option>`,
-        )
-        .join("");
+    syncAgentPicker();
+  }
+  function openAgentPicker() {
+    if (!window.STIPAgentSelector?.openPicker) {
+      $("#taFeedback").textContent = "Le sélecteur d’agent n’est pas disponible.";
+      return;
+    }
+    window.STIPAgentSelector.openPicker({
+      title: "Rechercher un agent",
+      items: agents,
+      selectedId: $("#taAgent").value,
+      filter: "first",
+      onSelect(agent) {
+        $("#taAgent").value = String(agent.id || "");
+        syncAgentPicker();
+        $("#taFeedback").textContent = "";
+      },
+    });
   }
   function setMode(v) {
     mode = v;
@@ -448,6 +467,8 @@
       $("#taTitle").value = "";
       $("#taBody").value = "";
       $("#taLocation").value = "";
+      $("#taAgent").value = "";
+      syncAgentPicker();
       await load();
       setTimeout(() => closeSheet("#taAddSheet"), 450);
     } catch (e) {
@@ -533,6 +554,7 @@
         }),
     );
     $("#taAdd").onclick = () => openSheet("#taAddSheet");
+    $("#taAgentPicker").onclick = openAgentPicker;
     $$("[data-close-sheet]").forEach(
       (b) => (b.onclick = () => closeSheet("#taDetailSheet")),
     );

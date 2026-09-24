@@ -53,6 +53,23 @@ check(
 );
 check(selector.includes('sas-absence-divider')&&selector.includes('sas-absent'),'Le sélecteur commun ne sépare plus les absents.');
 check(read('responsable-agents.js').includes('STIPAgentSelector.mount'),'Responsable ne réutilise plus le sélecteur commun.');
+check(
+  selector.includes('data-sas-filter="first"') &&
+  selector.includes('data-sas-filter="last"') &&
+  selector.includes('data-sas-filter="ghe"') &&
+  selector.includes('sas-wall-grid') &&
+  selector.includes('openPicker'),
+  'Le modèle commun Rechercher un agent a perdu son mur de portraits ou ses filtres.'
+);
+const responsableHtml=read('responsable.html');
+const responsableAgenda=read('responsable-agenda.js');
+check(
+  responsableHtml.includes('id="taAgent" type="hidden"') &&
+  responsableHtml.includes('id="taAgentPicker"') &&
+  !responsableHtml.includes('<select id="taAgent"') &&
+  responsableAgenda.includes('STIPAgentSelector.openPicker'),
+  'Ajouter un événement utilise de nouveau le sélecteur natif au lieu du modèle Rechercher un agent.'
+);
 
 check(/class="[^"]*as-day\b/.test(read('assistant.js')),'Assistant ne regroupe plus les sujets par journée.');
 check(/id="dayCard"[\s\S]*id="insightSection"/.test(read('cadre-activite.html')),'Activité sépare de nouveau l’analyse du conteneur de journée.');

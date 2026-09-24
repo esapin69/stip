@@ -97,42 +97,35 @@ STIP garde **un seul thème maître**. Les catégories ci-dessous ne sont pas de
 
 ### Page modèle canonique — « Rechercher un agent »
 
-Toute interface dont l’objectif principal est de **choisir un agent** appartient à ce modèle, y compris lorsqu’elle remplace un ancien `<select>` natif.
+Toute interface dont l’objectif principal est de **choisir un agent** appartient à ce modèle. Un ancien `<select>` natif doit être retiré à la source et remplacé par le sélecteur partagé ; il ne doit jamais être simplement recouvert.
 
-Contrat commun :
-- ne pas afficher la grande liste native du navigateur pour choisir un agent ;
-- utiliser le moteur partagé `STIPAgentSelector.mountPicker(...)` dans une page, ou `STIPAgentSelector.openPicker(...)` pour une sélection plein écran / modale ;
-- recherche à partir de **2 lettres** par nom, prénom ou GHE ;
-- identité affichée au format `PRÉNOM nom`, GHE très lisible, avatar puis initiales en secours ;
-- téléphone et statut du jour masqués par défaut dans ce mode : ils ne sont ajoutés que si le contexte métier les justifie ;
-- sélection visible par un marqueur commun, sans recréer des radios, cartes ou listes locales ;
-- aucun autofocus imposé à l’ouverture : le clavier apparaît lorsque l’utilisateur touche réellement le champ de recherche ;
-- la logique métier de la page conserve seulement la source des agents et l’action exécutée après sélection.
+Contrat validé :
+- ouverture dans une vraie vue STIP via `STIPAgentSelector.openPicker(...)` ; plein écran sur téléphone, surface adaptée sur écran large ;
+- en-tête simple avec retour + **Rechercher un agent** ; aucun sous-titre inutile ;
+- grande barre `Rechercher…` ; tous les agents sont visibles au départ et le filtrage commence dès le premier caractère, sans afficher de mention « dès 1 lettre » ;
+- séparateur officiel **FILTRE**, puis trois onglets : `Prénoms`, `Noms`, `GHE` ;
+- filtre initial : `Prénoms` ; le filtre actif zoome légèrement et passe en gras + majuscules ;
+- `Prénoms` et `Noms` regroupent le mur par séparateurs `A`, `B`, `C`… et ne rendent jamais de groupe vide ;
+- `GHE` regroupe dynamiquement en `SANS GHE`, puis par numéro réel `GHE 1`, `GHE 2`, etc., avec `AUTRE GHE` uniquement si une valeur existe mais n’est pas interprétable ;
+- affichage sous forme de **mur de portraits** : photo ronde importante, initiales en secours, tampon GHE superposé au bas du portrait sans masquer le visage ;
+- filtre `Prénoms` : prénom prioritaire en gras/majuscules puis nom ; filtre `Noms` : nom prioritaire puis prénom ; filtre `GHE` : tampon GHE visuellement renforcé puis identité ;
+- toute la vignette est cliquable ; l’agent déjà sélectionné possède un repère commun ;
+- une sélection ferme la vue et restitue immédiatement l’agent à la page appelante sans perdre les autres champs déjà saisis ;
+- aucun autofocus à l’ouverture : le clavier apparaît seulement après un toucher explicite dans la recherche.
 
-Exemple d’intégration :
+Exemple :
 
 ```js
 STIPAgentSelector.openPicker({
   items: agents,
   selectedId: currentAgentId,
   onSelect(agent) {
-    // La page garde uniquement son action métier.
+    // La page appelante ne garde que son action métier.
   },
 });
 ```
 
-Lorsqu’une ancienne page de choix d’agent est repérée, la correction attendue est : **la brancher sur « Rechercher un agent »**, pas refaire son visuel localement.
-
-3. **Actions** — À traiter, demandes, rappels, signatures, filtres et listes d’actions.
-4. **Catalogue** — applications, favoris, gestion des accès, niveaux MINI/MAXI.
-5. **Pilotage** — cockpit Responsable/Cadre, métriques, alertes et recommandations.
-
-Règle : deux écrans utilisant le même motif doivent prendre leur base visuelle dans la même famille. Une page ne recrée pas localement sa propre version d’un sélecteur d’agent, d’une navigation de semaine, d’un panneau d’actions ou d’un catalogue d’applications.
-
-La hiérarchie reste :
-`stip-theme-base.css` = tokens → `stip-patterns.css` = familles de composants → CSS de page = structure métier uniquement.
-
-
+Lorsqu’une ancienne page de choix d’agent est repérée, la correction attendue est : **la brancher sur « Rechercher un agent »**, pas recréer localement une liste, des radios, des cartes ou un autre moteur.
 
 ## Filtres et onglets — template 6B officiel
 
