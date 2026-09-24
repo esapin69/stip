@@ -322,9 +322,11 @@
     counts();
     renderWeek();
     renderTimeline();
-    $$("[data-filter]").forEach((b) =>
-      b.classList.toggle("active", b.dataset.filter === active),
-    );
+    $("[data-filter]").forEach((b) => {
+      const selected = b.dataset.filter === active;
+      b.classList.toggle("active", selected);
+      b.setAttribute("aria-selected", String(selected));
+    });
   }
   function openDetail(id, origin) {
     const x = events.find(
@@ -371,9 +373,11 @@
   }
   function setMode(v) {
     mode = v;
-    $$("[data-mode]").forEach((b) =>
-      b.classList.toggle("active", b.dataset.mode === v),
-    );
+    $("[data-mode]").forEach((b) => {
+      const selected = b.dataset.mode === v;
+      b.classList.toggle("active", selected);
+      b.setAttribute("aria-selected", String(selected));
+    });
     $$(".ta-schedule").forEach((x) =>
       x.classList.toggle("hidden", v === "notify"),
     );
