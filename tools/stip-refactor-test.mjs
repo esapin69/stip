@@ -325,10 +325,12 @@ check(
   theme.includes('--stip-month-number-lift:-4px') &&
   theme.includes('--stip-month-grid-column-gap:5px') &&
   theme.includes('--stip-month-grid-row-gap:10px') &&
-  theme.includes('--stip-month-cell-min-height:74px') &&
+  theme.includes('--stip-month-cell-min-height:88px') &&
   theme.includes('--stip-month-number-row:20px') &&
   theme.includes('--stip-month-visual-row:26px') &&
-  theme.includes('--stip-month-events-row:22px') &&
+  theme.includes('--stip-month-events-row:24px') &&
+  theme.includes('--stip-month-internal-gap:7px') &&
+  theme.includes('--stip-month-event-gap:7px') &&
   patterns.includes('.stip-month-calendar .stip-month-grid') &&
   patterns.includes('.stip-month-calendar .stip-month-day:not(.ph-day-cell)') &&
   patterns.includes('gap:var(--stip-month-event-gap)!important'),
@@ -341,6 +343,13 @@ check(
   read('esprit-equipe.js').includes('team-date-jump-grid stip-month-grid') &&
   planningUiSource.includes('pui-calendar stip-month-grid'),
   'Un calendrier mensuel ne consomme plus la grille commune.'
+);
+check(
+  patterns.includes('.stip-month-calendar .stip-month-day.is-selected:not(.is-today)') &&
+  patterns.includes('translateY(-4px) scale(1.10)') &&
+  agentMonthSource.includes('today is-today') &&
+  agentMonthSource.includes('selected is-selected'),
+  'Le jour mensuel choisi doit reprendre le zoom de sélection sans grossir automatiquement aujourd’hui.'
 );
 check(
   homeCss.includes('.hc-week-nav-global{\n width:100%!important;') &&
