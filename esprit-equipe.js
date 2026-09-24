@@ -1603,6 +1603,9 @@
     }
     if (day) return chooseDate(day.dataset.teamCalDay);
   });
+  $("#teamStandaloneBack")?.addEventListener("click", () => {
+    location.assign("index.html#/team");
+  });
   $("#teamRefresh").addEventListener("click", () =>
     showWeek({ force: true, preserve: true }),
   );
