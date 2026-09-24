@@ -5,7 +5,8 @@
     $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
 
-  let current = "";
+  let current = "",
+    agendaLoadPromise = null;
 
   function initialTab() {
     const params = new URLSearchParams(location.search),
@@ -105,15 +106,36 @@
   }
 
   function ensureAgenda() {
-    if (window.STIPResponsableAgendaLoaded) return;
-    if (document.querySelector('script[data-resp-inline-agenda="1"]')) return;
-    const script = document.createElement("script");
-    script.src = "responsable-agenda.js?v=20260924-agent-picker-stable2";
-    script.dataset.respInlineAgenda = "1";
-    script.onload = () => {
-      window.STIPResponsableAgendaLoaded = true;
-    };
-    document.body.appendChild(script);
+    if (window.STIPResponsableAgenda?.version === "20260924-agent-picker-stable3")
+      return Promise.resolve(window.STIPResponsableAgenda);
+    if (agendaLoadPromise) return agendaLoadPromise;
+    agendaLoadPromise = new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[data-resp-inline-agenda="1"]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.STIPResponsableAgenda), { once: true });
+        existing.addEventListener("error", reject, { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "responsable-agenda.js?v=20260924-agent-picker-stable3";
+      script.dataset.respInlineAgenda = "1";
+      script.onload = () => {
+        window.STIPResponsableAgendaLoaded = true;
+        resolve(window.STIPResponsableAgenda);
+      };
+      script.onerror = (error) => {
+        agendaLoadPromise = null;
+        reject(error);
+      };
+      document.body.appendChild(script);
+    });
+    return agendaLoadPromise;
+  }
+
+  async function openAgendaAdd(date = "") {
+    activate("agenda");
+    await ensureAgenda();
+    window.STIPResponsableAgenda?.openAdd?.(date);
   }
 
   function ensureRequests() {
@@ -202,5 +224,5 @@
 
   const start = initialTab();
   activate(start, { syncUrl: !new URLSearchParams(location.search).has("tab") });
-  window.STIPResponsableTabs = { activate, current: () => current };
+  window.STIPResponsableTabs = { activate, current: () => current, ensureAgenda, openAgendaAdd };
 })();
