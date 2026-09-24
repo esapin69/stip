@@ -31,6 +31,9 @@
   --stip-shift-s-text:#8a6500;
   /* Calendriers 1 mois — taille canonique des pictogrammes (référence ✈️). */
   --stip-month-icon-size:1.32rem;
+  --stip-month-number-lift:-2px;
+  --stip-month-event-gap:5px;
+  --stip-month-event-offset:2px;
   --stip-radius-xs:8px;
   --stip-radius-sm:12px;
   --stip-radius-md:18px;
