@@ -55,6 +55,7 @@
     current = null,
     selectedRole = "",
     creating = false,
+    peopleMode = "with",
     renderBasePermissions = {},
     historyMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1),
     historyData = null,
@@ -311,7 +312,8 @@
   async function load() {
     try {
       data = await call("list", { q: $("q").value });
-      renderPeople();
+      if (peopleMode === "with") renderPeople();
+      else await renderCandidates();
       $("accessHistoryTab").hidden = !data.can_history;
       if (!data.can_history && document.body.classList.contains("access-history-mode"))
         setAccessMode("manage");
@@ -342,6 +344,36 @@
       .forEach(
         (b) => (b.onclick = () => edit(people[Number(b.dataset.person)])),
       );
+  }
+  async function renderCandidates() {
+    $("people").innerHTML =
+      '<p class="access-help">Recherche des agents sans accès…</p>';
+    const j = await call("find_new", { q: $("q").value });
+    const candidates = sortPeople(j.candidates || []);
+    $("people").innerHTML =
+      candidates
+        .map(
+          (a, i) =>
+            `<button class="access-person" data-candidate="${i}" type="button"><strong>${esc(a.prenom || "")} ${esc(a.nom || "")}</strong><small>GHE ${esc(String(a.ghe || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
+        )
+        .join("") ||
+      '<p class="access-help">Aucun agent sans accès trouvé.</p>';
+    $("people")
+      .querySelectorAll("[data-candidate]")
+      .forEach(
+        (b) =>
+          (b.onclick = () =>
+            editNew(candidates[Number(b.dataset.candidate)])),
+      );
+  }
+  function setPeopleMode(mode) {
+    peopleMode = mode === "without" ? "without" : "with";
+    const withAccess = peopleMode === "with";
+    $("withAccessBtn").classList.toggle("active", withAccess);
+    $("withoutAccessBtn").classList.toggle("active", !withAccess);
+    $("withAccessBtn").setAttribute("aria-selected", String(withAccess));
+    $("withoutAccessBtn").setAttribute("aria-selected", String(!withAccess));
+    load();
   }
   function presetUI() {
     $("presetRows").innerHTML = (data.presets || [])
@@ -703,29 +735,8 @@
       message(e.message);
     }
   };
-  $("newBtn").onclick = async () => {
-    try {
-      const j = await call("find_new", { q: $("q").value });
-      const candidates = sortPeople(j.candidates || []);
-      $("candidates").innerHTML =
-        candidates
-          .map(
-            (a, i) =>
-              `<button class="access-person" data-candidate="${i}" type="button"><strong>${esc(a.prenom || "")} ${esc(a.nom || "")}</strong><small>GHE ${esc(String(a.ghe || "—").replace(/^GHE\s*/i, ""))}</small></button>`,
-          )
-          .join("") ||
-        '<p class="access-help">Aucun agent sans accès trouvé.</p>';
-      $("candidates")
-        .querySelectorAll("[data-candidate]")
-        .forEach(
-          (b) =>
-            (b.onclick = () =>
-              editNew(candidates[Number(b.dataset.candidate)])),
-        );
-    } catch (e) {
-      message(e.message);
-    }
-  };
+  $("withAccessBtn").onclick = () => setPeopleMode("with");
+  $("withoutAccessBtn").onclick = () => setPeopleMode("without");
   let searchTimer;
   $("q").oninput = () => {
     clearTimeout(searchTimer);
