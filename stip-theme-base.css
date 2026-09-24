@@ -34,6 +34,8 @@
   --stip-month-number-lift:-2px;
   --stip-month-event-gap:5px;
   --stip-month-event-offset:2px;
+  --stip-month-grid-column-gap:5px;
+  --stip-month-grid-row-gap:7px;
   --stip-radius-xs:8px;
   --stip-radius-sm:12px;
   --stip-radius-md:18px;
@@ -121,7 +123,7 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 #planningView .phmh-arrow:disabled{opacity:.12!important}
 #planningView .phmh-center{height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important;padding:4px 0!important}
 #planningView .phmh-center img{display:block!important;width:min(96%,230px)!important;height:min(86px,18vw)!important;min-height:62px!important;object-fit:contain!important}
-#planningView .ph-month-grid{display:grid!important;grid-template-columns:repeat(7,var(--stip-calendar-cell))!important;gap:var(--stip-gap)!important;margin-top:0!important;align-items:stretch!important}
+#planningView .ph-month-grid{display:grid!important;grid-template-columns:repeat(7,var(--stip-calendar-cell))!important;margin-top:0!important;align-items:stretch!important}
 #planningView .ph-day-head{min-width:0!important;padding:7px 1px 6px!important;text-align:center!important;font-size:clamp(.46rem,1.65vw,.62rem)!important;font-weight:950!important;letter-spacing:-.015em!important;color:var(--stip-ink)!important;border-bottom:3px solid var(--stip-ink)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
 #planningView .ph-empty{min-height:clamp(76px,21vw,100px)!important}
 #planningView .ph-day-cell{position:relative!important;min-width:0!important;min-height:clamp(84px,22.6vw,110px)!important;padding:6px 2px 4px!important;border:1px solid var(--stip-line)!important;border-radius:clamp(8px,2.2vw,11px)!important;background:linear-gradient(180deg,#fff,#fbfdfe)!important;display:flex!important;flex-direction:column!important;align-items:center!important;overflow:hidden!important;box-shadow:var(--stip-shadow-soft)!important}
