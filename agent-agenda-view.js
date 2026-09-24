@@ -19,7 +19,7 @@
     cssLoader=new Promise(resolve=>{
       const l=document.createElement("link");
       l.rel="stylesheet";
-      l.href="agent-agenda-view.css?v=20260924-agent-agenda-repair1";
+      l.href="agent-agenda-view.css?v=20260924-month-contract1";
       l.dataset.agentAgendaCss="1";
       l.onload=()=>resolve(l);
       l.onerror=()=>resolve(l);
@@ -166,21 +166,21 @@
   function shiftToken(row,compact=false){
     const i=shiftInfo(row?.code||row?.source_value||"");
     if(!row)return compact?"":"—";
-    if(i.family==="rh")return "🏝️";
-    if(i.family==="off"||i.family==="other")return i.icon;
-    return compact?`<span class="aav-dot aav-${i.family}"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
+    if(i.family==="rh")return compact?'<span class="stip-month-icon">🏝️</span>':"🏝️";
+    if(i.family==="off"||i.family==="other")return compact?`<span class="stip-month-icon">${esc(i.icon)}</span>`:i.icon;
+    return compact?`<span class="aav-dot aav-${i.family} stip-month-dot"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
   }
   function monthHtml(){
     const k=state.month,[y,m]=k.split("-").map(Number),first=new Date(y,m-1,1,12),last=new Date(y,m,0,12),lead=(first.getDay()+6)%7,
           plan=byDate(state.data.items),emap=eventMap(state.events),cells=[];
     for(let i=0;i<lead;i++)cells.push('<span class="aav-cal-empty"></span>');
     for(let d=1;d<=last.getDate();d++){
-      const day=`${k}-${String(d).padStart(2,"0")}`,row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),
-            cls=[day===today()?"today":"",day===state.selected?"selected":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
-      cells.push(`<button type="button" class="aav-cal-day ${cls}" data-aav-day="${day}"><b>${d}</b><span class="aav-cal-shift">${row?shiftToken(row,true):""}</span><small>${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
+      const day=`${k}-${String(d).padStart(2,"0")}`,row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),weekend=[0,6].includes(dobj(day).getDay()),
+            cls=[day===today()?"today":"",day===state.selected?"selected":"",weekend?"is-weekend":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
+      cells.push(`<button type="button" class="aav-cal-day stip-month-day ${cls}" data-aav-day="${day}"><b class="stip-month-day-number">${d}</b><span class="aav-cal-shift">${row?shiftToken(row,true):""}</span><small class="stip-month-events">${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
     }
     const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
-    return `<section class="aav-month"><header><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar">${cells.join("")}</div></section>`;
+    return `<section class="aav-month stip-month-calendar"><header><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar">${cells.join("")}</div></section>`;
   }
   function quotity(){
     const q=Number(state?.data?.agent?.quotite);
