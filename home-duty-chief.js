@@ -2,14 +2,7 @@
   "use strict";
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data",
-    STORE = "stip_session_v1",
-    SHIFT = {
-      M: { start: "06:50", end: "14:40", label: "Matin" },
-      J: { start: "08:30", end: "16:20", label: "Journée" },
-      J4: { start: "10:10", end: "18:00", label: "J4" },
-      S: { start: "13:30", end: "21:00", label: "Soir" },
-      N: { start: "21:00", end: "06:50", label: "Nuit" },
-    };
+    STORE = "stip_session_v1";
   let data = null,
     loading = null,
     lastFetch = 0,
@@ -70,17 +63,25 @@
     const [h, m] = String(v || "00:00").split(":").map(Number);
     return h * 60 + m;
   }
+  function shiftMeta(v) {
+    const registry = window.STIPShiftRegistry,
+      def = registry?.resolve?.(v),
+      base = registry?.baseCode?.(v) || "";
+    if (!def?.is_working || !base) return null;
+    return {
+      code: base,
+      label: String(def.label || base),
+      start: String(def.start_time || "").slice(0, 5),
+      end: String(def.end_time || "").slice(0, 5),
+      icon: String(def.icon || ""),
+    };
+  }
   function baseCode(v) {
-    const c = String(v || "")
-      .trim()
-      .toUpperCase()
-      .replace(/\*+$/, "");
-    return SHIFT[c] ? c : "";
+    return shiftMeta(v)?.code || "";
   }
   function isCurrent(item, now) {
-    const code = baseCode(item?.code),
-      meta = SHIFT[code];
-    if (!meta) return false;
+    const meta = shiftMeta(item?.code);
+    if (!meta?.start || !meta?.end) return false;
     const start = hmMinutes(meta.start),
       end = hmMinutes(meta.end),
       date = String(item?.date || "").slice(0, 10);
@@ -92,9 +93,8 @@
     );
   }
   function nextStartKey(item) {
-    const code = baseCode(item?.code),
-      meta = SHIFT[code];
-    if (!meta) return "";
+    const meta = shiftMeta(item?.code);
+    if (!meta?.start) return "";
     return `${String(item?.date || "").slice(0, 10)} ${meta.start}`;
   }
   function currentKey(now) {
@@ -131,13 +131,12 @@
     });
   }
   function shiftText(item) {
-    const code = baseCode(item?.code),
-      meta = SHIFT[code];
-    return [code, meta?.label].filter(Boolean).join(" · ");
+    const meta = shiftMeta(item?.code);
+    return [meta?.code, meta?.label].filter(Boolean).join(" · ");
   }
   function shiftBadge(item) {
-    const code = baseCode(item?.code),
-      meta = SHIFT[code];
+    const meta = shiftMeta(item?.code),
+      code = meta?.code || "";
     if (!code || !meta) return "";
     const tone = code.toLowerCase();
     return `<span class="hc-duty-chief-shift tone-${esc(tone)}" aria-label="${esc(shiftText(item))}"><i aria-hidden="true"></i><b>${esc(code)}</b></span>`;
@@ -163,6 +162,8 @@
         if (!response.ok || json.error)
           throw Error(json.error || "Chefs indisponibles.");
         data = json;
+        if (json.shift_definitions)
+          window.STIPShiftRegistry?.set?.(json.shift_definitions);
         loadError = "";
         lastFetch = Date.now();
         return json;
