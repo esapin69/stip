@@ -465,3 +465,13 @@
   place-items:center!important;
   transform:none!important;
 }
+.stip-month-calendar .stip-month-day-number{
+  transform:translateY(var(--stip-month-number-lift))!important;
+}
+.stip-month-calendar .stip-month-events{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:var(--stip-month-event-gap)!important;
+  margin-top:var(--stip-month-event-offset)!important;
+}
