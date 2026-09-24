@@ -73,73 +73,48 @@
   function phoneDigits(v){return String(v||"").replace(/\D/g,"")}
   function phoneHref(v){const d=phoneDigits(v);if(!d)return"";return d.startsWith("33")?`tel:+${d}`:`tel:${d}`}
   function hiddenPhoneHref(v){let d=phoneDigits(v);if(!d)return"";if(d.startsWith("33"))d="0"+d.slice(2);return `tel:%2331%23${d}`}
-  const META={
-    M:{label:"Matin",time:"06h50–14h40",icon:"●",family:"m"},
-    J:{label:"Journée",time:"08h30–16h20",icon:"●",family:"j"},
-    J4:{label:"J4",time:"10h10–18h00",icon:"●",family:"j4"},
-    S:{label:"Soir",time:"13h30–21h00",icon:"●",family:"s"},
-    N:{label:"Nuit",time:"21h00–06h50",icon:"●",family:"n"},
-    RH:{label:"Repos",time:"",icon:"🏝️",family:"rh"},
-    CA:{label:"CA",time:"",icon:"•",family:"off"},
-    CP:{label:"CP",time:"",icon:"•",family:"off"},
-    RTT:{label:"RTT",time:"",icon:"⏱️",family:"off"},
-    RTTA:{label:"RTTA",time:"",icon:"⏱️",family:"off"},
-    RTA:{label:"RTA",time:"",icon:"⏱️",family:"off"},
-    RC:{label:"Récupération",time:"",icon:"↻",family:"off"},
-    RF:{label:"Repos férié",time:"",icon:"•",family:"off"},
-    FO:{label:"Formation",time:"",icon:"🎓",family:"off"},
-    ST:{label:"Référent stagiaire",time:"",icon:"👶",family:"off"},
-    VM:{label:"Visite médicale",time:"",icon:"🩺",family:"off"},
-    SYR:{label:"Activité syndicale",time:"",icon:"🤝",family:"off"},
-    MA:{label:"Absence",time:"",icon:"•",family:"off"},
-    AM:{label:"Absence",time:"",icon:"•",family:"off"},
-    AA:{label:"Absence autorisée",time:"",icon:"•",family:"off"},
-    ABS:{label:"Absence",time:"",icon:"•",family:"off"},
-    OFF:{label:"Repos",time:"",icon:"🏝️",family:"off"},
-    REPOS:{label:"Repos",time:"",icon:"🏝️",family:"off"},
-    "-":{label:"Aucun poste",time:"",icon:"",family:"other"},
-    "—":{label:"Aucun poste",time:"",icon:"",family:"other"}
-  };
-  function centralShiftDefinition(code){
-    const key=String(code||"").trim().toUpperCase(),target=key==="CP"?"CA":key;
-    return (state?.data?.shift_definitions||[]).find(x=>String(x?.code||"").trim().toUpperCase()===target)||null;
-  }
-  const FALLBACK_SPECIAL={
-    M0130:{base:"M",time:"3h45 · libre entre 06h00 et 21h30"},
-    M0131:{base:"M",time:"7h30 · libre entre 06h30 et 21h15"},
-    M0177:{base:"M",time:"7h30 · libre entre 06h25 et 21h35"},
-    J0464:{base:"J",time:"08h30–16h20 · fixe"},
-    S0113:{base:"S",time:"13h30–21h00 · fixe"}
-  };
-  function durationText(v){
-    const n=Number(v||0);if(!n)return"";
-    const h=Math.floor(n/60),m=n%60;
-    return m?`${h}h${String(m).padStart(2,"0")}`:`${h}h`;
-  }
-  function specialShift(code){
-    const server=(state?.data?.special_shifts||[]).find(x=>String(x.code||"").toUpperCase()===code);
-    if(server){
-      const base=String(server.base_shift||"").toUpperCase(),
-        start=String(server.window_start||"").slice(0,5).replace(":","h"),
-        end=String(server.window_end||"").slice(0,5).replace(":","h"),
-        flexible=String(server.schedule_mode||"")==="flexible",
-        duration=durationText(server.duration_minutes);
-      return{base,time:flexible?`${duration||"Durée spécifique"} · libre entre ${start} et ${end}`:`${start}–${end} · fixe`};
-    }
-    return FALLBACK_SPECIAL[code]||null;
+  function syncShiftRegistry(data){
+    if(data?.shift_definitions?.length) window.STIPShiftRegistry?.set?.(data.shift_definitions);
   }
   function shiftInfo(raw){
-    const src=String(raw||"").trim().toUpperCase(),star=src.includes("*"),clean=src.replace(/\*/g,""),special=specialShift(clean);
-    if(special){const s=special,m=META[s.base];return{...m,base:s.base,raw:src,time:s.time,adapted:true,star}}
-    if(META[clean]){const local={...META[clean]},server=centralShiftDefinition(clean);if(server){local.icon=String(server.icon||"").trim()||local.icon;if(clean==="CA"||clean==="CP")local.label=String(server.label||"").trim()||local.label}return{...local,base:clean,raw:src,star}}
-    let base="";
-    if(/^M\d+$/.test(clean))base="M";
-    else if(/^J4\d+$/.test(clean))base="J4";
-    else if(/^J\d+$/.test(clean))base="J";
-    else if(/^S\d+$/.test(clean))base="S";
-    else if(/^N\d+$/.test(clean))base="N";
-    if(base)return{...META[base],base,raw:src,time:"Horaire adapté",adapted:true,star};
-    return{label:clean||"—",time:"",icon:"•",family:"other",base:clean||"",raw:src,star};
+    const src=String(raw||"").trim().toUpperCase(),
+      star=src.includes("*"),
+      clean=src.replace(/\*+$/,""),
+      registry=window.STIPShiftRegistry,
+      def=registry?.resolve?.(clean),
+      base=registry?.baseCode?.(clean)||clean||"";
+    if(def){
+      return{
+        label:String(def.label||base||"—"),
+        time:registry?.time?.(clean)||"",
+        icon:String(def.icon||""),
+        family:String(def.family||"other"),
+        kind:String(def.kind||"other"),
+        base,
+        raw:src,
+        star,
+        adapted:String(def.schedule_mode||"standard")!=="standard"||Boolean(def.is_working&&clean!==base),
+        isWorking:Boolean(def.is_working),
+        color:String(def.color_hex||""),
+        softColor:String(def.soft_color_hex||""),
+        onColor:String(def.on_color_hex||""),
+      };
+    }
+    return{
+      label:clean||"—",
+      time:"",
+      icon:"•",
+      family:"other",
+      kind:"other",
+      base:clean||"",
+      raw:src,
+      star,
+      adapted:false,
+      isWorking:false,
+      color:"",
+      softColor:"",
+      onColor:"",
+    };
   }
   function expandRange(start,end,fn,max=370){let d=String(start||"").slice(0,10),e=String(end||start||"").slice(0,10),n=0;while(d&&d<=e&&n++<max){fn(d);d=add(d,1)}}
   function events(data){
@@ -187,20 +162,19 @@
     return Number.isInteger(q)&&q>=1&&q<100?q:0;
   }
   function weekHtml(){
-    const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[],workIcon={m:"🔵",j:"🟢",j4:"🟠",s:"🟡",n:"⚫"};
+    const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[];
     let hasEvents=false;
     for(let i=0;i<7;i++){
       const day=add(start,i),row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),d=dobj(day),
         dayName=d.toLocaleDateString("fr-FR",{weekday:"long"}).replace(".","").toUpperCase().slice(0,2),
         family=info.family||"other",base=info.base||"—",pending=!row,
-        rest=family==="rh"||family==="off",
-        codeClass=["m","j","j4","s","n"].includes(family)?`code-${family}`:"",
-        statusClass=pending?"pending":rest?"rest":"work",
+        codeClass=info.isWorking?`code-${family}`:"",
+        statusClass=pending?"pending":info.isWorking?"work":"rest",
         marker=ev.length?`<span class="hc-day-event-markers" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,3).map(x=>`<i title="${esc(x.title||x.kind||"Événement")}">${esc(x.icon||"•")}</i>`).join("")}</span>`:"",
         visual=pending
           ?'<span class="hc-pending-line"><span class="hc-pending-icon">🚫</span></span>'
-          :["m","j","j4","s","n"].includes(family)
-            ?`<span class="hc-work-line"><span class="hc-work-icon" aria-hidden="true">${workIcon[family]}</span><strong class="hc-shift-name">${esc(base)}</strong></span>`
+          :info.isWorking
+            ?`<span class="hc-work-line"><span class="hc-work-icon" aria-hidden="true">${esc(info.icon||"•")}</span><strong class="hc-shift-name">${esc(base)}</strong></span>`
             :`<span class="hc-rest-line"><span class="hc-status-icon" aria-hidden="true">${esc(info.icon||"•")}</span><strong class="hc-status-code">${esc(base)}</strong></span>`;
       if(ev.length)hasEvents=true;
       cards.push(`<button type="button" class="hc-day hc-day-landscape ${statusClass} ${codeClass} ${day===state.selected?"selected":""}" data-aav-day="${day}" aria-pressed="${day===state.selected}">${marker}<span class="hc-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="hc-week-visual">${visual}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
@@ -226,7 +200,7 @@
       hasPending=Array.from({length:7},(_,i)=>add(start,i)).some(day=>!weekPlan.has(day)),
       seen=new Map();
     for(const r of pagePlan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
-    const items=[...seen.values()].map(i=>`<span>${i.family==="rh"||i.family==="off"||i.family==="other"?i.icon:`<i class="aav-dot aav-${i.family}"></i>`}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
+    const items=[...seen.values()].map(i=>`<span>${i.isWorking?`<i class="aav-dot aav-${esc(i.family)}"></i>`:esc(i.icon||"•")}<b>${esc(i.label)}</b>${i.time?`<small>· ${esc(i.time)}</small>`:""}</span>`);
     if(hasPending)items.push('<span>🚫 <b>Planning non renseigné</b></span>');
     if(pagePlan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push('<span>⏱ <b>Horaire adapté</b></span>');
     if(quotity())items.push(`<span>◐ <b>Temps partiel</b><small>· ${quotity()}%</small></span>`);
@@ -331,7 +305,7 @@
     render();
   }
   async function reload(){
-    const data=await post(API,{source_key:state.sourceKey});state.data=data;state.events=events(data);state.bounds=monthBounds(data);render();
+    const data=await post(API,{source_key:state.sourceKey});syncShiftRegistry(data);state.data=data;state.events=events(data);state.bounds=monthBounds(data);render();
   }
   function wireBody(){
     const body=overlay.querySelector(".aav-body");
@@ -372,6 +346,7 @@
     overlay.querySelector("[data-aav-call]").onclick=e=>openCallChoice(e.currentTarget.dataset.aavCall,e.currentTarget.dataset.aavCallName);
     try{
       const data=await post(API,{source_key:sourceKey});
+      syncShiftRegistry(data);
       state={sourceKey,data,events:events(data),selected:today(),month:monthKey(today()),bounds:monthBounds(data)};
       render();
     }catch(err){
