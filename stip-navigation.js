@@ -1,5 +1,12 @@
 (() => {
   "use strict";
+  if (!window.__STIPActivityRuntimeRequested) {
+    window.__STIPActivityRuntimeRequested = true;
+    const activityScript = document.createElement("script");
+    activityScript.src = "/activity-runtime.js?v=20260924-history1";
+    activityScript.async = true;
+    document.head.appendChild(activityScript);
+  }
 
   const STORE = "stip_navigation_context_v2";
   const MAX_AGE = 12 * 60 * 60 * 1000;
