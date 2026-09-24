@@ -315,8 +315,8 @@ check(
 );
 check(home.includes('dateJumpPanel.dataset.calendarMonth ||')&&home.includes('return jumpToDate(day.dataset.calDay)'),'Sélectionner une semaine via un jour du mois voisin ne doit pas faire sauter le calendrier vers ce mois.');
 check(
-  homeCss.includes('.hc-date-jump-grid>button.is-selected') &&
-  homeCss.includes('.hc-date-jump-grid>button.is-today:not(.is-selected)'),
+  patterns.includes('.stip-month-calendar .stip-month-day.is-selected') &&
+  patterns.includes('.stip-month-calendar .stip-month-day.is-today'),
   'Le calendrier doit distinguer visuellement le jour sélectionné et aujourd’hui.'
 );
 
@@ -347,7 +347,7 @@ check(
   agentMonthSource.includes('weekend?"is-weekend":""') &&
   read('esprit-equipe.js').includes('weekend ? "is-weekend" : ""') &&
   planningUiSource.includes("weekend?' is-weekend':''") &&
-  responsableMonthSource.includes('weekend ? "is-weekend" : ""),
+  responsableMonthSource.includes('weekend ? "is-weekend" : ""'),
   'Les chiffres de samedi et dimanche doivent tous passer par la règle rouge commune.'
 );
 check(
