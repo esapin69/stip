@@ -580,22 +580,24 @@
     for (let day = 1; day <= last.getDate(); day++) {
       const date = new Date(year, month, day, 12),
         value = iso(date),
+        weekend = date.getDay() === 0 || date.getDay() === 6,
         signal = signalForDate(value),
         cls = [
           value === today ? "is-today" : "",
           value >= state.weekStart && value <= weekEnd ? "is-week" : "",
           value === state.dayFocus ? "is-selected" : "",
+          weekend ? "is-weekend" : "",
           signal?.level ? `status-${signal.level}` : "",
         ]
           .filter(Boolean)
           .join(" "),
         marker =
           signal?.level && signal.level !== "unknown"
-            ? `<span class="team-cal-status status-${esc(signal.level)}" aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>`
+            ? `<span class="team-cal-status stip-month-icon status-${esc(signal.level)}" aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>`
             : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
         aria = [dayTitle(value), signal?.label || ""].filter(Boolean).join(", ");
       cells.push(
-        `<button type="button" class="${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events"></small></button>`,
+        `<button type="button" class="stip-month-day ${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number stip-month-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events stip-month-events"></small></button>`,
       );
     }
     state.dateJumpMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
