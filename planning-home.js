@@ -144,7 +144,7 @@
     const used = pad + days,
       tail = (7 - (used % 7)) % 7;
     cells += '<span class="ph-empty" aria-hidden="true"></span>'.repeat(tail);
-    return `<div class="ph-month-card stip-month-calendar" data-ph-month="${k}"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid">${cells}</div></div>`;
+    return `<div class="ph-month-card stip-month-calendar" data-ph-month="${k}"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid stip-month-grid">${cells}</div></div>`;
   }
   function announceMonth() {
     window.dispatchEvent(
