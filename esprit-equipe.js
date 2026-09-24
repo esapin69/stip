@@ -248,12 +248,29 @@
       return;
     if (cached.signalPromise && !force) return cached.signalPromise;
     const days = daysOfWeek(start);
-    cached.signalPromise = Promise.allSettled(
-      days.map((date) => post("stip-staffing", { action: "day", date })),
-    ).then((rows) => {
+    cached.signalPromise = (async () => {
+      const rows = new Array(days.length);
+      let cursor = 0;
+      const workers = Array.from(
+        { length: Math.min(3, Math.max(1, days.length)) },
+        async () => {
+          while (cursor < days.length) {
+            const index = cursor++;
+            try {
+              rows[index] = {
+                status: "fulfilled",
+                value: await post("stip-staffing", { action: "day", date: days[index] }),
+              };
+            } catch (reason) {
+              rows[index] = { status: "rejected", reason };
+            }
+          }
+        },
+      );
+      await Promise.all(workers);
       rows.forEach((result, index) => {
         const date = days[index],
-          staff = result.status === "fulfilled" ? result.value : null,
+          staff = result?.status === "fulfilled" ? result.value : null,
           items = assistantItemsForDate(bundle, date),
           status = signalStatus(staff, items);
         state.staffingByDate.set(date, staff);
@@ -261,12 +278,11 @@
       });
       cached.signalLoaded = true;
       cached.signalFetchedAt = Date.now();
-      cached.signalPromise = null;
       if (start === state.weekStart) {
         renderHeader();
         if (state.rendered) renderContent(cached);
       }
-    }).catch(() => {
+    })().catch(() => {}).finally(() => {
       cached.signalPromise = null;
     });
     return cached.signalPromise;
@@ -311,7 +327,7 @@
       let cursor = 0;
       let completed = 0;
       const workers = Array.from(
-        { length: Math.min(6, Math.max(1, targetDays.length)) },
+        { length: Math.min(2, Math.max(1, targetDays.length)) },
         async () => {
           while (cursor < targetDays.length) {
             const date = targetDays[cursor++];
@@ -727,19 +743,37 @@
     if (!force && cached.activity) return cached;
     if (cached.activityPromise && !force) return cached.activityPromise;
     const days = daysOfWeek(start);
-    cached.activityPromise = Promise.allSettled(
-      days.map((date) => post("stip-cadre", { action: "dashboard", date })),
-    ).then((results) => {
+    cached.activityPromise = (async () => {
+      const results = new Array(days.length);
+      let cursor = 0;
+      const workers = Array.from(
+        { length: Math.min(2, Math.max(1, days.length)) },
+        async () => {
+          while (cursor < days.length) {
+            const index = cursor++;
+            try {
+              results[index] = {
+                status: "fulfilled",
+                value: await post("stip-cadre", { action: "dashboard", date: days[index] }),
+              };
+            } catch (reason) {
+              results[index] = { status: "rejected", reason };
+            }
+          }
+        },
+      );
+      await Promise.all(workers);
       cached.activity = new Map();
       results.forEach((result, index) => {
-        if (result.status === "fulfilled")
+        if (result?.status === "fulfilled")
           cached.activity.set(days[index], result.value?.day || {});
       });
-      cached.activityPromise = null;
       cached.activityError = results.find(
-        (result) => result.status === "rejected",
+        (result) => result?.status === "rejected",
       )?.reason;
       return cached;
+    })().finally(() => {
+      cached.activityPromise = null;
     });
     return cached.activityPromise;
   }
@@ -1488,14 +1522,26 @@
         if (request === state.request) renderContent(bundle);
       });
 
-      loadWeekSignals(state.weekStart, bundle, force)
-        .then(() => {
-          if (request === state.request) renderContent(bundle);
-        })
-        .catch(() => {})
-        .finally(() =>
-          loadMonthSignals(state.dateJumpMonth, force).catch(() => {}),
-        );
+      const runSignals = () => {
+        if (request !== state.request) return;
+        loadWeekSignals(state.weekStart, bundle, force)
+          .then(() => {
+            if (request === state.request) renderContent(bundle);
+          })
+          .catch(() => {})
+          .finally(() => {
+            const runMonthSignals = () => {
+              if (request !== state.request) return;
+              loadMonthSignals(state.dateJumpMonth, force).catch(() => {});
+            };
+            if ("requestIdleCallback" in window)
+              requestIdleCallback(runMonthSignals, { timeout: 2200 });
+            else setTimeout(runMonthSignals, 1200);
+          });
+      };
+      if ("requestIdleCallback" in window)
+        requestIdleCallback(runSignals, { timeout: 700 });
+      else setTimeout(runSignals, 140);
 
       clearBusy();
       if (!force) prefetchAdjacentWeeks();
