@@ -4490,24 +4490,29 @@
   --freshness-position:0%;
   position:absolute;
   top:50%;
-  left:clamp(3px,var(--freshness-position),calc(100% - 3px));
-  width:9px;
-  height:9px;
-  border:2px solid #fff;
+  left:clamp(12px,var(--freshness-position),calc(100% - 12px));
+  width:24px;
+  height:24px;
+  display:grid;
+  place-items:center;
+  border:0;
   border-radius:50%;
-  background:#173f48;
-  box-shadow:0 1px 4px rgba(0,0,0,.28);
+  background:rgba(255,255,255,.94);
+  box-shadow:0 1px 5px rgba(20,55,64,.24);
   transform:translate(-50%,-50%);
-  transition:left .8s ease;
+  transition:left .8s ease,transform .18s ease;
+  pointer-events:none;
+}
+.tb-freshness-marker span{
+  display:block;
+  font-size:16px;
+  line-height:1;
+  transform:translateY(-.5px);
 }
 .tb-wheelchair-freshness.is-warm .tb-freshness-copy{color:#a14e13}
 .tb-wheelchair-freshness.is-cooling .tb-freshness-copy{color:#8d493f}
 .tb-wheelchair-freshness.is-cold .tb-freshness-copy{color:#176da8}
 .tb-wheelchair-freshness.is-frozen .tb-freshness-copy{color:#5a849d}
-.tb-wheelchair-freshness.is-cold .tb-freshness-marker,
-.tb-wheelchair-freshness.is-frozen .tb-freshness-marker{
-  background:#0e75bb;
-}
 
 .hc-tableau-standalone .tb-wheelchair-actions{
   margin-top:8px!important;
