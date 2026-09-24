@@ -2049,7 +2049,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
-      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v1" loading="eager"></iframe></section>`;
+      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v2" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
@@ -2104,6 +2104,37 @@
           frame._stipTeamResizeObserver = observer;
         }
         requestAnimationFrame(syncFrameHeight);
+
+        // Keep agent/chef sheets in the parent page. This preserves the shared
+        // Applications / Mon profil / Esprit d'équipe header instead of trapping
+        // a full-screen agent view inside the iframe.
+        window.STIPLoad?.script?.("agent-agenda-view.js").catch(() => {});
+        if (doc.documentElement.dataset.stipAgentBridge !== "1") {
+          doc.documentElement.dataset.stipAgentBridge = "1";
+          doc.addEventListener(
+            "click",
+            (event) => {
+              const button = event.target.closest?.(
+                "[data-team-agent],[data-duty-chief-agent]",
+              );
+              if (!button) return;
+              const key = String(
+                button.dataset.teamAgent ||
+                  button.dataset.dutyChiefAgent ||
+                  "",
+              ).trim();
+              if (!key) return;
+              event.preventDefault();
+              event.stopImmediatePropagation();
+              const openParentAgent = () =>
+                window.STIPAgentAgenda?.open?.(key, {});
+              const loader = window.STIPLoad?.script?.("agent-agenda-view.js");
+              if (loader?.then) loader.then(openParentAgent).catch(() => {});
+              else openParentAgent();
+            },
+            true,
+          );
+        }
 
         const chair = doc.querySelector(".team-live-wheelchair");
         if (chair && chair.dataset.parentRouteBound !== "1") {
@@ -2208,12 +2239,8 @@
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
-          const next = b.dataset.homeMode || "planning";
-          if (next === "team") {
-            location.href = "esprit-equipe.html?from=home";
-            return;
-          }
-          const targetRoute = routeForHomeMode(next);
+          const next = b.dataset.homeMode || "planning",
+            targetRoute = routeForHomeMode(next);
           state.tableauFocus = false;
           if (window.STIPRouter?.set) {
             window.STIPRouter.set(targetRoute);
@@ -2360,7 +2387,7 @@
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
-    if (k === "team") return (location.href = "esprit-equipe.html?from=home");
+    if (k === "team") return window.STIPRouter?.set?.("team");
     if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
@@ -2623,10 +2650,6 @@
     }
     const next = homeModeForRoute(route);
     if (!next) return;
-    if (next === "team") {
-      location.href = "esprit-equipe.html?from=home";
-      return;
-    }
     if (next === "tableau" && !has("messages")) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
