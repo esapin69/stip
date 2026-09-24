@@ -844,6 +844,80 @@
       .join("");
   }
 
+  function teamLegendItem(key, iconHtml, label, meta = "") {
+    return `<button class="stip-legend-item" type="button" data-stip-legend-key="${esc(key)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${iconHtml}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</button>`;
+  }
+
+  function renderPageLegend() {
+    const list = $("#teamLegendList");
+    if (!list) return;
+    const sources = [
+        $("#teamContent"),
+        $("#teamDateJumpPanel"),
+        $("#teamMonthDigestHost"),
+        $("#teamDutyChiefTodayHost"),
+      ].filter(Boolean),
+      has = (selector) => sources.some((root) => root.querySelector(selector)),
+      textContent = sources.map((root) => root.textContent || "").join(" "),
+      items = [],
+      seen = new Set(),
+      add = (key, iconHtml, label, meta = "") => {
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        items.push(teamLegendItem(key, iconHtml, label, meta));
+      };
+
+    // Shift colours are meaningful visual cues on the selected day's cards.
+    for (const code of ["M", "J", "J4", "S", "N"]) {
+      const cls = code.toLowerCase(),
+        block = sources
+          .flatMap((root) => [...root.querySelectorAll(`.team-shift.shift-${cls}`)])
+          .find(Boolean);
+      if (!block) continue;
+      const meta = shiftMeta(code);
+      add(
+        "shift:" + code,
+        `<i class="team-legend-shift-dot shift-${cls}"></i>`,
+        meta?.label || code,
+        meta?.time || "",
+      );
+    }
+
+    const statuses = [
+      ["ok", "✔", "Rien ne coince"],
+      ["warning", "⚠", "À surveiller"],
+      ["critical", "🛑", "Journée tendue"],
+      ["opportunity", "+", "Présence plus large"],
+      ["unknown", "○", "Pas encore analysé"],
+    ];
+    for (const [level, icon, label] of statuses) {
+      if (
+        has(`.team-day-intel.status-${level},.team-shift-mini-status.status-${level},.team-cal-status.status-${level},.team-month-line.status-${level}`)
+      )
+        add("status:" + level, icon, label);
+    }
+
+    if (has(".hc-duty-chief-icon,.team-chef-mark"))
+      add("chef", "🎨", "Chef d’équipe");
+    if (has(".team-adapted-mark"))
+      add("adapted", "⏱", "Horaire adapté");
+    if (has(".team-part-mark"))
+      add("part-time", "◐", "Temps partiel");
+    if (textContent.includes("🎓"))
+      add("training", "🎓", "Formation");
+    if (textContent.includes("👶"))
+      add("trainee", "👶", "Stagiaire");
+
+    list.innerHTML =
+      items.join("") ||
+      teamLegendItem("empty", "○", "Aucun repère affiché");
+  }
+
+  function schedulePageLegend() {
+    cancelAnimationFrame(schedulePageLegend.frame || 0);
+    schedulePageLegend.frame = requestAnimationFrame(renderPageLegend);
+  }
+
   function renderHeader() {
     normalizeDayFocus();
     if (!state.dateJumpMonth)
@@ -1706,7 +1780,23 @@
     }
   });
 
+  function observePageLegendSources() {
+    const observer = new MutationObserver(schedulePageLegend);
+    [
+      $("#teamContent"),
+      $("#teamDateJumpPanel"),
+      $("#teamMonthDigestHost"),
+      $("#teamDutyChiefTodayHost"),
+    ]
+      .filter(Boolean)
+      .forEach((root) =>
+        observer.observe(root, { childList: true, subtree: true, characterData: true }),
+      );
+    schedulePageLegend();
+  }
+
   async function boot() {
+    observePageLegendSources();
     if (!token()) return location.replace("index.html");
     try {
       state.access = await post("stip-access", { action: "me" });
