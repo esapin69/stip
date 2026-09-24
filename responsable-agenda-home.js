@@ -417,30 +417,45 @@
       ),
       categories = new Set(visible.map((x) => categoryClass(x.category))),
       signalLevels = new Set(
-        weekDaysNow
-          .map(({ iso }) => signalForDate(iso)?.level)
-          .filter((level) => level && level !== "unknown"),
+        weekDaysNow.map(
+          ({ iso }) => signalForDate(iso)?.level || "unknown",
+        ),
       ),
-      items = [];
+      monthCounts = new Map(),
+      items = [],
+      add = (key, icon, label) => {
+        items.push(
+          `<button type="button" class="stip-legend-item" data-stip-legend-key="${esc(key)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${esc(icon)}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b></button>`,
+        );
+      };
+
+    for (const item of state.items.filter((x) => x.date.startsWith(month))) {
+      const groupKey = item.date + "|" + categoryClass(item.category);
+      monthCounts.set(groupKey, (monthCounts.get(groupKey) || 0) + 1);
+    }
 
     for (const category of ["medical", "intern", "training", "other"]) {
       if (!categories.has(category)) continue;
-      items.push(
-        `<span><i>${esc(categoryIcon(category))}</i><b>${esc(categoryLabel(category))}</b></span>`,
+      add(
+        "category:" + category,
+        categoryIcon(category),
+        categoryLabel(category),
       );
     }
     if (signalLevels.has("critical"))
-      items.push("<span><i>🛑</i><b>Journée tendue</b></span>");
+      add("status:critical", "🛑", "Journée tendue");
     if (signalLevels.has("warning"))
-      items.push("<span><i>⚠️</i><b>À surveiller</b></span>");
+      add("status:warning", "⚠️", "À surveiller");
     if (signalLevels.has("opportunity"))
-      items.push("<span><i>➕</i><b>Présence plus large</b></span>");
+      add("status:opportunity", "➕", "Présence plus large");
     if (signalLevels.has("ok"))
-      items.push("<span><i>✔</i><b>Rien ne coince</b></span>");
-    return (
-      items.join("") ||
-      '<span><i>○</i><b>Aucun repère affiché</b></span>'
-    );
+      add("status:ok", "✔", "Rien ne coince");
+    if (signalLevels.has("unknown"))
+      add("status:unknown", "○", "Pas encore analysé");
+    if ([...monthCounts.values()].some((count) => count > 1))
+      add("marker:multiple", "×N", "Plusieurs repères le même jour");
+
+    return items.join("");
   }
 
   function signalForDate(date) {
@@ -642,7 +657,7 @@
     const host = $("#rrLegend");
     if (!host) return;
     host.innerHTML =
-      `<div class="rr-period-separator rr-legend-separator"><span>LÉGENDE</span></div><section class="rr-legend" aria-label="Légende des repères de toute la page">${pageLegendHtml()}</section>`;
+      `<section class="rr-page-legend stip-legend" aria-label="Légende des repères de toute la page"><div class="rr-legend-separator stip-section-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="rr-legend stip-legend-surface"><div class="stip-legend-list">${pageLegendHtml()}</div></div></section>`;
   }
 
   function renderStatus() {
