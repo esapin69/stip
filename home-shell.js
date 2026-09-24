@@ -1551,7 +1551,7 @@
   }
   function homeModeNav() {
     const active =
-        state.homeMode === "responsable" ? "apps" : state.homeMode || "planning",
+        state.homeMode === "responsable" ? "" : state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
