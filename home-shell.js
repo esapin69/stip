@@ -919,11 +919,16 @@
       range = weekRangeLabel(w);
     return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
   }
-  function nativeFuture() {
+  function nativeTimelineItems({ includePast = false } = {}) {
     const b = state.boot || {},
+      today = parisIso(),
       o = [];
     (b.agenda_items || [])
-      .filter((x) => !done(x) && String(x.event_date || "") >= parisIso())
+      .filter(
+        (x) =>
+          !done(x) &&
+          (includePast || String(x.event_date || "") >= today),
+      )
       .forEach((x) => {
         const time = x.all_day
             ? "Toute la journée"
@@ -957,7 +962,9 @@
     (b.personal_formations || [])
       .filter(
         (x) =>
-          !done(x) && String(x.date_fin || x.date_debut || "") >= parisIso(),
+          !done(x) &&
+          (includePast ||
+            String(x.date_fin || x.date_debut || "") >= today),
       )
       .forEach((x) => {
         const time = String(x.horaire || "").trim(),
@@ -977,7 +984,9 @@
     (b.personal_stagiaires || [])
       .filter(
         (x) =>
-          !done(x) && String(x.date_fin || x.date_debut || "") >= parisIso(),
+          !done(x) &&
+          (includePast ||
+            String(x.date_fin || x.date_debut || "") >= today),
       )
       .forEach((x) => {
         const time = String(x.horaires || "").trim(),
@@ -997,26 +1006,61 @@
       });
     return o;
   }
-  function futureItems() {
-    const all = [...nativeFuture(), ...state.future.values()].filter(
-        (x) =>
-          !done(x) &&
-          String(x.endDate || x.end_date || x.date || "") >= parisIso(),
-      ),
-      m = new Map();
+  function normalizeTimelineItems(all = []) {
+    const m = new Map();
     all.forEach((x) => {
+      if (!x || done(x)) return;
       const id = String(
-          x.id || `${x.type || "item"}:${x.date || ""}:${x.title}`,
+          x.id || `${x.type || "item"}:${x.date || ""}:${x.title || ""}`,
         ),
         old = m.get(id);
       if (!old || Number(x.priority || 0) > Number(old.priority || 0))
-        m.set(id, { ...x, id, endDate: x.endDate || x.end_date || x.date });
+        m.set(id, {
+          ...x,
+          id,
+          endDate: x.endDate || x.end_date || x.date,
+        });
     });
     return [...m.values()].sort(
       (a, b) =>
         String(a.date).localeCompare(String(b.date)) ||
         String(a.title).localeCompare(String(b.title), "fr"),
     );
+  }
+  function nativeFuture() {
+    return nativeTimelineItems();
+  }
+  function futureItems() {
+    const today = parisIso();
+    return normalizeTimelineItems([
+      ...nativeFuture(),
+      ...state.future.values(),
+    ].filter(
+      (x) =>
+        !done(x) &&
+        String(x.endDate || x.end_date || x.date || "") >= today,
+    ));
+  }
+  function monthTimelineItems(key = "") {
+    const monthKey =
+        /^\d{4}-\d{2}$/.test(String(key || ""))
+          ? String(key)
+          : parisIso().slice(0, 7),
+      [year, month] = monthKey.split("-").map(Number),
+      monthStart = `${monthKey}-01`,
+      monthEnd = `${monthKey}-${String(
+        new Date(year, month, 0, 12).getDate(),
+      ).padStart(2, "0")}`;
+
+    return normalizeTimelineItems([
+      ...nativeTimelineItems({ includePast: true }),
+      ...state.future.values(),
+    ].filter((x) => {
+      if (!x || done(x)) return false;
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+      return !!start && start <= monthEnd && end >= monthStart;
+    }));
   }
   function fmtDateRange(x) {
     const a = dateObj(x.date),
@@ -1210,6 +1254,38 @@
 
     return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${content}</div></section>`;
   }
+  function monthEventsWidget() {
+    const key =
+        state.dateJumpMonth ||
+        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      items = monthTimelineItems(key);
+    if (!items.length) return "";
+
+    const buttons = items
+      .map((x) => {
+        const kind = futureTypeKey(x),
+          time = String(x.time || "").trim(),
+          place = String(x.place || "").trim(),
+          dateLabel = fmtDateRange(x);
+        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dateLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
+      })
+      .join("");
+
+    return `<section class="hc-widget hc-widget-future hc-week-event-key hc-month-event-key" data-widget="future"><div class="hc-week-event-key-list">${buttons}</div></section>`;
+  }
+  function planningMonthEventsSeparator() {
+    const key =
+        state.dateJumpMonth ||
+        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      label =
+        key === parisIso().slice(0, 7)
+          ? "CE MOIS-CI"
+          : monthTitle(`${key}-01`).toUpperCase();
+    return `<div class="hc-planning-period-separator hc-planning-month-events-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
+  }
+
   function legendEventDescriptor(event = {}) {
     const icon = String(event.icon || "•").trim() || "•",
       type = eventType(event);
@@ -1979,8 +2055,9 @@
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
+      monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${monthDetails ? `${planningMonthEventsSeparator()}<section class="hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
