@@ -449,3 +449,19 @@
   .stip-option-action{min-height:56px;grid-template-columns:38px minmax(0,1fr) 18px;gap:2px 9px}
   .stip-option-action>span{width:36px;height:36px}
 }
+
+/* 6. MONTH CALENDAR — canonical shared contract
+   All one-month calendars use one semantic vocabulary. Page sheets keep only
+   their structural layout; icon sizing and weekend date color live here. */
+.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number{
+  color:var(--stip-danger)!important;
+}
+.stip-month-calendar :is(.stip-month-icon,.stip-month-events){
+  font-size:var(--stip-month-icon-size)!important;
+  line-height:1!important;
+}
+.stip-month-calendar .stip-month-icon{
+  display:inline-grid!important;
+  place-items:center!important;
+  transform:none!important;
+}
