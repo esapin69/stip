@@ -750,16 +750,21 @@
 .rr-marker[data-rr-filter]{cursor:pointer}
 
 
-/* Shared week intelligence: Responsable uses the same day-status engine as Esprit d'équipe. */
-.rr-week-days > button{
-  grid-template-rows:31px 38px 23px minmax(26px,auto);
+/* Shared week intelligence: one stable signal row, outside the day cards. */
+.rr-week-signals{
+  display:grid;
+  grid-template-columns:repeat(7,minmax(0,1fr));
+  gap:4px;
+  min-height:28px;
+  margin:0 0 5px;
+  align-items:center;
 }
 .rr-week-signal{
-  min-width:22px;
-  min-height:22px;
+  min-width:0;
+  min-height:28px;
   display:grid;
   place-items:center;
-  font-size:1rem;
+  font-size:1.08rem;
   font-weight:950;
   line-height:1;
 }
@@ -767,8 +772,8 @@
 .rr-week-signal.status-warning{color:#c58b00}
 .rr-week-signal.status-critical{color:#c33b3b}
 .rr-week-signal.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
-.rr-week-days > button.status-warning:not(.selected){background:#fffaf1}
-.rr-week-days > button.status-critical:not(.selected){background:#fff5f5}
-.rr-week-days > button.status-opportunity:not(.selected){background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 6%,#fff)}
-.rr-week-days > button.status-ok:not(.selected){background:#f7fcf9}
-.rr-week-marks{min-height:26px;padding-top:1px}
+.rr-week-signal.status-unknown{visibility:hidden}
+.rr-week-days > button{
+  grid-template-rows:31px 43px minmax(28px,auto);
+}
+.rr-week-marks{min-height:28px;padding-top:1px}
