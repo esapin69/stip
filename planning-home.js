@@ -139,7 +139,7 @@
           .toUpperCase(),
         dow = new Date(`${dk}T12:00:00`).getDay(),
         weekend = dow === 0 || dow === 6;
-      cells += `<div class="ph-day-cell stip-month-day ${dk === today ? "today" : ""} ${weekend ? "weekend is-weekend" : ""}" data-ph-date="${dk}" data-ph-month="${k}"><b class="stip-month-day-number">${i}</b><div class="ph-shift-slot stip-month-primary">${shiftVisual(code)}</div></div>`;
+      cells += `<div class="ph-day-cell stip-month-day ${dk === today ? "today is-today" : ""} ${weekend ? "weekend is-weekend" : ""}" data-ph-date="${dk}" data-ph-month="${k}"><b class="stip-month-day-number">${i}</b><div class="ph-shift-slot stip-month-primary">${shiftVisual(code)}</div><small class="stip-month-events" aria-hidden="true"></small></div>`;
     }
     const used = pad + days,
       tail = (7 - (used % 7)) % 7;
