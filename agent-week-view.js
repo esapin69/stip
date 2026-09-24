@@ -5,7 +5,7 @@ async function spirit(){if(cache)return cache;const r=await fetch(API,{method:'P
 async function fullAgent(sourceKey){const r=await fetch(AGENT_API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORE)||''},body:JSON.stringify({source_key:sourceKey})}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);return j}
 const WEEK_SHIFT={
   M:['🔵','MATIN'],J:['🟢','JOUR'],J4:['🟠','J4'],S:['🟡','SOIR'],N:['🟣','NUIT'],
-  RH:['⚪','REPOS'],CA:['🌴','CONGÉ'],RTT:['⏱️','RTT'],RTTA:['⏱️','RTTA'],RTA:['⏱️','RTA'],
+  RH:['⚪','REPOS'],CA:['✈️','CONGÉ'],RTT:['⏱️','RTT'],RTTA:['⏱️','RTTA'],RTA:['⏱️','RTA'],
   RC:['🔁','RÉCUPÉRATION'],RF:['🎉','REPOS FÉRIÉ'],FO:['🎓','FORMATION'],SYR:['🤝','ACTIVITÉ SYNDICALE'],
   MA:['🤒','MALADIE'],AM:['🩺','ARRÊT MÉDICAL'],AA:['📝','ABSENCE AUTORISÉE'],ABS:['🚫','ABSENCE'],
   ST:['👶','RÉFÉRENT STAGIAIRE'],VM:['🩺','VISITE MÉDICALE']
