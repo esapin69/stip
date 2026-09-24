@@ -8,6 +8,14 @@
     document.head.appendChild(activityScript);
   }
 
+  if (!window.__STIPWorkspaceRequested) {
+    window.__STIPWorkspaceRequested = true;
+    const workspaceScript = document.createElement("script");
+    workspaceScript.src = "/stip-workspace.js?v=20260924-workspace1";
+    workspaceScript.async = true;
+    document.head.appendChild(workspaceScript);
+  }
+
   const STORE = "stip_navigation_context_v2";
   const MAX_AGE = 12 * 60 * 60 * 1000;
   let hooks = null;
