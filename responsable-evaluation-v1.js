@@ -193,10 +193,9 @@ function applyRemote(){
 }
 function configureSms(link){
   const phone=String(state.agent?.telephone||'').replace(/[^+0-9]/g,''),name=String(state.agent?.prenom||'').trim(),a=$('#remoteSms');
-  if(!phone){a.hidden=true;return}
   const body=`Bonjour${name?' '+name:''}, peux-tu relire et signer ton évaluation via ce lien sécurisé : ${link}`;
   const sep=/iPad|iPhone|iPod/i.test(navigator.userAgent)?'&':'?';
-  a.href=`sms:${encodeURIComponent(phone)}${sep}body=${encodeURIComponent(body)}`;
+  a.href=phone?`sms:${encodeURIComponent(phone)}${sep}body=${encodeURIComponent(body)}`:`sms:${sep}body=${encodeURIComponent(body)}`;
   a.hidden=false;
 }
 async function requestRemote(){
