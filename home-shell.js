@@ -2104,8 +2104,6 @@
           frame._stipTeamResizeObserver = observer;
         }
         requestAnimationFrame(syncFrameHeight);
-        setTimeout(syncFrameHeight, 80);
-        setTimeout(syncFrameHeight, 350);
 
         const chair = doc.querySelector(".team-live-wheelchair");
         if (chair && chair.dataset.parentRouteBound !== "1") {
