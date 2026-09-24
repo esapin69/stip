@@ -328,7 +328,7 @@
     if (filter === "last") {
       copy = `<strong>${esc(last || "SANS NOM")}</strong><small>${esc(first)}</small>`;
     } else if (filter === "ghe") {
-      copy = `<strong class="sas-wall-fullname">${esc(name(agent))}</strong>`;
+      copy = `<strong>${esc(last || first || "AGENT")}</strong>${first ? `<small>${esc(first)}</small>` : ""}`;
     } else {
       copy = `<strong>${esc(first)}</strong><small>${esc(last)}</small>`;
     }
@@ -365,6 +365,65 @@
       .join("");
   }
 
+  function normalizePickerFilter(value) {
+    const raw = String(value || "").toLowerCase();
+    if (raw === "prenom" || raw === "prénom" || raw === "first") return "first";
+    if (raw === "nom" || raw === "last") return "last";
+    return raw === "ghe" ? "ghe" : "first";
+  }
+
+  function mountWall(host, rawOptions = {}) {
+    if (!host) throw Error("Conteneur du mur d’agents introuvable.");
+    const options = { ...rawOptions };
+    const state = {
+      items: Array.isArray(rawOptions.items) ? rawOptions.items : [],
+      filter: normalizePickerFilter(rawOptions.filter),
+      selectedId: rawOptions.selectedId ?? "",
+    };
+
+    function render() {
+      options.selectedId = state.selectedId;
+      host.innerHTML = `<div class="sas-wall sas-wall-embedded" aria-live="polite">${state.items.length
+        ? pickerSections([...state.items], options, state.filter)
+        : `<p class="sas-empty sas-wall-empty">${esc(options.emptyText || "Aucun agent trouvé.")}</p>`}</div>`;
+
+      host.querySelectorAll(".sas-wall-photo img").forEach((image) =>
+        image.addEventListener("error", () => {
+          const box = image.parentElement;
+          if (box) box.textContent = box.dataset.initials || "ST";
+        }, { once: true }),
+      );
+
+      host.querySelectorAll("[data-sas-agent]").forEach((button) =>
+        button.addEventListener("click", () => {
+          const agent = state.items.find(
+            (item) => String(item.id) === String(button.dataset.sasAgent),
+          );
+          if (agent) options.onSelect?.(agent);
+        }),
+      );
+    }
+
+    render();
+    return {
+      setItems(items) {
+        state.items = Array.isArray(items) ? items : [];
+        render();
+      },
+      setFilter(filter) {
+        state.filter = normalizePickerFilter(filter);
+        render();
+      },
+      setSelected(selectedId) {
+        state.selectedId = selectedId ?? "";
+        render();
+      },
+      destroy() {
+        host.replaceChildren();
+      },
+    };
+  }
+
   function mount(host, rawOptions = {}) {
     if (!host) throw Error("Conteneur de sélection d’agent introuvable.");
     const mode = rawOptions.mode === "picker" ? "picker" : "directory";
@@ -379,7 +438,7 @@
     const state = {
       items: Array.isArray(options.items) ? options.items : [],
       query: String(options.query || ""),
-      pickerFilter: ["first","last","ghe"].includes(rawOptions.filter) ? rawOptions.filter : "first",
+      pickerFilter: normalizePickerFilter(rawOptions.filter),
     };
 
     function directoryResults() {
@@ -573,8 +632,9 @@
         refreshBody();
       },
       setFilter(filter) {
-        if (["first","last","ghe"].includes(filter)) {
-          state.pickerFilter = filter;
+        const next = normalizePickerFilter(filter);
+        if (["first","last","ghe"].includes(next)) {
+          state.pickerFilter = next;
           syncPickerFilters();
           refreshBody();
         }
@@ -644,6 +704,7 @@
   window.STIPAgentSelector = {
     mount,
     mountPicker,
+    mountWall,
     openPicker,
     closePicker: closePickerOverlay,
     name,

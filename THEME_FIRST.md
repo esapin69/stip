@@ -108,6 +108,7 @@ Contrat validé :
 - `Prénoms` et `Noms` regroupent le mur par séparateurs `A`, `B`, `C`… et ne rendent jamais de groupe vide ;
 - `GHE` regroupe dynamiquement en `SANS GHE`, puis par numéro réel `GHE 1`, `GHE 2`, etc., avec `AUTRE GHE` uniquement si une valeur existe mais n’est pas interprétable ;
 - affichage sous forme de **mur de portraits** : photo ronde importante, initiales en secours, tampon GHE superposé au bas du portrait sans masquer le visage ;
+- le **mur de portraits d’ADMIN > Accès est la référence visuelle canonique**. Il est rendu par `STIPAgentSelector.mountWall(...)` et consommé par ADMIN comme par `Rechercher un agent` ; aucun des deux écrans ne possède une copie locale des cartes, séparateurs, photos ou tampons GHE ;
 - filtre `Prénoms` : prénom prioritaire en gras/majuscules puis nom ; filtre `Noms` : nom prioritaire puis prénom ; filtre `GHE` : tampon GHE visuellement renforcé puis identité ;
 - toute la vignette est cliquable ; l’agent déjà sélectionné possède un repère commun ;
 - une sélection ferme la vue et restitue immédiatement l’agent à la page appelante sans perdre les autres champs déjà saisis ;
@@ -128,6 +129,7 @@ STIPAgentSelector.openPicker({
 ```
 
 Lorsqu’une ancienne page de choix d’agent est repérée, la correction attendue est : **la brancher sur « Rechercher un agent »**, pas recréer localement une liste, des radios, des cartes ou un autre moteur.
+- pour un écran qui a déjà ses propres contrôles de recherche/filtre, utiliser uniquement `STIPAgentSelector.mountWall(...)` pour le mur ; `openPicker(...)` reste le modèle complet avec en-tête, recherche et filtres.
 - depuis Responsable, ouvrir « Ajouter » doit rester dans la page courante : activer l’onglet Agenda puis ouvrir la feuille d’ajout en mémoire. La navigation vers une nouvelle URL n’est qu’un secours si le runtime inline n’est pas disponible.
 
 ## Filtres et onglets — template 6B officiel

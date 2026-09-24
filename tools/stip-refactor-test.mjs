@@ -58,6 +58,7 @@ check(
   selector.includes('data-sas-filter="last"') &&
   selector.includes('data-sas-filter="ghe"') &&
   selector.includes('sas-wall-grid') &&
+  selector.includes('mountWall') &&
   selector.includes('openPicker'),
   'Le modèle commun Rechercher un agent a perdu son mur de portraits ou ses filtres.'
 );
@@ -180,7 +181,17 @@ check(
   'Les états du panneau Applications ne suivent plus les libellés validés.'
 );
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
-check(accessManage.includes('sortPeople'),'La liste Accès n’est plus triée alphabétiquement côté interface.');
+check(
+  accessManage.includes('STIPAgentSelector.mountWall') &&
+  read('access-manage.html').includes('stip-agent-selector.js?v=20260924-shared-wall1'),
+  'ADMIN > Accès ne réutilise plus le mur canonique des agents.'
+);
+check(
+  !accessManage.includes('function sortPeople(') &&
+  !accessManage.includes('function groupedPeopleHtml(') &&
+  !read('access-manage.css').includes('.access-person-grid'),
+  'ADMIN > Accès a recréé une copie locale du mur des agents.'
+);
 check(['stip-time-surface','stip-person-surface','stip-action-surface','stip-catalog-surface','stip-cockpit-surface'].every(key=>patterns.includes(key)),'Une famille visuelle commune STIP a disparu.');
 check(read('stip-theme.css').includes('stip-patterns.css'),'Le thème maître ne charge plus les familles visuelles communes.');
 check(loadingJs.includes('const VISIBLE=new Set()'),'Le HUD global de chargement peut redevenir visible.');
