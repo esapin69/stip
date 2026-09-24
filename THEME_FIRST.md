@@ -100,6 +100,21 @@ Quand un motif est utilisé au moins deux fois, il doit devenir un composant com
 
 
 
+## Direction visuelle — lisibilité premium
+
+Cette direction renforce le thème existant sans créer une seconde identité.
+
+- **Inactif n’est jamais désactivé** : un filtre non sélectionné reste net, contrasté et immédiatement lisible.
+- La hiérarchie repose sur trois niveaux : **fond calme → surface nette → action expressive**.
+- L’état actif doit être identifiable par au moins deux indices : contraste + contour/relief/repère, jamais par la couleur seule.
+- Les libellés principaux n’utilisent pas la couleur `muted`; celle-ci est réservée à l’information secondaire.
+- Les pictogrammes fonctionnels ont une présence réelle. Ils peuvent devenir plus expressifs dans l’état actif, sans transformer tout le bouton en aplats criards.
+- Une page ne doit pas être « blanche sur blanc » : séparation par bordure, profondeur ou variation de surface, avec sobriété.
+- La profondeur est courte et précise : ombre douce pour une surface, ombre plus franche uniquement pour l’élément actif ou prioritaire.
+- Les accents métier restent contextuels ; la géométrie, la typographie et le comportement restent STIP.
+- Sur mobile et tablette, on gagne d’abord de l’espace en supprimant les wrappers et doublons, jamais en rendant le texte principal minuscule.
+- Toute évolution globale se fait dans les tokens/primitives avant les CSS de page.
+
 ## Garde-fou — stabilité visuelle
 
 STIP est considéré comme visuellement validé par défaut. Une amélioration locale ne doit pas devenir une refonte générale implicite.
