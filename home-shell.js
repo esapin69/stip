@@ -2049,7 +2049,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
-      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v2" loading="eager"></iframe></section>`;
+      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v3" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
