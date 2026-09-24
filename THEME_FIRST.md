@@ -311,3 +311,18 @@ Le Planning perso / calendrier reste le premier composant de référence migré 
 ## Règle finale
 
 En cas de conflit entre une ancienne règle visuelle et le thème : **le thème gagne**.
+
+
+## Bulles d’analyse liées aux indicateurs
+
+Les bulles ouvertes depuis un indicateur métier (`⚠️`, `🛑`, `✔`, `➕`) utilisent une hiérarchie typographique commune sur tout STIP.
+
+- conserver le même langage de surface et de couleur déjà validé ;
+- ne jamais mettre l’analyse métier en micro-texte ;
+- titre / conclusion essentielle : gras, lisible, en MAJUSCULES ;
+- explication : taille de lecture normale, interligne aéré ;
+- proposition / précision secondaire : nouvelle ligne distincte, séparée visuellement du constat ;
+- chiffres clés et verdict doivent être identifiables en un coup d’œil ;
+- privilégier les retours à la ligne sémantiques plutôt qu’un paragraphe compact ;
+- les feuilles Responsable, Esprit d’équipe et les aides d’effectif partagent cette même hiérarchie via `stip-theme.css` ;
+- une page ne doit pas recréer localement une version plus petite de cette typographie.
