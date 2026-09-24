@@ -324,6 +324,8 @@ check(
 const agentMonthSource=read('agent-agenda-view.js');
 const agentMonthCss=read('agent-agenda-view.css');
 const planningUiSource=read('planning-ui.js');
+const responsableMonthSource=read('responsable-agenda-home.js');
+const responsableMonthCss=read('responsable-agenda-home.css');
 check(
   theme.includes('--stip-month-icon-size:1.32rem') &&
   patterns.includes('.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number') &&
@@ -335,7 +337,8 @@ check(
   planningHome.includes('stip-month-calendar') &&
   agentMonthSource.includes('stip-month-calendar') &&
   read('esprit-equipe.html').includes('stip-month-calendar') &&
-  planningUiSource.includes('stip-month-calendar'),
+  planningUiSource.includes('stip-month-calendar') &&
+  responsableMonthSource.includes('stip-month-calendar'),
   'Un calendrier mensuel a quitté le contrat visuel commun.'
 );
 check(
@@ -343,7 +346,8 @@ check(
   planningHome.includes('weekend ? "weekend is-weekend" : ""') &&
   agentMonthSource.includes('weekend?"is-weekend":""') &&
   read('esprit-equipe.js').includes('weekend ? "is-weekend" : ""') &&
-  planningUiSource.includes("weekend?' is-weekend':''"),
+  planningUiSource.includes("weekend?' is-weekend':''") &&
+  responsableMonthSource.includes('weekend ? "is-weekend" : ""),
   'Les chiffres de samedi et dimanche doivent tous passer par la règle rouge commune.'
 );
 check(
@@ -365,18 +369,19 @@ check(
   'Les pastilles de couleur doivent garder leur gabarit local actuel et rester la seule exception de taille.'
 );
 check(
-  theme.includes('--stip-month-number-lift:-2px') &&
+  theme.includes('--stip-month-number-lift:0px') &&
   theme.includes('--stip-month-grid-column-gap:5px') &&
-  theme.includes('--stip-month-grid-row-gap:8px') &&
-  theme.includes('--stip-month-cell-min-height:84px') &&
-  theme.includes('--stip-month-number-row:20px') &&
+  theme.includes('--stip-month-grid-row-gap:10px') &&
+  theme.includes('--stip-month-cell-min-height:88px') &&
+  theme.includes('--stip-month-cell-height:88px') &&
+  theme.includes('--stip-month-number-row:22px') &&
   theme.includes('--stip-month-visual-row:22px') &&
   theme.includes('--stip-month-events-row:24px') &&
-  theme.includes('--stip-month-internal-gap:7px') &&
+  theme.includes('--stip-month-internal-gap:6px') &&
   theme.includes('--stip-month-event-gap:6px') &&
   theme.includes('--stip-month-event-offset:0px') &&
   patterns.includes('.stip-month-calendar .stip-month-grid') &&
-  patterns.includes('.stip-month-calendar .stip-month-day:not(.ph-day-cell)') &&
+  patterns.includes('.stip-month-calendar .stip-month-day{') &&
   patterns.includes('gap:var(--stip-month-event-gap)!important'),
   'Les espacements communs du calendrier mensuel ont disparu.'
 );
@@ -385,18 +390,25 @@ check(
   planningHome.includes('ph-month-grid stip-month-grid') &&
   agentMonthSource.includes('aav-calendar stip-month-grid') &&
   read('esprit-equipe.js').includes('team-date-jump-grid stip-month-grid') &&
-  planningUiSource.includes('pui-calendar stip-month-grid'),
+  planningUiSource.includes('pui-calendar stip-month-grid') &&
+  responsableMonthSource.includes('rr-month-grid stip-month-grid'),
   'Un calendrier mensuel ne consomme plus la grille commune.'
 );
 check(
   patterns.includes('.stip-month-calendar .stip-month-day.is-selected:not(.is-today)') &&
-  patterns.includes('translateY(-4px) scale(1.10)') &&
+  patterns.includes('transform:scale(1.15)!important') &&
+  patterns.includes('.stip-month-calendar .stip-month-day.is-today') &&
   patterns.includes('.stip-month-calendar .stip-month-primary') &&
   home.includes('hc-date-jump-marker stip-month-primary') &&
+  planningHome.includes('ph-shift-slot stip-month-primary') &&
+  planningUiSource.includes('stip-month-primary') &&
   agentMonthSource.includes('aav-cal-shift stip-month-primary') &&
   read('esprit-equipe.js').includes('team-cal-marker stip-month-primary') &&
+  responsableMonthSource.includes('rr-month-primary stip-month-primary') &&
   agentMonthSource.includes('today is-today') &&
-  agentMonthSource.includes('selected is-selected'),
+  agentMonthSource.includes('selected is-selected') &&
+  responsableMonthSource.includes('today is-today') &&
+  responsableMonthSource.includes('selected is-selected'),
   'Le jour mensuel choisi doit reprendre le zoom de sélection sans grossir automatiquement aujourd’hui.'
 );
 check(
@@ -406,6 +418,14 @@ check(
   !homeCss.includes('height:59px!important;min-height:59px!important') &&
   !homeCss.includes('margin-top:8px!important;gap:8px!important'),
   'La feuille Home est de nouveau corrompue ou recrée un espacement mensuel local.'
+);
+check(
+  !/\.hc-date-jump-grid>button\{[^}]*grid-template-rows/s.test(homeCss) &&
+  !/\.aav-cal-day\{[^}]*grid-template-rows/s.test(agentMonthCss) &&
+  !/\.team-date-jump-grid>button\{[^}]*grid-template-rows/s.test(read('esprit-equipe.css')) &&
+  !/\.rr-month-grid\s*>\s*button\s*\{[^}]*grid-template-rows/s.test(responsableMonthCss) &&
+  !/\.ph-day-cell\{[^}]*display:flex/s.test(planningHome),
+  'Une page recrée encore localement la géométrie du calendrier mensuel au lieu du template commun.'
 );
 
 const espritHtml=read('esprit-equipe.html');
