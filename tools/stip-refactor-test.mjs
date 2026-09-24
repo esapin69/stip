@@ -322,10 +322,15 @@ check(
   'Les pastilles de couleur doivent garder leur gabarit local actuel et rester la seule exception de taille.'
 );
 check(
-  theme.includes('--stip-month-number-lift:-2px') &&
+  theme.includes('--stip-month-number-lift:-4px') &&
   theme.includes('--stip-month-grid-column-gap:5px') &&
-  theme.includes('--stip-month-grid-row-gap:7px') &&
+  theme.includes('--stip-month-grid-row-gap:10px') &&
+  theme.includes('--stip-month-cell-min-height:74px') &&
+  theme.includes('--stip-month-number-row:20px') &&
+  theme.includes('--stip-month-visual-row:26px') &&
+  theme.includes('--stip-month-events-row:22px') &&
   patterns.includes('.stip-month-calendar .stip-month-grid') &&
+  patterns.includes('.stip-month-calendar .stip-month-day:not(.ph-day-cell)') &&
   patterns.includes('gap:var(--stip-month-event-gap)!important'),
   'Les espacements communs du calendrier mensuel ont disparu.'
 );
