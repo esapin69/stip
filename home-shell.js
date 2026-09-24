@@ -2057,6 +2057,21 @@
     return `<button type="button" class="hc-wheelchair-shortcut${state.homeMode === "tableau" ? " active" : ""}" data-home-mode="tableau" aria-pressed="${state.homeMode === "tableau"}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}</span><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils<span class="hc-home-live-badge" data-wheelchair-count hidden></span></strong></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span></button>`;
   }
 
+  function responsableEmbedSrc() {
+    const params = new URLSearchParams();
+    params.set("embed", "home-v2");
+    try {
+      const saved = sessionStorage.getItem("stip_responsable_entry_search_v1") || "";
+      sessionStorage.removeItem("stip_responsable_entry_search_v1");
+      const source = new URLSearchParams(saved);
+      for (const key of ["tab", "mode", "tool", "open"]) {
+        const value = source.get(key);
+        if (value) params.set(key, value);
+      }
+    } catch {}
+    return `responsable.html?${params.toString()}`;
+  }
+
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -2067,7 +2082,7 @@
       state.homeMode === "responsable" &&
       (has("responsable") || has("admin"))
     )
-      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="responsable.html?embed=home-v2" loading="eager"></iframe></section>`;
+      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="${esc(responsableEmbedSrc())}" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
