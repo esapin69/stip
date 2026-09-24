@@ -5347,3 +5347,37 @@
     min-width:0;
   }
 }
+
+
+/* global-responsive-contract-20260924 */
+/* Shared routed surfaces must stay in normal flow at tablet/desktop widths.
+   This deliberately overrides the legacy standalone centering rule above. */
+@media (min-width:760px){
+  .hc-home-pane-tableau .tb-page,
+  .hc-home-pane-chat .tb-page,
+  .hc-tableau-standalone .tb-page,
+  .tb-page{
+    left:auto!important;
+    right:auto!important;
+    transform:none!important;
+    width:100%!important;
+    max-width:760px!important;
+    margin-inline:auto!important;
+  }
+  .tb-dialogue,
+  .tb-search-shortcuts,
+  .tb-composer,
+  .tb-selection-bar,
+  .tb-mode-pills,
+  .tb-building-pulse{
+    min-width:0!important;
+    max-width:100%!important;
+  }
+}
+@media (min-width:1100px){
+  .hc-home-pane-tableau .tb-page,
+  .hc-home-pane-chat .tb-page,
+  .hc-tableau-standalone .tb-page{
+    max-width:900px!important;
+  }
+}
