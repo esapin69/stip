@@ -3820,7 +3820,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:0 0 4px!important;color:#71868e!important;font-size:.55rem!important;font-weight:950!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-weekdays>span{padding:3px 0!important}
-.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-empty{height:88px!important;min-height:88px!important}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-empty{height:96px!important;min-height:96px!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button{
   padding:2px 1px 1px!important;
   overflow:visible!important;border:1px solid transparent!important;border-radius:15px!important;background:#f7fafb!important;
@@ -3828,21 +3828,29 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button.is-selected{
   border-color:#1595ad!important;background:#ecf9fb!important;box-shadow:inset 0 0 0 2px #1595ad,0 5px 12px rgba(11,143,169,.12)!important;
 }
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button.is-selected:not(.is-today){
+  z-index:8!important;
+  transform:translateY(-4px) scale(1.10)!important;
+  transform-origin:center center!important;
+}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button.is-today{
+  transform:none!important;
+}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button.is-today:not(.is-selected){
   box-shadow:inset 0 0 0 2px #8fcbd6!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-day-number{
   font-size:1.16rem!important;line-height:1!important;font-weight:950!important;
 }
-.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-marker{height:21px!important;min-height:21px!important}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-marker{height:24px!important;min-height:24px!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-marker-empty{width:18px!important;height:18px!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-dot{
   width:17px!important;height:17px!important;box-shadow:inset 0 0 0 1px rgba(0,0,0,.07),0 2px 4px rgba(20,62,78,.08)!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-icon{line-height:1!important;transform:none!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-events{
-  min-height:19px!important;height:19px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  overflow:visible!important;padding:0!important;line-height:1!important;letter-spacing:-.08em!important;
+  min-height:26px!important;height:26px!important;display:flex!important;align-items:flex-start!important;justify-content:center!important;
+  margin-top:8px!important;gap:8px!important;overflow:visible!important;padding:0!important;line-height:1!important;letter-spacing:-.08em!important;
 }
 
 /* AGENDA — independent buttons, same card language as the duty-chief button */
