@@ -151,7 +151,7 @@
     for(let i=0;i<lead;i++)cells.push('<span class="aav-cal-empty"></span>');
     for(let d=1;d<=last.getDate();d++){
       const day=`${k}-${String(d).padStart(2,"0")}`,row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),weekend=[0,6].includes(dobj(day).getDay()),
-            cls=[day===today()?"today":"",day===state.selected?"selected":"",weekend?"is-weekend":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
+            cls=[day===today()?"today is-today":"",day===state.selected?"selected is-selected":"",weekend?"is-weekend":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
       cells.push(`<button type="button" class="aav-cal-day stip-month-day ${cls}" data-aav-day="${day}"><b class="stip-month-day-number">${d}</b><span class="aav-cal-shift">${row?shiftToken(row,true):""}</span><small class="stip-month-events">${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
     }
     const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
