@@ -287,6 +287,10 @@
     const submitLabel=viewer.is_self?"Ajouter à mon agenda":"Ajouter à son agenda";
     return `<section class="aav-manage"><button type="button" class="aav-add" data-aav-add><span>＋</span><strong>Ajouter un événement</strong><small>${viewer.is_self?"À mon planning":"À ce planning"}</small><em>›</em></button><form class="aav-form" data-aav-form hidden><div class="aav-form-grid"><label class="aav-wide">Titre<input name="title" maxlength="180" required placeholder="Ex. Réunion d’équipe"></label><label>Date<input name="event_date" type="date" value="${esc(state.selected)}" required></label><label>Type<select name="event_kind"><option value="rendezvous">Rendez-vous</option><option value="formation">Formation</option><option value="reunion">Réunion</option><option value="information">Information</option><option value="autre" selected>Autre</option></select></label><label>Début<input name="start_time" type="time" value="09:00"></label><label>Fin<input name="end_time" type="time" value="10:00"></label><label class="aav-wide aav-icon-field">Icône <small>Facultatif · une icône est proposée automatiquement</small><div><input name="icon" maxlength="24" inputmode="text" value="📌" aria-label="Icône de l’événement"><button type="button" data-aav-clear-icon>Auto</button></div></label><label class="aav-all"><input name="all_day" type="checkbox"> Toute la journée</label><label class="aav-wide">Lieu<input name="location" maxlength="240"></label><label class="aav-wide">Information<textarea name="body" maxlength="1800" rows="3"></textarea></label></div><div class="aav-form-actions"><button type="button" data-aav-cancel>Annuler</button><button type="submit">${submitLabel}</button></div><p data-aav-form-status></p></form></section>`;
   }
+  function agendaSectionSeparator(label){
+    return `<div class="aav-period-separator"><span>${esc(label)}</span></div>`;
+  }
+
   function render(){
     if(!overlay||!state)return;
     const c=state.data.contact||state.data.agent||{},ghe=String(c.ghe||state.data.agent?.ghe||"").replace(/^GHE\s*/i,"");
@@ -299,7 +303,7 @@
       call.dataset.aavCallName=person(c);
       call.setAttribute("aria-label",phone?`Choisir comment appeler ${person(c)}`:"Appel indisponible");
     }
-    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${monthHtml()}${weekHtml()}${eventHtml()}${addForm()}${legendHtml()}${calendarHtml()}`;
+    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${agendaSectionSeparator("SEMAINE")}${weekHtml()}${agendaSectionSeparator("MOIS")}${monthHtml()}${eventHtml()}${addForm()}${legendHtml()}${calendarHtml()}`;
     wireBody();
   }
   function moveMonth(step){
