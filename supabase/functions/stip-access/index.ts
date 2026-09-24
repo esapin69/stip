@@ -115,6 +115,25 @@ const DEFS = [
   title,
   small: "",
 }));
+const PAGE_LABELS: Record<string, string> = {
+  home: "Accueil",
+  planning_personal: "Planning perso",
+  tomorrow: "Pour demain",
+  team: "Esprit d’équipe",
+  agent_directory: "Équipe",
+  planning_compare: "Comparer les plannings",
+  change: "Changement",
+  calendar: "Synchroniser mon calendrier",
+  agent_dates: "Date des agents",
+  contacts: "Contacts",
+  responsable: "Responsable",
+  notifications: "Notifications",
+  messages: "Fauteuils",
+  places: "Visiter les lieux",
+  assistant: "Assistant STIP",
+  access: "Accès",
+  profile: "Mon compte",
+};
 const hex = (a: ArrayBuffer) =>
   [...new Uint8Array(a)].map((b) => b.toString(16).padStart(2, "0")).join("");
 async function sha256(s: string) {
@@ -293,6 +312,51 @@ async function sessionFrom(req: Request) {
     .update({ last_seen_at: new Date().toISOString() })
     .eq("id", data.id);
   return { session_id: data.id, ...p };
+}
+async function activitySessionFrom(req: Request) {
+  const token = req.headers.get("x-stip-session") || "";
+  if (!token) return null;
+  const hash = await sha256(token);
+  const { data: session, error } = await admin
+    .from("stip_access_sessions")
+    .select("id,profile_id,expires_at,revoked_at")
+    .eq("token_hash", hash)
+    .maybeSingle();
+  if (error) throw error;
+  if (
+    !session ||
+    session.revoked_at ||
+    new Date(session.expires_at) <= new Date()
+  )
+    return null;
+  const { data: profile, error: pe } = await admin
+    .from("stip_access_profiles")
+    .select("id,active")
+    .eq("id", session.profile_id)
+    .maybeSingle();
+  if (pe) throw pe;
+  if (!profile?.active) return null;
+  await admin
+    .from("stip_access_sessions")
+    .update({ last_seen_at: new Date().toISOString() })
+    .eq("id", session.id);
+  return { session_id: session.id, profile_id: session.profile_id };
+}
+async function trackActivity(req: Request, body: any) {
+  const s = await activitySessionFrom(req);
+  if (!s) return J({ error: "Session expirée." }, 401);
+  const pageKey = String(body.page_key || "")
+    .trim()
+    .toLowerCase();
+  if (!PAGE_LABELS[pageKey])
+    return J({ error: "Module inconnu." }, 400);
+  const { error } = await admin.from("stip_access_activity").insert({
+    profile_id: s.profile_id,
+    session_id: s.session_id,
+    page_key: pageKey,
+  });
+  if (error) throw error;
+  return J({ ok: true });
 }
 function ipOf(req: Request) {
   return (
@@ -660,6 +724,7 @@ Deno.serve(async (req) => {
       const s = await sessionFrom(req);
       return s ? J(s) : J({ error: "Session expirée." }, 401);
     }
+    if (action === "activity") return await trackActivity(req, body);
     if (action === "logout") {
       const s = await sessionFrom(req);
       if (s)
