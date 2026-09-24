@@ -601,7 +601,7 @@
           .replace(/^./, (char) => char.toUpperCase()),
       )}</strong><button type="button" data-team-cal-step="1" aria-label="Mois suivant">›</button></div>` +
       '<div class="team-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div>' +
-      `<div class="team-date-jump-grid">${cells.join("")}</div>`;
+      `<div class="team-date-jump-grid stip-month-grid">${cells.join("")}</div>`;
   }
 
   function chooseDate(value) {
