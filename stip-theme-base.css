@@ -131,14 +131,13 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 #planningView .phmh-center img{display:block!important;width:min(96%,230px)!important;height:min(86px,18vw)!important;min-height:62px!important;object-fit:contain!important}
 #planningView .ph-month-grid{display:grid!important;grid-template-columns:repeat(7,var(--stip-calendar-cell))!important;margin-top:0!important;align-items:stretch!important}
 #planningView .ph-day-head{min-width:0!important;padding:7px 1px 6px!important;text-align:center!important;font-size:clamp(.46rem,1.65vw,.62rem)!important;font-weight:950!important;letter-spacing:-.015em!important;color:var(--stip-ink)!important;border-bottom:3px solid var(--stip-ink)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:clip!important}
-#planningView .ph-empty{min-height:clamp(76px,21vw,100px)!important}
-#planningView .ph-day-cell{position:relative!important;min-width:0!important;min-height:clamp(84px,22.6vw,110px)!important;padding:6px 2px 4px!important;border:1px solid var(--stip-line)!important;border-radius:clamp(8px,2.2vw,11px)!important;background:linear-gradient(180deg,#fff,#fbfdfe)!important;display:flex!important;flex-direction:column!important;align-items:center!important;overflow:hidden!important;box-shadow:var(--stip-shadow-soft)!important}
-#planningView .ph-day-cell>b{align-self:flex-start!important;margin-left:4px!important;font-size:clamp(.95rem,4vw,1.25rem)!important;line-height:1!important;color:#111!important;font-weight:950!important}
-#planningView .ph-shift-slot{flex:1!important;width:100%!important;min-height:0!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:2px 0!important}
+#planningView .ph-empty{min-height:var(--stip-month-cell-height)!important}
+#planningView .ph-day-cell{min-width:0!important;border:1px solid var(--stip-line)!important;border-radius:15px!important;background:linear-gradient(180deg,#fff,#fbfdfe)!important;box-shadow:var(--stip-shadow-soft)!important}
+#planningView .ph-day-cell>b{color:#111!important}
+#planningView .ph-shift-slot{line-height:1!important}
 #planningView .ph-shift-img{display:block!important;max-width:96%!important;max-height:clamp(52px,15.5vw,76px)!important;width:auto!important;height:auto!important;object-fit:contain!important;filter:saturate(1.32) contrast(1.10) brightness(1.04) drop-shadow(0 2px 3px rgba(0,0,0,.08))!important}
 #planningView .ph-shift-img[alt="J4"]{filter:saturate(1.55) contrast(1.16) brightness(1.02) hue-rotate(-4deg) drop-shadow(0 2px 3px rgba(0,0,0,.08))!important}
 #planningView .ph-shift-img[alt="S"]{filter:saturate(1.55) contrast(1.12) brightness(1.10) drop-shadow(0 2px 3px rgba(0,0,0,.08))!important}
-#planningView .ph-day-cell.today{background:#e9f8fb!important;box-shadow:inset 0 0 0 3px var(--stip-ink),0 4px 11px rgba(16,63,81,.10)!important;z-index:2!important}
 
 /* Responsable : même app, pas une seconde identité visuelle. */
 .responsable-home-page,.resp-panel,.ra-native-panel .resp-panel-body{background:var(--stip-bg)!important;color:var(--stip-ink)!important}
@@ -185,7 +184,6 @@ button:active:not(:disabled){transform:var(--stip-tap)}
   #planningView .phmh-avatar{border-radius:17px!important}
   #planningView .phmh-carousel{min-height:92px!important;border-radius:17px!important}
   #planningView .phmh-center img{height:68px!important;min-height:58px!important}
-  #planningView .ph-day-cell{min-height:76px!important;padding-inline:1px!important}
   #planningView .ph-shift-img{max-height:52px!important}
 }
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
