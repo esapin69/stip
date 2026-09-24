@@ -225,6 +225,10 @@
 
   document.dispatchEvent(new CustomEvent("stip:navigation-ready"));
   const ensureQuickAccess = () => {
+    const embedded =
+      new URLSearchParams(location.search).has("embed") ||
+      window.self !== window.top;
+    if (embedded) return;
     if (document.querySelector('script[src*="quick-access-universal.js"]'))
       return;
     const script = document.createElement("script");
