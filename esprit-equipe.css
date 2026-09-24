@@ -1164,6 +1164,18 @@ body.team-page {
 .team-month-legend .status-warning{color:#c58b00}
 .team-month-legend .status-critical{color:#c33b3b}
 .team-month-legend .status-unknown{color:#8b9aa0}
+.team-legend-shift-dot{
+  display:block;
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:var(--stip-muted-2);
+}
+.team-legend-shift-dot.shift-m{background:var(--stip-shift-m)}
+.team-legend-shift-dot.shift-j{background:var(--stip-shift-j)}
+.team-legend-shift-dot.shift-j4{background:var(--stip-shift-j4)}
+.team-legend-shift-dot.shift-s{background:var(--stip-shift-s)}
+.team-legend-shift-dot.shift-n{background:var(--stip-shift-n)}
 
 /* Chef d’équipe — styles externes obligatoires : la CSP de cette page bloque
    les styles injectés par home-duty-chief.js. */
