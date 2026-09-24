@@ -25,29 +25,7 @@
       "VENDREDI",
       "SAMEDI",
       "DIMANCHE",
-    ],
-    FALLBACK = {
-      M0130: "var(--stip-shift-m)",
-      M0131: "var(--stip-shift-m)",
-      M0177: "var(--stip-shift-m)",
-      J0464: "var(--stip-shift-j)",
-      S0113: "var(--stip-shift-s)",
-      M: "var(--stip-shift-m)",
-      J: "var(--stip-shift-j)",
-      J4: "var(--stip-shift-j4)",
-      S: "var(--stip-shift-s)",
-      N: "var(--stip-shift-n)",
-      RH: "#748594",
-      RTT: "#748594",
-      RTTA: "#748594",
-      RC: "#748594",
-      CA: "#748594",
-      RF: "#748594",
-      AA: "#748594",
-      MA: "#748594",
-      RTA: "#748594",
-      SYR: "#748594",
-    };
+    ],    ];
   let items = [],
     monthKey = "",
     shiftAssets = {},
@@ -123,10 +101,18 @@
   }
   function shiftVisual(code) {
     if (!code) return "";
-    const url = asset(code);
+    const registry = window.STIPShiftRegistry,
+      def = registry?.resolve?.(code),
+      color = registry?.color?.(code, "#277b86") || "#277b86",
+      icon = registry?.icon?.(code) || "",
+      url = asset(code);
+    if (def?.is_working && url)
+      return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(def.label || code)}">`;
+    if (icon)
+      return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(code)}">`;
-    return `<span class="ph-shift-fallback" style="--shift:${FALLBACK[code] || "#277b86"}">${esc(code)}</span>`;
+    return `<span class="ph-shift-fallback" style="--shift:${esc(color)}">${esc(code)}</span>`;
   }
   function monthPanel(k) {
     const [y, m] = k.split("-").map(Number),
@@ -248,6 +234,7 @@
     if (!d) return false;
     items = d.personal || d.items || [];
     shiftAssets = d.media?.shifts || shiftAssets || {};
+    if (d.shift_definitions) window.STIPShiftRegistry?.set?.(d.shift_definitions);
     buildAvailable();
     chooseMonth();
     if (rerender && currentKind === "personal") renderPersonal();
