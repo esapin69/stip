@@ -2216,19 +2216,6 @@
         }
 
         doc.body?.classList.add("stip-home-embedded");
-        const top = doc.querySelector(".resp-top");
-        if (top) {
-          top.hidden = true;
-          top.style.display = "none";
-        }
-
-        // The shared home shell is now the only page header. Responsable keeps
-        // its own Dates / Suivi / Équipe / Agenda workspace directly below it.
-        const tabs = doc.querySelector(".resp-tabs");
-        if (tabs) {
-          tabs.style.top = "0";
-          tabs.style.position = "relative";
-        }
         doc.documentElement.style.overflow = "hidden";
         if (doc.body) {
           doc.body.style.overflow = "hidden";
