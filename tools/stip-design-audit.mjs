@@ -8,6 +8,15 @@ const ROOT = process.cwd();
 const HTML_EXEMPT = new Set([
   'print.html',
 ]);
+const CONTINUITY_EXEMPT = new Set([
+  'index.html',
+  'print.html',
+  'team-chat.html',
+  'tableau-stip.html',
+  'responsable-evaluation-agents.html',
+  'rejoindre-equipe.html',
+  'nouvel-arrivant-pro.html',
+]);
 const ROOT_TOKEN_FILES = new Set([
   'stip-theme-base.css',
   'stip-theme.css',
@@ -111,6 +120,16 @@ for (const file of files) {
 
     if (created && !exempt && !/stip-theme\.css(?:\?|["'])/i.test(content)) {
       errors.push(`${file}: toute nouvelle page STIP doit charger stip-theme.css.`);
+    }
+
+    if (
+      created &&
+      !CONTINUITY_EXEMPT.has(basename) &&
+      !/(?:stip-navigation|quick-access-universal|stip-workspace)\.js(?:\?|["'])/i.test(content)
+    ) {
+      errors.push(
+        `${file}: toute nouvelle app STIP doit charger la continuité centrale (stip-navigation.js, quick-access-universal.js ou stip-workspace.js).`,
+      );
     }
 
     const checks = [
