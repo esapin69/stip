@@ -309,7 +309,7 @@
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map(esc).join("")}</small></button>`,
+        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
