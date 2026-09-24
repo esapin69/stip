@@ -527,3 +527,47 @@ check(
   respStaffing.includes('rs-shift-overlay'),
   'Les indicateurs de shift Responsable doivent rester cliquables avec leur analyse terrain.'
 );
+
+
+/* Contrat canonique Visiter les lieux / Chat fauteuil / exports */
+const placesCanonicalHtml=read('places.html');
+const placesExportHtml=read('places-export.html');
+const wheelchairChatCanonical=read('team-chat.js');
+const wheelchairEdgeCanonical=read('supabase/functions/stip-messages/index.ts');
+const placesEdgeCanonical=read('supabase/functions/stip-places/index.ts');
+const agentsContract=read('AGENTS.md');
+
+check(
+  !wheelchairChatCanonical.includes('const WHEELCHAIR_LOCATIONS = {') &&
+  wheelchairChatCanonical.includes('api("wheelchair_catalog")') &&
+  wheelchairChatCanonical.includes('async function loadWheelchairCatalog()'),
+  'Chat fauteuil a recréé un catalogue de lieux local au lieu de consommer le référentiel canonique.'
+);
+check(
+  wheelchairEdgeCanonical.includes('async function wheelchairCatalog()') &&
+  wheelchairEdgeCanonical.includes('db.from("stip_places")') &&
+  wheelchairEdgeCanonical.includes('if(a==="wheelchair_catalog")'),
+  'stip-messages ne sert plus le catalogue fauteuil depuis stip_places.'
+);
+check(
+  placesEdgeCanonical.includes("action==='export_xlsx'") &&
+  placesEdgeCanonical.includes("action==='export_pdf'") &&
+  placesEdgeCanonical.includes('XLSX.write') &&
+  placesEdgeCanonical.includes('PDFDocument.create()'),
+  'Les exports Visiter les lieux ne sont plus générés par stip-places depuis la source canonique.'
+);
+check(
+  placesCanonicalHtml.includes('href="places-export.html"') &&
+  placesCanonicalHtml.includes("exportLink.hidden=d?.access_level!=='pro'"),
+  'Visiter les lieux ne protège plus l’entrée Export par le niveau professionnel confirmé par le serveur.'
+);
+check(
+  placesExportHtml.includes('action:format==="pdf"?"export_pdf":"export_xlsx"') &&
+  placesExportHtml.includes('x-stip-session'),
+  'La page Export ne déclenche plus directement les deux exports canoniques avec la session STIP.'
+);
+check(
+  agentsContract.includes('## 14. Visiter les lieux — canonical data and export contract') &&
+  agentsContract.includes('Do not operate Vercel directly'),
+  'Le contrat GitHub/Supabase de Visiter les lieux n’est plus documenté dans AGENTS.md.'
+);
