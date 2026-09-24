@@ -47,6 +47,6 @@ function render(){if(!selected.size)return;const self=session?.agent||{},cols=[s
 async function boot(){const token=localStorage.getItem(STORE)||'';if(!token){location.replace('index.html');return}try{[session,spirit]=await Promise.all([call(ACCESS,'me'),call(DATA,'spirit')]);if(!session?.permissions?.planning_team)throw Error('Comparaison non autorisée.');collectAgents();$('#teamLabel').textContent=spirit.team?`Équipe ${spirit.team}`:'';$('#status').classList.add('hidden');if(applyPrefill()){render()}else{$('#picker').classList.remove('hidden');paintPicker();if(HOME_ENTRY)setTimeout(()=>$('#search')?.focus(),60)}}catch(e){$('#status').textContent=e.message||'Comparaison indisponible.'}}
 $('#search').addEventListener('input',paintPicker);$('#compareBtn').onclick=render;boot()})();
 </script>
-<script src="quick-access-universal.js?v=20260924-history1"></script>
+<script src="quick-access-universal.js?v=20260924-history2"></script>
 </body>
 </html>
