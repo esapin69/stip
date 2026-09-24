@@ -1305,9 +1305,7 @@
     )
       ? String(payload.persistenceOverride)
       : "";
-    const inferredPersistence = (precision = "") =>
-      inferWheelchairPersistence({ quantity, location, precision });
-    let persistence = persistenceOverride || inferredPersistence();
+    let persistence = persistenceOverride || "normal";
     const summary = structuredDraft({
       type,
       building,
@@ -1328,12 +1326,11 @@
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
         (type === "spot"
-          ? '<div class="tb-confidence-override" aria-label="Fiabilité du repère">' +
-              '<div class="tb-confidence-label"><strong>Fiabilité</strong><small data-confidence-mode></small></div>' +
+          ? '<div class="tb-confidence-override" aria-label="Information supplémentaire">' +
+              '<div class="tb-confidence-label"><strong>Info en plus</strong><small data-confidence-mode>facultatif</small></div>' +
               '<div class="tb-confidence-actions">' +
-                '<button type="button" data-confidence="auto" aria-label="Automatique">Auto</button>' +
-                '<button type="button" data-confidence="fast" aria-label="Peut partir vite">🧊</button>' +
-                '<button type="button" data-confidence="sheltered" aria-label="Endroit plutôt stable">🔥</button>' +
+                '<button type="button" data-confidence="fast" aria-label="Peut partir vite"><span>🧊</span><strong>Vite</strong></button>' +
+                '<button type="button" data-confidence="sheltered" aria-label="Plutôt stable"><span>🔥</span><strong>Stable</strong></button>' +
               '</div>' +
             '</div>'
           : '') +
@@ -1351,42 +1348,30 @@
 
     const syncConfidence = () => {
       if (type !== "spot") return;
-      const inferred = inferredPersistence(String(input?.value || ""));
-      persistence = persistenceOverride || inferred;
+      persistence = persistenceOverride || "normal";
       wrap.querySelectorAll("[data-confidence]").forEach((button) => {
         const value = String(button.dataset.confidence || "");
-        const active =
-          value === "auto"
-            ? !persistenceOverride
-            : persistenceOverride
-              ? value === persistenceOverride
-              : value === inferred && inferred !== "normal";
+        const active = persistenceOverride === value;
         button.classList.toggle("is-selected", active);
-        button.classList.toggle(
-          "is-auto-selected",
-          !persistenceOverride && value === inferred && value !== "auto" && inferred !== "normal",
-        );
         button.setAttribute("aria-pressed", active ? "true" : "false");
       });
       const mode = wrap.querySelector("[data-confidence-mode]");
       if (mode) {
-        mode.textContent = persistenceOverride
-          ? "Choix manuel"
-          : inferred === "fast"
-            ? "Auto · 🧊"
-            : inferred === "sheltered"
-              ? "Auto · 🔥"
-              : "Auto";
+        mode.textContent =
+          persistenceOverride === "fast"
+            ? "🧊 peut partir vite"
+            : persistenceOverride === "sheltered"
+              ? "🔥 plutôt stable"
+              : "facultatif";
       }
     };
-
-    input?.addEventListener("input", syncConfidence);
 
     wrap.querySelectorAll("[data-confidence]").forEach((button) => {
       button.addEventListener("click", () => {
         const value = String(button.dataset.confidence || "");
-        persistenceOverride = value === "fast" || value === "sheltered" ? value : "";
+        persistenceOverride = persistenceOverride === value ? "" : value;
         payload.persistenceOverride = persistenceOverride;
+        payload.persistence = persistenceOverride || "normal";
         syncConfidence();
       });
     });
@@ -1403,7 +1388,7 @@
       payload.level = found.level || payload.level || "";
       location = found.location || "";
       payload.location = location;
-      payload.persistence = inferWheelchairPersistence({ quantity, location });
+      payload.persistence = persistenceOverride || "normal";
       payload.persistenceOverride = persistenceOverride;
       renderStructuredReview(wrap, payload, { back, close });
     });
@@ -1417,13 +1402,7 @@
           ...payload,
           location,
           precision: String(input?.value || "").trim(),
-          persistence:
-            persistenceOverride ||
-            inferWheelchairPersistence({
-              quantity,
-              location,
-              precision: String(input?.value || "").trim(),
-            }),
+          persistence: persistenceOverride || "normal",
         });
         if (sent) close?.(true);
         else {
@@ -1461,6 +1440,7 @@
       const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
       let quantity = 0;
       let level = "";
+      let persistenceOverride = "";
       const selectedPlaces = new Set();
 
       const wrap = document.createElement("div");
@@ -1485,6 +1465,8 @@
             quantity,
             level,
             location: result.location || "",
+            persistence: persistenceOverride || "normal",
+            persistenceOverride,
           },
           { back: level ? renderPlaces : renderLevels, close },
         );
@@ -1553,36 +1535,25 @@
             '<div class="tb-place-choices tb-field-spot-choices">' +
               quickPlaces.map((place) => {
                 const selected = selectedPlaces.has(place.value);
-                const confidenceIcon =
-                  place.persistence === "fast" ? "🧊" :
-                  place.persistence === "sheltered" ? "🔥" :
-                  "";
-                const confidenceLabel =
-                  place.persistence === "fast" ? "Peut partir vite" :
-                  place.persistence === "sheltered" ? "Endroit plus stable" :
-                  "";
-                return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" data-place-persistence="' + esc(place.persistence || "normal") + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
+                return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
                   '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span>' +
                   '<strong>' + esc(place.label) + '</strong>' +
-                  (confidenceIcon
-                    ? '<small class="tb-place-confidence" title="' + esc(confidenceLabel) + '" aria-label="' + esc(confidenceLabel) + '">' + confidenceIcon + '</small>'
-                    : '') +
                 "</button>";
               }).join("") +
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
+            '<div class="tb-place-temperature" aria-label="Information supplémentaire sur la stabilité">' +
+              '<div class="tb-place-temperature-copy"><strong>Info en plus</strong><small>facultatif · ce n’est pas un lieu</small></div>' +
+              '<div class="tb-place-temperature-actions">' +
+                '<button type="button" class="' + (persistenceOverride === "fast" ? "is-selected" : "") + '" data-place-temperature="fast" aria-pressed="' + (persistenceOverride === "fast" ? "true" : "false") + '"><span>🧊</span><strong>Peut partir vite</strong></button>' +
+                '<button type="button" class="' + (persistenceOverride === "sheltered" ? "is-selected" : "") + '" data-place-temperature="sheltered" aria-pressed="' + (persistenceOverride === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Plutôt stable</strong></button>' +
+              '</div>' +
+            '</div>' +
             '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
               '<span>Continuer' + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "") + '</span><b>›</b>' +
             "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
-
-        const selectedPersistence = () => {
-          if (selectedPlaces.has("__whole__")) return "normal";
-          const selected = quickPlaces.filter((place) => selectedPlaces.has(place.value));
-          const modes = [...new Set(selected.map((place) => place.persistence || "normal"))];
-          return modes.length === 1 ? modes[0] : "normal";
-        };
 
         wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
 
@@ -1605,10 +1576,17 @@
           });
         });
 
+        wrap.querySelectorAll("[data-place-temperature]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const value = String(button.dataset.placeTemperature || "");
+            persistenceOverride = persistenceOverride === value ? "" : value;
+            renderPlaces();
+          });
+        });
+
         wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
           if (!selectedPlaces.size) return;
           const locations = [...selectedPlaces].filter((value) => value !== "__whole__");
-          const persistence = selectedPersistence();
           renderStructuredReview(
             wrap,
             {
@@ -1617,8 +1595,8 @@
               quantity,
               level,
               location:locations.join(" | "),
-              persistence,
-              persistenceOverride:"",
+              persistence:persistenceOverride || "normal",
+              persistenceOverride,
             },
             { back:renderPlaces, close },
           );
@@ -3406,7 +3384,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-confidence-override1",
+    build: "20260924-temp-choice1",
     mount,
     mountPreview,
     unmountFull,
