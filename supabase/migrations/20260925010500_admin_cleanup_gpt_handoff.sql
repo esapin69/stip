@@ -33,3 +33,24 @@ end;
 $$;
 
 revoke all on function public.admin_cleanup_purge_handoffs() from public, anon, authenticated;
+
+
+do $$
+declare existing_job bigint;
+begin
+  select jobid into existing_job
+  from cron.job
+  where jobname='admin-cleanup-handoff-purge'
+  limit 1;
+
+  if existing_job is not null then
+    perform cron.unschedule(existing_job);
+  end if;
+
+  perform cron.schedule(
+    'admin-cleanup-handoff-purge',
+    '37 3 * * *',
+    'select public.admin_cleanup_purge_handoffs();'
+  );
+end
+$$;
