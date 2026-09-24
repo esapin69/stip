@@ -158,8 +158,35 @@
     return history.length > 1 && previousSameSite();
   }
 
+  function explicitReturnTarget() {
+    let raw = "";
+    try {
+      raw = new URLSearchParams(location.search).get("return") || "";
+    } catch {}
+    if (!raw) return "";
+    try {
+      const target = new URL(raw, location.href);
+      if (target.origin !== location.origin) return "";
+      const current = new URL(location.href);
+      if (
+        target.pathname === current.pathname &&
+        target.search === current.search &&
+        target.hash === current.hash
+      )
+        return "";
+      return target.pathname + target.search + target.hash;
+    } catch {
+      return "";
+    }
+  }
+
   function back(fallback = familyFallback()) {
     save();
+    const explicit = explicitReturnTarget();
+    if (explicit) {
+      location.assign(explicit);
+      return false;
+    }
     if (canBack()) {
       history.back();
       return true;
