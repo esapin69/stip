@@ -14,6 +14,18 @@ Règle absolue : **le thème possède le visuel ; la page possède seulement sa 
 
 Source active de production : `main`. Une branche ou une ancienne feuille de style ne doit jamais devenir une seconde source de vérité.
 
+## Registre des références visuelles
+
+Lire `VISUAL_MASTERS.md` avant toute modification UI.
+
+Ce fichier distingue :
+- les maîtres explicitement validés par Eddy ;
+- les composants déjà canoniques dans le dépôt ;
+- les références uniquement fonctionnelles ;
+- les candidats qui ne doivent pas être généralisés sans validation.
+
+La semaine de **Mon profil / Accueil personnel** est le maître visuel validé pour le composant semaine. Esprit d’équipe reste la référence fonctionnelle de la composition temporelle complète mois → semaine → jours.
+
 ## Avant toute modification visuelle
 
 1. Lire ce fichier.
