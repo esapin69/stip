@@ -50,17 +50,6 @@
   margin-top: 3px;
   color: var(--stip-muted);
 }
-.access-create {
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--stip-line);
-}
-.access-create h3 {
-  margin: 0 0 10px;
-}
-.access-create .access-list {
-  margin-top: 10px;
-}
 .access-editor {
   margin-top: 16px;
 }
@@ -224,13 +213,6 @@
 }
 
 /* access-final-20260920 */
-.access-new-cta{
-  width:100%;
-  min-height:54px;
-  margin-top:2px;
-  background:var(--stip-accent)!important;
-  box-shadow:var(--stip-shadow)!important;
-}
 .access-list{gap:7px}
 .access-person{
   background:var(--stip-surface-raised)!important;
@@ -314,31 +296,11 @@
 }
 
 
-/* access-history-20260924 */
-.access-mode-switch{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-  margin:0 0 16px;
-  padding:5px;
-  border:1px solid var(--stip-line);
-  border-radius:16px;
-  background:var(--stip-surface-soft);
-}
-.access-mode-switch button{
-  min-height:46px;
-  border:0;
-  border-radius:12px;
-  background:transparent;
-  color:var(--stip-muted);
-  font:inherit;
-  font-weight:900;
-}
-.access-mode-switch button.active{
-  background:var(--stip-surface-raised);
-  color:var(--stip-ink);
-  box-shadow:var(--stip-shadow-soft);
-}
+/* access-history-20260924
+   Les onglets utilisent le template 6B partagé ; cette page ne garde que
+   l'espacement structurel. */
+.access-mode-switch{margin:0 0 16px}
+.access-people-filters{margin:10px 0 12px}
 .access-history{
   padding:clamp(16px,4vw,24px);
 }
