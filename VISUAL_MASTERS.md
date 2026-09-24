@@ -6,16 +6,19 @@ But : ne plus redemander ni réinventer à chaque discussion quel écran sert de
 
 ## Statuts
 
-- **MAÎTRE VALIDÉ UTILISATEUR** : référence explicitement choisie par Eddy. Ne pas la remplacer sans validation explicite.
+- **MAÎTRE VALIDÉ UTILISATEUR** : référence explicitement choisie par Eddy et finalisée. Ne pas la remplacer sans validation explicite.
+- **MAÎTRE EN COURS DE FINALISATION** : future référence officielle encore en réglage. Corriger uniquement sa base jusqu’à validation finale ; ne pas propager automatiquement.
 - **CANONIQUE DÉJÀ ÉTABLI** : référence déjà définie comme officielle dans le dépôt.
 - **RÉFÉRENCE FONCTIONNELLE** : modèle de comportement/composition, sans imposer son visuel à tout le site.
 - **À CONFIRMER** : bon candidat repéré dans le dépôt, mais pas encore déclaré préféré.
 
 ## 1. Semaine / planning personnel
 
-**Statut : MAÎTRE VALIDÉ UTILISATEUR**
+**Statut : MAÎTRE EN COURS DE FINALISATION**
 
 Référence : la semaine de la page **Mon profil / Accueil personnel**.
+
+Cette référence est explicitement choisie par Eddy comme future base maîtresse, mais elle est encore en cours de réglage. Tant qu’Eddy n’a pas déclaré la base finalisée, **ne pas propager automatiquement ses changements aux autres pages**. Les modifications demandées doivent être faites d’abord sur cette base, puis la propagation sera décidée séparément.
 
 Implémentation actuelle :
 - `home-shell.js`
