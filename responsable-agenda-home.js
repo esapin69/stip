@@ -223,7 +223,7 @@
             count > 1
               ? `<em class="rr-marker-count" aria-hidden="true">×${count}</em>`
               : "";
-        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
+        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span class="stip-month-icon" aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
       })
       .join("");
   }
