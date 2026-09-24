@@ -5248,3 +5248,102 @@
   border-color:#8db7be;
   background:#eaf4f5;
 }
+
+
+/* 20260924-temp-choice1 — 🧊/🔥 is optional metadata, never a location badge */
+.tb-place-confidence{display:none!important}
+.tb-place-temperature{
+  margin-top:10px;
+  padding:8px 9px;
+  border:1px solid #d7e4e6;
+  border-radius:14px;
+  background:#f7fbfb;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:9px;
+}
+.tb-place-temperature-copy{
+  min-width:0;
+  display:grid;
+  gap:2px;
+}
+.tb-place-temperature-copy strong{
+  color:#315a62;
+  font-size:.64rem;
+  line-height:1;
+  font-weight:1000;
+}
+.tb-place-temperature-copy small{
+  color:#83979b;
+  font-size:.50rem;
+  line-height:1.05;
+  font-weight:800;
+}
+.tb-place-temperature-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+}
+.tb-place-temperature-actions button{
+  min-width:105px;
+  min-height:38px;
+  padding:4px 8px;
+  border:1px solid #d5e2e4;
+  border-radius:11px;
+  background:#fff;
+  color:#47676e;
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:5px;
+  font:inherit;
+  box-shadow:none;
+  touch-action:manipulation;
+}
+.tb-place-temperature-actions button span{
+  font-size:.92rem;
+  line-height:1;
+}
+.tb-place-temperature-actions button strong{
+  font-size:.54rem;
+  line-height:1.05;
+  font-weight:950;
+}
+.tb-place-temperature-actions button.is-selected[data-place-temperature="fast"]{
+  border-color:#79c6eb;
+  background:#e3f6ff;
+  color:#176488;
+  box-shadow:0 0 0 2px rgba(121,198,235,.12);
+}
+.tb-place-temperature-actions button.is-selected[data-place-temperature="sheltered"]{
+  border-color:#efa04a;
+  background:#fff0c9;
+  color:#8a4b08;
+  box-shadow:0 0 0 2px rgba(239,160,74,.12);
+}
+
+/* Final review mirrors the same two optional choices. */
+.tb-confidence-actions{
+  grid-template-columns:minmax(70px,1fr) minmax(70px,1fr)!important;
+}
+.tb-confidence-actions button{
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:auto 1fr!important;
+  gap:4px!important;
+}
+.tb-confidence-actions button span{font-size:.9rem!important}
+.tb-confidence-actions button strong{
+  font-size:.52rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+}
+@media(max-width:390px){
+  .tb-place-temperature{
+    grid-template-columns:1fr;
+  }
+  .tb-place-temperature-actions button{
+    min-width:0;
+  }
+}
