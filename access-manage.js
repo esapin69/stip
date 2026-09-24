@@ -327,6 +327,9 @@
     try {
       data = await call("list", { q: $("q").value });
       renderPeople();
+      $("accessHistoryTab").hidden = !data.can_history;
+      if (!data.can_history && document.body.classList.contains("access-history-mode"))
+        setAccessMode("manage");
     } catch (e) {
       message(e.message);
     }
