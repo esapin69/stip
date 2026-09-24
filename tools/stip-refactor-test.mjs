@@ -446,6 +446,12 @@ check(
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
 check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
 check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
+check(
+  read('THEME_FIRST.md').includes('Calendrier 1 mois canonique') &&
+  read('THEME_FIRST.md').includes('stip-month-calendar') &&
+  read('THEME_FIRST.md').includes('stip-month-primary'),
+  'Le contrat THEME_FIRST ne documente plus le template obligatoire des calendriers mensuels.'
+);
 
 const espritInteractiveHtml=read('esprit-equipe.html');
 const espritInteractiveJs=read('esprit-equipe.js');
