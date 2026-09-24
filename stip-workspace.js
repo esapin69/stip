@@ -153,7 +153,7 @@
         agenda: "Agenda",
       };
       return {
-        id: "page:responsable",
+        id: "route:responsable",
         label,
         detail: map[tab] || detail,
         icon,
@@ -231,6 +231,11 @@
     window.dispatchEvent(
       new CustomEvent("stip:workspace-updated", { detail: item }),
     );
+    if (embedded) {
+      try {
+        window.top.STIPWorkspace?.render?.();
+      } catch {}
+    }
     return item;
   }
 
