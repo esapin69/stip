@@ -774,12 +774,6 @@ body.resp-dashboard-mode .resp-carousel {
   .resp-apps {
     gap: 14px 6px;
   }
-  .resp-top {
-    padding-inline: 12px;
-  }
-  .resp-top .brand span {
-    display: none;
-  }
 }
 @media (min-width: 700px) {
   .resp-home {
