@@ -7,11 +7,11 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="robots" content="noindex,nofollow" />
-    <title>Accès · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260924-intel-readability1" />
+    <title>ADMIN · Accès & historique · STIP</title>
+    <link rel="stylesheet" href="stip-theme.css?v=20260924-filter6b1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="access-manage.css?v=20260924-history1" />
+    <link rel="stylesheet" href="access-manage.css?v=20260924-filter6b1" />
     <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
@@ -26,19 +26,19 @@
         </button>
         <div>
           <span class="stip-kicker">STIP · SÉCURISÉ</span>
-          <h1 class="stip-title">Accès</h1>
-          <p class="stip-subtitle">
-            Applications et niveaux définis pour chaque personne.
-          </p>
+          <h1 class="stip-title">ADMIN</h1>
+          <p class="stip-subtitle">Accès & historique</p>
         </div>
       </header>
 
-      <nav class="access-mode-switch" aria-label="Vue Accès">
-        <button id="accessManageTab" class="active" type="button" aria-selected="true">
-          Accès
+      <nav class="access-mode-switch stip-filter-bubbles" data-count="2" aria-label="Vue ADMIN">
+        <button id="accessManageTab" class="stip-filter-choice active" type="button" aria-selected="true">
+          <span class="stip-filter-visual" aria-hidden="true">🔐<i class="stip-filter-visual-badge">🔑</i></span>
+          <span class="stip-filter-copy"><strong>Accès</strong><small>Profils & droits</small></span>
         </button>
-        <button id="accessHistoryTab" type="button" aria-selected="false">
-          Historique
+        <button id="accessHistoryTab" class="stip-filter-choice" type="button" aria-selected="false">
+          <span class="stip-filter-visual" aria-hidden="true">🕘<i class="stip-filter-visual-badge">↺</i></span>
+          <span class="stip-filter-copy"><strong>Historique</strong><small>Connexions & ouvertures</small></span>
         </button>
       </nav>
 
@@ -84,14 +84,17 @@
           placeholder="Nom, prénom ou GHE…"
           autocomplete="off"
         />
-        <div id="people" class="access-list" aria-live="polite"></div>
-        <div class="access-create">
-          <h3>Créer un accès</h3>
-          <button id="newBtn" class="stip-btn access-new-cta" type="button">
-            Rechercher parmi les agents sans accès
+        <nav class="access-people-filters stip-filter-bubbles" data-count="2" aria-label="Filtrer les personnes par accès">
+          <button id="withAccessBtn" class="stip-filter-choice active" type="button" aria-selected="true">
+            <span class="stip-filter-visual" aria-hidden="true">👥<i class="stip-filter-visual-badge">🔑</i></span>
+            <span class="stip-filter-copy"><strong>AVEC ACCÈS</strong><small>Profils actifs</small></span>
           </button>
-          <div id="candidates" class="access-list"></div>
-        </div>
+          <button id="withoutAccessBtn" class="stip-filter-choice" type="button" aria-selected="false" data-tone="danger">
+            <span class="stip-filter-visual" aria-hidden="true">👥<i class="stip-filter-visual-badge">⛔</i></span>
+            <span class="stip-filter-copy"><strong>SANS ACCÈS</strong><small>Accès à créer</small></span>
+          </button>
+        </nav>
+        <div id="people" class="access-list" aria-live="polite"></div>
       </section>
 
       <section id="editor" class="stip-surface stip-catalog-surface access-editor hidden">
@@ -163,7 +166,7 @@
 
       <p id="msg" class="access-message" role="status"></p>
     </main>
-    <script src="access-manage.js?v=20260924-history1"></script>
+    <script src="access-manage.js?v=20260924-filter6b1"></script>
     <script src="quick-access-universal.js?v=20260924-history2"></script>
   </body>
 </html>
