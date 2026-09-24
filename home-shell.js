@@ -1372,7 +1372,20 @@
     const weekDaysNow = weekModel.visualDays.filter((day) => day?.iso),
       weekStart = weekDaysNow[0]?.iso || "",
       weekEnd = weekDaysNow.at(-1)?.iso || "";
-    monthTimelineItems(key).forEach(addEvent);
+    // Keep the legend on the same event source as the month/week widgets.
+    // monthTimelineItems() was removed when the month view was simplified;
+    // filtering futureItems() here prevents the home/Profile render from crashing.
+    const monthStart = `${key}-01`,
+      monthEnd = `${key}-${String(last).padStart(2, "0")}`;
+    futureItems()
+      .filter((event) => {
+        const start = String(event.date || "").slice(0, 10),
+          end = String(
+            event.endDate || event.end_date || event.date || "",
+          ).slice(0, 10);
+        return !!start && start <= monthEnd && end >= monthStart;
+      })
+      .forEach(addEvent);
     if (weekStart && weekEnd)
       futureItems()
         .filter((event) => {
