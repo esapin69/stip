@@ -365,44 +365,40 @@
     if (state.signalWeekPromises[key]) return state.signalWeekPromises[key];
 
     state.signalWeekPromises[key] = (async () => {
-      let assistantItems = [];
-      try {
-        const assistant = await postWeekJson(ASSIST_API, {
+      const assistantPromise = postWeekJson(ASSIST_API, {
           action: "feed",
           start_date: start,
           end_date: end,
-        });
+        }).catch(() => ({ items: [] })),
+        staffPromises = days.map(({ iso }) =>
+          postWeekJson(STAFF_API, { action: "day", date: iso }).catch(
+            () => null,
+          ),
+        ),
+        [assistant, ...staffByDay] = await Promise.all([
+          assistantPromise,
+          ...staffPromises,
+        ]),
         assistantItems = Array.isArray(assistant?.items) ? assistant.items : [];
-      } catch {
-        assistantItems = [];
-      }
 
-      await Promise.all(
-        days.map(async ({ iso }) => {
-          let staff = null;
-          try {
-            staff = await postWeekJson(STAFF_API, { action: "day", date: iso });
-          } catch {
-            staff = null;
-          }
-          const items = assistantItems.filter(
-              (item) => String(item?.date || "").slice(0, 10) === iso,
-            ),
-            shared = window.STIPFieldIntel?.dayStatus?.({
-              staffing: staff,
-              items,
-            });
-          state.daySignalByDate[iso] =
-            shared ||
-            (staff?.available
-              ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
-              : { level: "unknown", symbol: "", label: "Pas assez de données" });
-        }),
-      );
+      days.forEach(({ iso }, index) => {
+        const staff = staffByDay[index],
+          items = assistantItems.filter(
+            (item) => String(item?.date || "").slice(0, 10) === iso,
+          ),
+          shared = window.STIPFieldIntel?.dayStatus?.({
+            staffing: staff,
+            items,
+          });
+        state.daySignalByDate[iso] =
+          shared ||
+          (staff?.available
+            ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
+            : { level: "unknown", symbol: "", label: "Pas assez de données" });
+      });
+
       state.signalWeekLoaded[key] = true;
       delete state.signalWeekPromises[key];
-      renderWeek();
-      renderMonth();
     })().catch(() => {
       delete state.signalWeekPromises[key];
     });
@@ -410,12 +406,43 @@
     return state.signalWeekPromises[key];
   }
 
+  function waitForAccessLevel(timeout = 4000) {
+    const root = document.documentElement;
+    if (root.dataset.responsableLevel)
+      return Promise.resolve(root.dataset.responsableLevel);
+    return new Promise((resolve) => {
+      let finished = false;
+      const observer = new MutationObserver(() => {
+          if (root.dataset.responsableLevel) finish();
+        }),
+        timer = setTimeout(finish, timeout);
+      function finish() {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timer);
+        observer.disconnect();
+        resolve(root.dataset.responsableLevel || "");
+      }
+      observer.observe(root, {
+        attributes: true,
+        attributeFilter: ["data-responsable-level"],
+      });
+    });
+  }
+
   function syncProControls() {
-    const pro =
-      String(document.documentElement.dataset.responsableLevel || "") === "pro";
-    document
-      .querySelectorAll("[data-rr-add]")
-      .forEach((button) => (button.hidden = !pro));
+    const level = String(
+        document.documentElement.dataset.responsableLevel || "",
+      ).toLowerCase(),
+      known = level === "pro" || level === "visitor",
+      pro = level === "pro";
+    document.querySelectorAll("[data-rr-add]").forEach((button) => {
+      button.hidden = false;
+      button.disabled = !pro;
+      button.classList.toggle("access-pending", !known);
+      button.classList.toggle("access-hidden", known && !pro);
+      button.setAttribute("aria-hidden", String(!pro));
+    });
   }
 
   function renderWeek() {
@@ -430,16 +457,13 @@
           : days[0]?.iso || "";
     state.selectedDate = selected;
 
-    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add" type="button" data-rr-add hidden aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
+    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
           markers = weekMarkerMarkup(events, x.iso),
           signal = signalForDate(x.iso),
           signalLevel = signal?.level || "unknown",
-          signalMark =
-            signalLevel !== "unknown"
-              ? `<span class="rr-week-signal status-${esc(signalLevel)}" aria-hidden="true">${esc(statusSymbol(signalLevel, signal?.symbol || ""))}</span>`
-              : "",
+          signalMark = `<span class="rr-week-signal status-${esc(signalLevel)}" aria-hidden="true">${signalLevel !== "unknown" ? esc(statusSymbol(signalLevel, signal?.symbol || "")) : ""}</span>`,
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
@@ -560,6 +584,7 @@
       state.items = (r.items || [])
         .map(normalizeItem)
         .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
+      await Promise.all([loadWeekImpact(), waitForAccessLevel()]);
     } catch (e) {
       if (e?.status === 401 || e?.status === 403) {
         state.error = "Dates des agents indisponibles avec cet accès.";
@@ -571,7 +596,6 @@
     } finally {
       state.loading = false;
       render();
-      loadWeekImpact();
     }
   }
 
@@ -668,7 +692,10 @@
       renderWeek();
       renderSelectedDay();
       renderMonth();
-      loadWeekImpact();
+      loadWeekImpact().then(() => {
+        renderWeek();
+        renderMonth();
+      });
       return;
     }
     const day = e.target.closest?.("[data-rr-day]");
