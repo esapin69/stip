@@ -2947,3 +2947,12 @@ body.team-page {
 .team-selected-day-separator span{
   letter-spacing:.16em;
 }
+
+
+/* Embedded home mode owns the navigation chrome. */
+html.stip-team-embedded .team-top {
+  display: none !important;
+}
+html.stip-team-embedded .team-shell {
+  padding-top: 10px;
+}
