@@ -367,29 +367,92 @@
       );
     });
   }
-  function personCardText(value = {}, fallback = "Profil externe") {
+  function groupKey(value = {}) {
+    const a = agentOf(value);
+    if (sortMode === "ghe") return cleanGhe(a.ghe) || "Sans GHE";
+    const source = String(sortMode === "prenom" ? a.prenom || "" : a.nom || "")
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    const first = source.charAt(0).toUpperCase();
+    return /^[A-Z]$/.test(first) ? first : "#";
+  }
+  function initials(value = {}) {
+    const a = agentOf(value);
+    return [a.prenom, a.nom]
+      .filter(Boolean)
+      .map((x) => String(x).trim().charAt(0).toUpperCase())
+      .join("")
+      .slice(0, 2) || "ST";
+  }
+  function photoUrl(value = {}) {
+    const a = agentOf(value);
+    return String(a.profile_photo_url || a.avatar_url || "").trim();
+  }
+  function personNameHtml(value = {}, fallback = "Profil externe") {
     const a = agentOf(value),
       nom = String(a.nom || "").trim(),
-      prenom = String(a.prenom || "").trim(),
-      ghe = cleanGhe(a.ghe) || "—";
+      prenom = String(a.prenom || "").trim();
 
     if (sortMode === "prenom")
-      return `<strong><span class="access-person-focus">${esc(prenom || fallback)}</span>${nom ? ` <span class="access-person-secondary">${esc(nom)}</span>` : ""}</strong><small>GHE ${esc(ghe)}</small>`;
+      return `<span class="access-person-name-main">${esc(prenom || fallback)}</span>${nom ? `<span class="access-person-name-sub">${esc(nom)}</span>` : ""}`;
 
-    if (sortMode === "ghe")
-      return `<strong><span class="access-person-focus access-person-ghe">GHE ${esc(ghe)}</span></strong><small class="access-person-name-secondary">${esc([prenom, nom].filter(Boolean).join(" ") || fallback)}</small>`;
+    if (sortMode === "nom")
+      return `<span class="access-person-name-main">${esc(nom || fallback)}</span>${prenom ? `<span class="access-person-name-sub">${esc(prenom)}</span>` : ""}`;
 
-    return `<strong><span class="access-person-focus">${esc(nom || fallback)}</span>${prenom ? ` <span class="access-person-secondary">${esc(prenom)}</span>` : ""}</strong><small>GHE ${esc(ghe)}</small>`;
+    return `<span class="access-person-name-main">${esc(nom || fallback)}</span>${prenom ? `<span class="access-person-name-sub">${esc(prenom)}</span>` : ""}`;
+  }
+  function personCard(value = {}, index = 0, attr = "person", fallback = "Profil externe") {
+    const a = agentOf(value),
+      ghe = cleanGhe(a.ghe) || "—",
+      src = photoUrl(value),
+      photo = src
+        ? `<img class="access-person-photo" src="${esc(src)}" alt="" loading="lazy" decoding="async" />`
+        : `<span class="access-person-photo access-person-photo-fallback" aria-hidden="true">${esc(initials(value))}</span>`;
+    return `
+      <button class="access-person" data-${attr}="${index}" type="button">
+        <span class="access-person-portrait">
+          ${photo}
+          <span class="access-person-ghe-stamp">GHE ${esc(ghe)}</span>
+        </span>
+        <span class="access-person-name">${personNameHtml(value, fallback)}</span>
+      </button>`;
+  }
+  function groupedPeopleHtml(items = [], attr = "person", fallback = "Profil externe") {
+    if (!items.length) return "";
+    const groups = [];
+    let currentKey = null,
+      currentItems = [];
+    items.forEach((item, index) => {
+      const key = groupKey(item);
+      if (key !== currentKey) {
+        if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
+        currentKey = key;
+        currentItems = [];
+      }
+      currentItems.push({ item, index });
+    });
+    if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
+
+    return groups
+      .map(
+        (group) => `
+          <section class="access-person-group" data-group="${esc(group.key)}">
+            <div class="access-person-separator"><span>${esc(group.key)}</span></div>
+            <div class="access-person-grid">
+              ${group.items
+                .map(({ item, index }) => personCard(item, index, attr, fallback))
+                .join("")}
+            </div>
+          </section>`,
+      )
+      .join("");
   }
   function renderPeople() {
     const people = sortPeople(data.people || []);
     $("people").innerHTML =
-      people
-        .map(
-          (p, i) =>
-            `<button class="access-person" data-person="${i}" type="button">${personCardText(p)}</button>`,
-        )
-        .join("") || '<p class="access-help">Aucun profil trouvé.</p>';
+      groupedPeopleHtml(people, "person") ||
+      '<p class="access-help">Aucun profil trouvé.</p>';
     $("people")
       .querySelectorAll("[data-person]")
       .forEach(
@@ -399,12 +462,7 @@
   function renderCandidateList() {
     const candidates = sortPeople(candidateCache);
     $("people").innerHTML =
-      candidates
-        .map(
-          (a, i) =>
-            `<button class="access-person" data-candidate="${i}" type="button">${personCardText(a, "Agent")}</button>`,
-        )
-        .join("") ||
+      groupedPeopleHtml(candidates, "candidate", "Agent") ||
       '<p class="access-help">Aucun agent sans accès trouvé.</p>';
     $("people")
       .querySelectorAll("[data-candidate]")
