@@ -1158,46 +1158,9 @@ body.team-page {
   margin:0;
 }
 
-/* Page legend: every informational symbol visible on this surface must be explained here. */
-.team-month-legend{
-  width:100%;
-  padding:16px 16px 17px;
-  border:1px solid rgba(49,100,115,.14);
-  border-radius:23px;
-  background:linear-gradient(180deg,#fff 0%,#fbfdfd 100%);
-  box-shadow:0 9px 22px rgba(26,70,84,.09),inset 0 1px 0 rgba(255,255,255,.98);
-}
-.team-month-legend>div{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:8px 10px;
-  justify-items:stretch;
-}
-.team-month-legend>div>span{
-  width:100%;
-  min-width:0;
-  display:flex;
-  align-items:center;
-  justify-content:flex-start;
-  gap:7px;
-  color:#667b84;
-  font-size:.84rem;
-  line-height:1.15;
-}
-.team-month-legend i{
-  width:22px;
-  min-width:22px;
-  display:grid;
-  place-items:center;
-  font-style:normal;
-  font-size:1.1rem;
-  line-height:1;
-}
-.team-month-legend b{
-  color:#365866;
-  font-weight:900;
-}
-.team-month-legend .status-ok{color:#159b62;font-size:1.25rem}
+/* Official legend: geometry is owned by .stip-legend in stip-patterns.css.
+   This page keeps only the semantic status colours. */
+.team-month-legend .status-ok{color:#159b62}
 .team-month-legend .status-warning{color:#c58b00}
 .team-month-legend .status-critical{color:#c33b3b}
 .team-month-legend .status-unknown{color:#8b9aa0}
@@ -1722,7 +1685,6 @@ body.team-page {
 
 @media(max-width:430px){
   .team-month-zone{margin-top:22px;gap:12px}
-  .team-month-legend{padding:15px 12px 16px}
   .team-duty-chief-host .hc-duty-chief-card{
     min-height:74px;grid-template-columns:44px minmax(0,1fr) 16px;gap:9px;padding:10px;
   }
@@ -2894,7 +2856,6 @@ body.team-page {
   margin:2px 0 11px!important;
 }
 
-@media(max-width:350px){.team-month-legend>div{grid-template-columns:1fr}}
 
 
 /* Explicit boundary between the 7-day selector and the selected day's colleagues. */
