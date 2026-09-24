@@ -204,6 +204,7 @@
       `<div class="ra-load"><i></i><b>${mode === "evaluation" ? "Chargement des agents…" : "Lecture de l’équipe du jour…"}</b></div>`;
     try {
       directory = await call("directory");
+      if (directory.shift_definitions) window.STIPShiftRegistry?.set?.(directory.shift_definitions);
       renderSelector();
       const selected = (directory.items || []).find(
         (agent) => String(agent.id) === String(restoringAgent || ""),
