@@ -590,3 +590,222 @@
   gap:var(--stip-month-event-gap)!important;
   margin-top:var(--stip-month-event-offset)!important;
 }
+
+
+/* 7. FILTER BUBBLES — canonical STIP 6B */
+/* One shared component for tabs and filters. Pages keep only positioning and
+   business logic. The component is deliberately discreet but expressive:
+   rounded clickable bubbles, distinct visuals, semantic accent inheritance,
+   and count-aware composition. */
+.stip-filter-bubbles{
+  --stip-filter-accent:var(--stip-accent);
+  --stip-filter-count:2;
+  display:grid;
+  grid-template-columns:repeat(var(--stip-filter-count),minmax(0,1fr));
+  gap:clamp(6px,1vw,10px);
+  align-items:stretch;
+  width:100%;
+}
+.stip-filter-bubbles[data-count="2"]{--stip-filter-count:2}
+.stip-filter-bubbles[data-count="3"]{--stip-filter-count:3}
+.stip-filter-bubbles[data-count="4"]{--stip-filter-count:4}
+.stip-filter-bubbles[data-count="5"],
+.stip-filter-bubbles[data-count="6"]{--stip-filter-count:3}
+
+.stip-filter-choice{
+  --stip-filter-item-accent:var(--stip-filter-accent);
+  position:relative;
+  isolation:isolate;
+  min-width:0;
+  min-height:52px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:7px 12px;
+  overflow:hidden;
+  border:1px solid color-mix(in srgb,var(--stip-filter-item-accent) 12%,var(--stip-line));
+  border-radius:999px;
+  background:linear-gradient(180deg,var(--stip-surface) 0%,color-mix(in srgb,var(--stip-surface-soft) 72%,white) 100%);
+  color:var(--stip-ink-2);
+  box-shadow:0 7px 18px color-mix(in srgb,var(--stip-ink) 5%,transparent),inset 0 1px 0 rgba(255,255,255,.82);
+  font:inherit;
+  font-weight:900;
+  text-align:left;
+  cursor:pointer;
+  transition:transform var(--stip-motion),border-color var(--stip-motion),box-shadow var(--stip-motion),background var(--stip-motion),color var(--stip-motion);
+  -webkit-tap-highlight-color:transparent;
+}
+.stip-filter-choice::before{
+  content:"";
+  position:absolute;
+  z-index:-1;
+  width:94px;
+  height:94px;
+  left:-32px;
+  top:-42px;
+  border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--stip-filter-item-accent) 13%,transparent),transparent 68%);
+  opacity:.28;
+  pointer-events:none;
+}
+.stip-filter-choice::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:5px;
+  width:0;
+  height:3px;
+  border-radius:999px;
+  transform:translateX(-50%);
+  background:var(--stip-filter-item-accent);
+  opacity:0;
+  transition:width var(--stip-motion),opacity var(--stip-motion);
+}
+.stip-filter-choice:is(.active,[aria-selected="true"]){
+  border-color:color-mix(in srgb,var(--stip-filter-item-accent) 55%,var(--stip-line));
+  background:linear-gradient(135deg,color-mix(in srgb,var(--stip-filter-item-accent) 11%,white) 0%,var(--stip-surface) 72%);
+  color:var(--stip-ink);
+  box-shadow:
+    0 10px 24px color-mix(in srgb,var(--stip-filter-item-accent) 13%,transparent),
+    inset 0 0 0 1px color-mix(in srgb,var(--stip-filter-item-accent) 16%,transparent),
+    inset 0 1px 0 rgba(255,255,255,.9);
+  transform:translateY(-1px);
+}
+.stip-filter-choice:is(.active,[aria-selected="true"])::before{opacity:.72}
+.stip-filter-choice:is(.active,[aria-selected="true"])::after{width:26px;opacity:1}
+.stip-filter-choice:active{transform:var(--stip-tap)}
+.stip-filter-choice:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:2px;
+}
+
+.stip-filter-visual{
+  position:relative;
+  flex:0 0 auto;
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--stip-filter-item-accent) 10%,var(--stip-line-soft));
+  border-radius:50%;
+  background:color-mix(in srgb,var(--stip-filter-item-accent) 7%,var(--stip-surface));
+  color:var(--stip-filter-item-accent);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.86);
+  font-size:1.12rem;
+  line-height:1;
+}
+.stip-filter-choice:is(.active,[aria-selected="true"]) .stip-filter-visual{
+  background:color-mix(in srgb,var(--stip-filter-item-accent) 14%,var(--stip-surface));
+  border-color:color-mix(in srgb,var(--stip-filter-item-accent) 25%,var(--stip-line));
+  box-shadow:0 5px 14px color-mix(in srgb,var(--stip-filter-item-accent) 12%,transparent),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.stip-filter-visual-badge{
+  position:absolute;
+  right:-5px;
+  bottom:-4px;
+  min-width:17px;
+  height:17px;
+  display:grid;
+  place-items:center;
+  padding:0 3px;
+  border:2px solid var(--stip-surface);
+  border-radius:999px;
+  background:var(--stip-surface);
+  color:var(--stip-filter-item-accent);
+  font-size:.64rem;
+  line-height:1;
+}
+.stip-filter-copy{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  line-height:1.1;
+}
+.stip-filter-copy>strong,
+.stip-filter-copy>b{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:inherit;
+  font-size:.82rem;
+  font-weight:950;
+}
+.stip-filter-copy>small{
+  max-width:100%;
+  margin-top:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:var(--stip-muted);
+  font-size:.64rem;
+  font-weight:760;
+}
+.stip-filter-choice:is(.active,[aria-selected="true"]) .stip-filter-copy>small{
+  color:color-mix(in srgb,var(--stip-filter-item-accent) 58%,var(--stip-muted));
+}
+
+/* Semantic accents stay optional: the component defaults to the page accent. */
+.stip-filter-choice[data-tone="success"]{--stip-filter-item-accent:var(--stip-success)}
+.stip-filter-choice[data-tone="warning"]{--stip-filter-item-accent:var(--stip-warning)}
+.stip-filter-choice[data-tone="danger"]{--stip-filter-item-accent:var(--stip-danger)}
+.stip-filter-choice[data-tone="lavender"]{--stip-filter-item-accent:#7866b6}
+.stip-filter-choice[data-tone="neutral"]{--stip-filter-item-accent:var(--stip-ink-2)}
+
+/* Count-aware composition: the visual position changes with the number of
+   choices so the component never looks like a repeated row of ordinary buttons. */
+.stip-filter-bubbles[data-count="2"]>.stip-filter-choice:nth-child(2),
+.stip-filter-bubbles[data-count="4"]>.stip-filter-choice:nth-child(2),
+.stip-filter-bubbles[data-count="4"]>.stip-filter-choice:nth-child(4){
+  flex-direction:row-reverse;
+  text-align:right;
+}
+.stip-filter-bubbles[data-count="2"]>.stip-filter-choice:nth-child(2) .stip-filter-copy,
+.stip-filter-bubbles[data-count="4"]>.stip-filter-choice:nth-child(2) .stip-filter-copy,
+.stip-filter-bubbles[data-count="4"]>.stip-filter-choice:nth-child(4) .stip-filter-copy{
+  align-items:flex-end;
+}
+.stip-filter-bubbles[data-count="3"]>.stip-filter-choice:nth-child(2),
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(2),
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(5){
+  flex-direction:column;
+  gap:4px;
+  text-align:center;
+}
+.stip-filter-bubbles[data-count="3"]>.stip-filter-choice:nth-child(2) .stip-filter-copy,
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(2) .stip-filter-copy,
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(5) .stip-filter-copy{
+  align-items:center;
+}
+.stip-filter-bubbles[data-count="3"]>.stip-filter-choice:nth-child(3),
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(3),
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(6){
+  flex-direction:row-reverse;
+  text-align:right;
+}
+.stip-filter-bubbles[data-count="3"]>.stip-filter-choice:nth-child(3) .stip-filter-copy,
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(3) .stip-filter-copy,
+.stip-filter-bubbles[data-count="6"]>.stip-filter-choice:nth-child(6) .stip-filter-copy{
+  align-items:flex-end;
+}
+
+@media(min-width:760px){
+  .stip-filter-bubbles[data-count="5"]{--stip-filter-count:5}
+  .stip-filter-bubbles[data-count="6"]{--stip-filter-count:6}
+}
+@media(max-width:560px){
+  .stip-filter-bubbles{gap:5px}
+  .stip-filter-choice{min-height:48px;gap:6px;padding:6px 8px}
+  .stip-filter-visual{width:31px;height:31px;font-size:.98rem}
+  .stip-filter-copy>strong,.stip-filter-copy>b{font-size:.72rem}
+  .stip-filter-copy>small{font-size:.58rem}
+  .stip-filter-bubbles[data-count="4"] .stip-filter-choice{padding-inline:5px}
+  .stip-filter-bubbles[data-count="4"] .stip-filter-visual{width:28px;height:28px;font-size:.88rem}
+}
+@media(max-width:390px){
+  .stip-filter-bubbles[data-count="4"] .stip-filter-copy>strong,
+  .stip-filter-bubbles[data-count="4"] .stip-filter-copy>b{font-size:.67rem}
+}
