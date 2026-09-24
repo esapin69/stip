@@ -2,8 +2,6 @@
   "use strict";
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
-    DIRECTORY_API =
-      "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly",
     STORE = "stip_session_v1",
     $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
@@ -50,23 +48,7 @@
       });
     return j;
   }
-  async function directoryCall() {
-    const r = await fetch(DIRECTORY_API, {
-        method: "POST",
-        cache: "no-store",
-        headers: {
-          "Content-Type": "application/json",
-          "X-STIP-Session": localStorage.getItem(STORE) || "",
-        },
-        body: JSON.stringify({ action: "directory" }),
-      }),
-      j = await r.json().catch(() => ({}));
-    if (!r.ok || j.error)
-      throw Object.assign(Error(j.error || `Erreur ${r.status}`), {
-        status: r.status,
-      });
-    return j;
-  }
+
   function person(a) {
     if (!a) return "Agent";
     if (a.prenom)
@@ -392,9 +374,29 @@
   function renderAgents() {
     syncAgentPicker();
   }
-  function openAgentPicker() {
+  async function ensureAgents() {
+    if (agents.length) return agents;
+    const f = $("#taFeedback");
+    if (f) f.textContent = "Chargement des agents…";
+    const ar = await call("manager_agents");
+    agents = Array.isArray(ar.agents) ? ar.agents : [];
+    renderAgents();
+    if (f) f.textContent = "";
+    return agents;
+  }
+  async function openAgentPicker() {
     if (!window.STIPAgentSelector?.openPicker) {
       $("#taFeedback").textContent = "Le sélecteur d’agent n’est pas disponible.";
+      return;
+    }
+    try {
+      await ensureAgents();
+    } catch (error) {
+      $("#taFeedback").textContent = error?.message || "Impossible de charger les agents.";
+      return;
+    }
+    if (!agents.length) {
+      $("#taFeedback").textContent = "Aucun agent disponible.";
       return;
     }
     window.STIPAgentSelector.openPicker({
@@ -509,12 +511,11 @@
   async function load() {
     try {
       const [ar, ir, pr] = await Promise.all([
-        directoryCall(),
+        call("manager_agents"),
         call("manager_agenda_list"),
         call("manager_list"),
       ]);
-      agents = ar.items || [];
-      if (ar.shift_definitions) window.STIPShiftRegistry?.set?.(ar.shift_definitions);
+      agents = Array.isArray(ar.agents) ? ar.agents : [];
       items = ir.items || [];
       proposals = (pr.actions || []).filter(
         (x) => x.kind === "agenda_proposal",
@@ -618,5 +619,13 @@
       })
       .finally(() => window.STIPNav?.restoreScroll?.());
   }
+  window.STIPResponsableAgenda = {
+    version: "20260924-agent-picker-stable3",
+    openAdd(date = "") {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) $("#taDate").value = String(date);
+      openSheet("#taAddSheet");
+    },
+    openAgentPicker,
+  };
   init();
 })();

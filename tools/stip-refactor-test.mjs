@@ -77,14 +77,24 @@ check(
   'Le sélecteur commun recrée encore le champ de recherche à chaque caractère.'
 );
 check(
-  responsableAgenda.includes('stip-agent-readonly') &&
-  responsableAgenda.includes('directoryCall()') &&
-  !responsableAgenda.includes('call("manager_agents")'),
-  'Ajouter un événement ne réutilise plus le répertoire canonique des agents.'
+  responsableAgenda.includes('call("manager_agents")') &&
+  responsableAgenda.includes('async function ensureAgents()') &&
+  !responsableAgenda.includes('directoryCall()'),
+  'Ajouter un événement ne repose plus sur la source manager_agents ou peut encore ouvrir un mur vide.'
 );
 check(
-  read('responsable-tabs.js').includes('responsable-agenda.js?v=20260924-agent-picker-stable2'),
+  read('responsable-tabs.js').includes('responsable-agenda.js?v=20260924-agent-picker-stable3'),
   'Le chemin Agenda peut encore charger une ancienne version du moteur de sélection.'
+);
+check(
+  read('responsable-agenda-home.js').includes('STIPResponsableTabs?.openAgendaAdd') &&
+  responsableAgenda.includes('window.STIPResponsableAgenda = {') &&
+  responsableAgenda.includes('openAdd(date = "")'),
+  'Le bouton Ajouter peut encore forcer une navigation complète au lieu d’ouvrir Agenda en place.'
+);
+check(
+  read('supabase/functions/stip-actions/index.ts').includes('telephone,avatar_url,profile_photo_url'),
+  'manager_agents ne fournit plus les photos nécessaires au mur des agents.'
 );
 
 check(/class="[^"]*as-day\b/.test(read('assistant.js')),'Assistant ne regroupe plus les sujets par journée.');

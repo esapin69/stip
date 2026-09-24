@@ -767,9 +767,18 @@
 
   function openAdd(date = "") {
     saveView();
-    const target = date || state.selectedDate || parisIso(),
-      url =
-        "responsable.html?tab=agenda&open=add&date=" + encodeURIComponent(target);
+    const target = date || state.selectedDate || parisIso();
+    if (window.STIPResponsableTabs?.openAgendaAdd) {
+      window.STIPResponsableTabs.openAgendaAdd(target).catch(() => {
+        const url =
+          "responsable.html?tab=agenda&open=add&date=" + encodeURIComponent(target);
+        if (window.STIPNav) window.STIPNav.go(url);
+        else location.href = url;
+      });
+      return;
+    }
+    const url =
+      "responsable.html?tab=agenda&open=add&date=" + encodeURIComponent(target);
     if (window.STIPNav) window.STIPNav.go(url);
     else location.href = url;
   }

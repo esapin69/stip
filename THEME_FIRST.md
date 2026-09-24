@@ -113,7 +113,7 @@ Contrat validé :
 - une sélection ferme la vue et restitue immédiatement l’agent à la page appelante sans perdre les autres champs déjà saisis ;
 - aucun autofocus à l’ouverture : le clavier apparaît seulement après un toucher explicite dans la recherche.
 - pendant la saisie, le champ de recherche est **stable** : il ne doit jamais être détruit/recréé à chaque caractère ; seul le mur de résultats est actualisé, afin de ne jamais fermer/réouvrir le clavier mobile ;
-- pour les écrans Responsable, la sélection d’agent réutilise le répertoire canonique déjà autorisé (`stip-agent-readonly · directory`) afin de conserver les identités, GHE et avatars signés déjà utilisés par la fiche Équipe.
+- pour les écrans Responsable, la sélection d’agent utilise en priorité la source métier déjà fiable `stip-actions · manager_agents` ; cette source porte nom, prénom, GHE et photo. Une vue de sélection ne doit jamais dépendre d’un second appel facultatif pour afficher la liste de base.
 
 Exemple :
 
@@ -128,6 +128,7 @@ STIPAgentSelector.openPicker({
 ```
 
 Lorsqu’une ancienne page de choix d’agent est repérée, la correction attendue est : **la brancher sur « Rechercher un agent »**, pas recréer localement une liste, des radios, des cartes ou un autre moteur.
+- depuis Responsable, ouvrir « Ajouter » doit rester dans la page courante : activer l’onglet Agenda puis ouvrir la feuille d’ajout en mémoire. La navigation vers une nouvelle URL n’est qu’un secours si le runtime inline n’est pas disponible.
 
 ## Filtres et onglets — template 6B officiel
 
