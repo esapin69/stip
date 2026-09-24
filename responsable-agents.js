@@ -115,9 +115,24 @@
       title: evaluation ? "Choisir un agent" : "Brancardiers",
       description: evaluation
         ? "Recherche un agent pour ouvrir ou commencer son évaluation."
-        : "Présents par horaire, puis absents visibles directement.",
-      onSelect: evaluation ? openEvaluation : openAgent,
+        : "Tri par GHE, appel direct, horaires particuliers et absences détaillées pour l’encadrement.",
+      privacy: "full",
+      showPhone: true,
+      onSelect: evaluation ? openEvaluation : openAgentAgenda,
     });
+  }
+
+  async function openAgentAgenda(agent) {
+    window.STIPNav?.remember?.({
+      panelKind: "agents",
+      agentMode: mode,
+      agentId: agent.id,
+    });
+    if (window.STIPAgentAgenda?.open) {
+      window.STIPAgentAgenda.open(agent.source_key, agent);
+      return;
+    }
+    openAgent(agent);
   }
 
   async function openEvaluation(agent) {
@@ -193,7 +208,10 @@
       const selected = (directory.items || []).find(
         (agent) => String(agent.id) === String(restoringAgent || ""),
       );
-      if (selected) openAgent(selected);
+      if (selected) {
+        if (mode === "evaluation") openEvaluation(selected);
+        else openAgentAgenda(selected);
+      }
     } catch (error) {
       $("#respPanelBody").innerHTML =
         `<div class="ra-error"><b>Impossible de charger les agents</b><span>${esc(errorText(error))}</span></div>`;
