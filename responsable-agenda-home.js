@@ -287,7 +287,7 @@
   }
 
   function statusSymbol(level, fallback = "") {
-    if (level === "opportunity") return "+";
+    if (level === "opportunity") return "➕";
     if (level === "ok") return "✔";
     if (level === "warning") return "⚠️";
     if (level === "critical") return "🛑";
@@ -323,7 +323,7 @@
     if (signalLevels.has("warning"))
       items.push("<span><i>⚠️</i><b>À surveiller</b></span>");
     if (signalLevels.has("opportunity"))
-      items.push("<span><i>+</i><b>Présence plus large</b></span>");
+      items.push("<span><i>➕</i><b>Présence plus large</b></span>");
     if (signalLevels.has("ok"))
       items.push("<span><i>✔</i><b>Rien ne coince</b></span>");
     return (
@@ -457,18 +457,28 @@
           : days[0]?.iso || "";
     state.selectedDate = selected;
 
-    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><nav class="rr-week-days" aria-label="Jours de la semaine">${days
+    const signalRow = days
+      .map((x) => {
+        const signal = signalForDate(x.iso),
+          level = signal?.level || "unknown",
+          symbol =
+            level !== "unknown"
+              ? esc(statusSymbol(level, signal?.symbol || ""))
+              : "",
+          label = esc(signal?.label || "");
+        return `<span class="rr-week-signal status-${esc(level)}" title="${label}" aria-label="${label}">${symbol}</span>`;
+      })
+      .join("");
+
+    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><div class="rr-week-signals" aria-label="État des jours de la semaine">${signalRow}</div><nav class="rr-week-days" aria-label="Jours de la semaine">${days
       .map((x) => {
         const events = itemsForDate(x.iso),
           markers = weekMarkerMarkup(events, x.iso),
-          signal = signalForDate(x.iso),
-          signalLevel = signal?.level || "unknown",
-          signalMark = `<span class="rr-week-signal status-${esc(signalLevel)}" aria-hidden="true">${signalLevel !== "unknown" ? esc(statusSymbol(signalLevel, signal?.symbol || "")) : ""}</span>`,
           weekday = x.d
             .toLocaleDateString("fr-FR", { weekday: "short" })
             .replace(/\./g, "")
             .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""} status-${esc(signalLevel)}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}" title="${esc(signal?.label || "")}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b>${signalMark}<span class="rr-week-marks">${markers}</span></button>`;
+        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${markers}</span></button>`;
       })
       .join("")}</nav></section>`;
     syncProControls();
