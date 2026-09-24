@@ -54,35 +54,6 @@
     state.planningSlow = false;
   }
 
-  const REST = new Set([
-    "RH",
-    "RTT",
-    "RC",
-    "AA",
-    "MA",
-    "CA",
-    "CP",
-    "RF",
-    "RTA",
-    "RTTA",
-    "SYR",
-    "OFF",
-    "REPOS",
-    "-",
-    "",
-  ]);
-  const DAY_OFF = new Set([
-    "RH",
-    "RTT",
-    "RTTA",
-    "RTA",
-    "RC",
-    "RF",
-    "CA",
-    "CP",
-    "OFF",
-    "REPOS",
-  ]);
   const ICON = {
     personal:
       '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
@@ -261,7 +232,7 @@
     if (!raw) return null;
     const code = canonicalShift(raw),
       meta = shiftMeta(code),
-      workIcon = WORK_SHIFT_ICON[code] || "",
+      workIcon = workShiftIcon(code),
       icon =
         workIcon ||
         shiftStatusIcon(code) ||
@@ -550,97 +521,61 @@
     return s[k] || s[`${k}.PNG`] || s[`${k}.JPG`] || s[`${k}.JPEG`] || "";
   }
   function shiftDefinition(code) {
-    const k = String(code || "").trim().toUpperCase(),
-      target = k === "CP" ? "CA" : k;
+    const registry = window.STIPShiftRegistry;
+    if (registry?.resolve) return registry.resolve(code);
+    const key = String(code || "").trim().toUpperCase().replace(/\*+$/, "");
     return (state.boot?.shift_definitions || []).find(
-      (x) => String(x?.code || "").trim().toUpperCase() === target,
+      (x) => String(x?.code || "").trim().toUpperCase() === key,
     ) || null;
   }
+  function shiftType(code) {
+    if (code === "—" || code === "-") return "none";
+    const def = shiftDefinition(code);
+    if (!def) return "other";
+    if (def.kind === "work") {
+      return ({ m: "morning", j: "day", j4: "late", s: "evening", n: "night" })[
+        String(def.family || "").toLowerCase()
+      ] || "other";
+    }
+    return ["rest", "leave", "training", "medical", "absence", "union"].includes(
+      String(def.kind || ""),
+    )
+      ? String(def.kind)
+      : "other";
+  }
   function shiftMeta(code) {
-    const local = SHIFT_BADGE_META[code] || ["other", code],
-      server = shiftDefinition(code);
-    return [local[0], server?.label || local[1] || code];
+    const def = shiftDefinition(code);
+    return [
+      shiftType(code),
+      def?.label || (code === "—" ? "Aucun poste" : code),
+    ];
   }
   function shiftStatusIcon(code) {
-    const server = shiftDefinition(code);
-    return server?.icon || SPECIAL_SHIFT_ICON[code] || "";
+    const def = shiftDefinition(code);
+    return def && !def.is_working ? String(def.icon || "") : "";
   }
-  const SHIFT_BADGE_META = {
-    M: ["morning", "Matin"],
-    J: ["day", "Journée"],
-    J4: ["late", "J4"],
-    S: ["evening", "Soir"],
-    N: ["night", "Nuit"],
-    RH: ["rest", "Repos"],
-    CA: ["leave", "CA"],
-    CP: ["leave", "CP"],
-    RTT: ["rest", "RTT"],
-    RTTA: ["rest", "RTTA"],
-    RTA: ["rest", "RTA"],
-    RC: ["rest", "Récupération"],
-    RF: ["rest", "Repos férié"],
-    FO: ["training", "Formation"],
-    SYR: ["union", "Activité syndicale"],
-    MA: ["medical", "Maladie"],
-    AM: ["medical", "Arrêt médical"],
-    AA: ["absence", "Absence autorisée"],
-    ABS: ["absence", "Absence"],
-    ST: ["training", "Référent stagiaire"],
-    VM: ["medical", "Visite médicale"],
-    OFF: ["rest", "Repos"],
-    REPOS: ["rest", "Repos"],
-    "-": ["none", "Aucun poste"],
-    "—": ["none", "Aucun poste"],
-  };
-  const SPECIAL_SHIFT_ICON = {
-    RH: "🏝️",
-    RTT: "⏱️",
-    RTTA: "⏱️",
-    RTA: "⏱️",
-    RC: "↻",
-    RF: "•",
-    FO: "🎓",
-    ST: "👶",
-    VM: "🩺",
-    SYR: "🤝",
-    MA: "•",
-    AM: "•",
-    AA: "•",
-    ABS: "•",
-    OFF: "🏝️",
-    REPOS: "🏝️",
-  };
-  const WORK_SHIFT_ICON = {
-    M: "🔵",
-    J: "🟢",
-    J4: "🟠",
-    S: "🟡",
-    N: "⚫",
-  };
+  function workShiftIcon(code) {
+    const def = shiftDefinition(code);
+    return def?.is_working ? String(def.icon || "") : "";
+  }
   function canonicalShift(raw) {
+    if (window.STIPShiftRegistry?.baseCode)
+      return window.STIPShiftRegistry.baseCode(raw);
     const src = String(raw || "")
       .trim()
       .toUpperCase()
-      .replace(/\*/g, "");
+      .replace(/\*+$/, "");
     if (!src) return "—";
-    if (/^M\d*$/.test(src)) return "M";
-    if (
-      src === "J0464" ||
-      src === "J" ||
-      (/^J\d+$/.test(src) && !/^J4/.test(src))
-    )
-      return "J";
-    if (src === "J4" || /^J4\d+$/.test(src)) return "J4";
-    if (/^S\d*$/.test(src)) return "S";
-    if (/^N\d*$/.test(src)) return "N";
+    if (/^J4\d+$/.test(src)) return "J4";
+    if (/^M\d+$/.test(src)) return "M";
+    if (/^J\d+$/.test(src)) return "J";
+    if (/^S\d+$/.test(src)) return "S";
+    if (/^N\d+$/.test(src)) return "N";
     return src;
   }
   function shiftBadge(raw) {
     const code = canonicalShift(raw),
-      meta = SHIFT_BADGE_META[code] || [
-        "other",
-        code === "—" ? "Aucun poste" : code,
-      ],
+      meta = shiftMeta(code),
       len = Math.min(Math.max(code.length, 1), 4);
     return `<strong class="hc-shift-badge shift-${meta[0]} len-${len}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${esc(code)}</strong>`;
   }
@@ -652,19 +587,7 @@
     const start = String(row?.start_time || "").slice(0, 5),
       end = String(row?.end_time || "").slice(0, 5);
     if (start || end) return [start, end].filter(Boolean).join("–");
-    return (
-      {
-        M: "06:50–14:40",
-        J: "08:30–16:20",
-        J4: "10:10–18:00",
-        S: "13:30–21:00",
-        N: "21:00–06:50",
-      }[
-        String(code || "")
-          .trim()
-          .toUpperCase()
-      ] || ""
-    );
+    return window.STIPShiftRegistry?.time?.(code) || "";
   }
   function weekTimeHtml(v) {
     const parts = String(v || "").match(/\d{1,2}(?::|h)\d{2}/g) || [];
@@ -817,11 +740,10 @@
       landscape = cls.includes("hc-day-landscape"),
       day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
-      dayOff = DAY_OFF.has(canonical),
-      statusIcon = shiftStatusIcon(canonical) || (dayOff ? "🏝️" : ""),
+      statusIcon = shiftStatusIcon(canonical),
       shiftLabel = shiftMeta(canonical)[1] || canonical,
-      workIcon = WORK_SHIFT_ICON[canonical] || "",
-      workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
+      workIcon = workShiftIcon(canonical),
+      workLabel = landscape && workShiftIcon(canonical) ? canonical : weekend && workShiftIcon(canonical) ? canonical : shiftLabel,
       normalVisual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : pending
@@ -852,7 +774,7 @@
           ? `<span class="hc-shift-core"><span class="hc-shift-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator is-empty" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
           : `<span class="hc-shift-core"><strong class="hc-shift-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
-    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : REST.has(canonical) ? "rest" : "work"} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
+    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
@@ -1327,28 +1249,22 @@
         shift = calendarShiftForDate(iso);
       if (shift?.code && shift.code !== "—") {
         const code = shift.code,
-          work = {
-            M: ["Matin", "shift-m"],
-            J: ["Journée", "shift-j"],
-            J4: ["J4", "shift-j4"],
-            S: ["Soir", "shift-s"],
-            N: ["Nuit", "shift-n"],
-          }[code];
-        if (work) {
+          def = shiftDefinition(code);
+        if (def?.is_working) {
+          const family = String(def.family || "").toLowerCase();
           add(
             "shift:" + code,
-            '<span class="hc-fixed-shift-item"><i class="' +
-              work[1] +
+            '<span class="hc-fixed-shift-item"><i class="shift-' +
+              esc(family) +
               '" aria-hidden="true"></i><b>' +
-              esc(work[0]) +
+              esc(def.label || code) +
               '</b><em>•</em><strong>' +
               esc(shiftTime(code)) +
               "</strong></span>",
           );
         } else {
-          const label = SHIFT_BADGE_META[code]?.[1] || code,
-            symbol =
-              SPECIAL_SHIFT_ICON[code] || (DAY_OFF.has(code) ? "🏝️" : "");
+          const label = def?.label || code,
+            symbol = String(def?.icon || "");
           add(
             "status:" + code,
             '<span class="hc-fixed-shift-item">' +
