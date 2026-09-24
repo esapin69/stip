@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="stip-theme.css?v=20260924-filter6b2" />
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="access-manage.css?v=20260924-filter6b1" />
+    <link rel="stylesheet" href="access-manage.css?v=20260924-access-sort1" />
     <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
@@ -94,6 +94,22 @@
             <span class="stip-filter-copy"><strong>SANS ACCÈS</strong><small>Accès à créer</small></span>
           </button>
         </nav>
+
+        <div class="access-sort">
+          <span class="access-sort-label">Trier par :</span>
+          <nav class="access-sort-filters stip-filter-bubbles" data-count="3" aria-label="Trier les personnes">
+            <button id="sortNomBtn" class="stip-filter-choice active" type="button" aria-selected="true">
+              <span class="stip-filter-copy"><strong>Nom</strong></span>
+            </button>
+            <button id="sortPrenomBtn" class="stip-filter-choice" type="button" aria-selected="false">
+              <span class="stip-filter-copy"><strong>Prénom</strong></span>
+            </button>
+            <button id="sortGheBtn" class="stip-filter-choice" type="button" aria-selected="false">
+              <span class="stip-filter-copy"><strong>GHE</strong></span>
+            </button>
+          </nav>
+        </div>
+
         <div id="people" class="access-list" aria-live="polite"></div>
       </section>
 
@@ -166,7 +182,7 @@
 
       <p id="msg" class="access-message" role="status"></p>
     </main>
-    <script src="access-manage.js?v=20260924-filter6b1"></script>
+    <script src="access-manage.js?v=20260924-access-sort1"></script>
     <script src="quick-access-universal.js?v=20260924-history2"></script>
   </body>
 </html>
