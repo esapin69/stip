@@ -1,21 +1,24 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260922-agentcalendar1";
+    V = "20260924-agent-agenda-repair1";
   function load(src) {
-    if (loaded.has(src)) return loaded.get(src);
+    const url = new URL(String(src || ""), document.baseURI);
+    url.searchParams.set("v", V);
+    const key = url.href;
+    if (loaded.has(key)) return loaded.get(key);
     const p = new Promise((ok, ko) => {
       const s = document.createElement("script");
-      s.src = `${src}?v=${V}`;
+      s.src = key;
       s.async = false;
-      s.onload = () => ok(src);
+      s.onload = () => ok(key);
       s.onerror = () => {
-        loaded.delete(src);
-        ko(new Error(`Chargement impossible: ${src}`));
+        loaded.delete(key);
+        ko(new Error(`Chargement impossible: ${url.pathname}`));
       };
       document.body.appendChild(s);
     });
-    loaded.set(src, p);
+    loaded.set(key, p);
     return p;
   }
   async function seq(list) {
