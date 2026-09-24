@@ -16,11 +16,25 @@ function consume(){const n=pending();if(n)sessionStorage.removeItem(KEY);return 
 function sameTarget(n){try{const u=new URL(n,location.origin);return u.pathname===location.pathname&&u.search===location.search&&u.hash===location.hash}catch{return false}}
 function isReload(){try{return performance.getEntriesByType('navigation')[0]?.type==='reload'}catch{return false}}
 function cleanRoute(v){return String(v||'').replace(/^#\/?/,'').replace(/^\/+|\/+$/g,'')||'home'}
-function saveRoute(r){try{sessionStorage.setItem(ROUTE_KEY,cleanRoute(r))}catch{}}
+function validRoute(r){
+  r=cleanRoute(r);
+  return ['home','apps','notifications','team','responsable','fauteuils'].includes(r)||
+    r==='planning'||r.startsWith('planning/')||
+    r==='contacts'||r.startsWith('contacts/');
+}
+function saveRoute(r){try{r=cleanRoute(r);if(validRoute(r))sessionStorage.setItem(ROUTE_KEY,r);else sessionStorage.removeItem(ROUTE_KEY)}catch{}}
+function sanitizeCurrentHash(){
+  if(!location.hash)return false;
+  const r=cleanRoute(location.hash);
+  if(validRoute(r))return false;
+  try{sessionStorage.removeItem(ROUTE_KEY)}catch{}
+  history.replaceState({...(history.state||{}),stip:true,route:'home',panel:false},'',location.pathname+location.search+'#/home');
+  return true;
+}
 function restoreRoute(){
   if(!isReload()||!localStorage.getItem(TOKEN)||location.hash)return false;
   let r='';try{r=cleanRoute(sessionStorage.getItem(ROUTE_KEY)||'')}catch{}
-  if(!r||r==='home')return false;
+  if(!r||r==='home'||!validRoute(r)){try{sessionStorage.removeItem(ROUTE_KEY)}catch{}return false}
   history.replaceState({...(history.state||{}),stip:true,route:r,panel:false},'',location.pathname+location.search+'#/'+r);
   return true
 }
@@ -39,6 +53,7 @@ function go(){
   consume();location.replace(n);return true
 }
 remember();
+sanitizeCurrentHash();
 restoreRoute();
 forceExplicitEntry();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
