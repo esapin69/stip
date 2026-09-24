@@ -120,6 +120,7 @@ const PAGE_LABELS: Record<string, string> = {
   planning_personal: "Planning perso",
   tomorrow: "Pour demain",
   team: "Esprit d’équipe",
+  activity: "Activité",
   agent_directory: "Équipe",
   planning_compare: "Comparer les plannings",
   change: "Changement",
