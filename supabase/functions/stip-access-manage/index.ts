@@ -250,19 +250,20 @@ async function findNew(b: any) {
   const q = String(b.q || "")
     .trim()
     .toLowerCase();
-  if (q.length < 2) throw Error("Tape au moins 2 lettres");
   const { data: agents, error } = await db
     .from("agents")
     .select("id,nom,prenom,ghe,equipe,type_planning,actif")
     .eq("actif", true);
   if (error) throw error;
-  const found = (agents || [])
-    .filter((a: any) =>
+
+  const found = (agents || []).filter(
+    (a: any) =>
+      !q ||
       `${a.prenom || ""} ${a.nom || ""} ${a.ghe || ""}`
         .toLowerCase()
         .includes(q),
-    )
-    .slice(0, 30);
+  );
+
   const ids = found.map((x: any) => x.id);
   let profiles: any[] = [];
   if (ids.length) {
@@ -270,6 +271,7 @@ async function findNew(b: any) {
       .from("stip_access_profiles")
       .select("agent_id")
       .in("agent_id", ids);
+    if (r.error) throw r.error;
     profiles = r.data || [];
   }
   const have = new Set(profiles.map((x: any) => x.agent_id));
