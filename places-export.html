@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#eef5f6">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Exporter · Visiter les lieux</title>
+  <link rel="stylesheet" href="stip-theme.css?v=20260925-lucide1">
+  <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
+  <style>
+    html,body{margin:0;min-height:100%;background:var(--stip-bg,#eef5f6)}
+    .export-page{width:min(100%,720px);margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) var(--stip-page-pad,16px) calc(36px + env(safe-area-inset-bottom))}
+    .export-top{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;margin-bottom:28px}
+    .export-top a{width:46px;height:46px;display:grid;place-items:center;text-decoration:none;font-size:1.65rem}
+    .export-top strong{text-align:center}
+    .export-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
+    .export-choice{min-height:132px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;text-align:left}
+    .export-choice span{font-size:1.8rem}
+    .export-choice small{display:block;font-weight:650;line-height:1.35}
+    .export-status{min-height:42px;margin-top:14px}
+    @media(max-width:520px){.export-choices{grid-template-columns:1fr}.export-choice{min-height:108px}}
+  </style>
+</head>
+<body>
+  <main class="export-page">
+    <header class="export-top">
+      <a class="stip-btn secondary" href="javascript:history.back()" aria-label="Retour">‹</a>
+      <strong>Visiter les lieux</strong>
+      <span></span>
+    </header>
+    <section class="stip-surface">
+      <p class="stip-kicker">SOURCE CANONIQUE SUPABASE</p>
+      <h1 class="stip-title">Exporter le référentiel</h1>
+      <p class="stip-subtitle">Choisis le format. Les deux fichiers sont générés à l’instant depuis les mêmes données que le site.</p>
+      <div class="export-choices">
+        <button class="stip-btn export-choice" type="button" data-export="xlsx">
+          <span aria-hidden="true">▦</span>
+          <strong>Tableur Excel</strong>
+          <small>Données complètes et modifiables : lieux, alias, itinéraires, ascenseurs, chambres et contraintes.</small>
+        </button>
+        <button class="stip-btn export-choice" type="button" data-export="pdf">
+          <span aria-hidden="true">▤</span>
+          <strong>PDF lisible</strong>
+          <small>Version humaine organisée par GHE, Cardio, Neuro, HFME et bâtiments annexes.</small>
+        </button>
+      </div>
+      <div class="export-status" id="exportStatus" aria-live="polite"></div>
+    </section>
+  </main>
+<script>
+(()=>{
+  "use strict";
+  const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
+  const STORE="stip_session_v1";
+  const status=document.getElementById("exportStatus");
+  const buttons=[...document.querySelectorAll("[data-export]")];
+
+  function setStatus(text,kind=""){
+    status.textContent=text||"";
+    status.dataset.kind=kind;
+  }
+  function filenameFrom(response,format){
+    const raw=response.headers.get("content-disposition")||"";
+    const match=raw.match(/filename="?([^";]+)"?/i);
+    return match?.[1]||("Visite-des-lieux-GHE."+format);
+  }
+  async function run(format){
+    const token=localStorage.getItem(STORE)||"";
+    if(!token){setStatus("Session STIP requise pour exporter.","error");return}
+    buttons.forEach(b=>b.disabled=true);
+    setStatus(format==="pdf"?"Préparation du PDF…":"Préparation du tableur…");
+    try{
+      const response=await fetch(API,{
+        method:"POST",
+        cache:"no-store",
+        headers:{"content-type":"application/json","x-stip-session":token},
+        body:JSON.stringify({action:format==="pdf"?"export_pdf":"export_xlsx"})
+      });
+      if(!response.ok){
+        const data=await response.json().catch(()=>({}));
+        throw new Error(data.error||"Export indisponible.");
+      }
+      const blob=await response.blob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement("a");
+      a.href=url;
+      a.download=filenameFrom(response,format==="pdf"?"pdf":"xlsx");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),30000);
+      setStatus("Fichier généré depuis Supabase.","ok");
+    }catch(error){
+      setStatus(error?.message||"Export indisponible.","error");
+    }finally{
+      buttons.forEach(b=>b.disabled=false);
+    }
+  }
+  buttons.forEach(button=>button.addEventListener("click",()=>run(button.dataset.export)));
+})();
+</script>
+</body>
+</html>
