@@ -1492,7 +1492,7 @@
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
     if (has("agent_directory"))
-      s += app("agents", "Agents", "agents", "agents");
+      s += app("agents", "Équipe", "agents", "agents");
     if (has("change_app")) s += app("change", "Changement", "change", "change");
     if (has("calendar_subscribe"))
       s += app("calendar", "Synchroniser mon calendrier", "calendar", "calendar");
