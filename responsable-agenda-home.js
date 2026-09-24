@@ -635,18 +635,26 @@
     for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(y, m - 1, day, 12),
         iso = localIso(d),
+        weekend = d.getDay() === 0 || d.getDay() === 6,
         events = itemsForDate(iso),
         markers = markerMarkup(events, iso),
         gridStart =
           day === 1
             ? ` style="grid-column-start:${leading + 1}"`
-            : "";
+            : "",
+        cls = [
+          "stip-month-day",
+          iso === today ? "today is-today" : "",
+          iso === state.selectedDate ? "selected is-selected" : "",
+          weekend ? "is-weekend" : "",
+          events.length ? "has-event" : "",
+        ].filter(Boolean).join(" ");
       cells.push(
-        `<button type="button" class="${iso === today ? "today" : ""} ${iso === state.selectedDate ? "selected" : ""} ${events.length ? "has-event" : ""}"${gridStart} data-rr-cal-day="${iso}"><b>${day}</b><span>${markers}</span></button>`,
+        `<button type="button" class="${cls}"${gridStart} data-rr-cal-day="${iso}"><b class="stip-month-day-number">${day}</b><span class="rr-month-primary stip-month-primary">${markers}</span><small class="stip-month-events" aria-hidden="true"></small></button>`,
       );
     }
 
-    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid">${cells.join("")}</div></section>`;
+    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card stip-month-calendar"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid stip-month-grid">${cells.join("")}</div></section>`;
   }
 
   function renderSelectedDay() {
