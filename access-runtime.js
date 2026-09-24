@@ -215,7 +215,7 @@
     ["personal", "Planning perso", "personal"],
     ["tomorrow", "Actions", "tomorrow"],
     ["team", "Esprit d’équipe", "team"],
-    ["agents", "Agents", "agents"],
+    ["agents", "Équipe", "agents"],
     ["compare", "Comparer les plannings", "compare"],
     ["change", "Changement", "change"],
     ["calendar", "Synchroniser mon calendrier", "calendar"],
