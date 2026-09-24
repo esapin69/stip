@@ -185,7 +185,7 @@
               return `<div class="access-history-event ${event.type}"><time>${esc(PARIS_TIME.format(new Date(event.at)))}</time><span>${esc(label)}</span></div>`;
             })
             .join("");
-        return `<article class="access-history-person"><header><div><strong>${esc(info.name)}</strong><small>${esc([roleLabel(info.role), info.ghe ? `GHE ${String(info.ghe).replace(/^GHE\s*/i, "")}` : ""].filter(Boolean).join(" · "))}</small></div></header><div class="access-history-events">${lines}</div></article>`;
+        return `<details class="access-history-person"><summary><div><strong>${esc(info.name)}</strong><small>${esc([roleLabel(info.role), info.ghe ? `GHE ${String(info.ghe).replace(/^GHE\\s*/i, "")}` : ""].filter(Boolean).join(" · "))}</small></div><span class="access-history-toggle" aria-hidden="true"></span></summary><div class="access-history-events">${lines}</div></details>`;
       })
       .join("");
   }
