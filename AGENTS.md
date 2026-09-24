@@ -124,3 +124,5 @@ Any STIP surface that contains a legend must explain every informational icon, b
 - HFME must always expose two distinct elevator shortcuts on every floor: `Ascenseurs · côté STIP` and `Ascenseurs · côté bloc`. They are separate landmarks and must never be deduplicated into one generic ascenseur choice.
 
 - Confidence stays automatic by default, but a manual 🧊/🔥 override remains available on every wheelchair spot review regardless of building, floor, shortcut, free-text location, or number of selected places. `Auto` restores inference. The override applies to the whole signalement and must survive location edits until the user resets it.
+
+- 🧊/🔥 is independent optional metadata, not a property of a location button. Never put 🧊 automatically on an ascenseur/hall/couloir choice. Offer two separate optional controls (`🧊 Peut partir vite`, `🔥 Plutôt stable`) on every spot-location step and again on final review; tapping the selected value again clears it. With no explicit choice, store neutral `normal` rather than inferring from the place name.
