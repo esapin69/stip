@@ -505,3 +505,59 @@
     gap:4px;
   }
 }
+
+
+/* access-sort-20260924 — tri Nom / Prénom / GHE */
+.access-sort{
+  margin:14px 0 14px;
+}
+.access-sort-label{
+  display:block;
+  margin:0 2px 7px;
+  color:var(--stip-muted);
+  font-size:.78rem;
+  font-weight:900;
+  letter-spacing:.02em;
+}
+.access-sort-filters .stip-filter-choice{
+  min-height:44px;
+  padding:6px 10px;
+}
+.access-sort-filters .stip-filter-copy{
+  align-items:center!important;
+  text-align:center!important;
+}
+.access-sort-filters .stip-filter-copy>strong{
+  font-size:.78rem;
+}
+.access-person-focus{
+  display:inline!important;
+  font-size:1.04em;
+  font-weight:950;
+  text-transform:uppercase;
+  letter-spacing:.01em;
+}
+.access-person-secondary{
+  display:inline!important;
+  font-size:.9em;
+  font-weight:780;
+  text-transform:capitalize;
+}
+.access-person-ghe{
+  letter-spacing:.035em;
+}
+.access-person-name-secondary{
+  text-transform:capitalize;
+}
+@media(max-width:430px){
+  .access-sort-filters{
+    gap:5px;
+  }
+  .access-sort-filters .stip-filter-choice{
+    min-height:42px;
+    padding-inline:7px;
+  }
+  .access-sort-filters .stip-filter-copy>strong{
+    font-size:.74rem;
+  }
+}
