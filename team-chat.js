@@ -2258,7 +2258,7 @@
         }
 
         const canReply = swipeCard?.dataset.canReply === "1";
-        if (x < 0 && !canReply) {
+        if (x > 0 && !canReply) {
           if (Math.abs(x) > 26) clearTimer();
           return;
         }
@@ -2276,9 +2276,9 @@
       swipeCard.style.transform = "translate3d(" + dx + "px,0,0)";
 
       const canDelete = swipeCard.dataset.canDelete === "1";
-      swipeWrap?.classList.toggle("is-reply", dx < 0);
-      swipeWrap?.classList.toggle("is-delete", dx > 0 && canDelete);
-      swipeWrap?.classList.toggle("is-react", dx > 0 && !canDelete);
+      swipeWrap?.classList.toggle("is-reply", dx > 0);
+      swipeWrap?.classList.toggle("is-delete", dx < 0 && canDelete);
+      swipeWrap?.classList.toggle("is-react", dx < 0 && !canDelete);
     }, { passive: false });
 
     const finish = async (event) => {
@@ -2297,11 +2297,11 @@
       resetSwipe();
 
       if (hadHorizontalSwipe && id) {
-        if (finalDx < -72 && canReply) {
+        if (finalDx > 72 && canReply) {
           swiped = true;
           try { navigator.vibrate?.(10); } catch {}
           await openFreeReply(id);
-        } else if (finalDx > 72) {
+        } else if (finalDx < -72) {
           swiped = true;
           try { navigator.vibrate?.(10); } catch {}
           if (canDelete) await deleteMessageFromSwipe(id);
