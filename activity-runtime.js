@@ -84,7 +84,8 @@
     return "";
   }
 
-  let inFlightKey = "";
+  let inFlightKey = "",
+    activeKey = "";
   function recentDuplicate(key, now) {
     try {
       const saved = JSON.parse(sessionStorage.getItem(LAST) || "null");
@@ -105,9 +106,13 @@
     const token = localStorage.getItem(STORE) || "",
       key = currentKey(),
       now = Date.now();
-    if (!token || !key || inFlightKey === key || recentDuplicate(key, now))
+    if (!token || !key || inFlightKey === key || activeKey === key) return;
+    if (recentDuplicate(key, now)) {
+      activeKey = key;
       return;
+    }
 
+    activeKey = key;
     inFlightKey = key;
     mark(key, now);
     try {
@@ -122,7 +127,8 @@
         body: JSON.stringify({ action: "activity", page_key: key }),
       });
     } catch {
-      // La journalisation ne doit jamais bloquer l'application.
+      // Autorise un nouvel essai au prochain événement si le réseau a échoué.
+      activeKey = "";
     } finally {
       inFlightKey = "";
     }
