@@ -1,3 +1,20 @@
+## 0. Architecture-first obligatoire
+Avant toute modification substantielle, lire `ARCHITECTURE_FIRST.md`.
+
+Règle transverse non négociable :
+**une information métier = une source de vérité = un moteur commun = plusieurs vues adaptées.**
+
+Conséquences :
+- corriger au cœur avant de corriger en surface ;
+- chercher d’abord la source canonique, le moteur et le composant partagé ;
+- si le même concept existe sur plusieurs pages, ne pas créer une nouvelle implémentation locale ;
+- supprimer les anciennes couches remplacées ;
+- vérifier les autres consommateurs de la même source avant de conclure ;
+- lorsqu’un chantier révèle une duplication structurelle, la traiter ou la documenter explicitement avant d’ajouter une nouvelle couche ;
+- pour toute nouvelle page/app, justifier pourquoi les moteurs existants ne suffisent pas et lister ceux qui seront réutilisés.
+
+`ARCHITECTURE_FIRST.md` gouverne les données, moteurs, composants, chargements, permissions, navigation et réutilisation. `THEME_FIRST.md` gouverne le visuel. En cas de modification UI, les deux contrats s’appliquent.
+
 ## Règle de déploiement et de modification
 - Travailler uniquement dans le dépôt GitHub existant et modifier les fichiers/mécanismes déjà en place quand ils couvrent le besoin.
 - Ne pas lancer d’action directe sur Vercel, ne pas déclencher de déploiement manuel et ne pas modifier la configuration Vercel.
