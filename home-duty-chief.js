@@ -501,6 +501,12 @@
   });
   const init = () => {
     render();
+    if (document.getElementById("teamDutyChiefTodayHost")) {
+      setTimeout(() => {
+        if (!data) fetchDuty();
+      }, 900);
+      return;
+    }
     fetchDuty();
   };
   if (document.readyState === "loading")
