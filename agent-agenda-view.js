@@ -49,6 +49,18 @@
   function add(v,n){const d=dobj(v);d.setDate(d.getDate()+n);return iso(d)}
   function monday(v){const d=dobj(v),x=d.getDay()||7;d.setDate(d.getDate()-x+1);return iso(d)}
   function monthKey(v){return String(v||today()).slice(0,7)}
+  function agentWeekRangeLabel(v){
+    const start=monday(v),end=add(start,6),a=dobj(start),b=dobj(end);
+    const mon=d=>d.toLocaleDateString("fr-FR",{month:"short"}).replace(".","");
+    return a.getMonth()===b.getMonth()? `${a.getDate()} → ${b.getDate()} ${mon(b)}` : `${a.getDate()} ${mon(a)} → ${b.getDate()} ${mon(b)}`;
+  }
+  function agentWeekRelativeLabel(v){
+    const s=monday(v),cur=monday(today()),delta=Math.round((dobj(s)-dobj(cur))/604800000);
+    if(delta===0)return"CETTE SEMAINE";
+    if(delta===1)return"SEMAINE PROCHAINE";
+    if(delta===-1)return"SEMAINE PRÉCÉDENTE";
+    return"SEMAINE";
+  }
   function firstMondayInMonth(k){
     const d=dobj(k+"-01"),day=d.getDay()||7;
     if(day!==1)d.setDate(d.getDate()+(8-day)%7);
@@ -189,7 +201,7 @@
       if(ev.length)hasEvents=true;
       cards.push(`<button type="button" class="hc-day hc-day-landscape ${statusClass} ${codeClass} ${day===state.selected?"selected":""}" data-aav-day="${day}" aria-pressed="${day===state.selected}">${marker}<span class="hc-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="hc-week-visual">${visual}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
     }
-    return `<section class="aav-week aav-week-home"><div class="hc-days-landscape ${hasEvents?"has-week-events":"no-week-events"}" style="--visible-days:7">${cards.join("")}</div></section>`;
+    return `<section class="aav-week aav-week-home"><header class="aav-week-nav"><button type="button" data-aav-week-step="-1" aria-label="Semaine précédente">‹</button><div><small>${esc(agentWeekRelativeLabel(state.selected))}</small><strong>${esc(agentWeekRangeLabel(state.selected))}</strong></div><button type="button" data-aav-week-step="1" aria-label="Semaine suivante">›</button></header><div class="hc-days-landscape ${hasEvents?"has-week-events":"no-week-events"}" style="--visible-days:7">${cards.join("")}</div></section>`;
   }
   function eventHtml(){
     const start=monday(state.selected),end=add(start,6),rows=state.events.filter(x=>x.date>=start&&x.date<=end);
@@ -320,6 +332,7 @@
   function wireBody(){
     const body=overlay.querySelector(".aav-body");
     body.querySelectorAll("[data-aav-day]").forEach(b=>b.onclick=()=>{state.selected=b.dataset.aavDay;state.month=monthKey(state.selected);render()});
+    body.querySelectorAll("[data-aav-week-step]").forEach(b=>b.onclick=()=>{state.selected=add(monday(state.selected),Number(b.dataset.aavWeekStep||0)*7);state.month=monthKey(state.selected);render()});
     body.querySelectorAll("[data-aav-month]").forEach(b=>b.onclick=()=>moveMonth(b.dataset.aavMonth));
     body.querySelector("[data-aav-copy]")?.addEventListener("click",async e=>{try{await navigator.clipboard.writeText(e.currentTarget.dataset.aavCopy||"")}catch{}});
     const subscribe=body.querySelector("[data-aav-subscribe]");
