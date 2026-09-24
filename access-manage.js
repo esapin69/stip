@@ -4,8 +4,6 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access-manage";
   const DATES_API =
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates-admin";
-  const SESSION_API =
-    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access";
   const STORE = "stip_session_v1";
   const PREVIEW_STORE = "stip_admin_preview_v1";
   const $ = (id) => document.getElementById(id);
@@ -27,6 +25,7 @@
     planning_personal: "Planning perso",
     tomorrow: "Pour demain",
     team: "Esprit d’équipe",
+    activity: "Activité",
     agent_directory: "Équipe",
     planning_compare: "Comparer les plannings",
     change: "Changement",
@@ -100,20 +99,6 @@
         visiteur: "Visiteur",
       }[role] || role.replaceAll("_", " ")
     );
-  }
-  async function trackAccessPage() {
-    const token = localStorage.getItem(STORE) || "";
-    if (!token) return;
-    fetch(SESSION_API, {
-      method: "POST",
-      cache: "no-store",
-      keepalive: true,
-      headers: {
-        "content-type": "application/json",
-        "x-stip-session": token,
-      },
-      body: JSON.stringify({ action: "activity", page_key: "access" }),
-    }).catch(() => {});
   }
   function historyProfileMap() {
     return new Map((historyData?.profiles || []).map((p) => [p.id, p]));
@@ -749,6 +734,5 @@
   $("code").oninput = () => {
     $("code").value = $("code").value.replace(/\D/g, "").slice(0, 6);
   };
-  trackAccessPage();
   load();
 })();
