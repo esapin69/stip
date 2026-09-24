@@ -325,12 +325,13 @@ check(
   theme.includes('--stip-month-number-lift:-4px') &&
   theme.includes('--stip-month-grid-column-gap:5px') &&
   theme.includes('--stip-month-grid-row-gap:10px') &&
-  theme.includes('--stip-month-cell-min-height:88px') &&
+  theme.includes('--stip-month-cell-min-height:96px') &&
   theme.includes('--stip-month-number-row:20px') &&
   theme.includes('--stip-month-visual-row:26px') &&
-  theme.includes('--stip-month-events-row:24px') &&
-  theme.includes('--stip-month-internal-gap:7px') &&
-  theme.includes('--stip-month-event-gap:7px') &&
+  theme.includes('--stip-month-events-row:26px') &&
+  theme.includes('--stip-month-internal-gap:8px') &&
+  theme.includes('--stip-month-event-gap:8px') &&
+  theme.includes('--stip-month-event-offset:8px') &&
   patterns.includes('.stip-month-calendar .stip-month-grid') &&
   patterns.includes('.stip-month-calendar .stip-month-day:not(.ph-day-cell)') &&
   patterns.includes('gap:var(--stip-month-event-gap)!important'),
@@ -347,6 +348,8 @@ check(
 check(
   patterns.includes('.stip-month-calendar .stip-month-day.is-selected:not(.is-today)') &&
   patterns.includes('translateY(-4px) scale(1.10)') &&
+  homeCss.includes('.hc-date-jump-grid>button.is-selected:not(.is-today)') &&
+  homeCss.includes('margin-top:8px!important;gap:8px!important') &&
   agentMonthSource.includes('today is-today') &&
   agentMonthSource.includes('selected is-selected'),
   'Le jour mensuel choisi doit reprendre le zoom de sélection sans grossir automatiquement aujourd’hui.'
