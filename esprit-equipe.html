@@ -13,10 +13,10 @@
       content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'"
     />
     <title>Esprit d’équipe · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260924-month-vertical2" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260924-legend3" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-reprise1" />
     <link data-agent-agenda-css rel="stylesheet" href="agent-agenda-view.css?v=20260924-month-contract1" />
-    <link rel="stylesheet" href="esprit-equipe.css?v=20260924-shift-actions-clean1" />
+    <link rel="stylesheet" href="esprit-equipe.css?v=20260924-legend3" />
   </head>
   <body class="team-page">
     <header class="team-top">
@@ -73,24 +73,6 @@
         </div>
         <section id="teamMonthDigestHost" class="team-month-digest-host" aria-live="polite"></section>
 
-        <div class="team-legend-separator stip-section-separator" aria-hidden="true">
-          <span>LÉGENDE</span>
-        </div>
-        <section class="team-month-legend stip-legend-surface" aria-label="Légende des repères de la page">
-          <div>
-            <span><i class="status-ok" aria-hidden="true">✔</i><b>Rien ne coince</b></span>
-            <span><i class="status-warning" aria-hidden="true">⚠</i><b>À surveiller</b></span>
-            <span><i class="status-critical" aria-hidden="true">🛑</i><b>Journée tendue</b></span>
-            <span><i class="status-opportunity" aria-hidden="true">+</i><b>Présence plus large</b></span>
-            <span><i class="status-unknown" aria-hidden="true">○</i><b>Pas encore analysé</b></span>
-            <span><i aria-hidden="true">🎨</i><b>Chef d’équipe</b></span>
-            <span><i aria-hidden="true">⏱</i><b>Horaire adapté</b></span>
-            <span><i aria-hidden="true">◐</i><b>Temps partiel</b></span>
-            <span><i aria-hidden="true">🎓</i><b>Formation</b></span>
-            <span><i aria-hidden="true">👶</i><b>Stagiaire</b></span>
-          </div>
-        </section>
-
         <details class="stip-option-pocket" data-stip-option="calendar-team">
           <summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary>
           <div class="stip-option-pocket-body">
@@ -102,6 +84,26 @@
             </button>
           </div>
         </details>
+
+        <section class="team-page-legend stip-legend" aria-label="Légende des repères de la page">
+          <div class="team-legend-separator stip-section-separator" aria-hidden="true">
+            <span>LÉGENDE</span>
+          </div>
+          <div class="team-month-legend stip-legend-surface">
+            <div class="stip-legend-list">
+              <button class="stip-legend-item" type="button" data-stip-legend-key="status-ok" aria-pressed="false"><span class="stip-legend-icon status-ok" aria-hidden="true">✔</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Rien ne coince</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="status-warning" aria-pressed="false"><span class="stip-legend-icon status-warning" aria-hidden="true">⚠</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>À surveiller</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="status-critical" aria-pressed="false"><span class="stip-legend-icon status-critical" aria-hidden="true">🛑</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Journée tendue</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="status-opportunity" aria-pressed="false"><span class="stip-legend-icon status-opportunity" aria-hidden="true">+</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Présence plus large</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="status-unknown" aria-pressed="false"><span class="stip-legend-icon status-unknown" aria-hidden="true">○</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Pas encore analysé</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="chef" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">🎨</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Chef d’équipe</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="adapted" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">⏱</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Horaire adapté</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="part-time" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">◐</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Temps partiel</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="training" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">🎓</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Formation</b></button>
+              <button class="stip-legend-item" type="button" data-stip-legend-key="trainee" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">👶</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>Stagiaire</b></button>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
     <script src="stip-navigation.js?v=20260924-history2"></script>
@@ -109,7 +111,7 @@
     <script src="shift-registry.js?v=20260924-core1"></script>
     <script src="agent-agenda-view.js?v=20260924-month-spacing3"></script>
     <script src="calendar-subscriptions.js?v=20260922-agentplanning1"></script>
-    <script src="home-duty-chief.js?v=20260924-team-load1"></script>
+    <script src="home-duty-chief.js?v=20260924-team-load1"></script>\n    <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="esprit-equipe.js?v=20260924-month-spacing3"></script>
   </body>
 </html>
