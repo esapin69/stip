@@ -17,6 +17,9 @@
     const x = p();
     return Object.prototype.hasOwnProperty.call(x, k) ? !!x[k] : false;
   }
+  const ACTIVITY_API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access";
+  const ACTIVITY_STORE = "stip_activity_last_v1";
   const APP_POLICY = {
     personal: () => explicit("planning_personal"),
     tomorrow: () => explicit("tomorrow"),
@@ -43,6 +46,108 @@
   };
   function canApp(k) {
     return APP_POLICY[k]?.() ?? false;
+  }
+  function activityKey() {
+    const path = location.pathname.toLowerCase(),
+      params = new URLSearchParams(location.search),
+      route = window.STIPRouter?.get?.() || "";
+    const routeMap = {
+      "planning/personal": "planning_personal",
+      "planning/calendar": "calendar",
+      "planning/team": "team",
+      "planning/spirit": "team",
+      "planning/change": "change",
+      contacts: "contacts",
+      notifications: "notifications",
+      profile: "profile",
+      home: "home",
+    };
+    if (routeMap[route]) return routeMap[route];
+
+    const quick = String(params.get("quick") || "").toLowerCase(),
+      quickMap = {
+        personal: "planning_personal",
+        tomorrow: "tomorrow",
+        team: "team",
+        change: "change",
+        calendar: "calendar",
+        contacts: "contacts",
+        notifications: "notifications",
+        profile: "profile",
+      };
+    if (quickMap[quick]) return quickMap[quick];
+
+    const tab = String(params.get("tab") || "").toLowerCase();
+    if (path.endsWith("/esprit-equipe.html")) {
+      if (tab === "assistant") return "assistant";
+      return "team";
+    }
+    const paths = [
+      ["/agent-directory.html", "agent_directory"],
+      ["/planning-compare-app.html", "planning_compare"],
+      ["/agent-dates.html", "agent_dates"],
+      ["/responsable.html", "responsable"],
+      ["/assistant.html", "assistant"],
+      ["/places.html", "places"],
+      ["/places-app.html", "places"],
+      ["/access-manage.html", "access"],
+    ];
+    for (const [needle, key] of paths)
+      if (path.endsWith(needle)) return key;
+
+    const bodyKey = String(document.body?.dataset?.stipApp || "").toLowerCase();
+    const bodyMap = {
+      access: "access",
+      responsable: "responsable",
+      places: "places",
+      messages: "messages",
+      notifications: "notifications",
+      profile: "profile",
+    };
+    if (bodyMap[bodyKey]) return bodyMap[bodyKey];
+    if (
+      path.endsWith("/index.html") ||
+      path === "/" ||
+      /\/stip\/?$/.test(path)
+    )
+      return "home";
+    return "";
+  }
+  let lastActivityKey = "",
+    lastActivityAt = 0;
+  function trackActivity() {
+    if (window.STIPPreview?.active) return;
+    const token = localStorage.getItem("stip_session_v1") || "",
+      key = activityKey();
+    if (!token || !key) return;
+    const now = Date.now();
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(ACTIVITY_STORE) || "null");
+      if (
+        saved?.key === key &&
+        Number(saved?.at || 0) > now - 15000
+      )
+        return;
+    } catch {}
+    if (lastActivityKey === key && lastActivityAt > now - 15000) return;
+    lastActivityKey = key;
+    lastActivityAt = now;
+    try {
+      sessionStorage.setItem(
+        ACTIVITY_STORE,
+        JSON.stringify({ key, at: now }),
+      );
+    } catch {}
+    fetch(ACTIVITY_API, {
+      method: "POST",
+      cache: "no-store",
+      keepalive: true,
+      headers: {
+        "content-type": "application/json",
+        "x-stip-session": token,
+      },
+      body: JSON.stringify({ action: "activity", page_key: key }),
+    }).catch(() => {});
   }
   let livePermRefresh = null;
   async function refreshLivePermissions() {
@@ -337,6 +442,7 @@
     tuneDock();
     applyInfoPolicy();
     document.documentElement.dataset.stipInfoLevel = infoLevel();
+    trackActivity();
   }
   let raf = 0;
   function schedule() {
