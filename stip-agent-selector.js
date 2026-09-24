@@ -1,34 +1,6 @@
 (() => {
   "use strict";
 
-  const SHIFT = {
-    M: { label: "Matin", time: "06h50 – 14h40" },
-    J: { label: "Journée", time: "08h30 – 16h20" },
-    J4: { label: "J4", time: "10h10 – 18h00" },
-    S: { label: "Soir", time: "13h30 – 21h00" },
-    N: { label: "Nuit", time: "21h00 – 06h50" },
-  };
-  const SHIFT_ORDER = Object.keys(SHIFT);
-  const ABSENCE_ORDER = ["AR","AT","MA","CA","CP","RH","RTT","RTA","RTTA","RC","AA","RF","SYR"];
-  const SPECIAL_SHIFT = {
-    J0464: { base: "J", text: "08h30–16h20 · fixe" },
-    M0130: { base: "M", text: "3h45 · libre entre 06h00 et 21h30" },
-    M0131: { base: "M", text: "7h30 · libre entre 06h30 et 21h15" },
-    M0177: { base: "M", text: "7h30 · libre entre 06h25 et 21h35" },
-    S0113: { base: "S", text: "13h30–21h00 · fixe" },
-  };
-  const SAFE_ABSENCE = {
-    CA: "Congé",
-    CP: "Congé",
-    RH: "Repos",
-    RTT: "RTT",
-    RTA: "Repos / récupération",
-    RTTA: "Repos / récupération",
-    RC: "Récupération",
-    RF: "Repos",
-    OFF: "Repos",
-    REPOS: "Repos",
-  };
   const PRIVATE_ABSENCE = new Set(["AR","AT","MA","AM","AA","ABS","SYR"]);
   const esc = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -62,19 +34,28 @@
     return (`${parts[0]?.[0] || ""}${parts.at(-1)?.[0] || ""}`).toUpperCase() || "ST";
   }
 
-  const ABSENCE_CODES = new Set([...ABSENCE_ORDER, "ABS", "AM", "OFF", "REPOS", "-", ""]);
+  function shiftDef(value) {
+    return window.STIPShiftRegistry?.resolve?.(value) || null;
+  }
+
+  function shiftOrder() {
+    const seen = new Set();
+    return (window.STIPShiftRegistry?.all?.() || [])
+      .filter((row) => {
+        const code = String(row?.code || "").toUpperCase(),
+          base = String(row?.base_code || row?.code || "").toUpperCase();
+        if (!row?.is_working || code !== base || seen.has(code)) return false;
+        seen.add(code);
+        return true;
+      })
+      .sort((a, b) => Number(a?.sort_order || 999) - Number(b?.sort_order || 999));
+  }
 
   function baseShift(value) {
-    let code = String(value || "").trim().toUpperCase().replace(/\s+/g, "");
-    if (!code || ABSENCE_CODES.has(code)) return "";
-    if (code.endsWith("*")) code = code.slice(0, -1);
-    if (SHIFT[code]) return code;
-    if (/^J4\d+$/.test(code)) return "J4";
-    if (/^M\d+$/.test(code)) return "M";
-    if (/^J\d+$/.test(code)) return "J";
-    if (/^S\d+$/.test(code)) return "S";
-    if (/^N\d+$/.test(code)) return "N";
-    return "";
+    const def = shiftDef(value);
+    return def?.is_working
+      ? String(def.base_code || def.code || "").toUpperCase()
+      : "";
   }
 
   function isWorking(agent) {
@@ -115,40 +96,36 @@
   }
 
   function specialText(agent, code) {
-    const source = agent?.today_special_schedule;
-    if (source && String(source.code || "").toUpperCase() === code) {
-      const minutes = Number(source.duration_minutes || 0);
-      const duration = minutes
-        ? `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}`
-        : "";
-      const start = String(source.window_start || "").slice(0, 5).replace(":", "h");
-      const end = String(source.window_end || "").slice(0, 5).replace(":", "h");
-      return String(source.schedule_mode || "") === "flexible"
-        ? `${duration || "Durée spécifique"} · libre entre ${start} et ${end}`
-        : `${start}–${end} · fixe`;
-    }
-    return SPECIAL_SHIFT[code]?.text || "";
+    const source = agent?.today_shift_definition || agent?.today_special_schedule,
+      registryTime = window.STIPShiftRegistry?.time?.(code) || "";
+    if (source && String(source.schedule_mode || "standard") !== "standard")
+      return registryTime || String(source.source_label || "Horaire adapté");
+    const base = baseShift(code);
+    return base && String(code || "").replace(/\*+$/, "") !== base
+      ? registryTime || "Horaire adapté"
+      : "";
   }
 
   function publicAbsence(code) {
     const c = String(code || "").toUpperCase();
-    if (SAFE_ABSENCE[c]) return SAFE_ABSENCE[c];
     if (!c || c === "-") return "Absent aujourd’hui";
     if (PRIVATE_ABSENCE.has(c)) return "Absent aujourd’hui";
+    const def = shiftDef(c);
+    if (def && !def.is_working) return String(def.label || "Indisponible aujourd’hui");
     return "Indisponible aujourd’hui";
   }
 
   function row(agent, options) {
     const code = String(agent.today_code || "").toUpperCase();
     const base = baseShift(code);
-    const shift = SHIFT[base];
+    const shift = base ? shiftDef(base) : null;
     const standardCode = code === base || code === `${base}*`;
     const special = specialText(agent, code);
     const full = options.privacy === "full";
     let status = "";
     let marker = "";
     if (shift) {
-      if (standardCode) status = `${base} · ${shift.time}`;
+      if (standardCode) status = `${base} · ${window.STIPShiftRegistry?.time?.(base) || ''}`;
       else {
         status = special || "Horaire particulier";
         marker = `<span class="sas-status-chip is-adapted" title="Horaire adapté">⏱ Horaire adapté${full ? ` · ${esc(code)}` : ""}</span>`;
@@ -182,8 +159,8 @@
 
   function workGroup(code, items, options) {
     if (!items.length) return "";
-    const shift = SHIFT[code];
-    return `<section class="sas-shift shift-${code.toLowerCase()}"><header><b>${code}</b><span><strong>${shift.label}</strong><small>${shift.time}</small></span><em>${items.length}</em></header><div>${items.map((a) => row(a, options)).join("")}</div></section>`;
+    const shift = shiftDef(code);
+    return `<section class="sas-shift shift-${String(code).toLowerCase()}"><header><b>${esc(code)}</b><span><strong>${esc(shift?.label || code)}</strong><small>${esc(window.STIPShiftRegistry?.time?.(code) || "")}</small></span><em>${items.length}</em></header><div>${items.map((a) => row(a, options)).join("")}</div></section>`;
   }
 
   function absenceGroup(code, items, options) {
@@ -267,20 +244,21 @@
       const working = state.items.filter(isWorking);
       const absent = state.items.filter((agent) => !isWorking(agent));
       const results = selectedItems();
-      const work = SHIFT_ORDER.map((code) =>
-        workGroup(
+      const work = shiftOrder().map((definition) => {
+        const code = String(definition.code || "").toUpperCase();
+        return workGroup(
           code,
           working.filter((agent) => baseShift(agent.today_code) === code).sort(compareGhe),
           options,
-        ),
-      ).join("");
+        );
+      }).join("");
       let absentHtml = "";
       if (options.privacy === "full") {
         const absenceCodes = [...new Set(absent.map((agent) => String(agent.today_code || "")))].sort((a, b) => {
-          const ai = ABSENCE_ORDER.indexOf(a.toUpperCase());
-          const bi = ABSENCE_ORDER.indexOf(b.toUpperCase());
-          if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-          return a.localeCompare(b, "fr");
+          const ad = shiftDef(a), bd = shiftDef(b),
+            ai = Number(ad?.sort_order || 999),
+            bi = Number(bd?.sort_order || 999);
+          return ai !== bi ? ai - bi : a.localeCompare(b, "fr");
         });
         absentHtml = absenceCodes.map((code) =>
           absenceGroup(
