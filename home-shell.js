@@ -310,10 +310,12 @@
     for (let day = 1; day <= last.getDate(); day++) {
       const d = new Date(y, m, day, 12),
         iso = dateIsoLocal(d),
+        weekend = d.getDay() === 0 || d.getDay() === 6,
         shift = calendarShiftForDate(iso),
         cls = [
           iso === todayIso ? "is-today" : "",
           iso === selectedIso ? "is-selected" : "",
+          weekend ? "is-weekend" : "",
           shift ? "is-worked" : "",
         ]
           .filter(Boolean)
@@ -331,12 +333,12 @@
           ? '<span class="hc-date-jump-skeleton" aria-hidden="true"></span>'
           : shift
             ? shift.work
-              ? `<span class="hc-date-jump-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
-              : `<span class="hc-date-jump-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
+              ? `<span class="hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
+              : `<span class="hc-date-jump-icon stip-month-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events">${eventIcons.map(esc).join("")}</small></button>`,
+        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map(esc).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
@@ -987,7 +989,7 @@
   function planningCalendarOverview() {
     const w = navigationWeek(),
       calendarKey = state.dateJumpMonth || monthKeyOf(w[0]?.d || dateObj(parisIso()));
-    return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
+    return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent stip-month-calendar" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
   }
   function weekWidget() {
     const w = selectedWeek(),
