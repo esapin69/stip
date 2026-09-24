@@ -35,7 +35,7 @@ button,input{font:inherit}
 .ad-error{display:grid;gap:5px;padding:13px;border:1px solid #efcdcd;border-radius:15px;background:#fff5f5;color:#9f4242}
 .ad-error span{font-size:.72rem}
 .ad-error.page{margin-top:18px}
-.ad-error a{width:max-content;margin-top:5px;color:#087f96;font-weight:900}
+.ad-error a,.ad-error button{width:max-content;margin-top:5px;border:0;background:transparent;color:#087f96;font-weight:900;padding:0}
 .ad-loading{min-height:55vh;display:grid;place-items:center;align-content:center;gap:10px;color:#71858e}
 .ad-loading i{width:28px;height:28px;border:3px solid #d9e7ea;border-top-color:#0b8fa7;border-radius:50%;animation:adspin .8s linear infinite}
 @keyframes adspin{to{transform:rotate(360deg)}}
