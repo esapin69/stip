@@ -161,11 +161,18 @@
 
 .rr-event-meta b,
 .rr-event-referent {
-  min-height: 25px;
-  padding-inline: 7px;
-  background: #fff1c8;
-  color: #8d5a00;
-  font-size: 0.78rem;
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  min-height: 27px;
+  padding: 0 8px;
+  border-radius: 8px;
+  align-items: center;
+  background: #eef4f6;
+  color: #385c6a;
+  font-size: 0.80rem;
+  line-height: 1;
+  font-weight: 950;
 }
 
 .rr-event-meta .rr-event-time {
@@ -175,8 +182,11 @@
 }
 
 .rr-event-referent {
+  min-height: 25px;
+  padding-inline: 7px;
   background: #fff1c8;
   color: #8d5a00;
+  font-size: 0.78rem;
 }
 
 .rr-event-chevron {
