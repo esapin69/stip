@@ -17,7 +17,7 @@ function avatar(c,m){const u=m?.avatars?.[c?.source_key];return u?`<img src="${e
 function dateKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function mondayOf(d){const x=new Date(d);x.setHours(12,0,0,0);const n=x.getDay()||7;x.setDate(x.getDate()-n+1);return x}
 function sundayOf(d){const x=mondayOf(d);x.setDate(x.getDate()+6);return x}
-function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=shiftMeta(code);return`<div class="pui-day tone-${s.tone}${isToday?' today':''}"><strong>${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
+function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=shiftMeta(code),weekend=d.getDay()===0||d.getDay()===6;return`<div class="pui-day stip-month-day tone-${s.tone}${isToday?' today':''}${weekend?' is-weekend':''}"><strong class="stip-month-day-number">${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
 function monthSection(y,m,monthItems){
   const sorted=[...monthItems].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const byDate=new Map(sorted.map(x=>[String(x.date),x]));
@@ -39,7 +39,7 @@ function monthSection(y,m,monthItems){
     cursor.setDate(cursor.getDate()+7);row++;
   }
   const firstWeek=isoWeek(start),lastWeek=isoWeek(end);
-  return`<section class="pui-month-block"><header class="pui-month-banner"><div><strong>${MONTHS[m-1]}</strong><span>${y}</span></div><small>S${firstWeek}${firstWeek===lastWeek?'':'–S'+lastWeek}</small></header><div class="pui-weekdays">${DAYS.map(d=>`<b>${d}</b>`).join('')}</div><div class="pui-calendar-wrap"><div class="pui-week-tags">${weekTags}</div><div class="pui-calendar">${cells}</div></div></section>`
+  return`<section class="pui-month-block stip-month-calendar"><header class="pui-month-banner"><div><strong>${MONTHS[m-1]}</strong><span>${y}</span></div><small>S${firstWeek}${firstWeek===lastWeek?'':'–S'+lastWeek}</small></header><div class="pui-weekdays">${DAYS.map(d=>`<b>${d}</b>`).join('')}</div><div class="pui-calendar-wrap"><div class="pui-week-tags">${weekTags}</div><div class="pui-calendar">${cells}</div></div></section>`
 }
 function renderCalendar({contact,items=[],media={}}){const groups=new Map();for(const x of items){const k=String(x.date).slice(0,7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}const sections=[...groups.entries()].map(([k,list])=>{const[y,m]=k.split('-').map(Number);return monthSection(y,m,list)}).join('');return`<div class="pui-sheet"><div class="pui-agent"><div class="pui-avatar">${avatar(contact,media)}</div><div class="pui-agent-copy"><p>MON PLANNING</p><h2>${esc(name(contact))}</h2><span>À partir de la semaine en cours</span></div></div>${sections||'<div class="pui-none">Aucun planning disponible.</div>'}</div>`}
 async function openPersonal(){const root=document.getElementById('planningWorkspace');if(!root)return;root.classList.remove('hidden');root.innerHTML='<div class="pui-load">Chargement…</div>';try{const[p,b]=await Promise.all([call('personal'),call('bootstrap')]);root.innerHTML=renderCalendar({contact:p.agent||b.agent||{},items:upcoming(p.items||b.personal||[]),media:p.media||b.media||{}})}catch(e){root.innerHTML=`<div class="pui-load">${esc(e.message)}</div>`}}
