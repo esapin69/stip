@@ -324,3 +324,10 @@ body.aav-open{overflow:hidden}.aav-overlay{position:fixed;inset:0;z-index:20000;
 @media(max-width:360px){
   .aav-contact{grid-template-columns:1fr}
 }
+
+
+/* agent-agenda-section-order-20260924 */
+.aav-period-separator{display:flex;align-items:center;gap:12px;margin:7px 0 0;color:#768890;font-size:.69rem;font-weight:950;letter-spacing:.14em;text-align:center}
+.aav-period-separator::before,.aav-period-separator::after{content:"";height:1px;flex:1;background:#d5e1e4}
+.aav-period-separator span{white-space:nowrap}
+.aav-period-separator+.aav-week,.aav-period-separator+.aav-month{margin-top:0}
