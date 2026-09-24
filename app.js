@@ -43,7 +43,7 @@ function readScrolls(){try{return JSON.parse(sessionStorage.getItem(SCROLL_STORE
 function saveScroll(r=route()){const m=readScrolls();m[clean(r)]=Math.max(0,Math.round(window.scrollY||0));try{sessionStorage.setItem(SCROLL_STORE,JSON.stringify(m))}catch{}}
 function setScroll(r,y){const m=readScrolls();m[clean(r)]=Math.max(0,Number(y)||0);try{sessionStorage.setItem(SCROLL_STORE,JSON.stringify(m))}catch{}}
 function restoreScroll(r=route()){const y=Number(readScrolls()[clean(r)]||0);requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo({top:y,behavior:'auto'})))}
-function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}saveScroll();if(!opt.keepScroll)setScroll(target,0);const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
+function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}saveScroll();if(!opt.keepScroll){setScroll(target,0);window.scrollTo({top:0,left:0,behavior:'auto'})}const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
 function back(fallback='home'){saveScroll();if(history.state?.panel){history.back();return}if(route()!=='home'&&history.length>1&&history.state?.stip){history.back();return}setRoute(fallback,{replace:true,keepScroll:true})}
 function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden')}
 function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
