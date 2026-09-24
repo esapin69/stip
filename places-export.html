@@ -5,21 +5,64 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#eef5f6">
   <meta name="robots" content="noindex,nofollow">
-  <title>Exporter · Visiter les lieux</title>
+  <title>Exporter / imprimer · Visiter les lieux</title>
   <link rel="stylesheet" href="stip-theme.css?v=20260925-lucide1">
   <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
   <style>
     html,body{margin:0;min-height:100%;background:var(--stip-bg,#eef5f6)}
-    .export-page{width:min(100%,720px);margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) var(--stip-page-pad,16px) calc(36px + env(safe-area-inset-bottom))}
-    .export-top{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;margin-bottom:28px}
+    *{box-sizing:border-box}
+    button,input{font:inherit}
+    .export-page{width:min(100%,760px);margin:0 auto;padding:calc(14px + env(safe-area-inset-top)) var(--stip-page-pad,16px) calc(40px + env(safe-area-inset-bottom))}
+    .export-top{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:10px;margin-bottom:20px}
     .export-top a{width:46px;height:46px;display:grid;place-items:center;text-decoration:none;font-size:1.65rem}
     .export-top strong{text-align:center}
-    .export-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}
-    .export-choice{min-height:132px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:7px;text-align:left}
-    .export-choice span{font-size:1.8rem}
-    .export-choice small{display:block;font-weight:650;line-height:1.35}
-    .export-status{min-height:42px;margin-top:14px}
-    @media(max-width:520px){.export-choices{grid-template-columns:1fr}.export-choice{min-height:108px}}
+    .intro{margin-bottom:14px}
+    .intro .stip-title{margin-bottom:8px}
+    .flow{display:grid;gap:14px}
+    .step{padding:17px}
+    .step[hidden]{display:none!important}
+    .step-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:13px}
+    .step-n{flex:0 0 28px;width:28px;height:28px;border-radius:999px;display:grid;place-items:center;background:#0e5969;color:#fff;font-size:.78rem;font-weight:950}
+    .step-copy{min-width:0}
+    .step-copy strong{display:block;color:#123b4b;font-size:1rem}
+    .step-copy small{display:block;margin-top:3px;color:#607983;font-weight:650;line-height:1.35}
+    .choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .choice{min-height:88px;padding:14px;display:flex;align-items:flex-start;gap:11px;text-align:left}
+    .choice .ico{font-size:1.45rem;line-height:1}
+    .choice strong{display:block;color:#123b4b}
+    .choice small{display:block;margin-top:4px;color:#607983;font-size:.76rem;line-height:1.35}
+    .choice.is-active,.mini.is-active{outline:2px solid #0b8799;background:#e6f5f7}
+    .subpanel{margin-top:12px;padding-top:12px;border-top:1px solid rgba(18,59,75,.12)}
+    .subpanel[hidden]{display:none!important}
+    .mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .mini{min-height:52px;padding:10px 12px;text-align:left}
+    .mini strong{display:block}
+    .mini small{display:block;margin-top:2px;color:#66808a;font-size:.72rem}
+    .sub-actions{display:flex;justify-content:flex-end;margin-top:10px}
+    .selection-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding:10px 12px;border-radius:12px;background:#f2f8f9;color:#315966;font-size:.78rem;font-weight:750}
+    .custom-search{width:100%;height:46px;border:1px solid #b9d1d7;border-radius:13px;background:#fff;padding:0 13px;color:#123b4b;outline:none}
+    .custom-results{display:grid;gap:7px;margin-top:9px;max-height:320px;overflow:auto}
+    .custom-item{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:start;gap:9px;width:100%;padding:10px 11px;border:1px solid #c9d9de;border-radius:12px;background:#fff;text-align:left;color:#123b4b}
+    .custom-item b{width:22px;height:22px;border-radius:7px;border:1px solid #aac8d0;display:grid;place-items:center;font-size:.76rem}
+    .custom-item.is-active b{background:#0b8799;color:#fff;border-color:#0b8799}
+    .custom-item small{display:block;margin-top:3px;color:#67808a;font-size:.7rem}
+    .selected-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+    .selected-chip{border:0;border-radius:999px;background:#dff2f4;color:#164f5d;padding:7px 9px;font-size:.72rem;font-weight:850}
+    .format-grid,.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .format-btn{min-height:92px;padding:14px;display:flex;gap:11px;align-items:flex-start;text-align:left}
+    .format-btn .ico{font-size:1.5rem}
+    .format-btn small{display:block;margin-top:4px;color:#607983;font-size:.74rem;line-height:1.35}
+    .action-btn{min-height:54px;justify-content:flex-start;gap:8px}
+    .export-status{min-height:42px;margin-top:12px;padding:0 2px;color:#416773;font-size:.78rem;font-weight:750;line-height:1.4}
+    .export-status[data-kind="error"]{color:#a73535}
+    .export-status[data-kind="ok"]{color:#1b684e}
+    .busy{opacity:.62;pointer-events:none}
+    @media(max-width:560px){
+      .choice-grid,.format-grid,.action-grid{grid-template-columns:1fr}
+      .choice{min-height:76px}
+      .mini-grid{grid-template-columns:1fr 1fr}
+    }
+    @media(max-width:380px){.mini-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
@@ -29,76 +72,330 @@
       <strong>Visiter les lieux</strong>
       <span></span>
     </header>
-    <section class="stip-surface">
-      <p class="stip-kicker">SOURCE CANONIQUE SUPABASE</p>
-      <h1 class="stip-title">Exporter le référentiel</h1>
-      <p class="stip-subtitle">Choisis le format. Les deux fichiers sont générés à l’instant depuis les mêmes données que le site.</p>
-      <div class="export-choices">
-        <button class="stip-btn export-choice" type="button" data-export="xlsx">
-          <span aria-hidden="true">▦</span>
-          <strong>Tableur Excel</strong>
-          <small>Données complètes et modifiables : lieux, alias, itinéraires, ascenseurs, chambres et contraintes.</small>
-        </button>
-        <button class="stip-btn export-choice" type="button" data-export="pdf">
-          <span aria-hidden="true">▤</span>
-          <strong>PDF lisible</strong>
-          <small>Version humaine organisée par GHE, Cardio, Neuro, HFME et bâtiments annexes.</small>
-        </button>
-      </div>
-      <div class="export-status" id="exportStatus" aria-live="polite"></div>
+
+    <section class="stip-surface intro">
+      <p class="stip-kicker">EXPORTER · AFFICHER · IMPRIMER</p>
+      <h1 class="stip-title">Préparer une version utile</h1>
+      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF et le tableur sont générés à la demande depuis le même référentiel Supabase que le site.</p>
     </section>
+
+    <div class="flow">
+      <section class="stip-surface step" id="scopeStep">
+        <div class="step-head"><span class="step-n">1</span><div class="step-copy"><strong>Choisir le contenu</strong><small>Tout le GHE, un bâtiment, un domaine ou une sélection précise.</small></div></div>
+        <div class="choice-grid" id="scopeChoices">
+          <button class="stip-btn choice" type="button" data-open-scope="all"><span class="ico">◎</span><span><strong>Tout Visite des lieux</strong><small>Le référentiel GHE complet.</small></span></button>
+          <button class="stip-btn choice" type="button" data-open-scope="building"><span class="ico">▦</span><span><strong>Par bâtiment</strong><small>Cardio, Neuro, HFME ou annexes.</small></span></button>
+          <button class="stip-btn choice" type="button" data-open-scope="domain"><span class="ico">◫</span><span><strong>Par domaine</strong><small>Services, examens, blocs ou accès.</small></span></button>
+          <button class="stip-btn choice" type="button" data-open-scope="shortcut"><span class="ico">⚡</span><span><strong>Raccourcis utiles</strong><small>Les sélections les plus rapides à lancer.</small></span></button>
+          <button class="stip-btn choice" type="button" data-open-scope="custom"><span class="ico">＋</span><span><strong>Composer ma sélection</strong><small>Choisir plusieurs destinations une par une.</small></span></button>
+        </div>
+
+        <div class="subpanel" id="buildingPanel" hidden>
+          <div class="mini-grid">
+            <button class="stip-btn mini" type="button" data-building="HLP"><strong>CARDIO</strong><small>Hôpital Louis Pradel</small></button>
+            <button class="stip-btn mini" type="button" data-building="PW"><strong>NEURO</strong><small>Hôpital Pierre Wertheimer</small></button>
+            <button class="stip-btn mini" type="button" data-building="HFME"><strong>HFME</strong><small>Femme Mère Enfant</small></button>
+            <button class="stip-btn mini" type="button" data-building-annex><strong>ANNEXES</strong><small>A1, A3, A4, B13, B14…</small></button>
+          </div>
+          <div class="sub-actions"><button class="stip-btn" type="button" id="buildingContinue">Continuer</button></div>
+        </div>
+
+        <div class="subpanel" id="domainPanel" hidden>
+          <div class="mini-grid">
+            <button class="stip-btn mini" type="button" data-domain="services"><strong>Services & unités</strong><small>Services, unités, salles et accueils.</small></button>
+            <button class="stip-btn mini" type="button" data-domain="examens"><strong>Examens</strong><small>Destinations typées examen.</small></button>
+            <button class="stip-btn mini" type="button" data-domain="blocs"><strong>Blocs</strong><small>Destinations typées bloc.</small></button>
+            <button class="stip-btn mini" type="button" data-domain="acces"><strong>Accès & repères</strong><small>Entrées, halls, ascenseurs, passerelles et repères.</small></button>
+          </div>
+        </div>
+
+        <div class="subpanel" id="shortcutPanel" hidden>
+          <div class="mini-grid">
+            <button class="stip-btn mini" type="button" data-preset="all"><strong>GHE complet</strong><small>Tout en une fois.</small></button>
+            <button class="stip-btn mini" type="button" data-preset="cardio"><strong>Cardio</strong><small>Louis Pradel.</small></button>
+            <button class="stip-btn mini" type="button" data-preset="neuro"><strong>Neuro</strong><small>Pierre Wertheimer.</small></button>
+            <button class="stip-btn mini" type="button" data-preset="hfme"><strong>HFME</strong><small>Femme Mère Enfant.</small></button>
+            <button class="stip-btn mini" type="button" data-preset="examens"><strong>Examens</strong><small>Accès rapide au domaine examens.</small></button>
+            <button class="stip-btn mini" type="button" data-preset="annexes"><strong>Bâtiments annexes</strong><small>Repères hors trois bâtiments principaux.</small></button>
+          </div>
+        </div>
+
+        <div class="subpanel" id="customPanel" hidden>
+          <input class="custom-search" id="customSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Service, unité, examen, salle…" aria-label="Rechercher une destination à ajouter">
+          <div class="custom-results" id="customResults" aria-live="polite"></div>
+          <div class="selected-list" id="selectedList"></div>
+          <div class="sub-actions"><button class="stip-btn" type="button" id="customContinue">Continuer</button></div>
+        </div>
+
+        <div class="selection-summary" id="scopeSummary" hidden><span id="scopeSummaryText"></span><button class="stip-btn secondary" type="button" id="changeScope">Modifier</button></div>
+      </section>
+
+      <section class="stip-surface step" id="formatStep" hidden>
+        <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small>Le contenu reste identique : seule la présentation change.</small></div></div>
+        <div class="format-grid">
+          <button class="stip-btn format-btn" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF</strong><small>Pour afficher, imprimer, télécharger ou partager.</small></span></button>
+          <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur .xlsx</strong><small>Compatible Excel et Google Sheets, pour trier ou modifier les données.</small></span></button>
+        </div>
+      </section>
+
+      <section class="stip-surface step" id="actionStep" hidden>
+        <div class="step-head"><span class="step-n">3</span><div class="step-copy"><strong>Choisir l’action</strong><small id="actionHint">Que veux-tu faire avec le fichier ?</small></div></div>
+        <div class="action-grid" id="actionGrid"></div>
+        <div class="export-status" id="exportStatus" aria-live="polite"></div>
+      </section>
+    </div>
   </main>
+
 <script>
 (()=>{
   "use strict";
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
   const STORE="stip_session_v1";
+  const ANNEXES=["A1","A3","A4","B1","B13","B14","B16","CERMEP","IDÉE","MORTUAIRE","MPM","RADIO","GHE"];
+  const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set()};
   const status=document.getElementById("exportStatus");
-  const buttons=[...document.querySelectorAll("[data-export]")];
+  const formatStep=document.getElementById("formatStep");
+  const actionStep=document.getElementById("actionStep");
+  const actionGrid=document.getElementById("actionGrid");
+  const actionHint=document.getElementById("actionHint");
+  const scopeSummary=document.getElementById("scopeSummary");
+  const scopeSummaryText=document.getElementById("scopeSummaryText");
+  const panels={
+    building:document.getElementById("buildingPanel"),
+    domain:document.getElementById("domainPanel"),
+    shortcut:document.getElementById("shortcutPanel"),
+    custom:document.getElementById("customPanel")
+  };
 
-  function setStatus(text,kind=""){
-    status.textContent=text||"";
-    status.dataset.kind=kind;
+  const esc=(s)=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const norm=(s)=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  function setStatus(text,kind=""){status.textContent=text||"";status.dataset.kind=kind}
+  function closePanels(){Object.values(panels).forEach(p=>p.hidden=true)}
+  function clearScopeCards(){document.querySelectorAll("[data-open-scope]").forEach(b=>b.classList.remove("is-active"))}
+  function showPanel(name){
+    closePanels();
+    if(panels[name])panels[name].hidden=false;
+    clearScopeCards();
+    document.querySelector('[data-open-scope="'+name+'"]')?.classList.add("is-active");
+  }
+  function describeScope(scope){
+    if(!scope)return"";
+    if(scope.mode==="all")return"GHE complet";
+    if(scope.mode==="building"){
+      const map={HLP:"Cardio",PW:"Neuro",HFME:"HFME"};
+      const labels=scope.building_codes.map(c=>map[c]||c);
+      const annexOnly=scope.building_codes.length===ANNEXES.length&&ANNEXES.every(c=>scope.building_codes.includes(c));
+      return annexOnly?"Bâtiments annexes":labels.join(" + ");
+    }
+    if(scope.mode==="domain")return({services:"Services & unités",examens:"Examens",blocs:"Blocs",acces:"Accès & repères"})[scope.domain]||"Domaine";
+    if(scope.mode==="custom")return state.selectedIds.size+" destination"+(state.selectedIds.size>1?"s":"")+" sélectionnée"+(state.selectedIds.size>1?"s":"");
+    return"Sélection";
+  }
+  function commitScope(scope){
+    state.scope=scope;
+    closePanels();
+    clearScopeCards();
+    scopeSummaryText.textContent=describeScope(scope);
+    scopeSummary.hidden=false;
+    formatStep.hidden=false;
+    actionStep.hidden=true;
+    state.format=null;
+    document.querySelectorAll("[data-format]").forEach(b=>b.classList.remove("is-active"));
+    setStatus("");
+    formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+
+  document.querySelectorAll("[data-open-scope]").forEach(btn=>btn.addEventListener("click",()=>{
+    const mode=btn.dataset.openScope;
+    if(mode==="all"){commitScope({mode:"all"});return}
+    showPanel(mode);
+    scopeSummary.hidden=true;
+    formatStep.hidden=true;
+    actionStep.hidden=true;
+    if(mode==="custom")loadSnapshot().then(()=>renderCustom()).catch(e=>setStatus(e.message,"error"));
+  }));
+
+  document.querySelectorAll("[data-building]").forEach(btn=>btn.addEventListener("click",()=>{
+    const code=btn.dataset.building;
+    if(state.buildingCodes.has(code)){state.buildingCodes.delete(code);btn.classList.remove("is-active")}
+    else{state.buildingCodes.add(code);btn.classList.add("is-active")}
+  }));
+  document.querySelector("[data-building-annex]").addEventListener("click",e=>{
+    const btn=e.currentTarget;
+    const allSelected=ANNEXES.every(c=>state.buildingCodes.has(c));
+    ANNEXES.forEach(c=>allSelected?state.buildingCodes.delete(c):state.buildingCodes.add(c));
+    btn.classList.toggle("is-active",!allSelected);
+  });
+  document.getElementById("buildingContinue").addEventListener("click",()=>{
+    const codes=[...state.buildingCodes];
+    if(!codes.length){setStatus("Choisis au moins un bâtiment.","error");return}
+    commitScope({mode:"building",building_codes:codes});
+  });
+
+  document.querySelectorAll("[data-domain]").forEach(btn=>btn.addEventListener("click",()=>{
+    document.querySelectorAll("[data-domain]").forEach(b=>b.classList.remove("is-active"));
+    btn.classList.add("is-active");
+    commitScope({mode:"domain",domain:btn.dataset.domain});
+  }));
+
+  document.querySelectorAll("[data-preset]").forEach(btn=>btn.addEventListener("click",()=>{
+    const p=btn.dataset.preset;
+    if(p==="all")commitScope({mode:"all"});
+    else if(p==="cardio")commitScope({mode:"building",building_codes:["HLP"]});
+    else if(p==="neuro")commitScope({mode:"building",building_codes:["PW"]});
+    else if(p==="hfme")commitScope({mode:"building",building_codes:["HFME"]});
+    else if(p==="examens")commitScope({mode:"domain",domain:"examens"});
+    else if(p==="annexes")commitScope({mode:"building",building_codes:[...ANNEXES]});
+  }));
+
+  document.getElementById("changeScope").addEventListener("click",()=>{
+    state.scope=null;scopeSummary.hidden=true;formatStep.hidden=true;actionStep.hidden=true;clearScopeCards();closePanels();
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+
+  async function loadSnapshot(){
+    if(state.snapshot)return state.snapshot;
+    const token=localStorage.getItem(STORE)||"";
+    if(!token)throw new Error("Session STIP requise pour exporter.");
+    const r=await fetch(API,{method:"POST",cache:"no-store",headers:{"content-type":"application/json","x-stip-session":token},body:JSON.stringify({action:"bootstrap"})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||"Référentiel indisponible.");
+    state.snapshot=d;return d;
+  }
+  const customTypes=new Set(["service","unit","exam","block","room","virtual_room","reception","staff_area","staff_room","entrance","elevator","elevator_group","hall","walkway","landmark","operational_landmark","operational_point"]);
+  function customCandidates(){
+    const q=norm(document.getElementById("customSearch").value);
+    if(!q||!state.snapshot)return[];
+    const aliases=new Map();
+    for(const a of state.snapshot.aliases||[]){const arr=aliases.get(a.place_id)||[];arr.push(a.alias);aliases.set(a.place_id,arr)}
+    return (state.snapshot.places||[]).filter(p=>customTypes.has(p.place_type)).map(p=>{
+      const text=norm([p.display_name,p.official_name,p.building_code,p.level,p.summary,p.details,...(aliases.get(p.id)||[])].filter(Boolean).join(" "));
+      return {p,text};
+    }).filter(x=>x.text.includes(q)).slice(0,24).map(x=>x.p);
+  }
+  function customLabel(p){
+    const bits=[p.building_code,p.level].filter(Boolean).join(" · ");
+    return '<span><strong>'+esc(p.display_name||p.official_name||p.id)+'</strong><small>'+esc(bits||p.place_type||"Destination")+'</small></span>';
+  }
+  function renderCustom(){
+    const box=document.getElementById("customResults");
+    const q=document.getElementById("customSearch").value.trim();
+    if(!q){box.innerHTML='<div class="selection-summary">Tape un nom, un code, une unité, un examen ou une salle.</div>';renderSelected();return}
+    const items=customCandidates();
+    box.innerHTML=items.length?items.map(p=>'<button class="custom-item '+(state.selectedIds.has(String(p.id))?'is-active':'')+'" type="button" data-custom-id="'+esc(p.id)+'"><b>'+(state.selectedIds.has(String(p.id))?'✓':'＋')+'</b>'+customLabel(p)+'</button>').join(""):'<div class="selection-summary">Aucun résultat pour cette recherche.</div>';
+    box.querySelectorAll("[data-custom-id]").forEach(btn=>btn.addEventListener("click",()=>{
+      const id=btn.dataset.customId;
+      if(state.selectedIds.has(id))state.selectedIds.delete(id);else state.selectedIds.add(id);
+      renderCustom();
+    }));
+    renderSelected();
+  }
+  function renderSelected(){
+    const list=document.getElementById("selectedList");
+    if(!state.snapshot){list.innerHTML="";return}
+    const byId=new Map((state.snapshot.places||[]).map(p=>[String(p.id),p]));
+    list.innerHTML=[...state.selectedIds].map(id=>{
+      const p=byId.get(id);if(!p)return"";
+      return '<button class="selected-chip" type="button" data-remove-id="'+esc(id)+'">'+esc(p.display_name||p.official_name||id)+' ×</button>';
+    }).join("");
+    list.querySelectorAll("[data-remove-id]").forEach(b=>b.addEventListener("click",()=>{state.selectedIds.delete(b.dataset.removeId);renderCustom()}));
+  }
+  document.getElementById("customSearch").addEventListener("input",renderCustom);
+  document.getElementById("customContinue").addEventListener("click",()=>{
+    if(!state.selectedIds.size){setStatus("Ajoute au moins une destination.","error");return}
+    commitScope({mode:"custom",place_ids:[...state.selectedIds]});
+  });
+
+  document.querySelectorAll("[data-format]").forEach(btn=>btn.addEventListener("click",()=>{
+    state.format=btn.dataset.format;
+    document.querySelectorAll("[data-format]").forEach(b=>b.classList.toggle("is-active",b===btn));
+    renderActions();
+    actionStep.hidden=false;
+    setStatus("");
+    actionStep.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }));
+  function renderActions(){
+    const pdf=state.format==="pdf";
+    actionHint.textContent=pdf?"Le PDF peut être affiché, imprimé, téléchargé ou partagé.":"Le tableur .xlsx peut être téléchargé ou partagé puis ouvert dans Excel ou Google Sheets.";
+    const actions=pdf?[
+      ["view","◉","Afficher"],
+      ["download","⇩","Télécharger"],
+      ["print","▤","Imprimer"],
+      ["share","↗","Partager"]
+    ]:[
+      ["download","⇩","Télécharger"],
+      ["share","↗","Partager"]
+    ];
+    actionGrid.innerHTML=actions.map(a=>'<button class="stip-btn action-btn" type="button" data-action="'+a[0]+'"><span>'+a[1]+'</span><strong>'+a[2]+'</strong></button>').join("");
+    actionGrid.querySelectorAll("[data-action]").forEach(b=>b.addEventListener("click",()=>runExport(b.dataset.action)));
   }
   function filenameFrom(response,format){
     const raw=response.headers.get("content-disposition")||"";
     const match=raw.match(/filename="?([^";]+)"?/i);
-    return match?.[1]||("Visite-des-lieux-GHE."+format);
+    return match?.[1]||("Visite-des-lieux."+(format==="pdf"?"pdf":"xlsx"));
   }
-  async function run(format){
+  function downloadBlob(blob,name){
+    const url=URL.createObjectURL(blob),a=document.createElement("a");
+    a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+  }
+  async function runExport(action){
     const token=localStorage.getItem(STORE)||"";
     if(!token){setStatus("Session STIP requise pour exporter.","error");return}
-    buttons.forEach(b=>b.disabled=true);
-    setStatus(format==="pdf"?"Préparation du PDF…":"Préparation du tableur…");
+    if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
+    const pdf=state.format==="pdf";
+    let opened=null;
+    if(pdf&&(action==="view"||action==="print")){
+      opened=window.open("about:blank","_blank");
+      if(opened){opened.document.write('<title>Préparation…</title><p style="font-family:system-ui;padding:24px">Préparation du PDF…</p>')}
+    }
+    document.body.classList.add("busy");
+    setStatus(pdf?"Préparation du PDF…":"Préparation du tableur…");
     try{
-      const response=await fetch(API,{
-        method:"POST",
-        cache:"no-store",
+      const r=await fetch(API,{
+        method:"POST",cache:"no-store",
         headers:{"content-type":"application/json","x-stip-session":token},
-        body:JSON.stringify({action:format==="pdf"?"export_pdf":"export_xlsx"})
+        body:JSON.stringify({action:pdf?"export_pdf":"export_xlsx",scope:state.scope})
       });
-      if(!response.ok){
-        const data=await response.json().catch(()=>({}));
-        throw new Error(data.error||"Export indisponible.");
+      if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"Export indisponible.")}
+      const blob=await r.blob();
+      const name=filenameFrom(r,state.format);
+      if(action==="download"){
+        downloadBlob(blob,name);
+        setStatus("Fichier téléchargé.","ok");
+      }else if(action==="view"){
+        const url=URL.createObjectURL(blob);
+        if(opened)opened.location.href=url;else window.open(url,"_blank");
+        setStatus("PDF ouvert.","ok");
+        setTimeout(()=>URL.revokeObjectURL(url),120000);
+      }else if(action==="print"){
+        const url=URL.createObjectURL(blob);
+        if(opened){
+          opened.location.href=url;
+          setTimeout(()=>{try{opened.focus();opened.print()}catch{}},1400);
+        }else window.open(url,"_blank");
+        setStatus("PDF ouvert pour impression.","ok");
+        setTimeout(()=>URL.revokeObjectURL(url),120000);
+      }else if(action==="share"){
+        const file=new File([blob],name,{type:blob.type|| (pdf?"application/pdf":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")});
+        if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+          await navigator.share({files:[file],title:"Visiter les lieux"});
+          setStatus("Fichier partagé.","ok");
+        }else{
+          downloadBlob(blob,name);
+          setStatus("Partage direct indisponible ici : le fichier a été téléchargé.","ok");
+        }
       }
-      const blob=await response.blob();
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement("a");
-      a.href=url;
-      a.download=filenameFrom(response,format==="pdf"?"pdf":"xlsx");
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(()=>URL.revokeObjectURL(url),30000);
-      setStatus("Fichier généré depuis Supabase.","ok");
-    }catch(error){
-      setStatus(error?.message||"Export indisponible.","error");
+    }catch(e){
+      if(opened&&!opened.closed)opened.close();
+      if(e?.name==="AbortError")setStatus("Partage annulé.");
+      else setStatus(e?.message||"Export indisponible.","error");
     }finally{
-      buttons.forEach(b=>b.disabled=false);
+      document.body.classList.remove("busy");
     }
   }
-  buttons.forEach(button=>button.addEventListener("click",()=>run(button.dataset.export)));
 })();
 </script>
-<script src="stip-navigation.js?v=20260925-workspace-auto1"></script></body>
+<script src="stip-navigation.js?v=20260925-workspace-auto1"></script>
+</body>
 </html>
