@@ -468,6 +468,10 @@
 .stip-month-calendar .stip-month-day-number{
   transform:translateY(var(--stip-month-number-lift))!important;
 }
+.stip-month-calendar .stip-month-grid{
+  column-gap:var(--stip-month-grid-column-gap)!important;
+  row-gap:var(--stip-month-grid-row-gap)!important;
+}
 .stip-month-calendar .stip-month-events{
   display:flex!important;
   align-items:center!important;
