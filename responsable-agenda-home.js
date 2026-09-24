@@ -8,6 +8,11 @@
     ASSIST_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-assistant",
     STORE = "stip_session_v1",
+    CACHE = "stip_responsable_dates_cache_v1",
+    VIEW = "stip_responsable_dates_view_v1",
+    CACHE_FRESH_MS = 5 * 60 * 1000,
+    CACHE_MAX_MS = 30 * 60 * 1000,
+    VIEW_MAX_MS = 30 * 60 * 1000,
     $ = (s) => document.querySelector(s),
     DAY_MS = 86400000;
 
@@ -22,6 +27,70 @@
     signalWeekLoaded: {},
     signalWeekPromises: {},
   };
+
+  function readSession(key) {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(key) || "null");
+      return value && typeof value === "object" ? value : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeSession(key, value) {
+    try {
+      sessionStorage.setItem(key, JSON.stringify(value));
+    } catch {}
+  }
+
+  function hydrateCache() {
+    const cached = readSession(CACHE),
+      age = cached ? Date.now() - Number(cached.savedAt || 0) : Infinity;
+    if (!cached || age > CACHE_MAX_MS || !Array.isArray(cached.items))
+      return { hasCache: false, fresh: false };
+    state.items = cached.items
+      .map(normalizeItem)
+      .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
+    state.daySignalByDate =
+      cached.daySignalByDate && typeof cached.daySignalByDate === "object"
+        ? cached.daySignalByDate
+        : {};
+    state.signalWeekLoaded =
+      cached.signalWeekLoaded && typeof cached.signalWeekLoaded === "object"
+        ? cached.signalWeekLoaded
+        : {};
+    return { hasCache: true, fresh: age <= CACHE_FRESH_MS };
+  }
+
+  function saveDataCache() {
+    writeSession(CACHE, {
+      savedAt: Date.now(),
+      items: state.items,
+      daySignalByDate: state.daySignalByDate,
+      signalWeekLoaded: state.signalWeekLoaded,
+    });
+  }
+
+  function restoreView() {
+    const saved = readSession(VIEW),
+      age = saved ? Date.now() - Number(saved.savedAt || 0) : Infinity;
+    if (!saved || age > VIEW_MAX_MS) return;
+    if (Number.isFinite(Number(saved.weekOffset)))
+      state.weekOffset = Number(saved.weekOffset);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(saved.selectedDate || "")))
+      state.selectedDate = String(saved.selectedDate);
+    if (/^\d{4}-\d{2}$/.test(String(saved.monthKey || "")))
+      state.monthKey = String(saved.monthKey);
+  }
+
+  function saveView() {
+    writeSession(VIEW, {
+      savedAt: Date.now(),
+      weekOffset: state.weekOffset,
+      selectedDate: state.selectedDate,
+      monthKey: state.monthKey,
+    });
+  }
 
   const esc = (v) =>
     String(v ?? "").replace(
@@ -244,27 +313,70 @@
     return `<button class="rr-event-card type-${esc(x.category)}" type="button" data-rr-event="${esc(x.id)}"><span class="rr-event-icon" aria-hidden="true">${esc(x.icon)}</span><span class="rr-event-copy"><strong>${esc(x.person_name)}</strong><span class="rr-event-meta"><b>${esc(fmtShortDate(x.date))}</b>${x.time ? `<b class="rr-event-time">${esc(x.time)}</b>` : ""}</span>${relation}${sub ? `<small>${esc(sub)}</small>` : ""}</span><span class="rr-event-chevron" aria-hidden="true">›</span></button>`;
   }
 
+  function fullDateLabel(iso) {
+    return dateObj(iso)
+      .toLocaleDateString("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+      })
+      .toUpperCase();
+  }
+
+  function weekEventLabel(iso) {
+    return state.weekOffset === 0 ? relativeLabel(iso) : fullDateLabel(iso);
+  }
+
   function renderUpcoming() {
     const host = $("#rrUpcoming");
     if (!host) return;
-    const today = parisIso(),
-      future = sortedItems().filter((x) => x.date >= today).slice(0, 4);
-    if (!future.length) {
+    const dates = new Set(weekDays().map((x) => x.iso)),
+      rows = sortedItems().filter((x) => dates.has(x.date));
+    if (!rows.length) {
       host.innerHTML =
-        '<div class="rr-empty">Aucune date d’agent à venir.</div>';
+        '<div class="rr-period-separator"><span>DATES DE LA SEMAINE</span></div><div class="rr-empty">Aucune date d’agent sur la semaine affichée.</div>';
       return;
     }
     let lastDate = "";
-    host.innerHTML = future
+    host.innerHTML = rows
       .map((x) => {
         const sep =
           x.date !== lastDate
-            ? `<div class="rr-period-separator"><span>${esc(relativeLabel(x.date))}</span></div>`
+            ? `<div class="rr-period-separator"><span>${esc(weekEventLabel(x.date))}</span></div>`
             : "";
         lastDate = x.date;
         return sep + eventCard(x);
       })
       .join("");
+  }
+
+  function renderMonthEvents() {
+    const host = $("#rrSelectedDay");
+    if (!host) return;
+    const key = state.monthKey || parisIso().slice(0, 7),
+      rows = sortedItems().filter((x) => x.date.startsWith(key)),
+      [y, m] = key.split("-").map(Number),
+      monthName = new Date(y, (m || 1) - 1, 1, 12)
+        .toLocaleDateString("fr-FR", { month: "long" })
+        .toUpperCase();
+    if (!rows.length) {
+      host.innerHTML =
+        `<div class="rr-period-separator"><span>DATES DE ${esc(monthName)}</span></div><div class="rr-empty">Aucune date d’agent sur le mois affiché.</div>`;
+      return;
+    }
+    let lastDate = "";
+    host.innerHTML =
+      `<div class="rr-period-separator rr-month-events-title"><span>DATES DE ${esc(monthName)}</span></div>` +
+      rows
+        .map((x) => {
+          const sep =
+            x.date !== lastDate
+              ? `<div class="rr-period-separator rr-month-event-date"><span>${esc(fullDateLabel(x.date))}</span></div>`
+              : "";
+          lastDate = x.date;
+          return sep + eventCard(x);
+        })
+        .join("");
   }
 
   function weekCounts(days = weekDays()) {
@@ -299,11 +411,9 @@
       weekDaysNow = weekDays(),
       week = new Set(weekDaysNow.map((x) => x.iso)),
       month = state.monthKey || today.slice(0, 7),
-      upcoming = sortedItems().filter((x) => x.date >= today).slice(0, 4),
-      visible = [
-        ...upcoming,
-        ...state.items.filter((x) => week.has(x.date) || x.date.startsWith(month)),
-      ],
+      visible = state.items.filter(
+        (x) => week.has(x.date) || x.date.startsWith(month),
+      ),
       categories = new Set(visible.map((x) => categoryClass(x.category))),
       signalLevels = new Set(
         weekDaysNow
@@ -399,6 +509,7 @@
 
       state.signalWeekLoaded[key] = true;
       delete state.signalWeekPromises[key];
+      saveDataCache();
     })().catch(() => {
       delete state.signalWeekPromises[key];
     });
@@ -517,12 +628,18 @@
       );
     }
 
-    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid">${cells.join("")}</div></section><div class="rr-period-separator rr-legend-separator"><span>LÉGENDE</span></div><section class="rr-legend" aria-label="Légende des repères de la page">${pageLegendHtml()}</section>`;
+    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid">${cells.join("")}</div></section>`;
   }
 
   function renderSelectedDay() {
-    const host = $("#rrSelectedDay");
-    if (host) host.innerHTML = "";
+    renderMonthEvents();
+  }
+
+  function renderLegend() {
+    const host = $("#rrLegend");
+    if (!host) return;
+    host.innerHTML =
+      `<div class="rr-period-separator rr-legend-separator"><span>LÉGENDE</span></div><section class="rr-legend" aria-label="Légende des repères de toute la page">${pageLegendHtml()}</section>`;
   }
 
   function renderStatus() {
@@ -548,10 +665,11 @@
   function render() {
     renderStatus();
     if (state.loading && !state.items.length) return;
-    renderUpcoming();
     renderWeek();
-    renderSelectedDay();
+    renderUpcoming();
     renderMonth();
+    renderSelectedDay();
+    renderLegend();
   }
 
   async function postList() {
@@ -584,24 +702,27 @@
     }
   }
 
-  async function load() {
+  async function load({ silent = false } = {}) {
     if (state.loading) return;
-    state.loading = true;
+    state.loading = !silent;
     state.error = "";
-    render();
+    if (!silent) render();
     try {
       const r = await postList();
       state.items = (r.items || [])
         .map(normalizeItem)
         .filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.date));
       await Promise.all([loadWeekImpact(), waitForAccessLevel()]);
+      saveDataCache();
     } catch (e) {
-      if (e?.status === 401 || e?.status === 403) {
-        state.error = "Dates des agents indisponibles avec cet accès.";
-      } else if (e?.name === "AbortError") {
-        state.error = "Le chargement prend trop de temps.";
-      } else {
-        state.error = e?.message || "Chargement impossible.";
+      if (!state.items.length) {
+        if (e?.status === 401 || e?.status === 403) {
+          state.error = "Dates des agents indisponibles avec cet accès.";
+        } else if (e?.name === "AbortError") {
+          state.error = "Le chargement prend trop de temps.";
+        } else {
+          state.error = e?.message || "Chargement impossible.";
+        }
       }
     } finally {
       state.loading = false;
@@ -614,6 +735,7 @@
   }
 
   function openDatesPage(date, filter = "all") {
+    saveView();
     const url =
       "agent-dates.html?date=" +
       encodeURIComponent(date) +
@@ -626,6 +748,7 @@
   }
 
   function openAdd(date = "") {
+    saveView();
     const target = date || state.selectedDate || parisIso(),
       url =
         "responsable.html?tab=agenda&open=add&date=" + encodeURIComponent(target);
@@ -646,6 +769,7 @@
   }
 
   function openEvent(id) {
+    saveView();
     const x = state.items.find((v) => String(v.id) === String(id));
     if (!x) return;
     const type =
@@ -699,12 +823,15 @@
       state.selectedDate = days[0]?.iso || state.selectedDate;
       state.monthKey =
         String(state.selectedDate).slice(0, 7) || state.monthKey;
+      saveView();
       renderWeek();
-      renderSelectedDay();
+      renderUpcoming();
       renderMonth();
+      renderSelectedDay();
+      renderLegend();
       loadWeekImpact().then(() => {
         renderWeek();
-        renderMonth();
+        renderLegend();
       });
       return;
     }
@@ -720,7 +847,10 @@
         state.monthKey,
         Number(monthStep.dataset.rrMonthStep || 0),
       );
+      saveView();
       renderMonth();
+      renderSelectedDay();
+      renderLegend();
       return;
     }
     const calDay = e.target.closest?.("[data-rr-cal-day]");
@@ -730,12 +860,22 @@
     }
   });
 
-  state.selectedDate = parisIso();
-  state.monthKey = state.selectedDate.slice(0, 7);
+  const cacheState = hydrateCache();
+  restoreView();
+  if (!state.selectedDate) state.selectedDate = parisIso();
+  if (!state.monthKey) state.monthKey = state.selectedDate.slice(0, 7);
   new MutationObserver(syncProControls).observe(document.documentElement, {
     attributes: true,
     attributeFilter: ["data-responsable-level"],
   });
   syncProControls();
-  load();
+  if (cacheState.hasCache) {
+    state.loading = false;
+    state.error = "";
+    render();
+    waitForAccessLevel().then(syncProControls);
+    if (!cacheState.fresh) load({ silent: true });
+  } else {
+    load();
+  }
 })();
