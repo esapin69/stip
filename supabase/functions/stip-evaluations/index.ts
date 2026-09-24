@@ -112,9 +112,10 @@ async function saveLive(c:any,b:any){
   const old=oldQ.data,cr=normalizeCriteria(b.criteria??b.criteres),obs=incomingObs(b),log=Array.isArray(old?.observation_log)?[...old.observation_log]:[],cur=currentObs(log),now=new Date().toISOString()
   for(const k of OBS_KEYS){if(obs[k]!==cur[k]&&(obs[k]||cur[k]))log.push({at:now,by:c.agent.id,by_name:disp(c.agent),key:k,text:obs[k]})}
   const payload={criteria:cr,decision:['OUI','NON'].includes(text(b.decision??b.garder_agent).toUpperCase())?text(b.decision??b.garder_agent).toUpperCase():'',service:text(b.service,200),grade:text(b.grade,100),service_since:null,evaluation_date:date(b.evaluation_date??b.date_evaluation),observation_log:trimLog(log),evaluator_name:disp(c.agent),agent_nom:text(a.agent.nom,250),agent_prenom:text(a.agent.prenom,250),agent_matricule:text(b.agent_matricule,120),signature_date:date(b.signature_date??b.lyon_le),model_version:MODEL_VERSION}
-  const candidate={...(old||{}),...payload,agent_id:a.agent.id,case_id:a.case_id,evaluator_agent_id:c.agent.id}
+  const caseId=a.case_id||old?.case_id||null
+  const candidate={...(old||{}),...payload,agent_id:a.agent.id,case_id:caseId,evaluator_agent_id:c.agent.id}
   await assertWritableAgainstRemote(a.agent.id,candidate)
-  const q=await db.rpc('stip_eval_live_upsert',{p_agent_id:a.agent.id,p_case_id:a.case_id,p_evaluator_agent_id:c.agent.id,p_payload:payload});if(q.error)throw q.error
+  const q=await db.rpc('stip_eval_live_upsert',{p_agent_id:a.agent.id,p_case_id:caseId,p_evaluator_agent_id:c.agent.id,p_payload:payload});if(q.error)throw q.error
   return pubLive(q.data)
 }
 function assertReady(r:any){
