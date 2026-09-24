@@ -1,5 +1,5 @@
 ## 0. Architecture-first obligatoire
-Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Ce registre distingue les références explicitement validées par Eddy, les composants déjà canoniques et les candidats encore à confirmer. Ne jamais promouvoir un candidat en maître visuel sans validation explicite.
+Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Une référence marquée **MAÎTRE EN COURS DE FINALISATION** doit être modifiée uniquement à sa base ; aucune propagation vers d’autres pages n’est autorisée avant validation explicite d’Eddy. Ce registre distingue les références explicitement validées par Eddy, les composants déjà canoniques et les candidats encore à confirmer. Ne jamais promouvoir un candidat en maître visuel sans validation explicite.
 
 Avant toute modification substantielle, lire `ARCHITECTURE_FIRST.md`.
 
