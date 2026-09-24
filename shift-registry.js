@@ -21,6 +21,21 @@
     byCode = new Map(
       rows.map((row) => [clean(row?.code), row]).filter(([code]) => code),
     );
+    const root = document.documentElement;
+    for (const row of rows) {
+      const code = clean(row?.code),
+        base = clean(row?.base_code || row?.code),
+        family = String(row?.family || "").trim().toLowerCase();
+      if (!family || !/^[a-z0-9-]+$/.test(family) || code !== base) continue;
+      if (row?.color_hex)
+        root.style.setProperty(`--stip-shift-${family}`, String(row.color_hex));
+      if (row?.soft_color_hex)
+        root.style.setProperty(`--stip-shift-${family}-soft`, String(row.soft_color_hex));
+      if (row?.on_color_hex) {
+        root.style.setProperty(`--stip-shift-${family}-ink`, String(row.on_color_hex));
+        root.style.setProperty(`--stip-shift-${family}-text`, String(row.on_color_hex));
+      }
+    }
     window.dispatchEvent(
       new CustomEvent("stip:shift-registry-updated", { detail: rows }),
     );
