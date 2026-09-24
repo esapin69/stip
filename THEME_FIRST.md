@@ -162,7 +162,9 @@ Contrat commun :
 - conteneur : `.stip-legend` ;
 - titre : toujours le séparateur racine `.stip-section-separator` avec le libellé `LÉGENDE` ; si le séparateur officiel change, la légende change automatiquement ;
 - carte : `.stip-legend-surface` puis `.stip-legend-list` ;
-- chaque ligne est un vrai contrôle cliquable `.stip-legend-item`, centré horizontalement et utilisable au doigt ;
+- chaque ligne est un vrai contrôle cliquable `.stip-legend-item` et utilisable au doigt ;
+- le **groupe complet des lignes** est centré dans la carte, mais toutes les lignes partagent la même grille interne : icône → `•` → texte ;
+- les icônes et surtout les `•` restent donc alignés sur les mêmes axes verticaux d’une ligne à l’autre ; le texte est aligné à gauche dans sa colonne ;
 - structure d’une ligne : `.stip-legend-icon` → `.stip-legend-bullet` contenant `•` → libellé ; une information secondaire éventuelle reste après le libellé ;
 - aucune page ne redéfinit localement l’alignement, la géométrie, le fond, le rayon ou l’état pressé de la légende ;
 - une page peut seulement fournir ses icônes, ses libellés et l’action métier déclenchée au clic ;
