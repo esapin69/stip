@@ -206,8 +206,7 @@
 }
 
 .rr-week-card,
-.rr-month-card,
-.rr-legend {
+.rr-month-card {
   border: 1px solid #d9e5e8;
   border-radius: 25px;
   background: #fff;
@@ -413,32 +412,8 @@
   line-height: 1;
 }
 
-.rr-legend-separator {
+.rr-page-legend {
   margin-top: 28px;
-}
-
-.rr-legend {
-  padding: 16px 18px;
-  display: grid;
-  gap: 12px;
-}
-
-.rr-legend span {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #395d69;
-}
-
-.rr-legend i {
-  width: 28px;
-  font-style: normal;
-  font-size: 1.35rem;
-  text-align: center;
-}
-
-.rr-legend b {
-  font-size: 0.96rem;
 }
 
 .rr-empty {
