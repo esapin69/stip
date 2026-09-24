@@ -321,6 +321,28 @@ check(
   !patterns.includes('.stip-month-dot{'),
   'Les pastilles de couleur doivent garder leur gabarit local actuel et rester la seule exception de taille.'
 );
+check(
+  theme.includes('--stip-month-number-lift:-2px') &&
+  theme.includes('--stip-month-grid-column-gap:5px') &&
+  theme.includes('--stip-month-grid-row-gap:7px') &&
+  patterns.includes('.stip-month-calendar .stip-month-grid') &&
+  patterns.includes('gap:var(--stip-month-event-gap)!important'),
+  'Les espacements communs du calendrier mensuel ont disparu.'
+);
+check(
+  home.includes('hc-date-jump-grid stip-month-grid') &&
+  planningHome.includes('ph-month-grid stip-month-grid') &&
+  agentMonthSource.includes('aav-calendar stip-month-grid') &&
+  read('esprit-equipe.js').includes('team-date-jump-grid stip-month-grid') &&
+  planningUiSource.includes('pui-calendar stip-month-grid'),
+  'Un calendrier mensuel ne consomme plus la grille commune.'
+);
+check(
+  homeCss.includes('.hc-week-nav-global{\n width:100%!important;') &&
+  !homeCss.includes('.hc-date-jump-icon{\n box-sizing:border-box!important;') &&
+  !homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid{gap:'),
+  'La feuille Home est de nouveau corrompue ou recrée un espacement mensuel local.'
+);
 
 const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
