@@ -260,18 +260,12 @@
       raw = String(row?.code || row?.source_value || "").trim();
     if (!raw) return null;
     const code = canonicalShift(raw),
-      meta = SHIFT_BADGE_META[code] || ["other", code],
+      meta = shiftMeta(code),
       workIcon = WORK_SHIFT_ICON[code] || "",
       icon =
         workIcon ||
-        ({
-          RH:"🏝️",OFF:"🏝️",REPOS:"🏝️",
-          CA:"✈️",CP:"✈️",
-          RTT:"⏱️",RTTA:"⏱️",RTA:"⏱️",
-          RC:"↻",RF:"•",
-          FO:"🎓",ST:"👶",VM:"🩺",SYR:"🤝",
-          MA:"•",AM:"•",AA:"•",ABS:"•"
-        }[code] || (code === "—" || code === "-" ? "" : "•"));
+        shiftStatusIcon(code) ||
+        (code === "—" || code === "-" ? "" : "•");
     return {
       code,
       type: meta[0],
@@ -553,6 +547,22 @@
         .toUpperCase();
     return s[k] || s[`${k}.PNG`] || s[`${k}.JPG`] || s[`${k}.JPEG`] || "";
   }
+  function shiftDefinition(code) {
+    const k = String(code || "").trim().toUpperCase(),
+      target = k === "CP" ? "CA" : k;
+    return (state.boot?.shift_definitions || []).find(
+      (x) => String(x?.code || "").trim().toUpperCase() === target,
+    ) || null;
+  }
+  function shiftMeta(code) {
+    const local = SHIFT_BADGE_META[code] || ["other", code],
+      server = shiftDefinition(code);
+    return [local[0], server?.label || local[1] || code];
+  }
+  function shiftStatusIcon(code) {
+    const server = shiftDefinition(code);
+    return server?.icon || SPECIAL_SHIFT_ICON[code] || "";
+  }
   const SHIFT_BADGE_META = {
     M: ["morning", "Matin"],
     J: ["day", "Journée"],
@@ -560,8 +570,8 @@
     S: ["evening", "Soir"],
     N: ["night", "Nuit"],
     RH: ["rest", "Repos"],
-    CA: ["leave", "Congé annuel"],
-    CP: ["leave", "Congé payé"],
+    CA: ["leave", "CA"],
+    CP: ["leave", "CP"],
     RTT: ["rest", "RTT"],
     RTTA: ["rest", "RTTA"],
     RTA: ["rest", "RTA"],
@@ -582,8 +592,6 @@
   };
   const SPECIAL_SHIFT_ICON = {
     RH: "🏝️",
-    CA: "✈️",
-    CP: "✈️",
     RTT: "⏱️",
     RTTA: "⏱️",
     RTA: "⏱️",
@@ -808,8 +816,8 @@
       day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       dayOff = DAY_OFF.has(canonical),
-      statusIcon = SPECIAL_SHIFT_ICON[canonical] || (dayOff ? "🏝️" : ""),
-      shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical,
+      statusIcon = shiftStatusIcon(canonical) || (dayOff ? "🏝️" : ""),
+      shiftLabel = shiftMeta(canonical)[1] || canonical,
       workIcon = WORK_SHIFT_ICON[canonical] || "",
       workLabel = landscape && WORK_SHIFT_ICON[canonical] ? canonical : weekend && WORK_SHIFT_ICON[canonical] ? canonical : shiftLabel,
       normalVisual = loading
@@ -929,7 +937,7 @@
           canonical = canonicalShift(x.code),
           codeKey =
             canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
-          shiftLabel = SHIFT_BADGE_META[canonical]?.[1] || canonical || "",
+          shiftLabel = shiftMeta(canonical)[1] || canonical || "",
           events = weekEventsForDay(x).slice(0, 2),
           eventMarks = events.length
             ? `<span class="hc-home-day-events" aria-hidden="true">${events
