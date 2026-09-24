@@ -112,6 +112,8 @@ Contrat validé :
 - toute la vignette est cliquable ; l’agent déjà sélectionné possède un repère commun ;
 - une sélection ferme la vue et restitue immédiatement l’agent à la page appelante sans perdre les autres champs déjà saisis ;
 - aucun autofocus à l’ouverture : le clavier apparaît seulement après un toucher explicite dans la recherche.
+- pendant la saisie, le champ de recherche est **stable** : il ne doit jamais être détruit/recréé à chaque caractère ; seul le mur de résultats est actualisé, afin de ne jamais fermer/réouvrir le clavier mobile ;
+- pour les écrans Responsable, la sélection d’agent réutilise le répertoire canonique déjà autorisé (`stip-agent-readonly · directory`) afin de conserver les identités, GHE et avatars signés déjà utilisés par la fiche Équipe.
 
 Exemple :
 

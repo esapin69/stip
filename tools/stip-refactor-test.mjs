@@ -70,6 +70,22 @@ check(
   responsableAgenda.includes('STIPAgentSelector.openPicker'),
   'Ajouter un événement utilise de nouveau le sélecteur natif au lieu du modèle Rechercher un agent.'
 );
+check(
+  selector.includes('function refreshBody()') &&
+  selector.includes('state.query = event.target.value;') &&
+  !selector.includes('state.query = event.target.value;\n        render();'),
+  'Le sélecteur commun recrée encore le champ de recherche à chaque caractère.'
+);
+check(
+  responsableAgenda.includes('stip-agent-readonly') &&
+  responsableAgenda.includes('directoryCall()') &&
+  !responsableAgenda.includes('call("manager_agents")'),
+  'Ajouter un événement ne réutilise plus le répertoire canonique des agents.'
+);
+check(
+  read('responsable-tabs.js').includes('responsable-agenda.js?v=20260924-agent-picker-stable2'),
+  'Le chemin Agenda peut encore charger une ancienne version du moteur de sélection.'
+);
 
 check(/class="[^"]*as-day\b/.test(read('assistant.js')),'Assistant ne regroupe plus les sujets par journée.');
 check(/id="dayCard"[\s\S]*id="insightSection"/.test(read('cadre-activite.html')),'Activité sépare de nouveau l’analyse du conteneur de journée.');
