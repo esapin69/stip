@@ -9,8 +9,8 @@
     <meta name="theme-color" content="#f5fbfc" />
     <meta name="robots" content="noindex,nofollow" />
     <title>Date des agents · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260924-month-vertical2" />
-    <link rel="stylesheet" href="agent-dates.css?v=20260924-day-separators1" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260924-filter6b1" />
+    <link rel="stylesheet" href="agent-dates.css?v=20260924-filter6b1" />
   </head>
   <body>
     <main class="da-shell">
@@ -59,11 +59,23 @@
         </div>
         <span>›</span>
       </section>
-      <nav class="da-tabs">
-        <button data-filter="all" class="active">Tout</button
-        ><button data-filter="medical">Visites</button
-        ><button data-filter="intern">Stagiaires</button
-        ><button data-filter="training">Formations</button>
+      <nav class="da-tabs stip-filter-bubbles" data-count="4" aria-label="Filtrer les dates">
+        <button data-filter="all" class="stip-filter-choice active" aria-selected="true" type="button">
+          <span class="stip-filter-visual" aria-hidden="true">▦</span>
+          <span class="stip-filter-copy"><strong>Tout</strong></span>
+        </button>
+        <button data-filter="medical" class="stip-filter-choice" aria-selected="false" type="button">
+          <span class="stip-filter-visual" aria-hidden="true">🩺</span>
+          <span class="stip-filter-copy"><strong>Visites</strong></span>
+        </button>
+        <button data-filter="intern" class="stip-filter-choice" aria-selected="false" type="button">
+          <span class="stip-filter-visual" aria-hidden="true">👶</span>
+          <span class="stip-filter-copy"><strong>Stagiaires</strong></span>
+        </button>
+        <button data-filter="training" class="stip-filter-choice" aria-selected="false" type="button">
+          <span class="stip-filter-visual" aria-hidden="true">🎓</span>
+          <span class="stip-filter-copy"><strong>Formations</strong></span>
+        </button>
       </nav>
       <div class="da-scope" id="daScope" hidden>
         <span id="daScopeText"></span>
