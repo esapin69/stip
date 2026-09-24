@@ -61,7 +61,8 @@
     historyData = null,
     historySelectedDay = "",
     sortMode = "nom",
-    candidateCache = [];
+    candidateCache = [],
+    peopleWall = null;
 
   function parisDay(iso) {
     const parts = Object.fromEntries(
@@ -331,147 +332,50 @@
     }
   }
   function agentOf(value = {}) {
-    return value.agents || value;
+    const nested = Array.isArray(value.agents) ? value.agents[0] : value.agents;
+    return nested || value;
   }
-  function cleanGhe(value = "") {
-    return String(value || "").replace(/^GHE\s*/i, "").trim();
+  function wallFilter() {
+    return sortMode === "prenom" ? "first" : sortMode === "ghe" ? "ghe" : "last";
   }
-  function compareText(a = "", b = "") {
-    return String(a || "").localeCompare(String(b || ""), "fr", {
-      sensitivity: "base",
-      numeric: true,
+  function wallItems(items = []) {
+    return items.map((value, index) => {
+      const a = agentOf(value) || {},
+        fallbackId = `access-wall-${peopleMode}-${index}`;
+      return {
+        ...a,
+        id: a.id || value.id || fallbackId,
+        __access_index: index,
+      };
     });
   }
-  function sortPeople(items = []) {
-    return [...items].sort((left, right) => {
-      const a = agentOf(left),
-        b = agentOf(right),
-        aGhe = cleanGhe(a.ghe),
-        bGhe = cleanGhe(b.ghe);
-      if (sortMode === "prenom")
-        return (
-          compareText(a.prenom, b.prenom) ||
-          compareText(a.nom, b.nom) ||
-          compareText(aGhe, bGhe)
-        );
-      if (sortMode === "ghe")
-        return (
-          compareText(aGhe || "ZZZ", bGhe || "ZZZ") ||
-          compareText(a.nom, b.nom) ||
-          compareText(a.prenom, b.prenom)
-        );
-      return (
-        compareText(a.nom, b.nom) ||
-        compareText(a.prenom, b.prenom) ||
-        compareText(aGhe, bGhe)
-      );
+  function mountPeopleWall(items = [], onSelect, emptyText) {
+    peopleWall?.destroy?.();
+    peopleWall = null;
+    if (!window.STIPAgentSelector?.mountWall) {
+      $("people").innerHTML =
+        '<p class="access-help">Le mur commun des agents est indisponible.</p>';
+      return;
+    }
+    peopleWall = window.STIPAgentSelector.mountWall($("people"), {
+      items: wallItems(items),
+      filter: wallFilter(),
+      emptyText,
+      onSelect(agent) {
+        const item = items[Number(agent.__access_index)];
+        if (item) onSelect?.(item);
+      },
     });
-  }
-  function groupKey(value = {}) {
-    const a = agentOf(value);
-    if (sortMode === "ghe") return cleanGhe(a.ghe) || "Sans GHE";
-    const source = String(sortMode === "prenom" ? a.prenom || "" : a.nom || "")
-      .trim()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
-    const first = source.charAt(0).toUpperCase();
-    return /^[A-Z]$/.test(first) ? first : "#";
-  }
-  function initials(value = {}) {
-    const a = agentOf(value);
-    return [a.prenom, a.nom]
-      .filter(Boolean)
-      .map((x) => String(x).trim().charAt(0).toUpperCase())
-      .join("")
-      .slice(0, 2) || "ST";
-  }
-  function photoUrl(value = {}) {
-    const a = agentOf(value);
-    return String(a.profile_photo_url || a.avatar_url || "").trim();
-  }
-  function personNameHtml(value = {}, fallback = "Profil externe") {
-    const a = agentOf(value),
-      nom = String(a.nom || "").trim(),
-      prenom = String(a.prenom || "").trim();
-
-    if (sortMode === "prenom")
-      return `<span class="access-person-name-main">${esc(prenom || fallback)}</span>${nom ? `<span class="access-person-name-sub">${esc(nom)}</span>` : ""}`;
-
-    if (sortMode === "nom")
-      return `<span class="access-person-name-main">${esc(nom || fallback)}</span>${prenom ? `<span class="access-person-name-sub">${esc(prenom)}</span>` : ""}`;
-
-    return `<span class="access-person-name-main">${esc(nom || fallback)}</span>${prenom ? `<span class="access-person-name-sub">${esc(prenom)}</span>` : ""}`;
-  }
-  function personCard(value = {}, index = 0, attr = "person", fallback = "Profil externe") {
-    const a = agentOf(value),
-      ghe = cleanGhe(a.ghe) || "—",
-      src = photoUrl(value),
-      photo = src
-        ? `<img class="access-person-photo" src="${esc(src)}" alt="" loading="lazy" decoding="async" />`
-        : `<span class="access-person-photo access-person-photo-fallback" aria-hidden="true">${esc(initials(value))}</span>`;
-    return `
-      <button class="access-person" data-${attr}="${index}" type="button">
-        <span class="access-person-portrait">
-          ${photo}
-          <span class="access-person-ghe-stamp">GHE ${esc(ghe)}</span>
-        </span>
-        <span class="access-person-name">${personNameHtml(value, fallback)}</span>
-      </button>`;
-  }
-  function groupedPeopleHtml(items = [], attr = "person", fallback = "Profil externe") {
-    if (!items.length) return "";
-    const groups = [];
-    let currentKey = null,
-      currentItems = [];
-    items.forEach((item, index) => {
-      const key = groupKey(item);
-      if (key !== currentKey) {
-        if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
-        currentKey = key;
-        currentItems = [];
-      }
-      currentItems.push({ item, index });
-    });
-    if (currentItems.length) groups.push({ key: currentKey, items: currentItems });
-
-    return groups
-      .map(
-        (group) => `
-          <section class="access-person-group" data-group="${esc(group.key)}">
-            <div class="access-person-separator"><span>${esc(group.key)}</span></div>
-            <div class="access-person-grid">
-              ${group.items
-                .map(({ item, index }) => personCard(item, index, attr, fallback))
-                .join("")}
-            </div>
-          </section>`,
-      )
-      .join("");
   }
   function renderPeople() {
-    const people = sortPeople(data.people || []);
-    $("people").innerHTML =
-      groupedPeopleHtml(people, "person") ||
-      '<p class="access-help">Aucun profil trouvé.</p>';
-    $("people")
-      .querySelectorAll("[data-person]")
-      .forEach(
-        (b) => (b.onclick = () => edit(people[Number(b.dataset.person)])),
-      );
+    const people = data.people || [];
+    mountPeopleWall(people, edit, "Aucun profil trouvé.");
   }
   function renderCandidateList() {
-    const candidates = sortPeople(candidateCache);
-    $("people").innerHTML =
-      groupedPeopleHtml(candidates, "candidate", "Agent") ||
-      '<p class="access-help">Aucun agent sans accès trouvé.</p>';
-    $("people")
-      .querySelectorAll("[data-candidate]")
-      .forEach(
-        (b) =>
-          (b.onclick = () =>
-            editNew(candidates[Number(b.dataset.candidate)])),
-      );
+    const candidates = candidateCache || [];
+    mountPeopleWall(candidates, editNew, "Aucun agent sans accès trouvé.");
   }
+
   async function renderCandidates() {
     $("people").innerHTML =
       '<p class="access-help">Chargement des agents sans accès…</p>';
