@@ -64,48 +64,33 @@
 
   // Repères compacts issus du référentiel "Visiter les lieux" / 00 MASTER (09/2026).
   // L'interface les révèle progressivement : bâtiment -> niveau -> repère.
-  const WHEELCHAIR_LOCATIONS = {
-    neuro: [
-      { level: "RDJ", places: ["SRPR / salon d’accueil", "Psychiatrie / addictologie", "Neuro-rééducation", "HDJ artériographie / neurochirurgie"] },
-      { level: "RDC", places: ["Entrée A", "Entrée B", "Hall / consultations", "Réanimation neurologique", "Radiologie / écho-Doppler", "Bureau des admissions"] },
-      { level: "1er", places: ["Ascenseur 28 / imagerie", "Scanner", "IRM VENUS", "IRM JUPITER / SATURNE", "Bloc / salle de réveil", "U100", "U101", "U102", "Plateforme AIT"] },
-      { level: "2e", places: ["U200", "U201", "U202", "Neuro-ophtalmo / ORL", "Service social"] },
-      { level: "3e", places: ["U300", "U301", "U302"] },
-      { level: "4e", places: ["U400", "U401", "U402"] },
-      { level: "5e", places: ["U500", "U501", "U502 / HDJ", "EEG / ENMG"] },
-      { level: "6e", places: ["Amphithéâtre Michel Jouvet", "Salle Lapras"] },
-    ],
-    cardio: [
-      { level: "RDC", places: ["Entrée principale / hall", "Ascenseurs visiteurs", "Urgences cardio / CCU", "Plateau explorations", "Service social", "Bureau des admissions"] },
-      { level: "TM", places: ["Consultations spécialisées", "Radiologie", "Scanner", "Coronarographie / PTI", "Fibroscopie", "Bloc / salle de réveil", "Réanimation adulte", "Unité d’abord vasculaire"] },
-      { level: "1er", places: ["U10", "U11"] },
-      { level: "2e", places: ["U20 / USIC", "U21 / soins continus"] },
-      { level: "3e", places: ["U30 / rythmologie", "U31 / SICAT-transplantation"] },
-      { level: "4e", places: ["U40 / Cardiologie A", "U41 / Cardiologie B"] },
-      { level: "5e", places: ["U50 / chirurgie cardio-vasculaire", "Salon d’accueil J0"] },
-      { level: "6e", places: ["U60 / chirurgie thoraco-pulmonaire", "U61 / HDJ cardiologie"] },
-      { level: "7e", places: ["U70 / Pneumologie B", "U71 / Pneumologie C"] },
-      { level: "8e", places: ["U81 / HDJ pneumologie"] },
-      { level: "9e", places: ["U90 / Endocrino B-C", "U91 / Endocrino A-HDJ"] },
-      { level: "10e", places: ["Salles / événements"] },
-      { level: "11e", places: ["Hélistation"] },
-    ],
-    hfme: [
-      { level: "RDJ", places: ["Urgences pédiatriques", "UHCD / USC", "Hospitalisation urgences pédiatriques", "IRM APOLLO / NEMO", "Scanner / radiologie / échographie", "Consultations gynécologie / CECOS", "Sénologie / service social"] },
-      { level: "RDC", places: ["Accueil principal", "Consultations pédiatriques", "UAPED", "Bloc gynécologie / maternité", "Salles d’accouchement", "Urgences gynéco-obstétricales"] },
-      { level: "1er", places: ["Réanimation pédiatrique", "Bloc pédiatrique", "Salon d’accueil de chirurgie", "ACHA / chirurgie pédiatrique"] },
-      { level: "2e", places: ["Espace brancardiers / chef d’équipe", "Biberonnerie / diététique"] },
-      { level: "3e", places: ["Hépato-gastro pédiatrique", "Pneumo / allergologie pédiatrique", "Pédiatrie générale", "Néonatologie / réanimation néonatale"] },
-      { level: "4e", places: ["Pédiatrie générale", "Endocrino / diabéto / métabolique", "UERTD", "Maternité / suites de naissance", "Unité Kangourou", "USAP"] },
-      { level: "5e", places: ["Dialyse pédiatrique", "Néphro / rhumato / dermato", "Neurologie pédiatrique", "EEG / EMG / sommeil", "Gynécologie / sénologie", "Gynécologie A-HDJ / B-ACHA", "Orthogénie / IVG"] },
-      { level: "6e", places: ["Psychopathologie enfant / adolescent", "Hématologie / oncologie pédiatrique", "Consultation douleur", "Grossesse pathologique"] },
-    ],
-    a4: [
-      { level: "RDC", places: ["POP / HDJ / chimiothérapie"] },
-      { level: "1er", places: ["SEP / neuro-inflammation — conventionnel / semaine"] },
-      { level: "2e", places: ["SEP / neuro-inflammation — HDJ"] },
-    ],
-  };
+  // Catalogue des lieux : une seule source de vérité, stip_places via stip-messages.
+  // Aucun service/niveau n'est maintenu en double dans ce fichier.
+  const WHEELCHAIR_LOCATIONS = Object.create(null);
+  let wheelchairCatalogPromise = null;
+
+  async function loadWheelchairCatalog() {
+    if (wheelchairCatalogPromise) return wheelchairCatalogPromise;
+    wheelchairCatalogPromise = (async () => {
+      const catalog = await api("wheelchair_catalog");
+      for (const key of Object.keys(WHEELCHAIR_LOCATIONS)) delete WHEELCHAIR_LOCATIONS[key];
+      for (const building of catalog?.buildings || []) {
+        if (!building?.key) continue;
+        WHEELCHAIR_LOCATIONS[building.key] = (building.levels || []).map((group) => ({
+          level: String(group.level || ""),
+          places: (group.places || [])
+            .map((place) => typeof place === "string" ? place : place?.label)
+            .filter(Boolean),
+        }));
+      }
+      return catalog;
+    })().catch((error) => {
+      wheelchairCatalogPromise = null;
+      console.error("Catalogue fauteuils indisponible", error);
+      return null;
+    });
+    return wheelchairCatalogPromise;
+  }
 
   // Repères terrain réellement utiles au signalement fauteuil.
   // Les boutons sont multi-sélectionnables : un même lot peut être dispersé.
@@ -857,7 +842,8 @@
       .slice(0, 12);
   }
 
-  function chooseLocationShortcut(options = {}) {
+  async function chooseLocationShortcut(options = {}) {
+    await loadWheelchairCatalog();
     return new Promise((resolve) => {
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap tb-location-search-modal";
@@ -1435,7 +1421,8 @@
     });
   }
 
-  function chooseSpotDetails(building) {
+  async function chooseSpotDetails(building) {
+    await loadWheelchairCatalog();
     return new Promise((resolve) => {
       const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
       let quantity = 0;
@@ -1646,7 +1633,8 @@
     });
   }
 
-  function chooseSearchDetails(building) {
+  async function chooseSearchDetails(building) {
+    await loadWheelchairCatalog();
     return new Promise((resolve) => {
       const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
       let level = "";
