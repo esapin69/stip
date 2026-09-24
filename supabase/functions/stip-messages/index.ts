@@ -745,12 +745,79 @@ async function teamDelete(ctx:any,body:any){
 }
 
 
+const WHEELCHAIR_BUILDINGS=[
+  {key:"neuro",label:"Neuro",codes:["PW"],aliases:["neuro","pierre wertheimer","wertheimer","pw"]},
+  {key:"cardio",label:"Cardio",codes:["HLP"],aliases:["cardio","louis pradel","pradel","hlp"]},
+  {key:"hfme",label:"HFME",codes:["HFME"],aliases:["hfme","femme mere enfant","femme mère enfant","mere enfant","mère enfant"]},
+  {key:"a4",label:"POP (A4)",codes:["A4"],aliases:["pop","a4","pop a4","batiment pop","bâtiment pop","batiment a4","bâtiment a4"]}
+];
+const WHEELCHAIR_PICKER_TYPES=new Set([
+  "service","unit","exam","block","helipad","entrance","elevator","elevator_group",
+  "hall","reception","staff_area","staff_room","landmark","operational_landmark",
+  "operational_point","walkway","room","stairs"
+]);
+function wheelchairLevelRank(value:any){
+  const s=String(value||"").trim().toUpperCase();
+  if(s==="-2")return-20;if(s==="-1")return-10;
+  if(s==="RDJ"||s==="RJ")return-5;
+  if(s==="RDC"||s==="RC"||s==="0")return 0;
+  if(s==="TM")return .5;
+  const n=Number(s.replace(/[^0-9.-]/g,""));
+  return Number.isFinite(n)?n:999
+}
+function wheelchairNorm(value:any){
+  return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()
+}
+async function wheelchairCatalog(){
+  const codes=[...new Set(WHEELCHAIR_BUILDINGS.flatMap(x=>x.codes))];
+  const{data,error}=await db.from("stip_places")
+    .select("id,display_name,official_name,place_type,building_code,level,summary,sort_order,visibility,evidence_status")
+    .in("building_code",codes)
+    .in("visibility",["public","internal_stip"])
+    .order("sort_order")
+    .order("display_name");
+  if(error)throw error;
+  const rows=data||[];
+  const buildings=WHEELCHAIR_BUILDINGS.map(spec=>{
+    const scoped=rows.filter((p:any)=>spec.codes.includes(String(p.building_code||"").toUpperCase()));
+    const levels=[...new Set(scoped.map((p:any)=>String(p.level||"").trim()).filter(Boolean))]
+      .sort((a,b)=>wheelchairLevelRank(a)-wheelchairLevelRank(b)||a.localeCompare(b,"fr"));
+    return{
+      key:spec.key,
+      label:spec.label,
+      aliases:spec.aliases,
+      levels:levels.map(level=>{
+        const seen=new Set<string>(),places:any[]=[];
+        for(const p of scoped
+          .filter((x:any)=>String(x.level||"").trim()===level&&WHEELCHAIR_PICKER_TYPES.has(String(x.place_type||"")))
+          .sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name||"").localeCompare(String(b.display_name||""),"fr"))){
+          const label=String(p.display_name||p.official_name||"").trim();
+          const key=wheelchairNorm(label);
+          if(!label||!key||seen.has(key))continue;
+          seen.add(key);
+          places.push({
+            id:p.id,
+            label,
+            type:p.place_type,
+            summary:p.summary||"",
+            evidence_status:p.evidence_status||""
+          })
+        }
+        return{level,places}
+      })
+    }
+  });
+  return{source:"stip_places",generated_at:new Date().toISOString(),buildings}
+}
+
+
 Deno.serve(async req=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:H});
   if(req.method!=="POST")return J({error:"Méthode non autorisée."},405);
   try{
     const c=await ctx(req),b=await req.json().catch(()=>({})),a=String(b.action||"home");
     if(a==="home")return J(await home(c));
+    if(a==="wheelchair_catalog")return J(await wheelchairCatalog());
     if(a==="agents")return J({items:await agents(c,String(b.q||""))});
     if(a==="on_duty")return J({items:await onDuty(c)});
     if(a==="direct")return J({conversation:await direct(c,String(b.agent_id||""))});
