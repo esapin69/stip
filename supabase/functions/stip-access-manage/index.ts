@@ -108,7 +108,7 @@ function normalizePermissions(raw: any = {}, levels: any = {}, apps: any[]) {
   return out;
 }
 
-async function list(q = "") {
+async function list(q = "", viewer: any = null) {
   const [{ data, error }, apps, rolePresets, models] = await Promise.all([
     db
       .from("stip_access_profiles")
@@ -137,6 +137,7 @@ async function list(q = "") {
     presets: rolePresets,
     models,
     legacy_models: models,
+    can_history: viewer?.role_key === "admin" || !!viewer?.permissions?.admin,
     people: (data || [])
       .filter(
         (p: any) =>
@@ -409,14 +410,19 @@ Deno.serve(async (r) => {
   try {
     const me = await ctx(r),
       b = await r.json().catch(() => ({}));
-    if (b.action === "list") return J(await list(String(b.q || "")));
+    if (b.action === "list")
+      return J(await list(String(b.q || ""), me));
     if (b.action === "save") return J(await save(b, me));
     if (b.action === "save_preset" || b.action === "save_model")
       return J(await savePreset(b));
     if (b.action === "set_code") return J(await setCode(b, me));
     if (b.action === "find_new") return J(await findNew(b));
     if (b.action === "create_access") return J(await createAccess(b, me));
-    if (b.action === "history") return J(await history(b));
+    if (b.action === "history") {
+      if (!(me.role_key === "admin" || me.permissions?.admin))
+        throw Error("Historique réservé à l’administrateur");
+      return J(await history(b));
+    }
     return J({ error: "Action invalide" }, 400);
   } catch (e) {
     return J({ error: e instanceof Error ? e.message : String(e) }, 403);
