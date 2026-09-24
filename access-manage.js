@@ -4,6 +4,8 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access-manage";
   const DATES_API =
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates-admin";
+  const SESSION_API =
+    "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access";
   const STORE = "stip_session_v1";
   const PREVIEW_STORE = "stip_admin_preview_v1";
   const $ = (id) => document.getElementById(id);
@@ -20,11 +22,274 @@
         })[c],
     );
   const ESPRIT_KEYS = ["planning_team", "activity", "assistant_enabled"];
+  const HISTORY_PAGE_LABELS = {
+    home: "Accueil",
+    planning_personal: "Planning perso",
+    tomorrow: "Pour demain",
+    team: "Esprit d’équipe",
+    agent_directory: "Équipe",
+    planning_compare: "Comparer les plannings",
+    change: "Changement",
+    calendar: "Synchroniser mon calendrier",
+    agent_dates: "Date des agents",
+    contacts: "Contacts",
+    responsable: "Responsable",
+    notifications: "Notifications",
+    messages: "Fauteuils",
+    places: "Visiter les lieux",
+    assistant: "Assistant STIP",
+    access: "Accès",
+    profile: "Mon compte",
+  };
+  const PARIS_DATE = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const PARIS_TIME = new Intl.DateTimeFormat("fr-FR", {
+    timeZone: "Europe/Paris",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
   let data = null,
     current = null,
     selectedRole = "",
     creating = false,
-    renderBasePermissions = {};
+    renderBasePermissions = {},
+    historyMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    historyData = null,
+    historySelectedDay = "";
+
+  function parisDay(iso) {
+    const parts = Object.fromEntries(
+      PARIS_DATE.formatToParts(new Date(iso))
+        .filter((x) => x.type !== "literal")
+        .map((x) => [x.type, x.value]),
+    );
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+  function localDay(date) {
+    const y = date.getFullYear(),
+      m = String(date.getMonth() + 1).padStart(2, "0"),
+      d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+  function profileAgent(profile = {}) {
+    const a = Array.isArray(profile.agents) ? profile.agents[0] : profile.agents;
+    const i = Array.isArray(profile.stip_access_identities)
+      ? profile.stip_access_identities[0]
+      : profile.stip_access_identities;
+    return {
+      name:
+        [a?.prenom, a?.nom].filter(Boolean).join(" ").trim() ||
+        [i?.first_name, i?.last_name].filter(Boolean).join(" ").trim() ||
+        "Profil externe",
+      ghe: a?.ghe || "",
+      role: profile.role_key || i?.professional_role || "",
+    };
+  }
+  function roleLabel(role = "") {
+    return (
+      {
+        admin: "Admin",
+        chef_equipe: "Chef d’équipe",
+        responsable: "Responsable",
+        cadre: "Cadre",
+        brancardier: "Brancardier",
+        visiteur: "Visiteur",
+      }[role] || role.replaceAll("_", " ")
+    );
+  }
+  async function trackAccessPage() {
+    const token = localStorage.getItem(STORE) || "";
+    if (!token) return;
+    fetch(SESSION_API, {
+      method: "POST",
+      cache: "no-store",
+      keepalive: true,
+      headers: {
+        "content-type": "application/json",
+        "x-stip-session": token,
+      },
+      body: JSON.stringify({ action: "activity", page_key: "access" }),
+    }).catch(() => {});
+  }
+  function historyProfileMap() {
+    return new Map((historyData?.profiles || []).map((p) => [p.id, p]));
+  }
+  function historyCounts() {
+    const days = new Map();
+    const add = (day, profileId) => {
+      if (!day || !profileId) return;
+      if (!days.has(day)) days.set(day, new Set());
+      days.get(day).add(profileId);
+    };
+    for (const s of historyData?.sessions || [])
+      add(parisDay(s.created_at), s.profile_id);
+    for (const a of historyData?.activity || [])
+      add(parisDay(a.occurred_at), a.profile_id);
+    return days;
+  }
+  function renderHistoryDay() {
+    if (!historyData || !historySelectedDay) return;
+    const profiles = historyProfileMap(),
+      events = [];
+    for (const s of historyData.sessions || [])
+      if (parisDay(s.created_at) === historySelectedDay)
+        events.push({
+          profile_id: s.profile_id,
+          at: s.created_at,
+          type: "session",
+          key: "",
+        });
+    for (const a of historyData.activity || [])
+      if (parisDay(a.occurred_at) === historySelectedDay)
+        events.push({
+          profile_id: a.profile_id,
+          at: a.occurred_at,
+          type: "page",
+          key: a.page_key,
+        });
+    events.sort((a, b) => new Date(a.at) - new Date(b.at));
+
+    const groups = new Map();
+    for (const event of events) {
+      if (!groups.has(event.profile_id)) groups.set(event.profile_id, []);
+      const list = groups.get(event.profile_id),
+        previous = list[list.length - 1];
+      if (
+        event.type === "page" &&
+        previous?.type === "page" &&
+        previous.key === event.key &&
+        new Date(event.at) - new Date(previous.at) < 60000
+      )
+        continue;
+      list.push(event);
+    }
+
+    const date = new Date(`${historySelectedDay}T12:00:00`);
+    $("historyDayTitle").textContent = date.toLocaleDateString("fr-FR", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    $("historyDayCount").textContent = groups.size
+      ? `${groups.size} personne${groups.size > 1 ? "s" : ""}`
+      : "Aucune activité";
+
+    if (!groups.size) {
+      $("historyDayList").innerHTML =
+        '<p class="access-help">Aucune connexion ni ouverture de module enregistrée ce jour.</p>';
+      return;
+    }
+
+    $("historyDayList").innerHTML = [...groups.entries()]
+      .map(([profileId, list]) => {
+        const info = profileAgent(profiles.get(profileId) || {}),
+          lines = list
+            .map((event) => {
+              const label =
+                event.type === "session"
+                  ? "Session ouverte"
+                  : HISTORY_PAGE_LABELS[event.key] || event.key;
+              return `<div class="access-history-event ${event.type}"><time>${esc(PARIS_TIME.format(new Date(event.at)))}</time><span>${esc(label)}</span></div>`;
+            })
+            .join("");
+        return `<article class="access-history-person"><header><div><strong>${esc(info.name)}</strong><small>${esc([roleLabel(info.role), info.ghe ? `GHE ${String(info.ghe).replace(/^GHE\s*/i, "")}` : ""].filter(Boolean).join(" · "))}</small></div></header><div class="access-history-events">${lines}</div></article>`;
+      })
+      .join("");
+  }
+  function renderHistoryCalendar() {
+    const first = new Date(
+        historyMonth.getFullYear(),
+        historyMonth.getMonth(),
+        1,
+      ),
+      daysInMonth = new Date(
+        historyMonth.getFullYear(),
+        historyMonth.getMonth() + 1,
+        0,
+      ).getDate(),
+      offset = (first.getDay() + 6) % 7,
+      counts = historyCounts(),
+      today = localDay(new Date()),
+      cells = [];
+
+    $("historyMonthLabel").textContent = first.toLocaleDateString("fr-FR", {
+      month: "long",
+      year: "numeric",
+    });
+
+    for (let i = 0; i < offset; i++)
+      cells.push('<span class="access-history-blank" aria-hidden="true"></span>');
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(first.getFullYear(), first.getMonth(), day),
+        key = localDay(date),
+        count = counts.get(key)?.size || 0;
+      cells.push(
+        `<button type="button" class="access-history-date ${key === today ? "today" : ""} ${key === historySelectedDay ? "selected" : ""} ${count ? "has-data" : ""}" data-history-day="${key}" aria-label="${day} : ${count} personne${count > 1 ? "s" : ""}"><span>${day}</span>${count ? `<b>${count}</b>` : ""}</button>`,
+      );
+    }
+    $("historyCalendar").innerHTML = cells.join("");
+    $("historyCalendar")
+      .querySelectorAll("[data-history-day]")
+      .forEach(
+        (button) =>
+          (button.onclick = () => {
+            historySelectedDay = button.dataset.historyDay;
+            renderHistoryCalendar();
+            renderHistoryDay();
+          }),
+      );
+    renderHistoryDay();
+  }
+  async function loadHistory() {
+    const start = new Date(
+        historyMonth.getFullYear(),
+        historyMonth.getMonth(),
+        1,
+      ),
+      end = new Date(
+        historyMonth.getFullYear(),
+        historyMonth.getMonth() + 1,
+        1,
+      );
+    $("historyCalendar").innerHTML =
+      '<p class="access-help access-history-loading">Chargement…</p>';
+    try {
+      historyData = await call("history", {
+        start: start.toISOString(),
+        end: end.toISOString(),
+      });
+      const counts = historyCounts(),
+        today = localDay(new Date()),
+        monthPrefix = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-`;
+      if (!historySelectedDay.startsWith(monthPrefix)) {
+        const activeDays = [...counts.keys()]
+          .filter((x) => x.startsWith(monthPrefix))
+          .sort();
+        historySelectedDay =
+          today.startsWith(monthPrefix) ? today : activeDays.at(-1) || `${monthPrefix}01`;
+      }
+      renderHistoryCalendar();
+    } catch (e) {
+      $("historyCalendar").innerHTML =
+        `<p class="access-help">${esc(e.message)}</p>`;
+    }
+  }
+  function setAccessMode(mode) {
+    const history = mode === "history";
+    document.body.classList.toggle("access-history-mode", history);
+    $("historyPanel").classList.toggle("hidden", !history);
+    $("accessManageTab").classList.toggle("active", !history);
+    $("accessHistoryTab").classList.toggle("active", history);
+    $("accessManageTab").setAttribute("aria-selected", history ? "false" : "true");
+    $("accessHistoryTab").setAttribute("aria-selected", history ? "true" : "false");
+    if (history) loadHistory();
+  }
 
   async function request(url, action, body = {}) {
     const r = await fetch(url, {
@@ -405,6 +670,26 @@
     $("preview").disabled = true;
   }
 
+  $("accessManageTab").onclick = () => setAccessMode("manage");
+  $("accessHistoryTab").onclick = () => setAccessMode("history");
+  $("historyPrev").onclick = () => {
+    historyMonth = new Date(
+      historyMonth.getFullYear(),
+      historyMonth.getMonth() - 1,
+      1,
+    );
+    historySelectedDay = "";
+    loadHistory();
+  };
+  $("historyNext").onclick = () => {
+    historyMonth = new Date(
+      historyMonth.getFullYear(),
+      historyMonth.getMonth() + 1,
+      1,
+    );
+    historySelectedDay = "";
+    loadHistory();
+  };
   $("preview").onclick = previewCurrent;
   $("save").onclick = save;
   $("savePreset").onclick = savePreset;
@@ -461,5 +746,6 @@
   $("code").oninput = () => {
     $("code").value = $("code").value.replace(/\D/g, "").slice(0, 6);
   };
+  trackAccessPage();
   load();
 })();
