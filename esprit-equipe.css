@@ -916,18 +916,18 @@ body.team-page {
 }
 .team-date-jump-grid>button,.team-date-jump-empty{
  min-width:0;
- min-height:46px;
+ min-height:62px;
 }
 .team-date-jump-grid>button{
  position:relative;
- height:46px;
+ height:62px;
  padding:2px 1px 1px;
  border:1px solid transparent;
  border-radius:13px;
  background:#f8fbfc;
  color:var(--stip-ink-2);
  display:grid;
- grid-template-rows:14px 19px 9px;
+ grid-template-rows:18px 21px 19px;
  align-items:center;
  justify-items:center;
  gap:1px;
@@ -959,8 +959,8 @@ body.team-page {
  font-weight:950;
 }
 .team-cal-marker{
- min-height:19px;
- height:19px;
+ min-height:21px;
+ height:21px;
  display:grid;
  place-items:center;
  line-height:1;
@@ -984,17 +984,15 @@ body.team-page {
 .team-cal-dot.shift-night{background:var(--stip-shift-n)}
 .team-cal-icon{
  display:block;
- font-size:1.05rem;
  line-height:1;
  transform:translateY(-1px);
 }
 .team-cal-events{
- min-height:9px;
+ min-height:19px;
  max-width:100%;
  display:block;
  overflow:hidden;
  color:var(--stip-ink-2);
- font-size:.76rem;
  line-height:1;
  letter-spacing:-.05em;
  padding-right:.05em;
@@ -1059,11 +1057,10 @@ body.team-page {
  place-items:center;
  min-width:18px;
  min-height:18px;
- font-size:1.02rem;
  line-height:1;
  font-weight:1000;
 }
-.team-cal-status.status-ok{color:#159b62;font-size:1.18rem}
+.team-cal-status.status-ok{color:#159b62}
 .team-cal-status.status-warning{color:#c58b00}
 .team-cal-status.status-critical{color:#c33b3b}
 .team-date-jump-grid>button.status-ok:not(.is-selected){background:#f6fcf8}
