@@ -275,6 +275,60 @@ async function findNew(b: any) {
   return { candidates: found.filter((x: any) => !have.has(x.id)) };
 }
 
+async function history(b: any) {
+  const start = new Date(String(b.start || "")),
+    end = new Date(String(b.end || ""));
+  if (
+    !Number.isFinite(start.getTime()) ||
+    !Number.isFinite(end.getTime()) ||
+    end <= start
+  )
+    throw Error("Période invalide");
+  if (end.getTime() - start.getTime() > 45 * 86400000)
+    throw Error("Période trop longue");
+
+  const [sessionsQuery, activityQuery] = await Promise.all([
+    db
+      .from("stip_access_sessions")
+      .select("id,profile_id,created_at,last_seen_at,revoked_at")
+      .gte("created_at", start.toISOString())
+      .lt("created_at", end.toISOString())
+      .order("created_at", { ascending: true })
+      .limit(5000),
+    db
+      .from("stip_access_activity")
+      .select("id,profile_id,session_id,page_key,occurred_at")
+      .gte("occurred_at", start.toISOString())
+      .lt("occurred_at", end.toISOString())
+      .order("occurred_at", { ascending: true })
+      .limit(10000),
+  ]);
+  if (sessionsQuery.error) throw sessionsQuery.error;
+  if (activityQuery.error) throw activityQuery.error;
+
+  const sessions = sessionsQuery.data || [],
+    activity = activityQuery.data || [],
+    ids = [
+      ...new Set(
+        [...sessions, ...activity]
+          .map((x: any) => x.profile_id)
+          .filter(Boolean),
+      ),
+    ];
+  let profiles: any[] = [];
+  if (ids.length) {
+    const r = await db
+      .from("stip_access_profiles")
+      .select(
+        "id,role_key,agent_id,identity_id,agents(id,nom,prenom,ghe,equipe),stip_access_identities(id,first_name,last_name,professional_role,identity_kind)",
+      )
+      .in("id", ids);
+    if (r.error) throw r.error;
+    profiles = r.data || [];
+  }
+  return { sessions, activity, profiles };
+}
+
 async function createAccess(b: any, me: any) {
   const agent = String(b.agent_id || ""),
     code = String(b.code || "").replace(/\D/g, ""),
@@ -362,6 +416,7 @@ Deno.serve(async (r) => {
     if (b.action === "set_code") return J(await setCode(b, me));
     if (b.action === "find_new") return J(await findNew(b));
     if (b.action === "create_access") return J(await createAccess(b, me));
+    if (b.action === "history") return J(await history(b));
     return J({ error: "Action invalide" }, 400);
   } catch (e) {
     return J({ error: e instanceof Error ? e.message : String(e) }, 403);
