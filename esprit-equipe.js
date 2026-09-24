@@ -1195,16 +1195,20 @@
       rows.length
         ? `<section class="team-agent-group ${className}"><div class="team-agent-group-label">${esc(label)}</div>${rows.map(agentRow).join("")}</section>`
         : "";
-    return `<section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
-      <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
-        <b>${esc(code)}</b>
-        <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-        <span class="team-shift-mini-status status-${esc(signal.level)} is-clickable" data-team-shift-analysis="${esc(day)}|${esc(base)}" title="${esc(signal.label)}" aria-label="${esc(signal.label)}">${esc(statusSymbol(signal.level, signal.symbol))}</span>
-        <em>${sortedItems.length}</em>
-        <i aria-hidden="true">⌄</i>
+    return `<div class="team-shift-row">
+      <button class="team-shift-analysis-trigger status-${esc(signal.level)}" type="button" data-team-shift-analysis="${esc(day)}|${esc(base)}" title="${esc(signal.label)}" aria-label="Ouvrir l’analyse ${esc(meta.label)} · ${esc(signal.label)}">
+        <span aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>
       </button>
-      <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
-    </section>`;
+      <section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
+        <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
+          <b>${esc(code)}</b>
+          <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
+          <em>${sortedItems.length}</em>
+          <i aria-hidden="true">⌄</i>
+        </button>
+        <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
+      </section>
+    </div>`;
   }
 
   function dayAssistantLevel(item) {
