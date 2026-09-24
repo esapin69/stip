@@ -290,8 +290,11 @@
       encodeURIComponent(type) +
       "&source=" +
       encodeURIComponent(x.source_id) +
-      "&from=" +
-      encodeURIComponent(active);
+      "&from=agent-dates" +
+      "&filter=" +
+      encodeURIComponent(active) +
+      "&return=" +
+      encodeURIComponent(location.pathname + location.search + location.hash);
     if (window.STIPNav) window.STIPNav.go(url);
     else location.href = url;
   }
