@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="stip-theme.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="access-manage.css?v=20260921-tableau1" />
+    <link rel="stylesheet" href="access-manage.css?v=20260924-history1" />
     <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
@@ -32,6 +32,48 @@
           </p>
         </div>
       </header>
+
+      <nav class="access-mode-switch" aria-label="Vue Accès">
+        <button id="accessManageTab" class="active" type="button" aria-selected="true">
+          Accès
+        </button>
+        <button id="accessHistoryTab" type="button" aria-selected="false">
+          Historique
+        </button>
+      </nav>
+
+      <section id="historyPanel" class="stip-surface stip-catalog-surface access-history hidden">
+        <header class="access-history-head">
+          <div>
+            <span class="stip-kicker">JOURNAL D’ACCÈS</span>
+            <h2>Historique des connexions</h2>
+            <p>
+              Connexions et modules ouverts. Aucun contenu de fiche, texte saisi
+              ou détail de clic n’est enregistré.
+            </p>
+          </div>
+        </header>
+
+        <div class="access-history-toolbar">
+          <button id="historyPrev" class="stip-btn secondary" type="button" aria-label="Mois précédent">←</button>
+          <strong id="historyMonthLabel">Mois</strong>
+          <button id="historyNext" class="stip-btn secondary" type="button" aria-label="Mois suivant">→</button>
+        </div>
+        <div class="access-history-weekdays" aria-hidden="true">
+          <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+        </div>
+        <div id="historyCalendar" class="access-history-calendar" aria-label="Calendrier des connexions"></div>
+
+        <section class="access-history-day">
+          <header>
+            <h3 id="historyDayTitle">Sélectionnez un jour</h3>
+            <span id="historyDayCount"></span>
+          </header>
+          <div id="historyDayList" class="access-history-list">
+            <p class="access-help">Les détails du jour apparaîtront ici.</p>
+          </div>
+        </section>
+      </section>
 
       <section class="stip-surface stip-catalog-surface access-people">
         <h2>Choisir une personne</h2>
@@ -121,7 +163,7 @@
 
       <p id="msg" class="access-message" role="status"></p>
     </main>
-    <script src="access-manage.js?v=20260922-viewas1"></script>
+    <script src="access-manage.js?v=20260924-history1"></script>
     <script src="quick-access-universal.js?v=20260920-tomorrowapp1"></script>
   </body>
 </html>
