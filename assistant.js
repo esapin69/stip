@@ -232,20 +232,21 @@
   document.querySelectorAll(".as-filters button").forEach(
     (b) =>
       (b.onclick = () => {
-        document
-          .querySelectorAll(".as-filters button")
-          .forEach((x) => x.classList.remove("active"));
-        b.classList.add("active");
         activeFilter = b.dataset.filter;
+        document.querySelectorAll(".as-filters button").forEach((x) => {
+          const selected = x.dataset.filter === activeFilter;
+          x.classList.toggle("active", selected);
+          x.setAttribute("aria-selected", String(selected));
+        });
         window.STIPNav?.remember?.({ filter: activeFilter });
         render(activeFilter);
       }),
   );
-  document
-    .querySelectorAll(".as-filters button")
-    .forEach((button) =>
-      button.classList.toggle("active", button.dataset.filter === activeFilter),
-    );
+  document.querySelectorAll(".as-filters button").forEach((button) => {
+    const selected = button.dataset.filter === activeFilter;
+    button.classList.toggle("active", selected);
+    button.setAttribute("aria-selected", String(selected));
+  });
   window.STIPNav?.register?.({
     capture: () => ({ filter: activeFilter }),
   });
