@@ -1,21 +1,21 @@
 :root{
   color-scheme:light;
-  --stip-bg:#f3f6f8;
-  --stip-bg-strong:#e8eef2;
+  --stip-bg:#f6f7f8;
+  --stip-bg-strong:#eef1f3;
   --stip-surface:#ffffff;
-  --stip-surface-soft:#edf2f5;
-  --stip-surface-tint:#e3edf2;
-  --stip-ink:#103a55;
-  --stip-ink-2:#2c5369;
-  --stip-muted:#5f737e;
-  --stip-muted-2:#7d8f98;
-  --stip-accent:#0b7ea6;
-  --stip-accent-soft:#dceff5;
-  --stip-line:#cdd9df;
-  --stip-line-soft:#e5ebee;
-  --stip-danger:#b32634;
-  --stip-warning:#986000;
-  --stip-success:#247253;
+  --stip-surface-soft:#f2f4f5;
+  --stip-surface-tint:#eaf0f3;
+  --stip-ink:#173f5d;
+  --stip-ink-2:#365a70;
+  --stip-muted:#6d7f8a;
+  --stip-muted-2:#8b99a1;
+  --stip-accent:#176b93;
+  --stip-accent-soft:#e5eef3;
+  --stip-line:#dce2e6;
+  --stip-line-soft:#edf0f2;
+  --stip-danger:#b52b2b;
+  --stip-warning:#a96a00;
+  --stip-success:#2d7658;
   /* Shifts — palette métier unique, volontairement très distincte */
   --stip-shift-m:#087cff;
   --stip-shift-j:#00b85a;
@@ -47,18 +47,18 @@
   --stip-radius-md:18px;
   --stip-radius-lg:24px;
   --stip-radius-xl:30px;
-  --stip-shadow-soft:0 5px 16px rgba(16,58,85,.09),0 1px 2px rgba(16,58,85,.04);
-  --stip-shadow:0 12px 30px rgba(16,58,85,.12),0 2px 7px rgba(16,58,85,.05);
-  --stip-shadow-strong:0 18px 46px rgba(16,58,85,.18),0 4px 12px rgba(16,58,85,.08);
+  --stip-shadow-soft:0 4px 14px rgba(23,63,93,.07),0 1px 2px rgba(23,63,93,.04);
+  --stip-shadow:0 10px 28px rgba(23,63,93,.10),0 2px 6px rgba(23,63,93,.05);
+  --stip-shadow-strong:0 18px 46px rgba(23,63,93,.15),0 4px 12px rgba(23,63,93,.07);
   --stip-page-pad:clamp(10px,2.6vw,18px);
   --stip-gap:clamp(4px,1vw,7px);
   --stip-calendar-cell:minmax(0,1fr);
   --stip-tap:scale(.975);
   --stip-motion:160ms cubic-bezier(.2,.8,.2,1);
-  --stip-surface-raised:linear-gradient(180deg,#ffffff 0%,#f8fafb 100%);
-  --stip-surface-active:linear-gradient(180deg,#f5fcfe 0%,#e3f3f7 100%);
-  --stip-line-strong:#b5c6cf;
-  --stip-focus-ring:rgba(11,126,166,.28);
+  --stip-surface-raised:linear-gradient(180deg,#ffffff 0%,#fbfcfd 100%);
+  --stip-surface-active:linear-gradient(180deg,#f8fcfd 0%,#edf7f9 100%);
+  --stip-line-strong:#c8d4da;
+  --stip-focus-ring:rgba(23,107,147,.22);
   --stip-on-accent:#fff;
 
   /* Compatibilité : les anciennes couches héritent maintenant du thème maître. */
@@ -83,9 +83,9 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 .stip-subtitle{margin:7px 0 0;color:var(--stip-muted);font-size:.78rem;line-height:1.4}
 .stip-muted{color:var(--stip-muted)}.stip-accent{color:var(--stip-accent)}
 .stip-locked{opacity:.46;filter:saturate(.35)}
-.stip-search{width:100%;min-height:52px;border:1px solid var(--stip-line-strong);border-radius:16px;background:rgba(255,255,255,.98);box-shadow:var(--stip-shadow-soft)}
+.stip-search{width:100%;min-height:52px;border:1px solid var(--stip-line);border-radius:16px;background:rgba(255,255,255,.96);box-shadow:var(--stip-shadow-soft)}
 .stip-btn{min-height:44px;border:0;border-radius:14px;padding:0 15px;background:var(--stip-ink);color:#fff;font-weight:900}
-.stip-btn.secondary{background:var(--stip-surface);color:var(--stip-ink);border:1px solid var(--stip-line-strong);box-shadow:var(--stip-shadow-soft)}
+.stip-btn.secondary{background:var(--stip-surface-soft);color:var(--stip-ink)}
 .stip-icon-tile{display:grid;place-items:center;border-radius:16px;background:var(--stip-accent-soft);color:var(--stip-accent)}
 .stip-skeleton{position:relative;overflow:hidden;background:#e8f0f2;border-radius:12px}
 .stip-skeleton:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent);animation:stip-shimmer 1.1s infinite}

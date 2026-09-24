@@ -1,4 +1,4 @@
-@import url("stip-theme-base.css?v=20260925-lucide1");
+@import url("stip-theme-base.css?v=20260925-preserve1");
 @import url("stip-patterns.css?v=20260925-lucide1");
 
 /* IRM stable rendering: keep one guaranteed frame even if the <img> cache fails. */

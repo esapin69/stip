@@ -88,20 +88,17 @@ Quand un motif est utilisé au moins deux fois, il doit devenir un composant com
 
 
 
-## Direction visuelle — lisibilité premium
+## Garde-fou — stabilité visuelle
 
-Cette direction renforce le thème existant sans créer une seconde identité.
+STIP est considéré comme visuellement validé par défaut. Une amélioration locale ne doit pas devenir une refonte générale implicite.
 
-- **Inactif n’est jamais désactivé** : un filtre non sélectionné reste net, contrasté et immédiatement lisible.
-- La hiérarchie repose sur trois niveaux : **fond calme → surface nette → action expressive**.
-- L’état actif doit être identifiable par au moins deux indices : contraste + contour/relief/repère, jamais par la couleur seule.
-- Les libellés principaux n’utilisent pas la couleur `muted`; celle-ci est réservée à l’information secondaire.
-- Les pictogrammes fonctionnels ont une présence réelle. Ils peuvent devenir plus expressifs dans l’état actif, sans transformer tout le bouton en aplats criards.
-- Une page ne doit pas être « blanche sur blanc » : séparation par bordure, profondeur ou variation de surface, avec sobriété.
-- La profondeur est courte et précise : ombre douce pour une surface, ombre plus franche uniquement pour l’élément actif ou prioritaire.
-- Les accents métier restent contextuels ; la géométrie, la typographie et le comportement restent STIP.
-- Sur mobile et tablette, on gagne d’abord de l’espace en supprimant les wrappers et doublons, jamais en rendant le texte principal minuscule.
-- Toute évolution globale se fait dans les tokens/primitives avant les CSS de page.
+- Ne jamais modifier les tokens racine `--stip-bg`, `--stip-surface`, `--stip-ink`, `--stip-accent`, les ombres, rayons, typographies ou primitives globales sans validation explicite préalable.
+- Par défaut, corriger le composant concerné à sa source commune, sans modifier l’apparence des composants qui ne sont pas concernés.
+- Avant toute modification réellement globale, créer un checkpoint Git identifiable et isoler le changement pour permettre un retour arrière propre.
+- Une propagation à plusieurs pages est autorisée uniquement lorsqu’elles utilisent volontairement le même composant partagé.
+- Ne jamais « améliorer » une page déjà validée en changeant son esthétique par opportunité pendant un autre chantier.
+- Conserver les couleurs métier et conventions déjà validées tant qu’une demande explicite ne les remet pas en cause.
+- En cas de doute entre retoucher le thème maître et retoucher un composant partagé, préférer le composant partagé.
 
 ## Familles visuelles communes
 
