@@ -275,8 +275,10 @@
     $("historyPanel").classList.toggle("hidden", !history);
     $("accessManageTab").classList.toggle("active", !history);
     $("accessHistoryTab").classList.toggle("active", history);
+    $("accessControlTab")?.classList.remove("active");
     $("accessManageTab").setAttribute("aria-selected", history ? "false" : "true");
     $("accessHistoryTab").setAttribute("aria-selected", history ? "true" : "false");
+    $("accessControlTab")?.setAttribute("aria-selected", "false");
     if (history) loadHistory();
   }
 
@@ -723,6 +725,8 @@
 
   $("accessManageTab").onclick = () => setAccessMode("manage");
   $("accessHistoryTab").onclick = () => setAccessMode("history");
+  $("accessControlTab").onclick = () =>
+    location.assign("https://admin.esapin.com/cleanup.html");
   $("historyPrev").onclick = () => {
     historyMonth = new Date(
       historyMonth.getFullYear(),
