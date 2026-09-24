@@ -2208,8 +2208,12 @@
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
-          const next = b.dataset.homeMode || "planning",
-            targetRoute = routeForHomeMode(next);
+          const next = b.dataset.homeMode || "planning";
+          if (next === "team") {
+            location.href = "esprit-equipe.html?from=home";
+            return;
+          }
+          const targetRoute = routeForHomeMode(next);
           state.tableauFocus = false;
           if (window.STIPRouter?.set) {
             window.STIPRouter.set(targetRoute);
@@ -2356,7 +2360,7 @@
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
-    if (k === "team") return window.STIPRouter?.set?.("team");
+    if (k === "team") return (location.href = "esprit-equipe.html?from=home");
     if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
@@ -2619,6 +2623,10 @@
     }
     const next = homeModeForRoute(route);
     if (!next) return;
+    if (next === "team") {
+      location.href = "esprit-equipe.html?from=home";
+      return;
+    }
     if (next === "tableau" && !has("messages")) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
