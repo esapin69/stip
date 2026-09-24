@@ -1806,7 +1806,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-date-jump-dot.shift-night{background:var(--stip-shift-n)!important}
 .hc-date-jump-icon{
  display:block!important;
- 
  line-height:1!important;
  transform:translateY(-1px)!important;
 }
@@ -1816,7 +1815,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  display:block!important;
  overflow:hidden!important;
  color:#214d5c!important;
- 
  line-height:1!important;
  letter-spacing:-.05em!important;
  padding-right:.05em!important;
@@ -1856,7 +1854,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
  .hc-date-jump-grid>button{height:44px!important;min-height:44px!important}
  .hc-date-jump-day-number{font-size:.8rem!important}
  .hc-date-jump-dot{width:23px!important;height:23px!important}
- .hc-date-jump-icon{
+ .hc-date-jump-actions{gap:6px!important}
+ .hc-date-jump-close{min-width:78px!important}
+}
+.hc-week-nav-global{
+ width:100%!important;
  box-sizing:border-box!important;
  display:grid!important;
  grid-template-columns:52px minmax(0,1fr) 52px!important;
