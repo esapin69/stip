@@ -1527,6 +1527,7 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
+        responsable: "responsable",
         tableau: "fauteuils",
       }[mode] || "home"
     );
@@ -1538,12 +1539,14 @@
         apps: "apps",
         notifications: "notifications",
         team: "team",
+        responsable: "responsable",
         fauteuils: "tableau",
       }[String(route || "home")] || ""
     );
   }
   function homeModeNav() {
-    const active = state.homeMode || "planning",
+    const active =
+        state.homeMode === "responsable" ? "apps" : state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
@@ -2060,6 +2063,11 @@
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
       return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v3" loading="eager"></iframe></section>`;
+    if (
+      state.homeMode === "responsable" &&
+      (has("responsable") || has("admin"))
+    )
+      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="responsable.html?embed=home-v2" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
@@ -2162,6 +2170,76 @@
   }
 
 
+  function bindEmbeddedResponsable(root) {
+    const frame = root?.querySelector?.("#hcResponsableFrame");
+    if (!frame || frame.dataset.stipBound === "1") return;
+    frame.dataset.stipBound = "1";
+    const setup = () => {
+      try {
+        const doc = frame.contentDocument,
+          win = frame.contentWindow;
+        if (!doc || !win) return;
+
+        // Any route leaving Responsable becomes a normal parent-page navigation.
+        if (!/\/responsable\.html$/i.test(win.location.pathname)) {
+          location.href = win.location.href;
+          return;
+        }
+
+        doc.body?.classList.add("stip-home-embedded");
+        const top = doc.querySelector(".resp-top");
+        if (top) {
+          top.hidden = true;
+          top.style.display = "none";
+        }
+
+        // The shared home shell is now the only page header. Responsable keeps
+        // its own Dates / Suivi / Équipe / Agenda workspace directly below it.
+        const tabs = doc.querySelector(".resp-tabs");
+        if (tabs) {
+          tabs.style.top = "0";
+          tabs.style.position = "relative";
+        }
+        doc.documentElement.style.overflow = "hidden";
+        if (doc.body) {
+          doc.body.style.overflow = "hidden";
+          doc.body.style.minHeight = "0";
+        }
+
+        const syncFrameHeight = () => {
+          const body = doc.body,
+            html = doc.documentElement;
+          if (!body || !html) return;
+          const height = Math.max(
+            body.scrollHeight,
+            body.offsetHeight,
+            html.scrollHeight,
+            html.offsetHeight,
+          );
+          if (height > 0)
+            frame.style.setProperty(
+              "height",
+              `${Math.max(680, Math.ceil(height))}px`,
+              "important",
+            );
+        };
+
+        frame._stipResponsableResizeObserver?.disconnect?.();
+        if (window.ResizeObserver) {
+          const observer = new ResizeObserver(syncFrameHeight);
+          observer.observe(doc.documentElement);
+          if (doc.body) observer.observe(doc.body);
+          frame._stipResponsableResizeObserver = observer;
+        }
+        requestAnimationFrame(syncFrameHeight);
+        setTimeout(syncFrameHeight, 120);
+        setTimeout(syncFrameHeight, 650);
+      } catch {}
+    };
+    frame.addEventListener("load", setup);
+    setTimeout(setup, 0);
+  }
+
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
@@ -2169,7 +2247,11 @@
     // Embedded live pages stay mounted during background refreshes so their
     // current tab, scroll position and open sheets are not reset.
     const embeddedFrame =
-      state.homeMode === "team" ? root.querySelector("#hcTeamFrame") : null;
+      state.homeMode === "team"
+        ? root.querySelector("#hcTeamFrame")
+        : state.homeMode === "responsable"
+          ? root.querySelector("#hcResponsableFrame")
+          : null;
     if (embeddedFrame) {
       const bell = root.querySelector(".hc-profile-bell"),
         count = notifications().length + Number(window.STIPMessagesUnread || 0);
@@ -2265,6 +2347,7 @@
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
     if (state.homeMode === "team") bindEmbeddedTeam(root);
+    if (state.homeMode === "responsable") bindEmbeddedResponsable(root);
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
@@ -2405,7 +2488,12 @@
     if (k === "compare") return (location.href = "planning-compare-app.html?from=home");
     if (k === "dates") return (location.href = "agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.();
-    if (k === "responsable") return (location.href = "responsable.html");
+    if (k === "responsable") {
+      if (window.STIPRouter?.set) return window.STIPRouter.set("responsable");
+      state.homeMode = "responsable";
+      state.renderSig = "";
+      return render();
+    }
     if (k === "newagent")
       return (location.href = "https://esapin69.github.io/Ghe-interne/");
     if (k === "upload")
@@ -2532,10 +2620,6 @@
     state.session = e?.detail || window.STIPSession || state.session;
     loadDismissedNotifications();
     const routedRoute = window.STIPRouter?.get?.() || "home";
-    if (routedRoute === "responsable") {
-      location.replace("responsable.html");
-      return;
-    }
     const routedMode = homeModeForRoute(routedRoute);
     if (routedMode) state.homeMode = routedMode;
     try {
@@ -2654,12 +2738,8 @@
     render();
   });
   window.addEventListener("stip:route", (event) => {
-    const route = String(event?.detail?.route || "home");
-    if (route === "responsable") {
-      location.href = "responsable.html";
-      return;
-    }
-    const next = homeModeForRoute(route);
+    const route = String(event?.detail?.route || "home"),
+      next = homeModeForRoute(route);
     if (!next) return;
     if (next === "tableau" && !has("messages")) {
       window.STIPRouter?.set?.("home", { replace: true });
@@ -2669,7 +2749,10 @@
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
-    if (next === "responsable" && !has("responsable")) {
+    if (
+      next === "responsable" &&
+      !(has("responsable") || has("admin"))
+    ) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
