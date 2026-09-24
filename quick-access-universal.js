@@ -3,7 +3,7 @@
   if (!window.__STIPActivityRuntimeRequested) {
     window.__STIPActivityRuntimeRequested = true;
     const activityScript = document.createElement("script");
-    activityScript.src = "/activity-runtime.js?v=20260924-history1";
+    activityScript.src = "/activity-runtime.js?v=20260924-history2";
     activityScript.async = true;
     document.head.appendChild(activityScript);
   }
