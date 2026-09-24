@@ -1825,46 +1825,63 @@ body.team-page {
 .team-agent-group.is-chefs .team-agent-group-label{color:#70409f}
 
 /* shift-actions-canonical-20260924
-   Une seule lecture visuelle : statut discret, nombre lisible, chevron nu.
-   Aucun trio de boutons ronds concurrents. */
+   Deux zones tactiles séparées : analyse à gauche, carte dépliante à droite. */
+.team-shift-row{
+  display:grid;
+  grid-template-columns:44px minmax(0,1fr);
+  gap:8px;
+  align-items:start;
+  min-width:0;
+}
+.team-shift-row>.team-shift{min-width:0}
 .team-shift{
   --shift-ink:var(--shift);
   --shift-badge-ink:#fff;
   overflow-anchor:none;
 }
+.team-shift-analysis-trigger{
+  width:44px;
+  height:44px;
+  margin-top:14px;
+  padding:0;
+  border:0;
+  border-radius:12px;
+  background:transparent;
+  display:grid;
+  place-items:center;
+  align-self:start;
+  justify-self:center;
+  color:var(--stip-muted);
+  font:inherit;
+  font-size:1.28rem;
+  line-height:1;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.team-shift-analysis-trigger>span{
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+}
+.team-shift-analysis-trigger.status-ok{color:#172126}
+.team-shift-analysis-trigger.status-warning{color:#d9a20a}
+.team-shift-analysis-trigger.status-critical{color:#ef3d39}
+.team-shift-analysis-trigger.status-opportunity{color:#159b62}
+.team-shift-analysis-trigger.status-unknown{color:#9aa8af}
+.team-shift-analysis-trigger:active{transform:scale(.9)}
+.team-shift-analysis-trigger:focus-visible{
+  outline:3px solid color-mix(in srgb,var(--stip-accent) 25%,transparent);
+  outline-offset:2px;
+}
 .team-shift-head{
-  grid-template-columns:40px minmax(0,1fr) 34px auto 18px!important;
+  grid-template-columns:40px minmax(0,1fr) auto 18px!important;
   column-gap:8px!important;
 }
-.team-shift-head>b{
-  color:var(--shift-badge-ink)!important;
-}
-.team-shift-mini-status{
-  grid-column:3!important;
-  width:34px!important;
-  min-width:34px!important;
-  height:34px!important;
-  display:grid!important;
-  place-items:center!important;
-  justify-self:center!important;
-  align-self:center!important;
-  margin:0!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  box-shadow:none!important;
-  font-size:1.22rem!important;
-  line-height:1!important;
-  overflow:visible!important;
-  white-space:nowrap;
-}
-.team-shift-mini-status.status-ok{color:#159a63}
-.team-shift-mini-status.status-warning{color:#d9a20a}
-.team-shift-mini-status.status-critical{color:#ef3d39}
-.team-shift-mini-status.status-unknown{color:#9aa8af;font-size:1rem!important}
+.team-shift-head>b{color:var(--shift-badge-ink)!important}
 .team-shift-head>em{
-  grid-column:4!important;
+  grid-column:3!important;
   justify-self:end!important;
   min-width:30px!important;
   height:auto!important;
@@ -1885,7 +1902,7 @@ body.team-page {
   color:var(--shift-ink)!important;
 }
 .team-shift-head>i{
-  grid-column:5!important;
+  grid-column:4!important;
   justify-self:end!important;
   width:18px!important;
   height:34px!important;
@@ -1906,23 +1923,23 @@ body.team-page {
   background:transparent!important;
 }
 .team-shift-agents{overflow-anchor:none}
-.team-shift.shift-s .team-shift-head>b{
-  color:var(--stip-shift-s-ink)!important;
-}
+.team-shift.shift-s .team-shift-head>b{color:var(--stip-shift-s-ink)!important}
 .team-shift.shift-s .team-shift-head>em,
-.team-shift.shift-s .team-shift-head>i{
-  color:var(--stip-shift-s-text)!important;
-}
+.team-shift.shift-s .team-shift-head>i{color:var(--stip-shift-s-text)!important}
 @media(max-width:430px){
-  .team-shift-head{
-    grid-template-columns:40px minmax(0,1fr) 32px auto 16px!important;
-    column-gap:6px!important;
+  .team-shift-row{
+    grid-template-columns:40px minmax(0,1fr);
+    gap:6px;
   }
-  .team-shift-mini-status{
-    width:32px!important;
-    min-width:32px!important;
-    height:32px!important;
-    font-size:1.16rem!important;
+  .team-shift-analysis-trigger{
+    width:40px;
+    height:40px;
+    margin-top:14px;
+    font-size:1.2rem;
+  }
+  .team-shift-head{
+    grid-template-columns:40px minmax(0,1fr) auto 16px!important;
+    column-gap:6px!important;
   }
   .team-shift-head>em{font-size:1.14rem!important}
   .team-shift-head>i{
@@ -1995,7 +2012,6 @@ body.team-page {
 
 /* shared opportunity status — 20260922 */
 .team-month-legend .status-opportunity,
-.team-shift-mini-status.status-opportunity,
 .team-cal-status.status-opportunity,
 .team-day-intel.status-opportunity{color:var(--stip-opportunity,#7C3AED)}
 .team-subsections>section.status-opportunity{border-color:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 25%,var(--stip-line));background:color-mix(in srgb,var(--stip-opportunity,#7C3AED) 5%,var(--stip-surface))}
@@ -2127,15 +2143,6 @@ body.team-page {
 
 
 /* shift-analysis-popup-20260922 */
-.team-shift-mini-status.is-clickable{
-  cursor:pointer;
-  border-radius:0;
-  background:transparent;
-  box-shadow:none;
-}
-.team-shift-mini-status.is-clickable:active{
-  transform:scale(.92);
-}
 .team-shift-analysis-overlay{
   position:fixed;
   inset:0;
@@ -2406,14 +2413,12 @@ body.team-page {
 .team-week-section-label{margin-top:0!important}
 
 /* Statuts terrain : + vert, validation noire. */
-.team-shift-mini-status.status-ok,
 .team-cal-status.status-ok,
 .team-day-intel.status-ok,
 .team-month-legend .status-ok,
 .team-month-line.status-ok .team-month-line-status{
   color:#172126!important;
 }
-.team-shift-mini-status.status-opportunity,
 .team-cal-status.status-opportunity,
 .team-day-intel.status-opportunity,
 .team-month-legend .status-opportunity,
