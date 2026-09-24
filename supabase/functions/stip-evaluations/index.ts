@@ -252,7 +252,7 @@ async function finalize(c:any,b:any){
     }
     return{closed:pubLast(close.data),drive:{file_id:drive.file_id,url:drive.url,name:drive.name||name,folder_id:DRIVE_FOLDER},pdf_base64:toB64(pdf),reset:true}
   }finally{
-    await db.rpc('stip_eval_finalize_release',{p_agent_id:a.agent.id,p_token:lockToken}).catch(()=>{})
+    try{await db.rpc('stip_eval_finalize_release',{p_agent_id:a.agent.id,p_token:lockToken})}catch(_){ }
   }
 }
 
