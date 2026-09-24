@@ -100,7 +100,7 @@
     const evaluation = mode === "evaluation";
     $("#respPanelTitle").textContent = evaluation
       ? "Évaluation"
-      : "Brancardiers";
+      : "Équipe";
     body.innerHTML =
       '<main class="ra-day"><div id="respAgentSelector"></div></main>';
     if (!window.STIPAgentSelector) {
@@ -112,7 +112,7 @@
       items: all,
       date: directory.date,
       kicker: evaluation ? "ÉVALUATION 2026" : "ÉQUIPE · AUJOURD’HUI",
-      title: evaluation ? "Choisir un agent" : "Brancardiers",
+      title: evaluation ? "Choisir un agent" : "Équipe",
       description: evaluation
         ? "Recherche un agent pour ouvrir ou commencer son évaluation."
         : "Tri par GHE, appel direct, horaires particuliers et absences détaillées pour l’encadrement.",
@@ -158,7 +158,7 @@
       .filter(Boolean)
       .join(" · ");
     $("#respPanelBody").innerHTML =
-      `<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour aux brancardiers</button><section class="ra-hero">${avatar(agent, true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(agent))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenAgenda">Planning complet</button><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;
+      `<main class="ra-profile"><button type="button" id="raBackList" class="ra-profile-back">‹ Retour à l’équipe</button><section class="ra-hero">${avatar(agent, true)}<div><span class="ra-kicker">FICHE AGENT</span><h2>${esc(displayName(agent))}</h2><p>${esc(meta)}</p></div></section><section class="ra-actions"><button type="button" id="raOpenAgenda">Planning complet</button><button type="button" id="raOpenProfile">Fiche agent</button><button type="button" id="raOpenEval">Évaluation</button></section><p class="ra-hint">La fiche et l’évaluation utilisent le même agent et le même identifiant.</p><div id="raActionStatus"></div></main>`;
     $("#raBackList")?.addEventListener("click", renderSelector);
     $("#raOpenAgenda")?.addEventListener("click", () =>
       window.STIPAgentAgenda?.open?.(agent.source_key, agent),
@@ -199,9 +199,9 @@
     panel.classList.add("open", "ra-native-panel");
     panel.setAttribute("aria-hidden", "false");
     $("#respPanelTitle").textContent =
-      mode === "evaluation" ? "Évaluation" : "Brancardiers";
+      mode === "evaluation" ? "Évaluation" : "Équipe";
     $("#respPanelBody").innerHTML =
-      `<div class="ra-load"><i></i><b>${mode === "evaluation" ? "Chargement des agents…" : "Lecture du planning du jour…"}</b></div>`;
+      `<div class="ra-load"><i></i><b>${mode === "evaluation" ? "Chargement des agents…" : "Lecture de l’équipe du jour…"}</b></div>`;
     try {
       directory = await call("directory");
       renderSelector();
