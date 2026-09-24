@@ -10,8 +10,8 @@
     <meta name="robots" content="noindex,nofollow" />
     <title>STIP — Assistant</title>
     <link rel="stylesheet" href="styles.css?v=20260826-role1" />
-    <link rel="stylesheet" href="stip-theme.css?v=20260924-intel-readability1" />
-    <link rel="stylesheet" href="assistant.css?v=20260921-field3" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260924-filter6b1" />
+    <link rel="stylesheet" href="assistant.css?v=20260924-filter6b1" />
   </head>
   <body>
     <main class="as-shell">
@@ -31,11 +31,23 @@
           <p id="meta">Croisement des informations disponibles dans STIP.</p>
         </div>
       </section>
-      <nav class="as-filters" aria-label="Filtrer">
-        <button class="active" data-filter="all">Tout</button
-        ><button data-filter="decision">À décider</button
-        ><button data-filter="anticipation">À anticiper</button
-        ><button data-filter="opportunity">Opportunités</button>
+      <nav class="as-filters stip-filter-bubbles" data-count="4" aria-label="Filtrer">
+        <button class="stip-filter-choice active" data-filter="all" aria-selected="true" type="button">
+          <span class="stip-filter-visual" aria-hidden="true">✦</span>
+          <span class="stip-filter-copy"><strong>Tout</strong></span>
+        </button>
+        <button class="stip-filter-choice" data-filter="decision" aria-selected="false" type="button" data-tone="warning">
+          <span class="stip-filter-visual" aria-hidden="true">⚖</span>
+          <span class="stip-filter-copy"><strong>À décider</strong></span>
+        </button>
+        <button class="stip-filter-choice" data-filter="anticipation" aria-selected="false" type="button" data-tone="neutral">
+          <span class="stip-filter-visual" aria-hidden="true">🔭</span>
+          <span class="stip-filter-copy"><strong>À anticiper</strong></span>
+        </button>
+        <button class="stip-filter-choice" data-filter="opportunity" aria-selected="false" type="button" data-tone="success">
+          <span class="stip-filter-visual" aria-hidden="true">✨</span>
+          <span class="stip-filter-copy"><strong>Opportunités</strong></span>
+        </button>
       </nav>
       <div class="stip-section-separator is-compact"><span>À SUIVRE</span></div>
       <section id="feed" class="as-feed" aria-busy="true">
@@ -55,7 +67,7 @@
     </main>
     <script src="stip-navigation.js?v=20260924-history2"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
-    <script src="assistant.js?v=20260922-opportunity1"></script>
+    <script src="assistant.js?v=20260924-filter6b1"></script>
     <script src="quick-access-universal.js?v=20260924-history2"></script>
   </body>
 </html>
