@@ -357,3 +357,14 @@ Les bulles ouvertes depuis un indicateur métier (`⚠️`, `🛑`, `✔`, `➕`
 - privilégier les retours à la ligne sémantiques plutôt qu’un paragraphe compact ;
 - les feuilles Responsable, Esprit d’équipe et les aides d’effectif partagent cette même hiérarchie via `stip-theme.css` ;
 - une page ne doit pas recréer localement une version plus petite de cette typographie.
+
+## Calendrier 1 mois canonique
+
+Tous les tableaux calendrier affichant un mois complet utilisent obligatoirement le même contrat :
+`stip-month-calendar` → `stip-month-grid` → `stip-month-day`, avec
+`stip-month-day-number`, `stip-month-primary` et `stip-month-events`.
+
+La géométrie, les espacements, le rouge des chiffres de week-end, l’état Aujourd’hui et le zoom de sélection sont définis uniquement dans `stip-patterns.css` et les variables `--stip-month-*` de `stip-theme-base.css`.
+Une page peut définir son contenu et ses couleurs métier, mais ne doit pas redéfinir localement la hauteur des cases, les lignes internes, les gaps, la transformation de sélection ou la taille des pictogrammes. Les pastilles de shift sont la seule exception de taille.
+
+Toute nouvelle page contenant un calendrier mensuel doit se brancher sur ce contrat avant d’être considérée terminée.
