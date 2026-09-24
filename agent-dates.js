@@ -270,9 +270,11 @@
     counts();
     renderScope();
     renderList();
-    $("[data-filter]").forEach((b) =>
-      b.classList.toggle("active", b.dataset.filter === active),
-    );
+    $("[data-filter]").forEach((b) => {
+      const selected = b.dataset.filter === active;
+      b.classList.toggle("active", selected);
+      b.setAttribute("aria-selected", String(selected));
+    });
   }
   function openDetail(id) {
     const x = items.find((v) => v.id === id);
