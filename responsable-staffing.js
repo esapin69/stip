@@ -60,6 +60,69 @@
     document.getElementById("rsShiftAnalysis")?.remove();
   }
 
+  function fmtDay(value) {
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Europe/Paris",
+      }).format(new Date(String(value || "").slice(0, 10) + "T12:00:00"));
+    } catch {
+      return String(value || "");
+    }
+  }
+
+  function openDayAnalysis({ date = "", staffing = null, items = [] } = {}) {
+    const intel = field(),
+      checklist = intel?.dayChecklist?.({ staffing, items }) || null,
+      status = intel?.dayStatus?.({ staffing, items }) || checklist,
+      level = status?.level || checklist?.level || "unknown",
+      symbol =
+        status?.symbol ||
+        checklist?.symbol ||
+        (level === "critical"
+          ? "🛑"
+          : level === "warning"
+            ? "⚠️"
+            : level === "opportunity"
+              ? "➕"
+              : level === "ok"
+                ? "✔"
+                : "○"),
+      label =
+        status?.label ||
+        checklist?.label ||
+        (level === "unknown" ? "Pas assez de données" : "Lecture du jour"),
+      summary = staffing?.summary || {},
+      countText =
+        summary.planned != null && summary.target != null
+          ? `${summary.planned} prévus · cible ${summary.target}`
+          : "Effectif et signaux terrain croisés",
+      points = Array.isArray(checklist?.points) ? checklist.points : [],
+      pointHtml = points.length
+        ? `<div class="rs-day-points">${points
+            .slice(0, 7)
+            .map(
+              (point) =>
+                `<section class="rs-day-point rs-${esc(point.level || "info")}"><span aria-hidden="true">${esc(point.symbol || "•")}</span><div><strong>${esc(point.title || "Point à regarder")}</strong>${point.detail ? `<p>${esc(point.detail)}</p>` : ""}${point.proposal ? `<small>${esc(point.proposal)}</small>` : ""}</div></section>`,
+            )
+            .join("")}</div>`
+        : '<p class="rs-day-empty">Aucun point détaillé supplémentaire pour cette journée.</p>',
+      advice =
+        checklist?.advice && checklist?.strength !== "none"
+          ? `<div class="rs-shift-proposal"><strong>Lecture terrain</strong><span>${esc(checklist.advice)}</span></div>`
+          : "",
+      wrap = document.createElement("div");
+    closeShiftAnalysis();
+    wrap.id = "rsShiftAnalysis";
+    wrap.className = "rs-shift-overlay";
+    wrap.innerHTML = `<button type="button" class="rs-shift-backdrop" aria-label="Fermer"></button><section class="rs-shift-sheet rs-day-sheet rs-${esc(level)}" role="dialog" aria-modal="true" aria-label="Analyse du ${esc(fmtDay(date))}"><header><div><small>ANALYSE TERRAIN</small><strong>${esc(fmtDay(date))}</strong></div><button type="button" data-rs-shift-close aria-label="Fermer">×</button></header><div class="rs-shift-verdict"><span aria-hidden="true">${esc(symbol)}</span><div><strong>${esc(label)}</strong><small>${esc(countText)}</small></div></div>${pointHtml}${advice}</section>`;
+    document.body.appendChild(wrap);
+    wrap.querySelector(".rs-shift-backdrop")?.addEventListener("click", closeShiftAnalysis);
+    wrap.querySelector("[data-rs-shift-close]")?.addEventListener("click", closeShiftAnalysis);
+  }
+
   function shiftFallback(row, signal) {
     const gap = Number(row?.gap || 0);
     if (signal?.detail) return signal.detail;
@@ -95,7 +158,7 @@
           : level === "warning"
             ? "⚠️"
             : level === "opportunity"
-              ? "+"
+              ? "➕"
               : "✔"),
       label =
         signal?.label ||
@@ -243,8 +306,15 @@
   document.head.appendChild(opportunityStyle);
   const shiftAnalysisStyle = document.createElement("style");
   shiftAnalysisStyle.textContent =
-    "/* Responsable shift analysis drawer */.rs-shift{border:0;font:inherit;cursor:pointer}.rs-shift:focus-visible{outline:3px solid rgba(20,139,160,.22);outline-offset:2px}.rs-shift-overlay{position:fixed;z-index:9995;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:rgba(14,38,45,.30);backdrop-filter:blur(4px)}.rs-shift-backdrop{position:absolute;inset:0;border:0;background:transparent}.rs-shift-sheet{position:relative;width:min(100%,460px);padding:16px;border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(13,44,52,.25)}.rs-shift-sheet>header{display:flex;align-items:center;justify-content:space-between;gap:10px}.rs-shift-sheet>header small,.rs-shift-sheet>header strong{display:block}.rs-shift-sheet>header small{color:#148ba0;font-size:.58rem;font-weight:950;letter-spacing:.10em}.rs-shift-sheet>header strong{margin-top:2px;color:#173f49;font-size:1.25rem}.rs-shift-sheet>header button{width:38px;height:38px;border:0;border-radius:12px;background:#eef4f5;color:#476a72;font-size:1.25rem}.rs-shift-verdict{margin-top:12px;padding:12px;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px;border-radius:16px;background:#f3f8f8}.rs-shift-verdict>span{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#fff;font-size:1.1rem}.rs-shift-verdict strong,.rs-shift-verdict small{display:block}.rs-shift-verdict strong{color:#214f58;font-size:.84rem}.rs-shift-verdict small{margin-top:2px;color:#73898f;font-size:.66rem}.rs-shift-sheet>p{margin:11px 2px 0;color:#365b63;font-size:.76rem;line-height:1.45}.rs-shift-proposal{margin-top:10px;padding:10px 11px;border-radius:14px;background:#edf7f4;color:#225d50}.rs-shift-proposal strong,.rs-shift-proposal span{display:block}.rs-shift-proposal strong{font-size:.65rem}.rs-shift-proposal span{margin-top:3px;font-size:.73rem;line-height:1.4}@media(min-width:620px){.rs-shift-overlay{align-items:center}}";
+    "/* Responsable shift analysis drawer */.rs-shift{border:0;font:inherit;cursor:pointer}.rs-shift:focus-visible{outline:3px solid rgba(20,139,160,.22);outline-offset:2px}.rs-shift-overlay{position:fixed;z-index:9995;inset:0;display:flex;align-items:flex-end;justify-content:center;padding:16px;background:rgba(14,38,45,.30);backdrop-filter:blur(4px)}.rs-shift-backdrop{position:absolute;inset:0;border:0;background:transparent}.rs-shift-sheet{position:relative;width:min(100%,460px);padding:16px;border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(13,44,52,.25)}.rs-shift-sheet>header{display:flex;align-items:center;justify-content:space-between;gap:10px}.rs-shift-sheet>header small,.rs-shift-sheet>header strong{display:block}.rs-shift-sheet>header small{color:#148ba0;font-size:.58rem;font-weight:950;letter-spacing:.10em}.rs-shift-sheet>header strong{margin-top:2px;color:#173f49;font-size:1.25rem}.rs-shift-sheet>header button{width:38px;height:38px;border:0;border-radius:12px;background:#eef4f5;color:#476a72;font-size:1.25rem}.rs-shift-verdict{margin-top:12px;padding:12px;display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:10px;border-radius:16px;background:#f3f8f8}.rs-shift-verdict>span{width:40px;height:40px;display:grid;place-items:center;border-radius:13px;background:#fff;font-size:1.1rem}.rs-shift-verdict strong,.rs-shift-verdict small{display:block}.rs-shift-verdict strong{color:#214f58;font-size:.84rem}.rs-shift-verdict small{margin-top:2px;color:#73898f;font-size:.66rem}.rs-shift-sheet>p{margin:11px 2px 0;color:#365b63;font-size:.76rem;line-height:1.45}.rs-shift-proposal{margin-top:10px;padding:10px 11px;border-radius:14px;background:#edf7f4;color:#225d50}.rs-shift-proposal strong,.rs-shift-proposal span{display:block}.rs-shift-proposal strong{font-size:.65rem}.rs-shift-proposal span{margin-top:3px;font-size:.73rem;line-height:1.4}.rs-day-points{display:grid;gap:7px;margin-top:11px}.rs-day-point{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px;align-items:start;padding:9px 10px;border-radius:13px;background:#f4f8f8}.rs-day-point>span{display:grid;place-items:center;min-height:26px;font-size:1rem}.rs-day-point strong,.rs-day-point p,.rs-day-point small{display:block}.rs-day-point strong{color:#214f58;font-size:.72rem}.rs-day-point p{margin:3px 0 0;color:#526d74;font-size:.67rem;line-height:1.38}.rs-day-point small{margin-top:4px;color:#697f85;font-size:.62rem;line-height:1.35}.rs-day-point.rs-critical{background:#fdecec}.rs-day-point.rs-warning{background:#fff6df}.rs-day-point.rs-opportunity{background:#f3edff}.rs-day-point.rs-ok{background:#edf8f1}.rs-day-empty{margin:11px 2px 0;color:#6f8288;font-size:.7rem}.rs-day-sheet{max-height:min(82vh,720px);overflow:auto}@media(min-width:620px){.rs-shift-overlay{align-items:center}}";
   document.head.appendChild(shiftAnalysisStyle);
+
+  window.STIPResponsableStaffing = {
+    ...(window.STIPResponsableStaffing || {}),
+    openShiftAnalysis,
+    openDayAnalysis,
+    closeAnalysis: closeShiftAnalysis,
+  };
 
   summary();
   setInterval(() => {
