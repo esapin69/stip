@@ -92,13 +92,6 @@
   #detailView .service-app-grid{grid-template-columns:1fr!important}
 
   /* HFME west -> east reference: Vert, Bleu, Rose, Orange. */
-  #detailView .hfme-legend{display:flex!important;flex-wrap:wrap!important;white-space:normal!important;overflow:visible!important;row-gap:5px!important}
-  #detailView .hfme-legend-label{font-size:.72rem!important}
-  #detailView .hfme-legend .color-chip{font-size:.7rem!important}
-  #detailView .hfme-legend .color-chip:nth-of-type(1){order:1}
-  #detailView .hfme-legend .color-chip:nth-of-type(2){order:2}
-  #detailView .hfme-legend .color-chip:nth-of-type(3){order:3}
-  #detailView .hfme-legend .color-chip:nth-of-type(4){order:4}
   #detailView .floor-body{padding-right:4px!important}
   #homeView *,#detailView *{text-overflow:clip}
 }
