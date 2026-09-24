@@ -1306,59 +1306,30 @@
   function fixedShiftLegend() {
     const key =
         state.dateJumpMonth ||
-        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        selectedWeek()[0]?.iso?.slice(0, 7) ||
         parisIso().slice(0, 7),
-      parts = key.split("-").map(Number),
-      year = parts[0],
-      month = parts[1],
+      [year, month] = key.split("-").map(Number),
       last = new Date(year, month, 0, 12).getDate(),
+      weekModel = weekDisplayModel(selectedWeek()),
+      visibleDates = new Set(),
       items = [],
       seen = new Set(),
-      add = (id, html) => {
+      add = (id, iconHtml, label, meta = "") => {
         if (!id || seen.has(id)) return;
         seen.add(id);
-        items.push(html);
-      };
-
-    for (let day = 1; day <= last; day++) {
-      const iso = key + "-" + String(day).padStart(2, "0"),
-        shift = calendarShiftForDate(iso);
-      if (shift?.code && shift.code !== "—") {
-        const code = shift.code,
-          def = shiftDefinition(code);
-        if (def?.is_working) {
-          const family = String(def.family || "").toLowerCase();
-          add(
-            "shift:" + code,
-            '<span class="hc-fixed-shift-item"><i class="shift-' +
-              esc(family) +
-              '" aria-hidden="true"></i><b>' +
-              esc(def.label || code) +
-              '</b><em>•</em><strong>' +
-              esc(shiftTime(code)) +
-              "</strong></span>",
-          );
-        } else {
-          const label = def?.label || code,
-            symbol = String(def?.icon || "");
-          add(
-            "status:" + code,
-            '<span class="hc-fixed-shift-item">' +
-              (symbol
-                ? '<i class="hc-legend-symbol" aria-hidden="true">' +
-                  esc(symbol) +
-                  "</i>"
-                : "") +
-              "<b>" +
-              esc(code) +
-              "</b><em>•</em><strong>" +
-              esc(label) +
-              "</strong></span>",
-          );
-        }
-      }
-
-      calendarEventIcons(iso).forEach((icon) => {
+        items.push(
+          `<button type="button" class="stip-legend-item" data-stip-legend-key="${esc(id)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${iconHtml}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</button>`,
+        );
+      },
+      addEvent = (event) => {
+        const descriptor = legendEventDescriptor(event);
+        add(
+          "event:" + descriptor.icon + "|" + descriptor.label,
+          esc(descriptor.icon),
+          descriptor.label,
+        );
+      },
+      addEventIcon = (icon) => {
         const label =
           {
             "🩺": "Visite médicale",
@@ -1368,33 +1339,65 @@
             "❗": "Important",
             "📌": "Événement",
           }[icon] || "Événement";
-        add(
-          "event:" + icon + "|" + label,
-          '<span class="hc-fixed-shift-item hc-fixed-event-legend"><i class="hc-legend-symbol" aria-hidden="true">' +
-            esc(icon) +
-            "</i><b>" +
-            esc(label) +
-            "</b></span>",
-        );
-      });
+        add("event:" + icon + "|" + label, esc(icon), label);
+      };
+
+    for (let day = 1; day <= last; day++)
+      visibleDates.add(key + "-" + String(day).padStart(2, "0"));
+    weekModel.visualDays.forEach((day) => {
+      if (day?.iso) visibleDates.add(day.iso);
+    });
+
+    for (const iso of visibleDates) {
+      const shift = calendarShiftForDate(iso);
+      if (shift?.code && shift.code !== "—") {
+        const code = shift.code,
+          def = shiftDefinition(code);
+        if (def?.is_working) {
+          const family = String(def.family || "other").toLowerCase();
+          add(
+            "shift:" + code,
+            `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`,
+            def.label || code,
+            shiftTime(code),
+          );
+        } else {
+          const label = def?.label || shift.label || code,
+            symbol = String(def?.icon || shift.icon || "•");
+          add("status:" + code, esc(symbol), `${code} — ${label}`);
+        }
+      }
+      calendarEventIcons(iso).forEach(addEventIcon);
     }
 
-    const visibleWeekHasPending = navigationWeek().some((day) => {
+    // The week detail and month detail can expose more event symbols than the
+    // compact calendar cells; include those too so the page legend is complete.
+    const weekDaysNow = weekModel.visualDays.filter((day) => day?.iso),
+      weekStart = weekDaysNow[0]?.iso || "",
+      weekEnd = weekDaysNow.at(-1)?.iso || "";
+    monthTimelineItems(key).forEach(addEvent);
+    if (weekStart && weekEnd)
+      futureItems()
+        .filter((event) => {
+          const start = String(event.date || "").slice(0, 10),
+            end = String(
+              event.endDate || event.end_date || event.date || "",
+            ).slice(0, 10);
+          return !!start && start <= weekEnd && end >= weekStart;
+        })
+        .forEach(addEvent);
+
+    const visibleWeekHasPending = weekModel.visualDays.some((day) => {
       const shift = calendarShiftForDate(day?.iso || "");
       return !shift?.code || shift.code === "—";
     });
-    if (visibleWeekHasPending) {
-      add(
-        "planning:pending",
-        '<span class="hc-fixed-shift-item hc-fixed-event-legend"><i class="hc-legend-symbol" aria-hidden="true">🚫</i><b>Planning non renseigné</b></span>',
-      );
-    }
+    if (visibleWeekHasPending)
+      add("planning:pending", "🚫", "Planning non renseigné");
 
     if (!items.length) return "";
-    return '<section class="hc-fixed-shift-legend" aria-label="Légende des repères de la page"><div>' +
-      items.join("") +
-      "</div></section>";
+    return `<section class="hc-fixed-shift-legend stip-legend" aria-label="Légende des repères de la page"><div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${items.join("")}</div></div></section>`;
   }
+
   function nativeExchanges() {
     const b = state.boot || {},
       src = [
@@ -2057,7 +2060,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${monthDetails ? `${planningMonthEventsSeparator()}<section class="hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}${weeklyDetails ? `<section class="hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${monthDetails ? `${planningMonthEventsSeparator()}<section class="hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}<div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${planningCalendarPocket()}${legend}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
