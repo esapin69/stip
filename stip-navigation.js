@@ -15,6 +15,7 @@
     if (path.includes("cadre-")) return "cadre.html";
     if (path.includes("responsable-")) return "responsable.html";
     if (path.includes("agent-date-detail")) return "agent-dates.html";
+    if (path.includes("agent-directory")) return "index.html#/apps";
     return "index.html";
   }
 
