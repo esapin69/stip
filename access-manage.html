@@ -7,12 +7,12 @@
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
     <meta name="robots" content="noindex,nofollow" />
-    <title>ADMIN · Accès & historique · STIP</title>
+    <title>ACCÈS · Profils & historique · STIP</title>
     <link rel="stylesheet" href="stip-theme.css?v=20260924-month-template2" />
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260924-shared-wall1" />
-    <link rel="stylesheet" href="access-manage.css?v=20260924-shared-wall1" />
+    <link rel="stylesheet" href="access-manage.css?v=20260925-control1" />
     <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
@@ -27,12 +27,12 @@
         </button>
         <div>
           <span class="stip-kicker">STIP · SÉCURISÉ</span>
-          <h1 class="stip-title">ADMIN</h1>
-          <p class="stip-subtitle">Accès & historique</p>
+          <h1 class="stip-title">ACCÈS</h1>
+          <p class="stip-subtitle">Profils, droits & historique</p>
         </div>
       </header>
 
-      <nav class="access-mode-switch stip-filter-bubbles" data-count="2" aria-label="Vue ADMIN">
+      <nav class="access-mode-switch stip-filter-bubbles" data-count="3" aria-label="Accès, historique et contrôle">
         <button id="accessManageTab" class="stip-filter-choice active" type="button" aria-selected="true">
           <span class="stip-filter-visual" aria-hidden="true">🔐<i class="stip-filter-visual-badge">🔑</i></span>
           <span class="stip-filter-copy"><strong>Accès</strong><small>Profils & droits</small></span>
@@ -40,6 +40,10 @@
         <button id="accessHistoryTab" class="stip-filter-choice" type="button" aria-selected="false">
           <span class="stip-filter-visual" aria-hidden="true">🕘<i class="stip-filter-visual-badge">↺</i></span>
           <span class="stip-filter-copy"><strong>Historique</strong><small>Connexions & ouvertures</small></span>
+        </button>
+        <button id="accessControlTab" class="stip-filter-choice" type="button" aria-selected="false">
+          <span class="stip-filter-visual" aria-hidden="true">♻️<i class="stip-filter-visual-badge">✓</i></span>
+          <span class="stip-filter-copy"><strong>Contrôle</strong><small>Tri & ressources</small></span>
         </button>
       </nav>
 
@@ -184,7 +188,7 @@
       <p id="msg" class="access-message" role="status"></p>
     </main>
     <script src="stip-agent-selector.js?v=20260924-shared-wall1"></script>
-    <script src="access-manage.js?v=20260924-shared-wall1"></script>
+    <script src="access-manage.js?v=20260925-control1"></script>
     <script src="quick-access-universal.js?v=20260924-history2"></script>
   </body>
 </html>
