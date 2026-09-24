@@ -3912,10 +3912,9 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   margin:0 0 4px!important;color:#71868e!important;font-size:.55rem!important;font-weight:950!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-weekdays>span{padding:3px 0!important}
-.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button,
-.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-empty{height:62px!important;min-height:62px!important}
+.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-empty{height:88px!important;min-height:88px!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button{
-  grid-template-rows:18px 21px 19px!important;gap:1px!important;padding:2px 1px 1px!important;
+  padding:2px 1px 1px!important;
   overflow:visible!important;border:1px solid transparent!important;border-radius:15px!important;background:#f7fafb!important;
 }
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid>button.is-selected{
@@ -3935,7 +3934,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-icon{line-height:1!important;transform:none!important}
 .hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-events{
   min-height:19px!important;height:19px!important;display:flex!important;align-items:center!important;justify-content:center!important;
-  gap:1px!important;overflow:visible!important;padding:0!important;line-height:1!important;letter-spacing:-.08em!important;
+  overflow:visible!important;padding:0!important;line-height:1!important;letter-spacing:-.08em!important;
 }
 
 /* AGENDA — independent buttons, same card language as the duty-chief button */
