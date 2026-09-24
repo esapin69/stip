@@ -561,3 +561,39 @@
     font-size:.74rem;
   }
 }
+
+
+/* access-history-fold-20260924 — détails repliés par défaut */
+.access-history-person>summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  cursor:pointer;
+  list-style:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.access-history-person>summary::-webkit-details-marker{display:none}
+.access-history-person>summary::marker{content:""}
+.access-history-person>summary strong,
+.access-history-person>summary small{display:block}
+.access-history-person>summary small{
+  margin-top:3px;
+  color:var(--stip-muted);
+}
+.access-history-toggle{
+  width:11px;
+  height:11px;
+  flex:0 0 auto;
+  margin-right:3px;
+  border-right:2px solid var(--stip-muted);
+  border-bottom:2px solid var(--stip-muted);
+  transform:rotate(45deg);
+  transition:transform .18s ease;
+}
+.access-history-person[open] .access-history-toggle{
+  transform:rotate(225deg);
+}
+.access-history-person:not([open]) .access-history-events{
+  display:none;
+}
