@@ -44,7 +44,13 @@ check(spirit.includes('Array.from({ length: 7 }'),'Esprit d’équipe ne constru
 check(spirit.includes('loadCore(addDays(state.weekStart, -7))')&&spirit.includes('loadCore(addDays(state.weekStart, 7))'),'Le préchargement des semaines adjacentes a disparu.');
 
 const selector=read('stip-agent-selector.js');
-check(['M','J','J4','S','N'].every(code=>new RegExp(`\\b${code}: \\{ label:`).test(selector)),'Le sélecteur commun a perdu un horaire de référence.');
+const shiftRegistry=read('shift-registry.js');
+check(
+  selector.includes('STIPShiftRegistry?.resolve') &&
+  selector.includes('STIPShiftRegistry?.time') &&
+  ['J4','M','J','S','N'].every(code=>shiftRegistry.includes(`return "${code}"`)),
+  'Le sélecteur commun ne consomme plus le registre central des shifts.'
+);
 check(selector.includes('sas-absence-divider')&&selector.includes('sas-absent'),'Le sélecteur commun ne sépare plus les absents.');
 check(read('responsable-agents.js').includes('STIPAgentSelector.mount'),'Responsable ne réutilise plus le sélecteur commun.');
 
