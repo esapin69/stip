@@ -1329,8 +1329,8 @@
           ? '<div class="tb-confidence-override" aria-label="Information supplémentaire">' +
               '<div class="tb-confidence-label"><strong>Info en plus</strong><small data-confidence-mode>facultatif</small></div>' +
               '<div class="tb-confidence-actions">' +
-                '<button type="button" data-confidence="fast" aria-label="Peut partir vite"><span>🧊</span><strong>Vite</strong></button>' +
-                '<button type="button" data-confidence="sheltered" aria-label="Plutôt stable"><span>🔥</span><strong>Stable</strong></button>' +
+                '<button type="button" data-confidence="fast" aria-label="Peut partir vite"><span>🧊</span><strong>Peut partir vite</strong></button>' +
+                '<button type="button" data-confidence="sheltered" aria-label="Plutôt stable"><span>🔥</span><strong>Plutôt stable</strong></button>' +
               '</div>' +
             '</div>'
           : '') +
@@ -2521,7 +2521,9 @@
           '<small>' + esc(freshness.label) + '</small>' +
         '</div>' +
         '<div class="tb-freshness-track" aria-hidden="true">' +
-          '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%"></i>' +
+          '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%">' +
+            '<span>' + freshness.icon + '</span>' +
+          '</i>' +
         '</div>' +
       '</div>'
     );
@@ -2557,7 +2559,10 @@
       node.title = freshness.label;
 
       const marker = node.querySelector(".tb-freshness-marker");
-      marker?.style.setProperty("--freshness-position", freshness.position + "%");
+      if (marker) {
+        marker.style.setProperty("--freshness-position", freshness.position + "%");
+        marker.innerHTML = '<span>' + freshness.icon + '</span>';
+      }
     });
   }
 
