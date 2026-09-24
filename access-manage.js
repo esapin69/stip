@@ -298,7 +298,12 @@
   const call = (action, body) => request(API, action, body);
   const callDates = (action, body) => request(DATES_API, action, body);
   function message(text) {
-    $("msg").textContent = text || "";
+    const value = String(text || "");
+    if (/tape\s+au\s+moins\s+2\s+lettres/i.test(value)) {
+      $("msg").textContent = "";
+      return;
+    }
+    $("msg").textContent = value;
   }
   function displayAccessText(value = "") {
     return String(value)
@@ -312,6 +317,7 @@
   }
 
   async function load() {
+    message("");
     try {
       data = await call("list", { q: $("q").value });
       if (peopleMode === "with") renderPeople();
