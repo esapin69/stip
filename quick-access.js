@@ -24,7 +24,7 @@
       open: () => window.STIPRouter?.set?.("team"),
     },
     agents: {
-      label: "Agents",
+      label: "Équipe",
       open: () => (location.href = "agent-directory.html"),
     },
     compare: {
@@ -69,7 +69,7 @@
       open: () => (location.href = "responsable.html?tab=suivi&tool=requests"),
     },
     resp_directory: {
-      label: "Brancardiers",
+      label: "Équipe du jour",
       open: () => (location.href = "responsable.html?tab=equipe"),
     },
     resp_agenda: {
