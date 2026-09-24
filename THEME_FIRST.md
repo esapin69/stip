@@ -198,7 +198,10 @@ Contrat commun :
 - structure d’une ligne : `.stip-legend-icon` → `.stip-legend-bullet` contenant `•` → libellé ; une information secondaire éventuelle reste après le libellé ;
 - aucune page ne redéfinit localement l’alignement, la géométrie, le fond, le rayon ou l’état pressé de la légende ;
 - une page peut seulement fournir ses icônes, ses libellés et l’action métier déclenchée au clic ;
-- les entrées doivent être dérivées des symboles réellement visibles afin de respecter le contrat de complétude des légendes.
+- les entrées doivent être dérivées des symboles réellement visibles afin de respecter le contrat de complétude des légendes ;
+- une légende de page doit expliquer **tous les repères informationnels visibles sur la page ouverte** : icônes, dessins, pastilles, couleurs, badges et symboles d’état, y compris ceux présents dans la semaine, le mois, les synthèses et les détails ;
+- un même concept n’est expliqué qu’une fois dans la légende, même s’il apparaît plusieurs fois dans la page ;
+- les contrôles de navigation ou d’action (flèches, téléphone, fermeture, ajout, menu, etc.) ne sont pas des entrées de légende.
 
 Exemple :
 
