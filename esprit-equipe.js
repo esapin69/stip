@@ -589,7 +589,7 @@
             : '<span class="team-cal-marker-empty" aria-hidden="true"></span>',
         aria = [dayTitle(value), signal?.label || ""].filter(Boolean).join(", ");
       cells.push(
-        `<button type="button" class="stip-month-day ${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number stip-month-day-number">${day}</b><span class="team-cal-marker">${marker}</span><small class="team-cal-events stip-month-events"></small></button>`,
+        `<button type="button" class="stip-month-day ${cls}" data-team-cal-day="${value}" aria-label="${esc(aria)}"><b class="team-cal-day-number stip-month-day-number">${day}</b><span class="team-cal-marker stip-month-primary">${marker}</span><small class="team-cal-events stip-month-events"></small></button>`,
       );
     }
     state.dateJumpMonth = `${year}-${String(month + 1).padStart(2, "0")}`;
