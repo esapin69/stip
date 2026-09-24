@@ -188,7 +188,7 @@ check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),
 check(
   home.includes('work: Boolean(workIcon)') &&
   home.includes('shift.work') &&
-  home.includes('hc-date-jump-dot shift-${esc(shift.type)}'),
+  home.includes('hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}'),
   'Le calendrier doit réserver la pastille colorée aux shifts réellement travaillés.'
 );
 check(
@@ -269,6 +269,51 @@ check(
   homeCss.includes('.hc-date-jump-grid>button.is-selected') &&
   homeCss.includes('.hc-date-jump-grid>button.is-today:not(.is-selected)'),
   'Le calendrier doit distinguer visuellement le jour sélectionné et aujourd’hui.'
+);
+
+/* Contrat commun de tous les tableaux calendrier 1 mois. */
+const agentMonthSource=read('agent-agenda-view.js');
+const agentMonthCss=read('agent-agenda-view.css');
+const planningUiSource=read('planning-ui.js');
+check(
+  theme.includes('--stip-month-icon-size:1.32rem') &&
+  patterns.includes('.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number') &&
+  patterns.includes('font-size:var(--stip-month-icon-size)!important'),
+  'Le contrat calendrier 1 mois doit rester centralisé dans le thème partagé.'
+);
+check(
+  home.includes('stip-month-calendar') &&
+  planningHome.includes('stip-month-calendar') &&
+  agentMonthSource.includes('stip-month-calendar') &&
+  read('esprit-equipe.html').includes('stip-month-calendar') &&
+  planningUiSource.includes('stip-month-calendar'),
+  'Un calendrier mensuel a quitté le contrat visuel commun.'
+);
+check(
+  home.includes('weekend ? "is-weekend" : ""') &&
+  planningHome.includes('weekend ? "weekend is-weekend" : ""') &&
+  agentMonthSource.includes('weekend?"is-weekend":""') &&
+  read('esprit-equipe.js').includes('weekend ? "is-weekend" : ""') &&
+  planningUiSource.includes("weekend?' is-weekend':''"),
+  'Les chiffres de samedi et dimanche doivent tous passer par la règle rouge commune.'
+);
+check(
+  !theme.includes('.ph-day-head.weekend{color') &&
+  !planningHome.includes('.ph-day-head.weekend{color'),
+  'Les libellés SA/DI ne doivent pas hériter du rouge réservé aux chiffres des week-ends.'
+);
+check(
+  !/\.hc-date-jump-(?:icon|events)\{[^}]*font-size/s.test(homeCss) &&
+  !/\.aav-cal-shift\{[^}]*font-size/s.test(agentMonthCss) &&
+  !/\.aav-cal-day small\{[^}]*font-size/s.test(agentMonthCss) &&
+  !/\.team-cal-(?:icon|events|status)[^{]*\{[^}]*font-size/s.test(read('esprit-equipe.css')),
+  'Une page redéfinit encore localement la taille des icônes du calendrier mensuel.'
+);
+check(
+  home.includes('stip-month-dot') &&
+  agentMonthSource.includes('stip-month-dot') &&
+  !patterns.includes('.stip-month-dot{'),
+  'Les pastilles de couleur doivent garder leur gabarit local actuel et rester la seule exception de taille.'
 );
 
 const espritHtml=read('esprit-equipe.html');
