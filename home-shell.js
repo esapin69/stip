@@ -1354,10 +1354,15 @@
         const code = shift.code,
           def = shiftDefinition(code);
         if (def?.is_working) {
-          const family = String(def.family || "other").toLowerCase();
+          const family = String(def.family || "other").toLowerCase(),
+            workIcon = String(def.icon || shift.icon || "").trim(),
+            dot = `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`,
+            glyph = workIcon
+              ? `<span class="hc-legend-shift-pair"><span>${esc(workIcon)}</span>${dot}</span>`
+              : dot;
           add(
             "shift:" + code,
-            `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`,
+            glyph,
             def.label || code,
             shiftTime(code),
           );
