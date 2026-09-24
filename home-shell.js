@@ -2187,7 +2187,16 @@
           win = frame.contentWindow;
         if (!doc || !win) return;
 
-        // Any route leaving Responsable becomes a normal parent-page navigation.
+        // The iframe exists briefly as about:blank before Responsable loads.
+        // Never let that transient document replace the parent page.
+        if (
+          win.location.protocol === "about:" ||
+          !win.location.href ||
+          win.location.href === "about:blank"
+        )
+          return;
+
+        // Any real route leaving Responsable becomes a normal parent-page navigation.
         if (!/\/responsable\.html$/i.test(win.location.pathname)) {
           location.href = win.location.href;
           return;
