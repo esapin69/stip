@@ -128,7 +128,99 @@ function appendSheet(book:any,name:string,rows:any[]){
   const ws=XLSX.utils.json_to_sheet(normalized.length?normalized:[{info:'Aucune donnée'}])
   XLSX.utils.book_append_sheet(book,ws,name.slice(0,31))
 }
-function xlsxResponse(snapshot:any){
+
+const DOMAIN_PLACE_TYPES:Record<string,Set<string>>={
+  services:new Set(['service','unit','room','virtual_room','reception','staff_area','staff_room']),
+  examens:new Set(['exam']),
+  blocs:new Set(['block']),
+  acces:new Set(['entrance','elevator','elevator_group','walkway','landmark','hall','helipad','operational_landmark','operational_point'])
+}
+function cleanScope(raw:any){
+  const mode=['all','building','domain','custom'].includes(String(raw?.mode||''))?String(raw.mode):'all'
+  const building_codes=Array.isArray(raw?.building_codes)?raw.building_codes.map((x:any)=>String(x||'').trim().toUpperCase()).filter(Boolean).slice(0,30):[]
+  const domain=String(raw?.domain||'').trim().toLowerCase()
+  const place_ids=Array.isArray(raw?.place_ids)?raw.place_ids.map((x:any)=>String(x||'').trim()).filter(Boolean).slice(0,250):[]
+  return {mode,building_codes,domain,place_ids}
+}
+function scopeDisplayLabel(scope:any){
+  if(scope.mode==='building'){
+    const labels=scope.building_codes.map((code:string)=>MAIN_BUILDINGS.find(b=>b.code===code)?.label||code)
+    return labels.length?labels.join(' + '):'Bâtiment'
+  }
+  if(scope.mode==='domain'){
+    return ({services:'Services & unités',examens:'Examens',blocs:'Blocs',acces:'Accès & repères'} as Record<string,string>)[scope.domain]||'Domaine'
+  }
+  if(scope.mode==='custom')return'Sélection personnalisée'
+  return'GHE complet'
+}
+function scopeFilePart(label:string){
+  return pdfSafe(label).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,54)||'GHE'
+}
+function scopedSnapshot(snapshot:any,rawScope:any){
+  const scope=cleanScope(rawScope)
+  if(scope.mode==='all')return {snapshot,scope,label:scopeDisplayLabel(scope)}
+  const places=snapshot.places||[]
+  const byId=new Map<string,any>(places.map((p:any)=>[String(p.id),p]))
+  const selected=new Set<string>()
+  if(scope.mode==='building'){
+    const codes=new Set(scope.building_codes)
+    for(const p of places)if(codes.has(String(p.building_code||'').toUpperCase()))selected.add(String(p.id))
+  }else if(scope.mode==='domain'){
+    const types=DOMAIN_PLACE_TYPES[scope.domain]||new Set<string>()
+    for(const p of places)if(types.has(String(p.place_type||'')))selected.add(String(p.id))
+  }else if(scope.mode==='custom'){
+    for(const id of scope.place_ids)if(byId.has(id))selected.add(id)
+  }
+  const addAncestors=(id:string)=>{
+    let p=byId.get(id),guard=0
+    while(p&&guard++<20){
+      selected.add(String(p.id))
+      const parent=String(p.parent_id||'')
+      if(!parent||!byId.has(parent))break
+      p=byId.get(parent)
+    }
+  }
+  for(const id of [...selected])addAncestors(id)
+
+  const routes=(snapshot.routes||[]).filter((r:any)=>selected.has(String(r.to_place_id||'')))
+  for(const r of routes){
+    const from=String(r.from_place_id||'')
+    if(from&&byId.has(from))addAncestors(from)
+  }
+  const routeIds=new Set(routes.map((r:any)=>String(r.id)))
+  const route_steps=(snapshot.route_steps||[]).filter((x:any)=>routeIds.has(String(x.route_id)))
+  for(const step of route_steps){
+    const landmark=String(step.landmark_place_id||'')
+    if(landmark&&byId.has(landmark))addAncestors(landmark)
+  }
+
+  const filteredPlaces=places.filter((p:any)=>selected.has(String(p.id)))
+  if(!filteredPlaces.length)throw new Error('Aucune destination ne correspond à cette sélection.')
+  const ids=new Set(filteredPlaces.map((p:any)=>String(p.id)))
+  const relations=(snapshot.relations||[]).filter((r:any)=>ids.has(String(r.from_place_id||''))&&ids.has(String(r.to_place_id||'')))
+  const constraints=(snapshot.constraints||[]).filter((c:any)=>{
+    const list=Array.isArray(c.scope)?c.scope.map((x:any)=>String(x)):[]
+    return list.length===0||list.some((id:string)=>ids.has(id))
+  })
+  const elevator_stops=(snapshot.elevator_stops||[]).filter((x:any)=>ids.has(String(x.elevator_id||'')))
+    .map((x:any)=>({...x,linked_place_id:x.linked_place_id&&ids.has(String(x.linked_place_id))?x.linked_place_id:null}))
+  const room_ranges=(snapshot.room_ranges||[]).filter((x:any)=>!x.service_place_id||ids.has(String(x.service_place_id)))
+  const filtered={
+    ...snapshot,
+    places:filteredPlaces,
+    aliases:(snapshot.aliases||[]).filter((x:any)=>ids.has(String(x.place_id))),
+    tags:(snapshot.tags||[]).filter((x:any)=>ids.has(String(x.place_id))),
+    relations,
+    routes,
+    route_steps,
+    constraints,
+    elevator_stops,
+    room_ranges
+  }
+  return {snapshot:filtered,scope,label:scopeDisplayLabel(scope)}
+}
+
+function xlsxResponse(snapshot:any,scopeLabel='GHE complet'){
   const book=XLSX.utils.book_new()
   appendSheet(book,'DESTINATIONS',snapshot.places)
   appendSheet(book,'ALIASES',snapshot.aliases)
@@ -150,7 +242,7 @@ function xlsxResponse(snapshot:any){
   return new Response(bytes,{status:200,headers:{
     ...CORS,
     'Content-Type':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'Content-Disposition':'attachment; filename="Visite-des-lieux-GHE-'+exportDate()+'.xlsx"',
+    'Content-Disposition':'attachment; filename="Visite-des-lieux-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.xlsx"',
     'Cache-Control':'no-store'
   }})
 }
@@ -204,7 +296,7 @@ function wrapPdf(font:any,text:string,size:number,maxWidth:number){
   if(current)lines.push(current)
   return lines
 }
-async function pdfResponse(snapshot:any){
+async function pdfResponse(snapshot:any,scopeLabel='GHE complet'){
   const pdf=await PDFDocument.create()
   const regular=await pdf.embedFont(StandardFonts.Helvetica)
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
@@ -260,7 +352,7 @@ async function pdfResponse(snapshot:any){
   const tagsBy=new Map<string,string[]>()
   for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
 
-  freshPage('VISITER LES LIEUX - GHE','Export opérationnel généré depuis la source canonique Supabase · '+exportDate())
+  freshPage('VISITER LES LIEUX - '+scopeLabel,'Export opérationnel généré depuis la source canonique Supabase · '+exportDate())
   heading('REPÈRES BÂTIMENTS')
   const roots=(snapshot.places||[]).filter((p:any)=>['hospital','building','building_or_zone'].includes(p.place_type)&&p.id!=='ghe')
     .sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))
@@ -270,9 +362,10 @@ async function pdfResponse(snapshot:any){
   }
 
   const renderBuilding=(code:string,label:string,subtitle:string)=>{
+    const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
+    if(!rows.length)return
     divider(label,subtitle,'Synthèse des destinations, niveaux, codes, contacts et repères disponibles dans STIP')
     freshPage(label+' · '+subtitle,'Données issues du référentiel Supabase au '+exportDate())
-    const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
     const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
     for(const lvl of levels){
       heading(levelLabel(lvl))
@@ -293,8 +386,11 @@ async function pdfResponse(snapshot:any){
 
   for(const b of MAIN_BUILDINGS)renderBuilding(b.code,b.label,b.subtitle)
 
-  divider('BÂTIMENTS ANNEXES','GHE · REPÈRES BÂTIMENTS','A1 · A3 · A4 · B1 · B13 · B14 · B16 · CERMEP · MPM · Radiothérapie · Mortuaire · autres repères')
-  freshPage('BÂTIMENTS ANNEXES · GHE','Référentiel par bâtiment')
+  const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type))
+  if(hasAnnex){
+    divider('BÂTIMENTS ANNEXES','GHE · REPÈRES BÂTIMENTS','A1 · A3 · A4 · B1 · B13 · B14 · B16 · CERMEP · MPM · Radiothérapie · Mortuaire · autres repères')
+    freshPage('BÂTIMENTS ANNEXES · GHE','Référentiel par bâtiment')
+  }
   for(const code of ANNEX_CODES){
     const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type))
     if(!items.length)continue
@@ -316,7 +412,7 @@ async function pdfResponse(snapshot:any){
   return new Response(bytes,{status:200,headers:{
     ...CORS,
     'Content-Type':'application/pdf',
-    'Content-Disposition':'attachment; filename="Visite-des-lieux-GHE-'+exportDate()+'.pdf"',
+    'Content-Disposition':'attachment; filename="Visite-des-lieux-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
     'Cache-Control':'no-store'
   }})
 }
@@ -334,8 +430,9 @@ Deno.serve(async req=>{
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
     if(action==='export_xlsx'||action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
-      const snapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
-      return action==='export_xlsx'?xlsxResponse(snapshot):await pdfResponse(snapshot)
+      const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
+      const scoped=scopedSnapshot(fullSnapshot,body.scope)
+      return action==='export_xlsx'?xlsxResponse(scoped.snapshot,scoped.label):await pdfResponse(scoped.snapshot,scoped.label)
     }
     return json({error:'Action invalide.'},400)
   }catch(e){
