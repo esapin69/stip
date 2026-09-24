@@ -223,10 +223,133 @@
     );
   }
 
+  function pickerFirst(agent) {
+    const direct = String(agent?.prenom || "").trim();
+    if (direct) return direct;
+    const formatted = name(agent).trim().split(/\s+/).filter(Boolean);
+    return formatted[0] || "Agent";
+  }
+
+  function pickerLast(agent) {
+    const direct = String(agent?.nom || "").trim();
+    if (direct) return direct;
+    const formatted = name(agent).trim().split(/\s+/).filter(Boolean);
+    return formatted.length > 1 ? formatted.slice(1).join(" ") : "";
+  }
+
+  function pickerGhe(agent) {
+    const raw = String(agent?.ghe || "").replace(/^GHE\s*/i, "").trim();
+    const match = raw.match(/\d+/);
+    return {
+      raw,
+      number: match ? Number(match[0]) : null,
+      label: match ? `GHE ${Number(match[0])}` : raw ? "AUTRE GHE" : "SANS GHE",
+    };
+  }
+
+  function pickerSearchText(agent, filter) {
+    if (filter === "last") return pickerLast(agent);
+    if (filter === "ghe") {
+      const ghe = pickerGhe(agent);
+      return [ghe.raw, ghe.number == null ? "" : ghe.number, ghe.label].join(" ");
+    }
+    return pickerFirst(agent);
+  }
+
+  function pickerGroup(agent, filter) {
+    if (filter === "ghe") return pickerGhe(agent).label;
+    const value = filter === "last" ? pickerLast(agent) : pickerFirst(agent);
+    const first = normalize(value).charAt(0);
+    return first ? first.toLocaleUpperCase("fr-FR") : "AUTRES";
+  }
+
+  function pickerGroupRank(label, filter) {
+    if (filter !== "ghe") return [0, label];
+    if (label === "SANS GHE") return [0, 0];
+    const match = String(label).match(/\d+/);
+    if (match) return [1, Number(match[0])];
+    return [2, String(label)];
+  }
+
+  function pickerSort(a, b, filter) {
+    if (filter === "ghe") {
+      const ga = pickerGhe(a), gb = pickerGhe(b);
+      const aGroup = ga.number == null ? (ga.raw ? 2 : 0) : 1;
+      const bGroup = gb.number == null ? (gb.raw ? 2 : 0) : 1;
+      if (aGroup !== bGroup) return aGroup - bGroup;
+      if (ga.number != null && gb.number != null && ga.number !== gb.number)
+        return ga.number - gb.number;
+      return name(a).localeCompare(name(b), "fr", { sensitivity: "base" });
+    }
+    const av = filter === "last" ? pickerLast(a) : pickerFirst(a);
+    const bv = filter === "last" ? pickerLast(b) : pickerFirst(b);
+    return av.localeCompare(bv, "fr", { sensitivity: "base" }) ||
+      name(a).localeCompare(name(b), "fr", { sensitivity: "base" });
+  }
+
+  function pickerPortrait(agent) {
+    const url = String(
+      agent?.profile_photo_url ||
+      window.STIPBootCache?.media?.avatars?.[agent?.source_key] ||
+      agent?.avatar_signed_url ||
+      agent?.avatar_url ||
+      "",
+    );
+    const fallback = esc(initials(agent));
+    return `<span class="sas-wall-photo" data-initials="${fallback}">${/^https?:/i.test(url)
+      ? `<img src="${esc(url)}" alt="" loading="lazy">`
+      : fallback}</span>`;
+  }
+
+  function pickerCard(agent, options, filter) {
+    const first = pickerFirst(agent);
+    const last = pickerLast(agent);
+    const ghe = pickerGhe(agent);
+    const selected = String(agent?.id ?? "") === String(options.selectedId ?? "");
+    let copy = "";
+    if (filter === "last") {
+      copy = `<strong>${esc(last || "SANS NOM")}</strong><small>${esc(first)}</small>`;
+    } else if (filter === "ghe") {
+      copy = `<strong class="sas-wall-fullname">${esc(name(agent))}</strong>`;
+    } else {
+      copy = `<strong>${esc(first)}</strong><small>${esc(last)}</small>`;
+    }
+    return `<button class="sas-wall-agent${selected ? " is-selected" : ""}${filter === "ghe" ? " is-ghe-mode" : ""}" type="button" data-sas-agent="${esc(agent.id)}" aria-label="Choisir ${esc(name(agent))}">
+      <span class="sas-wall-portrait">
+        ${pickerPortrait(agent)}
+        <span class="sas-wall-ghe">${esc(ghe.label)}</span>
+        ${selected ? '<span class="sas-wall-selected" aria-hidden="true">✓</span>' : ""}
+      </span>
+      <span class="sas-wall-copy">${copy}</span>
+    </button>`;
+  }
+
+  function pickerSections(items, options, filter) {
+    const groups = new Map();
+    items.forEach((agent) => {
+      const key = pickerGroup(agent, filter);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(agent);
+    });
+    return [...groups.entries()]
+      .sort(([a], [b]) => {
+        const ar = pickerGroupRank(a, filter), br = pickerGroupRank(b, filter);
+        return ar[0] !== br[0]
+          ? ar[0] - br[0]
+          : typeof ar[1] === "number" && typeof br[1] === "number"
+            ? ar[1] - br[1]
+            : String(ar[1]).localeCompare(String(br[1]), "fr", { sensitivity: "base" });
+      })
+      .map(([group, rows]) => `<section class="sas-wall-section">
+        <div class="stip-section-separator is-compact sas-wall-separator"><span>${esc(group)}</span></div>
+        <div class="sas-wall-grid">${rows.sort((a,b)=>pickerSort(a,b,filter)).map((agent)=>pickerCard(agent, options, filter)).join("")}</div>
+      </section>`)
+      .join("");
+  }
+
   function mount(host, rawOptions = {}) {
     if (!host) throw Error("Conteneur de sélection d’agent introuvable.");
     const mode = rawOptions.mode === "picker" ? "picker" : "directory";
-    const minQueryValue = Number(rawOptions.minQuery);
     const options = {
       ...rawOptions,
       mode,
@@ -234,16 +357,16 @@
       showPhone: typeof rawOptions.showPhone === "boolean" ? rawOptions.showPhone : mode !== "picker",
       showAvatar: rawOptions.showAvatar !== false,
       showStatus: typeof rawOptions.showStatus === "boolean" ? rawOptions.showStatus : mode !== "picker",
-      minQuery: Number.isFinite(minQueryValue) ? Math.max(0, minQueryValue) : 2,
     };
     const state = {
       items: Array.isArray(options.items) ? options.items : [],
       query: String(options.query || ""),
+      pickerFilter: ["first","last","ghe"].includes(rawOptions.filter) ? rawOptions.filter : "first",
     };
 
-    function selectedItems() {
+    function directoryResults() {
       const query = normalize(state.query.trim());
-      if (query.length < options.minQuery) return null;
+      if (query.length < 2) return null;
       return state.items
         .filter((agent) =>
           normalize([name(agent), agent.source_key, agent.ghe, agent.today_code]
@@ -253,11 +376,38 @@
         .sort(compareGhe);
     }
 
-    function render() {
-      const picker = options.mode === "picker";
+    function pickerResults() {
+      const query = normalize(state.query.trim());
+      return state.items
+        .filter((agent) => !query || normalize(pickerSearchText(agent, state.pickerFilter)).includes(query))
+        .sort((a,b)=>pickerSort(a,b,state.pickerFilter));
+    }
+
+    function renderPicker() {
+      const results = pickerResults();
+      const heading = options.hideHeading
+        ? ""
+        : `<header class="sas-picker-inline-head"><h2>${esc(options.title || "Rechercher un agent")}</h2></header>`;
+      host.innerHTML = `<section class="sas-selector is-picker">
+        ${heading}
+        <label class="sas-search sas-picker-search"><span aria-hidden="true">⌕</span><input type="search" autocomplete="off" spellcheck="false" value="${esc(state.query)}" placeholder="${esc(options.placeholder || "Rechercher…")}" aria-label="Rechercher un agent"><button type="button" ${state.query ? "" : "hidden"} aria-label="Effacer">×</button></label>
+        <div class="stip-section-separator is-compact sas-filter-separator"><span>FILTRE</span></div>
+        <nav class="sas-picker-filters stip-filter-bubbles" data-count="3" aria-label="Filtrer les agents">
+          <button type="button" class="stip-filter-choice${state.pickerFilter === "first" ? " active" : ""}" data-sas-filter="first" aria-selected="${state.pickerFilter === "first"}"><span class="stip-filter-copy"><strong>Prénoms</strong></span></button>
+          <button type="button" class="stip-filter-choice${state.pickerFilter === "last" ? " active" : ""}" data-sas-filter="last" aria-selected="${state.pickerFilter === "last"}"><span class="stip-filter-copy"><strong>Noms</strong></span></button>
+          <button type="button" class="stip-filter-choice${state.pickerFilter === "ghe" ? " active" : ""}" data-sas-filter="ghe" aria-selected="${state.pickerFilter === "ghe"}"><span class="stip-filter-copy"><strong>GHE</strong></span></button>
+        </nav>
+        <div class="sas-wall" aria-live="polite">
+          ${results.length ? pickerSections(results, options, state.pickerFilter) : '<p class="sas-empty sas-wall-empty">Aucun agent trouvé.</p>'}
+        </div>
+      </section>`;
+      wire();
+    }
+
+    function renderDirectory() {
       const working = state.items.filter(isWorking);
       const absent = state.items.filter((agent) => !isWorking(agent));
-      const results = selectedItems();
+      const results = directoryResults();
       const work = shiftOrder().map((definition) => {
         const code = String(definition.code || "").toUpperCase();
         return workGroup(
@@ -267,7 +417,7 @@
         );
       }).join("");
       let absentHtml = "";
-      if (!picker && options.privacy === "full") {
+      if (options.privacy === "full") {
         const absenceCodes = [...new Set(absent.map((agent) => String(agent.today_code || "")))].sort((a, b) => {
           const ad = shiftDef(a), bd = shiftDef(b),
             ai = Number(ad?.sort_order || 999),
@@ -281,7 +431,7 @@
             options,
           ),
         ).join("");
-      } else if (!picker) {
+      } else {
         const groups = new Map();
         absent.forEach((agent) => {
           const label = publicAbsence(agent.today_code);
@@ -295,34 +445,23 @@
           )
           .join("");
       }
-
-      const kicker = options.kicker || (picker ? "PERSONNES" : "ÉQUIPE DU JOUR");
-      const title = options.title || (picker ? "Rechercher un agent" : "Équipe");
-      const description = options.description || (
-        picker
-          ? `Nom, prénom ou GHE · saisissez au moins ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}.`
-          : "Présents, horaires et absences utiles en un coup d’œil."
-      );
-      const placeholder = options.placeholder || `Nom, prénom ou GHE · dès ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}`;
-      const searchLabel = options.searchLabel || (picker ? "Rechercher un agent" : "Rechercher dans l’équipe");
-      const pickerBody = results
-        ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((agent) => row(agent, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
-        : `<section class="sas-picker-idle" aria-live="polite"><span aria-hidden="true">⌕</span><strong>Recherchez un agent</strong><small>Nom, prénom ou GHE · dès ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}</small></section>`;
-
-      host.innerHTML = `<section class="sas-selector${picker ? " is-picker" : ""}">
+      host.innerHTML = `<section class="sas-selector">
         <header class="sas-heading">
-          <span>${esc(kicker)}</span>
-          <h2>${esc(title)}</h2>
-          <p>${esc(description)}</p>
+          <span>${esc(options.kicker || "ÉQUIPE DU JOUR")}</span>
+          <h2>${esc(options.title || "Équipe")}</h2>
+          <p>${esc(options.description || "Présents, horaires et absences utiles en un coup d’œil.")}</p>
         </header>
-        <label class="sas-search"><span aria-hidden="true">⌕</span><input type="search" autocomplete="off" spellcheck="false" value="${esc(state.query)}" placeholder="${esc(placeholder)}" aria-label="${esc(searchLabel)}"><button type="button" ${state.query ? "" : "hidden"} aria-label="Effacer">×</button></label>
-        ${picker
-          ? pickerBody
-          : results
-            ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((agent) => row(agent, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
-            : `<section class="sas-present"><div class="sas-section-title"><span>PRÉSENTS AUJOURD’HUI</span><b>${working.length}</b></div>${work || '<p class="sas-empty">Aucun agent présent aujourd’hui.</p>'}</section><div class="sas-absence-divider"><span>ABSENTS AUJOURD’HUI</span><b>${absent.length}</b></div><section class="sas-absent">${absentHtml || '<p class="sas-empty">Aucune absence aujourd’hui.</p>'}</section>`}
+        <label class="sas-search"><span aria-hidden="true">⌕</span><input type="search" autocomplete="off" spellcheck="false" value="${esc(state.query)}" placeholder="Nom, prénom ou GHE · dès 2 lettres" aria-label="Rechercher dans l’équipe"><button type="button" ${state.query ? "" : "hidden"} aria-label="Effacer">×</button></label>
+        ${results
+          ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((agent) => row(agent, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
+          : `<section class="sas-present"><div class="sas-section-title"><span>PRÉSENTS AUJOURD’HUI</span><b>${working.length}</b></div>${work || '<p class="sas-empty">Aucun agent présent aujourd’hui.</p>'}</section><div class="sas-absence-divider"><span>ABSENTS AUJOURD’HUI</span><b>${absent.length}</b></div><section class="sas-absent">${absentHtml || '<p class="sas-empty">Aucune absence aujourd’hui.</p>'}</section>`}
       </section>`;
       wire();
+    }
+
+    function render() {
+      if (options.mode === "picker") renderPicker();
+      else renderDirectory();
     }
 
     function wire() {
@@ -341,7 +480,13 @@
         render();
         requestAnimationFrame(() => host.querySelector(".sas-search input")?.focus());
       });
-      host.querySelectorAll(".sas-avatar img").forEach((image) =>
+      host.querySelectorAll("[data-sas-filter]").forEach((button) =>
+        button.addEventListener("click", () => {
+          state.pickerFilter = button.dataset.sasFilter;
+          render();
+        }),
+      );
+      host.querySelectorAll(".sas-avatar img,.sas-wall-photo img").forEach((image) =>
         image.addEventListener("error", () => {
           const box = image.parentElement;
           if (box) box.textContent = box.dataset.initials || "ST";
@@ -379,6 +524,12 @@
         options.selectedId = selectedId;
         render();
       },
+      setFilter(filter) {
+        if (["first","last","ghe"].includes(filter)) {
+          state.pickerFilter = filter;
+          render();
+        }
+      },
       focus() {
         host.querySelector(".sas-search input")?.focus();
       },
@@ -394,6 +545,7 @@
 
   function closePickerOverlay() {
     document.getElementById("sasPickerOverlay")?.remove();
+    document.documentElement.classList.remove("sas-picker-open");
   }
 
   function openPicker(rawOptions = {}) {
@@ -402,31 +554,34 @@
     overlay.id = "sasPickerOverlay";
     overlay.className = "sas-picker-overlay";
     overlay.innerHTML = `
-      <button class="sas-picker-backdrop" type="button" aria-label="Fermer"></button>
       <section class="sas-picker-sheet" role="dialog" aria-modal="true" aria-label="${esc(rawOptions.title || "Rechercher un agent")}">
-        <button class="sas-picker-close" type="button" aria-label="Fermer">×</button>
+        <header class="sas-picker-page-head">
+          <button class="sas-picker-close" type="button" aria-label="Retour">←</button>
+          <h2>${esc(rawOptions.title || "Rechercher un agent")}</h2>
+        </header>
         <div class="sas-picker-host"></div>
       </section>`;
     document.body.appendChild(overlay);
+    document.documentElement.classList.add("sas-picker-open");
 
     let closed = false;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") close();
-    };
     const close = () => {
       if (closed) return;
       closed = true;
       document.removeEventListener("keydown", onKeyDown);
       overlay.remove();
+      document.documentElement.classList.remove("sas-picker-open");
       rawOptions.onClose?.();
     };
-
-    overlay.querySelector(".sas-picker-backdrop")?.addEventListener("click", close);
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
     overlay.querySelector(".sas-picker-close")?.addEventListener("click", close);
     document.addEventListener("keydown", onKeyDown);
 
     const selector = mountPicker(overlay.querySelector(".sas-picker-host"), {
       ...rawOptions,
+      hideHeading: true,
       onSelect(agent) {
         rawOptions.onSelect?.(agent);
         close();

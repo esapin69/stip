@@ -68,30 +68,49 @@
 }
 
 /* Modèle canonique PERSONNES — « Rechercher un agent » */
-.sas-selector.is-picker{width:100%}
-.sas-selector.is-picker .sas-heading{padding-right:44px}
-.sas-selector.is-picker .sas-search{margin:16px 0 12px;border-color:color-mix(in srgb,var(--stip-accent) 24%,var(--stip-line));box-shadow:0 10px 28px rgba(22,59,73,.07)}
-.sas-selector.is-picker .sas-results{border-radius:var(--stip-radius-lg);box-shadow:var(--stip-shadow-soft)}
-.sas-selector.is-picker .sas-results>.sas-person{padding-inline:8px}
-.sas-selector.is-picker .sas-person-main{grid-template-columns:66px 42px minmax(0,1fr) 24px;padding-right:0}
-.sas-selector.is-picker .sas-person.is-selected{background:var(--stip-accent-soft)!important}
-.sas-selector.is-picker .sas-person.is-selected .sas-ghe{border-color:color-mix(in srgb,var(--stip-accent) 38%,var(--stip-line));background:var(--stip-surface)}
-.sas-select-mark{position:relative;display:grid;place-items:center;width:22px;height:22px;border:2px solid var(--stip-muted-2);border-radius:50%;box-sizing:border-box}
-.sas-person.is-selected .sas-select-mark{border-color:var(--stip-accent);background:var(--stip-accent)}
-.sas-person.is-selected .sas-select-mark:after{content:"";width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:translateY(-1px) rotate(-45deg)}
-.sas-picker-idle{display:grid;place-items:center;gap:5px;min-height:190px;padding:28px 18px;border:1px dashed var(--stip-line);border-radius:var(--stip-radius-lg);background:var(--stip-surface-soft);color:var(--stip-muted);text-align:center}
-.sas-picker-idle>span{display:grid;place-items:center;width:54px;height:54px;margin-bottom:4px;border-radius:18px;background:var(--stip-accent-soft);color:var(--stip-accent);font-size:1.65rem}
-.sas-picker-idle>strong{color:var(--stip-ink-2);font-size:.9rem}
-.sas-picker-idle>small{font-size:.7rem;line-height:1.4}
-.sas-picker-overlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(10,31,40,.32);backdrop-filter:blur(5px)}
-.sas-picker-backdrop{position:absolute;inset:0;border:0;background:transparent}
-.sas-picker-sheet{position:relative;z-index:1;width:min(620px,100%);max-height:min(86dvh,820px);box-sizing:border-box;overflow:auto;padding:22px;border:1px solid var(--stip-line);border-radius:var(--stip-radius-xl);background:var(--stip-bg);box-shadow:var(--stip-shadow-strong);overscroll-behavior:contain}
-.sas-picker-close{position:absolute;z-index:3;top:14px;right:14px;display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--stip-line);border-radius:50%;background:var(--stip-surface);color:var(--stip-ink-2);font-size:1.35rem;box-shadow:var(--stip-shadow-soft)}
+html.sas-picker-open{overflow:hidden}
+.sas-selector.is-picker{width:100%;color:var(--stip-ink)}
+.sas-picker-inline-head h2{margin:0 0 14px;font-size:clamp(1.5rem,5vw,2rem);letter-spacing:-.03em}
+.sas-selector.is-picker .sas-search{margin:4px 0 18px;min-height:58px;border-color:color-mix(in srgb,var(--stip-accent) 26%,var(--stip-line));border-radius:var(--stip-radius-lg);box-shadow:var(--stip-shadow-soft)}
+.sas-selector.is-picker .sas-search input{font-size:1rem;font-weight:800}
+.sas-filter-separator{margin:2px 0 10px}
+.sas-picker-filters{margin:0 0 12px}
+.sas-picker-filters .stip-filter-choice{transition:transform var(--stip-motion),box-shadow var(--stip-motion),border-color var(--stip-motion)}
+.sas-picker-filters .stip-filter-choice.active{transform:scale(1.045);z-index:1}
+.sas-picker-filters .stip-filter-choice.active strong{font-weight:950;text-transform:uppercase;letter-spacing:.02em}
+.sas-wall{display:grid;gap:20px;padding-bottom:24px}
+.sas-wall-section{min-width:0}
+.sas-wall-separator{margin:4px 0 12px}
+.sas-wall-separator span{font-size:.76rem;font-weight:950;letter-spacing:.12em}
+.sas-wall-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 8px;align-items:start}
+.sas-wall-agent{display:grid;justify-items:center;align-content:start;min-width:0;padding:0 2px;border:0;background:transparent;color:var(--stip-ink);text-align:center}
+.sas-wall-agent:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:4px;border-radius:var(--stip-radius-md)}
+.sas-wall-portrait{position:relative;display:grid;place-items:center;width:clamp(82px,24vw,104px);max-width:100%;aspect-ratio:1;margin-bottom:17px}
+.sas-wall-photo{display:grid;place-items:center;width:100%;height:100%;overflow:hidden;border:3px solid var(--stip-surface);border-radius:50%;background:var(--stip-accent-soft);color:var(--stip-accent);font-size:1.15rem;font-weight:950;box-shadow:0 8px 20px rgba(22,59,73,.11)}
+.sas-wall-photo img{width:100%;height:100%;object-fit:cover}
+.sas-wall-ghe{position:absolute;z-index:2;left:50%;bottom:-7px;transform:translateX(-50%);max-width:94%;padding:4px 7px;border:2px solid var(--stip-surface);border-radius:999px;background:var(--stip-ink);color:#fff;font-size:.52rem;font-weight:950;line-height:1;white-space:nowrap;box-shadow:var(--stip-shadow-soft)}
+.sas-wall-selected{position:absolute;z-index:3;right:0;top:2px;display:grid;place-items:center;width:25px;height:25px;border:2px solid var(--stip-surface);border-radius:50%;background:var(--stip-accent);color:#fff;font-size:.72rem;font-weight:950;box-shadow:var(--stip-shadow-soft)}
+.sas-wall-agent.is-selected .sas-wall-photo{border-color:var(--stip-accent);box-shadow:0 0 0 3px var(--stip-accent-soft),var(--stip-shadow)}
+.sas-wall-copy{display:grid;justify-items:center;min-width:0;width:100%;line-height:1.12}
+.sas-wall-copy strong,.sas-wall-copy small{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sas-wall-copy strong{font-size:.76rem;font-weight:950;text-transform:uppercase}
+.sas-wall-copy small{margin-top:3px;color:var(--stip-muted);font-size:.68rem;font-weight:780}
+.sas-wall-copy .sas-wall-fullname{font-size:.71rem;text-transform:none}
+.sas-wall-agent.is-ghe-mode .sas-wall-ghe{transform:translateX(-50%) scale(1.09);background:var(--stip-accent);font-size:.56rem}
+.sas-wall-empty{margin-top:10px}
+.sas-picker-overlay{position:fixed;z-index:10000;inset:0;background:var(--stip-bg)}
+.sas-picker-sheet{width:min(100%,760px);height:100dvh;margin:0 auto;overflow:auto;overscroll-behavior:contain;padding:0 var(--stip-page-pad) calc(24px + env(safe-area-inset-bottom));background:var(--stip-bg)}
+.sas-picker-page-head{position:sticky;z-index:10;top:0;display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:center;gap:10px;margin:0 calc(-1 * var(--stip-page-pad)) 12px;padding:calc(12px + env(safe-area-inset-top)) var(--stip-page-pad) 12px;background:color-mix(in srgb,var(--stip-bg) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--stip-line-soft)}
+.sas-picker-page-head h2{grid-column:2;margin:0;text-align:center;font-size:1.18rem;font-weight:950;letter-spacing:-.025em}
+.sas-picker-close{grid-column:1;grid-row:1;display:grid;place-items:center;width:44px;height:44px;border:1px solid var(--stip-line);border-radius:15px;background:var(--stip-surface);color:var(--stip-ink);font-size:1.25rem;font-weight:900;box-shadow:var(--stip-shadow-soft)}
 .sas-picker-close:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:2px}
-@media(max-width:600px){
-  .sas-picker-overlay{display:block;padding:0;background:var(--stip-bg);backdrop-filter:none}
-  .sas-picker-backdrop{display:none}
-  .sas-picker-sheet{width:100%;height:100dvh;max-height:none;padding:calc(18px + env(safe-area-inset-top)) var(--stip-page-pad) calc(22px + env(safe-area-inset-bottom));border:0;border-radius:0;box-shadow:none}
-  .sas-picker-close{top:calc(10px + env(safe-area-inset-top));right:var(--stip-page-pad)}
-  .sas-selector.is-picker .sas-person-main{grid-template-columns:61px 38px minmax(0,1fr) 24px;gap:7px}
+@media(min-width:600px){
+  .sas-picker-overlay{padding:28px;background:rgba(10,31,40,.32);backdrop-filter:blur(5px)}
+  .sas-picker-sheet{height:min(900px,92dvh);border:1px solid var(--stip-line);border-radius:var(--stip-radius-xl);box-shadow:var(--stip-shadow-strong)}
+  .sas-picker-page-head{border-radius:var(--stip-radius-xl) var(--stip-radius-xl) 0 0}
+  .sas-wall-grid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:22px 12px}
+  .sas-wall-portrait{width:104px}
+}
+@media(max-width:350px){
+  .sas-wall-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap-inline:10px}
 }

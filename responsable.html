@@ -16,8 +16,8 @@
     <link rel="stylesheet" href="stip-theme.css?v=20260924-month-icons-gap2" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-context1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="stip-agent-selector.css?v=20260924-team-unified2" />
-    <link rel="stylesheet" href="responsable-agenda.css?v=20260924-filter6b1" />
+    <link rel="stylesheet" href="stip-agent-selector.css?v=20260924-agent-picker-wall1" />
+    <link rel="stylesheet" href="responsable-agenda.css?v=20260924-agent-picker-wall1" />
     <link rel="stylesheet" href="responsable-home.css?v=20260924-filter6b1" />
     <link rel="stylesheet" href="responsable-agenda-home.css?v=20260924-legend3" />
     <link
@@ -277,7 +277,7 @@
               </button>
             </div>
             <form id="taForm" class="ta-form">
-              <label>Agent<select id="taAgent" required><option value="">Chargement…</option></select></label>
+              <label>Agent<button id="taAgentPicker" class="ta-agent-picker" type="button" aria-haspopup="dialog"><span id="taAgentLabel">Choisir un agent…</span><span aria-hidden="true">›</span></button></label><input id="taAgent" type="hidden" value="" />
               <label>Titre<input id="taTitle" maxlength="180" required placeholder="Ex. Réunion d’équipe" /></label>
               <label>Message<textarea id="taBody" maxlength="1500" placeholder="Information utile pour l’agent"></textarea></label>
               <div class="ta-form-grid ta-schedule">
@@ -306,7 +306,7 @@
     <script src="stip-loading.js?v=20260830-core2"></script>
     <script src="name-format.js?v=20260822-final3"></script>
     <script src="shift-registry.js?v=20260924-core1"></script>
-    <script src="stip-agent-selector.js?v=20260924-team-unified2"></script>
+    <script src="stip-agent-selector.js?v=20260924-agent-picker-wall1"></script>
     <script src="stip-navigation.js?v=20260924-context-return1"></script>
     <script src="calendar-subscriptions.js?v=20260922-agentplanning1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
