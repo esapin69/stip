@@ -3,8 +3,8 @@ insert into public.stip_app_catalog
 values
   (
     'agent_directory',
-    'Agents',
-    'Rechercher une personne et ouvrir sa fiche en un coup d''œil.',
+    'Équipe',
+    'Voir les présents, les absents et joindre rapidement un collègue.',
     'agents',
     'single',
     35,
