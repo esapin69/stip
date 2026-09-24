@@ -4,9 +4,18 @@ const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data';
 const STORE='stip_session_v1';
 const MONTHS=['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
 const DAYS=['LUN','MAR','MER','JEU','VEN','SAM','DIM'];
-const SHIFT={M:{label:'Matin',tone:'blue'},J:{label:'Jour',tone:'green'},J4:{label:'J4',tone:'orange'},S:{label:'Soir',tone:'yellow'},N:{label:'Nuit',tone:'night'},RH:{label:'Repos',tone:'rest'},RTT:{label:'RTT',tone:'rest'},RTTA:{label:'RTTA',tone:'rest'},RC:{label:'RC',tone:'rest'},CA:{label:'Congé',tone:'rest'},RF:{label:'RF',tone:'rest'},AA:{label:'AA',tone:'rest'},MA:{label:'Maladie',tone:'rest'},RTA:{label:'Repos',tone:'rest'},SYR:{label:'Repos',tone:'rest'}};
-const SPECIAL_SHIFT={J0464:{base:'J',label:'08h30–16h20 · fixe'},M0130:{base:'M',label:'3h45 · horaire libre'},M0131:{base:'M',label:'7h30 · horaire libre'},M0177:{base:'M',label:'7h30 · horaire libre'},S0113:{base:'S',label:'13h30–21h00 · fixe'}};
-function shiftMeta(raw){const code=String(raw||'').trim().toUpperCase(),clean=code.replace(/\*+$/,'');if(SPECIAL_SHIFT[clean]){const x=SPECIAL_SHIFT[clean],base=SHIFT[x.base]||{tone:'neutral'};return{label:x.label,tone:base.tone,special:true}}return SHIFT[clean]||{label:clean||'—',tone:'neutral'}}
+function shiftMeta(raw){
+  const registry=window.STIPShiftRegistry,
+    def=registry?.resolve?.(raw);
+  return{
+    label:String(def?.label||registry?.clean?.(raw)||String(raw||'').trim().toUpperCase()||'—'),
+    family:String(def?.family||'other'),
+    color:String(def?.color_hex||'#277b86'),
+    softColor:String(def?.soft_color_hex||'#f1f6f7'),
+    onColor:String(def?.on_color_hex||'#ffffff'),
+    special:Boolean(def&&String(def.schedule_mode||'standard')!=='standard'),
+  };
+}
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function call(action,body={}){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':localStorage.getItem(STORE)||''},body:JSON.stringify({action,...body})});const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);return j}
 function currentWeekStart(){const d=new Date();d.setHours(12,0,0,0);const n=d.getDay()||7;d.setDate(d.getDate()-n+1);return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
@@ -17,7 +26,7 @@ function avatar(c,m){const u=m?.avatars?.[c?.source_key];return u?`<img src="${e
 function dateKey(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
 function mondayOf(d){const x=new Date(d);x.setHours(12,0,0,0);const n=x.getDay()||7;x.setDate(x.getDate()-n+1);return x}
 function sundayOf(d){const x=mondayOf(d);x.setDate(x.getDate()+6);return x}
-function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=shiftMeta(code),weekend=d.getDay()===0||d.getDay()===6;return`<div class="pui-day stip-month-day tone-${s.tone}${isToday?' today':''}${weekend?' is-weekend':''}"><strong class="stip-month-day-number">${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
+function dayCell(item,isToday){if(!item)return'<div class="pui-day pui-blank" aria-hidden="true"></div>';const d=new Date(String(item.date)+'T12:00:00'),code=String(item.code||'—').toUpperCase(),s=shiftMeta(code),weekend=d.getDay()===0||d.getDay()===6;return`<div class="pui-day stip-month-day${isToday?' today':''}${weekend?' is-weekend':''}" style="--tone:${esc(s.color)};--tone-ink:${esc(s.onColor)};--tone-soft:${esc(s.softColor)}"><strong class="stip-month-day-number">${d.getDate()}</strong><b>${esc(code)}</b><small>${esc(s.label)}</small></div>`}
 function monthSection(y,m,monthItems){
   const sorted=[...monthItems].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
   const byDate=new Map(sorted.map(x=>[String(x.date),x]));
@@ -41,8 +50,8 @@ function monthSection(y,m,monthItems){
   const firstWeek=isoWeek(start),lastWeek=isoWeek(end);
   return`<section class="pui-month-block stip-month-calendar"><header class="pui-month-banner"><div><strong>${MONTHS[m-1]}</strong><span>${y}</span></div><small>S${firstWeek}${firstWeek===lastWeek?'':'–S'+lastWeek}</small></header><div class="pui-weekdays">${DAYS.map(d=>`<b>${d}</b>`).join('')}</div><div class="pui-calendar-wrap"><div class="pui-week-tags">${weekTags}</div><div class="pui-calendar">${cells}</div></div></section>`
 }
-function renderCalendar({contact,items=[],media={}}){const groups=new Map();for(const x of items){const k=String(x.date).slice(0,7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}const sections=[...groups.entries()].map(([k,list])=>{const[y,m]=k.split('-').map(Number);return monthSection(y,m,list)}).join('');return`<div class="pui-sheet"><div class="pui-agent"><div class="pui-avatar">${avatar(contact,media)}</div><div class="pui-agent-copy"><p>MON PLANNING</p><h2>${esc(name(contact))}</h2><span>À partir de la semaine en cours</span></div></div>${sections||'<div class="pui-none">Aucun planning disponible.</div>'}</div>`}
-async function openPersonal(){const root=document.getElementById('planningWorkspace');if(!root)return;root.classList.remove('hidden');root.innerHTML='<div class="pui-load">Chargement…</div>';try{const[p,b]=await Promise.all([call('personal'),call('bootstrap')]);root.innerHTML=renderCalendar({contact:p.agent||b.agent||{},items:upcoming(p.items||b.personal||[]),media:p.media||b.media||{}})}catch(e){root.innerHTML=`<div class="pui-load">${esc(e.message)}</div>`}}
+function renderCalendar({contact,items=[],media={},shift_definitions=[]}){if(shift_definitions?.length)window.STIPShiftRegistry?.set?.(shift_definitions);const groups=new Map();for(const x of items){const k=String(x.date).slice(0,7);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(x)}const sections=[...groups.entries()].map(([k,list])=>{const[y,m]=k.split('-').map(Number);return monthSection(y,m,list)}).join('');return`<div class="pui-sheet"><div class="pui-agent"><div class="pui-avatar">${avatar(contact,media)}</div><div class="pui-agent-copy"><p>MON PLANNING</p><h2>${esc(name(contact))}</h2><span>À partir de la semaine en cours</span></div></div>${sections||'<div class="pui-none">Aucun planning disponible.</div>'}</div>`}
+async function openPersonal(){const root=document.getElementById('planningWorkspace');if(!root)return;root.classList.remove('hidden');root.innerHTML='<div class="pui-load">Chargement…</div>';try{const[p,b]=await Promise.all([call('personal'),call('bootstrap')]);const defs=p.shift_definitions||b.shift_definitions||[];if(defs.length)window.STIPShiftRegistry?.set?.(defs);root.innerHTML=renderCalendar({contact:p.agent||b.agent||{},items:upcoming(p.items||b.personal||[]),media:p.media||b.media||{},shift_definitions:defs})}catch(e){root.innerHTML=`<div class="pui-load">${esc(e.message)}</div>`}}
 function openPrint(){location.href='print.html'}
 document.addEventListener('click',e=>{const b=e.target.closest?.('[data-planning]');if(!b)return;if(b.dataset.planning==='personal'){e.preventDefault();e.stopImmediatePropagation();window.STIPRouter?.set('planning/personal');openPersonal()}else if(b.dataset.planning==='print'){e.preventDefault();e.stopImmediatePropagation();openPrint()}},true);
 const css=document.createElement('style');css.textContent=`
