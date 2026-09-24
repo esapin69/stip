@@ -5362,6 +5362,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   width:min(100%,760px)!important;
   margin:0 auto!important;
   padding:0!important;
+  overflow-anchor:none!important;
 }
 .hc-team-frame{
   display:block!important;
@@ -5373,6 +5374,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   background:var(--stip-bg,#f6fbfc)!important;
   box-shadow:none!important;
   overflow:hidden!important;
+  overflow-anchor:none!important;
 }
 .hc-home-filters>button[data-home-mode="team"]{
   order:3!important;
