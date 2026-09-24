@@ -4703,10 +4703,10 @@
   border-radius:17px!important;
 }
 .tb-message-right-bg{
-  justify-content:flex-start!important;
+  justify-content:flex-end!important;
 }
 .tb-message-reply-bg{
-  justify-content:flex-end!important;
+  justify-content:flex-start!important;
   background:linear-gradient(90deg,#14758a,#1195ad)!important;
 }
 .tb-message-right-bg.is-delete-bg{
