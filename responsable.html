@@ -13,12 +13,12 @@
       content="default-src 'self'; connect-src 'self' https://yzsrmuxghlengnkyphxj.supabase.co; img-src 'self' data: https://yzsrmuxghlengnkyphxj.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none'"
     />
     <title>Responsable · STIP</title>
-    <link rel="stylesheet" href="stip-theme.css?v=20260924-month-vertical2" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260924-filter6b1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260920-context1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260924-team-unified2" />
-    <link rel="stylesheet" href="responsable-agenda.css?v=20260923-chronology1" />
-    <link rel="stylesheet" href="responsable-home.css?v=20260922-tabs3" />
+    <link rel="stylesheet" href="responsable-agenda.css?v=20260924-filter6b1" />
+    <link rel="stylesheet" href="responsable-home.css?v=20260924-filter6b1" />
     <link rel="stylesheet" href="responsable-agenda-home.css?v=20260924-clickable-signals1" />
     <link
       rel="stylesheet"
@@ -30,18 +30,22 @@
       <div class="brand"><b>STIP</b><span>RESPONSABLE</span></div>
       <a class="home" href="index.html">Accueil STIP</a>
     </header>
-    <nav class="resp-tabs" role="tablist" aria-label="Espace Responsable">
-      <button type="button" role="tab" data-resp-tab="dates" aria-selected="true">
-        <span aria-hidden="true">📅</span><b>Dates</b>
+    <nav class="resp-tabs stip-filter-bubbles" data-count="4" role="tablist" aria-label="Espace Responsable">
+      <button class="stip-filter-choice" type="button" role="tab" data-resp-tab="dates" aria-selected="true">
+        <span class="stip-filter-visual" aria-hidden="true">📅</span>
+        <span class="stip-filter-copy"><strong>Dates</strong></span>
       </button>
-      <button type="button" role="tab" data-resp-tab="suivi" aria-selected="false">
-        <span aria-hidden="true">✓</span><b>Suivi</b>
+      <button class="stip-filter-choice" type="button" role="tab" data-resp-tab="suivi" aria-selected="false">
+        <span class="stip-filter-visual" aria-hidden="true">✓</span>
+        <span class="stip-filter-copy"><strong>Suivi</strong></span>
       </button>
-      <button type="button" role="tab" data-resp-tab="equipe" aria-selected="false">
-        <span aria-hidden="true">👥</span><b>Équipe</b>
+      <button class="stip-filter-choice" type="button" role="tab" data-resp-tab="equipe" aria-selected="false">
+        <span class="stip-filter-visual" aria-hidden="true">👥</span>
+        <span class="stip-filter-copy"><strong>Équipe</strong></span>
       </button>
-      <button type="button" role="tab" data-resp-tab="agenda" aria-selected="false">
-        <span aria-hidden="true">▦</span><b>Agenda</b>
+      <button class="stip-filter-choice" type="button" role="tab" data-resp-tab="agenda" aria-selected="false">
+        <span class="stip-filter-visual" aria-hidden="true">▦</span>
+        <span class="stip-filter-copy"><strong>Agenda</strong></span>
       </button>
     </nav>
     <main class="resp-home resp-home-clean">
@@ -215,11 +219,23 @@
             <span class="ta-hero-arrow">›</span>
           </section>
 
-          <nav class="ta-tabs" aria-label="Filtrer l’agenda">
-            <button type="button" data-filter="all" class="active">Tout <b id="countAll">0</b></button>
-            <button type="button" data-filter="medical">Visites <b id="countMedical">0</b></button>
-            <button type="button" data-filter="intern">Stagiaires <b id="countIntern">0</b></button>
-            <button type="button" data-filter="training">Formations <b id="countTraining">0</b></button>
+          <nav class="ta-tabs stip-filter-bubbles" data-count="4" aria-label="Filtrer l’agenda">
+            <button type="button" data-filter="all" class="stip-filter-choice active" aria-selected="true">
+              <span class="stip-filter-visual" aria-hidden="true">▦</span>
+              <span class="stip-filter-copy"><strong>Tout</strong><small><b id="countAll">0</b> éléments</small></span>
+            </button>
+            <button type="button" data-filter="medical" class="stip-filter-choice" aria-selected="false">
+              <span class="stip-filter-visual" aria-hidden="true">🩺</span>
+              <span class="stip-filter-copy"><strong>Visites</strong><small><b id="countMedical">0</b> rendez-vous</small></span>
+            </button>
+            <button type="button" data-filter="intern" class="stip-filter-choice" aria-selected="false">
+              <span class="stip-filter-visual" aria-hidden="true">👶</span>
+              <span class="stip-filter-copy"><strong>Stagiaires</strong><small><b id="countIntern">0</b> dates</small></span>
+            </button>
+            <button type="button" data-filter="training" class="stip-filter-choice" aria-selected="false">
+              <span class="stip-filter-visual" aria-hidden="true">🎓</span>
+              <span class="stip-filter-copy"><strong>Formations</strong><small><b id="countTraining">0</b> dates</small></span>
+            </button>
           </nav>
 
           <section class="ta-week" id="taWeek" aria-label="Semaine"></section>
@@ -246,10 +262,19 @@
               <button type="button" data-close-add aria-label="Fermer">×</button>
               <div><small>AGENDA ÉQUIPE</small><h2>Ajouter</h2></div>
             </header>
-            <div class="ta-mode-tabs">
-              <button class="active" data-mode="direct" type="button">Ajouter</button>
-              <button data-mode="proposal" type="button">Proposer</button>
-              <button data-mode="notify" type="button">Notifier</button>
+            <div class="ta-mode-tabs stip-filter-bubbles" data-count="3" role="tablist" aria-label="Mode d’ajout">
+              <button class="stip-filter-choice active" data-mode="direct" type="button" aria-selected="true">
+                <span class="stip-filter-visual" aria-hidden="true">＋</span>
+                <span class="stip-filter-copy"><strong>Ajouter</strong></span>
+              </button>
+              <button class="stip-filter-choice" data-mode="proposal" type="button" aria-selected="false" data-tone="lavender">
+                <span class="stip-filter-visual" aria-hidden="true">💬</span>
+                <span class="stip-filter-copy"><strong>Proposer</strong></span>
+              </button>
+              <button class="stip-filter-choice" data-mode="notify" type="button" aria-selected="false" data-tone="warning">
+                <span class="stip-filter-visual" aria-hidden="true">🔔</span>
+                <span class="stip-filter-copy"><strong>Notifier</strong></span>
+              </button>
             </div>
             <form id="taForm" class="ta-form">
               <label>Agent<select id="taAgent" required><option value="">Chargement…</option></select></label>
