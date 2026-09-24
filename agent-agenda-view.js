@@ -19,7 +19,7 @@
     cssLoader=new Promise(resolve=>{
       const l=document.createElement("link");
       l.rel="stylesheet";
-      l.href="agent-agenda-view.css?v=20260924-legend1";
+      l.href="agent-agenda-view.css?v=20260924-legend3";
       l.dataset.agentAgendaCss="1";
       l.onload=()=>resolve(l);
       l.onerror=()=>resolve(l);
@@ -297,7 +297,7 @@
       call.dataset.aavCallName=person(c);
       call.setAttribute("aria-label",phone?`Choisir comment appeler ${person(c)}`:"Appel indisponible");
     }
-    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${agendaSectionSeparator("SEMAINE")}${weekHtml()}${agendaSectionSeparator("MOIS")}${monthHtml()}${eventHtml()}${addForm()}${legendHtml()}${calendarHtml()}`;
+    overlay.querySelector(".aav-body").innerHTML=`${contactHtml()}${agendaSectionSeparator("SEMAINE")}${weekHtml()}${agendaSectionSeparator("MOIS")}${monthHtml()}${eventHtml()}${addForm()}${calendarHtml()}${legendHtml()}`;
     wireBody();
   }
   function moveMonth(step){
