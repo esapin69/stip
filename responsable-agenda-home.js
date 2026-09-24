@@ -575,12 +575,18 @@
     }
   }
 
+  function returnUrl() {
+    return location.pathname + location.search + location.hash;
+  }
+
   function openDatesPage(date, filter = "all") {
     const url =
       "agent-dates.html?date=" +
       encodeURIComponent(date) +
       "&filter=" +
-      encodeURIComponent(filter);
+      encodeURIComponent(filter) +
+      "&return=" +
+      encodeURIComponent(returnUrl());
     if (window.STIPNav) window.STIPNav.go(url);
     else location.href = url;
   }
@@ -622,7 +628,9 @@
       encodeURIComponent(type) +
       "&source=" +
       encodeURIComponent(x.source_id) +
-      "&from=all";
+      "&from=responsable" +
+      "&return=" +
+      encodeURIComponent(returnUrl());
     if (window.STIPNav) window.STIPNav.go(url);
     else location.href = url;
   }
