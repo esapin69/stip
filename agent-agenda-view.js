@@ -80,8 +80,8 @@
     S:{label:"Soir",time:"13h30–21h00",icon:"●",family:"s"},
     N:{label:"Nuit",time:"21h00–06h50",icon:"●",family:"n"},
     RH:{label:"Repos",time:"",icon:"🏝️",family:"rh"},
-    CA:{label:"Congé",time:"",icon:"✈️",family:"off"},
-    CP:{label:"Congé",time:"",icon:"✈️",family:"off"},
+    CA:{label:"CA",time:"",icon:"•",family:"off"},
+    CP:{label:"CP",time:"",icon:"•",family:"off"},
     RTT:{label:"RTT",time:"",icon:"⏱️",family:"off"},
     RTTA:{label:"RTTA",time:"",icon:"⏱️",family:"off"},
     RTA:{label:"RTA",time:"",icon:"⏱️",family:"off"},
@@ -100,6 +100,10 @@
     "-":{label:"Aucun poste",time:"",icon:"",family:"other"},
     "—":{label:"Aucun poste",time:"",icon:"",family:"other"}
   };
+  function centralShiftDefinition(code){
+    const key=String(code||"").trim().toUpperCase(),target=key==="CP"?"CA":key;
+    return (state?.data?.shift_definitions||[]).find(x=>String(x?.code||"").trim().toUpperCase()===target)||null;
+  }
   const FALLBACK_SPECIAL={
     M0130:{base:"M",time:"3h45 · libre entre 06h00 et 21h30"},
     M0131:{base:"M",time:"7h30 · libre entre 06h30 et 21h15"},
@@ -127,7 +131,7 @@
   function shiftInfo(raw){
     const src=String(raw||"").trim().toUpperCase(),star=src.includes("*"),clean=src.replace(/\*/g,""),special=specialShift(clean);
     if(special){const s=special,m=META[s.base];return{...m,base:s.base,raw:src,time:s.time,adapted:true,star}}
-    if(META[clean])return{...META[clean],base:clean,raw:src,star};
+    if(META[clean]){const local={...META[clean]},server=centralShiftDefinition(clean);if(server){local.icon=String(server.icon||"").trim()||local.icon;if(clean==="CA"||clean==="CP")local.label=String(server.label||"").trim()||local.label}return{...local,base:clean,raw:src,star}}
     let base="";
     if(/^M\d+$/.test(clean))base="M";
     else if(/^J4\d+$/.test(clean))base="J4";
