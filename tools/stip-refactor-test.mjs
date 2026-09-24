@@ -324,7 +324,7 @@ check(
   espritJs.includes('function weekControlsMarkup()') &&
   espritJs.includes('id="teamWeekControls"') &&
   espritJs.includes('id="teamDays"') &&
-  espritJs.includes('body = weekControlsMarkup() + staffing + teamDaySummary(bundle, day)') &&
+  espritJs.includes('body = weekControlsMarkup() + daySeparator + staffing + teamDaySummary(bundle, day)') &&
   /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) &&
   espritHtml.includes('id="teamDateJumpPanel"'),
   'Esprit d’équipe a perdu la hiérarchie validée Aujourd’hui / Cette semaine / shifts / Ce mois.'
