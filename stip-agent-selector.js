@@ -274,24 +274,35 @@
           options,
         ),
       ).join("");
-      const absenceCodes = [...new Set(absent.map((agent) => String(agent.today_code || "")))].sort((a, b) => {
-        if (options.privacy !== "full") {
-          const la = publicAbsence(a), lb = publicAbsence(b);
-          const label = la.localeCompare(lb, "fr");
-          if (label) return label;
-        }
-        const ai = ABSENCE_ORDER.indexOf(a.toUpperCase());
-        const bi = ABSENCE_ORDER.indexOf(b.toUpperCase());
-        if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-        return a.localeCompare(b, "fr");
-      });
-      const absentHtml = absenceCodes.map((code) =>
-        absenceGroup(
-          code,
-          absent.filter((agent) => String(agent.today_code || "") === code).sort(compareGhe),
-          options,
-        ),
-      ).join("");
+      let absentHtml = "";
+      if (options.privacy === "full") {
+        const absenceCodes = [...new Set(absent.map((agent) => String(agent.today_code || "")))].sort((a, b) => {
+          const ai = ABSENCE_ORDER.indexOf(a.toUpperCase());
+          const bi = ABSENCE_ORDER.indexOf(b.toUpperCase());
+          if (ai !== -1 || bi !== -1) return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+          return a.localeCompare(b, "fr");
+        });
+        absentHtml = absenceCodes.map((code) =>
+          absenceGroup(
+            code,
+            absent.filter((agent) => String(agent.today_code || "") === code).sort(compareGhe),
+            options,
+          ),
+        ).join("");
+      } else {
+        const groups = new Map();
+        absent.forEach((agent) => {
+          const label = publicAbsence(agent.today_code);
+          if (!groups.has(label)) groups.set(label, []);
+          groups.get(label).push(agent);
+        });
+        absentHtml = [...groups.entries()]
+          .sort(([a], [b]) => a.localeCompare(b, "fr"))
+          .map(([label, rows]) =>
+            `<section class="sas-absence-group"><header><span><b>${esc(label)}</b><small>Non présents aujourd’hui</small></span><strong>${rows.length}</strong></header><div>${rows.sort(compareGhe).map((agent) => row(agent, options)).join("")}</div></section>`,
+          )
+          .join("");
+      }
       host.innerHTML = `<section class="sas-selector">
         <header class="sas-heading">
           <span>${esc(options.kicker || "ÉQUIPE DU JOUR")}</span>
