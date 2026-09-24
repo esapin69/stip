@@ -315,13 +315,112 @@
 }
 .stip-section-separator.is-strong>span{color:var(--stip-ink-2)}
 
+/* Official LEGEND block — shared by every STIP surface.
+   The title always reuses .stip-section-separator so separator changes propagate
+   automatically. Rows are centred, tappable buttons and keep a visible
+   icon • label rhythm. */
+.stip-legend{
+  box-sizing:border-box;
+  width:100%;
+  display:grid;
+  gap:10px;
+}
+.stip-legend>.stip-section-separator{
+  margin:0 0 2px;
+}
 .stip-legend-surface{
   box-sizing:border-box;
   width:100%;
+  padding:14px 12px;
   border:1px solid var(--stip-line);
   border-radius:var(--stip-radius-lg);
   background:linear-gradient(180deg,var(--stip-surface),var(--stip-surface-soft));
   box-shadow:var(--stip-shadow-soft);
+}
+.stip-legend-list{
+  width:100%;
+  display:grid;
+  justify-items:center;
+  gap:5px;
+}
+.stip-legend-item{
+  appearance:none;
+  -webkit-appearance:none;
+  box-sizing:border-box;
+  width:max-content;
+  max-width:100%;
+  min-height:46px;
+  margin:0 auto;
+  padding:7px 12px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:transparent;
+  color:var(--stip-ink-2);
+  font:inherit;
+  font-size:.9rem;
+  font-weight:850;
+  line-height:1.15;
+  text-align:center;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform var(--stip-motion),background-color var(--stip-motion),border-color var(--stip-motion),box-shadow var(--stip-motion);
+}
+.stip-legend-icon{
+  flex:0 0 auto;
+  min-width:1.7rem;
+  display:inline-grid;
+  place-items:center;
+  font-size:1.35rem;
+  line-height:1;
+}
+.stip-legend-bullet{
+  flex:0 0 auto;
+  color:var(--stip-muted-2);
+  font-size:.86rem;
+  font-weight:950;
+  line-height:1;
+}
+.stip-legend-item>b,
+.stip-legend-item>strong{
+  color:var(--stip-ink-2);
+  font-weight:950;
+}
+.stip-legend-item>small{
+  color:var(--stip-muted);
+  font-size:.78rem;
+  font-weight:800;
+  white-space:nowrap;
+}
+.stip-legend-item:hover{
+  border-color:var(--stip-line-soft);
+  background:var(--stip-surface-raised);
+  box-shadow:var(--stip-shadow-soft);
+}
+.stip-legend-item:active{
+  transform:var(--stip-tap);
+  background:var(--stip-surface-active);
+}
+.stip-legend-item[aria-pressed="true"]{
+  border-color:color-mix(in srgb,var(--stip-accent) 38%,var(--stip-line));
+  background:var(--stip-accent-soft);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--stip-accent) 10%,transparent);
+}
+.stip-legend-item:focus-visible{
+  outline:3px solid var(--stip-focus-ring);
+  outline-offset:2px;
+}
+@media(max-width:430px){
+  .stip-legend{gap:8px}
+  .stip-legend-surface{padding:12px 8px}
+  .stip-legend-list{gap:3px}
+  .stip-legend-item{min-height:44px;padding:6px 9px;gap:7px;font-size:.88rem}
+  .stip-legend-icon{min-width:1.6rem;font-size:1.28rem}
+  .stip-legend-item>small{font-size:.74rem}
 }
 
 /* Une seule famille pour les options repliables.
