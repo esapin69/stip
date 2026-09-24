@@ -154,6 +154,39 @@ Sur **Esprit d’équipe**, la ligne **Cette semaine / 7 jours** est placée ava
 
 Le clic sur un jour doit produire un état sélectionné visible, être mémorisé dans le contexte de navigation quand cela est pertinent et rester cohérent avec la semaine affichée.
 
+## Bloc canonique — « LÉGENDE »
+
+Toute légende STIP doit être branchée sur le composant partagé du thème, jamais redessinée localement.
+
+Contrat commun :
+- conteneur : `.stip-legend` ;
+- titre : toujours le séparateur racine `.stip-section-separator` avec le libellé `LÉGENDE` ; si le séparateur officiel change, la légende change automatiquement ;
+- carte : `.stip-legend-surface` puis `.stip-legend-list` ;
+- chaque ligne est un vrai contrôle cliquable `.stip-legend-item`, centré horizontalement et utilisable au doigt ;
+- structure d’une ligne : `.stip-legend-icon` → `.stip-legend-bullet` contenant `•` → libellé ; une information secondaire éventuelle reste après le libellé ;
+- aucune page ne redéfinit localement l’alignement, la géométrie, le fond, le rayon ou l’état pressé de la légende ;
+- une page peut seulement fournir ses icônes, ses libellés et l’action métier déclenchée au clic ;
+- les entrées doivent être dérivées des symboles réellement visibles afin de respecter le contrat de complétude des légendes.
+
+Exemple :
+
+```html
+<section class="stip-legend">
+  <div class="stip-section-separator"><span>LÉGENDE</span></div>
+  <div class="stip-legend-surface">
+    <div class="stip-legend-list">
+      <button class="stip-legend-item" type="button">
+        <span class="stip-legend-icon" aria-hidden="true">🩺</span>
+        <span class="stip-legend-bullet" aria-hidden="true">•</span>
+        <b>Visite médicale</b>
+      </button>
+    </div>
+  </div>
+</section>
+```
+
+Lorsqu’une ancienne légende est repérée, la correction attendue est : **la brancher sur ce bloc officiel**, supprimer son habillage local remplacé, puis conserver uniquement sa logique métier.
+
 ## Structure d’une page STIP
 
 Une nouvelle page doit suivre ce principe :
