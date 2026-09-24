@@ -94,6 +94,35 @@ STIP garde **un seul thème maître**. Les catégories ci-dessous ne sont pas de
 
 1. **Temps** — planning personnel/équipe, semaine, jour, agenda, navigation temporelle.
 2. **Personnes** — recherche et sélection d’agents, groupes présents/absents, fiches de sélection. Le moteur commun est `stip-agent-selector.js/.css`.
+
+### Page modèle canonique — « Rechercher un agent »
+
+Toute interface dont l’objectif principal est de **choisir un agent** appartient à ce modèle, y compris lorsqu’elle remplace un ancien `<select>` natif.
+
+Contrat commun :
+- ne pas afficher la grande liste native du navigateur pour choisir un agent ;
+- utiliser le moteur partagé `STIPAgentSelector.mountPicker(...)` dans une page, ou `STIPAgentSelector.openPicker(...)` pour une sélection plein écran / modale ;
+- recherche à partir de **2 lettres** par nom, prénom ou GHE ;
+- identité affichée au format `PRÉNOM nom`, GHE très lisible, avatar puis initiales en secours ;
+- téléphone et statut du jour masqués par défaut dans ce mode : ils ne sont ajoutés que si le contexte métier les justifie ;
+- sélection visible par un marqueur commun, sans recréer des radios, cartes ou listes locales ;
+- aucun autofocus imposé à l’ouverture : le clavier apparaît lorsque l’utilisateur touche réellement le champ de recherche ;
+- la logique métier de la page conserve seulement la source des agents et l’action exécutée après sélection.
+
+Exemple d’intégration :
+
+```js
+STIPAgentSelector.openPicker({
+  items: agents,
+  selectedId: currentAgentId,
+  onSelect(agent) {
+    // La page garde uniquement son action métier.
+  },
+});
+```
+
+Lorsqu’une ancienne page de choix d’agent est repérée, la correction attendue est : **la brancher sur « Rechercher un agent »**, pas refaire son visuel localement.
+
 3. **Actions** — À traiter, demandes, rappels, signatures, filtres et listes d’actions.
 4. **Catalogue** — applications, favoris, gestion des accès, niveaux MINI/MAXI.
 5. **Pilotage** — cockpit Responsable/Cadre, métriques, alertes et recommandations.

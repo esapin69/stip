@@ -122,6 +122,8 @@
     const standardCode = code === base || code === `${base}*`;
     const special = specialText(agent, code);
     const full = options.privacy === "full";
+    const picker = options.mode === "picker";
+    const selected = picker && String(agent?.id ?? "") === String(options.selectedId ?? "");
     let status = "";
     let marker = "";
     if (shift) {
@@ -136,20 +138,26 @@
       status = publicAbsence(code);
     }
     const phone = String(agent?.telephone || "").replace(/\D/g, "");
-    const codeChip = !shift && full
+    const codeChip = !picker && !shift && full
       ? `<span class="sas-absence-code">${esc(code || "—")}</span>`
       : "";
-    return `<div class="sas-person" data-sas-row="${esc(agent.id)}">
-      <button class="sas-person-main" type="button" data-sas-agent="${esc(agent.id)}" aria-label="Ouvrir ${esc(name(agent))}">
+    const statusHtml = options.showStatus === false
+      ? ""
+      : `<small>${esc(status)}</small>${marker}`;
+    const trailing = picker
+      ? `<span class="sas-select-mark" aria-hidden="true"></span>`
+      : `<em aria-hidden="true">›</em>`;
+    const actionLabel = picker ? "Choisir" : "Ouvrir";
+    return `<div class="sas-person${selected ? " is-selected" : ""}" data-sas-row="${esc(agent.id)}">
+      <button class="sas-person-main" type="button" data-sas-agent="${esc(agent.id)}" aria-label="${actionLabel} ${esc(name(agent))}">
         <span class="sas-ghe"><small>GHE</small><b>${esc(gheText(agent))}</b></span>
         ${options.showAvatar === false ? "" : avatar(agent)}
         <span class="sas-person-copy">
           <strong>${esc(name(agent))}</strong>
-          <small>${esc(status)}</small>
-          ${marker}
+          ${statusHtml}
         </span>
         ${codeChip}
-        <em aria-hidden="true">›</em>
+        ${trailing}
       </button>
       ${options.showPhone !== false && phone
         ? `<button class="sas-call" type="button" data-sas-call="${esc(agent.id)}" aria-label="Appeler ${esc(name(agent))}">☎</button>`
@@ -217,11 +225,16 @@
 
   function mount(host, rawOptions = {}) {
     if (!host) throw Error("Conteneur de sélection d’agent introuvable.");
+    const mode = rawOptions.mode === "picker" ? "picker" : "directory";
+    const minQueryValue = Number(rawOptions.minQuery);
     const options = {
-      privacy: rawOptions.privacy === "full" ? "full" : "team",
-      showPhone: rawOptions.showPhone !== false,
-      showAvatar: rawOptions.showAvatar !== false,
       ...rawOptions,
+      mode,
+      privacy: rawOptions.privacy === "full" ? "full" : "team",
+      showPhone: typeof rawOptions.showPhone === "boolean" ? rawOptions.showPhone : mode !== "picker",
+      showAvatar: rawOptions.showAvatar !== false,
+      showStatus: typeof rawOptions.showStatus === "boolean" ? rawOptions.showStatus : mode !== "picker",
+      minQuery: Number.isFinite(minQueryValue) ? Math.max(0, minQueryValue) : 2,
     };
     const state = {
       items: Array.isArray(options.items) ? options.items : [],
@@ -230,7 +243,7 @@
 
     function selectedItems() {
       const query = normalize(state.query.trim());
-      if (query.length < 2) return null;
+      if (query.length < options.minQuery) return null;
       return state.items
         .filter((agent) =>
           normalize([name(agent), agent.source_key, agent.ghe, agent.today_code]
@@ -241,6 +254,7 @@
     }
 
     function render() {
+      const picker = options.mode === "picker";
       const working = state.items.filter(isWorking);
       const absent = state.items.filter((agent) => !isWorking(agent));
       const results = selectedItems();
@@ -253,7 +267,7 @@
         );
       }).join("");
       let absentHtml = "";
-      if (options.privacy === "full") {
+      if (!picker && options.privacy === "full") {
         const absenceCodes = [...new Set(absent.map((agent) => String(agent.today_code || "")))].sort((a, b) => {
           const ad = shiftDef(a), bd = shiftDef(b),
             ai = Number(ad?.sort_order || 999),
@@ -267,7 +281,7 @@
             options,
           ),
         ).join("");
-      } else {
+      } else if (!picker) {
         const groups = new Map();
         absent.forEach((agent) => {
           const label = publicAbsence(agent.today_code);
@@ -281,16 +295,32 @@
           )
           .join("");
       }
-      host.innerHTML = `<section class="sas-selector">
+
+      const kicker = options.kicker || (picker ? "PERSONNES" : "ÉQUIPE DU JOUR");
+      const title = options.title || (picker ? "Rechercher un agent" : "Équipe");
+      const description = options.description || (
+        picker
+          ? `Nom, prénom ou GHE · saisissez au moins ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}.`
+          : "Présents, horaires et absences utiles en un coup d’œil."
+      );
+      const placeholder = options.placeholder || `Nom, prénom ou GHE · dès ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}`;
+      const searchLabel = options.searchLabel || (picker ? "Rechercher un agent" : "Rechercher dans l’équipe");
+      const pickerBody = results
+        ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((agent) => row(agent, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
+        : `<section class="sas-picker-idle" aria-live="polite"><span aria-hidden="true">⌕</span><strong>Recherchez un agent</strong><small>Nom, prénom ou GHE · dès ${options.minQuery} lettre${options.minQuery > 1 ? "s" : ""}</small></section>`;
+
+      host.innerHTML = `<section class="sas-selector${picker ? " is-picker" : ""}">
         <header class="sas-heading">
-          <span>${esc(options.kicker || "ÉQUIPE DU JOUR")}</span>
-          <h2>${esc(options.title || "Équipe")}</h2>
-          <p>${esc(options.description || "Présents, horaires et absences utiles en un coup d’œil.")}</p>
+          <span>${esc(kicker)}</span>
+          <h2>${esc(title)}</h2>
+          <p>${esc(description)}</p>
         </header>
-        <label class="sas-search"><span aria-hidden="true">⌕</span><input type="search" autocomplete="off" spellcheck="false" value="${esc(state.query)}" placeholder="Nom, prénom ou GHE · dès 2 lettres" aria-label="Rechercher dans l’équipe"><button type="button" ${state.query ? "" : "hidden"} aria-label="Effacer">×</button></label>
-        ${results
-          ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((a) => row(a, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
-          : `<section class="sas-present"><div class="sas-section-title"><span>PRÉSENTS AUJOURD’HUI</span><b>${working.length}</b></div>${work || '<p class="sas-empty">Aucun agent présent aujourd’hui.</p>'}</section><div class="sas-absence-divider"><span>ABSENTS AUJOURD’HUI</span><b>${absent.length}</b></div><section class="sas-absent">${absentHtml || '<p class="sas-empty">Aucune absence aujourd’hui.</p>'}</section>`}
+        <label class="sas-search"><span aria-hidden="true">⌕</span><input type="search" autocomplete="off" spellcheck="false" value="${esc(state.query)}" placeholder="${esc(placeholder)}" aria-label="${esc(searchLabel)}"><button type="button" ${state.query ? "" : "hidden"} aria-label="Effacer">×</button></label>
+        ${picker
+          ? pickerBody
+          : results
+            ? `<section class="sas-results"><header><span>RÉSULTATS</span><b>${results.length}</b></header>${results.length ? results.map((agent) => row(agent, options)).join("") : '<p class="sas-empty">Aucun agent trouvé.</p>'}</section>`
+            : `<section class="sas-present"><div class="sas-section-title"><span>PRÉSENTS AUJOURD’HUI</span><b>${working.length}</b></div>${work || '<p class="sas-empty">Aucun agent présent aujourd’hui.</p>'}</section><div class="sas-absence-divider"><span>ABSENTS AUJOURD’HUI</span><b>${absent.length}</b></div><section class="sas-absent">${absentHtml || '<p class="sas-empty">Aucune absence aujourd’hui.</p>'}</section>`}
       </section>`;
       wire();
     }
@@ -345,14 +375,73 @@
         state.query = String(query || "");
         render();
       },
+      setSelected(selectedId) {
+        options.selectedId = selectedId;
+        render();
+      },
       focus() {
         host.querySelector(".sas-search input")?.focus();
+      },
+      destroy() {
+        host.replaceChildren();
       },
     };
   }
 
+  function mountPicker(host, rawOptions = {}) {
+    return mount(host, { ...rawOptions, mode: "picker" });
+  }
+
+  function closePickerOverlay() {
+    document.getElementById("sasPickerOverlay")?.remove();
+  }
+
+  function openPicker(rawOptions = {}) {
+    closePickerOverlay();
+    const overlay = document.createElement("div");
+    overlay.id = "sasPickerOverlay";
+    overlay.className = "sas-picker-overlay";
+    overlay.innerHTML = `
+      <button class="sas-picker-backdrop" type="button" aria-label="Fermer"></button>
+      <section class="sas-picker-sheet" role="dialog" aria-modal="true" aria-label="${esc(rawOptions.title || "Rechercher un agent")}">
+        <button class="sas-picker-close" type="button" aria-label="Fermer">×</button>
+        <div class="sas-picker-host"></div>
+      </section>`;
+    document.body.appendChild(overlay);
+
+    let closed = false;
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") close();
+    };
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      document.removeEventListener("keydown", onKeyDown);
+      overlay.remove();
+      rawOptions.onClose?.();
+    };
+
+    overlay.querySelector(".sas-picker-backdrop")?.addEventListener("click", close);
+    overlay.querySelector(".sas-picker-close")?.addEventListener("click", close);
+    document.addEventListener("keydown", onKeyDown);
+
+    const selector = mountPicker(overlay.querySelector(".sas-picker-host"), {
+      ...rawOptions,
+      onSelect(agent) {
+        rawOptions.onSelect?.(agent);
+        close();
+      },
+    });
+    if (rawOptions.autoFocus === true) requestAnimationFrame(() => selector.focus());
+
+    return { close, selector, element: overlay };
+  }
+
   window.STIPAgentSelector = {
     mount,
+    mountPicker,
+    openPicker,
+    closePicker: closePickerOverlay,
     name,
     baseShift,
     isWorking,

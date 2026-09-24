@@ -66,3 +66,32 @@
   .sas-avatar{display:none}
   .sas-call-actions{grid-template-columns:1fr}
 }
+
+/* Modèle canonique PERSONNES — « Rechercher un agent » */
+.sas-selector.is-picker{width:100%}
+.sas-selector.is-picker .sas-heading{padding-right:44px}
+.sas-selector.is-picker .sas-search{margin:16px 0 12px;border-color:color-mix(in srgb,var(--stip-accent) 24%,var(--stip-line));box-shadow:0 10px 28px rgba(22,59,73,.07)}
+.sas-selector.is-picker .sas-results{border-radius:var(--stip-radius-lg);box-shadow:var(--stip-shadow-soft)}
+.sas-selector.is-picker .sas-results>.sas-person{padding-inline:8px}
+.sas-selector.is-picker .sas-person-main{grid-template-columns:66px 42px minmax(0,1fr) 24px;padding-right:0}
+.sas-selector.is-picker .sas-person.is-selected{background:var(--stip-accent-soft)!important}
+.sas-selector.is-picker .sas-person.is-selected .sas-ghe{border-color:color-mix(in srgb,var(--stip-accent) 38%,var(--stip-line));background:var(--stip-surface)}
+.sas-select-mark{position:relative;display:grid;place-items:center;width:22px;height:22px;border:2px solid var(--stip-muted-2);border-radius:50%;box-sizing:border-box}
+.sas-person.is-selected .sas-select-mark{border-color:var(--stip-accent);background:var(--stip-accent)}
+.sas-person.is-selected .sas-select-mark:after{content:"";width:7px;height:4px;border-left:2px solid #fff;border-bottom:2px solid #fff;transform:translateY(-1px) rotate(-45deg)}
+.sas-picker-idle{display:grid;place-items:center;gap:5px;min-height:190px;padding:28px 18px;border:1px dashed var(--stip-line);border-radius:var(--stip-radius-lg);background:var(--stip-surface-soft);color:var(--stip-muted);text-align:center}
+.sas-picker-idle>span{display:grid;place-items:center;width:54px;height:54px;margin-bottom:4px;border-radius:18px;background:var(--stip-accent-soft);color:var(--stip-accent);font-size:1.65rem}
+.sas-picker-idle>strong{color:var(--stip-ink-2);font-size:.9rem}
+.sas-picker-idle>small{font-size:.7rem;line-height:1.4}
+.sas-picker-overlay{position:fixed;z-index:10000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(10,31,40,.32);backdrop-filter:blur(5px)}
+.sas-picker-backdrop{position:absolute;inset:0;border:0;background:transparent}
+.sas-picker-sheet{position:relative;z-index:1;width:min(620px,100%);max-height:min(86dvh,820px);box-sizing:border-box;overflow:auto;padding:22px;border:1px solid var(--stip-line);border-radius:var(--stip-radius-xl);background:var(--stip-bg);box-shadow:var(--stip-shadow-strong);overscroll-behavior:contain}
+.sas-picker-close{position:absolute;z-index:3;top:14px;right:14px;display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--stip-line);border-radius:50%;background:var(--stip-surface);color:var(--stip-ink-2);font-size:1.35rem;box-shadow:var(--stip-shadow-soft)}
+.sas-picker-close:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:2px}
+@media(max-width:600px){
+  .sas-picker-overlay{display:block;padding:0;background:var(--stip-bg);backdrop-filter:none}
+  .sas-picker-backdrop{display:none}
+  .sas-picker-sheet{width:100%;height:100dvh;max-height:none;padding:calc(18px + env(safe-area-inset-top)) var(--stip-page-pad) calc(22px + env(safe-area-inset-bottom));border:0;border-radius:0;box-shadow:none}
+  .sas-picker-close{top:calc(10px + env(safe-area-inset-top));right:var(--stip-page-pad)}
+  .sas-selector.is-picker .sas-person-main{grid-template-columns:61px 38px minmax(0,1fr) 24px;gap:7px}
+}
