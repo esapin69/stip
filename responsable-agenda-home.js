@@ -24,6 +24,7 @@
     selectedDate: "",
     monthKey: "",
     daySignalByDate: {},
+    dayContextByDate: {},
     signalWeekLoaded: {},
     signalWeekPromises: {},
   };
@@ -505,6 +506,7 @@
           (staff?.available
             ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
             : { level: "unknown", symbol: "", label: "Pas assez de données" });
+        state.dayContextByDate[iso] = { staffing: staff, items };
       });
 
       state.signalWeekLoaded[key] = true;
@@ -577,7 +579,8 @@
               ? esc(statusSymbol(level, signal?.symbol || ""))
               : "",
           label = esc(signal?.label || "");
-        return `<span class="rr-week-signal status-${esc(level)}" title="${label}" aria-label="${label}">${symbol}</span>`;
+        const disabled = level === "unknown" ? " disabled" : "";
+        return `<button type="button" class="rr-week-signal status-${esc(level)}" data-rr-day-analysis="${esc(x.iso)}" title="${label}" aria-label="Ouvrir l’analyse du ${esc(x.iso)} · ${label}"${disabled}>${symbol}</button>`;
       })
       .join("");
 
@@ -768,6 +771,41 @@
         "Le moteur d’abonnement calendrier n’est pas encore disponible.";
   }
 
+  async function openDayAnalysis(date) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return;
+    let context = state.dayContextByDate[date] || null;
+    if (!context) {
+      const [staffing, assistant] = await Promise.all([
+        postWeekJson(STAFF_API, { action: "day", date }).catch(() => null),
+        postWeekJson(ASSIST_API, {
+          action: "feed",
+          start_date: date,
+          end_date: date,
+        }).catch(() => ({ items: [] })),
+      ]);
+      const items = (Array.isArray(assistant?.items) ? assistant.items : []).filter(
+        (item) => String(item?.date || "").slice(0, 10) === date,
+      );
+      context = { staffing, items };
+      state.dayContextByDate[date] = context;
+      const shared = window.STIPFieldIntel?.dayStatus?.({
+        staffing,
+        items,
+      });
+      if (shared) {
+        state.daySignalByDate[date] = shared;
+        saveDataCache();
+        renderWeek();
+        renderLegend();
+      }
+    }
+    window.STIPResponsableStaffing?.openDayAnalysis?.({
+      date,
+      staffing: context.staffing,
+      items: context.items,
+    });
+  }
+
   function openEvent(id) {
     saveView();
     const x = state.items.find((v) => String(v.id) === String(id));
@@ -802,6 +840,13 @@
     const add = e.target.closest?.("[data-rr-add]");
     if (add) {
       openAdd();
+      return;
+    }
+    const dayAnalysis = e.target.closest?.("[data-rr-day-analysis]");
+    if (dayAnalysis && !dayAnalysis.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      openDayAnalysis(dayAnalysis.dataset.rrDayAnalysis);
       return;
     }
     const filterMarker = e.target.closest?.("[data-rr-filter][data-rr-date]");
