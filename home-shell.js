@@ -266,7 +266,7 @@
         workIcon ||
         ({
           RH:"🏝️",OFF:"🏝️",REPOS:"🏝️",
-          CA:"🌴",CP:"🌴",
+          CA:"✈️",CP:"✈️",
           RTT:"⏱️",RTTA:"⏱️",RTA:"⏱️",
           RC:"↻",RF:"•",
           FO:"🎓",ST:"👶",VM:"🩺",SYR:"🤝",
@@ -582,8 +582,8 @@
   };
   const SPECIAL_SHIFT_ICON = {
     RH: "🏝️",
-    CA: "🌴",
-    CP: "🌴",
+    CA: "✈️",
+    CP: "✈️",
     RTT: "⏱️",
     RTTA: "⏱️",
     RTA: "⏱️",
