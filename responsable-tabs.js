@@ -108,7 +108,7 @@
     if (window.STIPResponsableAgendaLoaded) return;
     if (document.querySelector('script[data-resp-inline-agenda="1"]')) return;
     const script = document.createElement("script");
-    script.src = "responsable-agenda.js?v=20260923-chronology1";
+    script.src = "responsable-agenda.js?v=20260924-filter6b1";
     script.dataset.respInlineAgenda = "1";
     script.onload = () => {
       window.STIPResponsableAgendaLoaded = true;
