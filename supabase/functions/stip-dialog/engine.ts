@@ -13,10 +13,11 @@ import {
   type Intent,
 } from "./core.ts";
 import { resolvePeople } from "./people.ts";
-import { exchangeAnswer, colleaguesAnswer, onDutyRoster, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
+import { exchangeAnswer, colleaguesAnswer, leaveLookupAnswer, onDutyRoster, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
 import { contactAnswer, messagingHelp, placeAnswer } from "./handlers-lookup.ts";
 import { baseContext, choiceResponse, contextSubjects, findAgents, personCard, personResponse } from "./presentation.ts";
 import { directory, shiftDefinitions, todayParis } from "./runtime.ts";
+import { semanticClassify, semanticText, type AppTarget } from "./semantic.ts";
 import type { Agent, SessionCtx } from "./types.ts";
 
 function defaultScope(intent: Intent): DateScope {
@@ -84,23 +85,84 @@ async function selectionAnswer(c: SessionCtx, old: DialogContext, raw: string, a
   };
 }
 
+
+const APP_META: Record<AppTarget,{label:string;permission?:string;pro?:boolean}> = {
+  profile_photo:{label:"Modifier ma photo",permission:"profile_photo"},
+  planning_personal:{label:"Mon planning",permission:"planning_personal"},
+  planning_team:{label:"Planning équipe",permission:"planning_team"},
+  change_app:{label:"Changement",permission:"change_app"},
+  calendar_subscribe:{label:"Synchroniser mon calendrier",permission:"calendar_subscribe"},
+  agent_dates:{label:"Date des agents",permission:"agent_dates"},
+  contacts:{label:"Contacts",permission:"contacts"},
+  responsable:{label:"Responsable",permission:"responsable",pro:true},
+  notes:{label:"Prendre des notes",permission:"notes",pro:true},
+  nouveaux_arrivants:{label:"Nouvel agent",permission:"nouveaux_arrivants"},
+  file_upload:{label:"Importer",permission:"file_upload"},
+  activity:{label:"Esprit d’équipe",permission:"activity"},
+  admin:{label:"Administration",permission:"admin",pro:true},
+  places:{label:"Visiter les lieux",permission:"places"},
+  access_manage:{label:"Accès & sécurité",permission:"access_manage",pro:true},
+  messages:{label:"Messages",permission:"messages"},
+  tomorrow:{label:"Actions",permission:"tomorrow"},
+  agent_directory:{label:"Équipe",permission:"agent_directory"},
+};
+function canOpenApp(c:SessionCtx, app:AppTarget){
+  const meta=APP_META[app], p=c.permissions||{};
+  if(app==="admin") return p.admin===true;
+  if(app==="access_manage") return p.access_manage===true || p.admin===true;
+  if(app==="responsable") return p.responsable===true || p.admin===true;
+  if(meta.pro && c.level!=="pro") return false;
+  return !meta.permission || p[meta.permission]===true || p.admin===true;
+}
+function appNavigationAnswer(c:SessionCtx, old:DialogContext, app:AppTarget){
+  const meta=APP_META[app];
+  if(!canOpenApp(c,app)) return {
+    kind:"help",title:"Accès STIP",text:"Cette fonction n’est pas disponible avec ton accès actuel.",
+    cards:[],actions:[],context:baseContext(old,{last_intent:"app_navigation",offered_options:[]})
+  };
+  return {
+    kind:"navigation",title:meta.label,text:"Je peux t’y emmener directement.",
+    cards:[],actions:[{type:"app",app,label:`Ouvrir · ${meta.label}`}],
+    context:baseContext(old,{last_intent:"app_navigation",offered_options:[]})
+  };
+}
+
 export async function answer(c: SessionCtx, body: any) {
   const raw = String(body.text || "").trim();
   if (!raw) throw Error("Écris quelque chose.");
+  if (raw.length > 500) throw Error("Message trop long pour STIP IA.");
   const old: DialogContext = body.context && typeof body.context === "object" ? body.context : {};
-  const all = await directory();
-  const defs = await shiftDefinitions();
-
-  let intent: Intent = classifyIntent(raw);
+  const command = normalize(raw);
+  if (/^(reset|reinitialise|reinitialiser|reinitialisation)$/.test(command)) return {
+    kind:"navigation",title:"Réinitialiser",text:"Je peux remettre cette conversation à zéro.",
+    cards:[],actions:[{type:"reset_dialog",label:"Réinitialiser"}],context:baseContext(old,{last_intent:"help"})
+  };
+  if (/\b(oublie|efface|retire)\b.*\b(date|jour|periode)\b/.test(command)) return {
+    kind:"context",title:"Date oubliée",text:"Je ne garde plus la date ou la période précédente.",
+    cards:[],actions:[],context:baseContext(old,{date_scope:null,date:null}),suggestions:["Et maintenant ?"]
+  };
+  const semantic = semanticClassify(raw, old);
+  let intent: Intent = semantic.intent !== "help" ? semantic.intent : classifyIntent(raw);
   const option = offeredOptionIntent(raw, old.offered_options || []);
   if (option === "planning") intent = "planning";
   if (option === "coordonnees") intent = "contact";
   if (option === "message") intent = "messaging_help";
-  if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(raw)) intent = "exchange";
-  if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(raw)) intent = "shift_roster";
+  if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(semanticText(raw))) intent = "exchange";
+  if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(semanticText(raw))) intent = "shift_roster";
   if (intent === "help" && old.place_id && /\b(autour|repere|reperes|info|infos|information|informations|detail|details|fiche|alias|proche|relie|lie a)\b/.test(normalize(raw))) intent = "place";
 
-  const parsedScope = parseDateScope(raw, todayParis(), old);
+  if (intent === "app_navigation" && semantic.app) return appNavigationAnswer(c, old, semantic.app);
+
+  const semanticQForDate = semanticText(raw);
+  const reuseDateContext =
+    /^et\b/.test(semanticQForDate) ||
+    hasContextualPersonRef(raw) ||
+    !!option ||
+    (intent === "colleagues" && !!old.date_scope) ||
+    (intent === "exchange" && old.last_intent === "exchange") ||
+    (intent === "shift_roster" && ["shift_roster","organization"].includes(String(old.last_intent||"")));
+  const dateContext:DialogContext = reuseDateContext ? old : { ...old, date_scope: undefined, date: undefined };
+  const parsedScope = parseDateScope(semanticQForDate, todayParis(), dateContext);
   if (intent === "exchange" && !parsedScope) return {
     kind: "exchange", title: "Échange de planning",
     text: "Pour quel jour ou quelle période veux-tu chercher un échange ?",
@@ -108,6 +170,7 @@ export async function answer(c: SessionCtx, body: any) {
     context: baseContext(old, { last_intent: "exchange", offered_options: [] }),
   };
   const ds = parsedScope || defaultScope(intent);
+  const [all, defs] = await Promise.all([directory(), shiftDefinitions()]);
 
   if (intent === "selection") return selectionAnswer(c, old, raw, all, ds, defs);
 
@@ -115,6 +178,22 @@ export async function answer(c: SessionCtx, body: any) {
   const allowContext = hasContextualPersonRef(raw) || !!option || ["contact", "colleagues"].includes(intent);
   const resolved = resolvePeople(raw, all, contextIds, allowContext);
   const explicitSubjects = resolved.candidates;
+  const semanticQ = semanticText(raw);
+  const compoundSubjects = explicitSubjects.length ? explicitSubjects : findAgents(all, contextIds);
+  if (/\b(planning|horaire|travaille|travail)\b/.test(semanticQ) && /\b(numero|telephone|mail|email|coordonnees)\b/.test(semanticQ) && compoundSubjects.length) {
+    const [planning, contact] = await Promise.all([
+      planningAnswer(c, old, compoundSubjects, ds, defs),
+      contactAnswer(c, old, compoundSubjects, raw, ds),
+    ]);
+    return {
+      kind:"combined", title:"Planning + coordonnées", text:`${planning.text} ${contact.text}`.trim(),
+      cards:[...(planning.cards||[]),...(contact.cards||[])], actions:[...(planning.actions||[]),...(contact.actions||[])],
+      suggestions:c.permissions?.messages===true?["Message"]:[],
+      context:baseContext(old,{subject_agent_ids:compoundSubjects.map(a=>a.id),agent_id:compoundSubjects[0]?.id,date_scope:ds,last_intent:"combined",offered_options:[]})
+    };
+  }
+
+  if (intent === "leave_lookup") return leaveLookupAnswer(c, old, semanticText(raw), defs, all);
 
   if (intent === "request_help") {
     const requestText = normalize(raw), isAbsence = /\b(absence|absent|absente)\b/.test(requestText);
@@ -123,7 +202,7 @@ export async function answer(c: SessionCtx, body: any) {
       text: isAbsence
         ? "STIP possède déjà le parcours “Prévenir d’une absence” avec contexte d’effectif et circuit responsable. Ouvre ton planning puis touche le jour concerné."
         : "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
-      cards: [], actions: [{ type: "open", label: "Ouvrir mon planning", url: "index.html?quick=personal" }],
+      cards: [], actions: canOpenApp(c,"planning_personal") ? [{ type: "app", app: "planning_personal", label: "Ouvrir mon planning" }] : [],
       context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
       suggestions: parsedScope ? ["Mon planning sur cette période ?"] : ["Mon planning cette semaine ?", "Mon planning semaine prochaine ?"],
     };
@@ -133,7 +212,7 @@ export async function answer(c: SessionCtx, body: any) {
     const subjects = explicitSubjects.length ? explicitSubjects : (contextualMessage ? findAgents(all, contextIds) : []);
     return messagingHelp(c, old, ds, subjects, all, raw);
   }
-  if (intent === "exchange") return exchangeAnswer(c, old, ds, extractShift(raw), all, defs);
+  if (intent === "exchange") return exchangeAnswer(c, old, ds, extractShift(semanticText(raw)), all, defs);
   if (intent === "place") {
     const p = await placeAnswer(c, old, raw, ds);
     if (p) return p;
@@ -143,8 +222,8 @@ export async function answer(c: SessionCtx, body: any) {
     };
   }
   if (intent === "on_duty") return onDutyRoster(c, old, ds, all, defs);
-  if (intent === "organization" && !extractShift(raw)) return organizationAnswer(c, old, ds);
-  if (intent === "shift_roster" || (intent === "organization" && extractShift(raw))) return shiftRoster(c, old, ds, extractShift(raw)!, all, defs);
+  if (intent === "organization" && !extractShift(semanticText(raw))) return organizationAnswer(c, old, ds);
+  if (intent === "shift_roster" || (intent === "organization" && extractShift(semanticText(raw)))) return shiftRoster(c, old, ds, extractShift(semanticText(raw))!, all, defs);
 
   if (intent === "colleagues") {
     const subject = explicitSubjects[0] || findAgents(all, contextIds)[0] || c.agent;
@@ -161,7 +240,7 @@ export async function answer(c: SessionCtx, body: any) {
     const subjects = explicitSubjects.length ? explicitSubjects : findAgents(all, contextIds);
     if (subjects.length > 1 && resolved.mode === "explicit" && !contextIds.length) return choiceResponse(c, old, subjects, ds);
     if (subjects.length) return planningAnswer(c, old, subjects, ds, defs);
-    if (/\b(je|moi|mon|ma|mes)\b/.test(normalize(raw))) return planningAnswer(c, old, [c.agent], ds, defs);
+    if (/\b(je|moi|mon|ma|mes)\b/.test(normalize(raw)) || resolved.mode === "none") return planningAnswer(c, old, [c.agent], ds, defs);
   }
 
   if (resolved.mode === "explicit") {
