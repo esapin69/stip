@@ -115,7 +115,19 @@ const MAIN_BUILDINGS=[
   {code:'PW',label:'NEURO',subtitle:'Hôpital Pierre Wertheimer'},
   {code:'HFME',label:'HFME',subtitle:'Hôpital Femme Mère Enfant'}
 ]
-const ANNEX_CODES=['A1','A3','A4','B1','B13','B14','B16','CERMEP','IDÉE','MORTUAIRE','MPM','RADIO','GHE']\nconst MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'\nconst MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'\nfunction masterPdfLinks(){\n  const id=encodeURIComponent(MASTER_DRIVE_ID)\n  return {\n    file_name:MASTER_FILE_NAME,\n    view_url:`https://drive.google.com/file/d/${id}/view`,\n    preview_url:`https://drive.google.com/file/d/${id}/preview`,\n    download_url:`https://drive.google.com/uc?export=download&id=${id}`,\n    source:'drive_master'\n  }\n}
+const ANNEX_CODES=['A1','A3','A4','B1','B13','B14','B16','CERMEP','IDÉE','MORTUAIRE','MPM','RADIO','GHE']
+const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'
+const MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'
+function masterPdfLinks(){
+  const id=encodeURIComponent(MASTER_DRIVE_ID)
+  return {
+    file_name:MASTER_FILE_NAME,
+    view_url:`https://drive.google.com/file/d/${id}/view`,
+    preview_url:`https://drive.google.com/file/d/${id}/preview`,
+    download_url:`https://drive.google.com/uc?export=download&id=${id}`,
+    source:'drive_master'
+  }
+}
 
 function exportDate(){return new Date().toISOString().slice(0,10)}
 function exportCell(v:any){if(v===null||v===undefined)return'';if(typeof v==='object')return JSON.stringify(v);return v}
