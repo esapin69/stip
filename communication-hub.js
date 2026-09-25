@@ -1,11 +1,11 @@
 (() => {
   "use strict";
-  const CLIENT_VERSION="20260925-dm-push3";
+  const CLIENT_VERSION="20260926-network-budget1";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
   const VAPID_PUBLIC="BGCXc9jLIjbzcsWqgH7PJDIIiI278kJmjpg3qHkjlutQ0mQFeX685llxQMiWXv8tK3li6BxMjgcDf8Nf_dUPFzI";
-  const STORE="stip_session_v1";
+  const STORE="stip_session_v1",ACTIVE_THREAD_POLL_MS=60000,PASSIVE_HOME_POLL_MS=300000;
   let home=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",pushPrefs=null,pushPrompt=null,exchangeQuickOpened=false,dialogContext={},dialogHistory=[];
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const can=k=>window.STIPAccess?.has?.(k) ?? !!({...window.STIPSession?.permissions,...window.STIPBootCache?.permissions}[k]);
@@ -232,7 +232,7 @@
     thread.querySelector("form").addEventListener("submit",async e=>{e.preventDefault();const input=e.currentTarget.elements.body,body=String(input.value||"").trim(),id=thread.dataset.conversation;if(!body||!id)return;input.value="";try{await msg("send",{conversation_id:id,body});await renderThread(id)}catch(err){alert(err.message)}});
     return thread
   }
-  async function openThread(id){closeDialog();const t=threadShell();syncVisualViewport();t.hidden=false;t.dataset.conversation=id;document.documentElement.classList.add("ch-lock");await renderThread(id);clearInterval(threadTimer);threadTimer=setInterval(()=>{if(thread&&!thread.hidden&&thread.dataset.conversation)renderThread(thread.dataset.conversation,true)},5000)}
+  async function openThread(id){closeDialog();const t=threadShell();syncVisualViewport();t.hidden=false;t.dataset.conversation=id;document.documentElement.classList.add("ch-lock");await renderThread(id);clearInterval(threadTimer);threadTimer=setInterval(()=>{if(thread&&!thread.hidden&&thread.dataset.conversation&&!document.hidden)renderThread(thread.dataset.conversation,true)},ACTIVE_THREAD_POLL_MS)}
   function closeThread(){if(thread)thread.hidden=true;clearInterval(threadTimer);threadTimer=null;document.documentElement.classList.remove("ch-lock","ch-keyboard-open");syncVisualViewport(true);loadHome(true)}
   async function renderThread(id,quiet=false){
     try{const r=await msg("thread",{conversation_id:id}),me=window.STIPSession?.agent?.id||window.STIPBootCache?.agent?.id,other=r.members?.find(m=>String(m.agent_id)!==String(me))?.agent,title=r.conversation.kind==="direct"?name(other):r.conversation.title||"Conversation",head=thread.querySelector("[data-thread-head]"),body=thread.querySelector("[data-thread-body]");head.innerHTML=(other?avatar(other,"ch-mini-avatar"):"")+'<div><strong>'+esc(title)+'</strong><small>'+esc(r.conversation.kind==="direct"?"Message privé":"Groupe STIP")+'</small></div>';const operational=r.broadcast?'<section class="ch-operational '+esc(r.broadcast.status)+'"><small>INFO TERRAIN</small><strong>'+esc(r.broadcast.title||"Information équipe")+'</strong><p>'+esc(r.broadcast.body||"")+'</p><div class="ch-operational-meta">'+(r.broadcast.location_text?'<span>⌖ '+esc(r.broadcast.location_text)+'</span>':"")+(r.broadcast.quantity!=null?'<span><b>'+esc(r.broadcast.quantity)+'</b> disponible'+(Number(r.broadcast.quantity)>1?"s":"")+'</span>':"")+'<span>'+(r.broadcast.status==="resolved"?"Terminé":"Mis à jour "+new Date(r.broadcast.updated_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}))+'</span></div>'+(r.broadcast.status!=="resolved"?'<div class="ch-operational-actions"><button type="button" data-broadcast-action="confirm">Toujours là</button><button type="button" data-broadcast-action="less">Il en reste moins</button><button type="button" data-broadcast-action="resolved">Plus rien</button></div>':'<div class="ch-operational-done">✓ Information clôturée</div>')+'</section>':"";body.innerHTML=operational+((r.messages||[]).map(m=>'<article class="ch-bubble '+(String(m.sender_agent_id)===String(me)?"mine":"theirs")+'">'+(String(m.sender_agent_id)!==String(me)?'<small>'+esc(name(m.sender))+'</small>':"")+'<p>'+esc(m.body)+'</p><time>'+new Date(m.created_at).toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})+'</time></article>').join("")||'<p class="ch-empty">Pas encore de message. À toi de jouer.</p>');body.querySelectorAll("[data-broadcast-action]").forEach(b=>b.addEventListener("click",async()=>{let quantity=null;if(b.dataset.broadcastAction==="less"){const v=prompt("Il en reste combien ?",String(r.broadcast.quantity??""));if(v===null)return;quantity=Math.max(0,Number(v)||0)}b.disabled=true;try{await msg("broadcast_update",{conversation_id:id,update:b.dataset.broadcastAction,quantity});await renderThread(id)}catch(err){b.disabled=false;alert(err.message)}}));if(!quiet||body.scrollHeight-body.scrollTop-body.clientHeight<100)body.scrollTop=body.scrollHeight;loadHome(true)}
@@ -287,10 +287,18 @@
   function profileSheet(){
     if(!home?.me)return;const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>MON IDENTITÉ MESSAGES</small><h3>Pseudo</h3></div><button type="button" data-close>×</button></header><form class="ch-profile-form"><label>Pseudo visible<input name="nickname" maxlength="32" value="'+esc(home.me.nickname||"")+'" placeholder="'+esc(home.me.prenom||"Prénom")+'"></label><label class="ch-check"><input type="checkbox" name="preview" '+(home.me.notification_preview!==false?"checked":"")+'> Afficher le nom et le message dans les futures notifications téléphone</label><button type="submit">Enregistrer</button></form></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await msg("profile_set",{nickname:f.get("nickname"),notification_preview:f.get("preview")==="on"});close();loadHome(true)}catch(err){alert(err.message)}}
   }
-  function onRender(){if(currentMode()==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},20000)}else{clearInterval(homeTimer);homeTimer=null}}
+  function onRender(){if(currentMode()==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},PASSIVE_HOME_POLL_MS)}else{clearInterval(homeTimer);homeTimer=null}}
   ["stip:home-rendered","stip:permissions-live","stip:session-ready"].forEach(e=>window.addEventListener(e,()=>setTimeout(onRender,0)));
   window.addEventListener("stip:session-ready",()=>setTimeout(maybePromptDmPush,650));
   window.addEventListener("stip:session-ended",()=>{home=null;pushPrefs=null;setUnread(0,0);closePushPrompt(false);closeDialog();closeThread()});
+  function refreshVisibleCommunication(){
+    if(document.hidden)return;
+    if(currentMode()==="notifications")loadHome(true);
+    if(thread&&!thread.hidden&&thread.dataset.conversation)renderThread(thread.dataset.conversation,true);
+  }
+  window.addEventListener("focus",()=>setTimeout(refreshVisibleCommunication,80));
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(refreshVisibleCommunication,80)});
+  navigator.serviceWorker?.addEventListener?.("message",event=>{if(event.data?.type==="stip:push")refreshVisibleCommunication()});
   syncVisualViewport(true);
   window.addEventListener("resize",queueViewportSync,{passive:true});
   window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
