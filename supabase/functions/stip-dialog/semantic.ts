@@ -11,7 +11,7 @@ export type SemanticResult = { intent: Intent; confidence: number; app?: AppTarg
 const SHORT: Record<string,string> = {
   ki:"qui", kan:"quand", qd:"quand", qnd:"quand", avc:"avec", num:"numero",
   tel:"telephone", vac:"vacances", vacs:"vacances", proch:"prochain", prochene:"prochaine",
-  sem:"semaine", msg:"message", stp:"", svp:"", taf:"travail", bosse:"travaille", bosser:"travailler",
+  sem:"semaine", msg:"message", stp:"", svp:"", taf:"travail", bosse:"travaille", bosser:"travailler", jbosse:"travaille",
 };
 
 export function semanticText(raw:string){
@@ -52,7 +52,7 @@ export function semanticClassify(raw:string, old:DialogContext = {}):SemanticRes
   if(hasAny(q,["importer","import","depot fichier","deposer fichier"])) return {intent:"app_navigation",app:"file_upload",confidence:.96};
   if(hasAny(q,["note","notes"]) && !hasAny(q,["numero","planning"])) return {intent:"app_navigation",app:"notes",confidence:.86};
   if(hasAny(q,["administration","admin"]) && (wantsOpen || q.split(" ").length<=3)) return {intent:"app_navigation",app:"admin",confidence:.98};
-  if(hasAny(q,["acces securite","gestion acces","droits"]) || (hasAny(q,["acces"]) && hasAny(q,["gerer","gestion","donner","retirer"]))) return {intent:"app_navigation",app:"access_manage",confidence:.94};
+  if(hasAny(q,["acces securite","gestion acces","droits","qui a acces"]) || (hasAny(q,["acces"]) && hasAny(q,["gerer","gestion","donner","retirer"]))) return {intent:"app_navigation",app:"access_manage",confidence:.94};
   if(hasAny(q,["responsable","cockpit"]) && wantsOpen) return {intent:"app_navigation",app:"responsable",confidence:.94};
   if(hasAny(q,["esprit equipe","activite"]) && wantsOpen) return {intent:"app_navigation",app:"activity",confidence:.90};
   if(hasAny(q,["annuaire","equipe"]) && wantsOpen) return {intent:"app_navigation",app:"agent_directory",confidence:.90};
