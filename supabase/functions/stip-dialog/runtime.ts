@@ -57,10 +57,11 @@ export async function session(req: Request): Promise<SessionCtx> {
     .select("agent_id,active,permissions,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,role,telephone,email,profile_photo_url,avatar_url)")
     .eq("id", s.profile_id).maybeSingle();
   if (error) throw error;
-  if (!p?.active || !p.agent_id || !p.agents) throw Error("Accès agent requis.");
+  const agent = (Array.isArray(p?.agents) ? p.agents[0] : p?.agents) as unknown as Agent | undefined;
+  if (!p?.active || !p.agent_id || !agent?.id) throw Error("Accès agent requis.");
   const level = levelOf(p);
   if (level === "none") throw Error("Demander à STIP n’est pas autorisé.");
-  return { agent: p.agents as Agent, level, team: teamOf(p.agents as Agent), permissions: p.permissions || {} };
+  return { agent, level, team: teamOf(agent), permissions: p.permissions || {} };
 }
 
 export async function directory(): Promise<Agent[]> {
