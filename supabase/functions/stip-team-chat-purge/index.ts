@@ -149,7 +149,38 @@ async function purgeCurrentConversation(conversation: any) {
   return { messages: ids.length, photos: photos + orphanPhotos };
 }
 
+async function collectStorageTree(prefix: string): Promise<string[]> {
+  const entries = await listFolder(prefix);
+  const paths: string[] = [];
+  for (const entry of entries) {
+    const name = String(entry?.name || "").trim();
+    if (!name) continue;
+    const path = prefix + "/" + name;
+    if (entry?.id) paths.push(path);
+    else paths.push(...(await collectStorageTree(path)));
+  }
+  return paths;
+}
+
+async function purgeExpiredDmMedia() {
+  const root = await listFolder("dm");
+  const cutoff = Date.now() - 15 * 24 * 60 * 60 * 1000;
+  let deleted = 0;
+
+  for (const entry of root) {
+    const day = String(entry?.name || "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    const dayEnd = Date.parse(day + "T23:59:59Z");
+    if (!Number.isFinite(dayEnd) || dayEnd >= cutoff) continue;
+    const paths = await collectStorageTree("dm/" + day);
+    if (paths.length) deleted += await removePaths(paths);
+  }
+
+  return deleted;
+}
+
 async function purgePreviousDays() {
+  const deletedDmPhotos = await purgeExpiredDmMedia();
   const todayKey = TABLEAU_PREFIX + parisDayKey();
   const { data: conversations, error } = await db
     .from("stip_conversations")
@@ -202,6 +233,7 @@ async function purgePreviousDays() {
     deleted_messages: deletedMessages,
     deleted_photos: deletedPhotos,
     deleted_conversations: deletedConversations,
+    deleted_dm_photos: deletedDmPhotos,
   };
 }
 
