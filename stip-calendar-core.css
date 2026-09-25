@@ -89,7 +89,8 @@
   width:100%!important;
   min-width:0!important;
   display:grid!important;
-  grid-template-rows:auto auto 1px auto!important;
+  grid-template-rows:none!important;
+  grid-auto-rows:max-content!important;
   align-items:center!important;
   justify-items:center!important;
   align-content:center!important;
@@ -104,7 +105,7 @@
   box-sizing:border-box!important;
   width:100%!important;
   min-width:0!important;
-  min-height:18px!important;
+  min-height:0!important;
   display:block!important;
   margin:0!important;
   padding:0!important;
@@ -118,7 +119,7 @@
   box-sizing:border-box!important;
   width:100%!important;
   min-width:0!important;
-  min-height:26px!important;
+  min-height:0!important;
   display:grid!important;
   place-items:center!important;
   margin:0!important;
@@ -135,12 +136,13 @@
   place-items:center!important;
   margin:0!important;
   padding:0!important;
-  font-size:1.38rem!important;
+  font-size:1.45rem!important;
   line-height:1!important;
   text-align:center!important;
   transform:none!important;
 }
 .stip-week-divider{
+  display:none!important;
   box-sizing:border-box!important;
   width:72%!important;
   height:1px!important;
@@ -153,7 +155,7 @@
   box-sizing:border-box!important;
   width:100%!important;
   min-width:0!important;
-  min-height:26px!important;
+  min-height:0!important;
   display:flex!important;
   flex-flow:row nowrap!important;
   align-items:center!important;
@@ -168,6 +170,13 @@
   white-space:nowrap!important;
 }
 .stip-week-events.is-empty{visibility:hidden!important}
+.stip-week-main-icon:empty{display:none!important}
+.stip-week-work-marker{width:19px!important;height:19px!important;min-width:19px!important;min-height:19px!important}
+.stip-week-day.stip-week-personal-layout .stip-week-day-body{grid-template-rows:auto auto 1px auto!important;grid-auto-rows:auto!important}
+.stip-week-day.stip-week-personal-layout .stip-week-code{min-height:18px!important}
+.stip-week-day.stip-week-personal-layout .stip-week-main{min-height:26px!important}
+.stip-week-day.stip-week-personal-layout .stip-week-divider{display:block!important}
+.stip-week-day.stip-week-personal-layout .stip-week-events{min-height:26px!important}
 .stip-week-event{
   box-sizing:border-box!important;
   width:26px!important;
@@ -180,7 +189,7 @@
   margin:0!important;
   padding:0!important;
   font-style:normal!important;
-  font-size:1.38rem!important;
+  font-size:1.45rem!important;
   line-height:1!important;
   text-align:center!important;
   transform:none!important;
