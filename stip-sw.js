@@ -20,6 +20,15 @@ function cacheable(response){
   return !!response&&response.ok&&response.type!=="opaque";
 }
 
+async function cacheFirst(request,cacheName){
+  const cache=await caches.open(cacheName);
+  const cached=await cache.match(request);
+  if(cached)return cached;
+  const response=await fetch(request);
+  if(cacheable(response))await cache.put(request,response.clone());
+  return response;
+}
+
 async function staleWhileRevalidate(request,event,cacheName){
   const cache=await caches.open(cacheName);
   const cached=await cache.match(request);
@@ -71,7 +80,9 @@ self.addEventListener("fetch",event=>{
   }
 
   if(isIndex){
-    event.respondWith(staleWhileRevalidate(request,event,PAGE_CACHE));
+    // index.html is an app shell. Its own self-heal probe checks the current
+    // build just after paint, so returning to it can safely use the cached shell.
+    event.respondWith(cacheFirst(request,PAGE_CACHE));
     return;
   }
 
@@ -81,7 +92,12 @@ self.addEventListener("fetch",event=>{
   }
 
   if(isStatic){
-    event.respondWith(staleWhileRevalidate(request,event,STATIC_CACHE));
+    // Versioned assets are immutable for that URL: never redownload them on
+    // every return. Unversioned assets stay stale-while-revalidate.
+    if(url.searchParams.has("v")||url.searchParams.has("__stip_build"))
+      event.respondWith(cacheFirst(request,STATIC_CACHE));
+    else
+      event.respondWith(staleWhileRevalidate(request,event,STATIC_CACHE));
   }
 });
 
