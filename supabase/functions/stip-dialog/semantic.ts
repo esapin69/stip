@@ -54,7 +54,7 @@ export function semanticClassify(raw:string, old:DialogContext = {}):SemanticRes
   if(hasAny(q,["administration","admin"]) && (wantsOpen || q.split(" ").length<=3)) return {intent:"app_navigation",app:"admin",confidence:.98};
   if(hasAny(q,["acces securite","gestion acces","droits","qui a acces"]) || (hasAny(q,["acces"]) && hasAny(q,["gerer","gestion","donner","retirer"]))) return {intent:"app_navigation",app:"access_manage",confidence:.94};
   if(hasAny(q,["responsable","cockpit"]) && wantsOpen) return {intent:"app_navigation",app:"responsable",confidence:.94};
-  if(hasAny(q,["esprit equipe","activite"]) && wantsOpen) return {intent:"app_navigation",app:"activity",confidence:.90};
+  if(hasAny(q,["esprit equipe","activite"])) return {intent:"app_navigation",app:"activity",confidence:.90};
   if(hasAny(q,["annuaire","equipe"]) && wantsOpen) return {intent:"app_navigation",app:"agent_directory",confidence:.90};
   if(hasAny(q,["actions demain","a faire demain","dois faire demain","j ai quoi demain"])) return {intent:"app_navigation",app:"tomorrow",confidence:.91};
 
@@ -62,7 +62,7 @@ export function semanticClassify(raw:string, old:DialogContext = {}):SemanticRes
      hasAny(q,["prochain","prochaine","prochains","prochaines","quand","mes","mon","vacances","rtt","repos","ca"]) &&
      !hasAny(q,["poser","demander","demande","prendre","soumettre"])) return {intent:"leave_lookup",confidence:.96};
 
-  if(hasAny(q,["echange","echanger","permuter","permutation"]) ||
+  if(hasAny(q,["echange","echanger","permuter","permutation","prendre mon"]) ||
      (previous==="exchange" && (!!extractShift(q) || hasAny(q,["soir","matin","nuit","journee"]))) ||
      (hasAny(q,["passer","changer"]) && hasAny(q,["soir","matin","nuit","shift"]))) return {intent:"exchange",confidence:.95};
 
