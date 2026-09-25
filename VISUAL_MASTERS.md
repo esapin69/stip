@@ -48,6 +48,7 @@ Règle :
 - les anciennes règles locales peuvent rester temporairement pour d’anciens écrans non migrés, mais elles ne doivent plus être utilisées par une ligne déjà branchée ;
 - la base reste « en cours de finalisation » tant qu’Eddy a encore des réglages à faire : ces réglages doivent désormais être faits sur le composant commun, puisque les lignes compatibles sont volontairement branchées dessus.
 - **socle brut obligatoire** : même si une couche locale ou décorative ne charge pas, chaque code, pictogramme et événement reste centré sur un axe unique dans un emplacement carré stable ; aucune page ne dépend d’un décalage de baseline, d’une marge corrective ou d’un calcul local pour obtenir l’alignement de base.
+- **exception Accueil personnel uniquement** : la composition « deux lignes shift → séparateur → ligne événements secondaires » n’est pas une règle commune. Elle est activée explicitement par `.stip-week-personal-layout` sur l’Accueil personnel ; ailleurs, aucune ligne ni séparateur vide n’est réservé.
 
 ## 2. Navigation temporelle complète mois → semaine → jours
 
@@ -78,7 +79,7 @@ Sources :
 - `stip-theme-base.css` uniquement pour les variables de thème
 
 Règle : aucune page ne redéfinit localement la géométrie du calendrier mensuel.
-Le socle brut du mois doit rester lisible sans couche de finition : numéro, repère principal et événements utilisent des lignes dédiées centrées ; les pictogrammes ont un emplacement stable et les pastilles de shift restent volontairement légèrement plus petites que les pictogrammes.
+Le socle brut du mois doit rester lisible sans couche de finition : numéro, repère principal et événements utilisent des lignes dédiées centrées ; tous les pictogrammes/émojis informatifs ont la même taille canonique, et seules les pastilles de shift travaillé restent volontairement légèrement plus petites.
 
 ## 4. Recherche / sélection d’un agent
 
