@@ -1912,9 +1912,11 @@
       ];
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
+    const tDoor = tDoorShortcut();
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
-      <div class="hc-home-top-tools">
+      <div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+        ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
@@ -2423,6 +2425,11 @@
   function wheelchairShortcut() {
     if (!has("messages")) return "";
     return `<button type="button" class="hc-wheelchair-shortcut${state.homeMode === "tableau" ? " active" : ""}" data-home-mode="tableau" aria-pressed="${state.homeMode === "tableau"}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}</span><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils<span class="hc-home-live-badge" data-wheelchair-count hidden></span></strong></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span></button>`;
+  }
+
+  function tDoorShortcut() {
+    if (!has("admin")) return "";
+    return '<button type="button" class="hc-t-door" data-t-door aria-label="Ouvrir la porte T"><span class="hc-t-door-mark" aria-hidden="true"></span></button>';
   }
 
   function responsableEmbedSrc() {
@@ -2967,6 +2974,11 @@
       document.getElementById("logoutBtn")?.click(),
     );
     if (state.homeMode === "notifications") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
+    root.querySelector("[data-t-door]")?.addEventListener("click", () => {
+      const level = Number(document.documentElement.dataset.stipTSuiteLevel || "0");
+      if (level >= 1) return;
+      location.href = new URL("t/index.html", document.baseURI).href;
+    });
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
