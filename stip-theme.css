@@ -391,9 +391,8 @@
 }
 .stip-swipe-month-word{
   position:absolute!important;
-  top:0!important;
-  bottom:0!important;
-  width:92px!important;
+  inset:10px 0!important;
+  width:100%!important;
   display:grid!important;
   place-items:center!important;
   overflow:visible!important;
@@ -406,7 +405,7 @@
   padding:0!important;
   color:#102f3d!important;
   font-family:Georgia,"Times New Roman",serif!important;
-  font-size:clamp(2.05rem,7vw,3.2rem)!important;
+  font-size:var(--stip-month-word-size,68px)!important;
   line-height:.9!important;
   font-weight:900!important;
   letter-spacing:-.045em!important;
@@ -427,14 +426,14 @@
   top:50%!important;
   display:flex!important;
   align-items:center!important;
-  gap:8px!important;
+  gap:14px!important;
   transform:translateY(-50%)!important;
   color:#173f49!important;
   white-space:nowrap!important;
 }
-.stip-swipe-neighbor-cue.is-next .stip-swipe-week-label{left:16px!important}
+.stip-swipe-neighbor-cue.is-next .stip-swipe-week-label{left:36px!important}
 .stip-swipe-neighbor-cue.is-prev .stip-swipe-week-label{
-  right:16px!important;
+  right:36px!important;
   flex-direction:row-reverse!important;
 }
 .stip-swipe-week-label span{
@@ -458,7 +457,9 @@
   text-transform:uppercase!important;
 }
 @media(max-width:430px){
-  .stip-swipe-month-word{width:78px!important}
-  .stip-swipe-month-word strong{font-size:clamp(1.9rem,8vw,2.8rem)!important}
+  .stip-swipe-month-word{inset:8px 0!important;width:100%!important}
+  .stip-swipe-month-word strong{font-size:var(--stip-month-word-size,64px)!important}
+  .stip-swipe-neighbor-cue.is-next .stip-swipe-week-label{left:30px!important}
+  .stip-swipe-neighbor-cue.is-prev .stip-swipe-week-label{right:30px!important}
   .stip-swipe-week-label strong{font-size:.72rem!important}
 }
