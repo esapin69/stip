@@ -1570,13 +1570,36 @@
       return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
     return `<button type="button" class="hc-pilotage-link" data-app="${esc(item.action || "")}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
   }
-  function pilotageRoleGroup(key, label, items = [], collapsible = false) {
+  const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v1";
+  function readPilotageOpen() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(PILOTAGE_OPEN_STORE) || "[]");
+      return new Set(Array.isArray(value) ? value.map(String) : []);
+    } catch {
+      return new Set();
+    }
+  }
+  function writePilotageOpen(openRoles) {
+    try {
+      sessionStorage.setItem(
+        PILOTAGE_OPEN_STORE,
+        JSON.stringify([...openRoles].filter(Boolean)),
+      );
+    } catch {}
+  }
+  function pilotageRoleGroup(
+    key,
+    label,
+    items = [],
+    collapsible = false,
+    openRoles = new Set(),
+  ) {
     const links = items.map(pilotageLink).filter(Boolean).join("");
     if (!links) return "";
     const separator = `<span>${esc(label)}</span>`;
     if (collapsible)
-      return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"><summary class="hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
-    return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
+      return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"${openRoles.has(key) ? " open" : ""}><summary class="stip-section-separator hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
+    return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="stip-section-separator hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
   }
   function pilotageBlock() {
     const role = pilotageRoleKey(),
@@ -1649,12 +1672,20 @@
         },
       ];
     if (role === "visiteur") return "";
-    if (role === "admin")
+    if (role === "admin") {
+      const openRoles = readPilotageOpen();
       return `<section class="hc-pilotage-shell is-admin" aria-label="Pilotage par profil">${groups
         .map((group) =>
-          pilotageRoleGroup(group.key, group.label, group.items, true),
+          pilotageRoleGroup(
+            group.key,
+            group.label,
+            group.items,
+            true,
+            openRoles,
+          ),
         )
         .join("")}</section>`;
+    }
     const group = groups.find((item) => item.key === role);
     if (!group) return "";
     const content = pilotageRoleGroup(
@@ -2517,6 +2548,18 @@
       .querySelectorAll("[data-copy]")
       .forEach(
         (b) => (b.onclick = () => copyText(b.dataset.copy, b.dataset.label)),
+      );
+    root
+      .querySelectorAll("details[data-pilotage-role]")
+      .forEach((details) =>
+        details.addEventListener("toggle", () => {
+          const key = String(details.dataset.pilotageRole || "").trim();
+          if (!key) return;
+          const openRoles = readPilotageOpen();
+          if (details.open) openRoles.add(key);
+          else openRoles.delete(key);
+          writePilotageOpen(openRoles);
+        }),
       );
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
