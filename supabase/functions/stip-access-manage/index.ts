@@ -79,6 +79,40 @@ async function legacyModels() {
   if (error) throw error;
   return data || [];
 }
+async function notificationSettings() {
+  const { data, error } = await db
+    .from("stip_notification_types")
+    .select("event_key,label,description,push_enabled,default_user_enabled,active,sort_order,updated_at")
+    .eq("active", true)
+    .order("sort_order");
+  if (error) throw error;
+  return data || [];
+}
+
+async function saveNotificationSetting(b: any, me: any) {
+  if (!(me?.role_key === "admin" || me?.permissions?.admin))
+    throw Error("Notifications réservées à l’administrateur");
+  const eventKey = String(b.event_key || "").trim();
+  if (!eventKey) throw Error("Type de notification manquant");
+  const { data: existing, error: readError } = await db
+    .from("stip_notification_types")
+    .select("event_key")
+    .eq("event_key", eventKey)
+    .eq("active", true)
+    .maybeSingle();
+  if (readError) throw readError;
+  if (!existing) throw Error("Type de notification inconnu");
+  const { error } = await db
+    .from("stip_notification_types")
+    .update({
+      push_enabled: !!b.push_enabled,
+      updated_by: me.agent_id || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("event_key", eventKey);
+  if (error) throw error;
+  return { ok: true, items: await notificationSettings() };
+}
 
 async function signedAvatarUrl(raw: any) {
   const value = String(raw || "");
@@ -171,6 +205,7 @@ async function list(q = "", viewer: any = null) {
     models,
     legacy_models: models,
     can_history: viewer?.role_key === "admin" || !!viewer?.permissions?.admin,
+    can_notifications: viewer?.role_key === "admin" || !!viewer?.permissions?.admin,
     people: people
       .filter(
         (p: any) =>
@@ -461,6 +496,13 @@ Deno.serve(async (r) => {
         throw Error("Historique réservé à l’administrateur");
       return J(await history(b));
     }
+    if (b.action === "notification_settings") {
+      if (!(me.role_key === "admin" || me.permissions?.admin))
+        throw Error("Notifications réservées à l’administrateur");
+      return J({ items: await notificationSettings() });
+    }
+    if (b.action === "notification_setting_save")
+      return J(await saveNotificationSetting(b, me));
     return J({ error: "Action invalide" }, 400);
   } catch (e) {
     return J({ error: e instanceof Error ? e.message : String(e) }, 403);
