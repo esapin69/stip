@@ -167,12 +167,15 @@ Le PDF opérationnel suit une architecture hybride : **pages fixes de repérage 
 Règles validées :
 - Le site **fabrique** les PDF demandés. Il ne renvoie plus le MASTER complet comme résultat d’export.
 - Le MASTER Drive reste la source de référence des pages visuelles fixes. Sa copie miroir privée strictement identique reste stockée dans le bucket privé `ghe-media` à `exports/visite-des-lieux/master.pdf`.
+- Le classeur Drive `01 - SOURCE MAÎTRE - Visite des lieux GHE.xlsm` est le **gabarit d’impression et d’ordre**, pas une deuxième source de données métier. `01_ORDRE_PDF` décrit la référence 19 pages : 16 pages héritées du MASTER + 3 nouveaux intercalaires (Cardio, Neuro, HFME). Les données de dictionnaire restent canoniques dans Supabase.
 - Le générateur `stip-places` extrait uniquement les pages fixes validées du miroir, puis fabrique les dictionnaires à partir du référentiel canonique Supabase.
+- Pour reproduire le gabarit XLSM sans dépendre d’Excel à l’exécution, les intercalaires Cardio/Neuro/HFME sont rendus par le moteur PDF avec les libellés du classeur ; les pages visuelles historiques sont copiées depuis le miroir PDF.
 - Mapping fixe actuel du MASTER 16 pages : **page 1 = repères GHE**, **page 2 = CARDIO**, **page 5 = NEURO**, **page 10 = HFME**, **page 14 = Bâtiments annexes**. Le code utilise les index PDF 0, 1, 4, 9 et 13.
 - Le générateur doit refuser silencieusement toute hypothèse : si le MASTER n’a plus exactement 16 pages, l’export PDF échoue explicitement jusqu’à revalidation du mapping. Ne jamais continuer avec des index potentiellement faux.
 - Après chaque modification validée du MASTER Drive : recharger la dernière version, vérifier la copie miroir privée (taille/hash), revalider le nombre et la position des pages fixes, puis mettre à jour le mapping si nécessaire.
 - Les actions **Afficher / Télécharger / Imprimer / Partager** utilisent toutes le PDF généré par STIP.
 - Les PDF par périmètre sont autorisés pour **GHE complet, bâtiment, domaine et sélection libre**. La sélection de données passe toujours par `scopedSnapshot`.
+- Le nombre final de pages n’est pas figé à 19 : le gabarit 19 pages donne l’ordre de composition, mais les dictionnaires dynamiques peuvent paginer sur plus ou moins de pages selon le périmètre et la richesse des données.
 - Les trois bâtiments principaux suivent l’ordre cible : **intercalaire généré au format fixe → page visuelle fixe issue du MASTER → dictionnaire dynamique**.
 - Les trois bâtiments principaux sont : **NEURO (Pierre Wertheimer) · CARDIO (Louis Pradel) · HFME (Femme Mère Enfant)**.
 - Les bâtiments annexes utilisent la page fixe **“Bâtiments annexes”** issue du MASTER, puis un flux continu par bâtiment. Chaque bâtiment annexe possède un titre de section dominant, suivi de son dictionnaire plus discret.
