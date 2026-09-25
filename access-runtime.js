@@ -249,7 +249,7 @@
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
     if (k === "dates") return openDocument("agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.("directory");
-    if (k === "responsable") return openDocument("responsable.html");
+    if (k === "responsable") return window.STIPRouter?.set?.("responsable");
     if (k === "notes")
       return location.assign(
         "https://sites.google.com/view/hfme-notes/notes-rapides",
