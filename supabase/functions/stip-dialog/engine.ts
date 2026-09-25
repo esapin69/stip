@@ -159,6 +159,20 @@ export async function answer(c: SessionCtx, body: any) {
   const allowContext = hasContextualPersonRef(raw) || !!option || ["contact", "colleagues"].includes(intent);
   const resolved = resolvePeople(raw, all, contextIds, allowContext);
   const explicitSubjects = resolved.candidates;
+  const semanticQ = semanticText(raw);
+  const compoundSubjects = explicitSubjects.length ? explicitSubjects : findAgents(all, contextIds);
+  if (/\b(planning|horaire|travaille|travail)\b/.test(semanticQ) && /\b(numero|telephone|mail|email|coordonnees)\b/.test(semanticQ) && compoundSubjects.length) {
+    const [planning, contact] = await Promise.all([
+      planningAnswer(c, old, compoundSubjects, ds, defs),
+      contactAnswer(c, old, compoundSubjects, raw, ds),
+    ]);
+    return {
+      kind:"combined", title:"Planning + coordonnées", text:`${planning.text} ${contact.text}`.trim(),
+      cards:[...(planning.cards||[]),...(contact.cards||[])], actions:[...(planning.actions||[]),...(contact.actions||[])],
+      suggestions:c.permissions?.messages===true?["Message"]:[],
+      context:baseContext(old,{subject_agent_ids:compoundSubjects.map(a=>a.id),agent_id:compoundSubjects[0]?.id,date_scope:ds,last_intent:"combined",offered_options:[]})
+    };
+  }
 
   if (intent === "leave_lookup") return leaveLookupAnswer(c, old, semanticText(raw), defs, all);\n\n  if (intent === "request_help") {
     const requestText = normalize(raw), isAbsence = /\b(absence|absent|absente)\b/.test(requestText);
@@ -205,7 +219,7 @@ export async function answer(c: SessionCtx, body: any) {
     const subjects = explicitSubjects.length ? explicitSubjects : findAgents(all, contextIds);
     if (subjects.length > 1 && resolved.mode === "explicit" && !contextIds.length) return choiceResponse(c, old, subjects, ds);
     if (subjects.length) return planningAnswer(c, old, subjects, ds, defs);
-    if (/\b(je|moi|mon|ma|mes)\b/.test(normalize(raw))) return planningAnswer(c, old, [c.agent], ds, defs);
+    if (/\b(je|moi|mon|ma|mes)\b/.test(normalize(raw)) || resolved.mode === "none") return planningAnswer(c, old, [c.agent], ds, defs);
   }
 
   if (resolved.mode === "explicit") {
