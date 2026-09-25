@@ -31,10 +31,10 @@
   };
   const APPS = {
     places: { label: "Visiter les lieux", home: "places-app.html" },
-    responsable: { label: "Responsable", home: "responsable.html" },
+    responsable: { label: "Responsable", home: "responsable.html?entry=shortcut" },
     assistant: { label: "Assistant STIP", home: "esprit-equipe.html?tab=assistant" },
     activity: { label: "Activité", home: "esprit-equipe.html?tab=activity" },
-    access: { label: "Accès", home: "access-manage.html" },
+    access: { label: "Accès & sécurité", home: "access-manage.html" },
     personal: { label: "Planning perso", home: "index.html?quick=personal" },
     tomorrow: { label: "Pour demain", home: "index.html?quick=tomorrow" },
     team: { label: "Esprit d’équipe", home: "esprit-equipe.html" },
