@@ -35,3 +35,6 @@ jobs:
 
       - name: Check STIP refactor invariants
         run: node tools/stip-refactor-test.mjs
+
+      - name: Check STIP calendar raw/common contract
+        run: node tools/stip-calendar-contract-test.mjs
