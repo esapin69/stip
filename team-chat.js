@@ -1134,7 +1134,7 @@
     });
   }
 
-  function chooseQuantityOnly(buildingLabel = "") {
+  function chooseQuantityOnly(contextLabel = "") {
     return new Promise((resolve) => {
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap";
@@ -1142,12 +1142,18 @@
         '<section class="tb-confirm tb-quantity-picker">' +
           '<div class="tb-confirm-icon">🦽</div>' +
           "<h3>Combien de fauteuils ?</h3>" +
-          "<p>" + esc(buildingLabel) + "</p>" +
-          '<div class="tb-quantity-choices">' +
+          "<p>" + esc(contextLabel) + "</p>" +
+          '<div class="tb-quantity-choices" aria-label="Nombre de fauteuils">' +
             [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) =>
-              '<button type="button" data-qty="' + n + '"><strong>' + n + "</strong></button>"
+              '<button type="button" class="tb-quantity-choice" data-qty="' + n + '">' +
+                '<span class="tb-quantity-wheel" aria-hidden="true">🦽</span>' +
+                '<strong>×' + n + "</strong>" +
+              "</button>"
             ).join("") +
-            '<button type="button" class="more" data-qty-more><strong>10+</strong><small>10 à 20</small></button>' +
+            '<button type="button" class="more tb-quantity-choice" data-qty-more>' +
+              '<span class="tb-quantity-wheel" aria-hidden="true">🦽</span>' +
+              '<strong>×10+</strong><small>10 à 20</small>' +
+            "</button>" +
           "</div>" +
           '<div class="tb-quantity-more" data-qty-more-panel hidden>' +
             '<label for="tbQuickQuantity">Nombre de fauteuils</label>' +
@@ -1245,7 +1251,7 @@
 
     let quantity = 1;
     if (state.composeMode === "spot") {
-      quantity = await chooseQuantityOnly(result.buildingLabel);
+      quantity = await chooseQuantityOnly([result.buildingLabel, wheelchairLevelDisplay(result.level)].filter(Boolean).join(" · "));
       if (!quantity || !state.root?.isConnected) return;
     }
 
@@ -1624,6 +1630,25 @@
         resolve(value);
       };
 
+      const wizardProgress = (active) => {
+        const steps = [
+          ["1", "Étage"],
+          ["2", "Fauteuils"],
+          ["3", "Endroit"],
+        ];
+        return (
+          '<div class="tb-wizard-progress" aria-label="Étape ' + active + ' sur 3">' +
+            steps.map((step, index) => {
+              const number = index + 1;
+              const cls = number === active ? " is-active" : number < active ? " is-done" : "";
+              return '<span class="tb-wizard-progress-step' + cls + '">' +
+                '<b>' + step[0] + '</b><small>' + step[1] + '</small>' +
+              '</span>';
+            }).join('<i aria-hidden="true">›</i>') +
+          '</div>'
+        );
+      };
+
       const searchHere = async () => {
         const result = await chooseLocationShortcut({
           buildingKey: building.key,
@@ -1646,17 +1671,52 @@
         );
       };
 
+      const renderLevels = () => {
+        wrap.innerHTML =
+          '<section class="tb-confirm tb-spot-wizard">' +
+            '<div class="tb-wizard-head"><span></span><div class="tb-confirm-icon">↕</div></div>' +
+            wizardProgress(1) +
+            "<h3>Quel étage ?</h3>" +
+            "<p>" + esc(building.label) + "</p>" +
+            '<div class="tb-level-choices tb-spot-level-choices" aria-label="Choisir un étage">' +
+              levels.map((item) =>
+                '<button type="button" data-level="' + esc(item.level) + '">' +
+                  '<small>NIVEAU</small><strong>' + esc(wheelchairLevelDisplay(item.level)) + "</strong>" +
+                "</button>"
+              ).join("") +
+            "</div>" +
+            '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+          "</section>";
+
+        wrap.querySelectorAll("[data-level]").forEach((button) => {
+          button.addEventListener("click", () => {
+            level = String(button.dataset.level || "");
+            quantity = 0;
+            selectedPlaces.clear();
+            renderQuantity();
+          });
+        });
+        wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
+      };
+
       const renderQuantity = () => {
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
-            '<div class="tb-confirm-icon">🦽</div>' +
+            '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour aux étages">‹</button><div class="tb-confirm-icon">🦽</div></div>' +
+            wizardProgress(2) +
             "<h3>Combien de fauteuils ?</h3>" +
-            "<p>" + esc(building.label) + "</p>" +
-            '<div class="tb-quantity-choices">' +
+            "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + "</p>" +
+            '<div class="tb-quantity-choices" aria-label="Nombre de fauteuils">' +
               [1,2,3,4,5,6,7,8,9].map((n) =>
-                '<button type="button" data-spot-qty="' + n + '"><strong>' + n + "</strong></button>"
+                '<button type="button" class="tb-quantity-choice" data-spot-qty="' + n + '">' +
+                  '<span class="tb-quantity-wheel" aria-hidden="true">🦽</span>' +
+                  '<strong>×' + n + "</strong>" +
+                "</button>"
               ).join("") +
-              '<button type="button" class="more" data-spot-more><strong>10+</strong><small>10 à 20</small></button>' +
+              '<button type="button" class="more tb-quantity-choice" data-spot-more>' +
+                '<span class="tb-quantity-wheel" aria-hidden="true">🦽</span>' +
+                '<strong>×10+</strong><small>10 à 20</small>' +
+              "</button>" +
             "</div>" +
             '<div class="tb-quantity-more" data-spot-more-panel hidden>' +
               '<label for="tbSpotQuantity">Nombre de fauteuils</label>' +
@@ -1666,31 +1726,9 @@
             "</div>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
-        bindQuantity();
-      };
 
-      const renderLevels = () => {
-        wrap.innerHTML =
-          '<section class="tb-confirm tb-spot-wizard">' +
-            '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-qty aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
-            "<h3>À quel niveau ?</h3>" +
-            "<p>" + quantity + " fauteuil" + (quantity > 1 ? "s" : "") + " · " + esc(building.label) + "</p>" +
-            '<div class="tb-level-choices">' +
-              levels.map((item) =>
-                '<button type="button" data-level="' + esc(item.level) + '"><strong>' + esc(item.level) + "</strong></button>"
-              ).join("") +
-            "</div>" +
-            '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
-          "</section>";
-        wrap.querySelector("[data-back-qty]")?.addEventListener("click", renderQuantity);
-        wrap.querySelectorAll("[data-level]").forEach((button) => {
-          button.addEventListener("click", () => {
-            level = String(button.dataset.level || "");
-            selectedPlaces.clear();
-            renderPlaces();
-          });
-        });
-        wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
+        wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
+        bindQuantity();
       };
 
       const renderPlaces = () => {
@@ -1704,12 +1742,14 @@
           ? wheelchairLevelContextOptions(building.key, level, selectedValues)
           : [];
         const unresolved = vagueSelections.length > 0;
+        const elevatorFollowup = !!activeVague && norm(activeVague).includes("ascenseur");
 
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
-            '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
+            '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-quantity aria-label="Retour au nombre de fauteuils">‹</button><div class="tb-confirm-icon">📍</div></div>' +
+            wizardProgress(3) +
             "<h3>Où exactement ?</h3>" +
-            "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + "</p>" +
+            "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + " · 🦽 ×" + esc(quantity) + "</p>" +
             '<div class="tb-place-choices tb-field-spot-choices">' +
               quickPlaces.map((place) => {
                 const selected = selectedPlaces.has(place.value);
@@ -1721,12 +1761,19 @@
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
             (activeVague
-              ? '<section class="tb-place-followup" aria-label="Préciser le repère choisi">' +
-                  '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>Précise avec un repère du ' + esc(wheelchairLevelDisplay(level)) + '</small></div>' +
+              ? '<section class="tb-place-followup' + (elevatorFollowup ? " is-elevator-panel" : "") + '" aria-label="Préciser le repère choisi">' +
+                  '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>' +
+                    (elevatorFollowup
+                      ? "Choisis le repère qui correspond à la sortie ou au côté de l’ascenseur."
+                      : "Précise avec un repère du " + esc(wheelchairLevelDisplay(level))) +
+                  '</small></div>' +
                   (contextOptions.length
-                    ? '<div class="tb-place-followup-options">' +
+                    ? '<div class="tb-place-followup-options' + (elevatorFollowup ? " is-elevator-options" : "") + '">' +
                         contextOptions.map((label) =>
-                          '<button type="button" data-place-followup="' + esc(label) + '"><span>＋</span><strong>' + esc(label) + '</strong></button>'
+                          '<button type="button" data-place-followup="' + esc(label) + '">' +
+                            '<span aria-hidden="true">' + (elevatorFollowup ? "🛗" : "＋") + '</span>' +
+                            '<strong>' + esc(label) + '</strong>' +
+                          '</button>'
                         ).join("") +
                       '</div>'
                     : '') +
@@ -1738,15 +1785,15 @@
               '<div class="tb-place-temperature-actions">' +
                 '<button type="button" class="' + (persistenceOverride === "fast" ? "is-selected" : "") + '" data-place-temperature="fast" aria-pressed="' + (persistenceOverride === "fast" ? "true" : "false") + '"><span>🧊</span><strong>Peut partir vite</strong></button>' +
                 '<button type="button" class="' + (persistenceOverride === "sheltered" ? "is-selected" : "") + '" data-place-temperature="sheltered" aria-pressed="' + (persistenceOverride === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Plutôt stable</strong></button>' +
-              '</div>' +
-            '</div>' +
+              "</div>" +
+            "</div>" +
             '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size || unresolved ? " disabled" : "") + '>' +
               '<span>' + (unresolved ? "Précise le repère ci-dessus" : "Continuer" + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "")) + '</span><b>›</b>' +
             "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
 
-        wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
+        wrap.querySelector("[data-back-quantity]")?.addEventListener("click", renderQuantity);
 
         wrap.querySelectorAll("[data-place]").forEach((button) => {
           button.addEventListener("click", () => {
@@ -1791,7 +1838,7 @@
         });
 
         wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
-          if (!selectedPlaces.size) return;
+          if (!selectedPlaces.size || unresolved) return;
           const locations = [...selectedPlaces];
           renderStructuredReview(
             wrap,
@@ -1816,7 +1863,10 @@
         wrap.querySelectorAll("[data-spot-qty]").forEach((button) => {
           button.addEventListener("click", () => {
             quantity = Number(button.dataset.spotQty) || 0;
-            if (quantity) renderLevels();
+            if (quantity) {
+              selectedPlaces.clear();
+              renderPlaces();
+            }
           });
         });
         const panel = wrap.querySelector("[data-spot-more-panel]");
@@ -1834,7 +1884,8 @@
             return;
           }
           quantity = value;
-          renderLevels();
+          selectedPlaces.clear();
+          renderPlaces();
         });
         input?.addEventListener("keydown", (event) => {
           if (event.key !== "Enter") return;
@@ -1848,7 +1899,7 @@
         if (event.target === wrap) close(false);
       });
       document.body.appendChild(wrap);
-      renderQuantity();
+      renderLevels();
     });
   }
 
@@ -2731,20 +2782,20 @@
     if (!wheelchair || wheelchair.type === "search" || wheelchair.status !== "active") return "";
     const seenAt = String(wheelchair.last_seen_at || message.created_at || "");
     const freshness = wheelchairFreshness(message, wheelchair);
+    const aria = freshness.timeLabel + " restantes · " + freshness.label;
     return (
       '<div class="tb-wheelchair-freshness is-' + freshness.stage +
         '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) +
         '" data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) +
         '" data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) +
         '" title="' + esc(freshness.label) + '">' +
-        '<div class="tb-freshness-copy">' +
-          '<span aria-hidden="true">' + freshness.icon + '</span>' +
-          '<strong>' + esc(freshness.timeLabel) + '</strong>' +
-          '<small>' + esc(freshness.label) + '</small>' +
-        '</div>' +
-        '<div class="tb-freshness-track" aria-hidden="true">' +
+        '<div class="tb-freshness-track" role="img" aria-label="' + esc(aria) + '">' +
+          '<span class="tb-freshness-state">' +
+            '<strong data-freshness-time>' + esc(freshness.timeLabel) + '</strong>' +
+            '<small data-freshness-label>' + esc(freshness.label) + '</small>' +
+          '</span>' +
           '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%">' +
-            '<span>' + freshness.icon + '</span>' +
+            '<span data-freshness-icon>' + freshness.icon + '</span>' +
           '</i>' +
         '</div>' +
       '</div>'
@@ -2770,20 +2821,27 @@
 
       node.classList.remove("is-hot", "is-warm", "is-cooling", "is-cold", "is-frozen");
       node.classList.add("is-" + freshness.stage);
-
-      const copy = node.querySelector(".tb-freshness-copy");
-      if (copy) {
-        copy.innerHTML =
-          '<span aria-hidden="true">' + freshness.icon + '</span>' +
-          '<strong>' + esc(freshness.timeLabel) + '</strong>' +
-          '<small>' + esc(freshness.label) + '</small>';
-      }
       node.title = freshness.label;
+
+      const time = node.querySelector("[data-freshness-time]");
+      if (time) time.textContent = freshness.timeLabel;
+
+      const label = node.querySelector("[data-freshness-label]");
+      if (label) label.textContent = freshness.label;
+
+      const track = node.querySelector(".tb-freshness-track");
+      if (track) {
+        track.setAttribute(
+          "aria-label",
+          freshness.timeLabel + " restantes · " + freshness.label,
+        );
+      }
 
       const marker = node.querySelector(".tb-freshness-marker");
       if (marker) {
         marker.style.setProperty("--freshness-position", freshness.position + "%");
-        marker.innerHTML = '<span>' + freshness.icon + '</span>';
+        const icon = marker.querySelector("[data-freshness-icon]");
+        if (icon) icon.textContent = freshness.icon;
       }
     });
   }
