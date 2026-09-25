@@ -5,7 +5,6 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/";
   const RELAY = "https://stip-ten.vercel.app/api/stip-access";
   const nativeFetch = window.fetch.bind(window);
-  const shellPage = location.pathname === "/" || /\/index\.html$/i.test(location.pathname);
 
   function mergedHeaders(input, init) {
     const headers = new Headers(
@@ -33,46 +32,23 @@
     return "";
   }
 
-  async function direct(input, init) {
-    return nativeFetch(input, init);
-  }
-
-  window.fetch = async function stipFetch(input, init = {}) {
-    const rawUrl =
-      typeof input === "string"
-        ? input
-        : input instanceof Request
-          ? input.url
-          : String(input || "");
-
-    if (!rawUrl.startsWith(SUPABASE_FUNCTIONS))
-      return direct(input, init);
-
-    if (!shellPage) return direct(input, init);
-
+  async function relay(input, init, rawUrl) {
     const url = new URL(rawUrl);
     const target = url.pathname
       .slice("/functions/v1/".length)
       .split("/")[0]
       .trim();
-
     const method = String(
-      init.method || (input instanceof Request ? input.method : "GET"),
+      init?.method || (input instanceof Request ? input.method : "GET"),
     ).toUpperCase();
 
-    if (!target || method !== "POST") return direct(input, init);
+    if (!target || method !== "POST") throw new Error("relay-not-applicable");
 
     const text = await bodyText(input, init);
-    if (text == null) return direct(input, init);
+    if (text == null) throw new Error("relay-body-unsupported");
 
     let payload = {};
-    if (text) {
-      try {
-        payload = JSON.parse(text);
-      } catch {
-        return direct(input, init);
-      }
-    }
+    if (text) payload = JSON.parse(text);
 
     const sourceHeaders = mergedHeaders(input, init);
     const relayHeaders = new Headers({ "Content-Type": "application/json" });
@@ -89,24 +65,45 @@
             payload,
           };
 
-    try {
-      const response = await nativeFetch(RELAY, {
-        method: "POST",
-        cache: "no-store",
-        headers: relayHeaders,
-        body: JSON.stringify(relayBody),
-        signal:
-          init?.signal ||
-          (input instanceof Request ? input.signal : undefined),
-      });
-      if (response.status < 500) return response;
-    } catch {}
+    return nativeFetch(RELAY, {
+      method: "POST",
+      cache: "no-store",
+      headers: relayHeaders,
+      body: JSON.stringify(relayBody),
+      signal:
+        init?.signal ||
+        (input instanceof Request ? input.signal : undefined),
+    });
+  }
 
-    return direct(input, init);
+  window.fetch = async function stipFetch(input, init = {}) {
+    const rawUrl =
+      typeof input === "string"
+        ? input
+        : input instanceof Request
+          ? input.url
+          : String(input || "");
+
+    if (!rawUrl.startsWith(SUPABASE_FUNCTIONS))
+      return nativeFetch(input, init);
+
+    // Core rule: Supabase remains the normal data path.
+    // The relay is only a network fallback when the device cannot reach
+    // Supabase at all. HTTP application errors must stay visible as-is.
+    try {
+      return await nativeFetch(input, init);
+    } catch (directError) {
+      try {
+        return await relay(input, init, rawUrl);
+      } catch {
+        throw directError;
+      }
+    }
   };
 
   window.STIPEdgeRelay = {
     active: true,
+    mode: "direct-first-fallback",
     relay: RELAY,
     version: "20260925-network-core3",
   };
