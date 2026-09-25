@@ -1028,11 +1028,10 @@ async function wheelchairCatalog(){
     }
   });
 
-  const targetTypes=new Set([...WHEELCHAIR_PICKER_TYPES,"hospital","building","building_or_zone"]);
   const targets:any[]=[];
   const seenTargets=new Set<string>();
   for(const p of rows){
-    if(!targetTypes.has(String(p.place_type||"")))continue;
+    if(String(p.place_type||"")==="campus")continue;
     const code=String(p.building_code||"").toUpperCase();
     const building=buildingByCode.get(code)||allBuildings.find((b:any)=>b.key==="ghe")||{key:"ghe",label:"GHE",aliases:["ghe"]};
     const label=String(p.display_name||p.official_name||"").trim();
@@ -1046,8 +1045,8 @@ async function wheelchairCatalog(){
       building_label:building.label,
       building_aliases:building.aliases||[],
       level:String(p.level||"").trim(),
-      location:label,
-      label,
+      location:String(p.place_type||"")==="level"?"":label,
+      label:String(p.place_type||"")==="level"?[building.label,label].filter(Boolean).join(" · "):label,
       type:p.place_type,
       summary:p.summary||"",
       aliases:aliasesBy.get(String(p.id))||[],
