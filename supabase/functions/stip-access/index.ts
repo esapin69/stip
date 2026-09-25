@@ -4,7 +4,7 @@ const TRAINEE_DEFAULT_AVATAR = "https://raw.githubusercontent.com/esapin69/stip/
 const C = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, content-type, x-stip-session, apikey",
+    "authorization, content-type, x-stip-session, apikey, cache-control, pragma",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const J = (body: unknown, status = 200) =>
