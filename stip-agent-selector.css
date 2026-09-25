@@ -125,3 +125,6 @@ html.sas-picker-open{overflow:hidden}
   .sas-picker-sheet{height:min(900px,92dvh);border:1px solid var(--stip-line);border-radius:var(--stip-radius-xl);box-shadow:var(--stip-shadow-strong)}
   .sas-picker-page-head{border-radius:var(--stip-radius-xl) var(--stip-radius-xl) 0 0}
 }
+
+/* Session-scoped trainee identity */
+.stip-trainee-session-gate{z-index:16000}.stip-trainee-session-gate .sas-picker-page-head>div{grid-column:2;text-align:center}.stip-trainee-session-gate .sas-picker-page-head small{display:block;color:var(--stip-accent);font-size:.58rem;font-weight:950;letter-spacing:.08em}.stip-trainee-session-note{max-width:640px;margin:0 auto 12px;padding:10px 12px;border:1px solid var(--stip-line-soft);border-radius:14px;background:var(--stip-surface-soft);color:var(--stip-muted);font-size:.72rem;line-height:1.45}
