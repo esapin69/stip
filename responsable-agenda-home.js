@@ -746,10 +746,12 @@
           cache: "no-store",
           signal: c.signal,
           headers: {
-            "content-type": "application/json",
-            "x-stip-session": localStorage.getItem(STORE) || "",
+            "content-type": "text/plain;charset=UTF-8",
           },
-          body: JSON.stringify({ action: "list" }),
+          body: JSON.stringify({
+            action: "list",
+            session_token: localStorage.getItem(STORE) || "",
+          }),
         }),
         j = await r.json().catch(() => ({}));
       if (!r.ok || j.error) {
