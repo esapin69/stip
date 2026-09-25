@@ -6,6 +6,87 @@
   const RELAY = "https://stip-ten.vercel.app/api/stip-access";
   const nativeFetch = window.fetch.bind(window);
 
+  const BREAKER_KEY = "stip_edge_breaker_v1";
+  const BREAKER_402_MS = 5 * 60 * 1000;
+  const BREAKER_429_MS = 60 * 1000;
+  const BREAKER_5XX_MS = 30 * 1000;
+  let breaker = readBreaker();
+
+  function readBreaker() {
+    try {
+      const value = JSON.parse(localStorage.getItem(BREAKER_KEY) || "null");
+      if (!value || Number(value.until || 0) <= Date.now())
+        return { until: 0, status: 0 };
+      return {
+        until: Number(value.until || 0),
+        status: Number(value.status || 0),
+      };
+    } catch {
+      return { until: 0, status: 0 };
+    }
+  }
+
+  function writeBreaker(status, duration) {
+    breaker = {
+      status: Number(status || 0),
+      until: Date.now() + Math.max(1000, Number(duration || 0)),
+    };
+    try {
+      localStorage.setItem(BREAKER_KEY, JSON.stringify(breaker));
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("stip:network-breaker", { detail: { ...breaker } }),
+    );
+  }
+
+  function clearBreaker() {
+    breaker = { until: 0, status: 0 };
+    try {
+      localStorage.removeItem(BREAKER_KEY);
+    } catch {}
+  }
+
+  function managed(rawUrl) {
+    return rawUrl.startsWith(SUPABASE_FUNCTIONS) || rawUrl === RELAY;
+  }
+
+  function breakerOpen() {
+    if (Number(breaker.until || 0) > Date.now()) return true;
+    if (breaker.until) clearBreaker();
+    return false;
+  }
+
+  function blockedResponse() {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Service STIP temporairement limité. Les tentatives automatiques sont suspendues quelques minutes.",
+        code: "stip_circuit_open",
+      }),
+      {
+        status: 503,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+          "X-STIP-Circuit": "open",
+        },
+      },
+    );
+  }
+
+  function observe(response) {
+    if (!response) return response;
+    if (response.status === 402) {
+      writeBreaker(402, BREAKER_402_MS);
+      return blockedResponse();
+    }
+    if (response.status === 429) writeBreaker(429, BREAKER_429_MS);
+    else if ([502, 503, 504].includes(response.status))
+      writeBreaker(response.status, BREAKER_5XX_MS);
+    else if (response.ok && breaker.until) clearBreaker();
+    return response;
+  }
+
   function mergedHeaders(input, init) {
     const headers = new Headers(
       input instanceof Request ? input.headers : undefined,
@@ -44,11 +125,11 @@
 
     if (!target || method !== "POST") throw new Error("relay-not-applicable");
 
-    const text = await bodyText(input, init);
-    if (text == null) throw new Error("relay-body-unsupported");
+    const body = await bodyText(input, init);
+    if (body == null) throw new Error("relay-body-unsupported");
 
     let payload = {};
-    if (text) payload = JSON.parse(text);
+    if (body) payload = JSON.parse(body);
 
     const sourceHeaders = mergedHeaders(input, init);
     const relayHeaders = new Headers({ "Content-Type": "application/json" });
@@ -84,27 +165,30 @@
           ? input.url
           : String(input || "");
 
-    if (!rawUrl.startsWith(SUPABASE_FUNCTIONS))
-      return nativeFetch(input, init);
+    if (!managed(rawUrl)) return nativeFetch(input, init);
+    if (breakerOpen()) return blockedResponse();
 
-    // Core rule: Supabase remains the normal data path.
-    // The relay is only a network fallback when the device cannot reach
-    // Supabase at all. HTTP application errors must stay visible as-is.
-    try {
-      return await nativeFetch(input, init);
-    } catch (directError) {
+    if (rawUrl.startsWith(SUPABASE_FUNCTIONS)) {
       try {
-        return await relay(input, init, rawUrl);
-      } catch {
-        throw directError;
+        return observe(await nativeFetch(input, init));
+      } catch (directError) {
+        try {
+          return observe(await relay(input, init, rawUrl));
+        } catch {
+          throw directError;
+        }
       }
     }
+
+    return observe(await nativeFetch(input, init));
   };
 
   window.STIPEdgeRelay = {
     active: true,
-    mode: "direct-first-fallback",
+    mode: "direct-first-fallback+circuit-breaker",
     relay: RELAY,
-    version: "20260925-network-core3",
+    version: "20260926-network-budget1",
+    breaker: () => ({ ...breaker, open: breakerOpen() }),
+    resetBreaker: clearBreaker,
   };
 })();
