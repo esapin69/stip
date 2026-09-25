@@ -51,6 +51,10 @@ assert(weekEngine.includes('selector=isWeek?".stip-week-master-nav":".stip-month
   "calendar swipe no longer delegates to the existing canonical navigation controls");
 assert(weekEngine.includes("ax<=ay*1.25"),
   "calendar swipe no longer protects vertical scrolling");
+assert(weekEngine.includes("touchmove"),
+  "calendar swipe no longer follows the finger during the gesture");
+assert(weekEngine.includes("animateIncoming"),
+  "calendar swipe no longer animates the incoming period");
 
 const rr = read("responsable-agenda-home.js");
 assert(rr.includes("stip-week-events stip-events-vertical rr-week-marks"),
