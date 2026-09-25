@@ -159,3 +159,40 @@ Non-negotiable invariants:
 - Application/interface code changes are made in GitHub. Do not operate Vercel directly or create a second deployment path; the existing deployment integration consumes GitHub.
 - Supabase Edge Function source must remain versioned in GitHub under `supabase/functions/*`. Before declaring a backend change complete, verify the deployed function source matches the GitHub source.
 - Add or extend regression checks whenever this contract changes, especially to prevent a hard-coded `WHEELCHAIR_LOCATIONS` catalogue from returning.
+
+## 15. Visiter les lieux — PDF MASTER, pages fixes et dictionnaires
+
+Le PDF opérationnel suit une architecture hybride volontaire : **pages fixes de repérage + dictionnaires dynamiques**.
+
+Règles validées :
+- Le PDF complet **GHE complet** doit ouvrir/télécharger le MASTER Drive officiel intact. Ne pas le reconstruire avec `pdf-lib` quand l’utilisateur demande le document complet.
+- Les pages de repérage visuel et les intercalaires sont des éléments fixes. Pour les trois bâtiments principaux, l’ordre cible est : **intercalaire fixe → page visuelle fixe → dictionnaire dynamique**.
+- Les trois bâtiments principaux sont : **NEURO (Pierre Wertheimer) · CARDIO (Louis Pradel) · HFME (Femme Mère Enfant)**.
+- Les bâtiments annexes ont un **intercalaire fixe “Bâtiments annexes”**, puis un flux continu par bâtiment. Chaque bâtiment annexe possède un titre de section visuellement dominant, suivi de son dictionnaire de services plus discret. Le dictionnaire ne doit jamais visuellement prendre le dessus sur le nom du bâtiment auquel il appartient.
+- Ne jamais créer une fiche pleine page par service uniquement parce qu’il contient beaucoup d’informations. Le dictionnaire reste l’outil principal.
+- Budget visuel : un service ne doit pas monopoliser plus d’environ une demi-page. Quand il contient beaucoup d’informations, **compacter, hiérarchiser, utiliser colonnes/champs courts et continuations structurées** plutôt que supprimer l’information.
+- **Aucune information opérationnelle utile n’est supprimée pour faire tenir le PDF.** On optimise sa présentation. Si une donnée est très détaillée mais utile, elle reste disponible dans le dictionnaire.
+- Les fiches terrain très riches comme **NEURO U301/U302** servent de référence de richesse informationnelle, pas de référence de surface occupée.
+
+Champs à savoir absorber dans une entrée de dictionnaire quand ils existent et sont utiles au transport :
+- nom officiel, alias et intitulé de mission ;
+- bâtiment, étage, aile/secteur, unité, salle/chambre ;
+- PTAH, UF et autres codes opérationnels ;
+- téléphone(s), contact utile, secrétariat, mail utile ;
+- horaires utiles ;
+- accès, badge, ascenseur, itinéraire, liaison, sens de circulation ;
+- restriction lit/fauteuil ou autre contrainte de transport ;
+- repère visuel, signalétique, raccourci terrain ;
+- activité ou rôle du service quand cela aide à distinguer la destination ;
+- contacts associés/collaborations uniquement quand ils aident réellement à joindre, identifier ou atteindre le lieu ;
+- source et niveau de confirmation quand l’information nécessite une vigilance.
+
+Les mentions `à compléter`, `à confirmer`, `à préciser`, `provisoire`, etc. sont des **lacunes**, jamais des faits à republier comme certains. Elles doivent rester dans le backlog de collecte terrain jusqu’à confirmation par une source conforme aux règles du projet.
+
+Le générateur PDF futur doit donc séparer :
+1. la composition fixe (intercalaires et pages visuelles) ;
+2. la sélection canonique des données ;
+3. le template compact de dictionnaire ;
+4. la pagination/densité ;
+5. les sorties par périmètre (GHE, bâtiment, domaine, sélection).
+
