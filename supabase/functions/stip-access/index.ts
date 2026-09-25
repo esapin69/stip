@@ -176,6 +176,10 @@ function authoritative(
   for (const [k, v] of Object.entries(over || {})) {
     if (typeof v === "boolean" && p[k] === undefined) p[k] = v;
   }
+  if (roleKey(role) === "chef_equipe") {
+    p.responsable = true;
+    p.__levels = { ...(p.__levels || {}), responsable: "pro" };
+  }
   if (p.planning === undefined)
     p.planning = !!(p.planning_personal || p.planning_team);
   if (p.equipe_contacts === undefined) p.equipe_contacts = !!p.contacts;
