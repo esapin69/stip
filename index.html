@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260925-calendar-swipe2" />
+    <meta name="stip-ui-build" content="20260925-access-recovery2" />
     <script id="stip-asset-self-heal">
       (() => {
         let probeTimer = 0;
@@ -343,13 +343,13 @@
         <div id="hsNotifList"></div>
       </div>
     </section>
-    <script src="stip-loading.js?v=20260831-perf2"></script>
+    <script src="stip-edge-relay.js?v=20260925-access-recovery1"></script>\n    <script src="stip-loading.js?v=20260831-perf2"></script>
     <script src="name-format.js?v=20260823-retain4"></script>
     <script src="shift-registry.js?v=20260924-core1"></script>
     <script src="stip-entry-router.js?v=20260924-team-unified1"></script>
     <script src="stip-workspace.js?v=20260925-workspace3"></script>
     <script src="stip-agent-selector.js?v=20260925-trainee1"></script>
-    <script src="app.js?v=20260925-access-relay1"></script>
+    <script src="app.js?v=20260925-access-recovery1"></script>
     <script src="quick-access.js?v=20260925-chef-access-hide1"></script>
     <script src="public-access-request.js?v=20260925-access-relay1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
@@ -368,7 +368,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260925-responsable-no-access1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260925-access-recovery1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
