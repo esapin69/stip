@@ -95,7 +95,7 @@
     <section class="stip-surface intro">
       <p class="stip-kicker">EXPORTER · AFFICHER · PARTAGER</p>
       <h1 class="stip-title">Préparer une version utile</h1>
-      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF officiel vient du MASTER Drive intact. Le tableur est généré depuis le référentiel Supabase de Visiter les lieux.</p>
+      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF officiel : copie privée STIP strictement identique au MASTER Drive. Le tableur est généré depuis le référentiel Supabase de Visiter les lieux.</p>
     </section>
 
     <div class="flow">
@@ -154,7 +154,7 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF officiel</strong><small>MASTER Drive intact, sans reconstruction Supabase.</small></span></button>
+          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF officiel</strong><small>MASTER Drive intact, servi directement par STIP.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur .xlsx</strong><small>Compatible Excel et Google Sheets, filtré selon ta sélection.</small></span></button>
         </div>
         <div class="format-note" id="formatNote"></div>
@@ -236,7 +236,7 @@
       ?"PDF officiel ou tableur complet."
       :"Cette sélection peut être exportée en tableur. Le PDF filtré attend le futur template dictionnaire.";
     formatNote.innerHTML=pdfAllowed
-      ?"<strong>PDF :</strong> le fichier proposé est le MASTER Drive officiel intact."
+      ?"<strong>PDF :</strong> le fichier proposé est la copie privée STIP, strictement identique au MASTER Drive."
       :"<strong>PDF filtré volontairement désactivé :</strong> aucune version Supabase ne remplacera le template officiel. Il sera activé après validation du dictionnaire.";
     setStatus("");
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -365,7 +365,7 @@
   function renderActions(){
     const pdf=state.format==="pdf";
     actionHint.textContent=pdf
-      ?"MASTER Drive officiel intact : aucune génération PDF depuis Supabase."
+      ?"PDF officiel intact : servi directement par STIP, sans reconstruction Supabase."
       :"Le tableur est généré depuis le référentiel Supabase et respecte la sélection choisie.";
     const actions=pdf?[
       ["view","◉","Afficher"],
@@ -389,6 +389,15 @@
     a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
   }
+  async function fetchMasterPdf(token,disposition="inline"){
+    const r=await fetch(API,{
+      method:"POST",cache:"no-store",
+      headers:{"content-type":"application/json","x-stip-session":token},
+      body:JSON.stringify({action:"master_pdf_file",disposition})
+    });
+    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"MASTER PDF indisponible.")}
+    return {blob:await r.blob(),name:filenameFrom(r,"pdf")};
+  }
   async function runExport(action){
     const token=localStorage.getItem(STORE)||"";
     if(!token){setStatus("Session STIP requise pour exporter.","error");return}
@@ -398,43 +407,55 @@
       setStatus("Le PDF filtré reste désactivé jusqu’à validation du template dictionnaire.","error");
       return;
     }
+
     let opened=null;
     if(pdf&&(action==="view"||action==="print")){
       opened=window.open("about:blank","_blank");
-      if(opened)opened.document.write('<title>Ouverture…</title><p style="font-family:system-ui;padding:24px">Ouverture du MASTER PDF officiel…</p>');
+      if(opened)opened.document.write('<title>Ouverture…</title><p style="font-family:system-ui;padding:24px">Ouverture du PDF officiel…</p>');
     }
+
     document.body.classList.add("busy");
-    setStatus(pdf?"Ouverture du MASTER Drive…":"Préparation du tableur…");
+    setStatus(pdf?"Préparation du PDF officiel…":"Préparation du tableur…");
     try{
       if(pdf){
-        const masterResponse=await fetch(API,{
-          method:"POST",cache:"no-store",
-          headers:{"content-type":"application/json","x-stip-session":token},
-          body:JSON.stringify({action:"master_pdf_link"})
-        });
-        const master=await masterResponse.json().catch(()=>({}));
-        if(!masterResponse.ok)throw new Error(master.error||"MASTER PDF indisponible.");
-        if(action==="view"){
-          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
-          setStatus("MASTER officiel ouvert sans reconstruction.","ok");
-        }else if(action==="print"){
-          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
-          setStatus("MASTER officiel ouvert dans le lecteur Drive : lance l’impression depuis le lecteur.","ok");
-        }else if(action==="download"){
-          const a=document.createElement("a");
-          a.href=master.download_url;a.target="_blank";a.rel="noopener noreferrer";
-          document.body.appendChild(a);a.click();a.remove();
-          setStatus("Téléchargement du MASTER officiel lancé.","ok");
-        }else if(action==="share"){
-          if(navigator.share){
-            await navigator.share({title:"Visiter les lieux · GHE",url:master.view_url});
-            setStatus("Lien du MASTER partagé. Les droits Drive restent appliqués.","ok");
-          }else{
-            await navigator.clipboard?.writeText(master.view_url);
-            setStatus("Lien du MASTER copié. Les droits Drive restent appliqués.","ok");
-          }
+        const {blob,name}=await fetchMasterPdf(token,action==="download"?"attachment":"inline");
+
+        if(action==="download"){
+          downloadBlob(blob,name);
+          setStatus("PDF officiel téléchargé directement.","ok");
+          return;
         }
-        return;
+
+        if(action==="view"){
+          const url=URL.createObjectURL(blob);
+          if(opened)opened.location.href=url;else window.open(url,"_blank","noopener");
+          setStatus("PDF officiel ouvert directement.","ok");
+          setTimeout(()=>URL.revokeObjectURL(url),180000);
+          return;
+        }
+
+        if(action==="print"){
+          const url=URL.createObjectURL(blob);
+          if(opened){
+            opened.location.href=url;
+            setTimeout(()=>{try{opened.focus();opened.print()}catch{}},1600);
+          }else window.open(url,"_blank","noopener");
+          setStatus("PDF officiel ouvert pour impression.","ok");
+          setTimeout(()=>URL.revokeObjectURL(url),180000);
+          return;
+        }
+
+        if(action==="share"){
+          const file=new File([blob],name,{type:"application/pdf"});
+          if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
+            await navigator.share({files:[file],title:"Visiter les lieux · GHE"});
+            setStatus("PDF officiel partagé directement.","ok");
+          }else{
+            downloadBlob(blob,name);
+            setStatus("Partage de fichier indisponible ici : le PDF a été téléchargé.","ok");
+          }
+          return;
+        }
       }
 
       const r=await fetch(API,{
