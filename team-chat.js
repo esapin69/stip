@@ -2474,36 +2474,15 @@
     let timer = 0;
     let startX = 0;
     let startY = 0;
-    let dx = 0;
     let targetId = "";
     let pointerId = null;
-    let active = false;
-    let horizontal = false;
-    let swiped = false;
     let longPressOpened = false;
-    let swipeWrap = null;
-    let swipeCard = null;
-
-    const resetSwipe = () => {
-      if (swipeCard) swipeCard.style.transform = "";
-      swipeWrap?.classList.remove("is-delete", "is-react", "is-reply", "is-dragging");
-      swipeWrap = null;
-      swipeCard = null;
-      dx = 0;
-      horizontal = false;
-    };
-
-    const clearTimer = () => {
-      if (timer) clearTimeout(timer);
-      timer = 0;
-    };
 
     const clear = () => {
-      clearTimer();
+      if (timer) clearTimeout(timer);
+      timer = 0;
       targetId = "";
       pointerId = null;
-      active = false;
-      resetSwipe();
     };
 
     root.addEventListener("pointerdown", (event) => {
@@ -2516,24 +2495,15 @@
 
       clear();
       longPressOpened = false;
-      swiped = false;
-      active = true;
       targetId = String(item.dataset.messageId || "");
       pointerId = event.pointerId;
       startX = Number(event.clientX || 0);
       startY = Number(event.clientY || 0);
-      dx = 0;
-      swipeCard = item;
-      swipeWrap = item.closest(".tb-message-swipe");
-
-      try {
-        item.setPointerCapture?.(event.pointerId);
-      } catch {}
 
       timer = window.setTimeout(() => {
         const id = targetId;
         timer = 0;
-        if (!id || horizontal) return;
+        if (!id) return;
         longPressOpened = true;
         try { navigator.vibrate?.(14); } catch {}
         openReactionPicker(id);
@@ -2541,110 +2511,32 @@
     }, { passive: true });
 
     root.addEventListener("pointermove", (event) => {
-      if (!active || (pointerId != null && event.pointerId !== pointerId)) return;
+      if (!timer || (pointerId != null && event.pointerId !== pointerId)) return;
+      const dx = Math.abs(Number(event.clientX || 0) - startX);
+      const dy = Math.abs(Number(event.clientY || 0) - startY);
+      if (dx > 26 || dy > 26) clear();
+    }, { passive: true });
 
-      const x = Number(event.clientX || 0) - startX;
-      const y = Number(event.clientY || 0) - startY;
+    root.addEventListener("pointerup", (event) => {
+      if (pointerId != null && event.pointerId !== pointerId) return;
+      clear();
+    }, { passive: true });
 
-      if (!horizontal) {
-        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
-        if (Math.abs(y) > Math.abs(x) * 1.1) {
-          clearTimer();
-          active = false;
-          resetSwipe();
-          return;
-        }
-
-        const canReply = swipeCard?.dataset.canReply === "1";
-        if (x > 0 && !canReply) {
-          if (Math.abs(x) > 26) clearTimer();
-          return;
-        }
-
-        horizontal = true;
-        clearTimer();
-        swipeWrap?.classList.add("is-dragging");
-      }
-
-      if (!horizontal || !swipeCard) return;
-      event.preventDefault();
-
-      dx = Math.max(-122, Math.min(122, x));
-      swiped = Math.abs(dx) > 12;
-      swipeCard.style.transform = "translate3d(" + dx + "px,0,0)";
-
-      const canDelete = swipeCard.dataset.canDelete === "1";
-      swipeWrap?.classList.toggle("is-reply", dx > 0);
-      swipeWrap?.classList.toggle("is-delete", dx < 0 && canDelete);
-      swipeWrap?.classList.toggle("is-react", dx < 0 && !canDelete);
-    }, { passive: false });
-
-    const finish = async (event) => {
-      if (pointerId != null && event?.pointerId != null && event.pointerId !== pointerId) return;
-
-      clearTimer();
-      const id = targetId;
-      const finalDx = dx;
-      const hadHorizontalSwipe = horizontal;
-      const canDelete = swipeCard?.dataset.canDelete === "1";
-      const canReply = swipeCard?.dataset.canReply === "1";
-
-      active = false;
-      targetId = "";
-      pointerId = null;
-      resetSwipe();
-
-      if (hadHorizontalSwipe && id) {
-        if (finalDx > 72 && canReply) {
-          swiped = true;
-          try { navigator.vibrate?.(10); } catch {}
-          await openFreeReply(id);
-        } else if (finalDx < -72) {
-          swiped = true;
-          try { navigator.vibrate?.(10); } catch {}
-          if (canDelete) await deleteMessageFromSwipe(id);
-          else openReactionPicker(id);
-        }
-      }
-
-      window.setTimeout(() => {
-        swiped = false;
-        longPressOpened = false;
-      }, 180);
-    };
-
-    root.addEventListener("pointerup", finish);
-    root.addEventListener("pointercancel", () => {
-      clearTimer();
-      active = false;
-      targetId = "";
-      pointerId = null;
-      resetSwipe();
-      window.setTimeout(() => {
-        swiped = false;
-        longPressOpened = false;
-      }, 180);
-    });
+    root.addEventListener("pointercancel", clear, { passive: true });
 
     root.addEventListener("contextmenu", (event) => {
-      if (state.selection || swiped) return;
+      if (state.selection) return;
       if (event.target.closest?.("button,input,textarea,label,a")) return;
       const item = event.target.closest?.("[data-message-id]");
       if (!item) return;
       event.preventDefault();
       const id = String(item.dataset.messageId || "");
-      clearTimer();
+      clear();
       if (!longPressOpened) openReactionPicker(id);
       longPressOpened = false;
     });
 
     root.addEventListener("click", (event) => {
-      if (swiped) {
-        event.preventDefault();
-        event.stopPropagation();
-        return;
-      }
-
       const open = event.target.closest?.("[data-reaction-open]");
       if (open) {
         event.preventDefault();
@@ -2658,8 +2550,8 @@
       event.preventDefault();
       event.stopPropagation();
       reactToMessage(
-        String(chip.dataset.reactQuick || ""),
-        String(chip.dataset.reactionEmoji || ""),
+        String(chip.dataset.messageId || ""),
+        String(chip.dataset.reactQuick || "")
       );
     });
   }
