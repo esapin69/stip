@@ -22,6 +22,30 @@ function hex(a: ArrayBuffer) {
 async function sha(value: string) {
   return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
 }
+function randomToken() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+function scrub(value: unknown): unknown {
+  if (typeof value === "string") {
+    return value
+      .replace(/sk-[A-Za-z0-9_-]{16,}/g, "[SECRET_MASQUÉ]")
+      .replace(/eyJ[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{20,}\\.[A-Za-z0-9_-]{10,}/g, "[JETON_MASQUÉ]");
+  }
+  if (Array.isArray(value)) return value.map(scrub);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, scrub(v)]));
+  }
+  return value;
+}
+const DEFAULT_GPT_PROMPTS = [
+  { title: "1 · Vérifier les faits", text: "Contrôle uniquement ce qui est démontré. Sépare FAIT, DÉDUCTION et HYPOTHÈSE. Cherche les contradictions, chiffres incohérents et affirmations non prouvées." },
+  { title: "2 · Chercher les dépendances cachées", text: "Cherche imports dynamiques, URL construites, service workers, crons, Edge Functions, Supabase, Storage, Vercel, Drive, routes rares, restaurations et dépendances indirectes." },
+  { title: "3 · Simplifier l’architecture", text: "Si la suppression n’est pas la meilleure option, propose la fusion, le déplacement ou la réécriture minimale qui réduit réellement les couches sans recréer une nouvelle couche." },
+  { title: "4 · Contrôler le risque", text: "Liste les conséquences concrètes, les moyens de retour arrière et les tests obligatoires. Distingue le réversible de l’irréversible." },
+  { title: "5 · Rendre la décision", text: "À partir de tous les contrôles précédents, rends uniquement la réponse finale au format demandé. Ne choisis SUPPRIMER que si les dépendances ont été suffisamment écartées par des preuves." }
+];
 async function requireStipAdmin(req: Request) {
   const token = req.headers.get("x-stip-session") || "";
   if (!token) throw new Error("Session STIP requise.");
@@ -139,6 +163,65 @@ async function localStorageDelete(caseRow: any) {
   return { provider: "supabase_storage", bucket, deleted, paths };
 }
 
+async function createGptHandoff(actor: string, body: any) {
+  const caseId = String(body.case_id || "");
+  if (!caseId) throw new Error("Dossier manquant.");
+  const { data: c, error } = await db.from("admin_cleanup_cases").select("*").eq("id", caseId).single();
+  if (error) throw error;
+  const { data: source } = c.source_key
+    ? await db.from("admin_cleanup_sources").select("source_key,label,source_type,locator").eq("source_key", c.source_key).maybeSingle()
+    : { data: null };
+
+  const prompts = Array.isArray(c.gpt_prompts) && c.gpt_prompts.length ? c.gpt_prompts : DEFAULT_GPT_PROMPTS;
+  const safeCase = scrub({
+    id: c.id,
+    source_key: c.source_key,
+    category: c.category,
+    title: c.title,
+    question: c.question,
+    context_text: c.context_text,
+    facts: c.facts,
+    metrics: c.metrics,
+    evidence: c.evidence,
+    uncertainties: c.uncertainties,
+    proposed_action: c.proposed_action,
+    proposed_plan: c.proposed_plan,
+    evidence_score: c.evidence_score,
+    evidence_hash: c.evidence_hash
+  });
+
+  const token = randomToken();
+  const tokenHash = await sha(token);
+  const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString();
+  const payload = scrub({
+    case: safeCase,
+    source: source || null,
+    prompts,
+    generated_at: new Date().toISOString()
+  });
+
+  const { error: insertError } = await db.from("admin_cleanup_handoffs").insert({
+    case_id: c.id,
+    token_hash: tokenHash,
+    payload,
+    created_by: actor,
+    expires_at: expiresAt
+  });
+  if (insertError) throw insertError;
+
+  await db.from("admin_cleanup_case_events").insert({
+    case_id: c.id,
+    event_type: "gpt_handoff_created",
+    actor,
+    payload: { expires_at: expiresAt, origin: "stip-cleanup-control" }
+  });
+
+  return {
+    handoff_url: `${URL}/functions/v1/admin-cleanup-handoff?token=${encodeURIComponent(token)}`,
+    expires_at: expiresAt
+  };
+}
+
 async function decide(actor: string, body: any) {
   const id = String(body.case_id || "");
   const decision = String(body.decision || "").toLowerCase();
@@ -217,6 +300,7 @@ Deno.serve(async (req) => {
     if (action === "overview") return J({ ok: true, ...(await overview()) });
     if (action === "request_scan") return J({ ok: true, run: await requestScan(admin.actor, body) });
     if (action === "settings") return J({ ok: true, settings: await updateSettings(body.patch || {}) });
+    if (action === "gpt_handoff") return J({ ok: true, ...(await createGptHandoff(admin.actor, body)) });
     if (action === "decision") return J({ ok: true, case: await decide(admin.actor, body) });
     return J({ error: "Action inconnue." }, 400);
   } catch (e) {
