@@ -972,7 +972,7 @@
 
 .stip-week-line{
   --stip-week-card-h:134px;
-  --stip-week-emoji-size:1.15rem;
+  --stip-week-emoji-size:1.38rem;
   --stip-week-columns:7;
   display:grid!important;
   grid-template-columns:repeat(var(--stip-week-columns),minmax(0,1fr))!important;
@@ -1105,9 +1105,9 @@
 .stip-week-events.is-empty{visibility:hidden!important}
 .stip-week-event{
   box-sizing:border-box!important;
-  width:20px!important;
-  height:20px!important;
-  min-width:20px!important;
+  width:24px!important;
+  height:24px!important;
+  min-width:24px!important;
   display:grid!important;
   place-items:center!important;
   margin:0!important;
@@ -1239,7 +1239,7 @@
   .stip-week-code{font-size:.88rem!important;line-height:18px!important}
   .stip-week-main{height:23px!important}
   .stip-week-events{height:21px!important;min-height:21px!important}
-  .stip-week-event{width:18px!important;height:18px!important;min-width:18px!important}
+  .stip-week-event{width:21px!important;height:21px!important;min-width:21px!important}
 }
 
 /* Shared hidden behavior: late-current-week bridge to next Monday. */
