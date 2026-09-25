@@ -181,6 +181,7 @@
       source_id: sourceId,
       category,
       date: String(x.date || "").slice(0, 10),
+      end_date: String(x.end_date || x.date || "").slice(0, 10),
       person_name: String(x.person_name || "Agent").trim(),
       title: String(x.title || categoryLabel(category)).trim(),
       time: String(x.time || "").trim(),
@@ -200,7 +201,11 @@
   }
 
   function itemsForDate(iso) {
-    return sortedItems().filter((x) => x.date === iso);
+    return sortedItems().filter((x) => {
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.end_date || start).slice(0, 10);
+      return Boolean(start && iso && start <= iso && iso <= end);
+    });
   }
 
   function markerGroups(events = []) {
