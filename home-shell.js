@@ -1663,10 +1663,10 @@
           label: "PILOTAGE · AGENT",
           items: [
             {
-              action: "personal",
-              label: "Mon planning",
-              icon: "🗓️",
-              when: () => has("planning_personal") || has("admin"),
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
             },
           ],
         },
