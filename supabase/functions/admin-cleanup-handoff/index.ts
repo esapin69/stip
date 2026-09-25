@@ -28,88 +28,8 @@ function textResponse(body: string, status = 200) {
 }
 
 function hex(buf: ArrayBuffer) {
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
-
-async function sha256(value: string) {
-  return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value)));
-}
-
-function randomToken() {
-  const bytes = new Uint8Array(32);
-  crypto.getRandomValues(bytes);
-  return btoa(String.fromCharCode(...bytes)).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
-}
-
-function scrub(value: unknown): unknown {
-  if (typeof value === "string") {
-    return value
-      .replace(/sk-[A-Za-z0-9_-]{16,}/g, "[SECRET_MASQUÉ]")
-      .replace(/eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}/g, "[JETON_MASQUÉ]");
-  }
-  if (Array.isArray(value)) return value.map(scrub);
-  if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, scrub(v)]));
-  }
-  return value;
-}
-
-async function requireAdmin(req: Request) {
-  const stipToken = req.headers.get("x-stip-session") || "";
-  if (stipToken) {
-    const tokenHash = await sha256(stipToken);
-    const { data: session, error: sessionError } = await db.from("stip_access_sessions")
-      .select("profile_id,expires_at,revoked_at")
-      .eq("token_hash", tokenHash)
-      .maybeSingle();
-    if (sessionError) throw sessionError;
-    if (!session || session.revoked_at || new Date(session.expires_at) <= new Date()) {
-      throw new Error("Session STIP expirée.");
-    }
-    const { data: profile, error: profileError } = await db.from("stip_access_profiles")
-      .select("id,role_key,permissions,active,agents(prenom,nom)")
-      .eq("id", session.profile_id)
-      .maybeSingle();
-    if (profileError) throw profileError;
-    if (!profile?.active || !(profile.role_key === "admin" || profile.permissions?.admin === true)) {
-      throw new Error("Contrôle réservé à l’administrateur STIP.");
-    }
-    const agent = Array.isArray(profile.agents) ? profile.agents[0] : profile.agents;
-    return [agent?.prenom, agent?.nom].filter(Boolean).join(" ").trim() || "Admin STIP";
-  }
-
-  const auth = req.headers.get("Authorization") || "";
-  if (!auth.startsWith("Bearer ")) throw new Error("Connexion administrateur requise.");
-  const client = createClient(URL, ANON, { global: { headers: { Authorization: auth } } });
-  const { data, error } = await client.auth.getUser();
-  if (error || !data.user?.email) throw new Error("Session administrateur invalide.");
-  const email = data.user.email.toLowerCase();
-  const { data: row, error: e } = await db.from("admin_ghe_users")
-    .select("email").eq("email", email).eq("active", true).maybeSingle();
-  if (e) throw e;
-  if (!row) throw new Error("Compte administrateur non autorisé.");
-  return email;
-}
-
-function formatItem(x: any, i: number) {
-  if (typeof x === "string") return `${i + 1}. ${x}`;
-  const label = x?.label || x?.type || x?.kind || `Élément ${i + 1}`;
-  const value = x?.value || x?.path || x?.url || x?.ref || x?.name || JSON.stringify(x);
-  return `${i + 1}. ${label} : ${value}`;
-}
-
-function buildMarkdown(payload: any) {
-  const c = payload.case;
-  const source = payload.source;
-  const facts = Array.isArray(c.facts) ? c.facts.map(formatItem).join("\n") : "Aucun fait structuré.";
-  const metrics = Object.entries(c.metrics || {}).map(([k, v]) => `- ${k} : ${String(v)}`).join("\n") || "Aucune mesure.";
-  const evidence = Array.isArray(c.evidence) ? c.evidence.map(formatItem).join("\n") : "Aucune preuve structurée.";
-  const uncertainties = Array.isArray(c.uncertainties) ? c.uncertainties.map(formatItem).join("\n") : "Aucune incertitude déclarée.";
-  const plan = Array.isArray(c.proposed_plan) ? c.proposed_plan.map(formatItem).join("\n") : "Aucun plan détaillé.";
-  const prompts = Array.isArray(payload.prompts) ? payload.prompts : [];
-
   return [
-    "# DOSSIER DE CONTRE-VÉRIFICATION ET D'EXÉCUTION — STIP",
+    "# DOSSIER AUTONOME DE CONTRÔLE ET D'EXÉCUTION — STIP",
     "",
     "## Identité du dossier",
     `CASE_ID : ${c.id}`,
@@ -117,18 +37,37 @@ function buildMarkdown(payload: any) {
     "TABLE DOSSIERS : public.admin_cleanup_cases",
     "TABLE JOURNAL : public.admin_cleanup_case_events",
     "",
-    "## Mission",
-    "Prends la suite complète de ce dossier dans cette conversation ChatGPT.",
-    "Commence par contre-vérifier les faits avec les connecteurs GitHub, Supabase, Vercel et Google Drive. Pendant cette phase, ne change rien.",
-    "Quand la vérification est terminée, présente au patron une seule question simple, factuelle et mesurable avec les choix utiles : VALIDER, MODIFIER, REFUSER ou SUPPRIMER.",
-    "Le patron prend la décision finale ici. Après sa réponse explicite, réalise le travail correspondant avec les connecteurs, vérifie le résultat et mets à jour ce dossier dans Supabase.",
-    "Ne demande pas au patron de copier-coller une réponse dans STIP.",
-    "Clôture le dossier seulement après contrôles. En cas d'échec ou de nouvelle preuve contradictoire, journalise-la et arrête l'exécution concernée.",
+    "## Rôle",
+    "Tu es le contre-expert technique et l'exécutant de ce dossier. Le patron ne doit pas avoir à savoir s'il faut VALIDER, MODIFIER ou REFUSER techniquement.",
+    "Tu dois vérifier les faits avec les connecteurs disponibles dans le compte ChatGPT : GitHub, Supabase, Vercel et Google Drive.",
+    "Tu prends toi-même la décision technique la mieux étayée et tu la consignes dans STIP.",
+    "",
+    "## Règle d'autonomie",
+    "1. Vérifie d'abord les faits, dépendances et risques. Pendant cette phase, ne modifie rien.",
+    "2. Si le dossier est un faux positif ou qu'aucune action n'est utile, ferme-le toi-même comme REFUSÉ avec le motif factuel.",
+    "3. Si une amélioration est utile, sûre, réversible et testable, exécute-la toi-même avec les connecteurs, de préférence sur la branche de travail adaptée, puis teste et mets STIP à jour.",
+    "4. Si la proposition doit être modifiée, choisis toi-même la meilleure variante, exécute-la si elle reste réversible et sûre, puis teste.",
+    "5. Ne demande PAS au patron de choisir entre VALIDER / MODIFIER / REFUSER : c'est ton travail technique.",
+    "6. Demande au patron une confirmation seulement pour une action réellement irréversible ou à fort impact : suppression définitive de données/fichiers/projets, perte d'historique, coût payant, changement de domaine critique ou autre conséquence métier importante.",
+    "7. Dans ce cas, ne formule pas une question technique. Donne une phrase simple et mesurable, par exemple : « 3 projets de test sans domaine actif ni déploiement prêt peuvent être supprimés définitivement. Les supprimer ? »",
+    "8. Si la preuve reste insuffisante, continue à chercher. Si elle ne peut pas être obtenue, n'invente rien : classe le dossier comme non concluant / à surveiller avec la preuve manquante.",
+    "",
+    "## Règle de publication",
+    "Pour GitHub, privilégie les branches de travail et les lots. N'empile pas des micro-déploiements Vercel. Respecte la politique de publication du dépôt. Ne pousse vers la production qu'après tests et uniquement si le changement le nécessite.",
+    "",
+    "## Mise à jour STIP obligatoire",
+    "Au début de ta prise en charge, journalise gpt_review_started dans public.admin_cleanup_case_events et indique execution_status='gpt_reviewing'.",
+    "Quand tu as tranché techniquement, renseigne decision_kind, decision_note, decision_at et decision_by='GPT contre-expert'.",
+    "Si tu exécutes : passe execution_status='gpt_executing', journalise les actions, puis vérifie les tests/régressions.",
+    "Si tout est vérifié : status='done', execution_status='completed', renseigne result et execution_log.",
+    "Si c'est un faux positif : status='refused', execution_status='completed' avec le motif.",
+    "Si une confirmation irréversible du patron est nécessaire : laisse le dossier ouvert, mets execution_status='awaiting_patron_confirmation' et journalise exactement la conséquence à confirmer.",
+    "En cas d'échec : status='execution_failed', execution_status='failed', avec la preuve et le rollback éventuel.",
     "",
     "## Source",
     `${source?.label || c.source_key || "Source"} — ${source?.locator || ""}`,
     "",
-    "## Question initiale",
+    "## Question initiale du moteur",
     c.question || c.title,
     "",
     "## Contexte",
@@ -149,7 +88,7 @@ function buildMarkdown(payload: any) {
     "## Action proposée par le moteur",
     c.proposed_action || "Aucune action proposée.",
     "",
-    "## Plan prévu si le patron valide",
+    "## Plan initial",
     plan,
     "",
     "## Niveau de preuve du moteur",
@@ -161,13 +100,10 @@ function buildMarkdown(payload: any) {
       String(p.text || p),
       ""
     ]),
-    "## Retour STIP obligatoire",
-    "Après la décision, enregistre-la dans public.admin_cleanup_cases et ajoute les étapes dans public.admin_cleanup_case_events.",
-    "Si l'action décidée réussit après tests, marque le dossier terminé et renseigne le résultat. Si elle échoue, marque l'échec avec la preuve.",
-    "",
-    "## Format avant décision",
-    "Résume seulement : CE QUI EST PROUVÉ / CE QUI RESTE INCERTAIN / CONSÉQUENCE CONCRÈTE / TA PROPOSITION.",
-    "Puis pose une seule question de décision au patron. Après sa réponse, exécute et vérifie sans lui demander de revenir dans STIP."
+    "## Sortie attendue",
+    "Ne rends pas un bloc à recopier dans STIP.",
+    "Fais le travail et synchronise STIP toi-même.",
+    "Dans la conversation, donne seulement : le verdict technique, ce que tu as vérifié, ce que tu as fait, le résultat des tests, et uniquement si nécessaire la confirmation irréversible simple à obtenir du patron."
   ].join("\n");
 }
 
