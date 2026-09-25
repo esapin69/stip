@@ -45,6 +45,7 @@
   margin:0!important;
   padding:0!important;
   overflow:visible!important;
+  touch-action:pan-y!important;
 }
 .stip-week-day{
   box-sizing:border-box!important;
@@ -266,6 +267,8 @@
   text-align:center!important;
   line-height:1!important;
 }
+.stip-month-calendar{touch-action:pan-y!important}
+
 .stip-month-calendar .stip-month-grid{
   box-sizing:border-box!important;
   width:100%!important;
