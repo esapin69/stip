@@ -355,7 +355,7 @@
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260925-week-engine4"></script>
     <script src="stip-loader.js?v=20260925-wheelchair-dm3"></script>
-    <script src="home-shell.js?v=20260925-team-analysis-perf1"></script>
+    <script src="home-shell.js?v=20260925-responsable-analysis-overlay1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
     <script src="tomorrow-ui.js?v=20260921-field3"></script>
@@ -368,7 +368,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260925-access-relay1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260925-responsable-analysis-overlay1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
