@@ -229,34 +229,44 @@
     ["places", "Visiter les lieux", "places"],
     ["access", "Accès", "access"],
   ];
+  function openDocument(url) {
+    if (window.STIPLoad?.navigateDocument) {
+      window.STIPLoad.navigateDocument(url);
+      return;
+    }
+    location.assign(new URL(url, location.href).href);
+  }
   function openApp(k, e) {
     e?.preventDefault?.();
     e?.stopPropagation?.();
     if (!canApp(k)) return;
-    if (k === "personal") return (location.href = "index.html?quick=personal");
-    if (k === "tomorrow") return (location.href = "index.html?quick=tomorrow");
-    if (k === "team") return (location.href = "esprit-equipe.html?tab=team");
-    if (k === "agents") return (location.href = "agent-directory.html");
-    if (k === "compare") return (location.href = "planning-compare-app.html");
-    if (k === "change") return (location.href = "index.html?quick=change");
-    if (k === "calendar") return (location.href = "index.html?quick=calendar");
-    if (k === "dates") return (location.href = "agent-dates.html");
-    if (k === "contacts") return (location.href = "index.html?quick=contacts");
-    if (k === "responsable") return (location.href = "responsable.html");
+    if (k === "personal") return window.STIPHubs?.planning?.("personal");
+    if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
+    if (k === "team") return window.STIPRouter?.set?.("team");
+    if (k === "agents") return openDocument("agent-directory.html");
+    if (k === "compare") return openDocument("planning-compare-app.html");
+    if (k === "change") return window.STIPHubs?.planning?.("change");
+    if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
+    if (k === "dates") return openDocument("agent-dates.html");
+    if (k === "contacts") return window.STIPHubs?.contacts?.("directory");
+    if (k === "responsable") return openDocument("responsable.html");
     if (k === "notes")
-      return (location.href =
-        "https://sites.google.com/view/hfme-notes/notes-rapides");
+      return location.assign(
+        "https://sites.google.com/view/hfme-notes/notes-rapides",
+      );
     if (k === "newagent")
-      return (location.href = "https://esapin69.github.io/Ghe-interne/");
-    if (k === "upload") return (location.href = "depot.html");
+      return location.assign("https://esapin69.github.io/Ghe-interne/");
+    if (k === "upload") return openDocument("depot.html");
     if (k === "activity")
-      return (location.href = "esprit-equipe.html?tab=activity");
-    if (k === "admin") return (location.href = "access-manage.html");
+      return openDocument("esprit-equipe.html?tab=activity");
+    if (k === "admin") return openDocument("access-manage.html");
     if (k === "places")
-      return (location.href = `places-app.html?mode=${infoLevel("places") === "pro" ? "pro" : "visitor"}`);
+      return openDocument(
+        `places-app.html?mode=${infoLevel("places") === "pro" ? "pro" : "visitor"}`,
+      );
     if (k === "assistant")
-      return (location.href = "esprit-equipe.html?tab=assistant");
-    if (k === "access") return (location.href = "access-manage.html");
+      return openDocument("esprit-equipe.html?tab=assistant");
+    if (k === "access") return openDocument("access-manage.html");
   }
   function dedupe(box) {
     const seen = new Set();
