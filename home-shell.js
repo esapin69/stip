@@ -864,9 +864,9 @@
 
     const navWeek = navigationWeek();
 
-    // Une navigation par flèche change seulement la période affichée.
-    // Aucune journée n'est sélectionnée tant que l'utilisateur n'en touche pas une.
-    state.dayFocus = "";
+    // Une navigation de semaine sélectionne toujours le premier jour visible.
+    // Sur une semaine complète, cela correspond au lundi.
+    state.dayFocus = navWeek[0]?.iso || parisIso();
 
     state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
     state.renderSig = "";
