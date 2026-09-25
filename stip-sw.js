@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260925-home-perf1";
+const STIP_SW_BUILD="20260925-team-analysis-perf1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
