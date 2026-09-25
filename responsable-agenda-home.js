@@ -200,12 +200,20 @@
     );
   }
 
+  function occursOn(item, iso) {
+    const start = String(item?.date || "").slice(0, 10),
+      end = String(item?.end_date || start).slice(0, 10);
+    return Boolean(start && iso && start <= iso && iso <= end);
+  }
+
+  function overlapsRange(item, startIso, endIso) {
+    const start = String(item?.date || "").slice(0, 10),
+      end = String(item?.end_date || start).slice(0, 10);
+    return Boolean(start && startIso && endIso && start <= endIso && end >= startIso);
+  }
+
   function itemsForDate(iso) {
-    return sortedItems().filter((x) => {
-      const start = String(x.date || "").slice(0, 10),
-        end = String(x.end_date || start).slice(0, 10);
-      return Boolean(start && iso && start <= iso && iso <= end);
-    });
+    return sortedItems().filter((x) => occursOn(x, iso));
   }
 
   function markerGroups(events = []) {
@@ -356,8 +364,12 @@
   function renderUpcoming() {
     const host = $("#rrUpcoming");
     if (!host) return;
-    const dates = new Set(weekDays().map((x) => x.iso)),
-      rows = sortedItems().filter((x) => dates.has(x.date));
+    const days = weekDays(),
+      start = days[0]?.iso || "",
+      end = days.at(-1)?.iso || "",
+      rows = sortedItems()
+        .filter((x) => overlapsRange(x, start, end))
+        .map((x) => ({ item: x, displayDate: String(x.date) < start ? start : x.date }));
     if (!rows.length) {
       host.innerHTML =
         '<div class="rr-period-separator"><span>DATES DE LA SEMAINE</span></div><div class="rr-empty">Aucune date d’agent sur la semaine affichée.</div>';
@@ -365,13 +377,13 @@
     }
     let lastDate = "";
     host.innerHTML = rows
-      .map((x) => {
+      .map(({ item, displayDate }) => {
         const sep =
-          x.date !== lastDate
-            ? `<div class="rr-period-separator"><span>${esc(weekEventLabel(x.date))}</span></div>`
+          displayDate !== lastDate
+            ? `<div class="rr-period-separator"><span>${esc(weekEventLabel(displayDate))}</span></div>`
             : "";
-        lastDate = x.date;
-        return sep + eventCard(x);
+        lastDate = displayDate;
+        return sep + eventCard(item);
       })
       .join("");
   }
@@ -380,8 +392,12 @@
     const host = $("#rrSelectedDay");
     if (!host) return;
     const key = state.monthKey || parisIso().slice(0, 7),
-      rows = sortedItems().filter((x) => x.date.startsWith(key)),
       [y, m] = key.split("-").map(Number),
+      monthStart = key + "-01",
+      monthEnd = localIso(new Date(y, m, 0, 12)),
+      rows = sortedItems()
+        .filter((x) => overlapsRange(x, monthStart, monthEnd))
+        .map((x) => ({ item: x, displayDate: String(x.date) < monthStart ? monthStart : x.date })),
       monthName = new Date(y, (m || 1) - 1, 1, 12)
         .toLocaleDateString("fr-FR", { month: "long" })
         .toUpperCase();
@@ -394,22 +410,23 @@
     host.innerHTML =
       `<div class="rr-period-separator rr-month-events-title"><span>DATES DE ${esc(monthName)}</span></div>` +
       rows
-        .map((x) => {
+        .map(({ item, displayDate }) => {
           const sep =
-            x.date !== lastDate
-              ? `<div class="rr-period-separator rr-month-event-date"><span>${esc(fullDateLabel(x.date))}</span></div>`
+            displayDate !== lastDate
+              ? `<div class="rr-period-separator rr-month-event-date"><span>${esc(fullDateLabel(displayDate))}</span></div>`
               : "";
-          lastDate = x.date;
-          return sep + eventCard(x);
+          lastDate = displayDate;
+          return sep + eventCard(item);
         })
         .join("");
   }
 
   function weekCounts(days = weekDays()) {
-    const dates = new Set(days.map((x) => x.iso)),
+    const start = days[0]?.iso || "",
+      end = days.at(-1)?.iso || "",
       counts = { medical: 0, intern: 0, training: 0 };
     for (const item of state.items) {
-      if (dates.has(item.date) && Object.hasOwn(counts, item.category))
+      if (overlapsRange(item, start, end) && Object.hasOwn(counts, item.category))
         counts[item.category] += 1;
     }
     return counts;
@@ -437,8 +454,13 @@
       weekDaysNow = weekDays(),
       week = new Set(weekDaysNow.map((x) => x.iso)),
       month = state.monthKey || today.slice(0, 7),
+      monthStart = month + "-01",
+      [monthY, monthM] = month.split("-").map(Number),
+      monthEnd = localIso(new Date(monthY, monthM, 0, 12)),
       visible = state.items.filter(
-        (x) => week.has(x.date) || x.date.startsWith(month),
+        (x) =>
+          [...week].some((iso) => occursOn(x, iso)) ||
+          overlapsRange(x, monthStart, monthEnd),
       ),
       categories = new Set(visible.map((x) => categoryClass(x.category))),
       signalLevels = new Set(
@@ -454,9 +476,12 @@
         );
       };
 
-    for (const item of state.items.filter((x) => x.date.startsWith(month))) {
-      const groupKey = item.date + "|" + categoryClass(item.category);
-      monthCounts.set(groupKey, (monthCounts.get(groupKey) || 0) + 1);
+    for (let day = new Date(monthY, monthM - 1, 1, 12); day.getMonth() === monthM - 1; day.setDate(day.getDate() + 1)) {
+      const iso = localIso(day);
+      for (const item of itemsForDate(iso)) {
+        const groupKey = iso + "|" + categoryClass(item.category);
+        monthCounts.set(groupKey, (monthCounts.get(groupKey) || 0) + 1);
+      }
     }
 
     for (const category of ["medical", "intern", "training", "other"]) {
