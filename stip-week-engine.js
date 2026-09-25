@@ -191,6 +191,7 @@
         endY=Number.isFinite(touch.clientY)?touch.clientY:start.lastY,
         dx=endX-start.x;
       if(start.vertical){clearSwipeVisual(start.surface);return}
+      if(start.horizontal)suppressClickUntil=Date.now()+260;
       handleSwipe(start.surface,start.x,start.y,endX,endY,dx);
     },{passive:true,capture:true});
     document.addEventListener("touchcancel",()=>{if(swipeStart)resetSwipe(swipeStart.surface,swipeStart.lastX-swipeStart.x);swipeStart=null},{passive:true,capture:true});
