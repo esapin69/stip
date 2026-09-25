@@ -1760,12 +1760,6 @@
               icon: "🧭",
               when: () => has("responsable") || has("admin"),
             },
-            {
-              action: "access",
-              label: "Accès & sécurité",
-              icon: "🔐",
-              when: () => has("access_manage") || has("admin"),
-            },
           ],
         },
         {
