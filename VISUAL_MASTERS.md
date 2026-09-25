@@ -14,27 +14,37 @@ But : ne plus redemander ni réinventer à chaque discussion quel écran sert de
 
 ## 1. Semaine / planning personnel
 
-**Statut : MAÎTRE EN COURS DE FINALISATION**
+**Statut : MAÎTRE PARTAGÉ EN COURS DE FINALISATION**
 
-Référence : la semaine de la page **Mon profil / Accueil personnel**.
+Référence d’origine : la semaine active de **Mon profil / Accueil personnel**.
 
-Cette référence est explicitement choisie par Eddy comme future base maîtresse, mais elle est encore en cours de réglage. Tant qu’Eddy n’a pas déclaré la base finalisée, **ne pas propager automatiquement ses changements aux autres pages**. Les modifications demandées doivent être faites d’abord sur cette base, puis la propagation sera décidée séparément.
+Source commune désormais :
+- `stip-patterns.css`
+- conteneur : `.stip-week-line`
+- jour : `.stip-week-day`
+- en-tête jour : `.stip-week-day-head`
+- corps jour : `.stip-week-day-body`
+- code : `.stip-week-code`
+- repère principal : `.stip-week-main`
+- événements : `.stip-week-events`
+- navigation : `.stip-week-master-nav`
 
-Implémentation actuelle :
-- `home-shell.js`
-- `home-shell.css`
-- structure principale : `.hc-planning-primary-head`
-- navigation : `.hc-week-nav-global.hc-week-nav-hero`
-- ligne des jours : `.hc-home-week-days`
-- jours / shifts : génération via `homeDayStrip(...)` et le registre canonique des shifts.
+La géométrie et les états communs ont été extraits de la semaine réellement affichée dans Mon profil / Accueil personnel. La page d’origine consomme maintenant elle-même ce contrat : elle n’est plus une copie locale servant seulement de référence.
+
+Propagation explicitement autorisée par Eddy :
+- Mon profil / Accueil personnel ;
+- fiche / agenda agent ;
+- Esprit d’équipe ;
+- Responsable > Dates ;
+- Agenda Responsable autonome ;
+- vues semaine du hub planning et fallback fiche agent.
 
 Règle :
-- lorsqu’une autre surface a besoin d’une semaine visuellement comparable, partir de ce modèle ;
-- ne pas recréer une semaine locale avec une autre géométrie si le besoin métier est compatible ;
-- les adaptations autorisées portent sur les informations visibles et les permissions, pas sur une réinvention du composant ;
-- si une amélioration du composant semaine est validée à la racine, les consommateurs compatibles doivent pouvoir en hériter.
-
-Note : `agent-agenda-view.css` réutilise déjà plusieurs primitives `hc-*` de semaine, ce qui confirme qu’une mutualisation réelle est possible.
+- toute future ligne de semaine compatible doit utiliser ce contrat avant d’être considérée terminée ;
+- les pages gardent leurs données propres (shift personnel, indicateur terrain, événements, lecture seule, permissions) mais ne redéfinissent plus la géométrie de la semaine ;
+- une modification validée sur la base maîtresse doit être faite dans `stip-patterns.css` pour se propager aux consommateurs ;
+- les anciennes règles locales peuvent rester temporairement pour d’anciens écrans non migrés, mais elles ne doivent plus être utilisées par une ligne déjà branchée ;
+- la base reste « en cours de finalisation » tant qu’Eddy a encore des réglages à faire : ces réglages doivent désormais être faits sur le composant commun, puisque les lignes compatibles sont volontairement branchées dessus.
 
 ## 2. Navigation temporelle complète mois → semaine → jours
 
