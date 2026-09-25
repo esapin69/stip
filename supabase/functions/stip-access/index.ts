@@ -1,5 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+const TRAINEE_DEFAULT_AVATAR = "https://drive.google.com/thumbnail?id=1OrU6Sl01mfmYYJgQxG40diKhsj_Yx0-Y&sz=w512";
 const C = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -260,8 +261,8 @@ function identityAgent(i: any) {
         equipe: null,
         ghe: null,
         role: i.professional_role || i.identity_kind,
-        avatar_url: null,
-        profile_photo_url: null,
+        avatar_url: TRAINEE_DEFAULT_AVATAR,
+        profile_photo_url: TRAINEE_DEFAULT_AVATAR,
         identity_kind: i.identity_kind,
       }
     : null;
@@ -345,6 +346,8 @@ async function traineeGroups() {
       source_key: `stagiaire:${x.key}`,
       role: "Stagiaire",
       ghe: "Stage",
+      avatar_url: TRAINEE_DEFAULT_AVATAR,
+      profile_photo_url: TRAINEE_DEFAULT_AVATAR,
       active_now:
         String(x.first_date || "") <= parisDay() &&
         String(x.last_date || "") >= parisDay(),
