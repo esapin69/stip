@@ -8,6 +8,7 @@ const theme = read("stip-theme.css");
 const core = read("stip-calendar-core.css");
 const visual = read("stip-calendar-visual.css");
 const patterns = read("stip-patterns.css");
+const weekEngine = read("stip-week-engine.js");
 
 assert(theme.includes("@layer stip-calendar-core, stip-calendar-visual;"), "cascade layers are not declared");
 const coreImport = theme.indexOf("stip-calendar-core.css");
@@ -43,6 +44,13 @@ assert(!patterns.includes(".stip-month-calendar .stip-month-day"),
   "month geometry leaked back into stip-patterns.css");
 assert(!patterns.includes("Emergency canonical calendar patch"),
   "old Responsable emergency calendar patch still exists");
+
+assert(weekEngine.includes('const SWIPE_SURFACE=".stip-week-line, .stip-month-calendar"'),
+  "shared week/month swipe surfaces are missing");
+assert(weekEngine.includes('selector=isWeek?".stip-week-master-nav":".stip-month-nav"'),
+  "calendar swipe no longer delegates to the existing canonical navigation controls");
+assert(weekEngine.includes("ax<=ay*1.25"),
+  "calendar swipe no longer protects vertical scrolling");
 
 const rr = read("responsable-agenda-home.js");
 assert(rr.includes("stip-week-events stip-events-vertical rr-week-marks"),
