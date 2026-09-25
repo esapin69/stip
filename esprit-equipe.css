@@ -2951,3 +2951,27 @@ html.stip-team-embedded .team-shell {
     font-size:1.28rem!important;
   }
 }
+
+
+/* shift-count-vivid-20260925 */
+/* Le compteur reprend la couleur vive du shift.
+   Le chevron reste neutre pour garder une lecture stable. */
+.team-shift.shift-m .team-shift-head>em,
+.team-shift.shift-j .team-shift-head>em,
+.team-shift.shift-j4 .team-shift-head>em,
+.team-shift.shift-s .team-shift-head>em,
+.team-shift.shift-n .team-shift-head>em,
+.team-shift.shift-m.open .team-shift-head>em,
+.team-shift.shift-j.open .team-shift-head>em,
+.team-shift.shift-j4.open .team-shift-head>em,
+.team-shift.shift-s.open .team-shift-head>em,
+.team-shift.shift-n.open .team-shift-head>em{
+  border-color:var(--shift)!important;
+  background:var(--shift)!important;
+  box-shadow:0 4px 11px color-mix(in srgb,var(--shift) 28%,transparent),inset 0 1px 0 rgba(255,255,255,.28)!important;
+  color:#fff!important;
+}
+.team-shift.shift-s .team-shift-head>em,
+.team-shift.shift-s.open .team-shift-head>em{
+  color:var(--stip-shift-s-ink,#2b2b20)!important;
+}
