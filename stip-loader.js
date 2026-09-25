@@ -1,7 +1,8 @@
 (() => {
   "use strict";
   const loaded = new Map(),
-    V = "20260924-legend3";
+    loadedStyles = new Map(),
+    V = "20260925-home-perf1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -19,6 +20,39 @@
       document.body.appendChild(s);
     });
     loaded.set(key, p);
+    return p;
+  }
+  function style(href) {
+    const url = new URL(String(href || ""), document.baseURI);
+    url.searchParams.set("v", V);
+    const key = url.href;
+    if (loadedStyles.has(key)) return loadedStyles.get(key);
+    const existing = [...document.querySelectorAll('link[rel="stylesheet"]')].find(
+      (link) => {
+        try {
+          const current = new URL(link.href, document.baseURI);
+          return current.pathname === url.pathname;
+        } catch {
+          return false;
+        }
+      },
+    );
+    if (existing) {
+      loadedStyles.set(key, Promise.resolve(existing.href));
+      return loadedStyles.get(key);
+    }
+    const p = new Promise((ok, ko) => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = key;
+      link.onload = () => ok(key);
+      link.onerror = () => {
+        loadedStyles.delete(key);
+        ko(new Error(`Chargement impossible: ${url.pathname}`));
+      };
+      document.head.appendChild(link);
+    });
+    loadedStyles.set(key, p);
     return p;
   }
   async function seq(list) {
@@ -61,7 +95,24 @@
     "change-permission-gate.js",
     "staffing-guidance.js",
   ];
-  let busyRoute = "";
+  let busyRoute = "",
+    tableauPromise = null;
+  function tableau() {
+    if (window.STIPTableau?.mount) return Promise.resolve(window.STIPTableau);
+    if (tableauPromise) return tableauPromise;
+    tableauPromise = style("team-chat.css")
+      .then(() => load("team-chat.js"))
+      .then(() => {
+        if (!window.STIPTableau?.mount)
+          throw new Error("Runtime Fauteuils indisponible.");
+        return window.STIPTableau;
+      })
+      .catch((error) => {
+        tableauPromise = null;
+        throw error;
+      });
+    return tableauPromise;
+  }
   async function ensureRoute(r) {
     r = String(r || "");
     if (!r) return;
@@ -98,7 +149,13 @@
       busyRoute = "";
     }
   }
-  window.STIPLoad = { script: load, route: ensureRoute };
+  window.STIPLoad = {
+    script: load,
+    style,
+    route: ensureRoute,
+    tableau,
+    idle: later,
+  };
   window.STIPHubs = window.STIPHubs || {
     planning(kind = "personal") {
       const map = {
@@ -128,6 +185,8 @@
   document.addEventListener(
     "pointerdown",
     (e) => {
+      if (e.target.closest?.('[data-home-mode="tableau"]'))
+        tableau().catch(() => {});
       const b = e.target.closest?.("[data-app]");
       if (!b) return;
       const k = b.dataset.app;
