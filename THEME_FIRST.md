@@ -134,9 +134,11 @@ STIP garde **un seul thème maître**. Les catégories ci-dessous ne sont pas de
 1. **Temps** — planning personnel/équipe, semaine, jour, agenda, navigation temporelle.
 2. **Personnes** — recherche et sélection d’agents, groupes présents/absents, fiches de sélection. Le moteur commun est `stip-agent-selector.js/.css`.
 
-### Page modèle canonique — « Rechercher un agent »
+### MAÎTRE VALIDÉ — « Rechercher un agent »
 
 Toute interface dont l’objectif principal est de **choisir un agent** appartient à ce modèle. Un ancien `<select>` natif doit être retiré à la source et remplacé par le sélecteur partagé ; il ne doit jamais être simplement recouvert.
+
+Référence enregistrée : le module actuel de **ACCÈS & SÉCURITÉ > Accès** est la source visuelle validée du maître. Les contrôles propres à Accès & Sécurité restent hors du maître ; seuls la recherche, les filtres Nom/Prénom/GHE, le mur, les séparateurs, portraits, tampons GHE et la logique de sélection appartiennent au composant partagé.
 
 Contrat validé :
 - ouverture dans une vraie vue STIP via `STIPAgentSelector.openPicker(...)` ; plein écran sur téléphone, surface adaptée sur écran large ;
