@@ -56,6 +56,30 @@ function scrollToNode(sel){document.querySelector(sel)?.scrollIntoView({behavior
 function runDockAction(action){const r=route();if(action==='calendar'){window.STIPCalendars?.open?.(r.includes('/team')?'team':'personal');return}if(action==='personalcal'){window.STIPCalendars?.open?.('personal');return}if(action==='teamcal'){window.STIPCalendars?.open?.('team');return}if(action==='mail'){const team=r.includes('/team');location.href=`mailto:?subject=${encodeURIComponent(team?'Planning équipe STIP':'Mon planning STIP')}`;return}if(action==='received'){scrollToNode('.cw-inbox');return}if(action==='history'){scrollToNode('.cw-history');return}if(action==='focus-search'){const i=$('#rhubSearch');i?.focus();i?.scrollIntoView({behavior:'smooth',block:'center'});return}if(action==='focus-services'||action==='focus-chiefs'){scrollToNode('#rhubContent');return}if(action==='contact-share'){if(r!=='contacts/share'){setRoute('contacts/share');setTimeout(()=>$('#rhubExport')?.click(),250)}else $('#rhubExport')?.click()}}
 async function access(action,body={}){const c=new AbortController(),t=setTimeout(()=>c.abort(),10000);try{const h={'Content-Type':'application/json'};if(token())h['X-STIP-Session']=token();const r=await fetch(ACCESS_API,{method:'POST',headers:h,body:JSON.stringify({action,...body}),signal:c.signal}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||`Erreur ${r.status}`);return j}finally{clearTimeout(t)}}
 function personName(a){return window.STIPName?.format?.(a)||String(a?.prenom||a?.nom||'Agent').trim()}
+function traineeItems(items=[]){return items.map(x=>({...x,id:x.id||`stagiaire:${x.key}`,source_key:x.source_key||`stagiaire:${x.key}`,trainee_key:x.trainee_key||x.key,ghe:x.ghe||'Stage',role:'Stagiaire'}))}
+async function chooseTraineeSession(d,{force=false}={}){
+  if(d?.role_key!=='stagiaire')return d;
+  if(d?.trainee_key&&!force)return d;
+  const list=await access('trainee_list'),items=traineeItems(list.items||[]);
+  if(!items.length)throw Error('Aucun stagiaire actif ou à venir n’est disponible.');
+  if(!window.STIPAgentSelector?.mountPicker)throw Error('Sélecteur stagiaire indisponible.');
+  return await new Promise((resolve,reject)=>{
+    let done=false,overlay=null;
+    const select=async item=>{
+      if(done)return;done=true;
+      try{const fresh=await access('trainee_select',{trainee_key:item.trainee_key||item.key});overlay?.remove();document.documentElement.classList.remove('sas-picker-open');resolve(fresh)}
+      catch(e){done=false;alert(e.message||'Sélection impossible.')}
+    };
+    if(force&&window.STIPAgentSelector?.openPicker){
+      const picker=window.STIPAgentSelector.openPicker({title:'Choisir le stagiaire',items,selectedId:d?.agent?.id||'',filter:'first',autoFocus:true,onSelect:select,onClose:()=>{if(!done)resolve(d)}});
+      overlay=picker.element;return
+    }
+    overlay=document.createElement('div');overlay.id='stipTraineeSessionGate';overlay.className='sas-picker-overlay stip-trainee-session-gate';
+    overlay.innerHTML='<section class="sas-picker-sheet" role="dialog" aria-modal="true" aria-label="Choisir le stagiaire"><header class="sas-picker-page-head"><span></span><div><small>ACCÈS STAGIAIRE</small><h2>Qui utilise STIP ?</h2></div><span></span></header><p class="stip-trainee-session-note">Choisis ton profil pour cette connexion. Ce choix reste propre à cet appareil et ne modifie pas le code commun.</p><div class="sas-picker-host"></div></section>';
+    document.body.appendChild(overlay);document.documentElement.classList.add('sas-picker-open');
+    window.STIPAgentSelector.mountPicker(overlay.querySelector('.sas-picker-host'),{items,selectedId:'',filter:'first',hideHeading:true,placeholder:'Ton prénom ou ton nom…',emptyText:'Aucun stagiaire disponible.',onSelect:select});
+  })
+}
 function showLogin(text=''){window.STIPSession=null;window.dispatchEvent(new CustomEvent('stip:session-ended'));appView.classList.add('hidden');loginView.classList.remove('hidden');renderDock('home');msg(text,text?'error':'');setTimeout(()=>accessCode?.focus(),40)}
 function showPublicWithSession(d){session=d;window.STIPSession=d;loginView.classList.remove('hidden');appView.classList.add('hidden');welcomeText.textContent=personName(d.agent||{});renderDock('home');window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}))}
 function closePanel(){const p=$('#hsPanel');if(!p)return;p.classList.remove('open');p.setAttribute('aria-hidden','true')}
@@ -63,7 +87,7 @@ function syncPanelHistory(){const p=$('#hsPanel');if(!p)return;const open=p.clas
 function restore(){if(!session||restoring)return;restoring=true;try{if(!history.state?.panel)closePanel();const r=route();if(r==='fauteuils'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='home'||r==='apps'||r==='notifications'||r==='team'||r==='responsable'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='planning'||r.startsWith('planning/')){showOnly('planningView');emitRoute(r);restoreScroll(r);return}if(r==='contacts'||r.startsWith('contacts/')){const hub=document.getElementById('rubricHubView');if(hub)showOnly('rubricHubView');else{showOnly('genericView');const g=$('#genericView');if(g)g.innerHTML='<div class="route-loading">Chargement de Contacts…</div>'}emitRoute(r);restoreScroll(r);return}setRoute('home',{replace:true,keepScroll:true})}finally{restoring=false}}
 function isCadreFamily(d){return d?.role_key==='cadre'&&d?.permissions?.cadre_dashboard===true}
 function renderSession(d){window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}session=d;window.STIPSession=d;loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));restore()}
-loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{const d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
+loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
 const accessCodeToggle=$('#toggleAccessCode'),accessCodeMask=$('#accessCodeMask');
 function updateAccessCodeMask(){
   if(!accessCode)return;
@@ -115,6 +139,7 @@ window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.pan
 const panel=$('#hsPanel');if(panel)new MutationObserver(syncPanelHistory).observe(panel,{attributes:true,attributeFilter:['class']});
 $('#hsPanelBack')?.addEventListener('click',e=>{if(history.state?.panel){e.preventDefault();e.stopImmediatePropagation();back()}},true);
 window.STIPRouter={set:setRoute,back,restore,show:showOnly,get:route,saveScroll,restoreScroll};
+window.addEventListener('stip:trainee-change',async()=>{if(session?.role_key!=='stagiaire')return;try{const fresh=await chooseTraineeSession(session,{force:true});if(fresh!==session)renderSession(fresh)}catch(e){alert(e.message||'Sélection impossible.')}});
 if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));
-(async()=>{if(!token()){showLogin();return}try{const d=await access('me'),params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null;if(preview&&previewAllowed(d)){window.STIPRealSession=d;window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview);return}if(params.get('preview')==='1')clearPreview();if(quick==='public'){showPublicWithSession(d);return}renderSession(d)}catch{localStorage.removeItem(STORAGE);clearPreview();showLogin('Reconnecte-toi.')}})();
+(async()=>{if(!token()){showLogin();return}try{let d=await access('me'),params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null;if(preview&&previewAllowed(d)){window.STIPRealSession=d;window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview);return}if(params.get('preview')==='1')clearPreview();d=await chooseTraineeSession(d);if(quick==='public'){showPublicWithSession(d);return}renderSession(d)}catch(e){localStorage.removeItem(STORAGE);clearPreview();showLogin(e?.message||'Reconnecte-toi.')}})();
 })();
