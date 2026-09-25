@@ -504,6 +504,28 @@ check(
   'Le segmented control obsolète Équipe / Activité / Assistant est revenu dans Esprit d’équipe.'
 );
 
+
+/* Garde-fous Visiter les lieux — MASTER PDF complet */
+const placesExportMasterGuard=read('places-export.html');
+const placesEdgeMasterGuard=read('supabase/functions/stip-places/index.ts');
+const placesAgentsMasterGuard=read('AGENTS.md');
+check(
+  placesExportMasterGuard.includes('pdf&&state.scope?.mode==="all"') &&
+  placesExportMasterGuard.includes('action:"master_pdf_link"'),
+  'GHE complet doit continuer à utiliser le MASTER officiel plutôt que le PDF reconstruit.'
+);
+check(
+  placesEdgeMasterGuard.includes("action==='master_pdf_link'") &&
+  placesEdgeMasterGuard.includes("session.app_level!=='pro'") &&
+  placesEdgeMasterGuard.includes("const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'"),
+  'Le lien du MASTER PDF n’est plus servi par stip-places avec contrôle professionnel.'
+);
+check(
+  placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF MASTER, pages fixes et dictionnaires') &&
+  placesAgentsMasterGuard.includes('Aucune information opérationnelle utile n’est supprimée'),
+  'Le contrat PDF fixe + dictionnaire dynamique n’est plus documenté.'
+);
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
