@@ -768,7 +768,8 @@
       message("Impossible d’ouvrir l’aperçu sur cet appareil.");
       return;
     }
-    location.assign("index.html?preview=1");
+    if (window.STIPNav?.go) window.STIPNav.go("index.html?preview=1");
+    else location.assign("index.html?preview=1");
   }
 
   function openEditor() {
@@ -880,7 +881,8 @@
   $("accessManageTab").onclick = () => setAccessMode("manage");
   $("accessHistoryTab").onclick = () => setAccessMode("history");
   $("accessNotificationsTab").onclick = () => setAccessMode("notifications");
-  $("accessControlTab").onclick = () => location.assign("control.html");
+  $("accessControlTab").onclick = () =>
+    window.STIPNav?.go?.("control.html") || location.assign("control.html");
   $("historyPrev").onclick = () => {
     historyMonth = new Date(
       historyMonth.getFullYear(),
@@ -903,8 +905,11 @@
   $("save").onclick = save;
   $("savePreset").onclick = savePreset;
   $("cancel").onclick = closeEditor;
-  $("backBtn").onclick = () =>
-    history.length > 1 ? history.back() : location.assign("index.html");
+  $("backBtn").onclick = () => {
+    if (window.STIPNav?.back) window.STIPNav.back("index.html");
+    else if (history.length > 1) history.back();
+    else location.assign("index.html");
+  };
   $("setCode").onclick = async () => {
     if (!current) return;
     if (creating) {
