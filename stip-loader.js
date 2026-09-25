@@ -96,7 +96,24 @@
     "staffing-guidance.js",
   ];
   let busyRoute = "",
-    tableauPromise = null;
+    tableauPromise = null,
+    homeExtrasPromise = null;
+  function homeExtras() {
+    if (homeExtrasPromise) return homeExtrasPromise;
+    homeExtrasPromise = Promise.all([
+      style("event-feedback.css"),
+      style("admin-access-requests-home.css"),
+      seq([
+        "event-feedback.js",
+        "home-duty-chief.js",
+        "admin-access-requests-home.js",
+      ]),
+    ]).catch((error) => {
+      homeExtrasPromise = null;
+      throw error;
+    });
+    return homeExtrasPromise;
+  }
   function tableau() {
     if (window.STIPTableau?.mount) return Promise.resolve(window.STIPTableau);
     if (tableauPromise) return tableauPromise;
@@ -154,6 +171,7 @@
     style,
     route: ensureRoute,
     tableau,
+    homeExtras,
     idle: later,
   };
   window.STIPHubs = window.STIPHubs || {
