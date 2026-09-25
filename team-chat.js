@@ -3566,11 +3566,37 @@
     }
   }
 
+  function dmPushViewState() {
+    const me = dmState.home?.me || dmState.me || {};
+    const adminEnabled = me.dm_push_available !== false;
+    const userEnabled = me.dm_push_enabled !== false;
+    const permission = "Notification" in window ? Notification.permission : "unsupported";
+    if (!adminEnabled) return { enabled: false, disabled: true, label: "Désactivées par l’administrateur", tone: "off" };
+    if (!userEnabled) return { enabled: false, disabled: false, label: "Désactivées pour moi", tone: "off" };
+    if (permission === "denied") return { enabled: false, disabled: false, label: "Bloquées par le téléphone", tone: "blocked" };
+    if (permission === "granted") return { enabled: true, disabled: false, label: "Activées · même STIP fermé", tone: "on" };
+    return { enabled: false, disabled: false, label: "À autoriser sur ce téléphone", tone: "pending" };
+  }
+
+  async function toggleDmPushFromPanel(button) {
+    const view = dmPushViewState();
+    if (view.disabled) return;
+    const target = !(dmState.home?.me?.dm_push_enabled !== false && view.enabled);
+    button.disabled = true;
+    try {
+      const ok = await window.STIPCommunication?.setDmPush?.(target, button);
+      if (ok !== false) await loadDmHome(false);
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   function renderDmHome() {
     const panel = dmPanel();
     if (!panel || !dmState.open) return;
     panel.hidden = false;
 
+    const pushView = dmPushViewState();
     const conversations = (dmState.home?.conversations || []).filter((item) =>
       item?.kind === "direct" || item?.kind === "group",
     );
@@ -3612,6 +3638,10 @@
       '<section class="tb-dm-shell">' +
       '<header class="tb-dm-head"><div><small>CHAT STIP</small><h3>Messages privés</h3></div><button type="button" data-dm-close aria-label="Fermer">×</button></header>' +
       '<div class="tb-dm-home">' +
+      '<button type="button" class="tb-dm-push-access is-' + esc(pushView.tone) + '" data-dm-push-access aria-pressed="' + (pushView.enabled ? "true" : "false") + '" ' + (pushView.disabled ? "disabled" : "") + '>' +
+      '<span class="tb-dm-push-access-icon" aria-hidden="true">🔔</span>' +
+      '<span class="tb-dm-push-access-copy"><strong>Notifications DM</strong><small>' + esc(pushView.label) + '</small></span>' +
+      '<b aria-hidden="true">' + (pushView.enabled ? "✓" : "›") + '</b></button>' +
       '<section class="tb-dm-section"><div class="tb-dm-section-title"><strong>Discussions</strong><span>' +
       esc(conversations.length) + "</span></div>" + conversationHtml + "</section>" +
       '<section class="tb-dm-section tb-dm-new"><div class="tb-dm-section-title"><strong>Nouveau DM</strong><span>' +
@@ -3627,6 +3657,10 @@
       (dmState.selected.size > 1 ? "Ouvrir le DM de groupe" : "Ouvrir le DM") +
       (dmState.selected.size ? " · " + esc(dmState.selected.size) : "") +
       "</button></footer></section>";
+
+    panel.querySelector("[data-dm-push-access]")?.addEventListener("click", (event) =>
+      toggleDmPushFromPanel(event.currentTarget),
+    );
 
     const search = panel.querySelector("[data-dm-search]");
     if (search) {
@@ -4146,9 +4180,12 @@
     if (value == null) return;
     setDmUnread(value);
   });
+  window.addEventListener("stip:dm-push-state", () => {
+    if (dmState.open && dmState.view === "home") loadDmHome(false);
+  });
 
   const apiSurface = {
-    build: "20260925-dm-push2",
+    build: "20260925-dm-push3",
     mount,
     mountPreview,
     unmountFull,
