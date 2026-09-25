@@ -81,14 +81,18 @@
     return Boolean(baseShift(agent?.today_code));
   }
 
-  function avatar(agent) {
-    const url = String(
+  function photoUrl(agent) {
+    return String(
       agent?.profile_photo_url ||
       window.STIPBootCache?.media?.avatars?.[agent?.source_key] ||
       agent?.avatar_signed_url ||
       agent?.avatar_url ||
       "",
     );
+  }
+
+  function avatar(agent) {
+    const url = photoUrl(agent);
     const value = esc(initials(agent));
     return `<span class="sas-avatar" data-initials="${value}">${/^https?:/i.test(url)
       ? `<img src="${esc(url)}" alt="" loading="lazy">`
@@ -269,6 +273,10 @@
     };
   }
 
+  function gheLabel(agent) {
+    return pickerGhe(agent).label;
+  }
+
   function pickerSearchText(agent, filter) {
     if (filter === "last") return pickerLast(agent);
     if (filter === "ghe") {
@@ -310,13 +318,7 @@
   }
 
   function pickerPortrait(agent) {
-    const url = String(
-      agent?.profile_photo_url ||
-      window.STIPBootCache?.media?.avatars?.[agent?.source_key] ||
-      agent?.avatar_signed_url ||
-      agent?.avatar_url ||
-      "",
-    );
+    const url = photoUrl(agent);
     const fallback = esc(initials(agent));
     return `<span class="sas-wall-photo" data-initials="${fallback}">${/^https?:/i.test(url)
       ? `<img src="${esc(url)}" alt="" loading="lazy">`
@@ -712,6 +714,9 @@
     openPicker,
     closePicker: closePickerOverlay,
     name,
+    initials,
+    photoUrl,
+    gheLabel,
     baseShift,
     isWorking,
     compareGhe,
