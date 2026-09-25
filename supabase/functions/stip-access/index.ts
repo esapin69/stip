@@ -21,6 +21,7 @@ const URL = Deno.env.get("SUPABASE_URL")!,
   admin = createClient(URL, SERVICE, { auth: { persistSession: false } });
 const LABELS: any = {
   visiteur: "Visiteur",
+  stagiaire: "Stagiaire",
   brancardier: "Brancardier",
   chef_equipe: "Chef d’équipe brancardier",
   responsable: "Responsable",
@@ -29,6 +30,14 @@ const LABELS: any = {
 };
 const FALLBACK: any = {
   visiteur: {},
+  stagiaire: {
+    planning_personal: true,
+    messages: true,
+    places: true,
+    team_chat_mode: "write",
+    trainee_session: true,
+    __levels: { planning_personal: "visitor", places: "visitor" },
+  },
   brancardier: {
     planning_personal: true,
     planning_team: true,
@@ -257,6 +266,100 @@ function identityAgent(i: any) {
       }
     : null;
 }
+function parisDay(offset = 0) {
+  const d = new Date(Date.now() + offset * 86400000);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
+function traineeKey(row: any) {
+  const source = String(row?.source_key || "").trim();
+  const match = source.match(/^stagiaire:([^:]+)(?::\d{4}-\d{2}-\d{2})?$/i);
+  if (match?.[1]) return match[1];
+  return [row?.nom, row?.prenom]
+    .filter(Boolean)
+    .join("_")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+}
+function traineeAgent(item: any) {
+  return item
+    ? {
+        id: `stagiaire:${item.key}`,
+        source_key: `stagiaire:${item.key}`,
+        nom: item.nom,
+        prenom: item.prenom,
+        equipe: "stage",
+        type_planning: "stagiaire",
+        ghe: null,
+        role: "Stagiaire",
+        avatar_url: null,
+        profile_photo_url: null,
+        identity_kind: "stagiaire",
+        trainee_key: item.key,
+      }
+    : null;
+}
+async function traineeGroups() {
+  const from = parisDay(-30), to = parisDay(180);
+  const { data, error } = await admin
+    .from("stagiaires")
+    .select("id,source_key,nom,prenom,date_debut,date_fin,horaires,referent")
+    .gte("date_fin", from)
+    .lte("date_debut", to)
+    .order("date_debut");
+  if (error) throw error;
+  const groups = new Map<string, any>();
+  for (const row of data || []) {
+    const key = traineeKey(row);
+    if (!key) continue;
+    const existing = groups.get(key) || {
+      key,
+      nom: row.nom,
+      prenom: row.prenom,
+      first_date: row.date_debut,
+      last_date: row.date_fin || row.date_debut,
+      days: 0,
+    };
+    existing.first_date =
+      !existing.first_date || String(row.date_debut) < String(existing.first_date)
+        ? row.date_debut
+        : existing.first_date;
+    existing.last_date =
+      String(row.date_fin || row.date_debut) > String(existing.last_date || "")
+        ? row.date_fin || row.date_debut
+        : existing.last_date;
+    existing.days += 1;
+    groups.set(key, existing);
+  }
+  return [...groups.values()]
+    .map((x) => ({
+      ...x,
+      id: `stagiaire:${x.key}`,
+      source_key: `stagiaire:${x.key}`,
+      role: "Stagiaire",
+      ghe: "Stage",
+      active_now:
+        String(x.first_date || "") <= parisDay() &&
+        String(x.last_date || "") >= parisDay(),
+    }))
+    .sort((a, b) =>
+      Number(b.active_now) - Number(a.active_now) ||
+      String(a.prenom || "").localeCompare(String(b.prenom || ""), "fr") ||
+      String(a.nom || "").localeCompare(String(b.nom || ""), "fr")
+    );
+}
+async function traineeByKey(key: string) {
+  const clean = String(key || "").trim();
+  if (!clean) return null;
+  return (await traineeGroups()).find((x: any) => x.key === clean) || null;
+}
 async function profilePayload(id: string) {
   const { data, error } = await admin
     .from("stip_access_profiles")
@@ -292,6 +395,7 @@ async function profilePayload(id: string) {
     app_catalog: catalog,
     agent,
     updated_at: data.updated_at,
+    trainee_selection_required: role === "stagiaire",
   };
 }
 async function sessionFrom(req: Request) {
@@ -300,19 +404,66 @@ async function sessionFrom(req: Request) {
   const hash = await sha256(token);
   const { data, error } = await admin
     .from("stip_access_sessions")
-    .select("id,profile_id,expires_at,revoked_at")
+    .select("id,profile_id,expires_at,revoked_at,selected_stagiaire_key")
     .eq("token_hash", hash)
     .maybeSingle();
   if (error) throw error;
   if (!data || data.revoked_at || new Date(data.expires_at) <= new Date())
     return null;
-  const p = await profilePayload(data.profile_id);
+  const p: any = await profilePayload(data.profile_id);
   if (!p) return null;
+  let trainee: any = null;
+  if (p.role_key === "stagiaire" && data.selected_stagiaire_key)
+    trainee = await traineeByKey(String(data.selected_stagiaire_key));
   await admin
     .from("stip_access_sessions")
     .update({ last_seen_at: new Date().toISOString() })
     .eq("id", data.id);
-  return { session_id: data.id, ...p };
+  return {
+    session_id: data.id,
+    ...p,
+    ...(p.role_key === "stagiaire"
+      ? {
+          trainee_key: trainee?.key || null,
+          trainee,
+          agent: trainee ? traineeAgent(trainee) : p.agent,
+          trainee_selection_required: !trainee,
+        }
+      : {}),
+  };
+}
+async function traineeList(req: Request) {
+  const s: any = await sessionFrom(req);
+  if (!s) return J({ error: "Session expirée." }, 401);
+  if (s.role_key !== "stagiaire")
+    return J({ error: "Accès Stagiaire requis." }, 403);
+  return J({ items: await traineeGroups(), selected_key: s.trainee_key || null });
+}
+async function traineeSelect(req: Request, body: any) {
+  const token = req.headers.get("x-stip-session") || "";
+  if (!token) return J({ error: "Session expirée." }, 401);
+  const hash = await sha256(token);
+  const { data: raw, error } = await admin
+    .from("stip_access_sessions")
+    .select("id,profile_id,expires_at,revoked_at")
+    .eq("token_hash", hash)
+    .maybeSingle();
+  if (error) throw error;
+  if (!raw || raw.revoked_at || new Date(raw.expires_at) <= new Date())
+    return J({ error: "Session expirée." }, 401);
+  const profile: any = await profilePayload(raw.profile_id);
+  if (!profile || profile.role_key !== "stagiaire")
+    return J({ error: "Accès Stagiaire requis." }, 403);
+  const key = String(body.trainee_key || "").trim();
+  const trainee = await traineeByKey(key);
+  if (!trainee) return J({ error: "Stagiaire introuvable." }, 404);
+  const { error: updateError } = await admin
+    .from("stip_access_sessions")
+    .update({ selected_stagiaire_key: trainee.key, last_seen_at: new Date().toISOString() })
+    .eq("id", raw.id);
+  if (updateError) throw updateError;
+  const fresh: any = await sessionFrom(req);
+  return fresh ? J(fresh) : J({ error: "Session expirée." }, 401);
 }
 async function activitySessionFrom(req: Request) {
   const token = req.headers.get("x-stip-session") || "";
@@ -725,6 +876,8 @@ Deno.serve(async (req) => {
       const s = await sessionFrom(req);
       return s ? J(s) : J({ error: "Session expirée." }, 401);
     }
+    if (action === "trainee_list") return await traineeList(req);
+    if (action === "trainee_select") return await traineeSelect(req, body);
     if (action === "activity") return await trackActivity(req, body);
     if (action === "logout") {
       const s = await sessionFrom(req);
