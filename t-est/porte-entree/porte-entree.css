@@ -1,0 +1,497 @@
+/* T-est / porte d'entrée — CANDIDAT VISUEL LOCAL.
+   Ne pas promouvoir dans regles-communes avant validation utilisateur.
+   Objectif: sérieux, confiance, simplicité, sans imitation d'une identité hospitalière officielle. */
+
+#loginView{
+  --entry-bg:#f4f7f6;
+  --entry-surface:#ffffff;
+  --entry-surface-soft:#f7faf9;
+  --entry-ink:#17352f;
+  --entry-ink-2:#31534c;
+  --entry-muted:#687c77;
+  --entry-line:#d8e2df;
+  --entry-line-strong:#c4d3cf;
+  --entry-accent:#176f64;
+  --entry-accent-strong:#10584f;
+  --entry-accent-soft:#e7f2ef;
+  --entry-danger:#a9323b;
+  --entry-shadow:0 18px 50px rgba(35,63,57,.09),0 3px 10px rgba(35,63,57,.045);
+  --entry-shadow-soft:0 8px 24px rgba(35,63,57,.065);
+  min-height:100svh;
+  background:
+    radial-gradient(circle at 82% 8%,rgba(23,111,100,.065),transparent 25rem),
+    linear-gradient(180deg,#f8faf9 0%,var(--entry-bg) 100%);
+  color:var(--entry-ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+
+#loginView *,
+#accessRequestDialog *{box-sizing:border-box}
+
+#loginView .t-entry-shell{
+  width:min(100%,760px);
+  margin:0 auto;
+  padding:calc(22px + env(safe-area-inset-top)) clamp(16px,4vw,28px) calc(34px + env(safe-area-inset-bottom));
+}
+
+#loginView .t-entry-header{
+  position:relative;
+  padding:10px 2px 24px 18px;
+  border-left:3px solid var(--entry-accent);
+}
+
+#loginView .t-entry-eyebrow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:0 0 8px;
+  color:var(--entry-accent);
+  font-size:.72rem;
+  font-weight:850;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+#loginView .t-entry-eyebrow::before{
+  content:"";
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--entry-accent);
+  box-shadow:0 0 0 5px rgba(23,111,100,.09);
+}
+
+#loginView .t-entry-header h1{
+  margin:0;
+  max-width:620px;
+  color:var(--entry-ink);
+  font-size:clamp(2.15rem,8vw,3.7rem);
+  line-height:.98;
+  letter-spacing:-.05em;
+  font-weight:820;
+}
+
+#loginView .t-entry-header p{
+  margin:12px 0 0;
+  max-width:560px;
+  color:var(--entry-muted);
+  font-size:clamp(.95rem,2.8vw,1.05rem);
+  line-height:1.5;
+}
+
+#loginView .t-auth-card{
+  position:relative;
+  overflow:hidden;
+  padding:clamp(20px,5vw,30px);
+  border:1px solid var(--entry-line);
+  border-radius:26px;
+  background:rgba(255,255,255,.97);
+  box-shadow:var(--entry-shadow);
+}
+
+#loginView .t-auth-card::before{
+  content:"";
+  position:absolute;
+  inset:0 auto 0 0;
+  width:5px;
+  background:linear-gradient(180deg,var(--entry-accent),#6ea99f);
+}
+
+#loginView .t-auth-kicker{
+  margin:0;
+  color:var(--entry-accent);
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.11em;
+  text-transform:uppercase;
+}
+
+#loginView .t-auth-card h2{
+  margin:7px 0 0;
+  color:var(--entry-ink);
+  font-size:clamp(1.55rem,5vw,2rem);
+  line-height:1.06;
+  letter-spacing:-.035em;
+}
+
+#loginView .t-auth-copy{
+  margin:8px 0 19px;
+  color:var(--entry-muted);
+  font-size:.9rem;
+  line-height:1.45;
+}
+
+#loginView .code-form{display:grid;gap:12px}
+
+#loginView .stip-code-wrap{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  min-height:62px;
+  border:1.5px solid var(--entry-line-strong);
+  border-radius:17px;
+  background:var(--entry-surface-soft);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
+  transition:border-color 160ms ease,box-shadow 160ms ease,background 160ms ease;
+}
+
+#loginView .stip-code-wrap:focus-within{
+  border-color:var(--entry-accent);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(23,111,100,.11);
+}
+
+#loginView #accessCode{
+  width:100%;
+  min-width:0;
+  height:60px;
+  padding:0 14px 0 18px;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:var(--entry-ink);
+  caret-color:var(--entry-accent);
+  font-size:1.3rem;
+  font-weight:800;
+  letter-spacing:.2em;
+}
+
+#loginView #accessCode::placeholder{
+  color:#9aa9a5;
+  -webkit-text-fill-color:#9aa9a5;
+  letter-spacing:.28em;
+}
+
+#loginView #accessCode.stip-code-masked{
+  color:transparent;
+  -webkit-text-fill-color:transparent;
+}
+
+#loginView .stip-code-mask{
+  position:absolute;
+  left:18px;
+  right:86px;
+  top:50%;
+  transform:translateY(-50%);
+  pointer-events:none;
+  color:var(--entry-ink);
+  font-size:1.08rem;
+  font-weight:900;
+  letter-spacing:.36em;
+  white-space:nowrap;
+}
+
+#loginView .stip-code-toggle{
+  z-index:2;
+  min-width:74px;
+  min-height:44px;
+  margin-right:8px;
+  padding:0 11px;
+  border:1px solid var(--entry-line);
+  border-radius:12px;
+  background:#fff;
+  color:var(--entry-ink-2);
+  font-weight:800;
+  cursor:pointer;
+}
+
+#loginView .t-login-submit{
+  min-height:54px;
+  border:0;
+  border-radius:15px;
+  background:var(--entry-accent-strong);
+  color:#fff;
+  box-shadow:0 7px 18px rgba(16,88,79,.16);
+  font-weight:850;
+  font-size:1rem;
+  cursor:pointer;
+}
+
+#loginView .t-login-submit:disabled{opacity:.55;cursor:wait}
+
+#loginView .message{
+  min-height:1.2em;
+  margin:2px 2px 0;
+  color:var(--entry-muted);
+  font-size:.82rem;
+  line-height:1.35;
+}
+
+#loginView .message.error{color:var(--entry-danger)}
+#loginView .message.success{color:var(--entry-accent-strong)}
+
+#loginView .t-access-request{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  margin-top:17px;
+  padding-top:17px;
+  border-top:1px solid var(--entry-line);
+}
+
+#loginView .t-access-request-copy strong{
+  display:block;
+  color:var(--entry-ink);
+  font-size:.9rem;
+}
+
+#loginView .t-access-request-copy small{
+  display:block;
+  margin-top:3px;
+  color:var(--entry-muted);
+  font-size:.75rem;
+  line-height:1.35;
+}
+
+#loginView #requestAccessOpen{
+  min-height:44px;
+  padding:0 14px;
+  border:1px solid var(--entry-line-strong);
+  border-radius:13px;
+  background:#fff;
+  color:var(--entry-accent-strong);
+  box-shadow:var(--entry-shadow-soft);
+  font-weight:850;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+#loginView .t-public{
+  margin-top:30px;
+}
+
+#loginView .t-section-head{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  margin:0 2px 13px;
+}
+
+#loginView .t-section-head div{min-width:0}
+
+#loginView .t-section-head h2{
+  margin:0;
+  color:var(--entry-ink);
+  font-size:1.12rem;
+  letter-spacing:-.02em;
+}
+
+#loginView .t-section-head p{
+  margin:4px 0 0;
+  color:var(--entry-muted);
+  font-size:.8rem;
+  line-height:1.4;
+}
+
+#loginView .t-public-grid{
+  display:grid;
+  gap:11px;
+}
+
+#loginView .t-public-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:52px minmax(0,1fr) auto;
+  align-items:center;
+  gap:14px;
+  min-height:88px;
+  padding:15px 15px 15px 14px;
+  border:1px solid var(--entry-line);
+  border-radius:19px;
+  background:var(--entry-surface);
+  box-shadow:var(--entry-shadow-soft);
+  color:inherit;
+  text-decoration:none;
+  transition:transform 160ms ease,border-color 160ms ease,box-shadow 160ms ease,background 160ms ease;
+}
+
+#loginView a.t-public-card:active{transform:scale(.985)}
+
+#loginView a.t-public-card:hover{
+  border-color:#b9cbc6;
+  box-shadow:0 12px 30px rgba(35,63,57,.095);
+}
+
+#loginView .t-public-icon{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  border-radius:15px;
+  background:var(--entry-accent-soft);
+  color:var(--entry-accent-strong);
+}
+
+#loginView .t-public-icon svg{
+  width:27px;
+  height:27px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.9;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+#loginView .t-public-copy{min-width:0}
+
+#loginView .t-public-copy strong{
+  display:block;
+  color:var(--entry-ink);
+  font-size:.96rem;
+  line-height:1.2;
+}
+
+#loginView .t-public-copy span{
+  display:block;
+  margin-top:4px;
+  color:var(--entry-muted);
+  font-size:.78rem;
+  line-height:1.38;
+}
+
+#loginView .t-public-meta{
+  display:grid;
+  justify-items:end;
+  gap:5px;
+  color:var(--entry-accent);
+  font-weight:900;
+}
+
+#loginView .t-public-meta small{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#f0f4f3;
+  color:#6d817c;
+  font-size:.58rem;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+
+#loginView .t-public-arrow{
+  font-size:1.45rem;
+  line-height:1;
+}
+
+#loginView .t-entry-footer{
+  margin:26px 4px 0;
+  padding-top:16px;
+  border-top:1px solid var(--entry-line);
+  color:var(--entry-muted);
+  font-size:.72rem;
+  line-height:1.5;
+}
+
+#loginView .t-entry-footer strong{color:var(--entry-ink-2)}
+
+#loginView .request-access-status{
+  margin:0 0 17px;
+  padding:15px;
+  border:1px solid var(--entry-line);
+  border-radius:16px;
+  background:var(--entry-surface-soft);
+}
+
+#loginView .request-status-head{display:grid;gap:3px}
+#loginView .request-status-head span{color:var(--entry-accent);font-size:.64rem;font-weight:900;letter-spacing:.08em}
+#loginView .request-status-head strong{color:var(--entry-ink)}
+#loginView .request-status-message,#loginView .request-access-status>p{color:var(--entry-muted);font-size:.82rem;line-height:1.4}
+#loginView .request-status-reminder{display:grid;gap:4px;margin:12px 0;padding:11px;border-radius:12px;background:#fff;border:1px solid var(--entry-line)}
+#loginView .request-status-reminder small{color:var(--entry-muted);font-weight:800}
+#loginView .request-status-reminder strong{font-size:1.25rem;letter-spacing:.18em}
+#loginView .request-status-use,#loginView .request-status-dismiss,#loginView #requestStatusSaveCode{
+  min-height:42px;border:0;border-radius:12px;padding:0 13px;background:var(--entry-accent-strong);color:#fff;font-weight:850
+}
+
+/* Demande d'accès: le comportement existant est conservé, seule la présentation change. */
+#accessRequestDialog{
+  width:min(92vw,560px);
+  max-height:min(88svh,760px);
+  padding:0;
+  border:0;
+  border-radius:24px;
+  background:#fff;
+  color:#17352f;
+  box-shadow:0 28px 80px rgba(19,48,42,.25);
+}
+
+#accessRequestDialog::backdrop{
+  background:rgba(18,34,31,.46);
+  backdrop-filter:blur(3px);
+}
+
+#accessRequestDialog .access-request-form{
+  display:grid;
+  gap:16px;
+  padding:22px;
+  overflow:auto;
+}
+
+#accessRequestDialog header{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:start;
+  padding-bottom:15px;
+  border-bottom:1px solid #d8e2df;
+}
+
+#accessRequestDialog header small{color:#176f64;font-size:.65rem;font-weight:900;letter-spacing:.1em}
+#accessRequestDialog header h2{margin:4px 0 5px;font-size:1.55rem;letter-spacing:-.03em}
+#accessRequestDialog header p{margin:0;color:#687c77;font-size:.82rem;line-height:1.4}
+#accessRequestDialog #requestAccessClose{
+  width:42px;height:42px;border:1px solid #d8e2df;border-radius:12px;background:#f7faf9;color:#31534c;font-size:1.35rem
+}
+
+#accessRequestDialog .request-step{
+  display:grid;
+  grid-template-columns:32px minmax(0,1fr);
+  gap:10px;
+  align-items:start;
+}
+
+#accessRequestDialog .request-step>span{
+  width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:#e7f2ef;color:#10584f;font-weight:900
+}
+
+#accessRequestDialog .request-step strong{display:block}
+#accessRequestDialog .request-step small{display:block;margin-top:3px;color:#687c77;line-height:1.35}
+#accessRequestDialog .request-name-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+#accessRequestDialog label{display:grid;gap:6px;color:#31534c;font-size:.78rem;font-weight:800}
+#accessRequestDialog input,#accessRequestDialog textarea{
+  width:100%;border:1px solid #c4d3cf;border-radius:12px;background:#f9fbfa;color:#17352f;padding:12px;outline:0
+}
+#accessRequestDialog input:focus,#accessRequestDialog textarea:focus{
+  border-color:#176f64;box-shadow:0 0 0 3px rgba(23,111,100,.1);background:#fff
+}
+#accessRequestDialog textarea{resize:vertical}
+#accessRequestDialog .request-code-card>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
+#accessRequestDialog .request-code-card b{color:#687c77;font-size:.72rem}
+#accessRequestDialog .request-submit{
+  min-height:50px;border:0;border-radius:14px;background:#10584f;color:#fff;font-weight:850
+}
+
+@media (min-width:700px){
+  #loginView .t-public-grid{grid-template-columns:1fr 1fr}
+  #loginView .t-public-card:first-child{grid-column:1/-1}
+}
+
+@media (max-width:520px){
+  #loginView .t-entry-shell{padding-inline:12px}
+  #loginView .t-entry-header{padding-left:14px}
+  #loginView .t-auth-card{border-radius:22px;padding:19px 17px}
+  #loginView .t-access-request{grid-template-columns:1fr}
+  #loginView #requestAccessOpen{width:100%}
+  #loginView .t-public-card{grid-template-columns:48px minmax(0,1fr) auto;padding:13px 12px}
+  #loginView .t-public-icon{width:48px;height:48px}
+  #loginView .t-public-meta small{display:none}
+  #accessRequestDialog{width:calc(100vw - 20px)}
+  #accessRequestDialog .access-request-form{padding:17px}
+  #accessRequestDialog .request-name-grid{grid-template-columns:1fr}
+}
+
+@media (prefers-reduced-motion:reduce){
+  #loginView *,#accessRequestDialog *{scroll-behavior:auto!important;transition:none!important}
+}
