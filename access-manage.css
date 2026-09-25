@@ -578,3 +578,92 @@
 .access-history-person:not([open]) .access-history-events{
   display:none;
 }
+
+
+/* Native notifications admin — 20260925 */
+.access-notifications{
+  padding:clamp(16px,4vw,24px);
+}
+.access-notifications-head h2{
+  margin:4px 0 0;
+}
+.access-notifications-head p{
+  max-width:680px;
+  margin:7px 0 0;
+  color:var(--stip-muted);
+  line-height:1.45;
+}
+.access-notification-list{
+  display:grid;
+  gap:10px;
+  margin-top:18px;
+}
+.access-notification-row{
+  min-height:78px;
+  display:grid;
+  grid-template-columns:28px minmax(0,1fr) auto;
+  gap:11px;
+  align-items:center;
+  padding:12px 13px;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-md);
+  background:var(--stip-surface-raised);
+  box-shadow:var(--stip-shadow-soft);
+  cursor:pointer;
+}
+.access-notification-row.is-enabled{
+  border-color:color-mix(in srgb,var(--stip-accent) 45%,var(--stip-line));
+}
+.access-notification-row input{
+  width:22px;
+  height:22px;
+  accent-color:var(--stip-accent);
+}
+.access-notification-copy{
+  min-width:0;
+}
+.access-notification-copy strong,
+.access-notification-copy small{
+  display:block;
+}
+.access-notification-copy strong{
+  color:var(--stip-ink);
+  font-size:.92rem;
+}
+.access-notification-copy small{
+  margin-top:4px;
+  color:var(--stip-muted);
+  font-size:.76rem;
+  line-height:1.38;
+}
+.access-notification-state{
+  min-width:58px;
+  padding:6px 8px;
+  border-radius:999px;
+  background:var(--stip-surface-soft);
+  color:var(--stip-muted);
+  text-align:center;
+  font-size:.66rem;
+  font-weight:950;
+}
+.access-notification-row.is-enabled .access-notification-state{
+  background:var(--stip-accent-soft);
+  color:var(--stip-accent);
+}
+.access-notifications-mode .access-people,
+.access-notifications-mode .access-editor,
+.access-notifications-mode .access-message{
+  display:none!important;
+}
+@media(max-width:560px){
+  .access-notifications{
+    padding:14px 10px;
+  }
+  .access-notification-row{
+    grid-template-columns:28px minmax(0,1fr);
+  }
+  .access-notification-state{
+    grid-column:2;
+    justify-self:start;
+  }
+}
