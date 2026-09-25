@@ -80,6 +80,33 @@ async function legacyModels() {
   return data || [];
 }
 
+async function signedAvatarUrl(raw: any) {
+  const value = String(raw || "");
+  if (!value) return null;
+  const marker = "/storage/v1/object/public/planning-pdf/";
+  if (!value.includes(marker)) return value;
+  const path = value.split(marker)[1]?.split("?")[0] || "";
+  if (!path) return value;
+  const { data, error } = await db.storage
+    .from("planning-pdf")
+    .createSignedUrl(decodeURIComponent(path), 3600);
+  return error || !data?.signedUrl ? value : data.signedUrl;
+}
+
+async function withSignedAvatar(agent: any) {
+  if (!agent) return agent;
+  const signed = await signedAvatarUrl(agent.avatar_url);
+  return signed && signed !== agent.avatar_url
+    ? { ...agent, avatar_signed_url: signed }
+    : agent;
+}
+
+async function signAgentRelation(agent: any) {
+  if (Array.isArray(agent))
+    return await Promise.all(agent.map((row: any) => withSignedAvatar(row)));
+  return await withSignedAvatar(agent);
+}
+
 function normalizePermissions(raw: any = {}, levels: any = {}, apps: any[]) {
   const out: any = {};
   const normalizedLevels: any = {};
@@ -122,7 +149,13 @@ async function list(q = "", viewer: any = null) {
     legacyModels(),
   ]);
   if (error) throw error;
-  const ids = (data || []).map((p: any) => p.id),
+  const people = await Promise.all(
+      (data || []).map(async (p: any) => ({
+        ...p,
+        agents: await signAgentRelation(p.agents),
+      })),
+    ),
+    ids = people.map((p: any) => p.id),
     vault: any = {};
   if (ids.length) {
     const { data: v } = await db
@@ -138,7 +171,7 @@ async function list(q = "", viewer: any = null) {
     models,
     legacy_models: models,
     can_history: viewer?.role_key === "admin" || !!viewer?.permissions?.admin,
-    people: (data || [])
+    people: people
       .filter(
         (p: any) =>
           !n ||
@@ -275,7 +308,10 @@ async function findNew(b: any) {
     profiles = r.data || [];
   }
   const have = new Set(profiles.map((x: any) => x.agent_id));
-  return { candidates: found.filter((x: any) => !have.has(x.id)) };
+  const candidates = found.filter((x: any) => !have.has(x.id));
+  return {
+    candidates: await Promise.all(candidates.map((x: any) => withSignedAvatar(x))),
+  };
 }
 
 async function history(b: any) {
