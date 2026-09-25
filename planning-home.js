@@ -126,11 +126,11 @@
       pad = (first.getDay() + 6) % 7,
       today = new Date().toISOString().slice(0, 10),
       idx = availableMonths.indexOf(k);
-    let cells =
-      DAYS.map(
-        (d, i) =>
-          `<span class="ph-day-head ${i > 4 ? "weekend" : ""}">${d}</span>`,
-      ).join("") + '<span class="ph-empty" aria-hidden="true"></span>'.repeat(pad);
+    const weekHeads = DAYS.map(
+      (d, i) =>
+        `<span class="ph-day-head ${i > 4 ? "weekend" : ""}">${d}</span>`,
+    ).join("");
+    let cells = '<span class="ph-empty" aria-hidden="true"></span>'.repeat(pad);
     for (let i = 1; i <= days; i++) {
       const dk = `${k}-${String(i).padStart(2, "0")}`,
         it = by.get(dk),
@@ -144,7 +144,7 @@
     const used = pad + days,
       tail = (7 - (used % 7)) % 7;
     cells += '<span class="ph-empty" aria-hidden="true"></span>'.repeat(tail);
-    return `<div class="ph-month-card stip-month-calendar" data-ph-month="${k}"><header><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-grid stip-month-grid">${cells}</div></div>`;
+    return `<div class="ph-month-card stip-month-calendar" data-ph-month="${k}"><header class="stip-month-nav"><button type="button" data-month-nav="-1" aria-label="Mois précédent" ${idx <= 0 ? "disabled" : ""}>‹</button><div class="ph-month-title"><span><strong>${MONTHS[m - 1]}</strong><small>${y}</small></span></div><button type="button" data-month-nav="1" aria-label="Mois suivant" ${idx < 0 || idx >= availableMonths.length - 1 ? "disabled" : ""}>›</button></header><div class="ph-month-weekdays stip-month-weekdays">${weekHeads}</div><div class="ph-month-grid stip-month-grid">${cells}</div></div>`;
   }
   function announceMonth() {
     window.dispatchEvent(

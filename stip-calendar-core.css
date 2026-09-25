@@ -1,0 +1,357 @@
+/* STIP calendar core — niveau brut.
+   Aucune couleur, ombre, halo ou animation ici.
+   Cette couche ne fait qu'une chose : garantir une structure simple,
+   centrée et stable avant toute couche visuelle. */
+
+.stip-week-master-nav{
+  box-sizing:border-box!important;
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:44px minmax(0,1fr) 44px!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 10px!important;
+  padding:0!important;
+}
+.stip-week-master-nav>button{
+  box-sizing:border-box!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  min-height:44px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font:inherit!important;
+  line-height:1!important;
+}
+.stip-week-master-nav>strong,
+.stip-week-master-nav>div{
+  min-width:0!important;
+  margin:0!important;
+  text-align:center!important;
+}
+
+.stip-week-line{
+  --stip-week-columns:7;
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(var(--stip-week-columns),minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+.stip-week-day{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:112px!important;
+  display:grid!important;
+  grid-template-rows:auto 1fr!important;
+  align-items:stretch!important;
+  margin:0!important;
+  padding:0!important;
+  font:inherit!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+  transform-origin:center center!important;
+  filter:none!important;
+}
+.stip-week-day-head{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto!important;
+  place-items:center!important;
+  gap:1px!important;
+  margin:0!important;
+  padding:5px 0 4px!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+.stip-week-day-head>i,
+.stip-week-day-head>b{
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+.stip-week-day-body{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto 1px auto!important;
+  align-items:center!important;
+  justify-items:center!important;
+  align-content:center!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:5px 2px 6px!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+.stip-week-core{display:contents!important}
+.stip-week-code{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:18px!important;
+  display:block!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  line-height:18px!important;
+  text-align:center!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+.stip-week-main{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:26px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  line-height:1!important;
+}
+.stip-week-main-icon{
+  box-sizing:border-box!important;
+  width:26px!important;
+  height:26px!important;
+  min-width:26px!important;
+  min-height:26px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-size:1.38rem!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+}
+.stip-week-divider{
+  box-sizing:border-box!important;
+  width:72%!important;
+  height:1px!important;
+  min-height:1px!important;
+  margin:0!important;
+  padding:0!important;
+}
+.stip-week-divider.is-empty{visibility:hidden!important}
+.stip-week-events{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:26px!important;
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-content:center!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  line-height:1!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+.stip-week-events.is-empty{visibility:hidden!important}
+.stip-week-event{
+  box-sizing:border-box!important;
+  width:26px!important;
+  height:26px!important;
+  min-width:26px!important;
+  min-height:26px!important;
+  flex:0 0 26px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-style:normal!important;
+  font-size:1.38rem!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+}
+.stip-events-vertical{
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  height:auto!important;
+  min-height:26px!important;
+  white-space:normal!important;
+}
+.stip-week-next-bridge,
+.hc-next-monday-bridge{
+  box-sizing:border-box!important;
+  min-width:0!important;
+  min-height:112px!important;
+  display:grid!important;
+  place-items:center!important;
+  align-content:center!important;
+  gap:5px!important;
+  margin:0!important;
+  padding:0 2px!important;
+  text-align:center!important;
+}
+
+/* MONTH — le numéro, le repère principal et les événements ont chacun leur ligne.
+   Pas de translate, marge négative ou correction spécifique à un emoji. */
+.stip-month-nav{
+  box-sizing:border-box!important;
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:44px minmax(0,1fr) 44px!important;
+  align-items:center!important;
+  gap:8px!important;
+  margin:0 0 8px!important;
+  padding:0!important;
+}
+.stip-month-nav>button{
+  box-sizing:border-box!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  min-height:44px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font:inherit!important;
+  line-height:1!important;
+}
+.stip-month-nav>strong,
+.stip-month-nav>div{
+  min-width:0!important;
+  margin:0!important;
+  text-align:center!important;
+}
+.stip-month-weekdays{
+  box-sizing:border-box!important;
+  width:100%!important;
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  align-items:center!important;
+  gap:4px!important;
+  margin:0 0 4px!important;
+  padding:0!important;
+}
+.stip-month-weekdays>*{
+  min-width:0!important;
+  margin:0!important;
+  padding:3px 0!important;
+  text-align:center!important;
+  line-height:1!important;
+}
+.stip-month-calendar .stip-month-grid{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:0!important;
+}
+.stip-month-calendar .stip-month-day{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:76px!important;
+  height:auto!important;
+  display:grid!important;
+  grid-template-rows:auto minmax(26px,auto) minmax(26px,auto)!important;
+  align-items:center!important;
+  justify-items:center!important;
+  align-content:start!important;
+  gap:3px!important;
+  margin:0!important;
+  padding:5px 2px!important;
+  overflow:visible!important;
+  font:inherit!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+  transform-origin:center center!important;
+  filter:none!important;
+}
+.stip-month-calendar .stip-month-day-number{
+  display:block!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  align-self:center!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+}
+.stip-month-calendar .stip-month-primary,
+.stip-month-calendar .stip-month-events{
+  box-sizing:border-box!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:26px!important;
+  display:flex!important;
+  flex-flow:row nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-content:center!important;
+  gap:4px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+  font-style:normal!important;
+  line-height:1!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+}
+.stip-month-calendar .stip-month-events:empty{visibility:hidden!important}
+.stip-month-calendar .stip-month-icon,
+.stip-month-calendar .stip-month-event{
+  box-sizing:border-box!important;
+  width:26px!important;
+  height:26px!important;
+  min-width:26px!important;
+  min-height:26px!important;
+  flex:0 0 26px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0!important;
+  padding:0!important;
+  font-style:normal!important;
+  font-size:1.45rem!important;
+  line-height:1!important;
+  text-align:center!important;
+  transform:none!important;
+}
+.stip-month-calendar .stip-month-dot{
+  box-sizing:border-box!important;
+  width:19px!important;
+  height:19px!important;
+  min-width:19px!important;
+  min-height:19px!important;
+  flex:0 0 19px!important;
+  display:block!important;
+  align-self:center!important;
+  margin:0!important;
+  padding:0!important;
+  transform:none!important;
+}
+.stip-month-calendar .stip-month-events.stip-events-vertical{
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  height:auto!important;
+  white-space:normal!important;
+}

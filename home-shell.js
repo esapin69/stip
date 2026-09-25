@@ -335,7 +335,7 @@
     panel.dataset.calendarMonth = monthKey;
     panel.classList.toggle("is-loading", loading);
     panel.setAttribute("aria-busy", loading ? "true" : "false");
-    panel.innerHTML = `<div class="hc-date-jump-head"><button type="button" data-cal-step="-1" aria-label="Mois précédent"${loading ? " disabled" : ""}>‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant"${loading ? " disabled" : ""}>›</button></div><div class="hc-date-jump-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid stip-month-grid">${cells.join("")}</div>`;
+    panel.innerHTML = `<div class="hc-date-jump-head stip-month-nav"><button type="button" data-cal-step="-1" aria-label="Mois précédent"${loading ? " disabled" : ""}>‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant"${loading ? " disabled" : ""}>›</button></div><div class="hc-date-jump-weekdays stip-month-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid stip-month-grid">${cells.join("")}</div>`;
   }
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);

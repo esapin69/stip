@@ -242,7 +242,7 @@
             count > 1
               ? `<em class="rr-marker-count" aria-hidden="true">×${count}</em>`
               : "";
-        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span class="stip-month-icon" aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
+        return `<i class="rr-marker stip-month-event type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(label)}${count > 1 ? ` ×${count}` : ""}"><span class="stip-month-icon" aria-hidden="true">${esc(icon)}</span>${badge}</i>`;
       })
       .join("");
   }
@@ -255,7 +255,7 @@
           icon = event.icon || categoryIcon(category),
           person = String(event.person_name || "").trim(),
           title = person ? `${label} · ${person}` : label;
-        return `<i class="rr-marker type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(title)}"><span aria-hidden="true">${esc(icon)}</span></i>`;
+        return `<i class="rr-marker stip-week-event type-${esc(category)}" data-rr-filter="${esc(category)}" data-rr-date="${esc(date)}" title="${esc(title)}"><span aria-hidden="true">${esc(icon)}</span></i>`;
       })
       .join("");
   }
@@ -641,9 +641,9 @@
         weekday=x.d.toLocaleDateString("fr-FR",{weekday:"long"}).replace(/\./g,"").toUpperCase().slice(0,2),
         classes=["stip-week-day","neutral",x.iso===today?"today":"",x.iso===selected?"selected":"",events.length?"has-event":""].filter(Boolean).join(" "),
         eventSlot=events.length
-          ? `<span class="stip-week-events rr-week-marks" aria-label="${events.length} événement${events.length>1?"s":""}">${markers}</span>`
-          : '<span class="stip-week-events is-empty rr-week-marks" aria-hidden="true"></span>';
-      return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso===selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body rr-events-only">${eventSlot}</span></button>`;
+          ? `<span class="stip-week-events stip-events-vertical rr-week-marks" aria-label="${events.length} événement${events.length>1?"s":""}">${markers}</span>`
+          : '<span class="stip-week-events stip-events-vertical is-empty rr-week-marks" aria-hidden="true"></span>';
+      return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso===selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"><span class="stip-week-main-icon"></span></span><span class="stip-week-divider ${events.length?"":"is-empty"}" aria-hidden="true"></span>${eventSlot}</span></button>`;
     };
 
     const signalParts=days.map(signalButton),dayParts=days.map(renderDay);
@@ -689,11 +689,11 @@
           events.length ? "has-event" : "",
         ].filter(Boolean).join(" ");
       cells.push(
-        `<button type="button" class="${cls}"${gridStart} data-rr-cal-day="${iso}"><b class="stip-month-day-number">${day}</b><span class="rr-month-primary stip-month-primary">${markers}</span><small class="stip-month-events" aria-hidden="true"></small></button>`,
+        `<button type="button" class="${cls}"${gridStart} data-rr-cal-day="${iso}"><b class="stip-month-day-number">${day}</b><span class="rr-month-primary stip-month-primary" aria-hidden="true"></span><small class="stip-month-events stip-events-vertical rr-month-events" aria-label="${events.length} événement${events.length>1?"s":""}">${markers}</small></button>`,
       );
     }
 
-    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card stip-month-calendar"><header><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid stip-month-grid">${cells.join("")}</div></section>`;
+    host.innerHTML = `<div class="rr-period-separator"><span>AU MOIS</span></div><section class="rr-month-card stip-month-calendar"><header class="stip-month-nav"><button type="button" data-rr-month-step="-1" aria-label="Mois précédent">‹</button><strong>${esc(first.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }))}</strong><button type="button" data-rr-month-step="1" aria-label="Mois suivant">›</button></header><div class="rr-month-weekdays stip-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="rr-month-grid stip-month-grid">${cells.join("")}</div></section>`;
   }
 
   function renderSelectedDay() {

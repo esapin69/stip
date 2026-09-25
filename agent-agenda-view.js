@@ -155,7 +155,7 @@
       cells.push(`<button type="button" class="aav-cal-day stip-month-day ${cls}" data-aav-day="${day}"><b class="stip-month-day-number">${d}</b><span class="aav-cal-shift stip-month-primary">${row?shiftToken(row,true):""}</span><small class="stip-month-events">${ev.slice(0,2).map(x=>x.icon).join("")}</small></button>`);
     }
     const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
-    return `<section class="aav-month stip-month-calendar"><header><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar stip-month-grid">${cells.join("")}</div></section>`;
+    return `<section class="aav-month stip-month-calendar"><header class="stip-month-nav"><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads stip-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar stip-month-grid">${cells.join("")}</div></section>`;
   }
   function weekModel(){
     const engine=window.STIPWeekEngine;
