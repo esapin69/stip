@@ -887,6 +887,57 @@
 
 
 /* 1B. SEMAINE MAÎTRESSE — Mon profil / Accueil personnel */
+.stip-week-master-nav{
+  display:grid!important;
+  grid-template-columns:44px minmax(0,1fr) 44px!important;
+  align-items:center!important;
+  gap:8px!important;
+  width:100%!important;
+  margin:0 0 11px!important;
+}
+.stip-week-master-nav>button{
+  width:44px!important;
+  height:44px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:1px solid var(--stip-line)!important;
+  border-radius:50%!important;
+  background:var(--stip-surface-raised)!important;
+  color:var(--stip-ink)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+  font:inherit!important;
+  font-size:1.85rem!important;
+  font-weight:750!important;
+  line-height:1!important;
+}
+.stip-week-master-nav>strong,
+.stip-week-master-nav>div{
+  min-width:0!important;
+  text-align:center!important;
+}
+.stip-week-master-nav>strong,
+.stip-week-master-nav>div>strong{
+  display:block!important;
+  color:var(--stip-ink)!important;
+  font-size:1rem!important;
+  font-weight:950!important;
+  line-height:1.12!important;
+}
+.stip-week-master-nav>div>small{
+  display:block!important;
+  margin-bottom:3px!important;
+  color:var(--stip-accent)!important;
+  font-size:.62rem!important;
+  font-weight:950!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+.stip-week-master-nav>button:focus-visible{
+  outline:3px solid var(--stip-focus-ring)!important;
+  outline-offset:2px!important;
+}
+
 .stip-week-line{
   --stip-week-card-h:134px;
   --stip-week-emoji-size:1.15rem;
