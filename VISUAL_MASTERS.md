@@ -45,6 +45,7 @@ Règle :
 - une modification validée sur la base maîtresse doit être faite dans `stip-patterns.css` pour se propager aux consommateurs ;
 - les anciennes règles locales peuvent rester temporairement pour d’anciens écrans non migrés, mais elles ne doivent plus être utilisées par une ligne déjà branchée ;
 - la base reste « en cours de finalisation » tant qu’Eddy a encore des réglages à faire : ces réglages doivent désormais être faits sur le composant commun, puisque les lignes compatibles sont volontairement branchées dessus.
+- **socle brut obligatoire** : même si une couche locale ou décorative ne charge pas, chaque code, pictogramme et événement reste centré sur un axe unique dans un emplacement carré stable ; aucune page ne dépend d’un décalage de baseline, d’une marge corrective ou d’un calcul local pour obtenir l’alignement de base.
 
 ## 2. Navigation temporelle complète mois → semaine → jours
 
@@ -74,6 +75,7 @@ Sources :
 - variables `--stip-month-*` dans `stip-theme-base.css`
 
 Règle : aucune page ne redéfinit localement la géométrie du calendrier mensuel.
+Le socle brut du mois doit rester lisible sans couche de finition : numéro, repère principal et événements utilisent des lignes dédiées centrées ; les pictogrammes ont un emplacement stable et les pastilles de shift restent volontairement légèrement plus petites que les pictogrammes.
 
 ## 4. Recherche / sélection d’un agent
 
