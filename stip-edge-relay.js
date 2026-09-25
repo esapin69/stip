@@ -5,6 +5,7 @@
     "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/";
   const RELAY = "https://stip-ten.vercel.app/api/stip-access";
   const nativeFetch = window.fetch.bind(window);
+  const shellPage = location.pathname === "/" || /\/index\.html$/i.test(location.pathname);
 
   function mergedHeaders(input, init) {
     const headers = new Headers(
@@ -46,6 +47,8 @@
 
     if (!rawUrl.startsWith(SUPABASE_FUNCTIONS))
       return direct(input, init);
+
+    if (!shellPage) return direct(input, init);
 
     const url = new URL(rawUrl);
     const target = url.pathname
@@ -105,6 +108,6 @@
   window.STIPEdgeRelay = {
     active: true,
     relay: RELAY,
-    version: "20260925-network-core2",
+    version: "20260925-network-core3",
   };
 })();
