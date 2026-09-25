@@ -230,6 +230,27 @@
     return result;
   }
 
+  function wheelchairLevelContextOptions(buildingKey = "", level = "", exclude = []) {
+    const group = (WHEELCHAIR_LOCATIONS[String(buildingKey || "")] || []).find(
+      (item) => String(item.level || "") === String(level || ""),
+    );
+    const excluded = new Set((exclude || []).map((value) => norm(value)));
+    const seen = new Set();
+    const options = [];
+
+    for (const place of group?.places || []) {
+      const label = String(place || "").trim();
+      const key = norm(label);
+      if (!label || !key || seen.has(key) || excluded.has(key)) continue;
+      if (isVagueWheelchairSpotLocation(label)) continue;
+      seen.add(key);
+      options.push(label);
+      if (options.length >= 6) break;
+    }
+
+    return options;
+  }
+
   const norm = (value) =>
     String(value ?? "")
       .normalize("NFD")
@@ -1565,6 +1586,14 @@
       const renderPlaces = () => {
         const quickPlaces = wheelchairFieldSpots(building.key, level);
         const selectedValues = [...selectedPlaces];
+        const vagueSelections = selectedValues.filter((value) =>
+          isVagueWheelchairSpotLocation(value),
+        );
+        const activeVague = vagueSelections[0] || "";
+        const contextOptions = activeVague
+          ? wheelchairLevelContextOptions(building.key, level, selectedValues)
+          : [];
+        const unresolved = vagueSelections.length > 0;
 
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
@@ -1581,6 +1610,19 @@
               }).join("") +
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
+            (activeVague
+              ? '<section class="tb-place-followup" aria-label="Préciser le repère choisi">' +
+                  '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>Précise avec un repère du ' + esc(wheelchairLevelDisplay(level)) + '</small></div>' +
+                  (contextOptions.length
+                    ? '<div class="tb-place-followup-options">' +
+                        contextOptions.map((label) =>
+                          '<button type="button" data-place-followup="' + esc(label) + '"><span>＋</span><strong>' + esc(label) + '</strong></button>'
+                        ).join("") +
+                      '</div>'
+                    : '') +
+                  '<button type="button" class="tb-place-followup-other" data-place-followup-other>Autre précision…</button>' +
+                '</section>'
+              : '') +
             '<div class="tb-place-temperature" aria-label="Information supplémentaire sur la stabilité">' +
               '<div class="tb-place-temperature-copy"><strong>Info en plus</strong><small>facultatif · ce n’est pas un lieu</small></div>' +
               '<div class="tb-place-temperature-actions">' +
@@ -1588,8 +1630,8 @@
                 '<button type="button" class="' + (persistenceOverride === "sheltered" ? "is-selected" : "") + '" data-place-temperature="sheltered" aria-pressed="' + (persistenceOverride === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Plutôt stable</strong></button>' +
               '</div>' +
             '</div>' +
-            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
-              '<span>Continuer' + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "") + '</span><b>›</b>' +
+            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size || unresolved ? " disabled" : "") + '>' +
+              '<span>' + (unresolved ? "Précise le repère ci-dessus" : "Continuer" + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "")) + '</span><b>›</b>' +
             "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
@@ -1603,6 +1645,31 @@
             else selectedPlaces.add(value);
             renderPlaces();
           });
+        });
+
+        wrap.querySelectorAll("[data-place-followup]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!activeVague) return;
+            const context = String(button.dataset.placeFollowup || "").trim();
+            if (!context) return;
+            selectedPlaces.delete(activeVague);
+            selectedPlaces.add(activeVague + " · " + context);
+            renderPlaces();
+          });
+        });
+
+        wrap.querySelector("[data-place-followup-other]")?.addEventListener("click", async () => {
+          if (!activeVague) return;
+          const result = await chooseLocationShortcut({
+            buildingKey: building.key,
+            level,
+          });
+          if (!result || !wrap.isConnected) return;
+          const precise = String(result.location || "").trim();
+          if (!precise) return;
+          selectedPlaces.delete(activeVague);
+          selectedPlaces.add(activeVague + " · " + precise);
+          renderPlaces();
         });
 
         wrap.querySelectorAll("[data-place-temperature]").forEach((button) => {
