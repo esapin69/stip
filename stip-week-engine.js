@@ -140,6 +140,12 @@
     cue.setAttribute("aria-hidden","true");
     cue.innerHTML=cueContent(start.surface,direction,button);
     host.appendChild(cue);
+    const rect=start.surface.getBoundingClientRect(),
+      hostRect=host.getBoundingClientRect();
+    cue.style.top=`${rect.top-hostRect.top+host.scrollTop}px`;
+    cue.style.left=`${rect.left-hostRect.left+host.scrollLeft}px`;
+    cue.style.width=`${rect.width}px`;
+    cue.style.height=`${rect.height}px`;
     start.host=host;
     start.cue=cue;
     start.cueDirection=direction;
