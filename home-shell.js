@@ -917,7 +917,7 @@
     const w = selectedWeek(),
       loading = planningLoading(),
       range = weekRangeLabel(w);
-    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
+    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
