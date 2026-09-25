@@ -199,7 +199,8 @@ Règles visuelles obligatoires :
 7. La couleur suit le contexte. Le composant utilise `--stip-filter-accent` et peut recevoir un accent métier par choix via `data-tone`, sans créer une nouvelle identité graphique.
 8. Une page ne redéfinit pas localement couleurs, rayons, ombres, états actifs ou iconographie de base du composant. Elle ne conserve que son positionnement et sa logique métier.
 9. Les filtres restent tactiles, lisibles au pouce, sans débordement horizontal et sans information portée uniquement par la couleur.
-10. Quand un ancien filtre est migré vers 6B, supprimer ses anciennes règles visuelles locales au lieu d’empiler une nouvelle couche.
+10. Sur mobile, un groupe de 3 choix avec pictogrammes passe automatiquement en composition verticale symétrique et conserve jusqu’à deux lignes de sous-libellé ; un groupe de 3 choix texte seul reste compact.
+11. Quand un ancien filtre est migré vers 6B, supprimer ses anciennes règles visuelles locales au lieu d’empiler une nouvelle couche.
 
 ## Navigation temporelle canonique
 
