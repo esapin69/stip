@@ -21,6 +21,8 @@
     loading: false,
     error: "",
     weekOffset: 0,
+    weekPast: false,
+    weekFull: false,
     selectedDate: "",
     monthKey: "",
     daySignalByDate: {},
@@ -78,6 +80,8 @@
     if (!saved || age > VIEW_MAX_MS) return;
     if (Number.isFinite(Number(saved.weekOffset)))
       state.weekOffset = Number(saved.weekOffset);
+    state.weekPast = Boolean(saved.weekPast);
+    state.weekFull = Boolean(saved.weekFull);
     if (/^\d{4}-\d{2}-\d{2}$/.test(String(saved.selectedDate || "")))
       state.selectedDate = String(saved.selectedDate);
     if (/^\d{4}-\d{2}$/.test(String(saved.monthKey || "")))
@@ -88,6 +92,8 @@
     writeSession(VIEW, {
       savedAt: Date.now(),
       weekOffset: state.weekOffset,
+      weekPast: state.weekPast,
+      weekFull: state.weekFull,
       selectedDate: state.selectedDate,
       monthKey: state.monthKey,
     });
@@ -270,15 +276,31 @@
       .replace(/\./g, "");
   }
 
+  function rrWeekState() {
+    return {
+      weekOffset: state.weekOffset,
+      weekPast: state.weekPast,
+      weekFull: state.weekFull,
+      dayFocus: state.selectedDate,
+    };
+  }
+  function weekDisplay() {
+    const engine=window.STIPWeekEngine;
+    if(engine?.display){
+      const model=engine.display(rrWeekState(),{today:parisIso()});
+      const toDay=(iso)=>({d:dateObj(iso),iso});
+      return{
+        ...model,
+        days:model.dates.map(toDay),
+        nextMondayDay:model.nextMonday?toDay(model.nextMonday):null,
+      };
+    }
+    const base=addDays(mondayOf(dateObj(parisIso())),state.weekOffset*7),
+      days=Array.from({length:7},(_,i)=>{const d=addDays(base,i);return{d,iso:localIso(d)}});
+    return{dates:days.map(x=>x.iso),days,nextMonday:"",nextMondayDay:null,slotCount:7};
+  }
   function weekDays() {
-    const base = addDays(
-      mondayOf(dateObj(parisIso())),
-      state.weekOffset * 7,
-    );
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = addDays(base, i);
-      return { d, iso: localIso(d) };
-    });
+    return weekDisplay().days;
   }
 
   function weekRangeLabel(days = weekDays()) {
@@ -300,10 +322,8 @@
   }
 
   function weekSeparatorLabel() {
-    if (state.weekOffset === 0) return "CETTE SEMAINE";
-    if (state.weekOffset === 1) return "SEMAINE PROCHAINE";
-    if (state.weekOffset === -1) return "SEMAINE PRÉCÉDENTE";
-    return "SEMAINE SÉLECTIONNÉE";
+    return window.STIPWeekEngine?.separatorLabel?.(rrWeekState(),{today:parisIso()}) ||
+      (state.weekOffset===0?(state.weekPast?"DÉBUT DE SEMAINE":"CETTE SEMAINE"):state.weekOffset===1?"SEMAINE PROCHAINE":state.weekOffset===-1?"SEMAINE PRÉCÉDENTE":"SEMAINE SÉLECTIONNÉE");
   }
 
   function eventCard(x) {
@@ -576,53 +596,35 @@
   function renderWeek() {
     const host = $("#rrWeek");
     if (!host) return;
-    const days = weekDays(),
-      today = parisIso(),
-      selected = days.some((x) => x.iso === state.selectedDate)
-        ? state.selectedDate
-        : days.some((x) => x.iso === today)
-          ? today
-          : days[0]?.iso || "";
-    state.selectedDate = selected;
+    const display=weekDisplay(),days=display.days||[],today=parisIso(),
+      selected=days.some((x)=>x.iso===state.selectedDate)?state.selectedDate:"";
+    if(state.selectedDate&&!selected)state.selectedDate="";
 
-    const signalRow = days
-      .map((x) => {
-        const signal = signalForDate(x.iso),
-          level = signal?.level || "unknown",
-          symbol =
-            level !== "unknown"
-              ? esc(statusSymbol(level, signal?.symbol || ""))
-              : "",
-          label = esc(signal?.label || "");
-        const disabled = level === "unknown" ? " disabled" : "";
-        return `<button type="button" class="rr-week-signal status-${esc(level)}" data-rr-day-analysis="${esc(x.iso)}" title="${label}" aria-label="Ouvrir l’analyse du ${esc(x.iso)} · ${label}"${disabled}>${symbol}</button>`;
-      })
-      .join("");
+    const signalButton=(x)=>{
+      const signal=signalForDate(x.iso),level=signal?.level||"unknown",
+        symbol=level!=="unknown"?esc(statusSymbol(level,signal?.symbol||"")):"",
+        label=esc(signal?.label||""),disabled=level==="unknown"?" disabled":"";
+      return `<button type="button" class="rr-week-signal status-${esc(level)}" data-rr-day-analysis="${esc(x.iso)}" title="${label}" aria-label="Ouvrir l’analyse du ${esc(x.iso)} · ${label}"${disabled}>${symbol}</button>`;
+    };
+    const renderDay=(x)=>{
+      const events=itemsForDate(x.iso),markers=weekMarkerMarkup(events,x.iso),
+        weekday=x.d.toLocaleDateString("fr-FR",{weekday:"long"}).replace(/\./g,"").toUpperCase().slice(0,2),
+        classes=["stip-week-day","neutral",x.iso===today?"today":"",x.iso===selected?"selected":"",events.length?"has-event":""].filter(Boolean).join(" "),
+        eventSlot=events.length
+          ? `<span class="stip-week-events rr-week-marks" aria-label="${events.length} événement${events.length>1?"s":""}">${markers}</span>`
+          : '<span class="stip-week-events is-empty rr-week-marks" aria-hidden="true"></span>';
+      return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso===selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"></span><span class="stip-week-divider ${events.length?"":"is-empty"}" aria-hidden="true"></span>${eventSlot}</span></button>`;
+    };
 
-    const dayLine = days
-      .map((x) => {
-        const events = itemsForDate(x.iso),
-          markers = weekMarkerMarkup(events, x.iso),
-          weekday = x.d
-            .toLocaleDateString("fr-FR", { weekday: "long" })
-            .replace(/\./g, "")
-            .toUpperCase()
-            .slice(0, 2),
-          classes = [
-            "stip-week-day",
-            "neutral",
-            x.iso === today ? "today" : "",
-            x.iso === selected ? "selected" : "",
-            events.length ? "has-event" : "",
-          ].filter(Boolean).join(" "),
-          eventSlot = events.length
-            ? `<span class="stip-week-events rr-week-marks" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${markers}</span>`
-            : '<span class="stip-week-events is-empty rr-week-marks" aria-hidden="true"></span>';
-        return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"></span><span class="stip-week-divider ${events.length ? "" : "is-empty"}" aria-hidden="true"></span>${eventSlot}</span></button>`;
-      })
-      .join("");
-
-    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></div><div class="rr-week-signals" aria-label="État des jours de la semaine">${signalRow}</div><nav class="stip-week-line" style="--stip-week-columns:7" aria-label="Jours de la semaine">${dayLine}</nav></section>`;
+    const signalParts=days.map(signalButton),dayParts=days.map(renderDay);
+    if(display.nextMondayDay){
+      signalParts.push('<span class="rr-week-signal rr-week-signal-bridge" aria-hidden="true"></span>');
+      signalParts.push(signalButton(display.nextMondayDay));
+      dayParts.push('<span class="stip-week-next-bridge" aria-hidden="true"><span class="stip-week-next-word">LUNDI</span><span class="stip-week-next-arrow">→</span></span>');
+      dayParts.push(renderDay(display.nextMondayDay));
+    }
+    const cols=display.slotCount||days.length||1;
+    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-rr-week-step="-1" aria-label="Période précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Période suivante">›</button></div><div class="rr-week-signals" style="--rr-week-columns:${cols}" aria-label="État des jours de la période">${signalParts.join("")}</div><nav class="stip-week-line ${display.nextMondayDay?"has-next-monday":""}" style="--stip-week-columns:${cols}" aria-label="Jours de la période">${dayParts.join("")}</nav></section>`;
     syncProControls();
   }
 
@@ -908,11 +910,22 @@
     }
     const weekStep = e.target.closest?.("[data-rr-week-step]");
     if (weekStep) {
-      state.weekOffset += Number(weekStep.dataset.rrWeekStep || 0);
+      const engine=window.STIPWeekEngine,step=Number(weekStep.dataset.rrWeekStep||0),
+        next=engine?.move?.(rrWeekState(),step,{today:parisIso()});
+      if(next){
+        state.weekOffset=next.weekOffset;
+        state.weekPast=Boolean(next.weekPast);
+        state.weekFull=Boolean(next.weekFull);
+        state.selectedDate=next.dayFocus||"";
+      }else{
+        state.weekOffset+=step;
+        state.weekPast=false;
+        state.weekFull=state.weekOffset!==0;
+        state.selectedDate="";
+      }
       const days = weekDays();
-      state.selectedDate = days[0]?.iso || state.selectedDate;
       state.monthKey =
-        String(state.selectedDate).slice(0, 7) || state.monthKey;
+        String(days[0]?.iso||parisIso()).slice(0, 7) || state.monthKey;
       saveView();
       renderWeek();
       renderUpcoming();

@@ -582,7 +582,7 @@
   justify-items:center!important;
   padding:5px 2px!important;
   overflow:visible!important;
-  transform-origin:center center!important;
+  transform-origin:bottom center!important;
   transition:transform .16s cubic-bezier(.2,.8,.2,1),box-shadow .16s ease,border-color .16s ease,background .16s ease!important;
 }
 .stip-month-calendar .stip-month-day-number{
@@ -944,6 +944,7 @@
   --stip-week-columns:7;
   display:grid!important;
   grid-template-columns:repeat(var(--stip-week-columns),minmax(0,1fr))!important;
+  align-items:stretch!important;
   gap:5px!important;
   width:100%!important;
   min-width:0!important;
@@ -958,8 +959,9 @@
   position:relative!important;
   min-width:0!important;
   min-height:var(--stip-week-card-h)!important;
+  height:100%!important;
   display:grid!important;
-  grid-template-rows:46px 88px!important;
+  grid-template-rows:46px minmax(88px,auto)!important;
   padding:0!important;
   overflow:visible!important;
   border:1.5px solid #c8d6da!important;
@@ -1013,7 +1015,8 @@
   box-sizing:border-box!important;
   min-width:0!important;
   display:grid!important;
-  grid-template-rows:20px 25px 1px 24px!important;
+  min-height:88px!important;
+  grid-template-rows:20px 25px 1px minmax(24px,auto)!important;
   align-content:center!important;
   justify-items:center!important;
   gap:3px!important;
@@ -1149,7 +1152,7 @@
 .stip-week-day.status-ok{--stip-week-accent:#18a56d}
 .stip-week-day.selected{
   z-index:6!important;
-  transform:translateY(-4px) scale(1.10)!important;
+  transform:scale(1.08)!important;
   filter:saturate(1.04) contrast(1.01)!important;
   opacity:1!important;
   border-color:var(--stip-week-accent)!important;
@@ -1158,9 +1161,9 @@
     0 0 0 7px color-mix(in srgb,var(--stip-week-accent) 12%,transparent),
     0 14px 26px rgba(20,62,78,.18)!important;
 }
-.stip-week-day.selected:first-child{transform-origin:left center!important}
-.stip-week-day.selected:last-child{transform-origin:right center!important}
-.stip-week-day.selected:active{transform:translateY(-2px) scale(1.06)!important}
+.stip-week-day.selected:first-child{transform-origin:bottom left!important}
+.stip-week-day.selected:last-child{transform-origin:bottom right!important}
+.stip-week-day.selected:active{transform:scale(1.05)!important}
 .stip-week-day.selected::after{
   content:""!important;
   position:absolute!important;
@@ -1185,7 +1188,7 @@
   .stip-week-line{gap:3px!important}
   .stip-week-day{
     --stip-week-card-h:118px;
-    grid-template-rows:40px 78px!important;
+    grid-template-rows:40px minmax(78px,auto)!important;
     border-radius:14px!important;
   }
   .stip-week-day-head{
@@ -1196,7 +1199,8 @@
   .stip-week-day-head>i{font-size:.68rem!important;line-height:16px!important}
   .stip-week-day-head>b{font-size:1.3rem!important;line-height:24px!important}
   .stip-week-day-body{
-    grid-template-rows:18px 23px 1px 21px!important;
+    min-height:78px!important;
+    grid-template-rows:18px 23px 1px minmax(21px,auto)!important;
     gap:2px!important;
     padding:5px 1px!important;
   }
@@ -1204,4 +1208,41 @@
   .stip-week-main{height:23px!important}
   .stip-week-events{height:21px!important;min-height:21px!important}
   .stip-week-event{width:18px!important;height:18px!important;min-width:18px!important}
+}
+
+/* Shared hidden behavior: late-current-week bridge to next Monday. */
+.stip-week-next-bridge,
+.hc-next-monday-bridge{
+  min-width:0!important;
+  min-height:var(--stip-week-card-h)!important;
+  height:100%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  padding:0 2px!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#c53333!important;
+  text-align:center!important;
+}
+.stip-week-next-word,
+.hc-next-monday-word{
+  color:#c53333!important;
+  font-size:.7rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-decoration:underline!important;
+  text-decoration-thickness:2px!important;
+  text-underline-offset:4px!important;
+}
+.stip-week-next-arrow,
+.hc-next-monday-arrow{
+  color:#c53333!important;
+  font-size:1.8rem!important;
+  line-height:.8!important;
+  font-weight:800!important;
 }

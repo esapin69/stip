@@ -185,29 +185,47 @@
       anchorDay: today.getDate(),
     };
   }
+  function applySharedWeekState(next) {
+    if (!next) return false;
+    state.weekOffset = Number(next.weekOffset) || 0;
+    state.weekPast = Boolean(next.weekPast);
+    state.weekFull = Boolean(next.weekFull);
+    state.dayFocus = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(next.dayFocus || ""))
+      ? String(next.dayFocus)
+      : "";
+    return true;
+  }
+  function sharedWeekState() {
+    return {
+      weekOffset: state.weekOffset,
+      weekPast: state.weekPast,
+      weekFull: state.weekFull,
+      dayFocus: state.dayFocus,
+    };
+  }
   function jumpToDate(iso) {
     iso = String(iso || "").slice(0, 10);
     if (!iso) return;
-    const today = dateObj(parisIso()),
-      target = dateObj(iso),
-      mondayOf = (d) => {
-        const x = new Date(d),
-          dow = x.getDay() || 7;
-        x.setDate(x.getDate() - (dow - 1));
-        x.setHours(12, 0, 0, 0);
-        return x;
-      },
-      currentMonday = mondayOf(today),
-      targetMonday = mondayOf(target);
-    state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000);
-    if (state.weekOffset === 0) {
-      state.weekPast = iso < parisIso();
-      state.weekFull = false;
-    } else {
-      state.weekPast = false;
-      state.weekFull = true;
+    const shared = window.STIPWeekEngine?.stateForDate?.(iso, {
+      today: parisIso(),
+    });
+    if (!applySharedWeekState(shared)) {
+      const today = dateObj(parisIso()),
+        target = dateObj(iso),
+        mondayOf = (d) => {
+          const x = new Date(d),
+            dow = x.getDay() || 7;
+          x.setDate(x.getDate() - (dow - 1));
+          x.setHours(12, 0, 0, 0);
+          return x;
+        },
+        currentMonday = mondayOf(today),
+        targetMonday = mondayOf(target);
+      state.weekOffset = Math.round((targetMonday - currentMonday) / 604800000);
+      state.weekPast = state.weekOffset === 0 && iso < parisIso();
+      state.weekFull = state.weekOffset !== 0;
+      state.dayFocus = iso;
     }
-    state.dayFocus = iso;
     state.renderSig = "";
     render();
   }
@@ -658,6 +676,10 @@
     return agendaRange(dateObj(parisIso()), days);
   }
   function navigationWeek() {
+    const engine = window.STIPWeekEngine,
+      dates = engine?.fullDates?.(sharedWeekState(), { today: parisIso() });
+    if (Array.isArray(dates) && dates.length)
+      return dates.map((iso) => agendaRange(dateObj(iso), 1)[0]);
     const today = dateObj(parisIso()),
       dow = today.getDay() || 7,
       monday = new Date(today);
@@ -665,11 +687,14 @@
     return agendaRange(monday, 7);
   }
   function selectedWeek() {
+    const engine = window.STIPWeekEngine,
+      dates = engine?.visibleDates?.(sharedWeekState(), { today: parisIso() });
+    if (Array.isArray(dates) && dates.length)
+      return dates.map((iso) => agendaRange(dateObj(iso), 1)[0]);
     const today = dateObj(parisIso()),
       dow = today.getDay() || 7,
       monday = new Date(today);
     monday.setDate(today.getDate() - (dow - 1) + state.weekOffset * 7);
-
     if (state.weekOffset === 0) {
       if (state.weekPast) {
         const pastCount = Math.max(0, dow - 1);
@@ -677,7 +702,6 @@
       }
       return agendaRange(today, 8 - dow);
     }
-
     return agendaRange(monday, 7);
   }
   function moveWeek(step) {
@@ -692,18 +716,28 @@
       todayIso = parisIso(),
       dow = today.getDay() || 7;
 
-    // La semaine courante est volontairement coupée en deux vues :
-    // restant (aujourd'hui → dimanche) et passé (lundi → hier).
-    if (state.weekOffset === 0 && step < 0 && !state.weekPast && dow > 1) {
-      state.weekPast = true;
-      state.weekFull = false;
-    } else if (state.weekOffset === 0 && step > 0 && state.weekPast) {
-      state.weekPast = false;
-      state.weekFull = false;
+    const shared = window.STIPWeekEngine?.move?.(
+      sharedWeekState(),
+      step,
+      { today: parisIso() },
+    );
+    if (shared) {
+      applySharedWeekState(shared);
     } else {
-      state.weekOffset += step;
-      state.weekPast = false;
-      state.weekFull = state.weekOffset !== 0;
+      const today = dateObj(parisIso()),
+        dow = today.getDay() || 7;
+      if (state.weekOffset === 0 && step < 0 && !state.weekPast && dow > 1) {
+        state.weekPast = true;
+        state.weekFull = false;
+      } else if (state.weekOffset === 0 && step > 0 && state.weekPast) {
+        state.weekPast = false;
+        state.weekFull = false;
+      } else {
+        state.weekOffset += step;
+        state.weekPast = false;
+        state.weekFull = state.weekOffset !== 0;
+      }
+      state.dayFocus = "";
     }
 
     const navWeek = navigationWeek();
@@ -803,13 +837,26 @@
       .join("")}</span>`;
   }
   function weekDisplayModel(w = selectedWeek()) {
+    const shared = window.STIPWeekEngine?.display?.(sharedWeekState(), {
+        today: parisIso(),
+      }),
+      nextMonday = shared?.nextMonday
+        ? agendaRange(dateObj(shared.nextMonday), 1)[0]
+        : null;
+    if (shared)
+      return {
+        weekDays: w,
+        nextMonday,
+        visualDays: nextMonday ? [...w, nextMonday] : w,
+        slotCount: shared.slotCount,
+      };
     const liveTail =
         state.weekOffset === 0 &&
         !state.weekFull &&
         !state.weekPast &&
         w[0]?.today &&
         w[0]?.dow >= 5,
-      nextMonday = liveTail
+      fallbackMonday = liveTail
         ? (() => {
             const d = new Date(w[w.length - 1].d);
             d.setDate(d.getDate() + 1);
@@ -818,9 +865,9 @@
         : null;
     return {
       weekDays: w,
-      nextMonday,
-      visualDays: nextMonday ? [...w, nextMonday] : w,
-      slotCount: Math.max(1, w.length + (nextMonday ? 2 : 0)),
+      nextMonday: fallbackMonday,
+      visualDays: fallbackMonday ? [...w, fallbackMonday] : w,
+      slotCount: Math.max(1, w.length + (fallbackMonday ? 2 : 0)),
     };
   }
   function weekDaysLandscape(w) {
@@ -887,7 +934,10 @@
   function planningWeekSeparator() {
     const w = navigationWeek(),
       label =
-        state.weekOffset === 0
+        window.STIPWeekEngine?.separatorLabel?.(sharedWeekState(), {
+          today: parisIso(),
+        }) ||
+        (state.weekOffset === 0
           ? state.weekPast
             ? "DÉBUT DE SEMAINE"
             : "CETTE SEMAINE"
@@ -895,7 +945,7 @@
             ? "SEMAINE PROCHAINE"
             : state.weekOffset === -1
               ? "SEMAINE PRÉCÉDENTE"
-              : `SEMAINE ${weekNo(w[0].d)}`;
+              : `SEMAINE ${weekNo(w[0].d)}`);
     return `<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
   }
 

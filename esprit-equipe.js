@@ -31,6 +31,8 @@
     access: null,
     tab: "team",
     weekStart: monday(todayIso()),
+    weekPast: false,
+    weekFull: false,
     dayFocus: todayIso(),
     weeks: new Map(),
     request: 0,
@@ -97,6 +99,19 @@
 
   function daysOfWeek(start = state.weekStart) {
     return Array.from({ length: 7 }, (_, index) => addDays(start, index));
+  }
+  function teamWeekState() {
+    const engine=window.STIPWeekEngine,
+      weekOffset=engine?.weekOffsetFor?.(state.weekStart,todayIso()) ?? Math.round((dateObj(state.weekStart)-dateObj(monday(todayIso())))/604800000);
+    return {weekOffset,weekPast:state.weekPast,weekFull:state.weekFull,dayFocus:state.dayFocus};
+  }
+  function visibleTeamDates() {
+    const engine=window.STIPWeekEngine;
+    return engine?.visibleDates?.(teamWeekState(),{today:todayIso()})||daysOfWeek(state.weekStart);
+  }
+  function teamWeekDisplay() {
+    const engine=window.STIPWeekEngine;
+    return engine?.display?.(teamWeekState(),{today:todayIso()})||{dates:daysOfWeek(state.weekStart),visualDates:daysOfWeek(state.weekStart),nextMonday:"",slotCount:7};
   }
 
   function isoWeek(value) {
@@ -606,7 +621,10 @@
 
   function chooseDate(value) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) return;
+    const shared=window.STIPWeekEngine?.stateForDate?.(value,{today:todayIso()});
     state.weekStart = monday(value);
+    state.weekPast = Boolean(shared?.weekPast);
+    state.weekFull = Boolean(shared?.weekFull);
     state.dayFocus = value;
     state.dateJumpMonth = monthKey(value);
     state.openShift = "";
@@ -807,44 +825,48 @@
   }
 
   function normalizeDayFocus() {
-    const days = daysOfWeek();
-    const today = todayIso();
-    if (!days.includes(state.dayFocus))
-      state.dayFocus = days.includes(today) ? today : days[0];
+    const days = visibleTeamDates();
+    if (state.dayFocus && !days.includes(state.dayFocus)) state.dayFocus = "";
   }
 
   function renderWeekStrip() {
     const host = $("#teamDays");
     if (!host) return;
-    const today = todayIso();
-    host.innerHTML = daysOfWeek(state.weekStart)
-      .map((day) => {
-        const d = dateObj(day);
-        const signal = signalForDate(day) || {
-          level: "unknown",
-          symbol: "",
-          label: "Pas encore analysé",
-        };
-        const level = signal.level || "unknown";
-        const cls = [
-          "stip-week-day",
-          "neutral",
-          level ? `status-${level}` : "",
-          day === state.dayFocus ? "selected" : "",
-          day === today ? "today" : "",
-        ].filter(Boolean).join(" ");
-        const weekday = d
-          .toLocaleDateString("fr-FR", { weekday: "long" })
-          .replace(".", "")
-          .toUpperCase()
-          .slice(0, 2);
-        const symbol =
-          level && level !== "unknown"
-            ? statusSymbol(level, signal.symbol)
-            : "○";
-        return `<button type="button" class="${cls}" data-team-day="${day}" aria-pressed="${day === state.dayFocus}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main"><span class="stip-week-main-icon team-day-intel status-${esc(level)}" aria-hidden="true">${esc(symbol)}</span></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
-      })
-      .join("");
+    const today = todayIso(),model=teamWeekDisplay(),dates=model.dates||[];
+    const renderDay=(day)=>{
+      const d = dateObj(day);
+      const signal = signalForDate(day) || {
+        level: "unknown",
+        symbol: "",
+        label: "Pas encore analysé",
+      };
+      const level = signal.level || "unknown";
+      const cls = [
+        "stip-week-day",
+        "neutral",
+        level ? `status-${level}` : "",
+        day === state.dayFocus ? "selected" : "",
+        day === today ? "today" : "",
+      ].filter(Boolean).join(" ");
+      const weekday = d
+        .toLocaleDateString("fr-FR", { weekday: "long" })
+        .replace(".", "")
+        .toUpperCase()
+        .slice(0, 2);
+      const symbol =
+        level && level !== "unknown"
+          ? statusSymbol(level, signal.symbol)
+          : "○";
+      return `<button type="button" class="${cls}" data-team-day="${day}" aria-pressed="${day === state.dayFocus}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main"><span class="stip-week-main-icon team-day-intel status-${esc(level)}" aria-hidden="true">${esc(symbol)}</span></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
+    };
+    const out=dates.map(renderDay);
+    if(model.nextMonday){
+      out.push('<span class="stip-week-next-bridge" aria-hidden="true"><span class="stip-week-next-word">LUNDI</span><span class="stip-week-next-arrow">→</span></span>');
+      out.push(renderDay(model.nextMonday));
+    }
+    host.style.setProperty("--stip-week-columns",String(model.slotCount||dates.length||1));
+    host.classList.toggle("has-next-monday",Boolean(model.nextMonday));
+    host.innerHTML=out.join("");
   }
 
   function teamLegendItem(key, iconHtml, label, meta = "") {
@@ -1469,16 +1491,19 @@
   }
 
   function weekControlsMarkup() {
-    return `<section id="teamWeekControls" class="team-week-inline-block team-time-stack stip-time-stack" aria-label="Cette semaine">
+    const engine=window.STIPWeekEngine,model=teamWeekDisplay(),days=model.dates||[],
+      range=engine?.rangeLabel?.(days)||weekRange(state.weekStart),
+      label=engine?.separatorLabel?.(teamWeekState(),{today:todayIso()})||"CETTE SEMAINE";
+    return `<section id="teamWeekControls" class="team-week-inline-block team-time-stack stip-time-stack" aria-label="${esc(label)}">
       <div class="team-week-section-label stip-section-separator" aria-hidden="true">
-        <span>CETTE SEMAINE</span>
+        <span>${esc(label)}</span>
       </div>
       <div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine">
-        <button class="team-week-step" type="button" data-team-week-step="-1" aria-label="Semaine précédente">‹</button>
-        <strong>${esc(weekRange(state.weekStart))}</strong>
-        <button class="team-week-step" type="button" data-team-week-step="1" aria-label="Semaine suivante">›</button>
+        <button class="team-week-step" type="button" data-team-week-step="-1" aria-label="Période précédente">‹</button>
+        <strong>${esc(range)}</strong>
+        <button class="team-week-step" type="button" data-team-week-step="1" aria-label="Période suivante">›</button>
       </div>
-      <nav id="teamDays" class="stip-week-line" style="--stip-week-columns:7" aria-label="Jours de la semaine"></nav>
+      <nav id="teamDays" class="stip-week-line" style="--stip-week-columns:${model.slotCount||days.length||1}" aria-label="Jours de la période"></nav>
     </section>`;
   }
 
@@ -1680,9 +1705,23 @@
   }
 
   function moveWeek(offset) {
-    state.weekStart = addDays(state.weekStart, offset * 7);
-    state.dayFocus = state.weekStart;
-    state.dateJumpMonth = monthKey(state.dayFocus);
+    const engine=window.STIPWeekEngine,step=Math.sign(Number(offset)||0),
+      current=teamWeekState(),
+      next=engine?.move?.(current,step,{today:todayIso()});
+    if(next){
+      state.weekPast=Boolean(next.weekPast);
+      state.weekFull=Boolean(next.weekFull);
+      state.dayFocus=next.dayFocus||"";
+      const dates=engine.visibleDates(next,{today:todayIso()});
+      state.weekStart=monday(dates[0]||todayIso());
+      state.dateJumpMonth=monthKey(dates[0]||todayIso());
+    }else{
+      state.weekStart = addDays(state.weekStart, step * 7);
+      state.weekPast=false;
+      state.weekFull=true;
+      state.dayFocus = "";
+      state.dateJumpMonth = monthKey(state.weekStart);
+    }
     window.STIPNav?.remember?.({
       tab: state.tab,
       weekStart: state.weekStart,
@@ -1805,6 +1844,8 @@
     try {
       state.access = await post("stip-access", { action: "me" });
       state.weekStart = monday(todayIso());
+      state.weekPast = false;
+      state.weekFull = false;
       state.dayFocus = todayIso();
       state.dateJumpMonth = monthKey(todayIso());
       const teamSubscribe = $("#teamSubscribe");

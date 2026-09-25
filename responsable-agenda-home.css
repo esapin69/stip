@@ -679,7 +679,7 @@
 /* Shared week intelligence: one stable signal row, outside the day cards. */
 .rr-week-signals{
   display:grid;
-  grid-template-columns:repeat(7,minmax(0,1fr));
+  grid-template-columns:repeat(var(--rr-week-columns,7),minmax(0,1fr));
   gap:4px;
   min-height:28px;
   margin:0 0 5px;
@@ -712,3 +712,5 @@
   grid-template-rows:31px 43px minmax(28px,auto);
 }
 .rr-week-marks{min-height:28px;padding-top:1px}
+
+.rr-week-signal-bridge{visibility:hidden;pointer-events:none}
