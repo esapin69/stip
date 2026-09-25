@@ -66,6 +66,72 @@
       requestIdleCallback(run, { timeout: 2400 });
     else setTimeout(run, 900);
   }
+  const documentWarm = new Map();
+  const DOCUMENT_APP_TARGET = {
+    agents: "agent-directory.html",
+    compare: "planning-compare-app.html",
+    dates: "agent-dates.html",
+    places: "places-app.html",
+    responsable: "responsable.html?tab=dates&entry=shortcut",
+    resp_tracking: "responsable.html?tab=suivi",
+    resp_evaluation: "responsable.html?tab=equipe&mode=evaluation",
+    resp_official: "responsable.html?tab=equipe&tool=official",
+    resp_requests: "responsable.html?tab=suivi&tool=requests",
+    resp_directory: "responsable.html?tab=equipe",
+    resp_agenda: "responsable.html?tab=agenda",
+    assistant: "esprit-equipe.html?tab=assistant",
+    activity: "esprit-equipe.html?tab=activity",
+    access: "access-manage.html",
+  };
+  function documentUrl(raw) {
+    try {
+      const url = new URL(String(raw || ""), location.href);
+      if (url.origin !== location.origin) return null;
+      if (url.pathname === location.pathname && url.search === location.search)
+        return null;
+      url.hash = "";
+      return url;
+    } catch {
+      return null;
+    }
+  }
+  function warmDocument(raw) {
+    const url = documentUrl(raw);
+    if (!url) return Promise.resolve(false);
+    const key = url.pathname + url.search;
+    if (documentWarm.has(key)) return documentWarm.get(key);
+    const promise = fetch(key, {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "default",
+    })
+      .then((response) => response.ok)
+      .catch(() => false);
+    documentWarm.set(key, promise);
+    return promise;
+  }
+  function navigateDocument(raw) {
+    const url = new URL(String(raw || ""), location.href);
+    if (url.origin === location.origin) warmDocument(url.href);
+    location.assign(url.href);
+  }
+  function warmVisibleDocuments(limit = 4) {
+    const keys = [
+      ...new Set(
+        [...document.querySelectorAll("[data-app]")]
+          .map((node) => String(node.dataset.app || ""))
+          .filter(Boolean),
+      ),
+    ];
+    let count = 0;
+    for (const key of keys) {
+      const target = DOCUMENT_APP_TARGET[key];
+      if (!target) continue;
+      warmDocument(target);
+      count += 1;
+      if (count >= limit) break;
+    }
+  }
   const personalCore = [
     "agent-agenda-view.js?v=20260925-chief-hours1",
     "calendar-subscriptions.js",
@@ -178,6 +244,9 @@
     tableau,
     homeExtras,
     idle: later,
+    warmDocument,
+    navigateDocument,
+    documentTarget: (key) => DOCUMENT_APP_TARGET[key] || "",
   };
   window.STIPHubs = window.STIPHubs || {
     planning(kind = "personal") {
@@ -201,6 +270,7 @@
   function idle() {
     if (new URLSearchParams(location.search).has("view_agent"))
       load("readonly-view-as.js").catch(console.error);
+    warmVisibleDocuments();
   }
   if ("requestIdleCallback" in window)
     requestIdleCallback(idle, { timeout: 2200 });
@@ -213,13 +283,8 @@
       const b = e.target.closest?.("[data-app]");
       if (!b) return;
       const k = b.dataset.app;
-      if (k === "responsable") {
-        const l = document.createElement("link");
-        l.rel = "prefetch";
-        l.href = "/responsable.html";
-        document.head.appendChild(l);
-        return;
-      }
+      const documentTarget = DOCUMENT_APP_TARGET[k];
+      if (documentTarget) warmDocument(documentTarget);
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
         seq(["agent-agenda-view.js?v=20260925-chief-hours1", "section-hubs.js"]).catch(() => {});
