@@ -63,7 +63,8 @@
     sortMode = "nom",
     candidateCache = [],
     peopleWall = null,
-    agentAgendaLoader = null;
+    agentAgendaLoader = null,
+    notificationSettings = [];
 
   function parisDay(iso) {
     const parts = Object.fromEntries(
@@ -271,17 +272,85 @@
         `<p class="access-help">${esc(e.message)}</p>`;
     }
   }
+  function renderNotificationSettings() {
+    const host = $("notificationSettingsList");
+    if (!host) return;
+    if (!notificationSettings.length) {
+      host.innerHTML =
+        '<p class="access-help">Aucun type de notification native n’est configuré.</p>';
+      return;
+    }
+    host.innerHTML = notificationSettings
+      .map((item) => {
+        const enabled = item.push_enabled !== false;
+        return `<label class="access-notification-row${enabled ? " is-enabled" : ""}">
+          <input type="checkbox" data-notification-key="${esc(item.event_key)}" ${enabled ? "checked" : ""}>
+          <span class="access-notification-copy">
+            <strong>${esc(item.label || item.event_key)}</strong>
+            <small>${esc(item.description || "")}</small>
+          </span>
+          <span class="access-notification-state">${enabled ? "ACTIF" : "COUPÉ"}</span>
+        </label>`;
+      })
+      .join("");
+    host.querySelectorAll("[data-notification-key]").forEach((input) => {
+      input.addEventListener("change", async () => {
+        const key = String(input.dataset.notificationKey || "");
+        const checked = !!input.checked;
+        input.disabled = true;
+        try {
+          const result = await call("notification_setting_save", {
+            event_key: key,
+            push_enabled: checked,
+          });
+          notificationSettings = Array.isArray(result.items) ? result.items : notificationSettings;
+          renderNotificationSettings();
+          message(
+            checked
+              ? "Notification téléphone activée pour ce type."
+              : "Notification téléphone coupée pour ce type.",
+          );
+        } catch (error) {
+          input.checked = !checked;
+          input.disabled = false;
+          message(error?.message || "Impossible de modifier cette notification.");
+        }
+      });
+    });
+  }
+
+  async function loadNotificationSettings() {
+    const host = $("notificationSettingsList");
+    if (host)
+      host.innerHTML = '<p class="access-help">Chargement…</p>';
+    try {
+      const result = await call("notification_settings");
+      notificationSettings = Array.isArray(result.items) ? result.items : [];
+      renderNotificationSettings();
+    } catch (error) {
+      if (host)
+        host.innerHTML = `<p class="access-help">${esc(error?.message || "Notifications indisponibles.")}</p>`;
+    }
+  }
+
   function setAccessMode(mode) {
-    const history = mode === "history";
+    const history = mode === "history",
+      notifications = mode === "notifications",
+      manage = !history && !notifications;
     document.body.classList.toggle("access-history-mode", history);
+    document.body.classList.toggle("access-notifications-mode", notifications);
     $("historyPanel").classList.toggle("hidden", !history);
-    $("accessManageTab").classList.toggle("active", !history);
+    $("notificationsPanel")?.classList.toggle("hidden", !notifications);
+    $("accessManageTab").classList.toggle("active", manage);
     $("accessHistoryTab").classList.toggle("active", history);
+    $("accessNotificationsTab")?.classList.toggle("active", notifications);
     $("accessControlTab")?.classList.remove("active");
-    $("accessManageTab").setAttribute("aria-selected", history ? "false" : "true");
+    $("accessManageTab").setAttribute("aria-selected", manage ? "true" : "false");
     $("accessHistoryTab").setAttribute("aria-selected", history ? "true" : "false");
+    $("accessNotificationsTab")?.setAttribute("aria-selected", notifications ? "true" : "false");
     $("accessControlTab")?.setAttribute("aria-selected", "false");
     if (history) loadHistory();
+    if (notifications) loadNotificationSettings();
   }
 
   async function request(url, action, body = {}) {
@@ -329,7 +398,10 @@
       else await renderCandidates();
       message("");
       $("accessHistoryTab").hidden = !data.can_history;
+      $("accessNotificationsTab").hidden = !data.can_notifications;
       if (!data.can_history && document.body.classList.contains("access-history-mode"))
+        setAccessMode("manage");
+      if (!data.can_notifications && document.body.classList.contains("access-notifications-mode"))
         setAccessMode("manage");
     } catch (e) {
       message(e.message);
@@ -807,6 +879,7 @@
 
   $("accessManageTab").onclick = () => setAccessMode("manage");
   $("accessHistoryTab").onclick = () => setAccessMode("history");
+  $("accessNotificationsTab").onclick = () => setAccessMode("notifications");
   $("accessControlTab").onclick = () => location.assign("control.html");
   $("historyPrev").onclick = () => {
     historyMonth = new Date(
