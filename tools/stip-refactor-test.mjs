@@ -282,6 +282,13 @@ check(
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
 const homeCss=read('home-shell.css');
+const fixedLegendBlock=home.slice(home.indexOf('function fixedShiftLegend()'),home.indexOf('function nativeExchanges()',home.indexOf('function fixedShiftLegend()')));
+check(
+  fixedLegendBlock.includes('hc-legend-shift-dot') &&
+  !fixedLegendBlock.includes('hc-legend-shift-pair') &&
+  !homeCss.includes('.hc-legend-shift-pair'),
+  'La légende planning ne doit plus superposer un emoji de shift et une petite pastille : un shift travaillé utilise une seule pastille colorée.'
+);
 check(home.includes('function planningCalendarOverview')&&home.includes('hc-date-jump-permanent'),'Le calendrier mensuel permanent a disparu du planning.');
 check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),'Le calendrier mensuel ne doit plus fonctionner comme un pop-up refermable.');
 check(

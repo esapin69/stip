@@ -1397,14 +1397,10 @@
           def = shiftDefinition(code);
         if (def?.is_working) {
           const family = String(def.family || "other").toLowerCase(),
-            workIcon = String(def.icon || shift.icon || "").trim(),
-            dot = `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`,
-            glyph = workIcon
-              ? `<span class="hc-legend-shift-pair"><span>${esc(workIcon)}</span>${dot}</span>`
-              : dot;
+            dot = `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`;
           add(
             "shift:" + code,
-            glyph,
+            dot,
             def.label || code,
             shiftTime(code),
           );
