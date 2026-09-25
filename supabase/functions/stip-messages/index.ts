@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const URL=Deno.env.get("SUPABASE_URL")!,SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}});
+const TRAINEE_DEFAULT_AVATAR="https://drive.google.com/thumbnail?id=1OrU6Sl01mfmYYJgQxG40diKhsj_Yx0-Y&sz=w512";
 const TABLEAU_PREFIX="__stip_tableau_day__:",LEGACY_TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
 
@@ -56,7 +57,7 @@ async function traineeActor(key:string){
   key=safeTraineeKey(key);if(!key)return null;
   const{data,error}=await db.from("stagiaires").select("nom,prenom,source_key,date_debut").like("source_key",`stagiaire:${key}:%`).order("date_debut").limit(1).maybeSingle();
   if(error)throw error;if(!data)return null;
-  return{id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:data.prenom,nom:data.nom,ghe:null,equipe:"stage",type_planning:"stagiaire",profile_photo_url:null,avatar_url:null,trainee_key:key,identity_kind:"stagiaire"}
+  return{id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:data.prenom,nom:data.nom,ghe:null,equipe:"stage",type_planning:"stagiaire",profile_photo_url:TRAINEE_DEFAULT_AVATAR,avatar_url:TRAINEE_DEFAULT_AVATAR,trainee_key:key,identity_kind:"stagiaire"}
 }
 function actorKey(ctx:any){return ctx?.is_trainee?`stagiaire:${ctx.trainee_key}`:String(ctx?.agent?.id||"")}
 async function actorDisplayName(ctx:any){if(ctx?.is_trainee)return display(ctx.agent)||"Stagiaire";const profile=await messageProfile(String(ctx.agent.id));return nick(ctx.agent,profile)}
@@ -237,7 +238,7 @@ async function traineeDirectory(){
   const today=parisDayKey(),edge=new Date(today+"T12:00:00Z");edge.setUTCDate(edge.getUTCDate()+180);const to=edge.toISOString().slice(0,10);
   const{data,error}=await db.from("stagiaires").select("source_key,nom,prenom,date_debut,date_fin").gte("date_fin",today).lte("date_debut",to).order("date_debut");
   if(error)throw error;const groups=new Map<string,any>();
-  for(const row of data||[]){const key=traineeKeyFromSource(row.source_key);if(!key)continue;const x=groups.get(key)||{trainee_key:key,id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,nom:row.nom,prenom:row.prenom,ghe:"Stage",role:"Stagiaire",first_date:row.date_debut,last_date:row.date_fin||row.date_debut};if(String(row.date_debut)<String(x.first_date))x.first_date=row.date_debut;if(String(row.date_fin||row.date_debut)>String(x.last_date))x.last_date=row.date_fin||row.date_debut;groups.set(key,x)}
+  for(const row of data||[]){const key=traineeKeyFromSource(row.source_key);if(!key)continue;const x=groups.get(key)||{trainee_key:key,id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,nom:row.nom,prenom:row.prenom,ghe:"Stage",role:"Stagiaire",profile_photo_url:TRAINEE_DEFAULT_AVATAR,avatar_url:TRAINEE_DEFAULT_AVATAR,first_date:row.date_debut,last_date:row.date_fin||row.date_debut};if(String(row.date_debut)<String(x.first_date))x.first_date=row.date_debut;if(String(row.date_fin||row.date_debut)>String(x.last_date))x.last_date=row.date_fin||row.date_debut;groups.set(key,x)}
   return[...groups.values()].sort((a,b)=>String(a.prenom||"").localeCompare(String(b.prenom||""),"fr")||String(a.nom||"").localeCompare(String(b.nom||""),"fr"))
 }
 async function traineeInbox(ctx:any,markRead=false){
@@ -486,7 +487,7 @@ async function teamThread(ctx:any){
   const withNames=(messages||[]).map((m:any)=>{
     if(m.sender_agent_id)return{...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}};
     const actor=m?.payload?.actor||{},key=String(m.sender_stagiaire_key||actor.key||"");
-    const sender={id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:actor.prenom||"Stagiaire",nom:actor.nom||"",ghe:null,equipe:"stage",nickname:actor.prenom||"Stagiaire",identity_kind:"stagiaire"};
+    const sender={id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:actor.prenom||"Stagiaire",nom:actor.nom||"",ghe:null,equipe:"stage",profile_photo_url:TRAINEE_DEFAULT_AVATAR,avatar_url:TRAINEE_DEFAULT_AVATAR,nickname:actor.prenom||"Stagiaire",identity_kind:"stagiaire"};
     return{...m,sender_agent_id:sender.id,sender}
   });
   const signed=await signedTeamPhotos(withNames);
