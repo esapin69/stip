@@ -115,6 +115,11 @@ const MAIN_BUILDINGS=[
   {code:'PW',label:'NEURO',subtitle:'Hôpital Pierre Wertheimer'},
   {code:'HFME',label:'HFME',subtitle:'Hôpital Femme Mère Enfant'}
 ]
+const INTERCALARY_DETAIL:Record<string,string>={
+  HLP:'Synthèse · dictionnaire · accès et repères terrain',
+  PW:'Synthèse · dictionnaire · accès et repères transport',
+  HFME:'Synthèse · dictionnaire · repères terrain'
+}
 const ANNEX_CODES=['A1','A3','A4','B1','B13','B14','B16','CERMEP','IDÉE','MORTUAIRE','MPM','RADIO','GHE']
 const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'
 const MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'
@@ -383,15 +388,18 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   const divider=(title:string,subtitle:string,detail:string)=>{
     page=pdf.addPage([W,H])
     page.drawText('VISITER LES LIEUX',{x:M,y:H-72,size:23,font:bold,color:navy})
-    page.drawText(pdfSafe(subtitle),{x:M,y:H-95,size:10,font:bold,color:navy,maxWidth:CONTENT})
+    page.drawText(pdfSafe(title+' · '+subtitle.toUpperCase()),{x:M,y:H-95,size:10,font:bold,color:navy,maxWidth:CONTENT})
     page.drawLine({start:{x:M,y:H-111},end:{x:W-M,y:H-111},thickness:1.2,color:navy})
     page.drawRectangle({x:M,y:255,width:CONTENT,height:270,color:soft})
-    const tw=bold.widthOfTextAtSize(pdfSafe(title),25)
-    page.drawText(pdfSafe(title),{x:Math.max(M,M+(CONTENT-tw)/2),y:405,size:25,font:bold,color:navy,maxWidth:CONTENT})
-    const subLines=wrapPdf(regular,detail,10,CONTENT-60)
-    let yy=365
-    for(const l of subLines){const lw=regular.widthOfTextAtSize(l,10);page.drawText(l,{x:M+(CONTENT-lw)/2,y:yy,size:10,font:regular,color:muted});yy-=15}
-    footer(page,'Intercalaire')
+    const titleSafe=pdfSafe(title),subSafe=pdfSafe(subtitle)
+    const tw=bold.widthOfTextAtSize(titleSafe,22)
+    page.drawText(titleSafe,{x:Math.max(M,M+(CONTENT-tw)/2),y:404,size:22,font:bold,color:navy,maxWidth:CONTENT})
+    const sw=bold.widthOfTextAtSize(subSafe,15)
+    page.drawText(subSafe,{x:Math.max(M,M+(CONTENT-sw)/2),y:365,size:15,font:bold,color:navy,maxWidth:CONTENT})
+    const subLines=wrapPdf(bold,detail,11,CONTENT-70)
+    let yy=322
+    for(const l of subLines){const lw=bold.widthOfTextAtSize(l,11);page.drawText(l,{x:M+(CONTENT-lw)/2,y:yy,size:11,font:bold,color:navy});yy-=16}
+    footer(page,'Intercalaire · '+title)
     y=0
   }
 
@@ -411,7 +419,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   const renderBuilding=async(code:string,label:string,subtitle:string)=>{
     const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
     if(!rows.length)return
-    divider(label,subtitle,'Synthèse des destinations, niveaux, codes, contacts et repères disponibles dans STIP')
+    divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
     const fixedIndex=code==='HLP'?FIXED_TEMPLATE_PAGE_INDEX.HLP:code==='PW'?FIXED_TEMPLATE_PAGE_INDEX.PW:FIXED_TEMPLATE_PAGE_INDEX.HFME
     await appendFixedPage(fixedIndex)
     freshPage(label+' · '+subtitle+' · DICTIONNAIRE','Données issues du référentiel Supabase au '+exportDate())
