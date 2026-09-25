@@ -37,4 +37,5 @@ jobs:
         run: node tools/stip-refactor-test.mjs
 
       - name: Check STIP calendar raw/common contract
+        if: always()
         run: node tools/stip-calendar-contract-test.mjs
