@@ -16,7 +16,9 @@ html.spa-open{overflow:hidden}
 .spa-actions{display:grid;gap:9px;padding:14px 0 8px}
 .spa-action{display:grid;grid-template-columns:42px minmax(0,1fr) 18px;align-items:center;gap:10px;min-height:64px;padding:9px 12px;border:1px solid var(--stip-line);border-radius:18px;background:var(--stip-surface);color:var(--stip-ink);text-align:left;text-decoration:none;box-shadow:0 7px 18px rgba(22,59,73,.04)}
 .spa-action.primary{border-color:color-mix(in srgb,var(--stip-accent) 38%,var(--stip-line));background:var(--stip-accent-soft)}
-.spa-action.danger{border-color:color-mix(in srgb,#b33 28%,var(--stip-line))}
+.spa-action.danger{border-color:color-mix(in srgb,#c62828 42%,var(--stip-line));background:color-mix(in srgb,#c62828 8%,var(--stip-surface));color:#a51d1d}
+.spa-action.danger .spa-action-icon{background:color-mix(in srgb,#c62828 12%,var(--stip-surface));color:#a51d1d}
+.spa-action.danger .spa-action-copy small,.spa-action.danger>em{color:#b14343}
 .spa-action:disabled{opacity:.45}
 .spa-action-icon{display:grid;place-items:center;width:40px;height:40px;border-radius:14px;background:var(--stip-surface-soft);font-size:1.05rem}
 .spa-action.primary .spa-action-icon{background:var(--stip-surface);color:var(--stip-accent)}
