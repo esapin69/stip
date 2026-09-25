@@ -6151,3 +6151,89 @@
   .tb-dm-section{padding:10px;border-radius:16px}
   .tb-dm-bubble{max-width:88%}
 }
+
+
+/* DM notification control — always visible in DM home */
+.tb-dm-push-access{
+  width:min(100%,680px);
+  min-height:62px;
+  margin:0 auto 12px;
+  padding:10px 12px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 28px;
+  gap:10px;
+  align-items:center;
+  border:1px solid #cfe0e3;
+  border-radius:17px;
+  background:#fff;
+  color:#244b55;
+  text-align:left;
+  box-shadow:0 6px 18px rgba(27,74,84,.06);
+  font:inherit;
+  cursor:pointer;
+}
+.tb-dm-push-access-icon{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#edf5f6;
+  font-size:1.05rem;
+}
+.tb-dm-push-access-copy{
+  min-width:0;
+}
+.tb-dm-push-access-copy strong,
+.tb-dm-push-access-copy small{
+  display:block;
+}
+.tb-dm-push-access-copy strong{
+  color:#234e58;
+  font-size:.78rem;
+  font-weight:950;
+}
+.tb-dm-push-access-copy small{
+  margin-top:3px;
+  color:#778d93;
+  font-size:.64rem;
+  line-height:1.3;
+}
+.tb-dm-push-access>b{
+  width:25px;
+  height:25px;
+  display:grid;
+  place-items:center;
+  border-radius:999px;
+  background:#eef3f4;
+  color:#6e858b;
+  font-size:.76rem;
+}
+.tb-dm-push-access.is-on{
+  border-color:#79c5cf;
+  background:linear-gradient(180deg,#f7ffff 0%,#e7f7f9 100%);
+  box-shadow:0 0 0 4px rgba(24,143,163,.08),0 7px 18px rgba(22,105,119,.10);
+}
+.tb-dm-push-access.is-on .tb-dm-push-access-icon,
+.tb-dm-push-access.is-on>b{
+  background:#168da4;
+  color:#fff;
+}
+.tb-dm-push-access.is-pending{
+  border-color:#9fcfd5;
+}
+.tb-dm-push-access.is-blocked{
+  border-color:#e5c5c1;
+  background:#fff8f7;
+}
+.tb-dm-push-access.is-blocked>b{
+  background:#fbe8e5;
+  color:#a23b32;
+}
+.tb-dm-push-access.is-off{
+  background:#f7f9fa;
+}
+.tb-dm-push-access:disabled{
+  opacity:.56;
+  cursor:default;
+}
