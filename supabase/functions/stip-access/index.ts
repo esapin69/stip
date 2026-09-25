@@ -1,6 +1,6 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-const TRAINEE_DEFAULT_AVATAR = "/images/stagiaire-default.png?v=20260925-1";
+const TRAINEE_DEFAULT_AVATAR = "https://raw.githubusercontent.com/esapin69/stip/0bd3aea4a363e2decfb1b41f20b4d349f157ebcd/images/stagiaire-default.png";
 const C = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
