@@ -193,7 +193,8 @@
     if(a.type==="mail")return location.href="mailto:"+a.value;
     if(a.type==="copy"){try{await navigator.clipboard.writeText(a.value)}catch{}return}
     if(a.type==="open"&&a.url)return location.href=a.url;
-    if(a.type==="app"&&a.app)return runDialogApp(a.app);\n    if(a.type==="reset_dialog")return resetDialog();
+    if(a.type==="app"&&a.app)return runDialogApp(a.app);
+    if(a.type==="reset_dialog")return resetDialog();
     if(a.type==="new_message"){closeDialog();return recipientSheet(false)}
     if(a.type==="message"&&a.agent_id){closeDialog();return openDirect(a.agent_id)}
     if(a.type==="group_message"&&Array.isArray(a.agent_ids)&&a.agent_ids.length){
