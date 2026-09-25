@@ -101,6 +101,7 @@
         responsable: "Responsable",
         cadre: "Cadre",
         brancardier: "Brancardier",
+        stagiaire: "Stagiaire",
         visiteur: "Visiteur",
       }[role] || role.replaceAll("_", " ")
     );
