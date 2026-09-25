@@ -2327,18 +2327,8 @@
       const x = e.clientX - startX,
         y = e.clientY - startY;
       if (!horizontal) {
-        const resolved =
-          window.STIPGesture?.axis?.(x, y, {
-            deadZone: 8,
-            horizontalRatio: 1.5,
-          }) ||
-          (Math.max(Math.abs(x), Math.abs(y)) < 8
-            ? ""
-            : Math.abs(x) >= Math.abs(y) * 1.5
-              ? "x"
-              : "y");
-        if (!resolved) return;
-        if (resolved === "y") {
+        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
+        if (Math.abs(y) > Math.abs(x) * 1.1) {
           active = false;
           reset();
           return;
@@ -2654,14 +2644,10 @@
         ay = Math.abs(dy);
 
       if (!gesture.axis) {
-        const resolved =
-          window.STIPGesture?.axis?.(dx, dy, {
-            deadZone: 9,
-            horizontalRatio: 1.5,
-          }) ||
-          (Math.max(ax, ay) < 9 ? "" : ax >= ay * 1.5 ? "x" : "y");
-        if (!resolved) return;
-        gesture.axis = resolved;
+        if (Math.max(ax, ay) < 9) return;
+        // A swipe must be clearly horizontal. Any diagonal/vertical gesture
+        // belongs to page scrolling so the embedded team page never feels stuck.
+        gesture.axis = ax >= ay * 1.35 ? "x" : "y";
       }
       if (gesture.axis !== "y") return;
 
@@ -2670,7 +2656,9 @@
       if (Math.abs(deltaY) < 0.5) return;
       if (scrollableAncestor(event.target, deltaY)) return;
 
+      const before = window.scrollY;
       window.scrollBy(0, deltaY);
+      if (Math.abs(window.scrollY - before) > 0.5) event.preventDefault();
     };
 
     const onWheel = (event) => {
@@ -2687,7 +2675,7 @@
       capture: true,
     });
     doc.addEventListener("touchmove", onTouchMove, {
-      passive: true,
+      passive: false,
       capture: true,
     });
     doc.addEventListener("touchend", reset, { passive: true, capture: true });
