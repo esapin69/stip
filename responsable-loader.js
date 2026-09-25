@@ -8,7 +8,7 @@
     try {
       const source = new URLSearchParams(location.search),
         keep = new URLSearchParams();
-      for (const key of ["tab", "mode", "tool", "open"]) {
+      for (const key of ["tab", "mode", "tool", "open", "entry"]) {
         const value = source.get(key);
         if (value) keep.set(key, value);
       }
@@ -23,7 +23,27 @@
     return;
   }
 
-  const V = "20260924-responsable-shared-head1",
+  try {
+    const params = new URLSearchParams(location.search);
+    if (params.get("entry") === "shortcut") {
+      window.STIPNav?.remember?.({
+        panel: "",
+        panelKind: "",
+        panelItemId: "",
+        agentId: "",
+        agentMode: "",
+      });
+      params.delete("entry");
+      const query = params.toString();
+      history.replaceState(
+        history.state,
+        "",
+        location.pathname + (query ? `?${query}` : "") + location.hash,
+      );
+    }
+  } catch {}
+
+  const V = "20260925-responsable-clean-entry1",
     m = new Map(),
     done = new Set();
   function load(src) {
