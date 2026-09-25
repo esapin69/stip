@@ -1630,7 +1630,7 @@
   function profile() {
     const a = state.boot?.agent || state.session?.agent || {},
       media = state.boot?.media || {},
-      avatar = a.profile_photo_url || media.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "",
+      avatar = window.STIPAgentSelector?.photoUrl?.(a) || a.profile_photo_url || "",
       ghe = String(a.ghe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
@@ -3326,7 +3326,7 @@
   };
   window.STIPAgentCard = (agent, media, label = "AGENT") => {
     const a = agent || {},
-      av = a.profile_photo_url || media?.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "";
+      av = window.STIPAgentSelector?.photoUrl?.(a) || a.profile_photo_url || "";
     const ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "ST";
     return `<section class="hc-profile"><div class="hc-avatar" data-avatar-fallback="${esc(ini)}">${av ? `<img src="${esc(av)}" alt="" loading="lazy">` : `<span>${esc(ini)}</span>`}</div><div class="hc-profile-copy"><small>${esc(label)}</small><strong>${esc(agentName(a))}</strong></div></section>`;
   };
