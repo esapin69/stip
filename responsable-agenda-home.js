@@ -989,22 +989,33 @@
     }
   });
 
-  const cacheState = hydrateCache();
-  restoreView();
-  if (!state.selectedDate) state.selectedDate = parisIso();
-  if (!state.monthKey) state.monthKey = state.selectedDate.slice(0, 7);
-  new MutationObserver(syncProControls).observe(document.documentElement, {
-    attributes: true,
-    attributeFilter: ["data-responsable-level"],
-  });
-  syncProControls();
-  if (cacheState.hasCache) {
-    state.loading = false;
-    state.error = "";
-    render();
-    waitForAccessLevel().then(syncProControls);
-    load({ silent: true });
-  } else {
-    load();
+  async function startAfterAuth() {
+    if (window.GHEAuth?.ready) {
+      try {
+        await window.GHEAuth.ready;
+      } catch {
+        return;
+      }
+    }
+    const cacheState = hydrateCache();
+    restoreView();
+    if (!state.selectedDate) state.selectedDate = parisIso();
+    if (!state.monthKey) state.monthKey = state.selectedDate.slice(0, 7);
+    new MutationObserver(syncProControls).observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-responsable-level"],
+    });
+    syncProControls();
+    if (cacheState.hasCache) {
+      state.loading = false;
+      state.error = "";
+      render();
+      waitForAccessLevel().then(syncProControls);
+      load({ silent: true });
+    } else {
+      load();
+    }
   }
+
+  setTimeout(startAfterAuth, 0);
 })();
