@@ -35,12 +35,42 @@
   function currentWork(){const route=window.STIPRouter?.get?.()||(baseName()==="index.html"||!baseName()?location.hash.replace(/^#\/?/,"")||"home":"");return routeMeta(route)||pageMeta()}
   function sameCurrent(item){const current=currentWork();return!!current&&current.id===item.id}
   function touch(work=currentWork()){if(!work?.id||!work?.url)return null;const now=Date.now(),previous=load(),existing=previous.find(item=>item.id===work.id),item={...existing,...work,at:now},next=[item,...previous.filter(x=>x.id!==item.id)];save(next);renderLauncher();window.dispatchEvent(new CustomEvent("stip:workspace-updated",{detail:item}));if(embedded){try{window.top.STIPWorkspace?.render?.()}catch{}}return item}
-  function recent(){return load().filter(item=>!sameCurrent(item)).slice(0,SHOW_ITEMS)}
+  function allRecent(){return load().filter(item=>!sameCurrent(item))}
+  function recent(){return allRecent().slice(0,SHOW_ITEMS)}
   function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[char])}
-  function ensureCss(){if(document.querySelector('link[data-stip-workspace-css]'))return;const link=document.createElement("link");link.rel="stylesheet";link.href="stip-workspace.css?v=20260925-workspace2";link.dataset.stipWorkspaceCss="1";document.head.appendChild(link)}
+  function ensureCss(){if(document.querySelector('link[data-stip-workspace-css]'))return;const link=document.createElement("link");link.rel="stylesheet";link.href="stip-workspace.css?v=20260925-workspace3";link.dataset.stipWorkspaceCss="1";document.head.appendChild(link)}
   function closeLauncher(){const host=document.getElementById("stipWorkspaceLauncher");if(!host)return;host.classList.remove("open");host.querySelector(".stip-workspace-toggle")?.setAttribute("aria-expanded","false")}
   function openItem(item){if(!item?.url)return;try{window.STIPNav?.save?.({workspaceExit:true})}catch{}location.assign(item.url)}
-  function renderLauncher(){if(embedded)return;ensureCss();const items=recent();let host=document.getElementById("stipWorkspaceLauncher");if(!items.length){host?.remove();return}if(!host){host=document.createElement("aside");host.id="stipWorkspaceLauncher";host.className="stip-workspace-launcher";host.setAttribute("aria-label","Travaux récents");document.body.appendChild(host)}const wasOpen=host.classList.contains("open");host.innerHTML=`<button class="stip-workspace-toggle" type="button" aria-expanded="${wasOpen}" aria-label="Reprendre un travail récent"><span aria-hidden="true">▤</span><b>${items.length}</b></button><section class="stip-workspace-panel" aria-label="Reprendre"><header><strong>Reprendre</strong><small>Travaux récents</small></header><div class="stip-workspace-list">${items.map((item,index)=>`<button type="button" data-stip-workspace-index="${index}"><span class="stip-workspace-icon" aria-hidden="true">${escapeHtml(item.icon||"↩")}</span><span class="stip-workspace-copy"><strong>${escapeHtml(item.label)}</strong>${item.detail?`<small>${escapeHtml(item.detail)}</small>`:"<small>Reprendre là où vous étiez</small>"}</span><span class="stip-workspace-arrow" aria-hidden="true">›</span></button>`).join("")}</div></section>`;host.classList.toggle("open",wasOpen);host.querySelector(".stip-workspace-toggle")?.addEventListener("click",()=>{const next=!host.classList.contains("open");host.classList.toggle("open",next);host.querySelector(".stip-workspace-toggle")?.setAttribute("aria-expanded",String(next))});host.querySelectorAll("[data-stip-workspace-index]").forEach(button=>button.addEventListener("click",()=>openItem(items[Number(button.dataset.stipWorkspaceIndex||0)])))}
+
+  function itemMarkup(item,index,compact=false){
+    const detail=item.detail?'<small>'+escapeHtml(item.detail)+'</small>':'<small>Reprendre là où vous étiez</small>';
+    return '<button type="button" class="stip-workspace-item'+(compact?' is-compact':'')+'" data-stip-workspace-index="'+index+'"><span class="stip-workspace-icon" aria-hidden="true">'+escapeHtml(item.icon||"↩")+'</span><span class="stip-workspace-copy"><strong>'+escapeHtml(item.label)+'</strong>'+detail+'</span><span class="stip-workspace-arrow" aria-hidden="true">'+(compact?'›':'Reprendre')+'</span></button>';
+  }
+  function renderLauncher(){
+    if(embedded)return;
+    ensureCss();
+    const allItems=allRecent(),items=allItems.slice(0,SHOW_ITEMS),more=allItems.slice(SHOW_ITEMS);
+    let host=document.getElementById("stipWorkspaceLauncher");
+    if(!items.length){host?.remove();return}
+    if(!host){
+      host=document.createElement("aside");
+      host.id="stipWorkspaceLauncher";
+      host.className="stip-workspace-launcher";
+      host.setAttribute("aria-label","Travaux récents");
+      document.body.appendChild(host);
+    }
+    const wasOpen=host.classList.contains("open"),
+      moreWasOpen=!!host.querySelector(".stip-workspace-more[open]"),
+      moreBlock=more.length?'<details class="stip-workspace-more"'+(moreWasOpen?' open':'')+'><summary><span>Autres reprises</span><b>'+more.length+'</b><i aria-hidden="true">⌄</i></summary><div class="stip-workspace-more-list">'+more.map((item,index)=>itemMarkup(item,index+SHOW_ITEMS,true)).join("")+'</div></details>':'';
+    host.innerHTML='<button class="stip-workspace-toggle" type="button" aria-expanded="'+wasOpen+'" aria-label="Reprendre un travail récent"><span aria-hidden="true">↩</span><b>'+items.length+'</b></button><section class="stip-workspace-panel" aria-label="Reprendre"><header><span class="stip-workspace-heading-icon" aria-hidden="true">↩</span><div><small>CONTINUITÉ</small><strong>Reprendre</strong><p>Revenez exactement à votre dernier contexte.</p></div></header><div class="stip-workspace-list">'+items.map((item,index)=>itemMarkup(item,index,false)).join("")+'</div>'+moreBlock+'</section>';
+    host.classList.toggle("open",wasOpen);
+    host.querySelector(".stip-workspace-toggle")?.addEventListener("click",()=>{
+      const next=!host.classList.contains("open");
+      host.classList.toggle("open",next);
+      host.querySelector(".stip-workspace-toggle")?.setAttribute("aria-expanded",String(next));
+    });
+    host.querySelectorAll("[data-stip-workspace-index]").forEach(button=>button.addEventListener("click",()=>openItem(allItems[Number(button.dataset.stipWorkspaceIndex||0)])));
+  }
   function refreshCurrent(){const work=currentWork();if(work)touch(work);else renderLauncher()}
   window.STIPWorkspace={close:closeLauncher,current:currentWork,recent,render:renderLauncher,touch};
   window.addEventListener("stip:route",event=>{const work=routeMeta(event?.detail?.route||"");if(work)touch(work);else renderLauncher()});
