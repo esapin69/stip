@@ -668,7 +668,7 @@
       .finally(() => window.STIPNav?.restoreScroll?.());
   }
   window.STIPResponsableAgenda = {
-    version: "20260925-canonical-events2",
+    version: "20260925-canonical-events3",
     openAdd(date = "") {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) $("#taDate").value = String(date);
       openSheet("#taAddSheet");
