@@ -50,7 +50,7 @@
   box-sizing:border-box!important;
   width:100%!important;
   min-width:0!important;
-  min-height:112px!important;
+  min-height:0!important;
   display:grid!important;
   grid-template-rows:auto 1fr!important;
   align-items:stretch!important;
@@ -93,7 +93,7 @@
   grid-auto-rows:max-content!important;
   align-items:center!important;
   justify-items:center!important;
-  align-content:center!important;
+  align-content:start!important;
   gap:4px!important;
   margin:0!important;
   padding:5px 2px 6px!important;
@@ -172,11 +172,14 @@
 .stip-week-events.is-empty{visibility:hidden!important}
 .stip-week-main-icon:empty{display:none!important}
 .stip-week-work-marker{width:19px!important;height:19px!important;min-width:19px!important;min-height:19px!important}
-.stip-week-day.stip-week-personal-layout .stip-week-day-body{grid-template-rows:auto auto 1px auto!important;grid-auto-rows:auto!important}
+.stip-week-day.stip-week-personal-layout{min-height:112px!important}
+.stip-week-day.stip-week-personal-layout .stip-week-day-body{grid-template-rows:auto auto 1px auto!important;grid-auto-rows:auto!important;align-content:center!important}
 .stip-week-day.stip-week-personal-layout .stip-week-code{min-height:18px!important}
 .stip-week-day.stip-week-personal-layout .stip-week-main{min-height:26px!important}
 .stip-week-day.stip-week-personal-layout .stip-week-divider{display:block!important}
 .stip-week-day.stip-week-personal-layout .stip-week-events{min-height:26px!important}
+.stip-week-personal-line .stip-week-next-bridge,
+.stip-week-personal-line .hc-next-monday-bridge{min-height:112px!important}
 .stip-week-event{
   box-sizing:border-box!important;
   width:26px!important;
@@ -205,7 +208,7 @@
 .hc-next-monday-bridge{
   box-sizing:border-box!important;
   min-width:0!important;
-  min-height:112px!important;
+  min-height:0!important;
   display:grid!important;
   place-items:center!important;
   align-content:center!important;
