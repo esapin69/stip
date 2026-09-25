@@ -410,7 +410,6 @@
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["download","⇩","Télécharger"],
-      ["print","▤","Imprimer"],
       ["share","↗","Partager"]
     ]:[
       ["download","⇩","Télécharger"],
@@ -444,7 +443,7 @@
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
     const pdf=state.format==="pdf";
     let popup=null;
-    if(pdf&&(action==="view"||action==="print"))popup=window.open("about:blank","_blank");
+    if(pdf&&action==="view")popup=window.open("about:blank","_blank");
 
     document.body.classList.add("busy");
     setStatus(pdf?"Fabrication du PDF…":"Préparation du tableur…");
@@ -452,12 +451,12 @@
       if(pdf){
         const {blob,name}=await fetchGeneratedPdf(token);
 
-        if(action==="view"||action==="print"){
+        if(action==="view"){
           const url=URL.createObjectURL(blob);
           if(popup&&!popup.closed)popup.location.href=url;
           else location.href=url;
           setTimeout(()=>URL.revokeObjectURL(url),120000);
-          setStatus(action==="print"?"PDF généré ouvert : utilise « Imprimer » dans le lecteur.":"PDF généré ouvert.","ok");
+          setStatus("PDF généré ouvert.","ok");
           return;
         }
 
