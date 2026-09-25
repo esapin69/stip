@@ -1609,7 +1609,7 @@
       groups = [
         {
           key: "agent",
-          label: "PILOTAGE · AGENT",
+          label: "RACCOURCIS · AGENT",
           items: [
             {
               href: "places-app.html",
@@ -1621,7 +1621,7 @@
         },
         {
           key: "responsable",
-          label: "PILOTAGE · RESPONSABLE",
+          label: "RACCOURCIS · RESPONSABLE",
           items: [
             {
               action: "responsable",
@@ -1639,7 +1639,7 @@
         },
         {
           key: "cadre",
-          label: "PILOTAGE · CADRE",
+          label: "RACCOURCIS · CADRE",
           items: [
             {
               href: "cadre-activite.html",
@@ -1663,7 +1663,7 @@
         },
         {
           key: "admin",
-          label: "PILOTAGE · ADMIN",
+          label: "RACCOURCIS · ADMIN",
           items: [
             {
               action: "admin",
@@ -1689,7 +1689,7 @@
     if (role === "visiteur") return "";
     if (role === "admin") {
       const openRoles = readPilotageOpen();
-      return `<section class="hc-pilotage-shell is-admin" aria-label="Pilotage par profil">${groups
+      return `<section class="hc-pilotage-shell is-admin" aria-label="Raccourcis par profil">${groups
         .map((group) =>
           pilotageRoleGroup(
             group.key,
@@ -1710,7 +1710,7 @@
       false,
     );
     return content
-      ? `<section class="hc-pilotage-shell" aria-label="Pilotage">${content}</section>`
+      ? `<section class="hc-pilotage-shell" aria-label="Raccourcis">${content}</section>`
       : "";
   }
   function app(kind, title, cls, action) {
