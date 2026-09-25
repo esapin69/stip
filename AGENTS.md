@@ -104,11 +104,11 @@ Current non-negotiable invariants:
 - The page header is `Chat STIP` with `Fauteuils` as context; do not add a second large body title.
 - The composer exposes two equal compact mode tabs: `J’ai vu` and `Je cherche`. Do not add an `ACTION` heading or explanatory subtitles under those tabs.
 - The location chooser stays compact: four building choices around one central `Service / repère` action.
-- Do not duplicate direct service/repère search inside every later wizard step. Nested steps are building → quantity/level → place, with short labels.
+- Do not duplicate direct service/repère search inside every later wizard step. In `J’ai vu`, the guided order is building → level → quantity → place. Level and quantity must be visually unmistakable: level buttons say the level explicitly; quantity buttons use a wheelchair cue with `×1`, `×2`, `×3`, etc.
 - Do not render a separate building dashboard above the feed. Building selection exists only in the composer.
 - In `Je cherche` mode, selecting a building is sufficient and makes the message ready to send; do not force a level/service/location step.
 - In `J’ai vu` mode, an availability signal must be recoverable in the field: building/floor alone or a bare generic clue such as `Ascenseur`, `Couloir`, `Escalier`, `Hall` or `Accueil` is not sufficient. A generic word is a guided prefix, not a dead end: immediately accompany it with contextual service/unit/landmark choices from the canonical `stip_places` data for the selected floor, then store the composed location (for example `Ascenseur · Pneumologie B`). If no canonical completion fits, require an explicit precision before sending. Legacy vague signals must be labelled as imprecise; never invent a missing unit or service.
-- The wheelchair freshness control is a countdown: remaining time and marker use the same semantics. A fresh/hot signal starts on the right and the marker moves left toward cold/expired as remaining time decreases.
+- The wheelchair freshness control is a countdown: remaining time and marker use the same semantics. A fresh/hot signal starts on the right and the marker moves left toward cold/expired as remaining time decreases. Time and probability label sit inside the same full-width flame→ice rail; do not restore a separate left badge.
 - Active availability cards use one dominant recovery action plus two compact secondary actions: `Toujours là` and `Pas trouvé`. `Toujours là` stores a timestamped sighting history and shows only the latest sighting inline.
 - Wheelchair card visual hierarchy is strict: building/hospital first, time second, quantity/status pill third, then an explicit human-readable floor label (`7e étage`, not a bare `7`), then service and optional landmark. The reporting agent’s preferred first name is shown directly under the avatar on the root chat card. Do not repeat the generated sentence or the full author name inside a structured wheelchair card when those structured fields already exist.
 - Hospital/building labels are uppercase and visually dominant; the time is intentionally large and immediately readable.
@@ -143,6 +143,8 @@ Any STIP surface that contains a legend must explain every informational icon, b
 - The secondary presence check is phrased as an action (`Je confirme qu’il/ils sont là`). A successful check must show a visible confirmation beside the freshness timer with the confirmation time, author and `chrono relancé`, because `last_seen_at` resets the freshness reference.
 
 - HFME must always expose two distinct elevator shortcuts on every floor: `Ascenseurs · côté STIP` and `Ascenseurs · côté bloc`. They are separate landmarks and must never be deduplicated into one generic ascenseur choice.
+
+- When a generic `Ascenseur` prefix still needs a canonical repère, show the completion choices as a large elevator-panel-style grid that wraps in place. Do not require horizontal swiping to discover an elevator choice.
 
 - Confidence stays automatic by default, but a manual 🧊/🔥 override remains available on every wheelchair spot review regardless of building, floor, shortcut, free-text location, or number of selected places. `Auto` restores inference. The override applies to the whole signalement and must survive location edits until the user resets it.
 
