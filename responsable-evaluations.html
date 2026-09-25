@@ -119,7 +119,7 @@
     <section class="ev-card ev-final">
       <span class="ev-kicker">ÉVALUATION TERMINÉE</span>
       <h2>Extraire et figer le PDF officiel</h2>
-      <p>STIP contrôle la fiche et les signatures, génère le PDF, le livre dans Drive puis ouvre une nouvelle fiche de travail vide.</p>
+      <p>STIP contrôle la fiche et les signatures, fige le PDF officiel dans son stockage sécurisé puis ouvre une nouvelle fiche de travail vide.</p>
       <button type="button" id="finalizeOpen" class="primary">Contrôler avant extraction</button>
     </section>
   </form>
@@ -130,7 +130,7 @@
       <span class="ev-kicker">CONTRÔLE FINAL</span>
       <h2>Extraire et figer le document</h2>
       <div id="finalSummary" class="ev-summary"></div>
-      <p class="ev-warning">Après extraction, cette version devient officielle et n’est plus modifiable. Drive reçoit uniquement le PDF final.</p>
+      <p class="ev-warning">Après extraction, cette version devient officielle et n’est plus modifiable. Le PDF reste conservé dans STIP et peut ensuite être affiché, téléchargé ou partagé.</p>
       <label class="ev-confirm"><input id="confirmFinal" type="checkbox"><span>J’ai relu toute l’évaluation et je confirme l’extraction officielle.</span></label>
       <div class="ev-final-actions"><button id="finalPrint" type="button" class="primary">Extraire et figer le PDF</button></div>
       <div id="finalStatus" class="ev-status"></div>
@@ -139,6 +139,6 @@
 </main>
 <script src="stip-navigation.js?v=20260924-workspace1"></script>
 <script src="responsable-base.js?v=20260827-evalbase5"></script>
-<script src="responsable-evaluation-v1.js?v=20260924-eval-parity1"></script>
+<script src="responsable-evaluation-v1.js?v=20260925-output1"></script>
 </body>
 </html>
