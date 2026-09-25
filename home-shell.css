@@ -5562,3 +5562,79 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 /* Shared trainee access */
 .hc-trainee-change{width:max-content;margin-top:6px;border:1px solid var(--stip-line);border-radius:999px;background:var(--stip-surface-soft);color:var(--stip-accent);padding:6px 10px;font:inherit;font-size:.65rem;font-weight:900}
+
+
+/* T SUITE DOOR — admin-only entry between Cloche and Fauteuils.
+   Kept local to the existing themed home; the T suite itself loads no visual CSS. */
+.hc-home-top-tools.has-t-door{
+  grid-template-columns:auto auto minmax(0,1fr)!important;
+}
+.hc-t-door{
+  position:relative!important;
+  justify-self:center!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  min-height:48px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  display:grid!important;
+  place-items:center!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hc-t-door-mark{
+  position:relative!important;
+  display:block!important;
+  width:34px!important;
+  height:38px!important;
+}
+.hc-t-door-mark::before,
+.hc-t-door-mark::after{
+  content:""!important;
+  position:absolute!important;
+  display:block!important;
+  border-radius:999px!important;
+  background:#194d5e!important;
+}
+.hc-t-door-mark::before{
+  left:3px!important;
+  right:3px!important;
+  top:6px!important;
+  height:4px!important;
+  transform:rotate(-2deg)!important;
+}
+.hc-t-door-mark::after{
+  top:6px!important;
+  bottom:3px!important;
+  left:50%!important;
+  width:4px!important;
+  transform:translateX(-50%) rotate(1deg)!important;
+}
+.hc-t-door:active .hc-t-door-mark{
+  transform:translateY(1px) scale(.96)!important;
+}
+.hc-t-door:focus-visible{
+  outline:3px solid var(--stip-focus-ring)!important;
+  outline-offset:2px!important;
+}
+@media(max-width:370px){
+  .hc-home-top-tools.has-t-door{
+    grid-template-columns:auto auto minmax(0,1fr)!important;
+    gap:10px!important;
+  }
+  .hc-t-door{
+    width:44px!important;
+    height:44px!important;
+    min-width:44px!important;
+    min-height:44px!important;
+  }
+  .hc-t-door-mark{
+    width:31px!important;
+    height:35px!important;
+  }
+}
