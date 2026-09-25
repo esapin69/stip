@@ -12,5 +12,5 @@ form?.addEventListener('submit',async e=>{e.preventDefault();const submit=form.q
 const requested=document.getElementById('requestedAccessCode');requested?.addEventListener('input',()=>{requested.value=requested.value.replace(/\D/g,'').slice(0,6)});
 window.addEventListener('stip:login-success',()=>{if(autoConnecting){autoConnecting=false;clearTracking()}});
 if(loginView)new MutationObserver(()=>{if(autoConnecting&&loginView.classList.contains('hidden')){autoConnecting=false;clearTracking()}}).observe(loginView,{attributes:true,attributeFilter:['class']});
-check();window.addEventListener('pageshow',check);window.addEventListener('focus',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});setInterval(check,60000)
+check();window.addEventListener('pageshow',check);window.addEventListener('focus',check);document.addEventListener('visibilitychange',()=>{if(!document.hidden)check()});setInterval(check,300000)
 })();
