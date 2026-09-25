@@ -968,6 +968,7 @@
   gap:3px!important;
   padding:5px 1px!important;
 }
+.stip-week-core{display:contents!important}
 .stip-week-code{
   display:block!important;
   max-width:100%!important;
