@@ -25,6 +25,8 @@ export type Intent =
   | "shift_roster"
   | "planning"
   | "person"
+  | "leave_lookup"
+  | "app_navigation"
   | "help";
 
 const MONTHS: Record<string, number> = {
