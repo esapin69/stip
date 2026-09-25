@@ -599,17 +599,30 @@
       })
       .join("");
 
-    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><header><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></header><div class="rr-week-signals" aria-label="État des jours de la semaine">${signalRow}</div><nav class="rr-week-days" aria-label="Jours de la semaine">${days
+    const dayLine = days
       .map((x) => {
         const events = itemsForDate(x.iso),
           markers = weekMarkerMarkup(events, x.iso),
           weekday = x.d
-            .toLocaleDateString("fr-FR", { weekday: "short" })
+            .toLocaleDateString("fr-FR", { weekday: "long" })
             .replace(/\./g, "")
-            .toUpperCase();
-        return `<button type="button" class="${x.iso === today ? "today" : ""} ${x.iso === selected ? "selected" : ""} ${events.length ? "has-event" : ""}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><small>${esc(weekday)}</small><b>${x.d.getDate()}</b><span class="rr-week-marks">${markers}</span></button>`;
+            .toUpperCase()
+            .slice(0, 2),
+          classes = [
+            "stip-week-day",
+            "neutral",
+            x.iso === today ? "today" : "",
+            x.iso === selected ? "selected" : "",
+            events.length ? "has-event" : "",
+          ].filter(Boolean).join(" "),
+          eventSlot = events.length
+            ? `<span class="stip-week-events rr-week-marks" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${markers}</span>`
+            : '<span class="stip-week-events is-empty rr-week-marks" aria-hidden="true"></span>';
+        return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso === selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"></span><span class="stip-week-divider ${events.length ? "" : "is-empty"}" aria-hidden="true"></span>${eventSlot}</span></button>`;
       })
-      .join("")}</nav></section>`;
+      .join("");
+
+    host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-rr-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Semaine suivante">›</button></div><div class="rr-week-signals" aria-label="État des jours de la semaine">${signalRow}</div><nav class="stip-week-line" style="--stip-week-columns:7" aria-label="Jours de la semaine">${dayLine}</nav></section>`;
     syncProControls();
   }
 
