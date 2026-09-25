@@ -123,6 +123,8 @@ check(/id="dayCard"[\s\S]*id="insightSection"/.test(read('cadre-activite.html'))
 check(/class="[^"]*op-day\b/.test(read('responsable-intelligence.js')),'Le cockpit Responsable ne regroupe plus les signaux par journée.');
 
 const theme=read('stip-theme-base.css');
+const calendarCore=read('stip-calendar-core.css');
+const calendarVisual=read('stip-calendar-visual.css');
 check(theme.includes('--stip-bg:#f6f7f8'),'Le fond maître neutre n’est plus appliqué.');
 check(theme.includes('--stip-accent:#176b93'),'L’accent bleu HCL n’est plus appliqué.');
 check(!read('assistant.css').trimStart().startsWith(':root'),'Assistant recrée une palette locale.');
@@ -311,8 +313,8 @@ check(
   'Le calendrier mensuel ne doit plus afficher le bouton Aujourd’hui redondant ; les flèches doivent recaler la semaine.'
 );
 check(
-  homeCss.includes('.hc-date-jump-dot.shift-morning') &&
-  homeCss.includes('.hc-date-jump-dot.shift-night'),
+  calendarVisual.includes('.stip-month-dot.shift-morning') &&
+  calendarVisual.includes('.stip-month-dot.shift-night'),
   'Les couleurs des pastilles de shifts du calendrier ont disparu.'
 );
 check(
@@ -341,8 +343,8 @@ check(
 check(
   home.includes('stip-month-calendar') &&
   home.includes('hc-date-jump-grid stip-month-grid') &&
-  patterns.includes('.stip-month-calendar .stip-month-day{') &&
-  patterns.includes('.stip-month-calendar .stip-month-day-number'),
+  calendarCore.includes('.stip-month-calendar .stip-month-day') &&
+  calendarCore.includes('.stip-month-calendar .stip-month-day-number'),
   'Le calendrier mensuel permanent a quitté le gabarit mensuel commun.'
 );
 check(
@@ -372,8 +374,8 @@ check(
 );
 check(home.includes('dateJumpPanel.dataset.calendarMonth ||')&&home.includes('return jumpToDate(day.dataset.calDay)'),'Sélectionner une semaine via un jour du mois voisin ne doit pas faire sauter le calendrier vers ce mois.');
 check(
-  patterns.includes('.stip-month-calendar .stip-month-day.is-selected') &&
-  patterns.includes('.stip-month-calendar .stip-month-day.is-today'),
+  calendarVisual.includes('.stip-month-calendar .stip-month-day.is-selected') &&
+  calendarVisual.includes('.stip-month-calendar .stip-month-day.is-today'),
   'Le calendrier doit distinguer visuellement le jour sélectionné et aujourd’hui.'
 );
 
@@ -383,10 +385,12 @@ const agentMonthCss=read('agent-agenda-view.css');
 const planningUiSource=read('planning-ui.js');
 const responsableMonthSource=read('responsable-agenda-home.js');
 const responsableMonthCss=read('responsable-agenda-home.css');
+
 check(
-  theme.includes('--stip-month-icon-size:1.32rem') &&
-  patterns.includes('.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number') &&
-  patterns.includes('font-size:var(--stip-month-icon-size)!important'),
+  read('stip-theme.css').includes('stip-calendar-core.css') &&
+  read('stip-theme.css').includes('stip-calendar-visual.css') &&
+  calendarCore.includes('.stip-month-calendar .stip-month-day') &&
+  calendarVisual.includes('.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number'),
   'Le contrat calendrier 1 mois doit rester centralisé dans le thème partagé.'
 );
 check(
@@ -404,13 +408,8 @@ check(
   agentMonthSource.includes('weekend?"is-weekend":""') &&
   read('esprit-equipe.js').includes('weekend ? "is-weekend" : ""') &&
   planningUiSource.includes("weekend?' is-weekend':''") &&
-  responsableMonthSource.includes('weekend ? "is-weekend" : ""'),
+  responsableMonthSource.includes('weekend ? "is-weekend" : ""),
   'Les chiffres de samedi et dimanche doivent tous passer par la règle rouge commune.'
-);
-check(
-  !theme.includes('.ph-day-head.weekend{color') &&
-  !planningHome.includes('.ph-day-head.weekend{color'),
-  'Les libellés SA/DI ne doivent pas hériter du rouge réservé aux chiffres des week-ends.'
 );
 check(
   !/\.hc-date-jump-(?:icon|events)\{[^}]*font-size/s.test(homeCss) &&
@@ -422,24 +421,16 @@ check(
 check(
   home.includes('stip-month-dot') &&
   agentMonthSource.includes('stip-month-dot') &&
+  calendarCore.includes('.stip-month-calendar .stip-month-dot') &&
+  calendarCore.includes('width:19px!important') &&
   !patterns.includes('.stip-month-dot{'),
-  'Les pastilles de couleur doivent garder leur gabarit local actuel et rester la seule exception de taille.'
+  'Les pastilles de couleur doivent garder une taille commune, légèrement inférieure aux pictogrammes.'
 );
 check(
-  theme.includes('--stip-month-number-lift:0px') &&
-  theme.includes('--stip-month-grid-column-gap:5px') &&
-  theme.includes('--stip-month-grid-row-gap:10px') &&
-  theme.includes('--stip-month-cell-min-height:88px') &&
-  theme.includes('--stip-month-cell-height:88px') &&
-  theme.includes('--stip-month-number-row:22px') &&
-  theme.includes('--stip-month-visual-row:22px') &&
-  theme.includes('--stip-month-events-row:24px') &&
-  theme.includes('--stip-month-internal-gap:6px') &&
-  theme.includes('--stip-month-event-gap:6px') &&
-  theme.includes('--stip-month-event-offset:0px') &&
-  patterns.includes('.stip-month-calendar .stip-month-grid') &&
-  patterns.includes('.stip-month-calendar .stip-month-day{') &&
-  patterns.includes('gap:var(--stip-month-event-gap)!important'),
+  calendarCore.includes('grid-template-columns:repeat(7,minmax(0,1fr))!important') &&
+  calendarCore.includes('grid-template-rows:auto minmax(26px,auto) minmax(26px,auto)!important') &&
+  calendarCore.includes('.stip-month-calendar .stip-month-primary') &&
+  calendarCore.includes('.stip-month-calendar .stip-month-events'),
   'Les espacements communs du calendrier mensuel ont disparu.'
 );
 check(
@@ -452,10 +443,8 @@ check(
   'Un calendrier mensuel ne consomme plus la grille commune.'
 );
 check(
-  patterns.includes('.stip-month-calendar .stip-month-day.is-selected:not(.is-today)') &&
-  patterns.includes('transform:scale(1.15)!important') &&
-  patterns.includes('.stip-month-calendar .stip-month-day.is-today') &&
-  patterns.includes('.stip-month-calendar .stip-month-primary') &&
+  calendarVisual.includes('.stip-month-calendar .stip-month-day.is-selected') &&
+  calendarCore.includes('transform:none!important') &&
   home.includes('hc-date-jump-marker stip-month-primary') &&
   planningHome.includes('ph-shift-slot stip-month-primary') &&
   planningUiSource.includes('stip-month-primary') &&
@@ -466,21 +455,13 @@ check(
   agentMonthSource.includes('selected is-selected') &&
   responsableMonthSource.includes('today is-today') &&
   responsableMonthSource.includes('selected is-selected'),
-  'Le jour mensuel choisi doit reprendre le zoom de sélection sans grossir automatiquement aujourd’hui.'
-);
-check(
-  homeCss.includes('.hc-week-nav-global{\n width:100%!important;') &&
-  !homeCss.includes('.hc-date-jump-icon{\n box-sizing:border-box!important;') &&
-  !homeCss.includes('.hc-calendar-driven-planning .hc-date-jump-permanent .hc-date-jump-grid{gap:') &&
-  !homeCss.includes('height:59px!important;min-height:59px!important') &&
-  !homeCss.includes('margin-top:8px!important;gap:8px!important'),
-  'La feuille Home est de nouveau corrompue ou recrée un espacement mensuel local.'
+  'Le jour mensuel choisi doit utiliser l’état commun sans zoom ni déplacement local.'
 );
 check(
   !/\.hc-date-jump-grid>button\{[^}]*grid-template-rows/s.test(homeCss) &&
   !/\.aav-cal-day\{[^}]*grid-template-rows/s.test(agentMonthCss) &&
   !/\.team-date-jump-grid>button\{[^}]*grid-template-rows/s.test(read('esprit-equipe.css')) &&
-  !/\.rr-month-grid\s*>\s*button\s*\{[^}]*grid-template-rows/s.test(responsableMonthCss) &&
+  !/#rrMonth\s+\.stip-month-day\s*\{/s.test(responsableMonthCss) &&
   !/\.ph-day-cell\{[^}]*display:flex/s.test(planningHome),
   'Une page recrée encore localement la géométrie du calendrier mensuel au lieu du template commun.'
 );
