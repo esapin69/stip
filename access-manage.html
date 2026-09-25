@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="stip-shell.css?v=20260919-refactor1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260925-person-actions1" />
-    <link rel="stylesheet" href="stip-person-actions.css?v=20260925-person-actions1" />\n    <link rel="stylesheet" href="access-manage.css?v=20260925-control1" />
+    <link rel="stylesheet" href="stip-person-actions.css?v=20260925-person-actions1" />\n    <link rel="stylesheet" href="access-manage.css?v=20260925-notifications1" />
     <link rel="stylesheet" href="quick-access.css?v=20260920-final1" />
   </head>
   <body data-stip-app="access">
@@ -32,7 +32,7 @@
         </div>
       </header>
 
-      <nav class="access-mode-switch stip-filter-bubbles" data-count="3" aria-label="Accès et sécurité : profils, historique et contrôle">
+      <nav class="access-mode-switch stip-filter-bubbles" data-count="4" aria-label="Accès et sécurité : profils, historique, notifications et contrôle">
         <button id="accessManageTab" class="stip-filter-choice active" type="button" aria-selected="true">
           <span class="stip-filter-visual" aria-hidden="true">🔐<i class="stip-filter-visual-badge">🔑</i></span>
           <span class="stip-filter-copy"><strong>Accès</strong><small>Profils & droits</small></span>
@@ -40,6 +40,10 @@
         <button id="accessHistoryTab" class="stip-filter-choice" type="button" aria-selected="false">
           <span class="stip-filter-visual" aria-hidden="true">🕘<i class="stip-filter-visual-badge">↺</i></span>
           <span class="stip-filter-copy"><strong>Historique</strong><small>Connexions & ouvertures</small></span>
+        </button>
+        <button id="accessNotificationsTab" class="stip-filter-choice" type="button" aria-selected="false">
+          <span class="stip-filter-visual" aria-hidden="true">🔔<i class="stip-filter-visual-badge">📲</i></span>
+          <span class="stip-filter-copy"><strong>Notifications</strong><small>Alertes téléphone</small></span>
         </button>
         <button id="accessControlTab" class="stip-filter-choice" type="button" aria-selected="false">
           <span class="stip-filter-visual" aria-hidden="true">♻️<i class="stip-filter-visual-badge">✓</i></span>
@@ -78,6 +82,22 @@
             <p class="access-help">Les détails du jour apparaîtront ici.</p>
           </div>
         </section>
+      </section>
+
+      <section id="notificationsPanel" class="stip-surface stip-catalog-surface access-notifications hidden">
+        <header class="access-notifications-head">
+          <div>
+            <span class="stip-kicker">NOTIFICATIONS NATIVES</span>
+            <h2>Notifications téléphone</h2>
+            <p>
+              Choisissez quels événements STIP ont le droit de provoquer une vraie notification sur le téléphone.
+              Chaque personne conserve ensuite son propre interrupteur quand un type le permet.
+            </p>
+          </div>
+        </header>
+        <div id="notificationSettingsList" class="access-notification-list" aria-live="polite">
+          <p class="access-help">Chargement…</p>
+        </div>
       </section>
 
       <section class="stip-surface stip-catalog-surface access-people">
@@ -188,7 +208,7 @@
       <p id="msg" class="access-message" role="status"></p>
     </main>
     <script src="stip-agent-selector.js?v=20260925-person-actions1"></script>
-    <script src="stip-person-actions.js?v=20260925-person-actions1"></script>\n    <script src="access-manage.js?v=20260925-person-actions1"></script>
+    <script src="stip-person-actions.js?v=20260925-person-actions1"></script>\n    <script src="access-manage.js?v=20260925-notifications1"></script>
     <script src="quick-access-universal.js?v=20260924-history2"></script>
   </body>
 </html>
