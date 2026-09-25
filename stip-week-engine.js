@@ -217,8 +217,8 @@
 
     if(cue.classList.contains("is-month")){
       const word=String(cue.querySelector(".stip-swipe-month-word strong")?.textContent||"").trim(),
-        target=Math.max(1,rect.height*.86),
-        fontPx=Math.max(52,Math.min(88,target/Math.max(4,word.length*.58)));
+        target=Math.max(1,rect.height*.92),
+        fontPx=Math.max(56,Math.min(96,target/Math.max(4,word.length*.58)));
       cue.style.setProperty("--stip-month-word-size",`${fontPx}px`);
     }
     return cue;
