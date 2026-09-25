@@ -5766,30 +5766,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   z-index:6!important;
 }
 
-/* Pilotage: remove line/bracket styling and identify each shortcut with its own compact prefix. */
-.hc-responsable-access-block .hc-responsable-tab{
-  border:0!important;
-  border-radius:0!important;
-  padding-left:8px!important;
-  gap:7px!important;
-}
-.hc-responsable-access-block .hc-responsable-tab::before{
-  display:inline-block!important;
-  flex:0 0 auto!important;
-  font-size:.86em!important;
-  line-height:1!important;
-  letter-spacing:.08em!important;
-  transform:translateY(-1px)!important;
-}
-.hc-responsable-access-block .hc-responsable-tab[data-app="responsable"]::before{
-  content:"🧭  •"!important;
-}
-.hc-responsable-access-block .hc-responsable-tab[data-app="access"]::before{
-  content:"🔐  •"!important;
-}
-
-
-/* 20260925-pilotage-state3 — canonical role-based Pilotage block */
+/* 20260925-pilotage-state4 — canonical role-based Pilotage block */
 .hc-pilotage-shell{
   box-sizing:border-box!important;
   width:100%!important;
