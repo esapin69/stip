@@ -2859,23 +2859,95 @@ html.stip-team-embedded .team-shell {
 }
 
 
-/* shift-header-neutral-meta-20260925 */
-/* Le compteur d'agents et le chevron restent neutres sur tous les shifts.
-   La couleur métier reste portée par la bande, le fond et le badge M/J/J4/S/N. */
-.team-shift.shift-m .team-shift-head>em,
-.team-shift.shift-m .team-shift-head>i,
-.team-shift.shift-j .team-shift-head>em,
-.team-shift.shift-j .team-shift-head>i,
-.team-shift.shift-j4 .team-shift-head>em,
-.team-shift.shift-j4 .team-shift-head>i,
-.team-shift.shift-s .team-shift-head>em,
-.team-shift.shift-s .team-shift-head>i,
-.team-shift.shift-n .team-shift-head>em,
-.team-shift.shift-n .team-shift-head>i,
-.team-shift.shift-m.open .team-shift-head>em,
-.team-shift.shift-j.open .team-shift-head>em,
-.team-shift.shift-j4.open .team-shift-head>em,
-.team-shift.shift-s.open .team-shift-head>em,
-.team-shift.shift-n.open .team-shift-head>em{
+/* shift-header-canonical-20260925
+   Même géométrie pour M/J/J4/S/N :
+   - badge métier coloré
+   - compteur d'agents en capsule neutre
+   - chevron neutre
+   - S garde le jaune mais son badge utilise le même texte blanc que les autres. */
+.team-shift-head>b{
+  color:#fff!important;
+}
+
+.team-shift.shift-s .team-shift-head>b{
+  color:#fff!important;
+}
+
+.team-shift-head>em{
+  grid-column:3!important;
+  justify-self:center!important;
+  min-width:42px!important;
+  height:34px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0 10px!important;
+  border:1px solid color-mix(in srgb,var(--stip-ink,#173f49) 14%,var(--stip-line,#d8e5e8))!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.90)!important;
+  box-shadow:0 3px 9px rgba(20,62,78,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;
   color:var(--stip-ink,#173f49)!important;
+  font-size:1.08rem!important;
+  font-style:normal!important;
+  font-weight:950!important;
+  line-height:1!important;
+  text-align:center!important;
+}
+
+.team-shift.open .team-shift-head>em,
+.team-shift.shift-m .team-shift-head>em,
+.team-shift.shift-j .team-shift-head>em,
+.team-shift.shift-j4 .team-shift-head>em,
+.team-shift.shift-s .team-shift-head>em,
+.team-shift.shift-n .team-shift-head>em{
+  border-color:color-mix(in srgb,var(--stip-ink,#173f49) 14%,var(--stip-line,#d8e5e8))!important;
+  background:rgba(255,255,255,.90)!important;
+  color:var(--stip-ink,#173f49)!important;
+}
+
+.team-shift-head>i,
+.team-shift.shift-m .team-shift-head>i,
+.team-shift.shift-j .team-shift-head>i,
+.team-shift.shift-j4 .team-shift-head>i,
+.team-shift.shift-s .team-shift-head>i,
+.team-shift.shift-n .team-shift-head>i{
+  grid-column:4!important;
+  justify-self:center!important;
+  width:24px!important;
+  height:34px!important;
+  display:grid!important;
+  place-items:center!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--stip-ink,#173f49)!important;
+  font-size:1.35rem!important;
+  font-style:normal!important;
+  font-weight:950!important;
+  line-height:1!important;
+}
+
+.team-shift.open .team-shift-head>i{
+  color:var(--stip-ink,#173f49)!important;
+  transform:rotate(180deg)!important;
+}
+
+@media(max-width:430px){
+  .team-shift-head{
+    grid-template-columns:40px minmax(0,1fr) 42px 22px!important;
+    column-gap:9px!important;
+    padding-right:14px!important;
+  }
+  .team-shift-head>em{
+    min-width:40px!important;
+    height:32px!important;
+    padding-inline:8px!important;
+    font-size:1.04rem!important;
+  }
+  .team-shift-head>i{
+    width:22px!important;
+    height:32px!important;
+    font-size:1.28rem!important;
+  }
 }
