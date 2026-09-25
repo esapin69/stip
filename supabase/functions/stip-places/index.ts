@@ -444,11 +444,12 @@ Deno.serve(async req=>{
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       return json(masterPdfLinks())
     }
-    if(action==='export_xlsx'||action==='export_pdf'){
+    if(action==='export_pdf')return json({error:'PDF dynamique désactivé : utiliser le MASTER Drive officiel.'},410)
+    if(action==='export_xlsx'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
       const scoped=scopedSnapshot(fullSnapshot,body.scope)
-      return action==='export_xlsx'?xlsxResponse(scoped.snapshot,scoped.label):await pdfResponse(scoped.snapshot,scoped.label)
+      return xlsxResponse(scoped.snapshot,scoped.label)
     }
     return json({error:'Action invalide.'},400)
   }catch(e){
