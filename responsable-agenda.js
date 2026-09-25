@@ -13,7 +13,11 @@
     items = [],
     proposals = [],
     events = [],
-    active = "all",
+    active = ["all", "medical", "intern", "training"].includes(
+      navigationState.filter,
+    )
+      ? navigationState.filter
+      : "all",
     selectedDay = navigationState.selectedDay || "",
     search = navigationState.search || "",
     focusId = "";
@@ -232,9 +236,14 @@
     x.setDate(x.getDate() - (day - 1));
     return x;
   }
+  function occursOn(x, isoDate) {
+    const start = String(x?.date || "").slice(0, 10),
+      end = String(x?.endDate || start).slice(0, 10);
+    return Boolean(start && isoDate && start <= isoDate && isoDate <= end);
+  }
   function visibleEvents() {
     let a = active === "all" ? events : events.filter((x) => x.type === active);
-    if (selectedDay) a = a.filter((x) => x.date === selectedDay);
+    if (selectedDay) a = a.filter((x) => occursOn(x, selectedDay));
     if (search) {
       const q = search.toLocaleLowerCase("fr-FR");
       a = a.filter((x) =>
@@ -254,12 +263,15 @@
     const m = now.slice(0, 7),
       src = events.filter((x) => active === "all" || x.type === active);
     $("#taUpcoming").textContent = `${src.length} à venir`;
-    $("#taWeekCount").textContent = src.filter((x) => {
-      const d = dateObj(x.date);
-      return d >= wk && d <= wkEnd;
-    }).length;
+    const wkStart = iso(wk),
+      wkFinish = iso(wkEnd),
+      monthStart = m + "-01",
+      monthFinish = iso(new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0, 12));
+    $("#taWeekCount").textContent = src.filter(
+      (x) => String(x.date || "") <= wkFinish && String(x.endDate || x.date || "") >= wkStart,
+    ).length;
     $("#taMonthCount").textContent = src.filter(
-      (x) => x.date.slice(0, 7) === m,
+      (x) => String(x.date || "") <= monthFinish && String(x.endDate || x.date || "") >= monthStart,
     ).length;
     $("#countAll").textContent = events.length;
     $("#countMedical").textContent = events.filter(
@@ -279,7 +291,7 @@
       const d = new Date(monday);
       d.setDate(monday.getDate() + i);
       const di = iso(d),
-        dayEvents = events.filter((x) => x.date === di),
+        dayEvents = events.filter((x) => occursOn(x, di)),
         shown =
           active === "all"
             ? dayEvents
