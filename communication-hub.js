@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const CLIENT_VERSION="20260920-dialogv2-reset2";
+  const CLIENT_VERSION="20260925-stipia-universal1";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
@@ -119,7 +119,7 @@
   function dialogWelcome(){return {side:"bot",html:'<article class="ch-bot-welcome"><strong>Demande-moi ce que STIP sait vraiment.</strong><p>Planning, collègues, coordonnées, lieux ou organisation. Je cherche dans les données, pas dans une boule de cristal.</p><div class="ch-suggestions"><button>Mon horaire demain ?</button><button>Qui est avec moi vendredi ?</button><button>Où est l’IRM ?</button><button>Je peux échanger demain ?</button><button>Je veux poser un congé</button></div></article>'}}
   function dialogShell(){
     if(dialog)return dialog;
-    dialog=document.createElement("section");dialog.className="ch-dialog";dialog.hidden=true;dialog.innerHTML='<header><button type="button" data-close>‹</button><div><small>STIP IA</small><strong>Recherche intelligente</strong></div><button type="button" data-dialog-reset title="Réinitialiser le dialogue" aria-label="Réinitialiser le dialogue"><span aria-hidden="true">↻</span><b>Reset</b></button></header><main class="ch-dialog-body" data-dialog-body></main><form class="ch-dialog-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit">↑</button></form>';
+    dialog=document.createElement("section");dialog.className="ch-dialog";dialog.hidden=true;dialog.innerHTML='<header><button type="button" data-close>‹</button><div><small>STIP IA</small><strong>Demande simplement</strong></div><button type="button" data-dialog-reset title="Réinitialiser le dialogue" aria-label="Réinitialiser le dialogue"><span aria-hidden="true">↻</span><b>Reset</b></button></header><main class="ch-dialog-body" data-dialog-body></main><form class="ch-dialog-form"><input name="q" autocomplete="off" placeholder="Écris comme tu parlerais…" maxlength="220"><button type="submit">↑</button></form>';
     document.body.appendChild(dialog);
     bindKeyboardTracking(dialog);
     dialog.querySelector("[data-close]").addEventListener("click",closeDialog);
@@ -165,11 +165,36 @@
     catch(e){dialogHistory.pop();dialogHistory.push({side:"bot",html:'<article class="ch-answer error"><strong>Ça coince côté données.</strong><p>'+esc(e.message||"Réessaie.")+'</p></article>'})}
     renderDialog()
   }
+  async function runDialogApp(app){
+    closeDialog();
+    if(app==="planning_personal")return window.STIPHubs?.planning?.("personal");
+    if(app==="planning_team")return window.STIPRouter?.set?.("team");
+    if(app==="change_app")return window.STIPHubs?.planning?.("change");
+    if(app==="calendar_subscribe"){
+      try{if(!window.STIPCalendars?.quick)await window.STIPLoad?.script?.("calendar-subscriptions.js");return window.STIPCalendars?.quick?.("personal")}catch{return}
+    }
+    if(app==="agent_dates")return location.href="agent-dates.html";
+    if(app==="contacts")return window.STIPHubs?.contacts?.();
+    if(app==="responsable")return window.STIPRouter?.set?.("responsable");
+    if(app==="notes")return window.STIPTomorrowUI?.open?.();
+    if(app==="nouveaux_arrivants")return location.href="https://esapin69.github.io/Ghe-interne/";
+    if(app==="file_upload")return location.href="https://admin.esapin.com/depot.html";
+    if(app==="activity")return location.href="esprit-equipe.html";
+    if(app==="admin")return location.href="https://admin.esapin.com/";
+    if(app==="places")return location.href="places-app.html";
+    if(app==="access_manage")return location.href="access-manage.html";
+    if(app==="messages")return recipientSheet(false);
+    if(app==="tomorrow")return window.STIPTomorrowUI?.open?.();
+    if(app==="agent_directory")return location.href="agent-directory.html";
+    if(app==="profile_photo")return location.href="mon-compte.html";
+  }
   async function runDialogAction(a){
     if(a.type==="call")return location.href="tel:"+a.value;
     if(a.type==="mail")return location.href="mailto:"+a.value;
     if(a.type==="copy"){try{await navigator.clipboard.writeText(a.value)}catch{}return}
     if(a.type==="open"&&a.url)return location.href=a.url;
+    if(a.type==="app"&&a.app)return runDialogApp(a.app);
+    if(a.type==="reset_dialog")return resetDialog();
     if(a.type==="new_message"){closeDialog();return recipientSheet(false)}
     if(a.type==="message"&&a.agent_id){closeDialog();return openDirect(a.agent_id)}
     if(a.type==="group_message"&&Array.isArray(a.agent_ids)&&a.agent_ids.length){
