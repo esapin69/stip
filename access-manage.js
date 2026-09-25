@@ -62,7 +62,8 @@
     historySelectedDay = "",
     sortMode = "nom",
     candidateCache = [],
-    peopleWall = null;
+    peopleWall = null,
+    agentAgendaLoader = null;
 
   function parisDay(iso) {
     const parts = Object.fromEntries(
@@ -351,7 +352,87 @@
       };
     });
   }
-  function mountPeopleWall(items = [], onSelect, emptyText) {
+  function ensureAgentAgenda() {
+    if (window.STIPAgentAgenda?.open)
+      return Promise.resolve(window.STIPAgentAgenda);
+    if (agentAgendaLoader) return agentAgendaLoader;
+    agentAgendaLoader = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "agent-agenda-view.js?v=20260925-person-actions1";
+      script.async = false;
+      script.onload = () =>
+        window.STIPAgentAgenda?.open
+          ? resolve(window.STIPAgentAgenda)
+          : reject(Error("Planning agent indisponible."));
+      script.onerror = () => reject(Error("Impossible de charger le planning agent."));
+      document.body.appendChild(script);
+    }).catch((error) => {
+      agentAgendaLoader = null;
+      throw error;
+    });
+    return agentAgendaLoader;
+  }
+
+  async function openAgentPlanning(agent) {
+    const key = String(agent?.source_key || "").trim();
+    if (!key) {
+      message("Planning indisponible pour cet agent.");
+      return;
+    }
+    try {
+      const agenda = await ensureAgentAgenda();
+      await agenda.open(key, agent);
+    } catch (error) {
+      message(error?.message || "Planning agent indisponible.");
+    }
+  }
+
+  function openAccessActions(item, createMode = false) {
+    const agent = agentOf(item) || {};
+    if (!window.STIPPersonActions?.open) {
+      if (createMode) editNew(item);
+      else edit(item);
+      return;
+    }
+    const actions = [
+      {
+        key: createMode ? "create-access" : "manage-access",
+        icon: "🔐",
+        label: createMode ? "Créer l’accès" : "Gérer l’accès",
+        detail: createMode
+          ? "Créer le profil et son code"
+          : "Droits, niveau et code d’accès",
+        primary: true,
+        onSelect: () => (createMode ? editNew(item) : edit(item)),
+      },
+      agent.source_key
+        ? {
+            key: "planning",
+            icon: "📅",
+            label: "Voir le planning",
+            detail: "Planning et événements de l’agent",
+            onSelect: () => openAgentPlanning(agent),
+          }
+        : null,
+      agent.telephone
+        ? {
+            key: "call",
+            icon: "☎",
+            label: "Appeler",
+            detail: String(agent.telephone),
+            onSelect: () => window.STIPAgentSelector?.openCallSheet?.(agent),
+          }
+        : null,
+    ].filter(Boolean);
+
+    window.STIPPersonActions.open({
+      agent,
+      contextLabel: createMode ? "SANS ACCÈS" : "ACCÈS & SÉCURITÉ",
+      actions,
+    });
+  }
+
+  function mountPeopleWall(items = [], createMode, emptyText) {
     peopleWall?.destroy?.();
     peopleWall = null;
     if (!window.STIPAgentSelector?.mountWall) {
@@ -365,17 +446,17 @@
       emptyText,
       onSelect(agent) {
         const item = items[Number(agent.__access_index)];
-        if (item) onSelect?.(item);
+        if (item) openAccessActions(item, createMode);
       },
     });
   }
   function renderPeople() {
     const people = data.people || [];
-    mountPeopleWall(people, edit, "Aucun profil trouvé.");
+    mountPeopleWall(people, false, "Aucun profil trouvé.");
   }
   function renderCandidateList() {
     const candidates = candidateCache || [];
-    mountPeopleWall(candidates, editNew, "Aucun agent sans accès trouvé.");
+    mountPeopleWall(candidates, true, "Aucun agent sans accès trouvé.");
   }
 
   async function renderCandidates() {

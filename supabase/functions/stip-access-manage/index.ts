@@ -140,7 +140,7 @@ async function list(q = "", viewer: any = null) {
     db
       .from("stip_access_profiles")
       .select(
-        "id,agent_id,identity_id,role_key,active,permissions,permission_overrides,access_model_key,agents(id,nom,prenom,ghe,equipe,type_planning,avatar_url,profile_photo_url)",
+        "id,agent_id,identity_id,role_key,active,permissions,permission_overrides,access_model_key,agents(id,source_key,nom,prenom,ghe,equipe,type_planning,telephone,avatar_url,profile_photo_url)",
       )
       .order("updated_at", { ascending: false })
       .limit(200),
@@ -285,7 +285,7 @@ async function findNew(b: any) {
     .toLowerCase();
   const { data: agents, error } = await db
     .from("agents")
-    .select("id,nom,prenom,ghe,equipe,type_planning,actif,avatar_url,profile_photo_url")
+    .select("id,source_key,nom,prenom,ghe,equipe,type_planning,telephone,actif,avatar_url,profile_photo_url")
     .eq("actif", true);
   if (error) throw error;
 

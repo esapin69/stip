@@ -44,6 +44,8 @@ check(spirit.includes('Array.from({ length: 7 }'),'Esprit d’équipe ne constru
 check(spirit.includes('loadCore(addDays(state.weekStart, -7))')&&spirit.includes('loadCore(addDays(state.weekStart, 7))'),'Le préchargement des semaines adjacentes a disparu.');
 
 const selector=read('stip-agent-selector.js');
+const personActions=read('stip-person-actions.js');
+const personActionsCss=read('stip-person-actions.css');
 const shiftRegistry=read('shift-registry.js');
 check(
   selector.includes('STIPShiftRegistry?.resolve') &&
@@ -67,6 +69,18 @@ check(
   selector.includes('mountWall') &&
   selector.includes('openPicker'),
   'Le modèle commun Rechercher un agent a perdu son mur de portraits ou ses filtres.'
+);
+
+check(
+  personActions.includes('window.STIPPersonActions = { open, close }') &&
+  personActions.includes('actions = (Array.isArray(rawOptions.actions)') &&
+  personActionsCss.includes('.spa-sheet') &&
+  personActionsCss.includes('@media(min-width:720px)'),
+  'Le maître Actions agent contextuelles est incomplet.'
+);
+check(
+  !selector.includes('STIPPersonActions'),
+  'Rechercher un agent ne doit pas imposer le pop contextuel : la sélection formulaire reste directe.'
 );
 const responsableHtml=read('responsable.html');
 const responsableAgenda=read('responsable-agenda.js');
@@ -189,8 +203,21 @@ check(
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
 check(
   accessManage.includes('STIPAgentSelector.mountWall') &&
-  read('access-manage.html').includes('stip-agent-selector.js?v=20260924-shared-wall1'),
+  read('access-manage.html').includes('stip-agent-selector.js?v=20260925-person-actions1'),
   'ADMIN > Accès ne réutilise plus le mur canonique des agents.'
+);
+check(
+  accessManage.includes('STIPPersonActions.open') &&
+  accessManage.includes('Gérer l’accès') &&
+  accessManage.includes('Voir le planning') &&
+  read('access-manage.html').includes('stip-person-actions.js?v=20260925-person-actions1'),
+  'ADMIN > Accès ne branche plus le pop contextuel agent.'
+);
+check(
+  read('agent-directory.js').includes('STIPPersonActions.open') &&
+  read('agent-directory.js').includes('onSelect: openAgentActions') &&
+  read('agent-directory.html').includes('stip-person-actions.js?v=20260925-person-actions1'),
+  'Équipe ne branche plus le pop contextuel agent.'
 );
 check(
   !accessManage.includes('function sortPeople(') &&
@@ -209,6 +236,10 @@ check(tomorrowCss.includes('var(--stip-bg)')&&tomorrowCss.includes('var(--stip-s
 
 const accessManageSource=read('access-manage.js');
 const accessManageEdge=read('supabase/functions/stip-access-manage/index.ts');
+check(
+  accessManageEdge.includes('source_key,nom,prenom,ghe,equipe,type_planning,telephone'),
+  'Accès ne fournit plus les champs nécessaires aux actions planning/appel.'
+);
 check(accessManageSource.includes('ESPRIT_KEYS')&&accessManageSource.includes('product_bundle: "esprit"'),'Accès ne regroupe plus Planning équipe / Activité / Assistant derrière Esprit d’équipe.');
 check(accessManageSource.includes('levels: false')&&accessManageSource.includes('MAXI n’est pas proposé'),'Esprit d’équipe affiche de nouveau un faux niveau MAXI.');
 check(accessManageEdge.includes('requestedPermissions')&&accessManageEdge.includes('b.permissions'),'La création d’accès ignore de nouveau les applications choisies.');
