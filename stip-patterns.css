@@ -1127,6 +1127,21 @@
   border-color:#9ba8ae!important;
 }
 .stip-week-day.pending .stip-week-day-head{background:#8d9aa2!important;color:#fff!important}
+.stip-week-day.loading{
+  pointer-events:none!important;
+  cursor:default!important;
+  --stip-week-accent:#9ba8ae;
+  border-color:#c9d5d9!important;
+  background:#f4f7f8!important;
+  color:#7e929a!important;
+  box-shadow:0 3px 8px rgba(30,66,79,.045),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+.stip-week-day.loading .stip-week-day-head{background:#8799a2!important;color:#fff!important}
+.stip-week-day.loading.selected{
+  transform:scale(.94)!important;
+  box-shadow:0 3px 8px rgba(30,66,79,.045),inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+.stip-week-day.loading.selected::after{display:none!important}
 .stip-week-day.neutral{--stip-week-accent:var(--stip-accent)}
 .stip-week-day.status-warning{--stip-week-accent:#d7a20b}
 .stip-week-day.status-critical{--stip-week-accent:#ef3d39}
