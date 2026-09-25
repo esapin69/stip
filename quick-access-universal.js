@@ -29,6 +29,30 @@
   const I = {
     fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
+  let continuityPromise = null;
+  function ensureContinuity() {
+    if (window.STIPContinuity) return Promise.resolve(window.STIPContinuity);
+    if (continuityPromise) return continuityPromise;
+    continuityPromise = new Promise((resolve) => {
+      const existing = document.querySelector('script[data-stip-continuity]');
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.STIPContinuity || null), { once: true });
+        existing.addEventListener("error", () => resolve(null), { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "/stip-session-continuity.js?v=20260926-continuity1";
+      script.async = true;
+      script.dataset.stipContinuity = "1";
+      script.onload = () => resolve(window.STIPContinuity || null);
+      script.onerror = () => resolve(null);
+      document.head.appendChild(script);
+    }).finally(() => {
+      continuityPromise = null;
+    });
+    return continuityPromise;
+  }
+
   const APPS = {
     places: { label: "Visiter les lieux", home: "places-app.html" },
     responsable: { label: "Responsable", home: "responsable.html?entry=shortcut" },
@@ -170,6 +194,12 @@
     const token = localStorage.getItem(STORE) || "";
     if (!token) return null;
     try {
+      const continuity = await ensureContinuity();
+      if (continuity) {
+        const fresh = continuity.readFresh?.();
+        if (fresh) return fresh;
+        return await continuity.validate();
+      }
       const r = await fetch(API, {
         method: "POST",
         cache: "no-store",
@@ -182,7 +212,7 @@
       if (!r.ok) return null;
       return await r.json().catch(() => null);
     } catch {
-      return null;
+      return window.STIPContinuity?.read?.() || null;
     }
   }
   function ensureCss() {
