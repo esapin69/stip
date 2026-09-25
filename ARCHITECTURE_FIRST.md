@@ -63,6 +63,9 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - Le retour navigateur doit conserver l’écran, le scroll et les données déjà rendues quand le navigateur peut restaurer la page ; ne pas forcer un rechargement complet sur `pageshow`, `focus` ou `visibilitychange`.
 - Les contrôles de version ne doivent pas déclencher plusieurs requêtes au simple retour sur une page. La vérification se fait au chargement initial puis à faible fréquence en arrière-plan.
 - Tous les caches de continuité restent versionnés, liés à la session courante et invalidés au logout, au changement de session ou à un refus serveur explicite.
+- Une application déjà intégrée au shell principal doit être ouverte avec `STIPRouter`/le moteur interne, jamais en chargeant d’abord son fichier HTML autonome pour être redirigé ensuite vers le shell.
+- Une vraie navigation entre documents STIP passe par `STIPNav`/`STIPLoad.navigateDocument`, avec sauvegarde de contexte et préchauffage opportuniste ; ne pas ajouter de nouveaux `location.href`/`location.assign` locaux pour un flux déjà couvert.
+- Le préchauffage est limité aux documents GET same-origin susceptibles d’être ouverts ; il ne doit jamais déclencher d’action métier ni précharger des URL externes.
 
 ### Agents
 - `stip-agent-selector.js/.css` : sélection/recherche partagée.
