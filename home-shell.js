@@ -327,7 +327,7 @@
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map(esc).join("")}</small></button>`,
+        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map((icon) => `<i class="stip-month-event" aria-hidden="true">${esc(icon)}</i>`).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
@@ -794,7 +794,7 @@
           : statusIcon
             ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
             : workIcon
-              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon" aria-hidden="true">${workIcon}</span></span>`
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workIcon}</span></span>`
               : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
       landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
@@ -808,7 +808,7 @@
           ? `<span class="hc-shift-core stip-week-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot stip-week-events hc-loading-event-slot is-empty" aria-hidden="true"></span>`
           : `<span class="hc-shift-core stip-week-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
-    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
+    return `<${tag}${attrs} class="${cls} ${landscape ? "stip-week-personal-layout" : ""} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
