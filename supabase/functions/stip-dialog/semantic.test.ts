@@ -17,7 +17,7 @@ eq(I("irm c ou"),"place","short place");
 eq(I("irm chemin"),"place","place route");
 eq(I("qui fait soir demain"),"shift_roster","shift roster natural");
 eq(I("liste des J4 demain"),"shift_roster","shift roster fragment");
-eq(I("je veux passer en soir mardi"),"exchange","exchange without keyword");
+eq(I("je veux passer en soir mardi"),"exchange","exchange without keyword");\neq(I("qui peut prendre mon mardi"),"exchange","natural exchange candidate request");
 eq(I("soir mardi",{last_intent:"exchange"}),"exchange","exchange followup");
 eq(I("message yael"),"messaging_help","message");
 eq(I("change ma photo"),"app_navigation","photo app");
