@@ -30,6 +30,35 @@
     fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
   let continuityPromise = null;
+  let navigationPromise = null;
+  function ensureNavigation() {
+    if (window.STIPNav) return Promise.resolve(window.STIPNav);
+    if (navigationPromise) return navigationPromise;
+    navigationPromise = new Promise((resolve) => {
+      const existing = document.querySelector('script[data-stip-navigation]');
+      if (existing) {
+        if (window.STIPNav) return resolve(window.STIPNav);
+        existing.addEventListener(
+          "load",
+          () => resolve(window.STIPNav || null),
+          { once: true },
+        );
+        existing.addEventListener("error", () => resolve(null), { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "/stip-navigation.js?v=20260926-navigation2";
+      script.async = true;
+      script.dataset.stipNavigation = "1";
+      script.onload = () => resolve(window.STIPNav || null);
+      script.onerror = () => resolve(null);
+      document.head.appendChild(script);
+    }).finally(() => {
+      navigationPromise = null;
+    });
+    return navigationPromise;
+  }
+
   function ensureContinuity() {
     if (window.STIPContinuity) return Promise.resolve(window.STIPContinuity);
     if (continuityPromise) return continuityPromise;
@@ -160,7 +189,34 @@
     writeUsage({ at: now, last: k, apps });
   }
   function go(url) {
-    location.href = new URL(url, location.href).href;
+    const target = new URL(url, location.href).href;
+    if (target.startsWith(location.origin)) {
+      if (window.STIPNav?.go) {
+        window.STIPNav.go(target);
+        return;
+      }
+      ensureNavigation().then((nav) => {
+        if (nav?.go) nav.go(target);
+        else location.assign(target);
+      });
+      return;
+    }
+    location.assign(target);
+  }
+
+  function warmApps(perms, roleKey = "") {
+    const keys = [
+      ...readFav().filter((k) => allowed(k, perms, roleKey)),
+      ...suggestions(perms, roleKey),
+    ];
+    const urls = [...new Set(keys.map((k) => appHome(k, perms)))].slice(0, 4);
+    const run = async () => {
+      const nav = await ensureNavigation();
+      urls.forEach((url) => nav?.prefetch?.(url));
+    };
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(run, { timeout: 2200 });
+    else setTimeout(run, 900);
   }
   function appHome(k, perms) {
     if (k === "places") {
@@ -297,7 +353,10 @@
   me().then((j) => {
     const perms = j?.permissions || j?.profile?.permissions || {};
     const roleKey = j?.role_key || j?.profile?.role_key || "";
-    if (j) mount(perms, roleKey);
+    if (j) {
+      mount(perms, roleKey);
+      warmApps(perms, roleKey);
+    }
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeFav();
