@@ -1636,6 +1636,7 @@
       prenom = cap(String(a.prenom || "").trim()),
       nomRaw = String(a.nom || "").trim().toLowerCase(),
       nom = nomRaw ? cap(nomRaw) : "",
+      isTrainee = String(state.session?.role_key || window.STIPSession?.role_key || "") === "stagiaire",
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
       gheLabel = ghe
         ? ghe.toUpperCase().startsWith("GHE")
@@ -1652,6 +1653,7 @@
             ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
           </div>
           ${matricule ? `<span class="hc-profile-matricule">Matricule <strong>${esc(matricule)}</strong></span>` : ""}
+          ${isTrainee ? '<span class="hc-profile-matricule">Session <strong>Stagiaire</strong></span><button type="button" class="hc-trainee-change" data-trainee-session-change>Changer de stagiaire</button>' : ""}
           ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
           <span class="hc-profile-breath" aria-hidden="true"></span>
           ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
@@ -1671,7 +1673,8 @@
       .toLowerCase();
     if (raw === "chef_equipe") return "responsable";
     if (raw === "brancardier") return "agent";
-    if (["admin", "cadre", "responsable", "agent", "visiteur"].includes(raw))
+    if (raw === "stagiaire") return "stagiaire";
+    if (["admin", "cadre", "responsable", "agent", "stagiaire", "visiteur"].includes(raw))
       return raw;
     if (has("admin")) return "admin";
     if (has("cadre_dashboard")) return "cadre";
@@ -1723,6 +1726,18 @@
   function pilotageBlock() {
     const role = pilotageRoleKey(),
       groups = [
+        {
+          key: "stagiaire",
+          label: "RACCOURCIS · Stagiaire",
+          items: [
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
+          ],
+        },
         {
           key: "agent",
           label: "RACCOURCIS · Agent",
@@ -2798,6 +2813,9 @@
     root
       .querySelectorAll("[data-app]")
       .forEach((b) => (b.onclick = () => openApp(b.dataset.app)));
+    root.querySelector("[data-trainee-session-change]")?.addEventListener("click", () => {
+      window.dispatchEvent(new CustomEvent("stip:trainee-change"));
+    });
     root
       .querySelectorAll("[data-widget-open]")
       .forEach(
@@ -2978,9 +2996,10 @@
     state.refreshing = (async () => {
       let changed = false;
       try {
+        const traineeSession = String(state.session?.role_key || "") === "stagiaire";
         const [boot, home] = await Promise.allSettled([
           call(DATA_API, "bootstrap"),
-          call(ACTION_API, "home"),
+          traineeSession ? Promise.resolve({ actions: [], notifications: [] }) : call(ACTION_API, "home"),
         ]);
         if (boot.status === "fulfilled") {
           state.bootStatus = "ready";
