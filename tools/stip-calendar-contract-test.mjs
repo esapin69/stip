@@ -26,6 +26,14 @@ assert(core.includes(".stip-events-vertical"), "vertical event stack must be a s
 assert(core.includes("grid-template-rows:none!important"), "common week body still reserves the personal 4-row layout");
 assert(core.includes(".stip-week-day.stip-week-personal-layout .stip-week-day-body"), "personal-home week modifier missing");
 assert(core.includes(".stip-week-work-marker"), "worked-shift marker exception missing");
+assert(/\.stip-week-day\{[\s\S]*?min-height:0!important/.test(core),
+  "default week cards still carry the profile fixed height");
+assert(core.includes(".stip-week-day.stip-week-personal-layout{min-height:112px!important}"),
+  "profile-only fixed week height is missing");
+assert(core.includes("align-content:start!important"),
+  "default week body still vertically reserves empty profile space");
+assert(core.includes(".stip-week-personal-line .stip-week-next-bridge"),
+  "profile-only next-Monday bridge height is not scoped");
 assert(visual.includes(".stip-week-events{font-size:1.45rem!important}"), "week secondary markers are not normalized");
 assert(visual.includes(".stip-month-calendar .stip-month-events{color:var(--stip-ink-2)!important;font-size:1.45rem!important}"), "month secondary markers are not normalized");
 
