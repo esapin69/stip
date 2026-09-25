@@ -5,36 +5,23 @@ async function canonicalSourceKey(raw:string){const key=String(raw||'').trim();i
 const TRAINEE_DEFAULT_AVATAR='https://raw.githubusercontent.com/esapin69/stip/0bd3aea4a363e2decfb1b41f20b4d349f157ebcd/images/stagiaire-default.png';
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session','Access-Control-Allow-Methods':'POST,OPTIONS'}
 
-const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
-async function signAvatarPayload(value:any){
-  const rawToPath=new Map<string,string>();
-  const collect=(v:any)=>{
+const LEGACY_AVATAR_STORAGE="/storage/v1/";
+function stripLegacyAvatarPayload(value:any){
+  const walk=(v:any)=>{
     if(!v||typeof v!=="object")return;
-    if(Array.isArray(v)){for(const x of v)collect(x);return}
-    const raw=typeof v.avatar_url==="string"?v.avatar_url:"";
-    if(raw.includes(LEGACY_AVATAR_MARKER)){
-      const path=raw.split(LEGACY_AVATAR_MARKER)[1]?.split("?")[0]||"";
-      if(path)rawToPath.set(raw,decodeURIComponent(path));
-    }
-    for(const x of Object.values(v))collect(x);
+    if(Array.isArray(v)){for(const x of v)walk(x);return}
+    const legacy=(raw:any)=>{
+      const url=String(raw||"");
+      return url.includes(LEGACY_AVATAR_STORAGE)&&url.includes("/planning-pdf/");
+    };
+    if(legacy(v.avatar_url))v.avatar_url=null;
+    if(legacy(v.avatar_signed_url))v.avatar_signed_url=null;
+    for(const x of Object.values(v))walk(x);
   };
-  collect(value);
-  if(!rawToPath.size)return value;
-  const raws=[...rawToPath.keys()],paths=raws.map(x=>rawToPath.get(x)!);
-  const {data,error}=await db.storage.from("planning-pdf").createSignedUrls(paths,3600);
-  if(error||!data)return value;
-  const signed=new Map<string,string>();
-  raws.forEach((raw,i)=>{const url=(data as any[])?.[i]?.signedUrl;if(url)signed.set(raw,url)});
-  const rewrite=(v:any)=>{
-    if(!v||typeof v!=="object")return;
-    if(Array.isArray(v)){for(const x of v)rewrite(x);return}
-    if(typeof v.avatar_url==="string"&&signed.has(v.avatar_url))v.avatar_url=signed.get(v.avatar_url);
-    for(const x of Object.values(v))rewrite(x);
-  };
-  rewrite(value);
+  walk(value);
   return value;
 }
-const J=async(b:unknown,s=200)=>new Response(JSON.stringify(await signAvatarPayload(b)),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}})
+const J=async(b:unknown,s=200)=>new Response(JSON.stringify(stripLegacyAvatarPayload(b)),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}})
 const DEPTH:any={visiteur:{equipe:'basic'},stagiaire:{planning:'basic'},brancardier:{equipe:'basic',planning:'basic',contacts:'basic'},chef_equipe:{equipe:'pro',planning:'pro',contacts:'pro',responsable:'pro'},responsable:{equipe:'pro',contacts:'pro',responsable:'admin'},admin:{equipe:'admin',planning:'admin',contacts:'admin',responsable:'admin'}}
 const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,'0')).join('');async function sha256(s:string){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))}
 function depth(p:any,k:string){const over=p?.permission_overrides?.['depth_'+k],base=DEPTH[p?.role_key||'brancardier']?.[k]||'none';return String(over||base)}function allowed(p:any,k:string){return p?.role_key==='admin'||!!p?.permissions?.[k]}function need(p:any,k:string,m='Accès non autorisé.'){if(!allowed(p,k))throw Error(m)}
@@ -64,7 +51,7 @@ async function ctx(req:Request){const token=req.headers.get('x-stip-session')||'
 function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||'jour').toLowerCase();return t==='stagiaire'||t==='stage'?'stage':t==='chef'||t==='chefs'?'chefs':t==='nuit'?'nuit':'jour'}
 const keyNorm=(v:any)=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleUpperCase('fr-FR').replace(/[^A-Z0-9]+/g,' ').trim();function refMatches(v:any,a:any){const q=keyNorm(v);if(!q)return false;const vals=[a?.source_key,a?.prenom,a?.nom,[a?.prenom,a?.nom].filter(Boolean).join(' '),[a?.nom,a?.prenom].filter(Boolean).join(' ')].map(keyNorm);const parts=String(a?.source_key||'').split('_').filter(Boolean);if(parts.length)vals.push(keyNorm(parts.at(-1)));return vals.includes(q)}function splitRefs(v:any){return String(v||'').split(/\s*(?:\+|\/|;|&|\bet\b)\s*/i).map(x=>x.trim()).filter(Boolean)}
 async function shiftDefinitions(){const {data,error}=await db.from('stip_shift_registry').select('code,base_code,label,start_time,end_time,icon,sort_order,color_hex,soft_color_hex,on_color_hex,kind,family,is_working,schedule_mode,window_start,window_end,duration_minutes,source_label').order('sort_order').order('code');if(error)throw error;return data||[]}
-async function media(){const {data,error}=await db.from('media_assets').select('kind,agent_source_key,code,storage_path,metadata').eq('active',true).in('kind',['avatar_agent','shift']);if(error)throw error;const avatars:Record<string,string>={},shifts:Record<string,string>={};for(const x of data||[]){const bucket=String(x?.metadata?.bucket||'ghe-media');const {data:s}=await db.storage.from(bucket).createSignedUrl(x.storage_path,3600);if(!s?.signedUrl)continue;if(x.kind==='avatar_agent'&&x.agent_source_key)avatars[x.agent_source_key]=s.signedUrl;if(x.kind==='shift'&&x.code)shifts[String(x.code).toUpperCase()]=s.signedUrl}return{avatars,shifts}}
+async function media(){const {data,error}=await db.from('media_assets').select('kind,code,storage_path,metadata').eq('active',true).eq('kind','shift');if(error)throw error;const avatars:Record<string,string>={},shifts:Record<string,string>={};for(const x of data||[]){const bucket=String(x?.metadata?.bucket||'ghe-media');const {data:s}=await db.storage.from(bucket).createSignedUrl(x.storage_path,3600);if(!s?.signedUrl)continue;if(x.code)shifts[String(x.code).toUpperCase()]=s.signedUrl}return{avatars,shifts}}
 async function personal(id:string){const {data,error}=await db.from('planning').select('date,code,observation,equipe,source_value').eq('agent_id',id).order('date');if(error)throw error;return data||[]}
 async function personalExtras(a:any){const today=parisDay(-31),end=parisDay(370);const [ag,fr,st]=await Promise.all([db.from('stip_agent_agenda_items').select('id,display_mode,title,body,event_date,all_day,start_time,end_time,location,importance,source_type,event_kind,icon,feedback_enabled,feedback_question,import_key,updated_at').eq('agent_id',a.id).eq('status','active').gte('event_date',today).lte('event_date',end).order('event_date').order('start_time'),db.from('formations').select('id,intitule,date_debut,date_fin,lieu,statut,horaire,updated_at').eq('agent_source_key',a.source_key).gte('date_fin',today+'T00:00:00Z').lte('date_debut',end+'T23:59:59Z').order('date_debut'),db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at').gte('date_fin',today).lte('date_debut',end).order('date_debut')]);if(ag.error)throw ag.error;if(fr.error)throw fr.error;if(st.error)throw st.error;return{agenda_items:ag.data||[],personal_formations:fr.data||[],personal_stagiaires:(st.data||[]).filter((x:any)=>splitRefs(x.referent).some((r:string)=>refMatches(r,a)))}}
 async function official(team:string){const {data,error}=await db.from('planning').select('date,code,observation,equipe,agent_id,agent_source_key,agents(nom,prenom,source_key,ghe,telephone,avatar_url,role,type_planning,quotite)').eq('equipe',team).order('date');if(error)throw error;return data||[]}
