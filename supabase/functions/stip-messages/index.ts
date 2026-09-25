@@ -80,6 +80,66 @@ async function messageProfile(id:string){
   const{data}=await db.from("stip_message_profiles").select("nickname,notification_preview").eq("agent_id",id).maybeSingle();
   return data||{nickname:null,notification_preview:true}
 }
+async function notificationType(eventKey:string){
+  const{data,error}=await db.from("stip_notification_types")
+    .select("event_key,label,description,push_enabled,default_user_enabled,active,sort_order")
+    .eq("event_key",eventKey).eq("active",true).maybeSingle();
+  if(error)throw error;
+  return data||null
+}
+async function notificationPreference(agentId:string,eventKey:string){
+  const type=await notificationType(eventKey);
+  if(!type)return{event_key:eventKey,push_enabled:false,enabled:false,default_user_enabled:false};
+  const{data,error}=await db.from("stip_notification_preferences")
+    .select("enabled").eq("agent_id",agentId).eq("event_key",eventKey).maybeSingle();
+  if(error)throw error;
+  return{...type,enabled:data?.enabled??type.default_user_enabled}
+}
+async function notificationPreferences(ctx:any){
+  if(ctx?.is_trainee)return{items:[]};
+  const{data:types,error}=await db.from("stip_notification_types")
+    .select("event_key,label,description,push_enabled,default_user_enabled,sort_order")
+    .eq("active",true).order("sort_order");
+  if(error)throw error;
+  const keys=(types||[]).map((x:any)=>String(x.event_key));
+  const{data:prefs,error:pe}=keys.length
+    ?await db.from("stip_notification_preferences").select("event_key,enabled").eq("agent_id",ctx.agent.id).in("event_key",keys)
+    :{data:[] as any[],error:null};
+  if(pe)throw pe;
+  const by=new Map((prefs||[]).map((x:any)=>[String(x.event_key),!!x.enabled]));
+  return{items:(types||[]).map((x:any)=>({...x,enabled:by.has(String(x.event_key))?by.get(String(x.event_key)):x.default_user_enabled}))}
+}
+async function notificationSet(ctx:any,body:any){
+  if(ctx?.is_trainee)throw Error("Accès non autorisé.");
+  const eventKey=String(body.event_key||"").trim(),type=await notificationType(eventKey);
+  if(!type)throw Error("Type de notification inconnu.");
+  const enabled=body.enabled!==false;
+  const{error}=await db.from("stip_notification_preferences").upsert({
+    agent_id:ctx.agent.id,event_key:eventKey,enabled,updated_at:new Date().toISOString()
+  },{onConflict:"agent_id,event_key"});
+  if(error)throw error;
+  return{ok:true,event_key:eventKey,enabled,push_enabled:type.push_enabled!==false}
+}
+async function dmStatus(ctx:any){
+  if(ctx?.is_trainee)return{unread:0};
+  const{data:member,error}=await db.from("stip_conversation_members")
+    .select("conversation_id,last_read_at").eq("agent_id",ctx.agent.id);
+  if(error)throw error;
+  const ids=(member||[]).map((x:any)=>String(x.conversation_id));
+  if(!ids.length)return{unread:0};
+  const read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
+  const{data:convs,error:ce}=await db.from("stip_conversations")
+    .select("id,kind").in("id",ids).in("kind",["direct","group"]);
+  if(ce)throw ce;
+  const counts=await Promise.all((convs||[]).map(async(c:any)=>{
+    const{count,error:countError}=await db.from("stip_messages").select("id",{count:"exact",head:true})
+      .eq("conversation_id",c.id).is("deleted_at",null).neq("sender_agent_id",ctx.agent.id)
+      .gt("created_at",read.get(String(c.id))||"1970-01-01T00:00:00Z");
+    if(countError)throw countError;
+    return count||0
+  }));
+  return{unread:counts.reduce((n:number,x:number)=>n+Number(x||0),0)}
+}
 async function activeMessagingAgents(){
   const{data:p,error}=await db.from("stip_access_profiles").select("agent_id,permissions").eq("active",true).not("agent_id","is",null);
   if(error)throw error;return [...new Set((p||[]).filter((x:any)=>x.permissions?.messages).map((x:any)=>String(x.agent_id)))]
@@ -196,6 +256,8 @@ async function thread(ctx:any,id:string){
 }
 async function send(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
+  const{data:conversation,error:conversationError}=await db.from("stip_conversations").select("kind").eq("id",id).maybeSingle();
+  if(conversationError)throw conversationError;if(!conversation)throw Error("Conversation introuvable.");
   const text=String(body.body||"").trim().slice(0,2000);
   let payload=body.payload&&typeof body.payload==="object"?body.payload:{},uploadedPath="";
   try{
@@ -210,12 +272,19 @@ async function send(ctx:any,body:any){
     await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",id);
     await db.from("stip_conversation_members").update({last_read_at:data.created_at}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
     try{
-      const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
-      const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo";
-      await Promise.allSettled((members||[]).map(async(m:any)=>{
-        const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
-        await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau message",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-message-"+id}})});
-      }))
+      if(["direct","group"].includes(String(conversation.kind||""))){
+        const eventType=await notificationType("dm_received");
+        if(eventType?.push_enabled){
+          const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
+          const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo";
+          await Promise.allSettled((members||[]).map(async(m:any)=>{
+            const targetState=await notificationPreference(String(m.agent_id),"dm_received");
+            if(!targetState.enabled||!targetState.push_enabled)return;
+            const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
+            await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau DM",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-dm-"+id}})});
+          }))
+        }
+      }
     }catch(e){console.error("push",e)}
     return{ok:true,...data}
   }catch(e){
@@ -278,7 +347,9 @@ async function home(ctx:any){
   }
   const suggestions=(await agents(ctx,"")).slice(0,18);
   const profile=await messageProfile(String(ctx.agent.id));
-  return{me:{...ctx.agent,nickname:nick(ctx.agent,profile),notification_preview:profile.notification_preview!==false},conversations,suggestions,unread:conversations.reduce((n,c)=>n+Number(c.unread||0),0)}
+  const dmPush=await notificationPreference(String(ctx.agent.id),"dm_received");
+  const dmUnread=conversations.filter((c:any)=>c.kind==="direct"||c.kind==="group").reduce((n:number,c:any)=>n+Number(c.unread||0),0);
+  return{me:{...ctx.agent,nickname:nick(ctx.agent,profile),notification_preview:profile.notification_preview!==false,dm_push_enabled:!!dmPush.enabled,dm_push_available:!!dmPush.push_enabled},conversations,suggestions,unread:conversations.reduce((n,c)=>n+Number(c.unread||0),0),dm_unread:dmUnread}
 }
 async function profileSet(ctx:any,body:any){
   const nickname=String(body.nickname||"").trim().slice(0,32)||null;
@@ -928,6 +999,9 @@ Deno.serve(async req=>{
   try{
     const c=await ctx(req),b=await req.json().catch(()=>({})),a=String(b.action||"home");
     if(a==="home")return J(await home(c));
+    if(a==="dm_status"){if(c.is_trainee)return J({unread:0});return J(await dmStatus(c))}
+    if(a==="notification_preferences"){if(c.is_trainee)return J({items:[]});return J(await notificationPreferences(c))}
+    if(a==="notification_set"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await notificationSet(c,b))}
     if(a==="trainees"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await traineeDirectory()})}
     if(a==="trainee_send")return J(await traineeSend(c,b));
     if(a==="trainee_read"){if(!c.is_trainee)throw Error("Accès Stagiaire requis.");return J({ok:true,items:await traineeInbox(c,true)})}
