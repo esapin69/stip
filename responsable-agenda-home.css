@@ -714,3 +714,124 @@
 .rr-week-marks{min-height:28px;padding-top:1px}
 
 .rr-week-signal-bridge{visibility:hidden;pointer-events:none}
+
+
+/* 2026-09-25 — Responsable uses the canonical week/month DOM.
+   Neutralise legacy rr-week-days layers and keep event markers horizontal. */
+#rrWeek .stip-week-line{
+  display:grid;
+  grid-template-columns:repeat(var(--stip-week-columns,7),minmax(0,1fr));
+  gap:4px;
+  align-items:stretch;
+}
+#rrWeek .stip-week-day{
+  min-width:0;
+  min-height:111px;
+  padding:0 2px 5px;
+  border:2px solid #cbd8dc;
+  border-radius:18px;
+  background:linear-gradient(180deg,#fff,#f8fbfc);
+  color:var(--stip-ink);
+  overflow:visible;
+  display:grid;
+  grid-template-rows:42px minmax(0,1fr);
+  align-items:stretch;
+}
+#rrWeek .stip-week-day.selected{
+  border-color:#199ab6;
+  box-shadow:0 0 0 3px rgba(25,154,182,.13);
+}
+#rrWeek .stip-week-day.today{background:#effbfc}
+#rrWeek .stip-week-day-head{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  line-height:1;
+}
+#rrWeek .stip-week-day-head i{font-style:normal;font-size:.64rem;font-weight:950}
+#rrWeek .stip-week-day-head b{font-size:1.45rem;font-weight:950}
+#rrWeek .stip-week-day-body{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-end;
+}
+#rrWeek .stip-week-code,#rrWeek .stip-week-main{display:none}
+#rrWeek .stip-week-divider{width:70%;height:1px;margin:0 0 5px;background:#8eb6bf}
+#rrWeek .stip-week-divider.is-empty{visibility:hidden}
+#rrWeek .rr-week-marks{
+  width:100%;
+  min-height:30px;
+  padding:0 1px 4px;
+  display:flex;
+  flex-direction:row;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+}
+#rrWeek .rr-week-marks .rr-marker{width:22px;height:24px}
+#rrWeek .rr-week-marks .rr-marker>span{font-size:1.05rem}
+#rrWeek .stip-week-next-bridge{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  color:#bd3038;
+  font-weight:950;
+}
+#rrWeek .stip-week-next-word{font-size:.62rem;text-decoration:underline}
+#rrWeek .stip-week-next-arrow{font-size:1.55rem;line-height:1.1}
+
+#rrMonth .rr-month-grid{gap:5px}
+#rrMonth .stip-month-day{
+  min-width:0;
+  min-height:82px;
+  padding:7px 3px 5px;
+  border:1px solid transparent;
+  border-radius:15px;
+  background:#f7fafb;
+  color:var(--stip-ink);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  overflow:visible;
+}
+#rrMonth .stip-month-day.today{
+  border-color:#75c2cf;
+  box-shadow:inset 0 0 0 2px #75c2cf;
+}
+#rrMonth .stip-month-day.is-weekend .stip-month-day-number{color:#b52d38}
+#rrMonth .stip-month-day-number{font-size:1.25rem;line-height:1;font-weight:950}
+#rrMonth .rr-month-primary{
+  width:100%;
+  min-height:28px;
+  margin-top:6px;
+  display:flex;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center;
+  justify-content:center;
+  gap:1px;
+  white-space:nowrap;
+}
+#rrMonth .rr-month-primary .rr-marker{width:21px;height:24px;flex:0 0 21px}
+#rrMonth .rr-month-primary .rr-marker>span{font-size:1rem}
+#rrMonth .rr-month-primary .rr-marker-count{top:-5px;right:-7px}
+
+@media(max-width:430px){
+  #rrWeek .stip-week-line{gap:3px}
+  #rrWeek .stip-week-day{min-height:101px;border-radius:15px}
+  #rrWeek .stip-week-day-head b{font-size:1.3rem}
+  #rrWeek .rr-week-marks .rr-marker{width:19px}
+  #rrWeek .rr-week-marks .rr-marker>span{font-size:.96rem}
+  #rrMonth .rr-month-grid{gap:3px}
+  #rrMonth .stip-month-day{min-height:78px;padding-inline:1px}
+  #rrMonth .rr-month-primary{gap:0}
+  #rrMonth .rr-month-primary .rr-marker{width:18px;flex-basis:18px}
+  #rrMonth .rr-month-primary .rr-marker>span{font-size:.94rem}
+}
