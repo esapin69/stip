@@ -185,7 +185,10 @@
     if (/escalier escargot/.test(text)) {
       return { label, value:label, icon:"↕", persistence:"sheltered", sourced:true };
     }
-    return null;
+
+    // Any canonical service/unit/landmark is already a valid precise place.
+    // Keep it available instead of dropping it in favour of generic field clues.
+    return { label, value:label, icon:"📍", persistence:"normal", sourced:true };
   }
 
   function wheelchairFieldSpots(buildingKey = "", level = "") {
@@ -234,6 +237,41 @@
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
+
+  function wheelchairLevelDisplay(value = "") {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    if (/^RDC$/i.test(raw) || /^RDJ$/i.test(raw) || /^TM$/i.test(raw)) return raw.toUpperCase();
+    const numeric = raw.match(/^(\d{1,2})(?:er|e|eme|ème)?$/i);
+    if (!numeric) return raw;
+    const floor = Number(numeric[1]);
+    return floor === 1 ? "1er étage" : floor + "e étage";
+  }
+
+  function isVagueWheelchairSpotLocation(value = "") {
+    const parts = String(value || "")
+      .split("|")
+      .map((part) => norm(part))
+      .filter(Boolean);
+    if (!parts.length) return true;
+
+    const generic = new Set([
+      "ascenseur",
+      "ascenseurs",
+      "couloir",
+      "escalier",
+      "escaliers",
+      "hall",
+      "accueil",
+      "entree",
+    ]);
+
+    return parts.every((part) =>
+      generic.has(part) ||
+      /^tout le\b/.test(part) ||
+      /^tout l etage\b/.test(part),
+    );
+  }
 
   function buildingForMessage(message = {}) {
     const explicit = String(message.payload?.wheelchair?.building || "").trim();
@@ -1037,7 +1075,7 @@
       );
     }
     if (building?.label) parts.push(building.label);
-    if (level) parts.push(level);
+    if (level) parts.push(wheelchairLevelDisplay(level));
     if (location) parts.push(location);
     return parts.join(" · ");
   }
@@ -1253,6 +1291,9 @@
     const finalLocation = [location, String(precision || "").trim()]
       .filter(Boolean)
       .join(" · ");
+    if (type === "spot" && isVagueWheelchairSpotLocation(finalLocation)) {
+      throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.");
+    }
     const body = structuredDraft({
       type,
       building,
@@ -1299,6 +1340,7 @@
       level: payload.level || "",
       location,
     });
+    const needsPrecision = type === "spot" && isVagueWheelchairSpotLocation(location);
 
     wrap.innerHTML =
       '<section class="tb-confirm tb-spot-wizard tb-final-review">' +
@@ -1321,16 +1363,30 @@
             '</div>'
           : '') +
 
-        '<label class="tb-precision-field"><span>Ajouter une précision <em>facultatif</em></span>' +
-          '<textarea rows="3" maxlength="160" placeholder="Ex. caché derrière l’escalier, près des ascenseurs…"></textarea>' +
+        '<label class="tb-precision-field"><span>' +
+          (needsPrecision ? 'Préciser l’endroit <em>obligatoire</em>' : 'Ajouter une précision <em>facultatif</em>') +
+          '</span>' +
+          '<textarea rows="3" maxlength="160" placeholder="Ex. devant Pneumologie B, ascenseur central…"></textarea>' +
         "</label>" +
-        '<button type="button" class="tb-review-send" data-review-send>' +
+        '<button type="button" class="tb-review-send" data-review-send' + (needsPrecision ? ' disabled' : '') + '>' +
           '<span>' + (type === "search" ? "Envoyer ma demande" : "Envoyer l’info") + '</span><b>↑</b>' +
         "</button>" +
         '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
       "</section>";
 
     const input = wrap.querySelector(".tb-precision-field textarea");
+    const syncReviewSend = () => {
+      const button = wrap.querySelector("[data-review-send]");
+      if (!button || type !== "spot") return;
+      const candidateLocation = [location, String(input?.value || "").trim()]
+        .filter(Boolean)
+        .join(" · ");
+      const vague = isVagueWheelchairSpotLocation(candidateLocation);
+      button.disabled = vague;
+      button.setAttribute("aria-disabled", vague ? "true" : "false");
+    };
+    input?.addEventListener("input", syncReviewSend);
+    syncReviewSend();
 
     const syncConfidence = () => {
       if (type !== "spot") return;
@@ -2356,7 +2412,8 @@
       String(wheelchair?.building || "").trim() ||
       "STIP";
 
-    const level = String(wheelchair?.level || "").trim();
+    const rawLevel = String(wheelchair?.level || "").trim();
+    const level = wheelchairLevelDisplay(rawLevel);
     const rawLocation = String(wheelchair?.location || "").trim();
     const distributedLocations = rawLocation.includes("|")
       ? rawLocation.split("|").map((part) => part.trim()).filter(Boolean)
@@ -2383,7 +2440,11 @@
       );
       if (hospitalIndex >= 0) {
         const afterHospital = parts.slice(hospitalIndex + 1);
-        if (level && afterHospital[0] && norm(afterHospital[0]) === norm(level)) {
+        if (
+          rawLevel &&
+          afterHospital[0] &&
+          [norm(rawLevel), norm(level)].includes(norm(afterHospital[0]))
+        ) {
           afterHospital.shift();
         }
         service = afterHospital.shift() || "";
@@ -2391,7 +2452,16 @@
       }
     }
 
-    return { hospital, level, service, landmark, locations: distributedLocations };
+    return {
+      hospital,
+      level,
+      service,
+      landmark,
+      locations: distributedLocations,
+      needsPrecision:
+        wheelchair?.type !== "search" &&
+        isVagueWheelchairSpotLocation(rawLocation),
+    };
   }
 
   function wheelchairFreshnessWindowMs(wheelchair = {}) {
@@ -2459,7 +2529,8 @@
     const windowMs = wheelchairFreshnessWindowMs(wheelchair);
     const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : windowMs;
     const progress = Math.min(1, age / windowMs);
-    const position = Math.round(progress * 100);
+    // The label is a countdown, so the marker must also decrease toward zero.
+    const position = Math.round((1 - progress) * 100);
     const remainingMs = Math.max(0, windowMs - age);
 
     let stage = "frozen";
@@ -2685,6 +2756,11 @@
                 '<span><b aria-hidden="true">•</b>' + esc(place) + '</span>'
               ).join("") +
             '</div>',
+          );
+        }
+        if (detail.needsPrecision) {
+          html.push(
+            '<span class="tb-wheelchair-location-warning">⚠ Endroit à préciser</span>',
           );
         }
         html.push(
@@ -2977,6 +3053,13 @@
     try {
       const structured = !!state.selectedBuilding;
       const type = state.draftKind === "search" ? "search" : "spot";
+      if (
+        structured &&
+        type === "spot" &&
+        isVagueWheelchairSpotLocation(state.selectedLocation || "")
+      ) {
+        throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.");
+      }
       await api("team_send", {
         body,
         ...(structured ? {
