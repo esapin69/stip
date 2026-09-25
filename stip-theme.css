@@ -1,8 +1,8 @@
 @layer stip-calendar-core, stip-calendar-visual;
 @import url("stip-theme-base.css?v=20260925-event-icons2");
 @import url("stip-patterns.css?v=20260925-calendar-base2");
-@import url("stip-calendar-core.css?v=20260925-calendar-raw1") layer(stip-calendar-core);
-@import url("stip-calendar-visual.css?v=20260925-calendar-common1") layer(stip-calendar-visual);
+@import url("stip-calendar-core.css?v=20260925-calendar-raw2") layer(stip-calendar-core);
+@import url("stip-calendar-visual.css?v=20260925-calendar-common2") layer(stip-calendar-visual);
 
 /* IRM stable rendering: keep one guaranteed frame even if the <img> cache fails. */
 #detailView .detail-hero.irm-card{padding:0!important;min-height:0!important;height:auto!important;overflow:hidden!important;background:#fff!important;border:1px solid var(--stip-line)!important;box-shadow:var(--stip-shadow)!important}
