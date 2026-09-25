@@ -737,7 +737,7 @@
         .toLocaleDateString("fr-FR", { weekday: "long" })
         .replace(".", "")
         .toUpperCase(),
-      landscape = cls.includes("hc-day-landscape"),
+      landscape = cls.includes("stip-week-day") || cls.includes("hc-day-landscape"),
       day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       statusIcon = shiftStatusIcon(canonical),
@@ -754,14 +754,14 @@
               ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
               : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
       landscapeMain = loading
-        ? '<span class="hc-shift-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb"></span></span>'
+        ? '<span class="hc-shift-main stip-week-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb stip-week-main-icon"></span></span>'
         : pending
-          ? '<span class="hc-shift-main"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
+          ? '<span class="hc-shift-main stip-week-main"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
-            ? `<span class="hc-shift-main hc-shift-main-special"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
+            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
             : workIcon
-              ? `<span class="hc-shift-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span></span>`
-              : `<span class="hc-shift-main"><span class="hc-shift-fallback">${esc(shiftLabel || "—")}</span></span>`,
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon" aria-hidden="true">${workIcon}</span></span>`
+              : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
       landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
       selected=landscape&&x.iso===state.dayFocus,
@@ -771,10 +771,10 @@
         : "",
       visual=landscape
         ? loading
-          ? `<span class="hc-shift-core"><span class="hc-shift-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator is-empty" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
-          : `<span class="hc-shift-core"><strong class="hc-shift-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
+          ? `<span class="hc-shift-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
+          : `<span class="hc-shift-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
-    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="hc-day-head"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="hc-week-visual">${visual}</span></${tag}>`;
+    return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
   }
   function weekDaysVertical(w) {
     const weekdays = w.filter((x) => x.dow < 6),
@@ -793,12 +793,12 @@
   function weekEventBadges(x) {
     const events = weekEventsForDay(x).slice(0, 2);
     if (!events.length)
-      return '<span class="hc-week-events-slot is-empty" aria-hidden="true"></span>';
-    return `<span class="hc-week-events-slot has-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
+      return '<span class="hc-week-events-slot stip-week-events is-empty" aria-hidden="true"></span>';
+    return `<span class="hc-week-events-slot stip-week-events has-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
       .map((event) => {
         const kind = futureTypeKey(event),
           title = event.title || event.type || "Événement";
-        return `<i class="hc-week-event-chip type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${event.icon || "•"}</i>`;
+        return `<i class="hc-week-event-chip stip-week-event type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${event.icon || "•"}</i>`;
       })
       .join("")}</span>`;
   }
@@ -829,7 +829,7 @@
       bridge = nextMonday
         ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
         : "";
-    return `<div class="hc-days-landscape ${nextMonday ? "has-next-monday" : ""}" style="--visible-days:${slotCount}">${w.map((x) => dayCard(x, "hc-day hc-day-landscape", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "hc-day hc-day-landscape hc-day-next-monday", true) : ""}</div>`;
+    return `<div class="stip-week-line ${nextMonday ? "has-next-monday" : ""}" style="--stip-week-columns:${slotCount};--week-card-h:var(--stip-week-card-h)">${w.map((x) => dayCard(x, "stip-week-day", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "stip-week-day hc-day-next-monday", true) : ""}</div>`;
   }
   function planningStatus() {
     if (planningLoading()) {
