@@ -192,3 +192,25 @@ Quand un motif est trouvé dans Git :
 2. s’il est **MAÎTRE** ou **CANONIQUE**, le réutiliser ;
 3. s’il est **À CONFIRMER**, ne pas le généraliser sans validation ;
 4. supprimer les anciennes couches lorsqu’une migration vers un maître est validée.
+
+
+## 12. Bloc contextuel adaptatif — parent → séparateur → détail
+
+**Statut : MAÎTRE VALIDÉ UTILISATEUR**
+
+Référence de comportement :
+- semaine → `JOUR SÉLECTIONNÉ` → détail du jour ;
+- mois → `À RETENIR CE MOIS` → résumé du mois.
+
+Contrat partagé :
+- parent : `.stip-context-master`
+- séparateur rattaché : `.stip-context-attached-separator`
+- contenu rattaché : `.stip-context-attached`
+- source visuelle : `stip-patterns.css`
+
+Règle :
+- un détail qui explique directement le bloc situé au-dessus reste dans le même contexte visuel ;
+- son séparateur est collé logiquement au parent et ne doit pas donner l’impression d’ouvrir une nouvelle application ou un module indépendant ;
+- le contenu reste adaptatif : il peut être vide, court, long, une liste, une carte ou plusieurs groupes sans changer cette relation ;
+- les vrais modules indépendants restent hors de `.stip-context-master` et conservent une respiration forte ;
+- toute page compatible doit consommer ce contrat plutôt que recréer localement marges, séparateur et rattachement.
