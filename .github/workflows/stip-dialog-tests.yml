@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - work/stip-ia-universal-v1
+      - "work/stip-ia-universal-*"
     paths:
       - "supabase/functions/stip-dialog/**"
       - "communication-hub.js"
