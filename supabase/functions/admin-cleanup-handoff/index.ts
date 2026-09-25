@@ -8,7 +8,7 @@ const db = createClient(URL, SERVICE, { auth: { persistSession: false } });
 
 const BASE_HEADERS = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization,apikey,content-type",
+  "Access-Control-Allow-Headers": "authorization,apikey,content-type,x-stip-session",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Cache-Control": "no-store"
 };
@@ -55,6 +55,29 @@ function scrub(value: unknown): unknown {
 }
 
 async function requireAdmin(req: Request) {
+  const stipToken = req.headers.get("x-stip-session") || "";
+  if (stipToken) {
+    const tokenHash = await sha256(stipToken);
+    const { data: session, error: sessionError } = await db.from("stip_access_sessions")
+      .select("profile_id,expires_at,revoked_at")
+      .eq("token_hash", tokenHash)
+      .maybeSingle();
+    if (sessionError) throw sessionError;
+    if (!session || session.revoked_at || new Date(session.expires_at) <= new Date()) {
+      throw new Error("Session STIP expirée.");
+    }
+    const { data: profile, error: profileError } = await db.from("stip_access_profiles")
+      .select("id,role_key,permissions,active,agents(prenom,nom)")
+      .eq("id", session.profile_id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile?.active || !(profile.role_key === "admin" || profile.permissions?.admin === true)) {
+      throw new Error("Contrôle réservé à l’administrateur STIP.");
+    }
+    const agent = Array.isArray(profile.agents) ? profile.agents[0] : profile.agents;
+    return [agent?.prenom, agent?.nom].filter(Boolean).join(" ").trim() || "Admin STIP";
+  }
+
   const auth = req.headers.get("Authorization") || "";
   if (!auth.startsWith("Bearer ")) throw new Error("Connexion administrateur requise.");
   const client = createClient(URL, ANON, { global: { headers: { Authorization: auth } } });
