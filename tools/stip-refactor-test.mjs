@@ -327,6 +327,11 @@ check(
   'Choisir un jour du calendrier doit recaler la semaine affichée et mémoriser le jour sélectionné.'
 );
 check(
+  home.includes('state.dayFocus = /^\d{4}-\d{2}-\d{2}$/.test') &&
+  !home.includes('state.dayFocus = /^\\d{4}-\\d{2}-\\d{2}$/.test'),
+  'La sélection commune semaine/mois doit accepter une date ISO réelle sans vider dayFocus.'
+);
+check(
   homeCss.includes('.hc-days-landscape .hc-day-landscape.selected') &&
   homeCss.includes('.hc-days-landscape .hc-day-landscape.selected::after'),
   'Le jour actif de la semaine a perdu son regroupement visuel.'
