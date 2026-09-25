@@ -17,6 +17,19 @@
     }
     location.assign(new URL(url, location.href).href);
   }
+  function openResponsable(search = "") {
+    try {
+      const query = String(search || "").replace(/^\?/, "");
+      if (query) sessionStorage.setItem("stip_responsable_entry_search_v1", query);
+      else sessionStorage.removeItem("stip_responsable_entry_search_v1");
+      sessionStorage.setItem("stip_responsable_fresh_entry_v1", "1");
+    } catch {}
+    if (window.STIPRouter?.set) {
+      window.STIPRouter.set("responsable");
+      return;
+    }
+    openDocument("responsable.html" + (search ? "?" + String(search).replace(/^\?/, "") : ""));
+  }
   const META = {
     personal: {
       label: "Planning perso",
@@ -57,31 +70,31 @@
     },
     responsable: {
       label: "Responsable",
-      open: () => openDocument("responsable.html?tab=dates&entry=shortcut"),
+      open: () => openResponsable("tab=dates&entry=shortcut"),
     },
     resp_tracking: {
       label: "Suivi",
-      open: () => openDocument("responsable.html?tab=suivi"),
+      open: () => openResponsable("tab=suivi"),
     },
     resp_evaluation: {
       label: "Évaluation",
-      open: () => openDocument("responsable.html?tab=equipe&mode=evaluation"),
+      open: () => openResponsable("tab=equipe&mode=evaluation"),
     },
     resp_official: {
       label: "Extraire un fichier officiel",
-      open: () => openDocument("responsable.html?tab=equipe&tool=official"),
+      open: () => openResponsable("tab=equipe&tool=official"),
     },
     resp_requests: {
       label: "Demandes",
-      open: () => openDocument("responsable.html?tab=suivi&tool=requests"),
+      open: () => openResponsable("tab=suivi&tool=requests"),
     },
     resp_directory: {
       label: "Équipe du jour",
-      open: () => openDocument("responsable.html?tab=equipe"),
+      open: () => openResponsable("tab=equipe"),
     },
     resp_agenda: {
       label: "Agenda agents",
-      open: () => openDocument("responsable.html?tab=agenda"),
+      open: () => openResponsable("tab=agenda"),
     },
     assistant: {
       label: "Assistant STIP",
