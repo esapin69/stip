@@ -7,7 +7,7 @@
     STORE = "stip_session_v1",
     HOME_CACHE_KEY = "stip_home_runtime_cache_v2",
     HOME_CACHE_VERSION = 2,
-    HOME_CACHE_FRESH_MS = 90 * 1000,
+    HOME_CACHE_FRESH_MS = 45 * 1000,
     HOME_CACHE_MAX_MS = 10 * 60 * 1000,
     $ = (s) => document.querySelector(s);
   const state = {
