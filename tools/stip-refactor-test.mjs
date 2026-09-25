@@ -408,7 +408,7 @@ check(
   agentMonthSource.includes('weekend?"is-weekend":""') &&
   read('esprit-equipe.js').includes('weekend ? "is-weekend" : ""') &&
   planningUiSource.includes("weekend?' is-weekend':''") &&
-  responsableMonthSource.includes('weekend ? "is-weekend" : ""),
+  responsableMonthSource.includes('weekend ? "is-weekend" : ""'),
   'Les chiffres de samedi et dimanche doivent tous passer par la règle rouge commune.'
 );
 check(
