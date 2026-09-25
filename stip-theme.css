@@ -1,7 +1,7 @@
 @layer stip-calendar-core, stip-calendar-visual;
 @import url("stip-theme-base.css?v=20260925-event-icons2");
 @import url("stip-patterns.css?v=20260925-calendar-base2");
-@import url("stip-calendar-core.css?v=20260925-calendar-raw3") layer(stip-calendar-core);
+@import url("stip-calendar-core.css?v=20260925-calendar-raw4") layer(stip-calendar-core);
 @import url("stip-calendar-visual.css?v=20260925-calendar-common3") layer(stip-calendar-visual);
 
 /* IRM stable rendering: keep one guaranteed frame even if the <img> cache fails. */
