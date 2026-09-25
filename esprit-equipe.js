@@ -960,7 +960,8 @@
 
   function normalizeDayFocus() {
     const days = visibleTeamDates();
-    if (state.dayFocus && !days.includes(state.dayFocus)) state.dayFocus = "";
+    if (!state.dayFocus || !days.includes(state.dayFocus))
+      state.dayFocus = days[0] || todayIso();
   }
 
   function renderWeekStrip() {
