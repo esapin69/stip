@@ -105,7 +105,15 @@ async function bootstrap(vis:string[], role='public_share', accessLevel='visitor
     .filter((s:any)=>allowed.has(s.elevator_id))
     .map((s:any)=>({...s,linked_place_id:s.linked_place_id&&allowed.has(s.linked_place_id)?s.linked_place_id:null}))
   const room_ranges=(roomRangesQ.data||[]).filter((r:any)=>!r.service_place_id||allowed.has(r.service_place_id))
-  return {role_key:role,access_level:accessLevel,visibility:vis,places,aliases,tags,relations,routes,route_steps:steps,route_fragments,constraints,elevator_stops,room_ranges,generated_at:new Date().toISOString()}
+  let dictionary_field_defs:any[]=[]
+  if(accessLevel==='pro'){
+    const defsQ=await db.from('stip_place_dictionary_field_defs')
+      .select('field_key,group_key,label,description,sort_order,completion_kind,completion_config,export_when_empty,applies_to_types')
+      .order('sort_order')
+    if(defsQ.error)throw defsQ.error
+    dictionary_field_defs=defsQ.data||[]
+  }
+  return {role_key:role,access_level:accessLevel,visibility:vis,places,aliases,tags,relations,routes,route_steps:steps,route_fragments,constraints,elevator_stops,room_ranges,dictionary_field_defs,generated_at:new Date().toISOString()}
 }
 
 
@@ -121,14 +129,12 @@ const INTERCALARY_DETAIL:Record<string,string>={
   HFME:'Synthèse · dictionnaire · repères terrain'
 }
 const ANNEX_CODES=['A1','A3','A4','B1','B13','B14','B16','CERMEP','IDÉE','MORTUAIRE','MPM','RADIO','GHE']
-const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'
-const MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'
-const MASTER_BUCKET='ghe-media'
-const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'
+const FIXED_TEMPLATE_BUCKET='ghe-media'
+const FIXED_TEMPLATE_PATH='exports/visite-des-lieux/master.pdf'
 const FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13} as const
 const FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16
 async function loadFixedTemplatePdf(){
-  const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
+  const {data,error}=await db.storage.from(FIXED_TEMPLATE_BUCKET).download(FIXED_TEMPLATE_PATH)
   if(error||!data)throw new Error('Template PDF fixe indisponible.')
   const bytes=await data.arrayBuffer()
   const source=await PDFDocument.load(bytes)
@@ -138,31 +144,6 @@ async function loadFixedTemplatePdf(){
   }
   return source
 }
-async function masterPdfFileResponse(disposition='inline'){
-  const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
-  if(error||!data)return json({error:'Copie privée du MASTER indisponible.'},503)
-  const bytes=await data.arrayBuffer()
-  const safeDisposition=disposition==='attachment'?'attachment':'inline'
-  return new Response(bytes,{status:200,headers:{
-    ...CORS,
-    'Content-Type':'application/pdf',
-    'Content-Length':String(bytes.byteLength),
-    'Content-Disposition':safeDisposition+'; filename="Visite-des-lieux-GHE-MASTER.pdf"',
-    'Cache-Control':'private, no-store'
-  }})
-}
-
-function masterPdfLinks(){
-  const id=encodeURIComponent(MASTER_DRIVE_ID)
-  return {
-    file_name:MASTER_FILE_NAME,
-    view_url:`https://drive.google.com/file/d/${id}/view`,
-    preview_url:`https://drive.google.com/file/d/${id}/preview`,
-    download_url:`https://drive.google.com/uc?export=download&id=${id}`,
-    source:'drive_master'
-  }
-}
-
 function exportDate(){return new Date().toISOString().slice(0,10)}
 function exportCell(v:any){if(v===null||v===undefined)return'';if(typeof v==='object')return JSON.stringify(v);return v}
 function appendSheet(book:any,name:string,rows:any[]){
@@ -293,6 +274,13 @@ function xlsxResponse(snapshot:any,scopeLabel='GHE complet'){
   }})
 }
 
+function exportFactValue(v:any){
+  const value=String(v??'').trim()
+  if(!value)return''
+  const n=value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()
+  if(/^(a completer|a confirmer|a preciser|non renseigne|information non renseignee|information en cours de preparation)[.!…]*$/.test(n))return''
+  return value
+}
 function pdfSafe(v:any){
   return String(v??'')
     .replace(/Œ/g,'OE').replace(/œ/g,'oe')
@@ -430,10 +418,10 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
       for(const p of items){
         ensure(52,label+' · '+subtitle)
         textBlock((p.display_name||p.official_name||p.id)+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),9,bold,ink,0,1)
-        const facts=[p.summary,p.details].filter(Boolean)
-        const als=(aliasesBy.get(String(p.id))||[]).filter(Boolean).slice(0,8)
+        const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
+        const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,8)
         if(als.length)facts.push('Alias : '+als.join(' · '))
-        const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim()).filter(Boolean).slice(0,10)
+        const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
         if(usefulTags.length)facts.push(...usefulTags)
         for(const fact of facts)textBlock(fact,7.6,regular,muted,10,1)
         y-=4
@@ -455,10 +443,10 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
       const prefix=p.level?levelLabel(p.level)+' · ':''
       textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
-      const facts=[p.summary,p.details].filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).filter(Boolean).slice(0,6)
+      const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,6)
       if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim()).filter(Boolean).slice(0,8)
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
       if(usefulTags.length)facts.push(...usefulTags)
       for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
       y-=3
@@ -485,14 +473,6 @@ Deno.serve(async req=>{
     if(!session)return json({error:'Session STIP expirée.'},401)
     if(!session.app_allowed)return json({error:'Accès Visiter les lieux non autorisé.'},403)
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
-    if(action==='master_pdf_link'){
-      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
-      return json(masterPdfLinks())
-    }
-    if(action==='master_pdf_file'){
-      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
-      return await masterPdfFileResponse(String(body.disposition||'inline'))
-    }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
