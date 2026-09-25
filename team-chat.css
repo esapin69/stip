@@ -323,8 +323,8 @@
   margin: 0 auto;
   padding: 11px 2px;
   display: grid;
-  grid-template-columns: 36px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns:44px minmax(0,1fr);
+  gap:9px;
   align-items: start;
   border-bottom: 1px solid #dde7e9;
 }
@@ -336,7 +336,7 @@
 }
 
 .tb-entry:has(.tb-check) {
-  grid-template-columns: 34px 36px minmax(0, 1fr);
+  grid-template-columns:34px 44px minmax(0,1fr);
 }
 
 .tb-check {
@@ -371,23 +371,49 @@
 }
 
 .tb-avatar {
-  width: 36px;
-  height: 36px;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: #dfecef;
-  color: #356270;
-  font-size: 0.64rem;
-  font-weight: 950;
+  width:44px;
+  min-width:0;
+  display:grid;
+  justify-items:center;
+  align-content:start;
+  gap:3px;
+  color:#356270;
+  font-size:.64rem;
+  font-weight:950;
 }
-
+.tb-avatar:not(.has-name){
+  width:36px;
+  gap:0;
+}
+.tb-avatar-photo{
+  width:36px;
+  height:36px;
+  overflow:hidden;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#dfecef;
+  color:#356270;
+  font-size:.64rem;
+  font-weight:950;
+}
 .tb-avatar img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+}
+.tb-avatar-name{
+  display:block;
+  width:44px;
+  overflow:hidden;
+  color:#315963;
+  font-size:.50rem;
+  line-height:1.05;
+  font-weight:1000;
+  text-align:center;
+  white-space:nowrap;
+  text-overflow:ellipsis;
 }
 
 .tb-entry-body {
@@ -3467,7 +3493,7 @@
 }
 @media(max-width:430px){
   .hc-tableau-standalone .tb-entry{
-    grid-template-columns:34px minmax(0,1fr)!important;
+    grid-template-columns:44px minmax(0,1fr)!important;
     gap:8px!important;
   }
   .hc-tableau-standalone .tb-entry:has(> .tb-check){
@@ -3514,7 +3540,7 @@
   margin-left:auto!important;
   margin-right:auto!important;
   display:grid!important;
-  grid-template-columns:38px minmax(0,1fr)!important;
+  grid-template-columns:44px minmax(0,1fr)!important;
   align-items:start!important;
   gap:9px!important;
 }
@@ -3534,7 +3560,7 @@
 }
 
 .hc-tableau-standalone .tb-entry:has(> .tb-check){
-  grid-template-columns:30px 36px minmax(0,1fr)!important;
+  grid-template-columns:30px 44px minmax(0,1fr)!important;
 }
 
 .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-check{
@@ -3632,7 +3658,7 @@
     grid-column:2!important;
   }
   .hc-tableau-standalone .tb-entry:has(> .tb-check){
-    grid-template-columns:28px 34px minmax(0,1fr)!important;
+    grid-template-columns:28px 44px minmax(0,1fr)!important;
   }
   .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-check{grid-column:1!important}
   .hc-tableau-standalone .tb-entry:has(> .tb-check)>.tb-avatar{grid-column:2!important}
@@ -4417,13 +4443,34 @@
   background:#bfe6fb!important;
   color:#145c85!important;
 }
-.tb-wheelchair-level{
+.tb-wheelchair-floor{
+  width:max-content;
+  max-width:100%;
+  min-height:26px;
+  margin-top:7px;
+  padding:4px 8px;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  border:1px solid #bcd9d8;
+  border-radius:999px;
+  background:#eef9f6;
   color:#0b6470;
-  font-size:.88rem;
+}
+.tb-wheelchair-floor span{
+  font-size:.78rem;
+  line-height:1;
+}
+.tb-wheelchair-floor strong{
+  font-size:.78rem;
   line-height:1;
   font-weight:1000;
 }
-.tb-entry.is-search .tb-wheelchair-level{color:#276b94}
+.tb-entry.is-search .tb-wheelchair-floor{
+  border-color:#bed8e8;
+  background:#eef7fc;
+  color:#276b94;
+}
 .tb-wheelchair-service{
   display:block;
   margin-top:7px;
@@ -4455,15 +4502,6 @@
   font-size:.58rem;
   line-height:1.05;
   font-weight:950;
-}
-
-.tb-wheelchair-author{
-  display:block;
-  margin-top:4px;
-  color:#789095;
-  font-size:.55rem;
-  line-height:1;
-  font-weight:800;
 }
 
 /* Wheelchair freshness — warm signal cooling toward glacial white */
@@ -4608,8 +4646,7 @@
   margin-top:4px!important;
   font-size:.82rem!important;
 }
-.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-landmark,
-.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-author{
+.hc-tableau-standalone .tb-entry.is-resolved .tb-wheelchair-landmark{
   font-size:.56rem!important;
 }
 
