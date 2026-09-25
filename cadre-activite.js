@@ -92,11 +92,23 @@
   }
   function renderWeek() {
     const box = $("#weekDays");
+    if (!box) return;
+    box.className = "stip-week-line";
+    box.style.setProperty("--stip-week-columns", "7");
     box.innerHTML = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(weekStart);
       d.setDate(d.getDate() + i);
-      const iso = ymd(d);
-      return `<button class="week-day ${iso === ymd(new Date()) ? "today" : ""} ${iso === selected ? "active" : ""}" data-day="${iso}" type="button"><span>${d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase()}</span><strong>${d.getDate()}</strong><small>${d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", "")}</small></button>`;
+      const iso = ymd(d),
+        weekday = d
+          .toLocaleDateString("fr-FR", { weekday: "long" })
+          .replace(".", "")
+          .toUpperCase()
+          .slice(0, 2),
+        month = d
+          .toLocaleDateString("fr-FR", { month: "short" })
+          .replace(".", "")
+          .toUpperCase();
+      return `<button class="stip-week-day neutral ${iso === ymd(new Date()) ? "today" : ""} ${iso === selected ? "selected" : ""}" data-day="${iso}" type="button" aria-pressed="${iso === selected}"><span class="stip-week-day-head"><i>${weekday}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${month}</strong><span class="stip-week-main" aria-hidden="true"></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
     }).join("");
     box
       .querySelectorAll("[data-day]")
