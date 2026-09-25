@@ -319,5 +319,5 @@
   summary();
   setInterval(() => {
     if (!document.hidden) summary();
-  }, 60000);
+  }, 300000);
 })();
