@@ -5,7 +5,11 @@
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
     STORE = "stip_session_v1",
-    TABLEAU_BUILD = "20260923-swipe2",
+    HOME_CACHE_KEY = "stip_home_runtime_cache_v2",
+    HOME_CACHE_VERSION = 2,
+    HOME_CACHE_FRESH_MS = 90 * 1000,
+    HOME_CACHE_MAX_MS = 10 * 60 * 1000,
+    TABLEAU_BUILD = "20260925-home-perf1",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -30,8 +34,10 @@
     homeMode: "planning",
     dateJumpMonth: "",
     tableauFocus: false,
+    lastRefreshAt: 0,
   };
-  let planningSlowTimer = 0;
+  let planningSlowTimer = 0,
+    tableauRuntimePromise = null;
   function planningLoading() {
     return (
       state.bootStatus === "loading" &&
@@ -400,6 +406,107 @@
   }
   function canTeamWrite() {
     return teamMode() === "write" || teamMode() === "admin";
+  }
+  function cacheOwner(session = state.session || window.STIPSession || {}) {
+    const agent = session?.agent || {};
+    return [
+      agent.id || agent.source_key || agent.matricule || [agent.prenom, agent.nom].filter(Boolean).join(" "),
+      session?.role_key || "",
+    ]
+      .map((value) => String(value || "").trim())
+      .join("::");
+  }
+  function readHomeCache() {
+    try {
+      const cached = JSON.parse(sessionStorage.getItem(HOME_CACHE_KEY) || "null");
+      if (
+        !cached ||
+        cached.version !== HOME_CACHE_VERSION ||
+        cached.owner !== cacheOwner() ||
+        !cached.boot ||
+        Date.now() - Number(cached.at || 0) > HOME_CACHE_MAX_MS
+      )
+        return null;
+      return cached;
+    } catch {
+      return null;
+    }
+  }
+  function writeHomeCache() {
+    if (!state.boot || !state.ready) return;
+    try {
+      sessionStorage.setItem(
+        HOME_CACHE_KEY,
+        JSON.stringify({
+          version: HOME_CACHE_VERSION,
+          owner: cacheOwner(),
+          at: state.lastRefreshAt || Date.now(),
+          boot: state.boot,
+          home: state.home || { actions: [], notifications: [] },
+        }),
+      );
+    } catch {}
+  }
+  function clearHomeCache() {
+    try {
+      sessionStorage.removeItem(HOME_CACHE_KEY);
+    } catch {}
+  }
+  function hydrateHomeCache() {
+    const cached = readHomeCache();
+    if (!cached) return null;
+    const sessionAgent = state.session?.agent || {},
+      cachedBoot = cached.boot || {},
+      hydratedBoot = {
+        ...cachedBoot,
+        agent: { ...(cachedBoot.agent || {}), ...sessionAgent },
+        permissions: state.session?.permissions || cachedBoot.permissions || {},
+      };
+    state.home = cached.home || { actions: [], notifications: [] };
+    state.lastRefreshAt = Number(cached.at || 0);
+    state.bootStatus = "ready";
+    state.bootError = "";
+    stopPlanningLoading();
+    publishBoot(hydratedBoot);
+    return cached;
+  }
+  function ensureTableauRuntime() {
+    if (window.STIPTableau?.mount) return Promise.resolve(window.STIPTableau);
+    if (tableauRuntimePromise) return tableauRuntimePromise;
+    const loader = window.STIPLoad?.tableau;
+    if (typeof loader !== "function")
+      return Promise.reject(new Error("Chargeur Fauteuils indisponible."));
+    tableauRuntimePromise = Promise.resolve(loader())
+      .then(() => {
+        if (!window.STIPTableau?.mount)
+          throw new Error("Runtime Fauteuils indisponible.");
+        return window.STIPTableau;
+      })
+      .catch((error) => {
+        tableauRuntimePromise = null;
+        throw error;
+      });
+    return tableauRuntimePromise;
+  }
+  function warmTableauRuntime() {
+    if (!has("messages") || window.STIPTableau?.mount) return;
+    const run = () =>
+      ensureTableauRuntime()
+        .then((runtime) => {
+          const root = $("#homeView .hs-home");
+          if (state.homeMode === "tableau") {
+            state.renderSig = "";
+            render();
+            return;
+          }
+          runtime?.bindHomeButton?.(
+            root?.querySelector('[data-home-mode="tableau"]'),
+          );
+        })
+        .catch(() => {});
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(run, { timeout: 3500 });
+    else setTimeout(run, 1400);
   }
   function publishBoot(d) {
     state.boot = d;
@@ -2599,19 +2706,26 @@
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
       if (!runtime || typeof runtime.mount !== "function") {
-        if (tableauHost) {
+        if (tableauHost)
           tableauHost.innerHTML =
-            '<div class="tb-runtime-refresh">Mise à jour de Fauteuils…</div>';
-        }
-        try {
-          const refreshKey = "stip_tableau_runtime_refresh_" + TABLEAU_BUILD;
-          if (!sessionStorage.getItem(refreshKey)) {
-            sessionStorage.setItem(refreshKey, "1");
-            const url = new URL(location.href);
-            url.searchParams.set("__stip_build", TABLEAU_BUILD);
-            setTimeout(() => location.replace(url.pathname + url.search + url.hash), 60);
-          }
-        } catch {}
+            '<div class="tb-runtime-refresh">Chargement de Fauteuils…</div>';
+        ensureTableauRuntime()
+          .then(() => {
+            state.renderSig = "";
+            render();
+          })
+          .catch(() => {
+            if (!tableauHost?.isConnected) return;
+            tableauHost.innerHTML =
+              '<div class="tb-runtime-refresh"><button type="button" data-tableau-runtime-retry>Réessayer</button></div>';
+            tableauHost
+              .querySelector("[data-tableau-runtime-retry]")
+              ?.addEventListener("click", () => {
+                tableauRuntimePromise = null;
+                state.renderSig = "";
+                render();
+              });
+          });
         return;
       }
       runtime.unmountPreview?.();
@@ -2835,12 +2949,21 @@
   async function refresh(force = false) {
     if (!token() || !state.ready) return;
     if (state.refreshing && !force) return state.refreshing;
-    state.bootStatus = "loading";
-    state.bootError = "";
-    startPlanningLoading();
-    state.renderSig = "";
-    render();
+    if (!force && state.lastRefreshAt && Date.now() - state.lastRefreshAt < 45000)
+      return;
+    const hasUsableBoot = !!state.boot && (state.boot?.personal || []).length > 0;
+    if (!hasUsableBoot) {
+      state.bootStatus = "loading";
+      state.bootError = "";
+      startPlanningLoading();
+      state.renderSig = "";
+      render();
+    } else {
+      state.bootStatus = "ready";
+      stopPlanningLoading();
+    }
     state.refreshing = (async () => {
+      let changed = false;
       try {
         const [boot, home] = await Promise.allSettled([
           call(DATA_API, "bootstrap"),
@@ -2848,16 +2971,25 @@
         ]);
         if (boot.status === "fulfilled") {
           state.bootStatus = "ready";
+          state.bootError = "";
           stopPlanningLoading();
           publishBoot(boot.value);
           prefetchContacts();
-        } else {
+          changed = true;
+        } else if (!hasUsableBoot) {
           state.bootStatus = "error";
           stopPlanningLoading();
           state.bootError = boot.reason?.message || "Planning indisponible.";
         }
-        if (home.status === "fulfilled") state.home = home.value;
-        render();
+        if (home.status === "fulfilled") {
+          state.home = home.value;
+          changed = true;
+        }
+        if (changed) {
+          state.lastRefreshAt = Date.now();
+          writeHomeCache();
+          render();
+        }
       } finally {
         state.refreshing = null;
       }
@@ -2883,11 +3015,20 @@
         sessionStorage.removeItem("stip_home_mode_once");
       }
     } catch {}
+    if (state.homeMode === "chat") state.homeMode = "tableau";
+    state.renderSig = "";
+    const cached = hydrateHomeCache();
+    if (cached) {
+      render();
+      prefetchContacts();
+      warmTableauRuntime();
+      if (Date.now() - Number(cached.at || 0) > HOME_CACHE_FRESH_MS)
+        setTimeout(() => refresh().catch(() => {}), 180);
+      return;
+    }
     state.bootStatus = "loading";
     state.bootError = "";
     startPlanningLoading();
-    if (state.homeMode === "chat") state.homeMode = "tableau";
-    state.renderSig = "";
     const a = state.session?.agent || {};
     publishBoot({
       agent: a,
@@ -2897,7 +3038,9 @@
       media: { avatars: {}, shifts: {} },
     });
     render();
-    refresh().catch(() => {});
+    refresh()
+      .then(() => warmTableauRuntime())
+      .catch(() => {});
   }
   function ended() {
     state.ready = false;
@@ -2914,6 +3057,9 @@
     state.weekFull = false;
     state.weekPast = false;
     state.renderSig = "";
+    state.lastRefreshAt = 0;
+    tableauRuntimePromise = null;
+    clearHomeCache();
     window.STIPBootCache = null;
     panel(false);
   }
