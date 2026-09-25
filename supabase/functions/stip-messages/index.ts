@@ -925,7 +925,8 @@ const WHEELCHAIR_BUILDINGS=[
   {key:"neuro",label:"Neuro",codes:["PW"],aliases:["neuro","pierre wertheimer","wertheimer","pw"]},
   {key:"cardio",label:"Cardio",codes:["HLP"],aliases:["cardio","louis pradel","pradel","hlp"]},
   {key:"hfme",label:"HFME",codes:["HFME"],aliases:["hfme","femme mere enfant","femme mère enfant","mere enfant","mère enfant"]},
-  {key:"a4",label:"POP (A4)",codes:["A4"],aliases:["pop","a4","pop a4","batiment pop","bâtiment pop","batiment a4","bâtiment a4"]}
+  {key:"a4",label:"POP (A4)",codes:["A4"],aliases:["pop","a4","pop a4","batiment pop","bâtiment pop","batiment a4","bâtiment a4"]},
+  {key:"b14",label:"Médecine nucléaire",codes:["B14"],aliases:["medecine nucleaire","médecine nucléaire","b14","tep","tep ct","tep-ct","imagerie nucleaire","imagerie nucléaire"]}
 ];
 const WHEELCHAIR_PICKER_TYPES=new Set([
   "service","unit","exam","block","helipad","entrance","elevator","elevator_group",
@@ -951,15 +952,57 @@ function wheelchairSpotLocationTooVague(value:any){
   return parts.every((part:string)=>generic.has(part)||/^tout le\b/.test(part)||/^tout l etage\b/.test(part))
 }
 async function wheelchairCatalog(){
-  const codes=[...new Set(WHEELCHAIR_BUILDINGS.flatMap(x=>x.codes))];
   const{data,error}=await db.from("stip_places")
-    .select("id,display_name,official_name,place_type,building_code,level,summary,sort_order,visibility,evidence_status")
-    .in("building_code",codes)
+    .select("id,display_name,official_name,place_type,building_code,level,parent_id,summary,sort_order,visibility,evidence_status")
     .in("visibility",["public","internal_stip"])
     .order("sort_order")
     .order("display_name");
   if(error)throw error;
   const rows=data||[];
+  const rowIds=rows.map((p:any)=>p.id);
+  let aliasRows:any[]=[];
+  if(rowIds.length){
+    const aliasesQ=await db.from("stip_place_aliases").select("place_id,alias").in("place_id",rowIds);
+    if(aliasesQ.error)throw aliasesQ.error;
+    aliasRows=aliasesQ.data||[]
+  }
+  const aliasesBy=new Map<string,string[]>();
+  for(const a of aliasRows){
+    const id=String(a.place_id||""),list=aliasesBy.get(id)||[];
+    if(a.alias)list.push(String(a.alias));
+    aliasesBy.set(id,list)
+  }
+
+  const topByCode=new Map<string,any>();
+  for(const p of rows){
+    const code=String(p.building_code||"").toUpperCase();
+    if(!code)continue;
+    if(["hospital","building","building_or_zone"].includes(String(p.place_type||""))&&String(p.parent_id||"")==="ghe"&&!topByCode.has(code))topByCode.set(code,p)
+  }
+
+  const curatedByCode=new Map<string,any>();
+  for(const spec of WHEELCHAIR_BUILDINGS)for(const code of spec.codes)curatedByCode.set(String(code).toUpperCase(),spec);
+
+  const codeSet=[...new Set(rows.map((p:any)=>String(p.building_code||"").toUpperCase()).filter(Boolean))];
+  const allBuildings=codeSet.map(code=>{
+    const curated=curatedByCode.get(code),top=topByCode.get(code);
+    return{
+      key:curated?.key||wheelchairNorm(code).replace(/\s+/g,"-")||"ghe",
+      label:curated?.label||String(top?.display_name||top?.official_name||code),
+      codes:[code],
+      aliases:[...new Set([
+        ...(curated?.aliases||[]),
+        code,
+        top?.display_name||"",
+        top?.official_name||""
+      ].map((x:any)=>String(x||"").trim()).filter(Boolean))]
+    }
+  });
+  if(rows.some((p:any)=>!String(p.building_code||"").trim()))allBuildings.push({key:"ghe",label:"GHE",codes:[],aliases:["ghe","groupement hospitalier est"]});
+
+  const buildingByCode=new Map<string,any>();
+  for(const b of allBuildings)for(const code of b.codes||[])buildingByCode.set(String(code).toUpperCase(),b);
+
   const buildings=WHEELCHAIR_BUILDINGS.map(spec=>{
     const scoped=rows.filter((p:any)=>spec.codes.includes(String(p.building_code||"").toUpperCase()));
     const levels=[...new Set(scoped.map((p:any)=>String(p.level||"").trim()).filter(Boolean))]
@@ -968,6 +1011,7 @@ async function wheelchairCatalog(){
       key:spec.key,
       label:spec.label,
       aliases:spec.aliases,
+      codes:spec.codes,
       levels:levels.map(level=>{
         const seen=new Set<string>(),places:any[]=[];
         for(const p of scoped
@@ -977,19 +1021,40 @@ async function wheelchairCatalog(){
           const key=wheelchairNorm(label);
           if(!label||!key||seen.has(key))continue;
           seen.add(key);
-          places.push({
-            id:p.id,
-            label,
-            type:p.place_type,
-            summary:p.summary||"",
-            evidence_status:p.evidence_status||""
-          })
+          places.push({id:p.id,label,type:p.place_type,summary:p.summary||"",evidence_status:p.evidence_status||"",aliases:aliasesBy.get(String(p.id))||[]})
         }
         return{level,places}
       })
     }
   });
-  return{source:"stip_places",generated_at:new Date().toISOString(),buildings}
+
+  const targetTypes=new Set([...WHEELCHAIR_PICKER_TYPES,"hospital","building","building_or_zone"]);
+  const targets:any[]=[];
+  const seenTargets=new Set<string>();
+  for(const p of rows){
+    if(!targetTypes.has(String(p.place_type||"")))continue;
+    const code=String(p.building_code||"").toUpperCase();
+    const building=buildingByCode.get(code)||allBuildings.find((b:any)=>b.key==="ghe")||{key:"ghe",label:"GHE",aliases:["ghe"]};
+    const label=String(p.display_name||p.official_name||"").trim();
+    if(!label)continue;
+    const key=wheelchairNorm([building.key,p.level,label].join("|"));
+    if(!key||seenTargets.has(key))continue;
+    seenTargets.add(key);
+    targets.push({
+      id:p.id,
+      building_key:building.key,
+      building_label:building.label,
+      building_aliases:building.aliases||[],
+      level:String(p.level||"").trim(),
+      location:label,
+      label,
+      type:p.place_type,
+      summary:p.summary||"",
+      aliases:aliasesBy.get(String(p.id))||[],
+      evidence_status:p.evidence_status||""
+    })
+  }
+  return{source:"stip_places",generated_at:new Date().toISOString(),buildings,all_buildings:allBuildings,targets}
 }
 
 
