@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260926-navigation4";
+const STIP_SW_BUILD="20260926-navigation5";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
