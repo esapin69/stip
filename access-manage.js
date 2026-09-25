@@ -881,8 +881,10 @@
   $("accessManageTab").onclick = () => setAccessMode("manage");
   $("accessHistoryTab").onclick = () => setAccessMode("history");
   $("accessNotificationsTab").onclick = () => setAccessMode("notifications");
-  $("accessControlTab").onclick = () =>
-    window.STIPNav?.go?.("control.html") || location.assign("control.html");
+  $("accessControlTab").onclick = () => {
+    if (window.STIPNav?.go) window.STIPNav.go("control.html");
+    else location.assign("control.html");
+  };
   $("historyPrev").onclick = () => {
     historyMonth = new Date(
       historyMonth.getFullYear(),
