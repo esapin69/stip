@@ -243,10 +243,12 @@
       location.replace("index.html");
       return false;
     }
+    const roleKey = String(me.role_key || "").toLowerCase();
+    const responsableLevel = String(
+      me.permissions?.__levels?.responsable || "visitor",
+    ).toLowerCase();
     accessLevel =
-      String(
-        me.permissions?.__levels?.responsable || "visitor",
-      ).toLowerCase() === "pro"
+      roleKey === "chef_equipe" || responsableLevel === "pro"
         ? "pro"
         : "visitor";
     document.documentElement.dataset.responsableLevel = accessLevel;
