@@ -1466,6 +1466,7 @@
       ghe = String(a.ghe || "").trim(),
       tel = String(a.telephone || "").trim(),
       mail = String(a.email || a.email_pro || "").trim(),
+      matricule = String(a.matricule || "").trim(),
       prenom = cap(String(a.prenom || "").trim()),
       nomRaw = String(a.nom || "").trim().toLowerCase(),
       nom = nomRaw ? cap(nomRaw) : "",
@@ -1475,18 +1476,22 @@
           ? ghe.toUpperCase()
           : `GHE ${ghe}`
         : "";
-    return `<section class="hc-profile hc-profile-full hc-id-card">
-      <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
-      <div class="hc-profile-copy">
-        <div class="hc-profile-name-line">
-          ${prenom ? `<strong class="hc-profile-firstname">${esc(prenom)}</strong>` : ""}
-          ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
+    return `<section class="hc-profile-section" aria-label="Carte STIP">
+      <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
+      <section class="hc-profile hc-profile-full hc-id-card">
+        <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
+        <div class="hc-profile-copy">
+          <div class="hc-profile-name-line">
+            ${prenom ? `<strong class="hc-profile-firstname">${esc(prenom)}</strong>` : ""}
+            ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
+          </div>
+          ${matricule ? `<span class="hc-profile-matricule">Matricule <strong>${esc(matricule)}</strong></span>` : ""}
+          ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
+          <span class="hc-profile-breath" aria-hidden="true"></span>
+          ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
         </div>
-        ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
-        <span class="hc-profile-breath" aria-hidden="true"></span>
-        ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
-      </div>
-      ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
+        ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
+      </section>
     </section>`;
   }
   function responsableAccessBlock() {
@@ -2325,7 +2330,7 @@
     const isTableau = state.homeMode === "tableau" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    let markup = `${homeModeNav()}${showProfile ? profile() + responsableAccessBlock() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${homeModeNav()}${showProfile ? responsableAccessBlock() + profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isTableau) {
       markup = `<section class="hc-tableau-standalone" aria-label="Chat STIP — Fauteuils">
           <header class="hc-tableau-standalone-head">
