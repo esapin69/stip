@@ -1743,7 +1743,7 @@
       s += app("contacts", "Contacts", "contacts", "contacts");
     if (has("responsable") || has("admin"))
       s += app("responsable", "Responsable", "responsable", "responsable");
-    if (has("places") || has("admin"))
+    if (pilotageRoleKey() === "responsable" && has("places"))
       s += app("places", "Visiter les lieux", "places", "places");
     if (has("nouveaux_arrivants"))
       s += app("newagent", "Nouvel agent", "newagent", "newagent");
