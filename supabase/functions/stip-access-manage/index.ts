@@ -117,22 +117,15 @@ async function saveNotificationSetting(b: any, me: any) {
 async function signedAvatarUrl(raw: any) {
   const value = String(raw || "");
   if (!value) return null;
-  const marker = "/storage/v1/object/public/planning-pdf/";
-  if (!value.includes(marker)) return value;
-  const path = value.split(marker)[1]?.split("?")[0] || "";
-  if (!path) return value;
-  const { data, error } = await db.storage
-    .from("planning-pdf")
-    .createSignedUrl(decodeURIComponent(path), 3600);
-  return error || !data?.signedUrl ? value : data.signedUrl;
+  if (value.includes("/storage/v1/") && value.includes("/planning-pdf/"))
+    return null;
+  return value;
 }
 
 async function withSignedAvatar(agent: any) {
   if (!agent) return agent;
-  const signed = await signedAvatarUrl(agent.avatar_url);
-  return signed && signed !== agent.avatar_url
-    ? { ...agent, avatar_signed_url: signed }
-    : agent;
+  const avatar = await signedAvatarUrl(agent.avatar_url);
+  return { ...agent, avatar_url: avatar, avatar_signed_url: null };
 }
 
 async function signAgentRelation(agent: any) {
