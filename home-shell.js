@@ -9,7 +9,6 @@
     HOME_CACHE_VERSION = 2,
     HOME_CACHE_FRESH_MS = 90 * 1000,
     HOME_CACHE_MAX_MS = 10 * 60 * 1000,
-    TABLEAU_BUILD = "20260925-home-perf1",
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -2951,7 +2950,7 @@
     if (state.refreshing && !force) return state.refreshing;
     if (!force && state.lastRefreshAt && Date.now() - state.lastRefreshAt < 45000)
       return;
-    const hasUsableBoot = !!state.boot && (state.boot?.personal || []).length > 0;
+    const hasUsableBoot = state.bootStatus === "ready" && !!state.boot;
     if (!hasUsableBoot) {
       state.bootStatus = "loading";
       state.bootError = "";
