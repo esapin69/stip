@@ -1246,3 +1246,25 @@
   line-height:.8!important;
   font-weight:800!important;
 }
+
+
+/* 8. CONTEXT MASTER — adaptive parent + attached contextual detail
+   The separator belongs to the parent block it explains. */
+.stip-context-master{
+  min-width:0;
+}
+.stip-context-master>.stip-context-attached-separator{
+  margin-top:18px!important;
+  margin-bottom:0!important;
+}
+.stip-context-master>.stip-context-attached{
+  margin-top:0!important;
+  padding-top:12px!important;
+}
+.stip-context-master>.stip-context-attached-separator + .stip-context-attached{
+  border-top:0!important;
+}
+@media(max-width:640px){
+  .stip-context-master>.stip-context-attached-separator{margin-top:14px!important}
+  .stip-context-master>.stip-context-attached{padding-top:10px!important}
+}
