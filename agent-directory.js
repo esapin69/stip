@@ -64,6 +64,38 @@
     );
   }
 
+  function openAgentActions(agent) {
+    if (!window.STIPPersonActions?.open) {
+      openAgent(agent);
+      return;
+    }
+    const actions = [
+      {
+        key: "planning",
+        icon: "📅",
+        label: "Voir le planning",
+        detail: "Planning et événements de l’agent",
+        primary: true,
+        onSelect: () => openAgent(agent),
+      },
+      agent?.telephone
+        ? {
+            key: "call",
+            icon: "☎",
+            label: "Appeler",
+            detail: String(agent.telephone),
+            onSelect: () => window.STIPAgentSelector?.openCallSheet?.(agent),
+          }
+        : null,
+    ].filter(Boolean);
+
+    window.STIPPersonActions.open({
+      agent,
+      contextLabel: "ÉQUIPE",
+      actions,
+    });
+  }
+
   function renderDirectory() {
     root.innerHTML =
       header() +
@@ -87,7 +119,7 @@
       title: "Présents et absents",
       description:
         "Tri par GHE. Les horaires particuliers sont expliqués sans exposer les motifs sensibles.",
-      onSelect: openAgent,
+      onSelect: openAgentActions,
     });
   }
 
