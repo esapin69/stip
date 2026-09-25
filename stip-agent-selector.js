@@ -1,6 +1,10 @@
 (() => {
   "use strict";
 
+  // STIP MASTER — Rechercher un agent.
+  // Référence validée le 25/09/2026 : recherche + filtres Nom/Prénom/GHE + mur de portraits.
+  // Toute page appelante doit réutiliser ce moteur au lieu de recréer une variante locale.
+
   const PRIVATE_ABSENCE = new Set(["AR","AT","MA","AM","AA","ABS","SYR"]);
   const esc = (value) =>
     String(value ?? "").replace(/[&<>"']/g, (char) => ({
