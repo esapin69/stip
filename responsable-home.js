@@ -19,6 +19,16 @@
   const trackingMode =
     pageTab === "suivi" || pageOpen === "tracking" || pageOpen === "suivi";
 
+  function inheritedSession() {
+    if (window.parent === window) return null;
+    try {
+      const session = window.parent.STIPSession;
+      return session?.permissions ? session : null;
+    } catch {
+      return null;
+    }
+  }
+
   function errorText(e) {
     if (!e) return "Erreur inconnue";
     if (typeof e === "string") return e;
@@ -238,7 +248,18 @@
         : "Voir ce qui demande ton attention.";
   }
   async function initAccess() {
-    const me = await call(ACCESS_API, "me");
+    const inherited = inheritedSession();
+    const cached = inherited ? null : window.STIPContinuity?.readFresh?.() || null;
+    const me =
+      inherited ||
+      cached ||
+      (window.STIPContinuity?.validate
+        ? await window.STIPContinuity.validate()
+        : await call(ACCESS_API, "me"));
+    if (cached)
+      window.STIPContinuity
+        ?.validate?.()
+        .catch(() => {});
     if (!me.permissions?.responsable) {
       location.replace("index.html");
       return false;
