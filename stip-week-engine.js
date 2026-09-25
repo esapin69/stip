@@ -39,7 +39,7 @@
 
   const SWIPE_SURFACE=".stip-week-line, .stip-month-calendar";
   const SWIPE_MIN_PX=48;
-  const SWIPE_DRAG_START_PX=10;
+  const SWIPE_DRAG_START_PX=14;
   let swipeStart=null,suppressClickUntil=0,dispatchingSwipeClick=false;
 
   const reducedMotion=()=>window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches===true;
@@ -158,10 +158,6 @@
       if(!surface)return;
       const touch=event.touches[0];
       swipeStart={surface,x:touch.clientX,y:touch.clientY,lastX:touch.clientX,lastY:touch.clientY,horizontal:false,vertical:false};
-      if(!reducedMotion()){
-        surface.style.willChange="transform, opacity";
-        surface.style.transition="none";
-      }
     },{passive:true,capture:true});
     document.addEventListener("touchmove",(event)=>{
       if(!swipeStart||event.touches.length!==1)return;
@@ -170,18 +166,29 @@
       swipeStart.lastX=touch.clientX;
       swipeStart.lastY=touch.clientY;
       if(!swipeStart.horizontal&&!swipeStart.vertical){
-        if(ay>SWIPE_DRAG_START_PX&&ay>ax*1.05){swipeStart.vertical=true;clearSwipeVisual(swipeStart.surface);return}
-        if(ax>SWIPE_DRAG_START_PX&&ax>ay*1.12)swipeStart.horizontal=true;
+        if(ay>=SWIPE_DRAG_START_PX&&ay>=ax*1.05){swipeStart.vertical=true;clearSwipeVisual(swipeStart.surface);return}
+        if(ax>=SWIPE_DRAG_START_PX&&ax>=ay*1.35){
+          swipeStart.horizontal=true;
+          if(!reducedMotion()){
+            swipeStart.surface.style.willChange="transform, opacity";
+            swipeStart.surface.style.transition="none";
+          }
+        }
+      }
+      if(swipeStart.horizontal&&ay>ax*1.18){
+        swipeStart.horizontal=false;
+        swipeStart.vertical=true;
+        clearSwipeVisual(swipeStart.surface);
+        return;
       }
       if(!swipeStart.horizontal)return;
-      event.preventDefault();
       if(reducedMotion())return;
       const width=Math.max(1,Number(swipeStart.surface.clientWidth)||1),
         limited=Math.max(-width*.62,Math.min(width*.62,dx)),
         fade=Math.max(.62,1-Math.abs(limited)/(width*1.55));
       swipeStart.surface.style.transform=`translate3d(${limited}px,0,0)`;
       swipeStart.surface.style.opacity=String(fade);
-    },{passive:false,capture:true});
+    },{passive:true,capture:true});
     document.addEventListener("touchend",(event)=>{
       if(!swipeStart||event.changedTouches.length!==1){swipeStart=null;return}
       const start=swipeStart;
