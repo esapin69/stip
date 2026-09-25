@@ -726,7 +726,7 @@
   $("accessManageTab").onclick = () => setAccessMode("manage");
   $("accessHistoryTab").onclick = () => setAccessMode("history");
   $("accessControlTab").onclick = () =>
-    location.assign("https://admin.esapin.com/cleanup.html");
+    location.assign("https://admin-ghe.esapin.com/cleanup.html");
   $("historyPrev").onclick = () => {
     historyMonth = new Date(
       historyMonth.getFullYear(),
