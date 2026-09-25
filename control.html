@@ -24,7 +24,7 @@
 .ctrl-list{display:grid;gap:6px;margin:0;padding:0;list-style:none}.ctrl-list li{padding:9px 10px;border-radius:10px;background:var(--stip-surface-soft);font-size:.74rem;line-height:1.4;overflow-wrap:anywhere}
 .ctrl-proposal{padding:12px 13px;border-left:3px solid var(--stip-accent);border-radius:0 11px 11px 0;background:var(--stip-accent-soft);font-size:.79rem;line-height:1.45}
 .ctrl-gpt{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px;padding:13px;border:1px solid var(--stip-line-strong);border-radius:14px;background:var(--stip-surface-soft)}.ctrl-gpt strong,.ctrl-gpt small{display:block}.ctrl-gpt small{margin-top:4px;color:var(--stip-muted);font-size:.68rem}.ctrl-gpt-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.ctrl-gpt button{min-height:40px;padding:0 12px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-accent);color:#fff;font-weight:900}
-.ctrl-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px;padding-top:13px;border-top:1px solid var(--stip-line-soft)}.ctrl-actions button{min-height:40px;padding:0 11px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-surface);color:var(--stip-ink);font-weight:900}.ctrl-actions .danger{color:#a43d3d;border-color:#e0b0b0;margin-left:auto}.ctrl-msg{min-height:1em;margin:8px 0 0;color:var(--stip-muted);font-size:.7rem}.ctrl-msg.error{color:#a43d3d}
+.ctrl-manual{margin-top:12px;border-top:1px solid var(--stip-line-soft);padding-top:10px}.ctrl-manual>summary{cursor:pointer;color:var(--stip-muted);font-size:.72rem;font-weight:850}.ctrl-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.ctrl-actions button{min-height:40px;padding:0 11px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-surface);color:var(--stip-ink);font-weight:900}.ctrl-actions .danger{color:#a43d3d;border-color:#e0b0b0;margin-left:auto}.ctrl-msg{min-height:1em;margin:8px 0 0;color:var(--stip-muted);font-size:.7rem}.ctrl-msg.error{color:#a43d3d}
 .ctrl-sources{margin-top:14px;border:1px solid var(--stip-line);border-radius:15px;background:var(--stip-surface-raised);overflow:hidden}.ctrl-sources>summary{padding:13px 14px;cursor:pointer;font-weight:900}.ctrl-source{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 14px;border-top:1px solid var(--stip-line-soft)}.ctrl-source b,.ctrl-source small{display:block}.ctrl-source small{margin-top:3px;color:var(--stip-muted);font-size:.64rem}.ctrl-source span{align-self:center;color:var(--stip-muted);font-size:.62rem}
 .ctrl-dialog{width:min(620px,calc(100% - 24px));border:0;padding:0;background:transparent}.ctrl-dialog::backdrop{background:rgba(0,0,0,.55)}.ctrl-dialog-card{padding:18px;border:1px solid var(--stip-line);border-radius:18px;background:var(--stip-surface);color:var(--stip-ink)}.ctrl-dialog-card h3{margin:0}.ctrl-dialog-card p{color:var(--stip-muted);font-size:.76rem}.ctrl-dialog-card textarea{width:100%;min-height:180px;padding:12px;border:1px solid var(--stip-line);border-radius:12px;font:inherit}.ctrl-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.ctrl-dialog-actions button{min-height:40px;padding:0 12px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-surface-soft);font-weight:900}.ctrl-dialog-actions .primary{background:var(--stip-accent);color:#fff}.ctrl-dialog-msg{min-height:1em;color:#a43d3d}
 @media(max-width:620px){.ctrl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-core{grid-template-columns:1fr}.ctrl-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-gpt{align-items:stretch;flex-direction:column}.ctrl-gpt-actions{display:grid;grid-template-columns:1fr}.ctrl-gpt button{width:100%}.ctrl-actions .danger{margin-left:0}}
@@ -38,7 +38,7 @@
 </header>
 
 <section class="ctrl-hero">
-<div><span class="stip-kicker">RÈGLE DU MOTEUR</span><h2>Le moteur enquête. Le patron décide.</h2><p>Chaque proposition doit être factuelle, mesurable et accompagnée de preuves vérifiables.</p></div>
+<div><span class="stip-kicker">RÈGLE DU MOTEUR</span><h2>Le moteur détecte. GPT tranche techniquement.</h2><p>GPT contre-vérifie et agit quand c’est sûr. Tu gardes la main uniquement sur les conséquences irréversibles ou importantes.</p></div>
 <span class="ctrl-shield">✓</span>
 </section>
 
@@ -50,13 +50,13 @@
 </section>
 
 <nav id="ctrlFilters" class="ctrl-filters stip-filter-bubbles" data-count="4">
-<button class="stip-filter-choice active" type="button" data-filter="decision"><span class="stip-filter-copy"><strong>À décider <b id="ctrlDecisionCount">0</b></strong></span></button>
+<button class="stip-filter-choice active" type="button" data-filter="decision"><span class="stip-filter-copy"><strong>À analyser <b id="ctrlDecisionCount">0</b></strong></span></button>
 <button class="stip-filter-choice" type="button" data-filter="execution"><span class="stip-filter-copy"><strong>En cours <b id="ctrlExecutionCount">0</b></strong></span></button>
 <button class="stip-filter-choice" type="button" data-filter="done"><span class="stip-filter-copy"><strong>Traités <b id="ctrlDoneCount">0</b></strong></span></button>
 <button class="stip-filter-choice" type="button" data-filter="all"><span class="stip-filter-copy"><strong>Tous <b id="ctrlAllCount">0</b></strong></span></button>
 </nav>
 
-<div class="ctrl-list-head"><div><span class="stip-kicker">DOSSIERS DE DÉCISION</span><h3 id="ctrlListTitle">À décider</h3></div><span id="ctrlCaseCount" class="ctrl-count">0</span></div>
+<div class="ctrl-list-head"><div><span class="stip-kicker">DOSSIERS DE DÉCISION</span><h3 id="ctrlListTitle">À analyser</h3></div><span id="ctrlCaseCount" class="ctrl-count">0</span></div>
 <section id="ctrlCases" class="ctrl-cases"><p class="ctrl-empty">Chargement…</p></section>
 
 <details class="ctrl-sources"><summary>Sources surveillées</summary><div id="ctrlSources"></div></details>
@@ -68,6 +68,6 @@
 
 
 
-<script src="control.js?v=20260925-gpt-execute1"></script>
+<script src="control.js?v=20260925-gpt-autonomous2"></script>
 <script src="stip-navigation.js?v=20260925-workspace-auto1"></script></body>
 </html>
