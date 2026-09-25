@@ -86,204 +86,146 @@
 
 
 
+    <!-- T-EST PAGE CANDIDATE — local until visual validation -->
+    <link rel="stylesheet" href="/t-est/porte-entree/porte-entree.css?v=20260926-first-draft1" />
+    <!-- /T-EST PAGE CANDIDATE -->
     <style>[hidden], .hidden { display: none !important; }</style>
   </head>
   <body>
     <main class="app-shell">
       <section id="loginView" class="login-screen">
-        <div class="login-brand">
-          <span class="brand-mark">STIP</span><span>Portail équipe · GHE</span>
-        </div>
-        <div class="login-card public-home">
-          <p class="kicker">STIP · GHE</p>
-          <h1>Accès direct</h1>
-          <div id="accessRequestStatusHost"></div>
-          <section
-            class="public-tools-priority"
-            aria-label="Applications accessibles"
-          >
-            <div class="public-tools">
-              <a
-                class="visitor-entry"
-                href="places.html?v=20260925-canonical-export1&mode=visitor"
-                ><span
-                  class="visitor-entry-icon"
-                  aria-hidden="true"
-                  style="
-                    padding: 0;
-                    overflow: hidden;
-                    background: none !important;
-                    box-shadow: none !important;
-                    filter: none !important;
-                  "
-                  ><img
-                    src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3"
-                    alt=""
-                    style="
-                      width: 100%;
-                      height: 100%;
-                      display: block;
-                      object-fit: cover;
-                      border-radius: inherit;
-                    " /></span
-                ><span><strong>Visiter les lieux</strong></span></a
-              ><a
-                class="visitor-entry public-app-locked"
-                href="nouvel-arrivant-pro.html"
-                aria-label="Nouvel arrivant Pro, application en préparation"
-                ><span
-                  class="visitor-entry-icon"
-                  aria-hidden="true"
-                  style="
-                    padding: 0;
-                    overflow: hidden;
-                    background: none !important;
-                    box-shadow: none !important;
-                    filter: none !important;
-                  "
-                  ><img
-                    src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3"
-                    alt=""
-                    style="
-                      width: 100%;
-                      height: 100%;
-                      display: block;
-                      object-fit: cover;
-                      border-radius: inherit;
-                    " /></span
-                ><span><strong>Nouvel arrivant Pro</strong></span></a
-              ><a
-                class="visitor-entry public-app-locked"
-                href="rejoindre-equipe.html"
-                aria-label="Rejoindre l’équipe, application en préparation"
-                ><span
-                  class="visitor-entry-icon"
-                  aria-hidden="true"
-                  style="
-                    padding: 0;
-                    overflow: hidden;
-                    background: none !important;
-                    box-shadow: none !important;
-                    filter: none !important;
-                  "
-                  ><img
-                    src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3"
-                    alt=""
-                    style="
-                      width: 100%;
-                      height: 100%;
-                      display: block;
-                      object-fit: cover;
-                      border-radius: inherit;
-                    " /></span
-                ><span><strong>Rejoindre l’équipe</strong></span></a
-              >
+        <div class="t-entry-shell">
+          <header class="t-entry-header">
+            <p class="t-entry-eyebrow">Outil professionnel indépendant</p>
+            <h1>Accès professionnel</h1>
+            <p>Un point d’entrée simple vers les outils utiles sur le terrain, sans se présenter comme un service officiel de l’établissement.</p>
+          </header>
+
+          <section class="t-auth-card" aria-labelledby="tAccessTitle">
+            <p class="t-auth-kicker">Espace privé</p>
+            <h2 id="tAccessTitle">Votre accès</h2>
+            <p class="t-auth-copy">Entrez votre code personnel à 6 chiffres.</p>
+
+            <div id="accessRequestStatusHost"></div>
+
+            <form id="loginForm" class="code-form">
+              <div class="stip-code-wrap">
+                <input
+                  id="accessCode"
+                  type="password"
+                  inputmode="numeric"
+                  pattern="[0-9]{6}"
+                  maxlength="6"
+                  autocomplete="one-time-code"
+                  aria-label="Code personnel à 6 chiffres"
+                  placeholder="••••••"
+                  required
+                />
+                <span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span>
+                <button id="toggleAccessCode" class="stip-code-toggle" type="button">Voir</button>
+              </div>
+              <button class="t-login-submit" type="submit">Continuer</button>
+            </form>
+            <p id="loginMessage" class="message" aria-live="polite"></p>
+
+            <div class="t-access-request">
+              <div class="t-access-request-copy">
+                <strong>Vous n’avez pas encore d’accès ?</strong>
+                <small>Chaque demande est vérifiée par une personne avant activation.</small>
+              </div>
+              <button id="requestAccessOpen" type="button">Demander un accès</button>
             </div>
           </section>
-          <div class="public-or" aria-hidden="true">
-            <span></span><b>OU</b><span></span>
-          </div>
-          <section
-            class="existing-access existing-access-visible"
-            aria-label="Accéder à mon espace"
-          >
-            <div class="existing-access-head">
-              <div><strong>Accéder à votre espace STIP</strong></div>
+
+          <section class="t-public" aria-labelledby="tPublicTitle">
+            <div class="t-section-head">
+              <div>
+                <h2 id="tPublicTitle">Accès sans connexion</h2>
+                <p>Trois portes utiles, indépendantes de votre espace personnel.</p>
+              </div>
             </div>
-            <section class="direct-access">
-              <form id="loginForm" class="code-form">
-                <div class="stip-code-wrap">
-                  <input
-                    id="accessCode"
-                    type="password"
-                    inputmode="numeric"
-                    pattern="[0-9]{6}"
-                    maxlength="6"
-                    autocomplete="one-time-code"
-                    aria-label="Code à 6 chiffres"
-                    placeholder="Code personnel"
-                    required
-                  /><span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span><button
-                    id="toggleAccessCode"
-                    class="stip-code-toggle"
-                    type="button"
-                  >
-                    Voir
-                  </button>
-                </div>
-                <button type="submit">Se connecter</button>
-              </form>
-              <p id="loginMessage" class="message"></p>
-            </section>
-            <div class="signup-separator">
-              <span>Pas encore d’accès ?</span>
-            </div>
-            <div class="request-access-zone">
-              <button
-                id="requestAccessOpen"
-                class="request-access-primary"
-                type="button"
-              >
-                <span><strong>Demander un accès</strong></span
-                ><b>›</b>
-              </button>
+
+            <div class="t-public-grid">
+              <a class="t-public-card" href="places.html?v=20260925-canonical-export1&mode=visitor">
+                <span class="t-public-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg>
+                </span>
+                <span class="t-public-copy">
+                  <strong>Visite des lieux</strong>
+                  <span>Trouver rapidement un service, une unité, un étage ou un itinéraire.</span>
+                </span>
+                <span class="t-public-meta"><span class="t-public-arrow" aria-hidden="true">›</span></span>
+              </a>
+
+              <a class="t-public-card" href="nouvel-arrivant-pro.html">
+                <span class="t-public-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M5 20V7.5L12 4l7 3.5V20"/><path d="M9 20v-5h6v5M8.5 10h.01M12 10h.01M15.5 10h.01"/></svg>
+                </span>
+                <span class="t-public-copy">
+                  <strong>Premiers repères</strong>
+                  <span>Les bases pratiques pour les professionnels qui découvrent les locaux.</span>
+                </span>
+                <span class="t-public-meta"><small>En préparation</small><span class="t-public-arrow" aria-hidden="true">›</span></span>
+              </a>
+
+              <a class="t-public-card" href="rejoindre-equipe.html">
+                <span class="t-public-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M17 8v6M14 11h6"/></svg>
+                </span>
+                <span class="t-public-copy">
+                  <strong>Rejoindre l’équipe</strong>
+                  <span>Découvrir le projet et les façons de participer ou d’aider.</span>
+                </span>
+                <span class="t-public-meta"><small>En préparation</small><span class="t-public-arrow" aria-hidden="true">›</span></span>
+              </a>
             </div>
           </section>
+
+          <footer class="t-entry-footer">
+            <strong>Outil indépendant et non officiel.</strong>
+            Les procédures, consignes et informations institutionnelles de l’établissement restent prioritaires.
+          </footer>
         </div>
+
         <dialog id="accessRequestDialog" class="access-request-dialog">
-          <form
-            id="accessRequestForm"
-            class="access-request-form access-request-form-v2"
-          >
+          <form id="accessRequestForm" class="access-request-form access-request-form-v2">
             <header>
               <div>
-                <small>MON ACCÈS STIP</small>
+                <small>DEMANDE D’ACCÈS</small>
                 <h2>Créer ma demande</h2>
-                <p>
-                  Nom, prénom, un commentaire si nécessaire, puis votre code
-                  personnel.
-                </p>
+                <p>La demande sera examinée par une personne avant toute activation.</p>
               </div>
-              <button id="requestAccessClose" type="button" aria-label="Fermer">
-                ×
-              </button>
+              <button id="requestAccessClose" type="button" aria-label="Fermer">×</button>
             </header>
+
             <div class="request-step">
               <span>1</span>
               <div>
-                <strong>Qui êtes-vous ?</strong
-                ><small
-                  >STIP cherchera lui-même si vous correspondez à une personne
-                  réellement suivie.</small
-                >
+                <strong>Qui êtes-vous ?</strong>
+                <small>Indiquez votre identité et, si nécessaire, une précision utile.</small>
               </div>
             </div>
+
             <div class="request-name-grid">
-              <label
-                >Prénom<input
-                  name="first_name"
-                  autocomplete="given-name"
-                  required /></label
-              ><label
-                >Nom<input name="last_name" autocomplete="family-name" required
-              /></label>
+              <label>Prénom<input name="first_name" autocomplete="given-name" required /></label>
+              <label>Nom<input name="last_name" autocomplete="family-name" required /></label>
             </div>
-            <label class="request-role"
-              >Commentaire libre<textarea
-                name="comment"
-                rows="3"
-                placeholder="Facultatif — précisez seulement ce qui peut aider à comprendre votre demande."
-              ></textarea>
+
+            <label class="request-role">
+              Commentaire libre
+              <textarea name="comment" rows="3" placeholder="Facultatif — seulement ce qui peut aider à comprendre votre demande."></textarea>
             </label>
+
             <div class="request-step">
               <span>2</span>
               <div>
-                <strong>Choisissez votre code</strong
-                ><small>6 chiffres personnels. Ils restent masqués.</small>
+                <strong>Choisissez votre code</strong>
+                <small>6 chiffres personnels. Ils restent masqués.</small>
               </div>
             </div>
-            <label class="request-code-card"
-              ><span>Code souhaité</span>
+
+            <label class="request-code-card">
+              <span>Code souhaité</span>
               <div>
                 <input
                   id="requestedAccessCode"
@@ -295,10 +237,12 @@
                   autocomplete="new-password"
                   placeholder="••••••"
                   required
-                /><b>6 chiffres</b>
-              </div></label
-            >
-            <p id="accessRequestMessage" class="message"></p>
+                />
+                <b>6 chiffres</b>
+              </div>
+            </label>
+
+            <p id="accessRequestMessage" class="message" aria-live="polite"></p>
             <button class="request-submit" type="submit">
               <span>Envoyer ma demande</span><b>→</b>
             </button>
