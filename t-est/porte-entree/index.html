@@ -1,13 +1,15 @@
 <!doctype html>
-<html lang="fr" data-stip-visual="none" data-stip-t-suite-level="1">
+<html lang="fr" data-stip-visual="none" data-stip-t-suite-level="1" data-t-est="1">
   <head>
-    <base href="../" />
+    <base href="../../" />
+    <link rel="stylesheet" href="t-est/regles-communes/global.css?v=20260926-t-est1" />
+    <script defer src="t-est/regles-communes/global.js?v=20260926-t-est1"></script>
     <script id="stip-t-admin-gate">
       document.documentElement.hidden = true;
       (async () => {
         const token = localStorage.getItem("stip_session_v1") || "";
         if (!token) {
-          location.replace(new URL("../", location.href).href);
+          location.replace(new URL("./", document.baseURI).href);
           return;
         }
         try {
@@ -22,12 +24,12 @@
           });
           const data = await response.json().catch(() => ({}));
           if (!response.ok || !data?.permissions?.admin) {
-            location.replace(new URL("../", location.href).href);
+            location.replace(new URL("./", document.baseURI).href);
             return;
           }
           document.documentElement.hidden = false;
         } catch {
-          location.replace(new URL("../", location.href).href);
+          location.replace(new URL("./", document.baseURI).href);
         }
       })();
     </script>
@@ -42,8 +44,8 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260925-t-suite-blank1" />
-<title>STIP — T</title>
+    <meta name="stip-ui-build" content="20260926-t-est1" />
+<title>STIP — T-est</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -330,14 +332,15 @@
     <script src="stip-workspace.js?v=20260925-workspace3"></script>
     <script src="stip-agent-selector.js?v=20260925-trainee1"></script>
     <script src="stip-person-actions.js?v=20260925-avatar-menu1"></script>
-    <script src="app.js?v=20260925-access-recovery1"></script>
+    <script src="stip-session-continuity.js?v=20260926-continuity1"></script>
+    <script src="app.js?v=20260926-continuity1"></script>
     <script src="quick-access.js?v=20260925-chef-access-hide1"></script>
     <script src="public-access-request.js?v=20260925-access-relay1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-gesture.js?v=20260925-gesture-contract1"></script>
-    <script src="stip-week-engine.js?v=20260925-gesture-track2"></script>
+    <script src="stip-week-engine.js?v=20260926-month-edge1"></script>
     <script src="stip-loader.js?v=20260925-t-suite1"></script>
-    <script src="home-shell.js?v=20260925-t-suite1"></script>
+    <script src="home-shell.js?v=20260926-t-est1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
     <script src="tomorrow-ui.js?v=20260921-field3"></script>
@@ -350,7 +353,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260925-t-suite1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-continuity1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });

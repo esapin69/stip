@@ -2977,7 +2977,7 @@
     root.querySelector("[data-t-door]")?.addEventListener("click", () => {
       const level = Number(document.documentElement.dataset.stipTSuiteLevel || "0");
       if (level >= 1) return;
-      location.href = new URL("t/index.html", document.baseURI).href;
+      location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
     });
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
