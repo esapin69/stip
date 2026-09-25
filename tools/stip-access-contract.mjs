@@ -52,6 +52,18 @@ expect(
   "Deterministic code_key lookup must still verify the bcrypt code_hash.",
 );
 
+const chefContract = read(
+  "supabase/migrations/20260925195000_enforce_chef_responsable_contract.sql",
+);
+expect(
+  "Chef role is structurally Responsable Pro",
+  chefContract.includes("coalesce(new.role_key,'') = 'chef_equipe'") &&
+    chefContract.includes("'depth_responsable','pro'") &&
+    chefContract.includes("'{access_manage}','false'::jsonb") &&
+    chefContract.includes("'{admin}','false'::jsonb"),
+  "Chef Responsable Pro / no Admin / no Access must be a database invariant, not a UI convention.",
+);
+
 const failed = checks.filter((x) => !x.ok);
 for (const c of checks) {
   console.log(`${c.ok ? "OK" : "FAIL"} - ${c.name}`);
