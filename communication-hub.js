@@ -77,6 +77,7 @@
   function name(a={}){return a.nickname||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||"Agent"}
   function avatar(a={},cls="ch-avatar"){const ini=[a.prenom?.[0],a.nom?.[0]].filter(Boolean).join("").toUpperCase()||String(name(a)).slice(0,2).toUpperCase(),signed=window.STIPBootCache?.media?.avatars?.[a.source_key]||"",src=a.profile_photo_url||signed||a.avatar_signed_url||a.avatar||a.avatar_url||"";return '<span class="'+cls+'" data-avatar-fallback="'+esc(ini)+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy">':esc(ini))+'</span>'}
   function currentMode(){return document.querySelector('#homeView [data-home-mode-current]')?.dataset.homeModeCurrent||""}
+  function isTrainee(){return String(window.STIPSession?.role_key||"")==="stagiaire"}
   function setUnread(n){const next=Number(n)||0,prev=Number(window.STIPMessagesUnread||0);window.STIPMessagesUnread=next;if(next!==prev)window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:next}}))}
   function vapidBytes(v){const pad="=".repeat((4-v.length%4)%4),raw=atob((v+pad).replace(/-/g,"+").replace(/_/g,"/")),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
   function pushText(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return"Notifications téléphone indisponibles";if(Notification.permission==="denied")return"Notifications bloquées par le téléphone";if(pushState==="on")return"Notifications téléphone activées";return"Activer les notifications téléphone"}
@@ -87,12 +88,13 @@
   function bubbleAgent(a){return '<button class="ch-person-bubble" type="button" data-agent="'+esc(a.id)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>'}
   function renderHost(){
     const host=document.getElementById("hcCommunicationHub");if(!host)return;
-    const messagesOk=can("messages");
-    const recent=home?.conversations||[],unread=recent.filter(c=>Number(c.unread||0)>0),unreadCount=unread.reduce((n,c)=>n+Number(c.unread||0),0);
+    const messagesOk=can("messages"),trainee=isTrainee();
+    const recent=home?.conversations||[],unread=recent.filter(c=>Number(c.unread||0)>0),traineeNotes=home?.trainee_messages||[],unreadCount=trainee?Number(home?.unread||0):unread.reduce((n,c)=>n+Number(c.unread||0),0);
     host.innerHTML='<section class="ch-hub ch-hub-compact">'+
-      '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>'+(unreadCount?unreadCount+' message'+(unreadCount>1?'s':'')+' non lu'+(unreadCount>1?'s':'')+'.':'Tout ce qui demande votre attention, sans bruit.')+'</p></div></header>'+
-      (messagesOk?'<button type="button" class="ch-exchange-entry" data-exchanges-open><span aria-hidden="true">↔</span><div><strong>Échanges</strong><small>Messages et conversations entre comptes</small></div><b>›</b></button>':"")+
-      (unread.length?'<div class="ch-recent ch-unread-only">'+unread.slice(0,5).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Nouveau message")+'</small></div><b>'+Number(c.unread||0)+'</b></button>').join("")+'</div>':"")+
+      '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>'+(unreadCount?unreadCount+' message'+(unreadCount>1?'s':'')+' non lu'+(unreadCount>1?'s':'')+'.':(trainee?'Les informations qui te sont adressées apparaissent ici.':'Tout ce qui demande votre attention, sans bruit.'))+'</p></div></header>'+
+      (!trainee&&messagesOk?'<button type="button" class="ch-exchange-entry" data-exchanges-open><span aria-hidden="true">↔</span><div><strong>Échanges</strong><small>Messages et conversations entre comptes</small></div><b>›</b></button>':"")+
+      (trainee?'<div class="ch-trainee-inbox">'+(traineeNotes.length?traineeNotes.slice(0,20).map(n=>'<article class="ch-trainee-note'+(!n.read_at?' is-unread':'')+'">'+avatar(n.sender||{},"ch-thread-avatar")+'<div><strong>'+esc(name(n.sender||{})||"STIP")+'</strong><p>'+esc(n.body||"")+'</p><time>'+new Date(n.created_at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+'</time></div></article>').join(""):'<p class="ch-empty">Aucune information pour toi pour le moment.</p>')+'</div>':"")+
+      (!trainee&&unread.length?'<div class="ch-recent ch-unread-only">'+unread.slice(0,5).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Nouveau message")+'</small></div><b>'+Number(c.unread||0)+'</b></button>').join("")+'</div>':"")+
     '</section>';
     host.querySelector("[data-exchanges-open]")?.addEventListener("click",exchangeSheet);
     host.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>openThread(b.dataset.conv)));
@@ -100,8 +102,9 @@
   async function loadHome(force=false){
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
     try{
-      home=await msg("home");setUnread(home.unread);await refreshPushState();renderHost();
+      home=await msg("home");setUnread(home.unread);if(!isTrainee())await refreshPushState();renderHost();
       if(currentMode()==="notifications"){
+        if(isTrainee()&&Number(home?.unread||0)>0){msg("trainee_read").then(()=>{home.unread=0;(home.trainee_messages||[]).forEach(x=>x.read_at=x.read_at||new Date().toISOString());setUnread(0);renderHost()}).catch(()=>{})}
         let pending="",openExchange=false;
         try{
           pending=sessionStorage.getItem("stip_message_open_v1")||"";
@@ -226,7 +229,7 @@
     const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.dataset.exchangeSheet="1";
     const recent=home?.conversations||[];
     wrap.innerHTML='<section class="ch-sheet ch-exchange-sheet"><header><div><small>COMMUNICATION STIP</small><h3>Échanges</h3></div><button type="button" data-close>×</button></header>'+
-      '<div class="ch-exchange-actions"><button type="button" data-new-message><span>＋</span><strong>Nouveau message</strong></button><button type="button" data-broadcast><span>↗</span><strong>Diffuser</strong></button></div>'+
+      '<div class="ch-exchange-actions"><button type="button" data-new-message><span>＋</span><strong>Nouveau message</strong></button><button type="button" data-broadcast><span>↗</span><strong>Diffuser</strong></button><button type="button" data-trainee-message><span>👶</span><strong>Informer un stagiaire</strong></button></div>'+
       (recent.length?'<div class="ch-exchange-recent"><small>CONVERSATIONS</small><div class="ch-recent">'+recent.slice(0,20).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></div>'+(c.unread?'<b>'+c.unread+'</b>':"")+'</button>').join("")+'</div></div>':'<p class="ch-empty">Aucune conversation pour l’instant.</p>')+
       '<div class="ch-exchange-settings"><button type="button" data-push-enable>'+esc(pushText())+'</button>'+(home?.me?'<button type="button" data-msg-profile>Réglages messages</button>':"")+'</div></section>';
     document.body.appendChild(wrap);
@@ -235,9 +238,20 @@
     wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
     wrap.querySelector("[data-new-message]")?.addEventListener("click",()=>{close();recipientSheet(false)});
     wrap.querySelector("[data-broadcast]")?.addEventListener("click",()=>{close();broadcastSheet()});
+    wrap.querySelector("[data-trainee-message]")?.addEventListener("click",()=>{close();traineeRecipientSheet()});
     wrap.querySelector("[data-push-enable]")?.addEventListener("click",e=>enablePush(e.currentTarget));
     wrap.querySelector("[data-msg-profile]")?.addEventListener("click",()=>{close();profileSheet()});
     wrap.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.conv;close();openThread(id)}));
+  }
+  async function traineeRecipientSheet(){
+    const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";
+    wrap.innerHTML='<section class="ch-sheet"><header><div><small>STAGIAIRE</small><h3>Envoyer une information</h3></div><button type="button" data-close>×</button></header><label class="ch-search"><span>⌕</span><input type="search" placeholder="Prénom ou nom du stagiaire…"></label><div class="ch-picker" data-picker><p class="ch-empty">Chargement…</p></div><form class="ch-profile-form" data-trainee-form hidden><div data-trainee-target></div><label>Information<textarea name="body" rows="4" maxlength="2000" required placeholder="Écris l’information à lui transmettre…"></textarea></label><button type="submit">Envoyer dans sa Cloche</button><p class="ch-form-status" role="status"></p></form></section>';
+    document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    let all=[],selected=null;const input=wrap.querySelector("input"),picker=wrap.querySelector("[data-picker]"),form=wrap.querySelector("[data-trainee-form]"),target=wrap.querySelector("[data-trainee-target]");
+    const paint=()=>{const q=String(input.value||"").toLowerCase(),rows=all.filter(a=>!q||name(a).toLowerCase().includes(q));picker.innerHTML='<div class="ch-picker-grid">'+rows.map(a=>'<button type="button" data-trainee-pick="'+esc(a.trainee_key)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc([a.first_date,a.last_date].filter(Boolean).join(" → "))+'</small></button>').join("")+'</div>';picker.querySelectorAll("[data-trainee-pick]").forEach(b=>b.onclick=()=>{selected=all.find(a=>String(a.trainee_key)===String(b.dataset.traineePick));if(!selected)return;target.innerHTML='<div class="ch-exchange-entry">'+avatar(selected)+'<div><strong>'+esc(name(selected))+'</strong><small>Information ciblée · Cloche STIP</small></div></div>';form.hidden=false;form.querySelector("textarea")?.focus()})};
+    input.addEventListener("input",paint);
+    try{const r=await msg("trainees");all=r.items||[];paint()}catch(e){picker.innerHTML='<p class="ch-error">'+esc(e.message||"Stagiaires indisponibles.")+'</p>'}
+    form.onsubmit=async e=>{e.preventDefault();if(!selected)return;const body=String(new FormData(form).get("body")||"").trim(),status=form.querySelector(".ch-form-status"),button=form.querySelector('button[type="submit"]');if(!body)return;button.disabled=true;status.textContent="Envoi…";try{await msg("trainee_send",{trainee_key:selected.trainee_key,body});status.textContent="Information envoyée.";setTimeout(close,350)}catch(err){status.textContent=err.message||"Envoi impossible.";button.disabled=false}}
   }
   async function recipientSheet(group=false){
     const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>NOUVEAU MESSAGE</small><h3>Choisir un professionnel</h3></div><button type="button" data-close>×</button></header><label class="ch-search"><span>⌕</span><input type="search" placeholder="Nom, prénom ou pseudo…"></label><div class="ch-picker" data-picker><p class="ch-empty">Chargement…</p></div><button class="ch-group-create" type="button" data-group hidden>Créer le groupe</button></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});let selected=new Set(),all=[];
