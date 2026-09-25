@@ -79,11 +79,12 @@
 
   const token = () => localStorage.getItem(STORE) || "";
 
-  const BUILDINGS = [
+  let BUILDINGS = [
     { key: "neuro", label: "Neuro", aliases: ["neuro", "pierre wertheimer", "wertheimer", "pw"] },
     { key: "cardio", label: "Cardio", aliases: ["cardio", "louis pradel", "pradel", "hlp"] },
     { key: "hfme", label: "HFME", aliases: ["hfme", "femme mere enfant", "femme mère enfant", "mere enfant", "mère enfant"] },
     { key: "a4", label: "POP (A4)", aliases: ["pop", "a4", "pop a4", "batiment pop", "bâtiment pop", "batiment a4", "bâtiment a4"] },
+    { key: "b14", label: "Médecine nucléaire", aliases: ["médecine nucléaire", "medecine nucleaire", "b14", "tep", "tep-ct", "tep ct", "imagerie nucléaire", "imagerie nucleaire"] },
   ];
 
   // Repères compacts issus du référentiel "Visiter les lieux" / 00 MASTER (09/2026).
@@ -91,6 +92,7 @@
   // Catalogue des lieux : une seule source de vérité, stip_places via stip-messages.
   // Aucun service/niveau n'est maintenu en double dans ce fichier.
   const WHEELCHAIR_LOCATIONS = Object.create(null);
+  let WHEELCHAIR_SEARCH_TARGETS = [];
   let wheelchairCatalogPromise = null;
 
   async function loadWheelchairCatalog() {
@@ -98,6 +100,20 @@
     wheelchairCatalogPromise = (async () => {
       const catalog = await api("wheelchair_catalog");
       for (const key of Object.keys(WHEELCHAIR_LOCATIONS)) delete WHEELCHAIR_LOCATIONS[key];
+
+      const merged = new Map(BUILDINGS.map((building) => [building.key, building]));
+      for (const building of catalog?.all_buildings || catalog?.buildings || []) {
+        if (!building?.key) continue;
+        const previous = merged.get(building.key) || {};
+        merged.set(building.key, {
+          ...previous,
+          key: building.key,
+          label: building.label || previous.label || building.key,
+          aliases: [...new Set([...(previous.aliases || []), ...(building.aliases || [])])],
+        });
+      }
+      BUILDINGS = [...merged.values()];
+
       for (const building of catalog?.buildings || []) {
         if (!building?.key) continue;
         WHEELCHAIR_LOCATIONS[building.key] = (building.levels || []).map((group) => ({
@@ -107,6 +123,19 @@
             .filter(Boolean),
         }));
       }
+
+      WHEELCHAIR_SEARCH_TARGETS = (catalog?.targets || []).map((target) => ({
+        buildingKey: String(target?.building_key || ""),
+        buildingLabel: String(target?.building_label || ""),
+        buildingAliases: Array.isArray(target?.building_aliases) ? target.building_aliases : [],
+        level: String(target?.level || ""),
+        location: String(target?.location || target?.label || ""),
+        label: String(target?.label || target?.location || ""),
+        aliases: Array.isArray(target?.aliases) ? target.aliases : [],
+        summary: String(target?.summary || ""),
+        type: String(target?.type || ""),
+      })).filter((target) => target.buildingKey && target.label);
+
       return catalog;
     })().catch((error) => {
       wheelchairCatalogPromise = null;
@@ -945,6 +974,34 @@
   }
 
   function locationSearchTargets({ buildingKey = "", level = "" } = {}) {
+    if (WHEELCHAIR_SEARCH_TARGETS.length) {
+      return WHEELCHAIR_SEARCH_TARGETS
+        .filter((target) => !buildingKey || target.buildingKey === buildingKey)
+        .filter((target) => !level || target.level === level)
+        .map((target) => {
+          const unit = String(target.label || "").match(/\bU\s*(\d{2,3})\b/i)?.[1] || "";
+          const baseSearch = [
+            target.buildingLabel,
+            ...(target.buildingAliases || []),
+            target.level,
+            levelSearchAliases(target.level),
+            target.label,
+            ...(target.aliases || []),
+            target.summary,
+            unit ? "unite " + unit + " unité " + unit + " u" + unit : "",
+          ].join(" ");
+          return {
+            buildingKey: target.buildingKey,
+            buildingLabel: target.buildingLabel,
+            level: target.level,
+            location: target.location,
+            label: target.label,
+            hint: [target.buildingLabel, target.level].filter(Boolean).join(" · "),
+            search: norm(baseSearch),
+          };
+        });
+    }
+
     const targets = [];
     for (const building of BUILDINGS) {
       if (buildingKey && building.key !== buildingKey) continue;
@@ -1308,6 +1365,11 @@
           buildingButton("a4", "a4") +
           '<button type="button" class="tb-place-known' + (state.selectedLocation ? " is-active" : "") + '" data-location-search>' +
             '<span aria-hidden="true">📍</span><strong>Service<br>/ repère</strong>' +
+          '</button>' +
+        '</div>' +
+        '<div class="tb-place-featured">' +
+          '<button type="button" class="tb-place-featured-btn' + (state.selectedBuilding === "b14" ? " is-active" : "") + '" data-building-compose="b14" aria-pressed="' + (state.selectedBuilding === "b14" ? "true" : "false") + '">' +
+            '<span aria-hidden="true">☢</span><strong>Médecine nucléaire</strong><small>B14</small>' +
           '</button>' +
         '</div>' +
       '</div>' +
