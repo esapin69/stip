@@ -4,6 +4,46 @@
   const API = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const STORE = "stip_session_v1";
   const PRIVACY_KEY = "stip_tableau_privacy_seen_v1";
+  const TEAM_THREAD_CACHE_MS = 45 * 1000;
+  const POLL_ACTIVE_MS = 60 * 1000;
+  const POLL_PASSIVE_MS = 5 * 60 * 1000;
+  const TEAM_THREAD_MUTATIONS = new Set([
+    "direct",
+    "group",
+    "send",
+    "team_delete",
+    "team_react",
+    "team_resolve",
+    "team_send",
+    "team_still_there",
+    "team_take",
+  ]);
+  let teamThreadCache = { data: null, at: 0, inFlight: null };
+
+  function invalidateTeamThreadCache() {
+    teamThreadCache.at = 0;
+    teamThreadCache.data = null;
+  }
+
+  async function readTeamThread({ force = false } = {}) {
+    if (
+      !force &&
+      teamThreadCache.data &&
+      Date.now() - teamThreadCache.at < TEAM_THREAD_CACHE_MS
+    )
+      return teamThreadCache.data;
+    if (teamThreadCache.inFlight) return teamThreadCache.inFlight;
+    teamThreadCache.inFlight = api("team_thread")
+      .then((data) => {
+        teamThreadCache.data = data;
+        teamThreadCache.at = Date.now();
+        return data;
+      })
+      .finally(() => {
+        teamThreadCache.inFlight = null;
+      });
+    return teamThreadCache.inFlight;
+  }
 
   const state = {
     root: null,
@@ -379,6 +419,7 @@
           : json.error?.message || "Tableau STIP indisponible.",
       );
     }
+    if (TEAM_THREAD_MUTATIONS.has(action)) invalidateTeamThreadCache();
     return json;
   }
 
@@ -529,7 +570,7 @@
         }
         updateWheelchairFreshnessIndicators();
         if (!document.hidden) loadFull(true);
-      }, 3000);
+      }, POLL_ACTIVE_MS);
     }
   }
 
@@ -845,7 +886,7 @@
     if (state.loading || !state.root) return;
     state.loading = true;
     try {
-      const data = await api("team_thread");
+      const data = await readTeamThread();
       state.data = data;
 
       const canWrite =
@@ -3398,7 +3439,7 @@
     dmState.statusTimer = setInterval(() => {
       if (!state.root?.isConnected) return stopDmStatus();
       if (!document.hidden) loadDmStatus();
-    }, 10000);
+    }, POLL_ACTIVE_MS);
   }
 
 
@@ -3680,7 +3721,7 @@
         return;
       }
       if (!document.hidden) loadDmThread(true);
-    }, 3000);
+    }, POLL_ACTIVE_MS);
   }
 
   async function loadDmThread(quiet = false) {
@@ -3866,7 +3907,7 @@
     if (!homeState.button?.isConnected || homeState.loading) return;
     homeState.loading = true;
     try {
-      homeState.data = await api("team_thread");
+      homeState.data = await readTeamThread();
       renderHomeStatus();
     } catch (error) {
       if (!quiet) console.error(error);
@@ -3895,7 +3936,7 @@
       homeState.timer = setInterval(() => {
         if (!homeState.button?.isConnected) return stopHomeStatus();
         if (!document.hidden) loadHomeStatus(true);
-      }, 5000);
+      }, POLL_PASSIVE_MS);
     }
   }
 
@@ -4001,7 +4042,7 @@
     if (!previewState.root || previewState.loading) return;
     previewState.loading = true;
     try {
-      const data = await api("team_thread");
+      const data = await readTeamThread();
       previewState.data = data;
       const signature =
         dataSignature(data) + "|" + String(data.access_mode || "");
@@ -4061,7 +4102,7 @@
           return;
         }
         if (!document.hidden) loadPreview(true);
-      }, 3000);
+      }, POLL_PASSIVE_MS);
     }
   }
 
@@ -4097,6 +4138,19 @@
     unmountFull();
     unmountPreview();
     stopHomeStatus();
+    invalidateTeamThreadCache();
+  }
+
+  function refreshVisibleSurfaces(force = false) {
+    if (document.hidden) return;
+    if (force) invalidateTeamThreadCache();
+    if (state.root?.isConnected) loadFull(true);
+    if (previewState.root?.isConnected) loadPreview(true);
+    if (homeState.button?.isConnected) loadHomeStatus(true);
+    if (dmState.open && dmState.view === "thread" && dmState.conversationId)
+      loadDmThread(true);
+    else if (state.root?.isConnected)
+      loadDmStatus();
   }
 
   function openPhoto(url) {
@@ -4128,6 +4182,13 @@
     true,
   );
 
+  window.addEventListener("focus", () => refreshVisibleSurfaces(true));
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshVisibleSurfaces(true);
+  });
+  navigator.serviceWorker?.addEventListener?.("message", (event) => {
+    if (event.data?.type === "stip:push") refreshVisibleSurfaces(true);
+  });
   window.addEventListener("stip:session-ended", stopAll);
   window.addEventListener("stip:messages-unread", (event) => {
     const value = event?.detail?.dmCount;
@@ -4139,7 +4200,7 @@
   });
 
   const apiSurface = {
-    build: "20260925-dm-push3",
+    build: "20260926-network-budget1",
     mount,
     mountPreview,
     unmountFull,
