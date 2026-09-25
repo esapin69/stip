@@ -931,7 +931,7 @@ Deno.serve(async req=>{
     if(a==="trainee_send")return J(await traineeSend(c,b));
     if(a==="trainee_read"){if(!c.is_trainee)throw Error("Accès Stagiaire requis.");return J({ok:true,items:await traineeInbox(c,true)})}
     if(a==="wheelchair_catalog")return J(await wheelchairCatalog());
-    if(a==="agents"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await agents(c,String(b.q||""))});
+    if(a==="agents"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await agents(c,String(b.q||""))})}
     if(a==="on_duty"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await onDuty(c)})}
     if(a==="direct"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await direct(c,String(b.agent_id||""))})}
     if(a==="group"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await group(c,b)})}
