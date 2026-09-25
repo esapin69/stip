@@ -1,7 +1,7 @@
 (()=>{"use strict";
 let raf=0;
 const avatarNodes=()=>document.querySelectorAll(".hc-id-card .hc-avatar");
-const current=()=>window.STIPSession?.agent?.profile_photo_url||window.STIPBootCache?.agent?.profile_photo_url||"";
+const current=()=>window.STIPAgentSelector?.photoUrl?.(currentAgent())||currentAgent().profile_photo_url||currentAgent().avatar_url||"";
 const currentAgent=()=>{
   const session=window.STIPSession?.agent||{},boot=window.STIPBootCache?.agent||{};
   return {...boot,...session,profile_photo_url:session.profile_photo_url||boot.profile_photo_url||""};
