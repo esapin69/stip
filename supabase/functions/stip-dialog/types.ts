@@ -41,7 +41,7 @@ export type Card = Record<string, unknown>;
 export type Action = Record<string, unknown>;
 export type DialogResponse = {
   kind: string;
-  title: string;
+  title?: string | null;
   text: string;
   cards?: Card[];
   actions?: Action[];

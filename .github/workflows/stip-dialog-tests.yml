@@ -1,0 +1,38 @@
+name: STIP dialog tests
+
+on:
+  push:
+    branches:
+      - main
+      - "work/stip-ia-universal-*"
+    paths:
+      - "supabase/functions/stip-dialog/**"
+      - "communication-hub.js"
+      - ".github/workflows/stip-dialog-tests.yml"
+  pull_request:
+    paths:
+      - "supabase/functions/stip-dialog/**"
+      - "communication-hub.js"
+
+permissions:
+  contents: read
+
+jobs:
+  dialog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Pure dialog tests
+        run: |
+          deno run supabase/functions/stip-dialog/core.test.ts
+          deno run supabase/functions/stip-dialog/people.test.ts
+          deno run supabase/functions/stip-dialog/suggestions.test.ts
+          deno run supabase/functions/stip-dialog/semantic.test.ts
+      - name: Type check Edge Function
+        run: deno check supabase/functions/stip-dialog/index.ts
+      - name: Frontend syntax
+        run: node --check communication-hub.js

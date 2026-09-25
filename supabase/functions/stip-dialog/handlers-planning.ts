@@ -1,6 +1,6 @@
-import { normalize, type DateScope, type DialogContext } from "./core.ts";
+import { addDays, normalize, type DateScope, type DialogContext } from "./core.ts";
 import { baseContext, personActions, personCard } from "./presentation.ts";
-import { canon, dayLabel, db, isChief, overlaps, planningRows, shiftDetail, shiftText, shortDay, teamOf } from "./runtime.ts";
+import { canon, dayLabel, db, isChief, overlaps, planningRows, shiftDetail, shiftText, shortDay, teamOf, todayParis } from "./runtime.ts";
 import type { Agent, SessionCtx, ShiftDef } from "./types.ts";
 
 export async function planningAnswer(c: SessionCtx, old: DialogContext, subjects: Agent[], ds: DateScope, defs: Record<string, ShiftDef>) {
@@ -153,6 +153,51 @@ export async function organizationAnswer(c: SessionCtx, old: DialogContext, ds: 
     text: rows.length ? `${total} agents comptés sur les horaires de référence. ${rows.some((x: any) => x.status === "below_reference") ? "Au moins un créneau est sous la référence datée." : "Aucun créneau sous la référence datée dans les données actuelles."}` : "Aucune référence d’effectif n’est disponible pour cette date.",
     cards: shifts.map((x: any) => ({ type: "metric", title: x.shift_code || x.metric, subtitle: `${x.planned_count} / ${x.target_count}`, detail: Number(x.gap) === 0 ? "Référence atteinte" : Number(x.gap) > 0 ? `+${x.gap}` : String(x.gap), severity: x.severity })),
     actions: [], context: baseContext(old, { date_scope: ds, last_intent: "organization" }), suggestions: ["Qui est en J4 ?", "Qui est sur le terrain ?"],
+  };
+}
+
+
+export async function leaveLookupAnswer(c: SessionCtx, old: DialogContext, raw: string, defs: Record<string, ShiftDef>, all: Agent[] = []) {
+  const q = normalize(raw), start = todayParis(), end = addDays(start, 370);
+  const rows = await planningRows([c.agent.id], start, end);
+  const wantsRest = /\b(repos|jour off|off)\b/.test(q), wantsRtt = /\brtt\b/.test(q), wantsCa = /\bca\b/.test(q) && !/\bvac/.test(q);
+  const relevant = rows.map((r:any)=>({ ...r, c: canon(r.code) })).filter((r:any) =>
+    wantsRest ? r.c === "RH" : wantsRtt ? r.c === "RTT" : wantsCa ? r.c === "CA" : ["CA","RTT"].includes(r.c)
+  );
+  if (!relevant.length) return {
+    kind:"leave", title:wantsRest?"Prochain repos":wantsRtt?"Prochain RTT":wantsCa?"Prochain CA":"Prochains congés",
+    text:`Je ne trouve aucun ${wantsRest?"repos":wantsRtt?"RTT":wantsCa?"CA":"CA ou RTT"} futur renseigné dans le planning sur les 12 prochains mois.`, cards:[], actions:[],
+    context:baseContext(old,{last_intent:"leave_lookup",offered_options:[]}), suggestions:["Mon planning semaine prochaine ?"]
+  };
+  const groups:Array<{start:string;end:string;codes:string[]}>= [];
+  for(const r of relevant as any[]){
+    const last=groups[groups.length-1];
+    if(last && addDays(last.end,1)===String(r.date)){ last.end=String(r.date); if(!last.codes.includes(r.c))last.codes.push(r.c); }
+    else groups.push({start:String(r.date),end:String(r.date),codes:[r.c]});
+  }
+  const top=groups.slice(0,3), first=top[0];
+  const cards:any[] = top.map(g=>({type:"metric",title:g.start===g.end?dayLabel(g.start):`${shortDay(g.start)} → ${shortDay(g.end)}`,subtitle:g.codes.join(" + "),detail:g.start===g.end?"1 jour":`${Math.round((Date.parse(g.end)-Date.parse(g.start))/86400000)+1} jours`}));
+  let returnDate="", returnCode="";
+  for(const r of rows as any[]){ if(String(r.date)>first.end && defs[canon(r.code)]){returnDate=String(r.date);returnCode=canon(r.code);break;} }
+  const wantsReturn=/\b(reprend|reprends|reprise|retour)\b/.test(q), wantsColleagues=/\b(avec qui|qui.*avec|collegues?)\b/.test(q);
+  if(wantsReturn && returnDate) cards.unshift({type:"metric",title:`Reprise · ${dayLabel(returnDate)}`,subtitle:returnCode,detail:defs[returnCode]?shiftDetail(returnCode,defs):returnCode});
+  if(wantsColleagues && returnDate && all.length){
+    const ds:DateScope={start:returnDate,end:returnDate};
+    const team=await colleaguesAnswer(c,old,c.agent,ds,defs,all,"avec qui");
+    return {
+      kind:"combined", title:"Congés + reprise",
+      text:`${first.start===first.end?dayLabel(first.start):`${shortDay(first.start)} → ${shortDay(first.end)}`} · ${first.codes.join(" + ")}. Reprise ${dayLabel(returnDate)} en ${returnCode}. ${team.text}`,
+      cards:[...cards,...(team.cards||[])],actions:team.actions||[],suggestions:["Mon planning à la reprise ?"],
+      context:baseContext(old,{date_scope:ds,last_intent:"colleagues",offered_options:[]})
+    };
+  }
+  return {
+    kind:"leave", title:wantsRest?"Prochain repos":wantsRtt?"Prochain RTT":wantsCa?"Prochain CA":"Prochains congés",
+    text:wantsReturn && returnDate
+      ? `Ta prochaine période trouvée est ${first.start===first.end?dayLabel(first.start):`du ${dayLabel(first.start)} au ${dayLabel(first.end)}`}. Reprise ${dayLabel(returnDate)} en ${returnCode}.`
+      : `J’ai trouvé ${top.length} prochaine${top.length>1?"s":""} période${top.length>1?"s":""} dans ton planning.`,
+    cards,actions:[],suggestions:returnDate?["Qui travaille avec moi à la reprise ?","Mon planning à la reprise ?"]:["Mon planning semaine prochaine ?"],
+    context:baseContext(old,{date_scope:returnDate?{start:returnDate,end:returnDate}:undefined,last_intent:"leave_lookup",offered_options:[]})
   };
 }
 
