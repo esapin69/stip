@@ -3398,6 +3398,6 @@
       (window.STIPRouter?.get?.() || "home") === "home"
     )
       refresh().catch(() => {});
-  }, 60000);
+  }, 300000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
