@@ -2,6 +2,12 @@
   "use strict";
   let rows = [];
   let byCode = new Map();
+  const contextualHours = Object.freeze({
+    chefs: Object.freeze({
+      M: Object.freeze({ start_time: "06:30", end_time: "14:20" }),
+      S: Object.freeze({ start_time: "14:00", end_time: "21:30" }),
+    }),
+  });
 
   function clean(raw) {
     return String(raw ?? "").trim().toUpperCase().replace(/\*+$/, "");
@@ -51,6 +57,33 @@
     return base ? byCode.get(base) || null : null;
   }
 
+  function contextKey(context = {}) {
+    const team = String(
+      context.team || context.equipe || context.type_planning || "",
+    )
+      .trim()
+      .toLowerCase();
+    const role = String(context.role || context.role_metier || "")
+      .trim()
+      .toLowerCase();
+    return team === "chef" || team === "chefs" || role.includes("chef")
+      ? "chefs"
+      : "";
+  }
+
+  function resolveFor(raw, context = {}) {
+    const row = resolve(raw);
+    if (!row) return null;
+    const base = clean(row?.base_code || row?.code || raw);
+    const override = contextualHours[contextKey(context)]?.[base];
+    if (
+      !override ||
+      String(row?.schedule_mode || "standard") !== "standard"
+    )
+      return row;
+    return { ...row, ...override };
+  }
+
   function baseCode(raw) {
     const row = resolve(raw);
     return clean(row?.base_code || row?.code || raw) || "—";
@@ -86,8 +119,8 @@
     return v ? v.replace(":", "h") : "";
   }
 
-  function time(raw) {
-    const row = resolve(raw);
+  function time(raw, context = {}) {
+    const row = resolveFor(raw, context);
     if (!row) return "";
     const special = String(row.schedule_mode || "standard") !== "standard";
     const start = hhmm(special ? row.window_start : row.start_time);
@@ -116,6 +149,7 @@
     set,
     all,
     resolve,
+    resolveFor,
     clean,
     baseCode,
     label,
@@ -125,6 +159,7 @@
     isWorking,
     color,
     time,
+    timeFor: time,
   };
 
   window.STIPShiftRegistry = api;
