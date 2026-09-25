@@ -316,7 +316,12 @@
   }));
   function renderActions(){
     const pdf=state.format==="pdf";
-    actionHint.textContent=pdf?"Le PDF peut être affiché, imprimé, téléchargé ou partagé.":"Le tableur .xlsx peut être téléchargé ou partagé puis ouvert dans Excel ou Google Sheets.";
+    const masterPdf=pdf&&state.scope?.mode==="all";
+    actionHint.textContent=masterPdf
+      ?"GHE complet : ce PDF ouvre le MASTER officiel Drive intact. Les droits de partage Drive restent appliqués."
+      :pdf
+        ?"Le PDF peut être affiché, imprimé, téléchargé ou partagé."
+        :"Le tableur .xlsx peut être téléchargé ou partagé puis ouvert dans Excel ou Google Sheets.";
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["download","⇩","Télécharger"],
@@ -352,6 +357,44 @@
     document.body.classList.add("busy");
     setStatus(pdf?"Préparation du PDF…":"Préparation du tableur…");
     try{
+      if(pdf&&state.scope?.mode==="all"){
+        const masterResponse=await fetch(API,{
+          method:"POST",cache:"no-store",
+          headers:{"content-type":"application/json","x-stip-session":token},
+          body:JSON.stringify({action:"master_pdf_link"})
+        });
+        const master=await masterResponse.json().catch(()=>({}));
+        if(!masterResponse.ok)throw new Error(master.error||"MASTER PDF indisponible.");
+        if(action==="view"){
+          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
+          setStatus("MASTER officiel ouvert sans reconstruction.","ok");
+          return;
+        }
+        if(action==="print"){
+          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
+          setStatus("MASTER officiel ouvert : utilise l’action Imprimer du lecteur PDF/Drive.","ok");
+          return;
+        }
+        if(action==="download"){
+          const a=document.createElement("a");
+          a.href=master.download_url;
+          a.target="_blank";
+          a.rel="noopener noreferrer";
+          document.body.appendChild(a);a.click();a.remove();
+          setStatus("Téléchargement du MASTER officiel lancé.","ok");
+          return;
+        }
+        if(action==="share"){
+          if(navigator.share){
+            await navigator.share({title:"Visiter les lieux · GHE",url:master.view_url});
+            setStatus("Lien du MASTER partagé. Les droits Drive du fichier restent appliqués.","ok");
+          }else{
+            await navigator.clipboard?.writeText(master.view_url);
+            setStatus("Lien du MASTER copié. Les droits Drive du fichier restent appliqués.","ok");
+          }
+          return;
+        }
+      }
       const r=await fetch(API,{
         method:"POST",cache:"no-store",
         headers:{"content-type":"application/json","x-stip-session":token},
