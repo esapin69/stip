@@ -19,18 +19,18 @@
   function weekNumber(value){const d=dateObj(value);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w1=new Date(d.getFullYear(),0,4,12);return 1+Math.round(((d-w1)/DAY-3+((w1.getDay()+6)%7))/7)}
   function separatorLabel(model={},options={}){const s=normalize(model,options);if(s.weekOffset===0)return s.weekPast?"DÉBUT DE SEMAINE":"CETTE SEMAINE";if(s.weekOffset===1)return"SEMAINE PROCHAINE";if(s.weekOffset===-1)return"SEMAINE PRÉCÉDENTE";const first=fullDates(s,{today:s.today})[0];return first?`SEMAINE ${weekNumber(first)}`:"SEMAINE"}
 
-  // Master presentation rule: within one day, identical event categories collapse
-  // to one centered icon carrying ×N. Pages provide events; the template owns layout.
   function groupEventMarkers(root=document){
     const hosts=root.querySelectorAll?.(".stip-week-events, .rr-week-marks")||[];
     hosts.forEach((host)=>{
       const markers=[...host.querySelectorAll(":scope > .rr-marker[data-rr-filter]")],groups=new Map();
       markers.forEach((marker)=>{const key=`${marker.dataset.rrDate||""}|${marker.dataset.rrFilter||"other"}`;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(marker)});
       groups.forEach((rows)=>{
-        const first=rows[0];
+        const first=rows[0],previous=Math.max(1,Number(first.dataset.rrGroupCount)||1),count=Math.max(previous,rows.length);
         rows.slice(1).forEach((node)=>node.remove());
-        first.querySelectorAll(":scope > .rr-marker-count").forEach((node)=>node.remove());
-        if(rows.length>1){const badge=document.createElement("em");badge.className="rr-marker-count";badge.setAttribute("aria-hidden","true");badge.textContent=`×${rows.length}`;first.appendChild(badge);const base=String(first.title||"").split(" · ")[0].replace(/ ×\d+$/,"");first.title=`${base} ×${rows.length}`}
+        first.dataset.rrGroupCount=String(count);
+        let badge=first.querySelector(":scope > .rr-marker-count");
+        if(count>1){if(!badge){badge=document.createElement("em");badge.className="rr-marker-count";badge.setAttribute("aria-hidden","true");first.appendChild(badge)}badge.textContent=`×${count}`;const base=String(first.title||"").split(" · ")[0].replace(/ ×\d+$/,"");first.title=`${base} ×${count}`}
+        else if(badge)badge.remove();
       });
     });
   }
