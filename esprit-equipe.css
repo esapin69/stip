@@ -901,11 +901,6 @@ body.team-page {
  font-weight:950;
  text-transform:capitalize;
 }
-.team-date-jump-weekdays,.team-date-jump-grid{
- display:grid;
- grid-template-columns:repeat(7,minmax(0,1fr));
- gap:3px;
-}
 .team-date-jump-weekdays{
  margin:8px 0 4px;
  color:var(--stip-muted);
@@ -914,51 +909,9 @@ body.team-page {
  text-align:center;
  text-transform:uppercase;
 }
-.team-date-jump-grid>button,.team-date-jump-empty{
- min-width:0;
-}
-.team-date-jump-grid>button{
- border:1px solid transparent;
- border-radius:15px;
- background:#f8fbfc;
- color:var(--stip-ink-2);
- font:inherit;
- cursor:pointer;
- touch-action:manipulation;
-}
 .team-date-jump-grid>button.is-week:not(.is-selected):not(.is-today){
  border-color:color-mix(in srgb,var(--stip-accent) 12%,transparent);
  background:color-mix(in srgb,var(--stip-accent-soft) 32%,#f8fbfc);
-}
-.team-date-jump-grid>button:active{transform:scale(.95)}
-.team-cal-day-number{display:block}
-.team-cal-marker{line-height:1}
-.team-cal-marker-empty{
- width:19px;
- height:19px;
- display:block;
-}
-.team-cal-dot{
- width:18px;
- height:18px;
- display:block;
- border-radius:50%;
- box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 5px rgba(20,62,78,.08);
-}
-.team-cal-dot.shift-morning{background:var(--stip-shift-m)}
-.team-cal-dot.shift-day{background:var(--stip-shift-j)}
-.team-cal-dot.shift-late{background:var(--stip-shift-j4)}
-.team-cal-dot.shift-evening{background:var(--stip-shift-s)}
-.team-cal-dot.shift-night{background:var(--stip-shift-n)}
-.team-cal-icon{
- display:block;
- line-height:1;
- transform:translateY(-1px);
-}
-.team-cal-events{
- color:var(--stip-ink-2);
- letter-spacing:-.05em;
- white-space:nowrap;
 }
 @media(max-width:430px){
  .team-date-jump-panel{padding:9px}
