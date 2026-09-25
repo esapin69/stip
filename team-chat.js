@@ -48,6 +48,9 @@
     pendingImage: null,
     pendingPreviewUrl: "",
     scrollToLatest: false,
+    unread: Number(window.STIPDMUnread || 0),
+    statusLoading: false,
+    statusTimer: null,
   };
 
   const homeState = {
@@ -429,7 +432,7 @@
       '<section class="tb-page">' +
       '<section class="tb-inline-tools" aria-label="Outils du chat">' +
       '<span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
-      '<button type="button" class="tb-dm-shortcut" data-dm-open aria-label="Ouvrir les messages privés"><span>✉</span><strong>DM</strong></button>' +
+      '<button type="button" class="tb-dm-shortcut" data-dm-open aria-label="Ouvrir les messages privés"><span class="tb-dm-shortcut-icon">✉</span><strong>DM</strong><b class="tb-dm-shortcut-badge" data-dm-unread hidden></b></button>' +
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</section>" +
       '<section class="tb-dm-panel" data-dm-panel hidden aria-label="Messages privés"></section>' +
@@ -478,6 +481,7 @@
       state.lastSignature = "";
       root.innerHTML = pageMarkup();
       bind(root);
+      startDmStatus();
       const textarea = root.querySelector("textarea");
       if (textarea && state.draft) {
         textarea.value = state.draft;
@@ -503,6 +507,7 @@
   function stopFull() {
     if (state.timer) clearInterval(state.timer);
     state.timer = null;
+    stopDmStatus();
     unbindViewport();
   }
 
@@ -3332,6 +3337,58 @@
   function dmPanel() {
     return state.root?.querySelector("[data-dm-panel]") || null;
   }
+  function renderDmShortcut() {
+    const button = state.root?.querySelector("[data-dm-open]");
+    if (!button) return;
+    const count = Math.max(0, Number(dmState.unread || 0));
+    const badge = button.querySelector("[data-dm-unread]");
+    button.classList.toggle("has-unread", count > 0);
+    button.setAttribute(
+      "aria-label",
+      count
+        ? "Ouvrir les messages privés · " + count + " non lu" + (count > 1 ? "s" : "")
+        : "Ouvrir les messages privés",
+    );
+    if (badge) {
+      badge.hidden = count < 1;
+      badge.textContent = count > 99 ? "99+" : String(count);
+    }
+  }
+
+  function setDmUnread(count) {
+    dmState.unread = Math.max(0, Number(count || 0));
+    window.STIPDMUnread = dmState.unread;
+    renderDmShortcut();
+  }
+
+  async function loadDmStatus() {
+    if (!state.root?.isConnected || dmState.statusLoading) return;
+    dmState.statusLoading = true;
+    try {
+      const result = await api("dm_status");
+      setDmUnread(result?.unread || 0);
+    } catch {
+    } finally {
+      dmState.statusLoading = false;
+    }
+  }
+
+  function stopDmStatus() {
+    if (dmState.statusTimer) clearInterval(dmState.statusTimer);
+    dmState.statusTimer = null;
+    dmState.statusLoading = false;
+  }
+
+  function startDmStatus() {
+    stopDmStatus();
+    renderDmShortcut();
+    loadDmStatus();
+    dmState.statusTimer = setInterval(() => {
+      if (!state.root?.isConnected) return stopDmStatus();
+      if (!document.hidden) loadDmStatus();
+    }, 10000);
+  }
+
 
   function clearDmImage() {
     if (dmState.pendingPreviewUrl) {
@@ -3438,6 +3495,7 @@
       dmState.conversationId = "";
       dmState.thread = null;
       dmState.signature = "";
+      setDmUnread(home?.dm_unread || 0);
       if (!quiet || document.activeElement?.closest?.("[data-dm-panel]") == null) renderDmHome();
       else renderDmHome();
     } catch (error) {
@@ -3591,6 +3649,7 @@
       const panel = dmPanel();
       const editing = !!panel?.querySelector("[data-dm-text]:focus");
       if (!quiet || (changed && !editing)) renderDmThread();
+      loadDmStatus();
     } catch (error) {
       const panel = dmPanel();
       if (panel && !quiet) panel.innerHTML =
@@ -3726,6 +3785,7 @@
       clearDmImage();
       dmState.scrollToLatest = true;
       await loadDmThread(false);
+      loadDmStatus();
     } catch (error) {
       alert(error.message || "Envoi du DM impossible.");
     } finally {
@@ -4023,9 +4083,14 @@
   );
 
   window.addEventListener("stip:session-ended", stopAll);
+  window.addEventListener("stip:messages-unread", (event) => {
+    const value = event?.detail?.dmCount;
+    if (value == null) return;
+    setDmUnread(value);
+  });
 
   const apiSurface = {
-    build: "20260925-dm1",
+    build: "20260925-dm-push1",
     mount,
     mountPreview,
     unmountFull,
