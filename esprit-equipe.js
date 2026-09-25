@@ -250,54 +250,64 @@
     );
   }
 
+  function signalDatesForStart(start) {
+    if (start !== state.weekStart) return daysOfWeek(start);
+    const model = teamWeekDisplay(),
+      preferred = [state.dayFocus, ...(model.dates || []), model.nextMonday]
+        .filter((date) => /^\d{4}-\d{2}-\d{2}$/.test(String(date || "")));
+    return [...new Set(preferred)];
+  }
+
   async function loadWeekSignals(start, bundle, force = false) {
-    const cached = cacheEntry(start);
-    if (
-      !force &&
-      cached.signalLoaded &&
-      Date.now() - Number(cached.signalFetchedAt || 0) < CACHE_TTL
-    )
-      return;
-    if (cached.signalPromise && !force) return cached.signalPromise;
-    const days = daysOfWeek(start);
-    cached.signalPromise = (async () => {
-      const rows = new Array(days.length);
-      let cursor = 0;
-      const workers = Array.from(
-        { length: Math.min(3, Math.max(1, days.length)) },
-        async () => {
-          while (cursor < days.length) {
-            const index = cursor++;
-            try {
-              rows[index] = {
-                status: "fulfilled",
-                value: await post("stip-staffing", { action: "day", date: days[index] }),
-              };
-            } catch (reason) {
-              rows[index] = { status: "rejected", reason };
-            }
-          }
-        },
+    const cached = cacheEntry(start),
+      now = Date.now(),
+      dates = signalDatesForStart(start),
+      targets = dates.filter(
+        (date) =>
+          force ||
+          now - Number(cached.signalFetchedAtByDate.get(date) || 0) >=
+            CACHE_TTL,
       );
-      await Promise.all(workers);
-      rows.forEach((result, index) => {
-        const date = days[index],
-          staff = result?.status === "fulfilled" ? result.value : null,
-          items = assistantItemsForDate(bundle, date),
-          status = signalStatus(staff, items);
-        state.staffingByDate.set(date, staff);
-        state.daySignals.set(date, status);
-      });
-      cached.signalLoaded = true;
-      cached.signalFetchedAt = Date.now();
-      if (start === state.weekStart) {
-        renderHeader();
-        if (state.rendered) renderContent(cached);
-      }
-    })().catch(() => {}).finally(() => {
-      cached.signalPromise = null;
-    });
-    return cached.signalPromise;
+    if (!targets.length) return cached;
+
+    let cursor = 0;
+    const workers = Array.from(
+      { length: Math.min(3, Math.max(1, targets.length)) },
+      async () => {
+        while (cursor < targets.length) {
+          const date = targets[cursor++];
+          let promise = cached.signalPromisesByDate.get(date);
+          if (!promise) {
+            promise = post("stip-staffing", { action: "day", date })
+              .then((staff) => {
+                state.staffingByDate.set(date, staff);
+                state.daySignals.set(
+                  date,
+                  signalStatus(staff, assistantItemsForDate(bundle, date)),
+                );
+                cached.signalFetchedAtByDate.set(date, Date.now());
+                return staff;
+              })
+              .catch(() => {
+                const items = assistantItemsForDate(bundle, date);
+                state.daySignals.set(date, signalStatus(null, items));
+                return null;
+              })
+              .finally(() => cached.signalPromisesByDate.delete(date));
+            cached.signalPromisesByDate.set(date, promise);
+          }
+          await promise;
+
+          if (start === state.weekStart) {
+            renderWeekStrip();
+            renderDateJumpCalendar(state.dateJumpMonth);
+            if (state.rendered && date === state.dayFocus) renderContent(cached);
+          }
+        }
+      },
+    );
+    await Promise.all(workers);
+    return cached;
   }
 
   async function loadMonthSignals(key, force = false) {
@@ -375,6 +385,61 @@
       cached.promise = null;
     });
     return cached.promise;
+  }
+
+  let monthSignalWatchCleanup = null;
+
+  function monthZoneNearViewport() {
+    const zone = document.querySelector(".team-month-zone");
+    if (!zone) return false;
+    const margin = 520;
+    if (EMBEDDED && window.parent !== window) {
+      try {
+        const frame = window.frameElement,
+          parentWindow = window.parent,
+          frameRect = frame?.getBoundingClientRect(),
+          zoneRect = zone.getBoundingClientRect(),
+          viewportHeight =
+            parentWindow.visualViewport?.height || parentWindow.innerHeight,
+          top = Number(frameRect?.top || 0) + Number(zoneRect.top || 0);
+        return top < viewportHeight + margin && top + zoneRect.height > -margin;
+      } catch {}
+    }
+    const rect = zone.getBoundingClientRect(),
+      viewportHeight = window.visualViewport?.height || window.innerHeight;
+    return rect.top < viewportHeight + margin && rect.bottom > -margin;
+  }
+
+  function scheduleMonthSignals(force = false) {
+    monthSignalWatchCleanup?.();
+    monthSignalWatchCleanup = null;
+
+    let hostWindow = window;
+    if (EMBEDDED && window.parent !== window) {
+      try {
+        hostWindow = window.parent;
+      } catch {}
+    }
+
+    const cleanup = () => {
+      hostWindow.removeEventListener("scroll", check);
+      hostWindow.removeEventListener("resize", check);
+      hostWindow.visualViewport?.removeEventListener("resize", check);
+      hostWindow.visualViewport?.removeEventListener("scroll", check);
+      if (monthSignalWatchCleanup === cleanup) monthSignalWatchCleanup = null;
+    };
+    const check = () => {
+      if (!monthZoneNearViewport()) return;
+      cleanup();
+      loadMonthSignals(state.dateJumpMonth, force).catch(() => {});
+    };
+
+    hostWindow.addEventListener("scroll", check, { passive: true });
+    hostWindow.addEventListener("resize", check);
+    hostWindow.visualViewport?.addEventListener("resize", check);
+    hostWindow.visualViewport?.addEventListener("scroll", check);
+    monthSignalWatchCleanup = cleanup;
+    check();
   }
 
   function monthAssistantItems(key) {
@@ -730,13 +795,16 @@
         fetchedAt: 0,
         team: null,
         assistant: null,
-        activity: null,
-        activityPromise: null,
+        assistantPromise: null,
+        assistantLoaded: false,
+        assistantFetchedAt: 0,
+        activity: new Map(),
+        activityPromises: new Map(),
+        activityFetchedAt: new Map(),
         corePromise: null,
         coreLoaded: false,
-        signalLoaded: false,
-        signalFetchedAt: 0,
-        signalPromise: null,
+        signalFetchedAtByDate: new Map(),
+        signalPromisesByDate: new Map(),
       });
     return state.weeks.get(start);
   }
@@ -750,78 +818,115 @@
     )
       return cached;
     if (cached.corePromise && !force) return cached.corePromise;
+
     const end = addDays(start, 6);
-    cached.corePromise = Promise.allSettled([
-      allowed("planning_team")
-        ? post("stip-data", {
-            action: "spirit_week",
-            start_date: start,
-            end_date: end,
-          })
-        : Promise.resolve(null),
-      allowed("assistant_enabled")
-        ? post("stip-assistant", {
-            action: "feed",
-            start_date: start,
-            end_date: end,
-          })
-        : Promise.resolve(null),
-    ]).then((results) => {
-      cached.team = results[0].status === "fulfilled" ? results[0].value : null;
-      if (cached.team?.shift_definitions)
-        window.STIPShiftRegistry?.set?.(cached.team.shift_definitions);
-      cached.assistant =
-        results[1].status === "fulfilled" ? results[1].value : null;
-      cached.fetchedAt = Date.now();
-      cached.coreLoaded = true;
-      cached.corePromise = null;
-      cached.coreError = results.find(
-        (result) => result.status === "rejected",
-      )?.reason;
+    cached.corePromise = (async () => {
+      try {
+        const team = allowed("planning_team")
+          ? await post("stip-data", {
+              action: "spirit_week",
+              start_date: start,
+              end_date: end,
+            })
+          : null;
+        cached.team = team;
+        if (team?.shift_definitions)
+          window.STIPShiftRegistry?.set?.(team.shift_definitions);
+        cached.fetchedAt = Date.now();
+        cached.coreLoaded = true;
+        cached.coreError = null;
+      } catch (error) {
+        cached.coreError = error;
+        if (!cached.team) throw error;
+      } finally {
+        cached.corePromise = null;
+      }
       return cached;
-    });
+    })();
     return cached.corePromise;
   }
 
-  async function loadActivity(start, force = false) {
+  async function loadAssistant(start, force = false) {
     const cached = cacheEntry(start);
-    if (!allowed("activity")) return cached;
-    if (!force && cached.activity) return cached;
-    if (cached.activityPromise && !force) return cached.activityPromise;
-    const days = daysOfWeek(start);
-    cached.activityPromise = (async () => {
-      const results = new Array(days.length);
-      let cursor = 0;
-      const workers = Array.from(
-        { length: Math.min(2, Math.max(1, days.length)) },
-        async () => {
-          while (cursor < days.length) {
-            const index = cursor++;
-            try {
-              results[index] = {
-                status: "fulfilled",
-                value: await post("stip-cadre", { action: "dashboard", date: days[index] }),
-              };
-            } catch (reason) {
-              results[index] = { status: "rejected", reason };
-            }
-          }
-        },
-      );
-      await Promise.all(workers);
-      cached.activity = new Map();
-      results.forEach((result, index) => {
-        if (result?.status === "fulfilled")
-          cached.activity.set(days[index], result.value?.day || {});
-      });
-      cached.activityError = results.find(
-        (result) => result?.status === "rejected",
-      )?.reason;
+    if (!allowed("assistant_enabled")) {
+      cached.assistant = null;
+      cached.assistantLoaded = true;
       return cached;
-    })().finally(() => {
-      cached.activityPromise = null;
-    });
-    return cached.activityPromise;
+    }
+    if (
+      !force &&
+      cached.assistantLoaded &&
+      Date.now() - cached.assistantFetchedAt < CACHE_TTL
+    )
+      return cached;
+    if (cached.assistantPromise && !force) return cached.assistantPromise;
+
+    cached.assistantPromise = post("stip-assistant", {
+      action: "feed",
+      start_date: start,
+      end_date: addDays(start, 6),
+    })
+      .then((assistant) => {
+        cached.assistant = assistant;
+        cached.assistantLoaded = true;
+        cached.assistantFetchedAt = Date.now();
+        cached.assistantError = null;
+        return cached;
+      })
+      .catch((error) => {
+        cached.assistantError = error;
+        return cached;
+      })
+      .finally(() => {
+        cached.assistantPromise = null;
+      });
+    return cached.assistantPromise;
+  }
+
+  function recomputeLoadedSignals(start, bundle = cacheEntry(start)) {
+    const cached = cacheEntry(start);
+    for (const date of cached.signalFetchedAtByDate.keys()) {
+      const staff = state.staffingByDate.get(date);
+      state.daySignals.set(
+        date,
+        signalStatus(staff, assistantItemsForDate(bundle, date)),
+      );
+    }
+    if (start !== state.weekStart) return;
+    renderWeekStrip();
+    renderDateJumpCalendar(state.dateJumpMonth);
+    if (state.rendered && state.dayFocus) renderContent(bundle);
+  }
+
+  async function loadActivityDay(start, day, force = false) {
+    const cached = cacheEntry(start);
+    if (
+      !allowed("activity") ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(String(day || ""))
+    )
+      return cached;
+
+    const fetchedAt = Number(cached.activityFetchedAt.get(day) || 0);
+    if (!force && cached.activity.has(day) && Date.now() - fetchedAt < CACHE_TTL)
+      return cached;
+
+    const existing = cached.activityPromises.get(day);
+    if (existing && !force) return existing;
+
+    const promise = post("stip-cadre", { action: "dashboard", date: day })
+      .then((result) => {
+        cached.activity.set(day, result?.day || {});
+        cached.activityFetchedAt.set(day, Date.now());
+        cached.activityError = null;
+        return cached;
+      })
+      .catch((error) => {
+        cached.activityError = error;
+        return cached;
+      })
+      .finally(() => cached.activityPromises.delete(day));
+    cached.activityPromises.set(day, promise);
+    return promise;
   }
 
   function normalizeDayFocus() {
@@ -1648,42 +1753,34 @@
       const bundle = await loadCore(state.weekStart, force);
       if (request !== state.request) return;
 
-      window.STIPDutyChiefs?.hydrateFromPlanning?.(
+      const chiefsHydrated = window.STIPDutyChiefs?.hydrateFromPlanning?.(
         bundle?.team?.planning || [],
         todayIso(),
       );
+      if (chiefsHydrated === false)
+        window.STIPDutyChiefs?.refresh?.()?.catch?.(() => {});
+
       renderContent(bundle);
+      clearBusy();
 
-      const activityPromise = allowed("activity")
-        ? loadActivity(state.weekStart, force).catch(() => null)
-        : Promise.resolve(null);
+      loadWeekSignals(state.weekStart, bundle, force).catch(() => {});
 
-      activityPromise.then(() => {
-        if (request === state.request) renderContent(bundle);
-      });
+      loadAssistant(state.weekStart, force)
+        .then(() => {
+          if (request !== state.request) return;
+          recomputeLoadedSignals(state.weekStart, bundle);
+        })
+        .catch(() => {});
 
-      const runSignals = () => {
-        if (request !== state.request) return;
-        loadWeekSignals(state.weekStart, bundle, force)
+      if (allowed("activity") && state.dayFocus) {
+        loadActivityDay(state.weekStart, state.dayFocus, force)
           .then(() => {
             if (request === state.request) renderContent(bundle);
           })
-          .catch(() => {})
-          .finally(() => {
-            const runMonthSignals = () => {
-              if (request !== state.request) return;
-              loadMonthSignals(state.dateJumpMonth, force).catch(() => {});
-            };
-            if ("requestIdleCallback" in window)
-              requestIdleCallback(runMonthSignals, { timeout: 2200 });
-            else setTimeout(runMonthSignals, 1200);
-          });
-      };
-      if ("requestIdleCallback" in window)
-        requestIdleCallback(runSignals, { timeout: 700 });
-      else setTimeout(runSignals, 140);
+          .catch(() => {});
+      }
 
-      clearBusy();
+      scheduleMonthSignals(force);
       if (!force) prefetchAdjacentWeeks();
     } catch (error) {
       clearBusy();
