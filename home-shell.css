@@ -5878,3 +5878,35 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:.84rem!important;
   }
 }
+
+
+/* active-pilotage-entry-20260925
+   The opened workspace is identified by its shortcut itself, not by a duplicate separator. */
+.hc-pilotage-group-responsable.is-context-entry{
+  margin-top:10px;
+}
+.hc-pilotage-group-responsable.is-context-entry>.hc-pilotage-links{
+  padding-top:0!important;
+}
+.hc-pilotage-link.is-current{
+  position:relative;
+  z-index:1;
+  border-color:color-mix(in srgb,var(--stip-accent) 58%,#b8d8df)!important;
+  background:linear-gradient(135deg,#fff 0%,color-mix(in srgb,var(--stip-accent-soft) 74%,#fff) 100%)!important;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb,var(--stip-accent) 12%,transparent),
+    0 0 28px color-mix(in srgb,var(--stip-accent) 24%,transparent),
+    0 10px 24px rgba(18,79,96,.12)!important;
+}
+.hc-pilotage-link.is-current::after{
+  content:"";
+  position:absolute;
+  inset:-7px;
+  z-index:-1;
+  border-radius:inherit;
+  background:radial-gradient(circle at center,color-mix(in srgb,var(--stip-accent) 18%,transparent),transparent 72%);
+  pointer-events:none;
+}
+.hc-pilotage-link.is-current .hc-pilotage-link-icon{
+  filter:drop-shadow(0 0 7px color-mix(in srgb,var(--stip-accent) 48%,transparent));
+}
