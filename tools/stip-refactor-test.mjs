@@ -542,16 +542,20 @@ check(
 );
 
 
-/* Garde-fous Visiter les lieux — PDF fabriqué + pages fixes */
+/* Garde-fous Visiter les lieux — PDF fabriqué + templates STIP */
 const placesExportMasterGuard=read('places-export.html');
 const placesEdgeMasterGuard=read('supabase/functions/stip-places/index.ts');
+const placesHtmlDictionaryGuard=read('places.html');
 const placesAgentsMasterGuard=read('AGENTS.md');
+
 check(
   placesExportMasterGuard.includes('action:"export_pdf"') &&
-  !placesExportMasterGuard.includes('MASTER_PREVIEW_URL') &&
-  !placesExportMasterGuard.includes('MASTER_VIEW_URL') &&
-  placesExportMasterGuard.includes('PDF généré'),
-  'Le PDF doit être fabriqué par STIP et ne plus ouvrir directement le MASTER Drive.'
+  placesExportMasterGuard.includes('action:"export_xlsx"') &&
+  !placesExportMasterGuard.includes('master_pdf_file') &&
+  !placesExportMasterGuard.includes('master_pdf_link') &&
+  !placesExportMasterGuard.includes('"print"') &&
+  !placesExportMasterGuard.includes('Imprimer'),
+  'Export doit générer PDF/XLSX à la demande sans dépendance Drive ni bouton Imprimer.'
 );
 check(
   placesExportMasterGuard.includes('id="progressScope"') &&
@@ -569,22 +573,29 @@ check(
 check(
   placesEdgeMasterGuard.includes("action==='export_pdf'") &&
   placesEdgeMasterGuard.includes("session.app_level!=='pro'") &&
-  placesEdgeMasterGuard.includes("const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'") &&
+  placesEdgeMasterGuard.includes("const FIXED_TEMPLATE_BUCKET='ghe-media'") &&
+  placesEdgeMasterGuard.includes("const FIXED_TEMPLATE_PATH='exports/visite-des-lieux/master.pdf'") &&
+  !placesEdgeMasterGuard.includes('MASTER_DRIVE_ID') &&
+  !placesEdgeMasterGuard.includes('masterPdfLinks') &&
   placesEdgeMasterGuard.includes('FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13}') &&
   placesEdgeMasterGuard.includes('FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16') &&
-  placesEdgeMasterGuard.includes("HLP:'Synthèse · dictionnaire · accès et repères terrain'") &&
-  placesEdgeMasterGuard.includes("PW:'Synthèse · dictionnaire · accès et repères transport'") &&
-  placesEdgeMasterGuard.includes("HFME:'Synthèse · dictionnaire · repères terrain'"),
-  'Le moteur PDF doit conserver le contrôle professionnel, le mapping des pages fixes et les intercalaires du gabarit.'
+  placesEdgeMasterGuard.includes("db.from('stip_place_dictionary_field_defs')") &&
+  placesEdgeMasterGuard.includes('function exportFactValue'),
+  'Le moteur PDF doit rester Supabase-only, conserver les pages fixes et omettre les champs non renseignés.'
 );
 check(
-  placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF généré, pages fixes et dictionnaires') &&
-  placesAgentsMasterGuard.includes('Aucune information opérationnelle utile n’est supprimée') &&
-  placesAgentsMasterGuard.includes('copie miroir privée') &&
-  placesAgentsMasterGuard.includes('page 1 = repères GHE') &&
-  placesAgentsMasterGuard.includes('01 - SOURCE MAÎTRE - Visite des lieux GHE.xlsm') &&
-  placesAgentsMasterGuard.includes('16 pages héritées du MASTER + 3 nouveaux intercalaires'),
-  'Le contrat PDF généré + pages fixes + dictionnaire dynamique n’est plus documenté.'
+  placesHtmlDictionaryGuard.includes('dictionaryDefs=d.dictionary_field_defs||[]') &&
+  placesHtmlDictionaryGuard.includes('function dictionaryFieldDone') &&
+  placesHtmlDictionaryGuard.includes('Champs attendus du dictionnaire') &&
+  placesHtmlDictionaryGuard.includes('À compléter'),
+  'Les fiches professionnelles doivent afficher le catalogue des champs attendus et les lacunes à compléter.'
+);
+check(
+  placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF généré, templates STIP et dictionnaires') &&
+  placesAgentsMasterGuard.includes('Aucun fichier Drive n’est nécessaire au fonctionnement de l’outil') &&
+  placesAgentsMasterGuard.includes('stip_place_dictionary_field_defs') &&
+  placesAgentsMasterGuard.includes('Le bouton autonome **Imprimer** ne doit pas revenir'),
+  'Le contrat sans Drive + catalogue dictionnaire + suppression Imprimer n’est plus documenté.'
 );
 
 if(failures.length){
