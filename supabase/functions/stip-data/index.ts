@@ -2,6 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,db=createClient(URL,SERVICE)
 async function canonicalSourceKey(raw:string){const key=String(raw||'').trim();if(!key)return key;const {data:alias,error}=await db.from('stip_agent_identity_aliases').select('canonical_agent_id').eq('incoming_source_key',key).eq('active',true).maybeSingle();if(error)throw error;if(!alias?.canonical_agent_id)return key;const {data:agent,error:ae}=await db.from('agents').select('source_key').eq('id',alias.canonical_agent_id).maybeSingle();if(ae)throw ae;return String(agent?.source_key||key)}
+const TRAINEE_DEFAULT_AVATAR='https://drive.google.com/thumbnail?id=1OrU6Sl01mfmYYJgQxG40diKhsj_Yx0-Y&sz=w512';
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session','Access-Control-Allow-Methods':'POST,OPTIONS'}
 
 const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
@@ -45,7 +46,7 @@ async function traineeSubject(key:string){
   key=safeTraineeKey(key);if(!key)return null;
   const {data,error}=await db.from('stagiaires').select('source_key,nom,prenom,date_debut,date_fin').like('source_key',`stagiaire:${key}:%`).order('date_debut').limit(1).maybeSingle();
   if(error)throw error;if(!data)return null;
-  return{id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,nom:data.nom,prenom:data.prenom,equipe:'stage',type_planning:'stagiaire',role:'Stagiaire',ghe:null,telephone:null,email:null,matricule:null,avatar_url:null,profile_photo_url:null,identity_kind:'stagiaire',trainee_key:key}
+  return{id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,nom:data.nom,prenom:data.prenom,equipe:'stage',type_planning:'stagiaire',role:'Stagiaire',ghe:null,telephone:null,email:null,matricule:null,avatar_url:TRAINEE_DEFAULT_AVATAR,profile_photo_url:TRAINEE_DEFAULT_AVATAR,identity_kind:'stagiaire',trainee_key:key}
 }
 async function traineePlanning(key:string){
   key=safeTraineeKey(key);if(!key)return[];
