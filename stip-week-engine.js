@@ -36,10 +36,80 @@
   }
   let markerFrame=0;
   function scheduleMarkerGrouping(){cancelAnimationFrame(markerFrame);markerFrame=requestAnimationFrame(()=>groupEventMarkers(document))}
+
+  const SWIPE_SURFACE=".stip-week-line, .stip-month-calendar";
+  const SWIPE_MIN_PX=48;
+  let swipeStart=null,suppressClickUntil=0,dispatchingSwipeClick=false;
+
+  function periodNavFor(surface){
+    if(!surface)return null;
+    const isWeek=surface.classList.contains("stip-week-line"),
+      selector=isWeek?".stip-week-master-nav":".stip-month-nav";
+    if(!isWeek){
+      const own=surface.querySelector(selector);
+      if(own)return own;
+    }
+    let scope=surface.parentElement,depth=0;
+    while(scope&&depth<6){
+      const direct=[...scope.children].find((node)=>node.matches?.(selector));
+      if(direct)return direct;
+      scope=scope.parentElement;
+      depth+=1;
+    }
+    return null;
+  }
+
+  function periodButton(surface,direction){
+    const nav=periodNavFor(surface);
+    if(!nav)return null;
+    const buttons=[...nav.querySelectorAll(":scope > button")];
+    const button=direction<0?buttons[0]:buttons[buttons.length-1];
+    if(!button||button.disabled||button.getAttribute("aria-disabled")==="true")return null;
+    return button;
+  }
+
+  function handleSwipe(surface,startX,startY,endX,endY){
+    if(!surface)return false;
+    const dx=endX-startX,dy=endY-startY,ax=Math.abs(dx),ay=Math.abs(dy),
+      width=Math.max(1,Number(surface.clientWidth)||1),
+      threshold=Math.max(SWIPE_MIN_PX,Math.min(72,width*.14));
+    if(ax<threshold||ax<=ay*1.25)return false;
+    const button=periodButton(surface,dx<0?1:-1);
+    if(!button)return false;
+    suppressClickUntil=Date.now()+450;
+    dispatchingSwipeClick=true;
+    try{button.click()}finally{dispatchingSwipeClick=false}
+    return true;
+  }
+
+  function installSwipeNavigation(){
+    document.addEventListener("touchstart",(event)=>{
+      if(event.touches.length!==1)return;
+      const surface=event.target.closest?.(SWIPE_SURFACE);
+      if(!surface)return;
+      const touch=event.touches[0];
+      swipeStart={surface,x:touch.clientX,y:touch.clientY};
+    },{passive:true,capture:true});
+    document.addEventListener("touchend",(event)=>{
+      if(!swipeStart||event.changedTouches.length!==1){swipeStart=null;return}
+      const start=swipeStart;
+      swipeStart=null;
+      const touch=event.changedTouches[0];
+      handleSwipe(start.surface,start.x,start.y,touch.clientX,touch.clientY);
+    },{passive:true,capture:true});
+    document.addEventListener("touchcancel",()=>{swipeStart=null},{passive:true,capture:true});
+    document.addEventListener("click",(event)=>{
+      if(dispatchingSwipeClick||Date.now()>=suppressClickUntil)return;
+      if(event.target.closest?.(SWIPE_SURFACE)){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    },true);
+  }
   if(typeof document!=="undefined"){
-    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",scheduleMarkerGrouping,{once:true});else scheduleMarkerGrouping();
+    if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{scheduleMarkerGrouping();installSwipeNavigation()},{once:true});else{scheduleMarkerGrouping();installSwipeNavigation()}
     new MutationObserver(scheduleMarkerGrouping).observe(document.documentElement,{childList:true,subtree:true});
   }
 
-  window.STIPWeekEngine=Object.freeze({todayIso,addDays,mondayIso,weekOffsetFor,stateForDate,move,fullDates,visibleDates,display,rangeLabel,separatorLabel,weekNumber,groupEventMarkers});
+  window.STIPWeekEngine=Object.freeze({todayIso,addDays,mondayIso,weekOffsetFor,stateForDate,move,fullDates,visibleDates,display,rangeLabel,separatorLabel,weekNumber,groupEventMarkers,handleSwipe});
 })();
