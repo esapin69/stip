@@ -476,6 +476,9 @@ async function teamSend(ctx:any,body:any){
       location=String(wheelchair.location||"").trim().slice(0,120),
       rawPersistence=String(wheelchair.persistence||"").trim().toLowerCase(),
       persistence=["fast","normal","sheltered"].includes(rawPersistence)?rawPersistence:"normal";
+    if(type==="spot"&&wheelchairSpotLocationTooVague(location)){
+      throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.")
+    }
     payload.wheelchair={
       type,
       status:"active",
@@ -767,6 +770,12 @@ function wheelchairLevelRank(value:any){
 }
 function wheelchairNorm(value:any){
   return String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim()
+}
+function wheelchairSpotLocationTooVague(value:any){
+  const parts=String(value||"").split("|").map(wheelchairNorm).filter(Boolean);
+  if(!parts.length)return true;
+  const generic=new Set(["ascenseur","ascenseurs","couloir","escalier","escaliers","hall","accueil","entree"]);
+  return parts.every((part:string)=>generic.has(part)||/^tout le\b/.test(part)||/^tout l etage\b/.test(part))
 }
 async function wheelchairCatalog(){
   const codes=[...new Set(WHEELCHAIR_BUILDINGS.flatMap(x=>x.codes))];
