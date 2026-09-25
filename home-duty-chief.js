@@ -502,12 +502,9 @@
   });
   const init = () => {
     render();
-    if (document.getElementById("teamDutyChiefTodayHost")) {
-      setTimeout(() => {
-        if (!data) fetchDuty();
-      }, 900);
-      return;
-    }
+    // Sur Esprit d’équipe, le planning hebdomadaire hydrate directement les
+    // chefs. Ne pas lancer une deuxième requête concurrente au démarrage.
+    if (document.getElementById("teamDutyChiefTodayHost")) return;
     fetchDuty();
   };
   if (document.readyState === "loading")
