@@ -1571,7 +1571,7 @@
       return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
     return `<button type="button" class="hc-pilotage-link${active ? " is-current" : ""}" data-app="${esc(item.action || "")}" aria-current="${active ? "page" : "false"}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
   }
-  const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v1";
+  const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v2";
   function readPilotageOpen() {
     try {
       const value = JSON.parse(sessionStorage.getItem(PILOTAGE_OPEN_STORE) || "[]");
