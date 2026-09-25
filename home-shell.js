@@ -2449,6 +2449,130 @@
       legend = fixedShiftLegend();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}<section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
+  const EMBEDDED_VIEWPORT_LAYER_SELECTOR = [
+    "#teamShiftAnalysisOverlay",
+    "#teamCallOverlay",
+    ".hc-duty-chief-call-overlay",
+    ".team-agent-overlay.open",
+    "#sasCallOverlay",
+    "#sasPickerOverlay",
+    ".aav-overlay",
+    "#respPanel.open",
+    ".ta-sheet.open",
+    "dialog[open]",
+  ].join(",");
+
+  function bindEmbeddedViewportLayer(frame, doc, syncFrameHeight) {
+    if (!frame || !doc) return;
+    frame._stipViewportLayerCleanup?.();
+
+    const childWindow = doc.defaultView;
+    let active = false;
+    let saved = null;
+    let raf = 0;
+
+    const hasOpenLayer = () =>
+      [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
+        (node) =>
+          !node.hidden &&
+          node.getAttribute("aria-hidden") !== "true" &&
+          doc.defaultView?.getComputedStyle(node)?.display !== "none",
+      );
+
+    const applyViewportBounds = () => {
+      if (!active) return;
+      const viewport = window.visualViewport,
+        top = Math.max(0, Math.round(viewport?.offsetTop || 0)),
+        left = Math.max(0, Math.round(viewport?.offsetLeft || 0)),
+        width = Math.max(1, Math.round(viewport?.width || window.innerWidth)),
+        height = Math.max(1, Math.round(viewport?.height || window.innerHeight));
+      frame.style.setProperty("position", "fixed", "important");
+      frame.style.setProperty("top", top + "px", "important");
+      frame.style.setProperty("left", left + "px", "important");
+      frame.style.setProperty("right", "auto", "important");
+      frame.style.setProperty("bottom", "auto", "important");
+      frame.style.setProperty("width", width + "px", "important");
+      frame.style.setProperty("height", height + "px", "important");
+      frame.style.setProperty("max-width", "none", "important");
+      frame.style.setProperty("z-index", "99990", "important");
+      frame.style.setProperty("border-radius", "0", "important");
+      frame.style.setProperty("box-shadow", "none", "important");
+    };
+
+    const enter = () => {
+      if (active) {
+        applyViewportBounds();
+        return;
+      }
+      const rect = frame.getBoundingClientRect();
+      saved = {
+        frameStyle: frame.getAttribute("style"),
+        scrollY: window.scrollY,
+        childScrollY: Math.max(0, Math.round(-rect.top)),
+        htmlOverflow: document.documentElement.style.overflow,
+        bodyOverflow: document.body.style.overflow,
+      };
+      active = true;
+      frame.dataset.stipViewportLayer = "1";
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+      applyViewportBounds();
+      try {
+        childWindow?.scrollTo?.(0, saved.childScrollY);
+      } catch {}
+    };
+
+    const leave = () => {
+      if (!active) return;
+      active = false;
+      delete frame.dataset.stipViewportLayer;
+      try {
+        childWindow?.scrollTo?.(0, 0);
+      } catch {}
+      if (saved?.frameStyle == null) frame.removeAttribute("style");
+      else frame.setAttribute("style", saved.frameStyle);
+      document.documentElement.style.overflow = saved?.htmlOverflow || "";
+      document.body.style.overflow = saved?.bodyOverflow || "";
+      const scrollY = Number(saved?.scrollY || 0);
+      saved = null;
+      requestAnimationFrame(() => {
+        syncFrameHeight?.();
+        window.scrollTo(0, scrollY);
+      });
+    };
+
+    const sync = () => {
+      raf = 0;
+      if (hasOpenLayer()) enter();
+      else leave();
+    };
+    const schedule = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(sync);
+    };
+
+    const observer = new MutationObserver(schedule);
+    observer.observe(doc.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "open", "hidden", "aria-hidden"],
+    });
+    window.addEventListener("resize", applyViewportBounds);
+    window.visualViewport?.addEventListener("resize", applyViewportBounds);
+    window.visualViewport?.addEventListener("scroll", applyViewportBounds);
+    schedule();
+
+    frame._stipViewportLayerCleanup = () => {
+      cancelAnimationFrame(raf);
+      observer.disconnect();
+      window.removeEventListener("resize", applyViewportBounds);
+      window.visualViewport?.removeEventListener("resize", applyViewportBounds);
+      window.visualViewport?.removeEventListener("scroll", applyViewportBounds);
+      leave();
+    };
+  }
+
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
     if (!frame || frame.dataset.stipBound === "1") return;
@@ -2477,6 +2601,7 @@
           const body = doc.body,
             html = doc.documentElement;
           if (!body || !html) return;
+          if (frame.dataset.stipViewportLayer === "1") return;
           const height = Math.max(
             body.scrollHeight,
             body.offsetHeight,
@@ -2497,6 +2622,7 @@
           frame._stipTeamResizeObserver = observer;
         }
         requestAnimationFrame(syncFrameHeight);
+        bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
 
         // Keep agent/chef sheets in the parent page. This preserves the shared
         // Applications / Mon profil / Esprit d'équipe header instead of trapping
@@ -2580,6 +2706,7 @@
           const body = doc.body,
             html = doc.documentElement;
           if (!body || !html) return;
+          if (frame.dataset.stipViewportLayer === "1") return;
           const height = Math.max(
             body.scrollHeight,
             body.offsetHeight,
@@ -2604,6 +2731,7 @@
         requestAnimationFrame(syncFrameHeight);
         setTimeout(syncFrameHeight, 120);
         setTimeout(syncFrameHeight, 650);
+        bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
       } catch {}
     };
     frame.addEventListener("load", setup);
