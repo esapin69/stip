@@ -38,16 +38,18 @@
   function scheduleMarkerGrouping(){cancelAnimationFrame(markerFrame);markerFrame=requestAnimationFrame(()=>groupEventMarkers(document))}
 
   const SWIPE_SURFACE=".stip-week-line, .stip-month-calendar";
-  const SWIPE_MIN_PX=48;
-  const SWIPE_DRAG_START_PX=14;
+  const SWIPE_MIN_PX=44;
+  const SWIPE_DRAG_START_PX=10;
   let swipeStart=null,suppressClickUntil=0,dispatchingSwipeClick=false;
 
-  const reducedMotion=()=>window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches===true;
+  const gesture=()=>window.STIPGesture||null;
+  const reducedMotion=()=>gesture()?.reducedMotion?.()??window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches===true;
+  const clamp=(value,min,max)=>gesture()?.clamp?.(value,min,max)??Math.max(min,Math.min(max,value));
 
   function clearSwipeVisual(surface){
     if(!surface)return;
+    surface.classList.remove("stip-swipe-live");
     surface.style.removeProperty("transform");
-    surface.style.removeProperty("opacity");
     surface.style.removeProperty("transition");
     surface.style.removeProperty("will-change");
   }
@@ -65,49 +67,6 @@
         bd=Math.hypot((br.left+br.width/2)-cx,(br.top+br.height/2)-cy);
       return ad-bd;
     })[0];
-  }
-
-  function animateIncoming(selector,rect,direction){
-    if(reducedMotion())return;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      const surface=nearestReplacement(selector,rect);
-      if(!surface?.animate)return;
-      clearSwipeVisual(surface);
-      surface.animate([
-        {transform:`translate3d(${direction*26}%,0,0)`,opacity:.35},
-        {transform:"translate3d(0,0,0)",opacity:1}
-      ],{duration:190,easing:"cubic-bezier(.2,.75,.25,1)"});
-    }));
-  }
-
-  function commitSwipe(surface,button,direction,currentDx=0){
-    const selector=surface.classList.contains("stip-week-line")?".stip-week-line":".stip-month-calendar",
-      rect=surface.getBoundingClientRect(),
-      finish=()=>{
-        clearSwipeVisual(surface);
-        dispatchingSwipeClick=true;
-        try{button.click()}finally{dispatchingSwipeClick=false}
-        animateIncoming(selector,rect,direction);
-      };
-    if(reducedMotion()||!surface.animate){finish();return}
-    const width=Math.max(1,Number(surface.clientWidth)||1),
-      fromPct=(currentDx/width)*100,
-      toPct=-direction*38,
-      anim=surface.animate([
-        {transform:`translate3d(${fromPct}%,0,0)`,opacity:Math.max(.45,1-Math.min(.38,Math.abs(fromPct)/115))},
-        {transform:`translate3d(${toPct}%,0,0)`,opacity:.28}
-      ],{duration:135,easing:"cubic-bezier(.4,0,.7,.2)",fill:"forwards"});
-    anim.finished.then(finish).catch(finish);
-  }
-
-  function resetSwipe(surface,currentDx=0){
-    if(!surface)return;
-    if(reducedMotion()||!surface.animate){clearSwipeVisual(surface);return}
-    const anim=surface.animate([
-      {transform:`translate3d(${currentDx}px,0,0)`,opacity:Math.max(.65,1-Math.min(.28,Math.abs(currentDx)/600))},
-      {transform:"translate3d(0,0,0)",opacity:1}
-    ],{duration:135,easing:"cubic-bezier(.2,.75,.25,1)"});
-    anim.finished.finally(()=>clearSwipeVisual(surface));
   }
 
   function periodNavFor(surface){
@@ -137,17 +96,168 @@
     return button;
   }
 
-  function handleSwipe(surface,startX,startY,endX,endY,currentDx=endX-startX){
-    if(!surface)return false;
-    const dx=endX-startX,dy=endY-startY,ax=Math.abs(dx),ay=Math.abs(dy),
+  function cueContent(surface,direction,button){
+    const isWeek=surface.classList.contains("stip-week-line"),
+      fallback=isWeek
+        ? direction>0?"Semaine suivante":"Semaine précédente"
+        : direction>0?"Mois suivant":"Mois précédent",
+      label=String(button?.getAttribute("aria-label")||fallback),
+      arrow=direction>0?"→":"←";
+    if(isWeek){
+      return `<div class="stip-swipe-cue-copy"><span>${arrow}</span><strong>${label}</strong></div><div class="stip-swipe-cue-week-grid" aria-hidden="true">${Array.from({length:7},()=>"<i></i>").join("")}</div>`;
+    }
+    return `<div class="stip-swipe-cue-copy"><span>${arrow}</span><strong>${label}</strong></div><div class="stip-swipe-cue-month-grid" aria-hidden="true">${Array.from({length:35},()=>"<i></i>").join("")}</div>`;
+  }
+
+  function removeCue(start,immediate=false){
+    const cue=start?.cue,host=start?.host;
+    if(!cue){
+      host?.classList.remove("stip-swipe-host-active");
+      return;
+    }
+    start.cue=null;
+    start.cueDirection=0;
+    const done=()=>{
+      cue.remove();
+      host?.classList.remove("stip-swipe-host-active");
+    };
+    if(immediate||reducedMotion()||!cue.animate){done();return}
+    const anim=cue.animate([{opacity:1},{opacity:0}],{duration:80,easing:"linear"});
+    anim.finished.then(done).catch(done);
+  }
+
+  function ensureCue(start,direction){
+    if(!start?.surface||!direction)return null;
+    const button=periodButton(start.surface,direction);
+    if(!button)return null;
+    if(start.cue&&start.cueDirection===direction)return start.cue;
+    start.cue?.remove();
+    const host=start.surface.parentElement;
+    if(!host)return null;
+    host.classList.add("stip-swipe-host-active");
+    const cue=document.createElement("div");
+    cue.className=`stip-swipe-neighbor-cue ${start.surface.classList.contains("stip-week-line")?"is-week":"is-month"}`;
+    cue.setAttribute("aria-hidden","true");
+    cue.innerHTML=cueContent(start.surface,direction,button);
+    host.appendChild(cue);
+    start.host=host;
+    start.cue=cue;
+    start.cueDirection=direction;
+    return cue;
+  }
+
+  function applyDrag(start,rawDx){
+    if(!start?.surface)return 0;
+    const surface=start.surface,
       width=Math.max(1,Number(surface.clientWidth)||1),
-      threshold=Math.max(SWIPE_MIN_PX,Math.min(72,width*.14));
-    if(ax<threshold||ax<=ay*1.25){resetSwipe(surface,currentDx);return false}
+      direction=rawDx<0?1:-1,
+      button=periodButton(surface,direction),
+      limit=button?width*.98:width*.18,
+      dx=clamp(rawDx,-limit,limit);
+    start.currentDx=dx;
+    start.direction=direction;
+    surface.classList.add("stip-swipe-live");
+    surface.style.willChange="transform";
+    surface.style.transition="none";
+    surface.style.transform=`translate3d(${dx}px,0,0)`;
+    const cue=button?ensureCue(start,direction):null;
+    if(cue){
+      cue.style.transition="none";
+      cue.style.willChange="transform";
+      cue.style.transform=`translate3d(${direction*width+dx}px,0,0)`;
+    }else if(start.cue){
+      removeCue(start,true);
+    }
+    return dx;
+  }
+
+  function resetSwipe(start){
+    const surface=start?.surface;
+    if(!surface)return;
+    const dx=Number(start.currentDx||0),
+      cue=start.cue,
+      direction=start.cueDirection||start.direction||1,
+      width=Math.max(1,Number(surface.clientWidth)||1);
+    if(reducedMotion()||!surface.animate){
+      clearSwipeVisual(surface);
+      removeCue(start,true);
+      return;
+    }
+    const a=surface.animate(
+      [{transform:`translate3d(${dx}px,0,0)`},{transform:"translate3d(0,0,0)"}],
+      {duration:170,easing:"cubic-bezier(.22,.78,.2,1)"}
+    );
+    if(cue?.animate){
+      cue.animate(
+        [{transform:`translate3d(${direction*width+dx}px,0,0)`},{transform:`translate3d(${direction*width}px,0,0)`}],
+        {duration:170,easing:"cubic-bezier(.22,.78,.2,1)"}
+      );
+    }
+    a.finished.finally(()=>{
+      clearSwipeVisual(surface);
+      removeCue(start,true);
+    });
+  }
+
+  function revealReplacement(selector,rect,start){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      const surface=nearestReplacement(selector,rect);
+      if(surface){
+        clearSwipeVisual(surface);
+        if(!reducedMotion()&&surface.animate){
+          surface.animate(
+            [{transform:"translate3d(2.5%,0,0)"},{transform:"translate3d(0,0,0)"}],
+            {duration:105,easing:"cubic-bezier(.2,.75,.25,1)"}
+          );
+        }
+      }
+      removeCue(start,false);
+    }));
+  }
+
+  function commitSwipe(start,button,direction){
+    const surface=start.surface,
+      selector=surface.classList.contains("stip-week-line")?".stip-week-line":".stip-month-calendar",
+      rect=surface.getBoundingClientRect(),
+      width=Math.max(1,Number(surface.clientWidth)||1),
+      dx=Number(start.currentDx||0),
+      cue=ensureCue(start,direction),
+      finish=()=>{
+        clearSwipeVisual(surface);
+        dispatchingSwipeClick=true;
+        try{button.click()}finally{dispatchingSwipeClick=false}
+        revealReplacement(selector,rect,start);
+      };
+    if(reducedMotion()||!surface.animate){finish();return}
+    const duration=Math.max(105,Math.min(190,120+Math.round((1-Math.min(1,Math.abs(dx)/width))*55))),
+      out=surface.animate(
+        [{transform:`translate3d(${dx}px,0,0)`},{transform:`translate3d(${-direction*width}px,0,0)`}],
+        {duration,easing:"cubic-bezier(.18,.82,.22,1)",fill:"forwards"}
+      );
+    if(cue?.animate){
+      cue.animate(
+        [{transform:`translate3d(${direction*width+dx}px,0,0)`},{transform:"translate3d(0,0,0)"}],
+        {duration,easing:"cubic-bezier(.18,.82,.22,1)",fill:"forwards"}
+      );
+    }
+    out.finished.then(finish).catch(finish);
+  }
+
+  function handleSwipe(surface,startX,startY,endX,endY,currentDx=endX-startX,velocityX=0,startState=null){
+    if(!surface)return false;
+    const dx=endX-startX,dy=endY-startY,
+      width=Math.max(1,Number(surface.clientWidth)||1),
+      shouldCommit=gesture()?.shouldCommit?.({
+        dx,dy,width,velocityX,minDistance:SWIPE_MIN_PX,progress:.14,flickDistance:24,flickVelocity:.48,horizontalRatio:1.25
+      })??(Math.abs(dx)>=Math.max(SWIPE_MIN_PX,Math.min(72,width*.14))&&Math.abs(dx)>Math.abs(dy)*1.25),
+      start=startState||{surface,currentDx,direction:dx<0?1:-1};
+    start.currentDx=currentDx;
+    if(!shouldCommit){resetSwipe(start);return false}
     const direction=dx<0?1:-1,
       button=periodButton(surface,direction);
-    if(!button){resetSwipe(surface,currentDx);return false}
+    if(!button){resetSwipe(start);return false}
     suppressClickUntil=Date.now()+520;
-    commitSwipe(surface,button,direction,currentDx);
+    commitSwipe(start,button,direction);
     return true;
   }
 
@@ -156,56 +266,86 @@
       if(event.touches.length!==1)return;
       const surface=event.target.closest?.(SWIPE_SURFACE);
       if(!surface)return;
-      const touch=event.touches[0];
-      swipeStart={surface,x:touch.clientX,y:touch.clientY,lastX:touch.clientX,lastY:touch.clientY,horizontal:false,vertical:false};
+      const touch=event.touches[0],now=performance.now();
+      swipeStart={
+        surface,
+        x:touch.clientX,
+        y:touch.clientY,
+        lastX:touch.clientX,
+        lastY:touch.clientY,
+        sampleX:touch.clientX,
+        sampleT:now,
+        velocityX:0,
+        currentDx:0,
+        axis:"",
+        cue:null,
+        cueDirection:0,
+        host:null
+      };
     },{passive:true,capture:true});
+
     document.addEventListener("touchmove",(event)=>{
       if(!swipeStart||event.touches.length!==1)return;
-      const touch=event.touches[0],dx=touch.clientX-swipeStart.x,dy=touch.clientY-swipeStart.y,
-        ax=Math.abs(dx),ay=Math.abs(dy);
+      const touch=event.touches[0],
+        dx=touch.clientX-swipeStart.x,
+        dy=touch.clientY-swipeStart.y,
+        now=performance.now();
       swipeStart.lastX=touch.clientX;
       swipeStart.lastY=touch.clientY;
-      if(!swipeStart.horizontal&&!swipeStart.vertical){
-        if(Math.max(ax,ay)<SWIPE_DRAG_START_PX)return;
-        if(ax>=ay*1.35){
-          swipeStart.horizontal=true;
-          if(!reducedMotion()){
-            swipeStart.surface.style.willChange="transform, opacity";
-            swipeStart.surface.style.transition="none";
-          }
-        }else{
-          swipeStart.vertical=true;
+
+      if(!swipeStart.axis){
+        const resolved=gesture()?.axis?.(dx,dy,{deadZone:SWIPE_DRAG_START_PX,horizontalRatio:1.35})
+          ||(Math.max(Math.abs(dx),Math.abs(dy))<SWIPE_DRAG_START_PX?"":Math.abs(dx)>=Math.abs(dy)*1.35?"x":"y");
+        if(!resolved)return;
+        swipeStart.axis=resolved;
+        if(resolved==="y"){
           clearSwipeVisual(swipeStart.surface);
+          removeCue(swipeStart,true);
           return;
         }
       }
-      if(swipeStart.horizontal&&ay>ax*1.18){
-        swipeStart.horizontal=false;
-        swipeStart.vertical=true;
-        clearSwipeVisual(swipeStart.surface);
+      if(swipeStart.axis!=="x")return;
+
+      if(event.cancelable)event.preventDefault();
+      const instant=gesture()?.velocity?.(swipeStart.sampleX,swipeStart.sampleT,touch.clientX,now)
+        ??((touch.clientX-swipeStart.sampleX)/Math.max(1,now-swipeStart.sampleT));
+      swipeStart.velocityX=swipeStart.velocityX*.55+instant*.45;
+      swipeStart.sampleX=touch.clientX;
+      swipeStart.sampleT=now;
+      applyDrag(swipeStart,dx);
+    },{passive:false,capture:true});
+
+    document.addEventListener("touchend",(event)=>{
+      if(!swipeStart||event.changedTouches.length!==1){
+        if(swipeStart)removeCue(swipeStart,true);
+        swipeStart=null;
         return;
       }
-      if(!swipeStart.horizontal)return;
-      if(reducedMotion())return;
-      const width=Math.max(1,Number(swipeStart.surface.clientWidth)||1),
-        limited=Math.max(-width*.62,Math.min(width*.62,dx)),
-        fade=Math.max(.62,1-Math.abs(limited)/(width*1.55));
-      swipeStart.surface.style.transform=`translate3d(${limited}px,0,0)`;
-      swipeStart.surface.style.opacity=String(fade);
-    },{passive:true,capture:true});
-    document.addEventListener("touchend",(event)=>{
-      if(!swipeStart||event.changedTouches.length!==1){swipeStart=null;return}
       const start=swipeStart;
       swipeStart=null;
       const touch=event.changedTouches[0],
         endX=Number.isFinite(touch.clientX)?touch.clientX:start.lastX,
         endY=Number.isFinite(touch.clientY)?touch.clientY:start.lastY,
-        dx=endX-start.x;
-      if(start.vertical){clearSwipeVisual(start.surface);return}
-      if(start.horizontal)suppressClickUntil=Date.now()+260;
-      handleSwipe(start.surface,start.x,start.y,endX,endY,dx);
+        dx=endX-start.x,
+        now=performance.now(),
+        finalVelocity=gesture()?.velocity?.(start.sampleX,start.sampleT,endX,now)
+          ??((endX-start.sampleX)/Math.max(1,now-start.sampleT)),
+        velocityX=start.velocityX*.65+finalVelocity*.35;
+      if(start.axis==="y"||!start.axis){
+        clearSwipeVisual(start.surface);
+        removeCue(start,true);
+        return;
+      }
+      suppressClickUntil=Date.now()+280;
+      handleSwipe(start.surface,start.x,start.y,endX,endY,start.currentDx||dx,velocityX,start);
     },{passive:true,capture:true});
-    document.addEventListener("touchcancel",()=>{if(swipeStart)resetSwipe(swipeStart.surface,swipeStart.lastX-swipeStart.x);swipeStart=null},{passive:true,capture:true});
+
+    document.addEventListener("touchcancel",()=>{
+      const start=swipeStart;
+      swipeStart=null;
+      if(start)resetSwipe(start);
+    },{passive:true,capture:true});
+
     document.addEventListener("click",(event)=>{
       if(dispatchingSwipeClick||Date.now()>=suppressClickUntil)return;
       if(event.target.closest?.(SWIPE_SURFACE)){
@@ -214,6 +354,7 @@
       }
     },true);
   }
+
   if(typeof document!=="undefined"){
     if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{scheduleMarkerGrouping();installSwipeNavigation()},{once:true});else{scheduleMarkerGrouping();installSwipeNavigation()}
     new MutationObserver(scheduleMarkerGrouping).observe(document.documentElement,{childList:true,subtree:true});
