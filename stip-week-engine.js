@@ -97,17 +97,69 @@
     return button;
   }
 
-  function cueContent(surface,direction,button){
-    const isWeek=surface.classList.contains("stip-week-line"),
-      fallback=isWeek
-        ? direction>0?"Semaine suivante":"Semaine précédente"
-        : direction>0?"Mois suivant":"Mois précédent",
-      label=String(button?.getAttribute("aria-label")||fallback),
-      arrow=direction>0?"→":"←";
-    if(isWeek){
-      return `<div class="stip-swipe-cue-copy"><span>${arrow}</span><strong>${label}</strong></div><div class="stip-swipe-cue-week-grid" aria-hidden="true">${Array.from({length:7},()=>"<i></i>").join("")}</div>`;
+  function datasetDates(surface){
+    const rows=[];
+    surface?.querySelectorAll?.("*").forEach((node)=>{
+      for(const value of Object.values(node.dataset||{})){
+        const raw=String(value||"").slice(0,10);
+        if(valid(raw))rows.push(raw);
+      }
+    });
+    return [...new Set(rows)].sort();
+  }
+
+  function monthKeyForSurface(surface){
+    const direct=String(surface?.dataset?.calendarMonth||"").slice(0,7);
+    if(/^\d{4}-\d{2}$/.test(direct))return direct;
+    const dates=datasetDates(surface);
+    if(dates[0])return dates[0].slice(0,7);
+    const text=String(periodNavFor(surface)?.querySelector("strong")?.textContent||"")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    const names=["janvier","fevrier","mars","avril","mai","juin","juillet","aout","septembre","octobre","novembre","decembre"],
+      month=names.findIndex((name)=>text.includes(name)),
+      year=Number((text.match(/\b(20\d{2})\b/)||[])[1]);
+    return month>=0&&year?`${year}-${String(month+1).padStart(2,"0")}`:"";
+  }
+
+  function adjacentMonth(surface,direction){
+    const key=monthKeyForSurface(surface);
+    if(!key)return{month:direction>0?"MOIS SUIVANT":"MOIS PRÉCÉDENT",year:""};
+    const [year,month]=key.split("-").map(Number),
+      d=new Date(year,month-1+direction,1,12),
+      label=d.toLocaleDateString("fr-FR",{month:"long"}).replace(/^./,(x)=>x.toUpperCase());
+    return{month:label.toLocaleUpperCase("fr-FR"),year:String(d.getFullYear())};
+  }
+
+  function adjacentWeekLabel(surface,direction){
+    const dates=datasetDates(surface);
+    if(!dates.length)return direction>0?"SEMAINE SUIVANTE":"SEMAINE PRÉCÉDENTE";
+    let start,end;
+    if(direction>0&&dates.length<7){
+      start=addDays(dates.at(-1),1);
+      end=addDays(start,6);
+    }else if(direction<0&&dates.length<7){
+      end=addDays(dates[0],-1);
+      start=addDays(end,-6);
+    }else{
+      start=addDays(dates[0],direction*7);
+      end=addDays(dates.at(-1),direction*7);
     }
-    return `<div class="stip-swipe-cue-copy"><span>${arrow}</span><strong>${label}</strong></div><div class="stip-swipe-cue-month-grid" aria-hidden="true">${Array.from({length:35},()=>"<i></i>").join("")}</div>`;
+    const a=dateObj(start),b=dateObj(end),
+      month=(d)=>d.toLocaleDateString("fr-FR",{month:"long"}).replace(/^./,(x)=>x.toUpperCase());
+    return a.getMonth()===b.getMonth()
+      ? `${a.getDate()} → ${b.getDate()} ${month(b)}`
+      : `${a.getDate()} ${month(a)} → ${b.getDate()} ${month(b)}`;
+  }
+
+  function cueContent(surface,direction,button){
+    const isWeek=surface.classList.contains("stip-week-line");
+    if(isWeek){
+      const label=adjacentWeekLabel(surface,direction),
+        arrow=direction>0?"→":"←";
+      return `<div class="stip-swipe-week-label"><span>${arrow}</span><strong>${label}</strong></div>`;
+    }
+    const next=adjacentMonth(surface,direction);
+    return `<div class="stip-swipe-month-word"><strong>${next.month}</strong><small>${next.year}</small></div>`;
   }
 
   function removeCue(start,immediate=false){
@@ -137,7 +189,7 @@
     if(!host)return null;
     host.classList.add("stip-swipe-host-active");
     const cue=document.createElement("div");
-    cue.className=`stip-swipe-neighbor-cue ${start.surface.classList.contains("stip-week-line")?"is-week":"is-month"}`;
+    cue.className=`stip-swipe-neighbor-cue ${start.surface.classList.contains("stip-week-line")?"is-week":"is-month"} ${direction>0?"is-next":"is-prev"}`;
     cue.setAttribute("aria-hidden","true");
     cue.innerHTML=cueContent(start.surface,direction,button);
     host.appendChild(cue);
