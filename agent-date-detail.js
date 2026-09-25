@@ -179,6 +179,24 @@
         .join("") +
       "</div></section>";
   }
+  function renderAgenda(x) {
+    setHead("Événement", "Détail de l’événement STIP");
+    $("#ddContent").innerHTML =
+      '<section class="dd-hero"><div class="dd-hero-row"><span class="dd-hero-icon">' +
+      esc(x.icon || "📌") +
+      '</span><div><h2>' +
+      esc(x.title || "Événement") +
+      "</h2><p>" +
+      esc(longDate(x.date)) +
+      (x.time ? " · " + esc(x.time) : "") +
+      '</p></div></div></section><section class="dd-section"><h3>Informations</h3><div class="dd-card"><strong>' +
+      esc(x.person_name || "Agent") +
+      "</strong>" +
+      (x.location ? "<p>" + esc(x.location) + "</p>" : "") +
+      (x.detail ? "<small>" + esc(x.detail) + "</small>" : "") +
+      "</div></section>";
+  }
+
   async function init() {
     if (!localStorage.getItem(STORE)) {
       location.replace("index.html");
@@ -210,12 +228,15 @@
             ? "training_detail"
             : type === "medical"
               ? "medical_detail"
-              : "";
+              : type === "agenda"
+                ? "agenda_detail"
+                : "";
       if (!action) throw Error("Type non pris en charge.");
       const r = await post(API, action, { source_id: source });
       if (type === "intern") renderIntern(r);
       else if (type === "training") renderTraining(r);
-      else renderMedical(r);
+      else if (type === "medical") renderMedical(r);
+      else renderAgenda(r);
     } catch (e) {
       $("#ddContent").innerHTML =
         '<div class="dd-empty">' + esc(e.message) + "</div>";
