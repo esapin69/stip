@@ -1565,10 +1565,11 @@
   }
   function pilotageLink(item = {}) {
     if (item.when && !item.when()) return "";
-    const inner = `<span class="hc-pilotage-link-icon" aria-hidden="true">${esc(item.icon || "•")}</span><strong>${esc(item.label || "")}</strong><b aria-hidden="true">›</b>`;
+    const active = item.action && item.action === state.homeMode,
+      inner = `<span class="hc-pilotage-link-icon" aria-hidden="true">${esc(item.icon || "•")}</span><strong>${esc(item.label || "")}</strong><b aria-hidden="true">›</b>`;
     if (item.href)
       return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
-    return `<button type="button" class="hc-pilotage-link" data-app="${esc(item.action || "")}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
+    return `<button type="button" class="hc-pilotage-link${active ? " is-current" : ""}" data-app="${esc(item.action || "")}" aria-current="${active ? "page" : "false"}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
   }
   const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v1";
   function readPilotageOpen() {
@@ -1599,6 +1600,8 @@
     const separator = `<span>${esc(label)}</span>`;
     if (collapsible)
       return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"${openRoles.has(key) ? " open" : ""}><summary class="stip-section-separator hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
+    if (key === "responsable")
+      return `<section class="hc-pilotage-group hc-pilotage-group-responsable is-open is-context-entry" data-pilotage-role="responsable" aria-label="Espace Responsable"><div class="hc-pilotage-links">${links}</div></section>`;
     return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="stip-section-separator hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
   }
   function pilotageBlock() {
