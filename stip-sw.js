@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260926-network-budget1";
+const STIP_SW_BUILD="20260926-avatar-budget1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
