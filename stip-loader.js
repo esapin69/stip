@@ -103,15 +103,18 @@
     homeExtrasPromise = Promise.all([
       style("event-feedback.css"),
       style("admin-access-requests-home.css"),
-      seq([
-        "event-feedback.js",
-        "home-duty-chief.js",
-        "admin-access-requests-home.js",
-      ]),
-    ]).catch((error) => {
-      homeExtrasPromise = null;
-      throw error;
-    });
+    ])
+      .then(() =>
+        seq([
+          "event-feedback.js",
+          "home-duty-chief.js",
+          "admin-access-requests-home.js",
+        ]),
+      )
+      .catch((error) => {
+        homeExtrasPromise = null;
+        throw error;
+      });
     return homeExtrasPromise;
   }
   function tableau() {
