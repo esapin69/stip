@@ -109,17 +109,26 @@ function buildMarkdown(payload: any) {
   const prompts = Array.isArray(payload.prompts) ? payload.prompts : [];
 
   return [
-    "# DOSSIER DE CONTRE-VÉRIFICATION — ADMIN eSapin",
+    "# DOSSIER DE CONTRE-VÉRIFICATION ET D'EXÉCUTION — STIP",
     "",
-    "## Consigne générale",
-    "Tu travailles pour le patron du projet. Le moteur a préparé une proposition, mais tu dois chercher activement ce qui pourrait la contredire.",
-    "Tu peux utiliser les connecteurs déjà disponibles dans le compte ChatGPT (GitHub, Supabase, Vercel, Google Drive) pour contre-vérifier les preuves si nécessaire.",
-    "Ne modifie, ne supprime et ne déploie rien : ton rôle ici est uniquement de vérifier et de rendre une recommandation factuelle.",
+    "## Identité du dossier",
+    `CASE_ID : ${c.id}`,
+    "SUPABASE_PROJECT_ID : yzsrmuxghlengnkyphxj",
+    "TABLE DOSSIERS : public.admin_cleanup_cases",
+    "TABLE JOURNAL : public.admin_cleanup_case_events",
+    "",
+    "## Mission",
+    "Prends la suite complète de ce dossier dans cette conversation ChatGPT.",
+    "Commence par contre-vérifier les faits avec les connecteurs GitHub, Supabase, Vercel et Google Drive. Pendant cette phase, ne change rien.",
+    "Quand la vérification est terminée, présente au patron une seule question simple, factuelle et mesurable avec les choix utiles : VALIDER, MODIFIER, REFUSER ou SUPPRIMER.",
+    "Le patron prend la décision finale ici. Après sa réponse explicite, réalise le travail correspondant avec les connecteurs, vérifie le résultat et mets à jour ce dossier dans Supabase.",
+    "Ne demande pas au patron de copier-coller une réponse dans STIP.",
+    "Clôture le dossier seulement après contrôles. En cas d'échec ou de nouvelle preuve contradictoire, journalise-la et arrête l'exécution concernée.",
     "",
     "## Source",
     `${source?.label || c.source_key || "Source"} — ${source?.locator || ""}`,
     "",
-    "## Question au patron",
+    "## Question initiale",
     c.question || c.title,
     "",
     "## Contexte",
@@ -152,15 +161,13 @@ function buildMarkdown(payload: any) {
       String(p.text || p),
       ""
     ]),
-    "## Réponse finale obligatoire",
-    "Rends à la fin un bloc court, directement copiable dans Admin eSapin :",
+    "## Retour STIP obligatoire",
+    "Après la décision, enregistre-la dans public.admin_cleanup_cases et ajoute les étapes dans public.admin_cleanup_case_events.",
+    "Si l'action décidée réussit après tests, marque le dossier terminé et renseigne le résultat. Si elle échoue, marque l'échec avec la preuve.",
     "",
-    "DÉCISION PROPOSÉE : VALIDER | MODIFIER | REFUSER | SUPPRIMER",
-    "MOTIF FACTUEL : ...",
-    "MODIFICATION DEMANDÉE : ...",
-    "POINT À NE PAS CASSER : ...",
-    "PREUVE MANQUANTE : ...",
-    "NIVEAU DE CERTITUDE : .../100"
+    "## Format avant décision",
+    "Résume seulement : CE QUI EST PROUVÉ / CE QUI RESTE INCERTAIN / CONSÉQUENCE CONCRÈTE / TA PROPOSITION.",
+    "Puis pose une seule question de décision au patron. Après sa réponse, exécute et vérifie sans lui demander de revenir dans STIP."
   ].join("\n");
 }
 
