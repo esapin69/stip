@@ -771,8 +771,8 @@
         : "",
       visual=landscape
         ? loading
-          ? `<span class="hc-shift-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot hc-loading-event-slot is-empty" aria-hidden="true"></span>`
-          : `<span class="hc-shift-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
+          ? `<span class="hc-shift-core stip-week-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot stip-week-events hc-loading-event-slot is-empty" aria-hidden="true"></span>`
+          : `<span class="hc-shift-core stip-week-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
     return `<${tag}${attrs} class="${cls} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
   }
