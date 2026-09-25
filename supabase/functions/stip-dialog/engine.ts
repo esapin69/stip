@@ -131,19 +131,19 @@ export async function answer(c: SessionCtx, body: any) {
   const raw = String(body.text || "").trim();
   if (!raw) throw Error("Écris quelque chose.");
   const old: DialogContext = body.context && typeof body.context === "object" ? body.context : {};
-  const all = await directory();
-  const defs = await shiftDefinitions();
-
-  let intent: Intent = classifyIntent(raw);
+  const semantic = semanticClassify(raw, old);
+  let intent: Intent = semantic.intent !== "help" ? semantic.intent : classifyIntent(raw);
   const option = offeredOptionIntent(raw, old.offered_options || []);
   if (option === "planning") intent = "planning";
   if (option === "coordonnees") intent = "contact";
   if (option === "message") intent = "messaging_help";
-  if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(raw)) intent = "exchange";
-  if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(raw)) intent = "shift_roster";
+  if ((intent === "help" || intent === "planning") && old.last_intent === "exchange" && extractShift(semanticText(raw))) intent = "exchange";
+  if (intent === "help" && ["shift_roster", "organization"].includes(String(old.last_intent || "")) && extractShift(semanticText(raw))) intent = "shift_roster";
   if (intent === "help" && old.place_id && /\b(autour|repere|reperes|info|infos|information|informations|detail|details|fiche|alias|proche|relie|lie a)\b/.test(normalize(raw))) intent = "place";
 
-  const parsedScope = parseDateScope(raw, todayParis(), old);
+  if (intent === "app_navigation" && semantic.app) return appNavigationAnswer(c, old, semantic.app);
+
+  const parsedScope = parseDateScope(semanticText(raw), todayParis(), old);
   if (intent === "exchange" && !parsedScope) return {
     kind: "exchange", title: "Échange de planning",
     text: "Pour quel jour ou quelle période veux-tu chercher un échange ?",
@@ -151,6 +151,7 @@ export async function answer(c: SessionCtx, body: any) {
     context: baseContext(old, { last_intent: "exchange", offered_options: [] }),
   };
   const ds = parsedScope || defaultScope(intent);
+  const [all, defs] = await Promise.all([directory(), shiftDefinitions()]);
 
   if (intent === "selection") return selectionAnswer(c, old, raw, all, ds, defs);
 
@@ -159,14 +160,14 @@ export async function answer(c: SessionCtx, body: any) {
   const resolved = resolvePeople(raw, all, contextIds, allowContext);
   const explicitSubjects = resolved.candidates;
 
-  if (intent === "request_help") {
+  if (intent === "leave_lookup") return leaveLookupAnswer(c, old, semanticText(raw), defs, all);\n\n  if (intent === "request_help") {
     const requestText = normalize(raw), isAbsence = /\b(absence|absent|absente)\b/.test(requestText);
     return {
       kind: "redirect", title: isAbsence ? "Prévenir d’une absence" : "Demande de congé",
       text: isAbsence
         ? "STIP possède déjà le parcours “Prévenir d’une absence” avec contexte d’effectif et circuit responsable. Ouvre ton planning puis touche le jour concerné."
         : "STIP possède déjà un parcours dédié aux congés avec analyse des périodes et suivi de la demande. Ouvre ton planning, touche le premier jour concerné puis “Demander un congé”. Je ne recrée pas une demande parallèle ici.",
-      cards: [], actions: [{ type: "open", label: "Ouvrir mon planning", url: "index.html?quick=personal" }],
+      cards: [], actions: canOpenApp(c,"planning_personal") ? [{ type: "app", app: "planning_personal", label: "Ouvrir mon planning" }] : [],
       context: baseContext(old, { date_scope: parsedScope || undefined, last_intent: "request_help", offered_options: [] }),
       suggestions: parsedScope ? ["Mon planning sur cette période ?"] : ["Mon planning cette semaine ?", "Mon planning semaine prochaine ?"],
     };
@@ -176,7 +177,7 @@ export async function answer(c: SessionCtx, body: any) {
     const subjects = explicitSubjects.length ? explicitSubjects : (contextualMessage ? findAgents(all, contextIds) : []);
     return messagingHelp(c, old, ds, subjects, all, raw);
   }
-  if (intent === "exchange") return exchangeAnswer(c, old, ds, extractShift(raw), all, defs);
+  if (intent === "exchange") return exchangeAnswer(c, old, ds, extractShift(semanticText(raw)), all, defs);
   if (intent === "place") {
     const p = await placeAnswer(c, old, raw, ds);
     if (p) return p;
@@ -186,8 +187,8 @@ export async function answer(c: SessionCtx, body: any) {
     };
   }
   if (intent === "on_duty") return onDutyRoster(c, old, ds, all, defs);
-  if (intent === "organization" && !extractShift(raw)) return organizationAnswer(c, old, ds);
-  if (intent === "shift_roster" || (intent === "organization" && extractShift(raw))) return shiftRoster(c, old, ds, extractShift(raw)!, all, defs);
+  if (intent === "organization" && !extractShift(semanticText(raw))) return organizationAnswer(c, old, ds);
+  if (intent === "shift_roster" || (intent === "organization" && extractShift(semanticText(raw)))) return shiftRoster(c, old, ds, extractShift(semanticText(raw))!, all, defs);
 
   if (intent === "colleagues") {
     const subject = explicitSubjects[0] || findAgents(all, contextIds)[0] || c.agent;
