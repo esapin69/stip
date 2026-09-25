@@ -18,7 +18,7 @@
 <section id="view" class="view hidden"></section><div id="status" class="status">Ouverture des plannings…</div>
 </main>
 <script src="stip-session-continuity.js?v=20260926-continuity2"></script>
-<script src="stip-navigation.js?v=20260926-navigation2"></script>
+<script src="stip-navigation.js?v=20260926-navigation5"></script>
 <script>
 (()=>{'use strict';
 const DATA='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data',ACCESS='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',STORE='stip_session_v1',$=s=>document.querySelector(s),selected=new Map();
@@ -49,6 +49,6 @@ function render(){if(!selected.size)return;const self=session?.agent||{},cols=[s
 async function boot(){const token=localStorage.getItem(STORE)||'';if(!token){location.replace('index.html');return}try{const cached=window.STIPContinuity?.readFresh?.()||null,sessionRequest=cached?Promise.resolve(cached):(window.STIPContinuity?.validate?.()||call(ACCESS,'me'));[session,spirit]=await Promise.all([sessionRequest,call(DATA,'spirit')]);if(cached)window.STIPContinuity?.validate?.().then(fresh=>{if(fresh)session=fresh}).catch(()=>{});if(!session?.permissions?.planning_team)throw Error('Comparaison non autorisée.');collectAgents();$('#teamLabel').textContent=spirit.team?`Équipe ${spirit.team}`:'';$('#status').classList.add('hidden');if(applyPrefill()){render()}else{$('#picker').classList.remove('hidden');paintPicker();if(HOME_ENTRY)setTimeout(()=>$('#search')?.focus(),60)}}catch(e){$('#status').textContent=e.message||'Comparaison indisponible.'}}
 $('#search').addEventListener('input',paintPicker);$('#compareBtn').onclick=render;boot()})();
 </script>
-<script src="quick-access-universal.js?v=20260926-navigation2"></script>
+<script src="quick-access-universal.js?v=20260926-navigation5"></script>
 </body>
 </html>
