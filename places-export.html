@@ -27,32 +27,51 @@
     .step-copy strong{display:block;color:#123b4b;font-size:1rem}
     .step-copy small{display:block;margin-top:3px;color:#607983;font-weight:650;line-height:1.35}
     .choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .choice{min-height:88px;padding:14px;display:flex;align-items:flex-start;gap:11px;text-align:left}
-    .choice .ico{font-size:1.45rem;line-height:1}
-    .choice strong{display:block;color:#123b4b}
-    .choice small{display:block;margin-top:4px;color:#607983;font-size:.76rem;line-height:1.35}
-    .choice.is-active,.mini.is-active{outline:2px solid #0b8799;background:#e6f5f7}
-    .subpanel{margin-top:12px;padding-top:12px;border-top:1px solid rgba(18,59,75,.12)}
+    .choice-grid[hidden],.selection-summary[hidden],.format-note[hidden]{display:none!important}
+    .choice{position:relative;min-height:88px;padding:14px 48px 14px 14px;display:flex!important;align-items:flex-start;gap:11px;text-align:left;border:1px solid #c7d8dd!important;border-radius:15px!important;background:#fff!important;color:#123b4b!important;box-shadow:0 5px 13px rgba(18,59,75,.045)!important}
+    .choice:after{content:"";position:absolute;right:15px;top:50%;width:22px;height:22px;transform:translateY(-50%);border:2px solid #9eb9c1;border-radius:999px;background:#fff;box-sizing:border-box}
+    .choice.is-active{outline:none!important;border-color:#0b8799!important;background:#eff8f9!important;box-shadow:0 0 0 2px rgba(11,135,153,.12)!important}
+    .choice.is-active:after{content:"✓";display:grid;place-items:center;border-color:#0e5969;background:#0e5969;color:#fff;font-size:.72rem;font-weight:950}
+    .choice .ico{flex:0 0 auto;color:#0e5969;font-size:1.4rem;line-height:1}
+    .choice strong{display:block;color:#123b4b!important;font-size:.92rem;font-weight:900}
+    .choice small{display:block;margin-top:4px;color:#607983!important;font-size:.76rem;line-height:1.35;font-weight:650}
+    .subpanel{margin-top:13px;padding:14px;border:1px solid #d3e1e5;border-radius:15px;background:#f7fbfb}
     .subpanel[hidden]{display:none!important}
     .mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    .mini{min-height:52px;padding:10px 12px;text-align:left}
-    .mini strong{display:block}
-    .mini small{display:block;margin-top:2px;color:#66808a;font-size:.72rem}
-    .sub-actions{display:flex;justify-content:flex-end;margin-top:10px}
-    .selection-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding:10px 12px;border-radius:12px;background:#f2f8f9;color:#315966;font-size:.78rem;font-weight:750}
+    .mini{position:relative;min-height:58px;padding:10px 40px 10px 12px;text-align:left;border:1px solid #c7d8dd!important;border-radius:12px!important;background:#fff!important;color:#123b4b!important;box-shadow:none!important}
+    .mini:after{content:"";position:absolute;right:12px;top:50%;width:20px;height:20px;transform:translateY(-50%);border:2px solid #a8c0c7;border-radius:6px;background:#fff;box-sizing:border-box}
+    .mini.is-active{outline:none!important;border-color:#0b8799!important;background:#edf8f9!important}
+    .mini.is-active:after{content:"✓";display:grid;place-items:center;border-color:#0e5969;background:#0e5969;color:#fff;font-size:.68rem;font-weight:950}
+    .mini strong{display:block;color:#123b4b!important;font-size:.82rem;font-weight:900}
+    .mini small{display:block;margin-top:3px;color:#66808a!important;font-size:.72rem;line-height:1.3}
+    .sub-actions{display:flex;justify-content:flex-end;margin-top:12px}
+    .sub-actions .stip-btn{min-width:118px}
+    .selection-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px;padding:12px;border:1px solid #c8dde2;border-radius:13px;background:#eef7f8;color:#214e5b;font-size:.8rem;font-weight:850}
+    .selection-summary .stip-btn{min-width:auto}
     .custom-search{width:100%;height:46px;border:1px solid #b9d1d7;border-radius:13px;background:#fff;padding:0 13px;color:#123b4b;outline:none}
+    .custom-search:focus{border-color:#0b8799;box-shadow:0 0 0 3px rgba(11,135,153,.11)}
     .custom-results{display:grid;gap:7px;margin-top:9px;max-height:320px;overflow:auto}
     .custom-item{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:start;gap:9px;width:100%;padding:10px 11px;border:1px solid #c9d9de;border-radius:12px;background:#fff;text-align:left;color:#123b4b}
     .custom-item b{width:22px;height:22px;border-radius:7px;border:1px solid #aac8d0;display:grid;place-items:center;font-size:.76rem}
+    .custom-item.is-active{border-color:#0b8799;background:#edf8f9}
     .custom-item.is-active b{background:#0b8799;color:#fff;border-color:#0b8799}
     .custom-item small{display:block;margin-top:3px;color:#67808a;font-size:.7rem}
     .selected-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
     .selected-chip{border:0;border-radius:999px;background:#dff2f4;color:#164f5d;padding:7px 9px;font-size:.72rem;font-weight:850}
     .format-grid,.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .format-btn{min-height:92px;padding:14px;display:flex;gap:11px;align-items:flex-start;text-align:left}
-    .format-btn .ico{font-size:1.5rem}
-    .format-btn small{display:block;margin-top:4px;color:#607983;font-size:.74rem;line-height:1.35}
-    .action-btn{min-height:54px;justify-content:flex-start;gap:8px}
+    .format-btn{position:relative;min-height:96px;padding:14px 48px 14px 14px;display:flex!important;gap:11px;align-items:flex-start;text-align:left;border:1px solid #c7d8dd!important;border-radius:15px!important;background:#fff!important;color:#123b4b!important;box-shadow:0 5px 13px rgba(18,59,75,.045)!important}
+    .format-btn:after{content:"";position:absolute;right:15px;top:50%;width:22px;height:22px;transform:translateY(-50%);border:2px solid #9eb9c1;border-radius:999px;background:#fff;box-sizing:border-box}
+    .format-btn.is-active{outline:none!important;border-color:#0b8799!important;background:#eff8f9!important;box-shadow:0 0 0 2px rgba(11,135,153,.12)!important}
+    .format-btn.is-active:after{content:"✓";display:grid;place-items:center;border-color:#0e5969;background:#0e5969;color:#fff;font-size:.72rem;font-weight:950}
+    .format-btn[disabled]{opacity:.58;cursor:not-allowed;background:#f2f4f5!important;box-shadow:none!important}
+    .format-btn[disabled]:after{background:#edf1f2;border-color:#bdc9cd}
+    .format-btn .ico{flex:0 0 auto;color:#0e5969;font-size:1.45rem}
+    .format-btn strong{display:block;color:#123b4b!important;font-size:.9rem;font-weight:900}
+    .format-btn small{display:block;margin-top:4px;color:#607983!important;font-size:.74rem;line-height:1.35}
+    .format-note{margin-top:10px;padding:10px 11px;border-radius:11px;background:#f2f7f8;color:#4c6b75;font-size:.73rem;line-height:1.4;font-weight:720}
+    .format-note strong{color:#234f5c}
+    .action-btn{min-height:54px;display:flex!important;justify-content:flex-start!important;gap:9px;border-color:#0e5969!important;background:#0e5969!important;color:#fff!important}
+    .action-btn strong{color:#fff!important}
     .export-status{min-height:42px;margin-top:12px;padding:0 2px;color:#416773;font-size:.78rem;font-weight:750;line-height:1.4}
     .export-status[data-kind="error"]{color:#a73535}
     .export-status[data-kind="ok"]{color:#1b684e}
@@ -76,7 +95,7 @@
     <section class="stip-surface intro">
       <p class="stip-kicker">EXPORTER · AFFICHER · PARTAGER</p>
       <h1 class="stip-title">Préparer une version utile</h1>
-      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF et le tableur sont générés à la demande depuis le même référentiel Supabase que le site.</p>
+      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF officiel vient du MASTER Drive intact. Le tableur est généré depuis le référentiel Supabase de Visiter les lieux.</p>
     </section>
 
     <div class="flow">
@@ -107,6 +126,7 @@
             <button class="stip-btn mini" type="button" data-domain="blocs"><strong>Blocs</strong><small>Destinations typées bloc.</small></button>
             <button class="stip-btn mini" type="button" data-domain="acces"><strong>Accès & repères</strong><small>Entrées, halls, ascenseurs, passerelles et repères.</small></button>
           </div>
+          <div class="sub-actions"><button class="stip-btn" type="button" id="domainContinue">Continuer</button></div>
         </div>
 
         <div class="subpanel" id="shortcutPanel" hidden>
@@ -118,6 +138,7 @@
             <button class="stip-btn mini" type="button" data-preset="examens"><strong>Examens</strong><small>Accès rapide au domaine examens.</small></button>
             <button class="stip-btn mini" type="button" data-preset="annexes"><strong>Bâtiments annexes</strong><small>Repères hors trois bâtiments principaux.</small></button>
           </div>
+          <div class="sub-actions"><button class="stip-btn" type="button" id="shortcutContinue">Continuer</button></div>
         </div>
 
         <div class="subpanel" id="customPanel" hidden>
@@ -131,11 +152,12 @@
       </section>
 
       <section class="stip-surface step" id="formatStep" hidden>
-        <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small>Le contenu reste identique : seule la présentation change.</small></div></div>
+        <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF</strong><small>Pour afficher, télécharger ou partager.</small></span></button>
-          <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur .xlsx</strong><small>Compatible Excel et Google Sheets, pour trier ou modifier les données.</small></span></button>
+          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF officiel</strong><small>MASTER Drive intact, sans reconstruction Supabase.</small></span></button>
+          <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur .xlsx</strong><small>Compatible Excel et Google Sheets, filtré selon ta sélection.</small></span></button>
         </div>
+        <div class="format-note" id="formatNote"></div>
       </section>
 
       <section class="stip-surface step" id="actionStep" hidden>
@@ -149,17 +171,23 @@
 <script>
 (()=>{
   "use strict";
+  try{history.scrollRestoration="manual"}catch{}
+  requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
   const STORE="stip_session_v1";
   const ANNEXES=["A1","A3","A4","B1","B13","B14","B16","CERMEP","IDÉE","MORTUAIRE","MPM","RADIO","GHE"];
-  const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set()};
+  const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set(),pendingDomain:null,pendingPreset:null};
   const status=document.getElementById("exportStatus");
   const formatStep=document.getElementById("formatStep");
   const actionStep=document.getElementById("actionStep");
   const actionGrid=document.getElementById("actionGrid");
   const actionHint=document.getElementById("actionHint");
+  const scopeChoices=document.getElementById("scopeChoices");
   const scopeSummary=document.getElementById("scopeSummary");
   const scopeSummaryText=document.getElementById("scopeSummaryText");
+  const pdfFormat=document.getElementById("pdfFormat");
+  const formatNote=document.getElementById("formatNote");
+  const formatScopeCopy=document.getElementById("formatScopeCopy");
   const panels={
     building:document.getElementById("buildingPanel"),
     domain:document.getElementById("domainPanel"),
@@ -171,12 +199,12 @@
   const norm=(s)=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
   function setStatus(text,kind=""){status.textContent=text||"";status.dataset.kind=kind}
   function closePanels(){Object.values(panels).forEach(p=>p.hidden=true)}
-  function clearScopeCards(){document.querySelectorAll("[data-open-scope]").forEach(b=>b.classList.remove("is-active"))}
+  function clearScopeCards(){document.querySelectorAll("[data-open-scope]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")})}
   function showPanel(name){
     closePanels();
     if(panels[name])panels[name].hidden=false;
     clearScopeCards();
-    document.querySelector('[data-open-scope="'+name+'"]')?.classList.add("is-active");
+    const active=document.querySelector('[data-open-scope="'+name+'"]');if(active){active.classList.add("is-active");active.setAttribute("aria-pressed","true")}
   }
   function describeScope(scope){
     if(!scope)return"";
@@ -195,12 +223,21 @@
     state.scope=scope;
     closePanels();
     clearScopeCards();
+    scopeChoices.hidden=true;
     scopeSummaryText.textContent=describeScope(scope);
     scopeSummary.hidden=false;
     formatStep.hidden=false;
     actionStep.hidden=true;
     state.format=null;
-    document.querySelectorAll("[data-format]").forEach(b=>b.classList.remove("is-active"));
+    document.querySelectorAll("[data-format]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")});
+    const pdfAllowed=scope.mode==="all";
+    pdfFormat.disabled=!pdfAllowed;
+    formatScopeCopy.textContent=pdfAllowed
+      ?"PDF officiel ou tableur complet."
+      :"Cette sélection peut être exportée en tableur. Le PDF filtré attend le futur template dictionnaire.";
+    formatNote.innerHTML=pdfAllowed
+      ?"<strong>PDF :</strong> le fichier proposé est le MASTER Drive officiel intact."
+      :"<strong>PDF filtré volontairement désactivé :</strong> aucune version Supabase ne remplacera le template officiel. Il sera activé après validation du dictionnaire.";
     setStatus("");
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
@@ -212,6 +249,8 @@
     scopeSummary.hidden=true;
     formatStep.hidden=true;
     actionStep.hidden=true;
+    if(mode==="domain")state.pendingDomain=null;
+    if(mode==="shortcut")state.pendingPreset=null;
     if(mode==="custom")loadSnapshot().then(()=>renderCustom()).catch(e=>setStatus(e.message,"error"));
   }));
 
@@ -233,24 +272,32 @@
   });
 
   document.querySelectorAll("[data-domain]").forEach(btn=>btn.addEventListener("click",()=>{
-    document.querySelectorAll("[data-domain]").forEach(b=>b.classList.remove("is-active"));
-    btn.classList.add("is-active");
-    commitScope({mode:"domain",domain:btn.dataset.domain});
+    state.pendingDomain=btn.dataset.domain;
+    document.querySelectorAll("[data-domain]").forEach(b=>b.classList.toggle("is-active",b===btn));
   }));
+  document.getElementById("domainContinue").addEventListener("click",()=>{
+    if(!state.pendingDomain){setStatus("Choisis un domaine.","error");return}
+    commitScope({mode:"domain",domain:state.pendingDomain});
+  });
 
   document.querySelectorAll("[data-preset]").forEach(btn=>btn.addEventListener("click",()=>{
-    const p=btn.dataset.preset;
+    state.pendingPreset=btn.dataset.preset;
+    document.querySelectorAll("[data-preset]").forEach(b=>b.classList.toggle("is-active",b===btn));
+  }));
+  document.getElementById("shortcutContinue").addEventListener("click",()=>{
+    const p=state.pendingPreset;
+    if(!p){setStatus("Choisis un raccourci.","error");return}
     if(p==="all")commitScope({mode:"all"});
     else if(p==="cardio")commitScope({mode:"building",building_codes:["HLP"]});
     else if(p==="neuro")commitScope({mode:"building",building_codes:["PW"]});
     else if(p==="hfme")commitScope({mode:"building",building_codes:["HFME"]});
     else if(p==="examens")commitScope({mode:"domain",domain:"examens"});
     else if(p==="annexes")commitScope({mode:"building",building_codes:[...ANNEXES]});
-  }));
+  });
 
   document.getElementById("changeScope").addEventListener("click",()=>{
-    state.scope=null;scopeSummary.hidden=true;formatStep.hidden=true;actionStep.hidden=true;clearScopeCards();closePanels();
-    window.scrollTo({top:0,behavior:"smooth"});
+    state.scope=null;state.format=null;scopeSummary.hidden=true;scopeChoices.hidden=false;formatStep.hidden=true;actionStep.hidden=true;clearScopeCards();closePanels();
+    setStatus("");window.scrollTo({top:0,behavior:"smooth"});
   });
 
   async function loadSnapshot(){
@@ -307,8 +354,9 @@
   });
 
   document.querySelectorAll("[data-format]").forEach(btn=>btn.addEventListener("click",()=>{
+    if(btn.disabled)return;
     state.format=btn.dataset.format;
-    document.querySelectorAll("[data-format]").forEach(b=>b.classList.toggle("is-active",b===btn));
+    document.querySelectorAll("[data-format]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",active?"true":"false")});
     renderActions();
     actionStep.hidden=false;
     setStatus("");
@@ -316,15 +364,13 @@
   }));
   function renderActions(){
     const pdf=state.format==="pdf";
-    const masterPdf=pdf&&state.scope?.mode==="all";
-    actionHint.textContent=masterPdf
-      ?"GHE complet : ce PDF ouvre le MASTER officiel Drive intact. Les droits de partage Drive restent appliqués."
-      :pdf
-        ?"Le PDF peut être affiché, téléchargé ou partagé."
-        :"Le tableur .xlsx peut être téléchargé ou partagé puis ouvert dans Excel ou Google Sheets.";
+    actionHint.textContent=pdf
+      ?"MASTER Drive officiel intact : aucune génération PDF depuis Supabase."
+      :"Le tableur est généré depuis le référentiel Supabase et respecte la sélection choisie.";
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["download","⇩","Télécharger"],
+      ["print","▤","Imprimer"],
       ["share","↗","Partager"]
     ]:[
       ["download","⇩","Télécharger"],
@@ -348,15 +394,19 @@
     if(!token){setStatus("Session STIP requise pour exporter.","error");return}
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
     const pdf=state.format==="pdf";
+    if(pdf&&state.scope.mode!=="all"){
+      setStatus("Le PDF filtré reste désactivé jusqu’à validation du template dictionnaire.","error");
+      return;
+    }
     let opened=null;
-    if(pdf&&action==="view"){
+    if(pdf&&(action==="view"||action==="print")){
       opened=window.open("about:blank","_blank");
-      if(opened){opened.document.write('<title>Préparation…</title><p style="font-family:system-ui;padding:24px">Préparation du PDF…</p>')}
+      if(opened)opened.document.write('<title>Ouverture…</title><p style="font-family:system-ui;padding:24px">Ouverture du MASTER PDF officiel…</p>');
     }
     document.body.classList.add("busy");
-    setStatus(pdf?"Préparation du PDF…":"Préparation du tableur…");
+    setStatus(pdf?"Ouverture du MASTER Drive…":"Préparation du tableur…");
     try{
-      if(pdf&&state.scope?.mode==="all"){
+      if(pdf){
         const masterResponse=await fetch(API,{
           method:"POST",cache:"no-store",
           headers:{"content-type":"application/json","x-stip-session":token},
@@ -367,52 +417,45 @@
         if(action==="view"){
           if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
           setStatus("MASTER officiel ouvert sans reconstruction.","ok");
-          return;
-        }
-        if(action==="download"){
+        }else if(action==="print"){
+          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
+          setStatus("MASTER officiel ouvert dans le lecteur Drive : lance l’impression depuis le lecteur.","ok");
+        }else if(action==="download"){
           const a=document.createElement("a");
-          a.href=master.download_url;
-          a.target="_blank";
-          a.rel="noopener noreferrer";
+          a.href=master.download_url;a.target="_blank";a.rel="noopener noreferrer";
           document.body.appendChild(a);a.click();a.remove();
           setStatus("Téléchargement du MASTER officiel lancé.","ok");
-          return;
-        }
-        if(action==="share"){
+        }else if(action==="share"){
           if(navigator.share){
             await navigator.share({title:"Visiter les lieux · GHE",url:master.view_url});
-            setStatus("Lien du MASTER partagé. Les droits Drive du fichier restent appliqués.","ok");
+            setStatus("Lien du MASTER partagé. Les droits Drive restent appliqués.","ok");
           }else{
             await navigator.clipboard?.writeText(master.view_url);
-            setStatus("Lien du MASTER copié. Les droits Drive du fichier restent appliqués.","ok");
+            setStatus("Lien du MASTER copié. Les droits Drive restent appliqués.","ok");
           }
-          return;
         }
+        return;
       }
+
       const r=await fetch(API,{
         method:"POST",cache:"no-store",
         headers:{"content-type":"application/json","x-stip-session":token},
-        body:JSON.stringify({action:pdf?"export_pdf":"export_xlsx",scope:state.scope})
+        body:JSON.stringify({action:"export_xlsx",scope:state.scope})
       });
       if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"Export indisponible.")}
       const blob=await r.blob();
-      const name=filenameFrom(r,state.format);
+      const name=filenameFrom(r,"xlsx");
       if(action==="download"){
         downloadBlob(blob,name);
-        setStatus("Fichier téléchargé.","ok");
-      }else if(action==="view"){
-        const url=URL.createObjectURL(blob);
-        if(opened)opened.location.href=url;else window.open(url,"_blank");
-        setStatus("PDF ouvert.","ok");
-        setTimeout(()=>URL.revokeObjectURL(url),120000);
+        setStatus("Tableur téléchargé.","ok");
       }else if(action==="share"){
-        const file=new File([blob],name,{type:blob.type|| (pdf?"application/pdf":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")});
+        const file=new File([blob],name,{type:blob.type||"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
         if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
           await navigator.share({files:[file],title:"Visiter les lieux"});
-          setStatus("Fichier partagé.","ok");
+          setStatus("Tableur partagé.","ok");
         }else{
           downloadBlob(blob,name);
-          setStatus("Partage direct indisponible ici : le fichier a été téléchargé.","ok");
+          setStatus("Partage direct indisponible ici : le tableur a été téléchargé.","ok");
         }
       }
     }catch(e){
