@@ -157,6 +157,114 @@ function randomToken() {
   crypto.getRandomValues(a);
   return [...a].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+function cleanPublic(v: unknown, n = 1000) {
+  return String(v ?? "").trim().slice(0, n);
+}
+async function publicTrackedRow(id: string, secret: string) {
+  if (!id || !secret) throw Error("Suivi indisponible.");
+  const { data: r, error } = await admin
+    .from("stip_public_access_requests")
+    .select("id,status,metadata,reviewed_at,decision_note")
+    .eq("id", id)
+    .maybeSingle();
+  if (error || !r) throw Error("Demande introuvable.");
+  if (r.metadata?.tracking_hash !== await sha256(secret))
+    throw Error("Suivi invalide.");
+  return r;
+}
+async function ensurePublicCodeFree(code: string, requestId = "") {
+  const codeKey = await sha256(code);
+  const { data: used } = await admin
+    .from("stip_access_profiles")
+    .select("id")
+    .eq("code_key", codeKey)
+    .maybeSingle();
+  if (used) throw Error("Ce code est déjà utilisé. Choisissez-en un autre.");
+  let q = admin
+    .from("stip_public_access_requests")
+    .select("id")
+    .eq("status", "pending")
+    .contains("metadata", { requested_code: code });
+  if (requestId) q = q.neq("id", requestId);
+  const { data: pending } = await q.limit(1);
+  if (pending?.length)
+    throw Error("Ce code est déjà demandé. Choisissez-en un autre.");
+}
+async function publicAccessRequest(body: any) {
+  const action = cleanPublic(body.action, 20) || "submit";
+  if (action === "status") {
+    const r = await publicTrackedRow(
+      cleanPublic(body.request_id, 80),
+      cleanPublic(body.tracking_token, 100),
+    );
+    return J({
+      ok: true,
+      status: r.status,
+      reviewed_at: r.reviewed_at,
+      decision_note: r.decision_note || null,
+      needs_code:
+        r.status === "pending" &&
+        !/^\d{6}$/.test(String(r.metadata?.requested_code || "")),
+      code:
+        r.status === "approved"
+          ? r.metadata?.granted_code || r.metadata?.requested_code || null
+          : null,
+    });
+  }
+  if (action === "set_code") {
+    const id = cleanPublic(body.request_id, 80),
+      secret = cleanPublic(body.tracking_token, 100),
+      requestedCode = cleanPublic(body.requested_code, 6),
+      r = await publicTrackedRow(id, secret);
+    if (r.status !== "pending")
+      return J({ error: "Cette demande a déjà été traitée." }, 409);
+    if (!/^\d{6}$/.test(requestedCode))
+      return J({ error: "Choisissez un code personnel de 6 chiffres." }, 400);
+    await ensurePublicCodeFree(requestedCode, id);
+    const metadata = { ...(r.metadata || {}), requested_code: requestedCode };
+    const { error } = await admin
+      .from("stip_public_access_requests")
+      .update({ metadata })
+      .eq("id", id)
+      .eq("status", "pending");
+    if (error) throw error;
+    return J({ ok: true, status: "pending", needs_code: false });
+  }
+
+  const firstName = cleanPublic(body.first_name, 80),
+    lastName = cleanPublic(body.last_name, 80),
+    comment = cleanPublic(body.comment ?? body.reason, 1200),
+    requestedCode = cleanPublic(body.requested_code, 6);
+  if (!firstName || !lastName) return J({ error: "Nom et prénom requis." }, 400);
+  if (!/^\d{6}$/.test(requestedCode))
+    return J({ error: "Choisissez un code personnel de 6 chiffres." }, 400);
+  await ensurePublicCodeFree(requestedCode);
+  const tracking = randomToken(),
+    trackingHash = await sha256(tracking);
+  const { data, error } = await admin
+    .from("stip_public_access_requests")
+    .insert({
+      first_name: firstName,
+      last_name: lastName,
+      professional_role: null,
+      reason: comment || null,
+      metadata: {
+        source: "public_home",
+        tracking_hash: trackingHash,
+        requested_code: requestedCode,
+        comment: comment || null,
+      },
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return J({
+    ok: true,
+    message: "Demande transmise.",
+    request_id: data.id,
+    tracking_token: tracking,
+  });
+}
 function roleKey(v: any) {
   return LABELS[v] ? String(v) : "brancardier";
 }
@@ -878,6 +986,8 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({})),
       action = String(body.action || "");
+    if (action === "submit" || action === "status" || action === "set_code")
+      return await publicAccessRequest(body);
     if (action === "login") return await login(req, String(body.code || ""));
     if (action === "me") {
       const s = await sessionFrom(req);
