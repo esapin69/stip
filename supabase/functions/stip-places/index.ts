@@ -118,6 +118,22 @@ const MAIN_BUILDINGS=[
 const ANNEX_CODES=['A1','A3','A4','B1','B13','B14','B16','CERMEP','IDÉE','MORTUAIRE','MPM','RADIO','GHE']
 const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'
 const MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'
+const MASTER_BUCKET='ghe-media'
+const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'
+async function masterPdfFileResponse(disposition='inline'){
+  const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
+  if(error||!data)return json({error:'Copie privée du MASTER indisponible.'},503)
+  const bytes=await data.arrayBuffer()
+  const safeDisposition=disposition==='attachment'?'attachment':'inline'
+  return new Response(bytes,{status:200,headers:{
+    ...CORS,
+    'Content-Type':'application/pdf',
+    'Content-Length':String(bytes.byteLength),
+    'Content-Disposition':safeDisposition+'; filename="Visite-des-lieux-GHE-MASTER.pdf"',
+    'Cache-Control':'private, no-store'
+  }})
+}
+
 function masterPdfLinks(){
   const id=encodeURIComponent(MASTER_DRIVE_ID)
   return {
@@ -443,6 +459,10 @@ Deno.serve(async req=>{
     if(action==='master_pdf_link'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       return json(masterPdfLinks())
+    }
+    if(action==='master_pdf_file'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      return await masterPdfFileResponse(String(body.disposition||'inline'))
     }
     if(action==='export_pdf')return json({error:'PDF dynamique désactivé : utiliser le MASTER Drive officiel.'},410)
     if(action==='export_xlsx'){
