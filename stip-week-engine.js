@@ -166,13 +166,17 @@
       swipeStart.lastX=touch.clientX;
       swipeStart.lastY=touch.clientY;
       if(!swipeStart.horizontal&&!swipeStart.vertical){
-        if(ay>=SWIPE_DRAG_START_PX&&ay>=ax*1.05){swipeStart.vertical=true;clearSwipeVisual(swipeStart.surface);return}
-        if(ax>=SWIPE_DRAG_START_PX&&ax>=ay*1.35){
+        if(Math.max(ax,ay)<SWIPE_DRAG_START_PX)return;
+        if(ax>=ay*1.35){
           swipeStart.horizontal=true;
           if(!reducedMotion()){
             swipeStart.surface.style.willChange="transform, opacity";
             swipeStart.surface.style.transition="none";
           }
+        }else{
+          swipeStart.vertical=true;
+          clearSwipeVisual(swipeStart.surface);
+          return;
         }
       }
       if(swipeStart.horizontal&&ay>ax*1.18){
@@ -182,9 +186,6 @@
         return;
       }
       if(!swipeStart.horizontal)return;
-      // Once the gesture is clearly horizontal, keep it for STIP. Vertical
-      // movement remains native because we only cancel after axis locking.
-      if(event.cancelable)event.preventDefault();
       if(reducedMotion())return;
       const width=Math.max(1,Number(swipeStart.surface.clientWidth)||1),
         limited=Math.max(-width*.62,Math.min(width*.62,dx)),
