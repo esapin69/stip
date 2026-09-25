@@ -4,6 +4,17 @@ const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_ses
 const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false;
 try{history.scrollRestoration='manual'}catch{}
 function token(){return localStorage.getItem(STORAGE)||''}
+function clientId(){
+  const key='stip_client_id_v1';
+  let id='';
+  try{id=localStorage.getItem(key)||''}catch{}
+  if(!id){
+    try{id=crypto.randomUUID?.()||''}catch{}
+    if(!id)id='stip-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,12);
+    try{localStorage.setItem(key,id)}catch{}
+  }
+  return id;
+}
 function readPreview(){try{return JSON.parse(sessionStorage.getItem(PREVIEW_STORE)||'null')}catch{return null}}
 function clearPreview(){try{sessionStorage.removeItem(PREVIEW_STORE)}catch{}}
 function previewAllowed(d){return !!(d?.permissions?.admin||d?.permissions?.access_manage)}
@@ -87,7 +98,7 @@ function syncPanelHistory(){const p=$('#hsPanel');if(!p)return;const open=p.clas
 function restore(){if(!session||restoring)return;restoring=true;try{if(!history.state?.panel)closePanel();const r=route();if(r==='fauteuils'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='home'||r==='apps'||r==='notifications'||r==='team'||r==='responsable'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='planning'||r.startsWith('planning/')){showOnly('planningView');emitRoute(r);restoreScroll(r);return}if(r==='contacts'||r.startsWith('contacts/')){const hub=document.getElementById('rubricHubView');if(hub)showOnly('rubricHubView');else{showOnly('genericView');const g=$('#genericView');if(g)g.innerHTML='<div class="route-loading">Chargement de Contacts…</div>'}emitRoute(r);restoreScroll(r);return}setRoute('home',{replace:true,keepScroll:true})}finally{restoring=false}}
 function isCadreFamily(d){return d?.role_key==='cadre'&&d?.permissions?.cadre_dashboard===true}
 function renderSession(d){window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}session=d;window.STIPSession=d;loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));restore()}
-loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code});localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
+loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code,client_id:clientId()});localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
 const accessCodeToggle=$('#toggleAccessCode'),accessCodeMask=$('#accessCodeMask');
 function updateAccessCodeMask(){
   if(!accessCode)return;
