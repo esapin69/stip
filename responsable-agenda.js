@@ -255,9 +255,16 @@
           active === "all"
             ? dayEvents
             : dayEvents.filter((x) => x.type === active),
-        training = shown.some((x) => x.type === "training");
+        weekday = d.toLocaleDateString("fr-FR", { weekday: "long" }).replace(".", "").toUpperCase().slice(0,2),
+        markers = shown.slice(0,2).map((x) => `<i class="stip-week-event" title="${esc(x.title || typeLabel(x.type))}">${esc(x.icon || typeIcon(x.type))}</i>`).join(""),
+        classes = [
+          "stip-week-day",
+          "neutral",
+          di === todayIso() ? "today" : "",
+          selectedDay === di ? "selected" : "",
+        ].filter(Boolean).join(" ");
       html.push(
-        `<button type="button" class="ta-day ${di === todayIso() ? "today" : ""} ${selectedDay === di ? "selected" : ""} ${training ? "has-training" : ""}" data-day="${di}"><small>${esc(d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", ""))}</small><b>${d.getDate()}</b><em>${shown.length ? "<i></i>" : ""}${shown.length}</em></button>`,
+        `<button type="button" class="${classes}" data-day="${di}" aria-pressed="${selectedDay === di}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${shown.length ? shown.length : ""}</strong><span class="stip-week-main"><span class="stip-week-main-icon" aria-hidden="true">${shown[0] ? esc(shown[0].icon || typeIcon(shown[0].type)) : ""}</span></span><span class="stip-week-divider ${shown.length ? "" : "is-empty"}" aria-hidden="true"></span><span class="stip-week-events ${shown.length ? "" : "is-empty"}" aria-hidden="${shown.length ? "false" : "true"}">${markers}</span></span></button>`,
       );
     }
     $("#taWeek").innerHTML = html.join("");
