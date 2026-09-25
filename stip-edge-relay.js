@@ -32,6 +32,10 @@
     return "";
   }
 
+  async function direct(input, init) {
+    return nativeFetch(input, init);
+  }
+
   window.fetch = async function stipFetch(input, init = {}) {
     const rawUrl =
       typeof input === "string"
@@ -41,7 +45,7 @@
           : String(input || "");
 
     if (!rawUrl.startsWith(SUPABASE_FUNCTIONS))
-      return nativeFetch(input, init);
+      return direct(input, init);
 
     const url = new URL(rawUrl);
     const target = url.pathname
@@ -53,17 +57,17 @@
       init.method || (input instanceof Request ? input.method : "GET"),
     ).toUpperCase();
 
-    if (!target || method !== "POST") return nativeFetch(input, init);
+    if (!target || method !== "POST") return direct(input, init);
 
     const text = await bodyText(input, init);
-    if (text == null) return nativeFetch(input, init);
+    if (text == null) return direct(input, init);
 
     let payload = {};
     if (text) {
       try {
         payload = JSON.parse(text);
       } catch {
-        return nativeFetch(input, init);
+        return direct(input, init);
       }
     }
 
@@ -82,16 +86,25 @@
             payload,
           };
 
-    return nativeFetch(RELAY, {
-      method: "POST",
-      cache: "no-store",
-      headers: relayHeaders,
-      body: JSON.stringify(relayBody),
-    });
+    try {
+      const response = await nativeFetch(RELAY, {
+        method: "POST",
+        cache: "no-store",
+        headers: relayHeaders,
+        body: JSON.stringify(relayBody),
+        signal:
+          init?.signal ||
+          (input instanceof Request ? input.signal : undefined),
+      });
+      if (response.status < 500) return response;
+    } catch {}
+
+    return direct(input, init);
   };
 
   window.STIPEdgeRelay = {
     active: true,
     relay: RELAY,
+    version: "20260925-network-core2",
   };
 })();
