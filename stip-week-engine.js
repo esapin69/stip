@@ -48,6 +48,7 @@
 
   function clearSwipeVisual(surface){
     if(!surface)return;
+    try{surface.getAnimations?.().forEach((animation)=>animation.cancel())}catch{}
     surface.classList.remove("stip-swipe-live");
     surface.style.removeProperty("transform");
     surface.style.removeProperty("transition");
