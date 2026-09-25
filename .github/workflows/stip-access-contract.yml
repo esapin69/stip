@@ -1,0 +1,33 @@
+name: STIP access contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "stip-edge-relay.js"
+      - "stip-sw.js"
+      - "supabase/functions/stip-agent-dates/index.ts"
+      - "supabase/functions/stip-assistant/index.ts"
+      - "supabase/functions/stip-staffing/index.ts"
+      - "supabase/migrations/**"
+      - "tools/stip-access-contract.mjs"
+      - ".github/workflows/stip-access-contract.yml"
+  pull_request:
+    paths:
+      - "stip-edge-relay.js"
+      - "stip-sw.js"
+      - "supabase/functions/stip-agent-dates/index.ts"
+      - "supabase/functions/stip-assistant/index.ts"
+      - "supabase/functions/stip-staffing/index.ts"
+      - "supabase/migrations/**"
+      - "tools/stip-access-contract.mjs"
+
+jobs:
+  access-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node tools/stip-access-contract.mjs
