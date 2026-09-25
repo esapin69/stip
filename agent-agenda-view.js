@@ -19,7 +19,7 @@
     cssLoader=new Promise(resolve=>{
       const l=document.createElement("link");
       l.rel="stylesheet";
-      l.href="agent-agenda-view.css?v=20260924-legend3";
+      l.href="agent-agenda-view.css?v=20260925-calendar-common1";
       l.dataset.agentAgendaCss="1";
       l.onload=()=>resolve(l);
       l.onerror=()=>resolve(l);
