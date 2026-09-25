@@ -593,6 +593,30 @@ check(
   'Le contrat sans Drive + catalogue dictionnaire + suppression Imprimer n’est plus documenté.'
 );
 
+
+check(
+  spirit.includes('data-team-shift-analysis=') &&
+  spirit.includes('function openShiftAnalysis') &&
+  spirit.includes('teamShiftAnalysisOverlay'),
+  'Les repères terrain M/J/J4/S/N doivent rester de vrais boutons ouvrant leur analyse.'
+);
+check(
+  home.includes('function bindEmbeddedViewportLayer') &&
+  home.includes('#teamShiftAnalysisOverlay') &&
+  home.includes('#respPanel.open') &&
+  home.includes('.ta-sheet.open') &&
+  home.includes('frame.dataset.stipViewportLayer === "1"'),
+  'Une fenêtre modale embarquée peut de nouveau se retrouver hors du viewport visible.'
+);
+check(
+  spirit.includes('async function loadAssistant(start, force = false)') &&
+  spirit.includes('async function loadActivityDay(start, day, force = false)') &&
+  !spirit.includes('async function loadActivity(start, force = false)') &&
+  spirit.includes('function scheduleMonthSignals(force = false)') &&
+  spirit.includes('function signalDatesForStart(start)'),
+  'Esprit d’équipe peut de nouveau bloquer le premier rendu avec les enrichissements secondaires.'
+);
+
 if(failures.length){
   console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
   process.exit(1);
