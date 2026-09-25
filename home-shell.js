@@ -2330,11 +2330,11 @@
         const resolved =
           window.STIPGesture?.axis?.(x, y, {
             deadZone: 8,
-            horizontalRatio: 1.35,
+            horizontalRatio: 1.5,
           }) ||
           (Math.max(Math.abs(x), Math.abs(y)) < 8
             ? ""
-            : Math.abs(x) >= Math.abs(y) * 1.35
+            : Math.abs(x) >= Math.abs(y) * 1.5
               ? "x"
               : "y");
         if (!resolved) return;
@@ -2657,9 +2657,9 @@
         const resolved =
           window.STIPGesture?.axis?.(dx, dy, {
             deadZone: 9,
-            horizontalRatio: 1.35,
+            horizontalRatio: 1.5,
           }) ||
-          (Math.max(ax, ay) < 9 ? "" : ax >= ay * 1.35 ? "x" : "y");
+          (Math.max(ax, ay) < 9 ? "" : ax >= ay * 1.5 ? "x" : "y");
         if (!resolved) return;
         gesture.axis = resolved;
       }
