@@ -2,7 +2,7 @@
 
 Dernier audit : 25/09/2026.
 
-Ce fichier est un **registre de collecte**, pas une source de vérité publiée. Une mention `à compléter`, `à confirmer`, `à préciser`, `provisoire` ou un `evidence_status=to_confirm` ne doit jamais être exportée comme fait certain dans le PDF MASTER.
+Ce fichier est un **registre de collecte**, pas une source de vérité publiée. Le catalogue canonique des champs attendus est `stip_place_dictionary_field_defs`. Une mention `à compléter`, `à confirmer`, `à préciser`, `provisoire` ou un `evidence_status=to_confirm` sert uniquement au suivi interne et ne doit jamais devenir un fait exporté.
 
 ## 1. Lacunes explicitement repérées dans Visiter les lieux
 
@@ -69,7 +69,23 @@ Le MASTER contient en plus plusieurs informations non encore structurées dans `
 
 Même constat pour U301 : le site porte surtout unité, activité, PTAH/UF et alias, alors que le MASTER contient une richesse terrain beaucoup plus grande.
 
-## 4. Catégories à prévoir dans le futur dictionnaire
+## 4. Catalogue canonique des champs attendus
+
+Le catalogue est désormais enregistré dans Supabase : `stip_place_dictionary_field_defs`.
+
+Il contient actuellement **38 possibilités de champs**, réparties en :
+- Identification : nom officiel, alias/nom de mission, activité, codes, PTAH, UF.
+- Localisation : bâtiment, étage, aile/secteur, unité/salle/chambre, plages de chambres, adresse, transport/arrêt.
+- Accès & transport : itinéraire, ascenseur, badge/accès pro, lit/fauteuil/brancard, accessibilité, repère d’arrivée, proximité, organisation interne, raccourcis/liaisons.
+- Contacts & horaires : téléphone public, contacts internes, secrétariat, e-mail, horaires d’accueil, rendez-vous, équipe/fonctions utiles, contacts associés, collaborations.
+- Opérationnel : vigilance, particularités, prise en charge particulière, informations temporaires, notes terrain, repères/équipements.
+- Qualité : source/date/niveau de confirmation.
+
+Dans l’interface professionnelle, une destination peut afficher ces champs comme **Renseigné** ou **À compléter**.
+
+Dans le PDF généré et lors du partage, un champ vide ou un simple marqueur `À compléter / À confirmer / À préciser / Information non renseignée` est **omis automatiquement**. Le PDF montre donc uniquement ce qui est réellement renseigné.
+
+## 5. Catégories à prévoir dans le futur dictionnaire
 
 Le futur modèle doit pouvoir afficher, quand elles existent et sont utiles :
 - localisation : bâtiment, étage, entrée, aile, secteur, unité, salle/chambre ;
@@ -84,7 +100,7 @@ Le futur modèle doit pouvoir afficher, quand elles existent et sont utiles :
 - utilité terrain ;
 - source, date et niveau de confirmation.
 
-## 5. Règle de densité
+## 6. Règle de densité
 
 Aucune information opérationnelle utile ne doit être retirée pour gagner de la place.
 
