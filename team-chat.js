@@ -2547,18 +2547,8 @@
       const y = Number(event.clientY || 0) - startY;
 
       if (!horizontal) {
-        const resolved =
-          window.STIPGesture?.axis?.(x, y, {
-            deadZone: 8,
-            horizontalRatio: 1.5,
-          }) ||
-          (Math.max(Math.abs(x), Math.abs(y)) < 8
-            ? ""
-            : Math.abs(x) >= Math.abs(y) * 1.5
-              ? "x"
-              : "y");
-        if (!resolved) return;
-        if (resolved === "y") {
+        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
+        if (Math.abs(y) > Math.abs(x) * 1.1) {
           clearTimer();
           active = false;
           resetSwipe();
