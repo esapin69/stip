@@ -130,7 +130,17 @@ function appNavigationAnswer(c:SessionCtx, old:DialogContext, app:AppTarget){
 export async function answer(c: SessionCtx, body: any) {
   const raw = String(body.text || "").trim();
   if (!raw) throw Error("Écris quelque chose.");
+  if (raw.length > 500) throw Error("Message trop long pour STIP IA.");
   const old: DialogContext = body.context && typeof body.context === "object" ? body.context : {};
+  const command = normalize(raw);
+  if (/^(reset|reinitialise|reinitialiser|reinitialisation)$/.test(command)) return {
+    kind:"navigation",title:"Réinitialiser",text:"Je peux remettre cette conversation à zéro.",
+    cards:[],actions:[{type:"reset_dialog",label:"Réinitialiser"}],context:baseContext(old,{last_intent:"help"})
+  };
+  if (/\b(oublie|efface|retire)\b.*\b(date|jour|periode)\b/.test(command)) return {
+    kind:"context",title:"Date oubliée",text:"Je ne garde plus la date ou la période précédente.",
+    cards:[],actions:[],context:baseContext(old,{date_scope:null,date:null}),suggestions:["Et maintenant ?"]
+  };
   const semantic = semanticClassify(raw, old);
   let intent: Intent = semantic.intent !== "help" ? semantic.intent : classifyIntent(raw);
   const option = offeredOptionIntent(raw, old.offered_options || []);
