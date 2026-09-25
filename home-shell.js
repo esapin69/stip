@@ -78,6 +78,8 @@
       '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
     responsable:
       '<img src="images/icone_app/responsable.webp?v=20260922-responsable2" alt="" aria-hidden="true">',
+    places:
+      '<img src="images/icone_app/visiter-les-lieux.webp?v=20260925-responsable-main1" alt="" aria-hidden="true">',
     newagent:
       '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M18 8v6M15 11h6"/></svg>',
     upload:
@@ -1760,6 +1762,12 @@
               icon: "🧭",
               when: () => has("responsable") || has("admin"),
             },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
           ],
         },
         {
@@ -1860,6 +1868,8 @@
       s += app("contacts", "Contacts", "contacts", "contacts");
     if (has("responsable") || has("admin"))
       s += app("responsable", "Responsable", "responsable", "responsable");
+    if (pilotageRoleKey() === "responsable" && has("places"))
+      s += app("places", "Visiter les lieux", "places", "places");
     if (has("nouveaux_arrivants"))
       s += app("newagent", "Nouvel agent", "newagent", "newagent");
     if (has("file_upload")) s += app("upload", "Importer", "upload", "upload");
@@ -3119,6 +3129,7 @@
       state.renderSig = "";
       return render();
     }
+    if (k === "places") return (location.href = "places-app.html?mode=pro");
     if (k === "newagent")
       return (location.href = "https://esapin69.github.io/Ghe-interne/");
     if (k === "upload") return (location.href = "depot.html");
