@@ -68,7 +68,12 @@ self.addEventListener("fetch",event=>{
   const isHtml=request.mode==="navigate"||/\.html?$/i.test(path);
   const isStatic=/\.(?:js|css|webmanifest|png|jpe?g|webp|svg|gif|ico|woff2?|ttf)$/i.test(path);
 
-  if(request.cache==="reload"||request.cache==="no-store"){
+  if(request.cache==="no-store"||url.searchParams.has("__stip_probe")){
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  if(request.cache==="reload"){
     event.respondWith(
       fetch(request).then(async response=>{
         const cache=await caches.open(isHtml?PAGE_CACHE:STATIC_CACHE);
