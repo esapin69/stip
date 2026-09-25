@@ -111,7 +111,9 @@
       );
     } catch {}
   }
-  function allowed(k, perms) {
+  function allowed(k, perms, roleKey = "") {
+    if (k === "access" && String(roleKey).toLowerCase() === "chef_equipe")
+      return false;
     if (k === "team")
       return !!(
         APPS[k] &&
@@ -152,11 +154,11 @@
     }
     return APPS[k]?.home || "index.html";
   }
-  function suggestions(perms) {
-    const pinned = new Set(readFav().filter((k) => allowed(k, perms))),
+  function suggestions(perms, roleKey = "") {
+    const pinned = new Set(readFav().filter((k) => allowed(k, perms, roleKey))),
       scores = readUsage().apps || {};
     return Object.keys(APPS)
-      .filter((k) => allowed(k, perms) && !pinned.has(k))
+      .filter((k) => allowed(k, perms, roleKey) && !pinned.has(k))
       .sort(
         (a, b) =>
           Number(scores[b] || 0) - Number(scores[a] || 0) ||
@@ -218,10 +220,10 @@
       setTimeout(() => note.remove(), 1300);
     });
   }
-  function toggleFav(perms) {
+  function toggleFav(perms, roleKey = "") {
     if (document.getElementById("stipFavoritesPanel")) return closeFav();
-    const pinned = readFav().filter((k) => allowed(k, perms)),
-      all = Object.keys(APPS).filter((k) => allowed(k, perms)),
+    const pinned = readFav().filter((k) => allowed(k, perms, roleKey)),
+      all = Object.keys(APPS).filter((k) => allowed(k, perms, roleKey)),
       p = document.createElement("section");
     p.id = "stipFavoritesPanel";
     p.className = "stip-favorites-panel";
@@ -236,6 +238,7 @@
         pin = e.target.closest("[data-fav-pin]");
       if (o) {
         const k = o.dataset.favOpen;
+        if (!allowed(k, perms, roleKey)) return;
         closeFav();
         touch(k);
         go(appHome(k, perms));
@@ -247,23 +250,24 @@
         const adding = !a.includes(k);
         writeFav(adding ? [...a, k] : a.filter((x) => x !== k));
         closeFav();
-        toggleFav(perms);
+        toggleFav(perms, roleKey);
         favoriteFeedback(adding ? "Ajouté aux favoris" : "Retiré des favoris");
       }
     });
   }
-  function mount(perms) {
+  function mount(perms, roleKey = "") {
     if (window.__STIPQuickAccessOwner === "main") return;
     window.__STIPQuickAccessOwner = "universal";
     document.getElementById("stipQuickSwitch")?.remove();
     document.getElementById("stipQuickUniversal")?.remove();
     document.body.classList.remove("stip-quick-connected", "stip-quick-in-app");
     const k = currentKey();
-    if (k && allowed(k, perms)) touch(k);
+    if (k && allowed(k, perms, roleKey)) touch(k);
   }
   me().then((j) => {
     const perms = j?.permissions || j?.profile?.permissions || {};
-    if (j) mount(perms);
+    const roleKey = j?.role_key || j?.profile?.role_key || "";
+    if (j) mount(perms, roleKey);
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeFav();
