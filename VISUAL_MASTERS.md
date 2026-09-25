@@ -18,8 +18,10 @@ But : ne plus redemander ni réinventer à chaque discussion quel écran sert de
 
 Référence d’origine : la semaine active de **Mon profil / Accueil personnel**.
 
-Source commune désormais :
-- `stip-patterns.css`
+Architecture commune désormais :
+- `stip-calendar-core.css` = **socle brut structurel** : ordre, grille, centrage, retours à la ligne et emplacements ; aucune décoration ;
+- `stip-calendar-visual.css` = **visuel commun** : couleurs, bordures, typographie et états ; aucune géométrie ;
+- `stip-patterns.css` ne contient plus la géométrie semaine/mois
 - conteneur : `.stip-week-line`
 - jour : `.stip-week-day`
 - en-tête jour : `.stip-week-day-head`
@@ -71,8 +73,9 @@ Référence :
 - `.stip-month-events`
 
 Sources :
-- `stip-patterns.css`
-- variables `--stip-month-*` dans `stip-theme-base.css`
+- `stip-calendar-core.css` pour la structure brute ;
+- `stip-calendar-visual.css` pour l'apparence commune ;
+- `stip-theme-base.css` uniquement pour les variables de thème
 
 Règle : aucune page ne redéfinit localement la géométrie du calendrier mensuel.
 Le socle brut du mois doit rester lisible sans couche de finition : numéro, repère principal et événements utilisent des lignes dédiées centrées ; les pictogrammes ont un emplacement stable et les pastilles de shift restent volontairement légèrement plus petites que les pictogrammes.
@@ -230,3 +233,17 @@ Règle :
 - le contenu reste adaptatif : il peut être vide, court, long, une liste, une carte ou plusieurs groupes sans changer cette relation ;
 - les vrais modules indépendants restent hors de `.stip-context-master` et conservent une respiration forte ;
 - toute page compatible doit consommer ce contrat plutôt que recréer localement marges, séparateur et rattachement.
+
+
+## 13. Contrat brut calendrier — règle d'architecture
+
+**Statut : CANONIQUE ET PROTÉGÉ PAR CI**
+
+Pour toute vue semaine ou mois :
+1. le HTML fournit les mêmes emplacements logiques ;
+2. `stip-calendar-core.css` suffit à obtenir un rendu brut propre, centré et lisible ;
+3. aucune page locale ne recalcule la position d'un pictogramme, n'utilise de `translate`, marge négative ou taille locale pour corriger un alignement ;
+4. `stip-calendar-visual.css` habille ensuite cette base sans toucher à sa géométrie ;
+5. les pages peuvent changer les données et les actions, pas la structure de base.
+
+Le core est placé dans une couche CSS prioritaire pour les propriétés structurelles : une ancienne règle locale ne doit plus pouvoir déplacer ou réduire la base commune. Le test `tools/stip-calendar-contract-test.mjs` bloque les régressions connues.
