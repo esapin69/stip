@@ -571,14 +571,19 @@ check(
   placesEdgeMasterGuard.includes("session.app_level!=='pro'") &&
   placesEdgeMasterGuard.includes("const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'") &&
   placesEdgeMasterGuard.includes('FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13}') &&
-  placesEdgeMasterGuard.includes('FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16'),
-  'Le moteur PDF doit conserver le contrôle professionnel et le mapping validé des pages fixes du MASTER.'
+  placesEdgeMasterGuard.includes('FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16') &&
+  placesEdgeMasterGuard.includes("HLP:'Synthèse · dictionnaire · accès et repères terrain'") &&
+  placesEdgeMasterGuard.includes("PW:'Synthèse · dictionnaire · accès et repères transport'") &&
+  placesEdgeMasterGuard.includes("HFME:'Synthèse · dictionnaire · repères terrain'"),
+  'Le moteur PDF doit conserver le contrôle professionnel, le mapping des pages fixes et les intercalaires du gabarit.'
 );
 check(
   placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF généré, pages fixes et dictionnaires') &&
   placesAgentsMasterGuard.includes('Aucune information opérationnelle utile n’est supprimée') &&
   placesAgentsMasterGuard.includes('copie miroir privée') &&
-  placesAgentsMasterGuard.includes('page 1 = repères GHE'),
+  placesAgentsMasterGuard.includes('page 1 = repères GHE') &&
+  placesAgentsMasterGuard.includes('01 - SOURCE MAÎTRE - Visite des lieux GHE.xlsm') &&
+  placesAgentsMasterGuard.includes('16 pages héritées du MASTER + 3 nouveaux intercalaires'),
   'Le contrat PDF généré + pages fixes + dictionnaire dynamique n’est plus documenté.'
 );
 
