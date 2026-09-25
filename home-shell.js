@@ -1494,11 +1494,128 @@
       </section>
     </section>`;
   }
-  function responsableAccessBlock() {
-    const canResponsable = has("responsable") || has("admin"),
-      canAccess = has("access_manage") || has("admin");
-    if (!(canResponsable || canAccess)) return "";
-    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div>${canResponsable ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}${canAccess ? '<div class="hc-profile-responsable-row hc-profile-access-row"><button type="button" class="hc-responsable-tab" data-app="access" aria-label="Ouvrir les profils, l’historique et le contrôle des accès"><span>Accès & sécurité</span><b aria-hidden="true">›</b></button></div>' : ""}</section>`;
+  function pilotageRoleKey() {
+    const raw = String(
+      state.session?.role_key ||
+        window.STIPSession?.role_key ||
+        state.boot?.role_key ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
+    if (raw === "chef_equipe") return "responsable";
+    if (raw === "brancardier") return "agent";
+    if (["admin", "cadre", "responsable", "agent", "visiteur"].includes(raw))
+      return raw;
+    if (has("admin")) return "admin";
+    if (has("cadre_dashboard")) return "cadre";
+    if (has("responsable")) return "responsable";
+    if (has("planning_personal")) return "agent";
+    return "visiteur";
+  }
+  function pilotageLink(item = {}) {
+    if (item.when && !item.when()) return "";
+    const inner = `<span class="hc-pilotage-link-icon" aria-hidden="true">${esc(item.icon || "•")}</span><strong>${esc(item.label || "")}</strong><b aria-hidden="true">›</b>`;
+    if (item.href)
+      return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
+    return `<button type="button" class="hc-pilotage-link" data-app="${esc(item.action || "")}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
+  }
+  function pilotageRoleGroup(key, label, items = [], collapsible = false) {
+    const links = items.map(pilotageLink).filter(Boolean).join("");
+    if (!links) return "";
+    const separator = `<span>${esc(label)}</span>`;
+    if (collapsible)
+      return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"><summary class="hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
+    return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
+  }
+  function pilotageBlock() {
+    const role = pilotageRoleKey(),
+      groups = [
+        {
+          key: "admin",
+          label: "PILOTAGE · ADMIN",
+          items: [
+            {
+              action: "admin",
+              label: "Administration",
+              icon: "⚙️",
+              when: () => has("admin"),
+            },
+            {
+              action: "access",
+              label: "Accès & sécurité",
+              icon: "🔐",
+              when: () => has("access_manage") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "cadre",
+          label: "PILOTAGE · CADRE",
+          items: [
+            {
+              href: "cadre-activite.html",
+              label: "Activité",
+              icon: "📈",
+              when: () => has("activity") || has("admin"),
+            },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Connaître les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+            {
+              href: "cadre-documents.html",
+              label: "Documents",
+              icon: "▤",
+              when: () => has("cadre_dashboard") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "responsable",
+          label: "PILOTAGE · RESPONSABLE",
+          items: [
+            {
+              action: "responsable",
+              label: "Responsable",
+              icon: "🧭",
+              when: () => has("responsable") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "agent",
+          label: "PILOTAGE · AGENT",
+          items: [
+            {
+              action: "personal",
+              label: "Mon planning",
+              icon: "🗓️",
+              when: () => has("planning_personal") || has("admin"),
+            },
+          ],
+        },
+      ];
+    if (role === "visiteur") return "";
+    if (role === "admin")
+      return `<section class="hc-pilotage-shell is-admin" aria-label="Pilotage par profil">${groups
+        .map((group) =>
+          pilotageRoleGroup(group.key, group.label, group.items, true),
+        )
+        .join("")}</section>`;
+    const group = groups.find((item) => item.key === role);
+    if (!group) return "";
+    const content = pilotageRoleGroup(
+      group.key,
+      group.label,
+      group.items,
+      false,
+    );
+    return content
+      ? `<section class="hc-pilotage-shell" aria-label="Pilotage">${content}</section>`
+      : "";
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -2330,7 +2447,7 @@
     const isTableau = state.homeMode === "tableau" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "";
-    let markup = `${homeModeNav()}${showProfile ? responsableAccessBlock() + profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${homeModeNav()}${pilotageBlock()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isTableau) {
       markup = `<section class="hc-tableau-standalone" aria-label="Chat STIP — Fauteuils">
           <header class="hc-tableau-standalone-head">
