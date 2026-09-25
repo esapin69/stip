@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-profile-menu2" />
+    <meta name="stip-ui-build" content="20260926-profile-menu3" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -368,12 +368,12 @@
     <script src="activity-runtime.js?v=20260924-history2"></script>
     <script src="access-runtime.js?v=20260925-adminroutes1"></script>
     <script src="communication-hub.js?v=20260925-dm-push3"></script>
-    <script src="profile-photo.js?v=20260926-profile-menu2"></script>
+    <script src="profile-photo.js?v=20260926-profile-menu3"></script>
     <script id="stip-sw-register">
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260926-profile-menu2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-profile-menu3", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
