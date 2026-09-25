@@ -190,6 +190,45 @@ async function ensurePublicCodeFree(code: string, requestId = "") {
   if (pending?.length)
     throw Error("Ce code est déjà demandé. Choisissez-en un autre.");
 }
+async function relayEdgeFunction(req: Request, body: any) {
+  const target = String(body.target || "").trim().toLowerCase();
+  if (!/^stip-[a-z0-9-]+$/.test(target) || target === "stip-access")
+    return J({ error: "Relais STIP non autorisé." }, 400);
+
+  const query = String(body.query || "");
+  const upstreamUrl =
+    URL +
+    "/functions/v1/" +
+    target +
+    (query && query.startsWith("?") ? query : "");
+
+  const headers = new Headers({
+    "Content-Type": "application/json",
+    apikey: ANON,
+    Authorization: `Bearer ${ANON}`,
+  });
+
+  const session = req.headers.get("x-stip-session");
+  if (session) headers.set("x-stip-session", session);
+
+  const upstream = await fetch(upstreamUrl, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body.payload ?? {}),
+  });
+
+  const text = await upstream.text();
+  return new Response(text, {
+    status: upstream.status,
+    headers: {
+      ...C,
+      "Content-Type":
+        upstream.headers.get("content-type") || "application/json",
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
 async function publicAccessRequest(body: any) {
   const action = cleanPublic(body.action, 20) || "submit";
   if (action === "status") {
@@ -636,9 +675,12 @@ function ipOf(req: Request) {
     .split(",")[0]
     .trim();
 }
-async function login(req: Request, code: string) {
+async function login(req: Request, code: string, clientId = "") {
   if (!/^\d{6}$/.test(code || "")) return J({ error: "Code invalide." }, 401);
-  const ipHash = await sha256(ipOf(req)),
+  const limiterKey = clientId
+      ? "client:" + String(clientId).slice(0, 120)
+      : "ip:" + ipOf(req),
+    ipHash = await sha256(limiterKey),
     ten = new Date(Date.now() - 600000).toISOString();
   await admin
     .from("stip_access_attempts")
@@ -988,9 +1030,15 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json().catch(() => ({})),
       action = String(body.action || "");
+    if (action === "relay") return await relayEdgeFunction(req, body);
     if (action === "submit" || action === "status" || action === "set_code")
       return await publicAccessRequest(body);
-    if (action === "login") return await login(req, String(body.code || ""));
+    if (action === "login")
+      return await login(
+        req,
+        String(body.code || ""),
+        String(body.client_id || ""),
+      );
     if (action === "me") {
       const s = await sessionFrom(req);
       return s ? J(s) : J({ error: "Session expirée." }, 401);
