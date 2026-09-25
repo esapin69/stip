@@ -18,8 +18,91 @@
 
   const STORE = "stip_navigation_context_v2";
   const MAX_AGE = 12 * 60 * 60 * 1000;
+  const PREFETCH_LIMIT = 4;
+  const prefetches = new Map();
+  let continuityPromise = null;
   let hooks = null;
   let restored = false;
+
+  function ensureContinuity() {
+    if (window.STIPContinuity) return Promise.resolve(window.STIPContinuity);
+    if (continuityPromise) return continuityPromise;
+    continuityPromise = new Promise((resolve) => {
+      const existing = document.querySelector('script[data-stip-continuity]');
+      if (existing) {
+        if (window.STIPContinuity) return resolve(window.STIPContinuity);
+        existing.addEventListener(
+          "load",
+          () => resolve(window.STIPContinuity || null),
+          { once: true },
+        );
+        existing.addEventListener("error", () => resolve(null), { once: true });
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "/stip-session-continuity.js?v=20260926-continuity2";
+      script.async = true;
+      script.dataset.stipContinuity = "1";
+      script.onload = () => resolve(window.STIPContinuity || null);
+      script.onerror = () => resolve(null);
+      document.head.appendChild(script);
+    });
+    return continuityPromise;
+  }
+
+  function documentTarget(raw) {
+    try {
+      const url = new URL(String(raw || ""), location.href);
+      if (url.origin !== location.origin) return null;
+      if (!/^https?:$/.test(url.protocol)) return null;
+      if (
+        url.pathname === location.pathname &&
+        url.search === location.search
+      )
+        return null;
+      const file = url.pathname.split("/").pop() || "";
+      if (file && /\.[a-z0-9]+$/i.test(file) && !/\.html?$/i.test(file))
+        return null;
+      url.hash = "";
+      return url;
+    } catch {
+      return null;
+    }
+  }
+
+  function prefetch(raw) {
+    const url = documentTarget(raw);
+    if (!url) return Promise.resolve(false);
+    const key = url.pathname + url.search;
+    if (prefetches.has(key)) return prefetches.get(key);
+    const request = fetch(key, {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "default",
+    })
+      .then((response) => response.ok)
+      .catch(() => false);
+    prefetches.set(key, request);
+    return request;
+  }
+
+  function prefetchVisible(limit = PREFETCH_LIMIT) {
+    const seen = new Set();
+    const targets = [];
+    for (const link of document.querySelectorAll("a[href]")) {
+      if (targets.length >= limit) break;
+      if (link.target === "_blank" || link.hasAttribute("download")) continue;
+      const url = documentTarget(link.href);
+      if (!url) continue;
+      const key = url.pathname + url.search;
+      if (seen.has(key)) continue;
+      const rect = link.getBoundingClientRect?.();
+      if (rect && rect.width === 0 && rect.height === 0) continue;
+      seen.add(key);
+      targets.push(url.href);
+    }
+    targets.forEach((url) => prefetch(url));
+  }
 
   function routeKey() {
     return location.pathname.replace(/\/+$/, "") || "/";
@@ -192,19 +275,22 @@
     save();
     const explicit = explicitReturnTarget();
     if (explicit) {
-      location.assign(explicit);
+      prefetch(explicit);
+      location.replace(explicit);
       return false;
     }
     if (canBack()) {
       history.back();
       return true;
     }
+    prefetch(fallback);
     location.assign(fallback);
     return false;
   }
 
   function go(url, context = {}) {
     save(context);
+    prefetch(url);
     location.assign(url);
   }
 
@@ -241,22 +327,56 @@
     true,
   );
 
+  const warmLink = (event) => {
+    const link = event.target.closest?.("a[href]");
+    if (!link || link.target === "_blank" || link.hasAttribute("download"))
+      return;
+    prefetch(link.href);
+  };
+  document.addEventListener("pointerover", warmLink, {
+    passive: true,
+    capture: true,
+  });
+  document.addEventListener("pointerdown", warmLink, {
+    passive: true,
+    capture: true,
+  });
+  document.addEventListener("focusin", warmLink, true);
+
   addEventListener("pagehide", () => save());
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) save();
+  });
   addEventListener("pageshow", (event) => {
-    if (event.persisted) restoreScroll();
+    if (!event.persisted) return;
+    restoreScroll();
+    document.dispatchEvent(
+      new CustomEvent("stip:navigation-bfcache", {
+        detail: { persisted: true, saved: read() },
+      }),
+    );
   });
 
   window.STIPNav = {
     back,
     canBack,
     go,
+    navigate: go,
+    prefetch,
     read,
     register,
     remember,
     restore,
     restoreScroll,
     save,
+    session: ensureContinuity,
   };
+
+  ensureContinuity().catch(() => null);
+  const warmIdle = () => prefetchVisible();
+  if ("requestIdleCallback" in window)
+    requestIdleCallback(warmIdle, { timeout: 1800 });
+  else setTimeout(warmIdle, 900);
 
   document.dispatchEvent(new CustomEvent("stip:navigation-ready"));
   const ensureQuickAccess = () => {
@@ -267,7 +387,7 @@
     if (document.querySelector('script[src*="quick-access-universal.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "quick-access-universal.js?v=20260920-tomorrowapp1";
+    script.src = "quick-access-universal.js?v=20260926-navigation2";
     script.dataset.stipQuickUniversal = "1";
     document.head.appendChild(script);
   };
