@@ -120,6 +120,19 @@ const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'
 const MASTER_FILE_NAME='00 - MASTER - Visite des lieux GHE - prêt à imprimer.pdf'
 const MASTER_BUCKET='ghe-media'
 const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'
+const FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13} as const
+const FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16
+async function loadFixedTemplatePdf(){
+  const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
+  if(error||!data)throw new Error('Template PDF fixe indisponible.')
+  const bytes=await data.arrayBuffer()
+  const source=await PDFDocument.load(bytes)
+  const count=source.getPageCount()
+  if(count!==FIXED_TEMPLATE_EXPECTED_PAGE_COUNT){
+    throw new Error('Template PDF fixe incompatible : '+count+' pages au lieu de '+FIXED_TEMPLATE_EXPECTED_PAGE_COUNT+'.')
+  }
+  return source
+}
 async function masterPdfFileResponse(disposition='inline'){
   const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
   if(error||!data)return json({error:'Copie privée du MASTER indisponible.'},503)
@@ -324,13 +337,20 @@ function wrapPdf(font:any,text:string,size:number,maxWidth:number){
   if(current)lines.push(current)
   return lines
 }
-async function pdfResponse(snapshot:any,scopeLabel='GHE complet'){
+async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   const pdf=await PDFDocument.create()
   const regular=await pdf.embedFont(StandardFonts.Helvetica)
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
   const W=595.28,H=841.89,M=42,CONTENT=W-M*2
   const navy=rgb(0.035,0.30,0.42),ink=rgb(0.08,0.20,0.24),muted=rgb(0.38,0.49,0.52),soft=rgb(0.91,0.97,0.98),line=rgb(0.76,0.87,0.89)
+  const fixedTemplate=await loadFixedTemplatePdf()
   let page:any=null,y=0
+  const appendFixedPage=async(index:number)=>{
+    const [fixed]=await pdf.copyPages(fixedTemplate,[index])
+    pdf.addPage(fixed)
+    page=null
+    y=0
+  }
 
   const footer=(p:any,label='')=>{
     p.drawLine({start:{x:M,y:28},end:{x:W-M,y:28},thickness:.6,color:line})
@@ -380,20 +400,21 @@ async function pdfResponse(snapshot:any,scopeLabel='GHE complet'){
   const tagsBy=new Map<string,string[]>()
   for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
 
-  freshPage('VISITER LES LIEUX - '+scopeLabel,'Export opérationnel généré depuis la source canonique Supabase · '+exportDate())
-  heading('REPÈRES BÂTIMENTS')
-  const roots=(snapshot.places||[]).filter((p:any)=>['hospital','building','building_or_zone'].includes(p.place_type)&&p.id!=='ghe')
-    .sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))
-  for(const p of roots){
-    textBlock((p.building_code?p.building_code+' · ':'')+(p.display_name||p.official_name||p.id),9,bold,ink)
-    if(p.summary)textBlock(p.summary,8,regular,muted,10,4)
+  if(scope?.mode==='all'){
+    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.overview)
+  }else{
+    freshPage('VISITER LES LIEUX - '+scopeLabel,'Document fabriqué par STIP · pages fixes validées + dictionnaire Supabase · '+exportDate())
+    heading('PÉRIMÈTRE')
+    textBlock(scopeLabel,11,bold,ink)
   }
 
-  const renderBuilding=(code:string,label:string,subtitle:string)=>{
+  const renderBuilding=async(code:string,label:string,subtitle:string)=>{
     const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
     if(!rows.length)return
     divider(label,subtitle,'Synthèse des destinations, niveaux, codes, contacts et repères disponibles dans STIP')
-    freshPage(label+' · '+subtitle,'Données issues du référentiel Supabase au '+exportDate())
+    const fixedIndex=code==='HLP'?FIXED_TEMPLATE_PAGE_INDEX.HLP:code==='PW'?FIXED_TEMPLATE_PAGE_INDEX.PW:FIXED_TEMPLATE_PAGE_INDEX.HFME
+    await appendFixedPage(fixedIndex)
+    freshPage(label+' · '+subtitle+' · DICTIONNAIRE','Données issues du référentiel Supabase au '+exportDate())
     const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
     for(const lvl of levels){
       heading(levelLabel(lvl))
@@ -412,12 +433,12 @@ async function pdfResponse(snapshot:any,scopeLabel='GHE complet'){
     }
   }
 
-  for(const b of MAIN_BUILDINGS)renderBuilding(b.code,b.label,b.subtitle)
+  for(const b of MAIN_BUILDINGS)await renderBuilding(b.code,b.label,b.subtitle)
 
   const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type))
   if(hasAnnex){
-    divider('BÂTIMENTS ANNEXES','GHE · REPÈRES BÂTIMENTS','A1 · A3 · A4 · B1 · B13 · B14 · B16 · CERMEP · MPM · Radiothérapie · Mortuaire · autres repères')
-    freshPage('BÂTIMENTS ANNEXES · GHE','Référentiel par bâtiment')
+    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.annexes)
+    freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
   }
   for(const code of ANNEX_CODES){
     const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type))
@@ -464,7 +485,12 @@ Deno.serve(async req=>{
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       return await masterPdfFileResponse(String(body.disposition||'inline'))
     }
-    if(action==='export_pdf')return json({error:'PDF dynamique désactivé : utiliser le MASTER Drive officiel.'},410)
+    if(action==='export_pdf'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
+      const scoped=scopedSnapshot(fullSnapshot,body.scope)
+      return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label)
+    }
     if(action==='export_xlsx'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
