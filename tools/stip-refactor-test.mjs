@@ -52,6 +52,12 @@ check(
   'Le sélecteur commun ne consomme plus le registre central des shifts.'
 );
 check(selector.includes('sas-absence-divider')&&selector.includes('sas-absent'),'Le sélecteur commun ne sépare plus les absents.');
+check(
+  read('stip-agent-selector.css').includes('aspect-ratio:4/5') &&
+  read('stip-agent-selector.css').includes('object-fit:cover') &&
+  read('stip-agent-selector.css').includes('object-position:50% var(--sas-photo-y,42%)'),
+  'Le mur commun a perdu le portrait ovale 4:5 ou la protection anti-déformation des images.'
+);
 check(read('responsable-agents.js').includes('STIPAgentSelector.mount'),'Responsable ne réutilise plus le sélecteur commun.');
 check(
   selector.includes('data-sas-filter="first"') &&

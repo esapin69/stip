@@ -148,7 +148,7 @@ Contrat validé :
 - filtre initial : `Prénoms` ; le filtre actif zoome légèrement et passe en gras + majuscules ;
 - `Prénoms` et `Noms` regroupent le mur par séparateurs `A`, `B`, `C`… et ne rendent jamais de groupe vide ;
 - `GHE` regroupe dynamiquement en `SANS GHE`, puis par numéro réel `GHE 1`, `GHE 2`, etc., avec `AUTRE GHE` uniquement si une valeur existe mais n’est pas interprétable ;
-- affichage sous forme de **mur de portraits** : photo ronde importante, initiales en secours, tampon GHE superposé au bas du portrait sans masquer le visage ;
+- affichage sous forme de **mur de portraits ovales verticaux (4:5)** : photo importante, initiales en secours, tampon GHE superposé au bas du portrait sans masquer le visage ; les images utilisent `object-fit: cover` afin de conserver leurs proportions sans jamais les étirer ;
 - le **mur de portraits d’ADMIN > Accès est la référence visuelle canonique**. Il est rendu par `STIPAgentSelector.mountWall(...)` et consommé par ADMIN comme par `Rechercher un agent` ; aucun des deux écrans ne possède une copie locale des cartes, séparateurs, photos ou tampons GHE ;
 - filtre `Prénoms` : prénom prioritaire en gras/majuscules puis nom ; filtre `Noms` : nom prioritaire puis prénom ; filtre `GHE` : tampon GHE visuellement renforcé puis identité ;
 - toute la vignette est cliquable ; l’agent déjà sélectionné possède un repère commun ;
