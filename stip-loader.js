@@ -23,6 +23,8 @@
     return p;
   }
   function style(href) {
+    if (document.documentElement.dataset.stipVisual === "none")
+      return Promise.resolve(null);
     const url = new URL(String(href || ""), document.baseURI);
     url.searchParams.set("v", V);
     const key = url.href;
