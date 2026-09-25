@@ -413,7 +413,7 @@
       }
       return {
         level: "ok",
-        headline: "Rien ne coince côté effectif",
+        headline: "Effectif conforme",
         detail: "",
         proposal: "",
         source: item,
