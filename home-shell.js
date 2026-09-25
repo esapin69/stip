@@ -996,7 +996,7 @@
       bridge = nextMonday
         ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
         : "";
-    return `<div class="stip-week-line ${nextMonday ? "has-next-monday" : ""}" style="--stip-week-columns:${slotCount};--week-card-h:var(--stip-week-card-h)">${w.map((x) => dayCard(x, "stip-week-day", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "stip-week-day hc-day-next-monday", true) : ""}</div>`;
+    return `<div class="stip-week-line stip-week-personal-line ${nextMonday ? "has-next-monday" : ""}" style="--stip-week-columns:${slotCount};--week-card-h:var(--stip-week-card-h)">${w.map((x) => dayCard(x, "stip-week-day", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "stip-week-day hc-day-next-monday", true) : ""}</div>`;
   }
   function planningStatus() {
     if (planningLoading()) {
