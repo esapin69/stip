@@ -2457,6 +2457,7 @@
     "#sasCallOverlay",
     "#sasPickerOverlay",
     ".aav-overlay",
+    "#rsShiftAnalysis",
     "#respPanel.open",
     ".ta-sheet.open",
     "dialog[open]",
