@@ -1493,7 +1493,7 @@
     const canResponsable = has("responsable") || has("admin"),
       canAccess = has("access_manage") || has("admin");
     if (!(canResponsable || canAccess)) return "";
-    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div>${canResponsable ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}${canAccess ? '<div class="hc-profile-responsable-row hc-profile-access-row"><button type="button" class="hc-responsable-tab" data-app="access" aria-label="Ouvrir la gestion des accès"><span>Accès</span><b aria-hidden="true">›</b></button></div>' : ""}</section>`;
+    return `<section class="hc-responsable-access-block" aria-label="Pilotage"><div class="hc-responsable-access-separator" aria-hidden="true"><span>PILOTAGE</span></div>${canResponsable ? '<div class="hc-profile-responsable-row"><button type="button" class="hc-responsable-tab" data-app="responsable" aria-label="Ouvrir l’espace Responsable"><span>Responsable</span><b aria-hidden="true">›</b></button></div>' : ""}${canAccess ? '<div class="hc-profile-responsable-row hc-profile-access-row"><button type="button" class="hc-responsable-tab" data-app="access" aria-label="Ouvrir les profils, l’historique et le contrôle des accès"><span>Accès & sécurité</span><b aria-hidden="true">›</b></button></div>' : ""}</section>`;
   }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
@@ -1522,7 +1522,7 @@
     if (has("file_upload")) s += app("upload", "Importer", "upload", "upload");
     if (has("admin")) s += app("admin", "Admin", "admin", "admin");
     if (has("access_manage") || has("admin"))
-      s += app("access", "Accès", "access", "access");
+      s += app("access", "Accès & sécurité", "access", "access");
     return s || '<p class="hc-empty">Aucune application autorisée.</p>';
   }
   function routeForHomeMode(mode = "planning") {
@@ -2067,12 +2067,17 @@
     params.set("embed", "home-v2");
     try {
       const saved = sessionStorage.getItem("stip_responsable_entry_search_v1") || "";
+      const freshShortcut =
+        sessionStorage.getItem("stip_responsable_fresh_entry_v1") === "1";
       sessionStorage.removeItem("stip_responsable_entry_search_v1");
+      sessionStorage.removeItem("stip_responsable_fresh_entry_v1");
       const source = new URLSearchParams(saved);
-      for (const key of ["tab", "mode", "tool", "open"]) {
+      for (const key of ["tab", "mode", "tool", "open", "entry"]) {
         const value = source.get(key);
         if (value) params.set(key, value);
       }
+      if (freshShortcut && !params.get("entry"))
+        params.set("entry", "shortcut");
     } catch {}
     return `responsable.html?${params.toString()}`;
   }
@@ -2505,6 +2510,9 @@
     if (k === "dates") return (location.href = "agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.();
     if (k === "responsable") {
+      try {
+        sessionStorage.setItem("stip_responsable_fresh_entry_v1", "1");
+      } catch {}
       if (window.STIPRouter?.set) return window.STIPRouter.set("responsable");
       state.homeMode = "responsable";
       state.renderSig = "";
