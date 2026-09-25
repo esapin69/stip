@@ -173,6 +173,21 @@ Lorsqu’une ancienne page de choix d’agent est repérée, la correction atten
 - pour un écran qui a déjà ses propres contrôles de recherche/filtre, utiliser uniquement `STIPAgentSelector.mountWall(...)` pour le mur ; `openPicker(...)` reste le modèle complet avec en-tête, recherche et filtres.
 - depuis Responsable, ouvrir « Ajouter » doit rester dans la page courante : activer l’onglet Agenda puis ouvrir la feuille d’ajout en mémoire. La navigation vers une nouvelle URL n’est qu’un secours si le runtime inline n’est pas disponible.
 
+### MAÎTRE — Actions agent contextuelles
+
+Le clic sur une personne peut ouvrir un **pop commun d’actions** via `STIPPersonActions.open(...)` lorsque la page propose plusieurs suites possibles.
+
+Règles :
+- le pop est un bottom-sheet sur mobile et une fenêtre centrée sur écran large ;
+- son en-tête réutilise le portrait ovale, l’identité et le tampon GHE du maître Personnes ;
+- la page appelante fournit uniquement les actions pertinentes et déjà autorisées ; le composant visuel ne décide jamais lui-même des permissions métier ;
+- une action sensible reste revalidée côté métier/serveur au moment de son exécution ;
+- **Rechercher un agent dans un formulaire reste une exception volontaire** : le clic sélectionne immédiatement l’agent et revient au formulaire, sans pop intermédiaire ;
+- dans **ADMIN > Accès**, le pop propose selon les données disponibles : gérer/créer l’accès, voir le planning, appeler ;
+- dans **Équipe / annuaire**, le pop propose : voir le planning et appeler lorsque le téléphone est disponible ;
+- une action indisponible n’est pas affichée plutôt que grisée inutilement ;
+- aucune page ne recrée localement son propre bottom-sheet d’actions agent.
+
 ## Filtres et onglets — template 6B officiel
 
 Les filtres, onglets de vue et sélecteurs courts utilisent désormais le composant partagé **6B** défini dans `stip-patterns.css`.
