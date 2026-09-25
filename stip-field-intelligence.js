@@ -35,7 +35,7 @@
     if (level === "opportunity")
       return { level, symbol: "➕", label: "Marge utile" };
     if (level === "ok")
-      return { level, symbol: "✔", label: "Nombre prévu OK" };
+      return { level, symbol: "✔", label: "Effectif conforme" };
     return { level: "unknown", symbol: "", label: "Pas assez de données" };
   }
 
