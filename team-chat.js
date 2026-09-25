@@ -1564,17 +1564,13 @@
 
       const renderPlaces = () => {
         const quickPlaces = wheelchairFieldSpots(building.key, level);
-        const wholeSelected = selectedPlaces.has("__whole__");
-        const selectedValues = [...selectedPlaces].filter((value) => value !== "__whole__");
+        const selectedValues = [...selectedPlaces];
 
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
             '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-level aria-label="Retour">‹</button><div class="tb-confirm-icon">📍</div></div>' +
             "<h3>Où exactement ?</h3>" +
-            "<p>" + esc(building.label) + " · " + esc(level) + "</p>" +
-            '<button type="button" class="tb-wizard-finish tb-place-toggle' + (wholeSelected ? " is-selected" : "") + '" data-finish-level aria-pressed="' + (wholeSelected ? "true" : "false") + '">' +
-              '<span aria-hidden="true">✓</span><span><strong>Tout le ' + esc(level) + '</strong></span>' +
-            "</button>" +
+            "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + "</p>" +
             '<div class="tb-place-choices tb-field-spot-choices">' +
               quickPlaces.map((place) => {
                 const selected = selectedPlaces.has(place.value);
@@ -1600,19 +1596,9 @@
 
         wrap.querySelector("[data-back-level]")?.addEventListener("click", renderLevels);
 
-        wrap.querySelector("[data-finish-level]")?.addEventListener("click", () => {
-          if (selectedPlaces.has("__whole__")) selectedPlaces.delete("__whole__");
-          else {
-            selectedPlaces.clear();
-            selectedPlaces.add("__whole__");
-          }
-          renderPlaces();
-        });
-
         wrap.querySelectorAll("[data-place]").forEach((button) => {
           button.addEventListener("click", () => {
             const value = String(button.dataset.place || "");
-            selectedPlaces.delete("__whole__");
             if (selectedPlaces.has(value)) selectedPlaces.delete(value);
             else selectedPlaces.add(value);
             renderPlaces();
@@ -1629,7 +1615,7 @@
 
         wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
           if (!selectedPlaces.size) return;
-          const locations = [...selectedPlaces].filter((value) => value !== "__whole__");
+          const locations = [...selectedPlaces];
           renderStructuredReview(
             wrap,
             {
