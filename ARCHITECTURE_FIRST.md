@@ -53,6 +53,17 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - Réutiliser le moteur de navigation STIP existant et ses états de reprise.
 - Ne pas créer de logique retour/reprise propre à une page lorsque le moteur commun peut la porter.
 
+### Continuité de session et retour navigateur
+- Une session déjà valide ne doit jamais réafficher provisoirement l’écran « Accès direct » pendant un rafraîchissement ou un retour navigateur.
+- Le client réhydrate immédiatement le dernier instantané de session valide, puis revalide silencieusement côté serveur.
+- Seuls les refus serveur explicites d’authentification/autorisation (`401`/`403`) peuvent invalider la session locale. Une coupure réseau, un timeout ou une erreur serveur transitoire ne doit pas déconnecter l’utilisateur.
+- `stip-session-continuity.js` est la source commune pour l’instantané et la revalidation de session. Ne pas recréer un appel `me` concurrent lorsqu’un instantané frais est disponible.
+- Le bouton retour doit préférer l’historique navigateur réel. Un fallback par nouvelle navigation n’est utilisé que lorsqu’aucune entrée STIP exploitable n’existe.
+- Les navigations HTML normales utilisent une réponse mise en cache immédiatement disponible puis une actualisation silencieuse. Un rafraîchissement explicite reste autorisé à demander la version réseau.
+- Le retour navigateur doit conserver l’écran, le scroll et les données déjà rendues quand le navigateur peut restaurer la page ; ne pas forcer un rechargement complet sur `pageshow`, `focus` ou `visibilitychange`.
+- Les contrôles de version ne doivent pas déclencher plusieurs requêtes au simple retour sur une page. La vérification se fait au chargement initial puis à faible fréquence en arrière-plan.
+- Tous les caches de continuité restent versionnés, liés à la session courante et invalidés au logout, au changement de session ou à un refus serveur explicite.
+
 ### Agents
 - `stip-agent-selector.js/.css` : sélection/recherche partagée.
 - Les pages doivent consommer les données agent fiables existantes au lieu de recréer une seconde liste.
