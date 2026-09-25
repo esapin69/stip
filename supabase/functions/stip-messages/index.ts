@@ -50,15 +50,30 @@ const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart
 async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc.encode(s)))}
 function nick(a:any,p:any){return String(p?.nickname||a?.prenom||a?.nom||"Agent").trim()}
 function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}
-function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
+function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="stagiaire"||t==="stage"?"stage":t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
+function safeTraineeKey(v:any){const key=String(v||"").trim();return /^[a-z0-9_-]{1,100}$/i.test(key)?key:""}
+async function traineeActor(key:string){
+  key=safeTraineeKey(key);if(!key)return null;
+  const{data,error}=await db.from("stagiaires").select("nom,prenom,source_key,date_debut").like("source_key",`stagiaire:${key}:%`).order("date_debut").limit(1).maybeSingle();
+  if(error)throw error;if(!data)return null;
+  return{id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:data.prenom,nom:data.nom,ghe:null,equipe:"stage",type_planning:"stagiaire",profile_photo_url:null,avatar_url:null,trainee_key:key,identity_kind:"stagiaire"}
+}
+function actorKey(ctx:any){return ctx?.is_trainee?`stagiaire:${ctx.trainee_key}`:String(ctx?.agent?.id||"")}
+async function actorDisplayName(ctx:any){if(ctx?.is_trainee)return display(ctx.agent)||"Stagiaire";const profile=await messageProfile(String(ctx.agent.id));return nick(ctx.agent,profile)}
+function senderOwnerKey(row:any){return row?.sender_stagiaire_key?`stagiaire:${row.sender_stagiaire_key}`:String(row?.sender_agent_id||"")}
 async function ctx(req:Request){
   const t=req.headers.get("x-stip-session")||"";if(!t)throw Error("Session STIP requise.");
-  const{data:s,error:se}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at").eq("token_hash",await sha(t)).maybeSingle();
+  const{data:s,error:se}=await db.from("stip_access_sessions").select("profile_id,expires_at,revoked_at,selected_stagiaire_key").eq("token_hash",await sha(t)).maybeSingle();
   if(se)throw se;if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error("Session expirée.");
   const{data:p,error:pe}=await db.from("stip_access_profiles").select("agent_id,active,permissions,role_key,preset_roles,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url)").eq("id",s.profile_id).maybeSingle();
-  if(pe)throw pe;if(!p?.active||!p.agent_id||!p.agents)throw Error("Accès agent requis.");
-  if(!p.permissions?.messages)throw Error("Messages non autorisés.");
-  return{profile:p,agent:p.agents as any}
+  if(pe)throw pe;if(!p?.active)throw Error("Accès désactivé.");if(!p.permissions?.messages)throw Error("Messages non autorisés.");
+  if(String(p.role_key||"")==="stagiaire"){
+    const key=safeTraineeKey(s.selected_stagiaire_key),actor=await traineeActor(key);
+    if(!actor)throw Error("Choisis le stagiaire de cette session.");
+    return{profile:p,agent:actor,trainee_key:key,is_trainee:true}
+  }
+  if(!p.agent_id||!p.agents)throw Error("Accès agent requis.");
+  return{profile:p,agent:p.agents as any,is_trainee:false}
 }
 async function messageProfile(id:string){
   const{data}=await db.from("stip_message_profiles").select("nickname,notification_preview").eq("agent_id",id).maybeSingle();
@@ -217,7 +232,32 @@ async function broadcastUpdate(ctx:any,body:any){
   const u=await db.from("stip_operational_broadcasts").update(patch).eq("id",row.id);if(u.error)throw u.error;
   return{ok:true}
 }
+function traineeKeyFromSource(v:any){const m=String(v||"").match(/^stagiaire:([^:]+)(?::\d{4}-\d{2}-\d{2})?$/i);return m?.[1]||""}
+async function traineeDirectory(){
+  const today=parisDayKey(),edge=new Date(today+"T12:00:00Z");edge.setUTCDate(edge.getUTCDate()+180);const to=edge.toISOString().slice(0,10);
+  const{data,error}=await db.from("stagiaires").select("source_key,nom,prenom,date_debut,date_fin").gte("date_fin",today).lte("date_debut",to).order("date_debut");
+  if(error)throw error;const groups=new Map<string,any>();
+  for(const row of data||[]){const key=traineeKeyFromSource(row.source_key);if(!key)continue;const x=groups.get(key)||{trainee_key:key,id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,nom:row.nom,prenom:row.prenom,ghe:"Stage",role:"Stagiaire",first_date:row.date_debut,last_date:row.date_fin||row.date_debut};if(String(row.date_debut)<String(x.first_date))x.first_date=row.date_debut;if(String(row.date_fin||row.date_debut)>String(x.last_date))x.last_date=row.date_fin||row.date_debut;groups.set(key,x)}
+  return[...groups.values()].sort((a,b)=>String(a.prenom||"").localeCompare(String(b.prenom||""),"fr")||String(a.nom||"").localeCompare(String(b.nom||""),"fr"))
+}
+async function traineeInbox(ctx:any,markRead=false){
+  if(!ctx?.is_trainee)throw Error("Accès Stagiaire requis.");
+  const key=safeTraineeKey(ctx.trainee_key);const{data,error}=await db.from("stip_trainee_messages").select("id,target_key,sender_agent_id,body,created_at,read_at").eq("target_key",key).order("created_at",{ascending:false}).limit(100);if(error)throw error;
+  const ids=[...new Set((data||[]).map((x:any)=>String(x.sender_agent_id)).filter(Boolean))];
+  const{data:senders}=ids.length?await db.from("agents").select("id,prenom,nom,ghe,profile_photo_url,avatar_url").in("id",ids):{data:[] as any[]};
+  const by=new Map((senders||[]).map((x:any)=>[String(x.id),x]));
+  const items=(data||[]).map((x:any)=>({...x,sender:by.get(String(x.sender_agent_id))||null}));
+  if(markRead){const unread=items.filter((x:any)=>!x.read_at).map((x:any)=>x.id);if(unread.length){const u=await db.from("stip_trainee_messages").update({read_at:new Date().toISOString()}).in("id",unread).eq("target_key",key);if(u.error)throw u.error}}
+  return items
+}
+async function traineeSend(ctx:any,body:any){
+  if(ctx?.is_trainee||!ctx?.agent?.id)throw Error("Envoi réservé aux professionnels STIP.");
+  const key=safeTraineeKey(body.trainee_key),text=String(body.body||"").trim().slice(0,2000);if(!key||!text)throw Error("Destinataire ou message manquant.");
+  if(!(await traineeDirectory()).some((x:any)=>x.trainee_key===key))throw Error("Stagiaire introuvable.");
+  const{data,error}=await db.from("stip_trainee_messages").insert({target_key:key,sender_agent_id:ctx.agent.id,body:text}).select("id,created_at").single();if(error)throw error;return{ok:true,...data}
+}
 async function home(ctx:any){
+  if(ctx?.is_trainee){const messages=await traineeInbox(ctx,false);return{me:ctx.agent,conversations:[],suggestions:[],trainee_messages:messages,unread:messages.filter((x:any)=>!x.read_at).length}}
   const{data:member,error}=await db.from("stip_conversation_members").select("conversation_id,last_read_at").eq("agent_id",ctx.agent.id);if(error)throw error;
   const ids=(member||[]).map((x:any)=>x.conversation_id),read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
   let conversations:any[]=[];
@@ -300,7 +340,8 @@ async function teamConversation(ctx:any){
       kind:"team_chat",
       direct_key:key,
       title:"Tableau STIP",
-      created_by_agent_id:ctx.agent.id
+      created_by_agent_id:ctx.is_trainee?null:ctx.agent.id,
+      created_by_stagiaire_key:ctx.is_trainee?ctx.trainee_key:null
     }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at").single();
     if(created.error){
       const again=await db.from("stip_conversations")
@@ -432,7 +473,7 @@ async function teamThread(ctx:any){
   await purgePastStorageFolders(String(conv.id));
   await purgePreviousTableauDays(String(conv.id));
   const{data:messages,error}=await db.from("stip_messages")
-    .select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
+    .select("id,body,payload,created_at,sender_agent_id,sender_stagiaire_key,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
     .eq("conversation_id",conv.id)
     .order("created_at")
     .limit(300);
@@ -442,17 +483,19 @@ async function teamThread(ctx:any){
     ?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",senderIds)
     :{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
-  const withNames=(messages||[]).map((m:any)=>({
-    ...m,
-    sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}
-  }));
+  const withNames=(messages||[]).map((m:any)=>{
+    if(m.sender_agent_id)return{...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}};
+    const actor=m?.payload?.actor||{},key=String(m.sender_stagiaire_key||actor.key||"");
+    const sender={id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:actor.prenom||"Stagiaire",nom:actor.nom||"",ghe:null,equipe:"stage",nickname:actor.prenom||"Stagiaire",identity_kind:"stagiaire"};
+    return{...m,sender_agent_id:sender.id,sender}
+  });
   const signed=await signedTeamPhotos(withNames);
-  const meProfile=await messageProfile(String(ctx.agent.id));
+  const meProfile=ctx.is_trainee?null:await messageProfile(String(ctx.agent.id));
   const accessMode=teamAccessMode(ctx);
   return{
     conversation:conv,
     day:parisDayKey(),
-    me:{...ctx.agent,nickname:nick(ctx.agent,meProfile)},
+    me:{...ctx.agent,nickname:ctx.is_trainee?display(ctx.agent):nick(ctx.agent,meProfile)},
     access_mode:accessMode,
     can_write:accessMode!=="read",
     admin:accessMode==="admin",
@@ -523,6 +566,7 @@ async function teamSend(ctx:any,body:any){
     createdPhoto=photoPath
   }
   const payload:any={};
+  if(ctx.is_trainee)payload.actor={kind:"stagiaire",key:ctx.trainee_key,prenom:ctx.agent.prenom||"",nom:ctx.agent.nom||""};
   if(photoPath)payload.photo_path=photoPath;
   if(replyTo)payload.reply_to_id=replyTo;
   if(wheelchair){
@@ -547,7 +591,8 @@ async function teamSend(ctx:any,body:any){
   }
   const{data,error}=await db.from("stip_messages").insert({
     conversation_id:conv.id,
-    sender_agent_id:ctx.agent.id,
+    sender_agent_id:ctx.is_trainee?null:ctx.agent.id,
+    sender_stagiaire_key:ctx.is_trainee?ctx.trainee_key:null,
     body:text,
     payload
   }).select("id,created_at").single();
@@ -579,16 +624,16 @@ async function teamResolve(ctx:any,body:any){
   const wheelchair=row?.payload?.wheelchair;
   if(!wheelchair)throw Error("Ce message n’est pas un signalement de fauteuil.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
-  const profile=await messageProfile(String(ctx.agent.id)),
-    resolvedAt=new Date().toISOString(),
-    resolvedBy=nick(ctx.agent,profile),
+  const resolvedAt=new Date().toISOString(),
+    resolvedBy=await actorDisplayName(ctx),
+    resolvedById=actorKey(ctx),
     payload={
       ...(row.payload||{}),
       wheelchair:{
         ...wheelchair,
         status:"resolved",
         resolved_at:resolvedAt,
-        resolved_by_agent_id:String(ctx.agent.id),
+        resolved_by_agent_id:resolvedById,
         resolved_by_name:resolvedBy
       }
     };
@@ -627,9 +672,9 @@ async function teamTake(ctx:any,body:any){
 
   if(remaining<1)return{ok:true,already_resolved:true,remaining:0};
 
-  const profile=await messageProfile(String(ctx.agent.id)),
-    takenAt=new Date().toISOString(),
-    takenBy=nick(ctx.agent,profile),
+  const takenAt=new Date().toISOString(),
+    takenBy=await actorDisplayName(ctx),
+    takenById=actorKey(ctx),
     nextRemaining=Math.max(0,remaining-taken),
     takes=Array.isArray(wheelchair.takes)?wheelchair.takes.slice(-19):[],
     nextWheelchair={
@@ -640,16 +685,16 @@ async function teamTake(ctx:any,body:any){
       takes:[...takes,{
         quantity:taken,
         taken_at:takenAt,
-        taken_by_agent_id:String(ctx.agent.id),
+        taken_by_agent_id:takenById,
         taken_by_name:takenBy
       }],
       last_taken_at:takenAt,
-      last_taken_by_agent_id:String(ctx.agent.id),
+      last_taken_by_agent_id:takenById,
       last_taken_by_name:takenBy,
       ...(nextRemaining===0?{
         status:"resolved",
         resolved_at:takenAt,
-        resolved_by_agent_id:String(ctx.agent.id),
+        resolved_by_agent_id:takenById,
         resolved_by_name:takenBy
       }:{status:"active"})
     },
@@ -691,19 +736,19 @@ async function teamStillThere(ctx:any,body:any){
   if(!wheelchair||wheelchair.type==="search")throw Error("Ce message n’est pas un fauteuil disponible.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
 
-  const profile=await messageProfile(String(ctx.agent.id)),
-    seenAt=new Date().toISOString(),
-    seenBy=nick(ctx.agent,profile),
+  const seenAt=new Date().toISOString(),
+    seenBy=await actorDisplayName(ctx),
+    seenById=actorKey(ctx),
     sightings=Array.isArray(wheelchair.sightings)?wheelchair.sightings.slice(-29):[],
     nextWheelchair={
       ...wheelchair,
       sightings:[...sightings,{
         seen_at:seenAt,
-        seen_by_agent_id:String(ctx.agent.id),
+        seen_by_agent_id:seenById,
         seen_by_name:seenBy
       }],
       last_seen_at:seenAt,
-      last_seen_by_agent_id:String(ctx.agent.id),
+      last_seen_by_agent_id:seenById,
       last_seen_by_name:seenBy
     },
     payload={...(row.payload||{}),wheelchair:nextWheelchair};
@@ -748,10 +793,9 @@ async function teamReact(ctx:any,body:any){
   if(error)throw error;
   if(!row)throw Error("Ce message n’est plus disponible.");
 
-  const profile=await messageProfile(String(ctx.agent.id)),
-    agentId=String(ctx.agent.id),
+  const agentId=actorKey(ctx),
     reactedAt=new Date().toISOString(),
-    reactedBy=nick(ctx.agent,profile),
+    reactedBy=await actorDisplayName(ctx),
     existing=Array.isArray(row?.payload?.reactions)?row.payload.reactions:[],
     mine=existing.find((reaction:any)=>String(reaction?.agent_id||"")===agentId),
     others=existing.filter((reaction:any)=>String(reaction?.agent_id||"")!==agentId),
@@ -787,12 +831,12 @@ async function teamDelete(ctx:any,body:any){
   const ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
   if(!ids.length)throw Error("Aucun message sélectionné.");
   const{data:rows,error}=await db.from("stip_messages")
-    .select("id,payload,sender_agent_id")
+    .select("id,payload,sender_agent_id,sender_stagiaire_key")
     .eq("conversation_id",conv.id)
     .in("id",ids);
   if(error)throw error;
   if(!rows?.length)return{ok:true,deleted:0};
-  if(!admin&&rows.some((m:any)=>String(m.sender_agent_id)!==String(ctx.agent.id)))
+  if(!admin&&rows.some((m:any)=>senderOwnerKey(m)!==actorKey(ctx)))
     throw Error("Suppression non autorisée.");
   await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
   const realIds=rows.map((m:any)=>m.id),
@@ -883,15 +927,18 @@ Deno.serve(async req=>{
   try{
     const c=await ctx(req),b=await req.json().catch(()=>({})),a=String(b.action||"home");
     if(a==="home")return J(await home(c));
+    if(a==="trainees"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await traineeDirectory()})}
+    if(a==="trainee_send")return J(await traineeSend(c,b));
+    if(a==="trainee_read"){if(!c.is_trainee)throw Error("Accès Stagiaire requis.");return J({ok:true,items:await traineeInbox(c,true)})}
     if(a==="wheelchair_catalog")return J(await wheelchairCatalog());
-    if(a==="agents")return J({items:await agents(c,String(b.q||""))});
-    if(a==="on_duty")return J({items:await onDuty(c)});
-    if(a==="direct")return J({conversation:await direct(c,String(b.agent_id||""))});
-    if(a==="group")return J({conversation:await group(c,b)});
-    if(a==="thread")return J(await thread(c,String(b.conversation_id||"")));
-    if(a==="send")return J(await send(c,b));
-    if(a==="broadcast_update")return J(await broadcastUpdate(c,b));
-    if(a==="profile_set")return J(await profileSet(c,b));
+    if(a==="agents"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await agents(c,String(b.q||""))});
+    if(a==="on_duty"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await onDuty(c)})}
+    if(a==="direct"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await direct(c,String(b.agent_id||""))})}
+    if(a==="group"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await group(c,b)})}
+    if(a==="thread"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await thread(c,String(b.conversation_id||"")))}
+    if(a==="send"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await send(c,b))}
+    if(a==="broadcast_update"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await broadcastUpdate(c,b))}
+    if(a==="profile_set"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await profileSet(c,b))}
     if(a==="team_thread")return J(await teamThread(c));
     if(a==="team_photo_upload")return J(await teamPhotoUpload(c,b));
     if(a==="team_send")return J(await teamSend(c,b));
