@@ -1,15 +1,41 @@
 # T-est
 
-Ce dossier est la racine de l’univers de test visuel **T-est**.
+T-est est l’atelier de reconstruction progressive du site STIP.
 
-Structure minimale actuelle :
+## Structure
 
-- `porte-entree/index.html` : première page, construite à partir du squelette et des moteurs de l’accueil STIP courant, sans reprendre son thème visuel.
-- `regles-communes/global.css` : règles visuelles communes à toutes les pages T-est.
-- `regles-communes/global.js` : comportements communs à toutes les pages T-est.
+- `porte-entree/` : première page reconstruite.
+- `regles-communes/` : règles permanentes communes aux pages reconstruites.
+- `outils-test/` : outils visibles uniquement dans l’univers T-est.
 
-Règle d’architecture : lorsqu’une règle doit s’appliquer à plusieurs pages T-est, elle vit dans `regles-communes/` et n’est pas recopiée page par page.
+## Contrat obligatoire pour chaque nouvelle page T-est
 
-Première règle commune : chaque page T-est affiche une bulle flottante avec un **T dessiné**. La bulle est injectée par `global.js` et son dessin est défini dans `global.css`.
+Toute nouvelle page créée dans T-est charge **par défaut et en permanence** :
 
-Les autres pages seront ajoutées une par une à partir des pages STIP existantes. Aucun thème ou comportement visuel supplémentaire n’est importé tant qu’il n’est pas demandé explicitement.
+```html
+<link rel="stylesheet" href="/t-est/regles-communes/global.css" />
+<script defer src="/t-est/regles-communes/global.js"></script>
+```
+
+Une règle destinée à plusieurs pages ne doit jamais être recopiée localement : elle va dans `regles-communes/`.
+
+Les chemins sont absolus afin que ce branchement continue de fonctionner lorsque la page testée est déplacée pour remplacer sa vraie page.
+
+## Outils T-est qui ne doivent jamais suivre en production
+
+La bulle flottante **T** est un outil de laboratoire. Elle est volontairement séparée :
+
+```html
+<link rel="stylesheet" href="/t-est/outils-test/bulle-t.css" />
+<script defer src="/t-est/outils-test/bulle-t.js"></script>
+```
+
+Quand une page est validée et remplace sa vraie page :
+
+1. la page T-est remplace la page réelle dépassée ;
+2. le branchement vers `regles-communes/` reste présent ;
+3. les moteurs métier partagés existants restent branchés ;
+4. seuls les éléments marqués **T-EST LAB ONLY** sont retirés ;
+5. la bulle T et ses fichiers `outils-test/` ne sont jamais copiés dans la page réelle.
+
+Ainsi, les futures corrections globales faites dans `regles-communes/` continuent à atteindre toutes les pages T-est et toutes les pages déjà promues qui y sont branchées.

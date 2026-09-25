@@ -2,9 +2,16 @@
 <html lang="fr" data-stip-visual="none" data-stip-t-suite-level="1" data-t-est="1">
   <head>
     <base href="../../" />
-    <link rel="stylesheet" href="t-est/regles-communes/global.css?v=20260926-t-est1" />
-    <script defer src="t-est/regles-communes/global.js?v=20260926-t-est1"></script>
-    <script id="stip-t-admin-gate">
+    <!-- T-EST COMMON — permanent, follows the page when promoted -->
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-contract2" />
+    <script defer src="/t-est/regles-communes/global.js?v=20260926-contract2"></script>
+    <!-- /T-EST COMMON -->
+
+    <!-- T-EST LAB ONLY — remove when this page replaces the real page -->
+    <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260926-contract2" />
+    <script defer src="/t-est/outils-test/bulle-t.js?v=20260926-contract2"></script>
+    <!-- /T-EST LAB ONLY -->
+<script id="stip-t-admin-gate">
       document.documentElement.hidden = true;
       (async () => {
         const token = localStorage.getItem("stip_session_v1") || "";
@@ -44,7 +51,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-t-est1" />
+    <meta name="stip-ui-build" content="20260926-t-est-contract2" />
 <title>STIP — T-est</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
