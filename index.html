@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260925-scroll-core1" />
+    <meta name="stip-ui-build" content="20260925-gesture-contract1" />
     <script id="stip-asset-self-heal">
       (() => {
         let probeTimer = 0;
@@ -95,7 +95,7 @@
     <link rel="stylesheet" href="stip-person-actions.css?v=20260925-avatar-menu1" />
     <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
     <link rel="stylesheet" href="communication-hub.css?v=20260925-dm-push2" />
-    <link rel="stylesheet" href="stip-theme.css?v=20260925-calendar-common3" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260925-gesture-track1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
@@ -355,9 +355,10 @@
     <script src="quick-access.js?v=20260925-chef-access-hide1"></script>
     <script src="public-access-request.js?v=20260925-access-relay1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
-    <script src="stip-week-engine.js?v=20260925-week-engine9"></script>
-    <script src="stip-loader.js?v=20260925-chief-hours1"></script>
-    <script src="home-shell.js?v=20260925-team-vertical1"></script>
+    <script src="stip-gesture.js?v=20260925-gesture-contract1"></script>
+    <script src="stip-week-engine.js?v=20260925-gesture-track1"></script>
+    <script src="stip-loader.js?v=20260925-gesture-contract1"></script>
+    <script src="home-shell.js?v=20260925-gesture-contract1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
     <script src="tomorrow-ui.js?v=20260921-field3"></script>
@@ -370,7 +371,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260925-scroll-core1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260925-gesture-contract1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
