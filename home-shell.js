@@ -1677,6 +1677,12 @@
               icon: "🧭",
               when: () => has("admin"),
             },
+            {
+              action: "access",
+              label: "Accès & sécurité",
+              icon: "🔐",
+              when: () => has("admin"),
+            },
           ],
         },
       ];
@@ -2745,8 +2751,8 @@
     if (k === "newagent")
       return (location.href = "https://esapin69.github.io/Ghe-interne/");
     if (k === "upload")
-      return (location.href = "https://admin.esapin.com/depot.html");
-    if (k === "admin") return (location.href = "https://admin.esapin.com/");
+      return (location.href = "https://admin-ghe.esapin.com/depot.html");
+    if (k === "admin") return (location.href = "https://admin-ghe.esapin.com/");
     if (k === "access") return (location.href = "access-manage.html");
   }
   function panel(v, title = "") {
