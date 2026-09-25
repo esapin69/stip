@@ -49,6 +49,22 @@
     return localStorage.getItem(STORE) || "";
   }
 
+  function inheritedAccess() {
+    if (!EMBEDDED || window.parent === window) return null;
+    try {
+      const session = window.parent.STIPSession;
+      if (!session?.permissions) return null;
+      return {
+        permissions: session.permissions,
+        access_level: session.access_level || "",
+        role_key: session.role_key || "",
+        agent: session.agent || null,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   const field = () => window.STIPFieldIntel || null;
 
   async function post(fn, body) {
@@ -334,22 +350,21 @@
     if (cached.promise && !force) return cached.promise;
 
     cached.promise = (async () => {
-      const assistant = allowed("assistant_enabled")
-        ? await post("stip-assistant", {
-            action: "feed",
-            start_date: days[0],
-            end_date: days.at(-1),
-          }).catch(() => null)
-        : null;
-      const assistantItems = assistant?.items || [];
-      cached.assistantItems = assistantItems;
-      const targetDays = force
-        ? days
-        : days.filter((date) => !state.daySignals.has(date));
-      let cursor = 0;
-      let completed = 0;
+      const assistantPromise = allowed("assistant_enabled")
+          ? post("stip-assistant", {
+              action: "feed",
+              start_date: days[0],
+              end_date: days.at(-1),
+            }).catch(() => null)
+          : Promise.resolve(null),
+        targetDays = force
+          ? days
+          : days.filter((date) => !state.daySignals.has(date));
+      let assistantItems = cached.assistantItems || [],
+        cursor = 0,
+        completed = 0;
       const workers = Array.from(
-        { length: Math.min(2, Math.max(1, targetDays.length)) },
+        { length: Math.min(3, Math.max(1, targetDays.length)) },
         async () => {
           while (cursor < targetDays.length) {
             const date = targetDays[cursor++];
@@ -365,16 +380,30 @@
             completed += 1;
             if (
               state.dateJumpMonth === key &&
-              (completed % 4 === 0 || completed === targetDays.length)
-            )
-              {
-                renderDateJumpCalendar(key);
-                renderMonthDigest(key);
-              }
+              (completed % 3 === 0 || completed === targetDays.length)
+            ) {
+              renderDateJumpCalendar(key);
+              renderMonthDigest(key);
+            }
           }
         },
       );
-      await Promise.all(workers);
+      const [assistant] = await Promise.all([
+        assistantPromise,
+        Promise.all(workers).then(() => null),
+      ]);
+      assistantItems = assistant?.items || [];
+      cached.assistantItems = assistantItems;
+      for (const date of days) {
+        if (!state.staffingByDate.has(date)) continue;
+        const items = assistantItems.filter(
+          (item) => String(item?.date || "").slice(0, 10) === date,
+        );
+        state.daySignals.set(
+          date,
+          signalStatus(state.staffingByDate.get(date), items),
+        );
+      }
       cached.loaded = true;
       cached.fetchedAt = Date.now();
       if (state.dateJumpMonth === key) {
@@ -1939,7 +1968,8 @@
     observePageLegendSources();
     if (!token()) return location.replace("index.html");
     try {
-      state.access = await post("stip-access", { action: "me" });
+      state.access =
+        inheritedAccess() || (await post("stip-access", { action: "me" }));
       state.weekStart = monday(todayIso());
       state.weekPast = false;
       state.weekFull = false;
