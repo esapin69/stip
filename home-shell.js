@@ -2568,6 +2568,111 @@
     };
   }
 
+
+  function bindEmbeddedParentScroll(frame, doc) {
+    if (!frame || !doc) return;
+    frame._stipParentScrollCleanup?.();
+
+    const childWindow = doc.defaultView;
+    let gesture = null;
+
+    const scrollableAncestor = (target, deltaY) => {
+      let node = target?.nodeType === 1 ? target : target?.parentElement;
+      while (node && node !== doc.body && node !== doc.documentElement) {
+        const style = childWindow?.getComputedStyle?.(node),
+          overflowY = String(style?.overflowY || "");
+        if (
+          /(auto|scroll|overlay)/.test(overflowY) &&
+          node.scrollHeight > node.clientHeight + 1
+        ) {
+          const top = Number(node.scrollTop || 0),
+            max = Math.max(0, node.scrollHeight - node.clientHeight);
+          if ((deltaY > 0 && top < max - 1) || (deltaY < 0 && top > 1))
+            return node;
+        }
+        node = node.parentElement;
+      }
+      return null;
+    };
+
+    const reset = () => {
+      gesture = null;
+    };
+
+    const onTouchStart = (event) => {
+      if (event.touches.length !== 1) {
+        reset();
+        return;
+      }
+      const touch = event.touches[0];
+      gesture = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastY: touch.clientY,
+        axis: "",
+      };
+    };
+
+    const onTouchMove = (event) => {
+      if (
+        !gesture ||
+        event.touches.length !== 1 ||
+        frame.dataset.stipViewportLayer === "1"
+      )
+        return;
+      const touch = event.touches[0],
+        dx = touch.clientX - gesture.startX,
+        dy = touch.clientY - gesture.startY,
+        ax = Math.abs(dx),
+        ay = Math.abs(dy);
+
+      if (!gesture.axis) {
+        if (Math.max(ax, ay) < 9) return;
+        gesture.axis = ay >= ax * 1.12 ? "y" : ax >= ay * 1.18 ? "x" : "";
+      }
+      if (gesture.axis !== "y") return;
+
+      const deltaY = gesture.lastY - touch.clientY;
+      gesture.lastY = touch.clientY;
+      if (Math.abs(deltaY) < 0.5) return;
+      if (scrollableAncestor(event.target, deltaY)) return;
+
+      const before = window.scrollY;
+      window.scrollBy(0, deltaY);
+      if (Math.abs(window.scrollY - before) > 0.5) event.preventDefault();
+    };
+
+    const onWheel = (event) => {
+      if (frame.dataset.stipViewportLayer === "1") return;
+      const deltaY = Number(event.deltaY || 0);
+      if (!deltaY || scrollableAncestor(event.target, deltaY)) return;
+      const before = window.scrollY;
+      window.scrollBy(0, deltaY);
+      if (Math.abs(window.scrollY - before) > 0.5) event.preventDefault();
+    };
+
+    doc.addEventListener("touchstart", onTouchStart, {
+      passive: true,
+      capture: true,
+    });
+    doc.addEventListener("touchmove", onTouchMove, {
+      passive: false,
+      capture: true,
+    });
+    doc.addEventListener("touchend", reset, { passive: true, capture: true });
+    doc.addEventListener("touchcancel", reset, { passive: true, capture: true });
+    doc.addEventListener("wheel", onWheel, { passive: false, capture: true });
+
+    frame._stipParentScrollCleanup = () => {
+      doc.removeEventListener("touchstart", onTouchStart, true);
+      doc.removeEventListener("touchmove", onTouchMove, true);
+      doc.removeEventListener("touchend", reset, true);
+      doc.removeEventListener("touchcancel", reset, true);
+      doc.removeEventListener("wheel", onWheel, true);
+      reset();
+    };
+  }
+
   function bindEmbeddedTeam(root) {
     const frame = root?.querySelector?.("#hcTeamFrame");
     if (!frame || frame.dataset.stipBound === "1") return;
@@ -2618,6 +2723,7 @@
         }
         requestAnimationFrame(syncFrameHeight);
         bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
+        bindEmbeddedParentScroll(frame, doc);
 
         // Keep agent/chef sheets in the parent page. This preserves the shared
         // Applications / Mon profil / Esprit d'équipe header instead of trapping
@@ -2727,6 +2833,7 @@
         setTimeout(syncFrameHeight, 120);
         setTimeout(syncFrameHeight, 650);
         bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
+        bindEmbeddedParentScroll(frame, doc);
       } catch {}
     };
     frame.addEventListener("load", setup);
