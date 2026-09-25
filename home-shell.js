@@ -1609,7 +1609,7 @@
       groups = [
         {
           key: "agent",
-          label: "RACCOURCIS · AGENT",
+          label: "RACCOURCIS · Agent",
           items: [
             {
               href: "places-app.html",
@@ -1621,7 +1621,7 @@
         },
         {
           key: "responsable",
-          label: "RACCOURCIS · RESPONSABLE",
+          label: "RACCOURCIS · Responsable",
           items: [
             {
               action: "responsable",
@@ -1639,7 +1639,7 @@
         },
         {
           key: "cadre",
-          label: "RACCOURCIS · CADRE",
+          label: "RACCOURCIS · Cadre",
           items: [
             {
               href: "cadre-activite.html",
@@ -1663,7 +1663,7 @@
         },
         {
           key: "admin",
-          label: "RACCOURCIS · ADMIN",
+          label: "RACCOURCIS · Admin",
           items: [
             {
               action: "admin",
