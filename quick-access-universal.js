@@ -3,7 +3,7 @@
   if (!window.__STIPWorkspaceRequested) {
     window.__STIPWorkspaceRequested = true;
     const workspaceScript = document.createElement("script");
-    workspaceScript.src = "/stip-workspace.js?v=20260924-workspace2";
+    workspaceScript.src = "/stip-workspace.js?v=20260925-workspace3";
     workspaceScript.async = true;
     document.head.appendChild(workspaceScript);
   }
