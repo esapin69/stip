@@ -130,6 +130,14 @@
     lastTouch = { key: "", at: 0 };
   function allowed(k) {
     if (!META[k]) return false;
+    const sessionRole = String(
+      window.STIPSession?.role_key ||
+        window.STIPSession?.profile?.role_key ||
+        window.STIPBootCache?.role_key ||
+        window.STIPBootCache?.profile?.role_key ||
+        "",
+    ).toLowerCase();
+    if (k === "access" && sessionRole === "chef_equipe") return false;
     const p = window.STIPPreview?.active
       ? { ...(window.STIPSession?.permissions || {}) }
       : {
