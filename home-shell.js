@@ -190,7 +190,7 @@
     state.weekOffset = Number(next.weekOffset) || 0;
     state.weekPast = Boolean(next.weekPast);
     state.weekFull = Boolean(next.weekFull);
-    state.dayFocus = /^\\d{4}-\\d{2}-\\d{2}$/.test(String(next.dayFocus || ""))
+    state.dayFocus = /^\d{4}-\d{2}-\d{2}$/.test(String(next.dayFocus || ""))
       ? String(next.dayFocus)
       : "";
     return true;
