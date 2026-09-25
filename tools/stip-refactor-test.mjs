@@ -326,9 +326,11 @@ check(
   home.includes('data-cal-day='),
   'Choisir un jour du calendrier doit recaler la semaine affichée et mémoriser le jour sélectionné.'
 );
+const sharedDayFocusLine = home
+  .split('\n')
+  .find((line) => line.includes('test(String(next.dayFocus'));
 check(
-  home.includes('state.dayFocus = /^\d{4}-\d{2}-\d{2}$/.test') &&
-  !home.includes('state.dayFocus = /^\\d{4}-\\d{2}-\\d{2}$/.test'),
+  sharedDayFocusLine && (sharedDayFocusLine.match(/\\/g) || []).length === 3,
   'La sélection commune semaine/mois doit accepter une date ISO réelle sans vider dayFocus.'
 );
 check(
