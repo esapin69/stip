@@ -183,7 +183,9 @@ export async function answer(c: SessionCtx, body: any) {
     };
   }
 
-  if (intent === "leave_lookup") return leaveLookupAnswer(c, old, semanticText(raw), defs, all);\n\n  if (intent === "request_help") {
+  if (intent === "leave_lookup") return leaveLookupAnswer(c, old, semanticText(raw), defs, all);
+
+  if (intent === "request_help") {
     const requestText = normalize(raw), isAbsence = /\b(absence|absent|absente)\b/.test(requestText);
     return {
       kind: "redirect", title: isAbsence ? "Prévenir d’une absence" : "Demande de congé",
