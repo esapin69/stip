@@ -65,7 +65,9 @@
   }
   function shiftMeta(v) {
     const registry = window.STIPShiftRegistry,
-      def = registry?.resolve?.(v),
+      def =
+        registry?.resolveFor?.(v, { team: "chefs" }) ||
+        registry?.resolve?.(v),
       base = registry?.baseCode?.(v) || "";
     if (!def?.is_working || !base) return null;
     return {
