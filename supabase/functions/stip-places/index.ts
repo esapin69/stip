@@ -127,26 +127,6 @@ const MASTER_BUCKET='ghe-media'
 const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'
 const FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13} as const
 const FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16
-const MASTER_TEMPLATE_PAGE_SETS={
-  HLP:[1,2,3],
-  PW:[4,5,6,7,8],
-  HFME:[9,10,11,12],
-  ANNEXES:[13,14,15]
-} as const
-function templatePageIndexes(rawScope:any){
-  const scope=cleanScope(rawScope)
-  if(scope.mode==='all')return Array.from({length:FIXED_TEMPLATE_EXPECTED_PAGE_COUNT},(_,i)=>i)
-  if(scope.mode!=='building')throw new Error('PDF filtré disponible après validation du template dictionnaire pour ce périmètre.')
-  const codes=new Set(scope.building_codes)
-  const out:number[]=[]
-  if(codes.has('HLP'))out.push(...MASTER_TEMPLATE_PAGE_SETS.HLP)
-  if(codes.has('PW'))out.push(...MASTER_TEMPLATE_PAGE_SETS.PW)
-  if(codes.has('HFME'))out.push(...MASTER_TEMPLATE_PAGE_SETS.HFME)
-  if(ANNEX_CODES.some(code=>codes.has(code)))out.push(...MASTER_TEMPLATE_PAGE_SETS.ANNEXES)
-  if(!out.length)throw new Error('Aucune page PDF ne correspond à cette sélection.')
-  return [...new Set(out)]
-}
-
 async function loadFixedTemplatePdf(){
   const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
   if(error||!data)throw new Error('Template PDF fixe indisponible.')
@@ -158,6 +138,31 @@ async function loadFixedTemplatePdf(){
   }
   return source
 }
+async function masterPdfFileResponse(disposition='inline'){
+  const {data,error}=await db.storage.from(MASTER_BUCKET).download(MASTER_STORAGE_PATH)
+  if(error||!data)return json({error:'Copie privée du MASTER indisponible.'},503)
+  const bytes=await data.arrayBuffer()
+  const safeDisposition=disposition==='attachment'?'attachment':'inline'
+  return new Response(bytes,{status:200,headers:{
+    ...CORS,
+    'Content-Type':'application/pdf',
+    'Content-Length':String(bytes.byteLength),
+    'Content-Disposition':safeDisposition+'; filename="Visite-des-lieux-GHE-MASTER.pdf"',
+    'Cache-Control':'private, no-store'
+  }})
+}
+
+function masterPdfLinks(){
+  const id=encodeURIComponent(MASTER_DRIVE_ID)
+  return {
+    file_name:MASTER_FILE_NAME,
+    view_url:`https://drive.google.com/file/d/${id}/view`,
+    preview_url:`https://drive.google.com/file/d/${id}/preview`,
+    download_url:`https://drive.google.com/uc?export=download&id=${id}`,
+    source:'drive_master'
+  }
+}
+
 function exportDate(){return new Date().toISOString().slice(0,10)}
 function exportCell(v:any){if(v===null||v===undefined)return'';if(typeof v==='object')return JSON.stringify(v);return v}
 function appendSheet(book:any,name:string,rows:any[]){
@@ -337,24 +342,135 @@ function wrapPdf(font:any,text:string,size:number,maxWidth:number){
   if(current)lines.push(current)
   return lines
 }
-async function pdfResponse(scope:any,scopeLabel='GHE complet'){
-  const source=await loadFixedTemplatePdf()
-  const indexes=templatePageIndexes(scope)
+async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   const pdf=await PDFDocument.create()
-  const pages=await pdf.copyPages(source,indexes)
-  for(const page of pages)pdf.addPage(page)
-  pdf.setTitle('Visiter les lieux - '+scopeLabel)
-  pdf.setSubject('Export STIP reconstruit à la demande depuis le template MASTER validé')
-  pdf.setCreator('STIP - Visiter les lieux')
-  pdf.setProducer('STIP - pdf-lib')
-  pdf.setCreationDate(new Date())
-  pdf.setModificationDate(new Date())
+  const regular=await pdf.embedFont(StandardFonts.Helvetica)
+  const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
+  const W=595.28,H=841.89,M=42,CONTENT=W-M*2
+  const navy=rgb(0.035,0.30,0.42),ink=rgb(0.08,0.20,0.24),muted=rgb(0.38,0.49,0.52),soft=rgb(0.91,0.97,0.98),line=rgb(0.76,0.87,0.89)
+  const fixedTemplate=await loadFixedTemplatePdf()
+  let page:any=null,y=0
+  const appendFixedPage=async(index:number)=>{
+    const [fixed]=await pdf.copyPages(fixedTemplate,[index])
+    pdf.addPage(fixed)
+    page=null
+    y=0
+  }
+
+  const footer=(p:any,label='')=>{
+    p.drawLine({start:{x:M,y:28},end:{x:W-M,y:28},thickness:.6,color:line})
+    p.drawText(pdfSafe('STIP · GHE · Visiter les lieux'+(label?' · '+label:'')),{x:M,y:15,size:7,font:regular,color:muted})
+  }
+  const freshPage=(title:string,subtitle='')=>{
+    page=pdf.addPage([W,H]);y=H-50
+    page.drawText(pdfSafe(title),{x:M,y,size:20,font:bold,color:navy,maxWidth:CONTENT});y-=26
+    if(subtitle){for(const l of wrapPdf(regular,subtitle,9,CONTENT)){page.drawText(l,{x:M,y,size:9,font:regular,color:muted});y-=12}}
+    page.drawLine({start:{x:M,y:y-2},end:{x:W-M,y:y-2},thickness:1,color:line});y-=19
+    footer(page)
+    return page
+  }
+  const ensure=(need:number,title='Suite')=>{
+    if(!page||y<45+need){freshPage(title)}
+  }
+  const textBlock=(text:string,size=8.5,font=regular,color=ink,indent=0,gap=2)=>{
+    const lines=wrapPdf(font,text,size,CONTENT-indent)
+    const need=lines.length*(size+3)+gap
+    ensure(need+8)
+    for(const l of lines){page.drawText(l,{x:M+indent,y,size,font,color});y-=size+3}
+    y-=gap
+  }
+  const heading=(text:string)=>{
+    ensure(30)
+    page.drawRectangle({x:M,y:y-15,width:CONTENT,height:20,color:soft})
+    page.drawText(pdfSafe(text),{x:M+8,y:y-9,size:10,font:bold,color:navy,maxWidth:CONTENT-16})
+    y-=29
+  }
+  const divider=(title:string,subtitle:string,detail:string)=>{
+    page=pdf.addPage([W,H])
+    page.drawText('VISITER LES LIEUX',{x:M,y:H-72,size:23,font:bold,color:navy})
+    page.drawText(pdfSafe(title+' · '+subtitle.toUpperCase()),{x:M,y:H-95,size:10,font:bold,color:navy,maxWidth:CONTENT})
+    page.drawLine({start:{x:M,y:H-111},end:{x:W-M,y:H-111},thickness:1.2,color:navy})
+    page.drawRectangle({x:M,y:255,width:CONTENT,height:270,color:soft})
+    const titleSafe=pdfSafe(title),subSafe=pdfSafe(subtitle)
+    const tw=bold.widthOfTextAtSize(titleSafe,22)
+    page.drawText(titleSafe,{x:Math.max(M,M+(CONTENT-tw)/2),y:404,size:22,font:bold,color:navy,maxWidth:CONTENT})
+    const sw=bold.widthOfTextAtSize(subSafe,15)
+    page.drawText(subSafe,{x:Math.max(M,M+(CONTENT-sw)/2),y:365,size:15,font:bold,color:navy,maxWidth:CONTENT})
+    const subLines=wrapPdf(bold,detail,11,CONTENT-70)
+    let yy=322
+    for(const l of subLines){const lw=bold.widthOfTextAtSize(l,11);page.drawText(l,{x:M+(CONTENT-lw)/2,y:yy,size:11,font:bold,color:navy});yy-=16}
+    footer(page,'Intercalaire · '+title)
+    y=0
+  }
+
+  const aliasesBy=new Map<string,string[]>()
+  for(const a of snapshot.aliases||[]){const arr=aliasesBy.get(String(a.place_id))||[];arr.push(String(a.alias||''));aliasesBy.set(String(a.place_id),arr)}
+  const tagsBy=new Map<string,string[]>()
+  for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
+
+  if(scope?.mode==='all'){
+    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.overview)
+  }else{
+    freshPage('VISITER LES LIEUX - '+scopeLabel,'Document fabriqué par STIP · pages fixes validées + dictionnaire Supabase · '+exportDate())
+    heading('PÉRIMÈTRE')
+    textBlock(scopeLabel,11,bold,ink)
+  }
+
+  const renderBuilding=async(code:string,label:string,subtitle:string)=>{
+    const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
+    if(!rows.length)return
+    divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
+    const fixedIndex=code==='HLP'?FIXED_TEMPLATE_PAGE_INDEX.HLP:code==='PW'?FIXED_TEMPLATE_PAGE_INDEX.PW:FIXED_TEMPLATE_PAGE_INDEX.HFME
+    await appendFixedPage(fixedIndex)
+    freshPage(label+' · '+subtitle+' · DICTIONNAIRE','Données issues du référentiel Supabase au '+exportDate())
+    const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
+    for(const lvl of levels){
+      heading(levelLabel(lvl))
+      const items=rows.filter((p:any)=>String(p.level||'')===lvl).sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))
+      for(const p of items){
+        ensure(52,label+' · '+subtitle)
+        textBlock((p.display_name||p.official_name||p.id)+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),9,bold,ink,0,1)
+        const facts=[p.summary,p.details].filter(Boolean)
+        const als=(aliasesBy.get(String(p.id))||[]).filter(Boolean).slice(0,8)
+        if(als.length)facts.push('Alias : '+als.join(' · '))
+        const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim()).filter(Boolean).slice(0,10)
+        if(usefulTags.length)facts.push(...usefulTags)
+        for(const fact of facts)textBlock(fact,7.6,regular,muted,10,1)
+        y-=4
+      }
+    }
+  }
+
+  for(const b of MAIN_BUILDINGS)await renderBuilding(b.code,b.label,b.subtitle)
+
+  const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type))
+  if(hasAnnex){
+    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.annexes)
+    freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
+  }
+  for(const code of ANNEX_CODES){
+    const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type))
+    if(!items.length)continue
+    heading(code)
+    for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
+      const prefix=p.level?levelLabel(p.level)+' · ':''
+      textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
+      const facts=[p.summary,p.details].filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).filter(Boolean).slice(0,6)
+      if(als.length)facts.push('Alias : '+als.join(' · '))
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim()).filter(Boolean).slice(0,8)
+      if(usefulTags.length)facts.push(...usefulTags)
+      for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
+      y-=3
+    }
+  }
+
   const bytes=await pdf.save()
   return new Response(bytes,{status:200,headers:{
     ...CORS,
     'Content-Type':'application/pdf',
     'Content-Disposition':'attachment; filename="Visite-des-lieux-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
-    'Cache-Control':'private, no-store'
+    'Cache-Control':'no-store'
   }})
 }
 
@@ -369,10 +485,19 @@ Deno.serve(async req=>{
     if(!session)return json({error:'Session STIP expirée.'},401)
     if(!session.app_allowed)return json({error:'Accès Visiter les lieux non autorisé.'},403)
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
+    if(action==='master_pdf_link'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      return json(masterPdfLinks())
+    }
+    if(action==='master_pdf_file'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      return await masterPdfFileResponse(String(body.disposition||'inline'))
+    }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
-      const scope=cleanScope(body.scope)
-      return await pdfResponse(scope,scopeDisplayLabel(scope))
+      const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
+      const scoped=scopedSnapshot(fullSnapshot,body.scope)
+      return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label)
     }
     if(action==='export_xlsx'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
