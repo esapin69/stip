@@ -24,7 +24,7 @@ async function apiGet(action,p={}){await GHE_AUTH_READY;if(action==='listEvaluat
 async function apiPost(action,p={}){await GHE_AUTH_READY;if(action==='saveEvaluationDraft')return eva('save_live',{...p,...target()});if(action==='finalizeEvaluation')return eva('finalize',{...p,...target()});throw new Error('Action non disponible.')}
 async function searchAgents(query=''){await GHE_AUTH_READY;const r=await eva('search_agents',{query});return r.items||[]}
 async function ensureCase(agentId){return agentId}
-function openAgentEvaluation(agentId){location.href=`responsable-evaluations.html?agent=${encodeURIComponent(agentId)}`;return Promise.resolve(agentId)}
+function openAgentEvaluation(agentId){const url=`responsable-evaluations.html?agent=${encodeURIComponent(agentId)}`;if(window.STIPNav?.go)window.STIPNav.go(url);else location.assign(url);return Promise.resolve(agentId)}
 window.GHEAuth={ready:GHE_AUTH_READY,get user(){return authState.user},hasAccess:key=>Boolean(bootCache?.permissions?.[key])};window.AgentContext=AgentContext;window.apiGet=apiGet;window.apiPost=apiPost;window.esc=esc;window.q=q;window.setStatus=setStatus;window.formObject=formObject;window.displayDate=displayDate;window.GHEBase={bootstrap,searchAgents,ensureCase,openAgentEvaluation,displayName,onb,eva};
-if(!document.querySelector('script[data-stip-quick-universal]')){const s=document.createElement('script');s.src='quick-access-universal.js?v=20260831-quick3';s.dataset.stipQuickUniversal='1';document.head.appendChild(s)}
+if(!document.querySelector('script[data-stip-quick-universal]')){const s=document.createElement('script');s.src='quick-access-universal.js?v=20260926-navigation4';s.dataset.stipQuickUniversal='1';document.head.appendChild(s)}
 })();
