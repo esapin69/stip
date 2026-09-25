@@ -315,5 +315,5 @@
   setInterval(() => {
     if (!document.hidden && document.body.classList.contains("resp-tab-suivi"))
       load();
-  }, 30000);
+  }, 300000);
 })();
