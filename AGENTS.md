@@ -1,5 +1,5 @@
 ## 0. Architecture-first obligatoire
-Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Une référence marquée **MAÎTRE EN COURS DE FINALISATION** doit être modifiée uniquement à sa base ; aucune propagation vers d’autres pages n’est autorisée avant validation explicite d’Eddy. Ce registre distingue les références explicitement validées par Eddy, les composants déjà canoniques et les candidats encore à confirmer. Ne jamais promouvoir un candidat en maître visuel sans validation explicite.
+Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Une référence en cours de finalisation ne se propage que si `VISUAL_MASTERS.md` mentionne explicitement que sa propagation a été autorisée. La semaine maîtresse de Mon profil / Accueil personnel est dans ce cas : ses consommateurs compatibles sont volontairement branchés au composant partagé, et les prochains réglages doivent être faits à la base commune. Ce registre distingue les références explicitement validées par Eddy, les composants déjà canoniques et les candidats encore à confirmer. Ne jamais promouvoir un candidat en maître visuel sans validation explicite.
 
 Avant toute modification substantielle, lire `ARCHITECTURE_FIRST.md`.
 
