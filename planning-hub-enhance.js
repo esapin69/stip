@@ -32,10 +32,71 @@ function todayStatus(code,date){if(date!==todayIso())return'';const d=shiftDef(c
 function agentRows(items,date){return items.map(x=>{const a=x.agents||{},raw=String(x.code||'').toUpperCase(),c=baseShift(raw),phone=telHref(a.telephone),q=Number(a.quotite),part=Number.isInteger(q)&&q>=1&&q<100;return`<div class="ph-agent-row"><button class="ph-agent-open" data-ph-agent="${esc(String(x.agent_id||a.id||a.source_key||''))}" data-ph-agent-code="${esc(c)}"><span class="ph-ghe">${esc(gheLabel(a.ghe))}</span><span class="ph-agent-copy"><strong>${esc(personName(a))}${adaptedShift(raw)?'<em class="ph-adapted-mark" title="Horaire adapté">⏱</em>':''}${part?`<em class="ph-part-mark" title="Temps partiel">◐ ${q}%</em>`:''}</strong><small>${esc(shiftTime(raw))}</small></span>${todayStatus(c,date)}<b>›</b></button>${phone?`<a class="ph-agent-call" href="${esc(phone)}" aria-label="Appeler ${esc(personName(a))}">☎</a>`:''}</div>`}).join('')}
 async function loadWeek(date,force=false){const start=monday(date),cached=state.weeks.get(start);if(!force&&cached&&Date.now()-cached.fetchedAt<CACHE_TTL)return cached.data;const seq=++state.request,end=addDays(start,6),data=await call('spirit_week',{start_date:start,end_date:end});if(data.shift_definitions)window.STIPShiftRegistry?.set?.(data.shift_definitions);if(seq<=state.request)state.weeks.set(start,{data,fetchedAt:Date.now()});return data}
 async function showDate(date,force=false){const w=root();if(!w)return;const start=monday(date),cached=state.weeks.get(start);if(cached&&!force){spiritCache=cached.data;state.date=date;renderSpirit(date);loadStaff(date).catch(()=>{});return}w.classList.add('ph-team-native');w.innerHTML='<div class="ph-live-load">Chargement de la semaine…</div>';try{spiritCache=await loadWeek(date,force);state.date=date;renderSpirit(date);loadStaff(date,force).catch(()=>{})}catch(e){w.innerHTML=`<div class="ph-live-error">${esc(e.message)}</div>`}}
-function renderSpirit(date){const w=root();if(!w||!spiritCache)return;w.classList.add('ph-team-native');state.date=date;const all=spiritCache.planning||[],dayItems=all.filter(x=>x.date===date),rows=rowCounts(all,date),total=rows.reduce((n,r)=>n+r.items.length,0),week=weekDays(date),today=todayIso(),active=rows.filter(r=>r.items.length),first=active[0]?.c,last=active.at(-1)?.c,firstDef=shiftDef(first),lastDef=shiftDef(last),span=first&&last&&firstDef?.start_time&&lastDef?.end_time?`${String(firstDef.start_time).slice(0,5)} → ${String(lastDef.end_time).slice(0,5)}`:'Aucun poste',closed=closedSet(date),visible=state.filter==='ALL'?rows.filter(r=>r.items.length):rows.filter(r=>r.c===state.filter),filters=[{c:'ALL',label:'Tous',n:total},...rows.map(r=>({c:r.c,label:r.c,n:r.items.length}))];
-const sections=visible.length?visible.map(r=>{const m=shiftMeta(r.c),isClosed=closed.has(r.c),signal=shiftSignal(date,r.c);return`<section class="ph-shift-row" style="--c:${m.c};--ct:${m.t||m.c}"><button class="ph-shift-toggle" data-ph-spirit-code="${r.c}" aria-expanded="${isClosed?'false':'true'}"><span class="ph-shift-code">${r.c}</span><span class="ph-shift-copy"><strong>${esc(m.label)}</strong><small>${esc(m.time)}</small></span><span class="ph-shift-count"><b>${r.items.length}</b><small>agent${r.items.length>1?'s':''}</small></span><span class="ph-shift-status status-${esc(signal.level)}" title="${esc(signal.label)}">${esc(signal.symbol)}</span><span class="ph-shift-chevron">${isClosed?'⌄':'⌃'}</span></button>${isClosed?'':`<div class="ph-agent-list">${r.items.length?agentRows(r.items,date):'<p class="ph-none">Aucun agent sur ce poste.</p>'}</div>`}</section>`}).join(''):`<div class="ph-filter-empty">Aucun agent sur ce shift pour cette journée.</div>`;
-const staffRead=field()?.staffing?.(state.staffing.get(date)),staffBanner=staffRead?.known&&staffRead.level!=='ok'?`<div class="ph-field-banner status-${esc(staffRead.level)}"><strong>${esc(staffRead.symbol)} ${esc(staffRead.headline)}</strong><span>${esc(staffRead.detail||'')}</span>${staffRead.proposal?`<small>${esc(staffRead.proposal)}</small>`:''}</div>`:'';w.innerHTML=`<div class="ph-live-page"><div class="ph-live-head"><span class="ph-eyebrow">QUI TRAVAILLE ?</span><h2>${esc(dateLabel(date))}</h2><p>${total} présent${total>1?'s':''} · ${esc(span)}</p><small>↳ ${esc(updatedLabel(dayItems))}</small></div>${staffBanner}<div class="ph-week-nav"><button data-ph-week="-7" aria-label="Semaine précédente">‹</button><strong>SEMAINE ${isoWeek(dateObj(date))}</strong><button data-ph-week="7" aria-label="Semaine suivante">›</button></div><div class="ph-live-daystrip">${week.map(o=>`<button data-ph-spirit-day="${o.iso}" class="${o.iso===date?'on':''} ${o.iso===today?'today':''}"><small>${o.x.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${o.x.getDate()}</b></button>`).join('')}</div><div class="ph-shift-filters" aria-label="Filtrer les shifts">${filters.map(f=>`<button type="button" data-ph-filter="${f.c}" class="${state.filter===f.c?'on':''}" ${f.c!=='ALL'&&!f.n?'aria-label="Aucun agent"':''}><span>${f.label}</span><b>${f.n}</b></button>`).join('')}</div><div class="ph-live-list">${sections}</div></div>`;w.dataset.phSpiritDate=date}
-function renderAgent(agentId,code,date){const w=root();if(!w||!spiritCache)return;const all=spiritCache.planning||[],mine=all.filter(x=>String(x.agent_id||x.agents?.id||x.agents?.source_key||'')===String(agentId)),sample=mine.find(x=>x.date===date)||mine[0],a=sample?.agents||{},week=weekDays(date,[...new Set(all.map(x=>x.date))]),by=new Map(mine.map(x=>[x.date,String(x.code||'').toUpperCase()]));w.innerHTML=`<div class="ph-agent-native"><button type="button" class="ph-agent-back" data-ph-agent-back>‹ Équipe</button><header><div class="ph-agent-initial">${esc((a.prenom?.[0]||'')+(a.nom?.[0]||''))}</div><div><span>LECTURE RAPIDE</span><h2>${esc(personName(a))}</h2><p>${esc(a.ghe?`GHE ${a.ghe}`:'Brancardier')}</p></div></header><section class="ph-agent-today" style="--c:${esc(shiftMeta(code).c)};--on:${esc(shiftMeta(code).def?.on_color_hex||'#fff')}"><div><small>${date===new Date().toISOString().slice(0,10)?'Aujourd’hui':esc(dateLabel(date))}</small><b>${esc(code||'—')} · ${esc(shiftMeta(code).label||'Planning')}</b></div><strong>${esc(shiftMeta(code).time||'—')}</strong></section><div class="ph-agent-week">${week.map(o=>{const c=by.get(o.iso)||'—',m=shiftMeta(c);return`<div class="${o.iso===date?'on':''}"><small>${o.x.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','')}</small><b>${o.x.getDate()}</b><em style="--c:${esc(m.t||m.c)}">${esc(c)}</em></div>`}).join('')}</div><p class="ph-agent-note">Cette vue reste volontairement en lecture seule. Les autres informations de l’agent restent dans l’espace Responsable selon les droits du code connecté.</p></div>`;w.querySelector('[data-ph-agent-back]')?.addEventListener('click',()=>renderSpirit(date,code))}
+function renderSpirit(date){
+  const w=root();
+  if(!w||!spiritCache)return;
+  w.classList.add('ph-team-native');
+  state.date=date;
+  const all=spiritCache.planning||[],
+    dayItems=all.filter(x=>x.date===date),
+    rows=rowCounts(all,date),
+    total=rows.reduce((n,r)=>n+r.items.length,0),
+    week=weekDays(date),
+    today=todayIso(),
+    active=rows.filter(r=>r.items.length),
+    first=active[0]?.c,
+    last=active.at(-1)?.c,
+    firstDef=shiftDef(first),
+    lastDef=shiftDef(last),
+    span=first&&last&&firstDef?.start_time&&lastDef?.end_time?`${String(firstDef.start_time).slice(0,5)} → ${String(lastDef.end_time).slice(0,5)}`:'Aucun poste',
+    closed=closedSet(date),
+    visible=state.filter==='ALL'?rows.filter(r=>r.items.length):rows.filter(r=>r.c===state.filter),
+    filters=[{c:'ALL',label:'Tous',n:total},...rows.map(r=>({c:r.c,label:r.c,n:r.items.length}))];
+  const sections=visible.length
+    ?visible.map(r=>{
+      const m=shiftMeta(r.c),isClosed=closed.has(r.c),signal=shiftSignal(date,r.c);
+      return`<section class="ph-shift-row" style="--c:${m.c};--ct:${m.t||m.c}"><button class="ph-shift-toggle" data-ph-spirit-code="${r.c}" aria-expanded="${isClosed?'false':'true'}"><span class="ph-shift-code">${r.c}</span><span class="ph-shift-copy"><strong>${esc(m.label)}</strong><small>${esc(m.time)}</small></span><span class="ph-shift-count"><b>${r.items.length}</b><small>agent${r.items.length>1?'s':''}</small></span><span class="ph-shift-status status-${esc(signal.level)}" title="${esc(signal.label)}">${esc(signal.symbol)}</span><span class="ph-shift-chevron">${isClosed?'⌄':'⌃'}</span></button>${isClosed?'':`<div class="ph-agent-list">${r.items.length?agentRows(r.items,date):'<p class="ph-none">Aucun agent sur ce poste.</p>'}</div>`}</section>`;
+    }).join('')
+    :'<div class="ph-filter-empty">Aucun agent sur ce shift pour cette journée.</div>';
+  const staffRead=field()?.staffing?.(state.staffing.get(date)),
+    staffBanner=staffRead?.known&&staffRead.level!=='ok'
+      ?`<div class="ph-field-banner status-${esc(staffRead.level)}"><strong>${esc(staffRead.symbol)} ${esc(staffRead.headline)}</strong><span>${esc(staffRead.detail||'')}</span>${staffRead.proposal?`<small>${esc(staffRead.proposal)}</small>`:''}</div>`
+      :'';
+  const weekLine=week.map(o=>{
+    const weekday=o.x.toLocaleDateString('fr-FR',{weekday:'long'}).replace('.','').toUpperCase().slice(0,2),
+      selected=o.iso===date,
+      cls=['stip-week-day','neutral',selected?'selected':'',o.iso===today?'today':''].filter(Boolean).join(' ');
+    return`<button type="button" data-ph-spirit-day="${o.iso}" class="${cls}" aria-pressed="${selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${o.x.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
+  }).join('');
+  w.innerHTML=`<div class="ph-live-page"><div class="ph-live-head"><span class="ph-eyebrow">QUI TRAVAILLE ?</span><h2>${esc(dateLabel(date))}</h2><p>${total} présent${total>1?'s':''} · ${esc(span)}</p><small>↳ ${esc(updatedLabel(dayItems))}</small></div>${staffBanner}<div class="stip-week-master-nav"><button data-ph-week="-7" aria-label="Semaine précédente">‹</button><strong>SEMAINE ${isoWeek(dateObj(date))}</strong><button data-ph-week="7" aria-label="Semaine suivante">›</button></div><div class="stip-week-line" style="--stip-week-columns:7">${weekLine}</div><div class="ph-shift-filters" aria-label="Filtrer les shifts">${filters.map(f=>`<button type="button" data-ph-filter="${f.c}" class="${state.filter===f.c?'on':''}" ${f.c!=='ALL'&&!f.n?'aria-label="Aucun agent"':''}><span>${f.label}</span><b>${f.n}</b></button>`).join('')}</div><div class="ph-live-list">${sections}</div></div>`;
+  w.dataset.phSpiritDate=date;
+}
+function renderAgent(agentId,code,date){
+  const w=root();
+  if(!w||!spiritCache)return;
+  const all=spiritCache.planning||[],
+    mine=all.filter(x=>String(x.agent_id||x.agents?.id||x.agents?.source_key||'')===String(agentId)),
+    sample=mine.find(x=>x.date===date)||mine[0],
+    a=sample?.agents||{},
+    week=weekDays(date,[...new Set(all.map(x=>x.date))]),
+    by=new Map(mine.map(x=>[x.date,String(x.code||'').toUpperCase()]));
+  const weekLine=week.map(o=>{
+    const raw=by.get(o.iso)||'',
+      def=shiftDef(raw),
+      base=raw?(window.STIPShiftRegistry?.baseCode?.(raw)||raw):'—',
+      family=raw?(window.STIPShiftRegistry?.family?.(raw)||'other'):'other',
+      pending=!raw,
+      working=Boolean(def?.is_working),
+      stateClass=pending?'pending':working?'work':'rest',
+      codeClass=working?`code-${family}`:'',
+      icon=pending?'🚫':String(def?.icon||'•'),
+      weekday=o.x.toLocaleDateString('fr-FR',{weekday:'long'}).replace('.','').toUpperCase().slice(0,2),
+      cls=['stip-week-day','readonly',stateClass,codeClass,o.iso===date?'selected':'',o.iso===todayIso()?'today':''].filter(Boolean).join(' ');
+    return`<div class="${cls}" aria-current="${o.iso===date?'date':'false'}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${o.x.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${esc(base)}</strong><span class="stip-week-main"><span class="stip-week-main-icon" aria-hidden="true">${esc(icon)}</span></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></div>`;
+  }).join('');
+  w.innerHTML=`<div class="ph-agent-native"><button type="button" class="ph-agent-back" data-ph-agent-back>‹ Équipe</button><header><div class="ph-agent-initial">${esc((a.prenom?.[0]||'')+(a.nom?.[0]||''))}</div><div><span>LECTURE RAPIDE</span><h2>${esc(personName(a))}</h2><p>${esc(a.ghe?`GHE ${a.ghe}`:'Brancardier')}</p></div></header><section class="ph-agent-today" style="--c:${esc(shiftMeta(code).c)};--on:${esc(shiftMeta(code).def?.on_color_hex||'#fff')}"><div><small>${date===new Date().toISOString().slice(0,10)?'Aujourd’hui':esc(dateLabel(date))}</small><b>${esc(code||'—')} · ${esc(shiftMeta(code).label||'Planning')}</b></div><strong>${esc(shiftMeta(code).time||'—')}</strong></section><div class="stip-week-line" style="--stip-week-columns:7;margin-top:12px!important">${weekLine}</div><p class="ph-agent-note">Cette vue reste volontairement en lecture seule. Les autres informations de l’agent restent dans l’espace Responsable selon les droits du code connecté.</p></div>`;
+  w.querySelector('[data-ph-agent-back]')?.addEventListener('click',()=>renderSpirit(date,code));
+}
 async function spirit(){state.filter='ALL';await showDate(todayIso())}
 window.addEventListener('stip:planning-select',e=>{if(e.detail?.kind==='spirit')spirit()});
 document.addEventListener('click',e=>{const day=e.target.closest?.('[data-ph-spirit-day]');if(day){state.filter='ALL';showDate(day.dataset.phSpiritDay);return}const nav=e.target.closest?.('[data-ph-week]');if(nav){const cur=root()?.dataset.phSpiritDate||state.date||todayIso(),target=addDays(cur,Number(nav.dataset.phWeek));state.filter='ALL';showDate(target);return}const filter=e.target.closest?.('[data-ph-filter]');if(filter){state.filter=filter.dataset.phFilter||'ALL';renderSpirit(state.date||todayIso());return}const shift=e.target.closest?.('[data-ph-spirit-code]');if(shift){const set=closedSet(state.date||todayIso()),c=shift.dataset.phSpiritCode;set.has(c)?set.delete(c):set.add(c);renderSpirit(state.date||todayIso());return}const agent=e.target.closest?.('[data-ph-agent]');if(agent){const all=spiritCache?.planning||[],id=String(agent.dataset.phAgent||''),sample=all.find(x=>String(x.agent_id||x.agents?.id||x.agents?.source_key||'')===id),a=sample?.agents||{},sourceKey=String(a.source_key||id);if(window.STIPAgentAgenda?.open)return window.STIPAgentAgenda.open(sourceKey,a);renderAgent(agent.dataset.phAgent,agent.dataset.phAgentCode,state.date||todayIso())}});
