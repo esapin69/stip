@@ -27,6 +27,10 @@ assert(core.includes(".stip-events-vertical"), "vertical event stack must be a s
 assert(core.includes("grid-template-rows:none!important"), "common week body still reserves the personal 4-row layout");
 assert(core.includes(".stip-week-day.stip-week-personal-layout .stip-week-day-body"), "personal-home week modifier missing");
 assert(core.includes(".stip-week-work-marker"), "worked-shift marker exception missing");
+assert(/\.stip-week-line\{[\s\S]*?touch-action:pan-y!important/.test(core),
+  "week swipe surface must preserve native vertical panning");
+assert(core.includes(".stip-month-calendar{touch-action:pan-y!important}"),
+  "month swipe surface must preserve native vertical panning");
 assert(/\.stip-week-day\{[\s\S]*?min-height:0!important/.test(core),
   "default week cards still carry the profile fixed height");
 assert(core.includes(".stip-week-day.stip-week-personal-layout{min-height:112px!important}"),
@@ -53,6 +57,10 @@ assert(weekEngine.includes("ax<=ay*1.25"),
   "calendar swipe no longer protects vertical scrolling");
 assert(weekEngine.includes("touchmove"),
   "calendar swipe no longer follows the finger during the gesture");
+assert(!weekEngine.includes("{passive:false,capture:true}"),
+  "calendar swipe must not install a blocking document-level touchmove listener");
+assert(weekEngine.includes("ay>ax*1.18"),
+  "calendar swipe must release horizontal tracking when the gesture turns vertical");
 assert(weekEngine.includes("animateIncoming"),
   "calendar swipe no longer animates the incoming period");
 
