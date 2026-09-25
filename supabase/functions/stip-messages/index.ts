@@ -125,7 +125,7 @@ async function storeDmImage(ctx:any,conversationId:string,image:any){
   if(bytes.byteLength<1||bytes.byteLength>3000000)throw Error("Photo trop lourde (3 Mo max).");
   const ext=mime==="image/png"?"png":mime==="image/webp"?"webp":"jpg",
     original=dmSafeName(image.name||("photo."+ext)),
-    path="dm/"+conversationId+"/"+String(ctx.agent.id)+"/"+crypto.randomUUID()+"."+ext;
+    path="dm/"+parisDayKey()+"/"+conversationId+"/"+String(ctx.agent.id)+"/"+crypto.randomUUID()+"."+ext;
   const up=await db.storage.from(TEAM_BUCKET).upload(path,bytes,{contentType:mime,upsert:false,cacheControl:"3600"});
   if(up.error)throw up.error;
   return{storage_path:path,mime_type:mime,file_name:original,size_bytes:bytes.byteLength}
