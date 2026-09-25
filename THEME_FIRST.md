@@ -215,9 +215,11 @@ Deux variantes sont autorisées :
 - **2 niveaux** : mois + semaine, lorsque la page n’a pas besoin de choisir directement un jour ;
 - **3 niveaux** : mois + semaine + jours, lorsque le jour doit être accessible directement.
 
-La page **Esprit d’équipe** est la référence officielle de la variante complète à 3 niveaux. Toute autre page qui a besoin des trois niveaux doit réutiliser les classes partagées `.stip-time-stack`, `.stip-time-month`, `.stip-time-week` et `.stip-time-days`, et ne pas recréer sa propre version locale.
+La page **Esprit d’équipe** reste la référence fonctionnelle de la composition complète à 3 niveaux (mois → semaine → jours). En revanche, le **visuel canonique d’une ligne de semaine** vient de **Mon profil / Accueil personnel** et vit désormais dans le composant partagé `.stip-week-line` / `.stip-week-day` de `stip-patterns.css`.
 
-Sur **Esprit d’équipe**, la ligne **Cette semaine / 7 jours** est placée avant les cartes de shifts. Les informations destinées aux agents utilisent un langage terrain ; les cibles, écarts chiffrés et consignes de pilotage restent dans l’espace Responsable.
+Toute page qui affiche une ligne de jours compatible doit utiliser ce composant partagé. Elle peut adapter les données du corps de chaque jour (shift personnel, indicateur terrain, événements, lecture seule), mais pas recréer sa propre géométrie de semaine.
+
+Sur **Esprit d’équipe**, la ligne **Cette semaine / 7 jours** reste placée avant les cartes de shifts. Les informations destinées aux agents utilisent un langage terrain ; les cibles, écarts chiffrés et consignes de pilotage restent dans l’espace Responsable.
 
 Le clic sur un jour doit produire un état sélectionné visible, être mémorisé dans le contexte de navigation quand cela est pertinent et rester cohérent avec la semaine affichée.
 
