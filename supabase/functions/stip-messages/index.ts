@@ -7,36 +7,23 @@ const TRAINEE_DEFAULT_AVATAR="https://raw.githubusercontent.com/esapin69/stip/0b
 const TABLEAU_PREFIX="__stip_tableau_day__:",LEGACY_TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
 
-const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
-async function signAvatarPayload(value:any){
-  const rawToPath=new Map<string,string>();
-  const collect=(v:any)=>{
+const LEGACY_AVATAR_STORAGE="/storage/v1/";
+function stripLegacyAvatarPayload(value:any){
+  const walk=(v:any)=>{
     if(!v||typeof v!=="object")return;
-    if(Array.isArray(v)){for(const x of v)collect(x);return}
-    const raw=typeof v.avatar_url==="string"?v.avatar_url:"";
-    if(raw.includes(LEGACY_AVATAR_MARKER)){
-      const path=raw.split(LEGACY_AVATAR_MARKER)[1]?.split("?")[0]||"";
-      if(path)rawToPath.set(raw,decodeURIComponent(path));
-    }
-    for(const x of Object.values(v))collect(x);
+    if(Array.isArray(v)){for(const x of v)walk(x);return}
+    const legacy=(raw:any)=>{
+      const url=String(raw||"");
+      return url.includes(LEGACY_AVATAR_STORAGE)&&url.includes("/planning-pdf/");
+    };
+    if(legacy(v.avatar_url))v.avatar_url=null;
+    if(legacy(v.avatar_signed_url))v.avatar_signed_url=null;
+    for(const x of Object.values(v))walk(x);
   };
-  collect(value);
-  if(!rawToPath.size)return value;
-  const raws=[...rawToPath.keys()],paths=raws.map(x=>rawToPath.get(x)!);
-  const {data,error}=await db.storage.from("planning-pdf").createSignedUrls(paths,3600);
-  if(error||!data)return value;
-  const signed=new Map<string,string>();
-  raws.forEach((raw,i)=>{const url=(data as any[])?.[i]?.signedUrl;if(url)signed.set(raw,url)});
-  const rewrite=(v:any)=>{
-    if(!v||typeof v!=="object")return;
-    if(Array.isArray(v)){for(const x of v)rewrite(x);return}
-    if(typeof v.avatar_url==="string"&&signed.has(v.avatar_url))v.avatar_url=signed.get(v.avatar_url);
-    for(const x of Object.values(v))rewrite(x);
-  };
-  rewrite(value);
+  walk(value);
   return value;
 }
-const J=async(x:unknown,s=200)=>new Response(JSON.stringify(await signAvatarPayload(x)),{status:s,headers:H});
+const J=async(x:unknown,s=200)=>new Response(JSON.stringify(stripLegacyAvatarPayload(x)),{status:s,headers:H});
 function errMsg(e:any){
   if(e instanceof Error&&e.message)return e.message;
   if(e&&typeof e==="object"){
