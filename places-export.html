@@ -36,8 +36,8 @@
     .flow{display:grid;gap:12px}
     .step{padding:15px 16px}
     .step[hidden]{display:none!important}
-    .step-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
-    .step-n{flex:0 0 27px;width:27px;height:27px;border-radius:999px;display:grid;place-items:center;background:var(--stip-accent,#176b93);color:#fff;font-size:.76rem;font-weight:950}
+    .step-head{display:flex;align-items:flex-start;gap:0;margin-bottom:11px}
+    .step-n{display:none}
     .step-copy{min-width:0}
     .step-copy strong{display:block;color:var(--stip-ink,#173f5d);font-size:1rem;line-height:1.18}
     .step-copy small{display:block;margin-top:2px;color:var(--stip-muted,#607983);font-size:.76rem;font-weight:670;line-height:1.34}
@@ -123,10 +123,16 @@
     </header>
 
     <section class="stip-surface intro">
-      <p class="stip-kicker">EXPORTER · AFFICHER · PARTAGER</p>
-      <h1 class="stip-title">Préparer une version utile</h1>
-      <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF officiel : copie privée STIP strictement identique au MASTER Drive. Le tableur est généré depuis le référentiel Supabase de Visiter les lieux.</p>
+      <p class="stip-kicker">VISITER LES LIEUX · EXPORT</p>
+      <h1 class="stip-title">Préparer un fichier</h1>
+      <p class="stip-subtitle">Choisis le contenu, le format, puis l’action.</p>
     </section>
+
+    <div class="progress" aria-label="Étapes de l’export">
+      <div class="progress-item is-current" id="progressScope"><b>1</b><span>Contenu</span></div>
+      <div class="progress-item" id="progressFormat"><b>2</b><span>Format</span></div>
+      <div class="progress-item" id="progressAction"><b>3</b><span>Action</span></div>
+    </div>
 
     <div class="flow">
       <section class="stip-surface step" id="scopeStep">
