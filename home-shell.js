@@ -1608,14 +1608,26 @@
     const role = pilotageRoleKey(),
       groups = [
         {
-          key: "admin",
-          label: "PILOTAGE · ADMIN",
+          key: "agent",
+          label: "PILOTAGE · AGENT",
           items: [
             {
-              action: "admin",
-              label: "Administration",
-              icon: "⚙️",
-              when: () => has("admin"),
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "responsable",
+          label: "PILOTAGE · RESPONSABLE",
+          items: [
+            {
+              action: "responsable",
+              label: "Responsable",
+              icon: "🧭",
+              when: () => has("responsable") || has("admin"),
             },
             {
               action: "access",
@@ -1650,26 +1662,14 @@
           ],
         },
         {
-          key: "responsable",
-          label: "PILOTAGE · RESPONSABLE",
+          key: "admin",
+          label: "PILOTAGE · ADMIN",
           items: [
             {
-              action: "responsable",
-              label: "Responsable",
-              icon: "🧭",
-              when: () => has("responsable") || has("admin"),
-            },
-          ],
-        },
-        {
-          key: "agent",
-          label: "PILOTAGE · AGENT",
-          items: [
-            {
-              href: "places-app.html",
-              label: "Visiter les lieux",
-              icon: "📍",
-              when: () => has("places") || has("admin"),
+              action: "admin",
+              label: "Administration",
+              icon: "⚙️",
+              when: () => has("admin"),
             },
           ],
         },
@@ -1683,7 +1683,7 @@
             group.key,
             group.label,
             group.items,
-            true,
+            group.key !== "admin",
             openRoles,
           ),
         )
