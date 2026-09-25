@@ -329,17 +329,20 @@
         ),
       months = new Map();
     a.forEach((x) => {
-      const k = x.date.slice(0, 7);
+      const displayDate =
+          selectedDay && occursOn(x, selectedDay) ? selectedDay : x.date,
+        k = displayDate.slice(0, 7);
       if (!months.has(k)) months.set(k, []);
-      months.get(k).push(x);
+      months.get(k).push({ ...x, displayDate });
     });
     $("#taTimeline").innerHTML = a.length
       ? [...months.values()]
           .map((monthItems) => {
             const days = new Map();
             monthItems.forEach((x) => {
-              if (!days.has(x.date)) days.set(x.date, []);
-              days.get(x.date).push(x);
+              const date = x.displayDate || x.date;
+              if (!days.has(date)) days.set(date, []);
+              days.get(date).push(x);
             });
             const dayHtml = [...days.entries()]
               .map(([date, dayItems]) => {
