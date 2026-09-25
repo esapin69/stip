@@ -13,10 +13,11 @@ import {
   type Intent,
 } from "./core.ts";
 import { resolvePeople } from "./people.ts";
-import { exchangeAnswer, colleaguesAnswer, onDutyRoster, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
+import { exchangeAnswer, colleaguesAnswer, leaveLookupAnswer, onDutyRoster, organizationAnswer, planningAnswer, shiftRoster } from "./handlers-planning.ts";
 import { contactAnswer, messagingHelp, placeAnswer } from "./handlers-lookup.ts";
 import { baseContext, choiceResponse, contextSubjects, findAgents, personCard, personResponse } from "./presentation.ts";
 import { directory, shiftDefinitions, todayParis } from "./runtime.ts";
+import { semanticClassify, semanticText, type AppTarget } from "./semantic.ts";
 import type { Agent, SessionCtx } from "./types.ts";
 
 function defaultScope(intent: Intent): DateScope {
@@ -81,6 +82,48 @@ async function selectionAnswer(c: SessionCtx, old: DialogContext, raw: string, a
     kind: "help", title: "Je veux être sûr",
     text: "Je n’ai pas exactement ce nombre d’éléments actifs à sélectionner. Précise les personnes ou l’action voulue.",
     cards: [], actions: [], context: baseContext(old, { date_scope: ds }),
+  };
+}
+
+
+const APP_META: Record<AppTarget,{label:string;permission?:string;pro?:boolean}> = {
+  profile_photo:{label:"Modifier ma photo",permission:"profile_photo"},
+  planning_personal:{label:"Mon planning",permission:"planning_personal"},
+  planning_team:{label:"Planning équipe",permission:"planning_team"},
+  change_app:{label:"Changement",permission:"change_app"},
+  calendar_subscribe:{label:"Synchroniser mon calendrier",permission:"calendar_subscribe"},
+  agent_dates:{label:"Date des agents",permission:"agent_dates"},
+  contacts:{label:"Contacts",permission:"contacts"},
+  responsable:{label:"Responsable",permission:"responsable",pro:true},
+  notes:{label:"Prendre des notes",permission:"notes",pro:true},
+  nouveaux_arrivants:{label:"Nouvel agent",permission:"nouveaux_arrivants"},
+  file_upload:{label:"Importer",permission:"file_upload"},
+  activity:{label:"Esprit d’équipe",permission:"activity"},
+  admin:{label:"Administration",permission:"admin",pro:true},
+  places:{label:"Visiter les lieux",permission:"places"},
+  access_manage:{label:"Accès & sécurité",permission:"access_manage",pro:true},
+  messages:{label:"Messages",permission:"messages"},
+  tomorrow:{label:"Actions",permission:"tomorrow"},
+  agent_directory:{label:"Équipe",permission:"agent_directory"},
+};
+function canOpenApp(c:SessionCtx, app:AppTarget){
+  const meta=APP_META[app], p=c.permissions||{};
+  if(app==="admin") return p.admin===true;
+  if(app==="access_manage") return p.access_manage===true || p.admin===true;
+  if(app==="responsable") return p.responsable===true || p.admin===true;
+  if(meta.pro && c.level!=="pro") return false;
+  return !meta.permission || p[meta.permission]===true || p.admin===true;
+}
+function appNavigationAnswer(c:SessionCtx, old:DialogContext, app:AppTarget){
+  const meta=APP_META[app];
+  if(!canOpenApp(c,app)) return {
+    kind:"help",title:"Accès STIP",text:"Cette fonction n’est pas disponible avec ton accès actuel.",
+    cards:[],actions:[],context:baseContext(old,{last_intent:"app_navigation",offered_options:[]})
+  };
+  return {
+    kind:"navigation",title:meta.label,text:"Je peux t’y emmener directement.",
+    cards:[],actions:[{type:"app",app,label:`Ouvrir · ${meta.label}`}],
+    context:baseContext(old,{last_intent:"app_navigation",offered_options:[]})
   };
 }
 
