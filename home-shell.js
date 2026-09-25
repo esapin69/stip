@@ -2297,78 +2297,11 @@
       );
   }
   function bindNoteSwipe(wrap, note) {
-    const card = wrap.querySelector(".hc-note-card");
-    if (!card) return;
-    let startX = 0,
-      startY = 0,
-      dx = 0,
-      active = false,
-      horizontal = false,
-      swiped = false;
-    const reset = () => {
-      card.style.transform = "";
-      wrap.classList.remove("is-delete", "is-action", "is-dragging");
-    };
-    card.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-      startX = e.clientX;
-      startY = e.clientY;
-      dx = 0;
-      active = true;
-      horizontal = false;
-      swiped = false;
-      wrap.classList.add("is-dragging");
-      try {
-        card.setPointerCapture(e.pointerId);
-      } catch {}
-    });
-    card.addEventListener("pointermove", (e) => {
-      if (!active) return;
-      const x = e.clientX - startX,
-        y = e.clientY - startY;
-      if (!horizontal) {
-        if (Math.abs(x) < 8 && Math.abs(y) < 8) return;
-        if (Math.abs(y) > Math.abs(x) * 1.1) {
-          active = false;
-          reset();
-          return;
-        }
-        horizontal = true;
-      }
-      e.preventDefault();
-      dx = Math.max(-122, Math.min(122, x));
-      swiped = Math.abs(dx) > 12;
-      card.style.transform = "translate3d(" + dx + "px,0,0)";
-      wrap.classList.toggle("is-delete", dx > 0);
-      wrap.classList.toggle("is-action", dx < 0);
-    });
-    const finish = async () => {
-      if (!active && !horizontal) return;
-      const finalDx = dx;
-      active = false;
-      reset();
-      if (finalDx > 72) {
-        const ok = await bigConfirm({
-          title: "Supprimer cette notification ?",
-          body: "Elle disparaîtra de votre Cloche STIP.",
-          confirmLabel: "Confirmer",
-        });
-        if (ok) dismissActionNote(note);
-      } else if (finalDx < -72) openNotificationDetail(note, { focusAction: true });
-      setTimeout(() => (swiped = false), 180);
-    };
-    card.addEventListener("pointerup", finish);
-    card.addEventListener("pointercancel", () => {
-      active = false;
-      reset();
-      setTimeout(() => (swiped = false), 180);
-    });
-    card.addEventListener("click", (e) => {
-      if (swiped) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
+    const card = wrap?.querySelector?.(".hc-note-card");
+    if (!card || card.dataset.stipClickBound === "1") return;
+    card.dataset.stipClickBound = "1";
+    card.addEventListener("click", (event) => {
+      if (event.target.closest?.("button,a,input,textarea,label,select")) return;
       openNotificationDetail(note);
     });
   }
