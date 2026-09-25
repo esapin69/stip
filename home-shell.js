@@ -2670,9 +2670,7 @@
       if (Math.abs(deltaY) < 0.5) return;
       if (scrollableAncestor(event.target, deltaY)) return;
 
-      const before = window.scrollY;
       window.scrollBy(0, deltaY);
-      if (Math.abs(window.scrollY - before) > 0.5) event.preventDefault();
     };
 
     const onWheel = (event) => {
@@ -2689,7 +2687,7 @@
       capture: true,
     });
     doc.addEventListener("touchmove", onTouchMove, {
-      passive: false,
+      passive: true,
       capture: true,
     });
     doc.addEventListener("touchend", reset, { passive: true, capture: true });
