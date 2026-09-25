@@ -13,11 +13,7 @@
     items = [],
     proposals = [],
     events = [],
-    active = ["all", "medical", "intern", "training"].includes(
-      navigationState.filter,
-    )
-      ? navigationState.filter
-      : "all",
+    active = "all",
     selectedDay = navigationState.selectedDay || "",
     search = navigationState.search || "",
     focusId = "";
@@ -660,7 +656,7 @@
       .finally(() => window.STIPNav?.restoreScroll?.());
   }
   window.STIPResponsableAgenda = {
-    version: "20260925-canonical-events1",
+    version: "20260925-canonical-events2",
     openAdd(date = "") {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) $("#taDate").value = String(date);
       openSheet("#taAddSheet");

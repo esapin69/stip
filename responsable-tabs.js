@@ -106,7 +106,7 @@
   }
 
   function ensureAgenda() {
-    if (window.STIPResponsableAgenda?.version === "20260925-canonical-events1")
+    if (window.STIPResponsableAgenda?.version === "20260925-canonical-events2")
       return Promise.resolve(window.STIPResponsableAgenda);
     if (agendaLoadPromise) return agendaLoadPromise;
     agendaLoadPromise = new Promise((resolve, reject) => {
@@ -117,7 +117,7 @@
         return;
       }
       const script = document.createElement("script");
-      script.src = "responsable-agenda.js?v=20260925-canonical-events1";
+      script.src = "responsable-agenda.js?v=20260925-canonical-events2";
       script.dataset.respInlineAgenda = "1";
       script.onload = () => {
         window.STIPResponsableAgendaLoaded = true;
