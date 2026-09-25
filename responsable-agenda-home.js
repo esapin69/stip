@@ -993,7 +993,11 @@
     if (window.GHEAuth?.ready) {
       try {
         await window.GHEAuth.ready;
-      } catch {
+      } catch (error) {
+        state.loading = false;
+        state.error =
+          error?.message || "Chargement impossible avec cet accès.";
+        render();
         return;
       }
     }
