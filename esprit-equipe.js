@@ -857,7 +857,7 @@
         level && level !== "unknown"
           ? statusSymbol(level, signal.symbol)
           : "○";
-      return `<button type="button" class="${cls}" data-team-day="${day}" aria-pressed="${day === state.dayFocus}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main"><span class="stip-week-main-icon team-day-intel status-${esc(level)}" aria-hidden="true">${esc(symbol)}</span></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
+      return `<button type="button" class="${cls}" data-team-day="${day}" aria-pressed="${day === state.dayFocus}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><span class="stip-week-main"><span class="stip-week-main-icon team-day-intel status-${esc(level)}" aria-hidden="true">${esc(symbol)}</span></span></span></button>`;
     };
     const out=dates.map(renderDay);
     if(model.nextMonday){
