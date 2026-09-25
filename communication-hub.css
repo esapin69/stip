@@ -27,3 +27,6 @@
 .ch-exchange-settings{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:11px;border-top:1px solid var(--stip-line-soft)}
 .ch-exchange-settings button{min-height:38px;border:1px solid var(--stip-line);border-radius:12px;background:var(--stip-surface-soft);color:var(--stip-muted);padding:8px 10px;font:800 .64rem/1.2 inherit}
 @media(max-width:520px){.ch-exchange-actions{grid-template-columns:1fr}}
+
+/* Shared trainee access */
+.ch-trainee-inbox{display:grid;gap:7px;margin-top:6px}.ch-trainee-note{display:grid;grid-template-columns:44px minmax(0,1fr);gap:9px;align-items:start;padding:10px 2px;border-top:1px solid var(--stip-line-soft)}.ch-trainee-note.is-unread{padding-left:8px;border-left:3px solid var(--stip-accent)}.ch-trainee-note>div{min-width:0}.ch-trainee-note strong{display:block;font-size:.72rem}.ch-trainee-note p{margin:4px 0 0;white-space:pre-wrap;font-size:.72rem;line-height:1.42}.ch-trainee-note time{display:block;margin-top:5px;color:var(--stip-muted);font-size:.55rem}.ch-profile-form textarea{width:100%;box-sizing:border-box;min-height:96px;border:1px solid var(--stip-line);border-radius:12px;padding:10px;font:inherit;color:var(--stip-ink);background:var(--stip-surface-soft);resize:vertical}
