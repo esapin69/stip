@@ -349,7 +349,14 @@
     );
   }
 
-  function avatar(agent = {}) {
+  function agentFirstName(agent = {}) {
+    const preferred = String(agent.nickname || agent.prenom || "").trim();
+    if (preferred) return preferred.split(/\s+/)[0];
+    const fallback = String(agentName(agent)).trim();
+    return fallback ? fallback.split(/\s+/)[0] : "Agent";
+  }
+
+  function avatar(agent = {}, { showFirstName = false } = {}) {
     const src =
       agent.profile_photo_url ||
       agent.avatar_signed_url ||
@@ -360,12 +367,17 @@
       String(agentName(agent)).slice(0, 2).toUpperCase() ||
       "ST";
     return (
-      '<span class="tb-avatar" data-avatar-fallback="' +
+      '<span class="tb-avatar' + (showFirstName ? ' has-name' : '') + '" data-avatar-fallback="' +
       esc(initials) +
       '">' +
-      (src
-        ? '<img src="' + esc(src) + '" alt="" loading="lazy">'
-        : esc(initials)) +
+        '<span class="tb-avatar-photo">' +
+          (src
+            ? '<img src="' + esc(src) + '" alt="" loading="lazy">'
+            : esc(initials)) +
+        '</span>' +
+        (showFirstName
+          ? '<small class="tb-avatar-name">' + esc(agentFirstName(agent)) + '</small>'
+          : '') +
       "</span>"
     );
   }
@@ -2767,7 +2779,7 @@
         );
       }
 
-      html.push(avatar(message.sender));
+      html.push(avatar(message.sender, { showFirstName: true }));
       html.push('<div class="tb-entry-body">');
 
       if (wheelchair) {
@@ -2786,11 +2798,17 @@
                 ? "Je cherche"
                 : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
             '</span>' +
-            (detail.level
-              ? '<strong class="tb-wheelchair-level">' + esc(detail.level) + '</strong>'
-              : '') +
           '</div>',
         );
+
+        if (detail.level) {
+          html.push(
+            '<div class="tb-wheelchair-floor">' +
+              '<span aria-hidden="true">↕</span>' +
+              '<strong>' + esc(detail.level) + '</strong>' +
+            '</div>',
+          );
+        }
 
         if (detail.service) {
           html.push(
@@ -2816,12 +2834,6 @@
             '<span class="tb-wheelchair-location-warning">⚠ Endroit à préciser</span>',
           );
         }
-        html.push(
-          '<small class="tb-wheelchair-author">' +
-            esc(agentName(message.sender)) +
-            (isSearchType ? " cherche" : " · signalé") +
-          '</small>',
-        );
         if (activeSignal && !isSearchType) {
           html.push(wheelchairFreshnessMarkup(message, wheelchair));
           if (wheelchair?.last_seen_at) {
