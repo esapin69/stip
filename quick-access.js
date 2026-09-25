@@ -50,7 +50,7 @@
     },
     responsable: {
       label: "Responsable",
-      open: () => (location.href = "responsable.html?tab=dates"),
+      open: () => (location.href = "responsable.html?tab=dates&entry=shortcut"),
     },
     resp_tracking: {
       label: "Suivi",
@@ -85,7 +85,7 @@
       open: () => (location.href = "esprit-equipe.html?tab=activity"),
     },
     access: {
-      label: "Accès",
+      label: "Accès & sécurité",
       open: () => (location.href = "access-manage.html"),
     },
     newagent: {
@@ -121,7 +121,7 @@
     resp_agenda: ["Agenda agents", "Consulter et gérer les dates utiles de l’équipe.", "Responsable"],
     assistant: ["Assistant STIP", "Assistant pour les outils et données STIP.", "Outils"],
     activity: ["Activité", "Suivi d’activité pour les profils autorisés.", "Encadrement"],
-    access: ["Accès", "Gérer les accès selon vos autorisations.", "Sécurité"],
+    access: ["Accès & sécurité", "Profils, droits, historique et contrôle des accès.", "Sécurité"],
     newagent: ["Nouvel agent", "Ressources pour l’arrivée dans l’équipe.", "Découvrir"],
     upload: ["Importer", "Déposer les fichiers autorisés.", "Outils"],
     admin: ["Admin", "Administration réservée aux profils autorisés.", "Administration"],
