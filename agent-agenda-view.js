@@ -163,23 +163,20 @@
   }
   function weekHtml(){
     const start=monday(state.selected),plan=byDate(state.data.items),emap=eventMap(state.events),cards=[];
-    let hasEvents=false;
     for(let i=0;i<7;i++){
       const day=add(start,i),row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),d=dobj(day),
         dayName=d.toLocaleDateString("fr-FR",{weekday:"long"}).replace(".","").toUpperCase().slice(0,2),
         family=info.family||"other",base=info.base||"—",pending=!row,
         codeClass=info.isWorking?`code-${family}`:"",
         statusClass=pending?"pending":info.isWorking?"work":"rest",
-        marker=ev.length?`<span class="hc-day-event-markers" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,3).map(x=>`<i title="${esc(x.title||x.kind||"Événement")}">${esc(x.icon||"•")}</i>`).join("")}</span>`:"",
-        visual=pending
-          ?'<span class="hc-pending-line"><span class="hc-pending-icon">🚫</span></span>'
-          :info.isWorking
-            ?`<span class="hc-work-line"><span class="hc-work-icon" aria-hidden="true">${esc(info.icon||"•")}</span><strong class="hc-shift-name">${esc(base)}</strong></span>`
-            :`<span class="hc-rest-line"><span class="hc-status-icon" aria-hidden="true">${esc(info.icon||"•")}</span><strong class="hc-status-code">${esc(base)}</strong></span>`;
-      if(ev.length)hasEvents=true;
-      cards.push(`<button type="button" class="hc-day hc-day-landscape ${statusClass} ${codeClass} ${day===state.selected?"selected":""}" data-aav-day="${day}" aria-pressed="${day===state.selected}">${marker}<span class="hc-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="hc-week-visual">${visual}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
+        mainIcon=pending?"🚫":String(info.icon||"•"),
+        eventHtml=ev.length
+          ? `<span class="stip-week-events" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,2).map(x=>`<i class="stip-week-event" title="${esc(x.title||x.kind||"Événement")}">${esc(x.icon||"•")}</i>`).join("")}</span>`
+          : '<span class="stip-week-events is-empty" aria-hidden="true"></span>',
+        aria=[fullDay(day),info.label||base,ev.length?`${ev.length} événement${ev.length>1?"s":""}`:""].filter(Boolean).join(", ");
+      cards.push(`<button type="button" class="stip-week-day ${statusClass} ${codeClass} ${day===state.selected?"selected":""} ${day===today()?"today":""}" data-aav-day="${day}" aria-pressed="${day===state.selected}" aria-label="${esc(aria)}"><span class="stip-week-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${esc(base)}</strong><span class="stip-week-main"><span class="stip-week-main-icon" aria-hidden="true">${esc(mainIcon)}</span></span><span class="stip-week-divider ${ev.length?"":"is-empty"}" aria-hidden="true"></span>${eventHtml}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`);
     }
-    return `<section class="aav-week aav-week-home"><header class="aav-week-nav"><button type="button" data-aav-week-step="-1" aria-label="Semaine précédente">‹</button><div><small>${esc(agentWeekRelativeLabel(state.selected))}</small><strong>${esc(agentWeekRangeLabel(state.selected))}</strong></div><button type="button" data-aav-week-step="1" aria-label="Semaine suivante">›</button></header><div class="hc-days-landscape ${hasEvents?"has-week-events":"no-week-events"}" style="--visible-days:7">${cards.join("")}</div></section>`;
+    return `<section class="aav-week aav-week-home"><header class="aav-week-nav"><button type="button" data-aav-week-step="-1" aria-label="Semaine précédente">‹</button><div><small>${esc(agentWeekRelativeLabel(state.selected))}</small><strong>${esc(agentWeekRangeLabel(state.selected))}</strong></div><button type="button" data-aav-week-step="1" aria-label="Semaine suivante">›</button></header><div class="stip-week-line" style="--stip-week-columns:7">${cards.join("")}</div></section>`;
   }
   function eventHtml(){
     const start=monday(state.selected),end=add(start,6),rows=state.events.filter(x=>x.date>=start&&x.date<=end);
