@@ -852,13 +852,15 @@
     const x = state.items.find((v) => String(v.id) === String(id));
     if (!x) return;
     const type =
-      x.category === "intern"
-        ? "intern"
-        : x.category === "training"
-          ? "training"
-          : x.category === "medical"
-            ? "medical"
-            : "other";
+      x.source_kind === "agenda"
+        ? "agenda"
+        : x.category === "intern"
+          ? "intern"
+          : x.category === "training"
+            ? "training"
+            : x.category === "medical"
+              ? "medical"
+              : "agenda";
     if (!x.source_id) return;
     const url =
       "agent-date-detail.html?type=" +
