@@ -143,7 +143,16 @@ export async function answer(c: SessionCtx, body: any) {
 
   if (intent === "app_navigation" && semantic.app) return appNavigationAnswer(c, old, semantic.app);
 
-  const parsedScope = parseDateScope(semanticText(raw), todayParis(), old);
+  const semanticQForDate = semanticText(raw);
+  const reuseDateContext =
+    /^et\b/.test(semanticQForDate) ||
+    hasContextualPersonRef(raw) ||
+    !!option ||
+    (intent === "colleagues" && !!old.date_scope) ||
+    (intent === "exchange" && old.last_intent === "exchange") ||
+    (intent === "shift_roster" && ["shift_roster","organization"].includes(String(old.last_intent||"")));
+  const dateContext:DialogContext = reuseDateContext ? old : { ...old, date_scope: undefined, date: undefined };
+  const parsedScope = parseDateScope(semanticQForDate, todayParis(), dateContext);
   if (intent === "exchange" && !parsedScope) return {
     kind: "exchange", title: "Échange de planning",
     text: "Pour quel jour ou quelle période veux-tu chercher un échange ?",
