@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260926-profile-menu2";
+const STIP_SW_BUILD="20260926-profile-menu3";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
