@@ -190,7 +190,7 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF officiel</strong><small>Version complète prête à imprimer.</small></span></button>
+          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF généré</strong><small>Pages fixes + dictionnaire à jour.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur</strong><small>Excel / Google Sheets.</small></span></button>
         </div>
         <div class="format-note" id="formatNote"></div>
@@ -211,9 +211,6 @@
   requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
   const STORE="stip_session_v1";
-  const MASTER_DRIVE_ID="14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o";
-  const MASTER_PREVIEW_URL=`https://drive.google.com/file/d/${MASTER_DRIVE_ID}/preview`;
-  const MASTER_VIEW_URL=`https://drive.google.com/file/d/${MASTER_DRIVE_ID}/view`;
   const ANNEXES=["A1","A3","A4","B1","B13","B14","B16","CERMEP","IDÉE","MORTUAIRE","MPM","RADIO","GHE"];
   const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set(),pendingDomain:null,pendingPreset:null};
   const status=document.getElementById("exportStatus");
@@ -276,14 +273,9 @@
     actionStep.hidden=true;
     state.format=null;
     document.querySelectorAll("[data-format]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")});
-    const pdfAllowed=scope.mode==="all";
-    pdfFormat.disabled=!pdfAllowed;
-    formatScopeCopy.textContent=pdfAllowed
-      ?"Choisis PDF ou tableur."
-      :"Cette sélection est disponible en tableur.";
-    formatNote.innerHTML=pdfAllowed
-      ?"<strong>PDF officiel</strong> · même fichier que le MASTER validé."
-      :"<strong>PDF par sélection</strong> · disponible après validation du dictionnaire.";
+    pdfFormat.disabled=false;
+    formatScopeCopy.textContent="Choisis PDF ou tableur.";
+    formatNote.innerHTML="<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
     setStatus("");
     setProgress(1);
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -413,7 +405,7 @@
   function renderActions(){
     const pdf=state.format==="pdf";
     actionHint.textContent=pdf
-      ?"PDF officiel · GHE complet"
+      ?"PDF généré · "+describeScope(state.scope)
       :"Tableur · "+describeScope(state.scope);
     const actions=pdf?[
       ["view","◉","Afficher"],
@@ -437,13 +429,13 @@
     a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
   }
-  async function fetchMasterPdf(token,disposition="inline"){
+  async function fetchGeneratedPdf(token){
     const r=await fetch(API,{
       method:"POST",cache:"no-store",
       headers:{"content-type":"application/json","x-stip-session":token},
-      body:JSON.stringify({action:"master_pdf_file",disposition})
+      body:JSON.stringify({action:"export_pdf",scope:state.scope})
     });
-    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"MASTER PDF indisponible.")}
+    if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"PDF généré indisponible.")}
     return {blob:await r.blob(),name:filenameFrom(r,"pdf")};
   }
   async function runExport(action){
@@ -451,42 +443,35 @@
     if(!token){setStatus("Session STIP requise pour exporter.","error");return}
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
     const pdf=state.format==="pdf";
-    if(pdf&&state.scope.mode!=="all"){
-      setStatus("Le PDF filtré reste désactivé jusqu’à validation du template dictionnaire.","error");
-      return;
-    }
-
-    if(pdf&&action==="view"){
-      const opened=window.open(MASTER_PREVIEW_URL,"_blank","noopener");
-      if(!opened)location.href=MASTER_PREVIEW_URL;
-      setStatus("PDF officiel ouvert dans le lecteur Drive.","ok");
-      return;
-    }
-
-    if(pdf&&action==="print"){
-      const opened=window.open(MASTER_VIEW_URL,"_blank","noopener");
-      if(!opened)location.href=MASTER_VIEW_URL;
-      setStatus("PDF officiel ouvert : utilise « Imprimer » dans le lecteur.","ok");
-      return;
-    }
+    let popup=null;
+    if(pdf&&(action==="view"||action==="print"))popup=window.open("about:blank","_blank");
 
     document.body.classList.add("busy");
-    setStatus(pdf?"Préparation du PDF officiel…":"Préparation du tableur…");
+    setStatus(pdf?"Fabrication du PDF…":"Préparation du tableur…");
     try{
       if(pdf){
-        const {blob,name}=await fetchMasterPdf(token,action==="download"?"attachment":"inline");
+        const {blob,name}=await fetchGeneratedPdf(token);
+
+        if(action==="view"||action==="print"){
+          const url=URL.createObjectURL(blob);
+          if(popup&&!popup.closed)popup.location.href=url;
+          else location.href=url;
+          setTimeout(()=>URL.revokeObjectURL(url),120000);
+          setStatus(action==="print"?"PDF généré ouvert : utilise « Imprimer » dans le lecteur.":"PDF généré ouvert.","ok");
+          return;
+        }
 
         if(action==="download"){
           downloadBlob(blob,name);
-          setStatus("PDF officiel téléchargé directement.","ok");
+          setStatus("PDF généré téléchargé.","ok");
           return;
         }
 
         if(action==="share"){
           const file=new File([blob],name,{type:"application/pdf"});
           if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]}))){
-            await navigator.share({files:[file],title:"Visiter les lieux · GHE"});
-            setStatus("PDF officiel partagé directement.","ok");
+            await navigator.share({files:[file],title:"Visiter les lieux · "+describeScope(state.scope)});
+            setStatus("PDF généré partagé.","ok");
           }else{
             downloadBlob(blob,name);
             setStatus("Partage de fichier indisponible ici : le PDF a été téléchargé.","ok");
@@ -517,7 +502,7 @@
         }
       }
     }catch(e){
-      if(opened&&!opened.closed)opened.close();
+      if(popup&&!popup.closed)popup.close();
       if(e?.name==="AbortError")setStatus("Partage annulé.");
       else setStatus(e?.message||"Export indisponible.","error");
     }finally{
