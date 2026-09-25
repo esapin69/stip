@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260925-responsable-no-access1";
+const STIP_SW_BUILD="20260925-access-recovery1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
@@ -8,7 +8,77 @@ function cacheable(response){return !!response&&response.ok&&response.type!=="op
 async function cacheFirst(request,cacheName){const cache=await caches.open(cacheName),cached=await cache.match(request);if(cached)return cached;const response=await fetch(request);if(cacheable(response))await cache.put(request,response.clone());return response}
 async function staleWhileRevalidate(request,event,cacheName){const cache=await caches.open(cacheName),cached=await cache.match(request),network=fetch(request).then(async response=>{if(cacheable(response))await cache.put(request,response.clone());return response});if(cached){event.waitUntil(network.catch(()=>{}));return cached}return network}
 async function networkFirst(request,cacheName){const cache=await caches.open(cacheName);try{const response=await fetch(request);if(cacheable(response))await cache.put(request,response.clone());return response}catch(error){const cached=await cache.match(request);if(cached)return cached;throw error}}
-self.addEventListener("fetch",event=>{const request=event.request;if(request.method!=="GET")return;const url=new URL(request.url);if(url.origin!==self.location.origin)return;const path=url.pathname,isIndex=path==="/"||/\/index\.html$/i.test(path),isHtml=request.mode==="navigate"||/\.html?$/i.test(path),isStatic=/\.(?:js|css|webmanifest|png|jpe?g|webp|svg|gif|ico|woff2?|ttf)$/i.test(path);if(request.cache==="no-store"||url.searchParams.has("__stip_probe")){event.respondWith(fetch(request));return}if(request.cache==="reload"){event.respondWith(fetch(request).then(async response=>{const cache=await caches.open(isHtml?PAGE_CACHE:STATIC_CACHE);if(cacheable(response))await cache.put(request,response.clone());return response}));return}if(isIndex){event.respondWith(cacheFirst(request,PAGE_CACHE));return}if(isHtml){event.respondWith(networkFirst(request,PAGE_CACHE));return}if(isStatic){if(url.searchParams.has("v")||url.searchParams.has("__stip_build"))event.respondWith(cacheFirst(request,STATIC_CACHE));else event.respondWith(staleWhileRevalidate(request,event,STATIC_CACHE))}});
+const SUPABASE_FUNCTIONS="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/";
+const STIP_RELAY="https://stip-ten.vercel.app/api/stip-access";
+
+async function relayEdgeRequest(request,url){
+  const target=url.pathname.slice("/functions/v1/".length).split("/")[0].trim();
+  if(!target||request.method!=="POST")return fetch(request);
+  let payload={};
+  try{
+    const raw=await request.clone().text();
+    payload=raw?JSON.parse(raw):{};
+  }catch{
+    return fetch(request);
+  }
+  const headers=new Headers({"Content-Type":"application/json"});
+  const session=request.headers.get("x-stip-session");
+  if(session)headers.set("X-STIP-Session",session);
+  const body=target==="stip-access"
+    ? payload
+    : {action:"relay",target,query:url.search||"",payload};
+  return fetch(STIP_RELAY,{
+    method:"POST",
+    cache:"no-store",
+    headers,
+    body:JSON.stringify(body)
+  });
+}
+
+self.addEventListener("fetch",event=>{
+  const request=event.request;
+  const url=new URL(request.url);
+
+  if(url.href.startsWith(SUPABASE_FUNCTIONS)){
+    event.respondWith(relayEdgeRequest(request,url));
+    return;
+  }
+
+  if(request.method!=="GET")return;
+  if(url.origin!==self.location.origin)return;
+
+  const path=url.pathname,
+    isIndex=path==="/"||/\/index\.html$/i.test(path),
+    isHtml=request.mode==="navigate"||/\.html?$/i.test(path),
+    isStatic=/\.(?:js|css|webmanifest|png|jpe?g|webp|svg|gif|ico|woff2?|ttf)$/i.test(path);
+
+  if(request.cache==="no-store"||url.searchParams.has("__stip_probe")){
+    event.respondWith(fetch(request));
+    return;
+  }
+  if(request.cache==="reload"){
+    event.respondWith(fetch(request).then(async response=>{
+      const cache=await caches.open(isHtml?PAGE_CACHE:STATIC_CACHE);
+      if(cacheable(response))await cache.put(request,response.clone());
+      return response;
+    }));
+    return;
+  }
+  if(isIndex){
+    event.respondWith(cacheFirst(request,PAGE_CACHE));
+    return;
+  }
+  if(isHtml){
+    event.respondWith(networkFirst(request,PAGE_CACHE));
+    return;
+  }
+  if(isStatic){
+    if(url.searchParams.has("v")||url.searchParams.has("__stip_build"))
+      event.respondWith(cacheFirst(request,STATIC_CACHE));
+    else
+      event.respondWith(staleWhileRevalidate(request,event,STATIC_CACHE));
+  }
+});
 
 function notificationIcon(data){
   const key=String(data.event_key||data.kind||data.type||data.tag||"").toLowerCase();
