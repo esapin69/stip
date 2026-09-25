@@ -2638,7 +2638,9 @@
 
       if (!gesture.axis) {
         if (Math.max(ax, ay) < 9) return;
-        gesture.axis = ay >= ax * 1.12 ? "y" : ax >= ay * 1.18 ? "x" : "";
+        // A swipe must be clearly horizontal. Any diagonal/vertical gesture
+        // belongs to page scrolling so the embedded team page never feels stuck.
+        gesture.axis = ax >= ay * 1.35 ? "x" : "y";
       }
       if (gesture.axis !== "y") return;
 
