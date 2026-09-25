@@ -182,6 +182,9 @@
         return;
       }
       if(!swipeStart.horizontal)return;
+      // Once the gesture is clearly horizontal, keep it for STIP. Vertical
+      // movement remains native because we only cancel after axis locking.
+      if(event.cancelable)event.preventDefault();
       if(reducedMotion())return;
       const width=Math.max(1,Number(swipeStart.surface.clientWidth)||1),
         limited=Math.max(-width*.62,Math.min(width*.62,dx)),
