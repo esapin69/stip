@@ -663,6 +663,21 @@ check(
   'stip-messages ne sert plus le catalogue fauteuil depuis stip_places.'
 );
 check(
+  wheelchairChatCanonical.includes('key: "b14"') &&
+  wheelchairChatCanonical.includes('Médecine nucléaire') &&
+  wheelchairChatCanonical.includes('WHEELCHAIR_SEARCH_TARGETS') &&
+  wheelchairChatCanonical.includes('catalog?.targets') &&
+  wheelchairChatCanonical.includes('tb-place-featured-btn'),
+  'Le chat Fauteuils doit conserver le raccourci B14 et la recherche globale Service / repère.'
+);
+check(
+  wheelchairEdgeCanonical.includes('all_buildings:allBuildings') &&
+  wheelchairEdgeCanonical.includes('targets') &&
+  wheelchairEdgeCanonical.includes('stip_place_aliases') &&
+  !wheelchairEdgeCanonical.includes('.in("building_code",codes)'),
+  'wheelchair_catalog ne doit plus être limité aux seuls bâtiments raccourcis.'
+);
+check(
   placesEdgeCanonical.includes("action==='export_xlsx'") &&
   placesEdgeCanonical.includes("action==='export_pdf'") &&
   placesEdgeCanonical.includes('async function pdfResponse') &&
