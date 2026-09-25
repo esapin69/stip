@@ -260,7 +260,7 @@
           : worst >= 2
             ? { level: "warning", symbol: "⚠️", label: "À surveiller" }
             : staff?.available
-              ? { level: "ok", symbol: "✔", label: "Rien ne coince" }
+              ? { level: "ok", symbol: "✔", label: "Journée validée" }
               : { level: "unknown", symbol: "", label: "Pas assez de données" };
       })()
     );
@@ -1043,7 +1043,7 @@
     }
 
     const statuses = [
-      ["ok", "✔", "Rien ne coince"],
+      ["ok", "✔", "Journée validée"],
       ["warning", "⚠", "À surveiller"],
       ["critical", "🛑", "Journée tendue"],
       ["opportunity", "+", "Présence plus large"],
