@@ -118,7 +118,8 @@ function toggleHistory(i){
   document.querySelectorAll('[data-history-detail]').forEach(x=>x.hidden=true);
   if(!opening)return;
   box.hidden=false;
-  box.innerHTML=`<div class="ev-prev-meta">${esc(h.grade||'')} · ${esc(h.service||'')} · ${fr(h.evaluation_date)}</div>${GROUPS.flatMap(g=>g[1]).map(c=>`<div class="ev-prev-row"><span>${esc(c)}</span><strong>${esc(h.criteria?.[c]===NOT?'Non observé':h.criteria?.[c]||'Non observé')}</strong></div>`).join('')}<div class="ev-history-actions">${h.drive_url?`<a class="ev-link-btn" href="${esc(h.drive_url)}" target="_blank" rel="noopener">Ouvrir le PDF officiel</a>`:''}</div>`;
+  box.innerHTML=`<div class="ev-prev-meta">${esc(h.grade||'')} · ${esc(h.service||'')} · ${fr(h.evaluation_date)}</div>${GROUPS.flatMap(g=>g[1]).map(c=>`<div class="ev-prev-row"><span>${esc(c)}</span><strong>${esc(h.criteria?.[c]===NOT?'Non observé':h.criteria?.[c]||'Non observé')}</strong></div>`).join('')}<div class="ev-history-actions">${h.has_pdf?`<button type="button" class="ev-link-btn" data-official-pdf>Afficher le PDF officiel</button>`:''}</div>`;
+  box.querySelector('[data-official-pdf]')?.addEventListener('click',()=>openOfficialPdf(h));
 }
 function renderCompare(){
   const p=state.previous,card=$('#compareCard');
@@ -136,6 +137,38 @@ function showPreviousMarkers(){
   paintCompareButton();
 }
 function paintCompareButton(){const b=$('#comparePrevious');if(!b)return;b.textContent=state.compare?'Masquer les anciens choix':'Afficher les anciens choix sur la grille';b.classList.toggle('active',state.compare)}
+
+async function openOfficialPdf(h){
+  const opened=window.open('about:blank','_blank');
+  if(opened)opened.document.write('<title>Préparation…</title><p style="font-family:system-ui;padding:24px">Ouverture du PDF officiel…</p>');
+  try{
+    const r=await GHEBase.eva('official_pdf_link',{...target(),history_id:h.history_id||'',version:h.version||0});
+    if(opened)opened.location.href=r.view_url;else window.open(r.view_url,'_blank','noopener');
+  }catch(e){if(opened)opened.close();msg(friendly(e),'error')}
+}
+function pdfBlob(base64){
+  const bin=atob(String(base64||'')),a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return new Blob([a],{type:'application/pdf'});
+}
+function downloadBlob(blob,name){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
+function showFinalDelivery(base64,name){
+  document.querySelector('.ev-delivery')?.remove();
+  const blob=pdfBlob(base64),box=document.createElement('div');box.className='ev-delivery';
+  box.innerHTML=`<strong>PDF officiel prêt</strong><div class="ev-delivery-actions"><button type="button" class="ev-link-btn" data-delivery="view">Afficher</button><button type="button" class="ev-link-btn" data-delivery="download">Télécharger</button><button type="button" class="ev-link-btn" data-delivery="share">Partager</button></div>`;
+  box.querySelector('[data-delivery="view"]').onclick=()=>{const url=URL.createObjectURL(blob);window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),120000)};
+  box.querySelector('[data-delivery="download"]').onclick=()=>downloadBlob(blob,name);
+  box.querySelector('[data-delivery="share"]').onclick=async()=>{
+    const file=new File([blob],name,{type:'application/pdf'});
+    if(navigator.share&&(!navigator.canShare||navigator.canShare({files:[file]})))await navigator.share({files:[file],title:'Évaluation officielle STIP'});
+    else downloadBlob(blob,name);
+  };
+  status.after(box);
+}
 
 function setupPads(){
   document.querySelectorAll('.ev-signature-pad').forEach(box=>{
@@ -260,17 +293,13 @@ async function finalize(){
   const b=$('#finalPrint');
   if(!$('#confirmFinal').checked){finalStatus.textContent='Confirme la relecture avant l’extraction.';return}
   if(!validateFinal()){closeFinal();return}
-  b.disabled=true;finalStatus.textContent='Génération du PDF et livraison Drive…';
+  b.disabled=true;finalStatus.textContent='Génération et archivage sécurisé du PDF…';
   try{
-    const r=await GHEBase.eva('finalize',payload(true)),drive=r.drive||{},closed=r.closed||{};
+    const r=await GHEBase.eva('finalize',payload(true)),delivery=r.delivery||{},closed=r.closed||{};
+    const base64=r.pdf_base64||'',name=delivery.name||closed.pdf_name||'Evaluation-officielle.pdf';
     closeFinal();state.remoteLink='';clearForm();await refresh();
-    msg(`Version ${closed.version||''} figée et livrée sur Drive.`,'ok');
-    if(drive.url){
-      document.querySelector('.ev-delivery')?.remove();
-      const box=document.createElement('div');box.className='ev-delivery';
-      box.innerHTML=`<strong>PDF officiel livré</strong><a class="ev-link-btn" href="${esc(drive.url)}" target="_blank" rel="noopener">Ouvrir dans Drive</a>`;
-      status.after(box);setTimeout(()=>box.remove(),30000);
-    }
+    msg(`Version ${closed.version||''} figée dans STIP.`,'ok');
+    if(base64)showFinalDelivery(base64,name);
   }catch(e){finalStatus.textContent=friendly(e)}
   finally{b.disabled=false}
 }
