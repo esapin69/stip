@@ -35,7 +35,7 @@
     if (level === "opportunity")
       return { level, symbol: "➕", label: "Marge utile" };
     if (level === "ok")
-      return { level, symbol: "✔", label: "Rien ne coince" };
+      return { level, symbol: "✔", label: "Journée validée" };
     return { level: "unknown", symbol: "", label: "Pas assez de données" };
   }
 
@@ -213,7 +213,7 @@
       return {
         ...meta,
         known: true,
-        headline: "Rien ne coince côté effectif",
+        headline: "Effectif conforme",
         detail:
           totalGap != null && totalGap > 0
             ? `Les créneaux suivis tiennent la référence, avec +${totalGap} de marge au total.`
