@@ -5,7 +5,6 @@ import { CRITERIA,LEVELS,NOT_OBSERVED,OBS_KEYS,MODEL_VERSION,makeOfficialPdf,sha
 const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}})
 const SIGNATURE_BUCKET='stip-pdf-assets'
-const DRIVE_FOLDER='1yK2ICCnDLNy2gti56SOoGBZAb6lo60uC'
 const ORIGINS=new Set(['https://stip.esapin.com','https://esapin69.github.io'])
 const text=(v:any,m=10000)=>String(v??'').trim().slice(0,m)
 const uuid=(v:any)=>{const s=text(v,80);return/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)?s:''}
@@ -57,7 +56,7 @@ function incomingObs(b:any){const o=b.observations&&typeof b.observations==='obj
 function currentObs(log:any[]){const out:any={};OBS_KEYS.forEach(k=>out[k]='');for(const e of Array.isArray(log)?log:[]){if(OBS_KEYS.includes(e?.key)&&typeof e?.text==='string')out[e.key]=e.text}return out}
 function trimLog(log:any[]){const by:any={};for(const e of log){if(!OBS_KEYS.includes(e?.key))continue;(by[e.key]??=[]).push(e)}const out:any[]=[];for(const k of OBS_KEYS)out.push(...(by[k]||[]).slice(-4));return out.sort((a,b)=>String(a.at).localeCompare(String(b.at))).slice(-24)}
 function pubLive(r:any){if(!r)return null;return{status:'OPEN',case_id:r.case_id,agent_id:r.agent_id,evaluator_name:r.evaluator_name||'',evaluation_date:r.evaluation_date,service:r.service||'',grade:r.grade||'',service_since:r.service_since,decision:r.decision||'',criteria:normalizeCriteria(r.criteria),observations:currentObs(r.observation_log||[]),observation_history:r.observation_log||[],signature_date:r.signature_date,updated_at:r.updated_at}}
-function pubLast(r:any){if(!r)return null;return{status:'CLOSED',read_only:true,history_id:r.history_id||null,version:Number(r.version||1),agent_id:r.agent_id,closed_at:r.closed_at,evaluation_date:r.evaluation_date,evaluator_name:r.evaluator_name||'',service:r.service||'',grade:r.grade||'',service_since:r.service_since,decision:r.decision||'',criteria:normalizeCriteria(r.criteria),observations:currentObs(r.observations||[]),observation_history:r.observations||[],drive_url:r.drive_url||'',drive_name:r.drive_name||'',pdf_sha256:r.pdf_sha256||'',document_id:r.drive_file_id||''}}
+function pubLast(r:any){if(!r)return null;return{status:'CLOSED',read_only:true,history_id:r.history_id||null,version:Number(r.version||1),agent_id:r.agent_id,closed_at:r.closed_at,evaluation_date:r.evaluation_date,evaluator_name:r.evaluator_name||'',service:r.service||'',grade:r.grade||'',service_since:r.service_since,decision:r.decision||'',criteria:normalizeCriteria(r.criteria),observations:currentObs(r.observations||[]),observation_history:r.observations||[],pdf_sha256:r.pdf_sha256||'',pdf_name:r.pdf_storage_name||r.drive_name||'',has_pdf:Boolean(r.pdf_storage_path||r.drive_url),legacy_drive_url:r.pdf_storage_path?'':(r.drive_url||'')}}
 function signaturePublic(r:any){if(!r)return{statut:'AUCUNE'};return{id:r.id,statut:r.status,expire_le:r.expires_at,signe_le:r.signed_at,annule_le:r.cancelled_at,finalise_le:r.finalized_at}}
 async function historyFor(agentId:string){
   const q=await db.from('stip_evaluation_history').select('*').eq('agent_id',agentId).order('version',{ascending:false})
@@ -215,13 +214,30 @@ async function templateBytes(){
   return{bytes:a,version:q.data.version||MODEL_VERSION}
 }
 function toB64(a:Uint8Array){let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode(...a.subarray(i,Math.min(i+0x8000,a.length)));return btoa(s)}
-async function uploadDrive(name:string,pdf:Uint8Array,sha:string){
-  const bridge=Deno.env.get('EVAL_DRIVE_UPLOAD_URL')||'',key=Deno.env.get('EVAL_DRIVE_UPLOAD_KEY')||''
-  if(!bridge)throw Error('DRIVE_BRIDGE_NON_CONFIGURE')
-  const r=await fetch(bridge,{method:'POST',headers:{'content-type':'application/json',...(key?{'x-eval-key':key}:{})},body:JSON.stringify({action:'upload_evaluation_pdf',parent_folder_id:DRIVE_FOLDER,name,mime_type:'application/pdf',sha256:sha,base64:toB64(pdf)})})
-  const j=await r.json().catch(()=>({}))
-  if(!r.ok||!j.file_id||!j.url)throw Error(j.error||'ENREGISTREMENT_DRIVE_ECHOUE')
-  return j
+async function storeOfficialPdf(agentId:string,name:string,pdf:Uint8Array){
+  const path=`official/evaluations/${agentId}/${crypto.randomUUID()}.pdf`
+  const up=await db.storage.from(SIGNATURE_BUCKET).upload(path,pdf,{contentType:'application/pdf',upsert:false})
+  if(up.error)throw Error('ENREGISTREMENT_PDF_SUPABASE_ECHOUE')
+  return{bucket:SIGNATURE_BUCKET,path,name}
+}
+async function officialPdfLink(b:any){
+  const a=await resolveAgent(b)
+  let q:any=db.from('stip_evaluation_history').select('history_id,version,pdf_storage_bucket,pdf_storage_path,pdf_storage_name,drive_url,drive_name,pdf_sha256').eq('agent_id',a.agent.id)
+  if(b.history_id)q=q.eq('history_id',text(b.history_id,80))
+  else if(Number(b.version)>0)q=q.eq('version',Number(b.version))
+  else q=q.order('version',{ascending:false}).limit(1)
+  const r=await q.maybeSingle();if(r.error)throw r.error
+  const d=r.data;if(!d)throw Error('PDF_OFFICIEL_INTROUVABLE')
+  if(!d.pdf_storage_path){
+    if(d.drive_url)return{legacy:true,view_url:d.drive_url,download_url:d.drive_url,name:d.drive_name||'Evaluation.pdf',sha256:d.pdf_sha256||''}
+    throw Error('PDF_OFFICIEL_INTROUVABLE')
+  }
+  const bucket=d.pdf_storage_bucket||SIGNATURE_BUCKET,name=d.pdf_storage_name||'Evaluation.pdf'
+  const view=await db.storage.from(bucket).createSignedUrl(d.pdf_storage_path,600)
+  if(view.error||!view.data?.signedUrl)throw Error('LIEN_PDF_OFFICIEL_INDISPONIBLE')
+  const down=await db.storage.from(bucket).createSignedUrl(d.pdf_storage_path,600,{download:name})
+  if(down.error||!down.data?.signedUrl)throw Error('LIEN_PDF_OFFICIEL_INDISPONIBLE')
+  return{legacy:false,view_url:view.data.signedUrl,download_url:down.data.signedUrl,name,sha256:d.pdf_sha256||''}
 }
 async function finalize(c:any,b:any){
   const a=await resolveAgent(b),lockToken=crypto.randomUUID()
@@ -244,14 +260,14 @@ async function finalize(c:any,b:any){
     const sigMeta={agent:remoteAgent?{mode:'distance',sha256:await sha256Bytes(remoteAgent)}:localAgent?{mode:'local',sha256:await sha256Bytes(localAgent)}:null,responsable:{mode:'local',sha256:await sha256Bytes(responsable)},direction:direction?{mode:'local',sha256:await sha256Bytes(direction)}:null}
     const pdf=await makeOfficialPdf(template.bytes,p,{agent:remoteAgent||localAgent,responsable,direction,names:{agent:`${r.agent_prenom||''} ${r.agent_nom||''}`.trim(),responsable:r.evaluator_name||disp(c.agent),direction:text(b.direction_name,160)}})
     const sha=await sha256Bytes(pdf),name=safeName(`${r.agent_nom||''} ${r.agent_prenom||''} - Evaluation ${displayDateFr(r.evaluation_date)}.pdf`)
-    const drive=await uploadDrive(name,pdf,sha)
-    const close=await db.rpc('stip_eval_live_close',{p_agent_id:a.agent.id,p_closed_by:c.agent.id,p_pdf:{file_id:drive.file_id,url:drive.url,name:drive.name||name,sha256:sha,signatures:sigMeta}})
-    if(close.error)throw close.error
+    const stored=await storeOfficialPdf(a.agent.id,name,pdf)
+    const close=await db.rpc('stip_eval_live_close',{p_agent_id:a.agent.id,p_closed_by:c.agent.id,p_pdf:{storage_bucket:stored.bucket,storage_path:stored.path,name:stored.name,sha256:sha,signatures:sigMeta}})
+    if(close.error){await db.storage.from(stored.bucket).remove([stored.path]);throw close.error}
     if(remote&&['SIGNE','EN_ATTENTE'].includes(remote.status)){
       if(remote.signature_path)await db.storage.from(remote.signature_bucket||SIGNATURE_BUCKET).remove([remote.signature_path])
       await db.from('stip_evaluation_signature_requests').update({status:'FINALISE',finalized_at:new Date().toISOString(),signature_path:null,signature_bucket:null,updated_at:new Date().toISOString()}).eq('id',remote.id)
     }
-    return{closed:pubLast(close.data),drive:{file_id:drive.file_id,url:drive.url,name:drive.name||name,folder_id:DRIVE_FOLDER},pdf_base64:toB64(pdf),reset:true}
+    return{closed:pubLast(close.data),delivery:{storage:'supabase',name:stored.name,sha256:sha},pdf_base64:toB64(pdf),reset:true}
   }finally{
     try{await db.rpc('stip_eval_finalize_release',{p_agent_id:a.agent.id,p_token:lockToken})}catch(_){ }
   }
@@ -276,12 +292,13 @@ Deno.serve(async req=>{
     if(act==='signature_request')return json(req,{ok:true,request:await createSignatureRequest(c,b)})
     if(act==='signature_status'){const a=await resolveAgent(b);return json(req,{ok:true,request:signaturePublic(await latestSignatureRequest(a.agent.id))})}
     if(act==='signature_cancel')return json(req,{ok:true,request:await cancelSignatureRequest(c,b)})
+    if(act==='official_pdf_link')return json(req,{ok:true,...await officialPdfLink(b)})
     if(['finalize','finalizeEvaluation'].includes(act))return json(req,{ok:true,...await finalize(c,b)})
     return json(req,{error:'ACTION_INVALIDE'},400)
   }catch(e){
     console.error(e)
     const m=e instanceof Error?e.message:String(e)
-    const s=/ACCES|ORIGINE/.test(m)?403:/SESSION/.test(m)?401:/DRIVE_BRIDGE_NON_CONFIGURE/.test(m)?503:400
+    const s=/ACCES|ORIGINE/.test(m)?403:/SESSION/.test(m)?401:/ENREGISTREMENT_PDF_SUPABASE_ECHOUE/.test(m)?503:400
     return json(req,{error:m},s)
   }
 })
