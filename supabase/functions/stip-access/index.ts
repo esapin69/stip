@@ -286,6 +286,8 @@ function authoritative(
   }
   if (roleKey(role) === "chef_equipe") {
     p.responsable = true;
+    p.access_manage = false;
+    p.admin = false;
     p.__levels = { ...(p.__levels || {}), responsable: "pro" };
   }
   if (p.planning === undefined)
