@@ -869,6 +869,38 @@
   .stip-filter-visual{width:33px;height:33px;font-size:1rem}
   .stip-filter-copy>strong,.stip-filter-copy>b{font-size:.75rem}
   .stip-filter-copy>small{font-size:.6rem}
+
+  /* Three visual choices need a taller, symmetric mobile composition.
+     Text-only 3-choice filters (Nom / Prénom / GHE, etc.) stay compact. */
+  .stip-filter-bubbles[data-count="3"]>.stip-filter-choice:has(.stip-filter-visual){
+    min-height:86px;
+    flex-direction:column!important;
+    gap:5px;
+    padding:7px 5px 9px;
+    text-align:center!important;
+  }
+  .stip-filter-bubbles[data-count="3"]>.stip-filter-choice:has(.stip-filter-visual) .stip-filter-copy{
+    width:100%;
+    align-items:center!important;
+    text-align:center!important;
+  }
+  .stip-filter-bubbles[data-count="3"]>.stip-filter-choice:has(.stip-filter-visual) .stip-filter-copy>strong,
+  .stip-filter-bubbles[data-count="3"]>.stip-filter-choice:has(.stip-filter-visual) .stip-filter-copy>b{
+    overflow:visible;
+    text-overflow:clip;
+  }
+  .stip-filter-bubbles[data-count="3"]>.stip-filter-choice:has(.stip-filter-visual) .stip-filter-copy>small{
+    min-height:1.32em;
+    margin-top:3px;
+    overflow:hidden;
+    text-overflow:clip;
+    white-space:normal;
+    line-height:1.1;
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+  }
+
   .stip-filter-bubbles[data-count="4"]>.stip-filter-choice{
     min-height:64px;
     flex-direction:column!important;
