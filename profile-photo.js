@@ -2,7 +2,10 @@
 let raf=0;
 const avatarNodes=()=>document.querySelectorAll(".hc-id-card .hc-avatar");
 const current=()=>window.STIPSession?.agent?.profile_photo_url||window.STIPBootCache?.agent?.profile_photo_url||"";
-const currentAgent=()=>window.STIPSession?.agent||window.STIPBootCache?.agent||{};
+const currentAgent=()=>{
+  const session=window.STIPSession?.agent||{},boot=window.STIPBootCache?.agent||{};
+  return {...boot,...session,profile_photo_url:session.profile_photo_url||boot.profile_photo_url||""};
+};
 function paint(){
   const url=current();
   avatarNodes().forEach(a=>{
@@ -32,6 +35,13 @@ function openNotifications(){
   try{sessionStorage.setItem("stip_home_mode_once","notifications")}catch{}
   location.href="index.html?quick=notifications";
 }
+function logout(){
+  const button=document.getElementById("logoutBtn");
+  if(button){button.click();return}
+  window.STIPContinuity?.clear?.({clearToken:true});
+  try{localStorage.removeItem("stip_session_v1")}catch{}
+  location.replace("index.html");
+}
 function openProfileMenu(){
   const menu=window.STIPPersonActions;
   if(!menu?.open){openAccount();return}
@@ -42,7 +52,8 @@ function openProfileMenu(){
     actions:[
       {icon:"✎",label:"Modifier l’image",detail:"Changer ou gérer ma photo",primary:true,onSelect:openPhoto},
       {icon:"🔔",label:"Voir les notifications",detail:"Ouvrir les éléments à traiter",onSelect:openNotifications},
-      {icon:"👤",label:"Ouvrir mon profil",detail:"Accéder à Mon compte",onSelect:openAccount}
+      {icon:"👤",label:"Ouvrir mon profil",detail:"Accéder à Mon compte",onSelect:openAccount},
+      {icon:"⏻",label:"Déconnexion",detail:"Quitter cette session",danger:true,onSelect:logout}
     ]
   });
 }
