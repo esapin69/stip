@@ -273,12 +273,9 @@
     actionStep.hidden=true;
     state.format=null;
     document.querySelectorAll("[data-format]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")});
-    const pdfAllowed=scope.mode==="all"||scope.mode==="building";
-    pdfFormat.disabled=!pdfAllowed;
-    formatScopeCopy.textContent=pdfAllowed?"Choisis PDF ou tableur.":"Cette sélection est disponible en tableur.";
-    formatNote.innerHTML=pdfAllowed
-      ?"<strong>PDF généré à la demande</strong> · assemblé depuis les pages validées du MASTER."
-      :"<strong>PDF</strong> · ce périmètre sera activé avec le futur template dictionnaire.";
+    pdfFormat.disabled=false;
+    formatScopeCopy.textContent="Choisis PDF ou tableur.";
+    formatNote.innerHTML="<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
     setStatus("");
     setProgress(1);
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
