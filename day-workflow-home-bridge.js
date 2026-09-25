@@ -25,5 +25,5 @@ async function refresh(){try{publish(await call())}catch{}}
 function removeLegacy(){document.querySelector('#dwHomeActions')?.remove()}
 new MutationObserver(removeLegacy).observe(document.documentElement,{childList:true,subtree:true});
 ['stip:session-ready','stip:boot-updated'].forEach(e=>window.addEventListener(e,()=>setTimeout(refresh,120)));window.addEventListener('stip:route',e=>{removeLegacy();if(e.detail?.route==='home')setTimeout(refresh,80)});window.addEventListener('focus',()=>setTimeout(refresh,80));
-setInterval(()=>{if(!document.hidden)refresh()},60000);setTimeout(()=>{removeLegacy();refresh()},350);
+setInterval(()=>{if(!document.hidden)refresh()},300000);setTimeout(()=>{removeLegacy();refresh()},350);
 })();
