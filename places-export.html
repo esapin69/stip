@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#eef5f6">
   <meta name="robots" content="noindex,nofollow">
-  <title>Exporter / imprimer · Visiter les lieux</title>
+  <title>Exporter · Visiter les lieux</title>
   <link rel="stylesheet" href="stip-theme.css?v=20260925-lucide1">
   <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
   <style>
@@ -74,7 +74,7 @@
     </header>
 
     <section class="stip-surface intro">
-      <p class="stip-kicker">EXPORTER · AFFICHER · IMPRIMER</p>
+      <p class="stip-kicker">EXPORTER · AFFICHER · PARTAGER</p>
       <h1 class="stip-title">Préparer une version utile</h1>
       <p class="stip-subtitle">Choisis d’abord ce que tu veux sortir. Le PDF et le tableur sont générés à la demande depuis le même référentiel Supabase que le site.</p>
     </section>
@@ -133,7 +133,7 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small>Le contenu reste identique : seule la présentation change.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF</strong><small>Pour afficher, imprimer, télécharger ou partager.</small></span></button>
+          <button class="stip-btn format-btn" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF</strong><small>Pour afficher, télécharger ou partager.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur .xlsx</strong><small>Compatible Excel et Google Sheets, pour trier ou modifier les données.</small></span></button>
         </div>
       </section>
@@ -320,12 +320,11 @@
     actionHint.textContent=masterPdf
       ?"GHE complet : ce PDF ouvre le MASTER officiel Drive intact. Les droits de partage Drive restent appliqués."
       :pdf
-        ?"Le PDF peut être affiché, imprimé, téléchargé ou partagé."
+        ?"Le PDF peut être affiché, téléchargé ou partagé."
         :"Le tableur .xlsx peut être téléchargé ou partagé puis ouvert dans Excel ou Google Sheets.";
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["download","⇩","Télécharger"],
-      ["print","▤","Imprimer"],
       ["share","↗","Partager"]
     ]:[
       ["download","⇩","Télécharger"],
@@ -350,7 +349,7 @@
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
     const pdf=state.format==="pdf";
     let opened=null;
-    if(pdf&&(action==="view"||action==="print")){
+    if(pdf&&action==="view"){
       opened=window.open("about:blank","_blank");
       if(opened){opened.document.write('<title>Préparation…</title><p style="font-family:system-ui;padding:24px">Préparation du PDF…</p>')}
     }
@@ -368,11 +367,6 @@
         if(action==="view"){
           if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
           setStatus("MASTER officiel ouvert sans reconstruction.","ok");
-          return;
-        }
-        if(action==="print"){
-          if(opened)opened.location.href=master.view_url;else window.open(master.view_url,"_blank","noopener");
-          setStatus("MASTER officiel ouvert : utilise l’action Imprimer du lecteur PDF/Drive.","ok");
           return;
         }
         if(action==="download"){
@@ -410,14 +404,6 @@
         const url=URL.createObjectURL(blob);
         if(opened)opened.location.href=url;else window.open(url,"_blank");
         setStatus("PDF ouvert.","ok");
-        setTimeout(()=>URL.revokeObjectURL(url),120000);
-      }else if(action==="print"){
-        const url=URL.createObjectURL(blob);
-        if(opened){
-          opened.location.href=url;
-          setTimeout(()=>{try{opened.focus();opened.print()}catch{}},1400);
-        }else window.open(url,"_blank");
-        setStatus("PDF ouvert pour impression.","ok");
         setTimeout(()=>URL.revokeObjectURL(url),120000);
       }else if(action==="share"){
         const file=new File([blob],name,{type:blob.type|| (pdf?"application/pdf":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")});
