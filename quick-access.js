@@ -10,6 +10,13 @@
   const I = {
     fav: '<img src="images/icone_app/quick-rocket.svg?v=20260919-restore1" alt="" aria-hidden="true">',
   };
+  function openDocument(url) {
+    if (window.STIPLoad?.navigateDocument) {
+      window.STIPLoad.navigateDocument(url);
+      return;
+    }
+    location.assign(new URL(url, location.href).href);
+  }
   const META = {
     personal: {
       label: "Planning perso",
@@ -25,11 +32,11 @@
     },
     agents: {
       label: "Équipe",
-      open: () => (location.href = "agent-directory.html"),
+      open: () => openDocument("agent-directory.html"),
     },
     compare: {
       label: "Comparer les plannings",
-      open: () => (location.href = "planning-compare-app.html"),
+      open: () => openDocument("planning-compare-app.html"),
     },
     change: {
       label: "Changement",
@@ -41,52 +48,52 @@
     },
     dates: {
       label: "Date des agents",
-      open: () => (location.href = "agent-dates.html"),
+      open: () => openDocument("agent-dates.html"),
     },
     contacts: { label: "Contacts", open: () => window.STIPHubs?.contacts?.() },
     places: {
       label: "Visiter les lieux",
-      open: () => (location.href = "places-app.html"),
+      open: () => openDocument("places-app.html"),
     },
     responsable: {
       label: "Responsable",
-      open: () => (location.href = "responsable.html?tab=dates&entry=shortcut"),
+      open: () => openDocument("responsable.html?tab=dates&entry=shortcut"),
     },
     resp_tracking: {
       label: "Suivi",
-      open: () => (location.href = "responsable.html?tab=suivi"),
+      open: () => openDocument("responsable.html?tab=suivi"),
     },
     resp_evaluation: {
       label: "Évaluation",
-      open: () => (location.href = "responsable.html?tab=equipe&mode=evaluation"),
+      open: () => openDocument("responsable.html?tab=equipe&mode=evaluation"),
     },
     resp_official: {
       label: "Extraire un fichier officiel",
-      open: () => (location.href = "responsable.html?tab=equipe&tool=official"),
+      open: () => openDocument("responsable.html?tab=equipe&tool=official"),
     },
     resp_requests: {
       label: "Demandes",
-      open: () => (location.href = "responsable.html?tab=suivi&tool=requests"),
+      open: () => openDocument("responsable.html?tab=suivi&tool=requests"),
     },
     resp_directory: {
       label: "Équipe du jour",
-      open: () => (location.href = "responsable.html?tab=equipe"),
+      open: () => openDocument("responsable.html?tab=equipe"),
     },
     resp_agenda: {
       label: "Agenda agents",
-      open: () => (location.href = "responsable.html?tab=agenda"),
+      open: () => openDocument("responsable.html?tab=agenda"),
     },
     assistant: {
       label: "Assistant STIP",
-      open: () => (location.href = "esprit-equipe.html?tab=assistant"),
+      open: () => openDocument("esprit-equipe.html?tab=assistant"),
     },
     activity: {
       label: "Activité",
-      open: () => (location.href = "esprit-equipe.html?tab=activity"),
+      open: () => openDocument("esprit-equipe.html?tab=activity"),
     },
     access: {
       label: "Accès & sécurité",
-      open: () => (location.href = "access-manage.html"),
+      open: () => openDocument("access-manage.html"),
     },
     newagent: {
       label: "Nouvel agent",
