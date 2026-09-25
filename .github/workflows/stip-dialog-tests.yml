@@ -28,5 +28,4 @@ jobs:
           deno run supabase/functions/stip-dialog/people.test.ts
           deno run supabase/functions/stip-dialog/suggestions.test.ts
           deno run supabase/functions/stip-dialog/semantic.test.ts
-      - name: Type check Edge Function
-        run: deno check supabase/functions/stip-dialog/index.ts
+      - name: Type check Edge Function\n        run: deno check supabase/functions/stip-dialog/index.ts\n      - name: Frontend syntax\n        run: node --check communication-hub.js
