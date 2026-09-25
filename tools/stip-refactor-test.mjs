@@ -549,8 +549,15 @@ const placesAgentsMasterGuard=read('AGENTS.md');
 check(
   placesExportMasterGuard.includes('action:"master_pdf_file"') &&
   !placesExportMasterGuard.includes('action:"export_pdf"') &&
-  placesExportMasterGuard.includes('copie privée STIP strictement identique au MASTER Drive'),
-  'Le PDF proposé doit rester le MASTER Drive intact servi par la copie privée STIP, sans génération Supabase.'
+  placesExportMasterGuard.includes('même fichier que le MASTER validé'),
+  'Le PDF proposé doit rester le MASTER validé servi par la copie privée STIP, sans génération Supabase.'
+);
+check(
+  placesExportMasterGuard.includes('id="progressScope"') &&
+  placesExportMasterGuard.includes('id="progressFormat"') &&
+  placesExportMasterGuard.includes('id="progressAction"') &&
+  placesExportMasterGuard.includes('.action-grid{display:grid;grid-template-columns:repeat(2'),
+  'Le parcours Export doit conserver son wizard compact Contenu / Format / Action.'
 );
 check(
   placesExportMasterGuard.includes('.selection-summary[hidden]') &&
