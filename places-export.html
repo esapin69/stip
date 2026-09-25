@@ -211,6 +211,9 @@
   requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
   const STORE="stip_session_v1";
+  const MASTER_DRIVE_ID="14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o";
+  const MASTER_PREVIEW_URL=`https://drive.google.com/file/d/${MASTER_DRIVE_ID}/preview`;
+  const MASTER_VIEW_URL=`https://drive.google.com/file/d/${MASTER_DRIVE_ID}/view`;
   const ANNEXES=["A1","A3","A4","B1","B13","B14","B16","CERMEP","IDÉE","MORTUAIRE","MPM","RADIO","GHE"];
   const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set(),pendingDomain:null,pendingPreset:null};
   const status=document.getElementById("exportStatus");
@@ -453,10 +456,18 @@
       return;
     }
 
-    let opened=null;
-    if(pdf&&(action==="view"||action==="print")){
-      opened=window.open("about:blank","_blank");
-      if(opened)opened.document.write('<title>Ouverture…</title><p style="font-family:system-ui;padding:24px">Ouverture du PDF officiel…</p>');
+    if(pdf&&action==="view"){
+      const opened=window.open(MASTER_PREVIEW_URL,"_blank","noopener");
+      if(!opened)location.href=MASTER_PREVIEW_URL;
+      setStatus("PDF officiel ouvert dans le lecteur Drive.","ok");
+      return;
+    }
+
+    if(pdf&&action==="print"){
+      const opened=window.open(MASTER_VIEW_URL,"_blank","noopener");
+      if(!opened)location.href=MASTER_VIEW_URL;
+      setStatus("PDF officiel ouvert : utilise « Imprimer » dans le lecteur.","ok");
+      return;
     }
 
     document.body.classList.add("busy");
@@ -468,25 +479,6 @@
         if(action==="download"){
           downloadBlob(blob,name);
           setStatus("PDF officiel téléchargé directement.","ok");
-          return;
-        }
-
-        if(action==="view"){
-          const url=URL.createObjectURL(blob);
-          if(opened)opened.location.href=url;else window.open(url,"_blank","noopener");
-          setStatus("PDF officiel ouvert directement.","ok");
-          setTimeout(()=>URL.revokeObjectURL(url),180000);
-          return;
-        }
-
-        if(action==="print"){
-          const url=URL.createObjectURL(blob);
-          if(opened){
-            opened.location.href=url;
-            setTimeout(()=>{try{opened.focus();opened.print()}catch{}},1600);
-          }else window.open(url,"_blank","noopener");
-          setStatus("PDF officiel ouvert pour impression.","ok");
-          setTimeout(()=>URL.revokeObjectURL(url),180000);
           return;
         }
 
