@@ -1,1 +1,126 @@
-PLACEHOLDER
+/* Emergency canonical calendar patch — restores the Responsable week/month geometry after the shared stylesheet regression. */
+
+/* Responsable: every status belongs to the exact same column as its day card. */
+#rrWeek .rr-week-signals,
+#rrWeek .stip-week-line{
+  display:grid!important;
+  grid-template-columns:repeat(var(--rr-week-columns, var(--stip-week-columns, 7)),minmax(0,1fr))!important;
+  column-gap:4px!important;
+  width:100%!important;
+  padding-inline:0!important;
+}
+#rrWeek .rr-week-signal{
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  place-items:center!important;
+  text-align:center!important;
+}
+
+/* Responsable day cards: date/header and content share one true centre axis. */
+#rrWeek .stip-week-day{
+  position:relative!important;
+  box-sizing:border-box!important;
+  min-width:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  text-align:center!important;
+}
+#rrWeek .stip-week-day-head,
+#rrWeek .stip-week-day-body{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  justify-items:center!important;
+  text-align:center!important;
+}
+#rrWeek .stip-week-day-head{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+}
+#rrWeek .stip-week-day-body.rr-events-only{
+  box-sizing:border-box!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  padding:9px 2px 8px!important;
+}
+
+/* Events stay vertical. Each emoji gets its own centred row with breathing room. */
+#rrWeek .rr-events-only .rr-week-marks{
+  width:100%!important;
+  min-height:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:visible!important;
+}
+#rrWeek .rr-events-only .rr-week-marks .rr-marker{
+  position:relative!important;
+  width:30px!important;
+  height:30px!important;
+  min-width:30px!important;
+  flex:0 0 30px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0 auto!important;
+  padding:0!important;
+  line-height:1!important;
+}
+#rrWeek .rr-events-only .rr-week-marks .rr-marker>span{
+  display:block!important;
+  font-size:1.58rem!important;
+  line-height:1!important;
+  transform:none!important;
+}
+#rrWeek .rr-events-only .rr-marker-count{display:none!important}
+
+/* Selected card must stay centred on its own day; no left/right transform origin drift. */
+#rrWeek .stip-week-day.selected{
+  transform-origin:center center!important;
+}
+
+/* Month: same rule — one vertical emoji per row, centred, with visible spacing. */
+#rrMonth .rr-month-primary{
+  width:100%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:6px!important;
+  margin:0!important;
+  padding:5px 0 0!important;
+  overflow:visible!important;
+}
+#rrMonth .rr-month-primary .rr-marker{
+  width:29px!important;
+  height:29px!important;
+  min-width:29px!important;
+  flex:0 0 29px!important;
+  display:grid!important;
+  place-items:center!important;
+  margin:0 auto!important;
+}
+#rrMonth .rr-month-primary .rr-marker>span{
+  font-size:1.55rem!important;
+  line-height:1!important;
+}
+
+@media(max-width:430px){
+  #rrWeek .rr-week-signals,#rrWeek .stip-week-line{column-gap:3px!important}
+  #rrWeek .rr-events-only .rr-week-marks{gap:7px!important}
+  #rrWeek .rr-events-only .rr-week-marks .rr-marker{width:28px!important;height:28px!important;min-width:28px!important;flex-basis:28px!important}
+  #rrWeek .rr-events-only .rr-week-marks .rr-marker>span{font-size:1.48rem!important}
+  #rrMonth .rr-month-primary{gap:5px!important}
+  #rrMonth .rr-month-primary .rr-marker{width:27px!important;height:27px!important;min-width:27px!important;flex-basis:27px!important}
+  #rrMonth .rr-month-primary .rr-marker>span{font-size:1.46rem!important}
+}
