@@ -507,6 +507,20 @@
       requestIdleCallback(run, { timeout: 3500 });
     else setTimeout(run, 1400);
   }
+  function warmHomeExtras() {
+    const run = () => window.STIPLoad?.homeExtras?.().catch(() => {});
+    if (state.homeMode === "notifications") {
+      run();
+      return;
+    }
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(run, { timeout: 2600 });
+    else setTimeout(run, 1200);
+  }
+  function warmHomeRuntimes() {
+    warmTableauRuntime();
+    warmHomeExtras();
+  }
   function publishBoot(d) {
     state.boot = d;
     window.STIPBootCache = d;
@@ -3020,7 +3034,7 @@
     if (cached) {
       render();
       prefetchContacts();
-      warmTableauRuntime();
+      warmHomeRuntimes();
       if (Date.now() - Number(cached.at || 0) > HOME_CACHE_FRESH_MS)
         setTimeout(() => refresh().catch(() => {}), 180);
       return;
@@ -3038,7 +3052,7 @@
     });
     render();
     refresh()
-      .then(() => warmTableauRuntime())
+      .then(() => warmHomeRuntimes())
       .catch(() => {});
   }
   function ended() {
