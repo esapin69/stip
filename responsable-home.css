@@ -837,3 +837,13 @@ body.resp-tab-equipe .ra-search{top:122px}
 .resp-request-body .agent-option{width:100%;min-height:58px;padding:9px 11px;border:1px solid #dce8ea;border-radius:14px;background:#fff;color:var(--stip-ink);display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left}
 .resp-request-body .agent-option strong{font-size:.8rem}.resp-request-body .agent-option small{color:var(--stip-muted);font-size:.65rem}.resp-request-body .agent-option.selected{border-color:#1598b4;background:#eefbfc}
 .resp-request-wait{padding:14px;border:1px dashed #cfe0e3;border-radius:13px;color:var(--stip-muted);font-size:.7rem;text-align:center}
+
+
+/* Workspace label above the four Responsable tabs. */
+.resp-tabs-separator{
+  margin:12px max(14px,env(safe-area-inset-left)) 5px max(14px,env(safe-area-inset-right));
+}
+.resp-tabs-separator>span{
+  font-size:.66rem;
+  letter-spacing:.15em;
+}
