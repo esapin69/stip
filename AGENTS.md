@@ -166,6 +166,9 @@ Le PDF opérationnel suit une architecture hybride volontaire : **pages fixes de
 
 Règles validées :
 - Le PDF complet **GHE complet** doit ouvrir/télécharger le MASTER Drive officiel intact. Ne pas le reconstruire avec `pdf-lib` quand l’utilisateur demande le document complet.
+- Le MASTER Drive reste la **source unique**. Pour éviter les écrans de connexion Google, STIP peut servir une **copie miroir privée** strictement identique stockée dans le bucket privé `ghe-media` à `exports/visite-des-lieux/master.pdf`. Cette copie n’est jamais une deuxième source de vérité.
+- Après chaque modification validée du MASTER Drive : recharger la dernière version Drive, vérifier qu’elle n’a pas changé pendant le travail, puis remplacer la copie miroir privée et contrôler au minimum la taille et un hash avant de considérer l’export à jour.
+- Les actions Afficher / Télécharger / Imprimer / Partager doivent utiliser le fichier PDF privé servi par STIP, afin de ne jamais demander à l’utilisateur de choisir un compte Google.
 - Aucun PDF filtré ne doit être fabriqué depuis Supabase comme solution provisoire. Tant que le template dictionnaire n’est pas validé, les sélections partielles restent disponibles en tableur uniquement.
 - Les pages de repérage visuel et les intercalaires sont des éléments fixes. Pour les trois bâtiments principaux, l’ordre cible est : **intercalaire fixe → page visuelle fixe → dictionnaire dynamique**.
 - Les trois bâtiments principaux sont : **NEURO (Pierre Wertheimer) · CARDIO (Louis Pradel) · HFME (Femme Mère Enfant)**.
