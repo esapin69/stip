@@ -5559,3 +5559,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-pilotage-link.is-current .hc-pilotage-link-icon{
   filter:drop-shadow(0 0 7px color-mix(in srgb,var(--stip-accent) 48%,transparent));
 }
+
+/* Shared trainee access */
+.hc-trainee-change{width:max-content;margin-top:6px;border:1px solid var(--stip-line);border-radius:999px;background:var(--stip-surface-soft);color:var(--stip-accent);padding:6px 10px;font:inherit;font-size:.65rem;font-weight:900}
