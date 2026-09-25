@@ -248,11 +248,10 @@
         "https://sites.google.com/view/hfme-notes/notes-rapides");
     if (k === "newagent")
       return (location.href = "https://esapin69.github.io/Ghe-interne/");
-    if (k === "upload")
-      return (location.href = "https://admin-ghe.esapin.com/depot.html");
+    if (k === "upload") return (location.href = "depot.html");
     if (k === "activity")
       return (location.href = "esprit-equipe.html?tab=activity");
-    if (k === "admin") return (location.href = "https://admin-ghe.esapin.com/");
+    if (k === "admin") return (location.href = "access-manage.html");
     if (k === "places")
       return (location.href = `places-app.html?mode=${infoLevel("places") === "pro" ? "pro" : "visitor"}`);
     if (k === "assistant")
