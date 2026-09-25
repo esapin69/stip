@@ -5650,55 +5650,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   white-space:nowrap!important;
 }
 
-/* 20260923-responsable-pilotage1 — role-only block between identity and planning */
-.hc-responsable-access-block{
-  box-sizing:border-box!important;
-  width:100%!important;
-  margin:2px 0 0!important;
-}
-.hc-responsable-access-separator{
-  box-sizing:border-box!important;
-  width:100%!important;
-  margin:4px 0 7px!important;
-  padding:0 20px!important;
-  display:grid!important;
-  grid-template-columns:minmax(28px,1fr) auto minmax(28px,1fr)!important;
-  align-items:center!important;
-  gap:10px!important;
-}
-.hc-responsable-access-separator::before,
-.hc-responsable-access-separator::after{
-  content:""!important;
-  display:block!important;
-  height:1px!important;
-  background:linear-gradient(90deg,transparent,#cbd8dc)!important;
-}
-.hc-responsable-access-separator::after{
-  background:linear-gradient(90deg,#cbd8dc,transparent)!important;
-}
-.hc-responsable-access-separator>span{
-  color:#7b8b92!important;
-  font-size:.76rem!important;
-  line-height:1!important;
-  font-weight:900!important;
-  letter-spacing:.16em!important;
-  text-transform:uppercase!important;
-  white-space:nowrap!important;
-}
-.hc-responsable-access-block .hc-profile-responsable-row{
-  margin:0 0 8px!important;
-  padding-right:18px!important;
-}
-@media(max-width:430px){
-  .hc-responsable-access-separator{
-    padding:0 14px!important;
-  }
-  .hc-responsable-access-block .hc-profile-responsable-row{
-    padding-right:14px!important;
-    margin-top:0!important;
-  }
-}
-
 /* 20260923-planning-compare-responsable1 — reuse Responsable visual, right aligned */
 .hc-planning-compare-row{
   margin:7px 0 2px!important;
@@ -5780,13 +5731,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
 }
 
-/* 20260923-pilotage-access-shortcut1 — Access directly under Responsable */
-.hc-responsable-access-block .hc-profile-responsable-row + .hc-profile-responsable-row{
-  margin-top:-3px!important;
-}
-.hc-responsable-access-block .hc-profile-access-row{
-  margin-bottom:8px!important;
-}
 /* 20260924-home-attention-brush1 — date underline, conditional hand-drawn wheelchair alert, clean Pilotage prefixes */
 .hc-calendar-driven-planning>.hc-home-today-separator>.hc-home-today-label{
   padding-bottom:6px!important;
@@ -5845,7 +5789,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* 20260925-pilotage-role-shell2 — canonical role-based Pilotage block */
+/* 20260925-pilotage-state3 — canonical role-based Pilotage block */
 .hc-pilotage-shell{
   box-sizing:border-box!important;
   width:100%!important;
@@ -5858,41 +5802,14 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-pilotage-separator{
   box-sizing:border-box!important;
-  width:100%!important;
   min-height:30px!important;
-  margin:4px 0 7px!important;
-  padding:0 20px!important;
+  padding-inline:20px!important;
   border:0!important;
   background:transparent!important;
-  color:inherit!important;
-  display:grid!important;
-  grid-template-columns:minmax(28px,1fr) auto minmax(28px,1fr)!important;
-  align-items:center!important;
-  gap:10px!important;
-  list-style:none!important;
   font:inherit!important;
 }
 .hc-pilotage-separator::-webkit-details-marker{
   display:none!important;
-}
-.hc-pilotage-separator::before,
-.hc-pilotage-separator::after{
-  content:""!important;
-  display:block!important;
-  height:1px!important;
-  background:linear-gradient(90deg,transparent,#cbd8dc)!important;
-}
-.hc-pilotage-separator::after{
-  background:linear-gradient(90deg,#cbd8dc,transparent)!important;
-}
-.hc-pilotage-separator>span{
-  color:#7b8b92!important;
-  font-size:.76rem!important;
-  line-height:1!important;
-  font-weight:900!important;
-  letter-spacing:.16em!important;
-  text-transform:uppercase!important;
-  white-space:nowrap!important;
 }
 .hc-pilotage-shell.is-admin .hc-pilotage-separator{
   cursor:pointer!important;
@@ -5901,7 +5818,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 .hc-pilotage-shell.is-admin .hc-pilotage-separator>span::after{
   content:" +"!important;
-  color:#148ca5!important;
+  color:var(--stip-accent)!important;
   font-weight:950!important;
   letter-spacing:0!important;
 }
@@ -5913,19 +5830,22 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   width:100%!important;
   display:grid!important;
   justify-items:end!important;
-  gap:4px!important;
+  gap:2px!important;
   padding:0 18px 8px!important;
 }
 .hc-pilotage-link{
+  appearance:none!important;
+  -webkit-appearance:none!important;
   box-sizing:border-box!important;
-  min-width:166px!important;
-  min-height:41px!important;
-  padding:0 15px 2px!important;
+  width:max-content!important;
+  max-width:100%!important;
+  min-height:44px!important;
+  margin:0!important;
+  padding:0 10px!important;
   border:0!important;
-  border-bottom:3px solid #148ca5!important;
-  border-radius:0!important;
+  border-radius:12px!important;
   background:transparent!important;
-  color:#244f5f!important;
+  color:var(--stip-ink-2)!important;
   box-shadow:none!important;
   text-decoration:none!important;
   display:inline-flex!important;
@@ -5953,30 +5873,31 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   line-height:1!important;
 }
 .hc-pilotage-link>b{
-  color:#148ca5!important;
+  color:var(--stip-accent)!important;
   font-size:1.12rem!important;
   line-height:1!important;
   transform:translateY(-1px)!important;
 }
+.hc-pilotage-link:hover{
+  background:var(--stip-surface-soft)!important;
+}
 .hc-pilotage-link:active{
-  transform:translateY(1px)!important;
-  opacity:.78!important;
+  transform:var(--stip-tap)!important;
+  background:var(--stip-surface-active)!important;
 }
 .hc-pilotage-link:focus-visible,
 .hc-pilotage-separator:focus-visible{
   outline:3px solid var(--stip-focus-ring)!important;
-  outline-offset:3px!important;
+  outline-offset:2px!important;
 }
 @media(max-width:430px){
   .hc-pilotage-separator{
-    padding:0 14px!important;
+    padding-inline:14px!important;
   }
   .hc-pilotage-links{
     padding-right:14px!important;
   }
   .hc-pilotage-link{
-    min-width:160px!important;
-    min-height:40px!important;
     font-size:.84rem!important;
   }
 }
