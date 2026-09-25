@@ -76,17 +76,27 @@
   function syncShiftRegistry(data){
     if(data?.shift_definitions?.length) window.STIPShiftRegistry?.set?.(data.shift_definitions);
   }
+  function shiftContext(){
+    const contact=state?.data?.contact||{},
+      agent=state?.data?.agent||{};
+    return{
+      equipe:agent.equipe||contact.equipe||"",
+      type_planning:agent.type_planning||contact.type_planning||"",
+      role:agent.role||contact.role||contact.role_metier||"",
+    };
+  }
   function shiftInfo(raw){
     const src=String(raw||"").trim().toUpperCase(),
       star=src.includes("*"),
       clean=src.replace(/\*+$/,""),
       registry=window.STIPShiftRegistry,
-      def=registry?.resolve?.(clean),
+      context=shiftContext(),
+      def=registry?.resolveFor?.(clean,context)||registry?.resolve?.(clean),
       base=registry?.baseCode?.(clean)||clean||"";
     if(def){
       return{
         label:String(def.label||base||"—"),
-        time:registry?.time?.(clean)||"",
+        time:registry?.time?.(clean,context)||"",
         icon:String(def.icon||""),
         family:String(def.family||"other"),
         kind:String(def.kind||"other"),
