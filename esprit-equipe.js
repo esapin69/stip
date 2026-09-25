@@ -825,21 +825,24 @@
           symbol: "",
           label: "Pas encore analysé",
         };
+        const level = signal.level || "unknown";
         const cls = [
+          "stip-week-day",
+          "neutral",
+          level ? `status-${level}` : "",
           day === state.dayFocus ? "selected" : "",
           day === today ? "today" : "",
-          signal.level ? `status-${signal.level}` : "",
         ].filter(Boolean).join(" ");
         const weekday = d
-          .toLocaleDateString("fr-FR", { weekday: "short" })
+          .toLocaleDateString("fr-FR", { weekday: "long" })
           .replace(".", "")
-          .toUpperCase();
-        const symbol = statusSymbol(signal.level, signal.symbol);
-        const marker =
-          signal.level && signal.level !== "unknown"
-            ? `<span class="team-day-intel status-${esc(signal.level)}" aria-hidden="true">${esc(symbol)}</span>`
-            : '<span class="team-day-intel status-unknown" aria-hidden="true">○</span>';
-        return `<button type="button" class="${cls}" data-team-day="${day}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><small>${esc(weekday)}</small><b>${d.getDate()}</b>${marker}</button>`;
+          .toUpperCase()
+          .slice(0, 2);
+        const symbol =
+          level && level !== "unknown"
+            ? statusSymbol(level, signal.symbol)
+            : "○";
+        return `<button type="button" class="${cls}" data-team-day="${day}" aria-pressed="${day === state.dayFocus}" aria-label="${esc(dayTitle(day))}, ${esc(signal.label || "")}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main"><span class="stip-week-main-icon team-day-intel status-${esc(level)}" aria-hidden="true">${esc(symbol)}</span></span><span class="stip-week-divider is-empty" aria-hidden="true"></span><span class="stip-week-events is-empty" aria-hidden="true"></span></span></button>`;
       })
       .join("");
   }
@@ -1470,11 +1473,12 @@
       <div class="team-week-section-label stip-section-separator" aria-hidden="true">
         <span>CETTE SEMAINE</span>
       </div>
-      <section class="team-week-picker" aria-label="Cette semaine">
+      <div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine">
         <button class="team-week-step" type="button" data-team-week-step="-1" aria-label="Semaine précédente">‹</button>
-        <nav id="teamDays" class="team-days stip-time-days" aria-label="Jours de la semaine"></nav>
+        <strong>${esc(weekRange(state.weekStart))}</strong>
         <button class="team-week-step" type="button" data-team-week-step="1" aria-label="Semaine suivante">›</button>
-      </section>
+      </div>
+      <nav id="teamDays" class="stip-week-line" style="--stip-week-columns:7" aria-label="Jours de la semaine"></nav>
     </section>`;
   }
 
