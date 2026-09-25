@@ -1969,13 +1969,33 @@
     observePageLegendSources();
     if (!token()) return location.replace("index.html");
     try {
+      const inherited = inheritedAccess();
+      const cached = inherited ? null : window.STIPContinuity?.readFresh?.() || null;
       state.access =
-        inheritedAccess() || (await post("stip-access", { action: "me" }));
-      state.weekStart = monday(todayIso());
-      state.weekPast = false;
-      state.weekFull = false;
-      state.dayFocus = todayIso();
-      state.dateJumpMonth = monthKey(todayIso());
+        inherited ||
+        cached ||
+        (window.STIPContinuity?.validate
+          ? await window.STIPContinuity.validate()
+          : await post("stip-access", { action: "me" }));
+      if (cached)
+        window.STIPContinuity
+          ?.validate?.()
+          .then((fresh) => {
+            if (fresh) state.access = fresh;
+          })
+          .catch(() => {});
+      const saved = window.STIPNav?.read?.() || null;
+      state.weekStart =
+        /^\d{4}-\d{2}-\d{2}$/.test(String(saved?.weekStart || ""))
+          ? saved.weekStart
+          : monday(todayIso());
+      state.weekPast = Boolean(saved?.weekPast);
+      state.weekFull = Boolean(saved?.weekFull);
+      state.dayFocus =
+        /^\d{4}-\d{2}-\d{2}$/.test(String(saved?.dayFocus || ""))
+          ? saved.dayFocus
+          : todayIso();
+      state.dateJumpMonth = monthKey(state.dayFocus);
       const teamSubscribe = $("#teamSubscribe");
       const canSubscribe =
         allowed("planning_team") && allowed("calendar_subscribe");
@@ -2000,6 +2020,8 @@
   window.STIPNav?.register?.({
     capture: () => ({
       weekStart: state.weekStart,
+      weekPast: state.weekPast,
+      weekFull: state.weekFull,
       dayFocus: state.dayFocus,
     }),
   });
