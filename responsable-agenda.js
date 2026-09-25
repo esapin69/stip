@@ -2,6 +2,8 @@
   "use strict";
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
+    DATES_API =
+      "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates",
     STORE = "stip_session_v1",
     $ = (s) => document.querySelector(s),
     $$ = (s) => [...document.querySelectorAll(s)];
@@ -33,6 +35,23 @@
     );
   async function call(action, body = {}) {
     const r = await fetch(API, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+          "X-STIP-Session": localStorage.getItem(STORE) || "",
+        },
+        body: JSON.stringify({ action, ...body }),
+      }),
+      j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error)
+      throw Object.assign(Error(j.error || `Erreur ${r.status}`), {
+        status: r.status,
+      });
+    return j;
+  }
+  async function callDates(action, body = {}) {
+    const r = await fetch(DATES_API, {
         method: "POST",
         cache: "no-store",
         headers: {
@@ -167,21 +186,35 @@
       cancellable: origin === "manager" && !proposal,
     };
   }
-  function collect(ir, pr) {
+  function normalizeCanonical(x = {}) {
+    const k = typeKey(x),
+      a = resolveAgent({ agent_id: x.agent_id }),
+      id = String(x.id || x.source_id || `canonical:${x.date || ""}:${x.person_name || ""}`);
+    return {
+      id,
+      cancelId: String(x.source_id || ""),
+      date: String(x.date || "").slice(0, 10),
+      endDate: String(x.end_date || x.date || "").slice(0, 10),
+      title: String(x.title || typeLabel(k)),
+      body: String(x.detail || ""),
+      time: String(x.time || ""),
+      place: String(x.location || ""),
+      type: k,
+      icon: String(x.icon || typeIcon(k)),
+      agent: a,
+      agentName: String(x.person_name || person(a)),
+      proposal: false,
+      origin: "canonical",
+      raw: x,
+      cancellable: Boolean(x.cancellable && x.source_id),
+    };
+  }
+  function collect(cr, pr) {
     const out = [];
-    (ir.items || []).forEach((x) => out.push(normalize(x, false, "manager")));
+    (cr.items || []).forEach((x) => out.push(normalizeCanonical(x)));
     (pr.actions || [])
       .filter((x) => x.kind === "agenda_proposal")
       .forEach((x) => out.push(normalize(x, true, "proposal")));
-    [
-      ["medical_visits", "medical"],
-      ["visites_medicales", "medical"],
-      ["formations", "training"],
-      ["stagiaires", "intern"],
-      ["items_auto", "other"],
-    ].forEach(([key]) => {
-      (ir[key] || []).forEach((x) => out.push(normalize(x, false, "auto")));
-    });
     const m = new Map();
     out
       .filter((x) => x.date && x.endDate >= todayIso())
@@ -350,7 +383,7 @@
     $("#taDetailTitle").textContent = x.agentName;
     $("#taDetailBody").innerHTML =
       `<div class="ta-detail-card"><dl><dt>Date</dt><dd>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</dd><dt>Événement</dt><dd>${esc(x.title)}</dd>${x.time ? `<dt>Horaire</dt><dd>${esc(x.time)}</dd>` : ""}${x.place ? `<dt>Lieu</dt><dd>${esc(x.place)}</dd>` : ""}${x.body ? `<dt>Information</dt><dd>${esc(x.body)}</dd>` : ""}${x.proposal ? "<dt>Statut</dt><dd>Proposition en attente</dd>" : ""}</dl>${x.cancellable ? `<div class="ta-detail-actions"><button class="danger" id="taCancelEvent" type="button">Retirer de l’agenda</button></div>` : ""}</div>`;
-    if (x.cancellable) $("#taCancelEvent").onclick = () => cancelItem(x.id);
+    if (x.cancellable) $("#taCancelEvent").onclick = () => cancelItem(x.cancelId || x.id);
     openSheet("#taDetailSheet");
   }
   function openSheet(sel) {
@@ -517,17 +550,17 @@
   }
   async function load() {
     try {
-      const [ar, ir, pr] = await Promise.all([
+      const [ar, cr, pr] = await Promise.all([
         call("manager_agents"),
-        call("manager_agenda_list"),
+        callDates("list"),
         call("manager_list"),
       ]);
       agents = Array.isArray(ar.agents) ? ar.agents : [];
-      items = ir.items || [];
+      items = cr.items || [];
       proposals = (pr.actions || []).filter(
         (x) => x.kind === "agenda_proposal",
       );
-      events = collect(ir, pr);
+      events = collect(cr, pr);
       renderAgents();
       render();
     } catch (e) {
@@ -627,7 +660,7 @@
       .finally(() => window.STIPNav?.restoreScroll?.());
   }
   window.STIPResponsableAgenda = {
-    version: "20260924-agent-picker-stable3",
+    version: "20260925-canonical-events1",
     openAdd(date = "") {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) $("#taDate").value = String(date);
       openSheet("#taAddSheet");
