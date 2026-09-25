@@ -542,15 +542,16 @@ check(
 );
 
 
-/* Garde-fous Visiter les lieux — MASTER PDF complet */
+/* Garde-fous Visiter les lieux — PDF fabriqué + pages fixes */
 const placesExportMasterGuard=read('places-export.html');
 const placesEdgeMasterGuard=read('supabase/functions/stip-places/index.ts');
 const placesAgentsMasterGuard=read('AGENTS.md');
 check(
-  placesExportMasterGuard.includes('action:"master_pdf_file"') &&
-  !placesExportMasterGuard.includes('action:"export_pdf"') &&
-  placesExportMasterGuard.includes('même fichier que le MASTER validé'),
-  'Le PDF proposé doit rester le MASTER validé servi par la copie privée STIP, sans génération Supabase.'
+  placesExportMasterGuard.includes('action:"export_pdf"') &&
+  !placesExportMasterGuard.includes('MASTER_PREVIEW_URL') &&
+  !placesExportMasterGuard.includes('MASTER_VIEW_URL') &&
+  placesExportMasterGuard.includes('PDF généré'),
+  'Le PDF doit être fabriqué par STIP et ne plus ouvrir directement le MASTER Drive.'
 );
 check(
   placesExportMasterGuard.includes('id="progressScope"') &&
@@ -561,21 +562,24 @@ check(
 );
 check(
   placesExportMasterGuard.includes('.selection-summary[hidden]') &&
-  placesExportMasterGuard.includes('pdfFormat.disabled=!pdfAllowed'),
-  'Le formulaire Export a reperdu ses états de sélection ou peut afficher un faux état déjà complété.'
+  placesExportMasterGuard.includes('pdfFormat.disabled=false') &&
+  placesExportMasterGuard.includes('scope:state.scope'),
+  'Le formulaire Export doit autoriser le PDF pour tous les périmètres et transmettre la sélection au moteur canonique.'
 );
 check(
-  placesEdgeMasterGuard.includes("action==='master_pdf_file'") &&
+  placesEdgeMasterGuard.includes("action==='export_pdf'") &&
   placesEdgeMasterGuard.includes("session.app_level!=='pro'") &&
   placesEdgeMasterGuard.includes("const MASTER_STORAGE_PATH='exports/visite-des-lieux/master.pdf'") &&
-  placesEdgeMasterGuard.includes("const MASTER_DRIVE_ID='14V7-N2L37ZHWTWZm3qPCQhXjNRRXdJ5o'"),
-  'Le MASTER PDF privé n’est plus servi par stip-places avec contrôle professionnel.'
+  placesEdgeMasterGuard.includes('FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13}') &&
+  placesEdgeMasterGuard.includes('FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16'),
+  'Le moteur PDF doit conserver le contrôle professionnel et le mapping validé des pages fixes du MASTER.'
 );
 check(
-  placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF MASTER, pages fixes et dictionnaires') &&
+  placesAgentsMasterGuard.includes('## 15. Visiter les lieux — PDF généré, pages fixes et dictionnaires') &&
   placesAgentsMasterGuard.includes('Aucune information opérationnelle utile n’est supprimée') &&
-  placesAgentsMasterGuard.includes('copie miroir privée'),
-  'Le contrat PDF fixe + dictionnaire dynamique + miroir privé n’est plus documenté.'
+  placesAgentsMasterGuard.includes('copie miroir privée') &&
+  placesAgentsMasterGuard.includes('page 1 = repères GHE'),
+  'Le contrat PDF généré + pages fixes + dictionnaire dynamique n’est plus documenté.'
 );
 
 if(failures.length){
@@ -626,21 +630,22 @@ check(
 check(
   placesEdgeCanonical.includes("action==='export_xlsx'") &&
   placesEdgeCanonical.includes("action==='export_pdf'") &&
-  placesEdgeCanonical.includes('PDF dynamique désactivé') &&
+  placesEdgeCanonical.includes('async function pdfResponse') &&
+  placesEdgeCanonical.includes('FIXED_TEMPLATE_PAGE_INDEX') &&
   placesEdgeCanonical.includes('XLSX.write'),
-  'Le tableur doit rester canonique et toute génération PDF dynamique doit rester bloquée tant que le template dictionnaire n’est pas validé.'
+  'Les exports PDF et tableur doivent rester produits par le moteur canonique stip-places.'
 );
 check(
-  placesCanonicalHtml.includes('href="places-export.html"') &&
+  placesCanonicalHtml.includes('href="places-export.html?v=') &&
   placesCanonicalHtml.includes("exportLink.hidden=d?.access_level!=='pro'"),
   'Visiter les lieux ne protège plus l’entrée Export par le niveau professionnel confirmé par le serveur.'
 );
 check(
-  placesExportHtml.includes('action:"master_pdf_link"') &&
+  placesExportHtml.includes('action:"export_pdf"') &&
   placesExportHtml.includes('action:"export_xlsx"') &&
-  !placesExportHtml.includes('action:"export_pdf"') &&
+  !placesExportHtml.includes('MASTER_PREVIEW_URL') &&
   placesExportHtml.includes('x-stip-session'),
-  'La page Export doit utiliser le MASTER Drive pour le PDF et Supabase uniquement pour le tableur.'
+  'La page Export doit déléguer PDF et tableur au moteur serveur canonique sans dépendance Drive côté client.'
 );
 check(
   agentsContract.includes('## 14. Visiter les lieux — canonical data and export contract') &&
