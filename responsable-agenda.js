@@ -461,7 +461,7 @@
   }
   function setMode(v) {
     mode = v;
-    $("[data-mode]").forEach((b) => {
+    $$("[data-mode]").forEach((b) => {
       const selected = b.dataset.mode === v;
       b.classList.toggle("active", selected);
       b.setAttribute("aria-selected", String(selected));
@@ -668,7 +668,7 @@
       .finally(() => window.STIPNav?.restoreScroll?.());
   }
   window.STIPResponsableAgenda = {
-    version: "20260925-canonical-events4",
+    version: "20260925-canonical-events5",
     openAdd(date = "") {
       if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) $("#taDate").value = String(date);
       openSheet("#taAddSheet");

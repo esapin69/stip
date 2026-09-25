@@ -8,7 +8,7 @@
     ASSIST_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-assistant",
     STORE = "stip_session_v1",
-    CACHE = "stip_responsable_dates_cache_v2",
+    CACHE = "stip_responsable_dates_cache_v3",
     VIEW = "stip_responsable_dates_view_v1",
     CACHE_FRESH_MS = 5 * 60 * 1000,
     CACHE_MAX_MS = 30 * 60 * 1000,
