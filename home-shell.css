@@ -1211,6 +1211,14 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   box-shadow:0 3px 8px rgba(120,30,30,.18)!important;
 }
 
+.hc-profile-section{
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin:0!important;
+}
+.hc-profile-card-separator{
+  margin:5px 0 8px!important;
+}
 .hc-profile-full{
   margin-top:0!important;
   border:1px solid rgba(22,91,111,.11)!important;
@@ -1287,6 +1295,25 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   line-height:1!important;
   font-style:italic!important;
   font-weight:700!important;
+}
+.hc-profile-matricule{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  margin-top:2px!important;
+  color:#536f79!important;
+  font-size:.72rem!important;
+  line-height:1.08!important;
+  font-weight:780!important;
+  letter-spacing:.015em!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.hc-profile-matricule strong{
+  color:#173f52!important;
+  font-weight:950!important;
 }
 .hc-profile-email{
   display:block!important;
@@ -3276,7 +3303,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
 }
 /* HOME PLANNING — AUTHORITATIVE REBUILD V8 — 20260922
-   Page order: Esprit shortcut -> launchers -> profile -> this week -> agenda actions -> month -> legend.
+   Page order: launchers -> Pilotage -> Carte STIP -> planning -> month -> legend.
    The former unified planning card is visually split into independent surfaces. */
 .hc-home-major-separator{
   box-sizing:border-box!important;
