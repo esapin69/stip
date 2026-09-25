@@ -98,19 +98,15 @@
     const s = normalize(model, options);
     const dates = visibleDates(s, { today: s.today });
     const dow = dateObj(s.today).getDay() || 7;
-    const liveTail =
-      s.weekOffset === 0 &&
-      !s.weekFull &&
-      !s.weekPast &&
-      dates[0] === s.today &&
-      dow >= 5;
-    const nextMonday =
-      liveTail && dates.length ? addDays(dates[dates.length - 1], 1) : "";
+    // Master rule: a week is always a contiguous date range.
+    // Never append a future Monday after Sunday: that created a fake 9-slot week
+    // and detached events from the canonical seven-day grid.
+    const nextMonday = "";
     return {
       dates,
       nextMonday,
       visualDates: nextMonday ? [...dates, nextMonday] : dates.slice(),
-      slotCount: Math.max(1, dates.length + (nextMonday ? 2 : 0)),
+      slotCount: Math.max(1, dates.length),
       weekOffset: s.weekOffset,
       weekPast: s.weekPast,
       weekFull: s.weekFull,
