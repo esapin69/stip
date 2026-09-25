@@ -91,6 +91,50 @@ async function isMember(conversationId:string,agentId:string){
   const{data,error}=await db.from("stip_conversation_members").select("conversation_id").eq("conversation_id",conversationId).eq("agent_id",agentId).maybeSingle();
   if(error)throw error;return!!data
 }
+function dmSafeName(value:any){
+  return String(value||"photo")
+    .normalize("NFKD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/-+/g,"-")
+    .replace(/^-+|-+$/g,"").slice(0,96)||"photo"
+}
+async function storeDmImage(ctx:any,conversationId:string,image:any){
+  if(!image||typeof image!=="object")return null;
+  const mime=String(image.mime||"").toLowerCase(),raw=String(image.data||"");
+  if(!["image/jpeg","image/png","image/webp"].includes(mime))throw Error("Format d’image non pris en charge.");
+  if(!raw||raw.length>4300000)throw Error("Photo trop lourde (3 Mo max).");
+  let bytes:Uint8Array;
+  try{
+    const bin=atob(raw);bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i)
+  }catch{throw Error("Photo invalide.")}
+  if(bytes.byteLength<1||bytes.byteLength>3000000)throw Error("Photo trop lourde (3 Mo max).");
+  const ext=mime==="image/png"?"png":mime==="image/webp"?"webp":"jpg",
+    original=dmSafeName(image.name||("photo."+ext)),
+    path="dm/"+conversationId+"/"+String(ctx.agent.id)+"/"+crypto.randomUUID()+"."+ext;
+  const up=await db.storage.from(TEAM_BUCKET).upload(path,bytes,{contentType:mime,upsert:false,cacheControl:"3600"});
+  if(up.error)throw up.error;
+  return{storage_path:path,mime_type:mime,file_name:original,size_bytes:bytes.byteLength}
+}
+async function signedDmAttachments(messages:any[]){
+  const paths=[...new Set(messages.flatMap((message:any)=>
+    (Array.isArray(message?.payload?.attachments)?message.payload.attachments:[])
+      .map((item:any)=>String(item?.storage_path||""))
+      .filter((path:string)=>path.startsWith("dm/"))
+  ))];
+  if(!paths.length)return messages;
+  const{data,error}=await db.storage.from(TEAM_BUCKET).createSignedUrls(paths,1800);
+  if(error||!data)return messages;
+  const urls=new Map<string,string>();
+  paths.forEach((path,i)=>{const url=(data as any[])?.[i]?.signedUrl;if(url)urls.set(path,url)});
+  return messages.map((message:any)=>{
+    const attachments=Array.isArray(message?.payload?.attachments)?message.payload.attachments:[];
+    if(!attachments.length)return message;
+    return{...message,payload:{...(message.payload||{}),attachments:attachments.map((item:any)=>{
+      const path=String(item?.storage_path||"");
+      return path&&urls.has(path)?{...item,url:urls.get(path)}:item
+    })}}
+  })
+}
 async function direct(ctx:any,target:string){
   if(!target||target===String(ctx.agent.id))throw Error("Destinataire invalide.");
   const allowed=await activeMessagingAgents();if(!allowed.includes(target))throw Error("Ce professionnel n’a pas accès aux Messages STIP.");
@@ -129,26 +173,39 @@ async function thread(ctx:any,id:string){
   const mids=(members||[]).map((x:any)=>x.agent_id);const{data:profiles}=mids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",mids):{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
   const{data:messages,error}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",id).is("deleted_at",null).order("created_at").limit(1000);if(error)throw error;
+  const signedMessages=await signedDmAttachments(messages||[]);
   const {data:broadcast}=conv.kind==="broadcast"?await db.from("stip_operational_broadcasts").select("id,category,title,body,location_text,quantity,status,expires_at,updated_at,created_at").eq("conversation_id",id).maybeSingle():{data:null};
   await db.from("stip_conversation_members").update({last_read_at:new Date().toISOString()}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
-  return{conversation:conv,broadcast:broadcast||null,members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),messages:(messages||[]).map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))}
+  return{conversation:conv,broadcast:broadcast||null,members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),messages:signedMessages.map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))}
 }
 async function send(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
-  const text=String(body.body||"").trim().slice(0,2000);if(!text)throw Error("Message vide.");
-  const payload=body.payload&&typeof body.payload==="object"?body.payload:{};
-  const{data,error}=await db.from("stip_messages").insert({conversation_id:id,sender_agent_id:ctx.agent.id,body:text,payload}).select("id,created_at").single();if(error)throw error;
-  await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",id);
-  await db.from("stip_conversation_members").update({last_read_at:data.created_at}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
+  const text=String(body.body||"").trim().slice(0,2000);
+  let payload=body.payload&&typeof body.payload==="object"?body.payload:{},uploadedPath="";
   try{
-    const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
-    const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile);
-    await Promise.allSettled((members||[]).map(async(m:any)=>{
-      const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
-      await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?text.slice(0,140):"Nouveau message",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-message-"+id}})});
-    }))
-  }catch(e){console.error("push",e)}
-  return{ok:true,...data}
+    const attachment=await storeDmImage(ctx,id,body.image);
+    if(attachment){
+      uploadedPath=attachment.storage_path;
+      const previous=Array.isArray(payload.attachments)?payload.attachments:[];
+      payload={...payload,attachments:[...previous,attachment].slice(-4)}
+    }
+    if(!text&&!uploadedPath)throw Error("Message vide.");
+    const{data,error}=await db.from("stip_messages").insert({conversation_id:id,sender_agent_id:ctx.agent.id,body:text,payload}).select("id,created_at").single();if(error)throw error;
+    await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",id);
+    await db.from("stip_conversation_members").update({last_read_at:data.created_at}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
+    try{
+      const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
+      const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo";
+      await Promise.allSettled((members||[]).map(async(m:any)=>{
+        const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
+        await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau message",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-message-"+id}})});
+      }))
+    }catch(e){console.error("push",e)}
+    return{ok:true,...data}
+  }catch(e){
+    if(uploadedPath)await db.storage.from(TEAM_BUCKET).remove([uploadedPath]).catch(()=>{});
+    throw e
+  }
 }
 async function broadcastUpdate(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
@@ -172,7 +229,7 @@ async function home(ctx:any){
       const otherIds=others.map((m:any)=>m.agent_id);
       const{data:profs}=otherIds.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",otherIds):{data:[] as any[]};
       const pb=new Map((profs||[]).map((p:any)=>[String(p.agent_id),p]));
-      const{data:last}=await db.from("stip_messages").select("id,body,created_at,sender_agent_id").eq("conversation_id",c.id).is("deleted_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();
+      const{data:last}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id").eq("conversation_id",c.id).is("deleted_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();
       const lastRead=read.get(String(c.id));
       const{count}=await db.from("stip_messages").select("id",{count:"exact",head:true}).eq("conversation_id",c.id).is("deleted_at",null).neq("sender_agent_id",ctx.agent.id).gt("created_at",lastRead||"1970-01-01T00:00:00Z");
       conversations.push({...c,others:others.map((m:any)=>({...m.agents,nickname:nick(m.agents,pb.get(String(m.agent_id)))})),last_message:last||null,unread:count||0})
