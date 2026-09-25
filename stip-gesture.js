@@ -1,8 +1,8 @@
 (() => {
   "use strict";
 
-  const DEFAULT_DEAD_ZONE = 10;
-  const DEFAULT_HORIZONTAL_RATIO = 1.35;
+  const DEFAULT_DEAD_ZONE = 12;
+  const DEFAULT_HORIZONTAL_RATIO = 1.5;
 
   function axis(dx, dy, options = {}) {
     const ax = Math.abs(Number(dx) || 0);
