@@ -643,7 +643,7 @@
         eventSlot=events.length
           ? `<span class="stip-week-events stip-events-vertical rr-week-marks" aria-label="${events.length} événement${events.length>1?"s":""}">${markers}</span>`
           : '<span class="stip-week-events stip-events-vertical is-empty rr-week-marks" aria-hidden="true"></span>';
-      return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso===selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code" aria-hidden="true"></strong><span class="stip-week-main" aria-hidden="true"><span class="stip-week-main-icon"></span></span><span class="stip-week-divider ${events.length?"":"is-empty"}" aria-hidden="true"></span>${eventSlot}</span></button>`;
+      return `<button type="button" class="${classes}" data-rr-day="${x.iso}" aria-pressed="${x.iso===selected}"><span class="stip-week-day-head"><i>${esc(weekday)}</i><b>${x.d.getDate()}</b></span><span class="stip-week-day-body">${eventSlot}</span></button>`;
     };
 
     const signalParts=days.map(signalButton),dayParts=days.map(renderDay);
