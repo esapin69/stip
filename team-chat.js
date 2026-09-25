@@ -29,6 +29,27 @@
     selectedLocation: "",
   };
 
+  const dmState = {
+    open: false,
+    view: "home",
+    home: null,
+    me: null,
+    agents: [],
+    onDuty: [],
+    selected: new Set(),
+    conversationId: "",
+    thread: null,
+    loading: false,
+    sending: false,
+    timer: null,
+    signature: "",
+    search: "",
+    draft: "",
+    pendingImage: null,
+    pendingPreviewUrl: "",
+    scrollToLatest: false,
+  };
+
   const homeState = {
     button: null,
     timer: null,
@@ -407,8 +428,11 @@
     return (
       '<section class="tb-page">' +
       '<section class="tb-inline-tools" aria-label="Outils du chat">' +
-      '<span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span><button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
+      '<span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
+      '<button type="button" class="tb-dm-shortcut" data-dm-open aria-label="Ouvrir les messages privés"><span>✉</span><strong>DM</strong></button>' +
+      '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</section>" +
+      '<section class="tb-dm-panel" data-dm-panel hidden aria-label="Messages privés"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -615,6 +639,75 @@
     });
 
     root.addEventListener("click", (event) => {
+      const dmOpen = event.target.closest?.("[data-dm-open]");
+      if (dmOpen) {
+        event.preventDefault();
+        openDm();
+        return;
+      }
+      const dmClose = event.target.closest?.("[data-dm-close]");
+      if (dmClose) {
+        event.preventDefault();
+        closeDm();
+        return;
+      }
+      const dmBack = event.target.closest?.("[data-dm-back]");
+      if (dmBack) {
+        event.preventDefault();
+        loadDmHome(false);
+        return;
+      }
+      const dmAgent = event.target.closest?.("[data-dm-agent]");
+      if (dmAgent) {
+        event.preventDefault();
+        toggleDmRecipient(String(dmAgent.dataset.dmAgent || ""));
+        return;
+      }
+      const dmDuty = event.target.closest?.("[data-dm-duty]");
+      if (dmDuty) {
+        event.preventDefault();
+        selectDmOnDuty();
+        return;
+      }
+      const dmAll = event.target.closest?.("[data-dm-all]");
+      if (dmAll) {
+        event.preventDefault();
+        selectDmAll();
+        return;
+      }
+      const dmStart = event.target.closest?.("[data-dm-start]");
+      if (dmStart) {
+        event.preventDefault();
+        startDmConversation();
+        return;
+      }
+      const dmConversation = event.target.closest?.("[data-dm-conversation]");
+      if (dmConversation) {
+        event.preventDefault();
+        openDmConversation(String(dmConversation.dataset.dmConversation || ""));
+        return;
+      }
+      const dmAttach = event.target.closest?.("[data-dm-attach]");
+      if (dmAttach) {
+        event.preventDefault();
+        state.root?.querySelector("[data-dm-file]")?.click();
+        return;
+      }
+      const dmRemoveImage = event.target.closest?.("[data-dm-remove-image]");
+      if (dmRemoveImage) {
+        event.preventDefault();
+        clearDmImage();
+        renderDmThread();
+        return;
+      }
+      const dmPhoto = event.target.closest?.("[data-dm-photo]");
+      if (dmPhoto) {
+        event.preventDefault();
+        event.stopPropagation();
+        openPhoto(String(dmPhoto.dataset.dmPhoto || ""));
+        return;
+      }
+
       const selectOpen = event.target.closest?.("[data-select]");
       if (selectOpen) {
         event.preventDefault();
@@ -3235,6 +3328,412 @@
   }
 
 
+
+  function dmPanel() {
+    return state.root?.querySelector("[data-dm-panel]") || null;
+  }
+
+  function clearDmImage() {
+    if (dmState.pendingPreviewUrl) {
+      try { URL.revokeObjectURL(dmState.pendingPreviewUrl); } catch {}
+    }
+    dmState.pendingImage = null;
+    dmState.pendingPreviewUrl = "";
+  }
+
+  function stopDmTimer() {
+    if (dmState.timer) clearInterval(dmState.timer);
+    dmState.timer = null;
+  }
+
+  function closeDm(reset = true) {
+    stopDmTimer();
+    const panel = dmPanel();
+    if (panel) {
+      panel.hidden = true;
+      panel.innerHTML = "";
+    }
+    state.root?.classList.remove("is-dm-open");
+    dmState.open = false;
+    dmState.loading = false;
+    dmState.sending = false;
+    if (!reset) return;
+    clearDmImage();
+    dmState.view = "home";
+    dmState.home = null;
+    dmState.me = null;
+    dmState.agents = [];
+    dmState.onDuty = [];
+    dmState.selected.clear();
+    dmState.conversationId = "";
+    dmState.thread = null;
+    dmState.signature = "";
+    dmState.search = "";
+    dmState.draft = "";
+    dmState.scrollToLatest = false;
+  }
+
+  function dmAgentLabel(agent = {}) {
+    return String(agent.nickname || [agent.prenom, agent.nom].filter(Boolean).join(" ") || "Agent").trim();
+  }
+
+  function dmConversationLabel(conversation = {}) {
+    const title = String(conversation.title || "").trim();
+    if (title) return title;
+    const names = (conversation.others || []).map(dmAgentLabel).filter(Boolean);
+    return names.length ? names.slice(0, 3).join(", ") + (names.length > 3 ? " +" + (names.length - 3) : "") : "Discussion privée";
+  }
+
+  function dmLastPreview(conversation = {}) {
+    const last = conversation.last_message || {};
+    const text = String(last.body || "").trim();
+    if (text) return text;
+    if (Array.isArray(last.payload?.attachments) && last.payload.attachments.length) return "Photo";
+    return "Aucun message";
+  }
+
+  function dmThreadSignature(data) {
+    return JSON.stringify([
+      data?.conversation?.id || "",
+      (data?.members || []).map((m) => [m.agent_id, m.last_read_at || ""]),
+      (data?.messages || []).map((m) => [
+        m.id,
+        m.body,
+        m.created_at,
+        m.sender_agent_id,
+        (Array.isArray(m.payload?.attachments) ? m.payload.attachments : []).map((a) => a.storage_path || ""),
+      ]),
+    ]);
+  }
+
+  async function openDm() {
+    if (dmState.open) return;
+    if (!(await ensurePrivacy())) return;
+    const panel = dmPanel();
+    if (!panel) return;
+    dmState.open = true;
+    dmState.view = "home";
+    state.root?.classList.add("is-dm-open");
+    panel.hidden = false;
+    panel.innerHTML =
+      '<section class="tb-dm-shell"><header class="tb-dm-head"><div><small>CHAT STIP</small><h3>Messages privés</h3></div><button type="button" data-dm-close aria-label="Fermer">×</button></header><div class="tb-dm-loading">Chargement…</div></section>';
+    await loadDmHome(false);
+  }
+
+  async function loadDmHome(quiet = false) {
+    if (!dmState.open || dmState.loading) return;
+    stopDmTimer();
+    dmState.loading = true;
+    try {
+      const [home, agentsData, dutyData] = await Promise.all([
+        api("home"),
+        api("agents", { q: "" }),
+        api("on_duty"),
+      ]);
+      dmState.home = home || {};
+      dmState.me = home?.me || dmState.me;
+      dmState.agents = Array.isArray(agentsData?.items) ? agentsData.items : [];
+      dmState.onDuty = Array.isArray(dutyData?.items) ? dutyData.items : [];
+      dmState.view = "home";
+      dmState.conversationId = "";
+      dmState.thread = null;
+      dmState.signature = "";
+      if (!quiet || document.activeElement?.closest?.("[data-dm-panel]") == null) renderDmHome();
+      else renderDmHome();
+    } catch (error) {
+      const panel = dmPanel();
+      if (panel && !quiet) panel.innerHTML =
+        '<section class="tb-dm-shell"><header class="tb-dm-head"><div><small>CHAT STIP</small><h3>Messages privés</h3></div><button type="button" data-dm-close>×</button></header><p class="tb-dm-error">' +
+        esc(error.message || "Messages privés indisponibles.") + "</p></section>";
+    } finally {
+      dmState.loading = false;
+    }
+  }
+
+  function renderDmHome() {
+    const panel = dmPanel();
+    if (!panel || !dmState.open) return;
+    panel.hidden = false;
+
+    const conversations = (dmState.home?.conversations || []).filter((item) =>
+      item?.kind === "direct" || item?.kind === "group",
+    );
+    const q = norm(dmState.search || "");
+    const agents = dmState.agents.filter((agent) => {
+      const hay = norm(
+        [dmAgentLabel(agent), agent.prenom, agent.nom, agent.ghe, agent.equipe]
+          .filter(Boolean).join(" "),
+      );
+      return !q || hay.includes(q);
+    });
+
+    const conversationHtml = conversations.length
+      ? conversations.map((conversation) =>
+          '<button type="button" class="tb-dm-conversation" data-dm-conversation="' + esc(conversation.id) + '">' +
+          '<span class="tb-dm-conversation-main"><strong>' + esc(dmConversationLabel(conversation)) + '</strong><small>' +
+          esc(dmLastPreview(conversation)) + '</small></span>' +
+          (Number(conversation.unread || 0) > 0
+            ? '<b class="tb-dm-unread">' + esc(Math.min(99, Number(conversation.unread || 0))) + "</b>"
+            : '<span class="tb-dm-chevron">›</span>') +
+          "</button>"
+        ).join("")
+      : '<p class="tb-dm-empty">Aucun DM pour le moment.</p>';
+
+    const agentHtml = agents.length
+      ? agents.map((agent) => {
+          const id = String(agent.id || "");
+          const selected = dmState.selected.has(id);
+          return '<button type="button" class="tb-dm-agent' + (selected ? " is-selected" : "") +
+            '" data-dm-agent="' + esc(id) + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
+            avatar(agent, { showFirstName: true }) +
+            '<span><strong>' + esc(dmAgentLabel(agent)) + '</strong><small>' +
+            esc([agent.ghe, agent.equipe].filter(Boolean).join(" · ")) + '</small></span>' +
+            '<b>' + (selected ? "✓" : "+") + "</b></button>";
+        }).join("")
+      : '<p class="tb-dm-empty">Aucun agent trouvé.</p>';
+
+    panel.innerHTML =
+      '<section class="tb-dm-shell">' +
+      '<header class="tb-dm-head"><div><small>CHAT STIP</small><h3>Messages privés</h3></div><button type="button" data-dm-close aria-label="Fermer">×</button></header>' +
+      '<div class="tb-dm-home">' +
+      '<section class="tb-dm-section"><div class="tb-dm-section-title"><strong>Discussions</strong><span>' +
+      esc(conversations.length) + "</span></div>" + conversationHtml + "</section>" +
+      '<section class="tb-dm-section tb-dm-new"><div class="tb-dm-section-title"><strong>Nouveau DM</strong><span>' +
+      esc(dmState.selected.size) + " sélectionné" + (dmState.selected.size > 1 ? "s" : "") + "</span></div>" +
+      '<div class="tb-dm-picks">' +
+      '<button type="button" data-dm-duty><span>●</span><strong>En poste</strong><small>' + esc(dmState.onDuty.length) + "</small></button>" +
+      '<button type="button" data-dm-all><span>◎</span><strong>Tout le monde</strong><small>' + esc(dmState.agents.length) + "</small></button>" +
+      "</div>" +
+      '<label class="tb-dm-search"><span>⌕</span><input type="search" data-dm-search placeholder="Rechercher un agent…" value="' + esc(dmState.search) + '"></label>' +
+      '<div class="tb-dm-agent-list">' + agentHtml + "</div>" +
+      "</section></div>" +
+      '<footer class="tb-dm-home-actions"><button type="button" data-dm-start ' + (!dmState.selected.size ? "disabled" : "") + ">" +
+      (dmState.selected.size > 1 ? "Ouvrir le DM de groupe" : "Ouvrir le DM") +
+      (dmState.selected.size ? " · " + esc(dmState.selected.size) : "") +
+      "</button></footer></section>";
+
+    const search = panel.querySelector("[data-dm-search]");
+    if (search) {
+      search.addEventListener("input", () => {
+        dmState.search = search.value;
+        const pos = search.selectionStart || search.value.length;
+        renderDmHome();
+        const next = dmPanel()?.querySelector("[data-dm-search]");
+        next?.focus({ preventScroll: true });
+        try { next?.setSelectionRange(pos, pos); } catch {}
+      });
+    }
+  }
+
+  function toggleDmRecipient(id) {
+    if (!id) return;
+    if (dmState.selected.has(id)) dmState.selected.delete(id);
+    else dmState.selected.add(id);
+    renderDmHome();
+  }
+
+  function selectDmOnDuty() {
+    dmState.selected = new Set(dmState.onDuty.map((agent) => String(agent.id || "")).filter(Boolean));
+    renderDmHome();
+  }
+
+  function selectDmAll() {
+    dmState.selected = new Set(dmState.agents.map((agent) => String(agent.id || "")).filter(Boolean));
+    renderDmHome();
+  }
+
+  async function startDmConversation() {
+    const ids = [...dmState.selected].filter(Boolean);
+    if (!ids.length || dmState.loading) return;
+    dmState.loading = true;
+    try {
+      const result = ids.length === 1
+        ? await api("direct", { agent_id: ids[0] })
+        : await api("group", { agent_ids: ids });
+      const id = String(result?.conversation?.id || "");
+      if (!id) throw new Error("Conversation introuvable.");
+      dmState.selected.clear();
+      await openDmConversation(id);
+    } catch (error) {
+      alert(error.message || "Impossible d’ouvrir le DM.");
+    } finally {
+      dmState.loading = false;
+    }
+  }
+
+  async function openDmConversation(id) {
+    if (!id) return;
+    stopDmTimer();
+    dmState.view = "thread";
+    dmState.conversationId = id;
+    dmState.signature = "";
+    dmState.scrollToLatest = true;
+    await loadDmThread(false);
+    if (!dmState.open || dmState.view !== "thread") return;
+    dmState.timer = setInterval(() => {
+      if (!dmState.open || dmState.view !== "thread" || !dmState.conversationId) {
+        stopDmTimer();
+        return;
+      }
+      if (!document.hidden) loadDmThread(true);
+    }, 3000);
+  }
+
+  async function loadDmThread(quiet = false) {
+    if (!dmState.open || !dmState.conversationId || dmState.loading) return;
+    dmState.loading = true;
+    try {
+      const data = await api("thread", { conversation_id: dmState.conversationId });
+      dmState.thread = data;
+      const signature = dmThreadSignature(data);
+      const changed = signature !== dmState.signature;
+      dmState.signature = signature;
+      const panel = dmPanel();
+      const editing = !!panel?.querySelector("[data-dm-text]:focus");
+      if (!quiet || (changed && !editing)) renderDmThread();
+    } catch (error) {
+      const panel = dmPanel();
+      if (panel && !quiet) panel.innerHTML =
+        '<section class="tb-dm-shell"><header class="tb-dm-head"><button type="button" data-dm-back>‹</button><div><small>DM</small><h3>Discussion</h3></div><button type="button" data-dm-close>×</button></header><p class="tb-dm-error">' +
+        esc(error.message || "Discussion indisponible.") + "</p></section>";
+    } finally {
+      dmState.loading = false;
+    }
+  }
+
+  function dmThreadTitle(data = {}) {
+    const me = String(dmState.me?.id || "");
+    const others = (data.members || [])
+      .filter((member) => String(member.agent_id || "") !== me)
+      .map((member) => dmAgentLabel(member.agent || {}))
+      .filter(Boolean);
+    return String(data.conversation?.title || "").trim() ||
+      (others.length ? others.slice(0, 3).join(", ") + (others.length > 3 ? " +" + (others.length - 3) : "") : "Discussion privée");
+  }
+
+  function renderDmThread() {
+    const panel = dmPanel();
+    const data = dmState.thread;
+    if (!panel || !data || !dmState.open) return;
+    const me = String(dmState.me?.id || "");
+    const messages = data.messages || [];
+    const bodyHtml = messages.length
+      ? messages.map((message) => {
+          const mine = String(message.sender_agent_id || "") === me;
+          const sender = message.sender || {};
+          const attachments = Array.isArray(message.payload?.attachments) ? message.payload.attachments : [];
+          const photos = attachments.filter((item) => item?.url).map((item) =>
+            '<button type="button" class="tb-dm-photo" data-dm-photo="' + esc(item.url) + '"><img src="' +
+            esc(item.url) + '" alt="' + esc(item.file_name || "Photo") + '"></button>'
+          ).join("");
+          const text = String(message.body || "").trim();
+          return '<article class="tb-dm-message' + (mine ? " is-mine" : "") + '">' +
+            (!mine ? avatar(sender, { showFirstName: true }) : "") +
+            '<div class="tb-dm-bubble"><header><strong>' + esc(mine ? "Moi" : dmAgentLabel(sender)) +
+            '</strong><time>' + esc(fmtTime(message.created_at)) + "</time></header>" +
+            (photos ? '<div class="tb-dm-photos">' + photos + "</div>" : "") +
+            (text ? "<p>" + esc(text).replace(/\n/g, "<br>") + "</p>" : "") +
+            "</div></article>";
+        }).join("")
+      : '<div class="tb-dm-thread-empty"><span>✉</span><strong>Discussion privée</strong><p>Seuls les participants sélectionnés peuvent lire ce fil.</p></div>';
+
+    const imagePreview = dmState.pendingImage
+      ? '<div class="tb-dm-pending"><img src="' + esc(dmState.pendingPreviewUrl) + '" alt=""><span><strong>' +
+        esc(dmState.pendingImage.name || "Photo") + '</strong><small>Photo jointe</small></span><button type="button" data-dm-remove-image aria-label="Retirer">×</button></div>'
+      : "";
+
+    panel.innerHTML =
+      '<section class="tb-dm-shell is-thread">' +
+      '<header class="tb-dm-head"><button type="button" class="tb-dm-back" data-dm-back aria-label="Retour">‹</button><div><small>DM · ' +
+      esc((data.members || []).length) + ' participant' + ((data.members || []).length > 1 ? "s" : "") + "</small><h3>" +
+      esc(dmThreadTitle(data)) + '</h3></div><button type="button" data-dm-close aria-label="Fermer">×</button></header>' +
+      '<div class="tb-dm-thread" data-dm-thread>' + bodyHtml + "</div>" +
+      '<form class="tb-dm-composer" data-dm-form>' + imagePreview +
+      '<div class="tb-dm-compose-row"><button type="button" class="tb-dm-attach" data-dm-attach aria-label="Ajouter une photo">＋</button>' +
+      '<input type="file" data-dm-file accept="image/jpeg,image/png,image/webp" capture="environment" hidden>' +
+      '<textarea data-dm-text rows="1" maxlength="2000" placeholder="Message privé…">' + esc(dmState.draft) + "</textarea>" +
+      '<button type="submit" class="tb-dm-send" ' + ((!dmState.draft.trim() && !dmState.pendingImage) || dmState.sending ? "disabled" : "") + ">↑</button></div>" +
+      "</form></section>";
+
+    const thread = panel.querySelector("[data-dm-thread]");
+    if (thread && dmState.scrollToLatest) {
+      requestAnimationFrame(() => {
+        thread.scrollTop = thread.scrollHeight;
+        dmState.scrollToLatest = false;
+      });
+    }
+    const textarea = panel.querySelector("[data-dm-text]");
+    textarea?.addEventListener("input", () => {
+      dmState.draft = textarea.value;
+      autoGrow(textarea);
+      const sendButton = panel.querySelector(".tb-dm-send");
+      if (sendButton) sendButton.disabled = (!dmState.draft.trim() && !dmState.pendingImage) || dmState.sending;
+    });
+    autoGrow(textarea);
+    panel.querySelector("[data-dm-file]")?.addEventListener("change", (event) => {
+      const file = event.target.files?.[0];
+      if (file) setDmImage(file);
+      event.target.value = "";
+    });
+    panel.querySelector("[data-dm-form]")?.addEventListener("submit", sendDm);
+  }
+
+  async function setDmImage(file) {
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(String(file.type || "").toLowerCase())) {
+      alert("Format accepté : JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > 3000000) {
+      alert("Photo trop lourde : 3 Mo maximum.");
+      return;
+    }
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
+        reader.onerror = () => reject(new Error("Lecture de la photo impossible."));
+        reader.readAsDataURL(file);
+      });
+      if (!data) throw new Error("Photo invalide.");
+      clearDmImage();
+      dmState.pendingImage = { name: file.name || "photo", mime: file.type, data };
+      dmState.pendingPreviewUrl = URL.createObjectURL(file);
+      renderDmThread();
+    } catch (error) {
+      alert(error.message || "Photo impossible à joindre.");
+    }
+  }
+
+  async function sendDm(event) {
+    event?.preventDefault?.();
+    if (dmState.sending || !dmState.conversationId) return;
+    const text = String(dmState.draft || "").trim().slice(0, 2000);
+    if (!text && !dmState.pendingImage) return;
+    dmState.sending = true;
+    renderDmThread();
+    try {
+      await api("send", {
+        conversation_id: dmState.conversationId,
+        body: text,
+        image: dmState.pendingImage ? {
+          name: dmState.pendingImage.name,
+          mime: dmState.pendingImage.mime,
+          data: dmState.pendingImage.data,
+        } : null,
+      });
+      dmState.draft = "";
+      clearDmImage();
+      dmState.scrollToLatest = true;
+      await loadDmThread(false);
+    } catch (error) {
+      alert(error.message || "Envoi du DM impossible.");
+    } finally {
+      dmState.sending = false;
+      renderDmThread();
+    }
+  }
+
   function activeWheelchairs(data) {
     return (data?.messages || []).filter(
       (message) => message?.payload?.wheelchair?.status === "active",
@@ -3473,6 +3972,7 @@
   }
 
   function unmountFull() {
+    closeDm();
     stopFull();
     state.root = null;
     state.data = null;
@@ -3525,7 +4025,7 @@
   window.addEventListener("stip:session-ended", stopAll);
 
   const apiSurface = {
-    build: "20260924-temp-choice1",
+    build: "20260925-dm1",
     mount,
     mountPreview,
     unmountFull,
