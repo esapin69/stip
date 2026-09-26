@@ -1,38 +1,7 @@
 <!doctype html>
-<html lang="fr" data-t-est="1">
+<html lang="fr" data-t-est="1" data-stip-entry-standalone="1">
   <head>
     <base href="../../" />
-    <!-- T-EST LAB ACCESS — admin only -->
-    <script id="stip-t-admin-gate">
-      document.documentElement.hidden = true;
-      (async () => {
-        const token = localStorage.getItem("stip_session_v1") || "";
-        if (!token) {
-          location.replace(new URL("./", document.baseURI).href);
-          return;
-        }
-        try {
-          const response = await fetch("https://stip-ten.vercel.app/api/stip-access", {
-            method: "POST",
-            cache: "no-store",
-            headers: {
-              "content-type": "application/json",
-              "x-stip-session": token
-            },
-            body: JSON.stringify({ action: "me" })
-          });
-          const data = await response.json().catch(() => ({}));
-          if (!response.ok || !data?.permissions?.admin) {
-            location.replace(new URL("./", document.baseURI).href);
-            return;
-          }
-          document.documentElement.hidden = false;
-        } catch {
-          location.replace(new URL("./", document.baseURI).href);
-        }
-      })();
-    </script>
-    <!-- /T-EST LAB ACCESS -->
     <meta charset="utf-8" />
     <meta
       name="viewport"
