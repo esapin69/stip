@@ -4849,23 +4849,28 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* ESPRIT D'EQUIPE — FIRST-CLASS HOME MODE — 2026-09-22 */
+/* ESPRIT D'EQUIPE — NATIVE MOBILE SCROLL — 2026-09-26 */
 .hc-home-pane-team{
   width:min(100%,760px)!important;
   margin:0 auto!important;
   padding:0!important;
+  overflow:hidden!important;
   overflow-anchor:none!important;
 }
 .hc-team-frame{
   display:block!important;
   width:100%!important;
-  height:520px!important;
-  min-height:0!important;
+  height:calc(100dvh - 210px)!important;
+  min-height:280px!important;
+  max-height:calc(100dvh - 8px)!important;
   border:0!important;
   border-radius:0!important;
   background:var(--stip-bg,#f6fbfc)!important;
   box-shadow:none!important;
-  overflow:hidden!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
   overflow-anchor:none!important;
 }
 .hc-home-filters>button[data-home-mode="team"]{
@@ -4879,8 +4884,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 @media(max-width:430px){
   .hc-team-frame{
-    height:500px!important;
-    min-height:0!important;
+    height:calc(100dvh - 198px)!important;
+    min-height:280px!important;
   }
 }
 
