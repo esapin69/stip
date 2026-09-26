@@ -392,9 +392,14 @@ function depthPayload(p: any, over: any = {}) {
 async function signedAvatarUrl(raw: any) {
   const value = String(raw || "");
   if (!value) return null;
-  if (value.includes("/storage/v1/") && value.includes("/planning-pdf/"))
-    return null;
-  return value;
+  const marker = "/storage/v1/object/public/planning-pdf/";
+  if (!value.includes(marker)) return value;
+  const path = value.split(marker)[1]?.split("?")[0] || "";
+  if (!path) return value;
+  const { data, error } = await admin.storage
+    .from("planning-pdf")
+    .createSignedUrl(decodeURIComponent(path), 3600);
+  return error || !data?.signedUrl ? value : data.signedUrl;
 }
 async function withSignedAvatar(a: any) {
   return a ? { ...a, avatar_url: await signedAvatarUrl(a.avatar_url) } : a;
