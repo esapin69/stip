@@ -25,6 +25,8 @@
   function invalidateTeamThreadCache() {
     teamThreadCache.at = 0;
     teamThreadCache.data = null;
+    teamProbeCache.at = 0;
+    teamProbeCache.data = null;
   }
 
   async function readTeamThread({ force = false } = {}) {
@@ -3476,6 +3478,7 @@
     dmState.conversationId = "";
     dmState.thread = null;
     dmState.signature = "";
+    dmState.version = "";
     dmState.search = "";
     dmState.draft = "";
     dmState.scrollToLatest = false;
