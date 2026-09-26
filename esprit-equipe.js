@@ -45,19 +45,7 @@
   }
 
   function inheritedAccess() {
-    if (!EMBEDDED || window.parent === window) return null;
-    try {
-      const session = window.parent.STIPSession;
-      if (!session?.permissions) return null;
-      return {
-        permissions: session.permissions,
-        access_level: session.access_level || "",
-        role_key: session.role_key || "",
-        agent: session.agent || null,
-      };
-    } catch {
-      return null;
-    }
+    return null;
   }
 
   const field = () => window.STIPFieldIntel || null;
@@ -417,18 +405,6 @@
     const zone = document.querySelector(".team-month-zone");
     if (!zone) return false;
     const margin = 520;
-    if (EMBEDDED && window.parent !== window) {
-      try {
-        const frame = window.frameElement,
-          parentWindow = window.parent,
-          frameRect = frame?.getBoundingClientRect(),
-          zoneRect = zone.getBoundingClientRect(),
-          viewportHeight =
-            parentWindow.visualViewport?.height || parentWindow.innerHeight,
-          top = Number(frameRect?.top || 0) + Number(zoneRect.top || 0);
-        return top < viewportHeight + margin && top + zoneRect.height > -margin;
-      } catch {}
-    }
     const rect = zone.getBoundingClientRect(),
       viewportHeight = window.visualViewport?.height || window.innerHeight;
     return rect.top < viewportHeight + margin && rect.bottom > -margin;
@@ -438,12 +414,7 @@
     monthSignalWatchCleanup?.();
     monthSignalWatchCleanup = null;
 
-    let hostWindow = window;
-    if (EMBEDDED && window.parent !== window) {
-      try {
-        hostWindow = window.parent;
-      } catch {}
-    }
+    const hostWindow = window;
 
     const cleanup = () => {
       hostWindow.removeEventListener("scroll", check);
@@ -1883,12 +1854,6 @@
     if (day) return chooseDate(day.dataset.teamCalDay);
   });
   $("#teamStandaloneBack")?.addEventListener("click", () => {
-    if (EMBEDDED && window.parent !== window) {
-      try {
-        window.parent.STIPRouter?.set?.("home");
-        return;
-      } catch {}
-    }
     location.assign("index.html#/home");
   });
   $("#teamRefresh").addEventListener("click", () =>
