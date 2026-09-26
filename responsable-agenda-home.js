@@ -647,7 +647,13 @@
     };
 
     const signalParts=days.map(signalButton),dayParts=days.map(renderDay);
-    const cols=days.length||1;
+    if(display.nextMondayDay){
+      signalParts.push('<span class="rr-week-signal rr-week-signal-bridge" aria-hidden="true"></span>');
+      signalParts.push(signalButton(display.nextMondayDay));
+      dayParts.push('<span class="stip-week-next-bridge" aria-hidden="true"><span class="stip-week-next-word">LUNDI</span><span class="stip-week-next-arrow">→</span></span>');
+      dayParts.push(renderDay(display.nextMondayDay));
+    }
+    const cols=display.slotCount||days.length||1;
     host.innerHTML = `<div class="rr-period-separator"><span>${esc(weekSeparatorLabel())}</span></div><div class="rr-week-tools"><p>${esc(weekSummary(days))}</p><button class="rr-week-add access-pending" type="button" data-rr-add disabled aria-hidden="true" aria-label="Ajouter un événement">+</button></div><section class="rr-week-card"><div class="stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-rr-week-step="-1" aria-label="Période précédente">‹</button><strong>${esc(weekRangeLabel(days))}</strong><button type="button" data-rr-week-step="1" aria-label="Période suivante">›</button></div><div class="rr-week-signals" style="--rr-week-columns:${cols}" aria-label="État des jours de la période">${signalParts.join("")}</div><nav class="stip-week-line ${display.nextMondayDay?"has-next-monday":""}" style="--stip-week-columns:${cols}" aria-label="Jours de la période">${dayParts.join("")}</nav></section>`;
     syncProControls();
   }
