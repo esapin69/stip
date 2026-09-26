@@ -2407,14 +2407,72 @@
     "dialog[open]",
   ].join(",");
 
-  function bindEmbeddedViewportLayer(frame, doc, syncFrameHeight) {
-    if (!frame || !doc) return;
-    frame._stipViewportLayerCleanup?.();
+  // One scroll contract for every same-origin page displayed below the shared
+  // STIP home header. The parent header scrolls away first; the embedded page
+  // then continues natively. This replaces all legacy full-height iframe and
+  // gesture-relay variants.
+  function bindSharedHeaderScroll(frame, doc, options = {}) {
+    if (!frame || !doc) return () => {};
 
-    const childWindow = doc.defaultView;
-    let active = false;
-    let saved = null;
-    let raf = 0;
+    frame._stipSharedHeaderScrollCleanup?.();
+    frame._stipParentScrollCleanup?.();
+    frame._stipParentScrollCleanup = null;
+    frame._stipViewportLayerCleanup?.();
+    frame._stipViewportLayerCleanup = null;
+    frame._stipTeamResizeObserver?.disconnect?.();
+    frame._stipTeamResizeObserver = null;
+    frame._stipResponsableResizeObserver?.disconnect?.();
+    frame._stipResponsableResizeObserver = null;
+
+    frame.dataset.stipNativeScroll = "1";
+    frame.setAttribute("scrolling", "yes");
+    frame.style.setProperty("overflow", "auto", "important");
+    frame.style.setProperty("touch-action", "pan-y", "important");
+    frame.style.setProperty("overscroll-behavior", "auto", "important");
+
+    const html = doc.documentElement;
+    const body = doc.body;
+    const scrollPaddingTop = String(options.scrollPaddingTop || "0px");
+
+    html.style.height = "100%";
+    html.style.overflowX = "hidden";
+    html.style.overflowY = "auto";
+    html.style.overscrollBehaviorY = "auto";
+    html.style.touchAction = "pan-y";
+    html.style.scrollPaddingTop = scrollPaddingTop;
+    html.style.webkitOverflowScrolling = "touch";
+
+    if (body) {
+      body.style.minHeight = "100%";
+      body.style.overflowX = "hidden";
+      body.style.overflowY = "visible";
+      body.style.touchAction = "pan-y";
+    }
+
+    const syncViewportHeight = () => {
+      if (!frame.isConnected) return;
+      const viewportHeight = Number(
+        window.visualViewport?.height || window.innerHeight || 0,
+      );
+      frame.style.setProperty(
+        "height",
+        `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
+        "important",
+      );
+    };
+
+    const onViewportChange = () =>
+      requestAnimationFrame(syncViewportHeight);
+    window.addEventListener("resize", onViewportChange, { passive: true });
+    window.visualViewport?.addEventListener("resize", onViewportChange, {
+      passive: true,
+    });
+    window.visualViewport?.addEventListener("scroll", onViewportChange, {
+      passive: true,
+    });
+
+    const scroller = doc.scrollingElement || html;
+    let transferring = false;
 
     const hasOpenLayer = () =>
       [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
@@ -2424,107 +2482,122 @@
           doc.defaultView?.getComputedStyle(node)?.display !== "none",
       );
 
-    const applyViewportBounds = () => {
-      if (!active) return;
-      const viewport = window.visualViewport,
-        top = Math.max(0, Math.round(viewport?.offsetTop || 0)),
-        left = Math.max(0, Math.round(viewport?.offsetLeft || 0)),
-        width = Math.max(1, Math.round(viewport?.width || window.innerWidth)),
-        height = Math.max(1, Math.round(viewport?.height || window.innerHeight));
-      frame.style.setProperty("position", "fixed", "important");
-      frame.style.setProperty("top", top + "px", "important");
-      frame.style.setProperty("left", left + "px", "important");
-      frame.style.setProperty("right", "auto", "important");
-      frame.style.setProperty("bottom", "auto", "important");
-      frame.style.setProperty("width", width + "px", "important");
-      frame.style.setProperty("height", height + "px", "important");
-      frame.style.setProperty("max-width", "none", "important");
-      frame.style.setProperty("z-index", "99990", "important");
-      frame.style.setProperty("border-radius", "0", "important");
-      frame.style.setProperty("box-shadow", "none", "important");
-    };
+    const handoffForwardScroll = () => {
+      if (transferring || hasOpenLayer()) return;
+      const childTop = Number(scroller.scrollTop || 0);
+      const frameTop = frame.getBoundingClientRect().top;
+      if (childTop <= 0.5 || frameTop <= 0.5) return;
 
-    const enter = () => {
-      if (active) {
-        applyViewportBounds();
-        return;
-      }
-      const rect = frame.getBoundingClientRect();
-      saved = {
-        frameStyle: frame.getAttribute("style"),
-        scrollY: window.scrollY,
-        childScrollY: Math.max(0, Math.round(-rect.top)),
-        htmlOverflow: document.documentElement.style.overflow,
-        bodyOverflow: document.body.style.overflow,
-      };
-      active = true;
-      frame.dataset.stipViewportLayer = "1";
-      document.documentElement.style.overflow = "hidden";
-      document.body.style.overflow = "hidden";
-      applyViewportBounds();
-      try {
-        childWindow?.scrollTo?.(0, saved.childScrollY);
-      } catch {}
-    };
+      const delta = Math.min(childTop, Math.max(0, frameTop));
+      if (delta < 0.5) return;
 
-    const leave = () => {
-      if (!active) return;
-      active = false;
-      delete frame.dataset.stipViewportLayer;
-      try {
-        childWindow?.scrollTo?.(0, 0);
-      } catch {}
-      if (saved?.frameStyle == null) frame.removeAttribute("style");
-      else frame.setAttribute("style", saved.frameStyle);
-      document.documentElement.style.overflow = saved?.htmlOverflow || "";
-      document.body.style.overflow = saved?.bodyOverflow || "";
-      const scrollY = Number(saved?.scrollY || 0);
-      saved = null;
+      transferring = true;
+      scroller.scrollTop = Math.max(0, childTop - delta);
+      window.scrollBy(0, delta);
       requestAnimationFrame(() => {
-        syncFrameHeight?.();
-        window.scrollTo(0, scrollY);
+        transferring = false;
       });
     };
 
-    const sync = () => {
-      raf = 0;
-      if (hasOpenLayer()) enter();
-      else leave();
-    };
-    const schedule = () => {
-      if (raf) return;
-      raf = requestAnimationFrame(sync);
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchLastY = 0;
+    let touchAxis = "";
+
+    const onTouchStart = (event) => {
+      if (event.touches?.length !== 1) {
+        touchAxis = "";
+        return;
+      }
+      const touch = event.touches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+      touchLastY = touch.clientY;
+      touchAxis = "";
     };
 
-    const observer = new MutationObserver(schedule);
-    observer.observe(doc.documentElement, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "open", "hidden", "aria-hidden"],
+    const onTouchMove = (event) => {
+      if (
+        event.touches?.length !== 1 ||
+        hasOpenLayer() ||
+        Number(scroller.scrollTop || 0) > 1
+      )
+        return;
+
+      const touch = event.touches[0];
+      const totalX = touch.clientX - touchStartX;
+      const totalY = touch.clientY - touchStartY;
+
+      if (!touchAxis) {
+        const ax = Math.abs(totalX);
+        const ay = Math.abs(totalY);
+        if (Math.max(ax, ay) < 6) return;
+        touchAxis = ax > ay * 1.45 ? "x" : "y";
+      }
+      if (touchAxis !== "y") return;
+
+      const fingerDelta = touch.clientY - touchLastY;
+      touchLastY = touch.clientY;
+
+      // At the top of the embedded page, downward movement returns to the
+      // shared header instead of creating a second disconnected scroll zone.
+      if (fingerDelta > 0 && window.scrollY > 0) {
+        const before = window.scrollY;
+        window.scrollBy(0, -fingerDelta);
+        if (window.scrollY !== before) event.preventDefault();
+      }
+    };
+
+    scroller.addEventListener("scroll", handoffForwardScroll, {
+      passive: true,
     });
-    window.addEventListener("resize", applyViewportBounds);
-    window.visualViewport?.addEventListener("resize", applyViewportBounds);
-    window.visualViewport?.addEventListener("scroll", applyViewportBounds);
-    schedule();
+    doc.addEventListener("touchstart", onTouchStart, {
+      passive: true,
+      capture: true,
+    });
+    doc.addEventListener("touchmove", onTouchMove, {
+      passive: false,
+      capture: true,
+    });
 
-    frame._stipViewportLayerCleanup = () => {
-      cancelAnimationFrame(raf);
-      observer.disconnect();
-      window.removeEventListener("resize", applyViewportBounds);
-      window.visualViewport?.removeEventListener("resize", applyViewportBounds);
-      window.visualViewport?.removeEventListener("scroll", applyViewportBounds);
-      leave();
+    frame._stipSharedHeaderScrollCleanup = () => {
+      scroller.removeEventListener("scroll", handoffForwardScroll);
+      doc.removeEventListener("touchstart", onTouchStart, true);
+      doc.removeEventListener("touchmove", onTouchMove, true);
+      window.removeEventListener("resize", onViewportChange);
+      window.visualViewport?.removeEventListener(
+        "resize",
+        onViewportChange,
+      );
+      window.visualViewport?.removeEventListener(
+        "scroll",
+        onViewportChange,
+      );
     };
+
+    requestAnimationFrame(syncViewportHeight);
+    setTimeout(syncViewportHeight, 80);
+    setTimeout(syncViewportHeight, 350);
+    return frame._stipSharedHeaderScrollCleanup;
   }
 
-
-  function bindEmbeddedParentScroll(frame, doc) {
-    if (!frame || !doc) return;
-    frame._stipParentScrollCleanup?.();
-    const cleanup = window.STIPTouchCore?.bindEmbeddedVerticalScroll?.(frame, doc);
-    frame._stipParentScrollCleanup =
-      typeof cleanup === "function" ? cleanup : () => {};
+  // Safety net: any future same-origin iframe inserted in a home pane inherits
+  // the shared-header scroll contract automatically unless explicitly opted out.
+  function bindSharedHeaderFrames(root) {
+    root
+      ?.querySelectorAll?.('.hc-home-pane iframe:not([data-stip-scroll-opt-out="1"])')
+      .forEach((frame) => {
+        if (frame.dataset.stipSharedHeaderAutoBound === "1") return;
+        frame.dataset.stipSharedHeaderAutoBound = "1";
+        const setup = () => {
+          try {
+            const doc = frame.contentDocument;
+            if (doc) bindSharedHeaderScroll(frame, doc);
+          } catch {}
+        };
+        frame.addEventListener("load", setup);
+        setTimeout(setup, 0);
+      });
   }
 
   function bindEmbeddedTeam(root) {
@@ -2544,175 +2617,7 @@
           shell.style.paddingBottom = "28px";
         }
 
-        // Esprit d'équipe owns its vertical scroll. Do not relay touch gestures
-        // to the parent page: the old bridge was the source of mobile freezes.
-        frame._stipParentScrollCleanup?.();
-        frame._stipParentScrollCleanup = null;
-        frame._stipViewportLayerCleanup?.();
-        frame._stipViewportLayerCleanup = null;
-        frame._stipTeamResizeObserver?.disconnect?.();
-        frame._stipTeamResizeObserver = null;
-
-        frame.setAttribute("scrolling", "yes");
-        frame.style.setProperty("overflow", "auto", "important");
-        frame.style.setProperty("touch-action", "pan-y", "important");
-        frame.style.setProperty("overscroll-behavior", "auto", "important");
-
-        const html = doc.documentElement;
-        html.style.height = "100%";
-        html.style.overflowX = "hidden";
-        html.style.overflowY = "auto";
-        html.style.overscrollBehaviorY = "auto";
-        html.style.touchAction = "pan-y";
-        html.style.scrollPaddingTop = "10px";
-        html.style.webkitOverflowScrolling = "touch";
-
-        if (doc.body) {
-          doc.body.style.minHeight = "100%";
-          doc.body.style.overflowX = "hidden";
-          doc.body.style.overflowY = "visible";
-          doc.body.style.touchAction = "pan-y";
-        }
-
-        // Give the team view a full viewport of its own. This intentionally
-        // leaves enough document height for the home header to scroll away
-        // before the inner team content starts moving.
-        const syncTeamViewportHeight = () => {
-          if (!frame.isConnected) return;
-          const viewportHeight = Number(
-            window.visualViewport?.height || window.innerHeight || 0,
-          );
-          frame.style.setProperty(
-            "height",
-            `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
-            "important",
-          );
-        };
-
-        frame._stipTeamViewportCleanup?.();
-        const onViewportChange = () =>
-          requestAnimationFrame(syncTeamViewportHeight);
-        window.addEventListener("resize", onViewportChange, { passive: true });
-        window.visualViewport?.addEventListener("resize", onViewportChange, {
-          passive: true,
-        });
-        window.visualViewport?.addEventListener("scroll", onViewportChange, {
-          passive: true,
-        });
-        frame._stipTeamViewportCleanup = () => {
-          window.removeEventListener("resize", onViewportChange);
-          window.visualViewport?.removeEventListener(
-            "resize",
-            onViewportChange,
-          );
-          window.visualViewport?.removeEventListener(
-            "scroll",
-            onViewportChange,
-          );
-        };
-
-        requestAnimationFrame(syncTeamViewportHeight);
-        setTimeout(syncTeamViewportHeight, 80);
-        setTimeout(syncTeamViewportHeight, 350);
-
-        // Native scroll handoff:
-        // while the home header is still visible, consume the iframe's first
-        // vertical movement by moving the parent page instead. Once the iframe
-        // reaches the top of the viewport, its own native scroll takes over.
-        frame._stipTeamScrollHandoffCleanup?.();
-        const scroller = doc.scrollingElement || html;
-        let transferring = false;
-        const hasOpenTeamLayer = () =>
-          [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
-            (node) =>
-              !node.hidden &&
-              node.getAttribute("aria-hidden") !== "true" &&
-              doc.defaultView?.getComputedStyle(node)?.display !== "none",
-          );
-
-        const handoffForwardScroll = () => {
-          if (transferring || hasOpenTeamLayer()) return;
-          const childTop = Number(scroller.scrollTop || 0);
-          const frameTop = frame.getBoundingClientRect().top;
-          if (childTop <= 0.5 || frameTop <= 0.5) return;
-
-          const delta = Math.min(childTop, Math.max(0, frameTop));
-          if (delta < 0.5) return;
-
-          transferring = true;
-          scroller.scrollTop = Math.max(0, childTop - delta);
-          window.scrollBy(0, delta);
-          requestAnimationFrame(() => {
-            transferring = false;
-          });
-        };
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchLastY = 0;
-        let touchAxis = "";
-
-        const onTeamTouchStart = (event) => {
-          if (event.touches?.length !== 1) {
-            touchAxis = "";
-            return;
-          }
-          const touch = event.touches[0];
-          touchStartX = touch.clientX;
-          touchStartY = touch.clientY;
-          touchLastY = touch.clientY;
-          touchAxis = "";
-        };
-
-        const onTeamTouchMove = (event) => {
-          if (
-            event.touches?.length !== 1 ||
-            hasOpenTeamLayer() ||
-            Number(scroller.scrollTop || 0) > 1
-          )
-            return;
-
-          const touch = event.touches[0];
-          const totalX = touch.clientX - touchStartX;
-          const totalY = touch.clientY - touchStartY;
-
-          if (!touchAxis) {
-            const ax = Math.abs(totalX);
-            const ay = Math.abs(totalY);
-            if (Math.max(ax, ay) < 6) return;
-            touchAxis = ax > ay * 1.45 ? "x" : "y";
-          }
-          if (touchAxis !== "y") return;
-
-          const fingerDelta = touch.clientY - touchLastY;
-          touchLastY = touch.clientY;
-
-          // At the top of Esprit d'équipe, a downward swipe returns naturally
-          // to the home header instead of leaving two disconnected scroll zones.
-          if (fingerDelta > 0 && window.scrollY > 0) {
-            const before = window.scrollY;
-            window.scrollBy(0, -fingerDelta);
-            if (window.scrollY !== before) event.preventDefault();
-          }
-        };
-
-        scroller.addEventListener("scroll", handoffForwardScroll, {
-          passive: true,
-        });
-        doc.addEventListener("touchstart", onTeamTouchStart, {
-          passive: true,
-          capture: true,
-        });
-        doc.addEventListener("touchmove", onTeamTouchMove, {
-          passive: false,
-          capture: true,
-        });
-
-        frame._stipTeamScrollHandoffCleanup = () => {
-          scroller.removeEventListener("scroll", handoffForwardScroll);
-          doc.removeEventListener("touchstart", onTeamTouchStart, true);
-          doc.removeEventListener("touchmove", onTeamTouchMove, true);
-        };
+        bindSharedHeaderScroll(frame, doc, { scrollPaddingTop: "10px" });
 
         // Keep agent/chef sheets in the parent page. This preserves the shared
         // Applications / Mon profil / Esprit d'équipe header.
@@ -2771,7 +2676,6 @@
           win = frame.contentWindow;
         if (!doc || !win) return;
 
-        // The iframe exists briefly as about:blank before Responsable loads.
         if (
           win.location.protocol === "about:" ||
           !win.location.href ||
@@ -2786,171 +2690,7 @@
         }
 
         doc.body?.classList.add("stip-home-embedded");
-
-        // Responsable now owns its native vertical scroll, like Esprit d'équipe.
-        // Remove the old full-document iframe + parent gesture relay.
-        frame._stipParentScrollCleanup?.();
-        frame._stipParentScrollCleanup = null;
-        frame._stipViewportLayerCleanup?.();
-        frame._stipViewportLayerCleanup = null;
-        frame._stipResponsableResizeObserver?.disconnect?.();
-        frame._stipResponsableResizeObserver = null;
-
-        frame.setAttribute("scrolling", "yes");
-        frame.style.setProperty("overflow", "auto", "important");
-        frame.style.setProperty("touch-action", "pan-y", "important");
-        frame.style.setProperty("overscroll-behavior", "auto", "important");
-
-        const html = doc.documentElement;
-        html.style.height = "100%";
-        html.style.overflowX = "hidden";
-        html.style.overflowY = "auto";
-        html.style.overscrollBehaviorY = "auto";
-        html.style.touchAction = "pan-y";
-        html.style.webkitOverflowScrolling = "touch";
-
-        if (doc.body) {
-          doc.body.style.minHeight = "100%";
-          doc.body.style.overflowX = "hidden";
-          doc.body.style.overflowY = "visible";
-          doc.body.style.touchAction = "pan-y";
-        }
-
-        // Keep Responsable as a full mobile viewport so the home header can
-        // scroll away first, then hand over naturally to the embedded page.
-        const syncResponsableViewportHeight = () => {
-          if (!frame.isConnected) return;
-          const viewportHeight = Number(
-            window.visualViewport?.height || window.innerHeight || 0,
-          );
-          frame.style.setProperty(
-            "height",
-            `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
-            "important",
-          );
-        };
-
-        frame._stipResponsableViewportCleanup?.();
-        const onViewportChange = () =>
-          requestAnimationFrame(syncResponsableViewportHeight);
-        window.addEventListener("resize", onViewportChange, { passive: true });
-        window.visualViewport?.addEventListener("resize", onViewportChange, {
-          passive: true,
-        });
-        window.visualViewport?.addEventListener("scroll", onViewportChange, {
-          passive: true,
-        });
-        frame._stipResponsableViewportCleanup = () => {
-          window.removeEventListener("resize", onViewportChange);
-          window.visualViewport?.removeEventListener(
-            "resize",
-            onViewportChange,
-          );
-          window.visualViewport?.removeEventListener(
-            "scroll",
-            onViewportChange,
-          );
-        };
-
-        requestAnimationFrame(syncResponsableViewportHeight);
-        setTimeout(syncResponsableViewportHeight, 80);
-        setTimeout(syncResponsableViewportHeight, 350);
-
-        // Same native handoff validated on Esprit d'équipe:
-        // parent page moves while its header is visible; once Responsable
-        // reaches the viewport top, the child page scrolls by itself.
-        frame._stipResponsableScrollHandoffCleanup?.();
-        const scroller = doc.scrollingElement || html;
-        let transferring = false;
-        const hasOpenResponsableLayer = () =>
-          [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
-            (node) =>
-              !node.hidden &&
-              node.getAttribute("aria-hidden") !== "true" &&
-              doc.defaultView?.getComputedStyle(node)?.display !== "none",
-          );
-
-        const handoffForwardScroll = () => {
-          if (transferring || hasOpenResponsableLayer()) return;
-          const childTop = Number(scroller.scrollTop || 0);
-          const frameTop = frame.getBoundingClientRect().top;
-          if (childTop <= 0.5 || frameTop <= 0.5) return;
-
-          const delta = Math.min(childTop, Math.max(0, frameTop));
-          if (delta < 0.5) return;
-
-          transferring = true;
-          scroller.scrollTop = Math.max(0, childTop - delta);
-          window.scrollBy(0, delta);
-          requestAnimationFrame(() => {
-            transferring = false;
-          });
-        };
-
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchLastY = 0;
-        let touchAxis = "";
-
-        const onResponsableTouchStart = (event) => {
-          if (event.touches?.length !== 1) {
-            touchAxis = "";
-            return;
-          }
-          const touch = event.touches[0];
-          touchStartX = touch.clientX;
-          touchStartY = touch.clientY;
-          touchLastY = touch.clientY;
-          touchAxis = "";
-        };
-
-        const onResponsableTouchMove = (event) => {
-          if (
-            event.touches?.length !== 1 ||
-            hasOpenResponsableLayer() ||
-            Number(scroller.scrollTop || 0) > 1
-          )
-            return;
-
-          const touch = event.touches[0];
-          const totalX = touch.clientX - touchStartX;
-          const totalY = touch.clientY - touchStartY;
-
-          if (!touchAxis) {
-            const ax = Math.abs(totalX);
-            const ay = Math.abs(totalY);
-            if (Math.max(ax, ay) < 6) return;
-            touchAxis = ax > ay * 1.45 ? "x" : "y";
-          }
-          if (touchAxis !== "y") return;
-
-          const fingerDelta = touch.clientY - touchLastY;
-          touchLastY = touch.clientY;
-
-          if (fingerDelta > 0 && window.scrollY > 0) {
-            const before = window.scrollY;
-            window.scrollBy(0, -fingerDelta);
-            if (window.scrollY !== before) event.preventDefault();
-          }
-        };
-
-        scroller.addEventListener("scroll", handoffForwardScroll, {
-          passive: true,
-        });
-        doc.addEventListener("touchstart", onResponsableTouchStart, {
-          passive: true,
-          capture: true,
-        });
-        doc.addEventListener("touchmove", onResponsableTouchMove, {
-          passive: false,
-          capture: true,
-        });
-
-        frame._stipResponsableScrollHandoffCleanup = () => {
-          scroller.removeEventListener("scroll", handoffForwardScroll);
-          doc.removeEventListener("touchstart", onResponsableTouchStart, true);
-          doc.removeEventListener("touchmove", onResponsableTouchMove, true);
-        };
+        bindSharedHeaderScroll(frame, doc);
       } catch {}
     };
 
@@ -3081,6 +2821,7 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
+    bindSharedHeaderFrames(root);
     if (state.homeMode === "team") bindEmbeddedTeam(root);
     if (state.homeMode === "responsable") bindEmbeddedResponsable(root);
     if (state.homeMode === "tableau") {
