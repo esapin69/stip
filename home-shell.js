@@ -2379,7 +2379,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
-      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v3" loading="eager"></iframe></section>`;
+      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v4&v=20260926-team-native-scroll1" loading="eager"></iframe></section>`;
     if (
       state.homeMode === "responsable" &&
       (has("responsable") || has("admin"))
@@ -2530,10 +2530,12 @@
     const frame = root?.querySelector?.("#hcTeamFrame");
     if (!frame || frame.dataset.stipBound === "1") return;
     frame.dataset.stipBound = "1";
+
     const setup = () => {
       try {
         const doc = frame.contentDocument;
         if (!doc) return;
+
         doc.querySelector(".team-top")?.setAttribute("hidden", "");
         const shell = doc.querySelector(".team-shell");
         if (shell) {
@@ -2541,46 +2543,85 @@
           shell.style.paddingBottom = "28px";
         }
 
-        // Esprit d'équipe must scroll with the parent home page, exactly like
-        // Applications and Mon profil. No nested iframe scroll / fixed home header.
-        doc.documentElement.style.scrollPaddingTop = "10px";
-        doc.documentElement.style.overflow = "hidden";
+        // Esprit d'équipe owns its vertical scroll. Do not relay touch gestures
+        // to the parent page: the old bridge was the source of mobile freezes.
+        frame._stipParentScrollCleanup?.();
+        frame._stipParentScrollCleanup = null;
+        frame._stipViewportLayerCleanup?.();
+        frame._stipViewportLayerCleanup = null;
+        frame._stipTeamResizeObserver?.disconnect?.();
+        frame._stipTeamResizeObserver = null;
+
+        frame.setAttribute("scrolling", "yes");
+        frame.style.setProperty("overflow", "auto", "important");
+        frame.style.setProperty("touch-action", "pan-y", "important");
+        frame.style.setProperty("overscroll-behavior", "contain", "important");
+
+        const html = doc.documentElement;
+        html.style.height = "100%";
+        html.style.overflowX = "hidden";
+        html.style.overflowY = "auto";
+        html.style.overscrollBehaviorY = "contain";
+        html.style.touchAction = "pan-y";
+        html.style.scrollPaddingTop = "10px";
+        html.style.webkitOverflowScrolling = "touch";
+
         if (doc.body) {
-          doc.body.style.overflow = "hidden";
-          doc.body.style.minHeight = "0";
+          doc.body.style.minHeight = "100%";
+          doc.body.style.overflowX = "hidden";
+          doc.body.style.overflowY = "visible";
+          doc.body.style.touchAction = "pan-y";
         }
 
-        const syncFrameHeight = () => {
-          const body = doc.body,
-            html = doc.documentElement;
-          if (!body || !html) return;
-          if (frame.dataset.stipViewportLayer === "1") return;
-          const height = Math.max(
-            body.scrollHeight,
-            body.offsetHeight,
-            html.scrollHeight,
-            html.offsetHeight,
-            shell?.scrollHeight || 0,
+        // The frame fills the remaining visible screen. The child document then
+        // scrolls natively instead of trying to move the parent page.
+        const syncTeamViewportHeight = () => {
+          if (!frame.isConnected) return;
+          const viewport = window.visualViewport;
+          const viewportTop = Number(viewport?.offsetTop || 0);
+          const viewportHeight = Number(
+            viewport?.height || window.innerHeight || 0,
           );
-          if (height > 0)
-            frame.style.setProperty("height", `${Math.ceil(height)}px`, "important");
+          const rect = frame.getBoundingClientRect();
+          const topInsideViewport = Math.max(0, rect.top - viewportTop);
+          const available = Math.floor(
+            viewportHeight - topInsideViewport - 8,
+          );
+          frame.style.setProperty(
+            "height",
+            `${Math.max(280, available)}px`,
+            "important",
+          );
         };
 
-        frame._stipTeamResizeObserver?.disconnect?.();
-        if (window.ResizeObserver) {
-          const observer = new ResizeObserver(syncFrameHeight);
-          observer.observe(doc.documentElement);
-          if (doc.body) observer.observe(doc.body);
-          if (shell) observer.observe(shell);
-          frame._stipTeamResizeObserver = observer;
-        }
-        requestAnimationFrame(syncFrameHeight);
-        bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
-        bindEmbeddedParentScroll(frame, doc);
+        frame._stipTeamViewportCleanup?.();
+        const onViewportChange = () =>
+          requestAnimationFrame(syncTeamViewportHeight);
+        window.addEventListener("resize", onViewportChange, { passive: true });
+        window.visualViewport?.addEventListener("resize", onViewportChange, {
+          passive: true,
+        });
+        window.visualViewport?.addEventListener("scroll", onViewportChange, {
+          passive: true,
+        });
+        frame._stipTeamViewportCleanup = () => {
+          window.removeEventListener("resize", onViewportChange);
+          window.visualViewport?.removeEventListener(
+            "resize",
+            onViewportChange,
+          );
+          window.visualViewport?.removeEventListener(
+            "scroll",
+            onViewportChange,
+          );
+        };
+
+        requestAnimationFrame(syncTeamViewportHeight);
+        setTimeout(syncTeamViewportHeight, 80);
+        setTimeout(syncTeamViewportHeight, 350);
 
         // Keep agent/chef sheets in the parent page. This preserves the shared
-        // Applications / Mon profil / Esprit d'équipe header instead of trapping
-        // a full-screen agent view inside the iframe.
+        // Applications / Mon profil / Esprit d'équipe header.
         window.STIPLoad?.script?.("agent-agenda-view.js").catch(() => {});
         if (doc.documentElement.dataset.stipAgentBridge !== "1") {
           doc.documentElement.dataset.stipAgentBridge = "1";
@@ -2619,6 +2660,7 @@
         }
       } catch {}
     };
+
     frame.addEventListener("load", setup);
     setTimeout(setup, 0);
   }
