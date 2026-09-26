@@ -1,11 +1,6 @@
 (() => {
   "use strict";
 
-  const EMBEDDED =
-    new URLSearchParams(location.search).has("embed") ||
-    window.self !== window.top;
-  if (EMBEDDED) document.documentElement.classList.add("stip-team-embedded");
-
   const ROOT = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/";
   const STORE = "stip_session_v1";
   const CACHE_TTL = 5 * 60 * 1000;
