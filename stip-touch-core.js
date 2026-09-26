@@ -17,17 +17,28 @@
     return null;
   }
 
+  function hostWindowFor(frame) {
+    return frame?.ownerDocument?.defaultView || window;
+  }
+
+  function hostCanScroll(hostWindow, deltaY) {
+    if (!hostWindow || !deltaY) return false;
+    const doc = hostWindow.document;
+    const root = doc?.scrollingElement || doc?.documentElement;
+    if (!root) return false;
+    const top = Number(hostWindow.scrollY || root.scrollTop || 0);
+    const max = Math.max(0, Number(root.scrollHeight || 0) - Number(hostWindow.innerHeight || 0));
+    return deltaY > 0 ? top < max - 1 : top > 1;
+  }
+
   function bindEmbeddedVerticalScroll(frame, doc) {
     if (!frame || !doc) return () => {};
 
-    let tracking = false;
-    let lastX = 0;
-    let lastY = 0;
+    const hostWindow = hostWindowFor(frame);
+    let gesture = null;
 
     const reset = () => {
-      tracking = false;
-      lastX = 0;
-      lastY = 0;
+      gesture = null;
     };
 
     const onTouchStart = (event) => {
@@ -36,40 +47,60 @@
         return;
       }
       const touch = event.touches[0];
-      tracking = true;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
+      gesture = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        lastY: touch.clientY,
+        axis: "",
+      };
     };
 
     const onTouchMove = (event) => {
-      if (!tracking || event.touches.length !== 1 || frame.dataset.stipViewportLayer === "1") return;
+      if (!gesture || event.touches.length !== 1 || frame.dataset.stipViewportLayer === "1") return;
 
       const touch = event.touches[0];
-      const dx = touch.clientX - lastX;
-      const dy = touch.clientY - lastY;
-      lastX = touch.clientX;
-      lastY = touch.clientY;
+      const dx = touch.clientX - gesture.startX;
+      const dy = touch.clientY - gesture.startY;
+      const ax = Math.abs(dx);
+      const ay = Math.abs(dy);
 
-      if (Math.abs(dy) < 0.1) return;
-      if (Math.abs(dx) > Math.abs(dy) * 2.4) return;
+      if (!gesture.axis) {
+        if (Math.max(ax, ay) < 5) return;
+        gesture.axis = ax > ay * 1.55 ? "x" : "y";
+      }
+      if (gesture.axis !== "y") return;
 
-      const deltaY = -dy;
+      const deltaY = gesture.lastY - touch.clientY;
+      gesture.lastY = touch.clientY;
+      if (Math.abs(deltaY) < 0.1) return;
+
       if (scrollableAncestor(doc, event.target, deltaY)) return;
-      window.scrollBy(0, deltaY);
+      if (!hostCanScroll(hostWindow, deltaY)) return;
+
+      const before = Number(hostWindow.scrollY || 0);
+      hostWindow.scrollBy(0, deltaY);
+      const after = Number(hostWindow.scrollY || 0);
+
+      if (Math.abs(after - before) > 0.1 && event.cancelable) event.preventDefault();
     };
 
     const onWheel = (event) => {
       if (frame.dataset.stipViewportLayer === "1") return;
       const deltaY = Number(event.deltaY || 0);
       if (!deltaY || scrollableAncestor(doc, event.target, deltaY)) return;
-      window.scrollBy(0, deltaY);
+      if (!hostCanScroll(hostWindow, deltaY)) return;
+
+      const before = Number(hostWindow.scrollY || 0);
+      hostWindow.scrollBy(0, deltaY);
+      const after = Number(hostWindow.scrollY || 0);
+      if (Math.abs(after - before) > 0.1 && event.cancelable) event.preventDefault();
     };
 
     doc.addEventListener("touchstart", onTouchStart, { passive: true, capture: true });
-    doc.addEventListener("touchmove", onTouchMove, { passive: true, capture: true });
+    doc.addEventListener("touchmove", onTouchMove, { passive: false, capture: true });
     doc.addEventListener("touchend", reset, { passive: true, capture: true });
     doc.addEventListener("touchcancel", reset, { passive: true, capture: true });
-    doc.addEventListener("wheel", onWheel, { passive: true, capture: true });
+    doc.addEventListener("wheel", onWheel, { passive: false, capture: true });
 
     return () => {
       doc.removeEventListener("touchstart", onTouchStart, true);
