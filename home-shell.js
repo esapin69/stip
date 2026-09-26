@@ -2165,15 +2165,15 @@
               catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
               body = friendlyNoteBody(n);
             return (
-              '<div class="hc-note-swipe" data-note-index="' +
+              '<button type="button" class="hs-note hc-note-card" data-note-index="' +
               i +
-              '"><div class="hc-note-swipe-bg hc-note-delete"><span>✕</span><strong>Supprimer</strong></div><div class="hc-note-swipe-bg hc-note-action"><span>✓</span><strong>Traiter</strong></div><button type="button" class="hs-note hc-note-card" data-note-open><small>' +
+              '" data-note-open><small>' +
               esc(catLabel) +
               "</small><strong>" +
               esc(n.title || "Notification") +
               "</strong>" +
               (body ? "<p>" + esc(body) + "</p>" : "") +
-              "</button></div>"
+              "</button>"
             );
           })
           .join("") +
@@ -2296,8 +2296,7 @@
           ?.focus({ preventScroll: false }),
       );
   }
-  function bindNoteSwipe(wrap, note) {
-    const card = wrap?.querySelector?.(".hc-note-card");
+  function bindNoteCard(card, note) {
     if (!card || card.dataset.stipClickBound === "1") return;
     card.dataset.stipClickBound = "1";
     card.addEventListener("click", (event) => {
@@ -2317,9 +2316,9 @@
           else renderActionCenter(next);
         }),
     );
-    scope.querySelectorAll("[data-note-index]").forEach((wrap) => {
-      const n = shown[Number(wrap.dataset.noteIndex)];
-      if (n) bindNoteSwipe(wrap, n);
+    scope.querySelectorAll(".hc-note-card[data-note-index]").forEach((card) => {
+      const n = shown[Number(card.dataset.noteIndex)];
+      if (n) bindNoteCard(card, n);
     });
   }
   function renderProfileActions(filter = state.actionFilter) {
