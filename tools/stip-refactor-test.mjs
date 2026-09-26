@@ -79,6 +79,15 @@ check(
   'Le maître Actions agent contextuelles est incomplet.'
 );
 check(
+  personActions.includes('class="spa-photo"') &&
+  !personActions.includes('sas-wall-photo') &&
+  !personActions.includes('sas-wall-portrait') &&
+  personActionsCss.includes('.spa-photo img') &&
+  personActionsCss.includes('max-height:calc(100dvh') &&
+  personActionsCss.includes('overflow-y:auto'),
+  'Le menu profil doit garder un portrait borné et une feuille refermable sans dépendre du mur des agents.'
+);
+check(
   !selector.includes('STIPPersonActions'),
   'Rechercher un agent ne doit pas imposer le pop contextuel : la sélection formulaire reste directe.'
 );

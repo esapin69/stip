@@ -69,9 +69,9 @@
       photo = /^https?:/i.test(url)
         ? `<img src="${esc(url)}" alt="" loading="lazy">`
         : fallback;
-    return `<span class="spa-portrait sas-wall-portrait" aria-hidden="true">
-      <span class="sas-wall-photo" data-initials="${fallback}">${photo}</span>
-      <span class="sas-wall-ghe">${esc(gheLabel(agent))}</span>
+    return `<span class="spa-portrait" aria-hidden="true">
+      <span class="spa-photo" data-initials="${fallback}">${photo}</span>
+      <span class="spa-ghe">${esc(gheLabel(agent))}</span>
     </span>`;
   }
 
@@ -122,7 +122,7 @@
     overlay.querySelector(".spa-backdrop")?.addEventListener("click", close);
     overlay.querySelector(".spa-close")?.addEventListener("click", close);
     overlay.querySelector(".spa-cancel")?.addEventListener("click", close);
-    overlay.querySelector(".sas-wall-photo img")?.addEventListener("error", (event) => {
+    overlay.querySelector(".spa-photo img")?.addEventListener("error", (event) => {
       const host = event.currentTarget.parentElement;
       if (host) host.textContent = host.dataset.initials || "ST";
     }, { once: true });
