@@ -35,7 +35,7 @@
     if (level === "opportunity")
       return { level, symbol: "➕", label: "Marge utile" };
     if (level === "ok")
-      return { level, symbol: "✔", label: "Effectif conforme" };
+      return { level, symbol: "✔", label: "Effectif prévu conforme" };
     return { level: "unknown", symbol: "", label: "Pas assez de données" };
   }
 
@@ -444,7 +444,7 @@
           detail:
             planned != null && target != null
               ? `${planned} prévus pour ${target} : il manque ${missing}.`
-              : `Il manque ${missing} par rapport à la référence.`,
+              : `Il manque ${missing} par rapport à la cible HCL.`,
           proposal: String(item?.recommendation_text || "").trim(),
           source: item,
         };
@@ -453,7 +453,7 @@
         return {
           level: "opportunity",
           headline: "Marge utile disponible",
-          detail: `+${gap} par rapport à la référence sur ce créneau.`,
+          detail: `+${gap} par rapport à la cible HCL sur ce créneau.`,
           proposal: String(item?.recommendation_text || "").trim(),
           source: item,
         };
@@ -562,7 +562,7 @@
         title: "Total de la journée",
         detail:
           summary.planned != null && summary.target != null
-            ? `${summary.planned} prévus · cible ${summary.target} · écart ${totalGap}.`
+            ? `${summary.planned} prévus · cible HCL ${summary.target} · écart ${totalGap}.`
             : `Écart global ${totalGap} par rapport à la cible HCL.`,
         proposal: "",
         shift: "",
@@ -605,7 +605,7 @@
       push({
         level: "ok",
         symbol: "✔",
-        title: "Effectif au niveau attendu",
+        title: "Effectif prévu au niveau attendu",
         detail: staffRead.detail || "Aucun point prioritaire détecté.",
         proposal: "",
         shift: "",
