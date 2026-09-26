@@ -1637,13 +1637,14 @@
         shifts || '<p class="team-empty-inline">Aucun agent planifié.</p>',
       selectedDayLabel = day === todayIso() ? "AUJOURD’HUI" : "JOUR SÉLECTIONNÉ",
       daySeparator = `<div class="team-selected-day-separator stip-section-separator" aria-hidden="true"><span>${selectedDayLabel}</span></div>`,
-      body = weekControlsMarkup() + daySeparator + staffing + teamDaySummary(bundle, day);
-    return dayContainer(
-      day,
-      `${items.length} présent${items.length > 1 ? "s" : ""}`,
-      body,
-      "team",
-    );
+      dayCard = dayContainer(
+        day,
+        `${items.length} présent${items.length > 1 ? "s" : ""}`,
+        weekControlsMarkup(),
+        "team",
+      ),
+      dayDetails = `<section class="team-selected-day-details" aria-label="${esc(selectedDayLabel)}">${staffing}${teamDaySummary(bundle, day)}</section>`;
+    return dayCard + daySeparator + dayDetails;
   }
 
   function syncShiftPanels() {
