@@ -71,7 +71,7 @@
     if (!root?.matches?.("[data-stip-form-focus]")) return;
     clearFormPath(root);
 
-    let node = field.closest("label") || field;
+    let node = field;
     while (node && node !== root) {
       node.classList.add("stip-keyboard-path");
       node = node.parentElement;
