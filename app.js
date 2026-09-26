@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
+const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
 const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false;
 try{history.scrollRestoration='manual'}catch{}
 function token(){return localStorage.getItem(STORAGE)||''}
@@ -56,7 +56,7 @@ function setScroll(r,y){const m=readScrolls();m[clean(r)]=Math.max(0,Number(y)||
 function restoreScroll(r=route()){const y=Number(readScrolls()[clean(r)]||0);requestAnimationFrame(()=>requestAnimationFrame(()=>window.scrollTo({top:y,behavior:'auto'})))}
 function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}saveScroll();if(!opt.keepScroll){setScroll(target,0);window.scrollTo({top:0,left:0,behavior:'auto'})}const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
 function back(fallback='home'){saveScroll();if(history.state?.panel){history.back();return}if(route()!=='home'&&history.length>1&&history.state?.stip){history.back();return}setRoute(fallback,{replace:true,keepScroll:true})}
-function showOnly(id){$$('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden')}
+function showOnly(id){qsa('.view').forEach(v=>v.classList.add('hidden'));document.getElementById(id)?.classList.remove('hidden')}
 function msg(t='',kind=''){loginMessage.textContent=t;loginMessage.className=`message ${kind}`.trim()}
 function dockButton(action,icon,label){return`<button type="button" data-root-action="${action}" aria-label="${label}"><span>${icon}</span><small>${label}</small></button>`}
 function dockActions(r){if(r==='home'||!r)return[];if(r==='planning/personal')return[];if(r==='planning/team'||r==='planning/spirit')return[['mail','✉','Envoyer équipe'],['calendar','▦','Agenda équipe']];if(r==='planning/change')return[['received','↓','Reçues'],['history','✓','Mes demandes']];if(r==='planning/calendar')return[['personalcal','♙','Mon agenda'],['teamcal','♟','Équipe']];if(r==='contacts/directory')return[['focus-search','⌕','Rechercher'],['contact-share','↥','Exporter']];if(r==='contacts/services')return[['focus-services','☎','Services']];if(r==='contacts/chiefs')return[['focus-chiefs','♟','Encadrement']];if(r==='contacts/share')return[['contact-share','↥','Exporter']];return[]}
