@@ -2,7 +2,7 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,db=createClient(URL,SERVICE)
 async function canonicalSourceKey(raw:string){const key=String(raw||'').trim();if(!key)return key;const {data:alias,error}=await db.from('stip_agent_identity_aliases').select('canonical_agent_id').eq('incoming_source_key',key).eq('active',true).maybeSingle();if(error)throw error;if(!alias?.canonical_agent_id)return key;const {data:agent,error:ae}=await db.from('agents').select('source_key').eq('id',alias.canonical_agent_id).maybeSingle();if(ae)throw ae;return String(agent?.source_key||key)}
-const TRAINEE_DEFAULT_AVATAR='https://raw.githubusercontent.com/esapin69/stip/0bd3aea4a363e2decfb1b41f20b4d349f157ebcd/images/stagiaire-default.png';
+const TRAINEE_DEFAULT_AVATAR='https://stip.esapin.com/images/stagiaire-default.svg';
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session','Access-Control-Allow-Methods':'POST,OPTIONS'}
 
 const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
