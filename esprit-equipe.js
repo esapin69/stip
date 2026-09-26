@@ -509,7 +509,7 @@
             code: baseShift(row?.shift_code || row?.shift || row?.code),
             gap: staffingRowGap(row),
           }))
-          .filter((row) => row.code && row.gap !== 0)
+          .filter((row) => row.code && row.gap != null && row.gap !== 0)
           .sort((a, b) => Math.abs(b.gap) - Math.abs(a.gap));
         const meaningful =
           ["critical", "warning", "opportunity"].includes(signal.level) ||
@@ -1100,11 +1100,12 @@
   function staffingRowGap(row) {
     if (row?.gap != null && Number.isFinite(Number(row.gap)))
       return Number(row.gap);
-    const planned = Number(row?.planned_count);
-    const target = Number(row?.target_count);
+    if (row?.planned_count == null || row?.target_count == null) return null;
+    const planned = Number(row.planned_count);
+    const target = Number(row.target_count);
     return Number.isFinite(planned) && Number.isFinite(target)
       ? planned - target
-      : 0;
+      : null;
   }
 
   function shiftSignalForDate(day, code) {
@@ -1136,6 +1137,8 @@
 
     const severity = Number(row?.severity || 0);
     const gap = staffingRowGap(row);
+    if (gap == null)
+      return { level: "unknown", symbol: "○", label: "Effectif prévu indisponible" };
     if (severity >= 4)
       return { level: "critical", symbol: "🛑", label: "Équipe très légère" };
     if (gap < 0 || severity >= 2)
@@ -1550,7 +1553,7 @@
         code: baseShift(row?.shift_code || row?.shift || row?.code),
         gap: staffingRowGap(row),
       }))
-      .filter((row) => row.code && row.gap !== 0);
+      .filter((row) => row.code && row.gap != null && row.gap !== 0);
     const lighter = staffingGaps.filter((row) => row.gap < 0);
     const wider = staffingGaps.filter((row) => row.gap > 0);
 
@@ -1587,7 +1590,7 @@
           code: baseShift(row?.shift_code || row?.shift || row?.code),
           gap: staffingRowGap(row),
         }))
-        .filter((row) => row.code && row.gap < 0)
+        .filter((row) => row.code && row.gap != null && row.gap < 0)
         .sort((a, b) => a.gap - b.gap);
 
     if (!deficits.length) return null;
