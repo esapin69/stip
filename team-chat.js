@@ -452,8 +452,9 @@
 
   function avatar(agent = {}, { showFirstName = false } = {}) {
     const src =
-      window.STIPAgentSelector?.photoUrl?.(agent) ||
       agent.profile_photo_url ||
+      agent.avatar_signed_url ||
+      agent.avatar_url ||
       "";
     const initials =
       ((agent.prenom?.[0] || "") + (agent.nom?.[0] || "")).toUpperCase() ||
