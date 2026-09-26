@@ -3,23 +3,36 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 const URL=Deno.env.get('SUPABASE_URL')!, SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, db=createClient(URL,SERVICE)
 const C={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'content-type,x-stip-session,x-stip-view-grant','Access-Control-Allow-Methods':'POST,OPTIONS'}
 
-const LEGACY_AVATAR_STORAGE="/storage/v1/";
-function stripLegacyAvatarPayload(value:any){
-  const walk=(v:any)=>{
+const LEGACY_AVATAR_MARKER="/storage/v1/object/public/planning-pdf/";
+async function signAvatarPayload(value:any){
+  const rawToPath=new Map<string,string>();
+  const collect=(v:any)=>{
     if(!v||typeof v!=="object")return;
-    if(Array.isArray(v)){for(const x of v)walk(x);return}
-    const legacy=(raw:any)=>{
-      const url=String(raw||"");
-      return url.includes(LEGACY_AVATAR_STORAGE)&&url.includes("/planning-pdf/");
-    };
-    if(legacy(v.avatar_url))v.avatar_url=null;
-    if(legacy(v.avatar_signed_url))v.avatar_signed_url=null;
-    for(const x of Object.values(v))walk(x);
+    if(Array.isArray(v)){for(const x of v)collect(x);return}
+    const raw=typeof v.avatar_url==="string"?v.avatar_url:"";
+    if(raw.includes(LEGACY_AVATAR_MARKER)){
+      const path=raw.split(LEGACY_AVATAR_MARKER)[1]?.split("?")[0]||"";
+      if(path)rawToPath.set(raw,decodeURIComponent(path));
+    }
+    for(const x of Object.values(v))collect(x);
   };
-  walk(value);
+  collect(value);
+  if(!rawToPath.size)return value;
+  const raws=[...rawToPath.keys()],paths=raws.map(x=>rawToPath.get(x)!);
+  const {data,error}=await db.storage.from("planning-pdf").createSignedUrls(paths,3600);
+  if(error||!data)return value;
+  const signed=new Map<string,string>();
+  raws.forEach((raw,i)=>{const url=(data as any[])?.[i]?.signedUrl;if(url)signed.set(raw,url)});
+  const rewrite=(v:any)=>{
+    if(!v||typeof v!=="object")return;
+    if(Array.isArray(v)){for(const x of v)rewrite(x);return}
+    if(typeof v.avatar_url==="string"&&signed.has(v.avatar_url))v.avatar_url=signed.get(v.avatar_url);
+    for(const x of Object.values(v))rewrite(x);
+  };
+  rewrite(value);
   return value;
 }
-const J=async(b:unknown,s=200)=>new Response(JSON.stringify(stripLegacyAvatarPayload(b)),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}})
+const J=async(b:unknown,s=200)=>new Response(JSON.stringify(await signAvatarPayload(b)),{status:s,headers:{...C,'Content-Type':'application/json','Cache-Control':'no-store'}})
 const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart(2,'0')).join('')
 async function sha256(s:string){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))}
 function randomToken(){const a=new Uint8Array(32);crypto.getRandomValues(a);return btoa(String.fromCharCode(...a)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
@@ -28,7 +41,7 @@ function parisDay(offset=0){const base=parisToday();if(!offset)return base;const
 async function viewer(req:Request){const token=req.headers.get('x-stip-session')||'';if(!token)throw Error('Session STIP requise.');const h=await sha256(token);const {data:s,error}=await db.from('stip_access_sessions').select('profile_id,expires_at,revoked_at').eq('token_hash',h).maybeSingle();if(error)throw error;if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error('Session expirée.');const {data:p,error:pe}=await db.from('stip_access_profiles').select('id,agent_id,active,permissions,agents(id,nom,prenom,role)').eq('id',s.profile_id).maybeSingle();if(pe)throw pe;if(!p?.active)throw Error('Accès désactivé.');if(!p.permissions?.agent_directory&&!p.permissions?.responsable&&!/chef|responsable|cadre/i.test(String((p as any).agents?.role||'')))throw Error('Accès Agents non autorisé.');return p}
 async function grant(req:Request){const raw=req.headers.get('x-stip-view-grant')||'';if(!raw)throw Error('Laissez-passer lecture requis.');const h=await sha256(raw);const {data:g,error}=await db.from('stip_readonly_grants').select('id,viewer_profile_id,target_agent_id,expires_at,revoked_at').eq('token_hash',h).maybeSingle();if(error)throw error;if(!g||g.revoked_at||new Date(g.expires_at)<=new Date())throw Error('Laissez-passer expiré.');const {data:p}=await db.from('stip_access_profiles').select('id,active,permissions').eq('id',g.viewer_profile_id).maybeSingle();if(!p?.active)throw Error('Accès du responsable désactivé.');return{...g,viewer_permissions:p.permissions||{}}}
 function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||'jour').toLowerCase();return /chef/.test(t)?'chefs':t==='nuit'?'nuit':'jour'}
-async function media(){const {data,error}=await db.from('media_assets').select('kind,code,storage_path,metadata').eq('active',true).eq('kind','shift');if(error)throw error;const avatars:Record<string,string>={},shifts:Record<string,string>={};for(const x of data||[]){const {data:s}=await db.storage.from(String(x?.metadata?.bucket||'ghe-media')).createSignedUrl(x.storage_path,3600);if(!s?.signedUrl)continue;if(x.code)shifts[String(x.code).toUpperCase()]=s.signedUrl}return{avatars,shifts}}
+async function media(){const {data,error}=await db.from('media_assets').select('kind,agent_source_key,code,storage_path,metadata').eq('active',true).in('kind',['avatar_agent','shift']);if(error)throw error;const avatars:Record<string,string>={},shifts:Record<string,string>={};for(const x of data||[]){const {data:s}=await db.storage.from(String(x?.metadata?.bucket||'ghe-media')).createSignedUrl(x.storage_path,3600);if(!s?.signedUrl)continue;if(x.kind==='avatar_agent'&&x.agent_source_key)avatars[x.agent_source_key]=s.signedUrl;if(x.kind==='shift'&&x.code)shifts[String(x.code).toUpperCase()]=s.signedUrl}return{avatars,shifts}}
 async function target(id:string){const {data:a,error}=await db.from('agents').select('id,source_key,nom,prenom,equipe,type_planning,ghe,telephone,email,avatar_url,role,actif').eq('id',id).eq('actif',true).maybeSingle();if(error)throw error;if(!a)throw Error('Agent introuvable.');const {data:p}=await db.from('stip_access_profiles').select('permissions,active').eq('agent_id',id).maybeSingle();return{agent:a,permissions:p?.active===false?{}:(p?.permissions||{})}}
 async function boot(id:string,viewer_permissions:any){const t=await target(id),a=t.agent,[pl,m,ag,fr,st,shiftDefs]=await Promise.all([db.from('planning').select('date,code,observation,equipe,source_value').eq('agent_id',id).order('date'),media(),db.from('stip_agent_agenda_items').select('id,title,body,event_date,all_day,start_time,end_time,location,importance').eq('agent_id',id).eq('status','active').order('event_date'),db.from('formations').select('id,intitule,date_debut,date_fin,lieu,horaire,statut').eq('agent_source_key',a.source_key).order('date_debut'),db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').order('date_debut'),shiftDefinitions()]);if(pl.error)throw pl.error;return{agent:a,target_permissions:t.permissions,viewer_permissions,team:teamOf(a),personal:pl.data||[],media:m,shift_definitions:shiftDefs,agenda_items:ag.data||[],personal_formations:fr.data||[],personal_stagiaires:(st.data||[]).filter((x:any)=>String(x.referent||'').toLowerCase().includes(String(a.prenom||'').toLowerCase())||String(x.referent||'').toLowerCase().includes(String(a.nom||'').toLowerCase()))}}
 async function team(id:string,viewer_permissions:any){const t=await target(id),team=teamOf(t.agent),today=parisDay(),end=parisDay(62);let q=db.from('planning').select('date,code,observation,equipe,agent_id,agent_source_key,agents(id,nom,prenom,source_key,ghe,telephone,avatar_url)').gte('date',today).lte('date',end).order('date');q=team==='chefs'?q.in('equipe',['jour','nuit','chefs']):q.eq('equipe',team);const [{data,error},shiftDefs]=await Promise.all([q,shiftDefinitions()]);if(error)throw error;return{team,planning:data||[],shift_definitions:shiftDefs,viewer_permissions}}
