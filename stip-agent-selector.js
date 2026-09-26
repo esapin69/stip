@@ -91,11 +91,6 @@
     );
   }
 
-  function avatar(agent) {
-    const value = esc(initials(agent));
-    return `<span class="sas-avatar" data-initials="${value}">${value}</span>`;
-  }
-
   function gheText(agent) {
     const raw = String(agent?.ghe || "").replace(/^GHE\s*/i, "").trim();
     const match = raw.match(/\d+/);
@@ -170,7 +165,6 @@
     return `<div class="sas-person${selected ? " is-selected" : ""}" data-sas-row="${esc(agent.id)}">
       <button class="sas-person-main" type="button" data-sas-agent="${esc(agent.id)}" aria-label="${actionLabel} ${esc(name(agent))}">
         <span class="sas-ghe"><small>GHE</small><b>${esc(gheText(agent))}</b></span>
-        ${options.showAvatar === false ? "" : avatar(agent)}
         <span class="sas-person-copy">
           <strong>${esc(name(agent))}</strong>
           ${statusHtml}
@@ -314,16 +308,16 @@
       name(a).localeCompare(name(b), "fr", { sensitivity: "base" });
   }
 
-  function pickerPortrait(agent) {
-    const fallback = esc(initials(agent));
-    return `<span class="sas-wall-photo" data-initials="${fallback}">${fallback}</span>`;
-  }
-
   function pickerCard(agent, options, filter) {
     const first = pickerFirst(agent);
     const last = pickerLast(agent);
     const ghe = pickerGhe(agent);
     const selected = String(agent?.id ?? "") === String(options.selectedId ?? "");
+    const meta = [agent?.role, agent?.today_code, agent?.equipe]
+      .map((value) => String(value || "").trim())
+      .filter((value, index, all) => value && all.indexOf(value) === index)
+      .slice(0, 2)
+      .join(" · ");
     let copy = "";
     if (filter === "last") {
       copy = `<strong>${esc(last || "SANS NOM")}</strong><small>${esc(first)}</small>`;
@@ -333,12 +327,14 @@
       copy = `<strong>${esc(first)}</strong><small>${esc(last)}</small>`;
     }
     return `<button class="sas-wall-agent${selected ? " is-selected" : ""}${filter === "ghe" ? " is-ghe-mode" : ""}" type="button" data-sas-agent="${esc(agent.id)}" aria-label="Choisir ${esc(name(agent))}">
-      <span class="sas-wall-portrait">
-        ${pickerPortrait(agent)}
+      <span class="sas-wall-card-top">
         <span class="sas-wall-ghe">${esc(ghe.label)}</span>
-        ${selected ? '<span class="sas-wall-selected" aria-hidden="true">✓</span>' : ""}
+        ${selected
+          ? '<span class="sas-wall-selected" aria-hidden="true">✓</span>'
+          : '<span class="sas-wall-arrow" aria-hidden="true">›</span>'}
       </span>
       <span class="sas-wall-copy">${copy}</span>
+      ${meta ? `<span class="sas-wall-meta">${esc(meta)}</span>` : ""}
     </button>`;
   }
 
@@ -387,13 +383,6 @@
         ? pickerSections([...state.items], options, state.filter)
         : `<p class="sas-empty sas-wall-empty">${esc(options.emptyText || "Aucun agent trouvé.")}</p>`}</div>`;
 
-      host.querySelectorAll(".sas-wall-photo img").forEach((image) =>
-        image.addEventListener("error", () => {
-          const box = image.parentElement;
-          if (box) box.textContent = box.dataset.initials || "ST";
-        }, { once: true }),
-      );
-
       host.querySelectorAll("[data-sas-agent]").forEach((button) =>
         button.addEventListener("click", () => {
           const agent = state.items.find(
@@ -432,7 +421,6 @@
       mode,
       privacy: rawOptions.privacy === "full" ? "full" : "team",
       showPhone: typeof rawOptions.showPhone === "boolean" ? rawOptions.showPhone : mode !== "picker",
-      showAvatar: rawOptions.showAvatar !== false,
       showStatus: typeof rawOptions.showStatus === "boolean" ? rawOptions.showStatus : mode !== "picker",
     };
     const state = {
@@ -530,12 +518,6 @@
     }
 
     function wireDynamic() {
-      host.querySelectorAll(".sas-avatar img,.sas-wall-photo img").forEach((image) =>
-        image.addEventListener("error", () => {
-          const box = image.parentElement;
-          if (box) box.textContent = box.dataset.initials || "ST";
-        }, { once: true }),
-      );
       host.querySelectorAll("[data-sas-agent]").forEach((button) =>
         button.addEventListener("click", () => {
           const agent = state.items.find((item) => String(item.id) === String(button.dataset.sasAgent));
