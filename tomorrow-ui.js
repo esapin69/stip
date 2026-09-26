@@ -1,5 +1,5 @@
 (()=>{"use strict";
-const CSS="tomorrow-hub.css?v=20260920-access6";let page=null,opened=false,scrollLock="",selectedDay="";
+const CSS="tomorrow-hub.css?v=20260926-touch-core1";let page=null,opened=false,scrollLock="",selectedDay="";
 function core(){return window.STIPTomorrow}
 function remote(){return window.STIPTomorrowRemote}
 function notice(msg){try{window.STIPToast?.show?.(msg)}catch{}if(!window.STIPToast?.show)window.alert?.(msg)}
