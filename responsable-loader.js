@@ -1,27 +1,9 @@
 (() => {
   "use strict";
 
-  // Responsable is a first-class STIP workspace: direct/deep links are routed
-  // through the main home shell so the canonical Applications / Mon profil /
-  // Esprit d'équipe header, notification bell and shortcuts stay consistent.
-  if (window.self === window.top) {
-    try {
-      const source = new URLSearchParams(location.search),
-        keep = new URLSearchParams();
-      for (const key of ["tab", "mode", "tool", "open", "entry"]) {
-        const value = source.get(key);
-        if (value) keep.set(key, value);
-      }
-      if ([...keep].length)
-        sessionStorage.setItem(
-          "stip_responsable_entry_search_v1",
-          keep.toString(),
-        );
-      else sessionStorage.removeItem("stip_responsable_entry_search_v1");
-    } catch {}
-    location.replace("index.html#/responsable");
-    return;
-  }
+  // Responsable is now a real standalone page with the shared STIP header
+  // mounted inside the same document. No iframe or parent-shell redirect.
+
 
   try {
     const params = new URLSearchParams(location.search);
