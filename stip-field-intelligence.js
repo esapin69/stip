@@ -47,11 +47,12 @@
   function rowGap(row) {
     if (row?.gap != null && Number.isFinite(Number(row.gap)))
       return Number(row.gap);
-    const planned = Number(row?.planned_count);
-    const target = Number(row?.target_count);
+    if (row?.planned_count == null || row?.target_count == null) return null;
+    const planned = Number(row.planned_count);
+    const target = Number(row.target_count);
     return Number.isFinite(planned) && Number.isFinite(target)
       ? planned - target
-      : 0;
+      : null;
   }
 
   function minuteLabel(value) {
@@ -60,7 +61,9 @@
   }
 
   function transferOptions(rows) {
-    const shiftRows = (Array.isArray(rows) ? rows : []).filter((row) => row?.shift_code);
+    const shiftRows = (Array.isArray(rows) ? rows : []).filter(
+      (row) => row?.shift_code && rowGap(row) != null,
+    );
     const deficits = shiftRows.filter((row) => rowGap(row) < 0);
     const donors = shiftRows.filter((row) => rowGap(row) > 0);
     const out = [];
@@ -72,47 +75,48 @@
         const fromShift = String(source.shift_code || "").toUpperCase();
         const fromMeta = SHIFT[fromShift];
         if (!fromMeta || fromShift === toShift) continue;
-        const start = Math.max(fromMeta.start, toMeta.start);
-        const end = Math.min(fromMeta.end, toMeta.end);
-        const minutes = end - start;
-        if (minutes < MIN_USEFUL_OVERLAP) continue;
-        const count = Math.min(rowGap(source), Math.abs(rowGap(target)));
+        const fromSurplus = rowGap(source);
+        const toGap = rowGap(target);
+        if (fromSurplus == null || toGap == null) continue;
+        const count = Math.min(fromSurplus, Math.abs(toGap));
         if (count <= 0) continue;
+        const overlapStart = Math.max(fromMeta.start, toMeta.start);
+        const overlapEnd = Math.min(fromMeta.end, toMeta.end);
+        const overlapMinutes = Math.max(0, overlapEnd - overlapStart);
         out.push({
+          kind: "schedule_exchange",
           fromShift,
           toShift,
           count,
-          fromSurplus: rowGap(source),
-          toGap: rowGap(target),
+          fromSurplus,
+          fromGapAfter: fromSurplus - count,
+          toGap,
+          toGapAfter: toGap + count,
           severity: number(target?.severity),
-          start: minuteLabel(start),
-          end: minuteLabel(end),
-          minutes,
+          overlapStart: overlapMinutes ? minuteLabel(overlapStart) : null,
+          overlapEnd: overlapMinutes ? minuteLabel(overlapEnd) : null,
+          overlapMinutes,
         });
       }
     }
-    return out.sort((a, b) =>
-      b.severity - a.severity ||
-      b.count - a.count ||
-      b.minutes - a.minutes
+    return out.sort(
+      (a, b) =>
+        b.severity - a.severity ||
+        b.count - a.count ||
+        b.fromSurplus - a.fromSurplus ||
+        b.overlapMinutes - a.overlapMinutes,
     );
   }
 
-
   function recommendedTransfers(rows) {
-    const options = transferOptions(rows).slice().sort(
-      (a, b) =>
-        b.severity - a.severity ||
-        b.minutes - a.minutes ||
-        b.count - a.count,
-    );
+    const options = transferOptions(rows).slice();
     const donorLeft = new Map();
     const targetLeft = new Map();
     (Array.isArray(rows) ? rows : []).forEach((row) => {
       const code = String(row?.shift_code || "").trim().toUpperCase();
       const gap = rowGap(row);
-      if (gap > 0) donorLeft.set(code, gap);
-      if (gap < 0) targetLeft.set(code, Math.abs(gap));
+      if (gap != null && gap > 0) donorLeft.set(code, gap);
+      if (gap != null && gap < 0) targetLeft.set(code, Math.abs(gap));
     });
     const selected = [];
     for (const option of options) {
@@ -120,7 +124,12 @@
       const need = number(targetLeft.get(option.toShift));
       const count = Math.min(number(option.count), donor, need);
       if (count <= 0) continue;
-      selected.push({ ...option, count });
+      selected.push({
+        ...option,
+        count,
+        fromGapAfter: donor - count,
+        toGapAfter: -need + count,
+      });
       donorLeft.set(option.fromShift, donor - count);
       targetLeft.set(option.toShift, need - count);
     }
@@ -130,10 +139,16 @@
   function transferProposal(option) {
     if (!option) return "";
     const count = Math.max(1, number(option.count, 1));
-    const noun = count > 1 ? `${count} renforts` : "1 renfort";
-    const action = count > 1 ? "peuvent être mobilisés" : "peut être mobilisé";
-    const timing = option.minutes < 180 ? " ponctuellement" : "";
-    return `Piste faisable sur les horaires : ${option.fromShift} a +${option.fromSurplus} et recouvre ${option.toShift} de ${option.start} à ${option.end}. ${noun} ${action} sur cette plage${timing}, après vérification terrain.`;
+    const noun = count > 1 ? `${count} changements d’horaire` : "1 changement d’horaire";
+    const donorAfter = number(option.fromGapAfter);
+    const targetAfter = number(option.toGapAfter);
+    const targetResult =
+      targetAfter < 0
+        ? `le déficit de ${option.toShift} resterait à ${targetAfter}`
+        : targetAfter === 0
+          ? `${option.toShift} atteindrait sa cible HCL`
+          : `${option.toShift} passerait à +${targetAfter} au-dessus de sa cible HCL`;
+    return `Piste d’échange à étudier : ${option.fromShift} dispose de +${option.fromSurplus} par rapport à sa cible HCL. ${noun} de ${option.fromShift} vers ${option.toShift} laisserait ${option.fromShift} à ${donorAfter >= 0 ? "+" + donorAfter : donorAfter} et ${targetResult}. À proposer seulement après vérification des contraintes individuelles et terrain.`;
   }
 
   function opportunityContext(context = {}) {
@@ -158,13 +173,21 @@
   function staffing(staff) {
     const summary = staff?.summary || {};
     const rows = rowsOf(staff);
+    const incomplete =
+      summary?.data_complete === false ||
+      rows.some(
+        (row) =>
+          row?.status === "unknown" ||
+          (row?.target_count != null && row?.planned_count == null),
+      );
+    const knownRows = rows.filter(
+      (row) => row?.target_count != null && row?.planned_count != null,
+    );
     const known =
       Boolean(staff) &&
       staff?.available !== false &&
-      (rows.length > 0 ||
-        summary.planned != null ||
-        summary.target != null ||
-        summary.gap != null);
+      (knownRows.length > 0 ||
+        (summary.planned != null && summary.target != null));
 
     if (!known) {
       return {
@@ -210,14 +233,26 @@
           : null;
 
     if (!deficits.length) {
+      if (incomplete) {
+        return {
+          ...statusMeta("unknown"),
+          known: false,
+          headline: "Lecture incomplète",
+          detail: "La cible HCL est connue, mais au moins un effectif prévu manque dans le bloc Cumul par Horaire. STIP ne conclut pas à la place de la donnée source.",
+          reasons: [],
+          totalGap: null,
+          transferOptions: [],
+          recommendedTransfers: [],
+        };
+      }
       return {
         ...meta,
         known: true,
-        headline: "Effectif conforme",
+        headline: "Effectif prévu conforme",
         detail:
           totalGap != null && totalGap > 0
-            ? `Les créneaux suivis tiennent la référence, avec +${totalGap} de marge au total.`
-            : "Les créneaux suivis sont au niveau attendu.",
+            ? `Les créneaux suivis tiennent leur cible HCL, avec +${totalGap} de marge au total.`
+            : "Les créneaux suivis sont au niveau de leur cible HCL.",
         reasons: [],
         totalGap,
         transferOptions: transferOptionsAll,
@@ -241,7 +276,7 @@
     let detail =
       planned != null && target != null
         ? `${planned} prévus pour ${target} : il manque ${missing}.`
-        : `Il manque ${missing} sur ce créneau par rapport à la référence.`;
+        : `Il manque ${missing} sur ce créneau par rapport à la cible HCL.`;
     const specialCount = number(summary.special_count);
 
     if (totalGap != null && totalGap >= 0 && bestSurplus) {
@@ -253,6 +288,8 @@
 
     if (specialCount > 0)
       detail += ` ${specialCount} horaire${specialCount > 1 ? "s" : ""} spécifique${specialCount > 1 ? "s" : ""} reste${specialCount > 1 ? "nt" : ""} compté${specialCount > 1 ? "s" : ""} à part.`;
+    if (incomplete)
+      detail += " Lecture partielle : au moins une valeur prévue manque dans le tableau source.";
 
     const reasons = deficits.slice(0, 3).map((row) => ({
         shift: String(row.shift_code || "").toUpperCase(),
@@ -286,6 +323,16 @@
     );
     if (!staff || staff?.available === false || !row)
       return { ...statusMeta("unknown"), symbol: "○", gap: null, detail: "", proposal: "" };
+    if (row?.status === "unknown" || row?.planned_count == null || row?.target_count == null)
+      return {
+        ...statusMeta("unknown"),
+        symbol: "○",
+        gap: null,
+        planned: row?.planned_count ?? null,
+        target: row?.target_count ?? null,
+        detail: "Cible HCL connue mais effectif prévu indisponible dans le tableau source.",
+        proposal: "",
+      };
 
     const severity = number(row?.severity);
     const gap = rowGap(row);
@@ -301,7 +348,7 @@
       const detail =
         planned != null && target != null
           ? `${planned} prévus pour ${target} : il manque ${missing}.`
-          : `Il manque ${missing} par rapport à la référence.`;
+          : `Il manque ${missing} par rapport à la cible HCL.`;
       return {
         ...statusMeta(level),
         gap,
@@ -516,7 +563,7 @@
         detail:
           summary.planned != null && summary.target != null
             ? `${summary.planned} prévus · cible ${summary.target} · écart ${totalGap}.`
-            : `Écart global ${totalGap} par rapport à la référence.`,
+            : `Écart global ${totalGap} par rapport à la cible HCL.`,
         proposal: "",
         shift: "",
       });
