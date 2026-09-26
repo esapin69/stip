@@ -5,6 +5,7 @@
   const STORE = "stip_session_v1";
   const PRIVACY_KEY = "stip_tableau_privacy_seen_v1";
   const TEAM_THREAD_CACHE_MS = 45 * 1000;
+  const TEAM_PROBE_CACHE_MS = 15 * 1000;
   const POLL_ACTIVE_MS = 60 * 1000;
   const POLL_PASSIVE_MS = 5 * 60 * 1000;
   const TEAM_THREAD_MUTATIONS = new Set([
@@ -19,6 +20,7 @@
     "team_take",
   ]);
   let teamThreadCache = { data: null, at: 0, inFlight: null };
+  let teamProbeCache = { data: null, at: 0, inFlight: null };
 
   function invalidateTeamThreadCache() {
     teamThreadCache.at = 0;
@@ -45,6 +47,26 @@
     return teamThreadCache.inFlight;
   }
 
+  async function readTeamProbe({ force = false } = {}) {
+    if (
+      !force &&
+      teamProbeCache.data &&
+      Date.now() - teamProbeCache.at < TEAM_PROBE_CACHE_MS
+    )
+      return teamProbeCache.data;
+    if (teamProbeCache.inFlight) return teamProbeCache.inFlight;
+    teamProbeCache.inFlight = api("team_probe")
+      .then((data) => {
+        teamProbeCache.data = data;
+        teamProbeCache.at = Date.now();
+        return data;
+      })
+      .finally(() => {
+        teamProbeCache.inFlight = null;
+      });
+    return teamProbeCache.inFlight;
+  }
+
   const state = {
     root: null,
     data: null,
@@ -57,6 +79,7 @@
     interactionReleaseTimer: 0,
     scrollToLatestPending: true,
     lastSignature: "",
+    version: "",
     focusAfterLoad: false,
     viewportHandler: null,
     viewportHeight: 0,
@@ -83,6 +106,7 @@
     sending: false,
     timer: null,
     signature: "",
+    version: "",
     search: "",
     draft: "",
     pendingImage: null,
@@ -98,6 +122,7 @@
     timer: null,
     loading: false,
     data: null,
+    version: "",
   };
 
   const previewState = {
@@ -106,6 +131,7 @@
     timer: null,
     loading: false,
     signature: "",
+    version: "",
   };
 
   const esc = (value) =>
@@ -569,9 +595,26 @@
           return;
         }
         updateWheelchairFreshnessIndicators();
-        if (!document.hidden) loadFull(true);
+        if (!document.hidden && !dmState.open) pollFull();
       }, POLL_ACTIVE_MS);
     }
+  }
+
+  async function pollFull() {
+    if (!state.root?.isConnected || state.loading || dmState.open || document.hidden) return;
+    try {
+      const probe = await readTeamProbe({ force: true });
+      const version = String(probe?.version || "");
+      if (!version) return;
+      if (!state.version) {
+        state.version = version;
+        return;
+      }
+      if (version === state.version) return;
+      state.version = version;
+      invalidateTeamThreadCache();
+      await loadFull(true);
+    } catch {}
   }
 
   function stopFull() {
@@ -888,6 +931,7 @@
     try {
       const data = await readTeamThread();
       state.data = data;
+      state.version = String(data?.version || state.version || "");
 
       const canWrite =
         data.can_write !== false && data.access_mode !== "read";
@@ -3393,7 +3437,7 @@
     dmState.statusTimer = setInterval(() => {
       if (!state.root?.isConnected) return stopDmStatus();
       if (!document.hidden) loadDmStatus();
-    }, POLL_ACTIVE_MS);
+    }, POLL_PASSIVE_MS);
   }
 
 
@@ -3489,15 +3533,11 @@
     stopDmTimer();
     dmState.loading = true;
     try {
-      const [home, agentsData, dutyData] = await Promise.all([
-        api("home"),
-        api("agents", { q: "" }),
-        api("on_duty"),
-      ]);
+      const home = await api("home");
       dmState.home = home || {};
       dmState.me = home?.me || dmState.me;
-      dmState.agents = Array.isArray(agentsData?.items) ? agentsData.items : [];
-      dmState.onDuty = Array.isArray(dutyData?.items) ? dutyData.items : [];
+      dmState.agents = Array.isArray(home?.agents) ? home.agents : [];
+      dmState.onDuty = Array.isArray(home?.on_duty) ? home.on_duty : [];
       dmState.view = "home";
       dmState.conversationId = "";
       dmState.thread = null;
@@ -3670,6 +3710,7 @@
     dmState.view = "thread";
     dmState.conversationId = id;
     dmState.signature = "";
+    dmState.version = "";
     dmState.scrollToLatest = true;
     await loadDmThread(false);
     if (!dmState.open || dmState.view !== "thread") return;
@@ -3678,8 +3719,23 @@
         stopDmTimer();
         return;
       }
-      if (!document.hidden) loadDmThread(true);
+      if (!document.hidden) pollDmThread();
     }, POLL_ACTIVE_MS);
+  }
+
+  async function pollDmThread() {
+    if (!dmState.open || dmState.view !== "thread" || !dmState.conversationId || dmState.loading || document.hidden) return;
+    try {
+      const probe = await api("thread_probe", { conversation_id: dmState.conversationId });
+      const version = String(probe?.version || "");
+      if (!version) return;
+      if (!dmState.version) {
+        dmState.version = version;
+        return;
+      }
+      if (version === dmState.version) return;
+      await loadDmThread(true);
+    } catch {}
   }
 
   async function loadDmThread(quiet = false) {
@@ -3688,13 +3744,14 @@
     try {
       const data = await api("thread", { conversation_id: dmState.conversationId });
       dmState.thread = data;
+      dmState.version = String(data?.version || data?.conversation?.updated_at || data?.conversation?.last_message_at || dmState.version || "");
       const signature = dmThreadSignature(data);
       const changed = signature !== dmState.signature;
       dmState.signature = signature;
       const panel = dmPanel();
       const editing = !!panel?.querySelector("[data-dm-text]:focus");
       if (!quiet || (changed && !editing)) renderDmThread();
-      loadDmStatus();
+      if (!quiet || changed) loadDmStatus();
     } catch (error) {
       const panel = dmPanel();
       if (panel && !quiet) panel.innerHTML =
@@ -3865,7 +3922,14 @@
     if (!homeState.button?.isConnected || homeState.loading) return;
     homeState.loading = true;
     try {
+      if (quiet && homeState.data && homeState.version) {
+        const probe = await readTeamProbe();
+        const version = String(probe?.version || "");
+        if (version && version === homeState.version) return;
+        if (version) invalidateTeamThreadCache();
+      }
       homeState.data = await readTeamThread();
+      homeState.version = String(homeState.data?.version || "");
       renderHomeStatus();
     } catch (error) {
       if (!quiet) console.error(error);
@@ -3879,6 +3943,7 @@
     homeState.timer = null;
     homeState.button = null;
     homeState.data = null;
+    homeState.version = "";
   }
 
   function bindHomeButton(button) {
@@ -4000,8 +4065,15 @@
     if (!previewState.root || previewState.loading) return;
     previewState.loading = true;
     try {
+      if (quiet && previewState.data && previewState.version) {
+        const probe = await readTeamProbe();
+        const version = String(probe?.version || "");
+        if (version && version === previewState.version) return;
+        if (version) invalidateTeamThreadCache();
+      }
       const data = await readTeamThread();
       previewState.data = data;
+      previewState.version = String(data?.version || "");
       const signature =
         dataSignature(data) + "|" + String(data.access_mode || "");
       if (!quiet || signature !== previewState.signature) {
@@ -4026,6 +4098,7 @@
       previewState.root = root;
       previewState.data = null;
       previewState.signature = "";
+      previewState.version = "";
       root.innerHTML =
         '<section class="tb-home-board is-loading"><div class="tb-board-frame"><div class="tb-board-plaque">TABLEAU STIP</div><div class="tb-board-surface"></div></div></section>';
 
@@ -4074,6 +4147,7 @@
     previewState.root = null;
     previewState.data = null;
     previewState.signature = "";
+    previewState.version = "";
   }
 
   function unmountFull() {
@@ -4089,6 +4163,7 @@
     state.interactionReleaseTimer = 0;
     state.scrollToLatestPending = true;
     state.lastSignature = "";
+    state.version = "";
     state.focusAfterLoad = false;
   }
 
