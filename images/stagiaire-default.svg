@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Stagiaire">
+  <defs>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eaf9fb"/>
+      <stop offset="1" stop-color="#cfeff4"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#b)"/>
+  <circle cx="128" cy="112" r="66" fill="#ffd7b3"/>
+  <path d="M96 55c9-18 34-24 51-10 10 8 12 22 3 31-8 8-21 6-26-3-4-8 1-18 10-19" fill="none" stroke="#5f4a42" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="103" cy="111" r="7" fill="#173b4b"/>
+  <circle cx="153" cy="111" r="7" fill="#173b4b"/>
+  <circle cx="88" cy="133" r="11" fill="#f5a6a0" opacity=".65"/>
+  <circle cx="168" cy="133" r="11" fill="#f5a6a0" opacity=".65"/>
+  <path d="M111 137c9 8 25 8 34 0" fill="none" stroke="#8a554b" stroke-width="6" stroke-linecap="round"/>
+  <path d="M63 231c5-39 30-61 65-61s60 22 65 61" fill="#20a8bc"/>
+  <path d="M96 180l32 29 32-29" fill="#fff" opacity=".92"/>
+  <circle cx="128" cy="211" r="8" fill="#fff"/>
+</svg>
