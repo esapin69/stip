@@ -37,17 +37,20 @@ async function overview() {
     { data: settings, error: settingsError },
     { data: sources, error: sourcesError },
     { data: cases, error: casesError },
-    { data: runs, error: runsError }
+    { data: runs, error: runsError },
+    { data: health, error: healthError }
   ] = await Promise.all([
     db.from("admin_cleanup_settings").select("config,updated_at").eq("singleton", true).maybeSingle(),
     db.from("admin_cleanup_sources").select("*").order("label"),
     db.from("admin_cleanup_cases").select("*").order("last_changed_at", { ascending: false }).limit(250),
-    db.from("admin_cleanup_scan_runs").select("*").order("started_at", { ascending: false }).limit(20)
+    db.from("admin_cleanup_scan_runs").select("*").order("started_at", { ascending: false }).limit(20),
+    db.rpc("admin_cleanup_system_summary")
   ]);
   if (settingsError) throw settingsError;
   if (sourcesError) throw sourcesError;
   if (casesError) throw casesError;
   if (runsError) throw runsError;
+  if (healthError) throw healthError;
   const rows = cases || [];
   const counts: Record<string, number> = {};
   for (const row of rows) counts[row.status] = (counts[row.status] || 0) + 1;
@@ -56,6 +59,7 @@ async function overview() {
     sources: sources || [],
     cases: rows,
     runs: runs || [],
+    health: health || {},
     counts,
     generated_at: new Date().toISOString()
   };
@@ -63,14 +67,17 @@ async function overview() {
 
 async function requestScan(actor: string, body: any) {
   const scope = Array.isArray(body.scope) ? body.scope.map(String).slice(0, 50) : [];
-  const { data, error } = await db.from("admin_cleanup_scan_runs").insert({
-    trigger_kind: "manual_request",
-    status: "running",
-    scope,
-    summary: { requested_by: actor, requested_at: new Date().toISOString(), waiting_for_worker: true }
-  }).select("*").single();
+  const { data, error } = await db.rpc("admin_cleanup_local_health_scan", {
+    p_trigger: "manual_request",
+    p_actor: actor
+  });
   if (error) throw error;
-  return data;
+  return {
+    ...(data || {}),
+    requested_scope: scope,
+    external_review:
+      "Les sources externes périmées sont remontées comme dossier à confier à GPT."
+  };
 }
 
 async function updateSettings(patch: any) {
