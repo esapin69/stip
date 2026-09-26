@@ -150,6 +150,8 @@
           <form
             id="accessRequestForm"
             class="access-request-form access-request-form-v2"
+            data-stip-keyboard-scope
+            data-stip-form-focus
           >
             <header>
               <div>
@@ -178,15 +180,17 @@
                 >Prénom<input
                   name="first_name"
                   autocomplete="given-name"
+                  data-stip-keyboard-focus
                   required /></label
               ><label
-                >Nom<input name="last_name" autocomplete="family-name" required
+                >Nom<input name="last_name" autocomplete="family-name" data-stip-keyboard-focus required
               /></label>
             </div>
             <label class="request-role"
               >Commentaire libre<textarea
                 name="comment"
                 rows="3"
+                data-stip-keyboard-focus
                 placeholder="Facultatif — précisez seulement ce qui peut aider à comprendre votre demande."
               ></textarea>
             </label>
@@ -208,6 +212,7 @@
                   pattern="[0-9]{6}"
                   maxlength="6"
                   autocomplete="new-password"
+                  data-stip-keyboard-focus
                   placeholder="••••••"
                   required
                 /><b>6 chiffres</b>

@@ -433,6 +433,92 @@
   box-shadow:0 14px 32px rgba(0,143,170,.32);
 }
 
+/* Premier formulaire pilote : champ actif + action suivante au clavier. */
+#accessRequestForm.stip-keyboard-focus-mode{
+  position:fixed;
+  z-index:10020;
+  left:0;
+  right:0;
+  top:var(--stip-vv-top,0px);
+  width:100%;
+  height:var(--stip-vv-height,100dvh);
+  max-width:none;
+  margin:0;
+  padding:18px 16px max(18px,env(safe-area-inset-bottom))!important;
+  display:grid!important;
+  align-content:center;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 40%,rgba(8,198,218,.14),transparent 46%),
+    linear-gradient(180deg,#ffffff,#edf8fa);
+}
+
+#accessRequestForm.stip-keyboard-focus-mode > *:not(.stip-keyboard-path):not(.stip-keyboard-next-action){
+  display:none!important;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode .stip-keyboard-path > *:not(.stip-keyboard-path){
+  display:none!important;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode label.stip-keyboard-path{
+  width:min(100%,620px);
+  margin:0 auto!important;
+  display:grid!important;
+  gap:9px;
+  color:#164f5d;
+  font-size:.78rem;
+  font-weight:900;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode .request-name-grid.stip-keyboard-path,
+#accessRequestForm.stip-keyboard-focus-mode .request-code-card.stip-keyboard-path{
+  width:min(100%,620px);
+  margin:0 auto!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode input,
+#accessRequestForm.stip-keyboard-focus-mode textarea{
+  width:100%;
+  min-height:62px;
+  margin:0!important;
+  padding:14px 16px!important;
+  border:2px solid #08c6da!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  color:#063f4d!important;
+  font-size:1rem!important;
+  box-shadow:0 0 0 5px rgba(8,198,218,.16),0 14px 34px rgba(4,82,104,.14)!important;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode textarea{
+  min-height:76px;
+  max-height:96px;
+  resize:none;
+}
+
+#accessRequestForm.stip-keyboard-focus-mode .stip-keyboard-next-action{
+  width:min(100%,620px);
+  min-height:58px;
+  margin:11px auto 0;
+  padding:0 18px;
+  border:0;
+  border-radius:19px;
+  background:linear-gradient(118deg,#006d89,#00a8c2 50%,#18d0df);
+  color:#fff;
+  font-weight:950;
+  font-size:.96rem;
+  box-shadow:0 14px 32px rgba(0,143,170,.32);
+}
+
+#accessRequestForm .stip-keyboard-next-action[hidden]{
+  display:none!important;
+}
+
 @keyframes entryShine{
   0%,68%{left:-45%}
   82%,100%{left:135%}

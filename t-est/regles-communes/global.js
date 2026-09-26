@@ -40,6 +40,7 @@
   }
 
   function clearMode() {
+    clearFormPath(scope);
     setMode(false);
     active = null;
     scope = null;
@@ -58,11 +59,61 @@
     setMode(current < baselineHeight - 120);
   }
 
+  function clearFormPath(root = scope) {
+    root?.querySelectorAll?.(".stip-keyboard-path").forEach((node) => {
+      node.classList.remove("stip-keyboard-path");
+    });
+    const action = root?.querySelector?.(".stip-keyboard-next-action");
+    if (action) action.hidden = true;
+  }
+
+  function prepareFormPath(field, root) {
+    if (!root?.matches?.("[data-stip-form-focus]")) return;
+    clearFormPath(root);
+
+    let node = field.closest("label") || field;
+    while (node && node !== root) {
+      node.classList.add("stip-keyboard-path");
+      node = node.parentElement;
+    }
+
+    const form = field.closest("form");
+    if (!form) return;
+
+    const fields = [...form.querySelectorAll(FOCUS)].filter(
+      (item) => !item.disabled && item.type !== "hidden"
+    );
+    const index = fields.indexOf(field);
+    if (index < 0) return;
+
+    let action = form.querySelector(".stip-keyboard-next-action");
+    if (!action) {
+      action = document.createElement("button");
+      action.type = "button";
+      action.className = "stip-keyboard-next-action";
+      form.appendChild(action);
+    }
+
+    const next = fields[index + 1] || null;
+    const submit = form.querySelector('button[type="submit"]');
+    action.hidden = false;
+    action.textContent = next ? "Suivant  →" : "Envoyer ma demande  →";
+    action.onclick = () => {
+      if (next) {
+        try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
+        return;
+      }
+      if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
+      else submit?.click();
+    };
+  }
+
   function focusField(field) {
     active = field;
     scope = field.closest(SCOPE);
     if (!scope) return;
     baselineHeight = Math.max(layoutHeight(), heightNow());
+    prepareFormPath(field, scope);
     syncKeyboard();
     setTimeout(syncKeyboard, 80);
     setTimeout(syncKeyboard, 220);
@@ -130,6 +181,7 @@
       const next = document.activeElement?.closest?.(FOCUS);
       if (next && next.closest(SCOPE) === scope) {
         active = next;
+        prepareFormPath(next, scope);
         syncKeyboard();
         return;
       }
