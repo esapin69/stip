@@ -4849,6 +4849,23 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
+/* SHARED HEADER — ONE NATIVE SCROLL CONTRACT — 2026-09-26
+   Every same-origin page mounted below the persistent STIP header uses the
+   same mobile viewport/vertical-scroll behavior. */
+.hc-home-pane iframe[data-stip-native-scroll="1"]{
+  display:block!important;
+  width:100%!important;
+  height:calc(100dvh - 8px)!important;
+  min-height:320px!important;
+  max-height:calc(100dvh - 8px)!important;
+  border:0!important;
+  overflow:auto!important;
+  overscroll-behavior:auto!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
+  overflow-anchor:none!important;
+}
+
 /* ESPRIT D'EQUIPE — NATIVE MOBILE SCROLL — 2026-09-26 */
 .hc-home-pane-team{
   width:min(100%,760px)!important;
