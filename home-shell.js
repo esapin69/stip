@@ -2356,7 +2356,8 @@
 
   function responsableEmbedSrc() {
     const params = new URLSearchParams();
-    params.set("embed", "home-v2");
+    params.set("embed", "home-v3");
+    params.set("v", "20260926-responsable-unified-scroll1");
     try {
       const saved = sessionStorage.getItem("stip_responsable_entry_search_v1") || "";
       const freshShortcut =
@@ -2763,6 +2764,7 @@
     const frame = root?.querySelector?.("#hcResponsableFrame");
     if (!frame || frame.dataset.stipBound === "1") return;
     frame.dataset.stipBound = "1";
+
     const setup = () => {
       try {
         const doc = frame.contentDocument,
@@ -2770,7 +2772,6 @@
         if (!doc || !win) return;
 
         // The iframe exists briefly as about:blank before Responsable loads.
-        // Never let that transient document replace the parent page.
         if (
           win.location.protocol === "about:" ||
           !win.location.href ||
@@ -2785,45 +2786,174 @@
         }
 
         doc.body?.classList.add("stip-home-embedded");
-        doc.documentElement.style.overflow = "hidden";
+
+        // Responsable now owns its native vertical scroll, like Esprit d'équipe.
+        // Remove the old full-document iframe + parent gesture relay.
+        frame._stipParentScrollCleanup?.();
+        frame._stipParentScrollCleanup = null;
+        frame._stipViewportLayerCleanup?.();
+        frame._stipViewportLayerCleanup = null;
+        frame._stipResponsableResizeObserver?.disconnect?.();
+        frame._stipResponsableResizeObserver = null;
+
+        frame.setAttribute("scrolling", "yes");
+        frame.style.setProperty("overflow", "auto", "important");
+        frame.style.setProperty("touch-action", "pan-y", "important");
+        frame.style.setProperty("overscroll-behavior", "auto", "important");
+
+        const html = doc.documentElement;
+        html.style.height = "100%";
+        html.style.overflowX = "hidden";
+        html.style.overflowY = "auto";
+        html.style.overscrollBehaviorY = "auto";
+        html.style.touchAction = "pan-y";
+        html.style.webkitOverflowScrolling = "touch";
+
         if (doc.body) {
-          doc.body.style.overflow = "hidden";
-          doc.body.style.minHeight = "0";
+          doc.body.style.minHeight = "100%";
+          doc.body.style.overflowX = "hidden";
+          doc.body.style.overflowY = "visible";
+          doc.body.style.touchAction = "pan-y";
         }
 
-        const syncFrameHeight = () => {
-          const body = doc.body,
-            html = doc.documentElement;
-          if (!body || !html) return;
-          if (frame.dataset.stipViewportLayer === "1") return;
-          const height = Math.max(
-            body.scrollHeight,
-            body.offsetHeight,
-            html.scrollHeight,
-            html.offsetHeight,
+        // Keep Responsable as a full mobile viewport so the home header can
+        // scroll away first, then hand over naturally to the embedded page.
+        const syncResponsableViewportHeight = () => {
+          if (!frame.isConnected) return;
+          const viewportHeight = Number(
+            window.visualViewport?.height || window.innerHeight || 0,
           );
-          if (height > 0)
-            frame.style.setProperty(
-              "height",
-              `${Math.max(680, Math.ceil(height))}px`,
-              "important",
-            );
+          frame.style.setProperty(
+            "height",
+            `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
+            "important",
+          );
         };
 
-        frame._stipResponsableResizeObserver?.disconnect?.();
-        if (window.ResizeObserver) {
-          const observer = new ResizeObserver(syncFrameHeight);
-          observer.observe(doc.documentElement);
-          if (doc.body) observer.observe(doc.body);
-          frame._stipResponsableResizeObserver = observer;
-        }
-        requestAnimationFrame(syncFrameHeight);
-        setTimeout(syncFrameHeight, 120);
-        setTimeout(syncFrameHeight, 650);
-        bindEmbeddedViewportLayer(frame, doc, syncFrameHeight);
-        bindEmbeddedParentScroll(frame, doc);
+        frame._stipResponsableViewportCleanup?.();
+        const onViewportChange = () =>
+          requestAnimationFrame(syncResponsableViewportHeight);
+        window.addEventListener("resize", onViewportChange, { passive: true });
+        window.visualViewport?.addEventListener("resize", onViewportChange, {
+          passive: true,
+        });
+        window.visualViewport?.addEventListener("scroll", onViewportChange, {
+          passive: true,
+        });
+        frame._stipResponsableViewportCleanup = () => {
+          window.removeEventListener("resize", onViewportChange);
+          window.visualViewport?.removeEventListener(
+            "resize",
+            onViewportChange,
+          );
+          window.visualViewport?.removeEventListener(
+            "scroll",
+            onViewportChange,
+          );
+        };
+
+        requestAnimationFrame(syncResponsableViewportHeight);
+        setTimeout(syncResponsableViewportHeight, 80);
+        setTimeout(syncResponsableViewportHeight, 350);
+
+        // Same native handoff validated on Esprit d'équipe:
+        // parent page moves while its header is visible; once Responsable
+        // reaches the viewport top, the child page scrolls by itself.
+        frame._stipResponsableScrollHandoffCleanup?.();
+        const scroller = doc.scrollingElement || html;
+        let transferring = false;
+        const hasOpenResponsableLayer = () =>
+          [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
+            (node) =>
+              !node.hidden &&
+              node.getAttribute("aria-hidden") !== "true" &&
+              doc.defaultView?.getComputedStyle(node)?.display !== "none",
+          );
+
+        const handoffForwardScroll = () => {
+          if (transferring || hasOpenResponsableLayer()) return;
+          const childTop = Number(scroller.scrollTop || 0);
+          const frameTop = frame.getBoundingClientRect().top;
+          if (childTop <= 0.5 || frameTop <= 0.5) return;
+
+          const delta = Math.min(childTop, Math.max(0, frameTop));
+          if (delta < 0.5) return;
+
+          transferring = true;
+          scroller.scrollTop = Math.max(0, childTop - delta);
+          window.scrollBy(0, delta);
+          requestAnimationFrame(() => {
+            transferring = false;
+          });
+        };
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchLastY = 0;
+        let touchAxis = "";
+
+        const onResponsableTouchStart = (event) => {
+          if (event.touches?.length !== 1) {
+            touchAxis = "";
+            return;
+          }
+          const touch = event.touches[0];
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+          touchLastY = touch.clientY;
+          touchAxis = "";
+        };
+
+        const onResponsableTouchMove = (event) => {
+          if (
+            event.touches?.length !== 1 ||
+            hasOpenResponsableLayer() ||
+            Number(scroller.scrollTop || 0) > 1
+          )
+            return;
+
+          const touch = event.touches[0];
+          const totalX = touch.clientX - touchStartX;
+          const totalY = touch.clientY - touchStartY;
+
+          if (!touchAxis) {
+            const ax = Math.abs(totalX);
+            const ay = Math.abs(totalY);
+            if (Math.max(ax, ay) < 6) return;
+            touchAxis = ax > ay * 1.45 ? "x" : "y";
+          }
+          if (touchAxis !== "y") return;
+
+          const fingerDelta = touch.clientY - touchLastY;
+          touchLastY = touch.clientY;
+
+          if (fingerDelta > 0 && window.scrollY > 0) {
+            const before = window.scrollY;
+            window.scrollBy(0, -fingerDelta);
+            if (window.scrollY !== before) event.preventDefault();
+          }
+        };
+
+        scroller.addEventListener("scroll", handoffForwardScroll, {
+          passive: true,
+        });
+        doc.addEventListener("touchstart", onResponsableTouchStart, {
+          passive: true,
+          capture: true,
+        });
+        doc.addEventListener("touchmove", onResponsableTouchMove, {
+          passive: false,
+          capture: true,
+        });
+
+        frame._stipResponsableScrollHandoffCleanup = () => {
+          scroller.removeEventListener("scroll", handoffForwardScroll);
+          doc.removeEventListener("touchstart", onResponsableTouchStart, true);
+          doc.removeEventListener("touchmove", onResponsableTouchMove, true);
+        };
       } catch {}
     };
+
     frame.addEventListener("load", setup);
     setTimeout(setup, 0);
   }
