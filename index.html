@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-entry-polish2" />
+    <meta name="stip-ui-build" content="20260927-access-transfer1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -91,7 +91,7 @@
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
     <link rel="stylesheet" href="styles.css?v=20260829-public5" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20260927-entry-polish2" />
+    <link rel="stylesheet" href="public-home-priority.css?v=20260927-access-transfer1" />
     <link rel="stylesheet" href="home-shell.css?v=20260926-no-iframe-pages1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu4" />
@@ -103,7 +103,7 @@
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
     <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />
     <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-formux2" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260927-formux3"></script>  </head>
+    <script defer src="/t-est/regles-communes/global.js?v=20260927-formux4"></script>  </head>
   <body>
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
@@ -158,6 +158,15 @@
                 <button class="t-login-submit" type="submit">
                   <span>Continuer</span><b aria-hidden="true">→</b>
                 </button>
+                <button
+                  class="t-request-inline"
+                  type="button"
+                  data-open-access-request
+                  data-stip-keyboard-keep
+                >
+                  <span>Pas de code ?</span>
+                  <strong>Demander un accès</strong>
+                </button>
               </form>
               <p id="loginMessage" class="message" aria-live="polite"></p>
             </div>
@@ -183,12 +192,6 @@
             </nav>
           </section>
 
-          <div class="t-access-request" data-stip-keyboard-hide>
-            <button id="requestAccessOpen" class="t-request-button" type="button">
-              <span class="t-request-copy"><small>Pas encore d’accès ?</small><strong>Demander un accès</strong></span>
-              <span class="t-request-orbit" aria-hidden="true">✦</span>
-            </button>
-          </div>
         </div>
 
         <dialog id="accessRequestDialog" class="access-request-dialog">
@@ -308,7 +311,7 @@
     <script src="stip-session-continuity.js?v=20260926-continuity2"></script>
     <script src="app.js?v=20260926-entry-promoted2"></script>
     <script src="quick-access.js?v=20260926-navigation-stable1"></script>
-    <script src="public-access-request.js?v=20260926-network-budget1"></script>
+    <script src="public-access-request.js?v=20260927-access-transfer1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260926-nextmonday1"></script>
     <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>

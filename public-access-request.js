@@ -1,6 +1,18 @@
 (()=>{'use strict';
-const API='https://stip-ten.vercel.app/api/stip-access',KEY='stip_access_request_tracking_v1',d=document.getElementById('accessRequestDialog'),open=document.getElementById('requestAccessOpen'),close=document.getElementById('requestAccessClose'),form=document.getElementById('accessRequestForm'),msg=document.getElementById('accessRequestMessage'),loginView=document.getElementById('loginView');let autoConnecting=false;
-open?.addEventListener('click',()=>d?.showModal());close?.addEventListener('click',()=>d?.close());d?.addEventListener('click',e=>{if(e.target===d)d.close()});
+const API='https://stip-ten.vercel.app/api/stip-access',KEY='stip_access_request_tracking_v1',d=document.getElementById('accessRequestDialog'),openers=[...document.querySelectorAll('[data-open-access-request]')],close=document.getElementById('requestAccessClose'),form=document.getElementById('accessRequestForm'),msg=document.getElementById('accessRequestMessage'),loginView=document.getElementById('loginView');let autoConnecting=false;
+function openRequest(){
+  if(!d||!form)return;
+  if(!d.open)d.showModal();
+  const first=form.querySelector('[name="first_name"]');
+  if(!first)return;
+  if(window.STIPFormUX?.transferFocus?.(first))return;
+  try{first.focus({preventScroll:true})}catch{first.focus?.()}
+}
+openers.forEach(button=>{
+  button.addEventListener('pointerdown',e=>e.preventDefault());
+  button.addEventListener('click',e=>{e.preventDefault();openRequest()})
+});
+close?.addEventListener('click',()=>d?.close());d?.addEventListener('click',e=>{if(e.target===d)d.close()});
 async function post(body){const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||'Envoi impossible.');return j}
 function tracking(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}}
 function clearTracking(){localStorage.removeItem(KEY);document.getElementById('accessRequestStatus')?.remove()}

@@ -198,17 +198,36 @@
     setMode(keyboardDetected());
   }
 
-  function focusField(field) {
+  function focusField(field, options = {}) {
     const nextScope = field?.closest?.(SCOPE);
     if (!nextScope) return;
 
+    const previousScope = scope;
+    const previousBaseline = baselineHeight;
+    const previousModeOpen = modeOpen;
+    const changingScope = previousScope && previousScope !== nextScope;
     const continuingSameFlow =
-      scope === nextScope && Boolean(active) && (modeOpen || keyboardDetected());
+      !changingScope &&
+      scope === nextScope &&
+      Boolean(active) &&
+      (modeOpen || keyboardDetected());
+
+    if (changingScope) {
+      clearFormPath(previousScope);
+      previousScope.classList.remove(MODE_CLASS);
+      previousScope.style.removeProperty("--stip-vv-height");
+      previousScope.style.removeProperty("--stip-vv-top");
+      modeOpen = false;
+    }
 
     scope = nextScope;
     active = field;
 
-    if (!continuingSameFlow || !baselineHeight) {
+    const preserveKeyboard = options.preserveKeyboard === true;
+    if (preserveKeyboard && previousBaseline) {
+      baselineHeight = previousBaseline;
+      pendingBaseline = previousBaseline;
+    } else if (!continuingSameFlow || !baselineHeight) {
       baselineHeight = Math.max(
         pendingBaseline || 0,
         stableHeight || 0,
@@ -218,10 +237,17 @@
     pendingBaseline = 0;
 
     prepareFormPath(field, scope);
+
+    if (preserveKeyboard && previousModeOpen) {
+      modeOpen = true;
+      scope.classList.add(MODE_CLASS);
+      document.body.classList.add(LOCK_CLASS);
+    }
+
     syncKeyboard();
-    scheduleSync(80);
-    scheduleSync(220);
-    scheduleSync(420);
+    scheduleSync(60);
+    scheduleSync(160);
+    scheduleSync(320);
   }
 
   function clearMode() {
@@ -387,10 +413,27 @@
   });
   window.addEventListener("stip:session-ended", () => resetIntents());
 
+  function transferFocus(field) {
+    if (!field) return false;
+    const preserved = baselineHeight || pendingBaseline || stableHeight || measureFullHeight();
+    pendingBaseline = preserved;
+    try {
+      field.focus({ preventScroll: true });
+    } catch {
+      field.focus?.();
+    }
+    if (document.activeElement === field) {
+      focusField(field, { preserveKeyboard: true });
+      return true;
+    }
+    return false;
+  }
+
   window.STIPFormUX = {
     reveal,
     resetIntents,
     syncKeyboard,
-    version: 2
+    transferFocus,
+    version: 3
   };
 })();
