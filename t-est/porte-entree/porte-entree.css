@@ -25,46 +25,25 @@
 
 #loginView .t-entry-shell{
   width:min(100%,680px);
+  height:100dvh;
   min-height:100dvh;
   margin:0 auto;
-  padding:calc(18px + env(safe-area-inset-top)) 18px calc(26px + env(safe-area-inset-bottom));
+  padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
   display:grid;
-  align-content:center;
-  gap:15px;
+  grid-template-rows:minmax(0,.86fr) minmax(0,1.14fr);
+  align-content:stretch;
+  gap:12px;
 }
-
-#loginView .t-entry-topbar{
-  min-height:34px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 4px;
-}
-
-#loginView .t-entry-wordmark{
-  font-size:.65rem;
-  line-height:1;
-  font-weight:950;
-  letter-spacing:.22em;
-  color:#3f6872;
-}
-
-#loginView .t-entry-signature{display:flex;align-items:center;gap:5px}
-#loginView .t-entry-signature i{
-  display:block;
-  width:7px;height:7px;
-  border-radius:999px;
-  background:#d8e6e9;
-}
-#loginView .t-entry-signature i:nth-child(2){width:22px;background:linear-gradient(90deg,var(--entry-cyan-2),var(--entry-cyan))}
-#loginView .t-entry-signature i:nth-child(3){background:var(--entry-deep)}
 
 #loginView .t-app-title{
   position:relative;
+  height:100%;
+  min-height:0;
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
+  align-items:stretch;
   gap:8px;
-  padding:16px 8px 13px;
+  padding:clamp(12px,2.2vh,22px) 8px;
   border:1.5px solid rgba(8,79,96,.20);
   border-radius:26px;
   background:rgba(255,255,255,.94);
@@ -86,8 +65,8 @@
   min-width:0;
   display:grid;
   justify-items:center;
-  align-content:start;
-  gap:8px;
+  align-content:center;
+  gap:clamp(7px,1.4vh,12px);
   padding:4px 3px 7px;
   border-radius:18px;
   color:var(--entry-ink);
@@ -115,11 +94,19 @@
 #loginView .t-app-link-muted{opacity:.82}
 #loginView .t-app-link-muted .t-app-icon{filter:saturate(.94) contrast(1.03) drop-shadow(0 8px 12px rgba(6,79,97,.12))}
 
-#loginView .t-auth-stage{display:block}
+#loginView .t-auth-stage{
+  display:block;
+  height:100%;
+  min-height:0;
+}
 #loginView .t-auth-focus{
   position:relative;
   isolation:isolate;
-  padding:18px;
+  height:100%;
+  min-height:0;
+  padding:clamp(14px,2.4vh,22px);
+  display:grid;
+  align-content:center;
   border:1.5px solid rgba(0,143,170,.26);
   border-radius:28px;
   background:linear-gradient(180deg,rgba(232,250,253,.98),rgba(255,255,255,.98));
@@ -301,6 +288,8 @@
   justify-self:center;
 }
 #loginView.t-keyboard-open .t-auth-focus{
+  height:auto;
+  min-height:0;
   padding:0;
   border:0;
   border-radius:0;
@@ -356,7 +345,7 @@ body.t-entry-keyboard-lock{overflow:hidden!important}
 #accessRequestDialog{color:#173f49}
 
 @media(max-width:520px){
-  #loginView .t-entry-shell{padding-inline:12px}
+  #loginView .t-entry-shell{padding-inline:10px}
   #loginView .t-app-icon{width:64px;height:64px;border-radius:20px}
   #loginView .t-app-link strong{font-size:.72rem}
   #loginView .t-auth-focus{padding:15px}
