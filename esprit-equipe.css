@@ -2667,12 +2667,6 @@ body.team-page {
   );
   box-shadow:var(--stip-shadow-soft);
 }
-.team-live-zone>.stip-section-separator{
-  margin:2px 0 11px;
-}
-.team-live-zone>.team-today-separator{
-  margin:15px 0 10px;
-}
 .team-duty-chief-host{
   margin:0!important;
 }
@@ -2787,11 +2781,10 @@ body.team-page {
 }
 
 
-/* today-only-chief-block-20260922 */
-.team-live-zone>.team-today-separator{
-  margin:2px 0 11px!important;
+/* today-only-chief-block-20260926 — divider lives outside the chief card */
+.team-today-separator{
+  margin:18px 0 12px!important;
 }
-
 
 
 /* Explicit boundary between the 7-day selector and the selected day's colleagues. */
