@@ -3,7 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 
 const URL=Deno.env.get("SUPABASE_URL")!,SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}});
-const TRAINEE_DEFAULT_AVATAR="https://raw.githubusercontent.com/esapin69/stip/0bd3aea4a363e2decfb1b41f20b4d349f157ebcd/images/stagiaire-default.png";
+const TRAINEE_DEFAULT_AVATAR="https://stip.esapin.com/images/stagiaire-default.svg";
 const TABLEAU_PREFIX="__stip_tableau_day__:",LEGACY_TEAM_KEY="__stip_team_chat_v1__",TEAM_BUCKET="stip-team-chat";
 const H={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"content-type,x-stip-session","Access-Control-Allow-Methods":"POST,OPTIONS","Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"};
 
