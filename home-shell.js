@@ -2354,38 +2354,10 @@
     return '<button type="button" class="hc-t-door" data-t-door aria-label="Ouvrir la porte T"><span class="hc-t-door-mark" aria-hidden="true"></span></button>';
   }
 
-  function responsableEmbedSrc() {
-    const params = new URLSearchParams();
-    params.set("embed", "home-v3");
-    params.set("v", "20260926-responsable-unified-scroll1");
-    try {
-      const saved = sessionStorage.getItem("stip_responsable_entry_search_v1") || "";
-      const freshShortcut =
-        sessionStorage.getItem("stip_responsable_fresh_entry_v1") === "1";
-      sessionStorage.removeItem("stip_responsable_entry_search_v1");
-      sessionStorage.removeItem("stip_responsable_fresh_entry_v1");
-      const source = new URLSearchParams(saved);
-      for (const key of ["tab", "mode", "tool", "open", "entry"]) {
-        const value = source.get(key);
-        if (value) params.set(key, value);
-      }
-      if (freshShortcut && !params.get("entry"))
-        params.set("entry", "shortcut");
-    } catch {}
-    return `responsable.html?${params.toString()}`;
-  }
-
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
-    if (state.homeMode === "team")
-      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v5&v=20260926-team-unified-scroll1" loading="eager"></iframe></section>`;
-    if (
-      state.homeMode === "responsable" &&
-      (has("responsable") || has("admin"))
-    )
-      return `<section class="hc-home-pane hc-home-pane-responsable"><iframe id="hcResponsableFrame" class="hc-responsable-frame" title="Espace Responsable" src="${esc(responsableEmbedSrc())}" loading="eager"></iframe></section>`;
     if (state.homeMode === "tableau" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-tableau"><section id="hcTableauStipHost"></section></section>`;
     const weeklyDetails = futureWidget(),
@@ -2393,343 +2365,9 @@
       legend = fixedShiftLegend();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}<section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
-  const EMBEDDED_VIEWPORT_LAYER_SELECTOR = [
-    "#teamShiftAnalysisOverlay",
-    "#teamCallOverlay",
-    ".hc-duty-chief-call-overlay",
-    ".team-agent-overlay.open",
-    "#sasCallOverlay",
-    "#sasPickerOverlay",
-    ".aav-overlay",
-    "#rsShiftAnalysis",
-    "#respPanel.open",
-    ".ta-sheet.open",
-    "dialog[open]",
-  ].join(",");
-
-  // One scroll contract for every same-origin page displayed below the shared
-  // STIP home header. The parent header scrolls away first; the embedded page
-  // then continues natively. This replaces all legacy full-height iframe and
-  // gesture-relay variants.
-  function bindSharedHeaderScroll(frame, doc, options = {}) {
-    if (!frame || !doc) return () => {};
-
-    frame._stipSharedHeaderScrollCleanup?.();
-    frame._stipParentScrollCleanup?.();
-    frame._stipParentScrollCleanup = null;
-    frame._stipViewportLayerCleanup?.();
-    frame._stipViewportLayerCleanup = null;
-    frame._stipTeamResizeObserver?.disconnect?.();
-    frame._stipTeamResizeObserver = null;
-    frame._stipResponsableResizeObserver?.disconnect?.();
-    frame._stipResponsableResizeObserver = null;
-
-    frame.dataset.stipNativeScroll = "1";
-    frame.setAttribute("scrolling", "yes");
-    frame.style.setProperty("overflow", "auto", "important");
-    frame.style.setProperty("touch-action", "pan-y", "important");
-    frame.style.setProperty("overscroll-behavior", "auto", "important");
-
-    const html = doc.documentElement;
-    const body = doc.body;
-    const scrollPaddingTop = String(options.scrollPaddingTop || "0px");
-
-    html.style.height = "100%";
-    html.style.overflowX = "hidden";
-    html.style.overflowY = "auto";
-    html.style.overscrollBehaviorY = "auto";
-    html.style.touchAction = "pan-y";
-    html.style.scrollPaddingTop = scrollPaddingTop;
-    html.style.webkitOverflowScrolling = "touch";
-
-    if (body) {
-      body.style.minHeight = "100%";
-      body.style.overflowX = "hidden";
-      body.style.overflowY = "visible";
-      body.style.touchAction = "pan-y";
-    }
-
-    const syncViewportHeight = () => {
-      if (!frame.isConnected) return;
-      const viewportHeight = Number(
-        window.visualViewport?.height || window.innerHeight || 0,
-      );
-      frame.style.setProperty(
-        "height",
-        `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
-        "important",
-      );
-    };
-
-    const onViewportChange = () =>
-      requestAnimationFrame(syncViewportHeight);
-    window.addEventListener("resize", onViewportChange, { passive: true });
-    window.visualViewport?.addEventListener("resize", onViewportChange, {
-      passive: true,
-    });
-    window.visualViewport?.addEventListener("scroll", onViewportChange, {
-      passive: true,
-    });
-
-    const scroller = doc.scrollingElement || html;
-    let transferring = false;
-
-    const hasOpenLayer = () =>
-      [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
-        (node) =>
-          !node.hidden &&
-          node.getAttribute("aria-hidden") !== "true" &&
-          doc.defaultView?.getComputedStyle(node)?.display !== "none",
-      );
-
-    const handoffForwardScroll = () => {
-      if (transferring || hasOpenLayer()) return;
-      const childTop = Number(scroller.scrollTop || 0);
-      const frameTop = frame.getBoundingClientRect().top;
-      if (childTop <= 0.5 || frameTop <= 0.5) return;
-
-      const delta = Math.min(childTop, Math.max(0, frameTop));
-      if (delta < 0.5) return;
-
-      transferring = true;
-      scroller.scrollTop = Math.max(0, childTop - delta);
-      window.scrollBy(0, delta);
-      requestAnimationFrame(() => {
-        transferring = false;
-      });
-    };
-
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchLastY = 0;
-    let touchAxis = "";
-
-    const onTouchStart = (event) => {
-      if (event.touches?.length !== 1) {
-        touchAxis = "";
-        return;
-      }
-      const touch = event.touches[0];
-      touchStartX = touch.clientX;
-      touchStartY = touch.clientY;
-      touchLastY = touch.clientY;
-      touchAxis = "";
-    };
-
-    const onTouchMove = (event) => {
-      if (
-        event.touches?.length !== 1 ||
-        hasOpenLayer() ||
-        Number(scroller.scrollTop || 0) > 1
-      )
-        return;
-
-      const touch = event.touches[0];
-      const totalX = touch.clientX - touchStartX;
-      const totalY = touch.clientY - touchStartY;
-
-      if (!touchAxis) {
-        const ax = Math.abs(totalX);
-        const ay = Math.abs(totalY);
-        if (Math.max(ax, ay) < 6) return;
-        touchAxis = ax > ay * 1.45 ? "x" : "y";
-      }
-      if (touchAxis !== "y") return;
-
-      const fingerDelta = touch.clientY - touchLastY;
-      touchLastY = touch.clientY;
-
-      // At the top of the embedded page, downward movement returns to the
-      // shared header instead of creating a second disconnected scroll zone.
-      if (fingerDelta > 0 && window.scrollY > 0) {
-        const before = window.scrollY;
-        window.scrollBy(0, -fingerDelta);
-        if (window.scrollY !== before) event.preventDefault();
-      }
-    };
-
-    scroller.addEventListener("scroll", handoffForwardScroll, {
-      passive: true,
-    });
-    doc.addEventListener("touchstart", onTouchStart, {
-      passive: true,
-      capture: true,
-    });
-    doc.addEventListener("touchmove", onTouchMove, {
-      passive: false,
-      capture: true,
-    });
-
-    frame._stipSharedHeaderScrollCleanup = () => {
-      scroller.removeEventListener("scroll", handoffForwardScroll);
-      doc.removeEventListener("touchstart", onTouchStart, true);
-      doc.removeEventListener("touchmove", onTouchMove, true);
-      window.removeEventListener("resize", onViewportChange);
-      window.visualViewport?.removeEventListener(
-        "resize",
-        onViewportChange,
-      );
-      window.visualViewport?.removeEventListener(
-        "scroll",
-        onViewportChange,
-      );
-    };
-
-    requestAnimationFrame(syncViewportHeight);
-    setTimeout(syncViewportHeight, 80);
-    setTimeout(syncViewportHeight, 350);
-    return frame._stipSharedHeaderScrollCleanup;
-  }
-
-  // Safety net: any future same-origin iframe inserted in a home pane inherits
-  // the shared-header scroll contract automatically unless explicitly opted out.
-  function bindSharedHeaderFrames(root) {
-    root
-      ?.querySelectorAll?.('.hc-home-pane iframe:not([data-stip-scroll-opt-out="1"])')
-      .forEach((frame) => {
-        if (frame.dataset.stipSharedHeaderAutoBound === "1") return;
-        frame.dataset.stipSharedHeaderAutoBound = "1";
-        const setup = () => {
-          try {
-            const doc = frame.contentDocument;
-            if (doc) bindSharedHeaderScroll(frame, doc);
-          } catch {}
-        };
-        frame.addEventListener("load", setup);
-        setTimeout(setup, 0);
-      });
-  }
-
-  function bindEmbeddedTeam(root) {
-    const frame = root?.querySelector?.("#hcTeamFrame");
-    if (!frame || frame.dataset.stipBound === "1") return;
-    frame.dataset.stipBound = "1";
-
-    const setup = () => {
-      try {
-        const doc = frame.contentDocument;
-        if (!doc) return;
-
-        doc.querySelector(".team-top")?.setAttribute("hidden", "");
-        const shell = doc.querySelector(".team-shell");
-        if (shell) {
-          shell.style.paddingTop = "10px";
-          shell.style.paddingBottom = "28px";
-        }
-
-        bindSharedHeaderScroll(frame, doc, { scrollPaddingTop: "10px" });
-
-        // Keep agent/chef sheets in the parent page. This preserves the shared
-        // Applications / Mon profil / Esprit d'équipe header.
-        window.STIPLoad?.script?.("agent-agenda-view.js").catch(() => {});
-        if (doc.documentElement.dataset.stipAgentBridge !== "1") {
-          doc.documentElement.dataset.stipAgentBridge = "1";
-          doc.addEventListener(
-            "click",
-            (event) => {
-              const button = event.target.closest?.(
-                "[data-team-agent],[data-duty-chief-agent]",
-              );
-              if (!button) return;
-              const key = String(
-                button.dataset.teamAgent ||
-                  button.dataset.dutyChiefAgent ||
-                  "",
-              ).trim();
-              if (!key) return;
-              event.preventDefault();
-              event.stopImmediatePropagation();
-              const openParentAgent = () =>
-                window.STIPAgentAgenda?.open?.(key, {});
-              const loader = window.STIPLoad?.script?.("agent-agenda-view.js");
-              if (loader?.then) loader.then(openParentAgent).catch(() => {});
-              else openParentAgent();
-            },
-            true,
-          );
-        }
-
-        const chair = doc.querySelector(".team-live-wheelchair");
-        if (chair && chair.dataset.parentRouteBound !== "1") {
-          chair.dataset.parentRouteBound = "1";
-          chair.addEventListener("click", (event) => {
-            event.preventDefault();
-            window.STIPRouter?.set?.("fauteuils");
-          });
-        }
-      } catch {}
-    };
-
-    frame.addEventListener("load", setup);
-    setTimeout(setup, 0);
-  }
-
-
-  function bindEmbeddedResponsable(root) {
-    const frame = root?.querySelector?.("#hcResponsableFrame");
-    if (!frame || frame.dataset.stipBound === "1") return;
-    frame.dataset.stipBound = "1";
-
-    const setup = () => {
-      try {
-        const doc = frame.contentDocument,
-          win = frame.contentWindow;
-        if (!doc || !win) return;
-
-        if (
-          win.location.protocol === "about:" ||
-          !win.location.href ||
-          win.location.href === "about:blank"
-        )
-          return;
-
-        // Any real route leaving Responsable becomes a normal parent-page navigation.
-        if (!/\/responsable\.html$/i.test(win.location.pathname)) {
-          location.href = win.location.href;
-          return;
-        }
-
-        doc.body?.classList.add("stip-home-embedded");
-        bindSharedHeaderScroll(frame, doc);
-      } catch {}
-    };
-
-    frame.addEventListener("load", setup);
-    setTimeout(setup, 0);
-  }
-
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
-
-    // Embedded live pages stay mounted during background refreshes so their
-    // current tab, scroll position and open sheets are not reset.
-    const embeddedFrame =
-      state.homeMode === "team"
-        ? root.querySelector("#hcTeamFrame")
-        : state.homeMode === "responsable"
-          ? root.querySelector("#hcResponsableFrame")
-          : null;
-    if (embeddedFrame) {
-      const bell = root.querySelector(".hc-profile-bell"),
-        count = notifications().length + Number(window.STIPMessagesUnread || 0);
-      if (bell) {
-        bell.setAttribute(
-          "aria-label",
-          `Notifications${count ? ` : ${count} à traiter` : ""}`,
-        );
-        let badge = bell.querySelector("b");
-        if (count && !badge) {
-          badge = document.createElement("b");
-          bell.appendChild(badge);
-        }
-        if (badge) {
-          badge.textContent = count ? String(count) : "";
-          badge.hidden = !count;
-        }
-      }
-      return;
-    }
 
     // The Fauteuils screen owns a live text composer. Background home refreshes
     // must never replace its DOM while it is open, otherwise Android closes the
@@ -2807,8 +2445,12 @@
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
-          const next = b.dataset.homeMode || "planning",
-            targetRoute = routeForHomeMode(next);
+          const next = b.dataset.homeMode || "planning";
+          if (next === "team") {
+            location.href = "esprit-equipe.html?entry=home-header";
+            return;
+          }
+          const targetRoute = routeForHomeMode(next);
           state.tableauFocus = false;
           if (window.STIPRouter?.set) {
             window.STIPRouter.set(targetRoute);
@@ -2821,9 +2463,6 @@
         }),
     );
     if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
-    bindSharedHeaderFrames(root);
-    if (state.homeMode === "team") bindEmbeddedTeam(root);
-    if (state.homeMode === "responsable") bindEmbeddedResponsable(root);
     if (state.homeMode === "tableau") {
       const tableauHost = root.querySelector("#hcTableauStipHost");
       const runtime = window.STIPTableau;
@@ -2967,22 +2606,15 @@
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
-    if (k === "team") return window.STIPRouter?.set?.("team");
+    if (k === "team") return (location.href = "esprit-equipe.html?entry=home-app");
     if (k === "agents") return (location.href = "agent-directory.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
     if (k === "compare") return (location.href = "planning-compare-app.html?from=home");
     if (k === "dates") return (location.href = "agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.();
-    if (k === "responsable") {
-      try {
-        sessionStorage.setItem("stip_responsable_fresh_entry_v1", "1");
-      } catch {}
-      if (window.STIPRouter?.set) return window.STIPRouter.set("responsable");
-      state.homeMode = "responsable";
-      state.renderSig = "";
-      return render();
-    }
+    if (k === "responsable")
+      return (location.href = "responsable.html?entry=shortcut");
     if (k === "places") return (location.href = "places-app.html?mode=pro");
     if (k === "newagent")
       return (location.href = "https://esapin69.github.io/Ghe-interne/");
@@ -3128,6 +2760,20 @@
     state.session = e?.detail || window.STIPSession || state.session;
     loadDismissedNotifications();
     const routedRoute = window.STIPRouter?.get?.() || "home";
+    if (
+      routedRoute === "team" &&
+      (has("planning_team") || has("activity") || has("assistant_enabled"))
+    ) {
+      location.replace("esprit-equipe.html?entry=legacy-route");
+      return;
+    }
+    if (
+      routedRoute === "responsable" &&
+      (has("responsable") || has("admin"))
+    ) {
+      location.replace("responsable.html?entry=legacy-route");
+      return;
+    }
     const routedMode = homeModeForRoute(routedRoute);
     if (routedMode) state.homeMode = routedMode;
     try {
@@ -3137,7 +2783,15 @@
         state.homeMode = "notifications";
       } else if ((quick === "tableau" || quick === "teamchat") && has("messages")) {
         state.homeMode = "tableau";
-      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "team" || requested === "responsable" || requested === "tableau") {
+      } else if (requested === "team") {
+        sessionStorage.removeItem("stip_home_mode_once");
+        location.replace("esprit-equipe.html?entry=resume");
+        return;
+      } else if (requested === "responsable") {
+        sessionStorage.removeItem("stip_home_mode_once");
+        location.replace("responsable.html?entry=resume");
+        return;
+      } else if (requested === "notifications" || requested === "apps" || requested === "planning" || requested === "tableau") {
         state.homeMode = requested;
         sessionStorage.removeItem("stip_home_mode_once");
       }
@@ -3260,21 +2914,26 @@
     render();
   });
   window.addEventListener("stip:route", (event) => {
-    const route = String(event?.detail?.route || "home"),
-      next = homeModeForRoute(route);
+    const route = String(event?.detail?.route || "home");
+    if (route === "team") {
+      if (!(has("planning_team") || has("activity") || has("assistant_enabled"))) {
+        window.STIPRouter?.set?.("home", { replace: true });
+        return;
+      }
+      location.href = "esprit-equipe.html?entry=route";
+      return;
+    }
+    if (route === "responsable") {
+      if (!(has("responsable") || has("admin"))) {
+        window.STIPRouter?.set?.("home", { replace: true });
+        return;
+      }
+      location.href = "responsable.html?entry=route";
+      return;
+    }
+    const next = homeModeForRoute(route);
     if (!next) return;
     if (next === "tableau" && !has("messages")) {
-      window.STIPRouter?.set?.("home", { replace: true });
-      return;
-    }
-    if (next === "team" && !(has("planning_team") || has("activity") || has("assistant_enabled"))) {
-      window.STIPRouter?.set?.("home", { replace: true });
-      return;
-    }
-    if (
-      next === "responsable" &&
-      !(has("responsable") || has("admin"))
-    ) {
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
