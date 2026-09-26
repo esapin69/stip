@@ -5,6 +5,9 @@
 
   const FOCUS = "[data-stip-keyboard-focus]";
   const SCOPE = "[data-stip-keyboard-scope]";
+  const FORM_FOCUS = "[data-stip-form-focus]";
+  const INTENT = "[data-stip-intent-reveal]";
+  const NEXT_ACTION = ".stip-keyboard-next-action";
   const LOCK_CLASS = "stip-keyboard-focus-lock";
   const MODE_CLASS = "stip-keyboard-focus-mode";
   const viewport = window.visualViewport;
@@ -12,8 +15,12 @@
   let active = null;
   let scope = null;
   let baselineHeight = 0;
+  let pendingBaseline = 0;
+  let modeOpen = false;
+  let stableHeight = measureFullHeight();
+  const timers = new Set();
 
-  function heightNow() {
+  function visualHeight() {
     return Math.max(
       1,
       Math.round(
@@ -27,48 +34,79 @@
 
   function layoutHeight() {
     return Math.max(
-      window.innerHeight || 0,
-      viewport?.height || 0,
-      document.documentElement.clientHeight || 0
+      1,
+      Math.round(
+        window.innerHeight ||
+        document.documentElement.clientHeight ||
+        viewport?.height ||
+        1
+      )
     );
   }
 
-  function setMode(open) {
-    if (!scope) return;
-    scope.classList.toggle(MODE_CLASS, open);
-    document.body.classList.toggle(LOCK_CLASS, open);
+  function measureFullHeight() {
+    return Math.max(
+      visualHeight(),
+      layoutHeight(),
+      Math.round(document.documentElement.clientHeight || 0)
+    );
   }
 
-  function clearMode() {
-    clearFormPath(scope);
-    setMode(false);
-    active = null;
-    scope = null;
-    baselineHeight = 0;
+  function updateStableHeight() {
+    if (active || modeOpen) return;
+    stableHeight = measureFullHeight();
   }
 
-  function syncKeyboard() {
-    if (!active || !scope) return;
-    const vvHeight = heightNow();
-    const vvTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
-    scope.style.setProperty("--stip-vv-height", vvHeight + "px");
-    scope.style.setProperty("--stip-vv-top", vvTop + "px");
+  function captureBaseline() {
+    pendingBaseline = Math.max(stableHeight || 0, measureFullHeight());
+  }
 
-    if (document.activeElement !== active) return;
-    const current = Math.min(vvHeight, layoutHeight());
-    setMode(current < baselineHeight - 120);
+  function scheduleSync(delay) {
+    const timer = setTimeout(() => {
+      timers.delete(timer);
+      syncKeyboard();
+    }, delay);
+    timers.add(timer);
+  }
+
+  function clearScheduled() {
+    timers.forEach((timer) => clearTimeout(timer));
+    timers.clear();
+  }
+
+  function formFor(field) {
+    return field?.closest?.(FORM_FOCUS) || field?.closest?.("form") || null;
   }
 
   function clearFormPath(root = scope) {
     root?.querySelectorAll?.(".stip-keyboard-path").forEach((node) => {
       node.classList.remove("stip-keyboard-path");
     });
-    const action = root?.querySelector?.(".stip-keyboard-next-action");
+    const action = root?.querySelector?.(NEXT_ACTION);
     if (action) action.hidden = true;
   }
 
-  function prepareFormPath(field, root) {
-    if (!root?.matches?.("[data-stip-form-focus]")) return;
+  function usableFields(form) {
+    return [...(form?.querySelectorAll?.(FOCUS) || [])].filter((field) => {
+      if (field.disabled || field.type === "hidden") return false;
+      if (field.closest("[hidden]")) return false;
+      return true;
+    });
+  }
+
+  function submitLabel(submit) {
+    const explicit = submit?.dataset?.stipKeyboardLabel?.trim?.();
+    if (explicit) return explicit;
+    const span = submit?.querySelector?.("span")?.textContent?.trim?.();
+    if (span) return span.replace(/[→›»]+\s*$/, "").trim();
+    const text = submit?.textContent?.trim?.() || "";
+    return text.replace(/[→›»]+\s*$/, "").trim() || "Continuer";
+  }
+
+  function prepareFormPath(field, root = scope) {
+    const form = formFor(field);
+    if (!form?.matches?.(FORM_FOCUS)) return;
+
     clearFormPath(root);
 
     let node = field;
@@ -77,16 +115,11 @@
       node = node.parentElement;
     }
 
-    const form = field.closest("form");
-    if (!form) return;
-
-    const fields = [...form.querySelectorAll(FOCUS)].filter(
-      (item) => !item.disabled && item.type !== "hidden"
-    );
+    const fields = usableFields(form);
     const index = fields.indexOf(field);
     if (index < 0) return;
 
-    let action = form.querySelector(".stip-keyboard-next-action");
+    let action = form.querySelector(NEXT_ACTION);
     if (!action) {
       action = document.createElement("button");
       action.type = "button";
@@ -96,37 +129,129 @@
 
     const next = fields[index + 1] || null;
     const submit = form.querySelector('button[type="submit"]');
+    const label = next ? "Suivant" : submitLabel(submit);
+
     action.hidden = false;
-    action.textContent = next ? "Suivant  →" : "Envoyer ma demande  →";
+    action.textContent = label + "  →";
+    action.setAttribute("aria-label", label);
+
     action.onclick = () => {
-      if (next) {
-        try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
+      if (typeof field.reportValidity === "function" && !field.reportValidity()) {
         return;
       }
-      if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
-      else submit?.click();
+      if (next) {
+        try {
+          next.focus({ preventScroll: true });
+        } catch {
+          next.focus?.();
+        }
+        return;
+      }
+      if (typeof form.requestSubmit === "function") {
+        form.requestSubmit(submit || undefined);
+      } else {
+        submit?.click();
+      }
     };
   }
 
-  function focusField(field) {
-    active = field;
-    scope = field.closest(SCOPE);
+  function setMode(open) {
     if (!scope) return;
-    baselineHeight = Math.max(layoutHeight(), heightNow());
+    modeOpen = Boolean(open);
+    scope.classList.toggle(MODE_CLASS, modeOpen);
+    document.body.classList.toggle(LOCK_CLASS, modeOpen);
+
+    const action = scope.querySelector?.(NEXT_ACTION);
+    if (modeOpen) {
+      prepareFormPath(active, scope);
+    } else if (action) {
+      action.hidden = true;
+    }
+  }
+
+  function keyboardDetected() {
+    if (!baselineHeight) return false;
+    const current = Math.min(visualHeight(), layoutHeight());
+    const threshold = Math.max(96, Math.round(baselineHeight * 0.12));
+    return baselineHeight - current > threshold;
+  }
+
+  function syncKeyboard() {
+    if (!active || !scope) return;
+
+    const vvHeight = visualHeight();
+    const vvTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
+    scope.style.setProperty("--stip-vv-height", vvHeight + "px");
+    scope.style.setProperty("--stip-vv-top", vvTop + "px");
+
+    const focused = document.activeElement;
+    if (focused !== active) {
+      const retained =
+        focused &&
+        scope.contains(focused) &&
+        (focused.matches?.(NEXT_ACTION) ||
+          focused.closest?.("[data-stip-keyboard-keep]"));
+      if (retained) return;
+      return;
+    }
+
+    setMode(keyboardDetected());
+  }
+
+  function focusField(field) {
+    const nextScope = field?.closest?.(SCOPE);
+    if (!nextScope) return;
+
+    const continuingSameFlow =
+      scope === nextScope && Boolean(active) && (modeOpen || keyboardDetected());
+
+    scope = nextScope;
+    active = field;
+
+    if (!continuingSameFlow || !baselineHeight) {
+      baselineHeight = Math.max(
+        pendingBaseline || 0,
+        stableHeight || 0,
+        measureFullHeight()
+      );
+    }
+    pendingBaseline = 0;
+
     prepareFormPath(field, scope);
     syncKeyboard();
-    setTimeout(syncKeyboard, 80);
-    setTimeout(syncKeyboard, 220);
-    setTimeout(syncKeyboard, 420);
+    scheduleSync(80);
+    scheduleSync(220);
+    scheduleSync(420);
+  }
+
+  function clearMode() {
+    clearScheduled();
+    clearFormPath(scope);
+    if (scope) {
+      scope.classList.remove(MODE_CLASS);
+      scope.style.removeProperty("--stip-vv-height");
+      scope.style.removeProperty("--stip-vv-top");
+    }
+    document.body.classList.remove(LOCK_CLASS);
+    active = null;
+    scope = null;
+    baselineHeight = 0;
+    pendingBaseline = 0;
+    modeOpen = false;
+    setTimeout(updateStableHeight, 80);
   }
 
   function reveal(trigger) {
     const selector = trigger.getAttribute("data-stip-intent-reveal") || "";
     if (!selector) return null;
+
     let target = null;
-    try { target = document.querySelector(selector); } catch {}
+    try {
+      target = document.querySelector(selector);
+    } catch {}
     if (!target) return null;
 
+    captureBaseline();
     target.hidden = false;
     target.dataset.stipRevealed = "1";
     trigger.setAttribute("aria-expanded", "true");
@@ -138,7 +263,11 @@
         target.querySelector(FOCUS) ||
         target.querySelector("input, textarea, select, button");
       if (!next) return;
-      try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
+      try {
+        next.focus({ preventScroll: true });
+      } catch {
+        next.focus?.();
+      }
     });
 
     window.dispatchEvent(
@@ -150,10 +279,12 @@
   }
 
   function resetIntents(root = document) {
-    root.querySelectorAll("[data-stip-intent-reveal]").forEach((trigger) => {
+    root.querySelectorAll(INTENT).forEach((trigger) => {
       const selector = trigger.getAttribute("data-stip-intent-reveal") || "";
       let target = null;
-      try { target = selector ? document.querySelector(selector) : null; } catch {}
+      try {
+        target = selector ? document.querySelector(selector) : null;
+      } catch {}
       if (target) {
         target.hidden = true;
         delete target.dataset.stipRevealed;
@@ -164,8 +295,18 @@
     clearMode();
   }
 
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      if (event.target.closest?.(FOCUS) || event.target.closest?.(INTENT)) {
+        captureBaseline();
+      }
+    },
+    true
+  );
+
   document.addEventListener("click", (event) => {
-    const trigger = event.target.closest?.("[data-stip-intent-reveal]");
+    const trigger = event.target.closest?.(INTENT);
     if (!trigger) return;
     event.preventDefault();
     reveal(trigger);
@@ -178,36 +319,78 @@
 
   document.addEventListener("focusout", () => {
     setTimeout(() => {
-      const next = document.activeElement?.closest?.(FOCUS);
-      if (next && next.closest(SCOPE) === scope) {
-        active = next;
-        prepareFormPath(next, scope);
+      const focused = document.activeElement;
+      const nextField = focused?.closest?.(FOCUS);
+
+      if (nextField && nextField.closest(SCOPE) === scope) {
+        active = nextField;
+        prepareFormPath(nextField, scope);
         syncKeyboard();
         return;
       }
+
+      if (
+        focused &&
+        scope?.contains?.(focused) &&
+        (focused.matches?.(NEXT_ACTION) ||
+          focused.closest?.("[data-stip-keyboard-keep]"))
+      ) {
+        return;
+      }
+
       setTimeout(() => {
-        if (!document.activeElement?.closest?.(FOCUS)) clearMode();
-      }, 120);
+        const current = document.activeElement;
+        if (current?.closest?.(FOCUS)) return;
+        if (
+          current &&
+          scope?.contains?.(current) &&
+          (current.matches?.(NEXT_ACTION) ||
+            current.closest?.("[data-stip-keyboard-keep]"))
+        ) {
+          return;
+        }
+        clearMode();
+      }, 160);
     }, 0);
   });
 
-  viewport?.addEventListener("resize", syncKeyboard);
-  viewport?.addEventListener("scroll", syncKeyboard);
-  window.addEventListener("resize", syncKeyboard);
+  viewport?.addEventListener("resize", () => {
+    if (active) syncKeyboard();
+    else updateStableHeight();
+  });
+  viewport?.addEventListener("scroll", () => {
+    if (active) syncKeyboard();
+  });
+  window.addEventListener("resize", () => {
+    if (active) syncKeyboard();
+    else updateStableHeight();
+  });
   window.addEventListener("orientationchange", () => {
+    clearScheduled();
     setTimeout(() => {
       if (active) {
-        baselineHeight = Math.max(layoutHeight(), heightNow());
+        baselineHeight = Math.max(measureFullHeight(), stableHeight || 0);
         syncKeyboard();
+      } else {
+        stableHeight = measureFullHeight();
       }
-    }, 280);
+    }, 320);
   });
-  window.addEventListener("pageshow", syncKeyboard);
+  window.addEventListener("pageshow", () => {
+    if (active) syncKeyboard();
+    else updateStableHeight();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    if (active) syncKeyboard();
+    else updateStableHeight();
+  });
   window.addEventListener("stip:session-ended", () => resetIntents());
 
   window.STIPFormUX = {
     reveal,
     resetIntents,
-    syncKeyboard
+    syncKeyboard,
+    version: 2
   };
 })();

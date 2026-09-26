@@ -55,7 +55,7 @@
   min-height:clamp(118px,15dvh,150px);
   padding:20px 18px 20px 24px;
   display:grid;
-  grid-template-columns:minmax(0,1fr) 58px;
+  grid-template-columns:minmax(0,1fr) auto;
   align-items:center;
   gap:16px;
   border:1.5px solid rgba(0,143,172,.35);
@@ -109,14 +109,15 @@
   font-weight:950;
 }
 #loginView .t-access-intent b{
-  width:56px;height:56px;
-  display:grid;place-items:center;
+  display:block;
   justify-self:end;
-  border-radius:20px;
-  background:linear-gradient(145deg,#007e9b,#11cddd);
-  color:#fff;
-  font-size:1.55rem;
-  box-shadow:0 12px 25px rgba(0,143,172,.28);
+  padding:0 2px;
+  background:transparent;
+  color:#007f9a;
+  font-size:1.85rem;
+  line-height:1;
+  font-weight:850;
+  box-shadow:none;
 }
 #loginView .t-access-intent:active{transform:scale(.992)}
 
@@ -463,10 +464,9 @@
   width:min(100%,620px);
   margin:0 auto!important;
   display:grid!important;
-  gap:9px;
-  color:#164f5d;
-  font-size:.78rem;
-  font-weight:900;
+  gap:0;
+  color:transparent;
+  font-size:0;
 }
 
 #accessRequestForm.stip-keyboard-focus-mode .request-name-grid.stip-keyboard-path,
