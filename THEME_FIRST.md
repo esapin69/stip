@@ -14,6 +14,52 @@ Règle absolue : **le thème possède le visuel ; la page possède seulement sa 
 
 Source active de production : `main`. Une branche ou une ancienne feuille de style ne doit jamais devenir une seconde source de vérité.
 
+## Moteur de conception — de l’intention au détail
+
+Toute demande visuelle doit être traitée comme une **intention à traduire**, pas comme une liste littérale de propriétés CSS. Avant de modifier l’interface, déterminer le rôle de l’élément, ses relations avec son environnement et le résultat perceptible recherché.
+
+Ordre de raisonnement obligatoire :
+
+**intention → contexte → invariants → hiérarchie → relations → géométrie → rendu → interactions → états → contraintes négatives → cohérence → vérification réelle.**
+
+### 1. Intention
+Comprendre ce que l’utilisateur cherche réellement à obtenir. Une formulation comme « plus discret », « premium », « naturel », « trop collé », « moche » ou « on sent une séparation » décrit un effet perçu ; elle ne prescrit pas à elle seule une propriété CSS. Traduire cet effet en causes vérifiables avant de modifier.
+
+### 2. Contexte et invariants
+Identifier explicitement ce qui fonctionne déjà, ce qui est validé et ce qui ne doit pas bouger. Une correction locale ne donne jamais l’autorisation de redessiner les éléments voisins, changer une icône, inverser des actions ou modifier un comportement métier non demandé.
+
+### 3. Hiérarchie et relations
+Définir avant les valeurs CSS :
+- ce qui doit être vu en premier ;
+- ce qui est secondaire ;
+- ce qui doit être discret mais découvrable ;
+- ce qui doit sembler appartenir au même bloc ;
+- ce qui doit au contraire être clairement séparé ;
+- les rapports de dominance entre titre, contenu, action principale, action secondaire et information d’état.
+
+La qualité d’une interface vient d’abord de ces relations. Ne jamais réduire une demande visuelle à une accumulation de tailles, couleurs ou ombres indépendantes.
+
+### 4. Géométrie
+Traiter consciemment dimensions, proportions, marges, espacements, alignements, centrage, densité, rayon, épaisseur, rythme vertical, zones tactiles et occupation de l’écran. Éviter les décalages correctifs locaux lorsqu’un axe, une grille ou un composant commun peut exprimer la géométrie proprement.
+
+### 5. Rendu perceptible
+Les mots abstraits doivent être traduits en propriétés observables. Par exemple, « premium » peut nécessiter une hiérarchie plus nette, une profondeur courte, des séparations précises, une typographie mieux pondérée et un état actif mieux marqué — pas davantage de décoration. Contraste, surface, bordure, relief, profondeur, typographie et densité doivent servir le rôle de l’élément.
+
+### 6. Interactions et états
+Pour tout élément interactif, considérer au minimum : repos, pression/touch, focus si pertinent, sélection, chargement, succès, erreur et retour/navigation. Sur mobile, vérifier aussi scroll vertical, swipe horizontal, clavier ouvert, `visualViewport`, focus, zoom navigateur, safe areas et stabilité des zones tactiles.
+
+### 7. Contraintes négatives
+Avant une modification sensible, formuler ce qu’elle ne doit pas provoquer : aucun déplacement parasite, aucune régression, aucune nouvelle couche inutile, aucune modification d’icône non demandée, aucune rupture de navigation, aucun changement métier caché, aucune duplication d’un composant déjà commun.
+
+### 8. Cohérence
+Comparer d’abord avec `VISUAL_MASTERS.md`, les composants canoniques et les consommateurs déjà validés. Réutiliser la règle commune lorsqu’elle existe. Une similitude visuelle seule n’autorise pas la propagation : respecter les statuts maître/canonique/référence fonctionnelle.
+
+### 9. Vérification réelle
+Ne jamais considérer une modification visuelle comme correcte uniquement parce que le code paraît cohérent. Quand les outils le permettent, inspecter le rendu réel dans le viewport concerné, exercer les interactions touchées et contrôler les composants voisins susceptibles d’avoir régressé. Une vérification non exécutée doit être signalée comme telle.
+
+### Principe de précision
+Préférer des descriptions causales et relationnelles aux adjectifs vagues. Décrire **pourquoi** un élément doit paraître juste, **par rapport à quoi**, **dans quel état** et **ce qui doit rester stable**. Les valeurs CSS viennent ensuite comme moyen d’obtenir ce résultat.
+
 ## Registre des références visuelles
 
 Lire `VISUAL_MASTERS.md` avant toute modification UI.
@@ -213,219 +259,47 @@ Règles visuelles obligatoires :
    - 3 choix : centre différencié, extrémités miroir ;
    - 4 choix : composition symétrique alternée ;
    - 5/6 choix : grille plus compacte et composition adaptée, sans recopier six fois le même bouton.
-7. La couleur suit le contexte. Le composant utilise `--stip-filter-accent` et peut recevoir un accent métier par choix via `data-tone`, sans créer une nouvelle identité graphique.
-8. Une page ne redéfinit pas localement couleurs, rayons, ombres, états actifs ou iconographie de base du composant. Elle ne conserve que son positionnement et sa logique métier.
-9. Les filtres restent tactiles, lisibles au pouce, sans débordement horizontal et sans information portée uniquement par la couleur.
-10. Sur mobile, un groupe de 3 choix avec pictogrammes passe automatiquement en composition verticale symétrique et conserve jusqu’à deux lignes de sous-libellé ; un groupe de 3 choix texte seul reste compact.
-11. Quand un ancien filtre est migré vers 6B, supprimer ses anciennes règles visuelles locales au lieu d’empiler une nouvelle couche.
+7. La couleur suit le contexte. Le composant utilise `--stip-filter-accent` et `--stip-filter-accent-soft`, surchargeables par choix/page si le sens métier le demande.
+8. L’état actif est nettement plus présent : relief, saturation et échelle augmentent légèrement ; les choix inactifs restent parfaitement lisibles.
+9. Le texte reste sous le visuel et centré ; ne pas transformer le composant en liste de gros boutons texte.
+10. Sur mobile, les bulles restent tactiles et lisibles ; réduire d’abord les espaces avant de réduire fortement les pictogrammes ou les libellés.
 
-## Navigation temporelle canonique
+Règle de réutilisation : lorsqu’une page propose **2 à 6 choix courts de même niveau** (filtre, onglet, vue, statut), vérifier 6B en premier. Ne créer une autre géométrie que si le besoin métier l’exige réellement.
 
-Le visuel de référence pour les filtres temporels STIP est un empilement de cartes interactives de la famille **Temps**.
+## Formulaires — contrat commun mobile-first
 
-La hiérarchie canonique est :
+Tous les formulaires STIP, publics comme authentifiés, doivent suivre le même moteur d’interaction mobile. Une page ne recrée pas localement une navigation clavier différente.
 
-1. **Mois / année** — contexte principal, avec le mois fortement mis en évidence et une action éventuelle seulement si la page possède réellement une vue mensuelle.
-2. **Semaine** — flèche précédente, période centrale, numéro de semaine en information secondaire, flèche suivante.
-3. **Jours** — sept boutons de lundi à dimanche. Un clic ne masque pas la semaine : il déplace directement vers la journée choisie et conserve la semaine complète.
+### Clavier et viewport
 
-Deux variantes sont autorisées :
-- **2 niveaux** : mois + semaine, lorsque la page n’a pas besoin de choisir directement un jour ;
-- **3 niveaux** : mois + semaine + jours, lorsque le jour doit être accessible directement.
+- Un champ ne doit jamais provoquer de zoom navigateur au focus : sur mobile, les `input`, `textarea` et `select` éditables utilisent une taille calculée d’au moins `16px`.
+- L’ouverture du clavier n’a pas le droit de rendre le champ actif ou l’action suivante inaccessible.
+- Le moteur commun doit suivre `window.visualViewport` quand il existe et raisonner sur la hauteur réellement visible, pas uniquement sur `100vh`.
+- Le contenu du formulaire reste naturellement scrollable ; ne pas figer la page entière pour compenser le clavier.
+- Les zones fixes ou sticky tiennent compte de `env(safe-area-inset-bottom)`.
 
-La page **Esprit d’équipe** reste la référence fonctionnelle de la composition complète à 3 niveaux (mois → semaine → jours). En revanche, le **visuel canonique d’une ligne de semaine** vient de **Mon profil / Accueil personnel** et vit désormais dans le composant partagé `.stip-week-line` / `.stip-week-day` de `stip-patterns.css`.
+### Progression champ par champ
 
-Toute page qui affiche une ligne de jours compatible doit utiliser ce composant partagé. Elle peut adapter les données du corps de chaque jour (shift personnel, indicateur terrain, événements, lecture seule), mais pas recréer sa propre géométrie de semaine.
+- Quand un champ reçoit le focus, le formulaire l’amène dans la zone visible sans zoom artificiel et sans animation excessive.
+- Tant que le clavier est ouvert, l’écran réduit doit prioriser dans cet ordre : **contexte immédiat du champ → champ actif → action de progression**.
+- Les grands titres, textes d’introduction et décorations situés au-dessus peuvent sortir naturellement du viewport ; ne pas les recopier dans une seconde interface spéciale clavier.
+- Les champs texte simples utilisent une action clavier cohérente (`next` quand une étape éditable suit, `done` à la dernière saisie pertinente).
+- `Enter` / l’action « suivant » du clavier avance vers le prochain champ éditable lorsqu’il existe ; elle ne soumet pas prématurément un formulaire multi-étapes.
+- Une zone de texte multiligne conserve le retour à la ligne naturel sauf règle métier explicite contraire.
 
-Sur **Esprit d’équipe**, la ligne **Cette semaine / 7 jours** reste placée avant les cartes de shifts. Les informations destinées aux agents utilisent un langage terrain ; les cibles, écarts chiffrés et consignes de pilotage restent dans l’espace Responsable.
+### Action de progression
 
-Le clic sur un jour doit produire un état sélectionné visible, être mémorisé dans le contexte de navigation quand cela est pertinent et rester cohérent avec la semaine affichée.
+- Une action visuelle compacte peut accompagner le champ actif quand cela améliore réellement la progression, mais elle doit être dérivée du moteur commun et non dessinée différemment par formulaire.
+- Cette action doit rester clairement distincte du champ, suffisamment tactile, et ne doit jamais recouvrir le texte saisi.
+- Ne pas transformer la flèche/validation intermédiaire en bouton principal surdimensionné ; la validation finale reste visuellement distincte.
 
-## Bloc canonique — « LÉGENDE »
+### États et validation
 
-Toute légende STIP doit être branchée sur le composant partagé du thème, jamais redessinée localement.
+- La validation se fait au plus près du champ concerné ; une erreur ne doit pas faire perdre le focus ni renvoyer arbitrairement en haut de page.
+- Après correction, l’état d’erreur disparaît sans laisser une couche visuelle résiduelle.
+- Une étape désactivée ou non applicable n’entre pas dans la chaîne `next`.
+- Au retour arrière dans le formulaire, conserver les valeurs déjà saisies tant que le métier ne demande pas explicitement de les réinitialiser.
 
-Contrat commun :
-- conteneur : `.stip-legend` ;
-- titre : toujours le séparateur racine `.stip-section-separator` avec le libellé `LÉGENDE` ; si le séparateur officiel change, la légende change automatiquement ;
-- carte : `.stip-legend-surface` puis `.stip-legend-list` ;
-- chaque ligne est un vrai contrôle cliquable `.stip-legend-item` et utilisable au doigt ;
-- le **groupe complet des lignes** est centré dans la carte, mais toutes les lignes partagent la même grille interne : icône → `•` → texte ;
-- les icônes et surtout les `•` restent donc alignés sur les mêmes axes verticaux d’une ligne à l’autre ; le texte est aligné à gauche dans sa colonne ;
-- structure d’une ligne : `.stip-legend-icon` → `.stip-legend-bullet` contenant `•` → libellé ; une information secondaire éventuelle reste après le libellé ;
-- aucune page ne redéfinit localement l’alignement, la géométrie, le fond, le rayon ou l’état pressé de la légende ;
-- une page peut seulement fournir ses icônes, ses libellés et l’action métier déclenchée au clic ;
-- les entrées doivent être dérivées des symboles réellement visibles afin de respecter le contrat de complétude des légendes ;
-- une légende de page doit expliquer **tous les repères informationnels visibles sur la page ouverte** : icônes, dessins, pastilles, couleurs, badges et symboles d’état, y compris ceux présents dans la semaine, le mois, les synthèses et les détails ;
-- un même concept n’est expliqué qu’une fois dans la légende, même s’il apparaît plusieurs fois dans la page ;
-- les contrôles de navigation ou d’action (flèches, téléphone, fermeture, ajout, menu, etc.) ne sont pas des entrées de légende.
+### Règle de propagation
 
-Exemple :
-
-```html
-<section class="stip-legend">
-  <div class="stip-section-separator"><span>LÉGENDE</span></div>
-  <div class="stip-legend-surface">
-    <div class="stip-legend-list">
-      <button class="stip-legend-item" type="button">
-        <span class="stip-legend-icon" aria-hidden="true">🩺</span>
-        <span class="stip-legend-bullet" aria-hidden="true">•</span>
-        <b>Visite médicale</b>
-      </button>
-    </div>
-  </div>
-</section>
-```
-
-Lorsqu’une ancienne légende est repérée, la correction attendue est : **la brancher sur ce bloc officiel**, supprimer son habillage local remplacé, puis conserver uniquement sa logique métier.
-
-## Structure d’une page STIP
-
-Une nouvelle page doit suivre ce principe :
-
-```html
-<link rel="stylesheet" href="stip-theme.css">
-<link rel="stylesheet" href="stip-shell.css">
-
-<main class="stip-page">
-  <header>
-    <span class="stip-kicker">SECTION</span>
-    <h1 class="stip-title">Titre</h1>
-    <p class="stip-subtitle">Information utile.</p>
-  </header>
-
-  <section class="stip-surface">
-    <!-- contenu métier -->
-  </section>
-</main>
-```
-
-Les feuilles locales sont chargées pour la structure métier, pas pour recréer l’identité visuelle.
-
-## Rôles
-
-Agent, Responsable, Cadre et Admin sont **quatre contextes du même produit**, pas quatre thèmes différents.
-
-Ils peuvent varier par :
-
-- densité d’information ;
-- navigation ;
-- actions disponibles ;
-- priorité des données ;
-- accent fonctionnel ponctuel.
-
-Ils conservent toujours la même base : typographie, surfaces, géométrie, interactions, composants et langage visuel STIP.
-
-## ADN visuel
-
-STIP doit être clair, mobile d’abord et immédiatement lisible : fond très léger, bleu pétrole pour la structure, cyan pour l’action, surfaces blanches aérées, titres courts, avatars humains, icônes fonctionnelles, information métier dense mais hiérarchisée, interactions adaptées au pouce.
-
-Principes :
-
-- Le fond est l’écran : éviter l’effet « page dans une page ».
-- La couleur forte indique une fonction ou un état, jamais une décoration gratuite.
-- Une surface blanche = contenu consultable.
-- Une surface douce = information secondaire.
-- Un contour/accent cyan = sélection ou action courante.
-- Un élément atténué + `🚫` = fonction existante mais non autorisée.
-- Les anomalies doivent rompre volontairement la tranquillité visuelle.
-- Les dimensions découlent de la largeur disponible et des tokens, pas d’une collection de valeurs fixes par téléphone.
-
-## Mobile et accessibilité
-
-- cible tactile recommandée : au moins 44 px ;
-- aucune information essentielle uniquement par couleur ;
-- texte lisible sans zoom ;
-- les informations métier et actions principales ne doivent jamais être reléguées dans la plus petite taille typographique ;
-- lorsqu’il faut gagner de la place, réduire d’abord wrappers, marges, doublons, sous-titres et surfaces inutiles avant de réduire le texte ;
-- une hausse de lisibilité ne doit pas augmenter mécaniquement la hauteur de page : récupérer l’espace par la hiérarchie, la révélation progressive et la suppression des éléments redondants ;
-- réserver les tailles les plus petites aux métadonnées réellement secondaires (heure, aide, précision courte) ;
-- pas de débordement horizontal involontaire ;
-- `prefers-reduced-motion` respecté ;
-- safe areas iOS/Android respectées ;
-- focus visible sur les éléments interactifs ;
-- priorité à une seule colonne lorsque la largeur devient insuffisante.
-
-## Performance visuelle
-
-- préférer skeleton/état local discret à un grand écran « Chargement… » ;
-- conserver l’écran courant pendant une actualisation réseau ;
-- éviter les animations lourdes ;
-- ne charger un composant lourd que lorsqu’il est utilisé ;
-- ne pas multiplier les feuilles CSS concurrentes pour corriger un détail.
-
-## Nettoyage obligatoire
-
-Lorsqu’une page est migrée vers le thème :
-
-- retirer les styles inline remplacés ;
-- retirer le CSS injecté par JavaScript devenu inutile ;
-- fusionner les variantes dupliquées ;
-- supprimer les breakpoints contradictoires ;
-- supprimer les anciens wrappers visuels remplacés.
-
-Une migration réussie **réduit** le nombre de règles concurrentes.
-
-## Anciennes couches
-
-`stip-ui.css` et les anciennes feuilles de style locales peuvent encore exister pour compatibilité historique. Elles ne sont pas des sources de vérité et ne doivent pas être utilisées comme base d’un nouveau développement.
-
-Aucun nouveau fichier ne doit introduire un second jeu de variables globales ou une seconde identité STIP.
-
-## Contrôle automatique
-
-Le dépôt contient `tools/stip-design-audit.mjs` et la vérification GitHub `STIP design contract`.
-
-Sur les changements futurs, le contrôle bloque notamment :
-
-- une nouvelle page HTML qui n’importe pas `stip-theme.css` ;
-- un nouvel import de `stip-ui.css` ;
-- un nouveau bloc `<style>` dans une page HTML ;
-- un nouveau style inline `style="…"` ;
-- une nouvelle déclaration `:root` en dehors des fichiers autorisés du thème.
-
-Les exceptions doivent être explicites dans l’audit, rares et justifiées.
-
-## Accueil STIP — zones partagées à préserver
-
-Ne jamais créer une quatrième zone concurrente et ne jamais écraser ces trois espaces :
-
-- Intelligence / À retenir → `STIPRetain`
-- Planning / À venir → `STIPTimeline`
-- Échanges & changements → `STIPExchange`
-
-Un sujet peut apparaître dans plusieurs espaces uniquement s’il produit réellement des informations différentes.
-
-## Composant pilote
-
-Le Planning perso / calendrier reste le premier composant de référence migré sous le thème. Sa géométrie sert de précédent : adaptation calculée à la largeur réelle, pas de tailles bricolées pour chaque appareil.
-
-## Règle finale
-
-En cas de conflit entre une ancienne règle visuelle et le thème : **le thème gagne**.
-
-
-## Bulles d’analyse liées aux indicateurs
-
-Les bulles ouvertes depuis un indicateur métier (`⚠️`, `🛑`, `✔`, `➕`) utilisent une hiérarchie typographique commune sur tout STIP.
-
-- conserver le même langage de surface et de couleur déjà validé ;
-- ne jamais mettre l’analyse métier en micro-texte ;
-- titre / conclusion essentielle : gras, lisible, en MAJUSCULES ;
-- explication : taille de lecture normale, interligne aéré ;
-- proposition / précision secondaire : nouvelle ligne distincte, séparée visuellement du constat ;
-- chiffres clés et verdict doivent être identifiables en un coup d’œil ;
-- privilégier les retours à la ligne sémantiques plutôt qu’un paragraphe compact ;
-- les feuilles Responsable, Esprit d’équipe et les aides d’effectif partagent cette même hiérarchie via `stip-theme.css` ;
-- une page ne doit pas recréer localement une version plus petite de cette typographie.
-
-## Calendrier 1 mois canonique
-
-Tous les tableaux calendrier affichant un mois complet utilisent obligatoirement le même contrat :
-`stip-month-calendar` → `stip-month-grid` → `stip-month-day`, avec
-`stip-month-day-number`, `stip-month-primary` et `stip-month-events`.
-
-La géométrie, les espacements, le rouge des chiffres de week-end, l’état Aujourd’hui et le zoom de sélection sont définis uniquement dans `stip-patterns.css` et les variables `--stip-month-*` de `stip-theme-base.css`.
-Une page peut définir son contenu et ses couleurs métier, mais ne doit pas redéfinir localement la hauteur des cases, les lignes internes, les gaps, la transformation de sélection ou la taille des pictogrammes. Les pastilles de shift sont la seule exception de taille.
-
-Toute nouvelle page contenant un calendrier mensuel doit se brancher sur ce contrat avant d’être considérée terminée.
+Le premier consommateur de référence est le formulaire public **Demander un accès**. Les comportements validés sur ce formulaire doivent être implémentés dans le moteur/formulaire commun avant propagation aux autres formulaires compatibles. Tant que ce formulaire est encore en réglage, ne pas copier ses correctifs localement dans toutes les pages : corriger la base commune puis brancher progressivement les consommateurs.
