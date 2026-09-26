@@ -12,8 +12,9 @@ function consume(){const n=pending();if(n)sessionStorage.removeItem(KEY);return 
 function sameTarget(n){try{const u=new URL(n,location.origin);return u.pathname===location.pathname&&u.search===location.search&&u.hash===location.hash}catch{return false}}
 function isReload(){try{return performance.getEntriesByType('navigation')[0]?.type==='reload'}catch{return false}}
 function cleanRoute(v){return String(v||'').replace(/^#\/?/,'').replace(/^\/+|\/+$/g,'')||'home'}
-function validRoute(r){r=cleanRoute(r);return ['home','apps','notifications','team','responsable','fauteuils'].includes(r)||r==='planning'||r.startsWith('planning/')||r==='contacts'||r.startsWith('contacts/')}
+function validRoute(r){r=cleanRoute(r);return ['home','apps','notifications','fauteuils'].includes(r)||r==='planning'||r.startsWith('planning/')||r==='contacts'||r.startsWith('contacts/')}
 function saveRoute(r){try{r=cleanRoute(r);if(validRoute(r))sessionStorage.setItem(ROUTE_KEY,r);else sessionStorage.removeItem(ROUTE_KEY)}catch{}}
+function migrateLegacyStandaloneHash(){if(!location.hash||!localStorage.getItem(TOKEN))return false;const r=cleanRoute(location.hash);if(r==='team'){location.replace('esprit-equipe.html?entry=legacy-hash');return true}if(r==='responsable'){location.replace('responsable.html?entry=legacy-hash');return true}return false}
 function sanitizeCurrentHash(){if(!location.hash)return false;const r=cleanRoute(location.hash);if(validRoute(r))return false;try{sessionStorage.removeItem(ROUTE_KEY)}catch{}history.replaceState({...(history.state||{}),stip:true,route:'home',panel:false},'',location.pathname+location.search+'#/home');return true}
 function restoreRoute(){if(!isReload()||!localStorage.getItem(TOKEN)||location.hash)return false;let r='';try{r=cleanRoute(sessionStorage.getItem(ROUTE_KEY)||'')}catch{}if(!r||r==='home'||!validRoute(r)){try{sessionStorage.removeItem(ROUTE_KEY)}catch{}return false}history.replaceState({...(history.state||{}),stip:true,route:r,panel:false},'',location.pathname+location.search+'#/'+r);return true}
 function forceExplicitEntry(){const file=location.pathname.split('/').pop()||'';if(!localStorage.getItem(TOKEN)||!(!file||file==='index.html'))return false;const u=new URL(location.href);if(u.searchParams.has('quick')||u.hash)return false;u.searchParams.set('quick','public');history.replaceState(history.state,'',u.pathname+u.search);return true}
@@ -50,7 +51,7 @@ function upgradeDialogWelcome(root=document){
     card.dataset.stipIntentSuggestions='1';
   })
 }
-remember();sanitizeCurrentHash();restoreRoute();forceExplicitEntry();
+remember();if(migrateLegacyStandaloneHash())return;sanitizeCurrentHash();restoreRoute();forceExplicitEntry();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
 window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}});
 window.addEventListener('stip:login-success',()=>go(),{once:true});

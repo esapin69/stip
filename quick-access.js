@@ -18,17 +18,13 @@
     location.assign(new URL(url, location.href).href);
   }
   function openResponsable(search = "") {
+    const query = String(search || "").replace(/^\?/, "");
     try {
-      const query = String(search || "").replace(/^\?/, "");
       if (query) sessionStorage.setItem("stip_responsable_entry_search_v1", query);
       else sessionStorage.removeItem("stip_responsable_entry_search_v1");
       sessionStorage.setItem("stip_responsable_fresh_entry_v1", "1");
     } catch {}
-    if (window.STIPRouter?.set) {
-      window.STIPRouter.set("responsable");
-      return;
-    }
-    openDocument("responsable.html" + (search ? "?" + String(search).replace(/^\?/, "") : ""));
+    openDocument("responsable.html" + (query ? "?" + query : ""));
   }
   const META = {
     personal: {
@@ -41,7 +37,7 @@
     },
     team: {
       label: "Esprit d’équipe",
-      open: () => window.STIPRouter?.set?.("team"),
+      open: () => openDocument("esprit-equipe.html?entry=quick-access"),
     },
     agents: {
       label: "Équipe",

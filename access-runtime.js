@@ -242,14 +242,14 @@
     if (!canApp(k)) return;
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
-    if (k === "team") return window.STIPRouter?.set?.("team");
+    if (k === "team") return openDocument("esprit-equipe.html?entry=access-runtime");
     if (k === "agents") return openDocument("agent-directory.html");
     if (k === "compare") return openDocument("planning-compare-app.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
     if (k === "calendar") return window.STIPHubs?.planning?.("calendar");
     if (k === "dates") return openDocument("agent-dates.html");
     if (k === "contacts") return window.STIPHubs?.contacts?.("directory");
-    if (k === "responsable") return window.STIPRouter?.set?.("responsable");
+    if (k === "responsable") return openDocument("responsable.html?entry=access-runtime");
     if (k === "notes")
       return location.assign(
         "https://sites.google.com/view/hfme-notes/notes-rapides",
