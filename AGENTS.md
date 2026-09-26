@@ -213,3 +213,19 @@ Le générateur PDF sépare :
 5. la pagination/densité ;
 6. les sorties par périmètre.
 
+## 14. Contrat de communication infrastructure — Admin > Accès > Contrôle
+
+La page canonique de communication technique et de contrôle des ressources est **`control.html`**, ouverte depuis **Accès & sécurité > Contrôle**. Le moteur canonique est `admin_cleanup_*` / `stip-cleanup-control`. Ne jamais recréer un second tableau de santé, quota ou nettoyage dans une autre page.
+
+Règles obligatoires :
+- toute découverte concernant un quota, coût, restriction plateforme, erreur `402/429/5xx`, build Vercel bloqué, saturation Storage/Base, ressource dormante ou risque d'infrastructure doit être enregistrée dans ce moteur avant de conclure le chantier ; une information critique ne doit pas rester uniquement dans une conversation ;
+- utiliser `public.admin_cleanup_record_observation(...)` comme entrée canonique pour une observation externe vérifiée et mettre à jour la source correspondante dans `admin_cleanup_sources` ;
+- le contrôle local Supabase (base, Storage, continuité du moteur) est exécuté automatiquement par `public.admin_cleanup_local_health_scan(...)` et `pg_cron` ; aucune demande de contrôle ne doit rester indéfiniment en statut `running` ;
+- les métriques de compte qui ne sont pas exposées à PostgreSQL (quota Edge Functions du cycle, plan/billing, état Vercel, GitHub, Drive) restent `connector_assisted` : les relire avec les connecteurs lorsque le dossier « revue externe » est ouvert, puis enregistrer l'observation dans le moteur ;
+- conserver des seuils d'alerte avant blocage ; par défaut la page doit signaler la vigilance à 70 % et l'urgence à 90 % des quotas de référence configurés ;
+- une modification de plan ou de quota doit mettre à jour la référence dans `admin_cleanup_settings.config` et la source `supabase:organization` ;
+- aucune action de facturation, changement de plan, suppression définitive ou dépense ne peut être déclenchée automatiquement par ce moteur ;
+- lorsqu'une alerte est résolue, conserver son historique dans « Traités » au lieu de la faire disparaître silencieusement.
+
+Objectif : **une anomalie technique détectée = une trace dans Contrôle = une action claire ou un état résolu**.
+
