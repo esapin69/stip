@@ -4770,7 +4770,7 @@
 }
 
 
-/* 20260923-swipe1 — hierarchy + Cloche-style swipe delete */
+/* 20260923 — message hierarchy */
 .tb-wheelchair-hospital{
   font-size:1.16rem!important;
   text-transform:uppercase!important;
@@ -4784,131 +4784,11 @@
 .tb-wheelchair-head time span{
   font-size:.80rem!important;
 }
-.tb-message-swipe{
-  position:relative!important;
-  min-width:0!important;
-  overflow:hidden!important;
-  border-radius:18px!important;
-  touch-action:pan-y!important;
-  user-select:none!important;
-  -webkit-user-select:none!important;
-}
-.tb-message-delete-bg{
-  position:absolute!important;
-  z-index:0!important;
-  inset:4px 2px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-start!important;
-  gap:8px!important;
-  padding:0 18px!important;
-  border-radius:17px!important;
-  background:linear-gradient(90deg,#b92d35,#dc4f4f)!important;
-  color:#fff!important;
-  opacity:0!important;
-  transition:opacity .12s ease!important;
-  pointer-events:none!important;
-}
-.tb-message-delete-bg span{
-  width:38px!important;
-  height:38px!important;
-  display:grid!important;
-  place-items:center!important;
-  border-radius:50%!important;
-  background:rgba(255,255,255,.17)!important;
-  font-size:1.12rem!important;
-  font-weight:1000!important;
-}
-.tb-message-delete-bg strong{
-  font-size:.78rem!important;
-  font-weight:1000!important;
-}
-.tb-message-swipe.is-delete .tb-message-delete-bg{
-  opacity:1!important;
-}
-.tb-message-swipe>.tb-entry,
-.tb-thread-swipe>.tb-thread-reply{
-  position:relative!important;
-  z-index:2!important;
-  will-change:transform!important;
-  transition:transform .18s cubic-bezier(.2,.72,.2,1)!important;
-  touch-action:pan-y!important;
-}
-.tb-message-swipe.is-dragging>.tb-entry,
-.tb-thread-swipe.is-dragging>.tb-thread-reply{
-  transition:none!important;
-}
-.tb-message-swipe:not(.can-delete)>.tb-message-delete-bg{
-  display:none!important;
-}
-.tb-thread-swipe{
-  width:100%!important;
-  margin:0!important;
-  border-radius:14px!important;
-}
-.tb-thread-swipe .tb-message-delete-bg{
-  inset:2px 0!important;
-  border-radius:14px!important;
-}
-
 @media(max-width:430px){
   .tb-wheelchair-hospital{font-size:1.12rem!important}
   .tb-wheelchair-head time{font-size:1rem!important}
 }
 
-
-/* 20260923-swipe2 — two-way message swipe */
-.tb-message-right-bg,
-.tb-message-reply-bg{
-  position:absolute!important;
-  z-index:0!important;
-  inset:4px 2px!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  padding:0 18px!important;
-  color:#fff!important;
-  opacity:0!important;
-  transition:opacity .12s ease!important;
-  pointer-events:none!important;
-  border-radius:17px!important;
-}
-.tb-message-right-bg{
-  justify-content:flex-end!important;
-}
-.tb-message-reply-bg{
-  justify-content:flex-start!important;
-  background:linear-gradient(90deg,#14758a,#1195ad)!important;
-}
-.tb-message-right-bg.is-delete-bg{
-  background:linear-gradient(90deg,#b92d35,#dc4f4f)!important;
-}
-.tb-message-right-bg.is-react-bg{
-  background:linear-gradient(90deg,#5b7f8a,#3d9aae)!important;
-}
-.tb-message-right-bg span,
-.tb-message-reply-bg span{
-  width:38px!important;
-  height:38px!important;
-  display:grid!important;
-  place-items:center!important;
-  border-radius:50%!important;
-  background:rgba(255,255,255,.17)!important;
-  font-size:1.12rem!important;
-  font-weight:1000!important;
-}
-.tb-message-right-bg strong,
-.tb-message-reply-bg strong{
-  font-size:.78rem!important;
-  font-weight:1000!important;
-}
-.tb-message-swipe.is-delete .tb-message-right-bg.is-delete-bg,
-.tb-message-swipe.is-react .tb-message-right-bg.is-react-bg,
-.tb-message-swipe.is-reply .tb-message-reply-bg{
-  opacity:1!important;
-}
-/* Legacy background is superseded by the two-way gesture. */
-.tb-message-delete-bg{display:none!important}
 
 .tb-free-reply{
   width:min(100%,390px)!important;
