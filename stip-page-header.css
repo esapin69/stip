@@ -1,0 +1,20 @@
+.stip-page-header-host{
+  box-sizing:border-box;
+  width:100%;
+  padding:calc(14px + env(safe-area-inset-top)) 12px 8px;
+  background:var(--stip-bg,#f6fbfc);
+}
+.stip-page-header-host .hc-home-top-nav{
+  margin:0 auto!important;
+}
+.stip-page-header-native{
+  min-height:100dvh;
+  overflow-x:hidden;
+  overflow-y:auto;
+  overscroll-behavior-y:auto;
+  touch-action:pan-y;
+  -webkit-overflow-scrolling:touch;
+}
+.stip-page-header-native .team-top[hidden]{
+  display:none!important;
+}
