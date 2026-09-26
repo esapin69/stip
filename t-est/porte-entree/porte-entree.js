@@ -8,6 +8,10 @@
   if (!view || !shell || !auth || !input) return;
 
   const viewport = window.visualViewport;
+  window.addEventListener("stip:login-success", () => {
+    location.replace(new URL("./", document.baseURI).href);
+  }, { once: true });
+
   let keyboardOpen = false;
   let baselineHeight = Math.max(
     window.innerHeight || 0,
