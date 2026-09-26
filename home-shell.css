@@ -2944,57 +2944,11 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   align-items:center!important;
   padding-top:2px!important;
 }
-.hc-note-swipe{
-  position:relative!important;
-  overflow:hidden!important;
-  border-radius:17px!important;
-  min-width:0!important;
-  background:linear-gradient(90deg,#c83d3d 0 50%,#1a8599 50% 100%)!important;
-  touch-action:pan-y!important;
-  user-select:none!important;
-}
-.hc-note-swipe-bg{
-  position:absolute!important;
-  inset:0!important;
-  display:flex!important;
-  align-items:center!important;
-  gap:8px!important;
-  padding:0 18px!important;
-  color:#fff!important;
-  opacity:0!important;
-  transition:opacity .12s ease!important;
-  pointer-events:none!important;
-}
-.hc-note-swipe-bg span{
-  display:grid!important;
-  place-items:center!important;
-  width:38px!important;
-  height:38px!important;
-  border-radius:50%!important;
-  background:rgba(255,255,255,.17)!important;
-  font-size:1.15rem!important;
-  font-weight:950!important;
-}
-.hc-note-swipe-bg strong{
-  font-size:.78rem!important;
-  font-weight:950!important;
-}
-.hc-note-delete{
-  justify-content:flex-start!important;
-  background:linear-gradient(90deg,#b92d35,#dc4f4f)!important;
-}
-.hc-note-swipe.is-delete .hc-note-delete{opacity:1!important}
 .hc-note-card{
   position:relative!important;
-  z-index:2!important;
+  z-index:1!important;
   width:100%!important;
   min-height:100%!important;
-  transition:transform .18s cubic-bezier(.2,.72,.2,1),box-shadow .18s ease!important;
-  will-change:transform!important;
-  touch-action:pan-y!important;
-}
-.hc-note-swipe.is-dragging .hc-note-card{
-  transition:none!important;
 }
 .hc-note-card:active{
   box-shadow:0 2px 8px rgba(21,67,82,.08)!important;
@@ -4176,12 +4130,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* CLOCHE STIP — fiche de suivi + gestes homogènes — 20260922 */
-.hc-note-action{
-  justify-content:flex-end!important;
-  background:linear-gradient(90deg,#14758a,#1195ad)!important;
-}
-.hc-note-swipe.is-action .hc-note-action{opacity:1!important}
+/* CLOCHE STIP — fiche de suivi — 20260922 */
 .hc-detail-hero{padding:2px 0 4px!important}
 .hc-detail-pills{display:flex!important;flex-wrap:wrap!important;gap:8px!important;align-items:center!important}
 .hc-detail-status{
