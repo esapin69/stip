@@ -62,9 +62,15 @@
         )
         .slice(0, 3),
       terrain = alerts.map((x) => {
-        const planned = Number(x.planned_count),
-          target = Number(x.target_count),
-          gap = Number.isFinite(planned) && Number.isFinite(target) ? planned - target : null;
+        const planned = x.planned_count == null ? null : Number(x.planned_count),
+          target = x.target_count == null ? null : Number(x.target_count),
+          gap =
+            planned != null &&
+            target != null &&
+            Number.isFinite(planned) &&
+            Number.isFinite(target)
+              ? planned - target
+              : null;
         return intel?.terrainItem?.({
           severity: Number(x.severity || 2),
           source_family: "staffing",
