@@ -242,19 +242,28 @@ async function group(ctx:any,body:any){
   }
   return conv
 }
-async function thread(ctx:any,id:string){
+async function thread(ctx:any,id:string,afterRaw:any=""){
   if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
   const{data:conv,error:ce}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at,updated_at").eq("id",id).maybeSingle();if(ce)throw ce;if(!conv)throw Error("Conversation introuvable.");
-  const{data:members,error:me}=await db.from("stip_conversation_members").select("agent_id,last_read_at,agents(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",id);if(me)throw me;
+  const{data:members,error:me}=await db.from("stip_conversation_members").select("agent_id,last_read_at,agents(id,prenom,nom,ghe)").eq("conversation_id",id);if(me)throw me;
   const mids=(members||[]).map((x:any)=>x.agent_id);const{data:profiles}=mids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",mids):{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
-  const{data:messages,error}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",id).is("deleted_at",null).order("created_at").limit(1000);if(error)throw error;
+  const after=String(afterRaw||"").trim();
+  let messagesQuery=db.from("stip_messages")
+    .select("id,body,payload,created_at,sender_agent_id,sender:agents!stip_messages_sender_agent_id_fkey(id,prenom,nom,ghe,profile_photo_url,avatar_url)")
+    .eq("conversation_id",id)
+    .is("deleted_at",null)
+    .order("created_at");
+  if(after)messagesQuery=messagesQuery.gt("created_at",after).limit(200);
+  else messagesQuery=messagesQuery.limit(1000);
+  const{data:messages,error}=await messagesQuery;if(error)throw error;
   const signedMessages=await signedDmAttachments(messages||[]);
   const {data:broadcast}=conv.kind==="broadcast"?await db.from("stip_operational_broadcasts").select("id,category,title,body,location_text,quantity,status,expires_at,updated_at,created_at").eq("conversation_id",id).maybeSingle():{data:null};
   await db.from("stip_conversation_members").update({last_read_at:new Date().toISOString()}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
   return{
     conversation:conv,
     version:String(conv.updated_at||conv.last_message_at||conv.created_at||""),
+    incremental:!!after,
     broadcast:broadcast||null,
     members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),
     messages:signedMessages.map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))
@@ -1112,7 +1121,7 @@ Deno.serve(async req=>{
     if(a==="direct"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await direct(c,String(b.agent_id||""))})}
     if(a==="group"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await group(c,b)})}
     if(a==="thread_probe"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await threadProbe(c,String(b.conversation_id||"")))}
-    if(a==="thread"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await thread(c,String(b.conversation_id||"")))}
+    if(a==="thread"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await thread(c,String(b.conversation_id||""),b.after))}
     if(a==="send"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await send(c,b))}
     if(a==="broadcast_update"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await broadcastUpdate(c,b))}
     if(a==="profile_set"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await profileSet(c,b))}
