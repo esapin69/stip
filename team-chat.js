@@ -3745,10 +3745,32 @@
     if (!dmState.open || !dmState.conversationId || dmState.loading) return;
     dmState.loading = true;
     try {
-      const data = await api("thread", { conversation_id: dmState.conversationId });
-      dmState.thread = data;
+      const previous = dmState.thread;
+      const previousMessages = Array.isArray(previous?.messages) ? previous.messages : [];
+      const after = quiet && previousMessages.length
+        ? String(previousMessages.at(-1)?.created_at || "")
+        : "";
+      const data = await api("thread", {
+        conversation_id: dmState.conversationId,
+        ...(after ? { after } : {}),
+      });
+      let next = data;
+      if (data?.incremental && previous) {
+        const merged = new Map(
+          [...previousMessages, ...(Array.isArray(data.messages) ? data.messages : [])]
+            .map((message) => [String(message.id), message]),
+        );
+        next = {
+          ...previous,
+          ...data,
+          messages: [...merged.values()].sort((a, b) =>
+            String(a.created_at || "").localeCompare(String(b.created_at || "")),
+          ),
+        };
+      }
+      dmState.thread = next;
       dmState.version = String(data?.version || data?.conversation?.updated_at || data?.conversation?.last_message_at || dmState.version || "");
-      const signature = dmThreadSignature(data);
+      const signature = dmThreadSignature(next);
       const changed = signature !== dmState.signature;
       dmState.signature = signature;
       const panel = dmPanel();
