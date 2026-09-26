@@ -374,7 +374,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260926-iframe-scroll2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-places-recovery1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
