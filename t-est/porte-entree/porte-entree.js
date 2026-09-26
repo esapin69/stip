@@ -9,15 +9,39 @@
 
   const viewport = window.visualViewport;
   let keyboardOpen = false;
+  let baselineHeight = Math.max(
+    window.innerHeight || 0,
+    viewport?.height || 0,
+    document.documentElement.clientHeight || 0
+  );
+
+  function visibleHeight() {
+    return Math.max(1, Math.round(viewport?.height || window.innerHeight || baselineHeight));
+  }
+
+  function refreshBaseline() {
+    if (document.activeElement === input) return;
+    baselineHeight = Math.max(
+      baselineHeight,
+      window.innerHeight || 0,
+      viewport?.height || 0,
+      document.documentElement.clientHeight || 0
+    );
+  }
 
   function syncViewport() {
-    const vvHeight = Math.max(1, Math.round(viewport?.height || window.innerHeight));
+    const vvHeight = visibleHeight();
     const vvTop = Math.max(0, Math.round(viewport?.offsetTop || 0));
     view.style.setProperty("--t-vv-height", vvHeight + "px");
     view.style.setProperty("--t-vv-top", vvTop + "px");
 
     const focused = document.activeElement === input;
-    const shrunk = viewport ? viewport.height < window.innerHeight - 120 : false;
+    const currentLayoutHeight = Math.max(
+      window.innerHeight || 0,
+      viewport?.height || 0,
+      document.documentElement.clientHeight || 0
+    );
+    const shrunk = Math.min(vvHeight, currentLayoutHeight) < baselineHeight - 120;
     const next = focused && shrunk;
 
     if (next !== keyboardOpen) {
@@ -26,23 +50,41 @@
       document.body.classList.toggle("t-entry-keyboard-lock", keyboardOpen);
       if (keyboardOpen) shell.scrollTop = 0;
     }
+
+    if (!focused && !keyboardOpen) refreshBaseline();
   }
 
   input.addEventListener("focus", () => {
     syncViewport();
     setTimeout(syncViewport, 80);
     setTimeout(syncViewport, 220);
+    setTimeout(syncViewport, 420);
   });
   input.addEventListener("blur", () => {
     setTimeout(syncViewport, 80);
+    setTimeout(refreshBaseline, 260);
   });
   viewport?.addEventListener("resize", syncViewport);
   viewport?.addEventListener("scroll", syncViewport);
   window.addEventListener("resize", syncViewport);
-  window.addEventListener("pageshow", syncViewport);
+  window.addEventListener("orientationchange", () => {
+    baselineHeight = 0;
+    setTimeout(() => {
+      refreshBaseline();
+      syncViewport();
+    }, 280);
+  });
+  window.addEventListener("pageshow", () => {
+    refreshBaseline();
+    syncViewport();
+  });
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) syncViewport();
+    if (!document.hidden) {
+      refreshBaseline();
+      syncViewport();
+    }
   });
 
+  refreshBaseline();
   syncViewport();
 })();
