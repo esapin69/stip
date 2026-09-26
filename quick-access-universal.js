@@ -84,7 +84,7 @@
 
   const APPS = {
     places: { label: "Visiter les lieux", home: "places-app.html" },
-    responsable: { label: "Responsable", home: "index.html#/responsable" },
+    responsable: { label: "Responsable", home: "responsable.html" },
     assistant: { label: "Assistant STIP", home: "esprit-equipe.html?tab=assistant" },
     activity: { label: "Activité", home: "esprit-equipe.html?tab=activity" },
     access: { label: "Accès & sécurité", home: "access-manage.html" },
