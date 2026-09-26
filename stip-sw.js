@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260926-shared-header-scroll1";
+const STIP_SW_BUILD="20260926-no-iframe-pages1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
