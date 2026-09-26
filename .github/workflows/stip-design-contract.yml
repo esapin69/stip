@@ -39,3 +39,7 @@ jobs:
       - name: Check STIP calendar raw/common contract
         if: always()
         run: node tools/stip-calendar-contract-test.mjs
+
+      - name: Check STIP calendar behavior
+        if: always()
+        run: node tools/stip-calendar-behavior-test.mjs

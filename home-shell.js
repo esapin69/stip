@@ -884,7 +884,7 @@
         }),
       );
   }
-  function dayCard(x, cls = "hc-day", compact = false) {
+  function dayCard(x, cls = "stip-week-day", compact = false) {
     const canonical = canonicalShift(x.code),
       pending = !canonical || canonical === "—",
       code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
@@ -893,7 +893,7 @@
         .toLocaleDateString("fr-FR", { weekday: "long" })
         .replace(".", "")
         .toUpperCase(),
-      landscape = cls.includes("stip-week-day") || cls.includes("hc-day-landscape"),
+      landscape = cls.includes("stip-week-day"),
       day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
       loading = x.code === "…",
       statusIcon = shiftStatusIcon(canonical),
@@ -932,11 +932,6 @@
         : normalVisual;
     return `<${tag}${attrs} class="${cls} ${landscape ? "stip-week-personal-layout" : ""} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
   }
-  function weekDaysVertical(w) {
-    const weekdays = w.filter((x) => x.dow < 6),
-      weekend = w.filter((x) => x.dow > 5);
-    return `<div class="hc-days-vertical">${weekdays.map((x) => dayCard(x, "hc-day hc-day-vertical", true)).join("")}${weekend.length ? `<div class="hc-weekend-row">${weekend.map((x) => dayCard(x, "hc-day hc-day-vertical hc-day-weekend", true)).join("")}</div>` : ""}</div>`;
-  }
   function weekEventsForDay(x) {
     const iso = String(x?.iso || "");
     if (!iso) return [];
@@ -972,24 +967,13 @@
         visualDays: nextMonday ? [...w, nextMonday] : w,
         slotCount: shared.slotCount,
       };
-    const liveTail =
-        state.weekOffset === 0 &&
-        !state.weekFull &&
-        !state.weekPast &&
-        w[0]?.today &&
-        w[0]?.dow >= 5,
-      fallbackMonday = liveTail
-        ? (() => {
-            const d = new Date(w[w.length - 1].d);
-            d.setDate(d.getDate() + 1);
-            return agendaRange(d, 1)[0];
-          })()
-        : null;
+    // Dégradation sûre uniquement: si le moteur maître manque, ne pas recréer
+    // une deuxième logique calendrier susceptible de diverger.
     return {
       weekDays: w,
-      nextMonday: fallbackMonday,
-      visualDays: fallbackMonday ? [...w, fallbackMonday] : w,
-      slotCount: Math.max(1, w.length + (fallbackMonday ? 2 : 0)),
+      nextMonday: null,
+      visualDays: w,
+      slotCount: Math.max(1, w.length),
     };
   }
   function weekDaysLandscape(w) {

@@ -9,6 +9,7 @@ const core = read("stip-calendar-core.css");
 const visual = read("stip-calendar-visual.css");
 const patterns = read("stip-patterns.css");
 const weekEngine = read("stip-week-engine.js");
+const calendarRules = read("STIP-CALENDAR-RULES.md");
 
 assert(theme.includes("@layer stip-calendar-core, stip-calendar-visual;"), "cascade layers are not declared");
 const coreImport = theme.indexOf("stip-calendar-core.css");
@@ -64,6 +65,11 @@ assert(weekEngine.includes("ay>ax*1.18"),
 assert(weekEngine.includes("animateIncoming"),
   "calendar swipe no longer animates the incoming period");
 
+assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("vendredi") && calendarRules.includes("samedi") && calendarRules.includes("dimanche"),
+  "human-readable calendar contract is incomplete");
+assert(weekEngine.includes("liveTail") && weekEngine.includes("dow>=5") && weekEngine.includes("nextMonday"),
+  "late-current-week Friday/Saturday/Sunday bridge rule is missing from the master engine");
+
 const rr = read("responsable-agenda-home.js");
 assert(rr.includes("stip-week-events stip-events-vertical rr-week-marks"),
   "Responsable week is not using the common event slot");
@@ -87,6 +93,27 @@ const homeCss = read("home-shell.css");
 const teamCss = read("esprit-equipe.css");
 const agentCss = read("agent-agenda-view.css");
 const rrCss = read("responsable-agenda-home.css");
+const calendarConsumers = [
+  ["home", homeJs],
+  ["team", teamJs],
+  ["agent agenda", agentJs],
+  ["Responsable", rrHomeJs],
+];
+for (const [name, source] of calendarConsumers) {
+  assert(source.includes("STIPWeekEngine") && source.includes("display"),
+    `${name} no longer consumes the master week display engine`);
+  assert(!/\\bliveTail\\b/.test(source),
+    `${name} duplicates the late-week business rule instead of consuming the master engine`);
+}
+assert(homeJs.includes("hc-next-monday-bridge"), "home no longer renders the canonical next-Monday bridge");
+assert(teamJs.includes("stip-week-next-bridge"), "team no longer renders the canonical next-Monday bridge");
+assert(agentJs.includes("stip-week-next-bridge"), "agent agenda no longer renders the canonical next-Monday bridge");
+assert(rrHomeJs.includes("stip-week-next-bridge"), "Responsable no longer renders the canonical next-Monday bridge");
+assert(!homeJs.includes("function weekDaysVertical(") && !homeJs.includes("hc-days-vertical"),
+  "obsolete Home vertical week renderer has returned");
+const legacyHomeDayCount = (homeCss.match(/\\.hc-day\\b/g) || []).length;
+assert(legacyHomeDayCount <= 420,
+  `legacy .hc-day CSS debt grew (${legacyHomeDayCount}); new week work must use .stip-week-day`);
 assert(!/\.hc-date-jump-icon\s*\{[^}]*translateY/s.test(homeCss), "home month still offsets icons locally");
 assert(!/\.team-cal-icon\s*\{[^}]*translateY/s.test(teamCss), "team month still offsets icons locally");
 assert(!/\.aav-cal-shift\s+\.aav-dot\s*\{/s.test(agentCss), "agent month still resizes dots locally");
