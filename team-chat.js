@@ -654,7 +654,7 @@
     root.addEventListener("pointercancel", interactionEnd, { capture: true, passive: true });
 
     root.querySelector("[data-form]")?.addEventListener("submit", send);
-    bindMessageGestures(root);
+    bindMessageLongPress(root);
     root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
       const textarea = root.querySelector(".tb-composer textarea");
       if (!textarea) return;
@@ -2480,36 +2480,9 @@
     });
   }
 
-  async function deleteMessageFromSwipe(messageId) {
-    const id = String(messageId || "");
-    if (!id || state.deleteBusy) return;
-
-    const message = messageById(id);
-    const me = String(state.data?.me?.id || "");
-    const canDelete =
-      !!state.data?.admin ||
-      String(message?.sender_agent_id || "") === me;
-    if (!canDelete) return;
-
-    const confirmed = await confirmDelete(1);
-    if (!confirmed || state.deleteBusy) return;
-
-    state.deleteBusy = true;
-    try {
-      await api("team_delete", { message_ids: [id] });
-      state.selected.delete(id);
-      await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
-    } catch (error) {
-      alert(error.message || "Suppression impossible.");
-    } finally {
-      state.deleteBusy = false;
-      updateSelectionBar();
-    }
-  }
-
-  function bindMessageGestures(root) {
-    if (!root || root.dataset.reactionGestures === "1") return;
-    root.dataset.reactionGestures = "1";
+  function bindMessageLongPress(root) {
+    if (!root || root.dataset.reactionLongPress === "1") return;
+    root.dataset.reactionLongPress = "1";
 
     let timer = 0;
     let startX = 0;
@@ -2887,8 +2860,6 @@
     for (const message of rootMessages) {
       const id = String(message.id);
       const mine = String(message.sender_agent_id) === me;
-      const canDeleteMessage = !!state.data?.admin || mine;
-      const canReplyMessage = state.data?.can_write !== false && state.data?.access_mode !== "read";
       const checked = state.selected.has(id);
       const photo = message.payload?.photo_url || "";
       const replyToId = String(message.payload?.reply_to_id || "");
@@ -2901,11 +2872,6 @@
       const stock = isSearchType ? { total: 1, remaining: 1 } : wheelchairStock(message);
 
       html.push(
-        '<div class="tb-message-swipe' + (canDeleteMessage ? " can-delete" : " can-react") + (canReplyMessage ? " can-reply" : "") + '">' +
-          '<div class="tb-message-right-bg ' + (canDeleteMessage ? "is-delete-bg" : "is-react-bg") + '" aria-hidden="true">' +
-            '<span>' + (canDeleteMessage ? "✕" : "☺") + '</span><strong>' + (canDeleteMessage ? "Supprimer" : "Réagir") + '</strong>' +
-          '</div>' +
-          '<div class="tb-message-reply-bg" aria-hidden="true"><strong>Répondre</strong><span>↩</span></div>' +
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
           (activeSignal ? " is-wheelchair" : "") +
@@ -2914,8 +2880,6 @@
           (checked ? " is-selected" : "") +
           '" data-message-id="' +
           esc(id) +
-          '" data-can-delete="' + (canDeleteMessage ? "1" : "0") +
-          '" data-can-reply="' + (canReplyMessage ? "1" : "0") +
           '">',
       );
 
@@ -3091,21 +3055,11 @@
         html.push('<section class="tb-thread-replies" aria-label="Réponses liées à ce signalement">');
         for (const reply of linkedReplies) {
           const replyId = String(reply.id || "");
-          const replyMine = String(reply.sender_agent_id || "") === me;
-          const replyCanDelete = !!state.data?.admin || replyMine;
-          const replyCanReply = state.data?.can_write !== false && state.data?.access_mode !== "read";
           const replyChecked = state.selected.has(replyId);
           const replyBody = cleanWheelchairText(reply.body || "");
           html.push(
-            '<div class="tb-message-swipe tb-thread-swipe' + (replyCanDelete ? ' can-delete' : ' can-react') + (replyCanReply ? ' can-reply' : '') + '">' +
-              '<div class="tb-message-right-bg ' + (replyCanDelete ? 'is-delete-bg' : 'is-react-bg') + '" aria-hidden="true">' +
-                '<span>' + (replyCanDelete ? '✕' : '☺') + '</span><strong>' + (replyCanDelete ? 'Supprimer' : 'Réagir') + '</strong>' +
-              '</div>' +
-              '<div class="tb-message-reply-bg" aria-hidden="true"><strong>Répondre</strong><span>↩</span></div>' +
               '<article class="tb-thread-reply' + (replyChecked ? ' is-selected' : '') +
-              '" data-message-id="' + esc(replyId) +
-              '" data-can-delete="' + (replyCanDelete ? '1' : '0') +
-              '" data-can-reply="' + (replyCanReply ? '1' : '0') + '">'
+              '" data-message-id="' + esc(replyId) + '">'
           );
           if (state.selection) {
             html.push(
@@ -3124,12 +3078,12 @@
               '<small class="tb-thread-link">↪ Réponse à ce signalement</small>' +
               (replyBody ? '<p>' + esc(replyBody).replace(/\n/g, "<br>") + '</p>' : '') +
               reactionMarkup(reply) +
-            '</div></article></div>'
+            '</div></article>'
           );
         }
         html.push("</section>");
       }
-      html.push("</div></article></div>");
+      html.push("</div></article>");
     }
 
     feed.innerHTML = html.join("");
