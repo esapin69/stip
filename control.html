@@ -11,6 +11,7 @@
 *{box-sizing:border-box}.ctrl-page{max-width:900px}.ctrl-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}.ctrl-head .stip-title{margin-top:3px}
 .ctrl-hero,.ctrl-card{padding:16px;border:1px solid var(--stip-line);border-radius:var(--stip-radius-lg);background:var(--stip-surface-raised);box-shadow:var(--stip-shadow-soft)}
 .ctrl-hero{display:flex;align-items:center;justify-content:space-between;gap:14px}.ctrl-hero h2{margin:3px 0 5px}.ctrl-hero p{margin:0;color:var(--stip-muted);line-height:1.4}.ctrl-shield{width:46px;height:46px;display:grid;place-items:center;border-radius:15px;background:var(--stip-accent-soft);color:var(--stip-accent);font-weight:950}
+.ctrl-health{margin:12px 0;padding:15px;border:1px solid var(--stip-line);border-radius:16px;background:var(--stip-surface-raised);box-shadow:var(--stip-shadow-soft)}.ctrl-health-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.ctrl-health-head h3{margin:3px 0 4px}.ctrl-health-head p{margin:0;color:var(--stip-muted);font-size:.75rem}.ctrl-health-state{padding:6px 9px;border:1px solid var(--stip-line);border-radius:999px;font-size:.65rem;font-weight:950;white-space:nowrap}.ctrl-health.ok .ctrl-health-state{background:#e9f7ef;color:#17663b;border-color:#b9dfc8}.ctrl-health.warning .ctrl-health-state{background:#fff6df;color:#8a5a00;border-color:#ead6a5}.ctrl-health.critical .ctrl-health-state{background:#fff0f0;color:#a43d3d;border-color:#e0b0b0}.ctrl-health-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px}.ctrl-health-card{padding:10px;border:1px solid var(--stip-line);border-radius:12px;background:var(--stip-surface-soft);min-width:0}.ctrl-health-card small,.ctrl-health-card strong,.ctrl-health-card span{display:block}.ctrl-health-card small{color:var(--stip-muted);font-size:.61rem;font-weight:850}.ctrl-health-card strong{margin-top:4px;font-size:.92rem;overflow-wrap:anywhere}.ctrl-health-card span{margin-top:3px;color:var(--stip-muted);font-size:.64rem;line-height:1.3}.ctrl-health-meter{height:6px;margin-top:7px;border-radius:999px;background:var(--stip-line-soft);overflow:hidden}.ctrl-health-meter i{display:block;height:100%;max-width:100%;background:var(--stip-accent)}.ctrl-health-messages{display:grid;gap:6px;margin:10px 0 0;padding:0;list-style:none}.ctrl-health-messages li{padding:8px 10px;border-radius:10px;background:var(--stip-surface-soft);font-size:.7rem;line-height:1.4}.ctrl-health-messages:empty{display:none}
 .ctrl-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}.ctrl-stat{padding:12px;border:1px solid var(--stip-line);border-radius:14px;background:var(--stip-surface-raised);text-align:center}.ctrl-stat strong{display:block;font-size:1.35rem}.ctrl-stat span{display:block;margin-top:3px;color:var(--stip-muted);font-size:.72rem;font-weight:850}
 .ctrl-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0}.ctrl-toolbar small{color:var(--stip-muted)}
 .ctrl-filters{margin:10px 0 14px}.ctrl-filters .stip-filter-choice{min-height:42px}.ctrl-filters b{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:4px;border-radius:999px;background:var(--stip-surface-soft);font-size:.65rem}
@@ -27,7 +28,7 @@
 .ctrl-manual{margin-top:12px;border-top:1px solid var(--stip-line-soft);padding-top:10px}.ctrl-manual>summary{cursor:pointer;color:var(--stip-muted);font-size:.72rem;font-weight:850}.ctrl-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.ctrl-actions button{min-height:40px;padding:0 11px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-surface);color:var(--stip-ink);font-weight:900}.ctrl-actions .danger{color:#a43d3d;border-color:#e0b0b0;margin-left:auto}.ctrl-msg{min-height:1em;margin:8px 0 0;color:var(--stip-muted);font-size:.7rem}.ctrl-msg.error{color:#a43d3d}
 .ctrl-sources{margin-top:14px;border:1px solid var(--stip-line);border-radius:15px;background:var(--stip-surface-raised);overflow:hidden}.ctrl-sources>summary{padding:13px 14px;cursor:pointer;font-weight:900}.ctrl-source{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:10px 14px;border-top:1px solid var(--stip-line-soft)}.ctrl-source b,.ctrl-source small{display:block}.ctrl-source small{margin-top:3px;color:var(--stip-muted);font-size:.64rem}.ctrl-source span{align-self:center;color:var(--stip-muted);font-size:.62rem}
 .ctrl-dialog{width:min(620px,calc(100% - 24px));border:0;padding:0;background:transparent}.ctrl-dialog::backdrop{background:rgba(0,0,0,.55)}.ctrl-dialog-card{padding:18px;border:1px solid var(--stip-line);border-radius:18px;background:var(--stip-surface);color:var(--stip-ink)}.ctrl-dialog-card h3{margin:0}.ctrl-dialog-card p{color:var(--stip-muted);font-size:.76rem}.ctrl-dialog-card textarea{width:100%;min-height:180px;padding:12px;border:1px solid var(--stip-line);border-radius:12px;font:inherit}.ctrl-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}.ctrl-dialog-actions button{min-height:40px;padding:0 12px;border:1px solid var(--stip-line);border-radius:11px;background:var(--stip-surface-soft);font-weight:900}.ctrl-dialog-actions .primary{background:var(--stip-accent);color:#fff}.ctrl-dialog-msg{min-height:1em;color:#a43d3d}
-@media(max-width:620px){.ctrl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-core{grid-template-columns:1fr}.ctrl-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-gpt{align-items:stretch;flex-direction:column}.ctrl-gpt-actions{display:grid;grid-template-columns:1fr}.ctrl-gpt button{width:100%}.ctrl-actions .danger{margin-left:0}}
+@media(max-width:620px){.ctrl-health-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-health-head{align-items:stretch;flex-direction:column}.ctrl-health-state{align-self:flex-start}.ctrl-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-core{grid-template-columns:1fr}.ctrl-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.ctrl-gpt{align-items:stretch;flex-direction:column}.ctrl-gpt-actions{display:grid;grid-template-columns:1fr}.ctrl-gpt button{width:100%}.ctrl-actions .danger{margin-left:0}}
 </style>
 </head>
 <body data-stip-app="access">
@@ -42,11 +43,18 @@
 <span class="ctrl-shield">✓</span>
 </section>
 
+<section id="ctrlHealth" class="ctrl-health warning" aria-live="polite">
+  <div class="ctrl-health-head">
+    <div><span class="stip-kicker">COMMUNICATION TECHNIQUE</span><h3>État du système</h3><p>Quotas, stockage, base et continuité du contrôle.</p></div>
+    <span class="ctrl-health-state">LECTURE…</span>
+  </div>
+</section>
+
 <section id="ctrlStats" class="ctrl-stats"></section>
 
 <section class="ctrl-card ctrl-toolbar">
 <div><strong>Analyse des ressources</strong><small id="ctrlUpdated">Lecture en cours…</small></div>
-<div><button id="ctrlRefresh" class="stip-btn secondary" type="button">Actualiser</button> <button id="ctrlScan" class="stip-btn" type="button">Lancer un contrôle</button></div>
+<div><button id="ctrlRefresh" class="stip-btn secondary" type="button">Actualiser</button> <button id="ctrlScan" class="stip-btn" type="button">Contrôler maintenant</button></div>
 </section>
 
 <nav id="ctrlFilters" class="ctrl-filters stip-filter-bubbles" data-count="4">
@@ -68,6 +76,6 @@
 
 
 
-<script src="control.js?v=20260925-gpt-autonomous2"></script>
+<script src="control.js?v=20260926-system-health1"></script>
 <script src="stip-navigation.js?v=20260926-navigation4"></script></body>
 </html>
