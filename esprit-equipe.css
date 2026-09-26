@@ -2803,31 +2803,6 @@ body.team-page {
 }
 
 
-/* Embedded home mode owns the navigation chrome and its own native scroll. */
-html.stip-team-embedded {
-  height:100%!important;
-  overflow-x:hidden!important;
-  overflow-y:auto!important;
-  overscroll-behavior-y:auto!important;
-  touch-action:pan-y!important;
-  -webkit-overflow-scrolling:touch!important;
-}
-html.stip-team-embedded body.team-page {
-  min-height:100%!important;
-  overflow-x:hidden!important;
-  overflow-y:visible!important;
-  touch-action:pan-y!important;
-}
-html.stip-team-embedded .team-top {
-  display:none!important;
-}
-html.stip-team-embedded .team-shell {
-  min-height:100%!important;
-  padding-top:10px!important;
-  padding-bottom:28px!important;
-}
-
-
 /* shift-header-canonical-20260925
    Même géométrie pour M/J/J4/S/N :
    - badge métier coloré
