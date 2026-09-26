@@ -1,4 +1,13 @@
 /* T-est — règles communes permanentes.
-   Toutes les pages créées dans l'univers T-est chargent ce fichier.
-   Les règles placées ici sont destinées à suivre une page lorsqu'elle remplace
-   sa page réelle. Ne jamais y mettre un outil réservé au laboratoire T-est. */
+   Elles suivent les pages validées lors de leur promotion.
+   Les comportements sont opt-in via data-stip-* pour éviter toute régression
+   sur les formulaires qui n'ont pas encore été migrés. */
+
+[data-stip-intent-target][hidden] {
+  display: none !important;
+}
+
+body.stip-keyboard-focus-lock {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}

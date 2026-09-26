@@ -46,8 +46,8 @@
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
     <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />    <!-- T-EST COMMON — permanent when a page is promoted -->
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-contract2" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260926-contract2"></script>
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-formux1" />
+    <script defer src="/t-est/regles-communes/global.js?v=20260926-formux1"></script>
     <!-- /T-EST COMMON -->
 
     <!-- T-EST LAB ONLY -->
@@ -56,34 +56,41 @@
     <!-- /T-EST LAB ONLY -->
 
     <!-- T-EST PAGE CANDIDATE -->
-    <link rel="stylesheet" href="/t-est/porte-entree/porte-entree.css?v=20260926-entry-focus1" />
-    <script defer src="/t-est/porte-entree/porte-entree.js?v=20260926-entry-focus1"></script>
+    <script defer src="/t-est/porte-entree/porte-entree.js?v=20260926-promoted1"></script>
     <!-- /T-EST PAGE CANDIDATE -->
   </head>
   <body>
     <main class="app-shell">
-      <section id="loginView" class="login-screen t-entry-screen">
-        <div class="t-entry-shell">
-          <nav class="t-app-title" aria-label="Applications accessibles">
-            <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor">
-              <span class="t-app-icon"><img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" /></span>
-              <strong>Visiter les lieux</strong>
-            </a>
-            <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html" aria-label="Nouvel arrivant Pro, application en préparation">
-              <span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span>
-              <strong>Nouvel arrivant Pro</strong>
-            </a>
-            <a class="t-app-link t-app-link-muted" href="rejoindre-equipe.html" aria-label="Rejoindre l’équipe, application en préparation">
-              <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
-              <strong>Rejoindre l’équipe</strong>
-            </a>
-          </nav>
+      <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
+        <div class="t-entry-shell" data-stip-keyboard-surface>
+          <section class="t-primary-access" data-stip-keyboard-hide aria-label="Accès personnel">
+            <div id="accessRequestStatusHost"></div>
+            <button
+              id="accessIntent"
+              class="t-access-intent"
+              type="button"
+              aria-expanded="false"
+              aria-controls="accessEntryFields"
+              data-stip-intent-reveal="#accessEntryFields"
+              data-stip-intent-collapse="1"
+            >
+              <span>
+                <small>ESPACE PERSONNEL</small>
+                <strong>Accéder à mon espace</strong>
+              </span>
+              <b aria-hidden="true">→</b>
+            </button>
+          </section>
 
-          <section class="t-auth-stage" aria-label="Accéder à votre espace">
+          <section
+            id="accessEntryFields"
+            class="t-auth-stage"
+            aria-label="Code d’accès"
+            data-stip-intent-target
+            hidden
+          >
             <div class="t-auth-focus">
-              <div id="accessRequestStatusHost"></div>
-
-              <form id="loginForm" class="code-form t-code-form">
+              <form id="loginForm" class="code-form t-code-form" data-stip-keyboard-keep>
                 <div class="stip-code-wrap">
                   <input
                     id="accessCode"
@@ -94,6 +101,8 @@
                     autocomplete="one-time-code"
                     aria-label="Code personnel à 6 chiffres"
                     placeholder="••••••"
+                    data-stip-keyboard-focus
+                    data-stip-autofocus
                     required
                   /><span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span><button
                     id="toggleAccessCode"
@@ -102,21 +111,39 @@
                   >Voir</button>
                 </div>
                 <button class="t-login-submit" type="submit">
-                  <span>Ouvrir mon espace</span><b aria-hidden="true">→</b>
+                  <span>Continuer</span><b aria-hidden="true">→</b>
                 </button>
               </form>
               <p id="loginMessage" class="message" aria-live="polite"></p>
-
-              <div class="t-auth-divider" aria-hidden="true"><span></span><i></i><span></span></div>
-
-              <div class="t-access-request">
-                <button id="requestAccessOpen" class="t-request-button" type="button">
-                  <span class="t-request-copy"><small>Pas de code ?</small><strong>Demander un accès</strong></span>
-                  <span class="t-request-orbit" aria-hidden="true">✦</span>
-                </button>
-              </div>
             </div>
           </section>
+
+          <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
+            <div class="t-public-heading">
+              <strong id="publicAccessTitle">Accès sans compte</strong>
+            </div>
+            <nav class="t-app-title" aria-label="Applications accessibles sans compte">
+              <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor">
+                <span class="t-app-icon"><img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" /></span>
+                <strong>Visiter les lieux</strong>
+              </a>
+              <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html" aria-label="Nouvel arrivant Pro">
+                <span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span>
+                <strong>Nouvel arrivant Pro</strong>
+              </a>
+              <a class="t-app-link t-app-link-muted" href="rejoindre-equipe.html?v=20260926-public-page-upload1" aria-label="Rejoindre l’équipe">
+                <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
+                <strong>Rejoindre l’équipe</strong>
+              </a>
+            </nav>
+          </section>
+
+          <div class="t-access-request" data-stip-keyboard-hide>
+            <button id="requestAccessOpen" class="t-request-button" type="button">
+              <span class="t-request-copy"><small>Pas encore d’accès ?</small><strong>Demander un accès</strong></span>
+              <span class="t-request-orbit" aria-hidden="true">✦</span>
+            </button>
+          </div>
         </div>
 
         <dialog id="accessRequestDialog" class="access-request-dialog">

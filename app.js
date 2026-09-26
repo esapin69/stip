@@ -93,7 +93,7 @@ async function chooseTraineeSession(d,{force=false}={}){
 }
 function finishSessionResume(){document.documentElement.classList.remove('stip-session-resume')}
 function cacheSession(d){if(!window.STIPPreview?.active)window.STIPContinuity?.write?.(d)}
-function showLogin(text=''){finishSessionResume();window.STIPSession=null;window.dispatchEvent(new CustomEvent('stip:session-ended'));appView.classList.add('hidden');loginView.classList.remove('hidden');renderDock('home');msg(text,text?'error':'');setTimeout(()=>accessCode?.focus(),40)}
+function showLogin(text=''){finishSessionResume();window.STIPSession=null;window.dispatchEvent(new CustomEvent('stip:session-ended'));appView.classList.add('hidden');loginView.classList.remove('hidden');renderDock('home');msg(text,text?'error':'');setTimeout(()=>{if(accessCode&&!accessCode.closest('[hidden]'))accessCode.focus()},40)}
 function showPublicWithSession(d){cacheSession(d);finishSessionResume();session=d;window.STIPSession=d;loginView.classList.remove('hidden');appView.classList.add('hidden');welcomeText.textContent=personName(d.agent||{});renderDock('home');window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}))}
 function closePanel(){const p=$('#hsPanel');if(!p)return;p.classList.remove('open');p.setAttribute('aria-hidden','true')}
 function syncPanelHistory(){const p=$('#hsPanel');if(!p)return;const open=p.classList.contains('open');if(open&&!panelGuard&&!history.state?.panel){history.pushState({...(history.state||{}),stip:true,route:route(),panel:true},'',location.href)}panelGuard=false}
