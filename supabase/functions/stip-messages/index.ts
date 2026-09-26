@@ -146,7 +146,7 @@ async function activeMessagingAgents(){
 }
 async function agents(ctx:any,q=""){
   const ids=await activeMessagingAgents();if(!ids.length)return[];
-  const{data,error}=await db.from("agents").select("id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url").in("id",ids).eq("actif",true).order("prenom").order("nom");
+  const{data,error}=await db.from("agents").select("id,source_key,prenom,nom,ghe,equipe,type_planning").in("id",ids).eq("actif",true).order("prenom").order("nom");
   if(error)throw error;
   const{data:profiles}=await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",ids);
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
@@ -155,7 +155,7 @@ async function agents(ctx:any,q=""){
 }
 async function onDuty(ctx:any){
   const nowParts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),g=(k:string)=>nowParts.find(x=>x.type===k)?.value||"",today=g("year")+"-"+g("month")+"-"+g("day"),minute=Number(g("hour"))*60+Number(g("minute")),d=new Date(today+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);const yesterday=d.toISOString().slice(0,10),team=teamOf(ctx.agent),allowed=new Set(await activeMessagingAgents());
-  let q=db.from("planning").select("date,agent_id,code,equipe,agents(id,source_key,prenom,nom,ghe,equipe,type_planning,profile_photo_url,avatar_url)").in("date",[today,yesterday]);
+  let q=db.from("planning").select("date,agent_id,code,equipe,agents(id,source_key,prenom,nom,ghe,equipe,type_planning)").in("date",[today,yesterday]);
   q=team==="chefs"?q.in("equipe",["jour","nuit","chefs"]):q.eq("equipe",team);
   const{data,error}=await q;if(error)throw error;
   const ranges:any={M:[410,880],J:[510,980],J4:[610,1080],S:[810,1260]},items:any[]=[];
@@ -244,7 +244,7 @@ async function group(ctx:any,body:any){
 }
 async function thread(ctx:any,id:string){
   if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
-  const{data:conv,error:ce}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at").eq("id",id).maybeSingle();if(ce)throw ce;if(!conv)throw Error("Conversation introuvable.");
+  const{data:conv,error:ce}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at,updated_at").eq("id",id).maybeSingle();if(ce)throw ce;if(!conv)throw Error("Conversation introuvable.");
   const{data:members,error:me}=await db.from("stip_conversation_members").select("agent_id,last_read_at,agents(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",id);if(me)throw me;
   const mids=(members||[]).map((x:any)=>x.agent_id);const{data:profiles}=mids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",mids):{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
@@ -252,7 +252,25 @@ async function thread(ctx:any,id:string){
   const signedMessages=await signedDmAttachments(messages||[]);
   const {data:broadcast}=conv.kind==="broadcast"?await db.from("stip_operational_broadcasts").select("id,category,title,body,location_text,quantity,status,expires_at,updated_at,created_at").eq("conversation_id",id).maybeSingle():{data:null};
   await db.from("stip_conversation_members").update({last_read_at:new Date().toISOString()}).eq("conversation_id",id).eq("agent_id",ctx.agent.id);
-  return{conversation:conv,broadcast:broadcast||null,members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),messages:signedMessages.map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))}
+  return{
+    conversation:conv,
+    version:String(conv.updated_at||conv.last_message_at||conv.created_at||""),
+    broadcast:broadcast||null,
+    members:(members||[]).map((m:any)=>({...m,agent:{...m.agents,nickname:nick(m.agents,by.get(String(m.agent_id)))}})),
+    messages:signedMessages.map((m:any)=>({...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}}))
+  }
+}
+async function threadProbe(ctx:any,id:string){
+  if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
+  const{data,error}=await db.from("stip_conversations")
+    .select("id,updated_at,last_message_at")
+    .eq("id",id).maybeSingle();
+  if(error)throw error;
+  if(!data)throw Error("Conversation introuvable.");
+  return{
+    conversation_id:String(data.id),
+    version:String(data.updated_at||data.last_message_at||"")
+  }
 }
 async function send(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
@@ -334,7 +352,7 @@ async function home(ctx:any){
   if(ids.length){
     const{data:convs,error:ce}=await db.from("stip_conversations").select("id,kind,title,last_message_at,created_by_agent_id").in("id",ids).order("last_message_at",{ascending:false}).limit(30);if(ce)throw ce;
     for(const c of convs||[]){
-      const{data:members}=await db.from("stip_conversation_members").select("agent_id,agents(id,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",c.id);
+      const{data:members}=await db.from("stip_conversation_members").select("agent_id,agents(id,prenom,nom,ghe)").eq("conversation_id",c.id);
       const others=(members||[]).filter((m:any)=>String(m.agent_id)!==String(ctx.agent.id));
       const otherIds=others.map((m:any)=>m.agent_id);
       const{data:profs}=otherIds.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",otherIds):{data:[] as any[]};
@@ -345,11 +363,23 @@ async function home(ctx:any){
       conversations.push({...c,others:others.map((m:any)=>({...m.agents,nickname:nick(m.agents,pb.get(String(m.agent_id)))})),last_message:last||null,unread:count||0})
     }
   }
-  const suggestions=(await agents(ctx,"")).slice(0,18);
-  const profile=await messageProfile(String(ctx.agent.id));
-  const dmPush=await notificationPreference(String(ctx.agent.id),"dm_received");
+  const [agentDirectory,duty,profile,dmPush]=await Promise.all([
+    agents(ctx,""),
+    onDuty(ctx),
+    messageProfile(String(ctx.agent.id)),
+    notificationPreference(String(ctx.agent.id),"dm_received")
+  ]);
+  const suggestions=agentDirectory.slice(0,18);
   const dmUnread=conversations.filter((c:any)=>c.kind==="direct"||c.kind==="group").reduce((n:number,c:any)=>n+Number(c.unread||0),0);
-  return{me:{...ctx.agent,nickname:nick(ctx.agent,profile),notification_preview:profile.notification_preview!==false,dm_push_enabled:!!dmPush.enabled,dm_push_available:!!dmPush.push_enabled},conversations,suggestions,unread:conversations.reduce((n,c)=>n+Number(c.unread||0),0),dm_unread:dmUnread}
+  return{
+    me:{...ctx.agent,nickname:nick(ctx.agent,profile),notification_preview:profile.notification_preview!==false,dm_push_enabled:!!dmPush.enabled,dm_push_available:!!dmPush.push_enabled},
+    conversations,
+    suggestions,
+    agents:agentDirectory,
+    on_duty:duty,
+    unread:conversations.reduce((n,c)=>n+Number(c.unread||0),0),
+    dm_unread:dmUnread
+  }
 }
 async function profileSet(ctx:any,body:any){
   const nickname=String(body.nickname||"").trim().slice(0,32)||null;
@@ -387,20 +417,20 @@ function tableauDayKey(){return TABLEAU_PREFIX+parisDayKey()}
 async function teamConversation(ctx:any){
   const key=tableauDayKey();
   let{data:conv,error}=await db.from("stip_conversations")
-    .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+    .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
     .eq("direct_key",key).maybeSingle();
   if(error)throw error;
 
   if(!conv){
     const legacy=await db.from("stip_conversations")
-      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
       .eq("direct_key",LEGACY_TEAM_KEY).maybeSingle();
     if(legacy.error)throw legacy.error;
     if(legacy.data){
       const moved=await db.from("stip_conversations")
         .update({direct_key:key,title:"Tableau STIP",updated_at:new Date().toISOString()})
         .eq("id",legacy.data.id)
-        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
         .single();
       if(moved.error)throw moved.error;
       conv=moved.data
@@ -414,10 +444,10 @@ async function teamConversation(ctx:any){
       title:"Tableau STIP",
       created_by_agent_id:ctx.is_trainee?null:ctx.agent.id,
       created_by_stagiaire_key:ctx.is_trainee?ctx.trainee_key:null
-    }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at").single();
+    }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at").single();
     if(created.error){
       const again=await db.from("stip_conversations")
-        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
         .eq("direct_key",key).maybeSingle();
       if(again.error||!again.data)throw created.error;
       conv=again.data
@@ -426,7 +456,7 @@ async function teamConversation(ctx:any){
     const updated=await db.from("stip_conversations")
       .update({title:"Tableau STIP",updated_at:new Date().toISOString()})
       .eq("id",conv.id)
-      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at")
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
       .single();
     if(updated.error)throw updated.error;
     conv=updated.data
@@ -541,9 +571,6 @@ async function signedTeamPhotos(messages:any[]){
 }
 async function teamThread(ctx:any){
   const conv=await teamConversation(ctx);
-  await purgeCurrentTableauRows(String(conv.id));
-  await purgePastStorageFolders(String(conv.id));
-  await purgePreviousTableauDays(String(conv.id));
   const{data:messages,error}=await db.from("stip_messages")
     .select("id,body,payload,created_at,sender_agent_id,sender_stagiaire_key,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
     .eq("conversation_id",conv.id)
@@ -571,7 +598,16 @@ async function teamThread(ctx:any){
     access_mode:accessMode,
     can_write:accessMode!=="read",
     admin:accessMode==="admin",
+    version:String(conv.updated_at||conv.last_message_at||conv.created_at||""),
     messages:signed
+  }
+}
+
+async function teamProbe(ctx:any){
+  const conv=await teamConversation(ctx);
+  return{
+    conversation_id:String(conv.id),
+    version:String(conv.updated_at||conv.last_message_at||conv.created_at||"")
   }
 }
 
@@ -711,6 +747,7 @@ async function teamResolve(ctx:any,body:any){
     };
   const update=await db.from("stip_messages").update({payload}).eq("id",messageId).eq("conversation_id",conv.id);
   if(update.error)throw update.error;
+  await db.from("stip_conversations").update({updated_at:resolvedAt}).eq("id",conv.id);
   return{ok:true,resolved_at:resolvedAt,resolved_by_name:resolvedBy}
 }
 
@@ -1074,10 +1111,12 @@ Deno.serve(async req=>{
     if(a==="on_duty"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await onDuty(c)})}
     if(a==="direct"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await direct(c,String(b.agent_id||""))})}
     if(a==="group"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await group(c,b)})}
+    if(a==="thread_probe"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await threadProbe(c,String(b.conversation_id||"")))}
     if(a==="thread"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await thread(c,String(b.conversation_id||"")))}
     if(a==="send"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await send(c,b))}
     if(a==="broadcast_update"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await broadcastUpdate(c,b))}
     if(a==="profile_set"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await profileSet(c,b))}
+    if(a==="team_probe")return J(await teamProbe(c));
     if(a==="team_thread")return J(await teamThread(c));
     if(a==="team_photo_upload")return J(await teamPhotoUpload(c,b));
     if(a==="team_send")return J(await teamSend(c,b));
