@@ -92,11 +92,8 @@
   }
 
   function avatar(agent) {
-    const url = photoUrl(agent);
     const value = esc(initials(agent));
-    return `<span class="sas-avatar" data-initials="${value}">${/^https?:/i.test(url)
-      ? `<img src="${esc(url)}" alt="" loading="lazy">`
-      : value}</span>`;
+    return `<span class="sas-avatar" data-initials="${value}">${value}</span>`;
   }
 
   function gheText(agent) {
@@ -318,11 +315,8 @@
   }
 
   function pickerPortrait(agent) {
-    const url = photoUrl(agent);
     const fallback = esc(initials(agent));
-    return `<span class="sas-wall-photo" data-initials="${fallback}">${/^https?:/i.test(url)
-      ? `<img src="${esc(url)}" alt="" loading="lazy">`
-      : fallback}</span>`;
+    return `<span class="sas-wall-photo" data-initials="${fallback}">${fallback}</span>`;
   }
 
   function pickerCard(agent, options, filter) {
