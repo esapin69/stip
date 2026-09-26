@@ -1117,7 +1117,7 @@
         ...shared,
         label:
           shared.level === "critical"
-            ? "Équipe très légère"
+            ? "Prévu très sous cible"
             : shared.level === "warning"
               ? "Équipe plus légère"
               : shared.level === "opportunity"
@@ -1140,12 +1140,12 @@
     if (gap == null)
       return { level: "unknown", symbol: "○", label: "Effectif prévu indisponible" };
     if (severity >= 4)
-      return { level: "critical", symbol: "🛑", label: "Équipe très légère" };
+      return { level: "critical", symbol: "🛑", label: "Prévu très sous cible" };
     if (gap < 0 || severity >= 2)
-      return { level: "warning", symbol: "⚠️", label: "Équipe plus légère" };
+      return { level: "warning", symbol: "⚠️", label: "Prévu sous cible" };
     if (gap > 0)
-      return { level: "opportunity", symbol: "+", label: "Présence plus large" };
-    return { level: "ok", symbol: "✔", label: "Présence habituelle" };
+      return { level: "opportunity", symbol: "+", label: "Marge prévue" };
+    return { level: "ok", symbol: "✔", label: "Cible HCL atteinte" };
   }
 
   function isChefItem(item) {
@@ -1302,7 +1302,7 @@
       hiddenContext = Math.max(0, contextRows.length - visibleContext.length),
       analysisText =
         signal.level === "critical"
-          ? "La présence est nettement plus légère sur ce créneau. Le rythme peut être plus soutenu."
+          ? "Le tableau Cumul prévoit un effectif nettement sous la cible HCL sur ce créneau."
           : signal.level === "warning"
             ? "La présence est un peu plus légère sur ce créneau. Le rythme peut être plus soutenu."
             : signal.level === "opportunity"
@@ -1314,7 +1314,7 @@
 
     const stats =
       '<div class="team-shift-analysis-stats">' +
-      '<span><small>PRÉSENTS</small><b>' +
+      '<span><small>AGENTS LISTÉS</small><b>' +
       esc(present) +
       "</b></span>" +
       '<span><small>REPÈRE</small><b>' +
@@ -1566,7 +1566,7 @@
             ? "critical"
             : "warning",
         icon: "⚠️",
-        title: `Équipe plus légère${shifts ? ` sur ${shifts}` : ""}`,
+        title: `Prévu sous cible${shifts ? ` sur ${shifts}` : ""}`,
         detail: "Le rythme peut être plus soutenu sur ce créneau.",
       });
     } else if (wider.length) {
@@ -1575,8 +1575,8 @@
         type: "Effectif",
         level: "opportunity",
         icon: "+",
-        title: `Présence plus large${shifts ? ` sur ${shifts}` : ""}`,
-        detail: "Davantage de collègues sont prévus sur ce créneau.",
+        title: `Marge prévue${shifts ? ` sur ${shifts}` : ""}`,
+        detail: "Le tableau Cumul prévoit une marge au-dessus de la cible HCL sur ce créneau.",
       });
     }
 
