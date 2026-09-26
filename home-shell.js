@@ -2379,7 +2379,7 @@
     if (state.homeMode === "apps")
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "team")
-      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v4&v=20260926-team-native-scroll1" loading="eager"></iframe></section>`;
+      return `<section class="hc-home-pane hc-home-pane-team"><iframe id="hcTeamFrame" class="hc-team-frame" title="Esprit d’équipe" src="esprit-equipe.html?embed=home-v5&v=20260926-team-unified-scroll1" loading="eager"></iframe></section>`;
     if (
       state.homeMode === "responsable" &&
       (has("responsable") || has("admin"))
@@ -2555,13 +2555,13 @@
         frame.setAttribute("scrolling", "yes");
         frame.style.setProperty("overflow", "auto", "important");
         frame.style.setProperty("touch-action", "pan-y", "important");
-        frame.style.setProperty("overscroll-behavior", "contain", "important");
+        frame.style.setProperty("overscroll-behavior", "auto", "important");
 
         const html = doc.documentElement;
         html.style.height = "100%";
         html.style.overflowX = "hidden";
         html.style.overflowY = "auto";
-        html.style.overscrollBehaviorY = "contain";
+        html.style.overscrollBehaviorY = "auto";
         html.style.touchAction = "pan-y";
         html.style.scrollPaddingTop = "10px";
         html.style.webkitOverflowScrolling = "touch";
@@ -2573,23 +2573,17 @@
           doc.body.style.touchAction = "pan-y";
         }
 
-        // The frame fills the remaining visible screen. The child document then
-        // scrolls natively instead of trying to move the parent page.
+        // Give the team view a full viewport of its own. This intentionally
+        // leaves enough document height for the home header to scroll away
+        // before the inner team content starts moving.
         const syncTeamViewportHeight = () => {
           if (!frame.isConnected) return;
-          const viewport = window.visualViewport;
-          const viewportTop = Number(viewport?.offsetTop || 0);
           const viewportHeight = Number(
-            viewport?.height || window.innerHeight || 0,
-          );
-          const rect = frame.getBoundingClientRect();
-          const topInsideViewport = Math.max(0, rect.top - viewportTop);
-          const available = Math.floor(
-            viewportHeight - topInsideViewport - 8,
+            window.visualViewport?.height || window.innerHeight || 0,
           );
           frame.style.setProperty(
             "height",
-            `${Math.max(280, available)}px`,
+            `${Math.max(320, Math.floor(viewportHeight - 8))}px`,
             "important",
           );
         };
@@ -2619,6 +2613,105 @@
         requestAnimationFrame(syncTeamViewportHeight);
         setTimeout(syncTeamViewportHeight, 80);
         setTimeout(syncTeamViewportHeight, 350);
+
+        // Native scroll handoff:
+        // while the home header is still visible, consume the iframe's first
+        // vertical movement by moving the parent page instead. Once the iframe
+        // reaches the top of the viewport, its own native scroll takes over.
+        frame._stipTeamScrollHandoffCleanup?.();
+        const scroller = doc.scrollingElement || html;
+        let transferring = false;
+        const hasOpenTeamLayer = () =>
+          [...doc.querySelectorAll(EMBEDDED_VIEWPORT_LAYER_SELECTOR)].some(
+            (node) =>
+              !node.hidden &&
+              node.getAttribute("aria-hidden") !== "true" &&
+              doc.defaultView?.getComputedStyle(node)?.display !== "none",
+          );
+
+        const handoffForwardScroll = () => {
+          if (transferring || hasOpenTeamLayer()) return;
+          const childTop = Number(scroller.scrollTop || 0);
+          const frameTop = frame.getBoundingClientRect().top;
+          if (childTop <= 0.5 || frameTop <= 0.5) return;
+
+          const delta = Math.min(childTop, Math.max(0, frameTop));
+          if (delta < 0.5) return;
+
+          transferring = true;
+          scroller.scrollTop = Math.max(0, childTop - delta);
+          window.scrollBy(0, delta);
+          requestAnimationFrame(() => {
+            transferring = false;
+          });
+        };
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchLastY = 0;
+        let touchAxis = "";
+
+        const onTeamTouchStart = (event) => {
+          if (event.touches?.length !== 1) {
+            touchAxis = "";
+            return;
+          }
+          const touch = event.touches[0];
+          touchStartX = touch.clientX;
+          touchStartY = touch.clientY;
+          touchLastY = touch.clientY;
+          touchAxis = "";
+        };
+
+        const onTeamTouchMove = (event) => {
+          if (
+            event.touches?.length !== 1 ||
+            hasOpenTeamLayer() ||
+            Number(scroller.scrollTop || 0) > 1
+          )
+            return;
+
+          const touch = event.touches[0];
+          const totalX = touch.clientX - touchStartX;
+          const totalY = touch.clientY - touchStartY;
+
+          if (!touchAxis) {
+            const ax = Math.abs(totalX);
+            const ay = Math.abs(totalY);
+            if (Math.max(ax, ay) < 6) return;
+            touchAxis = ax > ay * 1.45 ? "x" : "y";
+          }
+          if (touchAxis !== "y") return;
+
+          const fingerDelta = touch.clientY - touchLastY;
+          touchLastY = touch.clientY;
+
+          // At the top of Esprit d'équipe, a downward swipe returns naturally
+          // to the home header instead of leaving two disconnected scroll zones.
+          if (fingerDelta > 0 && window.scrollY > 0) {
+            const before = window.scrollY;
+            window.scrollBy(0, -fingerDelta);
+            if (window.scrollY !== before) event.preventDefault();
+          }
+        };
+
+        scroller.addEventListener("scroll", handoffForwardScroll, {
+          passive: true,
+        });
+        doc.addEventListener("touchstart", onTeamTouchStart, {
+          passive: true,
+          capture: true,
+        });
+        doc.addEventListener("touchmove", onTeamTouchMove, {
+          passive: false,
+          capture: true,
+        });
+
+        frame._stipTeamScrollHandoffCleanup = () => {
+          scroller.removeEventListener("scroll", handoffForwardScroll);
+          doc.removeEventListener("touchstart", onTeamTouchStart, true);
+          doc.removeEventListener("touchmove", onTeamTouchMove, true);
+        };
 
         // Keep agent/chef sheets in the parent page. This preserves the shared
         // Applications / Mon profil / Esprit d'équipe header.
