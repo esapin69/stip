@@ -1,6 +1,5 @@
-/* STIP MASTER — Rechercher un agent.
-   Les listes et murs d'équipe sont des cartes texte sans photo ni initiales.
-   Les portraits restent réservés aux vues individuelles. */\n.sas-selector{color:var(--stip-ink)}
+/* STIP — composant partagé « Rechercher un agent ».
+   Présentation actuelle : carte texte sans zone portrait. */\n.sas-selector{color:var(--stip-ink)}
 .sas-heading span,.sas-section-title span,.sas-results>header span,.sas-absence-divider span{color:var(--stip-accent);font-size:.64rem;font-weight:950;letter-spacing:.1em}
 .sas-heading h2{margin:4px 0 0;font-size:clamp(1.65rem,6vw,2.15rem);line-height:1;letter-spacing:-.035em}
 .sas-heading p{margin:7px 0 0;color:var(--stip-muted);font-size:.78rem;line-height:1.4}
