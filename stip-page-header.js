@@ -21,6 +21,7 @@
   host.innerHTML = `
     <section class="hc-home-top-nav hc-home-top-nav-3" aria-label="Navigation STIP">
       <div class="hc-home-top-tools">
+        <button type="button" class="hc-profile-bell" data-shared-page="notifications" aria-label="Notifications"><span aria-hidden="true">🔔</span></button>
         <div class="hc-home-wheelchair-slot">
           <button type="button" class="hc-wheelchair-shortcut" data-shared-page="tableau" aria-label="Ouvrir Fauteuils">
             <span class="hc-wheelchair-shortcut-icon"><img src="images/icone_app/home-access-wheelchairs.webp?v=20260923-wheelchair-left-badge2" alt="" aria-hidden="true"></span>
@@ -28,7 +29,6 @@
             <span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span>
           </button>
         </div>
-        <button type="button" class="hc-profile-bell" data-shared-page="notifications" aria-label="Notifications"><span aria-hidden="true">🔔</span></button>
       </div>
       <nav class="hc-home-filters" data-count="3" aria-label="Accueil STIP">
         <button type="button" data-shared-page="apps" aria-label="Applications">
