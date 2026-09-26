@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',$=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
 const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false;
 try{history.scrollRestoration='manual'}catch{}
 function token(){return localStorage.getItem(STORAGE)||''}
@@ -154,7 +154,7 @@ $('#hsPanelBack')?.addEventListener('click',e=>{if(history.state?.panel){e.preve
 window.STIPRouter={set:setRoute,back,restore,show:showOnly,get:route,saveScroll,restoreScroll};
 window.addEventListener('stip:trainee-change',async()=>{if(session?.role_key!=='stagiaire')return;try{const fresh=await chooseTraineeSession(session,{force:true});if(fresh!==session)renderSession(fresh)}catch(e){alert(e.message||'Sélection impossible.')}});
 if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));
-(async()=>{if(!token()){showLogin();return}const params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null,cached=window.STIPContinuity?.read?.()||null;let hydrated=false;
+if(!STANDALONE_ENTRY)(async()=>{if(!token()){showLogin();return}const params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null,cached=window.STIPContinuity?.read?.()||null;let hydrated=false;
 if(cached){try{let d=cached;if(preview&&previewAllowed(d)){window.STIPRealSession=d;window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview);hydrated=true}else{if(params.get('preview')==='1')clearPreview();d=await chooseTraineeSession(d);if(quick==='public')showPublicWithSession(d);else renderSession(d);hydrated=true}}catch{}}
 try{let d=window.STIPContinuity?.validate?await window.STIPContinuity.validate({force:true}):await access('me');
 if(preview){if(previewAllowed(d)){window.STIPRealSession=d;if(!window.STIPPreview?.active){window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview)}return}clearPreview()}
