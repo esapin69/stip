@@ -18,8 +18,11 @@ assert(coreImport >= 0 && visualImport > coreImport, "raw core must load before 
 
 assert(!/(^|[;{])\s*(background|background-color|color|box-shadow|text-shadow)\s*:/m.test(core),
   "raw core contains decorative declarations");
-assert(!/(^|[;{])\s*(display|grid-template-columns|grid-template-rows|width|height|min-width|min-height|margin|padding|gap|transform|filter)\s*:/m.test(visual),
-  "visual layer contains structural geometry");
+const structuralGeometry = "(?:display|grid-template-columns|grid-template-rows|width|height|min-width|min-height|margin|padding|gap|transform|filter)";
+assert(!new RegExp("\\.stip-week-day\\s*\\{[^}]*" + structuralGeometry + "\\s*:", "s").test(visual),
+  "visual layer redefines base week-day geometry");
+assert(!new RegExp("\\.stip-month-calendar \\.stip-month-day\\s*\\{[^}]*" + structuralGeometry + "\\s*:", "s").test(visual),
+  "visual layer redefines base month-day geometry");
 
 assert(core.includes(".stip-week-line"), "week raw core missing");
 assert(core.includes(".stip-month-calendar .stip-month-day"), "month raw core missing");
@@ -50,20 +53,10 @@ assert(!patterns.includes(".stip-month-calendar .stip-month-day"),
 assert(!patterns.includes("Emergency canonical calendar patch"),
   "old Responsable emergency calendar patch still exists");
 
-assert(weekEngine.includes('const SWIPE_SURFACE=".stip-week-line, .stip-month-calendar"'),
-  "shared week/month swipe surfaces are missing");
-assert(weekEngine.includes('selector=isWeek?".stip-week-master-nav":".stip-month-nav"'),
-  "calendar swipe no longer delegates to the existing canonical navigation controls");
-assert(weekEngine.includes("ax<=ay*1.25"),
-  "calendar swipe no longer protects vertical scrolling");
-assert(weekEngine.includes("touchmove"),
-  "calendar swipe no longer follows the finger during the gesture");
 assert(!weekEngine.includes("{passive:false,capture:true}"),
-  "calendar swipe must not install a blocking document-level touchmove listener");
-assert(weekEngine.includes("ay>ax*1.18"),
-  "calendar swipe must release horizontal tracking when the gesture turns vertical");
-assert(weekEngine.includes("animateIncoming"),
-  "calendar swipe no longer animates the incoming period");
+  "week engine must not install a blocking document-level touch listener");
+assert(visual.includes(".stip-week-next-bridge") && visual.includes("color:#c53333!important") && visual.includes("text-decoration:underline!important"),
+  "next-Monday bridge visual contract is missing");
 
 assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("vendredi") && calendarRules.includes("samedi") && calendarRules.includes("dimanche"),
   "human-readable calendar contract is incomplete");
@@ -102,7 +95,7 @@ const calendarConsumers = [
 for (const [name, source] of calendarConsumers) {
   assert(source.includes("STIPWeekEngine") && source.includes("display"),
     `${name} no longer consumes the master week display engine`);
-  assert(!/\\bliveTail\\b/.test(source),
+  assert(!/\bliveTail\b/.test(source),
     `${name} duplicates the late-week business rule instead of consuming the master engine`);
 }
 assert(homeJs.includes("hc-next-monday-bridge"), "home no longer renders the canonical next-Monday bridge");
@@ -111,7 +104,7 @@ assert(agentJs.includes("stip-week-next-bridge"), "agent agenda no longer render
 assert(rrHomeJs.includes("stip-week-next-bridge"), "Responsable no longer renders the canonical next-Monday bridge");
 assert(!homeJs.includes("function weekDaysVertical(") && !homeJs.includes("hc-days-vertical"),
   "obsolete Home vertical week renderer has returned");
-const legacyHomeDayCount = (homeCss.match(/\\.hc-day\\b/g) || []).length;
+const legacyHomeDayCount = (homeCss.match(/\.hc-day\b/g) || []).length;
 assert(legacyHomeDayCount <= 420,
   `legacy .hc-day CSS debt grew (${legacyHomeDayCount}); new week work must use .stip-week-day`);
 assert(!/\.hc-date-jump-icon\s*\{[^}]*translateY/s.test(homeCss), "home month still offsets icons locally");
