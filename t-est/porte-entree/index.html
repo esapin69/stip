@@ -1,17 +1,9 @@
 <!doctype html>
-<html lang="fr" data-stip-visual="none" data-stip-t-suite-level="1" data-t-est="1">
+<html lang="fr" data-t-est="1">
   <head>
     <base href="../../" />
-    <!-- T-EST COMMON — permanent, follows the page when promoted -->
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-contract2" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260926-contract2"></script>
-    <!-- /T-EST COMMON -->
-
-    <!-- T-EST LAB ONLY — remove when this page replaces the real page -->
-    <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260926-contract2" />
-    <script defer src="/t-est/outils-test/bulle-t.js?v=20260926-contract2"></script>
-    <!-- /T-EST LAB ONLY -->
-<script id="stip-t-admin-gate">
+    <!-- T-EST LAB ACCESS — admin only -->
+    <script id="stip-t-admin-gate">
       document.documentElement.hidden = true;
       (async () => {
         const token = localStorage.getItem("stip_session_v1") || "";
@@ -40,19 +32,64 @@
         }
       })();
     </script>
+    <!-- /T-EST LAB ACCESS -->
     <meta charset="utf-8" />
     <meta
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover"
     />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-t-est-network-budget1" />
-<title>STIP — T-est</title>
+    <meta name="stip-ui-build" content="20260926-touch-core1" />
+    <script id="stip-asset-self-heal">
+      (() => {
+        let probeTimer = 0;
+        const isEditing = () => {
+          const el = document.activeElement;
+          return !!(
+            el &&
+            (el.matches?.("input, textarea, [contenteditable='true']") ||
+              document.body.classList.contains("hc-feedback-modal-open"))
+          );
+        };
+        const heal = async () => {
+          try {
+            const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
+              cache: "no-store",
+              headers: { "cache-control": "no-cache" }
+            });
+            if (!response.ok) return;
+            const source = await response.text();
+            const latest =
+              source.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/i)?.[1] || "";
+            const current =
+              document.querySelector('meta[name="stip-ui-build"]')?.content || "";
+            if (!latest || !current || latest === current) return;
+            if (isEditing()) {
+              clearTimeout(probeTimer);
+              probeTimer = setTimeout(heal, 15000);
+              return;
+            }
+            const key = "stip_asset_heal_" + latest;
+            if (sessionStorage.getItem(key)) return;
+            sessionStorage.setItem(key, "1");
+            const url = new URL(location.href);
+            url.searchParams.set("__stip_build", latest);
+            location.replace(url.pathname + url.search + url.hash);
+          } catch {}
+        };
+        const scheduleHeal = (delay = 120) => {
+          clearTimeout(probeTimer);
+          probeTimer = setTimeout(heal, delay);
+        };
+        addEventListener("load", () => scheduleHeal(1200), { once: true });
+        setInterval(() => {
+          if (!document.hidden) heal();
+        }, 300000);
+      })();
+    </script>
+    <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -75,157 +112,149 @@
       sizes="180x180"
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
+    <link rel="stylesheet" href="styles.css?v=20260829-public5" />
+    <link rel="stylesheet" href="public-home-priority.css?v=20260831-access4" />
+    <link rel="stylesheet" href="home-shell.css?v=20260926-touch-core1" />
+    <link rel="stylesheet" href="stip-agent-selector.css?v=20260925-trainee1" />
+    <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu2" />
+    <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
+    <link rel="stylesheet" href="communication-hub.css?v=20260925-dm-push2" />
+    <link rel="stylesheet" href="stip-theme.css?v=20260926-no-horizontal1" />
+    <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
+    <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
+    <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
+    <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />    <!-- T-EST COMMON — permanent when a page is promoted -->
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260926-contract2" />
+    <script defer src="/t-est/regles-communes/global.js?v=20260926-contract2"></script>
+    <!-- /T-EST COMMON -->
 
+    <!-- T-EST LAB ONLY -->
+    <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260926-contract2" />
+    <script defer src="/t-est/outils-test/bulle-t.js?v=20260926-contract2"></script>
+    <!-- /T-EST LAB ONLY -->
 
-
-
-
-
-
-
-
-
-
-    <!-- T-EST PAGE CANDIDATE — local until visual validation -->
-    <link rel="stylesheet" href="/t-est/porte-entree/porte-entree.css?v=20260926-first-draft1" />
+    <!-- T-EST PAGE CANDIDATE -->
+    <link rel="stylesheet" href="/t-est/porte-entree/porte-entree.css?v=20260926-entry-focus1" />
+    <script defer src="/t-est/porte-entree/porte-entree.js?v=20260926-entry-focus1"></script>
     <!-- /T-EST PAGE CANDIDATE -->
-    <style>[hidden], .hidden { display: none !important; }</style>
   </head>
   <body>
     <main class="app-shell">
-      <section id="loginView" class="login-screen">
+      <section id="loginView" class="login-screen t-entry-screen">
         <div class="t-entry-shell">
-          <header class="t-entry-header">
-            <p class="t-entry-eyebrow">Outil professionnel indépendant</p>
-            <h1>Accès professionnel</h1>
-            <p>Un point d’entrée simple vers les outils utiles sur le terrain, sans se présenter comme un service officiel de l’établissement.</p>
+          <header class="t-entry-topbar" aria-label="Portail">
+            <span class="t-entry-wordmark">PORTAIL</span>
+            <span class="t-entry-signature" aria-hidden="true"><i></i><i></i><i></i></span>
           </header>
 
-          <section class="t-auth-card" aria-labelledby="tAccessTitle">
-            <p class="t-auth-kicker">Espace privé</p>
-            <h2 id="tAccessTitle">Votre accès</h2>
-            <p class="t-auth-copy">Entrez votre code personnel à 6 chiffres.</p>
+          <nav class="t-app-title" aria-label="Applications accessibles">
+            <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor">
+              <span class="t-app-icon"><img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" /></span>
+              <strong>Visiter les lieux</strong>
+            </a>
+            <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html" aria-label="Nouvel arrivant Pro, application en préparation">
+              <span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span>
+              <strong>Nouvel arrivant Pro</strong>
+            </a>
+            <a class="t-app-link t-app-link-muted" href="rejoindre-equipe.html" aria-label="Rejoindre l’équipe, application en préparation">
+              <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
+              <strong>Rejoindre l’équipe</strong>
+            </a>
+          </nav>
 
-            <div id="accessRequestStatusHost"></div>
+          <section class="t-auth-stage" aria-label="Accéder à votre espace">
+            <div class="t-auth-focus">
+              <div id="accessRequestStatusHost"></div>
 
-            <form id="loginForm" class="code-form">
-              <div class="stip-code-wrap">
-                <input
-                  id="accessCode"
-                  type="password"
-                  inputmode="numeric"
-                  pattern="[0-9]{6}"
-                  maxlength="6"
-                  autocomplete="one-time-code"
-                  aria-label="Code personnel à 6 chiffres"
-                  placeholder="••••••"
-                  required
-                />
-                <span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span>
-                <button id="toggleAccessCode" class="stip-code-toggle" type="button">Voir</button>
+              <form id="loginForm" class="code-form t-code-form">
+                <div class="stip-code-wrap">
+                  <input
+                    id="accessCode"
+                    type="password"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    aria-label="Code personnel à 6 chiffres"
+                    placeholder="••••••"
+                    required
+                  /><span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span><button
+                    id="toggleAccessCode"
+                    class="stip-code-toggle"
+                    type="button"
+                  >Voir</button>
+                </div>
+                <button class="t-login-submit" type="submit">
+                  <span>Ouvrir mon espace</span><b aria-hidden="true">→</b>
+                </button>
+              </form>
+              <p id="loginMessage" class="message" aria-live="polite"></p>
+
+              <div class="t-auth-divider" aria-hidden="true"><span></span><i></i><span></span></div>
+
+              <div class="t-access-request">
+                <button id="requestAccessOpen" class="t-request-button" type="button">
+                  <span class="t-request-copy"><small>Pas de code ?</small><strong>Demander un accès</strong></span>
+                  <span class="t-request-orbit" aria-hidden="true">✦</span>
+                </button>
               </div>
-              <button class="t-login-submit" type="submit">Continuer</button>
-            </form>
-            <p id="loginMessage" class="message" aria-live="polite"></p>
-
-            <div class="t-access-request">
-              <div class="t-access-request-copy">
-                <strong>Vous n’avez pas encore d’accès ?</strong>
-                <small>Chaque demande est vérifiée par une personne avant activation.</small>
-              </div>
-              <button id="requestAccessOpen" type="button">Demander un accès</button>
             </div>
           </section>
-
-          <section class="t-public" aria-labelledby="tPublicTitle">
-            <div class="t-section-head">
-              <div>
-                <h2 id="tPublicTitle">Accès sans connexion</h2>
-                <p>Trois portes utiles, indépendantes de votre espace personnel.</p>
-              </div>
-            </div>
-
-            <div class="t-public-grid">
-              <a class="t-public-card" href="places.html?v=20260925-canonical-export1&mode=visitor">
-                <span class="t-public-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M12 21s6-5.3 6-11a6 6 0 1 0-12 0c0 5.7 6 11 6 11Z"/><circle cx="12" cy="10" r="2.2"/></svg>
-                </span>
-                <span class="t-public-copy">
-                  <strong>Visite des lieux</strong>
-                  <span>Trouver rapidement un service, une unité, un étage ou un itinéraire.</span>
-                </span>
-                <span class="t-public-meta"><span class="t-public-arrow" aria-hidden="true">›</span></span>
-              </a>
-
-              <a class="t-public-card" href="nouvel-arrivant-pro.html">
-                <span class="t-public-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M5 20V7.5L12 4l7 3.5V20"/><path d="M9 20v-5h6v5M8.5 10h.01M12 10h.01M15.5 10h.01"/></svg>
-                </span>
-                <span class="t-public-copy">
-                  <strong>Premiers repères</strong>
-                  <span>Les bases pratiques pour les professionnels qui découvrent les locaux.</span>
-                </span>
-                <span class="t-public-meta"><small>En préparation</small><span class="t-public-arrow" aria-hidden="true">›</span></span>
-              </a>
-
-              <a class="t-public-card" href="rejoindre-equipe.html">
-                <span class="t-public-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19c.6-3.3 2.4-5 5.5-5s4.9 1.7 5.5 5M17 8v6M14 11h6"/></svg>
-                </span>
-                <span class="t-public-copy">
-                  <strong>Rejoindre l’équipe</strong>
-                  <span>Découvrir le projet et les façons de participer ou d’aider.</span>
-                </span>
-                <span class="t-public-meta"><small>En préparation</small><span class="t-public-arrow" aria-hidden="true">›</span></span>
-              </a>
-            </div>
-          </section>
-
-          <footer class="t-entry-footer">
-            <strong>Outil indépendant et non officiel.</strong>
-            Les procédures, consignes et informations institutionnelles de l’établissement restent prioritaires.
-          </footer>
         </div>
 
         <dialog id="accessRequestDialog" class="access-request-dialog">
-          <form id="accessRequestForm" class="access-request-form access-request-form-v2">
+          <form
+            id="accessRequestForm"
+            class="access-request-form access-request-form-v2"
+          >
             <header>
               <div>
-                <small>DEMANDE D’ACCÈS</small>
+                <small>MON ACCÈS</small>
                 <h2>Créer ma demande</h2>
-                <p>La demande sera examinée par une personne avant toute activation.</p>
+                <p>
+                  Nom, prénom, un commentaire si nécessaire, puis votre code
+                  personnel.
+                </p>
               </div>
-              <button id="requestAccessClose" type="button" aria-label="Fermer">×</button>
+              <button id="requestAccessClose" type="button" aria-label="Fermer">
+                ×
+              </button>
             </header>
-
             <div class="request-step">
               <span>1</span>
               <div>
-                <strong>Qui êtes-vous ?</strong>
-                <small>Indiquez votre identité et, si nécessaire, une précision utile.</small>
+                <strong>Qui êtes-vous ?</strong
+                ><small
+                  >La demande sera rapprochée des informations déjà connues avant validation.</small
+                >
               </div>
             </div>
-
             <div class="request-name-grid">
-              <label>Prénom<input name="first_name" autocomplete="given-name" required /></label>
-              <label>Nom<input name="last_name" autocomplete="family-name" required /></label>
+              <label
+                >Prénom<input
+                  name="first_name"
+                  autocomplete="given-name"
+                  required /></label
+              ><label
+                >Nom<input name="last_name" autocomplete="family-name" required
+              /></label>
             </div>
-
-            <label class="request-role">
-              Commentaire libre
-              <textarea name="comment" rows="3" placeholder="Facultatif — seulement ce qui peut aider à comprendre votre demande."></textarea>
+            <label class="request-role"
+              >Commentaire libre<textarea
+                name="comment"
+                rows="3"
+                placeholder="Facultatif — précisez seulement ce qui peut aider à comprendre votre demande."
+              ></textarea>
             </label>
-
             <div class="request-step">
               <span>2</span>
               <div>
-                <strong>Choisissez votre code</strong>
-                <small>6 chiffres personnels. Ils restent masqués.</small>
+                <strong>Choisissez votre code</strong
+                ><small>6 chiffres personnels. Ils restent masqués.</small>
               </div>
             </div>
-
-            <label class="request-code-card">
-              <span>Code souhaité</span>
+            <label class="request-code-card"
+              ><span>Code souhaité</span>
               <div>
                 <input
                   id="requestedAccessCode"
@@ -237,12 +266,10 @@
                   autocomplete="new-password"
                   placeholder="••••••"
                   required
-                />
-                <b>6 chiffres</b>
-              </div>
-            </label>
-
-            <p id="accessRequestMessage" class="message" aria-live="polite"></p>
+                /><b>6 chiffres</b>
+              </div></label
+            >
+            <p id="accessRequestMessage" class="message"></p>
             <button class="request-submit" type="submit">
               <span>Envoyer ma demande</span><b>→</b>
             </button>
@@ -283,28 +310,28 @@
     <script src="stip-workspace.js?v=20260925-workspace3"></script>
     <script src="stip-agent-selector.js?v=20260926-avatar-budget1"></script>
     <script src="stip-person-actions.js?v=20260925-avatar-menu1"></script>
-    <script src="stip-session-continuity.js?v=20260926-continuity1"></script>
+    <script src="stip-session-continuity.js?v=20260926-continuity2"></script>
     <script src="app.js?v=20260926-continuity1"></script>
-    <script src="quick-access.js?v=20260925-chef-access-hide1"></script>
+    <script src="quick-access.js?v=20260926-navigation6"></script>
     <script src="public-access-request.js?v=20260926-network-budget1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
-    <script src="stip-gesture.js?v=20260925-gesture-contract1"></script>
-    <script src="stip-week-engine.js?v=20260926-month-edge1"></script>
-    <script src="stip-loader.js?v=20260926-avatar-budget1"></script>
-    <script src="home-shell.js?v=20260926-avatar-budget1"></script>
+    <script src="stip-week-engine.js?v=20260926-touch-core1"></script>
+    <script src="stip-touch-core.js?v=20260926-touch-core1"></script>
+    <script src="stip-loader.js?v=20260926-touch-core1"></script>
+    <script src="home-shell.js?v=20260926-touch-core1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
-    <script src="tomorrow-ui.js?v=20260921-field3"></script>
+    <script src="tomorrow-ui.js?v=20260926-touch-core1"></script>
     <script src="tomorrow-network.js?v=20260922-opportunity1"></script>
     <script src="activity-runtime.js?v=20260924-history2"></script>
-    <script src="access-runtime.js?v=20260925-adminroutes1"></script>
+    <script src="access-runtime.js?v=20260926-navigation6"></script>
     <script src="communication-hub.js?v=20260926-network-budget1"></script>
-    <script src="profile-photo.js?v=20260925-avatar-menu1"></script>
+    <script src="profile-photo.js?v=20260926-profile-menu3"></script>
     <script id="stip-sw-register">
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260926-network-budget1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-touch-core1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
