@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-touch-core1" />
+    <meta name="stip-ui-build" content="20260926-profile-menu4" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -374,7 +374,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260926-touch-core1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-profile-menu4", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });

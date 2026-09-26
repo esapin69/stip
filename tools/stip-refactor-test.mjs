@@ -9,6 +9,15 @@ const check=(condition,message)=>{if(!condition)failures.push(message)};
 const home=read('home-shell.js');
 const responsable=read('responsable-home.js');
 const loader=read('stip-loader.js');
+const index=read('index.html');
+const serviceWorker=read('stip-sw.js');
+
+check(
+  index.includes('<meta name="stip-ui-build" content="20260926-profile-menu4"') &&
+  index.includes('/stip-sw.js?v=20260926-profile-menu4') &&
+  serviceWorker.includes('STIP_SW_BUILD="20260926-profile-menu4"'),
+  'La correction du menu profil doit invalider les anciens caches sur les téléphones déjà connectés.'
+);
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
