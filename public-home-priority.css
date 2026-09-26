@@ -335,7 +335,7 @@
   min-height:46px;
   margin-top:1px;
   padding:0 15px;
-  display:flex;
+  display:none;
   align-items:center;
   justify-content:center;
   gap:7px;
@@ -418,11 +418,30 @@
   box-shadow:0 14px 32px rgba(0,143,170,.32);
 }
 #loginView.stip-keyboard-focus-mode .t-request-inline{
+  display:flex;
   min-height:44px;
   margin-top:2px;
   background:rgba(255,255,255,.94);
   border-color:rgba(4,82,104,.22);
   box-shadow:0 6px 16px rgba(4,82,104,.06);
+}
+
+#accessRequestDialog.stip-keyboard-dialog-mode{
+  width:100vw;
+  max-width:none;
+  height:100dvh;
+  max-height:none;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:0!important;
+  overflow:visible;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#accessRequestDialog.stip-keyboard-dialog-mode::backdrop{
+  background:#edf8fa!important;
+  backdrop-filter:none!important;
 }
 
 /* Premier formulaire pilote : champ actif + action suivante au clavier. */
@@ -457,9 +476,10 @@
   width:min(100%,620px);
   margin:0 auto!important;
   display:grid!important;
-  gap:0;
-  color:transparent;
-  font-size:0;
+  gap:9px;
+  color:#164f5d;
+  font-size:.78rem;
+  font-weight:900;
 }
 
 #accessRequestForm.stip-keyboard-focus-mode .request-name-grid.stip-keyboard-path,

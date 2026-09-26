@@ -9,8 +9,14 @@ function openRequest(){
   try{first.focus({preventScroll:true})}catch{first.focus?.()}
 }
 openers.forEach(button=>{
-  button.addEventListener('pointerdown',e=>e.preventDefault());
-  button.addEventListener('click',e=>{e.preventDefault();openRequest()})
+  button.addEventListener('pointerdown',e=>{
+    e.preventDefault();
+    openRequest()
+  });
+  button.addEventListener('click',e=>{
+    e.preventDefault();
+    if(!d?.open)openRequest()
+  })
 });
 close?.addEventListener('click',()=>d?.close());d?.addEventListener('click',e=>{if(e.target===d)d.close()});
 async function post(body){const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||'Envoi impossible.');return j}

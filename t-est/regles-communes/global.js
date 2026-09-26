@@ -155,10 +155,18 @@
     };
   }
 
+  function setDialogMode(root, open) {
+    root?.closest?.("dialog")?.classList.toggle(
+      "stip-keyboard-dialog-mode",
+      Boolean(open)
+    );
+  }
+
   function setMode(open) {
     if (!scope) return;
     modeOpen = Boolean(open);
     scope.classList.toggle(MODE_CLASS, modeOpen);
+    setDialogMode(scope, modeOpen);
     document.body.classList.toggle(LOCK_CLASS, modeOpen);
 
     const action = scope.querySelector?.(NEXT_ACTION);
@@ -215,6 +223,7 @@
     if (changingScope) {
       clearFormPath(previousScope);
       previousScope.classList.remove(MODE_CLASS);
+      setDialogMode(previousScope, false);
       previousScope.style.removeProperty("--stip-vv-height");
       previousScope.style.removeProperty("--stip-vv-top");
       modeOpen = false;
@@ -241,6 +250,7 @@
     if (preserveKeyboard && previousModeOpen) {
       modeOpen = true;
       scope.classList.add(MODE_CLASS);
+      setDialogMode(scope, true);
       document.body.classList.add(LOCK_CLASS);
     }
 
@@ -255,6 +265,7 @@
     clearFormPath(scope);
     if (scope) {
       scope.classList.remove(MODE_CLASS);
+      setDialogMode(scope, false);
       scope.style.removeProperty("--stip-vv-height");
       scope.style.removeProperty("--stip-vv-top");
     }
@@ -434,6 +445,6 @@
     resetIntents,
     syncKeyboard,
     transferFocus,
-    version: 3
+    version: 4
   };
 })();
