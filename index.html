@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-public-page-upload1" />
+    <meta name="stip-ui-build" content="20260926-places-render-fix1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -375,7 +375,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260926-public-page-upload1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260926-places-render-fix1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
