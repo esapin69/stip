@@ -299,7 +299,11 @@
         target: row.target_count,
       }));
     const bestTransfer = transfers[0] || null;
-    const proposal = transferProposal(bestTransfer);
+    const proposal = bestTransfer
+      ? transferProposal(bestTransfer)
+      : level === "critical"
+        ? "Aucun autre créneau M/J/J4/S n’est au-dessus de sa cible HCL ce jour-là. Ne pas compter sur un simple échange interne : préparer en amont un renfort, un changement volontaire compatible ou une organisation dégradée validée par le chef."
+        : "Aucune marge sûre n’est identifiée sur un autre créneau M/J/J4/S. Anticiper la solution avant le jour J plutôt que déplacer le sous-effectif.";
 
     return {
       ...meta,
