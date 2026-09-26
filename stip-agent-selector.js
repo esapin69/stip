@@ -81,28 +81,14 @@
     return Boolean(baseShift(agent?.today_code));
   }
 
-  function safeAvatarUrl(raw) {
-    const url = String(raw || "").trim();
-    if (!url) return "";
-    if (
-      url.includes("/storage/v1/") &&
-      url.includes("/planning-pdf/")
-    ) return "";
-    return url;
-  }
-
   function photoUrl(agent) {
-    const candidates = [
-      agent?.profile_photo_url,
-      window.STIPBootCache?.media?.avatars?.[agent?.source_key],
-      agent?.avatar_signed_url,
-      agent?.avatar_url,
-    ];
-    for (const candidate of candidates) {
-      const url = safeAvatarUrl(candidate);
-      if (url) return url;
-    }
-    return "";
+    return String(
+      agent?.profile_photo_url ||
+      window.STIPBootCache?.media?.avatars?.[agent?.source_key] ||
+      agent?.avatar_signed_url ||
+      agent?.avatar_url ||
+      "",
+    );
   }
 
   function avatar(agent) {
