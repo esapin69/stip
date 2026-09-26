@@ -5014,10 +5014,15 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 .hc-responsable-frame{
   display:block;
   width:100%;
-  min-height:680px;
+  height:calc(100dvh - 8px)!important;
+  min-height:320px;
+  max-height:calc(100dvh - 8px)!important;
   border:0;
   background:transparent;
-  overflow:hidden;
+  overflow:auto!important;
+  overscroll-behavior:auto!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
 }
 @media(max-width:560px){
   .hc-home-top-nav-4{
