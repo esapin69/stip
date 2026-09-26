@@ -297,7 +297,7 @@
   box-shadow:none;
 }
 #loginView.t-keyboard-open .t-auth-focus::before,
-#loginView.t-keyboard-open #accessRequestStatusHost{
+#loginView.t-keyboard-open .t-auth-focus > :not(.t-code-form){
   display:none!important;
 }
 #loginView.t-keyboard-open .t-code-form{
@@ -330,14 +330,6 @@
 #loginView.t-keyboard-open .t-login-submit b{
   width:40px;height:40px;border-radius:14px;font-size:1.2rem;
 }
-#loginView.t-keyboard-open .message{
-  min-height:0;
-  margin:8px 4px 0;
-  font-size:.72rem;
-  text-align:center;
-}
-#loginView.t-keyboard-open .message:empty{display:none}
-
 body.t-entry-keyboard-lock{overflow:hidden!important}
 
 /* The existing request dialog keeps the shared implementation; only public
