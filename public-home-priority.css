@@ -22,21 +22,19 @@
 
 #loginView .t-entry-shell{
   width:min(100%,680px);
-  height:100dvh;
   min-height:100dvh;
   margin:0 auto;
-  padding:calc(10px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));
+  padding:calc(16px + env(safe-area-inset-top)) 12px calc(16px + env(safe-area-inset-bottom));
   display:grid;
-  grid-template-rows:minmax(170px,.92fr) minmax(225px,1.08fr) auto;
-  align-content:stretch;
-  gap:12px;
+  grid-template-rows:auto auto auto;
+  align-content:center;
+  gap:clamp(14px,2.4dvh,22px);
 }
 
 #loginView .t-primary-access,
 #loginView .t-auth-stage{
   min-height:0;
-  display:grid;
-  align-items:center;
+  display:block;
 }
 
 #loginView .t-primary-access{
@@ -54,7 +52,7 @@
   isolation:isolate;
   overflow:hidden;
   width:100%;
-  min-height:clamp(122px,20dvh,178px);
+  min-height:clamp(118px,15dvh,150px);
   padding:20px 18px 20px 24px;
   display:grid;
   grid-template-columns:minmax(0,1fr) 58px;
@@ -266,20 +264,20 @@
 #loginView .t-public-access{
   min-height:0;
   display:grid;
-  grid-template-rows:auto 1fr;
-  gap:9px;
-  padding:13px 10px 11px;
+  grid-template-rows:auto auto;
+  gap:12px;
+  padding:15px 10px 16px;
   border:1.5px solid rgba(4,82,104,.20);
   border-radius:28px;
   background:rgba(255,255,255,.96);
-  box-shadow:0 19px 48px rgba(4,82,104,.13);
+  box-shadow:0 16px 38px rgba(4,82,104,.12);
 }
 
 #loginView .t-public-heading{
   display:flex;
   align-items:center;
   justify-content:center;
-  min-height:27px;
+  min-height:24px;
 }
 #loginView .t-public-heading strong{
   color:#376872;
@@ -293,7 +291,7 @@
   min-height:0;
   display:grid;
   grid-template-columns:repeat(3,minmax(0,1fr));
-  align-items:stretch;
+  align-items:start;
   gap:7px;
 }
 
@@ -301,8 +299,8 @@
   min-width:0;
   display:grid;
   justify-items:center;
-  align-content:center;
-  gap:clamp(7px,1.3vh,11px);
+  align-content:start;
+  gap:9px;
   padding:5px 2px 7px;
   border-radius:19px;
   color:var(--entry-ink);
@@ -312,8 +310,8 @@
 
 #loginView .t-app-link:active{transform:scale(.97)}
 #loginView .t-app-icon{
-  width:clamp(62px,17vw,78px);
-  height:clamp(62px,17vw,78px);
+  width:clamp(66px,18vw,78px);
+  height:clamp(66px,18vw,78px);
   display:block;
   overflow:hidden;
   border-radius:23px;
@@ -549,13 +547,12 @@
 
 @media(max-height:680px){
   #loginView .t-entry-shell{
-    grid-template-rows:minmax(142px,.88fr) minmax(190px,1.12fr) auto;
-    gap:8px;
-    padding-top:7px;
-    padding-bottom:7px;
+    gap:9px;
+    padding-top:8px;
+    padding-bottom:8px;
   }
-  #loginView .t-access-intent{min-height:112px}
-  #loginView .t-public-access{padding-block:9px}
+  #loginView .t-access-intent{min-height:104px}
+  #loginView .t-public-access{padding-block:10px}
   #loginView .t-app-icon{width:58px;height:58px;border-radius:19px}
   #loginView .t-request-button{min-height:51px}
 }
