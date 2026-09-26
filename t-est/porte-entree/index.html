@@ -41,54 +41,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-touch-core1" />
-    <script id="stip-asset-self-heal">
-      (() => {
-        let probeTimer = 0;
-        const isEditing = () => {
-          const el = document.activeElement;
-          return !!(
-            el &&
-            (el.matches?.("input, textarea, [contenteditable='true']") ||
-              document.body.classList.contains("hc-feedback-modal-open"))
-          );
-        };
-        const heal = async () => {
-          try {
-            const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
-              cache: "no-store",
-              headers: { "cache-control": "no-cache" }
-            });
-            if (!response.ok) return;
-            const source = await response.text();
-            const latest =
-              source.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/i)?.[1] || "";
-            const current =
-              document.querySelector('meta[name="stip-ui-build"]')?.content || "";
-            if (!latest || !current || latest === current) return;
-            if (isEditing()) {
-              clearTimeout(probeTimer);
-              probeTimer = setTimeout(heal, 15000);
-              return;
-            }
-            const key = "stip_asset_heal_" + latest;
-            if (sessionStorage.getItem(key)) return;
-            sessionStorage.setItem(key, "1");
-            const url = new URL(location.href);
-            url.searchParams.set("__stip_build", latest);
-            location.replace(url.pathname + url.search + url.hash);
-          } catch {}
-        };
-        const scheduleHeal = (delay = 120) => {
-          clearTimeout(probeTimer);
-          probeTimer = setTimeout(heal, delay);
-        };
-        addEventListener("load", () => scheduleHeal(1200), { once: true });
-        setInterval(() => {
-          if (!document.hidden) heal();
-        }, 300000);
-      })();
-    </script>
+    <meta name="stip-ui-build" content="20260926-t-est-entry-focus1" />
     <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
