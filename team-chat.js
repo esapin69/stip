@@ -3574,11 +3574,15 @@
       ? agents.map((agent) => {
           const id = String(agent.id || "");
           const selected = dmState.selected.has(id);
+          const rawGhe = String(agent.ghe || "").trim();
+          const ghe = rawGhe
+            ? (/^GHE\b/i.test(rawGhe) ? rawGhe : "GHE " + rawGhe)
+            : "ÉQUIPE";
           return '<button type="button" class="tb-dm-agent' + (selected ? " is-selected" : "") +
             '" data-dm-agent="' + esc(id) + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
-            avatar(agent, { showFirstName: true }) +
+            '<span class="tb-dm-agent-ghe">' + esc(ghe) + '</span>' +
             '<span><strong>' + esc(dmAgentLabel(agent)) + '</strong><small>' +
-            esc([agent.ghe, agent.equipe].filter(Boolean).join(" · ")) + '</small></span>' +
+            esc([agent.equipe, agent.shift].filter(Boolean).join(" · ")) + '</small></span>' +
             '<b>' + (selected ? "✓" : "+") + "</b></button>";
         }).join("")
       : '<p class="tb-dm-empty">Aucun agent trouvé.</p>';
