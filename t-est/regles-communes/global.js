@@ -166,6 +166,37 @@
     });
   }
 
+  function bindPinToggles(root = document) {
+    const toggles = [];
+    if (root?.matches?.("[data-stip-pin-toggle]")) toggles.push(root);
+    root?.querySelectorAll?.("[data-stip-pin-toggle]").forEach((button) => toggles.push(button));
+    toggles.forEach((button) => {
+      if (button.dataset.stipPinToggleBound === "1") return;
+      const selector = String(button.dataset.stipPinToggle || "").trim();
+      let field = null;
+      try { field = selector ? document.querySelector(selector) : null; } catch {}
+      if (!field) field = button.closest?.("label,form,div")?.querySelector?.("input[data-stip-pin-field],input[inputmode='numeric'][maxlength='6']");
+      if (!field) return;
+      normalizePinField(field);
+      button.dataset.stipPinToggleBound = "1";
+      const showLabel = button.dataset.stipPinShowLabel || "Voir";
+      const hideLabel = button.dataset.stipPinHideLabel || "Masquer";
+      const sync = () => {
+        const revealed = field.dataset.stipPinRevealed === "1";
+        button.textContent = revealed ? hideLabel : showLabel;
+        button.setAttribute("aria-pressed", revealed ? "true" : "false");
+      };
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (field.dataset.stipPinRevealed === "1") delete field.dataset.stipPinRevealed;
+        else field.dataset.stipPinRevealed = "1";
+        sync();
+        try { field.focus({ preventScroll: true }); } catch { field.focus?.(); }
+      });
+      sync();
+    });
+  }
+
   function normalizeAutofill(root = document) {
     const forms = new Set();
     if (root?.matches?.("form")) forms.add(root);
@@ -388,6 +419,7 @@
 
   function autoEnroll(root = document) {
     normalizeAutofill(root);
+    bindPinToggles(root);
     const fields = [];
     if (root?.matches?.(WRITABLE_SELECTOR)) fields.push(root);
     root?.querySelectorAll?.(WRITABLE_SELECTOR).forEach((field) => fields.push(field));
@@ -852,6 +884,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 20
+    version: 21
   };
 })();
