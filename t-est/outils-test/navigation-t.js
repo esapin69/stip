@@ -2,6 +2,7 @@
   "use strict";
   const mirrors = [
     { match: u => u.pathname === "/" && (!u.hash || u.hash === "#/home"), target: "/t-est/accueil/" },
+    { match: u => u.pathname.includes("/t-est/accueil"), target: "/t-est/accueil/" },
     { match: u => u.pathname.includes("/t-est/porte-entree"), target: "/t-est/porte-entree/" }
   ];
   function targetFor(raw, base = location.href) {
