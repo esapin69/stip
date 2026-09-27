@@ -493,3 +493,11 @@
   background:transparent!important;
   box-shadow:none!important;
 }
+
+#loginView .t-primary-access.stip-keyboard-focus-mode .stip-code-toggle{
+  width:auto!important;
+  min-width:74px!important;
+  max-width:92px!important;
+  margin:0 8px 0 0!important;
+  padding:0 11px!important;
+}
