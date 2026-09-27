@@ -119,6 +119,30 @@
         })[c],
     );
   }
+  function iconHtml(key, fallback = "", label = "", className = "") {
+    return window.STIPIcons?.markup?.(key, fallback, { label, className }) || esc(fallback || "•");
+  }
+  function eventIconKey(x = {}) {
+    const direct = String(x.iconKey || x.icon_key || "").trim();
+    if (direct) return direct;
+    const type = eventType(x);
+    if (type === "Visite médicale") return "medical";
+    if (type === "Stagiaire") return "trainee";
+    if (type === "Formation") return "training";
+    if (String(x.importance || "").toLowerCase() === "urgent") return "alert";
+    if (String(x.importance || "").toLowerCase() === "important") return "priority";
+    if (type === "Réunion") return "meeting";
+    return "event";
+  }
+  function eventIconHtml(x = {}, className = "") {
+    const fallback = String(x.icon || "").trim() ||
+      (eventIconKey(x) === "medical" ? "🩺" :
+       eventIconKey(x) === "trainee" ? "👶" :
+       eventIconKey(x) === "training" ? "🎓" :
+       eventIconKey(x) === "alert" ? "⚠️" :
+       eventIconKey(x) === "priority" ? "❗" : "📌");
+    return iconHtml(eventIconKey(x), fallback, x.title || eventType(x) || "Événement", className);
+  }
   function cap(v) {
     v = String(v || "")
       .trim()
@@ -262,6 +286,7 @@
     if (!raw) return null;
     const code = canonicalShift(raw),
       meta = shiftMeta(code),
+      def = shiftDefinition(code),
       workIcon = workShiftIcon(code),
       icon =
         workIcon ||
@@ -272,20 +297,30 @@
       type: meta[0],
       label: meta[1] || code,
       icon,
+      iconKey: String(def?.icon_key || ""),
       work: Boolean(workIcon),
     };
   }
 
   function calendarEventIcons(iso) {
     const b=state.boot||{},icons=[],
-      push=(icon)=>{icon=String(icon||"").trim();if(icon&&!icons.includes(icon))icons.push(icon)},
+      push=(item)=>{
+        const key=String(item?.iconKey||item?.icon_key||"").trim(),
+          icon=String(item?.icon||"").trim(),
+          id=key||icon;
+        if(id&&!icons.some((x)=>(x.iconKey||x.icon)===id))icons.push({iconKey:key,icon,label:String(item?.label||item?.title||"Événement")});
+      },
       inside=(start,end)=>{start=String(start||"").slice(0,10);end=String(end||start||"").slice(0,10);return !!start&&start<=iso&&iso<=end};
     for(const x of b.agenda_items||[]){
       if(String(x.event_date||"").slice(0,10)!==iso)continue;
-      push(String(x.icon||"").trim()||(x.source_type==="mobi_lit_medical"?"🩺":x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌"));
+      push({
+        iconKey:String(x.icon_key||"").trim()||(x.source_type==="mobi_lit_medical"?"medical":x.importance==="urgent"?"alert":x.importance==="important"?"priority":"event"),
+        icon:String(x.icon||"").trim()||(x.source_type==="mobi_lit_medical"?"🩺":x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌"),
+        label:x.title||eventType(x)
+      });
     }
-    for(const x of b.personal_formations||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push("🎓");
-    for(const x of b.personal_stagiaires||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push("👶");
+    for(const x of b.personal_formations||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push({iconKey:"training",icon:"🎓",label:x.intitule||"Formation"});
+    for(const x of b.personal_stagiaires||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push({iconKey:"trainee",icon:"👶",label:"Stagiaire"});
     return icons.slice(0,2);
   }
   function firstMondayOfMonth(key){
@@ -335,11 +370,11 @@
           : shift
             ? shift.work
               ? `<span class="hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
-              : `<span class="hc-date-jump-icon stip-month-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
+              : `<span class="hc-date-jump-icon stip-month-icon" aria-hidden="true">${iconHtml(shift.iconKey, shift.icon || "•", shift.label, "hc-calendar-shift-svg")}</span>`
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map((icon) => `<i class="stip-month-event" aria-hidden="true">${esc(icon)}</i>`).join("")}</small></button>`,
+        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map((item) => `<i class="stip-month-event" aria-hidden="true">${iconHtml(item.iconKey,item.icon||"•",item.label||"Événement","hc-calendar-event-svg")}</i>`).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
@@ -550,6 +585,7 @@
   function publishBoot(d) {
     state.boot = d;
     window.STIPBootCache = d;
+    if (d?.icon_catalog) window.STIPIcons?.setCatalog?.(d.icon_catalog);
     window.dispatchEvent(new CustomEvent("stip:boot-updated", { detail: d }));
   }
   function pending() {
@@ -721,6 +757,11 @@
   function workShiftIcon(code) {
     const def = shiftDefinition(code);
     return def?.is_working ? String(def.icon || "") : "";
+  }
+  function shiftIconHtml(code, className = "") {
+    const def = shiftDefinition(code);
+    if (!def) return "";
+    return iconHtml(def.icon_key, def.icon || "", def.label || code, className);
   }
   function canonicalShift(raw) {
     if (window.STIPShiftRegistry?.baseCode)
@@ -923,24 +964,26 @@
       statusIcon = shiftStatusIcon(canonical),
       shiftLabel = shiftMeta(canonical)[1] || canonical,
       workIcon = workShiftIcon(canonical),
-      workLabel = landscape && workShiftIcon(canonical) ? canonical : weekend && workShiftIcon(canonical) ? canonical : shiftLabel,
+      statusVisual = statusIcon ? shiftIconHtml(canonical, "hc-status-svg") : "",
+      workVisual = workIcon ? shiftIconHtml(canonical, "hc-work-svg") : "",
+      workLabel = landscape && workIcon ? canonical : weekend && workIcon ? canonical : shiftLabel,
       normalVisual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
         : pending
           ? '<span class="hc-pending-line" aria-label="En attente du nouveau planning"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
-            ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
+            ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
             : workIcon
-              ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
+              ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workVisual}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
               : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
       landscapeMain = loading
         ? '<span class="hc-shift-main stip-week-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb stip-week-main-icon"></span></span>'
         : pending
           ? '<span class="hc-shift-main stip-week-main"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
-            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
+            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span></span>`
             : workIcon
-              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workIcon}</span></span>`
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workVisual}</span></span>`
               : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
       landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
@@ -973,7 +1016,7 @@
       .map((event) => {
         const kind = futureTypeKey(event),
           title = event.title || event.type || "Événement";
-        return `<i class="hc-week-event-chip stip-week-event type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${event.icon || "•"}</i>`;
+        return `<i class="hc-week-event-chip stip-week-event type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${eventIconHtml(event,"hc-event-svg")}</i>`;
       })
       .join("")}</span>`;
   }
@@ -1042,7 +1085,7 @@
           events = weekEventsForDay(x).slice(0, 2),
           eventMarks = events.length
             ? `<span class="hc-home-day-events" aria-hidden="true">${events
-                .map((event) => `<i>${event.icon || "•"}</i>`)
+                .map((event) => `<i>${eventIconHtml(event,"hc-home-day-event-svg")}</i>`)
                 .join("")}</span>`
             : "",
           shiftBadge =
@@ -1127,6 +1170,15 @@
                 : x.importance === "important"
                   ? "❗"
                   : "📌"),
+          iconKey:
+            String(x.icon_key || "").trim() ||
+            (x.source_type === "mobi_lit_medical"
+              ? "medical"
+              : x.importance === "urgent"
+                ? "alert"
+                : x.importance === "important"
+                  ? "priority"
+                  : "event"),
           type: eventType(x),
           title: x.title || "Événement",
           time,
@@ -1147,6 +1199,7 @@
           date: String(x.date_debut || "").slice(0, 10),
           endDate: String(x.date_fin || x.date_debut || "").slice(0, 10),
           icon: "🎓",
+          iconKey: "training",
           type: "Formation",
           title: x.intitule || "Formation",
           time,
@@ -1167,6 +1220,7 @@
           date: String(x.date_debut || "").slice(0, 10),
           endDate: String(x.date_fin || x.date_debut || "").slice(0, 10),
           icon: "👶",
+          iconKey: "trainee",
           type: "Stagiaire",
           title: [x.prenom, x.nom].filter(Boolean).join(" ") || "Stagiaire",
           time,
@@ -1319,7 +1373,7 @@
                 time = String(x.time || "").trim(),
                 place = String(x.place || "").trim(),
                 isFocus = String(x.id) === String(focusId);
-              return `<article class="hc-agenda-item ${isFocus ? "is-focus" : ""}" data-agenda-id="${esc(x.id)}"><div class="hc-agenda-date"><b>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { day: "2-digit" }))}</b><small>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase())}</small></div><i class="hc-agenda-icon type-${key}">${x.icon || "•"}</i><div class="hc-agenda-copy"><span class="hc-agenda-item-top"><small>${esc((x.type || "Événement").toUpperCase())}</small><em>${esc(nextLabel(x.date))}</em></span><strong>${esc(x.title)}</strong><p>${esc([time, place].filter(Boolean).join(" · ") || x.sub || "")}</p></div></article>`;
+              return `<article class="hc-agenda-item ${isFocus ? "is-focus" : ""}" data-agenda-id="${esc(x.id)}"><div class="hc-agenda-date"><b>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { day: "2-digit" }))}</b><small>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase())}</small></div><i class="hc-agenda-icon type-${key}">${eventIconHtml(x,"hc-event-svg")}</i><div class="hc-agenda-copy"><span class="hc-agenda-item-top"><small>${esc((x.type || "Événement").toUpperCase())}</small><em>${esc(nextLabel(x.date))}</em></span><strong>${esc(x.title)}</strong><p>${esc([time, place].filter(Boolean).join(" · ") || x.sub || "")}</p></div></article>`;
             })
             .join("")}</div></section>`,
       )
@@ -1383,7 +1437,7 @@
         buttons = group.rows.map(({ event:x, day, time, place }) => {
           const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", ""),
             kind = futureTypeKey(x);
-          return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
+          return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${eventIconHtml(x,"hc-event-svg")}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
         }).join("");
       return `<div class="hc-week-event-date-group"><div class="hc-planning-period-separator hc-week-event-date-separator stip-section-separator is-compact"><span>${esc(label)}</span></div>${buttons}</div>`;
     }).join("");
@@ -1440,7 +1494,7 @@
               month: "short",
             })
             .replace(".", "");
-        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
+        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${eventIconHtml(x,"hc-event-svg")}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
       })
       .join("");
 
@@ -1460,20 +1514,19 @@
 
   function legendEventDescriptor(event = {}) {
     const icon = String(event.icon || "•").trim() || "•",
+      iconKey = eventIconKey(event),
       type = eventType(event);
-    if (icon === "🩺" || type === "Visite médicale")
-      return { icon: "🩺", label: "Visite médicale" };
-    if (icon === "👶" || type === "Stagiaire")
-      return { icon: "👶", label: "Stagiaire" };
-    if (icon === "🎓" || type === "Formation")
-      return { icon: "🎓", label: "Formation" };
-    if (icon === "⚠️" && type === "Événement")
-      return { icon, label: "Urgent" };
-    if (icon === "❗" && type === "Événement")
-      return { icon, label: "Important" };
-    if (icon === "📌" && type === "Événement")
-      return { icon, label: "Événement" };
-    return { icon, label: type || "Événement" };
+    if (iconKey === "medical" || type === "Visite médicale")
+      return { icon: "🩺", iconKey: "medical", label: "Visite médicale" };
+    if (iconKey === "trainee" || type === "Stagiaire")
+      return { icon: "👶", iconKey: "trainee", label: "Stagiaire" };
+    if (iconKey === "training" || type === "Formation")
+      return { icon: "🎓", iconKey: "training", label: "Formation" };
+    if (iconKey === "alert")
+      return { icon: "⚠️", iconKey: "alert", label: "Urgent" };
+    if (iconKey === "priority")
+      return { icon: "❗", iconKey: "priority", label: "Important" };
+    return { icon, iconKey: iconKey || "event", label: type || "Événement" };
   }
   function fixedShiftLegend() {
     const key =
@@ -1496,22 +1549,22 @@
       addEvent = (event) => {
         const descriptor = legendEventDescriptor(event);
         add(
-          "event:" + descriptor.icon + "|" + descriptor.label,
-          esc(descriptor.icon),
+          "event:" + descriptor.iconKey + "|" + descriptor.label,
+          iconHtml(descriptor.iconKey, descriptor.icon, descriptor.label, "hc-legend-event-svg"),
           descriptor.label,
         );
       },
-      addEventIcon = (icon) => {
-        const label =
-          {
-            "🩺": "Visite médicale",
-            "👶": "Stagiaire",
-            "🎓": "Formation",
-            "⚠️": "Urgent",
-            "❗": "Important",
-            "📌": "Événement",
-          }[icon] || "Événement";
-        add("event:" + icon + "|" + label, esc(icon), label);
+      addEventIcon = (item) => {
+        const descriptor = legendEventDescriptor({
+          icon: item?.icon || "•",
+          iconKey: item?.iconKey || "",
+          title: item?.label || "Événement"
+        });
+        add(
+          "event:" + descriptor.iconKey + "|" + descriptor.label,
+          iconHtml(descriptor.iconKey, descriptor.icon, descriptor.label, "hc-legend-event-svg"),
+          descriptor.label
+        );
       };
 
     for (let day = 1; day <= last; day++)
@@ -1536,8 +1589,9 @@
           );
         } else {
           const label = def?.label || shift.label || code,
-            symbol = String(def?.icon || shift.icon || "•");
-          add("status:" + code, esc(symbol), `${code} — ${label}`);
+            symbol = String(def?.icon || shift.icon || "•"),
+            iconKey = String(def?.icon_key || shift.iconKey || "");
+          add("status:" + code, iconHtml(iconKey, symbol, label, "hc-legend-shift-svg"), `${code} — ${label}`);
         }
       }
       calendarEventIcons(iso).forEach(addEventIcon);
