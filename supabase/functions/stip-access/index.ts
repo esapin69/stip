@@ -160,6 +160,28 @@ function randomToken() {
 function cleanPublic(v: unknown, n = 1000) {
   return String(v ?? "").trim().slice(0, n);
 }
+
+function weakPin(code: string) {
+  const c = String(code || "").replace(/\D/g, "").slice(0, 6);
+  if (!/^\d{6}$/.test(c)) return true;
+  const digits = [...c].map(Number);
+  if (new Set(digits).size < 3) return true;
+  let asc = true, desc = true;
+  for (let i = 1; i < digits.length; i++) {
+    if (((digits[i] - digits[i - 1] + 10) % 10) !== 1) asc = false;
+    if (((digits[i - 1] - digits[i] + 10) % 10) !== 1) desc = false;
+  }
+  if (asc || desc) return true;
+  if (c.slice(0, 3) === c.slice(3)) return true;
+  if (c.slice(0, 2) === c.slice(2, 4) && c.slice(0, 2) === c.slice(4, 6)) return true;
+  if (c[0] === c[1] && c[2] === c[3] && c[4] === c[5]) return true;
+  if ([...c].reverse().join("") === c) return true;
+  return ["123456","654321","012345","543210","112233","332211","987654","456789","159159","258258","147147"].includes(c);
+}
+function assertStrongPin(code: string) {
+  if (weakPin(code)) throw Error("Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.");
+}
+
 async function publicTrackedRow(id: string, secret: string) {
   if (!id || !secret) throw Error("Suivi indisponible.");
   const { data: r, error } = await admin
@@ -173,6 +195,7 @@ async function publicTrackedRow(id: string, secret: string) {
   return r;
 }
 async function ensurePublicCodeFree(code: string, requestId = "") {
+  assertStrongPin(code);
   const codeKey = await sha256(code);
   const { data: used } = await admin
     .from("stip_access_profiles")
@@ -670,45 +693,80 @@ function ipOf(req: Request) {
   return (
     req.headers.get("cf-connecting-ip") ||
     req.headers.get("x-forwarded-for") ||
-    "unknown"
+    req.headers.get("x-real-ip") ||
+    ""
   )
     .split(",")[0]
-    .trim();
+    .trim()
+    .slice(0, 120);
+}
+async function failedCount(key: string, since: string) {
+  if (!key) return 0;
+  const { count, error } = await admin
+    .from("stip_access_attempts")
+    .select("id", { count: "exact", head: true })
+    .eq("ip_hash", key)
+    .eq("success", false)
+    .gte("attempted_at", since);
+  if (error) throw error;
+  return count || 0;
 }
 async function login(req: Request, code: string, clientId = "") {
   if (!/^\d{6}$/.test(code || "")) return J({ error: "Code invalide." }, 401);
-  const limiterKey = clientId
-      ? "client:" + String(clientId).slice(0, 120)
-      : "ip:" + ipOf(req),
-    ipHash = await sha256(limiterKey),
-    ten = new Date(Date.now() - 600000).toISOString();
+
+  const ip = ipOf(req),
+    safeClient = String(clientId || "")
+      .replace(/[^a-zA-Z0-9._:-]/g, "")
+      .slice(0, 120),
+    pairHash = await sha256(
+      "pair:" + (ip || "no-ip") + ":" + (safeClient || "no-client"),
+    ),
+    ipHash = ip ? await sha256("ip:" + ip) : "",
+    ten = new Date(Date.now() - 10 * 60000).toISOString(),
+    hour = new Date(Date.now() - 60 * 60000).toISOString();
+
   await admin
     .from("stip_access_attempts")
     .delete()
     .lt("attempted_at", new Date(Date.now() - 86400000).toISOString());
-  const { count } = await admin
-    .from("stip_access_attempts")
-    .select("id", { count: "exact", head: true })
-    .eq("ip_hash", ipHash)
-    .eq("success", false)
-    .gte("attempted_at", ten);
-  if ((count || 0) >= 5)
+
+  const [pairFails, ipFails10, ipFails60] = await Promise.all([
+    failedCount(pairHash, ten),
+    failedCount(ipHash, ten),
+    failedCount(ipHash, hour),
+  ]);
+
+  if (pairFails >= 8 || ipFails10 >= 60 || ipFails60 >= 180)
     return J(
-      { error: "Trop de tentatives. Réessaie dans quelques minutes." },
+      { error: "Trop de tentatives depuis cet appareil ou ce réseau. Réessaie dans quelques minutes." },
       429,
     );
+
+  const delayMs = Math.min(
+    1600,
+    pairFails * 180 + Math.floor(ipFails10 / 10) * 180,
+  );
+  if (delayMs > 0)
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+
   const { data, error } = await admin.rpc("stip_verify_code", { p_code: code });
   if (error) throw error;
   const row = Array.isArray(data) ? data[0] : data;
+
   if (!row) {
-    await admin
-      .from("stip_access_attempts")
-      .insert({ ip_hash: ipHash, success: false });
+    const events: any[] = [{ ip_hash: pairHash, success: false }];
+    if (ipHash && ipHash !== pairHash)
+      events.push({ ip_hash: ipHash, success: false });
+    await admin.from("stip_access_attempts").insert(events);
     return J({ error: "Code inconnu ou désactivé." }, 401);
   }
+
   await admin
     .from("stip_access_attempts")
-    .insert({ ip_hash: ipHash, success: true });
+    .delete()
+    .eq("ip_hash", pairHash)
+    .eq("success", false);
+
   const token = randomToken(),
     hash = await sha256(token),
     expires = new Date(Date.now() + 30 * 86400000).toISOString();
