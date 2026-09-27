@@ -157,15 +157,16 @@
         </header>
 
         <div id="currentCode" class="access-current-code"></div>
-        <div class="access-code">
+        <div class="access-code" data-stip-form-focus data-stip-keyboard-scope>
           <input
             id="code"
             type="password"
             inputmode="numeric"
             maxlength="6"
             placeholder="Nouveau code · 6 chiffres"
+            data-stip-keyboard-focus
           />
-          <button id="setCode" class="stip-btn secondary" type="button">
+          <button id="setCode" class="stip-btn secondary" type="button" data-stip-keyboard-action>
             Changer
           </button>
         </div>
