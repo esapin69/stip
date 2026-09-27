@@ -16,9 +16,10 @@
       const signature = days.map((day) => day.dataset.calDay || "").join("|");
       if (
         grid.dataset.tEstWeekRows === signature &&
-        grid.querySelector(":scope > .t-est-week-separator")
+        grid.querySelector(":scope > .t-est-week-separator") &&
+        grid.querySelector(":scope > .t-est-week-weekdays")
       ) return;
-      grid.querySelectorAll(":scope > .t-est-week-separator").forEach((el) => el.remove());
+      grid.querySelectorAll(":scope > .t-est-week-separator, :scope > .t-est-week-weekdays").forEach((el) => el.remove());
       days.forEach((day, index) => {
         const iso = day.dataset.calDay || "";
         const date = new Date(`${iso}T12:00:00`);
@@ -31,7 +32,12 @@
         separator.setAttribute("role", "separator");
         separator.setAttribute("aria-label", `Semaine ${week}`);
         separator.innerHTML = `<span>S${week}</span>`;
+        const weekdays = doc.createElement("div");
+        weekdays.className = "t-est-week-weekdays";
+        weekdays.setAttribute("aria-hidden", "true");
+        weekdays.innerHTML = "<span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span>";
         grid.insertBefore(separator, day);
+        grid.insertBefore(weekdays, day);
       });
       grid.dataset.tEstWeekRows = signature;
     });
@@ -55,13 +61,15 @@
 .stip-month-nav>div{display:flex!important;flex-direction:column!important;align-items:center!important;gap:3px!important}
 .stip-month-nav>strong,.stip-month-nav>div>strong{color:#103f53!important;font-size:clamp(1.25rem,5vw,1.55rem)!important;font-weight:950!important;letter-spacing:-.045em!important}
 .stip-month-nav>div>small{color:#1494aa!important;font-size:.58rem!important;letter-spacing:.13em!important}
-.stip-month-weekdays{padding:2px 13px 7px!important;color:#71858d!important;font-size:.65rem!important;font-weight:950!important;letter-spacing:.035em!important}
+.stip-month-weekdays{display:none!important}
 .stip-month-calendar .stip-month-grid{row-gap:5px!important}
-.t-est-week-separator{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:9px!important;min-height:18px!important;margin:3px 2px 0!important;padding:0 3px!important;pointer-events:none!important}
+.t-est-week-separator{grid-column:1/-1!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;gap:9px!important;min-height:18px!important;margin:7px 2px 0!important;padding:0 3px!important;pointer-events:none!important}
 .t-est-week-separator:first-child{margin-top:0!important}
 .t-est-week-separator:before,.t-est-week-separator:after{content:""!important;height:1px!important;border-radius:999px!important;background:linear-gradient(90deg,transparent,rgba(20,112,132,.22))!important}
 .t-est-week-separator:after{background:linear-gradient(90deg,rgba(20,112,132,.22),transparent)!important}
 .t-est-week-separator>span{display:block!important;padding:2px 7px!important;border:1px solid rgba(20,112,132,.10)!important;border-radius:999px!important;background:rgba(247,252,253,.92)!important;color:#6e858d!important;font-size:.56rem!important;line-height:1!important;font-weight:950!important;letter-spacing:.07em!important}
+.t-est-week-weekdays{grid-column:1/-1!important;display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;align-items:center!important;gap:5px!important;margin:1px 0 2px!important;padding:0!important;color:#748890!important;font-size:.58rem!important;line-height:1!important;font-weight:950!important;letter-spacing:.035em!important;pointer-events:none!important}
+.t-est-week-weekdays>span{display:block!important;min-width:0!important;padding:3px 0 2px!important;text-align:center!important}
 .stip-month-calendar{padding:0 12px 10px!important;gap:6px!important}
 .stip-month-calendar .stip-month-day{position:relative!important;min-height:70px!important;border:1px solid rgba(19,66,80,.055)!important;border-radius:17px!important;background:linear-gradient(155deg,rgba(249,252,253,.98),rgba(236,243,246,.96))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 9px rgba(17,61,74,.035)!important;overflow:hidden!important;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease!important}
 .stip-month-calendar .stip-month-day:after{content:"";position:absolute;inset:auto 10px 0;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(21,117,137,.10),transparent);opacity:.65}
