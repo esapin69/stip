@@ -71,3 +71,23 @@ for (const c of checks) {
 }
 if (failed.length) process.exit(1);
 console.log(`Access contract: ${checks.length} invariants verified.`);
+
+
+const metiersMigration = read(
+  "supabase/migrations/20260928010000_add_metiers_access_role.sql",
+);
+const accessCore = read("supabase/functions/stip-access/index.ts");
+const homeShell = read("home-shell.js");
+expect(
+  "Autres métiers has a minimal dedicated access role",
+  metiersMigration.includes("'metiers'::text") &&
+    metiersMigration.includes("'Autres métiers'") &&
+    metiersMigration.includes("'places', true") &&
+    accessCore.includes('metiers: "Autres métiers"') &&
+    accessCore.includes('metiers: {') &&
+    homeShell.includes('"metiers", "visiteur"') &&
+    homeShell.includes('label: "RACCOURCIS · Autres métiers"') &&
+    homeShell.includes('label: "Visiter les lieux"') &&
+    homeShell.includes('metiers: "AUTRES MÉTIERS"'),
+  "Autres métiers must remain a dedicated role whose initial shortcut is Visiter les lieux.",
+);

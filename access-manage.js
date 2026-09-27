@@ -120,6 +120,7 @@
         cadre: "Cadre",
         brancardier: "Brancardier",
         stagiaire: "Stagiaire",
+        metiers: "Autres métiers",
         visiteur: "Visiteur",
       }[role] || role.replaceAll("_", " ")
     );

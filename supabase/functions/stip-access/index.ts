@@ -27,6 +27,7 @@ const LABELS: any = {
   chef_equipe: "Chef d’équipe brancardier",
   responsable: "Responsable",
   cadre: "Cadre",
+  metiers: "Autres métiers",
   admin: "Admin",
 };
 const FALLBACK: any = {
@@ -81,6 +82,10 @@ const FALLBACK: any = {
     places: true,
     assistant_enabled: true,
     profile_photo: true,
+  },
+  metiers: {
+    places: true,
+    __levels: { places: "visitor" },
   },
   admin: {
     planning_personal: true,

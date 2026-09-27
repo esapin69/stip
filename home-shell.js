@@ -1738,7 +1738,7 @@
     if (raw === "chef_equipe") return "responsable";
     if (raw === "brancardier") return "agent";
     if (raw === "stagiaire") return "stagiaire";
-    if (["admin", "cadre", "responsable", "agent", "stagiaire", "visiteur"].includes(raw))
+    if (["admin", "cadre", "responsable", "agent", "stagiaire", "metiers", "visiteur"].includes(raw))
       return raw;
     if (has("admin")) return "admin";
     if (has("cadre_dashboard")) return "cadre";
@@ -1860,6 +1860,12 @@
           key: "metiers",
           label: "RACCOURCIS · Autres métiers",
           items: [
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
             {
               href: "metiers/",
               label: "Accueil métiers",
@@ -2028,6 +2034,7 @@
           responsable: "RESPONSABLE",
           agent: "AGENT",
           stagiaire: "STAGIAIRE",
+          metiers: "AUTRES MÉTIERS",
         }[role] || "STIP";
     if (role === "visiteur" || !content) return "";
     return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcShortcutsTitle">
