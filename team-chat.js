@@ -3837,7 +3837,7 @@
       '<form class="tb-dm-composer" data-dm-form>' + imagePreview +
       '<div class="tb-dm-compose-row"><button type="button" class="tb-dm-attach" data-dm-attach aria-label="Ajouter une photo">＋</button>' +
       '<input type="file" data-dm-file accept="image/jpeg,image/png,image/webp" capture="environment" hidden>' +
-      '<textarea data-dm-text rows="1" maxlength="2000" placeholder="Message privé…">' + esc(dmState.draft) + "</textarea>" +
+      '<textarea data-dm-text data-stip-keyboard-native rows="1" maxlength="2000" placeholder="Message privé…">' + esc(dmState.draft) + "</textarea>" +
       '<button type="submit" class="tb-dm-send" ' + ((!dmState.draft.trim() && !dmState.pendingImage) || dmState.sending ? "disabled" : "") + ">↑</button></div>" +
       "</form></section>";
 
