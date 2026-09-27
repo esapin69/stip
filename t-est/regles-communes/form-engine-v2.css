@@ -1,0 +1,182 @@
+/* STIP form engine v2 — pilot: entry + Demander un accès.
+   Fixed entry viewport, full-form overview when keyboard is closed,
+   focused question/action when a virtual keyboard reduces the viewport. */
+
+html:has(#loginView:not(.hidden)),
+body:has(#loginView:not(.hidden)){
+  width:100%;
+  height:100%;
+  max-width:100%;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+}
+
+#loginView.t-entry-screen{
+  width:100%;
+  height:100dvh;
+  min-height:0!important;
+  max-height:100dvh;
+  overflow:hidden!important;
+  overscroll-behavior:none;
+  touch-action:manipulation;
+}
+
+#loginView .t-entry-shell{
+  height:100dvh!important;
+  min-height:0!important;
+  max-height:100dvh;
+  overflow:hidden!important;
+}
+
+/* Login: immediate visible feedback during the network wait. */
+#loginView .t-login-submit.stip-submit-loading{
+  cursor:wait;
+  opacity:.88!important;
+}
+#loginView .t-login-submit.stip-submit-loading span::after{
+  content:"";
+  display:inline-block;
+  width:.82em;
+  height:.82em;
+  margin-left:9px;
+  vertical-align:-.08em;
+  border:2px solid rgba(255,255,255,.42);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:stipFormSpin .72s linear infinite;
+}
+
+/* The access request is a true full-screen form, not a scrollable modal. */
+#accessRequestDialog[open]{
+  position:fixed!important;
+  inset:0!important;
+  width:100vw!important;
+  height:100dvh!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:hidden!important;
+  background:linear-gradient(180deg,#f8feff 0%,#edf8fa 100%)!important;
+}
+#accessRequestDialog[open]::backdrop{
+  background:#edf8fa!important;
+  backdrop-filter:none!important;
+}
+
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode){
+  width:min(100%,760px);
+  height:100dvh;
+  max-height:100dvh;
+  margin:0 auto!important;
+  padding:clamp(12px,2dvh,20px) clamp(16px,4vw,30px) max(14px,env(safe-area-inset-bottom))!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-template-rows:auto auto auto auto auto;
+  align-content:center;
+  gap:clamp(8px,1.25dvh,13px) 12px;
+  overflow:hidden!important;
+  background:transparent!important;
+}
+
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) header{
+  position:relative!important;
+  grid-column:1/-1;
+  top:auto!important;
+  margin:0!important;
+  padding:0 54px 4px 0!important;
+  border:0!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) header h2{
+  margin:3px 0!important;
+  font-size:clamp(1.35rem,4.5vw,1.8rem)!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) header p{
+  margin:0!important;
+  font-size:clamp(.7rem,2.4vw,.82rem)!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) header button{
+  position:absolute;
+  right:0;
+  top:0;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+}
+
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-step{
+  grid-column:1/-1;
+  margin:0!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-step>span{
+  width:32px;height:32px;border-radius:11px;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-name-grid{
+  grid-column:1/-1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-role{
+  grid-column:1/-1;
+  margin:0!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) textarea{
+  min-height:58px!important;
+  height:clamp(58px,8dvh,82px)!important;
+  resize:none;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-code-card{
+  grid-column:1/-1;
+  margin:0!important;
+  padding:10px 12px!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .message{
+  grid-column:1/-1;
+  margin:0!important;
+  min-height:16px!important;
+}
+#accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-submit{
+  grid-column:1/-1;
+  min-height:52px!important;
+  margin:0!important;
+}
+
+/* On narrow phones keep the overview complete without forcing a swipe. */
+@media(max-width:620px){
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode){
+    grid-template-columns:1fr;
+    grid-template-rows:auto;
+    gap:7px;
+    padding-top:10px!important;
+  }
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-name-grid{
+    grid-template-columns:1fr 1fr!important;
+  }
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .access-request-form-v2 label,
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) label{
+    margin-top:0!important;
+  }
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) input{
+    min-height:46px!important;
+  }
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-step small{
+    display:none;
+  }
+}
+
+@media(max-height:700px){
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode){gap:5px}
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) header p{display:none}
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-step{min-height:30px}
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) textarea{height:50px!important;min-height:50px!important}
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) input{min-height:43px!important}
+  #accessRequestDialog[open] #accessRequestForm:not(.stip-keyboard-focus-mode) .request-submit{min-height:48px!important}
+}
+
+@keyframes stipFormSpin{to{transform:rotate(1turn)}}
+@media(prefers-reduced-motion:reduce){#loginView .t-login-submit.stip-submit-loading span::after{animation:none}}
