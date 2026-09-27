@@ -119,6 +119,17 @@ body:has(#loginView.t-entry-screen:not(.hidden)) > .app-shell {
   touch-action: pan-y pinch-zoom;
 }
 
+/* Quand le clavier mobile est ouvert, la porte d'entrée se cale sur la
+   hauteur réellement visible. Cela évite de centrer les champs derrière
+   le clavier lorsque le viewport de mise en page reste à 100dvh. */
+#loginView.t-entry-screen:not(.hidden).stip-keyboard-focus-mode {
+  inset: auto 0 auto 0 !important;
+  top: var(--stip-vv-top, 0px) !important;
+  height: var(--stip-vv-height, 100dvh) !important;
+  min-height: 0 !important;
+  max-height: var(--stip-vv-height, 100dvh) !important;
+}
+
 /* Un dialogue ouvert garde son propre comportement tactile/formulaire. */
 #accessRequestDialog[open],
 #accessRequestDialog[open] * {
