@@ -21,6 +21,7 @@ submit=form?.querySelector('.request-submit');
 let autoConnecting=false,requestHistoryId='',restoringHistory=false,closingHistory=false;
 
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const weakPin=code=>{const c=String(code||'').replace(/\D/g,'').slice(0,6);if(!/^\d{6}$/.test(c))return true;const d=[...c].map(Number);if(new Set(d).size<3)return true;let a=true,b=true;for(let i=1;i<d.length;i++){if(((d[i]-d[i-1]+10)%10)!==1)a=false;if(((d[i-1]-d[i]+10)%10)!==1)b=false}return a||b||c.slice(0,3)===c.slice(3)||(c.slice(0,2)===c.slice(2,4)&&c.slice(0,2)===c.slice(4,6))||(c[0]===c[1]&&c[2]===c[3]&&c[4]===c[5])||[...c].reverse().join('')===c||['123456','654321','012345','543210','112233','332211','987654','456789','159159','258258','147147'].includes(c)};
 const tracking=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}};
 const pending=()=>{try{return JSON.parse(localStorage.getItem(PENDING)||'null')}catch{return null}};
 const profile=()=>profileInputs.find(x=>x.checked)?.value||'';
@@ -155,7 +156,7 @@ function notice(j){
     n.innerHTML='<div class="request-status-head"><span>DEMANDE À COMPLÉTER</span><strong>Choisissez votre code personnel</strong></div><p>Votre demande est conservée. Il manque seulement votre code à 6 chiffres.</p><div class="request-status-code"><input id="requestStatusNewCode" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="new-password"><button type="button" id="requestStatusSaveCode">Valider</button></div><p id="requestStatusCodeMessage"></p>';
     const input=n.querySelector('#requestStatusNewCode'),save=n.querySelector('#requestStatusSaveCode'),message=n.querySelector('#requestStatusCodeMessage');
     input.oninput=()=>input.value=input.value.replace(/\D/g,'').slice(0,6);
-    save.onclick=async()=>{const code=input.value.trim();if(!/^\d{6}$/.test(code)){message.textContent='Entrez exactement 6 chiffres.';return}save.disabled=true;message.textContent='Enregistrement…';try{await post({action:'set_code',...t,requested_code:code});notice({status:'pending',needs_code:false})}catch(e){message.textContent=e.message||'Impossible d’enregistrer ce code.';save.disabled=false}};
+    save.onclick=async()=>{const code=input.value.trim();if(!/^\d{6}$/.test(code)){message.textContent='Entrez exactement 6 chiffres.';return}if(weakPin(code)){message.textContent='Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.';return}save.disabled=true;message.textContent='Enregistrement…';try{await post({action:'set_code',...t,requested_code:code});notice({status:'pending',needs_code:false})}catch(e){message.textContent=e.message||'Impossible d’enregistrer ce code.';save.disabled=false}};
   }else{
     n.className='request-access-status pending';
     n.innerHTML='<div class="request-status-head"><span>DEMANDE ENVOYÉE</span><strong>STIP suit votre demande</strong></div><p>Vous pouvez quitter cette page. La réponse réapparaîtra ici sur ce navigateur.</p>';
@@ -188,6 +189,7 @@ form?.addEventListener('submit',async e=>{
   if(!p){msg.textContent='Choisissez votre situation.';msg.className='message error';return}
   if(!first||!last){msg.textContent='Nom et prénom requis.';msg.className='message error';return}
   if(!/^\d{6}$/.test(code)){msg.textContent='Choisissez un code personnel de 6 chiffres.';msg.className='message error';return}
+  if(weakPin(code)){msg.textContent='Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.';msg.className='message error';return}
   if(submit)submit.disabled=true;
   msg.textContent='Envoi…';msg.className='message';
   try{
