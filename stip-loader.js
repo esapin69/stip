@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20260927-formux1";
+    V = "20260927-communication1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -158,6 +158,7 @@
   ];
   let busyRoute = "",
     tableauPromise = null,
+    communicationPromise = null,
     homeExtrasPromise = null;
   function homeExtras() {
     if (homeExtrasPromise) return homeExtrasPromise;
@@ -193,6 +194,26 @@
         throw error;
       });
     return tableauPromise;
+  }
+  function communication() {
+    if (window.STIPCommunicationApp?.mount) return Promise.resolve(window.STIPCommunicationApp);
+    if (communicationPromise) return communicationPromise;
+    communicationPromise = Promise.all([
+      style("communication-app.css"),
+      style("communication-hub.css"),
+      tableau(),
+    ])
+      .then(() => load("communication-app.js"))
+      .then(() => {
+        if (!window.STIPCommunicationApp?.mount)
+          throw new Error("Runtime Communication indisponible.");
+        return window.STIPCommunicationApp;
+      })
+      .catch((error) => {
+        communicationPromise = null;
+        throw error;
+      });
+    return communicationPromise;
   }
   async function ensureRoute(r) {
     r = String(r || "");
@@ -235,6 +256,7 @@
     style,
     route: ensureRoute,
     tableau,
+    communication,
     homeExtras,
     idle: later,
     warmDocument,
@@ -272,12 +294,13 @@
     "pointerdown",
     (e) => {
       if (e.target.closest?.('[data-home-mode="tableau"]'))
-        tableau().catch(() => {});
+        communication().catch(() => {});
       const b = e.target.closest?.("[data-app]");
       if (!b) return;
       const k = b.dataset.app;
       const documentTarget = DOCUMENT_APP_TARGET[k];
       if (documentTarget) warmDocument(documentTarget);
+      if (k === "communication") communication().catch(() => {});
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
         seq(["agent-agenda-view.js?v=20260925-chief-hours1", "section-hubs.js"]).catch(() => {});
