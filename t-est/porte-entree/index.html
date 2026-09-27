@@ -1,367 +1,63 @@
 <!doctype html>
 <html lang="fr" data-t-est="1" data-stip-entry-standalone="1">
-  <head>
-    <base href="../../" />
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
-    />
-    <meta name="theme-color" content="#f7fbfc" />
-    <meta name="color-scheme" content="light only" />
-    <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-t-est-pin-back1" />
-    <title>STIP — Portail équipe</title>
-    <meta name="application-name" content="STIP" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="STIP" />
-    <link
-      rel="preconnect"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co"
-      crossorigin
-    />
-    <link rel="dns-prefetch" href="https://yzsrmuxghlengnkyphxj.supabase.co" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260826-role1" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="64x64"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-64.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
-    />
-    <link rel="stylesheet" href="styles.css?v=20260829-public5" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20260927-single-access1" />
-    <link rel="stylesheet" href="home-shell.css?v=20260926-touch-core1" />
-    <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
-    <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu2" />
-    <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
-    <link rel="stylesheet" href="communication-hub.css?v=20260925-dm-push2" />
-    <link rel="stylesheet" href="stip-theme.css?v=20260926-no-horizontal1" />
-    <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
-    <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
-    <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />    <!-- T-EST COMMON — permanent when a page is promoted -->
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide20" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide20"></script>
-    <!-- /T-EST COMMON -->
-
-    <!-- T-EST LAB ONLY -->
-    <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260926-contract2" />
-    <script defer src="/t-est/outils-test/bulle-t.js?v=20260926-contract2"></script>
-    <!-- /T-EST LAB ONLY -->
-
-    <!-- T-EST PAGE CANDIDATE -->
-    <script defer src="/t-est/porte-entree/porte-entree.js?v=20260926-promoted1"></script>
-    <!-- /T-EST PAGE CANDIDATE -->
-  </head>
-  <body>
-    <main class="app-shell">
-      <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
-        <div class="t-entry-shell" data-stip-keyboard-surface>
-          <section class="t-primary-access" aria-label="Accès personnel" data-stip-keyboard-scope data-stip-form-focus data-stip-force-focus-mode>
-            <div id="accessRequestStatusHost"></div>
-            <button
-              id="accessIntent"
-              class="t-access-intent"
-              type="button"
-              aria-expanded="false"
-              aria-controls="accessEntryFields"
-              data-stip-intent-reveal="#accessEntryFields"
-              data-stip-intent-collapse="1"
-            >
-              <span>
-                <small>ESPACE PERSONNEL</small>
-                <strong>Accéder à mon espace</strong>
-              </span>
-              <b aria-hidden="true">→</b>
-            </button>
-
-            <section
-              id="accessEntryFields"
-              class="t-auth-stage"
-              aria-label="Code d’accès"
-              data-stip-intent-target
-              hidden
-            >
-              <div class="t-auth-focus">
-                <form id="loginForm" class="code-form t-code-form" data-stip-form-mode="native" data-stip-keyboard-keep data-stip-keyboard-native>
-                  <div class="stip-code-wrap">
-                    <input
-                      id="accessCode"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]{6}"
-                      maxlength="6"
-                      autocomplete="off"
-                      data-stip-pin-field="1"
-                      enterkeyhint="done"
-                      aria-label="Code personnel à 6 chiffres"
-                      placeholder="••••••"
-                      data-stip-keyboard-focus
-                      data-stip-autofocus
-                      required
-                    /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button
-                      id="toggleAccessCode"
-                      class="stip-code-toggle"
-                      type="button"
-                      data-stip-keyboard-accessory
-                      data-stip-keyboard-keep
-                    >Voir</button>
-                  </div>
-                  <button class="t-login-submit" type="submit">
-                    <span>Continuer</span><b aria-hidden="true">→</b>
-                  </button>
-                </form>
-                <p id="loginMessage" class="message" aria-live="polite"></p>
-              </div>
-
-            </section>
-          </section>
-
-          <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
-            <div class="t-public-heading">
-              <strong id="publicAccessTitle">Accès sans compte</strong>
-            </div>
-            <nav class="t-app-title" aria-label="Applications accessibles sans compte">
-              <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor">
-                <span class="t-app-icon"><img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" /></span>
-                <strong>Visiter les lieux</strong>
-              </a>
-              <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html" aria-label="Nouvel arrivant Pro">
-                <span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span>
-                <strong>Nouvel arrivant Pro</strong>
-              </a>
-              <a class="t-app-link t-app-link-muted" href="#demande-acces" aria-label="Demander un accès" data-open-access-request>
-                <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
-                <strong>Demander un accès</strong>
-              </a>
-            </nav>
-          </section>
-
-        </div>
-
-        <dialog id="accessRequestDialog" class="access-request-dialog">
-          <form
-            id="accessRequestForm"
-            class="access-request-form access-request-form-v2"
-            autocomplete="on"
-            data-stip-form-mode="sequential"
-            data-stip-keyboard-scope
-            data-stip-form-focus
-            data-stip-step-nav
-          >
-            <header>
-              <div>
-                <small>MON ACCÈS</small>
-                <h2>Demander un accès</h2>
-                <p>STIP adapte la demande à votre situation et ne demande que les informations nécessaires.</p>
-              </div>
-              <button id="requestAccessClose" type="button" aria-label="Fermer" autofocus data-stip-overview-focus>×</button>
-            </header>
-            <div class="request-form-body">
-              <div class="request-step">
-                <span>1</span>
-                <div>
-                  <strong>Quelle est votre situation ?</strong>
-                  <small>Le parcours devient plus court si STIP vous connaît déjà.</small>
-                </div>
-              </div>
-              <div class="request-profile-grid" role="radiogroup" aria-label="Votre situation">
-                <label class="request-profile-choice">
-                  <input type="radio" name="request_profile" value="stip" required>
-                  <span><strong>Je fais partie de STIP / GHE</strong><small>Demande rapide, sans planning à envoyer.</small></span>
-                </label>
-                <label class="request-profile-choice">
-                  <input type="radio" name="request_profile" value="brancardier">
-                  <span><strong>Je suis brancardier ailleurs</strong><small>STIP connaît déjà le métier, il faut surtout votre établissement et votre planning.</small></span>
-                </label>
-                <label class="request-profile-choice">
-                  <input type="radio" name="request_profile" value="external">
-                  <span><strong>Je suis extérieur à STIP</strong><small>Quelques informations supplémentaires permettent de comprendre votre planning.</small></span>
-                </label>
-              </div>
-
-              <div id="requestSharedFields" hidden>
-                <div class="request-step">
-                  <span>2</span>
-                  <div>
-                    <strong>Qui êtes-vous ?</strong>
-                    <small>La demande est vérifiée avant activation.</small>
-                  </div>
-                </div>
-                <div class="request-name-grid">
-                  <label class="request-family-name">Nom<input
-                    id="accessRequestLastName"
-                    name="last_name"
-                    type="text"
-                    autocomplete="section-accessrequest family-name"
-                    autocapitalize="words"
-                    data-stip-keyboard-focus
-                    required></label>
-                  <label class="request-given-name">Prénom<input
-                    id="accessRequestFirstName"
-                    name="first_name"
-                    type="text"
-                    autocomplete="section-accessrequest given-name"
-                    autocapitalize="words"
-                    data-stip-keyboard-focus
-                    required></label>
-                </div>
-
-                <div id="requestExternalFields" class="request-external-fields" hidden>
-                  <div class="request-step">
-                    <span>3</span>
-                    <div>
-                      <strong>Votre activité</strong>
-                      <small>Pour interpréter correctement les codes et horaires de votre planning.</small>
-                    </div>
-                  </div>
-                  <label id="requestRoleWrap" class="request-role">Métier / poste<input
-                    id="accessRequestRole"
-                    name="professional_role"
-                    type="text"
-                    maxlength="120"
-                    placeholder="Ex. aide-soignant, agent, technicien…"
-                    data-stip-keyboard-focus></label>
-                  <label class="request-role">Établissement / entreprise<input
-                    id="accessRequestWorkplace"
-                    name="workplace"
-                    type="text"
-                    maxlength="160"
-                    placeholder="Où travaillez-vous ?"
-                    data-stip-keyboard-focus></label>
-
-                  <div class="request-step">
-                    <span>4</span>
-                    <div>
-                      <strong>Votre planning</strong>
-                      <small>Photo, capture d’écran ou PDF · 15 Mo maximum.</small>
-                    </div>
-                  </div>
-                  <div class="request-upload-actions" aria-label="Ajouter votre planning">
-                    <label class="request-upload-choice">
-                      <input id="accessRequestPlanningCamera" data-planning-input data-planning-source="Photo prise" type="file" accept="image/*" capture="environment">
-                      <span class="request-upload-choice-icon" aria-hidden="true">📷</span>
-                      <strong>Prendre une photo</strong>
-                    </label>
-                    <label class="request-upload-choice">
-                      <input id="accessRequestPlanningPhotos" data-planning-input data-planning-source="Photo choisie" type="file" accept="image/*">
-                      <span class="request-upload-choice-icon" aria-hidden="true">🖼️</span>
-                      <strong>Choisir une photo</strong>
-                    </label>
-                    <label class="request-upload-choice request-upload-choice-wide">
-                      <input id="accessRequestPlanningFile" data-planning-input data-planning-source="Fichier choisi" type="file" accept=".pdf,application/pdf">
-                      <span class="request-upload-choice-icon" aria-hidden="true">📄</span>
-                      <strong>Choisir un PDF / fichier</strong>
-                    </label>
-                  </div>
-                  <div id="accessRequestPlanningName" class="request-upload-name" aria-live="polite"></div>
-                  <label class="request-role">Commentaire <small>(facultatif)</small><textarea
-                    name="comment"
-                    maxlength="800"
-                    rows="3"
-                    placeholder="Une précision utile sur votre planning ou votre organisation."
-                    data-stip-keyboard-focus></textarea></label>
-                </div>
-
-                <div class="request-step">
-                  <span id="requestCodeStepNumber">3</span>
-                  <div>
-                    <strong>Choisissez votre code</strong>
-                    <small>6 chiffres personnels. Ils restent masqués.</small>
-                  </div>
-                </div>
-                <label class="request-code-card">
-                  <span>Code souhaité</span>
-                  <div>
-                    <input
-                      id="requestedAccessCode"
-                      name="requested_code"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]{6}"
-                      maxlength="6"
-                      autocomplete="off"
-                      data-stip-pin-field="1"
-                      data-stip-keyboard-focus
-                      placeholder="••••••"
-                      required><b>6 chiffres</b>
-                  </div>
-                </label>
-                <p id="accessRequestMessage" class="message"></p>
-              </div>
-            </div>
-            <button class="request-submit" type="submit" hidden>
-              <span>Demander un accès</span><b>→</b>
-            </button>
-          </form>
-        </dialog>
-      </section>
-      <section id="appView" class="hidden">
-        <header class="topbar">
-          <button class="brand-button" id="homeBtn" type="button">
-            <span class="brand-mark">STIP</span><span>Portail équipe</span>
+<head>
+  <base href="../../" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" />
+  <meta name="theme-color" content="#f7fbfc" />
+  <meta name="color-scheme" content="light only" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>STIP — Portail équipe T-est</title>
+  <link rel="stylesheet" href="styles.css?v=20260829-public5" />
+  <link rel="stylesheet" href="public-home-priority.css?v=20260927-single-access1" />
+  <link rel="stylesheet" href="home-shell.css?v=20260927-admin-shortcuts3" />
+  <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
+  <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu4" />
+  <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
+  <link rel="stylesheet" href="communication-hub.css?v=20260925-dm-push2" />
+  <link rel="stylesheet" href="stip-theme.css?v=20260926-no-horizontal1" />
+  <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
+  <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
+  <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
+  <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />
+  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide20" />
+  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide20"></script>
+  <!-- T-EST LAB ONLY -->
+  <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260927-fire2" />
+  <script defer src="/t-est/outils-test/bulle-t.js?v=20260927-fire2"></script>
+  <script defer src="/t-est/porte-entree/porte-entree.js?v=20260927-shortcut2"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
+      <div class="t-entry-shell" data-stip-keyboard-surface>
+        <section class="t-primary-access" aria-label="Accès personnel" data-stip-keyboard-scope data-stip-form-focus data-stip-force-focus-mode>
+          <div id="accessRequestStatusHost"></div>
+          <button id="accessIntent" class="t-access-intent" type="button" aria-expanded="false" aria-controls="accessEntryFields" data-stip-intent-reveal="#accessEntryFields" data-stip-intent-collapse="1">
+            <span><small>ESPACE PERSONNEL</small><strong>Accéder à mon espace</strong></span><b aria-hidden="true">→</b>
           </button>
-          <div class="user-chip">
-            <span id="welcomeText">Connecté</span
-            ><button id="logoutBtn" type="button">Déconnexion</button>
-          </div>
-        </header>
-        <section id="homeView" class="view">
-          <div class="hs-home"></div>
+          <section id="accessEntryFields" class="t-auth-stage" aria-label="Code d’accès" data-stip-intent-target hidden>
+            <div class="t-auth-focus">
+              <form id="loginForm" class="code-form t-code-form" data-stip-form-mode="native" data-stip-keyboard-keep data-stip-keyboard-native>
+                <div class="stip-code-wrap"><input id="accessCode" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" data-stip-pin-field="1" enterkeyhint="done" aria-label="Code personnel à 6 chiffres" placeholder="••••••" data-stip-keyboard-focus data-stip-autofocus required /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button id="toggleAccessCode" class="stip-code-toggle" type="button" data-stip-keyboard-accessory data-stip-keyboard-keep>Voir</button></div>
+                <button class="t-login-submit" type="submit"><span>Continuer</span><b aria-hidden="true">→</b></button>
+              </form>
+              <p id="loginMessage" class="message" aria-live="polite"></p>
+            </div>
+          </section>
         </section>
-        <section id="planningView" class="view hidden"></section>
-        <section id="genericView" class="view hidden"></section>
-      </section>
-    </main>
-    <section class="hs-panel" id="hsPanel" aria-hidden="true">
-      <header class="hs-panel-head">
-        <button id="hsPanelBack" type="button">‹</button>
-        <h2 id="hsPanelTitle">Notifications</h2>
-        <span></span>
-      </header>
-      <div class="hs-panel-body" id="hsPanelBody">
-        <div id="hsNotifList"></div>
+        <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
+          <div class="t-public-heading"><strong id="publicAccessTitle">Accès sans compte</strong></div>
+          <nav class="t-app-title" aria-label="Applications accessibles sans compte">
+            <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor"><span class="t-app-icon"><img src="images/icone_app/visiter-les-lieux.webp?v=20260831-icons3" alt="" /></span><strong>Visiter les lieux</strong></a>
+            <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html"><span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span><strong>Nouvel arrivant Pro</strong></a>
+            <a class="t-app-link t-app-link-muted" href="#demande-acces" data-open-access-request><span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span><strong>Demander un accès</strong></a>
+          </nav>
+        </section>
       </div>
     </section>
-    <script src="stip-edge-relay.js?v=20260926-network-budget1"></script>\n    <script src="stip-loading.js?v=20260831-perf2"></script>
-    <script src="name-format.js?v=20260823-retain4"></script>
-    <script src="shift-registry.js?v=20260925-chief-hours1"></script>
-    <script src="stip-entry-router.js?v=20260927-authflow2"></script>
-    <script src="stip-workspace.js?v=20260925-workspace3"></script>
-    <script src="stip-agent-selector.js?v=20260926-team-cards1"></script>
-    <script src="stip-person-actions.js?v=20260925-avatar-menu1"></script>
-    <script src="stip-session-continuity.js?v=20260927-authflow1"></script>
-    <script src="app.js?v=20260927-pin-contract1"></script>
-    <script src="quick-access.js?v=20260926-navigation6"></script>
-    <script src="public-access-request.js?v=20260927-upload-choices1"></script>
-    <script src="stip-legend.js?v=20260924-legend3"></script>
-    <script src="stip-week-engine.js?v=20260926-week-clean1"></script>
-    <script src="stip-touch-core.js?v=20260926-touch-core1"></script>
-    <script src="stip-loader.js?v=20260926-chat-budget3"></script>
-    <script src="home-shell.js?v=20260926-avatar-restore1"></script>
-    <script src="stip-field-intelligence.js?v=20260922-field6"></script>
-    <script src="tomorrow-core.js?v=20260921-field3"></script>
-    <script src="tomorrow-ui.js?v=20260926-touch-core1"></script>
-    <script src="tomorrow-network.js?v=20260922-opportunity1"></script>
-    <script src="activity-runtime.js?v=20260924-history2"></script>
-    <script src="access-runtime.js?v=20260926-navigation6"></script>
-    <script src="communication-hub.js?v=20260926-network-budget1"></script>
-    <script src="profile-photo.js?v=20260926-profile-menu3"></script>
-    <script id="stip-sw-register">
-      if ("serviceWorker" in navigator) {
-        addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/stip-sw.js?v=20260927-pin-back1", { updateViaCache: "none" })
-            .then((registration) => registration.update())
-            .catch(() => {});
-        }, { once: true });
-      }
-    </script>
-  </body>
+  </main>
+  <script src="supabase-config.js?v=20260827-roles1"></script>
+  <script src="app.js?v=20260927-access-security1"></script>
+</body>
 </html>
