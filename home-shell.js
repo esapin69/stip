@@ -739,7 +739,7 @@
   }
   function eventType(x = {}) {
     const kind=String(x.event_kind||"").toLowerCase(),
-      kindLabel={rendezvous:"Rendez-vous",formation:"Formation",reunion:"Réunion",information:"Information",autre:"Événement"}[kind];
+      kindLabel={rendezvous:"Rendez-vous",formation:"Formation",formateur:"Formateur",reunion:"Réunion",information:"Information",autre:"Événement"}[kind];
     if(kindLabel)return kindLabel;
     const raw = [x.kind, x.category, x.type, x.source_type]
       .filter(Boolean)
