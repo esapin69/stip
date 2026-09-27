@@ -102,17 +102,22 @@
   function shiftVisual(code) {
     if (!code) return "";
     const registry = window.STIPShiftRegistry,
+      rawDisplay = String(code).trim().toUpperCase().replace(/\s+/g, ""),
       def = registry?.resolve?.(code),
+      canonical = String(def?.code || "").trim().toUpperCase(),
+      variant = Boolean(def?.is_working && canonical && rawDisplay !== canonical),
       color = registry?.color?.(code, "#277b86") || "#277b86",
       icon = registry?.icon?.(code) || "",
       url = asset(code);
+    if (variant)
+      return `<span class="ph-shift-fallback" style="--shift:${esc(color)}" title="${esc(def?.label || canonical)}">${esc(rawDisplay)}</span>`;
     if (def?.is_working && url)
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(def.label || code)}">`;
     if (icon)
       return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(code)}">`;
-    return `<span class="ph-shift-fallback" style="--shift:${esc(color)}">${esc(code)}</span>`;
+    return `<span class="ph-shift-fallback" style="--shift:${esc(color)}">${esc(rawDisplay)}</span>`;
   }
   async function openPersonalCalendar() {
     if (!window.STIPCalendars?.quick) {
