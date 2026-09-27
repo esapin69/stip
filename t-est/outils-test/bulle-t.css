@@ -1,35 +1,18 @@
 /* T-EST LAB ONLY — repère visuel unique. Ne part jamais en production. */
 html[data-t-est="1"]::before{
-  content:"";
-  position:fixed;
-  z-index:2147483646;
-  inset:0;
-  pointer-events:none;
-  border:clamp(7px,1.15vw,14px) solid transparent;
-  border-radius:clamp(14px,2vw,26px);
+  content:"";position:fixed;z-index:2147483646;inset:0;pointer-events:none;
+  border:clamp(7px,1.15vw,14px) solid transparent;border-radius:clamp(14px,2vw,26px);
   background:linear-gradient(115deg,#ff2a00 0%,#ff7a00 22%,#ffd400 43%,#ff5a00 63%,#d90000 82%,#ffb000 100%) border-box;
-  -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask-composite:exclude;
+  -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;
   filter:drop-shadow(0 0 8px rgba(255,72,0,.75)) drop-shadow(0 0 18px rgba(255,180,0,.48));
 }
 html[data-t-est="1"]::after{
-  content:"T";
-  position:fixed;
-  z-index:2147483647;
-  top:max(8px,env(safe-area-inset-top));
-  right:max(10px,env(safe-area-inset-right));
-  width:30px;
-  height:30px;
-  display:grid;
-  place-items:center;
-  pointer-events:none;
-  border-radius:50%;
-  background:linear-gradient(145deg,#ffdc32,#ff6a00 58%,#d71900);
-  color:#fff;
-  font:950 16px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  text-shadow:0 1px 3px rgba(80,0,0,.55);
-  box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 18px rgba(255,92,0,.9);
+  content:"T";position:fixed;z-index:2147483647;top:max(8px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));
+  width:30px;height:30px;display:grid;place-items:center;pointer-events:none;border-radius:50%;
+  background:linear-gradient(145deg,#ffdc32,#ff6a00 58%,#d71900);color:#fff;font:950 16px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  text-shadow:0 1px 3px rgba(80,0,0,.55);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 18px rgba(255,92,0,.9);
 }
-/* Ancienne bulle supprimée : le cadre feu est désormais l'unique différenciation visuelle T-est. */
+/* Ancienne bulle supprimée : le cadre feu est l'unique repère visuel global T-est. */
 .t-est-global-bubble{display:none!important}
+/* Navigation de laboratoire demandée sur la porte d'entrée. */
+.t-est-home-preview-link{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:16px;border:1px dashed rgba(166,72,0,.42);background:rgba(255,248,232,.96);color:#7a3100;font-weight:900;font-size:.78rem;text-decoration:none;text-align:center}
