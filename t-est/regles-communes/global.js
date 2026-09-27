@@ -495,7 +495,8 @@
     scope.style.setProperty("--stip-vv-top", vvTop + "px");
     const focused = document.activeElement;
     const stepNavigation = !!formFor(active)?.hasAttribute?.("data-stip-step-nav");
-    if (stepNavigation) {
+    const forceFocusMode = !!active?.closest?.("[data-stip-force-focus-mode]");
+    if (stepNavigation || forceFocusMode) {
       const retained =
         focused === active ||
         (focused && scope.contains(focused) && focused.closest?.("[data-stip-keyboard-keep]"));
@@ -529,7 +530,8 @@
     pendingBaseline = 0;
     prepareFormPath(field, scope);
     const stepNavigation = !!formFor(field)?.hasAttribute?.("data-stip-step-nav");
-    if (stepNavigation || (preserveKeyboard && previousModeOpen)) {
+    const forceFocusMode = !!field?.closest?.("[data-stip-force-focus-mode]");
+    if (stepNavigation || forceFocusMode || (preserveKeyboard && previousModeOpen)) {
       modeOpen = true;
       scope.classList.add(MODE_CLASS);
       setDialogMode(scope, true);
@@ -673,6 +675,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 13
+    version: 14
   };
 })();
