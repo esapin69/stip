@@ -182,7 +182,7 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-keyboard-nav-actions):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
   display: none !important;
 }
 
@@ -273,6 +273,50 @@ dialog.stip-keyboard-dialog-mode::backdrop {
   font-weight: 950 !important;
   font-size: .96rem !important;
   box-shadow: 0 14px 32px rgba(0,143,170,.32) !important;
+  touch-action: manipulation !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-nav-actions {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 2px auto 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, .78fr) minmax(168px, 1.22fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-nav-actions[hidden] {
+  display: none !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode
+  .stip-keyboard-nav-actions .stip-keyboard-prev-action {
+  grid-column: 1 !important;
+  justify-self: start !important;
+  margin: 0 !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode
+  .stip-keyboard-nav-actions .stip-keyboard-next-action {
+  grid-column: 2 !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  justify-self: stretch !important;
+}
+
+@media (max-width: 390px) {
+  [data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-nav-actions {
+    grid-template-columns: minmax(0, .7fr) minmax(154px, 1.3fr) !important;
+    gap: 8px !important;
+  }
+
+  [data-stip-step-nav].stip-keyboard-focus-mode
+    .stip-keyboard-nav-actions .stip-keyboard-next-action {
+    padding-inline: 12px !important;
+    font-size: .88rem !important;
+  }
 }
 
 [data-stip-form-focus] .stip-keyboard-next-action[hidden] {
@@ -284,17 +328,18 @@ dialog.stip-keyboard-dialog-mode::backdrop {
    Active uniquement sur un formulaire portant data-stip-step-nav. */
 [data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-prev-action {
   width: max-content !important;
-  min-height: 38px !important;
-  margin-top: -2px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
   padding: 0 8px !important;
   justify-self: start !important;
   border: 0 !important;
   background: transparent !important;
   color: #58747c !important;
-  font-size: .72rem !important;
+  font-size: .76rem !important;
   line-height: 1 !important;
   font-weight: 850 !important;
   box-shadow: none !important;
+  touch-action: manipulation !important;
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-overview-action {
