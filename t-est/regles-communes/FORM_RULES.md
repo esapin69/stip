@@ -55,11 +55,13 @@ Pour vérifier si le moteur construit depuis **Demander un accès** s’adapte �
 
 Ce formulaire est un **consommateur de test**, pas une nouvelle source de règles. Son comportement ne devient canonique qu’après validation explicite. Tous les autres formulaires historiques restent en `legacy` et ne doivent pas recevoir automatiquement le moteur séquentiel.
 
+Sur ce pilote, le formulaire reste visible dans **Suivi** : la sélection de l’agent ne doit pas masquer les autres champs. Une demande classique crée une action `pending` pour l’agent et une notification associée ; elle reste donc visible dans ses actions d’accueil jusqu’à traitement. Le mode « Message libre · notification seulement » crée uniquement une notification.
+
 ### Briques communes ajoutées depuis le pilote
 
 Trois comportements sont désormais explicitement communs :
 
-- **Recherche d’une personne** : une recherche comme « Rechercher un agent » utilise une surface dédiée `data-stip-search-scope`. Quand le clavier est ouvert, la question, le champ et les résultats restent ensemble dans le viewport ; la page complète ne doit pas rester mélangée derrière la recherche.
+- **Recherche d’une personne** : une recherche comme « Rechercher un agent » doit réutiliser le sélecteur canonique `STIPAgentSelector` lorsqu’il s’agit d’un agent. La recherche, les filtres et la sélection ne doivent pas être recréés localement. Quand le clavier est ouvert, la question, le champ et les résultats restent ensemble dans le viewport.
 - **Menu de choix STIP** : un `select` marqué `data-stip-select-menu` n’utilise plus le grand menu natif Android/iOS comme interface principale. Le moteur affiche un panneau STIP cohérent, lisible et tactile, tout en conservant le vrai `select` comme valeur métier.
 - **Contexte de saisie** : pendant une question plein écran, le moteur affiche un repère persistant indiquant **d’où l’on vient**, **dans quel formulaire on se trouve**, **l’étape courante**, **POUR QUI**, **POURQUOI** et, lorsqu’elle existe, une aide courte **COMMENT** via `data-stip-help`. Le repère reste visible quand on passe d’un champ au suivant afin d’éviter l’effet « écran isolé » où l’utilisateur oublie ce qu’il est en train de remplir.
 
@@ -150,7 +152,7 @@ Quand le clavier réduit réellement la zone visible :
 - utiliser `visualViewport` lorsqu’il est disponible ;
 - caler le formulaire sur la hauteur réellement visible ;
 - afficher uniquement la question active, son champ et les actions utiles ;
-- éviter qu’un champ ou un bouton soit caché derrière le clavier ;
+- interdire qu’un champ, le contexte du formulaire, **Précédent**, **Suivant/Valider** ou **Vue complète** soit caché ou gêné par le clavier ;
 - conserver une largeur de lecture raisonnable sur grand écran ;
 - ne pas casser le geste natif de rafraîchissement de la porte d’entrée.
 

@@ -183,12 +183,12 @@ dialog.stip-keyboard-dialog-mode::backdrop {
   max-width: none !important;
   max-height: none !important;
   margin: 0 !important;
-  padding: 18px 16px max(18px, env(safe-area-inset-bottom)) !important;
+  padding: clamp(96px, 22dvh, 138px) 16px clamp(86px, 18dvh, 108px) !important;
   display: grid !important;
   grid-template-columns: minmax(0, 620px) !important;
   justify-content: center !important;
   align-content: center !important;
-  gap: 10px !important;
+  gap: 8px !important;
   overflow: hidden !important;
   background:
     radial-gradient(circle at 50% 40%, rgba(8,198,218,.14), transparent 46%),
@@ -294,9 +294,14 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-nav-actions {
-  width: 100% !important;
+  position: absolute !important;
+  z-index: 7 !important;
+  left: 50% !important;
+  bottom: max(10px, env(safe-area-inset-bottom)) !important;
+  transform: translateX(-50%) !important;
+  width: min(620px, calc(100% - 32px)) !important;
   max-width: 620px !important;
-  margin: 2px auto 0 !important;
+  margin: 0 !important;
   display: grid !important;
   grid-template-columns: minmax(0, .78fr) minmax(168px, 1.22fr) !important;
   align-items: center !important;
@@ -361,9 +366,10 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-overview-action {
   position: absolute !important;
-  z-index: 3 !important;
-  top: 12px !important;
-  right: 14px !important;
+  z-index: 7 !important;
+  top: auto !important;
+  right: 16px !important;
+  bottom: max(76px, calc(env(safe-area-inset-bottom) + 70px)) !important;
   width: auto !important;
   min-width: 38px !important;
   height: 38px !important;
@@ -804,6 +810,10 @@ input[data-stip-pin-field="1"][data-stip-pin-revealed="1"] {
 }
 
 @media (max-height: 560px) {
+  [data-stip-form-focus].stip-keyboard-focus-mode {
+    padding: 86px 12px 78px !important;
+    gap: 6px !important;
+  }
   [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-header {
     padding: 7px 9px !important;
     gap: 4px !important;
@@ -814,4 +824,12 @@ input[data-stip-pin-field="1"][data-stip-pin-revealed="1"] {
   [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-help {
     font-size: .6rem !important;
   }
+}
+
+/* Invariant clavier : dans le viewport réellement visible, la question,
+   le contexte et les actions restent tous au-dessus du clavier. */
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-path {
+  max-height: min(34dvh, 180px) !important;
+  overflow: auto !important;
+  overscroll-behavior: contain !important;
 }

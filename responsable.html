@@ -20,7 +20,7 @@
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="responsable-agenda.css?v=20260924-agent-picker-wall1" />
-    <link rel="stylesheet" href="responsable-home.css?v=20260924-header-clean2" />
+    <link rel="stylesheet" href="responsable-home.css?v=20260927-request-visible1" />
     <link rel="stylesheet" href="responsable-agenda-home.css?v=20260925-calendar-common1" />
     <link
       rel="stylesheet"
@@ -133,18 +133,26 @@
         </section>
         <div class="resp-dots" id="respDots"></div>
 
-        <details class="resp-request-compose" id="respRequestCompose">
+        <details class="resp-request-compose" id="respRequestCompose" data-stip-persistent-open open>
           <summary>
             <span aria-hidden="true">✉️</span>
             <span><b>Envoyer à un agent</b><small>Demande, validation, information ou notification</small></span>
             <i aria-hidden="true">›</i>
           </summary>
           <div class="resp-request-body">
-            <div class="resp-agent-search" data-stip-search-scope>
-              <label>Rechercher un agent<input id="search" type="search" placeholder="Nom ou prénom" data-stip-question="Rechercher un agent" autocomplete="off" /></label>
-              <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
-            </div>
-            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" data-stip-flow-origin="Suivi" data-stip-flow-label="Envoyer à un agent" data-stip-context-who-fallback="Agent" data-stip-context-why-fallback="Demande" hidden>
+            <section class="resp-request-target" aria-label="Destinataire">
+              <span>DESTINATAIRE</span>
+              <button id="requestAgentPicker" type="button" aria-haspopup="dialog">
+                <span class="resp-request-target-icon" aria-hidden="true">👤</span>
+                <span class="resp-request-target-copy">
+                  <strong id="requestAgentName">Choisir un agent</strong>
+                  <small id="requestAgentMeta">Rechercher par prénom, nom ou GHE</small>
+                </span>
+                <b aria-hidden="true">›</b>
+              </button>
+              <p id="requestAgentLoadStatus" class="resp-request-target-status" aria-live="polite">Chargement de l’annuaire…</p>
+            </section>
+            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" data-stip-flow-origin="Suivi" data-stip-flow-label="Envoyer à un agent" data-stip-context-who-fallback="Choisir un agent" data-stip-context-why-fallback="Demande">
               <input type="hidden" id="agentId" />
               <label>Type<select id="kind" data-stip-select-menu data-stip-select-title="Type de demande"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>
@@ -322,7 +330,7 @@
     <script src="responsable-home.js?v=20260926-network-budget1"></script>
     <script src="responsable-official-documents.js?v=20260922-tabs1"></script>
     <script src="responsable-staffing.js?v=20260926-network-budget1"></script>
-    <script src="responsable-tabs.js?v=20260927-formux-context1"></script>
+    <script src="responsable-tabs.js?v=20260927-request-visible1"></script>
     <script src="quick-access-universal.js?v=20260926-no-iframe-pages1"></script>
   </body>
 </html>

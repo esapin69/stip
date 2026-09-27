@@ -90,12 +90,13 @@ check(
 );
 
 const responsableDemandesJs = read("responsable-demandes.js");
+const responsableTabsJs = read("responsable-tabs.js");
 check(
-  responsableHtml.includes('data-stip-search-scope') &&
-    responsableHtml.includes('id="search" type="search"') &&
-    formJs.includes('field?.closest?.("[data-stip-search-scope]")') &&
-    formJs.includes("function ensureSearchQuestion"),
-  "La recherche d’agent pilote doit utiliser la recherche commune plein écran."
+  responsableHtml.includes('id="requestAgentPicker"') &&
+    responsableDemandesJs.includes("STIPAgentSelector.openPicker") &&
+    responsableDemandesJs.includes('stip-agent-readonly') &&
+    !responsableHtml.includes('id="search" type="search"'),
+  "La recherche d’agent pilote doit réutiliser le sélecteur canonique STIPAgentSelector."
 );
 check(
   responsableHtml.includes('data-stip-select-menu') &&
@@ -114,6 +115,20 @@ check(
     formCss.includes(".stip-keyboard-flow-header") &&
     formCss.includes(".stip-keyboard-flow-progress"),
   "Le repère de flux doit garder origine, destination, type, étape et aide visibles."
+);
+
+check(
+  responsableHtml.includes('data-stip-persistent-open open') &&
+    !responsableHtml.includes('data-stip-context-why-fallback="Demande" hidden') &&
+    responsableTabsJs.includes("ensureRequests();"),
+  "Le formulaire pilote doit rester visible et branché dès l’ouverture de Suivi."
+);
+
+check(
+  formCss.includes('bottom: max(10px, env(safe-area-inset-bottom))') &&
+    formCss.includes('bottom: max(76px, calc(env(safe-area-inset-bottom) + 70px))') &&
+    formCss.includes("Invariant clavier"),
+  "Le clavier ne doit masquer ni navigation, ni Vue complète, ni champ actif."
 );
 
 check(

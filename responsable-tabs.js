@@ -142,7 +142,7 @@
     if (window.STIPResponsableRequestsLoaded) return;
     if (document.querySelector('script[data-resp-inline-requests="1"]')) return;
     const script = document.createElement("script");
-    script.src = "responsable-demandes.js?v=20260927-formux-context1";
+    script.src = "responsable-demandes.js?v=20260927-agent-picker2";
     script.dataset.respInlineRequests = "1";
     script.onload = () => {
       window.STIPResponsableRequestsLoaded = true;
@@ -193,6 +193,9 @@
     if (tab === "suivi") {
       const tracking = $("#respTrackingTool");
       if (tracking) tracking.hidden = false;
+      const requests = $("#respRequestCompose");
+      if (requests?.hasAttribute("data-stip-persistent-open")) requests.open = true;
+      ensureRequests();
       window.dispatchEvent(
         new CustomEvent("stip:responsable-tab", { detail: { tab: "suivi" } }),
       );
@@ -211,7 +214,14 @@
 
   document.addEventListener("click", (event) => {
     const requestSummary = event.target.closest?.("#respRequestCompose > summary");
-    if (requestSummary) ensureRequests();
+    if (requestSummary) {
+      const requests = $("#respRequestCompose");
+      if (requests?.hasAttribute("data-stip-persistent-open")) {
+        event.preventDefault();
+        requests.open = true;
+      }
+      ensureRequests();
+    }
 
     const button = event.target.closest?.("[data-resp-tab]");
     if (!button) return;
