@@ -40,6 +40,7 @@
   const MODE_CLASS = "stip-keyboard-focus-mode";
   const SEARCH_MODE_ATTR = "data-stip-search-focus";
   const SEARCH_EXIT = ".stip-keyboard-search-exit";
+  const INTENT_BACK = ".stip-intent-back-action";
   const SEARCH_RESULT_SELECTOR = '[class*="result"],[id*="result"],[class*="suggest"],[id*="suggest"],[data-picker],[class*="list"],[id*="list"],[id*="List"]';
   const viewport = window.visualViewport;
 
@@ -101,8 +102,37 @@
     return "section-" + key;
   }
 
+  function isSixDigitPin(field) {
+    if (!field?.matches?.("input")) return false;
+    const key = fieldIdentityKey(field);
+    const maxlength = Number(field.getAttribute("maxlength") || field.maxLength || 0);
+    const numeric = String(field.getAttribute("inputmode") || "").toLowerCase() === "numeric";
+    const pattern = String(field.getAttribute("pattern") || "");
+    const codeLike = /(^|_)(code|pin|passcode|requested_code|access_code)(_|$)/.test(key);
+    return maxlength === 6 && numeric && (codeLike || /0-9|\\d/.test(pattern));
+  }
+
+  function normalizePinField(field) {
+    if (!isSixDigitPin(field)) return false;
+    field.dataset.stipPinField = "1";
+    field.classList.add("stip-pin-field");
+    if (field.type !== "text") field.type = "text";
+    field.setAttribute("inputmode", "numeric");
+    field.setAttribute("autocomplete", "off");
+    if (!field.hasAttribute("pattern")) field.setAttribute("pattern", "[0-9]{6}");
+    if (field.dataset.stipPinBound !== "1") {
+      field.dataset.stipPinBound = "1";
+      field.addEventListener("input", () => {
+        const clean = String(field.value || "").replace(/\D/g, "").slice(0, 6);
+        if (field.value !== clean) field.value = clean;
+      });
+    }
+    return true;
+  }
+
   function normalizeAutofillField(field) {
     if (!field?.matches?.("input,textarea,select")) return "";
+    if (normalizePinField(field)) return "one-time-code";
     const inferred = inferredAutocompleteToken(field);
     const explicit = explicitAutocompleteToken(field);
     if (inferred && (!explicit || PROFILE_AUTOFILL_TOKENS.has(explicit))) {
@@ -144,7 +174,10 @@
     root?.querySelectorAll?.("form").forEach((form) => forms.add(form));
     forms.forEach((form) => {
       if (!form.hasAttribute("autocomplete")) form.setAttribute("autocomplete", "on");
-      form.querySelectorAll("input,textarea,select").forEach(normalizeAutofillField);
+      form.querySelectorAll("input,textarea,select").forEach((field) => {
+        normalizePinField(field);
+        normalizeAutofillField(field);
+      });
       markAutofillContext(form);
     });
     return forms;
@@ -658,12 +691,57 @@
     setTimeout(updateStableHeight, 80);
   }
 
+  function collapseIntent(trigger, target, options = {}) {
+    if (!trigger || !target) return false;
+    const activeInside = target.contains(document.activeElement);
+    if (activeInside) {
+      try { document.activeElement?.blur?.(); } catch {}
+    }
+    clearMode();
+    target.hidden = true;
+    delete target.dataset.stipRevealed;
+    trigger.hidden = false;
+    trigger.setAttribute("aria-expanded", "false");
+    if (options.focus !== false) {
+      requestAnimationFrame(() => {
+        try { trigger.focus({ preventScroll: true }); } catch { trigger.focus?.(); }
+      });
+    }
+    window.dispatchEvent(new CustomEvent("stip:intent-collapsed", { detail: { trigger, target } }));
+    return true;
+  }
+
+  function ensureIntentBack(trigger, target) {
+    if (!trigger || !target || trigger.dataset.stipIntentCollapse !== "1") return null;
+    let button = target.querySelector?.(INTENT_BACK);
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "stip-intent-back-action";
+      button.textContent = "← Retour";
+      button.setAttribute("aria-label", "Revenir à l’écran précédent");
+      button.setAttribute("data-stip-keyboard-accessory", "");
+      button.setAttribute("data-stip-keyboard-keep", "");
+      target.appendChild(button);
+    }
+    if (button.dataset.stipIntentBackBound !== "1") {
+      button.dataset.stipIntentBackBound = "1";
+      button.addEventListener("pointerdown", (event) => event.preventDefault(), { passive: false });
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        collapseIntent(trigger, target);
+      });
+    }
+    return button;
+  }
+
   function reveal(trigger) {
     const selector = trigger.getAttribute("data-stip-intent-reveal") || "";
     if (!selector) return null;
     let target = null; try { target = document.querySelector(selector); } catch {}
     if (!target) return null;
     captureBaseline(); target.hidden = false; target.dataset.stipRevealed = "1"; trigger.setAttribute("aria-expanded", "true");
+    ensureIntentBack(trigger, target);
     if (trigger.dataset.stipIntentCollapse === "1") trigger.hidden = true;
     requestAnimationFrame(() => {
       const next = target.querySelector("[data-stip-autofocus]") || target.querySelector(FOCUS) || target.querySelector("input, textarea, select, button");
@@ -678,8 +756,8 @@
     root.querySelectorAll(INTENT).forEach((trigger) => {
       const selector = trigger.getAttribute("data-stip-intent-reveal") || "";
       let target = null; try { target = selector ? document.querySelector(selector) : null; } catch {}
-      if (target) { target.hidden = true; delete target.dataset.stipRevealed; }
-      trigger.hidden = false; trigger.setAttribute("aria-expanded", "false");
+      if (target) collapseIntent(trigger, target, { focus: false });
+      else { trigger.hidden = false; trigger.setAttribute("aria-expanded", "false"); }
     });
     clearMode(); pinEntryScroll();
   }
@@ -781,6 +859,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 19
+    version: 20
   };
 })();
