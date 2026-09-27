@@ -308,7 +308,7 @@ async function send(ctx:any,body:any){
             const targetState=await notificationPreference(String(m.agent_id),"dm_received");
             if(!targetState.enabled||!targetState.push_enabled)return;
             const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
-            await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau DM",url:"/?quick=notifications&conversation="+encodeURIComponent(id),tag:"stip-dm-"+id}})});
+            await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{event_key:"dm_received",title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau DM",url:"/?quick=communication&tab=dm&conversation="+encodeURIComponent(id),tag:"stip-dm-"+id}})});
           }))
         }
       }
@@ -720,6 +720,41 @@ async function teamSend(ctx:any,body:any){
     throw error
   }
   await db.from("stip_conversations").update({last_message_at:data.created_at,updated_at:data.created_at}).eq("id",conv.id);
+  try{
+    const eventKey=wheelchair?"wheelchair_received":"team_chat_received",
+      eventType=await notificationType(eventKey);
+    if(eventType?.push_enabled){
+      const all=await activeMessagingAgents(),
+        senderId=ctx.is_trainee?"":String(ctx.agent.id||""),
+        targets=all.filter((id:string)=>!senderId||String(id)!==senderId),
+        senderProfile=ctx.is_trainee?null:await messageProfile(String(ctx.agent.id)),
+        senderName=ctx.is_trainee?display(ctx.agent):nick(ctx.agent,senderProfile),
+        fallbackBody=wheelchair?"Nouveau signalement fauteuil":"Nouveau message d’équipe",
+        notificationBody=(text||fallbackBody).slice(0,140),
+        tab=wheelchair?"fauteuils":"chat";
+      await Promise.allSettled(targets.map(async(agentId:string)=>{
+        const targetState=await notificationPreference(agentId,eventKey);
+        if(!targetState.enabled||!targetState.push_enabled)return;
+        const targetProfile=await messageProfile(agentId),
+          preview=targetProfile.notification_preview!==false;
+        await fetch(URL+"/functions/v1/stip-push",{
+          method:"POST",
+          headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},
+          body:JSON.stringify({
+            action:"send_internal",
+            agent_id:agentId,
+            payload:{
+              event_key:eventKey,
+              title:preview?senderName:"STIP",
+              body:preview?notificationBody:fallbackBody,
+              url:"/?quick=communication&tab="+tab+"&message="+encodeURIComponent(String(data.id)),
+              tag:(wheelchair?"stip-wheelchair-":"stip-team-chat-")+String(data.id)
+            }
+          })
+        })
+      }))
+    }
+  }catch(e){console.error("team push",e)}
   return{ok:true,...data}
 }
 
