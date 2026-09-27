@@ -1866,7 +1866,7 @@
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
     if (has("messages"))
-      s += app("communication", "Communication", "homeChat", "communication");
+      s += app("homeChat", "Communication", "communication", "communication");
     if (has("agent_directory"))
       s += app("agents", "Équipe", "agents", "agents");
     if (has("change_app")) s += app("change", "Changement", "change", "change");
