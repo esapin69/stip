@@ -114,6 +114,79 @@
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(code)}">`;
     return `<span class="ph-shift-fallback" style="--shift:${esc(color)}">${esc(code)}</span>`;
   }
+  async function openPersonalCalendar() {
+    if (!window.STIPCalendars?.quick) {
+      await window.STIPLoad?.script?.("calendar-subscriptions.js");
+    }
+    if (window.STIPCalendars?.quick)
+      return window.STIPCalendars.quick("personal");
+    return window.STIPCalendars?.open?.("personal");
+  }
+  function planningOptionsPocket() {
+    return `<details class="stip-option-pocket ph-planning-options" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-ph-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Tous les shifts réunis · mise à jour automatique</small><b aria-hidden="true">›</b></button></div></details>`;
+  }
+  function legendMarkup() {
+    if (!monthKey) return "";
+    const registry = window.STIPShiftRegistry,
+      monthItems = items.filter((x) => String(x?.date || "").startsWith(monthKey)),
+      seen = new Set(),
+      rows = [],
+      add = (key, visual, label, meta = "") => {
+        if (!key || seen.has(key)) return;
+        seen.add(key);
+        rows.push(
+          `<button type="button" class="stip-legend-item" data-stip-legend-key="${esc(key)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${visual}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</button>`,
+        );
+      };
+    for (const item of monthItems) {
+      const raw = String(item?.code || item?.source_value || "").trim(),
+        def = registry?.resolve?.(raw),
+        canonical =
+          String(def?.code || registry?.baseCode?.(raw) || registry?.clean?.(raw) || raw)
+            .trim()
+            .toUpperCase();
+      if (!canonical) continue;
+      if (def?.is_working) {
+        const color = registry?.color?.(raw, def?.color_hex || "#277b86") || "#277b86",
+          time = registry?.time?.(raw) || "";
+        add(
+          "shift:" + canonical,
+          `<i class="ph-legend-shift-dot" style="--shift:${esc(color)}"></i>`,
+          def?.label || canonical,
+          time,
+        );
+      } else {
+        const icon = String(def?.icon || "•"),
+          label = String(def?.label || canonical);
+        add(
+          "status:" + canonical,
+          `<span class="ph-legend-emoji">${esc(icon)}</span>`,
+          `${canonical} — ${label}`,
+        );
+      }
+    }
+    const extras =
+      window.STIPPlanningAgendaExtras?.items?.() ||
+      window.STIPPlanningAgendaExtras?.items ||
+      [];
+    for (const item of Array.isArray(extras) ? extras : []) {
+      if (!String(item?.date || "").startsWith(monthKey)) continue;
+      const icon = String(item?.icon || "📌").trim() || "📌",
+        label = String(item?.kindLabel || item?.title || "Événement").trim();
+      add(
+        "event:" + icon + "|" + label,
+        `<span class="ph-legend-emoji">${esc(icon)}</span>`,
+        label,
+      );
+    }
+    if (!rows.length) return "";
+    return `<section class="ph-fixed-legend stip-legend" aria-label="Légende des repères affichés"><div class="stip-section-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${rows.join("")}</div></div></section>`;
+  }
+  function renderLegend() {
+    const host = $("#phLegendHost");
+    if (host) host.innerHTML = legendMarkup();
+  }
+
   function monthPanel(k) {
     const [y, m] = k.split("-").map(Number),
       by = new Map(
@@ -157,11 +230,15 @@
     const c = $("#phContent");
     if (!c) return;
     chooseMonth();
-    c.innerHTML = `<div class="ph-calendar-actions" aria-label="Actions du calendrier"><button type="button" class="ph-calendar-action primary" data-ph-print><span>▣</span><strong>Aperçu A4 paysage</strong></button><button type="button" class="ph-calendar-action" data-cal-subscribe><span>▦</span><strong>Synchroniser</strong></button></div>${monthPanel(monthKey)}`;
-    c.querySelector("[data-cal-subscribe]")?.addEventListener("click", () =>
-      window.STIPCalendars?.open?.("personal"),
+    c.innerHTML = `<div class="ph-calendar-actions" aria-label="Actions du calendrier"><button type="button" class="ph-calendar-action primary" data-ph-print><span>▣</span><strong>Aperçu A4 paysage</strong></button><button type="button" class="ph-calendar-action" data-cal-subscribe><span>▦</span><strong>Synchroniser</strong></button></div>${monthPanel(monthKey)}<section id="phLegendHost" class="ph-page-legend"></section>${planningOptionsPocket()}`;
+    c.querySelectorAll("[data-cal-subscribe],[data-ph-calendar-subscribe]").forEach(
+      (button) =>
+        button.addEventListener("click", () =>
+          openPersonalCalendar().catch(() => {}),
+        ),
     );
     announceMonth();
+    renderLegend();
     window.dispatchEvent(
       new CustomEvent("stip:planning-select", { detail: { kind: "personal" } }),
     );
@@ -217,8 +294,12 @@
       applyData(cached, false);
       return true;
     }
-    if (!loadingData)
-      loadingData = call("bootstrap").finally(() => (loadingData = null));
+    if (!loadingData) {
+      const shared = window.STIPBootPromise;
+      loadingData = Promise.resolve(shared || call("bootstrap")).finally(
+        () => (loadingData = null),
+      );
+    }
     try {
       const d = await loadingData;
       window.STIPBootCache = d;
@@ -293,6 +374,9 @@
   window.addEventListener("stip:boot-updated", (e) =>
     applyData(e.detail || window.STIPBootCache, currentKind === "personal"),
   );
+  window.addEventListener("stip:planning-extras-updated", () => {
+    if (currentKind === "personal") renderLegend();
+  });
   document.addEventListener("click", (e) => {
     const b = e.target.closest?.("[data-month-nav]");
     if (!b || b.disabled) return;
@@ -327,6 +411,6 @@
     set: setMonth,
   };
   const s = document.createElement("style");
-  s.textContent = `#planningView{padding:0!important;background:linear-gradient(180deg,#fbfeff,#f4fafb)}.ph-shell{box-sizing:border-box;width:100%;max-width:760px;margin:auto;padding:16px 10px 34px;display:flex;flex-direction:column}.ph-head{display:flex;align-items:center;gap:12px;margin:4px 4px 12px}.ph-head>div{min-width:0}.ph-head span{font-size:.7rem;font-weight:950;letter-spacing:.13em;color:#0798b5}.ph-head h1{margin:2px 0 0;color:#0d4257;font-size:2rem;line-height:1}.ph-head small{display:block;margin-top:5px;color:#778b93;font-size:.72rem;font-weight:750}.ph-back{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:14px;background:#fff;color:#0d4257;font-size:1.6rem;box-shadow:0 6px 16px rgba(13,66,87,.07)}.ph-context:empty{display:none}.ph-context{margin:0 4px 12px}.ph-content{width:100%;min-height:420px;border:1px solid #d9eaee;border-radius:24px;background:#fff;box-shadow:0 12px 30px rgba(18,72,88,.08);padding:0;overflow:hidden;box-sizing:border-box}.ph-page-load,.ph-error{min-height:420px;display:grid;place-items:center;color:#6f838b;font-size:.8rem}.ph-month-card{background:#fff;padding:8px;border-radius:22px}.ph-month-card header{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin:2px 0 10px}.ph-month-title{text-align:center}.ph-month-title>span{display:flex;align-items:baseline;justify-content:center}.ph-month-card header strong{font-size:1.55rem;color:#0d4257}.ph-month-card header small{margin-left:7px;color:#7a9098;font-size:.9rem;font-weight:850}.ph-month-card header>button{height:40px;border:0;border-radius:11px;background:#f1f7f8;color:#0d4257;font-size:1.3rem}.ph-month-card header>button:disabled{opacity:.18}.ph-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.ph-day-head{min-width:0;padding:6px 0 5px;text-align:center;font-size:.58rem;font-weight:950;color:#0d4257;border-bottom:3px solid #0d4257;white-space:nowrap;overflow:hidden}.ph-empty{min-height:var(--stip-month-cell-height)}.ph-day-cell{min-width:0;border:1px solid #e3e9eb;border-radius:15px;background:#fff}.ph-day-cell>b{color:#111}.ph-shift-slot{line-height:1}.ph-shift-img{display:block;max-width:100%;max-height:65px;width:auto;height:auto;object-fit:contain}.ph-shift-registry-icon{min-width:34px;height:34px;display:grid;place-items:center;font-size:1.35rem;line-height:1}.ph-shift-fallback{min-width:34px;height:34px;padding:0 4px;border-radius:999px;background:var(--shift);color:#fff;display:grid;place-items:center;font-size:.65rem;font-weight:950}.ph-dedicated-intro{padding:22px 18px 12px}.ph-dedicated-intro>span{font-size:.62rem;font-weight:950;letter-spacing:.12em;color:#0798b5}.ph-dedicated-intro h2{margin:5px 0;color:#0d4257;font-size:1.5rem}.ph-dedicated-intro p{margin:0;color:#6e838b;font-size:.82rem;line-height:1.45}.ph-calendar-cards{display:grid;gap:10px;padding:8px 14px 18px}.ph-calendar-subscriptions{display:block}.ph-calendar-cards strong,.ph-calendar-cards small{display:block}.ph-calendar-cards small{margin-top:3px;color:#71858d;font-size:.7rem}.ph-calendar-cards em{font-style:normal;font-size:1.3rem;color:#8aa0a8}.ph-info-card{padding:14px;border-radius:17px;background:#eef7f8;color:#244d5c}.ph-info-card small{margin-top:4px;line-height:1.35}@media(max-width:380px){.ph-shell{padding-inline:6px}.ph-day-head{font-size:.49rem}.ph-shift-img{max-height:56px}.ph-head h1{font-size:1.8rem}}.ph-calendar-actions{display:flex;gap:8px;padding:10px 10px 0;background:#fff}.ph-calendar-action{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid #d7e7ea;border-radius:13px;background:#f7fbfc;color:#174b5d;font-size:.72rem;font-weight:900}.ph-calendar-action span{font-size:1rem;line-height:1}.ph-calendar-action.primary{background:#eaf7f9;border-color:#c8e7ec;color:#087f96}.ph-calendar-action strong{font-size:.72rem}.ph-calendar-action:active{transform:translateY(1px)}@media(max-width:520px){.ph-calendar-actions{padding:8px 8px 0;gap:6px}.ph-calendar-action{flex:1;min-width:0;padding:0 7px}.ph-calendar-action strong{font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}@media(orientation:landscape) and (min-width:700px){.ph-shell{max-width:1180px;padding:10px 12px 24px}.ph-head{margin-bottom:8px}.ph-content{border-radius:22px}.ph-month-card{padding:10px 12px 12px}.ph-empty{min-height:var(--stip-month-cell-height)}.ph-shift-img{max-height:76px}.ph-day-head{font-size:.66rem}.ph-calendar-actions{justify-content:flex-end;padding:8px 12px 0}.ph-calendar-action{min-width:150px}}@media(orientation:landscape) and (max-height:520px){.ph-head h1{font-size:1.55rem}.ph-head small{margin-top:2px}.ph-back{width:38px;height:38px;flex-basis:38px}.ph-shell{padding-top:7px}.ph-shift-img{max-height:60px}}`;
+  s.textContent = `#planningView{padding:0!important;background:linear-gradient(180deg,#fbfeff,#f4fafb)}.ph-shell{box-sizing:border-box;width:100%;max-width:760px;margin:auto;padding:16px 10px 34px;display:flex;flex-direction:column}.ph-head{display:flex;align-items:center;gap:12px;margin:4px 4px 12px}.ph-head>div{min-width:0}.ph-head span{font-size:.7rem;font-weight:950;letter-spacing:.13em;color:#0798b5}.ph-head h1{margin:2px 0 0;color:#0d4257;font-size:2rem;line-height:1}.ph-head small{display:block;margin-top:5px;color:#778b93;font-size:.72rem;font-weight:750}.ph-back{width:42px;height:42px;flex:0 0 42px;border:0;border-radius:14px;background:#fff;color:#0d4257;font-size:1.6rem;box-shadow:0 6px 16px rgba(13,66,87,.07)}.ph-context:empty{display:none}.ph-context{margin:0 4px 12px}.ph-content{width:100%;min-height:420px;border:1px solid #d9eaee;border-radius:24px;background:#fff;box-shadow:0 12px 30px rgba(18,72,88,.08);padding:0;overflow:hidden;box-sizing:border-box}.ph-page-load,.ph-error{min-height:420px;display:grid;place-items:center;color:#6f838b;font-size:.8rem}.ph-month-card{background:#fff;padding:8px;border-radius:22px}.ph-month-card header{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;margin:2px 0 10px}.ph-month-title{text-align:center}.ph-month-title>span{display:flex;align-items:baseline;justify-content:center}.ph-month-card header strong{font-size:1.55rem;color:#0d4257}.ph-month-card header small{margin-left:7px;color:#7a9098;font-size:.9rem;font-weight:850}.ph-month-card header>button{height:40px;border:0;border-radius:11px;background:#f1f7f8;color:#0d4257;font-size:1.3rem}.ph-month-card header>button:disabled{opacity:.18}.ph-month-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.ph-day-head{min-width:0;padding:6px 0 5px;text-align:center;font-size:.58rem;font-weight:950;color:#0d4257;border-bottom:3px solid #0d4257;white-space:nowrap;overflow:hidden}.ph-empty{min-height:var(--stip-month-cell-height)}.ph-day-cell{min-width:0;border:1px solid #e3e9eb;border-radius:15px;background:#fff}.ph-day-cell>b{color:#111}.ph-shift-slot{line-height:1}.ph-shift-img{display:block;max-width:100%;max-height:65px;width:auto;height:auto;object-fit:contain}.ph-shift-registry-icon{min-width:34px;height:34px;display:grid;place-items:center;font-size:1.35rem;line-height:1}.ph-shift-fallback{min-width:34px;height:34px;padding:0 4px;border-radius:999px;background:var(--shift);color:#fff;display:grid;place-items:center;font-size:.65rem;font-weight:950}.ph-dedicated-intro{padding:22px 18px 12px}.ph-dedicated-intro>span{font-size:.62rem;font-weight:950;letter-spacing:.12em;color:#0798b5}.ph-dedicated-intro h2{margin:5px 0;color:#0d4257;font-size:1.5rem}.ph-dedicated-intro p{margin:0;color:#6e838b;font-size:.82rem;line-height:1.45}.ph-calendar-cards{display:grid;gap:10px;padding:8px 14px 18px}.ph-calendar-subscriptions{display:block}.ph-calendar-cards strong,.ph-calendar-cards small{display:block}.ph-calendar-cards small{margin-top:3px;color:#71858d;font-size:.7rem}.ph-calendar-cards em{font-style:normal;font-size:1.3rem;color:#8aa0a8}.ph-info-card{padding:14px;border-radius:17px;background:#eef7f8;color:#244d5c}.ph-info-card small{margin-top:4px;line-height:1.35}@media(max-width:380px){.ph-shell{padding-inline:6px}.ph-day-head{font-size:.49rem}.ph-shift-img{max-height:56px}.ph-head h1{font-size:1.8rem}}.ph-calendar-actions{display:flex;gap:8px;padding:10px 10px 0;background:#fff}.ph-calendar-action{min-height:42px;display:flex;align-items:center;justify-content:center;gap:7px;padding:0 12px;border:1px solid #d7e7ea;border-radius:13px;background:#f7fbfc;color:#174b5d;font-size:.72rem;font-weight:900}.ph-calendar-action span{font-size:1rem;line-height:1}.ph-calendar-action.primary{background:#eaf7f9;border-color:#c8e7ec;color:#087f96}.ph-calendar-action strong{font-size:.72rem}.ph-calendar-action:active{transform:translateY(1px)}.ph-page-legend{padding:10px 10px 2px;background:#fff}.ph-page-legend:empty{display:none}.ph-fixed-legend .stip-section-separator{margin-top:2px}.ph-legend-shift-dot{display:block;width:18px;height:18px;border-radius:6px;background:var(--shift);box-shadow:inset 0 -1px 0 rgba(0,0,0,.12)}.ph-legend-emoji{font-size:1.22rem;line-height:1}.ph-planning-options{margin:8px 10px 12px}@media(max-width:520px){.ph-calendar-actions{padding:8px 8px 0;gap:6px}.ph-calendar-action{flex:1;min-width:0;padding:0 7px}.ph-calendar-action strong{font-size:.66rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}@media(orientation:landscape) and (min-width:700px){.ph-shell{max-width:1180px;padding:10px 12px 24px}.ph-head{margin-bottom:8px}.ph-content{border-radius:22px}.ph-month-card{padding:10px 12px 12px}.ph-empty{min-height:var(--stip-month-cell-height)}.ph-shift-img{max-height:76px}.ph-day-head{font-size:.66rem}.ph-calendar-actions{justify-content:flex-end;padding:8px 12px 0}.ph-calendar-action{min-width:150px}}@media(orientation:landscape) and (max-height:520px){.ph-head h1{font-size:1.55rem}.ph-head small{margin-top:2px}.ph-back{width:38px;height:38px;flex-basis:38px}.ph-shell{padding-top:7px}.ph-shift-img{max-height:60px}}`;
   document.head.appendChild(s);
 })();
