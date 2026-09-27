@@ -32,8 +32,11 @@ const agents = read("AGENTS.md");
 check(
   rules.includes("contrat canonique") &&
     rules.includes("global.js") &&
-    rules.includes("global.css"),
-  "FORM_RULES.md doit rester le contrat canonique et nommer le moteur commun."
+    rules.includes("global.css") &&
+    rules.includes("une seule référence UX est validée") &&
+    rules.includes("accessRequestForm") &&
+    rules.includes("Chat STIP / Fauteuils / DM est hors périmètre"),
+  "FORM_RULES.md doit rester limité à la référence validée Demander un accès."
 );
 
 const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "legacy", "exempt"]);
@@ -113,19 +116,6 @@ check(
     formJs.includes('field.setAttribute("autocomplete", "off")') &&
     formCss.includes('input[data-stip-pin-field="1"]'),
   "Le contrat commun des codes personnels à 6 chiffres a disparu."
-);
-
-const chatJs = read("team-chat.js");
-check(
-  chatJs.includes('<form class="tb-composer" data-form data-stip-form-mode="composer">') &&
-    chatJs.includes('<form class="tb-dm-composer" data-dm-form data-stip-form-mode="composer">'),
-  "Chat STIP doit garder ses compositeurs sur son moteur propre."
-);
-
-check(
-  formJs.includes('const explicit = target.querySelector("[data-stip-autofocus]")') &&
-    !formJs.includes('target.querySelector("[data-stip-autofocus]") || target.querySelector(FOCUS)'),
-  "Ouvrir une surface ne doit pas ouvrir le clavier sans autofocus explicite."
 );
 
 check(

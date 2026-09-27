@@ -1,8 +1,10 @@
 # STIP — Règles communes des formulaires
 
-Ce document est le **contrat canonique** des formulaires STIP.
+Ce document est le **contrat canonique actuellement validé** des formulaires STIP.
 
-Il décrit les comportements qui doivent être partagés par tous les formulaires compatibles. Une page peut adapter son contenu métier, mais elle ne doit pas recréer localement une autre logique de clavier, de navigation, d’autoremplissage ou de progression.
+À ce stade, **une seule référence UX est validée : le formulaire « Demander un accès » (`accessRequestForm`) de la page de connexion**.
+
+Les autres formulaires du site, y compris Chat STIP / Fauteuils / DM, ne sont pas des sources de règles pour ce contrat tant qu’ils n’ont pas été explicitement revus et validés.
 
 ## 1. Source de vérité
 
@@ -39,22 +41,11 @@ Un formulaire créé dynamiquement doit recevoir son mode **avant** d’être in
 
 ### Référence et migration
 
-La **Demande d’accès** (`accessRequestForm`) est actuellement la référence validée pour le moteur commun des formulaires séquentiels.
+La **Demande d’accès** (`accessRequestForm`) est la seule référence validée pour construire le moteur commun.
 
-Les autres formulaires historiques ne deviennent pas « bons » parce qu’ils sont raccordés au moteur. Tant qu’ils n’ont pas été revus contre ce contrat, ils restent en mode `legacy` et doivent être migrés vers le moteur commun.
+Les autres formulaires historiques restent en mode `legacy` tant qu’ils n’ont pas été comparés à cette référence et corrigés. Leur comportement actuel ne doit jamais être recopié dans le moteur comme une règle.
 
-### Frontière avec Chat STIP
-
-Le Chat STIP garde son propre moteur de composition. Ses formulaires dynamiques sont en mode `composer` et ne doivent pas être transformés en questionnaire FormUX.
-
-En revanche, les principes réellement génériques observés dans le chat sont repris dans le moteur commun :
-- suivi du `visualViewport` et resynchronisations après ouverture du clavier ;
-- aucune ouverture de surface ne doit déclencher le clavier sans autofocus explicitement demandé ;
-- stabilité de la saisie pendant une interaction tactile ;
-- conservation de la valeur saisie lors d’un changement de présentation.
-
-Le wizard fauteuils, les DM, les réactions, le rafraîchissement du fil et la logique métier du chat restent dans le moteur Chat STIP.
-
+**Chat STIP / Fauteuils / DM est hors périmètre de ce contrat pour l’instant.** Son fonctionnement est encore en cours de réglage : aucune règle de son moteur ne doit être promue en règle commune sans validation explicite ultérieure.
 
 ## 3. Règle fondamentale
 
@@ -149,22 +140,7 @@ Quand le clavier réduit réellement la zone visible :
 
 Le mode plein écran est une présentation du même formulaire, pas un second formulaire.
 
-## 10. Recherche
-
-Les champs `input[type="search"]` utilisent le mode recherche commun :
-
-- champ visible dans le viewport clavier ;
-- résultats/suggestions du bloc conservés ;
-- bouton `×` pour quitter le mode plein écran ;
-- pas de transformation en questionnaire séquentiel classique.
-
-## 11. Chats et compositeurs
-
-Les formulaires identifiés comme chat, message, composer ou dialogue de saisie libre gardent leur comportement natif.
-
-Ils ne doivent pas être transformés automatiquement en questionnaire à étapes.
-
-## 12. Nom, prénom et autoremplissage
+## 10. Nom, prénom et autoremplissage
 
 Règle d’identité :
 
@@ -176,7 +152,7 @@ Règle d’identité :
 - conserver des attributs `autocomplete` explicites lorsque la sémantique est connue ;
 - ne jamais masquer une inversion de champs par une logique d’ordre cachée.
 
-## 13. Codes personnels à 6 chiffres
+## 11. Codes personnels à 6 chiffres
 
 Un code STIP à 6 chiffres n’est pas un mot de passe navigateur classique.
 
@@ -190,7 +166,7 @@ Le contrat commun est :
 - masquage visuel par le moteur STIP ;
 - possibilité d’afficher/masquer sans changer la sémantique du champ.
 
-## 14. Inscription automatique des formulaires
+## 12. Inscription automatique des formulaires
 
 Le moteur peut enrôler automatiquement les champs standards ajoutés au DOM.
 
@@ -203,7 +179,7 @@ Un nouveau formulaire ne doit donc pas recréer localement :
 
 Une exception locale doit être explicitement déclarée et justifiée.
 
-## 15. Règles d’évolution
+## 13. Règles d’évolution
 
 Toute modification du comportement commun d’un formulaire doit respecter cet ordre :
 
@@ -215,7 +191,7 @@ Toute modification du comportement commun d’un formulaire doit respecter cet o
 
 Une correction n’est pas considérée comme complète si elle fonctionne sur une seule page alors que le comportement est commun.
 
-## 16. Invariants à ne pas casser
+## 14. Invariants à ne pas casser
 
 - pas de **Suivant** sans vraie étape suivante ;
 - dernière étape = action terminale explicite ;
@@ -224,5 +200,5 @@ Une correction n’est pas considérée comme complète si elle fonctionne sur u
 - Nom et Prénom jamais inversés par le moteur ;
 - clavier mobile jamais au-dessus du champ ou de l’action principale ;
 - `Vue complète` ne perd pas les données ;
-- recherche et chat gardent leurs comportements spécialisés ;
-- un seul moteur commun pour les formulaires compatibles.
+- aucune règle d’un formulaire non validé ne devient commune par simple raccordement technique ;
+- un seul moteur commun pour les formulaires validés et migrés.

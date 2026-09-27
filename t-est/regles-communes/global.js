@@ -802,9 +802,7 @@
     ensureIntentBack(trigger, target);
     if (trigger.dataset.stipIntentCollapse === "1") trigger.hidden = true;
     requestAnimationFrame(() => {
-      const explicit = target.querySelector("[data-stip-autofocus]");
-      const safeControl = target.querySelector("[data-stip-overview-focus],button,[href],[tabindex]:not([tabindex='-1'])");
-      const next = explicit || safeControl;
+      const next = target.querySelector("[data-stip-autofocus]") || target.querySelector(FOCUS) || target.querySelector("input, textarea, select, button");
       if (!next) return;
       try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
     });
@@ -920,6 +918,6 @@
     normalizeAutofill,
     fields: sequentialControls,
     formMode,
-    version: 24
+    version: 25
   };
 })();

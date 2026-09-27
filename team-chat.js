@@ -543,7 +543,7 @@
       "</section>" +
       '<section class="tb-input-dock" data-input-dock>' +
       '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
-      '<form class="tb-composer" data-form data-stip-form-mode="composer">' +
+      '<form class="tb-composer" data-form>' +
       '<div class="tb-composer-main">' +
       '<div class="tb-draft-preview" data-draft-preview hidden></div>' +
       '<button type="button" class="tb-free-toggle" data-free-toggle>✎ Écrire librement</button>' +
@@ -3834,7 +3834,7 @@
       esc((data.members || []).length) + ' participant' + ((data.members || []).length > 1 ? "s" : "") + "</small><h3>" +
       esc(dmThreadTitle(data)) + '</h3></div><button type="button" data-dm-close aria-label="Fermer">×</button></header>' +
       '<div class="tb-dm-thread" data-dm-thread>' + bodyHtml + "</div>" +
-      '<form class="tb-dm-composer" data-dm-form data-stip-form-mode="composer">' + imagePreview +
+      '<form class="tb-dm-composer" data-dm-form>' + imagePreview +
       '<div class="tb-dm-compose-row"><button type="button" class="tb-dm-attach" data-dm-attach aria-label="Ajouter une photo">＋</button>' +
       '<input type="file" data-dm-file accept="image/jpeg,image/png,image/webp" capture="environment" hidden>' +
       '<textarea data-dm-text data-stip-keyboard-native rows="1" maxlength="2000" placeholder="Message privé…">' + esc(dmState.draft) + "</textarea>" +
