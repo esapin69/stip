@@ -92,6 +92,7 @@
     selectedQuantity: 0,
     selectedLevel: "",
     selectedLocation: "",
+    surfaceMode: "wheelchair",
   };
 
   const dmState = {
@@ -525,15 +526,14 @@
     );
   }
 
-  function pageMarkup() {
+  function pageMarkup(mode = state.surfaceMode) {
+    const chatMode = mode === "chat";
     return (
-      '<section class="tb-page">' +
+      '<section class="tb-page ' + (chatMode ? "is-chat-mode" : "is-wheelchair-mode") + '">' +
       '<section class="tb-inline-tools" aria-label="Outils du chat">' +
       '<span class="tb-active-count" data-active-count hidden></span><span class="tb-readonly" data-readonly hidden>Lecture seule</span>' +
-      '<button type="button" class="tb-dm-shortcut" data-dm-open aria-label="Ouvrir les messages privés"><span class="tb-dm-shortcut-icon">✉</span><strong>DM</strong><b class="tb-dm-shortcut-badge" data-dm-unread hidden></b></button>' +
       '<button type="button" class="tb-manage" data-select hidden>Gérer</button>' +
       "</section>" +
-      '<section class="tb-dm-panel" data-dm-panel hidden aria-label="Messages privés"></section>' +
       '<main class="tb-dialogue" data-feed aria-live="polite"></main>' +
       '<section class="tb-selection-bar" data-selection-bar hidden>' +
       '<button type="button" data-select-all>Tout sélectionner</button>' +
@@ -542,12 +542,12 @@
       '<button type="button" data-selection-close>Annuler</button>' +
       "</section>" +
       '<section class="tb-input-dock" data-input-dock>' +
-      '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"></section>' +
-      '<form class="tb-composer" data-form>' +
+      '<section class="tb-search-shortcuts" data-search-shortcuts aria-label="Actions rapides fauteuils"' + (chatMode ? " hidden" : "") + '></section>' +
+      '<form class="tb-composer" data-form data-stip-form-mode="composer">' +
       '<div class="tb-composer-main">' +
       '<div class="tb-draft-preview" data-draft-preview hidden></div>' +
-      '<button type="button" class="tb-free-toggle" data-free-toggle>✎ Écrire librement</button>' +
-      '<textarea name="body" rows="1" maxlength="2000" placeholder="Écrire ou préciser…" aria-label="Précision ou message libre" hidden></textarea>' +
+      '<button type="button" class="tb-free-toggle" data-free-toggle' + (chatMode ? " hidden" : "") + '>✎ Écrire librement</button>' +
+      '<textarea name="body" rows="1" maxlength="2000" placeholder="' + (chatMode ? "Message à l’équipe…" : "Écrire ou préciser…") + '" aria-label="' + (chatMode ? "Message à l’équipe" : "Précision ou message libre") + '"' + (chatMode ? ' data-open="1"' : " hidden") + '></textarea>' +
       "</div>" +
       '<button type="submit" class="tb-send" data-send disabled><span>Envoyer</span><b>↑</b></button>' +
       "</form>" +
@@ -558,9 +558,13 @@
 
   function mount(root, options = {}) {
     if (!root) return;
-    if (state.root !== root) {
+    const nextMode = options.mode === "chat" ? "chat" : "wheelchair";
+    const modeChanged = state.surfaceMode !== nextMode;
+    if (state.root !== root || modeChanged) {
       stopFull();
-      if (!state.draft) {
+      state.surfaceMode = nextMode;
+      if (!state.draft || modeChanged) {
+        state.draft = "";
         state.draftKind = "spot";
         state.composeMode = "spot";
         state.selectedBuilding = "";
@@ -577,13 +581,16 @@
       state.interactionReleaseTimer = 0;
       state.scrollToLatestPending = true;
       state.lastSignature = "";
-      root.innerHTML = pageMarkup();
+      root.innerHTML = pageMarkup(nextMode);
       bind(root);
-      startDmStatus();
       const textarea = root.querySelector("textarea");
       if (textarea && state.draft) {
         textarea.value = state.draft;
         autoGrow(textarea);
+      }
+      if (textarea && nextMode === "chat") {
+        textarea.hidden = false;
+        textarea.dataset.open = "1";
       }
     }
     state.focusAfterLoad = !!options.focus;
@@ -596,7 +603,7 @@
           unmountFull();
           return;
         }
-        updateWheelchairFreshnessIndicators();
+        if (state.surfaceMode === "wheelchair") updateWheelchairFreshnessIndicators();
         if (!document.hidden && !dmState.open) pollFull();
       }, POLL_ACTIVE_MS);
     }
@@ -1031,11 +1038,26 @@
     const toggle = root.querySelector("[data-free-toggle]");
     if (!textarea || !preview || !sendButton || !toggle) return;
 
+    if (state.surfaceMode === "chat") {
+      const body = String(textarea.value || "").trim();
+      preview.hidden = true;
+      preview.textContent = "";
+      toggle.hidden = true;
+      textarea.hidden = false;
+      textarea.dataset.open = "1";
+      textarea.placeholder = "Message à l’équipe…";
+      sendButton.disabled = !body;
+      sendButton.classList.toggle("is-ready", !!body);
+      requestAnimationFrame(syncViewport);
+      return;
+    }
+
     const body = cleanWheelchairText(textarea.value);
     preview.hidden = !body;
     preview.textContent = body;
     sendButton.disabled = !body;
     sendButton.classList.toggle("is-ready", !!body);
+    toggle.hidden = false;
     toggle.textContent = body
       ? "✎ Ajouter un repère / une précision"
       : "✎ Écrire directement";
@@ -1409,6 +1431,14 @@
   }
 
   function renderSearchShortcuts() {
+    if (state.surfaceMode === "chat") {
+      const host = state.root?.querySelector("[data-search-shortcuts]");
+      if (host) {
+        host.hidden = true;
+        host.innerHTML = "";
+      }
+      return;
+    }
     const host = state.root?.querySelector("[data-search-shortcuts]");
     if (!host) return;
 
@@ -1505,8 +1535,13 @@
     const textarea = state.root?.querySelector(".tb-composer textarea");
     if (textarea) {
       textarea.value = "";
-      delete textarea.dataset.open;
-      textarea.hidden = true;
+      if (state.surfaceMode === "chat") {
+        textarea.hidden = false;
+        textarea.dataset.open = "1";
+      } else {
+        delete textarea.dataset.open;
+        textarea.hidden = true;
+      }
       autoGrow(textarea);
     }
     state.draft = "";
@@ -2893,18 +2928,26 @@
       }
     }
 
+    const visibleRootMessages = rootMessages.filter((message) =>
+      state.surfaceMode === "chat"
+        ? !message?.payload?.wheelchair
+        : !!message?.payload?.wheelchair,
+    );
     const page = state.root?.querySelector(".tb-page");
-    page?.classList.toggle("is-feed-empty", !messages.length);
-    feed.classList.toggle("is-empty", !messages.length);
+    page?.classList.toggle("is-feed-empty", !visibleRootMessages.length);
+    feed.classList.toggle("is-empty", !visibleRootMessages.length);
 
-    if (!messages.length) {
-      feed.innerHTML = "";
+    if (!visibleRootMessages.length) {
+      feed.innerHTML =
+        state.surfaceMode === "chat"
+          ? '<div class="tb-mode-empty"><strong>Aucun message d’équipe</strong><small>Écris le premier message ci-dessous.</small></div>'
+          : "";
       updateSelectionBar();
       return;
     }
 
     const html = [];
-    for (const message of rootMessages) {
+    for (const message of visibleRootMessages) {
       const id = String(message.id);
       const mine = String(message.sender_agent_id) === me;
       const checked = state.selected.has(id);
@@ -3260,14 +3303,16 @@
     event.preventDefault();
     const form = event.currentTarget;
     const textarea = form.elements.body;
-    const body = cleanWheelchairText(textarea.value);
+    const body = state.surfaceMode === "chat"
+      ? String(textarea.value || "").trim()
+      : cleanWheelchairText(textarea.value);
     if (!body) return;
     if (!(await ensurePrivacy())) return;
 
     const button = form.querySelector('[type="submit"]');
     button.disabled = true;
     try {
-      const structured = !!state.selectedBuilding;
+      const structured = state.surfaceMode === "wheelchair" && !!state.selectedBuilding;
       const type = state.draftKind === "search" ? "search" : "spot";
       if (
         structured &&
@@ -3295,8 +3340,13 @@
       state.selectedQuantity = 0;
       state.selectedLevel = "";
       state.selectedLocation = "";
-      delete textarea.dataset.open;
-      textarea.hidden = true;
+      if (state.surfaceMode === "chat") {
+        textarea.hidden = false;
+        textarea.dataset.open = "1";
+      } else {
+        delete textarea.dataset.open;
+        textarea.hidden = true;
+      }
       autoGrow(textarea);
       renderSearchShortcuts();
       renderComposerState();
@@ -4258,7 +4308,7 @@
   });
 
   const apiSurface = {
-    build: "20260926-team-cards1",
+    build: "20260927-communication1",
     mount,
     mountPreview,
     unmountFull,
