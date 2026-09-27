@@ -2435,7 +2435,7 @@
     let markup = `${homeModeNav()}${inlinePilotage}${adminPilotagePopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
-          <section id="hcCommunicationAppHost">${homeModeBody()}</section>
+          ${homeModeBody()}
         </section>`;
     }
     if (state.renderSig === markup && root.childElementCount) return;
@@ -2826,7 +2826,11 @@
       return;
     }
     const routedMode = homeModeForRoute(routedRoute);
-    if (routedMode) state.homeMode = routedMode;
+    if (routedMode) {
+      state.homeMode = routedMode;
+      if (routedMode === "communication")
+        state.communicationTab = communicationTabForRoute(routedRoute);
+    }
     try {
       const quick = new URLSearchParams(location.search).get("quick") || "",
         requested = sessionStorage.getItem("stip_home_mode_once");
