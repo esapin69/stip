@@ -5,6 +5,7 @@
         STORE="stip_session_v1";
   let overlay=null,state=null;
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const iconHtml=(key,fallback="",label="",className="")=>window.STIPIcons?.markup?.(key,fallback,{label,className})||esc(fallback||"•");
   let cssLoader=null;
   function css(){
     const existing=document.querySelector('link[data-agent-agenda-css]');
@@ -74,6 +75,7 @@
   function phoneHref(v){const d=phoneDigits(v);if(!d)return"";return d.startsWith("33")?`tel:+${d}`:`tel:${d}`}
   function hiddenPhoneHref(v){let d=phoneDigits(v);if(!d)return"";if(d.startsWith("33"))d="0"+d.slice(2);return `tel:%2331%23${d}`}
   function syncShiftRegistry(data){
+    if(data?.icon_catalog?.length) window.STIPIcons?.setCatalog?.(data.icon_catalog);
     if(data?.shift_definitions?.length) window.STIPShiftRegistry?.set?.(data.shift_definitions);
   }
   function shiftContext(){
@@ -98,6 +100,7 @@
         label:String(def.label||base||"—"),
         time:registry?.time?.(clean,context)||"",
         icon:String(def.icon||""),
+        iconKey:String(def.icon_key||""),
         family:String(def.family||"other"),
         kind:String(def.kind||"other"),
         base,
@@ -114,6 +117,7 @@
       label:clean||"—",
       time:"",
       icon:"•",
+      iconKey:"other",
       family:"other",
       kind:"other",
       base:clean||"",
@@ -133,11 +137,12 @@
       const sourceType=String(x.source_type||""),medical=/medical|mobi_lit|visite/i.test(sourceType),privateAppointment=sourceType==="private_appointment",
         labels={rendezvous:"Rendez-vous",formation:"Formation",formateur:"Formateur",reunion:"Réunion",information:"Information",autre:"Événement"},
         kind=medical||privateAppointment?"Rendez-vous":labels[String(x.event_kind||"")]||"Événement",
-        icon=medical?"🩺":privateAppointment?"📅":(String(x.icon||"").trim()||(x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌"));
-      out.push({date:String(x.event_date||"").slice(0,10),icon,kind,title:x.title||"Événement",time:x.all_day?"Toute la journée":[String(x.start_time||"").slice(0,5),String(x.end_time||"").slice(0,5)].filter(Boolean).join("–"),detail:x.body||"",location:x.location||""});
+        icon=medical?"🩺":privateAppointment?"📅":(String(x.icon||"").trim()||(x.importance==="urgent"?"⚠️":x.importance==="important"?"❗":"📌")),
+        iconKey=String(x.icon_key||"").trim()||(medical?"medical":privateAppointment?"event":x.importance==="urgent"?"alert":x.importance==="important"?"priority":"event");
+      out.push({date:String(x.event_date||"").slice(0,10),icon,iconKey,kind,title:x.title||"Événement",time:x.all_day?"Toute la journée":[String(x.start_time||"").slice(0,5),String(x.end_time||"").slice(0,5)].filter(Boolean).join("–"),detail:x.body||"",location:x.location||""});
     }
-    for(const x of data.personal_formations||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"🎓",kind:"Formation",title:x.intitule||"Formation",time:x.horaire||"",detail:"",location:x.lieu||""}),40);
-    for(const x of data.personal_stagiaires||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"👶",kind:"Stagiaire",title:[x.prenom,x.nom].filter(Boolean).join(" ")||"Stagiaire",time:x.horaires||"",detail:x.observation||"",location:""}));
+    for(const x of data.personal_formations||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"🎓",iconKey:"training",kind:"Formation",title:x.intitule||"Formation",time:x.horaire||"",detail:"",location:x.lieu||""}),40);
+    for(const x of data.personal_stagiaires||[])expandRange(x.date_debut,x.date_fin||x.date_debut,d=>out.push({date:d,icon:"👶",iconKey:"trainee",kind:"Stagiaire",title:[x.prenom,x.nom].filter(Boolean).join(" ")||"Stagiaire",time:x.horaires||"",detail:x.observation||"",location:""}));
     const seen=new Set();
     return out.filter(x=>x.date&&(!seen.has([x.date,x.kind,x.title,x.time].join("|"))&&(seen.add([x.date,x.kind,x.title,x.time].join("|")),true))).sort((a,b)=>a.date.localeCompare(b.date)||String(a.time).localeCompare(String(b.time)));
   }
@@ -151,8 +156,10 @@
   function shiftToken(row,compact=false){
     const i=shiftInfo(row?.code||row?.source_value||"");
     if(!row)return compact?"":"—";
-    if(i.family==="rh")return compact?'<span class="stip-month-icon">🏝️</span>':"🏝️";
-    if(i.family==="off"||i.family==="other")return compact?`<span class="stip-month-icon">${esc(i.icon)}</span>`:i.icon;
+    if(!i.isWorking){
+      const visual=iconHtml(i.iconKey,i.icon,i.label,"aav-shift-status-svg");
+      return compact?`<span class="stip-month-icon">${visual}</span>`:visual;
+    }
     return compact?`<span class="aav-dot aav-${i.family} stip-month-dot"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
   }
   function monthHtml(){
@@ -162,7 +169,7 @@
     for(let d=1;d<=last.getDate();d++){
       const day=`${k}-${String(d).padStart(2,"0")}`,row=plan.get(day),ev=emap.get(day)||[],info=shiftInfo(row?.code||row?.source_value||""),weekend=[0,6].includes(dobj(day).getDay()),
             cls=[day===today()?"today is-today":"",day===state.selected?"selected is-selected":"",weekend?"is-weekend":"",row?`shift-${info.family}`:"",ev.length?"has-event":""].filter(Boolean).join(" ");
-      cells.push(`<button type="button" class="aav-cal-day stip-month-day ${cls}" data-aav-day="${day}"><b class="stip-month-day-number">${d}</b><span class="aav-cal-shift stip-month-primary">${row?shiftToken(row,true):""}</span><small class="stip-month-events">${ev.slice(0,2).map(x=>`<i class="stip-month-event" aria-hidden="true">${esc(x.icon||"•")}</i>`).join("")}</small></button>`);
+      cells.push(`<button type="button" class="aav-cal-day stip-month-day ${cls}" data-aav-day="${day}"><b class="stip-month-day-number">${d}</b><span class="aav-cal-shift stip-month-primary">${row?shiftToken(row,true):""}</span><small class="stip-month-events">${ev.slice(0,2).map(x=>`<i class="stip-month-event" aria-hidden="true">${iconHtml(x.iconKey,x.icon||"•",x.kind||x.title||"Événement","aav-event-svg")}</i>`).join("")}</small></button>`);
     }
     const prev=state.month>state.bounds.min,next=state.month<state.bounds.max;
     return `<section class="aav-month stip-month-calendar"><header class="stip-month-nav"><button type="button" data-aav-month="-1" ${prev?"":"disabled"}>‹</button><strong>${esc(fmtMonth(k))}</strong><button type="button" data-aav-month="1" ${next?"":"disabled"}>›</button></header><div class="aav-weekheads stip-month-weekdays"><span>LU</span><span>MA</span><span>ME</span><span>JE</span><span>VE</span><span>SA</span><span>DI</span></div><div class="aav-calendar stip-month-grid">${cells.join("")}</div></section>`;
@@ -197,12 +204,12 @@
         family=info.family||"other",base=info.base||"—",pending=!row,
         codeClass=info.isWorking?`code-${family}`:"",
         statusClass=pending?"pending":info.isWorking?"work":"rest",
-        mainIcon=pending?"🚫":String(info.icon||"•"),
+        mainIcon=pending?"🚫":(info.isWorking?esc(info.icon||"•"):iconHtml(info.iconKey,info.icon||"•",info.label||base,"aav-week-shift-svg")),
         eventSlot=ev.length
-          ? `<span class="stip-week-events" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,2).map(x=>`<i class="stip-week-event" title="${esc(x.title||x.kind||"Événement")}">${esc(x.icon||"•")}</i>`).join("")}</span>`
+          ? `<span class="stip-week-events" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,2).map(x=>`<i class="stip-week-event" title="${esc(x.title||x.kind||"Événement")}">${iconHtml(x.iconKey,x.icon||"•",x.kind||x.title||"Événement","aav-event-svg")}</i>`).join("")}</span>`
           : '<span class="stip-week-events is-empty" aria-hidden="true"></span>',
         aria=[fullDay(day),info.label||base,ev.length?`${ev.length} événement${ev.length>1?"s":""}`:""].filter(Boolean).join(", ");
-      return `<button type="button" class="stip-week-day ${statusClass} ${codeClass} ${day===selected?"selected":""} ${day===today()?"today":""}" data-aav-day="${day}" aria-pressed="${day===selected}" aria-label="${esc(aria)}"><span class="stip-week-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${esc(base)}</strong><span class="stip-week-main"><span class="stip-week-main-icon ${info.isWorking?"stip-week-work-marker":""}" aria-hidden="true">${esc(mainIcon)}</span></span>${eventSlot}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`;
+      return `<button type="button" class="stip-week-day ${statusClass} ${codeClass} ${day===selected?"selected":""} ${day===today()?"today":""}" data-aav-day="${day}" aria-pressed="${day===selected}" aria-label="${esc(aria)}"><span class="stip-week-day-head"><i>${esc(dayName)}</i><b>${d.getDate()}</b></span><span class="stip-week-day-body"><strong class="stip-week-code">${esc(base)}</strong><span class="stip-week-main"><span class="stip-week-main-icon ${info.isWorking?"stip-week-work-marker":""}" aria-hidden="true">${mainIcon}</span></span>${eventSlot}</span>${info.adapted?'<span class="aav-adapted" title="Horaire adapté">⏱</span>':""}${quotity()?`<span class="aav-part-badge" title="Temps partiel">◐ ${quotity()}%</span>`:""}</button>`;
     };
     const line=[];
     dates.forEach(day=>line.push(renderCard(day)));
@@ -219,7 +226,7 @@
     if(!rows.length)return '<section class="aav-events aav-events-empty"><span>Aucun événement cette période.</span></section>';
     return `<section class="aav-events aav-events-home-style"><div class="aav-event-list">${rows.map(x=>{
       const d=dobj(x.date),dateLabel=d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}).replace(".","");
-      return `<article class="aav-event-row ${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${esc(x.icon||"•")}</span><div class="aav-event-copy"><strong>${esc(x.title)}</strong><span class="aav-event-when"><b>${esc(dateLabel)}</b>${x.time?`<b>${esc(x.time)}</b>`:""}${x.location?`<em>${esc(x.location)}</em>`:""}</span>${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`;
+      return `<article class="aav-event-row ${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${iconHtml(x.iconKey,x.icon||"•",x.kind||x.title||"Événement","aav-event-svg")}</span><div class="aav-event-copy"><strong>${esc(x.title)}</strong><span class="aav-event-when"><b>${esc(dateLabel)}</b>${x.time?`<b>${esc(x.time)}</b>`:""}${x.location?`<em>${esc(x.location)}</em>`:""}</span>${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`;
     }).join("")}</div></section>`;
   }
   function eventHtml(){
@@ -227,7 +234,7 @@
     if(!rows.length)return '<section class="aav-events aav-events-empty"><span>Aucun événement cette semaine.</span></section>';
     return `<section class="aav-events aav-events-home-style"><div class="aav-event-list">${rows.map(x=>{
       const d=dobj(x.date),dateLabel=d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"}).replace(".","");
-      return `<article class="aav-event-row ${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${esc(x.icon||"•")}</span><div class="aav-event-copy"><strong>${esc(x.title)}</strong><span class="aav-event-when"><b>${esc(dateLabel)}</b>${x.time?`<b>${esc(x.time)}</b>`:""}${x.location?`<em>${esc(x.location)}</em>`:""}</span>${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`;
+      return `<article class="aav-event-row ${x.date===state.selected?"is-selected-day":""}"><span class="aav-event-icon">${iconHtml(x.iconKey,x.icon||"•",x.kind||x.title||"Événement","aav-event-svg")}</span><div class="aav-event-copy"><strong>${esc(x.title)}</strong><span class="aav-event-when"><b>${esc(dateLabel)}</b>${x.time?`<b>${esc(x.time)}</b>`:""}${x.location?`<em>${esc(x.location)}</em>`:""}</span>${x.detail?`<small>${esc(x.detail)}</small>`:""}</div></article>`;
     }).join("")}</div></section>`;
   }
   function legendItem(iconHtml,label,meta=""){
@@ -244,16 +251,16 @@
       hasPending=Array.from({length:7},(_,i)=>add(start,i)).some(day=>!weekPlan.has(day)),
       seen=new Map();
     for(const r of pagePlan){const i=shiftInfo(r.code||r.source_value);const key=i.base||i.label;if(!seen.has(key))seen.set(key,i)}
-    const items=[...seen.values()].map(i=>legendItem(i.isWorking?`<i class="aav-dot aav-${esc(i.family)}"></i>`:esc(i.icon||"•"),i.label,i.time?`· ${i.time}`:""));
+    const items=[...seen.values()].map(i=>legendItem(i.isWorking?`<i class="aav-dot aav-${esc(i.family)}"></i>`:iconHtml(i.iconKey,i.icon||"•",i.label,"aav-legend-svg"),i.label,i.time?`· ${i.time}`:""));
     if(hasPending)items.push(legendItem("🚫","Planning non renseigné"));
     if(pagePlan.some(r=>shiftInfo(r.code||r.source_value).adapted))items.push(legendItem("⏱","Horaire adapté"));
     if(quotity())items.push(legendItem("◐","Temps partiel",`· ${quotity()}%`));
     const kinds=new Map();
     for(const x of pageEvents){
-      const icon=String(x.icon||"•").trim()||"•",kind=String(x.kind||"Événement").trim()||"Événement",key=icon+"|"+kind;
-      if(!kinds.has(key))kinds.set(key,{icon,kind});
+      const icon=String(x.icon||"•").trim()||"•",iconKey=String(x.iconKey||"").trim(),kind=String(x.kind||"Événement").trim()||"Événement",key=(iconKey||icon)+"|"+kind;
+      if(!kinds.has(key))kinds.set(key,{icon,iconKey,kind});
     }
-    for(const {icon,kind} of kinds.values())items.push(legendItem(esc(icon),kind));
+    for(const {icon,iconKey,kind} of kinds.values())items.push(legendItem(iconHtml(iconKey,icon,kind,"aav-legend-svg"),kind));
     const body=items.join("")||legendItem("•","Aucun repère sur la page");
     return `<section class="aav-legend stip-legend"><div class="stip-section-separator"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${body}</div></div></section>`;
   }
