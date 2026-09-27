@@ -52,6 +52,7 @@
             }
             const key = "stip_asset_heal_" + latest;
             if (sessionStorage.getItem(key)) return;
+            try { window.STIPRouter?.saveScroll?.(); } catch {}
             sessionStorage.setItem(key, "1");
             const url = new URL(location.href);
             url.searchParams.set("__stip_build", latest);
@@ -103,8 +104,8 @@
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
     <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide3" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide3"></script>  </head>
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide4" />
+    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide4"></script>  </head>
   <body>
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
@@ -324,7 +325,7 @@
     <script src="stip-agent-selector.js?v=20260926-team-cards1"></script>
     <script src="stip-person-actions.js?v=20260926-profile-menu4"></script>
     <script src="stip-session-continuity.js?v=20260927-authflow1"></script>
-    <script src="app.js?v=20260927-authflow1"></script>
+    <script src="app.js?v=20260927-refresh-continuity1"></script>
     <script src="quick-access.js?v=20260926-navigation-stable1"></script>
     <script src="public-access-request.js?v=20260927-step-history3"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
