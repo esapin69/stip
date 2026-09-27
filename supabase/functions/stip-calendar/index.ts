@@ -245,7 +245,7 @@ async function agentDates(){
   const start=ymd(-60),end=ymd(370),dir=await loadDirectory();
   const [{data:manual,error:me},formationCal,stagiaireCal]=await Promise.all([
     db.from('stip_agent_agenda_items')
-      .select('id,agent_id,event_date,start_time,end_time,all_day,title,body,location,source_type,updated_at,status')
+      .select('id,agent_id,event_date,start_time,end_time,all_day,title,body,location,source_type,event_kind,icon,updated_at,status')
       .eq('status','active')
       .gte('event_date',start)
       .lte('event_date',end)
@@ -258,18 +258,25 @@ async function agentDates(){
   const l=head('Dates des agents');
   let events=0;
   for(const r of manual||[]){
-    if(!sensitiveAgenda(r))continue;
+    const trainer=String(r.event_kind||'').toLowerCase()==='formateur',
+      medical=sensitiveAgenda(r);
+    if(!medical&&!trainer)continue;
     const ag=dir.byId.get(r.agent_id),
       name=niceName(ag),
-      title=String(r.title||'Visite médicale').trim(),
-      summary=`🩺 Visite médicale · ${name}`,
-      desc=[title&&title!=='Visite médicale'?title:'',r.location?`📍 ${String(r.location).trim()}`:''].filter(Boolean).join('\n'),
-      date=String(r.event_date||'').slice(0,10);
+      title=String(r.title||(trainer?'Formateur':'Visite médicale')).trim(),
+      icon=trainer?'🧑‍🏫':'🩺',
+      summary=trainer?`${icon} Formateur · ${name}`:`${icon} Visite médicale · ${name}`,
+      desc=[
+        trainer&&title&&title!=='Formateur'?title:(!trainer&&title!=='Visite médicale'?title:''),
+        r.location?`📍 ${String(r.location).trim()}`:''
+      ].filter(Boolean).join('\n'),
+      date=String(r.event_date||'').slice(0,10),
+      uidKind=trainer?'trainer':'medical';
     if(!date)continue;
     if(r.all_day||!r.start_time||!r.end_time)
-      ev(l,`stip-agent-medical-${r.id}@esapin.com`,date,summary,desc,r.updated_at);
+      ev(l,`stip-agent-${uidKind}-${r.id}@esapin.com`,date,summary,desc,r.updated_at);
     else
-      evTimed(l,`stip-agent-medical-${r.id}@esapin.com`,date,String(r.start_time).slice(0,5),String(r.end_time).slice(0,5),summary,desc,r.updated_at,false);
+      evTimed(l,`stip-agent-${uidKind}-${r.id}@esapin.com`,date,String(r.start_time).slice(0,5),String(r.end_time).slice(0,5),summary,desc,r.updated_at,false);
     events++;
   }
   for(const block of extractVevents(formationCal.ics))l.push(block);
