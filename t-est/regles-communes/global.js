@@ -41,37 +41,14 @@
     return true;
   }
 
-  /* Hard stop for the public entry screen. CSS overflow alone is not enough on
-     mobile Chrome because the root visual viewport/browser chrome can still react
-     to a vertical pan. The entry screen has no vertical navigation, so consume
-     that gesture at the document boundary. Forms/dialogs are explicitly exempt. */
-  document.addEventListener(
-    "touchmove",
-    (event) => {
-      if (!entryScreenLocked()) return;
-      event.preventDefault();
-    },
-    { passive: false, capture: true }
-  );
-
-  document.addEventListener(
-    "wheel",
-    (event) => {
-      if (!entryScreenLocked()) return;
-      event.preventDefault();
-    },
-    { passive: false, capture: true }
-  );
-
+  /* L'entrée reste visuellement fixe, mais on ne consomme jamais le pan vertical :
+     le navigateur doit garder la main pour son pull-to-refresh natif. */
   function pinEntryScroll() {
     if (!entryScreenLocked()) return;
-    if (window.scrollX !== 0 || window.scrollY !== 0) window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    if (window.scrollX !== 0 || window.scrollY > 0) {
+      window.scrollTo({ left: 0, top: 0, behavior: "auto" });
+    }
   }
-
-  window.addEventListener("scroll", pinEntryScroll, { passive: true });
-  viewport?.addEventListener("scroll", pinEntryScroll, { passive: true });
 
   function visualHeight() {
     return Math.max(1, Math.round(viewport?.height || window.innerHeight || document.documentElement.clientHeight || 1));
@@ -502,7 +479,7 @@
   });
 
   viewport?.addEventListener("resize", () => { if (active) syncKeyboard(); else { updateStableHeight(); pinEntryScroll(); } });
-  viewport?.addEventListener("scroll", () => { if (active) syncKeyboard(); else pinEntryScroll(); });
+  viewport?.addEventListener("scroll", () => { if (active) syncKeyboard(); });
   window.addEventListener("resize", () => { if (active) syncKeyboard(); else { updateStableHeight(); pinEntryScroll(); } });
   window.addEventListener("orientationchange", () => { clearScheduled(); setTimeout(() => { if (active) { baselineHeight = Math.max(measureFullHeight(), stableHeight || 0); syncKeyboard(); } else { stableHeight = measureFullHeight(); pinEntryScroll(); } }, 320); });
   window.addEventListener("pageshow", () => { if (active) syncKeyboard(); else { updateStableHeight(); pinEntryScroll(); } });
@@ -518,5 +495,5 @@
   }
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 10 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 11 };
 })();
