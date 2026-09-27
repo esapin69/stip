@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260927-pin-back1";
+const STIP_SW_BUILD="20260927-communication1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
@@ -12,8 +12,9 @@ self.addEventListener("fetch",event=>{const request=event.request;if(request.met
 
 function notificationIcon(data){
   const key=String(data.event_key||data.kind||data.type||data.tag||"").toLowerCase();
-  if(key.includes("dm")||key.includes("direct")||key.includes("message"))return "/images/notifications/dm.webp?v=20260925-1";
   if(key.includes("wheelchair")||key.includes("fauteuil"))return "/images/notifications/wheelchair.webp?v=20260925-1";
+  if(key.includes("team_chat")||key.includes("chat-equipe")||key.includes("team-chat"))return "/images/icone_app/team-chat.svg?v=20260921-teamchat2";
+  if(key.includes("dm")||key.includes("direct")||key.includes("group"))return "/images/notifications/dm.webp?v=20260925-1";
   return "/images/icone_app/home-bell.svg?v=20260920-nav1";
 }
 self.addEventListener("push",event=>{let data={};try{data=event.data?event.data.json():{}}catch{data={body:event.data?.text?.()||""}}const title=data.title||"STIP",options={body:data.body||"Nouvelle information",icon:notificationIcon(data),badge:"/images/icone_app/home-bell.svg?v=20260920-nav1",tag:data.tag||"stip",renotify:true,data:{url:data.url||"/?quick=notifications"}};event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{client.postMessage({type:"stip:push",data})}catch{}}await self.registration.showNotification(title,options)})())});
