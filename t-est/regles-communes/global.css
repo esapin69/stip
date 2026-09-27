@@ -177,3 +177,53 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 [data-stip-form-focus] .stip-keyboard-next-action[hidden] {
   display: none !important;
 }
+
+
+/* Navigation pilote des formulaires à étapes.
+   Active uniquement sur un formulaire portant data-stip-step-nav. */
+[data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-prev-action {
+  width: max-content !important;
+  min-height: 38px !important;
+  margin-top: -2px !important;
+  padding: 0 8px !important;
+  justify-self: start !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #58747c !important;
+  font-size: .72rem !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  box-shadow: none !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-overview-action {
+  position: absolute !important;
+  z-index: 3 !important;
+  top: 12px !important;
+  right: 14px !important;
+  width: 38px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(4,82,104,.15) !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.72) !important;
+  color: #55747c !important;
+  font-size: .86rem !important;
+  font-weight: 900 !important;
+  opacity: .74 !important;
+  box-shadow: 0 5px 14px rgba(4,82,104,.06) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+[data-stip-step-nav].stip-keyboard-focus-mode .stip-keyboard-overview-action:active {
+  opacity: 1 !important;
+  transform: scale(.96);
+}
+
+[data-stip-step-nav] .stip-keyboard-prev-action[hidden],
+[data-stip-step-nav] .stip-keyboard-overview-action[hidden] {
+  display: none !important;
+}
