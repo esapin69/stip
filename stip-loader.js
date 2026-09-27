@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20260928-native-planning-icons1";
+    V = "20260928-planning-fast2";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -126,14 +126,14 @@
     }
   }
   const personalCore = [
-    "agent-agenda-view.js?v=20260928-icon-registry1",
-    "calendar-subscriptions.js",
-    "calendar-responsable-gate.js",
-    "planning-home.js?v=20260928-icon-registry1",
+    "planning-home.js?v=20260928-planning-page2",
     "planning-month-hero.js",
     "planning-print-reference.js",
   ];
   const personalExtras = [
+    "agent-agenda-view.js?v=20260928-icon-registry1",
+    "calendar-subscriptions.js",
+    "calendar-responsable-gate.js",
     "agent-week-view.js",
     "planning-agenda-extras.js",
     "change-permission-gate.js",
