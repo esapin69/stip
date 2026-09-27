@@ -2846,8 +2846,10 @@
       let changed = false;
       try {
         const traineeSession = String(state.session?.role_key || "") === "stagiaire";
+        const bootRequest = call(DATA_API, "bootstrap");
+        window.STIPBootPromise = bootRequest;
         const [boot, home] = await Promise.allSettled([
-          call(DATA_API, "bootstrap"),
+          bootRequest,
           traineeSession ? Promise.resolve({ actions: [], notifications: [] }) : call(ACTION_API, "home"),
         ]);
         if (boot.status === "fulfilled") {
@@ -2872,6 +2874,7 @@
           render();
         }
       } finally {
+        if (window.STIPBootPromise) window.STIPBootPromise = null;
         state.refreshing = null;
       }
     })();
@@ -3117,12 +3120,21 @@
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
-  setInterval(() => {
+  const refreshablePlanningRoute = () => {
+    const route = window.STIPRouter?.get?.() || "home";
+    return route === "home" || route === "planning" || route === "planning/personal";
+  };
+  document.addEventListener("visibilitychange", () => {
     if (
       state.ready &&
       !document.hidden &&
-      (window.STIPRouter?.get?.() || "home") === "home"
+      refreshablePlanningRoute() &&
+      Date.now() - Number(state.lastRefreshAt || 0) > 60000
     )
+      refresh().catch(() => {});
+  });
+  setInterval(() => {
+    if (state.ready && !document.hidden && refreshablePlanningRoute())
       refresh().catch(() => {});
   }, 300000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
