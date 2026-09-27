@@ -166,7 +166,7 @@
   }
 
   function enrollField(field) {
-    if (!writableField(field) || field.matches(FOCUS)) return;
+    if (!writableField(field) || field.disabled || field.readOnly || field.matches(FOCUS)) return;
     const role = fieldRole(field);
     field.dataset.stipKeyboardRole = role;
     if (role !== "form") return;
@@ -188,7 +188,23 @@
   }
 
   function usableFields(form) {
-    return [...(form?.querySelectorAll?.(FOCUS) || [])].filter((field) => !field.disabled && field.type !== "hidden" && !field.closest("[hidden]"));
+    return [...(form?.querySelectorAll?.(FOCUS) || [])].filter(
+      (field) =>
+        !field.disabled &&
+        !field.readOnly &&
+        field.type !== "hidden" &&
+        !field.closest("[hidden]")
+    );
+  }
+
+  function sequentialControls(form) {
+    return [...(form?.querySelectorAll?.("input,textarea,select") || [])].filter((control) => {
+      if (control.disabled || control.readOnly || control.type === "hidden") return false;
+      if (control.closest("[hidden]")) return false;
+      if (control.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return false;
+      if (control.matches('input[type="search"]')) return false;
+      return true;
+    });
   }
 
   function submitLabel(submit) {
@@ -207,20 +223,30 @@
     ensureQuestion(field, form);
     let node = field;
     while (node && node !== root) { node.classList.add("stip-keyboard-path"); node = node.parentElement; }
-    const fields = usableFields(form);
-    const index = fields.indexOf(field);
+    const controls = sequentialControls(form);
+    const index = controls.indexOf(field);
     if (index < 0) return;
     let action = form.querySelector(NEXT_ACTION);
     if (!action) { action = document.createElement("button"); action.type = "button"; action.className = "stip-keyboard-next-action"; form.appendChild(action); }
-    const next = fields[index + 1] || null;
-    const submit = form.querySelector('button[type="submit"]');
-    const label = next ? "Suivant" : submitLabel(submit);
+    const next = controls[index + 1] || null;
+    const submit = form.querySelector('button[type="submit"],input[type="submit"]');
+    const nextIsWritable = !!next?.matches?.(FOCUS);
+    const label = next ? (nextIsWritable ? "Suivant" : "Continuer") : submitLabel(submit);
     action.hidden = false;
     action.textContent = label + "  →";
     action.setAttribute("aria-label", label);
     action.onclick = () => {
       if (typeof field.reportValidity === "function" && !field.reportValidity()) return;
-      if (next) { try { next.focus({ preventScroll: true }); } catch { next.focus?.(); } return; }
+      if (nextIsWritable) {
+        transferFocus(next);
+        return;
+      }
+      if (next) {
+        clearMode();
+        try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
+        requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+        return;
+      }
       if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined); else submit?.click();
     };
   }
@@ -324,14 +350,20 @@
     if (!form?.matches?.(FORM_FOCUS)) return;
     event.preventDefault();
     if (typeof field.reportValidity === "function" && !field.reportValidity()) return;
-    const fields = usableFields(form);
-    const index = fields.indexOf(field);
-    const next = index >= 0 ? fields[index + 1] : null;
-    if (next) {
+    const controls = sequentialControls(form);
+    const index = controls.indexOf(field);
+    const next = index >= 0 ? controls[index + 1] : null;
+    if (next?.matches?.(FOCUS)) {
       transferFocus(next);
       return;
     }
-    const submit = form.querySelector('button[type="submit"]');
+    if (next) {
+      clearMode();
+      try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
+      requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+      return;
+    }
+    const submit = form.querySelector('button[type="submit"],input[type="submit"]');
     if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
     else submit?.click();
   }, true);
@@ -377,5 +409,5 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 7 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 8 };
 })();
