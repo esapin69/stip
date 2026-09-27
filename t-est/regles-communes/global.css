@@ -106,7 +106,7 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action) {
   display: none !important;
 }
 
