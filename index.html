@@ -419,7 +419,7 @@
     <script src="stip-loading.js?v=20260831-perf2"></script>
     <script src="name-format.js?v=20260823-retain4"></script>
 
-    <script src="shift-registry.js?v=20260928-planning-fast2"></script>
+    <script src="shift-registry.js?v=20260928-planning-fast3"></script>
     <script src="stip-entry-router.js?v=20260927-authflow2"></script>
     <script src="stip-workspace.js?v=20260925-workspace3"></script>
     <script src="stip-agent-selector.js?v=20260927-communication5"></script>
@@ -431,8 +431,8 @@
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260926-nextmonday1"></script>
     <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>
-    <script src="stip-loader.js?v=20260928-planning-fast2"></script>
-    <script src="home-shell.js?v=20260928-planning-fast2"></script>
+    <script src="stip-loader.js?v=20260928-planning-fast3"></script>
+    <script src="home-shell.js?v=20260928-planning-fast3"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
     <script src="tomorrow-ui.js?v=20260926-touch-core1"></script>
@@ -445,7 +445,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260928-planning-fast2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260928-planning-fast3", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
