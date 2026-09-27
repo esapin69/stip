@@ -15,6 +15,7 @@ const sw=read("stip-sw.js");
 const messages=read("supabase/functions/stip-messages/index.ts");
 const rules=read("COMMUNICATION_RULES.md");
 const migration=read("supabase/migrations/20260927225000_communication_notification_types.sql");
+const dmMigration=read("supabase/migrations/20260925151500_notification_push_controls.sql");
 
 for(const label of ["Chat équipe","DM & groupes","Fauteuils"])has(app,label,"onglet manquant: "+label);
 for(const route of ["communication/chat","communication/dm","communication/fauteuils"])has(app,route,"route manquante: "+route);
@@ -35,6 +36,9 @@ if(chat.includes('class="tb-dm-shortcut"'))fail("le raccourci DM ne doit plus vi
 
 for(const key of ["dm_received","team_chat_received","wheelchair_received"]){
   has(messages,key,"event_key backend manquant: "+key);
+}
+has(dmMigration,"dm_received","event_key migration manquant: dm_received");
+for(const key of ["team_chat_received","wheelchair_received"]){
   has(migration,key,"event_key migration manquant: "+key);
 }
 has(sw,"/images/notifications/dm.webp","icône DM manquante");
