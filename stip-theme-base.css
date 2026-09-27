@@ -91,6 +91,25 @@ button:active:not(:disabled){transform:var(--stip-tap)}
 .stip-skeleton:after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(255,255,255,.72),transparent);animation:stip-shimmer 1.1s infinite}
 @keyframes stip-shimmer{100%{transform:translateX(100%)}}
 
+/* Icônes canoniques STIP — SVG léger, hérite de la couleur du contexte. */
+.stip-icon-svg{
+  width:1em;
+  height:1em;
+  min-width:1em;
+  min-height:1em;
+  display:inline-block;
+  flex:0 0 auto;
+  overflow:visible;
+  vertical-align:-.14em;
+  color:inherit;
+  fill:none;
+  stroke:currentColor;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  pointer-events:none;
+}
+.stip-icon-svg path{vector-effect:non-scaling-stroke}
+
 /* Accueil : on garde l'identité actuelle mais toutes les surfaces parlent le même langage. */
 #homeView{background:var(--stip-bg)!important}
 .hs-home{color:var(--stip-ink)!important}
