@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20260927-communication5";
+    V = "20260928-icon-registry1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -126,10 +126,10 @@
     }
   }
   const personalCore = [
-    "agent-agenda-view.js?v=20260925-chief-hours1",
+    "agent-agenda-view.js?v=20260928-icon-registry1",
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
-    "planning-home.js?v=20260924-month-template2",
+    "planning-home.js?v=20260928-icon-registry1",
     "planning-month-hero.js",
     "planning-print-reference.js",
   ];
@@ -142,8 +142,8 @@
     "day-workflow-home-bridge.js",
   ];
   const teamCore = [
-    "agent-agenda-view.js?v=20260925-chief-hours1",
-    "planning-home.js?v=20260924-month-template2",
+    "agent-agenda-view.js?v=20260928-icon-registry1",
+    "planning-home.js?v=20260928-icon-registry1",
     "planning-hub-enhance.js?v=20260925-calendar-clean2",
   ];
   const teamExtras = [
@@ -151,7 +151,7 @@
     "calendar-responsable-gate.js",
   ];
   const changeCore = [
-    "planning-home.js?v=20260924-month-template2",
+    "planning-home.js?v=20260928-icon-registry1",
     "change-workflow.js",
     "change-permission-gate.js",
     "staffing-guidance.js",
@@ -220,7 +220,7 @@
     if (!r) return;
     if (r.startsWith("contacts")) {
       window.STIPReadCache?.requestContacts?.();
-      await seq(["agent-agenda-view.js?v=20260925-chief-hours1", "section-hubs.js"]);
+      await seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js"]);
       window.STIPHubs?.contactsRoute?.(r);
       return;
     }
@@ -303,7 +303,7 @@
       if (k === "communication") communication().catch(() => {});
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
-        seq(["agent-agenda-view.js?v=20260925-chief-hours1", "section-hubs.js"]).catch(() => {});
+        seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js"]).catch(() => {});
       }
       if (k === "personal") seq(personalCore).catch(() => {});
       if (k === "team") seq(teamCore).catch(() => {});
