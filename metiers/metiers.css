@@ -1,0 +1,89 @@
+.metiers-home{
+  min-height:100dvh;
+  padding-top:calc(14px + env(safe-area-inset-top));
+}
+.metiers-period-tabs{
+  margin:0 0 12px;
+}
+.metiers-period-tabs .stip-filter-choice{
+  min-height:48px;
+  padding-inline:8px;
+}
+.metiers-period-tabs .stip-filter-copy{
+  width:100%;
+  align-items:center;
+  text-align:center;
+}
+.metiers-period-tabs .stip-filter-copy>strong{
+  width:100%;
+  text-align:center;
+}
+.metiers-period-panel[hidden]{
+  display:none!important;
+}
+.metiers-month-host{
+  width:100%;
+}
+.metiers-loading,
+.metiers-error{
+  min-height:220px;
+  display:grid;
+  place-items:center;
+  color:var(--stip-muted);
+  font-size:.8rem;
+  font-weight:800;
+  text-align:center;
+}
+.metiers-month-card{
+  padding:10px;
+  border:1px solid var(--stip-line);
+  border-radius:var(--stip-radius-lg);
+  background:var(--stip-surface);
+  box-shadow:var(--stip-shadow);
+}
+.metiers-month-title{
+  min-width:0;
+  display:flex;
+  align-items:baseline;
+  justify-content:center;
+  gap:7px;
+}
+.metiers-month-title strong{
+  color:var(--stip-ink);
+  font-size:1.12rem;
+  font-weight:950;
+  text-transform:uppercase;
+}
+.metiers-month-title small{
+  color:var(--stip-muted);
+  font-size:.78rem;
+  font-weight:850;
+}
+.metiers-month-empty{
+  visibility:hidden;
+}
+.metiers-shift-code{
+  min-width:30px;
+  min-height:26px;
+  display:inline-grid;
+  place-items:center;
+  padding:0 6px;
+  border-radius:9px;
+  background:var(--metiers-shift-bg,var(--stip-accent-soft));
+  color:var(--metiers-shift-ink,var(--stip-ink));
+  font-size:.72rem;
+  font-weight:950;
+  line-height:1;
+}
+.metiers-shift-code.code-m{--metiers-shift-bg:var(--stip-shift-m);--metiers-shift-ink:#fff}
+.metiers-shift-code.code-j{--metiers-shift-bg:var(--stip-shift-j);--metiers-shift-ink:#fff}
+.metiers-shift-code.code-j4{--metiers-shift-bg:var(--stip-shift-j4);--metiers-shift-ink:#fff}
+.metiers-shift-code.code-s{--metiers-shift-bg:var(--stip-shift-s);--metiers-shift-ink:var(--stip-shift-s-ink)}
+.metiers-shift-code.code-n{--metiers-shift-bg:var(--stip-shift-n);--metiers-shift-ink:#fff}
+@media(max-width:430px){
+  .metiers-home{padding-inline:6px}
+  .metiers-period-tabs{gap:5px}
+  .metiers-period-tabs .stip-filter-choice{min-height:46px;padding-inline:5px}
+  .metiers-period-tabs .stip-filter-copy>strong{font-size:.72rem;white-space:normal;line-height:1.08}
+  .metiers-month-card{padding:7px}
+}
