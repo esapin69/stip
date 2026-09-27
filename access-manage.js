@@ -20,6 +20,23 @@
         })[c],
     );
   const ESPRIT_KEYS = ["planning_team", "activity", "assistant_enabled"];
+  const weakPin = (code = "") => {
+    const c = String(code || "").replace(/\D/g, "").slice(0, 6);
+    if (!/^\d{6}$/.test(c)) return true;
+    const d = [...c].map(Number);
+    if (new Set(d).size < 3) return true;
+    let asc = true, desc = true;
+    for (let i = 1; i < d.length; i++) {
+      if (((d[i] - d[i - 1] + 10) % 10) !== 1) asc = false;
+      if (((d[i - 1] - d[i] + 10) % 10) !== 1) desc = false;
+    }
+    return asc || desc ||
+      c.slice(0, 3) === c.slice(3) ||
+      (c.slice(0, 2) === c.slice(2, 4) && c.slice(0, 2) === c.slice(4, 6)) ||
+      (c[0] === c[1] && c[2] === c[3] && c[4] === c[5]) ||
+      [...c].reverse().join("") === c ||
+      ["123456","654321","012345","543210","112233","332211","987654","456789","159159","258258","147147"].includes(c);
+  };
   const HISTORY_PAGE_LABELS = {
     home: "Accueil",
     planning_personal: "Planning perso",
@@ -786,7 +803,7 @@
     $("who").textContent =
       `${profile.agents?.prenom || ""} ${profile.agents?.nom || "Accès"}`.trim();
     $("currentCode").innerHTML = profile.current_code
-      ? `Code actuel : <b>${esc(profile.current_code)}</b>`
+      ? `Code actuel : <b>${esc(profile.current_code)}</b>${profile.weak_code ? ' <span class="access-help">⚠ trop simple · à remplacer</span>' : ''}`
       : 'Code actuel : <span class="access-help">non disponible</span>';
     $("setCode").textContent = "Changer";
     $("save").textContent = "Enregistrer";
@@ -820,6 +837,8 @@
         const code = $("code").value.replace(/\D/g, "");
         if (!/^\d{6}$/.test(code))
           throw Error("Saisissez un code à six chiffres.");
+        if (weakPin(code))
+          throw Error("Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.");
         const created = await call("create_access", {
           agent_id: current.agent_id,
           role_key: selectedRole,
@@ -919,9 +938,14 @@
       return;
     }
     try {
+      const nextCode = $("code").value.replace(/\D/g, "");
+      if (!/^\d{6}$/.test(nextCode))
+        throw Error("Saisissez un code à six chiffres.");
+      if (weakPin(nextCode))
+        throw Error("Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.");
       const j = await call("set_code", {
         profile_id: current.id,
-        code: $("code").value,
+        code: nextCode,
       });
       current.current_code = j.code;
       $("currentCode").innerHTML = `Code actuel : <b>${esc(j.code)}</b>`;
