@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-entry-keyboard8" />
+    <meta name="stip-ui-build" content="20260927-entry-keyboard9" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -151,7 +151,7 @@
                     data-stip-keyboard-focus
                     data-stip-autofocus
                     required
-                  /><span id="accessCodeMask" class="stip-code-mask" aria-hidden="true"></span><button
+                  /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button
                     id="toggleAccessCode"
                     class="stip-code-toggle"
                     type="button"
@@ -346,7 +346,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260927-code-reset1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260927-code-mask1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
