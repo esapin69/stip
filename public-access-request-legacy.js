@@ -3,20 +3,129 @@ const API='https://stip-ten.vercel.app/api/stip-access',KEY='stip_access_request
 function requestFields(){return [...(form?.querySelectorAll?.('[data-stip-keyboard-focus]')||[])].filter(field=>!field.disabled&&!field.readOnly&&!field.closest('[hidden]'))}
 function requestState(state=history.state){return state?.stipAccessRequest||null}
 function requestMarker(view,index,depth){return{id:requestHistoryId,view,index,depth}}
-function showOverview(){if(!d||!form)return;window.STIPFormUX?.release?.();try{document.activeElement?.blur?.()}catch{}d.scrollTop=0;requestAnimationFrame(()=>{try{close?.focus({preventScroll:true})}catch{close?.focus?.()}})}
-function restoreStep(index){const field=requestFields()[Number(index)];if(!field){showOverview();return}requestAnimationFrame(()=>{if(window.STIPFormUX?.transferFocus?.(field))return;try{field.focus({preventScroll:true})}catch{field.focus?.()}})}
-function pushOverviewState(){requestHistoryId='access-'+Date.now();history.pushState({...history.state,stipAccessRequest:requestMarker('overview',-1,1)},'',location.href)}
-function pushStepState(field){if(restoringHistory||!d?.open)return;const fields=requestFields(),index=fields.indexOf(field);if(index<0)return;const current=requestState();if(current?.id===requestHistoryId&&current.view==='step'&&Number(current.index)===index)return;const depth=current?.id===requestHistoryId?Math.max(1,Number(current.depth)||1)+1:2;history.pushState({...history.state,stipAccessRequest:requestMarker('step',index,depth)},'',location.href)}
-function openRequest(options={}){if(!d||!form)return;window.STIPFormUX?.release?.();try{document.activeElement?.blur?.()}catch{}if(!d.open)d.showModal();const state=options.state||null;if(state){requestHistoryId=state.id||('access-'+Date.now());if(state.view==='step')restoreStep(state.index);else showOverview();return}pushOverviewState();showOverview()}
-function closeRequest(collapseHistory=true){if(!d)return;const state=requestState(),depth=state?.id===requestHistoryId?Math.max(0,Number(state.depth)||0):0;window.STIPFormUX?.release?.();try{document.activeElement?.blur?.()}catch{}if(d.open)d.close();if(collapseHistory&&depth>0){closingHistory=true;history.go(-depth);setTimeout(()=>{closingHistory=false;requestHistoryId=''},350)}else requestHistoryId=''}
+function showOverview(){
+  if(!d||!form)return;
+  form.dataset.stipOverview='1';
+  window.STIPFormUX?.release?.();
+  try{document.activeElement?.blur?.()}catch{}
+  d.scrollTop=0;
+  requestAnimationFrame(()=>{
+    try{close?.focus({preventScroll:true})}catch{close?.focus?.()}
+    requestAnimationFrame(()=>d.scrollTo?.({top:0,behavior:'auto'}))
+  })
+}
+function restoreStep(index){
+  const field=requestFields()[Number(index)];
+  if(!field){showOverview();return}
+  delete form.dataset.stipOverview;
+  requestAnimationFrame(()=>{
+    if(window.STIPFormUX?.transferFocus?.(field))return;
+    try{field.focus({preventScroll:true})}catch{field.focus?.()}
+  })
+}
+function pushOverviewState(){
+  requestHistoryId='access-'+Date.now();
+  history.pushState({...history.state,stipAccessRequest:requestMarker('overview',-1,1)},'',location.href)
+}
+function pushStepState(field){
+  if(restoringHistory||!d?.open)return;
+  const fields=requestFields(),index=fields.indexOf(field);
+  if(index<0)return;
+  const current=requestState();
+  if(current?.id===requestHistoryId&&current.view==='step'&&Number(current.index)===index)return;
+
+  let depth=current?.id===requestHistoryId?Math.max(1,Number(current.depth)||1):1;
+  let start=index;
+  if(current?.id===requestHistoryId&&current.view==='overview')start=0;
+  else if(current?.id===requestHistoryId&&current.view==='step'&&Number(current.index)<index)start=Number(current.index)+1;
+
+  for(let i=start;i<=index;i++){
+    depth+=1;
+    history.pushState({...history.state,stipAccessRequest:requestMarker('step',i,depth)},'',location.href)
+  }
+}
+function openRequest(options={}){
+  if(!d||!form)return;
+  window.STIPFormUX?.release?.();
+  try{document.activeElement?.blur?.()}catch{}
+
+  const state=options.state||null;
+  if(state){
+    restoringHistory=true;
+    requestHistoryId=state.id||('access-'+Date.now());
+    if(state.view==='overview')form.dataset.stipOverview='1';
+    else delete form.dataset.stipOverview;
+    if(!d.open)d.showModal();
+    if(state.view==='step')restoreStep(state.index);
+    else showOverview();
+    setTimeout(()=>restoringHistory=false,100);
+    return
+  }
+
+  pushOverviewState();
+  form.dataset.stipOverview='1';
+  if(!d.open)d.showModal();
+  showOverview()
+}
+function closeRequest(collapseHistory=true){
+  if(!d)return;
+  const state=requestState(),depth=state?.id===requestHistoryId?Math.max(0,Number(state.depth)||0):0;
+  window.STIPFormUX?.release?.();
+  try{document.activeElement?.blur?.()}catch{}
+  delete form?.dataset?.stipOverview;
+  if(d.open)d.close();
+  if(collapseHistory&&depth>0){
+    closingHistory=true;
+    history.go(-depth);
+    setTimeout(()=>{closingHistory=false;requestHistoryId=''},350)
+  }else requestHistoryId=''
+}
 openers.forEach(button=>button.addEventListener('click',e=>{e.preventDefault();openRequest()}));
 close?.addEventListener('click',()=>closeRequest(true));
 d?.addEventListener('click',e=>{if(e.target===d)closeRequest(true)});
 d?.addEventListener('cancel',e=>{e.preventDefault();closeRequest(true)});
-d?.addEventListener('close',()=>window.STIPFormUX?.release?.());
+d?.addEventListener('close',()=>{window.STIPFormUX?.release?.();if(form)delete form.dataset.stipOverview});
+form?.addEventListener('pointerdown',e=>{if(e.target.closest?.('[data-stip-keyboard-focus]'))delete form.dataset.stipOverview},true);
 form?.addEventListener('focusin',e=>{const field=e.target.closest?.('[data-stip-keyboard-focus]');if(field)pushStepState(field)});
-window.addEventListener('stip:form-previous-request',e=>{if(e.detail?.form!==form||!d?.open)return;e.preventDefault();const state=requestState();if(state?.id===requestHistoryId&&Number(state.depth)>1){history.back();return}showOverview()});
-window.addEventListener('popstate',e=>{if(closingHistory){closingHistory=false;requestHistoryId='';return}const state=requestState(e.state);if(!state){if(d?.open){restoringHistory=true;window.STIPFormUX?.release?.();d.close();setTimeout(()=>restoringHistory=false,0)}requestHistoryId='';return}restoringHistory=true;requestHistoryId=state.id||requestHistoryId;if(!d?.open)d.showModal();if(state.view==='step')restoreStep(state.index);else showOverview();setTimeout(()=>restoringHistory=false,80)});
+window.addEventListener('stip:form-overview',e=>{if(e.detail?.form!==form||!d?.open)return;form.dataset.stipOverview='1'});
+window.addEventListener('stip:form-previous-request',e=>{
+  if(e.detail?.form!==form||!d?.open)return;
+  e.preventDefault();
+  const state=requestState();
+  if(state?.id!==requestHistoryId||state.view!=='step'){showOverview();return}
+  const depth=Math.max(0,Number(state.depth)||0),index=Number(state.index);
+  if(depth>2){history.back();return}
+  if(index>0){
+    restoringHistory=true;
+    history.replaceState({...history.state,stipAccessRequest:requestMarker('step',index-1,2)},'',location.href);
+    restoreStep(index-1);
+    setTimeout(()=>restoringHistory=false,100);
+    return
+  }
+  history.back()
+});
+window.addEventListener('popstate',e=>{
+  if(closingHistory){closingHistory=false;requestHistoryId='';return}
+  const state=requestState(e.state);
+  if(!state){
+    if(d?.open){
+      restoringHistory=true;
+      window.STIPFormUX?.release?.();
+      d.close();
+      setTimeout(()=>restoringHistory=false,0)
+    }
+    requestHistoryId='';
+    return
+  }
+  restoringHistory=true;
+  requestHistoryId=state.id||requestHistoryId;
+  if(state.view==='overview')form.dataset.stipOverview='1';
+  else delete form.dataset.stipOverview;
+  if(!d?.open)d.showModal();
+  if(state.view==='step')restoreStep(state.index);
+  else showOverview();
+  setTimeout(()=>restoringHistory=false,100)
+});
 async function post(body){const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||'Envoi impossible.');return j}
 function tracking(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch{return null}}
 function clearTracking(){localStorage.removeItem(KEY);document.getElementById('accessRequestStatus')?.remove()}
