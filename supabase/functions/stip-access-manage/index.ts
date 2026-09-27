@@ -212,8 +212,9 @@ async function list(q = "", viewer: any = null) {
       })),
     ),
     ids = people.map((p: any) => p.id),
-    vault: any = {};
-  if (ids.length) {
+    vault: any = {},
+    canSeeCodes = viewer?.role_key === "admin" || !!viewer?.permissions?.admin;
+  if (ids.length && canSeeCodes) {
     const { data: v } = await db
       .from("stip_access_code_vault")
       .select("profile_id,code")
