@@ -306,55 +306,51 @@
   setTimeout(onRender,300);
   setTimeout(maybePromptDmPush,900);
 
-  const inboxState={root:null,selected:new Set(),search:"",status:"",loading:false,conversation:""};
+  const inboxState={root:null,selected:new Set(),status:"",loading:false,conversation:"",selector:null};
 
-  function inboxConversationLabel(c){
-    return conversationTitle(c);
+  function inboxConversationLabel(c){return conversationTitle(c)}
+
+  function syncInboxSelectionUi(){
+    const root=inboxState.root;if(!root?.isConnected)return;
+    const count=inboxState.selected.size,label=root.querySelector("[data-inbox-selected-count]"),action=root.querySelector("[data-inbox-continue]");
+    if(label)label.textContent=count+" sélectionné"+(count>1?"s":"");
+    if(action){action.disabled=!count;action.textContent=count>1?"Continuer · "+count:"Ouvrir le DM"+(count?" · 1":"")}
+    inboxState.selector?.setSelectedIds?.([...inboxState.selected])
   }
 
-  function inboxAgentLabel(a){
-    return name(a);
+  function toggleInboxAgent(agent){
+    const id=String(agent?.id||"");if(!id)return;
+    inboxState.selected.has(id)?inboxState.selected.delete(id):inboxState.selected.add(id);
+    syncInboxSelectionUi()
   }
 
   function renderInbox(){
-    const root=inboxState.root;
-    if(!root?.isConnected)return;
-    const conversations=(home?.conversations||[]).filter(c=>c.kind==="direct"||c.kind==="group");
-    const q=String(inboxState.search||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
-    const agents=(home?.agents||[]).filter(a=>{
-      if(!q)return true;
-      return [inboxAgentLabel(a),a.prenom,a.nom,a.ghe,a.equipe].filter(Boolean).join(" ")
-        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(q)
-    });
-    const rows=agents.length?agents.map(a=>{
-      const id=String(a.id||""),selected=inboxState.selected.has(id),rawGhe=String(a.ghe||"").trim(),ghe=rawGhe?(rawGhe.toUpperCase().startsWith("GHE")?rawGhe:"GHE "+rawGhe):"ÉQUIPE";
-      return '<button type="button" class="ch-inbox-agent'+(selected?" is-selected":"")+'" data-inbox-agent="'+esc(id)+'" aria-pressed="'+(selected?"true":"false")+'">'+
-        '<span class="ch-inbox-ghe">'+esc(ghe)+'</span><span class="ch-inbox-agent-copy"><strong>'+esc(inboxAgentLabel(a))+'</strong><small>'+esc([a.equipe,a.shift].filter(Boolean).join(" · ")||"jour")+'</small></span><b>'+(selected?"✓":"+")+'</b></button>'
-    }).join(""):'<p class="ch-empty">Aucun agent trouvé.</p>';
-    const discussions=conversations.length?conversations.map(c=>
-      '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'">'+
-      '<span><strong>'+esc(inboxConversationLabel(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></span>'+
-      (Number(c.unread||0)?'<b>'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+'</button>'
-    ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>';
-    const selectedCount=inboxState.selected.size;
+    const root=inboxState.root;if(!root?.isConnected)return;
+    inboxState.selector?.destroy?.();inboxState.selector=null;
+    const conversations=(home?.conversations||[]).filter(c=>c.kind==="direct"||c.kind==="group"),
+      discussions=conversations.length?conversations.map(c=>
+        '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'"><span><strong>'+esc(inboxConversationLabel(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></span>'+(Number(c.unread||0)?'<b>'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+'</button>'
+      ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>',
+      selectedCount=inboxState.selected.size;
     root.innerHTML='<section class="ch-inline-inbox">'+
       '<button type="button" class="ch-inbox-push '+(dmPreference().enabled!==false?"is-on":"")+'" data-inbox-push><span aria-hidden="true">🔔</span><span><strong>Notifications DM</strong><small>'+esc(dmPreference().enabled!==false?pushText():"Désactivées pour moi")+'</small></span><b>'+(dmPreference().enabled!==false?"✓":"›")+'</b></button>'+
       '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>Discussions</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
-      '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
-        '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
-        '<label class="ch-search ch-inbox-search"><span>⌕</span><input type="search" data-inbox-search placeholder="Rechercher un agent…" value="'+esc(inboxState.search)+'"></label>'+
-        '<div class="ch-inbox-agent-list">'+rows+'</div>'+
-      '</section>'+
+      '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span data-inbox-selected-count>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
+      '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
+      '<div class="ch-inbox-agent-selector" data-inbox-agent-selector></div></section>'+
       (inboxState.status?'<p class="ch-inbox-status" role="status">'+esc(inboxState.status)+'</p>':'')+
-      '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer>'+
-    '</section>';
+      '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer></section>';
     root.querySelector("[data-inbox-push]")?.addEventListener("click",e=>setDmPush(dmPreference().enabled===false,e.currentTarget));
-    root.querySelector("[data-inbox-search]")?.addEventListener("input",e=>{inboxState.search=e.currentTarget.value;const pos=e.currentTarget.selectionStart||0;renderInbox();const next=inboxState.root?.querySelector("[data-inbox-search]");next?.focus({preventScroll:true});try{next?.setSelectionRange(pos,pos)}catch{}});
-    root.querySelectorAll("[data-inbox-agent]").forEach(b=>b.addEventListener("click",()=>{const id=String(b.dataset.inboxAgent||"");if(!id)return;inboxState.selected.has(id)?inboxState.selected.delete(id):inboxState.selected.add(id);renderInbox()}));
-    root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));renderInbox()});
-    root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));renderInbox()});
+    root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
+    root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-continue]")?.addEventListener("click",continueInbox);
     root.querySelectorAll("[data-inbox-conversation]").forEach(b=>b.addEventListener("click",()=>openThread(String(b.dataset.inboxConversation||""))));
+    const selectorHost=root.querySelector("[data-inbox-agent-selector]");
+    if(selectorHost&&window.STIPAgentSelector?.mountPicker){
+      const duty=new Map((home?.on_duty||[]).map(a=>[String(a.id||""),a])),
+        items=(home?.agents||[]).map(agent=>{const live=duty.get(String(agent.id||""));return live?{...agent,today_code:live.shift||agent.today_code||"",shift:live.shift||agent.shift||""}:agent});
+      inboxState.selector=window.STIPAgentSelector.mountPicker(selectorHost,{items,selectedIds:[...inboxState.selected],title:"Rechercher un agent",placeholder:"Prénom, nom ou GHE…",privacy:"team",showPhone:false,showStatus:false,onSelect:toggleInboxAgent})
+    }else if(selectorHost)selectorHost.innerHTML='<p class="ch-error">Sélecteur d’agents indisponible.</p>'
   }
 
   function groupChoice(ids){
@@ -401,12 +397,8 @@
   }
 
   function unmountInbox(){
-    inboxState.root=null;
-    inboxState.selected.clear();
-    inboxState.search="";
-    inboxState.status="";
-    inboxState.loading=false;
-    inboxState.conversation=""
+    inboxState.selector?.destroy?.();inboxState.selector=null;
+    inboxState.root=null;inboxState.selected.clear();inboxState.status="";inboxState.loading=false;inboxState.conversation=""
   }
 
   window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}) ,mountInbox,unmountInbox};
