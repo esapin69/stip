@@ -129,6 +129,14 @@
     return "Indisponible aujourd’hui";
   }
 
+  function selectedAgent(agent, options = {}) {
+    const id = String(agent?.id ?? "");
+    const multiple = options.selectedIds;
+    if (multiple instanceof Set) return multiple.has(id);
+    if (Array.isArray(multiple)) return multiple.some((value) => String(value) === id);
+    return id === String(options.selectedId ?? "");
+  }
+
   function row(agent, options) {
     const code = String(agent.today_code || "").toUpperCase();
     const base = baseShift(code);
@@ -137,7 +145,7 @@
     const special = specialText(agent, code);
     const full = options.privacy === "full";
     const picker = options.mode === "picker";
-    const selected = picker && String(agent?.id ?? "") === String(options.selectedId ?? "");
+    const selected = picker && selectedAgent(agent, options);
     let status = "";
     let marker = "";
     if (shift) {
@@ -312,7 +320,7 @@
     const first = pickerFirst(agent);
     const last = pickerLast(agent);
     const ghe = pickerGhe(agent);
-    const selected = String(agent?.id ?? "") === String(options.selectedId ?? "");
+    const selected = selectedAgent(agent, options);
     const meta = [agent?.role, agent?.today_code, agent?.equipe]
       .map((value) => String(value || "").trim())
       .filter((value, index, all) => value && all.indexOf(value) === index)
@@ -375,10 +383,12 @@
       items: Array.isArray(rawOptions.items) ? rawOptions.items : [],
       filter: normalizePickerFilter(rawOptions.filter),
       selectedId: rawOptions.selectedId ?? "",
+      selectedIds: new Set((rawOptions.selectedIds || []).map(String)),
     };
 
     function render() {
       options.selectedId = state.selectedId;
+      options.selectedIds = state.selectedIds;
       host.innerHTML = `<div class="sas-wall sas-wall-embedded" aria-live="polite">${state.items.length
         ? pickerSections([...state.items], options, state.filter)
         : `<p class="sas-empty sas-wall-empty">${esc(options.emptyText || "Aucun agent trouvé.")}</p>`}</div>`;
@@ -405,6 +415,12 @@
       },
       setSelected(selectedId) {
         state.selectedId = selectedId ?? "";
+        state.selectedIds.clear();
+        render();
+      },
+      setSelectedIds(selectedIds) {
+        state.selectedId = "";
+        state.selectedIds = new Set((selectedIds || []).map(String));
         render();
       },
       destroy() {
@@ -427,7 +443,9 @@
       items: Array.isArray(options.items) ? options.items : [],
       query: String(options.query || ""),
       pickerFilter: normalizePickerFilter(rawOptions.filter),
+      selectedIds: new Set((rawOptions.selectedIds || []).map(String)),
     };
+    options.selectedIds = state.selectedIds;
 
     function directoryResults() {
       const query = normalize(state.query.trim());
@@ -611,6 +629,14 @@
       },
       setSelected(selectedId) {
         options.selectedId = selectedId;
+        state.selectedIds.clear();
+        options.selectedIds = state.selectedIds;
+        refreshBody();
+      },
+      setSelectedIds(selectedIds) {
+        options.selectedId = "";
+        state.selectedIds = new Set((selectedIds || []).map(String));
+        options.selectedIds = state.selectedIds;
         refreshBody();
       },
       setFilter(filter) {
