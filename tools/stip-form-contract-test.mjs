@@ -70,7 +70,11 @@ const responsableAgendaHtml = read("responsable-agenda.html");
 const responsableEvaluationsHtml = read("responsable-evaluations.html");
 
 check(
-  responsableHtml.includes('<form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" hidden>'),
+  responsableHtml.includes('<form id="form"') &&
+    responsableHtml.includes('data-stip-form-mode="sequential"') &&
+    responsableHtml.includes('data-stip-form-pilot="access-request-v1"') &&
+    responsableHtml.includes('data-stip-flow-origin="Suivi"') &&
+    responsableHtml.includes('data-stip-flow-label="Envoyer à un agent"'),
   "Le pilote FormUX doit rester limité à Responsable > Suivi > Envoyer à un agent."
 );
 check(
