@@ -92,8 +92,6 @@
       '<img src="images/icone_app/home-access-personal.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
     homeApps:
       '<img src="images/icone_app/home-access-applications.webp?v=20260922-topimages3" alt="" aria-hidden="true">',
-    homeShortcuts:
-      '<span class="hc-home-shortcuts-art" aria-hidden="true"><i></i><i></i><i></i><i></i></span>',
     homeChat:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     homeChair:
@@ -1898,8 +1896,6 @@
       ];
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
-    if (pilotageRoleKey() === "admin")
-      items.push({ key: "shortcuts", label: "Raccourcis", art: ICON.homeShortcuts, popup: true });
     const tDoor = tDoorShortcut();
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
       <div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
@@ -1908,13 +1904,21 @@
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
-        .map((item) =>
-          item.popup
-            ? `<button type="button" class="hc-home-shortcuts-button" data-admin-shortcuts-open aria-haspopup="dialog" aria-controls="hcAdminShortcutsDialog" aria-label="${esc(item.label)}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`
-            : `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
+        .map(
+          (item) =>
+            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
         )
         .join("")}</nav>
     </section>`;
+  }
+
+  function adminShortcutsLauncher() {
+    if (pilotageRoleKey() !== "admin") return "";
+    return `<div class="hc-admin-shortcuts-launcher-wrap">
+      <button type="button" class="hc-admin-shortcuts-launcher" data-admin-shortcuts-open aria-haspopup="dialog" aria-controls="hcAdminShortcutsDialog" aria-label="Ouvrir les raccourcis administrateur">
+        <span>Raccourcis</span><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
+      </button>
+    </div>`;
   }
 
   function adminPilotagePopup() {
@@ -2405,8 +2409,9 @@
     const isTableau = state.homeMode === "tableau" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      inlinePilotage = pilotageRoleKey() === "admin" ? "" : pilotageBlock();
-    let markup = `${homeModeNav()}${inlinePilotage}${adminPilotagePopup()}${showProfile ? profile() : ""}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+      inlinePilotage = pilotageRoleKey() === "admin" ? "" : pilotageBlock(),
+      profileMarkup = showProfile ? `${profile()}${adminShortcutsLauncher()}` : "";
+    let markup = `${homeModeNav()}${inlinePilotage}${adminPilotagePopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isTableau) {
       markup = `<section class="hc-tableau-standalone" aria-label="Chat STIP — Fauteuils">
           <header class="hc-tableau-standalone-head">
