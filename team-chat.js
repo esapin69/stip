@@ -4323,7 +4323,7 @@
   });
 
   const apiSurface = {
-    build: "20260927-communication1",
+    build: "20260927-communication4",
     mount,
     mountPreview,
     unmountFull,
