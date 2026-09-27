@@ -87,11 +87,16 @@
     const code = String(rawCode || "").trim().toUpperCase();
     if (!code) return "";
 
-    const def = window.STIPShiftRegistry?.resolve?.(code);
+    const registry = window.STIPShiftRegistry;
+    const def = registry?.resolve?.(code);
     if (def && def.is_working === false) {
-      const icon = window.STIPShiftRegistry?.icon?.(code) || "";
-      return icon
-        ? `<span class="stip-month-icon" aria-label="${esc(def.label || code)}">${esc(icon)}</span>`
+      const icon = registry?.icon?.(code) || "";
+      const iconMarkup = registry?.iconMarkup?.(code, {
+        className: "metiers-shift-svg",
+        label: def.label || code
+      }) || "";
+      return iconMarkup || icon
+        ? `<span class="stip-month-icon metiers-status-icon" aria-label="${esc(def.label || code)}">${iconMarkup || esc(icon)}</span>`
         : `<span class="metiers-shift-code">${esc(code)}</span>`;
     }
 
@@ -172,6 +177,7 @@
       try {
         const data = await callBootstrap();
         if (!data) return;
+        if (data.icon_catalog) window.STIPIcons?.setCatalog?.(data.icon_catalog);
         if (data.shift_definitions) window.STIPShiftRegistry?.set?.(data.shift_definitions);
         state.items = (data.personal || data.items || []).filter(validItem);
         state.months = [...new Set(state.items.map((item) => String(item.date).slice(0, 7)))].sort();
