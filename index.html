@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-entry-keyboard7" />
+    <meta name="stip-ui-build" content="20260927-entry-keyboard8" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -144,7 +144,7 @@
                     inputmode="numeric"
                     pattern="[0-9]{6}"
                     maxlength="6"
-                    autocomplete="one-time-code"
+                    autocomplete="off"
                     enterkeyhint="done"
                     aria-label="Code personnel à 6 chiffres"
                     placeholder="••••••"
@@ -326,7 +326,7 @@
     <script src="stip-agent-selector.js?v=20260926-team-cards1"></script>
     <script src="stip-person-actions.js?v=20260926-profile-menu4"></script>
     <script src="stip-session-continuity.js?v=20260927-authflow1"></script>
-    <script src="app.js?v=20260927-refresh-continuity1"></script>
+    <script src="app.js?v=20260927-code-reset1"></script>
     <script src="quick-access.js?v=20260926-navigation-stable1"></script>
     <script src="public-access-request.js?v=20260927-stepflow2"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
@@ -346,7 +346,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260927-keyboard-center6", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260927-code-reset1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
