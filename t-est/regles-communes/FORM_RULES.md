@@ -4,7 +4,7 @@ Ce document est le **contrat canonique actuellement validé** des formulaires ST
 
 À ce stade, **une seule référence UX est validée : le formulaire « Demander un accès » (`accessRequestForm`) de la page de connexion**.
 
-Les autres formulaires du site, y compris Chat STIP / Fauteuils / DM, ne sont pas des sources de règles pour ce contrat tant qu’ils n’ont pas été explicitement revus et validés.
+Les autres formulaires du site ne deviennent jamais automatiquement des sources de règles. **Communication** est désormais raccordé comme consommateur validé des briques compatibles, mais la Demande d’accès reste l’unique référence UX du moteur séquentiel.
 
 ## 1. Source de vérité
 
