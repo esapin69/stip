@@ -28,6 +28,28 @@ async function sha(s: string) {
   );
 }
 
+function weakPin(code: string) {
+  const c = String(code || "").replace(/\D/g, "").slice(0, 6);
+  if (!/^\d{6}$/.test(c)) return true;
+  const digits = [...c].map(Number);
+  if (new Set(digits).size < 3) return true;
+  let asc = true, desc = true;
+  for (let i = 1; i < digits.length; i++) {
+    if (((digits[i] - digits[i - 1] + 10) % 10) !== 1) asc = false;
+    if (((digits[i - 1] - digits[i] + 10) % 10) !== 1) desc = false;
+  }
+  if (asc || desc) return true;
+  if (c.slice(0, 3) === c.slice(3)) return true;
+  if (c.slice(0, 2) === c.slice(2, 4) && c.slice(0, 2) === c.slice(4, 6)) return true;
+  if (c[0] === c[1] && c[2] === c[3] && c[4] === c[5]) return true;
+  if ([...c].reverse().join("") === c) return true;
+  return ["123456","654321","012345","543210","112233","332211","987654","456789","159159","258258","147147"].includes(c);
+}
+function assertStrongPin(code: string) {
+  if (weakPin(code)) throw Error("Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.");
+}
+
+
 async function ctx(r: Request) {
   const t = r.headers.get("x-stip-session") || "";
   if (!t) throw Error("Session requise");
@@ -214,7 +236,11 @@ async function list(q = "", viewer: any = null) {
             .toLowerCase()
             .includes(n),
       )
-      .map((p: any) => ({ ...p, current_code: vault[p.id] || null })),
+      .map((p: any) => ({
+        ...p,
+        current_code: vault[p.id] || null,
+        weak_code: !!vault[p.id] && weakPin(vault[p.id]),
+      })),
   };
 }
 
@@ -278,6 +304,7 @@ async function setCode(b: any, me: any) {
   const id = String(b.profile_id || ""),
     code = String(b.code || "").replace(/\D/g, "");
   if (!/^\d{6}$/.test(code)) throw Error("Le code doit contenir 6 chiffres");
+  assertStrongPin(code);
   const { data: p } = await db
     .from("stip_access_profiles")
     .select("agent_id,identity_id,permissions,active")
@@ -412,6 +439,7 @@ async function createAccess(b: any, me: any) {
     );
   if (!agent || !/^\d{6}$/.test(code))
     throw Error("Agent et code à 6 chiffres requis");
+  assertStrongPin(code);
   const [apps, rolePresets] = await Promise.all([catalog(), presets()]);
   const preset = rolePresets.find((x: any) => x.role_key === role);
   if (!preset) throw Error("Profil métier invalide");
