@@ -158,7 +158,7 @@
 
   function syncFormHints(form) {
     const fields = usableFields(form);
-    const submit = form?.querySelector?.('button[type="submit"],input[type="submit"]');
+    const submit = form?.querySelector?.('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     fields.forEach((field, index) => {
       if (field.tagName === "TEXTAREA" || field.hasAttribute("enterkeyhint")) return;
       field.setAttribute("enterkeyhint", index < fields.length - 1 ? "next" : submit ? "done" : "next");
@@ -229,7 +229,7 @@
     let action = form.querySelector(NEXT_ACTION);
     if (!action) { action = document.createElement("button"); action.type = "button"; action.className = "stip-keyboard-next-action"; form.appendChild(action); }
     const next = controls[index + 1] || null;
-    const submit = form.querySelector('button[type="submit"],input[type="submit"]');
+    const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     const nextIsWritable = !!next?.matches?.(FOCUS);
     const label = next ? (nextIsWritable ? "Suivant" : "Continuer") : submitLabel(submit);
     action.hidden = false;
@@ -363,7 +363,7 @@
       requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
       return;
     }
-    const submit = form.querySelector('button[type="submit"],input[type="submit"]');
+    const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
     else submit?.click();
   }, true);
@@ -409,5 +409,5 @@
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 8 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 9 };
 })();
