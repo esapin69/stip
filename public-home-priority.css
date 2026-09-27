@@ -501,3 +501,9 @@
   margin:0 8px 0 0!important;
   padding:0 11px!important;
 }
+
+
+#loginView .stip-code-toggle:disabled{
+  opacity:.42!important;
+  cursor:default!important;
+}
