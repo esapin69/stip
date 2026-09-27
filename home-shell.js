@@ -2853,7 +2853,8 @@
       let changed = false;
       try {
         const traineeSession = String(state.session?.role_key || "") === "stagiaire";
-        const bootRequest = call(DATA_API, "bootstrap");
+        const bootRequest =
+          window.STIPBootPromise || call(DATA_API, "bootstrap");
         window.STIPBootPromise = bootRequest;
         const [boot, home] = await Promise.allSettled([
           bootRequest,
