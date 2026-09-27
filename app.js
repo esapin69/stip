@@ -109,7 +109,7 @@ async function chooseTraineeSession(d,{force=false}={}){
 }
 function finishSessionResume(){document.documentElement.classList.remove('stip-session-resume')}
 function cacheSession(d){if(!window.STIPPreview?.active)window.STIPContinuity?.write?.(d)}
-function showLogin(text=''){finishSessionResume();window.STIPSession=null;window.dispatchEvent(new CustomEvent('stip:session-ended'));appView.classList.add('hidden');loginView.classList.remove('hidden');renderDock('home');msg(text,text?'error':'');setTimeout(()=>{if(accessCode&&!accessCode.closest('[hidden]'))accessCode.focus()},40)}
+function showLogin(text=''){finishSessionResume();window.STIPSession=null;window.dispatchEvent(new CustomEvent('stip:session-ended'));appView.classList.add('hidden');loginView.classList.remove('hidden');resetAccessCode();renderDock('home');msg(text,text?'error':'');setTimeout(()=>{if(accessCode&&!accessCode.closest('[hidden]'))accessCode.focus()},40)}
 function showPublicWithSession(d){cacheSession(d);finishSessionResume();session=d;window.STIPSession=d;loginView.classList.remove('hidden');appView.classList.add('hidden');welcomeText.textContent=personName(d.agent||{});renderDock('home');window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}))}
 function closePanel(){const p=$('#hsPanel');if(!p)return;p.classList.remove('open');p.setAttribute('aria-hidden','true')}
 function syncPanelHistory(){const p=$('#hsPanel');if(!p)return;const open=p.classList.contains('open');if(open&&!panelGuard&&!history.state?.panel){history.pushState({...(history.state||{}),stip:true,route:route(),panel:true},'',location.href)}panelGuard=false}
@@ -125,6 +125,7 @@ function updateAccessCodeMask(){
   if(accessCodeMask)accessCodeMask.textContent=accessCode.type==='text'?'':'★'.repeat(clean.length);
   accessCode.classList.toggle('stip-code-revealed',accessCode.type==='text');
   accessCode.classList.toggle('stip-code-masked',accessCode.type!=='text'&&clean.length>0);
+  if(accessCodeToggle)accessCodeToggle.disabled=clean.length===0;
 }
 function sanitizeAccessCode(){
   if(!accessCode)return;
@@ -142,10 +143,25 @@ function hideAccessCode(){
 function showAccessCode(){
   if(!accessCode)return;
   sanitizeAccessCode();
+  const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
+  if(!clean)return;
   accessCode.type='text';
   updateAccessCodeMask();
   accessCodeToggle?.setAttribute('aria-pressed','true');
   if(accessCodeToggle)accessCodeToggle.textContent='Relâcher';
+}
+function resetAccessCode(){
+  if(!accessCode)return;
+  accessCode.value='';
+  lastAutoCode='';
+  accessCode.type='password';
+  accessCode.classList.remove('stip-code-revealed','stip-code-masked');
+  if(accessCodeMask)accessCodeMask.textContent='';
+  accessCodeToggle?.setAttribute('aria-pressed','false');
+  if(accessCodeToggle){
+    accessCodeToggle.textContent='Voir';
+    accessCodeToggle.disabled=true;
+  }
 }
 accessCode?.addEventListener('input',e=>{sanitizeAccessCode();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length<6){lastAutoCode='';return}if(!e.isTrusted||loginInFlight||code===lastAutoCode)return;lastAutoCode=code;queueMicrotask(()=>{if(!loginInFlight&&String(accessCode.value||'').replace(/\D/g,'').slice(0,6)===code)loginForm?.requestSubmit()})});
 accessCode?.addEventListener('change',sanitizeAccessCode);
@@ -159,10 +175,10 @@ accessCodeToggle?.addEventListener('click',e=>{e.preventDefault();hideAccessCode
 accessCodeToggle?.addEventListener('keydown',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();showAccessCode()}});
 accessCodeToggle?.addEventListener('keyup',e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();hideAccessCode()}});
 window.addEventListener('blur',hideAccessCode);
-window.addEventListener('pageshow',()=>{sanitizeAccessCode();hideAccessCode()});
+window.addEventListener('pageshow',()=>{if(!loginView?.classList.contains('hidden'))resetAccessCode();else hideAccessCode()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)hideAccessCode()});
-sanitizeAccessCode();
-hideAccessCode();
+window.addEventListener('stip:intent-revealed',e=>{if(e.detail?.target?.id==='accessEntryFields')resetAccessCode()});
+resetAccessCode();
 logoutBtn?.addEventListener('click',async()=>{authEpoch++;loginInFlight=false;lastAutoCode='';window.STIPAuthPending=false;try{await access('logout')}catch{}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
 $('#homeBtn')?.addEventListener('click',()=>{setRoute('home');window.dispatchEvent(new CustomEvent('stip:home-root'))});document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
 window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});window.addEventListener('beforeunload',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});window.addEventListener('stip:home-rendered',()=>{if(!pendingScrollRestore)return;requestAnimationFrame(()=>requestAnimationFrame(applyPendingScrollRestore))});document.addEventListener('pointerdown',()=>{if(pendingScrollRestore)pendingScrollRestore=null},{capture:true});
