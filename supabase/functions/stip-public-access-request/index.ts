@@ -9,6 +9,28 @@ const hex=(a:ArrayBuffer)=>[...new Uint8Array(a)].map(b=>b.toString(16).padStart
 async function sha256(s:string){return hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))}
 function token(){const a=new Uint8Array(24);crypto.getRandomValues(a);return [...a].map(x=>x.toString(16).padStart(2,'0')).join('')}
 function safe(s:string){return String(s||'planning').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(0,140)||'planning'}
+
+function weakPin(code: string) {
+  const c = String(code || "").replace(/\D/g, "").slice(0, 6);
+  if (!/^\d{6}$/.test(c)) return true;
+  const digits = [...c].map(Number);
+  if (new Set(digits).size < 3) return true;
+  let asc = true, desc = true;
+  for (let i = 1; i < digits.length; i++) {
+    if (((digits[i] - digits[i - 1] + 10) % 10) !== 1) asc = false;
+    if (((digits[i - 1] - digits[i] + 10) % 10) !== 1) desc = false;
+  }
+  if (asc || desc) return true;
+  if (c.slice(0, 3) === c.slice(3)) return true;
+  if (c.slice(0, 2) === c.slice(2, 4) && c.slice(0, 2) === c.slice(4, 6)) return true;
+  if (c[0] === c[1] && c[2] === c[3] && c[4] === c[5]) return true;
+  if ([...c].reverse().join("") === c) return true;
+  return ["123456","654321","012345","543210","112233","332211","987654","456789","159159","258258","147147"].includes(c);
+}
+function assertStrongPin(code: string) {
+  if (weakPin(code)) throw Error("Ce code est trop facile à deviner. Choisissez 6 chiffres moins prévisibles.");
+}
+
 const PAGE_MAX=15*1024*1024
 const PAGE_EXT=new Set(['pdf','png','jpg','jpeg','webp'])
 const PAGE_MIME=new Set(['application/pdf','image/png','image/jpeg','image/webp','application/octet-stream'])
@@ -21,6 +43,7 @@ async function trackedRow(id:string,secret:string){
   return r
 }
 async function ensureCodeFree(code:string,requestId=''){
+  assertStrongPin(code)
   const codeKey=await sha256(code)
   const {data:used}=await db.from('stip_access_profiles').select('id').eq('code_key',codeKey).maybeSingle()
   if(used)throw Error('Ce code est déjà utilisé. Choisissez-en un autre.')
