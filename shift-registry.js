@@ -10,7 +10,14 @@
   });
 
   function clean(raw) {
-    return String(raw ?? "").trim().toUpperCase().replace(/\*+$/, "");
+    const value = String(raw ?? "")
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, "");
+    return value.replace(
+      /[\\*★☆✱✳✶✷✸✹✺✻✼✽✾✿\\uFE0E\\uFE0F]+$/u,
+      "",
+    );
   }
 
   function inferredBase(code) {
