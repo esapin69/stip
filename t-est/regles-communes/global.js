@@ -223,6 +223,27 @@
   document.addEventListener("pointerdown", (event) => { if (event.target.closest?.(FOCUS) || event.target.closest?.(INTENT)) captureBaseline(); }, true);
   document.addEventListener("click", (event) => { const trigger = event.target.closest?.(INTENT); if (!trigger) return; event.preventDefault(); reveal(trigger); });
   document.addEventListener("focusin", (event) => { const field = event.target.closest?.(FOCUS); if (field) focusField(field); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
+    const field = event.target.closest?.(FOCUS);
+    if (!field || field.tagName === "TEXTAREA") return;
+    const form = formFor(field);
+    if (!form?.matches?.(FORM_FOCUS)) return;
+    event.preventDefault();
+    if (typeof field.reportValidity === "function" && !field.reportValidity()) return;
+    const fields = usableFields(form);
+    const index = fields.indexOf(field);
+    const next = index >= 0 ? fields[index + 1] : null;
+    if (next) {
+      transferFocus(next);
+      return;
+    }
+    const submit = form.querySelector('button[type="submit"]');
+    if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
+    else submit?.click();
+  }, true);
+  document.documentElement.dataset.stipEnterManaged = "1";
+
   document.addEventListener("focusout", () => {
     setTimeout(() => {
       const focused = document.activeElement; const nextField = focused?.closest?.(FOCUS);
@@ -254,5 +275,5 @@
   }
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, version: 5 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, version: 6 };
 })();
