@@ -28,7 +28,7 @@
     .step>span{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#e7f6f8;color:#168da5;font-size:.78rem;font-weight:950}
     .step strong{display:block;color:#244e5d;font-size:.91rem}
     .step small{display:block;margin-top:2px;color:#819298;font-size:.68rem;line-height:1.3}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.identity-family{order:1}.identity-given{order:2}
     label{display:grid;gap:6px;margin-top:10px;color:#315964;font-size:.72rem;font-weight:800}
     label small{font-weight:700;color:#819298}
     input,textarea{width:100%;border:1px solid #d6e4e7;border-radius:14px;background:#fbfdfe;color:#173e55;outline:none}
@@ -55,8 +55,8 @@
     .privacy{margin:15px 2px 0;color:#809197;font-size:.7rem;line-height:1.4}
     @media(max-width:520px){.grid{grid-template-columns:1fr}.form-card{padding:17px}.code-wrap{grid-template-columns:1fr}.code-wrap button{width:100%}}
   </style>
-  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide7" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide7"></script>
+  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide8" />
+  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide8"></script>
 </head>
 <body>
   <main class="wrap">
@@ -76,8 +76,8 @@
       <p>Les informations ci-dessous servent à comprendre votre planning et préparer votre accès.</p>
       <div class="step"><span>1</span><div><strong>Qui êtes-vous ?</strong><small>La personne concernée par le planning.</small></div></div>
       <div class="grid">
-        <label>Nom<input id="pageRequestLastName" name="last_name" type="text" autocomplete="section-pagerequest family-name" autocapitalize="words" maxlength="80" required></label>
-        <label>Prénom<input id="pageRequestFirstName" name="first_name" type="text" autocomplete="section-pagerequest given-name" autocapitalize="words" maxlength="80" required></label>
+        <label class="identity-given">Prénom<input id="pageRequestFirstName" name="first_name" type="text" autocomplete="section-pagerequest given-name" autocapitalize="words" maxlength="80" required></label>
+        <label class="identity-family">Nom<input id="pageRequestLastName" name="last_name" type="text" autocomplete="section-pagerequest family-name" autocapitalize="words" maxlength="80" required></label>
       </div>
       <div class="step"><span>2</span><div><strong>Quel est votre métier ?</strong><small>Pour comprendre les codes et horaires de votre planning.</small></div></div>
       <label>Métier / poste<input name="professional_role" maxlength="120" placeholder="Ex. aide-soignant, agent, technicien…" required></label>
