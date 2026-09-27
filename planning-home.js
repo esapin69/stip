@@ -31,7 +31,10 @@
     shiftAssets = {},
     availableMonths = [],
     currentKind = "personal",
-    loadingData = null;
+    loadingData = null,
+    legendObserver = null,
+    legendRaf = 0;
+  const pageLegendItems = new Map();
   async function call(action) {
     const r = await fetch(API, {
         method: "POST",
@@ -130,6 +133,63 @@
   function planningOptionsPocket() {
     return `<details class="stip-option-pocket ph-planning-options" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-ph-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Tous les shifts réunis · mise à jour automatique</small><b aria-hidden="true">›</b></button></div></details>`;
   }
+  function scheduleLegend() {
+    if (legendRaf) return;
+    legendRaf = requestAnimationFrame(() => {
+      legendRaf = 0;
+      if (currentKind === "personal") renderLegend();
+    });
+  }
+  function watchPageLegend() {
+    legendObserver?.disconnect?.();
+    const root = $("#phContent");
+    if (!root || typeof MutationObserver !== "function") return;
+    legendObserver = new MutationObserver((records) => {
+      const relevant = records.some((record) => {
+        const target = record.target?.nodeType === 1 ? record.target : record.target?.parentElement;
+        return !target?.closest?.("#phLegendHost");
+      });
+      if (relevant) scheduleLegend();
+    });
+    legendObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [
+        "data-stip-legend-icon",
+        "data-stip-legend-label",
+        "data-stip-legend-meta",
+        "hidden",
+        "aria-hidden",
+      ],
+    });
+  }
+  window.STIPPlanningLegend = {
+    register(item = {}) {
+      const key = String(item.key || item.id || "").trim();
+      const label = String(item.label || "").trim();
+      if (!key || !label) return false;
+      pageLegendItems.set(key, {
+        key,
+        label,
+        icon: String(item.icon || "•").trim() || "•",
+        meta: String(item.meta || "").trim(),
+      });
+      scheduleLegend();
+      return true;
+    },
+    remove(key) {
+      const changed = pageLegendItems.delete(String(key || "").trim());
+      if (changed) scheduleLegend();
+      return changed;
+    },
+    clear() {
+      if (!pageLegendItems.size) return;
+      pageLegendItems.clear();
+      scheduleLegend();
+    },
+  };
+
   function legendMarkup() {
     if (!monthKey) return "";
     const registry = window.STIPShiftRegistry,
@@ -184,6 +244,34 @@
         label,
       );
     }
+
+    for (const item of pageLegendItems.values())
+      add(
+        "page:" + item.key,
+        `<span class="ph-legend-emoji">${esc(item.icon)}</span>`,
+        item.label,
+        item.meta,
+      );
+
+    $("#phContent")
+      ?.querySelectorAll("[data-stip-legend-label]")
+      .forEach((node) => {
+        if (node.closest("#phLegendHost")) return;
+        if (node.hidden || node.closest("[hidden]") || node.getAttribute("aria-hidden") === "true")
+          return;
+        const label = String(node.dataset.stipLegendLabel || "").trim(),
+          icon = String(node.dataset.stipLegendIcon || "•").trim() || "•",
+          meta = String(node.dataset.stipLegendMeta || "").trim(),
+          key = String(node.dataset.stipLegendKey || "event:" + icon + "|" + label).trim();
+        if (!label) return;
+        add(
+          key,
+          `<span class="ph-legend-emoji">${esc(icon)}</span>`,
+          label,
+          meta,
+        );
+      });
+
     if (!rows.length) return "";
     return `<section class="ph-fixed-legend stip-legend" aria-label="Légende des repères affichés"><div class="stip-section-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${rows.join("")}</div></div></section>`;
   }
@@ -244,6 +332,7 @@
     );
     announceMonth();
     renderLegend();
+    watchPageLegend();
     window.dispatchEvent(
       new CustomEvent("stip:planning-select", { detail: { kind: "personal" } }),
     );
