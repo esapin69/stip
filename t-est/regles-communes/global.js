@@ -23,6 +23,7 @@
   const NEXT_ACTION = ".stip-keyboard-next-action";
   const PREV_ACTION = ".stip-keyboard-prev-action";
   const OVERVIEW_ACTION = ".stip-keyboard-overview-action";
+  const NAV_ACTIONS = ".stip-keyboard-nav-actions";
   const QUESTION_CLASS = "stip-keyboard-question";
   const WRITABLE_SELECTOR = [
     'input:not([type])',
@@ -226,6 +227,8 @@
     if (previous) previous.hidden = true;
     const overview = root?.querySelector?.(OVERVIEW_ACTION);
     if (overview) overview.hidden = true;
+    const nav = root?.querySelector?.(NAV_ACTIONS);
+    if (nav) nav.hidden = true;
   }
 
   function writableField(field) {
@@ -402,6 +405,44 @@
     return text.replace(/[→›»]+\s*$/, "").trim() || "Continuer";
   }
 
+  function focusPlainControl(control) {
+    if (!control) return false;
+    clearMode();
+    const focus = () => {
+      try { control.focus({ preventScroll: true }); } catch { control.focus?.(); }
+      if (document.activeElement === control) {
+        requestAnimationFrame(() => control.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+        return true;
+      }
+      return false;
+    };
+    if (focus()) return true;
+    requestAnimationFrame(() => {
+      if (focus()) return;
+      setTimeout(focus, 40);
+    });
+    return true;
+  }
+
+  function advanceFromField(field) {
+    const form = formFor(field);
+    if (!field || !form?.matches?.(FORM_FOCUS)) return false;
+    if (typeof field.reportValidity === "function" && !field.reportValidity()) return false;
+
+    const controls = sequentialControls(form);
+    const index = controls.indexOf(field);
+    if (index < 0) return false;
+    const next = controls[index + 1] || null;
+
+    if (next?.matches?.(FOCUS)) return transferFocus(next);
+    if (next) return focusPlainControl(next);
+
+    const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
+    if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
+    else submit?.click();
+    return true;
+  }
+
   function showFormOverview(form, field = active) {
     const target = field || active;
     if (form) form.dataset.stipOverview = "1";
@@ -444,13 +485,23 @@
     const stepNavigation = form.hasAttribute("data-stip-step-nav");
     let previous = form.querySelector(PREV_ACTION);
     let overview = form.querySelector(OVERVIEW_ACTION);
+    let nav = form.querySelector(NAV_ACTIONS);
 
+    if (stepNavigation && !nav) {
+      nav = document.createElement("div");
+      nav.className = "stip-keyboard-nav-actions";
+      nav.setAttribute("data-stip-keyboard-keep", "");
+      form.appendChild(nav);
+    }
     if (stepNavigation && !previous) {
       previous = document.createElement("button");
       previous.type = "button";
       previous.className = "stip-keyboard-prev-action";
       previous.textContent = "← Précédent";
-      form.appendChild(previous);
+    }
+    if (stepNavigation && nav) {
+      if (previous && previous.parentElement !== nav) nav.appendChild(previous);
+      if (action.parentElement !== nav) nav.appendChild(action);
     }
     if (stepNavigation && !overview) {
       overview = document.createElement("button");
@@ -462,6 +513,8 @@
       overview.setAttribute("data-stip-keyboard-keep", "");
       form.appendChild(overview);
     }
+
+    if (nav) nav.hidden = false;
 
     for (const button of [action, previous, overview]) {
       if (!button || button.dataset.stipKeepFocusBound === "1") continue;
@@ -480,19 +533,7 @@
     action.textContent = label + "  →";
     action.setAttribute("aria-label", label);
     action.onclick = () => {
-      if (typeof field.reportValidity === "function" && !field.reportValidity()) return;
-      if (nextIsWritable) {
-        transferFocus(next);
-        return;
-      }
-      if (next) {
-        clearMode();
-        try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
-        requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
-        return;
-      }
-      if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
-      else submit?.click();
+      advanceFromField(field);
     };
 
     if (previous) {
@@ -508,9 +549,7 @@
           return;
         }
         if (prev) {
-          clearMode();
-          try { prev.focus({ preventScroll: true }); } catch { prev.focus?.(); }
-          requestAnimationFrame(() => prev.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+          focusPlainControl(prev);
           return;
         }
         showFormOverview(form, field);
@@ -544,9 +583,11 @@
     const action = scope.querySelector?.(NEXT_ACTION);
     const previous = scope.querySelector?.(PREV_ACTION);
     const overview = scope.querySelector?.(OVERVIEW_ACTION);
+    const nav = scope.querySelector?.(NAV_ACTIONS);
     if (action) action.hidden = true;
     if (previous) previous.hidden = true;
     if (overview) overview.hidden = true;
+    if (nav) nav.hidden = true;
   }
 
   function keyboardDetected() {
@@ -673,23 +714,7 @@
     const form = formFor(field);
     if (!form?.matches?.(FORM_FOCUS)) return;
     event.preventDefault();
-    if (typeof field.reportValidity === "function" && !field.reportValidity()) return;
-    const controls = sequentialControls(form);
-    const index = controls.indexOf(field);
-    const next = index >= 0 ? controls[index + 1] : null;
-    if (next?.matches?.(FOCUS)) {
-      transferFocus(next);
-      return;
-    }
-    if (next) {
-      clearMode();
-      try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
-      requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
-      return;
-    }
-    const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
-    if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
-    else submit?.click();
+    advanceFromField(field);
   }, true);
   document.documentElement.dataset.stipEnterManaged = "1";
 
@@ -717,10 +742,22 @@
 
   function transferFocus(field) {
     if (!field) return false;
-    const preserved = baselineHeight || pendingBaseline || stableHeight || measureFullHeight(); pendingBaseline = preserved;
-    try { field.focus({ preventScroll: true }); } catch { field.focus?.(); }
-    if (document.activeElement === field) { focusField(field, { preserveKeyboard: true }); return true; }
-    return false;
+    const preserved = baselineHeight || pendingBaseline || stableHeight || measureFullHeight();
+    pendingBaseline = preserved;
+
+    const focus = () => {
+      try { field.focus({ preventScroll: true }); } catch { field.focus?.(); }
+      if (document.activeElement !== field) return false;
+      focusField(field, { preserveKeyboard: true });
+      return true;
+    };
+
+    if (focus()) return true;
+    requestAnimationFrame(() => {
+      if (focus()) return;
+      setTimeout(focus, 40);
+    });
+    return true;
   }
 
   autoEnroll(document);
@@ -744,6 +781,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 18
+    version: 19
   };
 })();
