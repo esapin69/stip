@@ -153,8 +153,9 @@ const navigation=read('stip-navigation.js');
 const appRuntime=read('app.js');
 check(
   appRuntime.includes("if(route()===target){restore();return}") &&
-  appRuntime.includes("if(r==='fauteuils'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}"),
-  'Le routeur principal peut de nouveau ignorer une ré-entrée ou perdre la route Fauteuils.'
+  appRuntime.includes("r==='fauteuils'||r==='communication'||r.startsWith('communication/')") &&
+  appRuntime.includes("showOnly('homeView');emitRoute(r);restoreScroll(r);return"),
+  'Le routeur principal peut de nouveau ignorer une ré-entrée ou perdre une route Communication/Fauteuils.'
 );
 check(
   home.includes('currentRoute === "fauteuils"') &&
