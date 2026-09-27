@@ -5552,34 +5552,48 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 }
 
 
-/* 20260927-admin-shortcuts-popup1 — admin shortcut groups leave the home flow and open from one launcher. */
-.hc-home-shortcuts-button .hc-home-filter-art{
-  display:grid!important;
-  place-items:center!important;
-  background:
-    radial-gradient(circle at 28% 22%,rgba(255,255,255,.95),rgba(255,255,255,0) 36%),
-    linear-gradient(145deg,#effbff 0%,#dff4f8 52%,#cdebf1 100%)!important;
+/* 20260927-admin-shortcuts-popup2 — admin shortcuts open from a discreet link below the STIP card. */
+.hc-admin-shortcuts-launcher-wrap{
+  box-sizing:border-box!important;
+  width:100%!important;
+  margin:0!important;
+  padding:2px 18px 0!important;
+  display:flex!important;
+  justify-content:flex-end!important;
 }
-.hc-home-shortcuts-art{
-  width:58%!important;
-  aspect-ratio:1!important;
-  display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  grid-template-rows:repeat(2,minmax(0,1fr))!important;
-  gap:8%!important;
-  transform:rotate(-2deg)!important;
+.hc-admin-shortcuts-launcher{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  min-height:30px!important;
+  margin:0!important;
+  padding:5px 2px!important;
+  border:0!important;
+  background:transparent!important;
+  color:#68818a!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:5px!important;
+  font:850 .78rem/1.1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  letter-spacing:.01em!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
 }
-.hc-home-shortcuts-art>i{
-  display:block!important;
-  border-radius:22%!important;
-  background:linear-gradient(145deg,#1b7188,#0f5266)!important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.38),
-    0 4px 8px rgba(20,62,78,.16)!important;
+.hc-admin-shortcuts-launcher-arrow{
+  color:#2e788b!important;
+  font-size:1.15rem!important;
+  font-weight:900!important;
+  line-height:.8!important;
+  transform:translateY(-.5px)!important;
 }
-.hc-home-shortcuts-art>i:nth-child(2),
-.hc-home-shortcuts-art>i:nth-child(3){
-  background:linear-gradient(145deg,#2da6bd,#177b92)!important;
+.hc-admin-shortcuts-launcher:active{
+  transform:translateX(2px)!important;
+}
+.hc-admin-shortcuts-launcher:focus-visible{
+  outline:2px solid var(--stip-focus-ring)!important;
+  outline-offset:2px!important;
+  border-radius:8px!important;
 }
 
 .hc-admin-shortcuts-dialog{
@@ -5698,10 +5712,5 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
   .hc-admin-shortcuts-head h2{
     font-size:1.3rem!important;
-  }
-}
-@media(max-width:370px){
-  .hc-home-shortcuts-art{
-    gap:7%!important;
   }
 }
