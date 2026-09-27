@@ -295,10 +295,13 @@
       return true;
     }
     if (!loadingData) {
-      const shared = window.STIPBootPromise;
-      loadingData = Promise.resolve(shared || call("bootstrap")).finally(
-        () => (loadingData = null),
-      );
+      const shared = window.STIPBootPromise,
+        request = shared || call("bootstrap");
+      if (!shared) window.STIPBootPromise = request;
+      loadingData = Promise.resolve(request).finally(() => {
+        if (window.STIPBootPromise === request) window.STIPBootPromise = null;
+        loadingData = null;
+      });
     }
     try {
       const d = await loadingData;
