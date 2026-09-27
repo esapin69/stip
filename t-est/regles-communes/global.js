@@ -1,6 +1,19 @@
 (() => {
   "use strict";
 
+  const viewportMeta = document.querySelector('meta[name="viewport"]');
+  if (viewportMeta) {
+    const currentViewport = String(viewportMeta.getAttribute("content") || "");
+    if (!/interactive-widget\s*=/.test(currentViewport)) {
+      viewportMeta.setAttribute(
+        "content",
+        [currentViewport.replace(/\s*,\s*$/, ""), "interactive-widget=resizes-content"]
+          .filter(Boolean)
+          .join(",")
+      );
+    }
+  }
+
   if (window.STIPFormUX) return;
 
   const FOCUS = "[data-stip-keyboard-focus]";
@@ -731,6 +744,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 17
+    version: 18
   };
 })();
