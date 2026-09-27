@@ -14,7 +14,7 @@ external=document.getElementById('requestExternalFields'),
 roleWrap=document.getElementById('requestRoleWrap'),
 role=document.getElementById('accessRequestRole'),
 workplace=document.getElementById('accessRequestWorkplace'),
-planning=document.getElementById('accessRequestPlanning'),
+planningInputs=[...document.querySelectorAll('[data-planning-input]')],
 planningName=document.getElementById('accessRequestPlanningName'),
 codeStep=document.getElementById('requestCodeStepNumber'),
 submit=form?.querySelector('.request-submit');
@@ -61,7 +61,6 @@ function syncProfile(){
   if(roleWrap)roleWrap.hidden=!isExternal;
   if(role)role.required=isExternal;
   if(workplace)workplace.required=isExternal;
-  if(planning)planning.required=isExternal;
   if(codeStep)codeStep.textContent=isExternal?'5':'3';
   if(submit){
     submit.hidden=!p;
@@ -173,7 +172,14 @@ async function signedUpload(url,f){
   const r=await fetch(url,{method:'PUT',headers:{'x-upsert':'false'},body});
   if(!r.ok){const j=await r.json().catch(()=>({}));throw Error(j.message||j.error||'Le planning n’a pas pu être envoyé.')}
 }
-planning?.addEventListener('change',()=>{const f=planning.files?.[0];if(planningName)planningName.textContent=f?f.name+' · '+fmt(f.size):''});
+const selectedPlanningFile=()=>planningInputs.find(input=>input.files?.[0])?.files?.[0]||null;
+planningInputs.forEach(input=>input.addEventListener('change',()=>{
+  const f=input.files?.[0]||null;
+  if(f){
+    planningInputs.forEach(other=>{if(other!==input)other.value=''});
+    if(planningName)planningName.textContent=(input.dataset.planningSource||'Fichier choisi')+' · '+f.name+' · '+fmt(f.size);
+  }else if(!selectedPlanningFile()&&planningName)planningName.textContent='';
+}));
 profileInputs.forEach(input=>input.addEventListener('change',()=>{syncProfile();msg.textContent='';msg.className='message'}));
 
 form?.addEventListener('submit',async e=>{
@@ -189,7 +195,7 @@ form?.addEventListener('submit',async e=>{
       const j=await post({action:'submit',first_name:first,last_name:last,requested_code:code,comment:'Profil déclaré : brancardier'});
       localStorage.setItem(KEY,JSON.stringify({request_id:j.request_id,tracking_token:j.tracking_token,created_at:Date.now()}));
     }else{
-      const f=planning?.files?.[0],professionalRole=String(fd.get('professional_role')||'').trim(),work=String(fd.get('workplace')||'').trim(),comment=String(fd.get('comment')||'').trim();
+      const f=selectedPlanningFile(),professionalRole=String(fd.get('professional_role')||'').trim(),work=String(fd.get('workplace')||'').trim(),comment=String(fd.get('comment')||'').trim();
       if(!professionalRole){throw Error('Indiquez votre métier ou votre poste.')}
       if(!work){throw Error('Indiquez votre établissement ou votre entreprise.')}
       if(!f){throw Error('Ajoutez votre planning.')}
@@ -209,7 +215,7 @@ form?.addEventListener('submit',async e=>{
       await post({action:'complete_page',request_id:saved.request_id,tracking_token:saved.tracking_token});
       localStorage.removeItem(PENDING);
     }
-    form.reset();if(planningName)planningName.textContent='';syncProfile();
+    form.reset();planningInputs.forEach(input=>input.value='');if(planningName)planningName.textContent='';syncProfile();
     msg.textContent='Demande transmise.';msg.className='message success';notice({status:'pending',needs_code:false});
     setTimeout(()=>closeRequest(true),500);
   }catch(err){
