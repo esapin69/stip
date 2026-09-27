@@ -308,11 +308,11 @@
     if (previous) {
       previous.hidden = false;
       previous.onclick = () => {
-        window.dispatchEvent(
-          new CustomEvent("stip:form-previous-request", {
-            detail: { form, field, index, previous: prev }
-          })
-        );
+        const previousEvent = new CustomEvent("stip:form-previous-request", {
+          detail: { form, field, index, previous: prev },
+          cancelable: true
+        });
+        if (!window.dispatchEvent(previousEvent)) return;
         if (prev?.matches?.(FOCUS)) {
           transferFocus(prev);
           return;
@@ -488,5 +488,5 @@
   }
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 10 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 11 };
 })();
