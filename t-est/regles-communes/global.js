@@ -100,19 +100,10 @@
     return explicit || inferred;
   }
 
-  function normalizeIdentityDomOrder(form) {
-    if (!form) return;
-    const controls = [...form.querySelectorAll("input,textarea,select")];
-    const family = controls.find((field) => normalizeAutofillField(field) === "family-name");
-    const given = controls.find((field) => normalizeAutofillField(field) === "given-name");
-    if (!family || !given) return;
-    const familyWrap = family.closest("label") || family;
-    const givenWrap = given.closest("label") || given;
-    if (!familyWrap.parentElement || familyWrap.parentElement !== givenWrap.parentElement) return;
-    const siblings = [...familyWrap.parentElement.children];
-    if (siblings.indexOf(familyWrap) > siblings.indexOf(givenWrap))
-      familyWrap.parentElement.insertBefore(familyWrap, givenWrap);
-  }
+  /* Do not rewrite identity-field DOM order here.
+     Browser autofill is more reliable when pages keep a standards-friendly
+     given-name -> family-name DOM order. STIP's visible/step order remains
+     controlled separately by the page layout and identityOrdered(). */
 
   function markAutofillContext(form) {
     if (!form) return;
@@ -136,7 +127,6 @@
     forms.forEach((form) => {
       if (!form.hasAttribute("autocomplete")) form.setAttribute("autocomplete", "on");
       form.querySelectorAll("input,textarea,select").forEach(normalizeAutofillField);
-      normalizeIdentityDomOrder(form);
       markAutofillContext(form);
     });
     return forms;
@@ -675,6 +665,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 14
+    version: 15
   };
 })();
