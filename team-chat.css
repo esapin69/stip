@@ -6194,3 +6194,5 @@
 .tb-page.is-chat-mode .tb-send span{display:none}
 .tb-page.is-chat-mode .tb-entry:not(.is-wheelchair){border-color:#dce8e5;background:#fff}
 .tb-mode-empty{margin:auto;padding:32px 18px;text-align:center;display:grid;gap:6px;color:#6f858a}.tb-mode-empty strong{font-size:.92rem;color:#45636a}.tb-mode-empty small{font-size:.74rem}
+
+.tb-entry.is-notification-focus,.tb-thread-reply.is-notification-focus{outline:3px solid rgba(24,150,167,.34);outline-offset:3px;box-shadow:0 0 0 8px rgba(24,150,167,.08),0 12px 30px rgba(23,98,107,.14);transition:outline-color .35s ease,box-shadow .35s ease}
