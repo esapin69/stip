@@ -436,7 +436,7 @@
           !field.disabled &&
           !field.readOnly &&
           field.type !== "hidden" &&
-          !field.closest("[hidden]")
+          !field.closest('[hidden],.hidden,[aria-hidden="true"],[inert]')
       )
     );
   }
@@ -445,8 +445,9 @@
     normalizeAutofill(form);
     return identityOrdered(
       [...(form?.querySelectorAll?.("input,textarea,select") || [])].filter((control) => {
-        if (control.disabled || control.readOnly || control.type === "hidden") return false;
-        if (control.closest("[hidden]")) return false;
+        const type = String(control.type || "").toLowerCase();
+        if (control.disabled || control.readOnly || ["hidden", "submit", "reset", "button", "image"].includes(type)) return false;
+        if (control.closest('[hidden],.hidden,[aria-hidden="true"],[inert]')) return false;
         if (control.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return false;
         if (control.matches('input[type="search"]')) return false;
         return true;
@@ -460,7 +461,13 @@
     const span = submit?.querySelector?.("span")?.textContent?.trim?.();
     if (span) return span.replace(/[→›»]+\s*$/, "").trim();
     const text = submit?.textContent?.trim?.() || "";
-    return text.replace(/[→›»]+\s*$/, "").trim() || "Continuer";
+    return text.replace(/[→›»]+\s*$/, "").trim() || "Valider";
+  }
+
+  function finalActionLabel(submit) {
+    if (!submit) return "Terminer";
+    const label = submitLabel(submit);
+    return /^(?:suivant|continuer)$/i.test(label) ? "Valider" : label;
   }
 
   function focusPlainControl(control) {
@@ -496,8 +503,12 @@
     if (next) return focusPlainControl(next);
 
     const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
-    if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
-    else submit?.click();
+    if (!submit) {
+      showFormOverview(form, field);
+      return true;
+    }
+    if (typeof form.requestSubmit === "function") form.requestSubmit(submit);
+    else submit.click();
     return true;
   }
 
@@ -585,10 +596,12 @@
     const next = controls[index + 1] || null;
     const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     const nextIsWritable = !!next?.matches?.(FOCUS);
-    const label = next ? (nextIsWritable ? "Suivant" : "Continuer") : submitLabel(submit);
+    const isFinal = !next;
+    const label = isFinal ? finalActionLabel(submit) : (nextIsWritable ? "Suivant" : "Continuer");
 
     action.hidden = false;
-    action.textContent = label + "  →";
+    action.dataset.stipFinalAction = isFinal ? "1" : "0";
+    action.textContent = label + (isFinal ? "  ✓" : "  →");
     action.setAttribute("aria-label", label);
     action.onclick = () => {
       advanceFromField(field);
@@ -621,7 +634,7 @@
 
     window.dispatchEvent(
       new CustomEvent("stip:form-step", {
-        detail: { form, field, index, count: controls.length }
+        detail: { form, field, index, count: controls.length, final: !next }
       })
     );
   }
@@ -884,6 +897,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 21
+    version: 22
   };
 })();
