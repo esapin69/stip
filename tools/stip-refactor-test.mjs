@@ -12,11 +12,12 @@ const loader=read('stip-loader.js');
 const index=read('index.html');
 const serviceWorker=read('stip-sw.js');
 
+const uiBuild = index.match(/<meta name="stip-ui-build" content="([^"]+)"/)?.[1] || "";
+const swAssetBuild = index.match(/\/stip-sw\.js\?v=([^"&]+)/)?.[1] || "";
+const swRuntimeBuild = serviceWorker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1] || "";
 check(
-  index.includes('<meta name="stip-ui-build" content="20260926-profile-menu4"') &&
-  index.includes('/stip-sw.js?v=20260926-profile-menu4') &&
-  serviceWorker.includes('STIP_SW_BUILD="20260926-profile-menu4"'),
-  'La correction du menu profil doit invalider les anciens caches sur les téléphones déjà connectés.'
+  !!uiBuild && uiBuild === swAssetBuild && uiBuild === swRuntimeBuild,
+  'Le build UI, le service worker enregistré et son cache doivent rester synchronisés pour invalider les anciens caches.'
 );
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
