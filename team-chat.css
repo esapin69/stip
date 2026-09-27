@@ -6181,3 +6181,16 @@
   opacity:.56;
   cursor:default;
 }
+
+/* Communication / Chat équipe mode */
+.tb-page.is-chat-mode{min-height:calc(100dvh - 135px);background:#f4f8f7}
+.tb-page.is-chat-mode .tb-inline-tools{min-height:44px;padding:7px 12px}
+.tb-page.is-chat-mode .tb-dialogue{padding-top:6px}
+.tb-page.is-chat-mode .tb-input-dock{background:rgba(248,251,250,.97);border-top:1px solid #d9e7e4}
+.tb-page.is-chat-mode .tb-composer{grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:9px 10px calc(9px + env(safe-area-inset-bottom))}
+.tb-page.is-chat-mode .tb-composer-main{min-width:0}
+.tb-page.is-chat-mode .tb-composer textarea{display:block!important;min-height:48px;max-height:132px;border:1px solid #d2e3e0;border-radius:17px;background:#fff;padding:12px 14px;font-size:16px;line-height:1.35;color:#214f59}
+.tb-page.is-chat-mode .tb-send{width:54px;min-width:54px;height:48px;border-radius:16px}
+.tb-page.is-chat-mode .tb-send span{display:none}
+.tb-page.is-chat-mode .tb-entry:not(.is-wheelchair){border-color:#dce8e5;background:#fff}
+.tb-mode-empty{margin:auto;padding:32px 18px;text-align:center;display:grid;gap:6px;color:#6f858a}.tb-mode-empty strong{font-size:.92rem;color:#45636a}.tb-mode-empty small{font-size:.74rem}
