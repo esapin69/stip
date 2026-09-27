@@ -51,7 +51,7 @@ function upgradeDialogWelcome(root=document){
   })
 }
 function clearStalePublicQuick(){try{const u=new URL(location.href);if(u.searchParams.get('quick')!=='public')return;u.searchParams.delete('quick');const qs=u.searchParams.toString();history.replaceState(history.state,'',u.pathname+(qs?'?'+qs:'')+u.hash)}catch{}}
-remember();if(migrateLegacyStandaloneHash())return;sanitizeCurrentHash();restoreRoute();
+clearStalePublicQuick();remember();if(migrateLegacyStandaloneHash())return;sanitizeCurrentHash();restoreRoute();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
 window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}clearStalePublicQuick()});
 window.addEventListener('stip:login-success',()=>go(),{once:true});
