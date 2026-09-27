@@ -98,6 +98,21 @@
     return String(resolve(raw)?.icon || "");
   }
 
+  function iconKey(raw) {
+    return String(resolve(raw)?.icon_key || "");
+  }
+
+  function iconMarkup(raw, options = {}) {
+    const row = resolve(raw);
+    if (!row) return "";
+    const fallback = String(row.icon || "");
+    if (!window.STIPIcons?.markup) return fallback;
+    return window.STIPIcons.markup(row.icon_key, fallback, {
+      ...options,
+      label: options.label || row.label || clean(raw)
+    });
+  }
+
   function family(raw) {
     return String(resolve(raw)?.family || "other");
   }
@@ -154,6 +169,8 @@
     baseCode,
     label,
     icon,
+    iconKey,
+    iconMarkup,
     family,
     kind,
     isWorking,
@@ -163,9 +180,13 @@
   };
 
   window.STIPShiftRegistry = api;
+  if (window.STIPBootCache?.icon_catalog)
+    window.STIPIcons?.setCatalog?.(window.STIPBootCache.icon_catalog);
   if (window.STIPBootCache?.shift_definitions)
     set(window.STIPBootCache.shift_definitions);
   window.addEventListener("stip:boot-updated", (event) => {
+    if (event?.detail?.icon_catalog)
+      window.STIPIcons?.setCatalog?.(event.detail.icon_catalog);
     if (event?.detail?.shift_definitions) set(event.detail.shift_definitions);
   });
 })();
