@@ -2,111 +2,13 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-  <meta name="theme-color" content="#f5fafb">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Votre page STIP</title>
-  <style>
-    *{box-sizing:border-box}
-    body{margin:0;background:#f5fafb;color:#164954;font-family:system-ui,-apple-system,sans-serif}
-    button,input,textarea{font:inherit}
-    .wrap{max-width:640px;margin:auto;padding:22px 18px 48px}
-    .back{display:inline-flex;align-items:center;color:#168da5;text-decoration:none;font-weight:850}
-    .hero{margin-top:28px}
-    .icon{width:76px;height:76px;border-radius:22px;overflow:hidden}
-    .icon img{display:block;width:100%;height:100%;object-fit:cover}
-    .eyebrow{margin:18px 0 0;color:#168da5;font-size:.72rem;font-weight:950;letter-spacing:.1em;text-transform:uppercase}
-    h1{margin:5px 0 9px;color:#173e55;font-size:2.35rem;line-height:1;letter-spacing:-.05em}
-    .lead{margin:0;color:#55737d;font-size:1rem;line-height:1.55}
-    .promise{margin-top:22px;padding:17px 18px;border:1px solid #cfe4e8;border-radius:20px;background:#fff;box-shadow:0 9px 24px rgba(22,72,82,.05)}
-    .promise strong{display:block;color:#173e55;font-size:1.08rem}
-    .promise span{display:block;margin-top:5px;color:#687f87;font-size:.88rem;line-height:1.45}
-    .form-card{margin-top:18px;padding:19px;border:1px solid #d7e6e9;border-radius:22px;background:#fff;box-shadow:0 10px 28px rgba(22,72,82,.06)}
-    .form-card h2{margin:0;color:#173e55;font-size:1.3rem}
-    .form-card>p{margin:5px 0 18px;color:#72868c;font-size:.86rem;line-height:1.4}
-    .step{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center;margin:18px 0 8px}
-    .step>span{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#e7f6f8;color:#168da5;font-size:.78rem;font-weight:950}
-    .step strong{display:block;color:#244e5d;font-size:.91rem}
-    .step small{display:block;margin-top:2px;color:#819298;font-size:.68rem;line-height:1.3}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.identity-family{order:1}.identity-given{order:2}
-    label{display:grid;gap:6px;margin-top:10px;color:#315964;font-size:.72rem;font-weight:800}
-    label small{font-weight:700;color:#819298}
-    input,textarea{width:100%;border:1px solid #d6e4e7;border-radius:14px;background:#fbfdfe;color:#173e55;outline:none}
-    input{min-height:49px;padding:0 13px}
-    textarea{min-height:82px;padding:12px 13px;resize:vertical}
-    input:focus,textarea:focus{border-color:#18a7bd;box-shadow:0 0 0 4px rgba(24,167,189,.09)}
-    .upload{position:relative;display:block;margin-top:10px;padding:17px;border:1.5px dashed #a9cbd2;border-radius:18px;background:#f5fbfc;text-align:center;cursor:pointer}
-    .upload input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
-    .upload b{display:block;color:#174f61;font-size:1rem}
-    .upload span{display:block;margin-top:5px;color:#71878e;font-size:.77rem;line-height:1.35}
-    .file-name{min-height:19px;margin:8px 2px 0;color:#137653;font-size:.76rem;font-weight:850}
-    .code-wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center}
-    .code-wrap input{font-size:1.2rem;font-weight:950;letter-spacing:.2em;text-align:center}
-    .code-wrap button{min-height:49px;padding:0 14px;border:0;border-radius:14px;background:#edf4f6;color:#315964;font-weight:900}
-    .submit{width:100%;min-height:56px;margin-top:18px;padding:0 17px;border:0;border-radius:18px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#0e8faa,#25bed0);color:#fff;font-weight:950;box-shadow:0 11px 23px rgba(15,154,179,.2)}
-    .submit:disabled{opacity:.55;box-shadow:none}
-    .message{min-height:22px;margin:11px 2px 0;font-size:.8rem;font-weight:800;line-height:1.4}
-    .message.error{color:#a33f3f}.message.success{color:#187554}
-    .success{display:none;margin-top:18px;padding:19px;border:1px solid #bde2d1;border-radius:20px;background:#f1fbf6}
-    .success.show{display:block}
-    .success strong{display:block;color:#176847;font-size:1.12rem}
-    .success p{margin:7px 0 0;color:#58736a;font-size:.88rem;line-height:1.5}
-    .success a{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:14px;border-radius:14px;background:#fff;color:#176847;text-decoration:none;font-weight:900}
-    .privacy{margin:15px 2px 0;color:#809197;font-size:.7rem;line-height:1.4}
-    @media(max-width:520px){.grid{grid-template-columns:1fr}.form-card{padding:17px}.code-wrap{grid-template-columns:1fr}.code-wrap button{width:100%}}
-  </style>
-  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide13" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide13"></script>
+  <title>STIP — Demander un accès</title>
+  <meta http-equiv="refresh" content="0;url=index.html#demande-acces">
 </head>
 <body>
-  <main class="wrap">
-    <a class="back" href="index.html">‹ STIP</a>
-    <section class="hero">
-      <div class="icon" aria-hidden="true"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt=""></div>
-      <p class="eyebrow">STIP · PAGE PERSONNELLE</p>
-      <h1>Votre planning, votre page</h1>
-      <p class="lead">Vous pouvez être dans un autre établissement, une autre entreprise ou complètement en dehors du GHE. Si vous avez un planning, vous pouvez demander une page STIP personnelle.</p>
-    </section>
-    <section class="promise">
-      <strong>Pas besoin de faire partie de l’équipe actuelle.</strong>
-      <span>Vous indiquez simplement qui vous êtes, votre métier, puis vous joignez votre planning. La demande arrive dans STIP pour préparer votre page.</span>
-    </section>
-    <form id="pageRequestForm" class="form-card" autocomplete="on">
-      <h2>Demander ma page</h2>
-      <p>Les informations ci-dessous servent à comprendre votre planning et préparer votre accès.</p>
-      <div class="step"><span>1</span><div><strong>Qui êtes-vous ?</strong><small>La personne concernée par le planning.</small></div></div>
-      <div class="grid">
-        <label class="identity-family">Nom<input id="pageRequestLastName" name="last_name" type="text" autocomplete="section-pagerequest family-name" autocapitalize="words" maxlength="80" required></label>
-        <label class="identity-given">Prénom<input id="pageRequestFirstName" name="first_name" type="text" autocomplete="section-pagerequest given-name" autocapitalize="words" maxlength="80" required></label>
-      </div>
-      <div class="step"><span>2</span><div><strong>Quel est votre métier ?</strong><small>Pour comprendre les codes et horaires de votre planning.</small></div></div>
-      <label>Métier / poste<input name="professional_role" maxlength="120" placeholder="Ex. aide-soignant, agent, technicien…" required></label>
-      <label>Établissement / entreprise <small>(facultatif)</small><input name="workplace" maxlength="160" placeholder="Où travaillez-vous ?"></label>
-      <div class="step"><span>3</span><div><strong>Envoyez votre planning</strong><small>Photo, capture d’écran ou PDF.</small></div></div>
-      <label class="upload">
-        <input id="planningFile" name="planning" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*,application/pdf" required>
-        <b>Choisir mon planning</b>
-        <span>1 fichier · 15 Mo maximum</span>
-      </label>
-      <div id="fileName" class="file-name"></div>
-      <div class="step"><span>4</span><div><strong>Choisissez votre futur code</strong><small>6 chiffres personnels pour votre accès lorsque la page sera prête.</small></div></div>
-      <label>Code personnel souhaité
-        <div class="code-wrap">
-          <input id="requestedCode" name="requested_code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" data-stip-pin-field="1" placeholder="••••••" required>
-          <button id="toggleCodePin" type="button" data-stip-pin-toggle="#requestedCode">Voir</button>
-        </div>
-      </label>
-      <label>Commentaire <small>(facultatif)</small><textarea name="comment" maxlength="800" placeholder="Une précision utile sur votre planning ou votre organisation."></textarea></label>
-      <p id="requestMessage" class="message"></p>
-      <button id="requestSubmit" class="submit" type="submit"><span>Envoyer ma demande et mon planning</span><b>→</b></button>
-      <p class="privacy">Le planning est déposé dans un espace privé STIP. Il n’est pas publié sur le site.</p>
-    </form>
-    <section id="requestSuccess" class="success">
-      <strong>Planning reçu.</strong>
-      <p>Votre demande est enregistrée. Revenez sur la page d’accueil STIP avec ce navigateur : l’état de votre demande et votre accès apparaîtront automatiquement lorsqu’ils seront prêts.</p>
-      <a href="index.html">Retour à STIP</a>
-    </section>
-  </main>
-  <script src="rejoindre-equipe.js?v=20260927-pin-contract1"></script>
+  <p><a href="index.html#demande-acces">Ouvrir la demande d’accès STIP</a></p>
+  <script>location.replace("index.html#demande-acces");</script>
 </body>
 </html>
