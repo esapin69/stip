@@ -208,8 +208,17 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-path,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-question,
-[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action,
-[data-stip-form-focus].stip-keyboard-focus-mode [data-stip-keyboard-accessory] {
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action {
+  width: 100% !important;
+  max-width: 620px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+}
+
+/* Les accessoires directs (ex. « Demander un accès ») suivent la largeur du
+   formulaire. Les accessoires inline (ex. bouton « Voir » dans un champ)
+   gardent leur propre largeur et ne peuvent plus écraser l'input. */
+[data-stip-form-focus].stip-keyboard-focus-mode > [data-stip-keyboard-accessory] {
   width: 100% !important;
   max-width: 620px !important;
   margin-left: auto !important;
