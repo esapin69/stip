@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260926-t-est-entry-focus1" />
+    <meta name="stip-ui-build" content="20260927-t-est-access-action1" />
     <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -35,7 +35,7 @@
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
     <link rel="stylesheet" href="styles.css?v=20260829-public5" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20260927-formux-global1" />
+    <link rel="stylesheet" href="public-home-priority.css?v=20260927-access-action1" />
     <link rel="stylesheet" href="home-shell.css?v=20260926-touch-core1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu2" />
@@ -148,6 +148,16 @@
             </nav>
           </section>
 
+          <div class="t-access-request" data-stip-keyboard-hide>
+            <button class="t-request-button" type="button" data-open-access-request>
+              <span class="t-request-copy">
+                <small>Pas encore d’accès ?</small>
+                <strong>Demander un accès</strong>
+              </span>
+              <span class="t-request-orbit" aria-hidden="true">✦</span>
+            </button>
+          </div>
+
         </div>
 
         <dialog id="accessRequestDialog" class="access-request-dialog">
@@ -171,6 +181,7 @@
                 ×
               </button>
             </header>
+            <div class="request-form-body">
             <div class="request-step">
               <span>1</span>
               <div>
@@ -224,8 +235,9 @@
               </div></label
             >
             <p id="accessRequestMessage" class="message"></p>
+            </div>
             <button class="request-submit" type="submit">
-              <span>Envoyer ma demande</span><b>→</b>
+              <span>Demander un accès</span><b>→</b>
             </button>
           </form>
         </dialog>
