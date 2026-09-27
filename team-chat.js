@@ -83,6 +83,7 @@
     lastSignature: "",
     version: "",
     focusAfterLoad: false,
+    focusMessageId: "",
     viewportHandler: null,
     viewportHeight: 0,
     draft: "",
@@ -594,6 +595,7 @@
       }
     }
     state.focusAfterLoad = !!options.focus;
+    state.focusMessageId = String(options.message || "");
     bindViewport();
     syncViewport();
     loadFull(false);
@@ -3178,6 +3180,18 @@
 
     feed.innerHTML = html.join("");
 
+    if (state.focusMessageId) {
+      const targetId = state.focusMessageId;
+      const target = feed.querySelector('[data-message-id="' + CSS.escape(targetId) + '"]');
+      if (target) {
+        state.focusMessageId = "";
+        state.scrollToLatestPending = false;
+        target.classList.add("is-notification-focus");
+        requestAnimationFrame(() => target.scrollIntoView({ block: "center", behavior: "smooth" }));
+        setTimeout(() => target.classList.remove("is-notification-focus"), 2600);
+      }
+    }
+
     updateSelectionBar();
     if (state.scrollToLatestPending && !state.selection) {
       state.scrollToLatestPending = false;
@@ -4240,6 +4254,7 @@
     state.lastSignature = "";
     state.version = "";
     state.focusAfterLoad = false;
+    state.focusMessageId = "";
   }
 
   function stopAll() {
