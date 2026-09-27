@@ -91,12 +91,8 @@
     const def = registry?.resolve?.(code);
     if (def && def.is_working === false) {
       const icon = registry?.icon?.(code) || "";
-      const iconMarkup = registry?.iconMarkup?.(code, {
-        className: "metiers-shift-svg",
-        label: def.label || code
-      }) || "";
-      return iconMarkup || icon
-        ? `<span class="stip-month-icon metiers-status-icon" aria-label="${esc(def.label || code)}">${iconMarkup || esc(icon)}</span>`
+      return icon
+        ? `<span class="stip-month-icon metiers-status-icon" aria-label="${esc(def.label || code)}">${esc(icon)}</span>`
         : `<span class="metiers-shift-code">${esc(code)}</span>`;
     }
 
