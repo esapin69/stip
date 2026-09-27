@@ -119,12 +119,16 @@ function renderSession(d){cacheSession(d);finishSessionResume();session=d;window
 loginForm?.addEventListener('submit',async e=>{e.preventDefault();if(loginInFlight)return;const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const attempt=++authEpoch,submit=loginForm.querySelector('button[type="submit"]');loginInFlight=true;window.STIPAuthPending=true;if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code,client_id:clientId()});if(attempt!==authEpoch)return;localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);if(attempt!==authEpoch)return;setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){if(attempt!==authEpoch)return;lastAutoCode='';msg(err.message||'Connexion impossible.','error');try{accessCode?.focus({preventScroll:true})}catch{accessCode?.focus?.()}}finally{if(attempt===authEpoch){loginInFlight=false;window.STIPAuthPending=false;if(submit)submit.disabled=false}}});
 
 const accessCodeToggle=$('#toggleAccessCode'),accessCodeMask=$('#accessCodeMask');
+function accessCodeRevealed(){return accessCode?.dataset?.stipPinRevealed==='1'}
 function updateAccessCodeMask(){
   if(!accessCode)return;
   const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
-  if(accessCodeMask)accessCodeMask.textContent=accessCode.type==='text'?'':'★'.repeat(clean.length);
-  accessCode.classList.toggle('stip-code-revealed',accessCode.type==='text');
-  accessCode.classList.toggle('stip-code-masked',accessCode.type!=='text'&&clean.length>0);
+  const revealed=accessCodeRevealed();
+  accessCode.type='text';
+  accessCode.dataset.stipPinField='1';
+  if(accessCodeMask)accessCodeMask.textContent=revealed?'':'★'.repeat(clean.length);
+  accessCode.classList.toggle('stip-code-revealed',revealed);
+  accessCode.classList.toggle('stip-code-masked',!revealed&&clean.length>0);
   if(accessCodeToggle)accessCodeToggle.disabled=clean.length===0;
 }
 function sanitizeAccessCode(){
@@ -135,7 +139,8 @@ function sanitizeAccessCode(){
 }
 function hideAccessCode(){
   if(!accessCode)return;
-  accessCode.type='password';
+  delete accessCode.dataset.stipPinRevealed;
+  accessCode.type='text';
   updateAccessCodeMask();
   accessCodeToggle?.setAttribute('aria-pressed','false');
   if(accessCodeToggle)accessCodeToggle.textContent='Voir';
@@ -146,6 +151,7 @@ function showAccessCode(){
   const clean=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);
   if(!clean)return;
   accessCode.type='text';
+  accessCode.dataset.stipPinRevealed='1';
   updateAccessCodeMask();
   accessCodeToggle?.setAttribute('aria-pressed','true');
   if(accessCodeToggle)accessCodeToggle.textContent='Relâcher';
@@ -154,7 +160,9 @@ function resetAccessCode(){
   if(!accessCode)return;
   accessCode.value='';
   lastAutoCode='';
-  accessCode.type='password';
+  accessCode.type='text';
+  accessCode.dataset.stipPinField='1';
+  delete accessCode.dataset.stipPinRevealed;
   accessCode.classList.remove('stip-code-revealed','stip-code-masked');
   if(accessCodeMask)accessCodeMask.textContent='';
   accessCodeToggle?.setAttribute('aria-pressed','false');
