@@ -305,5 +305,109 @@
   window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
   setTimeout(maybePromptDmPush,900);
-  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"})};
+
+  const inboxState={root:null,selected:new Set(),search:"",status:"",loading:false,conversation:""};
+
+  function inboxConversationLabel(c){
+    return conversationTitle(c);
+  }
+
+  function inboxAgentLabel(a){
+    return name(a);
+  }
+
+  function renderInbox(){
+    const root=inboxState.root;
+    if(!root?.isConnected)return;
+    const conversations=(home?.conversations||[]).filter(c=>c.kind==="direct"||c.kind==="group");
+    const q=String(inboxState.search||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+    const agents=(home?.agents||[]).filter(a=>{
+      if(!q)return true;
+      return [inboxAgentLabel(a),a.prenom,a.nom,a.ghe,a.equipe].filter(Boolean).join(" ")
+        .normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(q)
+    });
+    const rows=agents.length?agents.map(a=>{
+      const id=String(a.id||""),selected=inboxState.selected.has(id),rawGhe=String(a.ghe||"").trim(),ghe=rawGhe?(rawGhe.toUpperCase().startsWith("GHE")?rawGhe:"GHE "+rawGhe):"ÉQUIPE";
+      return '<button type="button" class="ch-inbox-agent'+(selected?" is-selected":"")+'" data-inbox-agent="'+esc(id)+'" aria-pressed="'+(selected?"true":"false")+'">'+
+        '<span class="ch-inbox-ghe">'+esc(ghe)+'</span><span class="ch-inbox-agent-copy"><strong>'+esc(inboxAgentLabel(a))+'</strong><small>'+esc([a.equipe,a.shift].filter(Boolean).join(" · ")||"jour")+'</small></span><b>'+(selected?"✓":"+")+'</b></button>'
+    }).join(""):'<p class="ch-empty">Aucun agent trouvé.</p>';
+    const discussions=conversations.length?conversations.map(c=>
+      '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'">'+
+      '<span><strong>'+esc(inboxConversationLabel(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></span>'+
+      (Number(c.unread||0)?'<b>'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+'</button>'
+    ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>';
+    const selectedCount=inboxState.selected.size;
+    root.innerHTML='<section class="ch-inline-inbox">'+
+      '<button type="button" class="ch-inbox-push '+(dmPreference().enabled!==false?"is-on":"")+'" data-inbox-push><span aria-hidden="true">🔔</span><span><strong>Notifications DM</strong><small>'+esc(dmPreference().enabled!==false?pushText():"Désactivées pour moi")+'</small></span><b>'+(dmPreference().enabled!==false?"✓":"›")+'</b></button>'+
+      '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>Discussions</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
+      '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
+        '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
+        '<label class="ch-search ch-inbox-search"><span>⌕</span><input type="search" data-inbox-search placeholder="Rechercher un agent…" value="'+esc(inboxState.search)+'"></label>'+
+        '<div class="ch-inbox-agent-list">'+rows+'</div>'+
+      '</section>'+
+      (inboxState.status?'<p class="ch-inbox-status" role="status">'+esc(inboxState.status)+'</p>':'')+
+      '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer>'+
+    '</section>';
+    root.querySelector("[data-inbox-push]")?.addEventListener("click",e=>setDmPush(dmPreference().enabled===false,e.currentTarget));
+    root.querySelector("[data-inbox-search]")?.addEventListener("input",e=>{inboxState.search=e.currentTarget.value;const pos=e.currentTarget.selectionStart||0;renderInbox();const next=inboxState.root?.querySelector("[data-inbox-search]");next?.focus({preventScroll:true});try{next?.setSelectionRange(pos,pos)}catch{}});
+    root.querySelectorAll("[data-inbox-agent]").forEach(b=>b.addEventListener("click",()=>{const id=String(b.dataset.inboxAgent||"");if(!id)return;inboxState.selected.has(id)?inboxState.selected.delete(id):inboxState.selected.add(id);renderInbox()}));
+    root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));renderInbox()});
+    root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));renderInbox()});
+    root.querySelector("[data-inbox-continue]")?.addEventListener("click",continueInbox);
+    root.querySelectorAll("[data-inbox-conversation]").forEach(b=>b.addEventListener("click",()=>openThread(String(b.dataset.inboxConversation||""))));
+  }
+
+  function groupChoice(ids){
+    const wrap=document.createElement("div");wrap.className="ch-sheet-wrap ch-inbox-choice-wrap";
+    wrap.innerHTML='<section class="ch-sheet ch-inbox-choice"><header><div><small>'+ids.length+' DESTINATAIRES</small><h3>Comment envoyer ?</h3></div><button type="button" data-close>×</button></header><div class="ch-inbox-choice-actions"><button type="button" data-group><span>👥</span><strong>Créer un groupe</strong><small>Une conversation commune</small></button><button type="button" data-separate><span>✉</span><strong>Envoyer séparément</strong><small>Un DM individuel à chacun</small></button></div></section>';
+    document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    wrap.querySelector("[data-group]").onclick=async()=>{const b=wrap.querySelector("[data-group]");b.disabled=true;try{const r=await msg("group",{agent_ids:ids,title:"Groupe STIP"});inboxState.selected.clear();close();await loadHome(true);renderInbox();openThread(r.conversation?.id||r.id)}catch(e){b.disabled=false;alert(e.message||"Groupe impossible.")}};
+    wrap.querySelector("[data-separate]").onclick=()=>{close();separateComposer(ids)}
+  }
+
+  function separateComposer(ids){
+    const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";
+    wrap.innerHTML='<section class="ch-sheet ch-inbox-separate"><header><div><small>ENVOI SÉPARÉ · '+ids.length+'</small><h3>Un message, plusieurs DM</h3></div><button type="button" data-close>×</button></header><form><label>Message<textarea name="body" rows="4" maxlength="2000" required placeholder="Écrire le message…"></textarea></label><button type="submit">Envoyer séparément</button><p class="ch-form-status" role="status"></p></form></section>';
+    document.body.appendChild(wrap);bindKeyboardTracking(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    wrap.querySelector("form").onsubmit=async e=>{e.preventDefault();const body=String(new FormData(e.currentTarget).get("body")||"").trim(),button=e.currentTarget.querySelector('[type="submit"]'),status=e.currentTarget.querySelector(".ch-form-status");if(!body)return;button.disabled=true;status.textContent="Envoi…";let sent=0;try{for(const agentId of ids){const d=await msg("direct",{agent_id:agentId});const conversationId=d.conversation?.id||d.id;if(!conversationId)throw Error("Conversation introuvable.");await msg("send",{conversation_id:conversationId,body});sent++}inboxState.selected.clear();inboxState.status=sent+' message'+(sent>1?"s":"")+' envoyé'+(sent>1?"s":"")+' séparément.';close();await loadHome(true);renderInbox()}catch(err){status.textContent=(err.message||"Envoi impossible.")+" · "+sent+"/"+ids.length+" envoyé(s)";button.disabled=false}}
+  }
+
+  async function continueInbox(){
+    const ids=[...inboxState.selected].filter(Boolean);if(!ids.length)return;
+    if(ids.length===1){const id=ids[0];inboxState.selected.clear();renderInbox();return openDirect(id)}
+    groupChoice(ids)
+  }
+
+  async function loadInbox(options={}){
+    if(!inboxState.root?.isConnected||inboxState.loading)return;
+    inboxState.loading=true;
+    try{
+      home=await msg("home");
+      setUnread(home?.unread,home?.dm_unread);
+      if(home?.me)syncDmPreference(home.me.dm_push_enabled!==false);
+      renderInbox();
+      const id=String(options.conversation||inboxState.conversation||"");
+      inboxState.conversation="";
+      if(id)setTimeout(()=>openThread(id),20)
+    }catch(e){if(inboxState.root)inboxState.root.innerHTML='<p class="ch-error">'+esc(e.message||"Messages indisponibles.")+'</p>'}
+    finally{inboxState.loading=false}
+  }
+
+  function mountInbox(root,options={}){
+    if(!root)return;
+    inboxState.root=root;
+    inboxState.conversation=String(options.conversation||"");
+    loadInbox(options)
+  }
+
+  function unmountInbox(){
+    inboxState.root=null;
+    inboxState.selected.clear();
+    inboxState.search="";
+    inboxState.status="";
+    inboxState.loading=false;
+    inboxState.conversation=""
+  }
+
+  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}) ,mountInbox,unmountInbox};
 })();
