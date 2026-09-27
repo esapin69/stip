@@ -106,7 +106,9 @@
     const row = resolve(raw);
     if (!row) return "";
     const fallback = String(row.icon || "");
-    if (!window.STIPIcons?.markup) return fallback;
+    // Planning: garder les pictogrammes natifs validés visuellement.
+    // Le SVG central reste disponible sur demande explicite.
+    if (options.svg !== true || !window.STIPIcons?.markup) return fallback;
     return window.STIPIcons.markup(row.icon_key, fallback, {
       ...options,
       label: options.label || row.label || clean(raw)
