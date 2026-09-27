@@ -5714,3 +5714,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     font-size:1.3rem!important;
   }
 }
+
+/* Unified Communication surface */
+.hc-communication-standalone,.hc-home-pane-communication,#hcCommunicationAppHost{width:100%;min-height:100dvh;margin:0;padding:0}
+.hc-communication-standalone .hc-home-pane{margin:0;padding:0}
