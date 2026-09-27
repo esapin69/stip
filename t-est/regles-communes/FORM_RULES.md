@@ -29,11 +29,31 @@ Modes autorisés :
 - `search` : formulaire ou surface dédiée à la recherche ; la saisie suit le mode recherche et non le questionnaire séquentiel ;
 - `composer` : chat, message ou saisie libre ; le compositeur garde son interaction native ;
 - `native` : formulaire volontairement géré par sa logique propre, tout en pouvant conserver les normalisations communes compatibles ;
+- `legacy` : ancien formulaire **pas encore validé ni migré**. Ce mode sert uniquement à préserver sa compatibilité pendant la refonte ; il ne signifie jamais que son UX est une référence ;
 - `exempt` : aucune intervention FormUX, y compris les normalisations automatiques.
 
 Les anciens attributs `data-stip-keyboard-native` et `data-stip-keyboard-exempt` restent compris pour compatibilité, mais ils ne remplacent pas le mode explicite sur un nouveau formulaire.
 
 Un formulaire créé dynamiquement doit recevoir son mode **avant** d’être inséré dans le DOM.
+
+
+### Référence et migration
+
+La **Demande d’accès** (`accessRequestForm`) est actuellement la référence validée pour le moteur commun des formulaires séquentiels.
+
+Les autres formulaires historiques ne deviennent pas « bons » parce qu’ils sont raccordés au moteur. Tant qu’ils n’ont pas été revus contre ce contrat, ils restent en mode `legacy` et doivent être migrés vers le moteur commun.
+
+### Frontière avec Chat STIP
+
+Le Chat STIP garde son propre moteur de composition. Ses formulaires dynamiques sont en mode `composer` et ne doivent pas être transformés en questionnaire FormUX.
+
+En revanche, les principes réellement génériques observés dans le chat sont repris dans le moteur commun :
+- suivi du `visualViewport` et resynchronisations après ouverture du clavier ;
+- aucune ouverture de surface ne doit déclencher le clavier sans autofocus explicitement demandé ;
+- stabilité de la saisie pendant une interaction tactile ;
+- conservation de la valeur saisie lors d’un changement de présentation.
+
+Le wizard fauteuils, les DM, les réactions, le rafraîchissement du fil et la logique métier du chat restent dans le moteur Chat STIP.
 
 
 ## 3. Règle fondamentale

@@ -20,7 +20,7 @@
   const SCOPE = "[data-stip-keyboard-scope]";
   const FORM_FOCUS = "[data-stip-form-focus]";
   const FORM_MODE_ATTR = "data-stip-form-mode";
-  const FORM_MODES = new Set(["sequential", "standard", "search", "composer", "native", "exempt"]);
+  const FORM_MODES = new Set(["sequential", "standard", "search", "composer", "native", "legacy", "exempt"]);
   const INTENT = "[data-stip-intent-reveal]";
   const NEXT_ACTION = ".stip-keyboard-next-action";
   const PREV_ACTION = ".stip-keyboard-prev-action";
@@ -432,7 +432,7 @@
     field.setAttribute("data-stip-keyboard-focus", "");
     form.setAttribute("data-stip-keyboard-scope", "");
     form.setAttribute("data-stip-form-focus", "");
-    if ((mode === "sequential" || mode === "auto") && sequentialControls(form).length > 1)
+    if ((mode === "sequential" || mode === "legacy" || mode === "auto") && sequentialControls(form).length > 1)
       form.setAttribute("data-stip-step-nav", "");
     syncFormHints(form);
   }
@@ -802,7 +802,9 @@
     ensureIntentBack(trigger, target);
     if (trigger.dataset.stipIntentCollapse === "1") trigger.hidden = true;
     requestAnimationFrame(() => {
-      const next = target.querySelector("[data-stip-autofocus]") || target.querySelector(FOCUS) || target.querySelector("input, textarea, select, button");
+      const explicit = target.querySelector("[data-stip-autofocus]");
+      const safeControl = target.querySelector("[data-stip-overview-focus],button,[href],[tabindex]:not([tabindex='-1'])");
+      const next = explicit || safeControl;
       if (!next) return;
       try { next.focus({ preventScroll: true }); } catch { next.focus?.(); }
     });
@@ -918,6 +920,6 @@
     normalizeAutofill,
     fields: sequentialControls,
     formMode,
-    version: 23
+    version: 24
   };
 })();

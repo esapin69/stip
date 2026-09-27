@@ -36,7 +36,7 @@ check(
   "FORM_RULES.md doit rester le contrat canonique et nommer le moteur commun."
 );
 
-const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "exempt"]);
+const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "legacy", "exempt"]);
 const formModeProblems = [];
 for (const file of walkHtml(ROOT)) {
   const source = fs.readFileSync(file, "utf8");
@@ -56,7 +56,7 @@ check(
 
 check(
   formJs.includes('const FORM_MODE_ATTR = "data-stip-form-mode"') &&
-    formJs.includes('"sequential", "standard", "search", "composer", "native", "exempt"') &&
+    formJs.includes('"sequential", "standard", "search", "composer", "native", "legacy", "exempt"') &&
     formJs.includes("function formMode(form)"),
   "Le moteur commun doit interpréter les modes explicites documentés."
 );
@@ -113,6 +113,19 @@ check(
     formJs.includes('field.setAttribute("autocomplete", "off")') &&
     formCss.includes('input[data-stip-pin-field="1"]'),
   "Le contrat commun des codes personnels à 6 chiffres a disparu."
+);
+
+const chatJs = read("team-chat.js");
+check(
+  chatJs.includes('<form class="tb-composer" data-form data-stip-form-mode="composer">') &&
+    chatJs.includes('<form class="tb-dm-composer" data-dm-form data-stip-form-mode="composer">'),
+  "Chat STIP doit garder ses compositeurs sur son moteur propre."
+);
+
+check(
+  formJs.includes('const explicit = target.querySelector("[data-stip-autofocus]")') &&
+    !formJs.includes('target.querySelector("[data-stip-autofocus]") || target.querySelector(FOCUS)'),
+  "Ouvrir une surface ne doit pas ouvrir le clavier sans autofocus explicite."
 );
 
 check(
