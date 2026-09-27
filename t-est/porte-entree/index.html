@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-t-est-access-action1" />
+    <meta name="stip-ui-build" content="20260927-t-est-access-fused1" />
     <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -35,7 +35,7 @@
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
     <link rel="stylesheet" href="styles.css?v=20260829-public5" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20260927-access-action1" />
+    <link rel="stylesheet" href="public-home-priority.css?v=20260927-access-fused1" />
     <link rel="stylesheet" href="home-shell.css?v=20260926-touch-core1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu2" />
@@ -63,7 +63,7 @@
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
         <div class="t-entry-shell" data-stip-keyboard-surface>
-          <section class="t-primary-access" data-stip-keyboard-hide aria-label="Accès personnel">
+          <section class="t-primary-access" aria-label="Accès personnel">
             <div id="accessRequestStatusHost"></div>
             <button
               id="accessIntent"
@@ -80,7 +80,6 @@
               </span>
               <b aria-hidden="true">→</b>
             </button>
-          </section>
 
           <section
             id="accessEntryFields"
@@ -114,18 +113,23 @@
                 <button class="t-login-submit" type="submit">
                   <span>Continuer</span><b aria-hidden="true">→</b>
                 </button>
-                <button
-                  class="t-request-inline"
-                  type="button"
-                  data-open-access-request
-                  data-stip-keyboard-keep
-                >
-                  <span>Pas de code ?</span>
-                  <strong>Demander un accès</strong>
-                </button>
               </form>
               <p id="loginMessage" class="message" aria-live="polite"></p>
             </div>
+          </section>
+
+          <button
+            class="t-request-docked"
+            type="button"
+            data-open-access-request
+            data-stip-keyboard-keep
+          >
+            <span class="t-request-docked-copy">
+              <small>Pas encore d’accès ?</small>
+              <strong>Demander un accès</strong>
+            </span>
+            <span class="t-request-docked-icon" aria-hidden="true">✦</span>
+          </button>
           </section>
 
           <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
@@ -147,16 +151,6 @@
               </a>
             </nav>
           </section>
-
-          <div class="t-access-request" data-stip-keyboard-hide>
-            <button class="t-request-button" type="button" data-open-access-request>
-              <span class="t-request-copy">
-                <small>Pas encore d’accès ?</small>
-                <strong>Demander un accès</strong>
-              </span>
-              <span class="t-request-orbit" aria-hidden="true">✦</span>
-            </button>
-          </div>
 
         </div>
 
