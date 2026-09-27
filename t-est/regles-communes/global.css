@@ -374,3 +374,47 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 [data-stip-form-focus] .stip-keyboard-overview-action[hidden] {
   display: none !important;
 }
+
+
+/* STIP PIN contract — a six-digit numeric access code is not a browser
+   password. Keep it masked visually without exposing password semantics to
+   Chrome/Google Password Manager. */
+input[data-stip-pin-field="1"] {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+input[data-stip-pin-field="1"][data-stip-pin-revealed="1"] {
+  -webkit-text-security: none;
+  text-security: none;
+}
+
+/* Contextual exit rule:
+   - step form: Précédent / Suivant
+   - revealed subview: Retour
+   - modal/dialog keeps its own Annuler/Fermer action. */
+.stip-intent-back-action {
+  width: max-content !important;
+  min-height: 44px !important;
+  margin: 8px 0 0 !important;
+  padding: 0 10px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: transparent !important;
+  color: #58747c !important;
+  font: inherit !important;
+  font-size: .78rem !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+  touch-action: manipulation !important;
+}
+
+.stip-intent-back-action:active {
+  transform: translateY(1px);
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-intent-back-action {
+  justify-self: start !important;
+  margin-top: 0 !important;
+}
