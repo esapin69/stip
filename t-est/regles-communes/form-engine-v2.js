@@ -1,3 +1,6 @@
+/* Adaptateur ciblé de compatibilité : feedback de connexion par code uniquement.
+   Le moteur canonique des formulaires est STIPFormUX dans global.js/global.css.
+   Contrat : t-est/regles-communes/FORM_RULES.md */
 (()=>{'use strict';
 const loginForm=document.getElementById('loginForm'),submit=loginForm?.querySelector('.t-login-submit'),label=submit?.querySelector('span'),defaultLabel=label?.textContent||'Continuer';
 function busy(on){if(!submit)return;submit.classList.toggle('stip-submit-loading',!!on);submit.setAttribute('aria-busy',on?'true':'false');if(label)label.textContent=on?'Vérification…':defaultLabel}
