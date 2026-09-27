@@ -156,9 +156,10 @@ check(
   'Le routeur principal peut de nouveau ignorer une ré-entrée ou perdre la route Fauteuils.'
 );
 check(
-  home.includes('if ((window.STIPRouter?.get?.() || "home") === "fauteuils")') &&
+  home.includes('currentRoute === "fauteuils"') &&
+  home.includes('currentRoute.startsWith("communication/")') &&
   home.includes('window.STIPRouter?.set?.("home", { replace: true, keepScroll: true })'),
-  'Quitter Fauteuils ne resynchronise plus la route avec le mode d’accueil.'
+  'Quitter Fauteuils / Communication ne resynchronise plus la route avec le mode d’accueil.'
 );
 check(navigation.includes('stip_navigation_context_v2'),'Le contrat de navigation contextualisée est absent.');
 check(['scrollY','fields','panel','register','remember'].every(key=>navigation.includes(key)),'Le contrat de navigation ne couvre plus tous les contextes validés.');
