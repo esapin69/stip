@@ -29,7 +29,7 @@
     <img class="icon" src="/images/icone_app/tableau-stip.svg" alt="">
     <h1>Fauteuils</h1>
     <p>Accès direct aux signalements de fauteuils du jour.</p>
-    <a class="open" href="/#/fauteuils">Ouvrir Fauteuils</a>
+    <a class="open" href="/#/communication/fauteuils">Ouvrir Fauteuils</a>
     <button id="shortcutBtn" class="shortcut" type="button">Ajouter un raccourci au téléphone</button>
     <div class="hint" id="hint" aria-live="polite"></div>
   </main>
@@ -37,7 +37,7 @@
     (() => {
       const KEY="stip_tableau_shortcut_installed_v1";
       const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
-      if(standalone){location.replace("/#/fauteuils");return}
+      if(standalone){location.replace("/#/communication/fauteuils");return}
 
       const btn=document.getElementById("shortcutBtn");
       const hint=document.getElementById("hint");
