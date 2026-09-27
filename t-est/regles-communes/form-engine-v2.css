@@ -1,6 +1,6 @@
-/* STIP form engine v2 — feedback réseau uniquement.
-   La géométrie du formulaire appartient désormais au moteur FormUX commun
-   et au composant de dialogue canonique. */
+/* Adaptateur ciblé de compatibilité : feedback réseau de connexion uniquement.
+   Le moteur canonique des formulaires et de leur géométrie est STIPFormUX
+   dans global.js/global.css. Contrat : FORM_RULES.md. */
 
 #loginView .t-login-submit.stip-submit-loading{
   cursor:wait;
