@@ -10,7 +10,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="stip-ui-build" content="20260927-t-est-pin-contract1" />
+    <meta name="stip-ui-build" content="20260927-t-est-pin-back1" />
     <title>STIP — Portail équipe</title>
     <meta name="application-name" content="STIP" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -300,7 +300,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260927-pin-contract1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260927-pin-back1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
