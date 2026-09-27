@@ -105,12 +105,11 @@
       def = registry?.resolve?.(code),
       color = registry?.color?.(code, "#277b86") || "#277b86",
       icon = registry?.icon?.(code) || "",
-      iconMarkup = registry?.iconMarkup?.(code, { className: "ph-shift-svg", label: def?.label || code }) || "",
       url = asset(code);
     if (def?.is_working && url)
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(def.label || code)}">`;
-    if (iconMarkup || icon)
-      return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${iconMarkup || esc(icon)}</span>`;
+    if (icon)
+      return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
       return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(code)}">`;
     return `<span class="ph-shift-fallback" style="--shift:${esc(color)}">${esc(code)}</span>`;
