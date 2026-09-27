@@ -5553,14 +5553,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 
 
 /* 20260927-admin-shortcuts-popup1 — admin shortcut groups leave the home flow and open from one launcher. */
-.hc-home-filters[data-count="4"]{
-  width:min(100%,430px)!important;
-  grid-template-columns:repeat(4,minmax(0,1fr))!important;
-  gap:6px!important;
-}
-.hc-home-filters[data-count="4"]>button{
-  min-width:0!important;
-}
 .hc-home-shortcuts-button .hc-home-filter-art{
   display:grid!important;
   place-items:center!important;
@@ -5691,18 +5683,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   scroll-margin-top:78px!important;
 }
 @media(max-width:430px){
-  .hc-home-filters[data-count="4"]{
-    width:min(100%,366px)!important;
-    grid-template-columns:repeat(4,minmax(0,1fr))!important;
-    gap:5px!important;
-  }
-  .hc-home-filters[data-count="4"]>button{
-    min-height:92px!important;
-    padding-inline:2px!important;
-  }
-  .hc-home-filters[data-count="4"]>button>strong{
-    font-size:.66rem!important;
-  }
   .hc-admin-shortcuts-dialog{
     width:calc(100% - 14px)!important;
     max-height:92dvh!important;
@@ -5721,23 +5701,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
   }
 }
 @media(max-width:370px){
-  .hc-home-filters[data-count="4"]{
-    width:min(100%,336px)!important;
-    gap:4px!important;
-  }
-  .hc-home-filters[data-count="4"]>button{
-    min-height:88px!important;
-  }
-  .hc-home-filters[data-count="4"]>button>strong{
-    font-size:.61rem!important;
-  }
   .hc-home-shortcuts-art{
     gap:7%!important;
-  }
-}
-@media(min-width:700px){
-  .hc-home-filters[data-count="4"]{
-    width:640px!important;
-    gap:12px!important;
   }
 }
