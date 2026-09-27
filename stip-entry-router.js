@@ -17,7 +17,6 @@ function saveRoute(r){try{r=cleanRoute(r);if(validRoute(r))sessionStorage.setIte
 function migrateLegacyStandaloneHash(){if(!location.hash||!localStorage.getItem(TOKEN))return false;const r=cleanRoute(location.hash);if(r==='team'){location.replace('esprit-equipe.html?entry=legacy-hash');return true}if(r==='responsable'){location.replace('responsable.html?entry=legacy-hash');return true}return false}
 function sanitizeCurrentHash(){if(!location.hash)return false;const r=cleanRoute(location.hash);if(validRoute(r))return false;try{sessionStorage.removeItem(ROUTE_KEY)}catch{}history.replaceState({...(history.state||{}),stip:true,route:'home',panel:false},'',location.pathname+location.search+'#/home');return true}
 function restoreRoute(){if(!isReload()||!localStorage.getItem(TOKEN)||location.hash)return false;let r='';try{r=cleanRoute(sessionStorage.getItem(ROUTE_KEY)||'')}catch{}if(!r||r==='home'||!validRoute(r)){try{sessionStorage.removeItem(ROUTE_KEY)}catch{}return false}history.replaceState({...(history.state||{}),stip:true,route:r,panel:false},'',location.pathname+location.search+'#/'+r);return true}
-function forceExplicitEntry(){const file=location.pathname.split('/').pop()||'';if(!localStorage.getItem(TOKEN)||!(!file||file==='index.html'))return false;const u=new URL(location.href);if(u.searchParams.has('quick')||u.hash)return false;u.searchParams.set('quick','public');history.replaceState(history.state,'',u.pathname+u.search);return true}
 function go(){const n=pending();if(!n||!localStorage.getItem(TOKEN)||sameTarget(n))return false;consume();location.replace(n);return true}
 function canSuggestion(key){try{return window.STIPAccess?.has?.(key)!==false}catch{return true}}
 function intentSuggestions(){
@@ -51,9 +50,10 @@ function upgradeDialogWelcome(root=document){
     card.dataset.stipIntentSuggestions='1';
   })
 }
-remember();if(migrateLegacyStandaloneHash())return;sanitizeCurrentHash();restoreRoute();forceExplicitEntry();
+function clearStalePublicQuick(){try{const u=new URL(location.href);if(u.searchParams.get('quick')!=='public')return;u.searchParams.delete('quick');const qs=u.searchParams.toString();history.replaceState(history.state,'',u.pathname+(qs?'?'+qs:'')+u.hash)}catch{}}
+remember();if(migrateLegacyStandaloneHash())return;sanitizeCurrentHash();restoreRoute();
 window.addEventListener('stip:route',e=>saveRoute(e.detail?.route||''));
-window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}});
+window.addEventListener('stip:session-ended',()=>{try{sessionStorage.removeItem(ROUTE_KEY)}catch{}clearStalePublicQuick()});
 window.addEventListener('stip:login-success',()=>go(),{once:true});
 const dialogSuggestionObserver=new MutationObserver(records=>{for(const record of records)for(const node of record.addedNodes)if(node.nodeType===1)upgradeDialogWelcome(node)});
 if(document.documentElement)dialogSuggestionObserver.observe(document.documentElement,{childList:true,subtree:true});
