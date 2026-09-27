@@ -453,9 +453,11 @@
 /* Accès personnel : dès que le code prend le focus, le champ et son action
    deviennent l'unique contenu utile au-dessus du clavier. */
 #loginView.stip-keyboard-focus-mode .t-access-intent,
-#loginView.stip-keyboard-focus-mode .t-request-docked,
 #loginView.stip-keyboard-focus-mode #accessRequestStatusHost{
   display:none!important;
+}
+#loginView.stip-keyboard-focus-mode .t-request-docked{
+  display:grid!important;
 }
 #loginView.stip-keyboard-focus-mode .t-primary-access{
   display:block!important;
