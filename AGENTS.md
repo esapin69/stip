@@ -99,6 +99,19 @@ Any STIP surface that analyses, summarizes, alerts, recommends, or republishes a
 - For the shared three-state signal: `🛑` = critical, `⚠️` = watch, green `✔` = checked/OK. Do not invent a second competing scale without an explicit product decision.
 
 
+## 11 bis. Communication — contrat commun
+
+Pour tout chantier touchant Chat équipe, DM, groupes, notifications messages ou Fauteuils, lire aussi `COMMUNICATION_RULES.md`.
+
+Invariants :
+- une seule application **Communication** ;
+- trois onglets canoniques : **Chat équipe**, **DM & groupes**, **Fauteuils** ;
+- les raccourcis ouvrent cette même application sur le bon onglet ;
+- `stip-messages` reste le backend commun ;
+- `STIPAgentSelector` reste le moteur commun de recherche/sélection d’agents ;
+- les notifications utilisent un seul pipeline avec un `event_key` par univers ;
+- ne jamais recréer un panneau DM, un annuaire, un backend ou un moteur de push concurrent.
+
 ## 12. Chat STIP / Fauteuils — canonical UI contract
 The wheelchair workflow lives inside the dedicated routed **Chat STIP** surface.
 
