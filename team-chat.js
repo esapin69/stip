@@ -952,7 +952,7 @@
       const active = activeWheelchairs(data);
       const activeLabel = state.root.querySelector("[data-active-count]");
       if (activeLabel) {
-        activeLabel.hidden = active < 1;
+        activeLabel.hidden = state.surfaceMode !== "wheelchair" || active < 1;
         activeLabel.textContent = active + " actif" + (active > 1 ? "s" : "");
       }
       if (!quiet) {
@@ -960,7 +960,15 @@
         renderComposerState();
       }
       const manage = state.root.querySelector("[data-select]");
-      if (manage) manage.hidden = !data.admin || !messages.length || state.selection;
+      if (manage) {
+        const hasVisibleRoot = messages.some((message) => {
+          if (message?.payload?.reply_to_id) return false;
+          return state.surfaceMode === "chat"
+            ? !message?.payload?.wheelchair
+            : !!message?.payload?.wheelchair;
+        });
+        manage.hidden = !data.admin || !hasVisibleRoot || state.selection;
+      }
 
       const form = state.root.querySelector("[data-form]");
       if (form) form.hidden = !canWrite;
@@ -3207,11 +3215,18 @@
     renderMessages();
   }
 
+  function visibleMessageIds() {
+    return [...(state.root?.querySelectorAll("[data-feed] [data-message-id]") || [])]
+      .map((node) => String(node.dataset.messageId || ""))
+      .filter(Boolean);
+  }
+
   function selectAll() {
     if (!state.selection || state.deleteBusy) return;
-    const messages = state.data?.messages || [];
-    if (state.selected.size === messages.length) state.selected.clear();
-    else messages.forEach((message) => state.selected.add(String(message.id)));
+    const ids = visibleMessageIds();
+    const allSelected = ids.length > 0 && ids.every((id) => state.selected.has(id));
+    if (allSelected) ids.forEach((id) => state.selected.delete(id));
+    else ids.forEach((id) => state.selected.add(id));
     renderMessages();
   }
 
@@ -3222,13 +3237,12 @@
     const page = state.root?.querySelector(".tb-page");
     if (!bar || !count) return;
 
-    const messages = state.data?.messages || [];
-    const validIds = new Set(messages.map((message) => String(message.id)));
+    const validIds = new Set(visibleMessageIds());
     for (const id of [...state.selected]) {
       if (!validIds.has(id)) state.selected.delete(id);
     }
 
-    const total = messages.length;
+    const total = validIds.size;
     page?.classList.toggle("is-selecting", !!state.selection);
     bar.hidden = !state.selection;
     count.textContent = String(state.selected.size);
@@ -3241,8 +3255,9 @@
     const allButton = bar.querySelector("[data-select-all]");
     if (allButton) {
       allButton.disabled = state.deleteBusy || !total;
-      allButton.textContent =
-        total > 0 && state.selected.size === total ? "Tout retirer" : "Tout sélectionner";
+      const allVisibleSelected =
+        total > 0 && [...validIds].every((id) => state.selected.has(id));
+      allButton.textContent = allVisibleSelected ? "Tout retirer" : "Tout sélectionner";
     }
 
     const deleteButton = bar.querySelector("[data-delete-selected]");
