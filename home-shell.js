@@ -2309,7 +2309,10 @@
     if (!card || card.dataset.stipClickBound === "1") return;
     card.dataset.stipClickBound = "1";
     card.addEventListener("click", (event) => {
-      if (event.target.closest?.("button,a,input,textarea,label,select")) return;
+      const interactive = event.target.closest?.(
+        "button,a,input,textarea,label,select",
+      );
+      if (interactive && interactive !== card && card.contains(interactive)) return;
       openNotificationDetail(note);
     });
   }
