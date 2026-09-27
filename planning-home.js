@@ -234,7 +234,6 @@
     if (!d) return false;
     items = d.personal || d.items || [];
     shiftAssets = d.media?.shifts || shiftAssets || {};
-    if (d.icon_catalog) window.STIPIcons?.setCatalog?.(d.icon_catalog);
     if (d.shift_definitions) window.STIPShiftRegistry?.set?.(d.shift_definitions);
     buildAvailable();
     chooseMonth();
