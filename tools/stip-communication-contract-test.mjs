@@ -46,7 +46,7 @@ for(const key of ["team_chat_received","wheelchair_received"]){
   has(migration,key,"event_key migration manquant: "+key);
 }
 has(sw,"/images/notifications/dm.webp","icône DM manquante");
-has(sw,"team-chat.svg","icône Chat équipe manquante");
+has(sw,"/images/notifications/chat.webp","icône Chat équipe manquante");
 has(sw,"/images/notifications/wheelchair.webp","icône Fauteuils manquante");
 has(messages,"quick=communication&tab=dm","une notification DM ne cible pas l’onglet DM");
 has(messages,'tab=wheelchair?"fauteuils":"chat"',"les notifications Chat/Fauteuils ne ciblent pas leur onglet");
