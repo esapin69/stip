@@ -224,6 +224,7 @@
 
   function showFormOverview(form, field = active) {
     const target = field || active;
+    if (form) form.dataset.stipOverview = "1";
     try { target?.blur?.(); } catch {}
     clearMode();
     requestAnimationFrame(() => {
@@ -275,8 +276,9 @@
       overview = document.createElement("button");
       overview.type = "button";
       overview.className = "stip-keyboard-overview-action";
-      overview.textContent = "Vue";
+      overview.textContent = "☰";
       overview.setAttribute("aria-label", "Voir le formulaire complet");
+      overview.setAttribute("title", "Voir le formulaire complet");
       form.appendChild(overview);
     }
 
@@ -346,8 +348,16 @@
     scope.classList.toggle(MODE_CLASS, modeOpen);
     setDialogMode(scope, modeOpen);
     document.body.classList.toggle(LOCK_CLASS, modeOpen);
+    if (modeOpen) {
+      prepareFormPath(active, scope);
+      return;
+    }
     const action = scope.querySelector?.(NEXT_ACTION);
-    if (modeOpen) prepareFormPath(active, scope); else if (action) action.hidden = true;
+    const previous = scope.querySelector?.(PREV_ACTION);
+    const overview = scope.querySelector?.(OVERVIEW_ACTION);
+    if (action) action.hidden = true;
+    if (previous) previous.hidden = true;
+    if (overview) overview.hidden = true;
   }
 
   function keyboardDetected() {
@@ -427,9 +437,29 @@
     clearMode(); pinEntryScroll();
   }
 
-  document.addEventListener("pointerdown", (event) => { if (event.target.closest?.(FOCUS) || event.target.closest?.(INTENT)) captureBaseline(); }, true);
+  document.addEventListener("pointerdown", (event) => {
+    const field = event.target.closest?.(FOCUS);
+    if (field) {
+      const form = formFor(field);
+      if (form?.dataset?.stipOverview === "1") delete form.dataset.stipOverview;
+      captureBaseline();
+      return;
+    }
+    if (event.target.closest?.(INTENT)) captureBaseline();
+  }, true);
   document.addEventListener("click", (event) => { const trigger = event.target.closest?.(INTENT); if (!trigger) return; event.preventDefault(); reveal(trigger); });
-  document.addEventListener("focusin", (event) => { const field = event.target.closest?.(FOCUS); if (field) focusField(field); });
+  document.addEventListener("focusin", (event) => {
+    const field = event.target.closest?.(FOCUS);
+    if (!field) return;
+    const form = formFor(field);
+    if (form?.dataset?.stipOverview === "1") {
+      try { field.blur?.(); } catch {}
+      const overviewFocus = form.closest?.("dialog")?.querySelector?.("[data-stip-overview-focus],[autofocus]");
+      try { overviewFocus?.focus?.({ preventScroll: true }); } catch { overviewFocus?.focus?.(); }
+      return;
+    }
+    focusField(field);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.shiftKey || event.isComposing) return;
     const field = event.target.closest?.(FOCUS);
@@ -488,5 +518,5 @@
   }
 
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 11 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 10 };
 })();
