@@ -58,7 +58,7 @@ body.stip-keyboard-focus-lock {
 [data-stip-search-focus].stip-keyboard-focus-mode .stip-keyboard-search-exit {
   position: absolute !important;
   z-index: 5 !important;
-  top: 12px !important;
+  top: max(12px, env(safe-area-inset-top)) !important;
   right: 14px !important;
   width: 38px !important;
   height: 38px !important;
@@ -196,7 +196,7 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-context):not(.stip-keyboard-help):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-keyboard-nav-actions):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-context):not(.stip-keyboard-help):not(.stip-keyboard-flow-header):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-keyboard-nav-actions):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
   display: none !important;
 }
 
@@ -224,6 +224,7 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-question,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-help,
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-header,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action {
   width: 100% !important;
   max-width: 620px !important;
@@ -393,6 +394,157 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 
 
 
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-header {
+  position: absolute !important;
+  z-index: 4 !important;
+  top: max(10px, env(safe-area-inset-top)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: min(620px, calc(100% - 32px)) !important;
+  max-width: 620px !important;
+  padding: 10px 12px !important;
+  display: grid !important;
+  gap: 7px !important;
+  border: 1px solid rgba(4,82,104,.11) !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.88) !important;
+  box-shadow: 0 8px 22px rgba(4,82,104,.09) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-top {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-breadcrumb {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow: hidden !important;
+  color: #5f7a82 !important;
+  font-size: .66rem !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .035em !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-breadcrumb span,
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-breadcrumb strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-breadcrumb strong {
+  color: #0d5262 !important;
+  font-weight: 950 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-counter {
+  flex: 0 0 auto !important;
+  min-width: 38px !important;
+  padding: 4px 7px !important;
+  border-radius: 999px !important;
+  background: rgba(8,198,218,.11) !important;
+  color: #007f98 !important;
+  font-size: .65rem !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  text-align: center !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-meta {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-meta > span {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  padding: 5px 8px !important;
+  display: inline-flex !important;
+  align-items: baseline !important;
+  gap: 5px !important;
+  border-radius: 9px !important;
+  background: rgba(4,82,104,.055) !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-meta small {
+  color: #72868b !important;
+  font-size: .52rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-meta b {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #174d5a !important;
+  font-size: .7rem !important;
+  font-weight: 900 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-current {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-current > strong {
+  color: #123f4b !important;
+  font-size: .82rem !important;
+  line-height: 1.15 !important;
+  font-weight: 950 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-help {
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  gap: 6px !important;
+  align-items: start !important;
+  color: #516d75 !important;
+  font-size: .65rem !important;
+  line-height: 1.25 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-help small {
+  color: #0095ad !important;
+  font-size: .52rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-progress {
+  width: 100% !important;
+  height: 3px !important;
+  overflow: hidden !important;
+  border-radius: 999px !important;
+  background: rgba(4,82,104,.08) !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-progress i {
+  display: block !important;
+  width: var(--stip-flow-progress, 0%) !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: linear-gradient(90deg, #00a8c2, #18d0df) !important;
+  transition: width .18s ease !important;
+}
+
+/* Older context blocks are kept for compatibility, but the flow header above
+   is now the primary orientation surface. */
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context {
   display: flex !important;
   flex-wrap: wrap !important;
@@ -649,4 +801,17 @@ input[data-stip-pin-field="1"][data-stip-pin-revealed="1"] {
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-intent-back-action {
   justify-self: start !important;
   margin-top: 0 !important;
+}
+
+@media (max-height: 560px) {
+  [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-header {
+    padding: 7px 9px !important;
+    gap: 4px !important;
+  }
+  [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-current > strong {
+    display: none !important;
+  }
+  [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-flow-help {
+    font-size: .6rem !important;
+  }
 }

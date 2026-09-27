@@ -61,7 +61,7 @@ Trois comportements sont désormais explicitement communs :
 
 - **Recherche d’une personne** : une recherche comme « Rechercher un agent » utilise une surface dédiée `data-stip-search-scope`. Quand le clavier est ouvert, la question, le champ et les résultats restent ensemble dans le viewport ; la page complète ne doit pas rester mélangée derrière la recherche.
 - **Menu de choix STIP** : un `select` marqué `data-stip-select-menu` n’utilise plus le grand menu natif Android/iOS comme interface principale. Le moteur affiche un panneau STIP cohérent, lisible et tactile, tout en conservant le vrai `select` comme valeur métier.
-- **Contexte de saisie** : pendant une question plein écran, le moteur peut rappeler **POUR QUI**, **POURQUOI** et l’**ÉTAPE**. Un champ peut ajouter une aide courte **COMMENT** avec `data-stip-help`. Ces informations servent à comprendre ce que l’on est en train de remplir sans alourdir la question.
+- **Contexte de saisie** : pendant une question plein écran, le moteur affiche un repère persistant indiquant **d’où l’on vient**, **dans quel formulaire on se trouve**, **l’étape courante**, **POUR QUI**, **POURQUOI** et, lorsqu’elle existe, une aide courte **COMMENT** via `data-stip-help`. Le repère reste visible quand on passe d’un champ au suivant afin d’éviter l’effet « écran isolé » où l’utilisateur oublie ce qu’il est en train de remplir.
 
 ## 3. Règle fondamentale
 

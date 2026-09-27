@@ -102,13 +102,14 @@ check(
 );
 check(
   responsableHtml.includes('data-stip-help=') &&
+    responsableHtml.includes('data-stip-flow-origin="Suivi"') &&
+    responsableHtml.includes('data-stip-flow-label="Envoyer à un agent"') &&
     responsableDemandesJs.includes("stipContextWho") &&
     responsableDemandesJs.includes("stipContextWhy") &&
-    formJs.includes("function ensureFormContext") &&
-    formJs.includes("function ensureFieldHelp") &&
-    formCss.includes(".stip-keyboard-context") &&
-    formCss.includes(".stip-keyboard-help"),
-  "Le contexte POUR QUI / POURQUOI / COMMENT doit rester branché au pilote."
+    formJs.includes("function ensureFlowHeader") &&
+    formCss.includes(".stip-keyboard-flow-header") &&
+    formCss.includes(".stip-keyboard-flow-progress"),
+  "Le repère de flux doit garder origine, destination, type, étape et aide visibles."
 );
 
 check(

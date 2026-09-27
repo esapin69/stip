@@ -29,6 +29,7 @@
   const QUESTION_CLASS = "stip-keyboard-question";
   const CONTEXT_CLASS = "stip-keyboard-context";
   const HELP_CLASS = "stip-keyboard-help";
+  const FLOW_HEADER_CLASS = "stip-keyboard-flow-header";
   const SEARCH_QUESTION = ".stip-keyboard-search-question";
   const SELECT_MENU_SELECTOR = "select[data-stip-select-menu]";
   const WRITABLE_SELECTOR = [
@@ -295,7 +296,7 @@
     if (overview) overview.hidden = true;
     const nav = root?.querySelector?.(NAV_ACTIONS);
     if (nav) nav.hidden = true;
-    root?.querySelectorAll?.("." + CONTEXT_CLASS + ",." + HELP_CLASS).forEach((node) => node.remove());
+    root?.querySelectorAll?.("." + CONTEXT_CLASS + ",." + HELP_CLASS + ",." + FLOW_HEADER_CLASS).forEach((node) => node.remove());
   }
 
   function writableField(field) {
@@ -420,6 +421,135 @@
     }
     if (question) question.textContent = questionText(field);
     return question;
+  }
+
+  function formFlowLabel(form) {
+    if (!form) return "";
+    return String(
+      form.dataset.stipFlowLabel ||
+      form.getAttribute("aria-label") ||
+      form.getAttribute("name") ||
+      ""
+    ).trim();
+  }
+
+  function formFlowOrigin(form) {
+    return String(form?.dataset?.stipFlowOrigin || "").trim();
+  }
+
+  function formFlowWho(form) {
+    return String(
+      form?.dataset?.stipContextWho ||
+      form?.dataset?.stipContextWhoFallback ||
+      ""
+    ).trim();
+  }
+
+  function formFlowWhy(form) {
+    return String(
+      form?.dataset?.stipContextWhy ||
+      form?.dataset?.stipContextWhyFallback ||
+      ""
+    ).trim();
+  }
+
+  function ensureFlowHeader(form, field, index, total) {
+    if (!form) return null;
+    form.querySelectorAll?.("." + FLOW_HEADER_CLASS).forEach((node) => node.remove());
+
+    const origin = formFlowOrigin(form);
+    const flow = formFlowLabel(form);
+    const who = formFlowWho(form);
+    const why = formFlowWhy(form);
+    const help = String(field?.dataset?.stipHelp || "").trim();
+    const current = questionText(field);
+    const step = total > 1 && index >= 0 ? (index + 1) + " / " + total : "";
+
+    const header = document.createElement("section");
+    header.className = FLOW_HEADER_CLASS;
+    header.setAttribute("aria-label", "Repère du formulaire");
+
+    const top = document.createElement("div");
+    top.className = "stip-keyboard-flow-top";
+
+    const breadcrumb = document.createElement("div");
+    breadcrumb.className = "stip-keyboard-flow-breadcrumb";
+    if (origin) {
+      const from = document.createElement("span");
+      from.textContent = origin;
+      breadcrumb.appendChild(from);
+    }
+    if (origin && flow) {
+      const sep = document.createElement("b");
+      sep.textContent = "›";
+      sep.setAttribute("aria-hidden", "true");
+      breadcrumb.appendChild(sep);
+    }
+    if (flow) {
+      const name = document.createElement("strong");
+      name.textContent = flow;
+      breadcrumb.appendChild(name);
+    }
+    if (!origin && !flow) {
+      const name = document.createElement("strong");
+      name.textContent = "Formulaire";
+      breadcrumb.appendChild(name);
+    }
+
+    const counter = document.createElement("span");
+    counter.className = "stip-keyboard-flow-counter";
+    counter.textContent = step || current;
+    top.append(breadcrumb, counter);
+
+    const currentLine = document.createElement("div");
+    currentLine.className = "stip-keyboard-flow-current";
+    const currentLabel = document.createElement("strong");
+    currentLabel.textContent = current;
+    currentLine.appendChild(currentLabel);
+
+    const meta = document.createElement("div");
+    meta.className = "stip-keyboard-flow-meta";
+    if (who) {
+      const item = document.createElement("span");
+      item.innerHTML = "<small>POUR</small>";
+      const value = document.createElement("b");
+      value.textContent = who;
+      item.appendChild(value);
+      meta.appendChild(item);
+    }
+    if (why) {
+      const item = document.createElement("span");
+      item.innerHTML = "<small>TYPE</small>";
+      const value = document.createElement("b");
+      value.textContent = why;
+      item.appendChild(value);
+      meta.appendChild(item);
+    }
+
+    if (help) {
+      const how = document.createElement("p");
+      how.className = "stip-keyboard-flow-help";
+      const label = document.createElement("small");
+      const text = document.createElement("span");
+      label.textContent = "COMMENT";
+      text.textContent = help;
+      how.append(label, text);
+      currentLine.appendChild(how);
+    }
+
+    const progress = document.createElement("div");
+    progress.className = "stip-keyboard-flow-progress";
+    const bar = document.createElement("i");
+    const ratio = total > 0 && index >= 0 ? Math.min(1, Math.max(0, (index + 1) / total)) : 0;
+    bar.style.setProperty("--stip-flow-progress", Math.round(ratio * 100) + "%");
+    progress.appendChild(bar);
+
+    header.append(top);
+    if (meta.childElementCount) header.append(meta);
+    header.append(currentLine);
+    if (total > 1) header.append(progress);
+    form.prepend(header);
+    return header;
   }
 
   function formContextEntries(form, index, total) {
@@ -763,8 +893,7 @@
     const controls = sequentialControls(form);
     const index = controls.indexOf(field);
     if (index < 0) return;
-    ensureFormContext(form, field, index, controls.length);
-    ensureFieldHelp(form, field);
+    ensureFlowHeader(form, field, index, controls.length);
 
     let action = form.querySelector(NEXT_ACTION);
     if (!action) {
@@ -1121,6 +1250,6 @@
     normalizeAutofill,
     fields: sequentialControls,
     formMode,
-    version: 27
+    version: 28
   };
 })();

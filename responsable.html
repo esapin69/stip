@@ -144,7 +144,7 @@
               <label>Rechercher un agent<input id="search" type="search" placeholder="Nom ou prénom" data-stip-question="Rechercher un agent" autocomplete="off" /></label>
               <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
             </div>
-            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" hidden>
+            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" data-stip-flow-origin="Suivi" data-stip-flow-label="Envoyer à un agent" data-stip-context-who-fallback="Agent" data-stip-context-why-fallback="Demande" hidden>
               <input type="hidden" id="agentId" />
               <label>Type<select id="kind" data-stip-select-menu data-stip-select-title="Type de demande"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>
