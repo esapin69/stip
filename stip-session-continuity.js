@@ -10,6 +10,7 @@
   const MAX_MS = 30 * 60 * 1000;
   const API = "https://stip-ten.vercel.app/api/stip-access";
   let inFlight = null;
+  let inFlightToken = "";
 
   function token() {
     try {
@@ -76,11 +77,12 @@
     }
   }
 
-  async function requestMe() {
-    const currentToken = token();
+  async function requestMe(expectedToken = token()) {
+    const currentToken = String(expectedToken || "");
     if (!currentToken) {
       const error = new Error("Session STIP requise.");
       error.status = 401;
+      error.requestToken = "";
       throw error;
     }
     const response = await fetch(API, {
@@ -93,10 +95,17 @@
       body: JSON.stringify({ action: "me" }),
     });
     const data = await response.json().catch(() => ({}));
+    if (token() !== currentToken) {
+      const error = new Error("Vérification de session remplacée.");
+      error.stale = true;
+      error.requestToken = currentToken;
+      throw error;
+    }
     if (!response.ok || data?.error) {
       const error = new Error(data?.error || `Erreur ${response.status}`);
       error.status = response.status;
       error.code = data?.error || "";
+      error.requestToken = currentToken;
       throw error;
     }
     return write(data);
@@ -107,9 +116,17 @@
       const fresh = readFresh();
       if (fresh) return fresh;
     }
-    if (inFlight) return inFlight;
-    inFlight = requestMe()
+    const expectedToken = token();
+    if (inFlight && inFlightToken === expectedToken) return inFlight;
+    inFlightToken = expectedToken;
+    const requestToken = expectedToken;
+    const promise = requestMe(requestToken)
       .catch((error) => {
+        if (error?.stale || token() !== requestToken) {
+          const cached = readFresh();
+          if (cached) return cached;
+          throw error;
+        }
         if (error?.status === 401 || error?.status === 403) {
           clear({ clearToken: true });
           window.dispatchEvent(
@@ -122,9 +139,13 @@
         throw error;
       })
       .finally(() => {
-        inFlight = null;
+        if (inFlight === promise) {
+          inFlight = null;
+          inFlightToken = "";
+        }
       });
-    return inFlight;
+    inFlight = promise;
+    return promise;
   }
 
   window.STIPContinuity = {
