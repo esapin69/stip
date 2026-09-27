@@ -25,6 +25,102 @@
   const MODE_CLASS = "stip-keyboard-focus-mode";
   const viewport = window.visualViewport;
 
+  const AUTOFILL_CONTEXT_CLASS = "stip-autofill-context";
+  const PROFILE_AUTOFILL_TOKENS = new Set([
+    "name",
+    "given-name",
+    "family-name",
+    "email",
+    "tel",
+    "organization",
+    "street-address",
+    "postal-code",
+    "address-level1",
+    "address-level2",
+    "country-name"
+  ]);
+
+  function fieldIdentityKey(field) {
+    return [field?.name, field?.id, field?.dataset?.stipField]
+      .filter(Boolean)
+      .join("_")
+      .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "_");
+  }
+
+  function explicitAutocompleteToken(field) {
+    const value = String(field?.getAttribute?.("autocomplete") || "").trim().toLowerCase();
+    if (!value || value === "on" || value === "off") return "";
+    const parts = value.split(/\s+/);
+    return parts[parts.length - 1] || "";
+  }
+
+  function inferredAutocompleteToken(field) {
+    const key = fieldIdentityKey(field);
+    if (/(^|_)(first_name|given_name|given|prenom)(_|$)/.test(key)) return "given-name";
+    if (/(^|_)(last_name|family_name|surname|nom)(_|$)/.test(key)) return "family-name";
+    if (/(^|_)(full_name|display_name|fullname)(_|$)/.test(key)) return "name";
+    if (/(^|_)(email|mail|courriel)(_|$)/.test(key) || field?.type === "email") return "email";
+    if (/(^|_)(phone|telephone|tel|mobile)(_|$)/.test(key) || field?.type === "tel") return "tel";
+    if (/(^|_)(organization|organisation|company|entreprise|workplace|employer)(_|$)/.test(key)) return "organization";
+    if (/(^|_)(postal_code|postcode|zip)(_|$)/.test(key)) return "postal-code";
+    return "";
+  }
+
+  function normalizeAutofillField(field) {
+    if (!field?.matches?.("input,textarea,select")) return "";
+    const inferred = inferredAutocompleteToken(field);
+    const explicit = explicitAutocompleteToken(field);
+    if (inferred && (!explicit || PROFILE_AUTOFILL_TOKENS.has(explicit))) {
+      if (explicit !== inferred) field.setAttribute("autocomplete", inferred);
+      if ((inferred === "given-name" || inferred === "family-name" || inferred === "name") && !field.hasAttribute("autocapitalize"))
+        field.setAttribute("autocapitalize", "words");
+      return inferred;
+    }
+    return explicit || inferred;
+  }
+
+  function markAutofillContext(form) {
+    if (!form) return;
+    form.querySelectorAll("input,textarea,select").forEach((field) => {
+      const token = normalizeAutofillField(field);
+      if (!PROFILE_AUTOFILL_TOKENS.has(token)) return;
+      let node = field;
+      while (node && node !== form) {
+        node.classList?.add?.(AUTOFILL_CONTEXT_CLASS);
+        node = node.parentElement;
+      }
+    });
+  }
+
+  function normalizeAutofill(root = document) {
+    const forms = new Set();
+    if (root?.matches?.("form")) forms.add(root);
+    const owner = root?.closest?.("form");
+    if (owner) forms.add(owner);
+    root?.querySelectorAll?.("form").forEach((form) => forms.add(form));
+    forms.forEach((form) => {
+      if (!form.hasAttribute("autocomplete")) form.setAttribute("autocomplete", "on");
+      form.querySelectorAll("input,textarea,select").forEach(normalizeAutofillField);
+      markAutofillContext(form);
+    });
+    return forms;
+  }
+
+  function identityOrdered(controls) {
+    const ordered = [...controls];
+    const familyIndex = ordered.findIndex((field) => normalizeAutofillField(field) === "family-name");
+    const givenIndex = ordered.findIndex((field) => normalizeAutofillField(field) === "given-name");
+    if (familyIndex >= 0 && givenIndex >= 0 && givenIndex < familyIndex) {
+      const [family] = ordered.splice(familyIndex, 1);
+      ordered.splice(givenIndex, 0, family);
+    }
+    return ordered;
+  }
+
   let active = null;
   let scope = null;
   let baselineHeight = 0;
@@ -162,6 +258,7 @@
   }
 
   function autoEnroll(root = document) {
+    normalizeAutofill(root);
     const fields = [];
     if (root?.matches?.(WRITABLE_SELECTOR)) fields.push(root);
     root?.querySelectorAll?.(WRITABLE_SELECTOR).forEach((field) => fields.push(field));
@@ -171,23 +268,29 @@
   }
 
   function usableFields(form) {
-    return [...(form?.querySelectorAll?.(FOCUS) || [])].filter(
-      (field) =>
-        !field.disabled &&
-        !field.readOnly &&
-        field.type !== "hidden" &&
-        !field.closest("[hidden]")
+    normalizeAutofill(form);
+    return identityOrdered(
+      [...(form?.querySelectorAll?.(FOCUS) || [])].filter(
+        (field) =>
+          !field.disabled &&
+          !field.readOnly &&
+          field.type !== "hidden" &&
+          !field.closest("[hidden]")
+      )
     );
   }
 
   function sequentialControls(form) {
-    return [...(form?.querySelectorAll?.("input,textarea,select") || [])].filter((control) => {
-      if (control.disabled || control.readOnly || control.type === "hidden") return false;
-      if (control.closest("[hidden]")) return false;
-      if (control.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return false;
-      if (control.matches('input[type="search"]')) return false;
-      return true;
-    });
+    normalizeAutofill(form);
+    return identityOrdered(
+      [...(form?.querySelectorAll?.("input,textarea,select") || [])].filter((control) => {
+        if (control.disabled || control.readOnly || control.type === "hidden") return false;
+        if (control.closest("[hidden]")) return false;
+        if (control.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return false;
+        if (control.matches('input[type="search"]')) return false;
+        return true;
+      })
+    );
   }
 
   function submitLabel(submit) {
@@ -494,6 +597,27 @@
     return false;
   }
 
+  normalizeAutofill(document);
+  const autofillObserver = new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes || []) {
+        if (node?.nodeType === 1) normalizeAutofill(node);
+      }
+    }
+  });
+  autofillObserver.observe(document.documentElement, { childList: true, subtree: true });
+
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 11 };
+  window.STIPFormUX = {
+    reveal,
+    resetIntents,
+    syncKeyboard,
+    transferFocus,
+    release: clearMode,
+    showOverview: showFormOverview,
+    autoEnroll,
+    normalizeAutofill,
+    fields: sequentialControls,
+    version: 12
+  };
 })();

@@ -1,6 +1,6 @@
 (()=>{'use strict';
 const API='https://stip-ten.vercel.app/api/stip-access',KEY='stip_access_request_tracking_v1',d=document.getElementById('accessRequestDialog'),openers=[...document.querySelectorAll('[data-open-access-request]')],close=document.getElementById('requestAccessClose'),form=document.getElementById('accessRequestForm'),msg=document.getElementById('accessRequestMessage'),loginView=document.getElementById('loginView');let autoConnecting=false,requestHistoryId='',restoringHistory=false,closingHistory=false;
-function requestFields(){return [...(form?.querySelectorAll?.('[data-stip-keyboard-focus]')||[])].filter(field=>!field.disabled&&!field.readOnly&&!field.closest('[hidden]'))}
+function requestFields(){const canonical=window.STIPFormUX?.fields?.(form);return [...(canonical||form?.querySelectorAll?.('[data-stip-keyboard-focus]')||[])].filter(field=>!field.disabled&&!field.readOnly&&!field.closest('[hidden]'))}
 function requestState(state=history.state){return state?.stipAccessRequest||null}
 function requestMarker(view,index,depth){return{id:requestHistoryId,view,index,depth}}
 function showOverview(){
@@ -46,6 +46,7 @@ function pushStepState(field){
 }
 function openRequest(options={}){
   if(!d||!form)return;
+  window.STIPFormUX?.normalizeAutofill?.(form);
   window.STIPFormUX?.release?.();
   try{document.activeElement?.blur?.()}catch{}
 

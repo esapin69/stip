@@ -46,8 +46,8 @@
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
     <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />    <!-- T-EST COMMON — permanent when a page is promoted -->
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide4" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide4"></script>
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide5" />
+    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide5"></script>
     <!-- /T-EST COMMON -->
 
     <!-- T-EST LAB ONLY -->
@@ -158,6 +158,7 @@
           <form
             id="accessRequestForm"
             class="access-request-form access-request-form-v2"
+            autocomplete="on"
             data-stip-keyboard-scope
             data-stip-form-focus
             data-stip-step-nav
@@ -187,13 +188,13 @@
             </div>
             <div class="request-name-grid">
               <label
-                >Prénom<input
-                  name="first_name"
-                  autocomplete="given-name"
+                >Nom<input
+                  name="last_name"
+                  autocomplete="family-name"
                   data-stip-keyboard-focus
                   required /></label
               ><label
-                >Nom<input name="last_name" autocomplete="family-name" data-stip-keyboard-focus required
+                >Prénom<input name="first_name" autocomplete="given-name" data-stip-keyboard-focus required
               /></label>
             </div>
             <label class="request-role"
@@ -273,7 +274,7 @@
     <script src="stip-session-continuity.js?v=20260927-authflow1"></script>
     <script src="app.js?v=20260927-refresh-continuity1"></script>
     <script src="quick-access.js?v=20260926-navigation6"></script>
-    <script src="public-access-request.js?v=20260927-step-history3"></script>
+    <script src="public-access-request.js?v=20260927-autofill1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260926-week-clean1"></script>
     <script src="stip-touch-core.js?v=20260926-touch-core1"></script>
@@ -291,7 +292,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260927-entry-auth1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260927-autofill1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });

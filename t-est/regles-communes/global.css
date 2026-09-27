@@ -110,13 +110,28 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-autofill-context) {
   display: none !important;
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  .stip-keyboard-path > *:not(.stip-keyboard-path) {
+  .stip-keyboard-path > *:not(.stip-keyboard-path):not(.stip-autofill-context) {
   display: none !important;
+}
+
+/* Les autres champs de profil restent rendus pour que le navigateur puisse
+   préremplir le formulaire entier, sans réapparaître dans le mode question. */
+[data-stip-form-focus].stip-keyboard-focus-mode
+  > .stip-autofill-context:not(.stip-keyboard-path):not(.stip-keyboard-question),
+[data-stip-form-focus].stip-keyboard-focus-mode
+  .stip-keyboard-path > .stip-autofill-context:not(.stip-keyboard-path):not(.stip-keyboard-question) {
+  position: fixed !important;
+  left: -120vw !important;
+  top: 0 !important;
+  width: min(620px, 100vw) !important;
+  max-width: 620px !important;
+  opacity: .01 !important;
+  pointer-events: none !important;
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-path,

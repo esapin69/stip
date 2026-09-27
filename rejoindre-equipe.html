@@ -55,8 +55,8 @@
     .privacy{margin:15px 2px 0;color:#809197;font-size:.7rem;line-height:1.4}
     @media(max-width:520px){.grid{grid-template-columns:1fr}.form-card{padding:17px}.code-wrap{grid-template-columns:1fr}.code-wrap button{width:100%}}
   </style>
-  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide4" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide4"></script>
+  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide5" />
+  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide5"></script>
 </head>
 <body>
   <main class="wrap">
@@ -71,13 +71,13 @@
       <strong>Pas besoin de faire partie de l’équipe actuelle.</strong>
       <span>Vous indiquez simplement qui vous êtes, votre métier, puis vous joignez votre planning. La demande arrive dans STIP pour préparer votre page.</span>
     </section>
-    <form id="pageRequestForm" class="form-card">
+    <form id="pageRequestForm" class="form-card" autocomplete="on">
       <h2>Demander ma page</h2>
       <p>Les informations ci-dessous servent à comprendre votre planning et préparer votre accès.</p>
       <div class="step"><span>1</span><div><strong>Qui êtes-vous ?</strong><small>La personne concernée par le planning.</small></div></div>
       <div class="grid">
-        <label>Prénom<input name="first_name" autocomplete="given-name" maxlength="80" required></label>
         <label>Nom<input name="last_name" autocomplete="family-name" maxlength="80" required></label>
+        <label>Prénom<input name="first_name" autocomplete="given-name" maxlength="80" required></label>
       </div>
       <div class="step"><span>2</span><div><strong>Quel est votre métier ?</strong><small>Pour comprendre les codes et horaires de votre planning.</small></div></div>
       <label>Métier / poste<input name="professional_role" maxlength="120" placeholder="Ex. aide-soignant, agent, technicien…" required></label>
