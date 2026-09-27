@@ -2,6 +2,11 @@
   "use strict";
 
   const BUILTIN = {
+    "work-morning": { label:"Matin", fallback_text:"🔵", view_box:"0 0 24 24", stroke_width:2.2, paths:["M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9"] },
+    "work-day": { label:"Journée", fallback_text:"🟢", view_box:"0 0 24 24", stroke_width:2.2, paths:["M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9"] },
+    "work-late": { label:"J4", fallback_text:"🟠", view_box:"0 0 24 24", stroke_width:2.2, paths:["M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9"] },
+    "work-evening": { label:"Soir", fallback_text:"🟡", view_box:"0 0 24 24", stroke_width:2.2, paths:["M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9"] },
+    "work-night": { label:"Nuit", fallback_text:"⚫", view_box:"0 0 24 24", stroke_width:2.2, paths:["M12 3a9 9 0 1 0 9 9 9 9 0 0 0-9-9"] },
     "rest-home": { label:"Repos", fallback_text:"🏠", view_box:"0 0 24 24", stroke_width:1.9, paths:["M3 11.5 12 4l9 7.5","M5 10.5V21h14V10.5","M9 21v-6h6v6"] },
     "leave-island": { label:"Congé / vacances", fallback_text:"🏝️", view_box:"0 0 24 24", stroke_width:1.9, paths:["M3 20c2.2-2.1 5.2-3.2 9-3.2s6.8 1.1 9 3.2","M12 16V7","M12 8c-2.1-2-4.5-2.2-6.7-.7","M12 8c2-2 4.5-2.2 6.7-.7"] },
     "time-off": { label:"RTT", fallback_text:"⏱️", view_box:"0 0 24 24", stroke_width:1.9, paths:["M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2","M12 7v5l3.5 2","M9 2h6"] },
