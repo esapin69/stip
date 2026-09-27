@@ -1803,6 +1803,18 @@
           ],
         },
         {
+          key: "metiers",
+          label: "RACCOURCIS · Autres métiers",
+          items: [
+            {
+              href: "metiers/",
+              label: "Accueil métiers",
+              icon: "▦",
+              when: () => has("admin"),
+            },
+          ],
+        },
+        {
           key: "admin",
           label: "RACCOURCIS · Admin",
           items: [
