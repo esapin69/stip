@@ -55,15 +55,11 @@ function recordField(field){
   for(let i=start;i<=index;i++){depth++;history.pushState({...history.state,stipAccessRequest:requestMarker('step',i,depth)},'',location.href)}
 }
 function syncProfile(){
-  const p=profile(),isExternal=p==='brancardier'||p==='external',isGeneral=p==='external';
+  const p=profile(),isExternal=p==='external';
   if(shared)shared.hidden=!p;
   if(external)external.hidden=!isExternal;
-  if(roleWrap)roleWrap.hidden=!isGeneral;
-  if(role){
-    role.required=isGeneral;
-    if(p==='brancardier')role.value='Brancardier';
-    else if(!isGeneral&&role.value==='Brancardier')role.value='';
-  }
+  if(roleWrap)roleWrap.hidden=!isExternal;
+  if(role)role.required=isExternal;
   if(workplace)workplace.required=isExternal;
   if(planning)planning.required=isExternal;
   if(codeStep)codeStep.textContent=isExternal?'5':'3';
@@ -190,10 +186,10 @@ form?.addEventListener('submit',async e=>{
   msg.textContent='Envoi…';msg.className='message';
   try{
     if(p==='stip'){
-      const j=await post({action:'submit',first_name:first,last_name:last,requested_code:code,comment:'Profil déclaré : STIP / GHE'});
+      const j=await post({action:'submit',first_name:first,last_name:last,requested_code:code,comment:'Profil déclaré : brancardier'});
       localStorage.setItem(KEY,JSON.stringify({request_id:j.request_id,tracking_token:j.tracking_token,created_at:Date.now()}));
     }else{
-      const f=planning?.files?.[0],professionalRole=p==='brancardier'?'Brancardier':String(fd.get('professional_role')||'').trim(),work=String(fd.get('workplace')||'').trim(),comment=String(fd.get('comment')||'').trim();
+      const f=planning?.files?.[0],professionalRole=String(fd.get('professional_role')||'').trim(),work=String(fd.get('workplace')||'').trim(),comment=String(fd.get('comment')||'').trim();
       if(!professionalRole){throw Error('Indiquez votre métier ou votre poste.')}
       if(!work){throw Error('Indiquez votre établissement ou votre entreprise.')}
       if(!f){throw Error('Ajoutez votre planning.')}
@@ -202,7 +198,7 @@ form?.addEventListener('submit',async e=>{
       if(saved?.request_id&&saved?.tracking_token){
         prep=await post({action:'resume_page',request_id:saved.request_id,tracking_token:saved.tracking_token,file_name:f.name,file_size:f.size,file_type:mimeFor(f)});
       }else{
-        prep=await post({action:'prepare_page',first_name:first,last_name:last,professional_role:professionalRole,workplace:work,comment:[p==='brancardier'?'Profil déclaré : brancardier hors STIP':'Profil déclaré : extérieur à STIP',comment].filter(Boolean).join('\n'),requested_code:code,file_name:f.name,file_size:f.size,file_type:mimeFor(f)});
+        prep=await post({action:'prepare_page',first_name:first,last_name:last,professional_role:professionalRole,workplace:work,comment:['Profil déclaré : autre profil',comment].filter(Boolean).join('\n'),requested_code:code,file_name:f.name,file_size:f.size,file_type:mimeFor(f)});
         saved={request_id:prep.request_id,tracking_token:prep.tracking_token};
         localStorage.setItem(PENDING,JSON.stringify(saved));
         localStorage.setItem(KEY,JSON.stringify({...saved,created_at:Date.now()}));
