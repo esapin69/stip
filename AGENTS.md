@@ -99,6 +99,18 @@ Any STIP surface that analyses, summarizes, alerts, recommends, or republishes a
 - For the shared three-state signal: `🛑` = critical, `⚠️` = watch, green `✔` = checked/OK. Do not invent a second competing scale without an explicit product decision.
 
 
+## 11 ter. Icônes — contrat commun
+
+Pour tout chantier qui touche une icône issue des données métier, lire aussi `ICON_RULES.md`.
+
+Invariants :
+- `icon_key` est la source sémantique ;
+- `stip_icon_catalog` est le catalogue visuel canonique ;
+- `stip-icon-registry.js` est le renderer commun ;
+- les anciennes colonnes emoji sont des fallbacks de compatibilité ;
+- ne jamais dupliquer un SVG complet dans les lignes Supabase ni créer une bibliothèque locale concurrente ;
+- une nouvelle icône métier doit pouvoir être ajoutée au catalogue sans refonte des consommateurs.
+
 ## 11 bis. Communication — contrat commun
 
 Pour tout chantier touchant Chat équipe, DM, groupes, notifications messages ou Fauteuils, lire aussi `COMMUNICATION_RULES.md`.
