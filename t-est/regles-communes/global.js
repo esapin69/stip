@@ -439,7 +439,7 @@
       previous.textContent = "← Précédent";
       form.appendChild(previous);
     }
-    if (!overview) {
+    if (stepNavigation && !overview) {
       overview = document.createElement("button");
       overview.type = "button";
       overview.className = "stip-keyboard-overview-action";
@@ -731,6 +731,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 16
+    version: 17
   };
 })();
