@@ -5550,3 +5550,194 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
     height:35px!important;
   }
 }
+
+
+/* 20260927-admin-shortcuts-popup1 — admin shortcut groups leave the home flow and open from one launcher. */
+.hc-home-filters[data-count="4"]{
+  width:min(100%,430px)!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:6px!important;
+}
+.hc-home-filters[data-count="4"]>button{
+  min-width:0!important;
+}
+.hc-home-shortcuts-button .hc-home-filter-art{
+  display:grid!important;
+  place-items:center!important;
+  background:
+    radial-gradient(circle at 28% 22%,rgba(255,255,255,.95),rgba(255,255,255,0) 36%),
+    linear-gradient(145deg,#effbff 0%,#dff4f8 52%,#cdebf1 100%)!important;
+}
+.hc-home-shortcuts-art{
+  width:58%!important;
+  aspect-ratio:1!important;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,minmax(0,1fr))!important;
+  gap:8%!important;
+  transform:rotate(-2deg)!important;
+}
+.hc-home-shortcuts-art>i{
+  display:block!important;
+  border-radius:22%!important;
+  background:linear-gradient(145deg,#1b7188,#0f5266)!important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.38),
+    0 4px 8px rgba(20,62,78,.16)!important;
+}
+.hc-home-shortcuts-art>i:nth-child(2),
+.hc-home-shortcuts-art>i:nth-child(3){
+  background:linear-gradient(145deg,#2da6bd,#177b92)!important;
+}
+
+.hc-admin-shortcuts-dialog{
+  box-sizing:border-box!important;
+  width:min(calc(100% - 24px),660px)!important;
+  max-width:660px!important;
+  max-height:min(86dvh,820px)!important;
+  margin:auto!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:26px!important;
+  background:transparent!important;
+  color:var(--stip-ink)!important;
+  overflow:visible!important;
+}
+.hc-admin-shortcuts-dialog::backdrop{
+  background:rgba(8,28,37,.48)!important;
+  backdrop-filter:blur(4px)!important;
+  -webkit-backdrop-filter:blur(4px)!important;
+}
+.hc-admin-shortcuts-card{
+  box-sizing:border-box!important;
+  width:100%!important;
+  max-height:min(86dvh,820px)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--stip-line) 82%,#fff)!important;
+  border-radius:26px!important;
+  background:var(--stip-surface-raised)!important;
+  box-shadow:0 28px 70px rgba(8,38,50,.28),inset 0 1px 0 rgba(255,255,255,.96)!important;
+}
+.hc-admin-shortcuts-head{
+  box-sizing:border-box!important;
+  flex:0 0 auto!important;
+  min-height:72px!important;
+  padding:14px 15px 12px 19px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:12px!important;
+  border-bottom:1px solid var(--stip-line)!important;
+  background:linear-gradient(180deg,#fff 0%,color-mix(in srgb,var(--stip-surface-soft) 70%,#fff) 100%)!important;
+}
+.hc-admin-shortcuts-head>div{
+  min-width:0!important;
+}
+.hc-admin-shortcuts-head small{
+  display:block!important;
+  margin:0 0 3px!important;
+  color:var(--stip-accent)!important;
+  font-size:.66rem!important;
+  font-weight:950!important;
+  letter-spacing:.14em!important;
+}
+.hc-admin-shortcuts-head h2{
+  margin:0!important;
+  color:var(--stip-ink)!important;
+  font-size:1.42rem!important;
+  line-height:1!important;
+  font-weight:950!important;
+  letter-spacing:-.025em!important;
+}
+.hc-admin-shortcuts-close{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:44px!important;
+  height:44px!important;
+  min-width:44px!important;
+  margin:0!important;
+  padding:0!important;
+  border:1px solid var(--stip-line)!important;
+  border-radius:14px!important;
+  background:var(--stip-surface)!important;
+  color:var(--stip-ink-2)!important;
+  box-shadow:var(--stip-shadow-soft)!important;
+  font:900 1.65rem/1 system-ui,-apple-system,sans-serif!important;
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.hc-admin-shortcuts-close:active{
+  transform:var(--stip-tap)!important;
+}
+.hc-admin-shortcuts-close:focus-visible{
+  outline:3px solid var(--stip-focus-ring)!important;
+  outline-offset:2px!important;
+}
+.hc-admin-shortcuts-body{
+  box-sizing:border-box!important;
+  min-height:0!important;
+  overflow:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  padding:10px 0 14px!important;
+}
+.hc-admin-shortcuts-body>.hc-pilotage-shell{
+  margin:0!important;
+}
+.hc-admin-shortcuts-body .hc-pilotage-group{
+  scroll-margin-top:78px!important;
+}
+@media(max-width:430px){
+  .hc-home-filters[data-count="4"]{
+    width:min(100%,366px)!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:5px!important;
+  }
+  .hc-home-filters[data-count="4"]>button{
+    min-height:92px!important;
+    padding-inline:2px!important;
+  }
+  .hc-home-filters[data-count="4"]>button>strong{
+    font-size:.66rem!important;
+  }
+  .hc-admin-shortcuts-dialog{
+    width:calc(100% - 14px)!important;
+    max-height:92dvh!important;
+    border-radius:23px!important;
+  }
+  .hc-admin-shortcuts-card{
+    max-height:92dvh!important;
+    border-radius:23px!important;
+  }
+  .hc-admin-shortcuts-head{
+    min-height:66px!important;
+    padding:11px 11px 10px 15px!important;
+  }
+  .hc-admin-shortcuts-head h2{
+    font-size:1.3rem!important;
+  }
+}
+@media(max-width:370px){
+  .hc-home-filters[data-count="4"]{
+    width:min(100%,336px)!important;
+    gap:4px!important;
+  }
+  .hc-home-filters[data-count="4"]>button{
+    min-height:88px!important;
+  }
+  .hc-home-filters[data-count="4"]>button>strong{
+    font-size:.61rem!important;
+  }
+  .hc-home-shortcuts-art{
+    gap:7%!important;
+  }
+}
+@media(min-width:700px){
+  .hc-home-filters[data-count="4"]{
+    width:640px!important;
+    gap:12px!important;
+  }
+}
