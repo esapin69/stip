@@ -15,7 +15,7 @@
       .toUpperCase()
       .replace(/\s+/g, "");
     return value.replace(
-      /[\\*★☆✱✳✶✷✸✹✺✻✼✽✾✿\\uFE0E\\uFE0F]+$/u,
+      /[*★☆✱✳✶✷✸✹✺✻✼✽✾✿︎️]+$/u,
       "",
     );
   }
