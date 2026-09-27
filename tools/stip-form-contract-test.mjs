@@ -35,8 +35,9 @@ check(
     rules.includes("global.css") &&
     rules.includes("une seule référence UX est validée") &&
     rules.includes("accessRequestForm") &&
-    rules.includes("Chat STIP / Fauteuils / DM est hors périmètre"),
-  "FORM_RULES.md doit rester limité à la référence validée Demander un accès."
+    rules.includes("Communication est désormais un consommateur validé") &&
+    rules.includes("sans devenir une source du questionnaire séquentiel"),
+  "FORM_RULES.md doit garder Demander un accès comme seule référence UX tout en autorisant Communication comme consommateur compatible."
 );
 
 const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "legacy", "exempt"]);
