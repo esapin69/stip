@@ -3,6 +3,8 @@ Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Une référen
 
 Avant toute modification substantielle, lire `ARCHITECTURE_FIRST.md`.
 
+Pour tout chantier qui touche un formulaire, une saisie, le clavier mobile, l’autoremplissage, les boutons Précédent/Suivant/Valider, un code à 6 chiffres ou une recherche plein écran, lire aussi `t-est/regles-communes/FORM_RULES.md`. Une règle universelle doit être corrigée dans `global.js` / `global.css`, documentée dans ce contrat et protégée par `tools/stip-form-contract-test.mjs`.
+
 Règle transverse non négociable :
 **une information métier = une source de vérité = un moteur commun = plusieurs vues adaptées.**
 
