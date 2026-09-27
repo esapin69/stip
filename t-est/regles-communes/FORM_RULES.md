@@ -47,6 +47,14 @@ Les autres formulaires historiques restent en mode `legacy` tant qu’ils n’on
 
 **Chat STIP / Fauteuils / DM est hors périmètre de ce contrat pour l’instant.** Son fonctionnement est encore en cours de réglage : aucune règle de son moteur ne doit être promue en règle commune sans validation explicite ultérieure.
 
+### Pilote de compatibilité en cours
+
+Pour vérifier si le moteur construit depuis **Demander un accès** s’adapte à un autre usage, un seul formulaire supplémentaire est branché en pilote :
+
+- `responsable.html#form` — **Responsable → Suivi → Envoyer à un agent**.
+
+Ce formulaire est un **consommateur de test**, pas une nouvelle source de règles. Son comportement ne devient canonique qu’après validation explicite. Tous les autres formulaires historiques restent en `legacy` et ne doivent pas recevoir automatiquement le moteur séquentiel.
+
 ## 3. Règle fondamentale
 
 **Un champ actif = une question claire = une action cohérente.**

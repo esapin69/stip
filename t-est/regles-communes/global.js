@@ -360,7 +360,7 @@
     if (field.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || field.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return "native";
     const form = field.closest("form");
     const mode = formMode(form);
-    if (mode === "exempt" || mode === "native" || mode === "composer") return "native";
+    if (mode === "exempt" || mode === "native" || mode === "composer" || mode === "legacy") return "native";
     if (field.matches('input[type="search"]') || mode === "search") return "search";
     if (mode === "standard") return "native";
     return form ? "form" : "native";
@@ -403,7 +403,7 @@
 
   function syncFormHints(form) {
     const mode = formMode(form);
-    if (mode === "standard" || mode === "search" || mode === "composer" || mode === "native" || mode === "exempt") return;
+    if (mode === "standard" || mode === "search" || mode === "composer" || mode === "native" || mode === "legacy" || mode === "exempt") return;
     const fields = usableFields(form);
     const submit = form?.querySelector?.('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     fields.forEach((field, index) => {
@@ -432,7 +432,7 @@
     field.setAttribute("data-stip-keyboard-focus", "");
     form.setAttribute("data-stip-keyboard-scope", "");
     form.setAttribute("data-stip-form-focus", "");
-    if ((mode === "sequential" || mode === "legacy" || mode === "auto") && sequentialControls(form).length > 1)
+    if ((mode === "sequential" || mode === "auto") && sequentialControls(form).length > 1)
       form.setAttribute("data-stip-step-nav", "");
     syncFormHints(form);
   }
@@ -918,6 +918,6 @@
     normalizeAutofill,
     fields: sequentialControls,
     formMode,
-    version: 25
+    version: 26
   };
 })();

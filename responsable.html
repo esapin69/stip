@@ -142,7 +142,7 @@
           <div class="resp-request-body">
             <label>Rechercher un agent<input id="search" placeholder="Nom ou prénom" /></label>
             <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
-            <form id="form" data-stip-form-mode="legacy" hidden>
+            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" hidden>
               <input type="hidden" id="agentId" />
               <label>Type<select id="kind"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>

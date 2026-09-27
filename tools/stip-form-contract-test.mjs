@@ -64,6 +64,27 @@ check(
   "Le moteur commun doit interpréter les modes explicites documentés."
 );
 
+const responsableHtml = read("responsable.html");
+const responsableDemandesHtml = read("responsable-demandes.html");
+const responsableAgendaHtml = read("responsable-agenda.html");
+const responsableEvaluationsHtml = read("responsable-evaluations.html");
+
+check(
+  responsableHtml.includes('<form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" hidden>'),
+  "Le pilote FormUX doit rester limité à Responsable > Suivi > Envoyer à un agent."
+);
+check(
+  responsableDemandesHtml.includes('data-stip-form-mode="legacy"') &&
+    responsableAgendaHtml.includes('data-stip-form-mode="legacy"') &&
+    responsableEvaluationsHtml.includes('data-stip-form-mode="legacy"'),
+  "Les autres formulaires historiques ne doivent pas être promus avant validation."
+);
+check(
+  formJs.includes('mode === "legacy") return "native"') &&
+    formJs.includes('mode === "legacy" || mode === "exempt") return;'),
+  "Un formulaire legacy ne doit pas être enrôlé automatiquement dans le moteur séquentiel."
+);
+
 check(
   rules.includes("pas de **Suivant** sans vraie étape suivante") &&
     rules.includes("dernière étape = action terminale explicite"),
