@@ -1,7 +1,7 @@
 (() => {
 'use strict';
 const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
-const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false;
+const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false,authEpoch=0,loginInFlight=false,lastAutoCode='';
 try{history.scrollRestoration='manual'}catch{}
 function token(){return localStorage.getItem(STORAGE)||''}
 function clientId(){
@@ -99,8 +99,9 @@ function closePanel(){const p=$('#hsPanel');if(!p)return;p.classList.remove('ope
 function syncPanelHistory(){const p=$('#hsPanel');if(!p)return;const open=p.classList.contains('open');if(open&&!panelGuard&&!history.state?.panel){history.pushState({...(history.state||{}),stip:true,route:route(),panel:true},'',location.href)}panelGuard=false}
 function restore(){if(!session||restoring)return;restoring=true;try{if(!history.state?.panel)closePanel();const r=route();if(r==='fauteuils'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='team'){location.replace('esprit-equipe.html?entry=legacy-app-route');return}if(r==='responsable'){location.replace('responsable.html?entry=legacy-app-route');return}if(r==='home'||r==='apps'||r==='notifications'){showOnly('homeView');emitRoute(r);restoreScroll(r);return}if(r==='planning'||r.startsWith('planning/')){showOnly('planningView');emitRoute(r);restoreScroll(r);return}if(r==='contacts'||r.startsWith('contacts/')){const hub=document.getElementById('rubricHubView');if(hub)showOnly('rubricHubView');else{showOnly('genericView');const g=$('#genericView');if(g)g.innerHTML='<div class="route-loading">Chargement de Contacts…</div>'}emitRoute(r);restoreScroll(r);return}setRoute('home',{replace:true,keepScroll:true})}finally{restoring=false}}
 function isCadreFamily(d){return d?.role_key==='cadre'&&d?.permissions?.cadre_dashboard===true}
-function renderSession(d){cacheSession(d);finishSessionResume();window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}session=d;window.STIPSession=d;loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));restore()}
-loginForm?.addEventListener('submit',async e=>{e.preventDefault();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const submit=loginForm.querySelector('button[type="submit"]');if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code,client_id:clientId()});localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){msg(err.message||'Connexion impossible.','error')}finally{if(submit)submit.disabled=false}});
+function renderSession(d){cacheSession(d);finishSessionResume();session=d;window.STIPSession=d;accessCode?.blur();window.STIPFormUX?.release?.();if(isCadreFamily(d)){window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));location.replace('cadre.html');return}loginView.classList.add('hidden');appView.classList.remove('hidden');welcomeText.textContent=personName(d.agent||{});if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));window.dispatchEvent(new CustomEvent('stip:login-success',{detail:d}));window.dispatchEvent(new CustomEvent('stip:session-ready',{detail:d}));restore()}
+loginForm?.addEventListener('submit',async e=>{e.preventDefault();if(loginInFlight)return;const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length!==6){msg('Entre les 6 chiffres.','error');return}const attempt=++authEpoch,submit=loginForm.querySelector('button[type="submit"]');loginInFlight=true;window.STIPAuthPending=true;if(submit)submit.disabled=true;msg('Connexion…');try{let d=await access('login',{code,client_id:clientId()});if(attempt!==authEpoch)return;localStorage.setItem(STORAGE,d.session_token);d=await chooseTraineeSession(d);if(attempt!==authEpoch)return;setScroll('home',0);history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));renderSession(d);msg('')}catch(err){if(attempt!==authEpoch)return;lastAutoCode='';msg(err.message||'Connexion impossible.','error');try{accessCode?.focus({preventScroll:true})}catch{accessCode?.focus?.()}}finally{if(attempt===authEpoch){loginInFlight=false;window.STIPAuthPending=false;if(submit)submit.disabled=false}}});
+
 const accessCodeToggle=$('#toggleAccessCode'),accessCodeMask=$('#accessCodeMask');
 function updateAccessCodeMask(){
   if(!accessCode)return;
@@ -130,7 +131,7 @@ function showAccessCode(){
   accessCodeToggle?.setAttribute('aria-pressed','true');
   if(accessCodeToggle)accessCodeToggle.textContent='Relâcher';
 }
-accessCode?.addEventListener('input',sanitizeAccessCode);
+accessCode?.addEventListener('input',e=>{sanitizeAccessCode();const code=String(accessCode.value||'').replace(/\D/g,'').slice(0,6);if(code.length<6){lastAutoCode='';return}if(!e.isTrusted||loginInFlight||code===lastAutoCode)return;lastAutoCode=code;queueMicrotask(()=>{if(!loginInFlight&&String(accessCode.value||'').replace(/\D/g,'').slice(0,6)===code)loginForm?.requestSubmit()})});
 accessCode?.addEventListener('change',sanitizeAccessCode);
 accessCodeToggle?.setAttribute('aria-label','Maintenir pour afficher le code');
 accessCodeToggle?.setAttribute('aria-pressed','false');
@@ -146,7 +147,7 @@ window.addEventListener('pageshow',()=>{sanitizeAccessCode();hideAccessCode()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)hideAccessCode()});
 sanitizeAccessCode();
 hideAccessCode();
-logoutBtn?.addEventListener('click',async()=>{try{await access('logout')}catch{}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
+logoutBtn?.addEventListener('click',async()=>{authEpoch++;loginInFlight=false;lastAutoCode='';window.STIPAuthPending=false;try{await access('logout')}catch{}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
 $('#homeBtn')?.addEventListener('click',()=>{setRoute('home');window.dispatchEvent(new CustomEvent('stip:home-root'))});document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
 window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});
 const panel=$('#hsPanel');if(panel)new MutationObserver(syncPanelHistory).observe(panel,{attributes:true,attributeFilter:['class']});
@@ -154,13 +155,13 @@ $('#hsPanelBack')?.addEventListener('click',e=>{if(history.state?.panel){e.preve
 window.STIPRouter={set:setRoute,back,restore,show:showOnly,get:route,saveScroll,restoreScroll};
 window.addEventListener('stip:trainee-change',async()=>{if(session?.role_key!=='stagiaire')return;try{const fresh=await chooseTraineeSession(session,{force:true});if(fresh!==session)renderSession(fresh)}catch(e){alert(e.message||'Sélection impossible.')}});
 if(!location.hash)history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));
-if(!STANDALONE_ENTRY)(async()=>{if(!token()){showLogin();return}const params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null,cached=window.STIPContinuity?.read?.()||null;let hydrated=false;
-if(cached){try{let d=cached;if(preview&&previewAllowed(d)){window.STIPRealSession=d;window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview);hydrated=true}else{if(params.get('preview')==='1')clearPreview();d=await chooseTraineeSession(d);if(quick==='public')showPublicWithSession(d);else renderSession(d);hydrated=true}}catch{}}
-try{let d=window.STIPContinuity?.validate?await window.STIPContinuity.validate({force:true}):await access('me');
+if(!STANDALONE_ENTRY)(async()=>{const bootEpoch=authEpoch,bootToken=token();if(!bootToken){showLogin();return}const params=new URLSearchParams(location.search),quick=params.get('quick')||'',preview=params.get('preview')==='1'?readPreview():null,cached=window.STIPContinuity?.read?.()||null;let hydrated=false;
+if(cached){try{let d=cached;if(preview&&previewAllowed(d)){window.STIPRealSession=d;window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview);hydrated=true}else{if(params.get('preview')==='1')clearPreview();d=await chooseTraineeSession(d);if(bootEpoch!==authEpoch||token()!==bootToken)return;if(quick==='public')showPublicWithSession(d);else renderSession(d);hydrated=true}}catch{}}
+try{let d=window.STIPContinuity?.validate?await window.STIPContinuity.validate({force:true}):await access('me');if(bootEpoch!==authEpoch||token()!==bootToken)return;
 if(preview){if(previewAllowed(d)){window.STIPRealSession=d;if(!window.STIPPreview?.active){window.STIPPreview={active:true};const pd=makePreviewSession(d,preview);renderSession(pd);installPreview(preview)}return}clearPreview()}
-d=await chooseTraineeSession(d);
+d=await chooseTraineeSession(d);if(bootEpoch!==authEpoch||token()!==bootToken)return;
 if(!hydrated){if(quick==='public')showPublicWithSession(d);else renderSession(d);return}
 if(isCadreFamily(d)){window.STIPSession=d;location.replace('cadre.html');return}
 session=d;window.STIPSession=d;cacheSession(d);finishSessionResume();window.dispatchEvent(new CustomEvent('stip:session-refreshed',{detail:d}));window.dispatchEvent(new CustomEvent('stip:permissions-live',{detail:d.permissions||{}}))
-}catch(e){if(hydrated&&e?.status!==401&&e?.status!==403){finishSessionResume();return}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);clearPreview();showLogin(e?.message||'Reconnecte-toi.')}})();
+}catch(e){if(bootEpoch!==authEpoch||token()!==bootToken||e?.stale){finishSessionResume();return}if(hydrated&&e?.status!==401&&e?.status!==403){finishSessionResume();return}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);clearPreview();showLogin(e?.message||'Reconnecte-toi.')}})();
 })();
