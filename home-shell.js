@@ -761,7 +761,7 @@
   function shiftIconHtml(code, className = "") {
     const def = shiftDefinition(code);
     if (!def) return "";
-    return iconHtml(def.icon_key, def.icon || "", def.label || code, className);
+    return esc(def.icon || "");
   }
   function canonicalShift(raw) {
     if (window.STIPShiftRegistry?.baseCode)
