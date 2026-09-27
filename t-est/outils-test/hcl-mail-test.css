@@ -1,0 +1,33 @@
+/* T-EST LAB ONLY — preview of the future HCL mail surface. */
+.t-est-hcl-mail{
+  margin:18px 0 8px;
+  border:1px solid rgba(18,75,90,.11);
+  border-radius:28px;
+  background:linear-gradient(160deg,#fff 0%,#f8fbfc 55%,#eef6f8 100%);
+  box-shadow:0 18px 42px rgba(16,61,74,.10),inset 0 1px 0 #fff;
+  overflow:hidden;
+}
+.t-est-hcl-mail__head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px}
+.t-est-hcl-mail__title{min-width:0}
+.t-est-hcl-mail__kicker{display:block;color:#6c828b;font-size:.68rem;font-weight:950;letter-spacing:.16em;text-transform:uppercase}
+.t-est-hcl-mail__title h3{margin:5px 0 0;color:#103f53;font-size:1.12rem;line-height:1.1;font-weight:950;letter-spacing:-.025em}
+.t-est-hcl-mail__badge{flex:0 0 auto;padding:7px 10px;border-radius:999px;background:#e6f7fa;color:#087d94;font-size:.72rem;font-weight:950}
+.t-est-hcl-mail__source{margin:0 18px 14px;padding:11px 12px;border-radius:17px;background:rgba(9,132,154,.07);color:#315e69;font-size:.78rem;font-weight:750;line-height:1.35}
+.t-est-hcl-mail__source strong{color:#0b6f84}
+.t-est-hcl-mail__list{display:grid;gap:9px;padding:0 12px 12px}
+.t-est-hcl-mail__row{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:11px;min-height:70px;padding:10px 11px;border:1px solid rgba(18,75,90,.075);border-radius:19px;background:rgba(255,255,255,.86);box-shadow:0 4px 12px rgba(17,61,73,.035)}
+.t-est-hcl-mail__icon{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:linear-gradient(145deg,#edf8fa,#dff1f4);font-size:1.18rem}
+.t-est-hcl-mail__copy{min-width:0}
+.t-est-hcl-mail__from,.t-est-hcl-mail__subject,.t-est-hcl-mail__meta{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-est-hcl-mail__from{color:#214c59;font-size:.78rem;font-weight:900}
+.t-est-hcl-mail__subject{margin-top:3px;color:#102f3a;font-size:.95rem;font-weight:950}
+.t-est-hcl-mail__meta{margin-top:4px;color:#778b92;font-size:.72rem;font-weight:700}
+.t-est-hcl-mail__chev{color:#6e858d;font-size:1.35rem;font-weight:900}
+.t-est-hcl-mail__foot{padding:0 18px 17px;color:#788b92;font-size:.7rem;line-height:1.4}
+@media(max-width:520px){
+  .t-est-hcl-mail{border-radius:25px}
+  .t-est-hcl-mail__head{padding:16px 15px 12px}
+  .t-est-hcl-mail__source{margin-inline:15px}
+  .t-est-hcl-mail__list{padding-inline:10px}
+  .t-est-hcl-mail__row{grid-template-columns:40px minmax(0,1fr) auto}
+}
