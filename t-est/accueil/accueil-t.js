@@ -11,6 +11,8 @@
   }
   function enhanceWeekRows(doc) {
     doc.querySelectorAll(".stip-month-calendar .stip-month-grid").forEach((grid) => {
+      const calendar = grid.closest(".stip-month-calendar");
+      calendar?.querySelectorAll(".stip-month-weekdays, .hc-date-jump-weekdays").forEach((el) => el.remove());
       const days = [...grid.querySelectorAll(":scope > .stip-month-day[data-cal-day]")];
       if (!days.length) return;
       const signature = days.map((day) => day.dataset.calDay || "").join("|");
