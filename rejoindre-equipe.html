@@ -55,8 +55,8 @@
     .privacy{margin:15px 2px 0;color:#809197;font-size:.7rem;line-height:1.4}
     @media(max-width:520px){.grid{grid-template-columns:1fr}.form-card{padding:17px}.code-wrap{grid-template-columns:1fr}.code-wrap button{width:100%}}
   </style>
-  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide12" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide12"></script>
+  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide13" />
+  <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide13"></script>
 </head>
 <body>
   <main class="wrap">
@@ -92,7 +92,7 @@
       <div class="step"><span>4</span><div><strong>Choisissez votre futur code</strong><small>6 chiffres personnels pour votre accès lorsque la page sera prête.</small></div></div>
       <label>Code personnel souhaité
         <div class="code-wrap">
-          <input id="requestedCode" name="requested_code" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="new-password" placeholder="••••••" required>
+          <input id="requestedCode" name="requested_code" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="off" data-stip-pin-field="1" placeholder="••••••" required>
           <button id="toggleCode" type="button">Voir</button>
         </div>
       </label>
@@ -107,6 +107,6 @@
       <a href="index.html">Retour à STIP</a>
     </section>
   </main>
-  <script src="rejoindre-equipe.js?v=20260926-public-page-upload1"></script>
+  <script src="rejoindre-equipe.js?v=20260927-pin-contract1"></script>
 </body>
 </html>
