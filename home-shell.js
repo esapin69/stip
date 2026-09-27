@@ -519,7 +519,2000 @@
       ensureTableauRuntime()
         .then((runtime) => {
           const root = $("#homeView .hs-home");
-          if (state.homeMode === "communication") {
+          if (state.homeMode === "tableau") {
+            state.renderSig = "";
+            render();
+            return;
+          }
+          runtime?.bindHomeButton?.(
+            root?.querySelector('[data-home-mode="tableau"]'),
+          );
+        })
+        .catch(() => {});
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(run, { timeout: 3500 });
+    else setTimeout(run, 1400);
+  }
+  function warmHomeExtras() {
+    const run = () => window.STIPLoad?.homeExtras?.().catch(() => {});
+    if (state.homeMode === "notifications") {
+      run();
+      return;
+    }
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(run, { timeout: 2600 });
+    else setTimeout(run, 1200);
+  }
+  function warmHomeRuntimes() {
+    warmTableauRuntime();
+    warmHomeExtras();
+  }
+  function publishBoot(d) {
+    state.boot = d;
+    window.STIPBootCache = d;
+    window.dispatchEvent(new CustomEvent("stip:boot-updated", { detail: d }));
+  }
+  function pending() {
+    return (state.home.actions || []).filter(
+      (a) => a.status === "pending" && !a.completed_at && !a.cancelled_at,
+    );
+  }
+  function actionOwnerKey() {
+    const a = state.session?.agent || state.boot?.agent || window.STIPSession?.agent || {};
+    return String(a.id || a.source_key || "local");
+  }
+  function notificationDismissedKey() {
+    return "stip_notification_dismissed_v1:" + actionOwnerKey();
+  }
+  function loadDismissedNotifications() {
+    try {
+      const raw = JSON.parse(
+        localStorage.getItem(notificationDismissedKey()) || "{}",
+      );
+      state.dismissedNotifications =
+        raw && typeof raw === "object" ? raw : {};
+      // Purge the obsolete tabs/moves preference store instead of loading it.
+      localStorage.removeItem("stip_action_center_prefs_v1:" + actionOwnerKey());
+    } catch {
+      state.dismissedNotifications = {};
+    }
+  }
+  function saveDismissedNotifications() {
+    try {
+      localStorage.setItem(
+        notificationDismissedKey(),
+        JSON.stringify(state.dismissedNotifications),
+      );
+    } catch {}
+  }
+  function actionNoteKey(n = {}) {
+    return String(
+      n.id ||
+        n.action_id ||
+        [n.source || "stip", n.title || "", n.body || ""].join(":"),
+    );
+  }
+  function refreshActionCenterUi() {
+    state.renderSig = "";
+    render();
+    if (
+      $("#hsPanel")?.classList.contains("open") &&
+      $("#hsPanelTitle")?.textContent === "À traiter"
+    )
+      renderActionCenter(state.actionFilter);
+  }
+  function dismissActionNote(n) {
+    state.dismissedNotifications[actionNoteKey(n)] = Date.now();
+    saveDismissedNotifications();
+    refreshActionCenterUi();
+  }
+  function noteCategory(n = {}) {
+    if (n.category) return n.category;
+    const s = `${n.title || ""} ${n.body || ""}`.toLowerCase();
+    if (/accès|acces|profil|session/.test(s)) return "access";
+    if (/signature|signer/.test(s)) return "signatures";
+    if (/rappel|échéance|echeance/.test(s)) return "reminders";
+    if (/planning|date|agenda|échange|echange/.test(s)) return "agenda";
+    return "other";
+  }
+  function notifications() {
+    const pendingActions = pending(),
+      byId = new Map(pendingActions.map((a) => [String(a.id), a])),
+      native = (state.home.notifications || [])
+        .filter((n) => !n.action_id || byId.has(String(n.action_id)))
+        .map((n) => {
+          const action = n.action_id ? byId.get(String(n.action_id)) : null,
+            merged = {
+              ...(action || {}),
+              ...n,
+              metadata: {
+                ...(action?.metadata || {}),
+                ...(n.metadata || {}),
+              },
+              created_at:
+                n.created_at ||
+                n.occurred_at ||
+                action?.created_at ||
+                action?.occurred_at ||
+                "",
+              updated_at: n.updated_at || action?.updated_at || "",
+              status: n.status || action?.status || "pending",
+              source: "stip",
+            };
+          merged.category = noteCategory(merged);
+          return merged;
+        }),
+      external = [...state.externalActions.values()].flat();
+    return [...native, ...external].filter(
+      (n) => !state.dismissedNotifications[actionNoteKey(n)],
+    );
+  }
+  function agentName(a = {}) {
+    return (
+      window.STIPName?.format?.(a) ||
+      [a.prenom, a.nom].filter(Boolean).join(" ") ||
+      "Agent"
+    );
+  }
+  function done(x) {
+    const s = String(x?.status || x?.statut || "").toLowerCase();
+    return !!(
+      x?.completed_at ||
+      x?.cancelled_at ||
+      x?.resolved_at ||
+      [
+        "done",
+        "termine",
+        "terminé",
+        "cancelled",
+        "annule",
+        "annulé",
+        "resolved",
+        "traite",
+        "traité",
+        "refused",
+        "refuse",
+        "refusé",
+        "rejected",
+      ].includes(s)
+    );
+  }
+  function shiftAsset(code) {
+    const s = state.boot?.media?.shifts || {},
+      k = String(code || "")
+        .trim()
+        .toUpperCase();
+    return s[k] || s[`${k}.PNG`] || s[`${k}.JPG`] || s[`${k}.JPEG`] || "";
+  }
+  function shiftDefinition(code) {
+    const registry = window.STIPShiftRegistry;
+    if (registry?.resolve) return registry.resolve(code);
+    const key = String(code || "").trim().toUpperCase().replace(/\*+$/, "");
+    return (state.boot?.shift_definitions || []).find(
+      (x) => String(x?.code || "").trim().toUpperCase() === key,
+    ) || null;
+  }
+  function shiftType(code) {
+    if (code === "—" || code === "-") return "none";
+    const def = shiftDefinition(code);
+    if (!def) return "other";
+    if (def.kind === "work") {
+      return ({ m: "morning", j: "day", j4: "late", s: "evening", n: "night" })[
+        String(def.family || "").toLowerCase()
+      ] || "other";
+    }
+    return ["rest", "leave", "training", "medical", "absence", "union"].includes(
+      String(def.kind || ""),
+    )
+      ? String(def.kind)
+      : "other";
+  }
+  function shiftMeta(code) {
+    const def = shiftDefinition(code);
+    return [
+      shiftType(code),
+      def?.label || (code === "—" ? "Aucun poste" : code),
+    ];
+  }
+  function shiftStatusIcon(code) {
+    const def = shiftDefinition(code);
+    return def && !def.is_working ? String(def.icon || "") : "";
+  }
+  function workShiftIcon(code) {
+    const def = shiftDefinition(code);
+    return def?.is_working ? String(def.icon || "") : "";
+  }
+  function canonicalShift(raw) {
+    if (window.STIPShiftRegistry?.baseCode)
+      return window.STIPShiftRegistry.baseCode(raw);
+    const src = String(raw || "")
+      .trim()
+      .toUpperCase()
+      .replace(/\*+$/, "");
+    if (!src) return "—";
+    if (/^J4\d+$/.test(src)) return "J4";
+    if (/^M\d+$/.test(src)) return "M";
+    if (/^J\d+$/.test(src)) return "J";
+    if (/^S\d+$/.test(src)) return "S";
+    if (/^N\d+$/.test(src)) return "N";
+    return src;
+  }
+  function shiftBadge(raw) {
+    const code = canonicalShift(raw),
+      meta = shiftMeta(code),
+      len = Math.min(Math.max(code.length, 1), 4);
+    return `<strong class="hc-shift-badge shift-${meta[0]} len-${len}" title="${esc(meta[1])}" aria-label="${esc(meta[1])}">${esc(code)}</strong>`;
+  }
+  function shiftTime(code, row = {}) {
+    const direct = String(
+      row?.horaire || row?.horaires || row?.shift_time || "",
+    ).trim();
+    if (direct) return direct;
+    const start = String(row?.start_time || "").slice(0, 5),
+      end = String(row?.end_time || "").slice(0, 5);
+    if (start || end) return [start, end].filter(Boolean).join("–");
+    return window.STIPShiftRegistry?.time?.(code) || "";
+  }
+  function weekTimeHtml(v) {
+    const parts = String(v || "").match(/\d{1,2}(?::|h)\d{2}/g) || [];
+    if (!parts.length) return "";
+    return parts
+      .slice(0, 2)
+      .map((t) => `<span>${esc(t.replace("h", ":"))}</span>`)
+      .join("");
+  }
+  function eventType(x = {}) {
+    const kind=String(x.event_kind||"").toLowerCase(),
+      kindLabel={rendezvous:"Rendez-vous",formation:"Formation",formateur:"Formateur",reunion:"Réunion",information:"Information",autre:"Événement"}[kind];
+    if(kindLabel)return kindLabel;
+    const raw = [x.kind, x.category, x.type, x.source_type]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    if (raw.includes("stagiaire")) return "Stagiaire";
+    if (raw.includes("formation")) return "Formation";
+    if (
+      raw.includes("réunion") ||
+      raw.includes("reunion") ||
+      raw.includes("meeting")
+    )
+      return "Réunion";
+    if (
+      raw.includes("mobi_lit_medical") ||
+      raw.includes("médical") ||
+      raw.includes("medical") ||
+      raw.includes("visite")
+    )
+      return "Visite médicale";
+    return (
+      String(x.kind || x.category || x.type || "Événement").trim() ||
+      "Événement"
+    );
+  }
+  function eventPlace(x = {}) {
+    return String(
+      x.lieu || x.location || x.place || x.room || x.service || "",
+    ).trim();
+  }
+  function agendaRange(start, days) {
+    const rows = state.boot?.personal || [],
+      today = parisIso(),
+      loading = state.bootStatus !== "ready" && !rows.length;
+    return Array.from({ length: days }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
+      const iso = parisIso(d),
+        r = rows.find((x) => x.date === iso),
+        code =
+          String(r?.code || r?.source_value || "")
+            .trim()
+            .toUpperCase() || (loading ? "…" : "—");
+      return {
+        d,
+        iso,
+        dow: d.getDay() || 7,
+        today: iso === today,
+        code,
+        time: shiftTime(code, r),
+        row: r || null,
+      };
+    });
+  }
+  function agendaFromToday(days) {
+    return agendaRange(dateObj(parisIso()), days);
+  }
+  function navigationWeek() {
+    const engine = window.STIPWeekEngine,
+      dates = engine?.fullDates?.(sharedWeekState(), { today: parisIso() });
+    if (Array.isArray(dates) && dates.length)
+      return dates.map((iso) => agendaRange(dateObj(iso), 1)[0]);
+    const today = dateObj(parisIso()),
+      dow = today.getDay() || 7,
+      monday = new Date(today);
+    monday.setDate(today.getDate() - (dow - 1) + state.weekOffset * 7);
+    return agendaRange(monday, 7);
+  }
+  function selectedWeek() {
+    const engine = window.STIPWeekEngine,
+      dates = engine?.visibleDates?.(sharedWeekState(), { today: parisIso() });
+    if (Array.isArray(dates) && dates.length)
+      return dates.map((iso) => agendaRange(dateObj(iso), 1)[0]);
+    const today = dateObj(parisIso()),
+      dow = today.getDay() || 7,
+      monday = new Date(today);
+    monday.setDate(today.getDate() - (dow - 1) + state.weekOffset * 7);
+    if (state.weekOffset === 0) {
+      if (state.weekPast) {
+        const pastCount = Math.max(0, dow - 1);
+        return pastCount ? agendaRange(monday, pastCount) : agendaRange(today, 8 - dow);
+      }
+      return agendaRange(today, 8 - dow);
+    }
+    return agendaRange(monday, 7);
+  }
+  function moveWeek(step) {
+    step = Math.sign(Number(step) || 0);
+    if (!step) return;
+
+    const anchor =
+        document.querySelector(".hc-planning-week-subblock") ||
+        document.querySelector(".hc-planning-week-separator"),
+      anchorTop = anchor?.getBoundingClientRect?.().top,
+      today = dateObj(parisIso()),
+      todayIso = parisIso(),
+      dow = today.getDay() || 7;
+
+    const shared = window.STIPWeekEngine?.move?.(
+      sharedWeekState(),
+      step,
+      { today: parisIso() },
+    );
+    if (shared) {
+      applySharedWeekState(shared);
+    } else {
+      const today = dateObj(parisIso()),
+        dow = today.getDay() || 7;
+      if (state.weekOffset === 0 && step < 0 && !state.weekPast && dow > 1) {
+        state.weekPast = true;
+        state.weekFull = false;
+      } else if (state.weekOffset === 0 && step > 0 && state.weekPast) {
+        state.weekPast = false;
+        state.weekFull = false;
+      } else {
+        state.weekOffset += step;
+        state.weekPast = false;
+        state.weekFull = state.weekOffset !== 0;
+      }
+      state.dayFocus = "";
+    }
+
+    const navWeek = navigationWeek();
+
+    // Une navigation de semaine sélectionne toujours le premier jour visible.
+    // Sur une semaine complète, cela correspond au lundi.
+    state.dayFocus = navWeek[0]?.iso || parisIso();
+
+    state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
+    state.renderSig = "";
+    render();
+
+    if (Number.isFinite(anchorTop))
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          const next =
+            document.querySelector(".hc-planning-week-subblock") ||
+            document.querySelector(".hc-planning-week-separator");
+          if (!next) return;
+          const delta = next.getBoundingClientRect().top - anchorTop;
+          if (Math.abs(delta) > 1) window.scrollBy({ top: delta, behavior: "auto" });
+        }),
+      );
+  }
+  function dayCard(x, cls = "stip-week-day", compact = false) {
+    const canonical = canonicalShift(x.code),
+      pending = !canonical || canonical === "—",
+      code = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+      weekend = x.dow > 5,
+      dayFull = x.d
+        .toLocaleDateString("fr-FR", { weekday: "long" })
+        .replace(".", "")
+        .toUpperCase(),
+      landscape = cls.includes("stip-week-day"),
+      day = landscape ? dayFull.slice(0, 2) : weekend ? dayFull.slice(0, 1) : dayFull.slice(0, 3),
+      loading = x.code === "…",
+      statusIcon = shiftStatusIcon(canonical),
+      shiftLabel = shiftMeta(canonical)[1] || canonical,
+      workIcon = workShiftIcon(canonical),
+      workLabel = landscape && workShiftIcon(canonical) ? canonical : weekend && workShiftIcon(canonical) ? canonical : shiftLabel,
+      normalVisual = loading
+        ? '<strong class="hc-shift-loading">…</strong>'
+        : pending
+          ? '<span class="hc-pending-line" aria-label="En attente du nouveau planning"><span class="hc-pending-icon" aria-hidden="true">🚫</span></span>'
+          : statusIcon
+            ? `<span class="hc-rest-line"><span class="hc-status-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span><strong class="hc-status-code">${esc(canonical)}</strong></span>`
+            : workIcon
+              ? `<span class="hc-work-line" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}"><span class="hc-work-icon" aria-hidden="true">${workIcon}</span><strong class="hc-shift-name">${esc(workLabel)}</strong></span>`
+              : `<strong class="hc-shift-name" title="${esc(shiftLabel)}" aria-label="${esc(shiftLabel)}">${esc(shiftLabel)}</strong>`,
+      landscapeMain = loading
+        ? '<span class="hc-shift-main stip-week-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb stip-week-main-icon"></span></span>'
+        : pending
+          ? '<span class="hc-shift-main stip-week-main"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
+          : statusIcon
+            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusIcon}</span></span>`
+            : workIcon
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workIcon}</span></span>`
+              : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
+      landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
+      hasSupplements = landscape && weekEventsForDay(x).length > 0,
+      selected=landscape&&x.iso===state.dayFocus,
+      tag=landscape?"button":"span",
+      attrs=landscape
+        ? ` type="button" data-home-day="${esc(x.iso)}" aria-pressed="${selected}"${loading ? ' disabled aria-disabled="true"' : ""}`
+        : "",
+      visual=landscape
+        ? loading
+          ? `<span class="hc-shift-core stip-week-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot stip-week-events hc-loading-event-slot is-empty" aria-hidden="true"></span>`
+          : `<span class="hc-shift-core stip-week-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
+        : normalVisual;
+    return `<${tag}${attrs} class="${cls} ${landscape ? "stip-week-personal-layout" : ""} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
+  }
+  function weekEventsForDay(x) {
+    const iso = String(x?.iso || "");
+    if (!iso) return [];
+    return futureItems().filter((event) => {
+      const start = String(event.date || "").slice(0, 10),
+        end = String(event.endDate || event.end_date || event.date || "").slice(0, 10);
+      return start <= iso && end >= iso;
+    });
+  }
+  function weekEventBadges(x) {
+    const events = weekEventsForDay(x).slice(0, 2);
+    if (!events.length)
+      return '<span class="hc-week-events-slot stip-week-events is-empty" aria-hidden="true"></span>';
+    return `<span class="hc-week-events-slot stip-week-events has-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
+      .map((event) => {
+        const kind = futureTypeKey(event),
+          title = event.title || event.type || "Événement";
+        return `<i class="hc-week-event-chip stip-week-event type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${event.icon || "•"}</i>`;
+      })
+      .join("")}</span>`;
+  }
+  function weekDisplayModel(w = selectedWeek()) {
+    const shared = window.STIPWeekEngine?.display?.(sharedWeekState(), {
+        today: parisIso(),
+      }),
+      nextMonday = shared?.nextMonday
+        ? agendaRange(dateObj(shared.nextMonday), 1)[0]
+        : null;
+    if (shared)
+      return {
+        weekDays: w,
+        nextMonday,
+        visualDays: nextMonday ? [...w, nextMonday] : w,
+        slotCount: shared.slotCount,
+      };
+    // Dégradation sûre uniquement: si le moteur maître manque, ne pas recréer
+    // une deuxième logique calendrier susceptible de diverger.
+    return {
+      weekDays: w,
+      nextMonday: null,
+      visualDays: w,
+      slotCount: Math.max(1, w.length),
+    };
+  }
+  function weekDaysLandscape(w) {
+    const model = weekDisplayModel(w),
+      { nextMonday, slotCount } = model,
+      bridge = nextMonday
+        ? '<span class="hc-next-monday-bridge" aria-hidden="true"><span class="hc-next-monday-word">LUNDI</span><span class="hc-next-monday-arrow">→</span></span>'
+        : "";
+    return `<div class="stip-week-line stip-week-personal-line ${nextMonday ? "has-next-monday" : ""}" style="--stip-week-columns:${slotCount};--week-card-h:var(--stip-week-card-h)">${w.map((x) => dayCard(x, "stip-week-day", true)).join("")}${bridge}${nextMonday ? dayCard(nextMonday, "stip-week-day hc-day-next-monday", true) : ""}</div>`;
+  }
+  function planningStatus() {
+    if (planningLoading()) {
+      const title = state.planningSlow
+          ? "Synchronisation en cours…"
+          : "Chargement de votre planning…",
+        detail = state.planningSlow
+          ? "Encore quelques secondes. Le planning reste verrouillé."
+          : "Les jours s’activent dès que vos shifts sont prêts.";
+      return `<div class="hc-planning-loading-banner" role="status" aria-live="polite"><span class="hc-planning-loader" aria-hidden="true"></span><span><strong>${esc(title)}</strong><small>${esc(detail)}</small></span></div>`;
+    }
+    if (state.bootStatus === "error")
+      return `<div class="hc-planning-status error"><span>Planning non chargé.</span><button type="button" data-planning-retry>Réessayer</button></div>`;
+    return "";
+  }
+  function homeDayStrip(w = navigationWeek()) {
+    const today = parisIso(),
+      selected = w.some((x) => x.iso === state.dayFocus)
+        ? state.dayFocus
+        : w.some((x) => x.iso === today)
+          ? today
+          : w[0]?.iso || "";
+    return `<nav class="hc-home-week-days stip-time-days" aria-label="Jours de la semaine">${w
+      .map((x) => {
+        const label = x.d
+            .toLocaleDateString("fr-FR", { weekday: "short" })
+            .replace(".", "")
+            .toUpperCase(),
+          canonical = canonicalShift(x.code),
+          codeKey =
+            canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+          shiftLabel = shiftMeta(canonical)[1] || canonical || "",
+          events = weekEventsForDay(x).slice(0, 2),
+          eventMarks = events.length
+            ? `<span class="hc-home-day-events" aria-hidden="true">${events
+                .map((event) => `<i>${event.icon || "•"}</i>`)
+                .join("")}</span>`
+            : "",
+          shiftBadge =
+            canonical && canonical !== "—"
+              ? `<span class="hc-home-day-shift code-${esc(codeKey)}" title="${esc(shiftLabel)}">${esc(canonical)}</span>`
+              : "";
+        return `<button type="button" data-home-day="${esc(x.iso)}" class="${[
+          x.iso === today ? "today" : "",
+          x.iso === selected ? "selected" : "",
+          `code-${codeKey}`,
+        ]
+          .filter(Boolean)
+          .join(" ")}" aria-pressed="${x.iso === selected}" aria-label="${esc(
+            `${label} ${x.d.getDate()}${shiftLabel ? `, ${shiftLabel}` : ""}`,
+          )}">${eventMarks}<small>${esc(label)}</small><b>${x.d.getDate()}</b>${shiftBadge}</button>`;
+      })
+      .join("")}</nav>`;
+  }
+  function planningWeekSeparator() {
+    const w = navigationWeek(),
+      label =
+        window.STIPWeekEngine?.separatorLabel?.(sharedWeekState(), {
+          today: parisIso(),
+        }) ||
+        (state.weekOffset === 0
+          ? state.weekPast
+            ? "DÉBUT DE SEMAINE"
+            : "CETTE SEMAINE"
+          : state.weekOffset === 1
+            ? "SEMAINE PROCHAINE"
+            : state.weekOffset === -1
+              ? "SEMAINE PRÉCÉDENTE"
+              : `SEMAINE ${weekNo(w[0].d)}`);
+    return `<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
+  }
+
+  function planningMonthTitle() {
+    const w = navigationWeek(),
+      mi = weekMonthInfo(w),
+      returnToCurrentWeek =
+        state.weekOffset !== 0
+          ? '<button type="button" class="hc-week-today hc-week-return-current" data-week-today>Revenir à cette semaine</button>'
+          : "";
+    return `<header class="hc-planning-primary-head"><div class="hc-week-nav hc-week-nav-global hc-week-nav-hero"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><div class="hc-week-context"><small class="hc-week-hero-kicker">PLANNING · ${esc(mi.heading)} ${esc(mi.yearLabel)}</small><strong>${esc(weekRangeLabel(w))}</strong><span>SEMAINE ${weekNo(w[0].d)}</span></div><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${homeDayStrip(w)}${returnToCurrentWeek}</header>`;
+  }
+  function planningCalendarOverview() {
+    const w = navigationWeek(),
+      calendarKey = state.dateJumpMonth || monthKeyOf(w[0]?.d || dateObj(parisIso()));
+    return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent stip-month-calendar" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
+  }
+  function weekWidget() {
+    const w = selectedWeek(),
+      loading = planningLoading(),
+      range = weekRangeLabel(w);
+    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
+  }
+  function nativeFuture() {
+    const b = state.boot || {},
+      o = [];
+    (b.agenda_items || [])
+      .filter((x) => !done(x) && String(x.event_date || "") >= parisIso())
+      .forEach((x) => {
+        const time = x.all_day
+            ? "Toute la journée"
+            : [
+                String(x.start_time || "").slice(0, 5),
+                String(x.end_time || "").slice(0, 5),
+              ]
+                .filter(Boolean)
+                .join("–"),
+          place = eventPlace(x);
+        o.push({
+          id: `agenda:${x.id || x.event_date}`,
+          date: String(x.event_date || "").slice(0, 10),
+          endDate: String(x.event_date || "").slice(0, 10),
+          icon:
+            String(x.icon || "").trim() ||
+            (x.source_type === "mobi_lit_medical"
+              ? "🩺"
+              : x.importance === "urgent"
+                ? "⚠️"
+                : x.importance === "important"
+                  ? "❗"
+                  : "📌"),
+          type: eventType(x),
+          title: x.title || "Événement",
+          time,
+          place,
+          sub: [time, place].filter(Boolean).join(" · "),
+        });
+      });
+    (b.personal_formations || [])
+      .filter(
+        (x) =>
+          !done(x) && String(x.date_fin || x.date_debut || "") >= parisIso(),
+      )
+      .forEach((x) => {
+        const time = String(x.horaire || "").trim(),
+          place = eventPlace(x);
+        o.push({
+          id: `formation:${x.id || x.source_key || x.date_debut}`,
+          date: String(x.date_debut || "").slice(0, 10),
+          endDate: String(x.date_fin || x.date_debut || "").slice(0, 10),
+          icon: "🎓",
+          type: "Formation",
+          title: x.intitule || "Formation",
+          time,
+          place,
+          sub: [time, place].filter(Boolean).join(" · "),
+        });
+      });
+    (b.personal_stagiaires || [])
+      .filter(
+        (x) =>
+          !done(x) && String(x.date_fin || x.date_debut || "") >= parisIso(),
+      )
+      .forEach((x) => {
+        const time = String(x.horaires || "").trim(),
+          place = eventPlace(x);
+        o.push({
+          id: `stagiaire:${x.id || x.source_key || x.date_debut}`,
+          date: String(x.date_debut || "").slice(0, 10),
+          endDate: String(x.date_fin || x.date_debut || "").slice(0, 10),
+          icon: "👶",
+          type: "Stagiaire",
+          title: [x.prenom, x.nom].filter(Boolean).join(" ") || "Stagiaire",
+          time,
+          place,
+          relation: "Référent : vous",
+          sub: [time, place].filter(Boolean).join(" · "),
+        });
+      });
+    return o;
+  }
+  function futureItems() {
+    const all = [...nativeFuture(), ...state.future.values()].filter(
+        (x) =>
+          !done(x) &&
+          String(x.endDate || x.end_date || x.date || "") >= parisIso(),
+      ),
+      m = new Map();
+    all.forEach((x) => {
+      const id = String(
+          x.id || `${x.type || "item"}:${x.date || ""}:${x.title}`,
+        ),
+        old = m.get(id);
+      if (!old || Number(x.priority || 0) > Number(old.priority || 0))
+        m.set(id, { ...x, id, endDate: x.endDate || x.end_date || x.date });
+    });
+    return [...m.values()].sort(
+      (a, b) =>
+        String(a.date).localeCompare(String(b.date)) ||
+        String(a.title).localeCompare(String(b.title), "fr"),
+    );
+  }
+  function fmtDateRange(x) {
+    const a = dateObj(x.date),
+      z = dateObj(x.endDate || x.date),
+      f = (d) =>
+        d
+          .toLocaleDateString("fr-FR", {
+            weekday: "short",
+            day: "numeric",
+            month: "short",
+          })
+          .replace(/\./g, "");
+    return x.endDate && x.endDate !== x.date ? `${f(a)} → ${f(z)}` : f(a);
+  }
+  function futureTypeKey(x = {}) {
+    const t = String(x.type || "").toLowerCase();
+    if (t.includes("visite") || t.includes("médical") || t.includes("medical"))
+      return "medical";
+    if (t.includes("stagiaire")) return "intern";
+    if (t.includes("formation")) return "training";
+    return "other";
+  }
+  function futureTypeLabel(k) {
+    return (
+      {
+        all: "Toutes les dates",
+        medical: "Visites médicales",
+        intern: "Stagiaires",
+        training: "Formations",
+        other: "Autres",
+      }[k] || "Toutes les dates"
+    );
+  }
+  function monthTitle(iso) {
+    return dateObj(iso)
+      .toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+      .replace(/^./, (c) => c.toUpperCase());
+  }
+  function dayDelta(iso) {
+    return Math.round((dateObj(iso) - dateObj(parisIso())) / 86400000);
+  }
+  function nextLabel(iso) {
+    const d = dayDelta(iso);
+    if (d === 0) return "Aujourd’hui";
+    if (d === 1) return "Demain";
+    if (d === 2) return "Après-demain";
+    if (d > 2 && d < 7) return `Dans ${d} jours`;
+    return fmtDateRange({ date: iso, endDate: iso });
+  }
+  function planningDaySeparatorLabel(iso) {
+    const d = dayDelta(iso);
+    if (d === 0) return "Aujourd’hui";
+    if (d === 1) return "Demain";
+    if (d === 2) return "Après-demain";
+    if (d > 2) return `Dans ${d} jours`;
+    return fmtDateRange({ date: iso, endDate: iso });
+  }
+  function todayFullDateSeparator() {
+    const date = dateObj(parisIso()),
+      formatter = new Intl.DateTimeFormat("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }),
+      parts = Object.fromEntries(
+        formatter
+          .formatToParts(date)
+          .filter((part) => part.type !== "literal")
+          .map((part) => [part.type, part.value]),
+      ),
+      raw = formatter.format(date),
+      weekday = String(parts.weekday || "").toUpperCase(),
+      day = String(parts.day || ""),
+      month = String(parts.month || "").toUpperCase();
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div>`;
+  }
+  function renderFutureHub(active = "all", focusId = "") {
+    const body = $("#hsPanelBody");
+    if (!body) return;
+    const all = futureItems(),
+      filtered =
+        active === "all" ? all : all.filter((x) => futureTypeKey(x) === active),
+      next = filtered[0] || null,
+      monthCount = filtered.filter(
+        (x) => String(x.date || "").slice(0, 7) === parisIso().slice(0, 7),
+      ).length,
+      weekCount = filtered.filter((x) => {
+        const d = dayDelta(x.date);
+        return d >= 0 && d < 7;
+      }).length,
+      tabs = [
+        ["all", "Tout"],
+        ["medical", "Visites"],
+        ["intern", "Stagiaires"],
+        ["training", "Formations"],
+      ],
+      days = Array.from({ length: 21 }, (_, i) => {
+        const d = dateObj(parisIso());
+        d.setDate(d.getDate() + i);
+        const iso = parisIso(d),
+          hasEvent = filtered.some(
+            (x) => String(x.date || "").slice(0, 10) === iso,
+          ),
+          isToday = i === 0;
+        return `<span class="hc-agenda-day ${hasEvent ? "has-event" : ""} ${isToday ? "today" : ""}"><small>${esc(d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase())}</small><b>${d.getDate()}</b>${hasEvent ? "<i></i>" : ""}</span>`;
+      }).join(""),
+      groups = new Map();
+    filtered.forEach((x) => {
+      const k = String(x.date || "").slice(0, 7);
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k).push(x);
+    });
+    const timeline = [...groups.entries()]
+      .map(
+        ([k, items]) =>
+          `<section class="hc-agenda-month"><h4>${esc(monthTitle(items[0].date))}</h4><div>${items
+            .map((x) => {
+              const key = futureTypeKey(x),
+                time = String(x.time || "").trim(),
+                place = String(x.place || "").trim(),
+                isFocus = String(x.id) === String(focusId);
+              return `<article class="hc-agenda-item ${isFocus ? "is-focus" : ""}" data-agenda-id="${esc(x.id)}"><div class="hc-agenda-date"><b>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { day: "2-digit" }))}</b><small>${esc(dateObj(x.date).toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase())}</small></div><i class="hc-agenda-icon type-${key}">${x.icon || "•"}</i><div class="hc-agenda-copy"><span class="hc-agenda-item-top"><small>${esc((x.type || "Événement").toUpperCase())}</small><em>${esc(nextLabel(x.date))}</em></span><strong>${esc(x.title)}</strong><p>${esc([time, place].filter(Boolean).join(" · ") || x.sub || "")}</p></div></article>`;
+            })
+            .join("")}</div></section>`,
+      )
+      .join("");
+    body.innerHTML = `<section class="hc-agenda-hub"><div class="hc-agenda-hero"><small>AGENDA</small><h3>${esc(futureTypeLabel(active))}</h3>${next ? `<p><b>${esc(nextLabel(next.date))}</b> · ${esc(next.title)}</p>` : "<p>Aucune date à venir dans cette catégorie.</p>"}<div class="hc-agenda-stats"><span><b>${filtered.length}</b><small>à venir</small></span><span><b>${weekCount}</b><small>cette semaine</small></span><span><b>${monthCount}</b><small>ce mois</small></span></div></div><nav class="hc-agenda-tabs" aria-label="Filtrer l’agenda">${tabs.map(([k, l]) => `<button type="button" data-agenda-filter="${k}" class="${active === k ? "active" : ""}">${l}<b>${k === "all" ? all.length : all.filter((x) => futureTypeKey(x) === k).length}</b></button>`).join("")}</nav><div class="hc-agenda-strip" aria-label="21 prochains jours">${days}</div><div class="hc-agenda-timeline">${timeline || '<div class="hc-agenda-empty">Rien à afficher pour le moment.</div>'}</div></section>`;
+    body.querySelectorAll("[data-agenda-filter]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const k = b.dataset.agendaFilter || "all";
+          if ($("#hsPanelTitle"))
+            $("#hsPanelTitle").textContent = futureTypeLabel(k);
+          renderFutureHub(k, "");
+        }),
+    );
+    if (focusId)
+      requestAnimationFrame(() =>
+        body
+          .querySelector(`[data-agenda-id="${CSS.escape(String(focusId))}"]`)
+          ?.scrollIntoView({ block: "center", behavior: "smooth" }),
+      );
+  }
+  function futureWidget() {
+    const w = selectedWeek(),
+      weekStart = w[0]?.iso || "",
+      weekEnd = w[w.length - 1]?.iso || "",
+      items = futureItems().filter((x) => {
+        const start = String(x.date || "").slice(0, 10),
+          end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+        return start <= weekEnd && end >= weekStart;
+      }),
+      rows = [];
+    items.slice(0, 3).forEach((x) => {
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10),
+        time = String(x.time || "").trim(),
+        place = String(x.place || "").trim();
+      w.forEach((day) => {
+        if (day.iso < start || day.iso > end) return;
+        rows.push({ event: x, day, time, place });
+      });
+    });
+    if (!rows.length) return "";
+
+    rows.sort((a, b) =>
+      a.day.iso.localeCompare(b.day.iso) ||
+      String(a.event?.title || "").localeCompare(String(b.event?.title || ""), "fr"),
+    );
+
+    const groups = [];
+    rows.forEach((row) => {
+      let group = groups[groups.length - 1];
+      if (!group || group.iso !== row.day.iso) {
+        group = { iso: row.day.iso, rows: [] };
+        groups.push(group);
+      }
+      group.rows.push(row);
+    });
+
+    const content = groups.map((group) => {
+      const label = planningDaySeparatorLabel(group.iso),
+        buttons = group.rows.map(({ event:x, day, time, place }) => {
+          const dayLabel = day.d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }).replace(".", ""),
+            kind = futureTypeKey(x);
+          return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
+        }).join("");
+      return `<div class="hc-week-event-date-group"><div class="hc-planning-period-separator hc-week-event-date-separator stip-section-separator is-compact"><span>${esc(label)}</span></div>${buttons}</div>`;
+    }).join("");
+
+    return `<section class="hc-widget hc-widget-future hc-week-event-key" data-widget="future"><div class="hc-week-event-key-list">${content}</div></section>`;
+  }
+  function monthEventsWidget() {
+    const key =
+        state.dateJumpMonth ||
+        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      [year, month] = key.split("-").map(Number),
+      first = new Date(year, month - 1, 1, 12),
+      last = new Date(year, month, 0, 12),
+      monthStart = dateIsoLocal(first),
+      monthEnd = dateIsoLocal(last),
+      rows = [];
+
+    futureItems().forEach((x) => {
+      const start = String(x.date || "").slice(0, 10),
+        end = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+      if (!start || start > monthEnd || end < monthStart) return;
+
+      const from = dateObj(start < monthStart ? monthStart : start),
+        to = dateObj(end > monthEnd ? monthEnd : end);
+      for (let d = new Date(from); d <= to; d.setDate(d.getDate() + 1)) {
+        rows.push({
+          event: x,
+          iso: dateIsoLocal(d),
+          d: new Date(d),
+        });
+      }
+    });
+
+    if (!rows.length) return "";
+    rows.sort(
+      (a, b) =>
+        a.iso.localeCompare(b.iso) ||
+        String(a.event?.title || "").localeCompare(
+          String(b.event?.title || ""),
+          "fr",
+        ),
+    );
+
+    const buttons = rows
+      .map(({ event: x, d }) => {
+        const kind = futureTypeKey(x),
+          time = String(x.time || "").trim(),
+          place = String(x.place || "").trim(),
+          dayLabel = d
+            .toLocaleDateString("fr-FR", {
+              weekday: "short",
+              day: "numeric",
+              month: "short",
+            })
+            .replace(".", "");
+        return `<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-${esc(kind)}" data-widget-open="future" data-future-id="${esc(x.id)}"><span class="hc-week-event-key-icon" aria-hidden="true">${x.icon || "•"}</span><span class="hc-week-event-copy"><strong>${esc(x.title)}</strong><span class="hc-week-event-when"><b class="hc-week-event-date">${esc(dayLabel)}</b>${time ? `<b class="hc-week-event-time">${esc(time)}</b>` : ""}${x.relation ? `<b class="hc-week-event-relation">${esc(x.relation)}</b>` : ""}${place ? `<span class="hc-week-event-place">${esc(place)}</span>` : ""}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
+      })
+      .join("");
+
+    return `<section class="hc-widget hc-widget-future hc-week-event-key hc-month-event-key" data-widget="future"><div class="hc-week-event-key-list">${buttons}</div></section>`;
+  }
+  function planningMonthEventsSeparator() {
+    const key =
+        state.dateJumpMonth ||
+        navigationWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      label =
+        key === parisIso().slice(0, 7)
+          ? "CE MOIS-CI"
+          : monthTitle(`${key}-01`).toUpperCase();
+    return `<div class="hc-planning-period-separator hc-planning-month-events-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
+  }
+
+  function legendEventDescriptor(event = {}) {
+    const icon = String(event.icon || "•").trim() || "•",
+      type = eventType(event);
+    if (icon === "🩺" || type === "Visite médicale")
+      return { icon: "🩺", label: "Visite médicale" };
+    if (icon === "👶" || type === "Stagiaire")
+      return { icon: "👶", label: "Stagiaire" };
+    if (icon === "🎓" || type === "Formation")
+      return { icon: "🎓", label: "Formation" };
+    if (icon === "⚠️" && type === "Événement")
+      return { icon, label: "Urgent" };
+    if (icon === "❗" && type === "Événement")
+      return { icon, label: "Important" };
+    if (icon === "📌" && type === "Événement")
+      return { icon, label: "Événement" };
+    return { icon, label: type || "Événement" };
+  }
+  function fixedShiftLegend() {
+    const key =
+        state.dateJumpMonth ||
+        selectedWeek()[0]?.iso?.slice(0, 7) ||
+        parisIso().slice(0, 7),
+      [year, month] = key.split("-").map(Number),
+      last = new Date(year, month, 0, 12).getDate(),
+      weekModel = weekDisplayModel(selectedWeek()),
+      visibleDates = new Set(),
+      items = [],
+      seen = new Set(),
+      add = (id, iconHtml, label, meta = "") => {
+        if (!id || seen.has(id)) return;
+        seen.add(id);
+        items.push(
+          `<button type="button" class="stip-legend-item" data-stip-legend-key="${esc(id)}" aria-pressed="false"><span class="stip-legend-icon" aria-hidden="true">${iconHtml}</span><span class="stip-legend-bullet" aria-hidden="true">•</span><b>${esc(label)}</b>${meta ? `<small>${esc(meta)}</small>` : ""}</button>`,
+        );
+      },
+      addEvent = (event) => {
+        const descriptor = legendEventDescriptor(event);
+        add(
+          "event:" + descriptor.icon + "|" + descriptor.label,
+          esc(descriptor.icon),
+          descriptor.label,
+        );
+      },
+      addEventIcon = (icon) => {
+        const label =
+          {
+            "🩺": "Visite médicale",
+            "👶": "Stagiaire",
+            "🎓": "Formation",
+            "⚠️": "Urgent",
+            "❗": "Important",
+            "📌": "Événement",
+          }[icon] || "Événement";
+        add("event:" + icon + "|" + label, esc(icon), label);
+      };
+
+    for (let day = 1; day <= last; day++)
+      visibleDates.add(key + "-" + String(day).padStart(2, "0"));
+    weekModel.visualDays.forEach((day) => {
+      if (day?.iso) visibleDates.add(day.iso);
+    });
+
+    for (const iso of visibleDates) {
+      const shift = calendarShiftForDate(iso);
+      if (shift?.code && shift.code !== "—") {
+        const code = shift.code,
+          def = shiftDefinition(code);
+        if (def?.is_working) {
+          const family = String(def.family || "other").toLowerCase(),
+            dot = `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`;
+          add(
+            "shift:" + code,
+            dot,
+            def.label || code,
+            shiftTime(code),
+          );
+        } else {
+          const label = def?.label || shift.label || code,
+            symbol = String(def?.icon || shift.icon || "•");
+          add("status:" + code, esc(symbol), `${code} — ${label}`);
+        }
+      }
+      calendarEventIcons(iso).forEach(addEventIcon);
+    }
+
+    // The week detail and month detail can expose more event symbols than the
+    // compact calendar cells; include those too so the page legend is complete.
+    const weekDaysNow = weekModel.visualDays.filter((day) => day?.iso),
+      weekStart = weekDaysNow[0]?.iso || "",
+      weekEnd = weekDaysNow.at(-1)?.iso || "";
+    // Keep the legend on the same event source as the month/week widgets.
+    // monthTimelineItems() was removed when the month view was simplified;
+    // filtering futureItems() here prevents the home/Profile render from crashing.
+    const monthStart = `${key}-01`,
+      monthEnd = `${key}-${String(last).padStart(2, "0")}`;
+    futureItems()
+      .filter((event) => {
+        const start = String(event.date || "").slice(0, 10),
+          end = String(
+            event.endDate || event.end_date || event.date || "",
+          ).slice(0, 10);
+        return !!start && start <= monthEnd && end >= monthStart;
+      })
+      .forEach(addEvent);
+    if (weekStart && weekEnd)
+      futureItems()
+        .filter((event) => {
+          const start = String(event.date || "").slice(0, 10),
+            end = String(
+              event.endDate || event.end_date || event.date || "",
+            ).slice(0, 10);
+          return !!start && start <= weekEnd && end >= weekStart;
+        })
+        .forEach(addEvent);
+
+    const visibleWeekHasPending = weekModel.visualDays.some((day) => {
+      const shift = calendarShiftForDate(day?.iso || "");
+      return !shift?.code || shift.code === "—";
+    });
+    if (visibleWeekHasPending)
+      add("planning:pending", "🚫", "Planning non renseigné");
+
+    if (!items.length) return "";
+    return `<section class="hc-fixed-shift-legend stip-legend" aria-label="Légende des repères de la page"><div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${items.join("")}</div></div></section>`;
+  }
+
+  function nativeExchanges() {
+    const b = state.boot || {},
+      src = [
+        ...(b.change_requests || []),
+        ...(b.home?.change_requests || []),
+        ...(b.exchanges || []),
+      ];
+    return src
+      .filter((x) => !done(x))
+      .map((x) => ({
+        id: `exchange:${x.id || x.request_id || x.date || x.shift_date || "pending"}`,
+        icon: "⇄",
+        title: x.title || x.label || "Changement de planning",
+        sub:
+          x.summary ||
+          x.description ||
+          [x.from_shift, x.to_shift].filter(Boolean).join(" → ") ||
+          "Demande en cours",
+        date: x.date || x.shift_date || "",
+        priority: 50,
+      }));
+  }
+  function exchangeItems() {
+    const m = new Map();
+    [...nativeExchanges(), ...state.exchanges.values()]
+      .filter((x) => !done(x))
+      .forEach((x) => {
+        const id = String(x.id || `${x.date}:${x.title}`),
+          old = m.get(id);
+        if (!old || Number(x.priority || 0) > Number(old.priority || 0))
+          m.set(id, { ...x, id });
+      });
+    return [...m.values()].sort(
+      (a, b) => Number(b.priority || 0) - Number(a.priority || 0),
+    );
+  }
+  function exchangeWidget() {
+    const a = exchangeItems();
+    if (!a.length) return "";
+    const x = a[0];
+    return `<section class="hc-widget hc-widget-alert" data-widget="exchange"><header class="hc-widget-head hc-widget-head-compact"><div><small>PLANNING</small><h2>Échanges & changements</h2></div><button type="button" data-widget-open="exchange">${a.length} ›</button></header><button class="hc-live-row" type="button" data-widget-open="exchange"><i>⇄</i><span><strong>${esc(x.title)}</strong><em>${esc(x.sub || "À consulter")}</em></span><b>›</b></button></section>`;
+  }
+  function genericWidgets() {
+    return [...state.widgets.values()]
+      .sort((a, b) => Number(b.priority || 0) - Number(a.priority || 0))
+      .map(
+        (x) =>
+          `<section class="hc-widget hc-widget-generic"><header class="hc-widget-head hc-widget-head-compact"><div><small>${esc(x.kicker || "INFO")}</small><h2>${esc(x.title || "À retenir")}</h2></div>${x.count != null ? `<b>${esc(x.count)}</b>` : ""}</header>${x.body ? `<p class="hc-widget-text">${esc(x.body)}</p>` : ""}</section>`,
+      )
+      .join("");
+  }
+  function profile() {
+    const a = state.boot?.agent || state.session?.agent || {},
+      media = state.boot?.media || {},
+      avatar = a.profile_photo_url || media.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "",
+      ghe = String(a.ghe || "").trim(),
+      tel = String(a.telephone || "").trim(),
+      mail = String(a.email || a.email_pro || "").trim(),
+      matricule = String(a.matricule || "").trim(),
+      prenom = cap(String(a.prenom || "").trim()),
+      nomRaw = String(a.nom || "").trim().toLowerCase(),
+      nom = nomRaw ? cap(nomRaw) : "",
+      isTrainee = String(state.session?.role_key || window.STIPSession?.role_key || "") === "stagiaire",
+      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
+      gheLabel = ghe
+        ? ghe.toUpperCase().startsWith("GHE")
+          ? ghe.toUpperCase()
+          : `GHE ${ghe}`
+        : "";
+    return `<section class="hc-profile-section" aria-label="Carte STIP">
+      <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
+      <section class="hc-profile hc-profile-full hc-id-card">
+        <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
+        <div class="hc-profile-copy">
+          <div class="hc-profile-name-line">
+            ${prenom ? `<strong class="hc-profile-firstname">${esc(prenom)}</strong>` : ""}
+            ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
+          </div>
+          ${matricule ? `<span class="hc-profile-matricule">Matricule <strong>${esc(matricule)}</strong></span>` : ""}
+          ${isTrainee ? '<span class="hc-profile-matricule">Session <strong>Stagiaire</strong></span><button type="button" class="hc-trainee-change" data-trainee-session-change>Changer de stagiaire</button>' : ""}
+          ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
+          <span class="hc-profile-breath" aria-hidden="true"></span>
+          ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
+        </div>
+        ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
+      </section>
+    </section>`;
+  }
+  function pilotageRoleKey() {
+    const raw = String(
+      state.session?.role_key ||
+        window.STIPSession?.role_key ||
+        state.boot?.role_key ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
+    if (raw === "chef_equipe") return "responsable";
+    if (raw === "brancardier") return "agent";
+    if (raw === "stagiaire") return "stagiaire";
+    if (["admin", "cadre", "responsable", "agent", "stagiaire", "visiteur"].includes(raw))
+      return raw;
+    if (has("admin")) return "admin";
+    if (has("cadre_dashboard")) return "cadre";
+    if (has("responsable")) return "responsable";
+    if (has("planning_personal")) return "agent";
+    return "visiteur";
+  }
+  function pilotageLink(item = {}) {
+    if (item.when && !item.when()) return "";
+    const active = item.action && item.action === state.homeMode,
+      inner = `<span class="hc-pilotage-link-icon" aria-hidden="true">${esc(item.icon || "•")}</span><strong>${esc(item.label || "")}</strong><b aria-hidden="true">›</b>`;
+    if (item.href)
+      return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
+    return `<button type="button" class="hc-pilotage-link${active ? " is-current" : ""}" data-app="${esc(item.action || "")}" aria-current="${active ? "page" : "false"}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
+  }
+  const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v3";
+  function readPilotageOpen() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(PILOTAGE_OPEN_STORE) || "[]");
+      return new Set(Array.isArray(value) ? value.map(String) : []);
+    } catch {
+      return new Set();
+    }
+  }
+  function writePilotageOpen(openRoles) {
+    try {
+      sessionStorage.setItem(
+        PILOTAGE_OPEN_STORE,
+        JSON.stringify([...openRoles].filter(Boolean)),
+      );
+    } catch {}
+  }
+  function pilotageRoleGroup(
+    key,
+    label,
+    items = [],
+    collapsible = false,
+    openRoles = new Set(),
+  ) {
+    const links = items.map(pilotageLink).filter(Boolean).join("");
+    if (!links) return "";
+    const separator = `<span>${esc(label)}</span>`;
+    if (collapsible)
+      return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"${openRoles.has(key) ? " open" : ""}><summary class="stip-section-separator hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
+    if (key === "responsable")
+      return `<section class="hc-pilotage-group hc-pilotage-group-responsable is-open is-context-entry" data-pilotage-role="responsable" aria-label="Espace Responsable"><div class="hc-pilotage-links">${links}</div></section>`;
+    return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="stip-section-separator hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
+  }
+  function pilotageBlock() {
+    const role = pilotageRoleKey(),
+      groups = [
+        {
+          key: "stagiaire",
+          label: "RACCOURCIS · Stagiaire",
+          items: [
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
+          ],
+        },
+        {
+          key: "agent",
+          label: "RACCOURCIS · Agent",
+          items: [
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "responsable",
+          label: "RACCOURCIS · Responsable",
+          items: [
+            {
+              action: "responsable",
+              label: "Responsable",
+              icon: "🧭",
+              when: () => has("responsable") || has("admin"),
+            },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
+          ],
+        },
+        {
+          key: "cadre",
+          label: "RACCOURCIS · Cadre",
+          items: [
+            {
+              href: "cadre-activite.html",
+              label: "Activité",
+              icon: "📈",
+              when: () => has("activity") || has("admin"),
+            },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Connaître les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+            {
+              href: "cadre-documents.html",
+              label: "Documents",
+              icon: "▤",
+              when: () => has("cadre_dashboard") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "admin",
+          label: "RACCOURCIS · Admin",
+          items: [
+            {
+              action: "admin",
+              label: "Administration",
+              icon: "⚙️",
+              when: () => has("admin"),
+            },
+            {
+              action: "responsable",
+              label: "Responsable",
+              icon: "🧭",
+              when: () => has("admin"),
+            },
+            {
+              action: "access",
+              label: "Accès & sécurité",
+              icon: "🔐",
+              when: () => has("admin"),
+            },
+          ],
+        },
+      ];
+    if (role === "visiteur") return "";
+    if (role === "admin") {
+      const openRoles = readPilotageOpen();
+      return `<section class="hc-pilotage-shell is-admin" aria-label="Raccourcis par profil">${groups
+        .map((group) =>
+          pilotageRoleGroup(
+            group.key,
+            group.label,
+            group.items,
+            group.key !== "admin",
+            openRoles,
+          ),
+        )
+        .join("")}</section>`;
+    }
+    const group = groups.find((item) => item.key === role);
+    if (!group) return "";
+    const content = pilotageRoleGroup(
+      group.key,
+      group.label,
+      group.items,
+      false,
+    );
+    return content
+      ? `<section class="hc-pilotage-shell" aria-label="Raccourcis">${content}</section>`
+      : "";
+  }
+  function app(kind, title, cls, action) {
+    return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
+  }
+  function apps() {
+    let s = "";
+    if (has("planning_personal"))
+      s += app("personal", "Planning perso", "personal", "personal");
+    if (has("tomorrow"))
+      s += app("tomorrow", "Actions", "tomorrow", "tomorrow");
+    if (has("planning_team") || has("activity") || has("assistant_enabled"))
+      s += app("team", "Esprit d’équipe", "team", "team");
+    if (has("messages"))
+      s += app("communication", "Communication", "homeChat", "communication");
+    if (has("agent_directory"))
+      s += app("agents", "Équipe", "agents", "agents");
+    if (has("change_app")) s += app("change", "Changement", "change", "change");
+    if (has("calendar_subscribe"))
+      s += app("calendar", "Synchroniser mon calendrier", "calendar", "calendar");
+    if (has("agent_dates"))
+      s += app("dates", "Date des agents", "dates", "dates");
+    if (has("contacts"))
+      s += app("contacts", "Contacts", "contacts", "contacts");
+    if (has("responsable") || has("admin"))
+      s += app("responsable", "Responsable", "responsable", "responsable");
+    if (pilotageRoleKey() === "responsable" && has("places"))
+      s += app("places", "Visiter les lieux", "places", "places");
+    if (has("nouveaux_arrivants"))
+      s += app("newagent", "Nouvel agent", "newagent", "newagent");
+    if (has("file_upload")) s += app("upload", "Importer", "upload", "upload");
+    if (has("admin")) s += app("admin", "Admin", "admin", "admin");
+    if (has("access_manage") || has("admin"))
+      s += app("access", "Accès & sécurité", "access", "access");
+    return s || '<p class="hc-empty">Aucune application autorisée.</p>';
+  }
+  function routeForHomeMode(mode = "planning") {
+    return (
+      {
+        planning: "home",
+        apps: "apps",
+        notifications: "notifications",
+        team: "team",
+        responsable: "responsable",
+        communication: "communication/chat",
+        tableau: "communication/fauteuils",
+      }[mode] || "home"
+    );
+  }
+  function communicationTabForRoute(route = "") {
+    const value = String(route || "");
+    if (value === "fauteuils" || value.endsWith("/fauteuils")) return "wheelchair";
+    if (value.endsWith("/dm")) return "dm";
+    return "chat";
+  }
+  function homeModeForRoute(route = "home") {
+    const value = String(route || "home");
+    if (value === "fauteuils" || value === "communication" || value.startsWith("communication/"))
+      return "communication";
+    return (
+      {
+        home: "planning",
+        apps: "apps",
+        notifications: "notifications",
+        team: "team",
+        responsable: "responsable",
+      }[value] || ""
+    );
+  }
+  function homeModeNav() {
+    const active =
+        state.homeMode === "responsable" ? "" : state.homeMode || "planning",
+      count = notifications().length + Number(window.STIPMessagesUnread || 0),
+      items = [
+        { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
+        { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
+      ];
+    if (has("planning_team") || has("activity") || has("assistant_enabled"))
+      items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
+    const tDoor = tDoorShortcut();
+    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
+      <div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
+        <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+        ${tDoor}
+        <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
+      </div>
+      <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
+        .map(
+          (item) =>
+            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
+        )
+        .join("")}</nav>
+    </section>`;
+  }
+
+  function adminShortcutsLauncher() {
+    if (pilotageRoleKey() !== "admin") return "";
+    return `<div class="hc-admin-shortcuts-launcher-wrap">
+      <button type="button" class="hc-admin-shortcuts-launcher" data-admin-shortcuts-open aria-haspopup="dialog" aria-controls="hcAdminShortcutsDialog" aria-label="Ouvrir les raccourcis administrateur">
+        <span>Raccourcis</span><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
+      </button>
+    </div>`;
+  }
+
+  function adminPilotagePopup() {
+    if (pilotageRoleKey() !== "admin") return "";
+    return `<dialog id="hcAdminShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcAdminShortcutsTitle">
+      <section class="hc-admin-shortcuts-card">
+        <header class="hc-admin-shortcuts-head">
+          <div><small>ADMIN</small><h2 id="hcAdminShortcutsTitle">Raccourcis</h2></div>
+          <button type="button" class="hc-admin-shortcuts-close" data-admin-shortcuts-close aria-label="Fermer">×</button>
+        </header>
+        <div class="hc-admin-shortcuts-body">${pilotageBlock()}</div>
+      </section>
+    </dialog>`;
+  }
+
+  function homeAIEntry() {
+    if (!(has("dialog") || has("assistant_enabled"))) return "";
+    return `<button type="button" class="hc-home-ai-footer" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-footer-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`;
+  }
+
+  function actionCenterData(filter = state.actionFilter) {
+    const ns = notifications(),
+      cats = [
+        ["all", "Tout"],
+        ["access", "Accès"],
+        ["signatures", "Signatures"],
+        ["reminders", "Rappels"],
+        ["agenda", "Agenda"],
+        ["other", "Autres"],
+      ],
+      counts = Object.fromEntries(
+        cats.map(([k]) => [
+          k,
+          k === "all" ? ns.length : ns.filter((n) => noteCategory(n) === k).length,
+        ]),
+      ),
+      shown = filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
+    return { ns, cats, counts, shown };
+  }
+  function noteIsNetworkError(n = {}) {
+    const s = `${n.title || ""} ${n.body || ""} ${n.technical_error || ""}`.toLowerCase();
+    return !!n.retryable || /failed to fetch|networkerror|network error|load failed|indisponible/.test(s);
+  }
+  function friendlyNoteBody(n = {}) {
+    if (noteIsNetworkError(n)) {
+      if (noteCategory(n) === "access")
+        return "STIP n’a pas pu vérifier les accès. Vous pouvez relancer le contrôle.";
+      return "STIP n’a pas réussi à récupérer cette information. Vous pouvez réessayer.";
+    }
+    return String(n.body || n.summary || n.description || "").trim();
+  }
+  function noteTimeValue(n = {}) {
+    return (
+      n.created_at ||
+      n.occurred_at ||
+      n.createdAt ||
+      n.sent_at ||
+      n.date ||
+      n.updated_at ||
+      ""
+    );
+  }
+  function formatNotificationTime(value) {
+    if (!value) return "";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return String(value);
+    try {
+      return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Paris",
+      }).format(d);
+    } catch {
+      return d.toLocaleString("fr-FR");
+    }
+  }
+  function sinceNotification(n = {}) {
+    const value = noteTimeValue(n);
+    if (!value) return "Date non fournie";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return formatNotificationTime(value);
+    const ms = Date.now() - d.getTime();
+    const abs = Math.max(0, ms);
+    let rel = "";
+    if (abs < 60000) rel = "À l’instant";
+    else if (abs < 3600000) rel = `Depuis ${Math.floor(abs / 60000)} min`;
+    else if (abs < 86400000) {
+      const h = Math.floor(abs / 3600000),
+        m = Math.floor((abs % 3600000) / 60000);
+      rel = `Depuis ${h} h${m ? ` ${m} min` : ""}`;
+    } else {
+      const days = Math.floor(abs / 86400000);
+      rel = `Depuis ${days} jour${days > 1 ? "s" : ""}`;
+    }
+    return `${rel} · ${formatNotificationTime(value)}`;
+  }
+  function noteStatus(n = {}) {
+    if (noteIsNetworkError(n)) return "Indisponible";
+    const raw = String(n.status || n.statut || "").toLowerCase();
+    if (!raw || /pending|waiting|open|todo|à traiter|a traiter/.test(raw))
+      return "À traiter";
+    if (/done|resolved|complete|trait|valid/.test(raw)) return "Résolu";
+    if (/reject|refus|cancel|annul/.test(raw)) return "Clos";
+    if (/error|erreur|fail/.test(raw)) return "Erreur";
+    return cap(raw.replace(/[_-]+/g, " "));
+  }
+  function noteReason(n = {}) {
+    const cat = noteCategory(n);
+    if (noteIsNetworkError(n) && cat === "access")
+      return "Le contrôle automatique des accès n’a pas obtenu de réponse. Cette notification sert à vous signaler que la vérification n’a pas abouti.";
+    if (n.source === "admin-access")
+      return "Une demande ou un contrôle d’accès nécessite une décision ou une vérification.";
+    if (n.action_id)
+      return "Une action STIP est encore en attente et nécessite votre intervention.";
+    if (cat === "signatures")
+      return "Une signature attendue n’est pas encore finalisée.";
+    if (cat === "reminders")
+      return "Un rappel est arrivé à échéance ou demande votre attention.";
+    if (cat === "agenda")
+      return "Un élément lié au planning ou à l’agenda nécessite votre attention.";
+    if (cat === "access")
+      return "Un élément lié aux accès STIP nécessite votre attention.";
+    return "Cette information a été placée dans la Cloche STIP parce qu’elle demande votre attention.";
+  }
+  function noteSubject(n = {}) {
+    const cat = noteCategory(n);
+    if (n.request_id) return "Demande d’accès";
+    if (n.security_index != null) return "Contrôle d’accès";
+    return (
+      {
+        access: "Accès STIP",
+        signatures: "Signature",
+        reminders: "Rappel",
+        agenda: "Planning / agenda",
+        other: "Information STIP",
+      }[cat] || "Information STIP"
+    );
+  }
+  function noteParty(n = {}) {
+    const direct =
+      n.recipient_name ||
+      n.assignee_name ||
+      n.target_name ||
+      n.contact_name ||
+      n.person_name ||
+      n.metadata?.recipient_name ||
+      n.metadata?.assignee_name ||
+      n.metadata?.target_name ||
+      n.metadata?.recipient ||
+      "";
+    if (String(direct).trim()) return String(direct).trim();
+    const body = String(n.body || "");
+    const m = body.match(/\bà\s+([A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+(?:\s+[A-ZÀ-ÖØ-Ý][A-Za-zÀ-ÖØ-öø-ÿ'’-]+){1,2})(?:[.,]|$)/);
+    return m?.[1]?.trim() || "";
+  }
+  function noteCanManage(n = {}) {
+    return !!((n?.source && n.source !== "stip") || n?.action_id);
+  }
+  function notePrimaryLabel(n = {}) {
+    if (noteIsNetworkError(n) || n.retryable) return "Réessayer";
+    if (n.source === "admin-access" && (n.request_id || n.security_index != null))
+      return "Prendre en charge";
+    if (n.action_id) return "Ouvrir la demande";
+    return "Gérer";
+  }
+  function noteEventRows(n = {}) {
+    const rows = [],
+      add = (title, body = "", at = "") => {
+        const key = `${title}|${body}|${at}`;
+        if (!rows.some((x) => x.key === key))
+          rows.push({ key, title, body, at });
+      },
+      raw = [
+        ...(Array.isArray(n.timeline) ? n.timeline : []),
+        ...(Array.isArray(n.history) ? n.history : []),
+        ...(Array.isArray(n.events) ? n.events : []),
+        ...(Array.isArray(n.metadata?.timeline) ? n.metadata.timeline : []),
+        ...(Array.isArray(n.metadata?.history) ? n.metadata.history : []),
+        ...(Array.isArray(n.metadata?.events) ? n.metadata.events : []),
+      ];
+    raw.forEach((x) => {
+      if (typeof x === "string") add(x);
+      else if (x && typeof x === "object")
+        add(
+          x.title || x.label || x.action || x.status || "Mise à jour",
+          x.body || x.message || x.detail || "",
+          x.created_at || x.occurred_at || x.date || x.at || "",
+        );
+    });
+    const created = n.created_at || n.occurred_at || n.createdAt || n.sent_at || "";
+    const updated = n.updated_at || n.updatedAt || "";
+    if (created) add("Notification créée", "", created);
+    if (updated && String(updated) !== String(created))
+      add("Dernière mise à jour", "", updated);
+    if (!rows.length) add("État actuel", noteStatus(n));
+    return rows.slice(0, 12);
+  }
+  function noteMessageRows(n = {}) {
+    const raw = [
+      ...(Array.isArray(n.messages) ? n.messages : []),
+      ...(Array.isArray(n.communications) ? n.communications : []),
+      ...(Array.isArray(n.exchanges) ? n.exchanges : []),
+      ...(Array.isArray(n.metadata?.messages) ? n.metadata.messages : []),
+      ...(Array.isArray(n.metadata?.communications) ? n.metadata.communications : []),
+    ];
+    if (typeof n.communication === "string" && n.communication.trim())
+      raw.push(n.communication);
+    return raw
+      .map((x) => {
+        if (typeof x === "string") return { who: "", text: x, at: "" };
+        if (!x || typeof x !== "object") return null;
+        return {
+          who: x.author || x.sender || x.from || x.name || "",
+          text: x.body || x.message || x.text || x.content || "",
+          at: x.created_at || x.sent_at || x.date || x.at || "",
+        };
+      })
+      .filter((x) => x && x.text)
+      .slice(0, 12);
+  }
+  function actionCenterMarkup(filter = state.actionFilter, inline = false) {
+    const { ns, cats, counts, shown } = actionCenterData(filter),
+      visibleCats = cats.filter(([k]) => k === "all" || counts[k] > 0),
+      filterBar = ns.length
+        ? '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">' +
+          visibleCats
+            .map(
+              ([k, l]) =>
+                '<button type="button" role="tab" aria-selected="' +
+                (filter === k) +
+                '" data-action-filter="' +
+                esc(k) +
+                '">' +
+                esc(l) +
+                (counts[k] ? ' <span>' + counts[k] + "</span>" : "") +
+                "</button>",
+            )
+            .join("") +
+          "</div>"
+        : "",
+      head = inline
+        ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
+        : "";
+    if (!ns.length) return head;
+    const cards = shown.length
+      ? '<div class="hc-panel-list">' +
+        shown
+          .map((n, i) => {
+            const cat = noteCategory(n),
+              catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
+              body = friendlyNoteBody(n);
+            return (
+              '<button type="button" class="hs-note hc-note-card" data-note-index="' +
+              i +
+              '" data-note-open><small>' +
+              esc(catLabel) +
+              "</small><strong>" +
+              esc(n.title || "Notification") +
+              "</strong>" +
+              (body ? "<p>" + esc(body) + "</p>" : "") +
+              "</button>"
+            );
+          })
+          .join("") +
+        "</div>"
+      : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>';
+    return head + filterBar + cards;
+  }
+  function bigConfirm({ title, body = "", confirmLabel = "Confirmer" } = {}) {
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "hc-confirm-backdrop";
+      wrap.innerHTML =
+        '<section class="hc-confirm-pop" role="dialog" aria-modal="true"><h3>' +
+        esc(title || "Confirmer ?") +
+        "</h3>" +
+        (body ? "<p>" + esc(body) + "</p>" : "") +
+        '<div class="hc-confirm-actions"><button type="button" data-confirm-no><span>❌</span><strong>Annuler</strong></button><button type="button" class="is-confirm" data-confirm-yes><span>✔</span><strong>' +
+        esc(confirmLabel) +
+        "</strong></button></div></section>";
+      document.body.appendChild(wrap);
+      const done = (v) => {
+        wrap.remove();
+        resolve(v);
+      };
+      wrap.querySelector("[data-confirm-no]").onclick = () => done(false);
+      wrap.querySelector("[data-confirm-yes]").onclick = () => done(true);
+      wrap.addEventListener("click", (e) => {
+        if (e.target === wrap) done(false);
+      });
+    });
+  }
+  function openNotificationDetail(n, options = {}) {
+    document.getElementById("hcNotificationDetail")?.remove();
+    const cat = noteCategory(n),
+      { cats } = actionCenterData(),
+      catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
+      manageable = noteCanManage(n),
+      body = friendlyNoteBody(n),
+      status = noteStatus(n),
+      since = sinceNotification(n),
+      subject = noteSubject(n),
+      party = noteParty(n) || "Non précisé dans la notification",
+      timeline = noteEventRows(n),
+      messages = noteMessageRows(n),
+      technical = String(n.technical_error || (noteIsNetworkError(n) ? n.body || "" : "")).trim();
+    const timelineHtml = timeline
+        .map(
+          (x) =>
+            `<li><span></span><div><strong>${esc(x.title)}</strong>${x.body ? `<p>${esc(x.body)}</p>` : ""}${x.at ? `<small>${esc(formatNotificationTime(x.at))}</small>` : ""}</div></li>`,
+        )
+        .join(""),
+      messagesHtml = messages.length
+        ? messages
+            .map(
+              (x) =>
+                `<article><div><strong>${esc(x.who || "Échange")}</strong>${x.at ? `<small>${esc(formatNotificationTime(x.at))}</small>` : ""}</div><p>${esc(x.text)}</p></article>`,
+            )
+            .join("")
+        : '<p class="hc-detail-empty">Aucun échange rattaché à cette notification.</p>';
+    const page = document.createElement("section");
+    page.id = "hcNotificationDetail";
+    page.className = "hc-notification-detail";
+    page.innerHTML = `<header><button type="button" data-detail-close aria-label="Retour">‹</button><div><small>CLOCHE STIP</small><strong>${esc(catLabel)}</strong></div><span></span></header><main>
+      <section class="hc-detail-hero">
+        <div class="hc-detail-pills"><span class="hc-detail-category">${esc(catLabel)}</span><span class="hc-detail-status">${esc(status)}</span></div>
+        <h2>${esc(n.title || "Notification")}</h2>
+        ${body ? `<p>${esc(body)}</p>` : ""}
+      </section>
+      <section class="hc-detail-facts" aria-label="Résumé de la notification">
+        <article><small>ÉTAT ACTUEL</small><strong>${esc(status)}</strong></article>
+        <article><small>DEPUIS</small><strong>${esc(since)}</strong></article>
+        <article><small>CONCERNANT</small><strong>${esc(subject)}</strong></article>
+        <article><small>AVEC QUI</small><strong>${esc(party)}</strong></article>
+      </section>
+      <section class="hc-detail-section"><small>POURQUOI</small><h3>Pourquoi cette notification ?</h3><p>${esc(noteReason(n))}</p></section>
+      <section class="hc-detail-section"><small>SUIVI</small><h3>Historique</h3><ol class="hc-detail-timeline">${timelineHtml}</ol></section>
+      <section class="hc-detail-section"><small>COMMUNICATION</small><h3>Échanges liés</h3><div class="hc-detail-messages">${messagesHtml}</div></section>
+      ${technical ? `<details class="hc-detail-technical"><summary>Détails techniques</summary><code>${esc(technical)}</code></details>` : ""}
+      <div class="hc-detail-actions">
+        ${
+          manageable
+            ? `<button type="button" class="primary" data-detail-manage>${esc(notePrimaryLabel(n))}</button>`
+            : '<button type="button" class="primary" data-detail-done>Marquer comme traité</button>'
+        }
+        <button type="button" class="danger" data-detail-delete>Supprimer</button>
+      </div>
+    </main>`;
+    document.body.appendChild(page);
+    const close = () => page.remove();
+    page.querySelector("[data-detail-close]").onclick = close;
+    page.querySelector("[data-detail-manage]")?.addEventListener("click", () => {
+      close();
+      if (n?.source && n.source !== "stip")
+        window.dispatchEvent(
+          new CustomEvent("stip:action-center-open", { detail: n }),
+        );
+      else if (n?.action_id) {
+        panel(true, "À traiter");
+        openAction(n.action_id);
+      }
+    });
+    page.querySelector("[data-detail-done]")?.addEventListener("click", () => {
+      close();
+      dismissActionNote(n);
+    });
+    page.querySelector("[data-detail-delete]").onclick = async () => {
+      const ok = await bigConfirm({
+        title: "Supprimer cette notification ?",
+        body: "Elle disparaîtra de votre Cloche STIP.",
+        confirmLabel: "Confirmer",
+      });
+      if (!ok) return;
+      close();
+      dismissActionNote(n);
+    };
+    if (options.focusAction)
+      requestAnimationFrame(() =>
+        page
+          .querySelector("[data-detail-manage],[data-detail-done]")
+          ?.focus({ preventScroll: false }),
+      );
+  }
+  function bindNoteCard(card, note) {
+    if (!card || card.dataset.stipClickBound === "1") return;
+    card.dataset.stipClickBound = "1";
+    card.addEventListener("click", (event) => {
+      const interactive = event.target.closest?.(
+        "button,a,input,textarea,label,select",
+      );
+      if (interactive && interactive !== card && card.contains(interactive)) return;
+      openNotificationDetail(note);
+    });
+  }
+  function bindActionCenter(scope, filter = state.actionFilter, inline = false) {
+    if (!scope) return;
+    const { shown } = actionCenterData(filter);
+    scope.querySelectorAll("[data-action-filter]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const next = b.dataset.actionFilter || "all";
+          state.actionFilter = next;
+          if (inline) renderProfileActions(next);
+          else renderActionCenter(next);
+        }),
+    );
+    scope.querySelectorAll(".hc-note-card[data-note-index]").forEach((card) => {
+      const n = shown[Number(card.dataset.noteIndex)];
+      if (n) bindNoteCard(card, n);
+    });
+  }
+  function renderProfileActions(filter = state.actionFilter) {
+    const host = $("#hcProfileActions");
+    if (!host) return;
+    state.actionFilter = filter;
+    host.innerHTML = actionCenterMarkup(filter, true);
+    bindActionCenter(host, filter, true);
+  }
+
+  function notificationsPane() {
+    const empty = notifications().length === 0;
+    return `<section class="hc-home-pane hc-home-pane-notifications"><section id="hcProfileActions" class="hc-profile-actions stip-action-surface${empty ? " is-empty" : ""}">${actionCenterMarkup(state.actionFilter, true)}</section><section id="hcCommunicationHub" class="hc-communication-host" aria-live="polite"></section></section>`;
+  }
+
+  function planningCalendarPocket() {
+    if (!has("calendar_subscribe")) return "";
+    return `<details class="stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
+  }
+
+  function planningCompareShortcut() {
+    if (!(has("planning_personal") && has("planning_team"))) return "";
+    return `<div class="hc-profile-responsable-row hc-planning-compare-row"><button type="button" class="hc-responsable-tab" data-app="compare" aria-label="Comparer mon planning avec un agent"><span>Comparer mon planning</span><b aria-hidden="true">›</b></button></div>`;
+  }
+
+  function wheelchairShortcut() {
+    if (!has("messages")) return "";
+    const active = state.homeMode === "communication" && state.communicationTab === "wheelchair";
+    return `<button type="button" class="hc-wheelchair-shortcut${active ? " active" : ""}" data-home-mode="tableau" aria-pressed="${active}" aria-label="Ouvrir Fauteuils"><span class="hc-wheelchair-shortcut-icon">${ICON.homeChair}</span><span class="hc-wheelchair-shortcut-copy"><strong>Fauteuils<span class="hc-home-live-badge" data-wheelchair-count hidden></span></strong></span><span class="hc-wheelchair-shortcut-arrow" aria-hidden="true">›</span></button>`;
+  }
+
+  function tDoorShortcut() {
+    if (!has("admin")) return "";
+    return '<button type="button" class="hc-t-door" data-t-door aria-label="Ouvrir la porte T"><span class="hc-t-door-mark" aria-hidden="true"></span></button>';
+  }
+
+  function homeModeBody() {
+    if (state.homeMode === "notifications") return notificationsPane();
+    if (state.homeMode === "apps")
+      return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
+    if (state.homeMode === "communication" && has("messages"))
+      return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
+    const weeklyDetails = futureWidget(),
+      monthDetails = monthEventsWidget(),
+      legend = fixedShiftLegend();
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}<section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+  }
+  function render() {
+    const root = $("#homeView .hs-home");
+    if (!root || !state.boot) return;
+
+    // Communication owns live composers. Background refreshes must not
+    // replace its DOM while the user is typing or switching tabs.
+    if (
+      state.homeMode === "communication" &&
+      has("messages") &&
+      root.querySelector("#hcCommunicationAppHost")
+    ) {
+      return;
+    }
+
+    const isCommunication = state.homeMode === "communication" && has("messages"),
+      showProfile = state.homeMode === "planning",
+      profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
+      inlinePilotage = pilotageRoleKey() === "admin" ? "" : pilotageBlock(),
+      profileMarkup = showProfile ? `${profile()}${adminShortcutsLauncher()}` : "";
+    let markup = `${homeModeNav()}${inlinePilotage}${adminPilotagePopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    if (isCommunication) {
+      markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
+          <section id="hcCommunicationAppHost">${homeModeBody()}</section>
+        </section>`;
+    }
+    if (state.renderSig === markup && root.childElementCount) return;
+    const onHome = (window.STIPRouter?.get?.() || "home") === "home",
+      y = onHome ? Math.max(0, window.scrollY || 0) : 0;
+    state.renderSig = markup;
+    root.innerHTML = markup;
+    root
+      .querySelectorAll("[data-copy]")
+      .forEach(
+        (b) => (b.onclick = () => copyText(b.dataset.copy, b.dataset.label)),
+      );
+    root
+      .querySelectorAll("details[data-pilotage-role]")
+      .forEach((details) =>
+        details.addEventListener("toggle", () => {
+          const key = String(details.dataset.pilotageRole || "").trim();
+          if (!key) return;
+          const openRoles = readPilotageOpen();
+          if (details.open) openRoles.add(key);
+          else openRoles.delete(key);
+          writePilotageOpen(openRoles);
+        }),
+      );
+    const adminShortcutsDialog = root.querySelector("#hcAdminShortcutsDialog");
+    const closeAdminShortcuts = () => {
+      if (!adminShortcutsDialog) return;
+      if (typeof adminShortcutsDialog.close === "function" && adminShortcutsDialog.open)
+        adminShortcutsDialog.close();
+      else adminShortcutsDialog.removeAttribute("open");
+    };
+    root.querySelector("[data-admin-shortcuts-open]")?.addEventListener("click", () => {
+      if (!adminShortcutsDialog) return;
+      if (typeof adminShortcutsDialog.showModal === "function") adminShortcutsDialog.showModal();
+      else adminShortcutsDialog.setAttribute("open", "");
+    });
+    adminShortcutsDialog
+      ?.querySelector("[data-admin-shortcuts-close]")
+      ?.addEventListener("click", closeAdminShortcuts);
+    adminShortcutsDialog?.addEventListener("click", (event) => {
+      if (event.target === adminShortcutsDialog) closeAdminShortcuts();
+    });
+    $("#hcLogout")?.addEventListener("click", () =>
+      document.getElementById("logoutBtn")?.click(),
+    );
+    if (state.homeMode === "notifications") bindActionCenter($("#hcProfileActions"), state.actionFilter, true);
+    root.querySelector("[data-t-door]")?.addEventListener("click", () => {
+      const level = Number(document.documentElement.dataset.stipTSuiteLevel || "0");
+      if (level >= 1) return;
+      location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
+    });
+    root.querySelectorAll("[data-home-mode]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          const next = b.dataset.homeMode || "planning";
+          if (next === "team") {
+            location.href = "esprit-equipe.html?entry=home-header";
+            return;
+          }
+          if (next === "tableau") {
+            state.communicationTab = "wheelchair";
+            state.communicationFocus = false;
+          }
+          const targetRoute = routeForHomeMode(next);
+          state.tableauFocus = false;
+          if (window.STIPRouter?.set) {
+            window.STIPRouter.set(targetRoute);
+            return;
+          }
+          if (next === state.homeMode) return;
+          state.homeMode = next;
+          state.renderSig = "";
+          render();
+        }),
+    );
+    if (state.homeMode === "apps") window.STIPFavorites?.renderApps?.(root.querySelector("#hcMyAppsHost"));
+    if (state.homeMode === "communication") {
       const communicationHost = root.querySelector("#hcCommunicationAppHost");
       const runtime = window.STIPCommunicationApp;
       if (!runtime || typeof runtime.mount !== "function") {
@@ -840,12 +2833,13 @@
       if (quick === "notifications" || quick === "exchange") {
         state.homeMode = "notifications";
       } else if (quick === "communication" && has("messages")) {
+        const params = new URLSearchParams(location.search);
         state.homeMode = "communication";
-        state.communicationTab = String(new URLSearchParams(location.search).get("tab") || "chat") === "fauteuils"
+        state.communicationTab = params.get("tab") === "fauteuils"
           ? "wheelchair"
-          : (String(new URLSearchParams(location.search).get("tab") || "chat") === "dm" ? "dm" : "chat");
-        state.communicationConversation = new URLSearchParams(location.search).get("conversation") || "";
-        state.communicationMessage = new URLSearchParams(location.search).get("message") || "";
+          : (params.get("tab") === "dm" ? "dm" : "chat");
+        state.communicationConversation = params.get("conversation") || "";
+        state.communicationMessage = params.get("message") || "";
       } else if ((quick === "tableau" || quick === "teamchat") && has("messages")) {
         state.homeMode = "communication";
         state.communicationTab = "wheelchair";
