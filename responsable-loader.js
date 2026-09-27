@@ -25,7 +25,7 @@
     }
   } catch {}
 
-  const V = "20260925-responsable-clean-entry1",
+  const V = "20260928-icon-registry2",
     m = new Map(),
     done = new Set();
   function load(src) {
