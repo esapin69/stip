@@ -8,6 +8,8 @@
   const FORM_FOCUS = "[data-stip-form-focus]";
   const INTENT = "[data-stip-intent-reveal]";
   const NEXT_ACTION = ".stip-keyboard-next-action";
+  const PREV_ACTION = ".stip-keyboard-prev-action";
+  const OVERVIEW_ACTION = ".stip-keyboard-overview-action";
   const QUESTION_CLASS = "stip-keyboard-question";
   const WRITABLE_SELECTOR = [
     'input:not([type])',
@@ -108,6 +110,10 @@
     });
     const action = root?.querySelector?.(NEXT_ACTION);
     if (action) action.hidden = true;
+    const previous = root?.querySelector?.(PREV_ACTION);
+    if (previous) previous.hidden = true;
+    const overview = root?.querySelector?.(OVERVIEW_ACTION);
+    if (overview) overview.hidden = true;
   }
 
   function writableField(field) {
@@ -216,6 +222,24 @@
     return text.replace(/[→›»]+\s*$/, "").trim() || "Continuer";
   }
 
+  function showFormOverview(form, field = active) {
+    const target = field || active;
+    try { target?.blur?.(); } catch {}
+    clearMode();
+    requestAnimationFrame(() => {
+      const anchor =
+        target?.closest?.(".request-step, label, .request-code-card") ||
+        target ||
+        form;
+      anchor?.scrollIntoView?.({ block: "center", behavior: "smooth" });
+    });
+    window.dispatchEvent(
+      new CustomEvent("stip:form-overview", {
+        detail: { form, field: target }
+      })
+    );
+  }
+
   function prepareFormPath(field, root = scope) {
     const form = formFor(field);
     if (!form?.matches?.(FORM_FOCUS)) return;
@@ -223,15 +247,45 @@
     ensureQuestion(field, form);
     let node = field;
     while (node && node !== root) { node.classList.add("stip-keyboard-path"); node = node.parentElement; }
+
     const controls = sequentialControls(form);
     const index = controls.indexOf(field);
     if (index < 0) return;
+
     let action = form.querySelector(NEXT_ACTION);
-    if (!action) { action = document.createElement("button"); action.type = "button"; action.className = "stip-keyboard-next-action"; form.appendChild(action); }
+    if (!action) {
+      action = document.createElement("button");
+      action.type = "button";
+      action.className = "stip-keyboard-next-action";
+      form.appendChild(action);
+    }
+
+    const stepNavigation = form.hasAttribute("data-stip-step-nav");
+    let previous = form.querySelector(PREV_ACTION);
+    let overview = form.querySelector(OVERVIEW_ACTION);
+
+    if (stepNavigation && !previous) {
+      previous = document.createElement("button");
+      previous.type = "button";
+      previous.className = "stip-keyboard-prev-action";
+      previous.textContent = "← Précédent";
+      form.appendChild(previous);
+    }
+    if (stepNavigation && !overview) {
+      overview = document.createElement("button");
+      overview.type = "button";
+      overview.className = "stip-keyboard-overview-action";
+      overview.textContent = "Vue";
+      overview.setAttribute("aria-label", "Voir le formulaire complet");
+      form.appendChild(overview);
+    }
+
+    const prev = controls[index - 1] || null;
     const next = controls[index + 1] || null;
     const submit = form.querySelector('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     const nextIsWritable = !!next?.matches?.(FOCUS);
     const label = next ? (nextIsWritable ? "Suivant" : "Continuer") : submitLabel(submit);
+
     action.hidden = false;
     action.textContent = label + "  →";
     action.setAttribute("aria-label", label);
@@ -247,8 +301,42 @@
         requestAnimationFrame(() => next.scrollIntoView?.({ block: "center", behavior: "smooth" }));
         return;
       }
-      if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined); else submit?.click();
+      if (typeof form.requestSubmit === "function") form.requestSubmit(submit || undefined);
+      else submit?.click();
     };
+
+    if (previous) {
+      previous.hidden = false;
+      previous.onclick = () => {
+        window.dispatchEvent(
+          new CustomEvent("stip:form-previous-request", {
+            detail: { form, field, index, previous: prev }
+          })
+        );
+        if (prev?.matches?.(FOCUS)) {
+          transferFocus(prev);
+          return;
+        }
+        if (prev) {
+          clearMode();
+          try { prev.focus({ preventScroll: true }); } catch { prev.focus?.(); }
+          requestAnimationFrame(() => prev.scrollIntoView?.({ block: "center", behavior: "smooth" }));
+          return;
+        }
+        showFormOverview(form, field);
+      };
+    }
+
+    if (overview) {
+      overview.hidden = false;
+      overview.onclick = () => showFormOverview(form, field);
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("stip:form-step", {
+        detail: { form, field, index, count: controls.length }
+      })
+    );
   }
 
   function setDialogMode(root, open) { root?.closest?.("dialog")?.classList.toggle("stip-keyboard-dialog-mode", Boolean(open)); }
@@ -399,15 +487,6 @@
     return false;
   }
 
-  autoEnroll(document);
-  new MutationObserver((records) => {
-    for (const record of records) {
-      for (const node of record.addedNodes) {
-        if (node.nodeType === 1) autoEnroll(node);
-      }
-    }
-  }).observe(document.documentElement, { childList: true, subtree: true });
-
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 9 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, showOverview: showFormOverview, autoEnroll, version: 10 };
 })();
