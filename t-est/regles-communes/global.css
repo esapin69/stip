@@ -182,12 +182,12 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-autofill-context) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
   display: none !important;
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  .stip-keyboard-path > *:not(.stip-keyboard-path):not(.stip-autofill-context) {
+  .stip-keyboard-path > *:not(.stip-keyboard-path):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
   display: none !important;
 }
 
@@ -208,7 +208,8 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-path,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-question,
-[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action {
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action,
+[data-stip-form-focus].stip-keyboard-focus-mode [data-stip-keyboard-accessory] {
   width: 100% !important;
   max-width: 620px !important;
   margin-left: auto !important;
