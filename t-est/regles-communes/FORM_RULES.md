@@ -18,7 +18,25 @@ Les fichiers :
 
 ne sont **pas** le moteur général des formulaires. Ils ne servent qu’au retour visuel de la connexion par code (`Vérification…` + indicateur de chargement) et restent un adaptateur de compatibilité ciblé.
 
-## 2. Règle fondamentale
+## 2. Mode explicite obligatoire
+
+Tout vrai `<form>` STIP doit déclarer `data-stip-form-mode`. Le mode est visible dans le HTML : il ne doit pas dépendre d’une déduction silencieuse.
+
+Modes autorisés :
+
+- `sequential` : formulaire question par question utilisant le moteur commun, le plein écran clavier et, lorsqu’il y a plusieurs étapes, Précédent / Suivant / action terminale / Vue complète ;
+- `standard` : formulaire classique conservant sa mise en page normale ; STIP garde seulement les normalisations communes utiles, notamment autoremplissage et codes compatibles ;
+- `search` : formulaire ou surface dédiée à la recherche ; la saisie suit le mode recherche et non le questionnaire séquentiel ;
+- `composer` : chat, message ou saisie libre ; le compositeur garde son interaction native ;
+- `native` : formulaire volontairement géré par sa logique propre, tout en pouvant conserver les normalisations communes compatibles ;
+- `exempt` : aucune intervention FormUX, y compris les normalisations automatiques.
+
+Les anciens attributs `data-stip-keyboard-native` et `data-stip-keyboard-exempt` restent compris pour compatibilité, mais ils ne remplacent pas le mode explicite sur un nouveau formulaire.
+
+Un formulaire créé dynamiquement doit recevoir son mode **avant** d’être inséré dans le DOM.
+
+
+## 3. Règle fondamentale
 
 **Un champ actif = une question claire = une action cohérente.**
 
@@ -36,7 +54,7 @@ Ne comptent jamais comme étape suivante :
 - les recherches gérées par le mode recherche ;
 - les éléments explicitement exclus avec `data-stip-keyboard-native` ou `data-stip-keyboard-exempt`.
 
-## 3. Navigation entre les étapes
+## 4. Navigation entre les étapes
 
 ### Étape intermédiaire
 
@@ -53,7 +71,7 @@ Ne comptent jamais comme étape suivante :
 
 Le clic et la touche **Entrée** doivent utiliser le même calcul de progression.
 
-## 4. Validation
+## 5. Validation
 
 Avant de quitter un champ, le moteur respecte la validation native du navigateur.
 
@@ -63,7 +81,7 @@ Si `reportValidity()` échoue :
 - ne pas ouvrir l’étape suivante ;
 - ne pas soumettre le formulaire.
 
-## 5. Touche Entrée
+## 6. Touche Entrée
 
 Pour un champ simple :
 
@@ -75,7 +93,7 @@ Pour un `textarea` :
 - `Entrée` reste une saisie de texte ;
 - elle ne doit pas valider ni changer d’étape.
 
-## 6. Précédent et vue complète
+## 7. Précédent et vue complète
 
 Sur un formulaire séquentiel :
 
@@ -85,7 +103,7 @@ Sur un formulaire séquentiel :
 
 Une page peut intercepter l’événement `stip:form-previous-request` uniquement lorsqu’elle doit préserver un historique métier ou navigateur spécifique.
 
-## 7. Question affichée
+## 8. Question affichée
 
 Le texte de la question active est déterminé dans cet ordre :
 
@@ -98,7 +116,7 @@ Le texte de la question active est déterminé dans cet ordre :
 
 Une question importante ne doit donc pas dépendre d’un placeholder ambigu.
 
-## 8. Clavier mobile et plein écran
+## 9. Clavier mobile et plein écran
 
 Quand le clavier réduit réellement la zone visible :
 
@@ -111,7 +129,7 @@ Quand le clavier réduit réellement la zone visible :
 
 Le mode plein écran est une présentation du même formulaire, pas un second formulaire.
 
-## 9. Recherche
+## 10. Recherche
 
 Les champs `input[type="search"]` utilisent le mode recherche commun :
 
@@ -120,13 +138,13 @@ Les champs `input[type="search"]` utilisent le mode recherche commun :
 - bouton `×` pour quitter le mode plein écran ;
 - pas de transformation en questionnaire séquentiel classique.
 
-## 10. Chats et compositeurs
+## 11. Chats et compositeurs
 
 Les formulaires identifiés comme chat, message, composer ou dialogue de saisie libre gardent leur comportement natif.
 
 Ils ne doivent pas être transformés automatiquement en questionnaire à étapes.
 
-## 11. Nom, prénom et autoremplissage
+## 12. Nom, prénom et autoremplissage
 
 Règle d’identité :
 
@@ -138,7 +156,7 @@ Règle d’identité :
 - conserver des attributs `autocomplete` explicites lorsque la sémantique est connue ;
 - ne jamais masquer une inversion de champs par une logique d’ordre cachée.
 
-## 12. Codes personnels à 6 chiffres
+## 13. Codes personnels à 6 chiffres
 
 Un code STIP à 6 chiffres n’est pas un mot de passe navigateur classique.
 
@@ -152,7 +170,7 @@ Le contrat commun est :
 - masquage visuel par le moteur STIP ;
 - possibilité d’afficher/masquer sans changer la sémantique du champ.
 
-## 13. Inscription automatique des formulaires
+## 14. Inscription automatique des formulaires
 
 Le moteur peut enrôler automatiquement les champs standards ajoutés au DOM.
 
@@ -165,7 +183,7 @@ Un nouveau formulaire ne doit donc pas recréer localement :
 
 Une exception locale doit être explicitement déclarée et justifiée.
 
-## 14. Règles d’évolution
+## 15. Règles d’évolution
 
 Toute modification du comportement commun d’un formulaire doit respecter cet ordre :
 
@@ -177,7 +195,7 @@ Toute modification du comportement commun d’un formulaire doit respecter cet o
 
 Une correction n’est pas considérée comme complète si elle fonctionne sur une seule page alors que le comportement est commun.
 
-## 15. Invariants à ne pas casser
+## 16. Invariants à ne pas casser
 
 - pas de **Suivant** sans vraie étape suivante ;
 - dernière étape = action terminale explicite ;

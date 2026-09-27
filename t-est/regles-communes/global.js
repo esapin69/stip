@@ -19,6 +19,8 @@
   const FOCUS = "[data-stip-keyboard-focus]";
   const SCOPE = "[data-stip-keyboard-scope]";
   const FORM_FOCUS = "[data-stip-form-focus]";
+  const FORM_MODE_ATTR = "data-stip-form-mode";
+  const FORM_MODES = new Set(["sequential", "standard", "search", "composer", "native", "exempt"]);
   const INTENT = "[data-stip-intent-reveal]";
   const NEXT_ACTION = ".stip-keyboard-next-action";
   const PREV_ACTION = ".stip-keyboard-prev-action";
@@ -113,6 +115,7 @@
   }
 
   function normalizePinField(field) {
+    if (formMode(field?.form || field?.closest?.("form")) === "exempt") return false;
     if (!isSixDigitPin(field)) return false;
     field.dataset.stipPinField = "1";
     field.classList.add("stip-pin-field");
@@ -132,6 +135,7 @@
 
   function normalizeAutofillField(field) {
     if (!field?.matches?.("input,textarea,select")) return "";
+    if (formMode(field.form || field.closest?.("form")) === "exempt") return "";
     if (normalizePinField(field)) return "one-time-code";
     const inferred = inferredAutocompleteToken(field);
     const explicit = explicitAutocompleteToken(field);
@@ -204,6 +208,7 @@
     if (owner) forms.add(owner);
     root?.querySelectorAll?.("form").forEach((form) => forms.add(form));
     forms.forEach((form) => {
+      if (formMode(form) === "exempt") return;
       if (!form.hasAttribute("autocomplete")) form.setAttribute("autocomplete", "on");
       form.querySelectorAll("input,textarea,select").forEach((field) => {
         normalizePinField(field);
@@ -292,11 +297,20 @@
     return !!field?.matches?.(WRITABLE_SELECTOR);
   }
 
-  function composerForm(form) {
-    if (!form) return false;
-    if (form.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || form.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return true;
+  function formMode(form) {
+    if (!form) return "native";
+    const explicit = String(form.getAttribute?.(FORM_MODE_ATTR) || "").trim().toLowerCase();
+    if (FORM_MODES.has(explicit)) return explicit;
+    if (form.matches?.("[data-stip-keyboard-exempt]") || form.closest?.("[data-stip-keyboard-exempt]")) return "exempt";
+    if (form.matches?.("[data-stip-keyboard-native]") || form.closest?.("[data-stip-keyboard-native]")) return "native";
     const key = [form.id, form.className, form.getAttribute?.("aria-label")].filter(Boolean).join(" ").toLowerCase();
-    return /(?:^|[\\s_-])(chat|message|messages|composer|compose|dialog-form)(?:$|[\\s_-])/.test(key);
+    if (/(?:^|[\\s_-])(chat|message|messages|composer|compose|dialog-form)(?:$|[\\s_-])/.test(key)) return "composer";
+    return "auto";
+  }
+
+  function composerForm(form) {
+    const mode = formMode(form);
+    return mode === "composer" || mode === "native" || mode === "exempt";
   }
 
   function searchScopeFor(field) {
@@ -344,9 +358,11 @@
   function fieldRole(field) {
     if (!writableField(field)) return "other";
     if (field.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || field.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return "native";
-    if (field.matches('input[type="search"]')) return "search";
     const form = field.closest("form");
-    if (composerForm(form)) return "native";
+    const mode = formMode(form);
+    if (mode === "exempt" || mode === "native" || mode === "composer") return "native";
+    if (field.matches('input[type="search"]') || mode === "search") return "search";
+    if (mode === "standard") return "native";
     return form ? "form" : "native";
   }
 
@@ -386,6 +402,8 @@
   }
 
   function syncFormHints(form) {
+    const mode = formMode(form);
+    if (mode === "standard" || mode === "search" || mode === "composer" || mode === "native" || mode === "exempt") return;
     const fields = usableFields(form);
     const submit = form?.querySelector?.('button[type="submit"],input[type="submit"],[data-stip-keyboard-action]');
     fields.forEach((field, index) => {
@@ -410,10 +428,12 @@
     if (role !== "form") return;
     const form = field.closest("form");
     if (!form) return;
+    const mode = formMode(form);
     field.setAttribute("data-stip-keyboard-focus", "");
     form.setAttribute("data-stip-keyboard-scope", "");
     form.setAttribute("data-stip-form-focus", "");
-    if (sequentialControls(form).length > 1) form.setAttribute("data-stip-step-nav", "");
+    if ((mode === "sequential" || mode === "auto") && sequentialControls(form).length > 1)
+      form.setAttribute("data-stip-step-nav", "");
     syncFormHints(form);
   }
 
@@ -897,6 +917,7 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 22
+    formMode,
+    version: 23
   };
 })();

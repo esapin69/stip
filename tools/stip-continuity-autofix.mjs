@@ -5,7 +5,7 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 const CONTINUITY_VERSION = "20260925-workspace-auto1";
-const FORMUX_VERSION = "20260927-sitewide14";
+const FORMUX_VERSION = "20260927-sitewide15";
 const EXEMPT = new Set([
   "index.html",
   "print.html",

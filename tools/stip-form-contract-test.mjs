@@ -10,6 +10,17 @@ const check = (condition, message) => {
   if (!condition) failures.push(message);
 };
 
+function walkHtml(dir) {
+  const out = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.name === ".git" || entry.name === "node_modules") continue;
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...walkHtml(full));
+    else if (entry.isFile() && entry.name.toLowerCase().endsWith(".html")) out.push(full);
+  }
+  return out;
+}
+
 const rules = read("t-est/regles-communes/FORM_RULES.md");
 const formJs = read("t-est/regles-communes/global.js");
 const formCss = read("t-est/regles-communes/global.css");
@@ -23,6 +34,31 @@ check(
     rules.includes("global.js") &&
     rules.includes("global.css"),
   "FORM_RULES.md doit rester le contrat canonique et nommer le moteur commun."
+);
+
+const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "exempt"]);
+const formModeProblems = [];
+for (const file of walkHtml(ROOT)) {
+  const source = fs.readFileSync(file, "utf8");
+  for (const match of source.matchAll(/<form\\b([^>]*)>/gi)) {
+    const attrs = match[1] || "";
+    const modeMatch = attrs.match(/\\bdata-stip-form-mode=["']([^"']+)["']/i);
+    const relative = path.relative(ROOT, file).replaceAll("\\\\", "/");
+    if (!modeMatch) formModeProblems.push(`${relative}: formulaire sans data-stip-form-mode`);
+    else if (!allowedModes.has(String(modeMatch[1]).toLowerCase()))
+      formModeProblems.push(`${relative}: mode inconnu "${modeMatch[1]}"`);
+  }
+}
+check(
+  formModeProblems.length === 0,
+  "Chaque formulaire HTML doit déclarer un mode FormUX explicite. " + formModeProblems.join(" | ")
+);
+
+check(
+  formJs.includes('const FORM_MODE_ATTR = "data-stip-form-mode"') &&
+    formJs.includes('"sequential", "standard", "search", "composer", "native", "exempt"') &&
+    formJs.includes("function formMode(form)"),
+  "Le moteur commun doit interpréter les modes explicites documentés."
 );
 
 check(
