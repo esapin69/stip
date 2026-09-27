@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260927-stepflow2";
+const STIP_SW_BUILD="20260927-keyboard-focus2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 

@@ -18,11 +18,15 @@
     'input[type="tel"]',
     'input[type="url"]',
     'input[type="password"]',
+    'input[type="search"]',
     'input[type="number"]',
     'textarea'
   ].join(",");
   const LOCK_CLASS = "stip-keyboard-focus-lock";
   const MODE_CLASS = "stip-keyboard-focus-mode";
+  const SEARCH_MODE_ATTR = "data-stip-search-focus";
+  const SEARCH_EXIT = ".stip-keyboard-search-exit";
+  const SEARCH_RESULT_SELECTOR = '[class*="result"],[id*="result"],[class*="suggest"],[id*="suggest"],[data-picker],[class*="list"],[id*="list"],[id*="List"]';
   const viewport = window.visualViewport;
 
   const AUTOFILL_CONTEXT_CLASS = "stip-autofill-context";
@@ -215,11 +219,62 @@
     return !!field?.matches?.(WRITABLE_SELECTOR);
   }
 
+  function composerForm(form) {
+    if (!form) return false;
+    if (form.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || form.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return true;
+    const key = [form.id, form.className, form.getAttribute?.("aria-label")].filter(Boolean).join(" ").toLowerCase();
+    return /(?:^|[\\s_-])(chat|message|messages|composer|compose|dialog-form)(?:$|[\\s_-])/.test(key);
+  }
+
+  function searchScopeFor(field) {
+    let node = field?.parentElement || null;
+    let named = null;
+    for (let depth = 0; node && node !== document.body && depth < 7; depth += 1, node = node.parentElement) {
+      const key = [node.id, node.className, node.getAttribute?.("role")].filter(Boolean).join(" ").toLowerCase();
+      if (/search|recherch|lookup|finder|picker/.test(key)) named = node;
+      if (node.querySelector?.(SEARCH_RESULT_SELECTOR)) return node;
+    }
+    return named || field?.parentElement || null;
+  }
+
+  function ensureSearchExit(root) {
+    if (!root) return null;
+    let button = root.querySelector?.(SEARCH_EXIT);
+    if (!button) {
+      button = document.createElement("button");
+      button.type = "button";
+      button.className = "stip-keyboard-search-exit";
+      button.textContent = "×";
+      button.setAttribute("aria-label", "Quitter la recherche plein écran");
+      button.setAttribute("title", "Quitter");
+      button.setAttribute("data-stip-keyboard-keep", "");
+      root.appendChild(button);
+    }
+    button.onclick = () => {
+      try { active?.blur?.(); } catch {}
+      clearMode();
+    };
+    return button;
+  }
+
+  function prepareSearchPath(field, root = scope) {
+    if (!field || !root || !root.hasAttribute?.(SEARCH_MODE_ATTR)) return;
+    root.querySelectorAll?.(".stip-keyboard-search-path").forEach((node) => node.classList.remove("stip-keyboard-search-path"));
+    let node = field;
+    while (node && node !== root) {
+      node.classList?.add?.("stip-keyboard-search-path");
+      node = node.parentElement;
+    }
+    ensureSearchExit(root);
+  }
+
   function fieldRole(field) {
     if (!writableField(field)) return "other";
     if (field.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || field.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return "native";
     if (field.matches('input[type="search"]')) return "search";
-    return field.closest("form") ? "form" : "native";
+    const form = field.closest("form");
+    if (composerForm(form)) return "native";
+    return form ? "form" : "native";
   }
 
   function questionText(field) {
@@ -267,15 +322,25 @@
   }
 
   function enrollField(field) {
-    if (!writableField(field) || field.disabled || field.readOnly || field.matches(FOCUS)) return;
+    if (!writableField(field) || field.disabled || field.readOnly) return;
     const role = fieldRole(field);
     field.dataset.stipKeyboardRole = role;
+    if (role === "search") {
+      const root = searchScopeFor(field);
+      if (!root) return;
+      field.setAttribute("data-stip-keyboard-focus", "");
+      root.setAttribute("data-stip-keyboard-scope", "");
+      root.setAttribute(SEARCH_MODE_ATTR, "");
+      ensureSearchExit(root);
+      return;
+    }
     if (role !== "form") return;
     const form = field.closest("form");
     if (!form) return;
     field.setAttribute("data-stip-keyboard-focus", "");
     form.setAttribute("data-stip-keyboard-scope", "");
     form.setAttribute("data-stip-form-focus", "");
+    if (sequentialControls(form).length > 1) form.setAttribute("data-stip-step-nav", "");
     syncFormHints(form);
   }
 
@@ -374,7 +439,7 @@
       previous.textContent = "← Précédent";
       form.appendChild(previous);
     }
-    if (stepNavigation && !overview) {
+    if (!overview) {
       overview = document.createElement("button");
       overview.type = "button";
       overview.className = "stip-keyboard-overview-action";
@@ -459,7 +524,8 @@
     setDialogMode(scope, modeOpen);
     document.body.classList.toggle(LOCK_CLASS, modeOpen);
     if (modeOpen) {
-      prepareFormPath(active, scope);
+      if (scope.hasAttribute?.(SEARCH_MODE_ATTR)) prepareSearchPath(active, scope);
+      else prepareFormPath(active, scope);
       return;
     }
     const action = scope.querySelector?.(NEXT_ACTION);
@@ -484,9 +550,8 @@
     scope.style.setProperty("--stip-vv-height", vvHeight + "px");
     scope.style.setProperty("--stip-vv-top", vvTop + "px");
     const focused = document.activeElement;
-    const stepNavigation = !!formFor(active)?.hasAttribute?.("data-stip-step-nav");
     const forceFocusMode = !!active?.closest?.("[data-stip-force-focus-mode]");
-    if (stepNavigation || forceFocusMode) {
+    if (forceFocusMode) {
       const retained =
         focused === active ||
         (focused && scope.contains(focused) && focused.closest?.("[data-stip-keyboard-keep]"));
@@ -518,15 +583,16 @@
     if (preserveKeyboard && previousBaseline) { baselineHeight = previousBaseline; pendingBaseline = previousBaseline; }
     else if (!continuingSameFlow || !baselineHeight) baselineHeight = Math.max(pendingBaseline || 0, stableHeight || 0, measureFullHeight());
     pendingBaseline = 0;
-    prepareFormPath(field, scope);
-    const stepNavigation = !!formFor(field)?.hasAttribute?.("data-stip-step-nav");
+    if (scope.hasAttribute?.(SEARCH_MODE_ATTR)) prepareSearchPath(field, scope);
+    else prepareFormPath(field, scope);
     const forceFocusMode = !!field?.closest?.("[data-stip-force-focus-mode]");
-    if (stepNavigation || forceFocusMode || (preserveKeyboard && previousModeOpen)) {
+    if (forceFocusMode || (preserveKeyboard && previousModeOpen)) {
       modeOpen = true;
       scope.classList.add(MODE_CLASS);
       setDialogMode(scope, true);
       document.body.classList.add(LOCK_CLASS);
-      prepareFormPath(field, scope);
+      if (scope.hasAttribute?.(SEARCH_MODE_ATTR)) prepareSearchPath(field, scope);
+      else prepareFormPath(field, scope);
     }
     syncKeyboard(); scheduleSync(60); scheduleSync(160); scheduleSync(320);
   }
@@ -617,7 +683,7 @@
   document.addEventListener("focusout", () => {
     setTimeout(() => {
       const focused = document.activeElement; const nextField = focused?.closest?.(FOCUS);
-      if (nextField && nextField.closest(SCOPE) === scope) { active = nextField; prepareFormPath(nextField, scope); syncKeyboard(); return; }
+      if (nextField && nextField.closest(SCOPE) === scope) { active = nextField; if (scope?.hasAttribute?.(SEARCH_MODE_ATTR)) prepareSearchPath(nextField, scope); else prepareFormPath(nextField, scope); syncKeyboard(); return; }
       if (focused && scope?.contains?.(focused) && (focused.matches?.(NEXT_ACTION) || focused.closest?.("[data-stip-keyboard-keep]"))) return;
       setTimeout(() => {
         const current = document.activeElement;
@@ -644,11 +710,11 @@
     return false;
   }
 
-  normalizeAutofill(document);
+  autoEnroll(document);
   const autofillObserver = new MutationObserver((records) => {
     for (const record of records) {
       for (const node of record.addedNodes || []) {
-        if (node?.nodeType === 1) normalizeAutofill(node);
+        if (node?.nodeType === 1) autoEnroll(node);
       }
     }
   });
@@ -665,6 +731,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 15
+    version: 16
   };
 })();
