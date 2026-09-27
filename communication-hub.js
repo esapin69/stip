@@ -225,7 +225,7 @@
   }
   function threadShell(){
     if(thread)return thread;
-    thread=document.createElement("section");thread.className="ch-thread";thread.hidden=true;thread.innerHTML='<header><button type="button" data-close>‹</button><div data-thread-head></div><span></span></header><main data-thread-body></main><form><textarea name="body" rows="1" maxlength="2000" placeholder="Message…"></textarea><button type="submit">↑</button></form>';
+    thread=document.createElement("section");thread.className="ch-thread";thread.hidden=true;thread.innerHTML='<header><button type="button" data-close>‹</button><div data-thread-head></div><span></span></header><main data-thread-body></main><form><textarea name="body" data-stip-keyboard-native rows="1" maxlength="2000" placeholder="Message…"></textarea><button type="submit">↑</button></form>';
     document.body.appendChild(thread);
     bindKeyboardTracking(thread);
     thread.querySelector("[data-close]").addEventListener("click",closeThread);
