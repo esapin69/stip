@@ -1690,42 +1690,27 @@
       .join("");
   }
   function profile() {
+    const template = window.STIPPersonCard;
+    if (template?.renderCurrent)
+      return `<section class="hc-profile-section" aria-label="Carte STIP">
+        <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
+        ${template.renderCurrent({ label: "MON PROFIL", compact: true })}
+      </section>`;
+
     const a = state.boot?.agent || state.session?.agent || {},
-      media = state.boot?.media || {},
-      avatar = a.profile_photo_url || media.avatars?.[a.source_key] || a.avatar_signed_url || a.avatar_url || "",
-      ghe = String(a.ghe || "").trim(),
-      tel = String(a.telephone || "").trim(),
-      mail = String(a.email || a.email_pro || "").trim(),
-      matricule = String(a.matricule || "").trim(),
       prenom = cap(String(a.prenom || "").trim()),
-      nomRaw = String(a.nom || "").trim().toLowerCase(),
-      nom = nomRaw ? cap(nomRaw) : "",
-      isTrainee = String(state.session?.role_key || window.STIPSession?.role_key || "") === "stagiaire",
-      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase(),
-      gheLabel = ghe
-        ? ghe.toUpperCase().startsWith("GHE")
-          ? ghe.toUpperCase()
-          : `GHE ${ghe}`
-        : "";
+      nom = cap(String(a.nom || "").trim()),
+      ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "ST";
     return `<section class="hc-profile-section" aria-label="Carte STIP">
       <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
-      <section class="hc-profile hc-profile-full hc-id-card">
-        <div class="hc-avatar" data-avatar-fallback="${esc(ini || "ST")}">${avatar ? `<img src="${esc(avatar)}" alt="" loading="lazy">` : `<span>${esc(ini || "ST")}</span>`}</div>
-        <div class="hc-profile-copy">
-          <div class="hc-profile-name-line">
-            ${prenom ? `<strong class="hc-profile-firstname">${esc(prenom)}</strong>` : ""}
-            ${nom ? `<span class="hc-profile-surname">${esc(nom)}</span>` : ""}
-          </div>
-          ${matricule ? `<span class="hc-profile-matricule">Matricule <strong>${esc(matricule)}</strong></span>` : ""}
-          ${isTrainee ? '<span class="hc-profile-matricule">Session <strong>Stagiaire</strong></span><button type="button" class="hc-trainee-change" data-trainee-session-change>Changer de stagiaire</button>' : ""}
-          ${mail ? `<span class="hc-profile-email" title="${esc(mail)}">${esc(mail)}</span>` : ""}
-          <span class="hc-profile-breath" aria-hidden="true"></span>
-          ${tel ? `<button class="hc-profile-contact hc-profile-phone" data-copy="${esc(tel)}" data-label="Téléphone" aria-label="Copier le téléphone"><strong>${esc(tel)}</strong></button>` : ""}
-        </div>
-        ${gheLabel ? `<div class="hc-profile-ghe-art" aria-label="${esc(gheLabel)}"><span>${esc(gheLabel)}</span></div>` : ""}
+      <section class="stip-person-card is-compact is-self hc-id-card">
+        <div class="stip-person-card-avatar hc-avatar" data-avatar-fallback="${esc(ini)}"><span>${esc(ini)}</span></div>
+        <div class="stip-person-card-copy"><small>MON PROFIL</small><strong>${esc([prenom, nom].filter(Boolean).join(" ") || "Utilisateur")}</strong></div>
+        <span class="stip-person-card-menu-hint" aria-hidden="true">•••</span>
       </section>
     </section>`;
   }
+
   function pilotageRoleKey() {
     const raw = String(
       state.session?.role_key ||
