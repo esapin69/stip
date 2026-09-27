@@ -157,7 +157,7 @@
     const i=shiftInfo(row?.code||row?.source_value||"");
     if(!row)return compact?"":"—";
     if(!i.isWorking){
-      const visual=iconHtml(i.iconKey,i.icon,i.label,"aav-shift-status-svg");
+      const visual=esc(i.icon||"•");
       return compact?`<span class="stip-month-icon">${visual}</span>`:visual;
     }
     return compact?`<span class="aav-dot aav-${i.family} stip-month-dot"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
@@ -204,7 +204,7 @@
         family=info.family||"other",base=info.base||"—",pending=!row,
         codeClass=info.isWorking?`code-${family}`:"",
         statusClass=pending?"pending":info.isWorking?"work":"rest",
-        mainIcon=pending?"🚫":(info.isWorking?esc(info.icon||"•"):iconHtml(info.iconKey,info.icon||"•",info.label||base,"aav-week-shift-svg")),
+        mainIcon=pending?"🚫":esc(info.icon||"•"),
         eventSlot=ev.length
           ? `<span class="stip-week-events" aria-label="${ev.length} événement${ev.length>1?"s":""}">${ev.slice(0,2).map(x=>`<i class="stip-week-event" title="${esc(x.title||x.kind||"Événement")}">${iconHtml(x.iconKey,x.icon||"•",x.kind||x.title||"Événement","aav-event-svg")}</i>`).join("")}</span>`
           : '<span class="stip-week-events is-empty" aria-hidden="true"></span>',
