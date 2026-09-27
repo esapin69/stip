@@ -142,7 +142,7 @@
           <div class="resp-request-body">
             <label>Rechercher un agent<input id="search" placeholder="Nom ou prénom" /></label>
             <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
-            <form id="form" data-stip-form-mode="sequential" hidden>
+            <form id="form" data-stip-form-mode="legacy" hidden>
               <input type="hidden" id="agentId" />
               <label>Type<select id="kind"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>
@@ -277,7 +277,7 @@
                 <span class="stip-filter-copy"><strong>Notifier</strong></span>
               </button>
             </div>
-            <form id="taForm" class="ta-form" data-stip-form-mode="sequential">
+            <form id="taForm" class="ta-form" data-stip-form-mode="legacy">
               <label>Agent<button id="taAgentPicker" class="ta-agent-picker" type="button" aria-haspopup="dialog"><span id="taAgentLabel">Choisir un agent…</span><span aria-hidden="true">›</span></button></label><input id="taAgent" type="hidden" value="" />
               <label>Titre<input id="taTitle" maxlength="180" required placeholder="Ex. Réunion d’équipe" /></label>
               <label>Message<textarea id="taBody" maxlength="1500" placeholder="Information utile pour l’agent"></textarea></label>
