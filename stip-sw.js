@@ -13,7 +13,7 @@ self.addEventListener("fetch",event=>{const request=event.request;if(request.met
 function notificationIcon(data){
   const key=String(data.event_key||data.kind||data.type||data.tag||"").toLowerCase();
   if(key.includes("wheelchair")||key.includes("fauteuil"))return "/images/notifications/wheelchair.webp?v=20260925-1";
-  if(key.includes("team_chat")||key.includes("chat-equipe")||key.includes("team-chat"))return "/images/icone_app/team-chat.svg?v=20260921-teamchat2";
+  if(key.includes("team_chat")||key.includes("chat-equipe")||key.includes("team-chat"))return "/images/notifications/chat.webp?v=20260927-communication5";
   if(key.includes("dm")||key.includes("direct")||key.includes("group"))return "/images/notifications/dm.webp?v=20260925-1";
   return "/images/icone_app/home-bell.svg?v=20260920-nav1";
 }
