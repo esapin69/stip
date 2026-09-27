@@ -11,3 +11,51 @@ body.stip-keyboard-focus-lock {
   overflow: hidden !important;
   overscroll-behavior: none;
 }
+
+/* Porte d'entrée : écran réellement fixe.
+   La page publique ne doit jamais pouvoir être déplacée verticalement par swipe.
+   Le verrou ne s'applique qu'à l'écran de connexion visible et n'affecte pas
+   l'application après connexion ni le contenu interne d'un dialogue. */
+html:has(#loginView.t-entry-screen:not(.hidden)),
+body:has(#loginView.t-entry-screen:not(.hidden)) {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  max-height: 100%;
+  margin: 0;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+body:has(#loginView.t-entry-screen:not(.hidden)) > .app-shell {
+  height: 100dvh;
+  min-height: 0 !important;
+  max-height: 100dvh;
+  overflow: hidden !important;
+}
+
+#loginView.t-entry-screen:not(.hidden) {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: pan-x;
+}
+
+#loginView.t-entry-screen:not(.hidden) > .t-entry-shell {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+}
+
+/* Un dialogue ouvert garde son propre comportement tactile/formulaire. */
+#accessRequestDialog[open],
+#accessRequestDialog[open] * {
+  touch-action: auto;
+}
