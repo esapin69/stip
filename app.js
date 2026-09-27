@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const ACCESS_API='https://stip-ten.vercel.app/api/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
+const ACCESS_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',STORAGE='stip_session_v1',SCROLL_STORE='stip_scroll_v2',PREVIEW_STORE='stip_admin_preview_v1',STANDALONE_ENTRY=document.documentElement.dataset.stipEntryStandalone==='1',$=s=>document.querySelector(s),qsa=s=>[...document.querySelectorAll(s)];
 const loginView=$('#loginView'),appView=$('#appView'),loginForm=$('#loginForm'),accessCode=$('#accessCode'),loginMessage=$('#loginMessage'),logoutBtn=$('#logoutBtn'),welcomeText=$('#welcomeText');let session=null,restoring=false,panelGuard=false,authEpoch=0,loginInFlight=false,lastAutoCode='',pendingScrollRestore=null;
 try{history.scrollRestoration='manual'}catch{}
 function token(){return localStorage.getItem(STORAGE)||''}
