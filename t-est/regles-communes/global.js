@@ -148,10 +148,10 @@
     return explicit || inferred;
   }
 
-  /* Do not rewrite identity-field DOM order here.
-     Browser autofill is more reliable when pages keep a standards-friendly
-     given-name -> family-name DOM order. STIP's visible/step order remains
-     controlled separately by the page layout and identityOrdered(). */
+  /* Règle identité : une seule source d'ordre = le DOM.
+     Ne jamais inverser Nom/Prénom en JavaScript ni avec un ordre caché.
+     Chaque formulaire garde son ordre visuel réel dans le DOM et déclare
+     explicitement family-name / given-name pour l'autoremplissage navigateur. */
 
   function markAutofillContext(form) {
     if (!form) return;
@@ -184,14 +184,7 @@
   }
 
   function identityOrdered(controls) {
-    const ordered = [...controls];
-    const familyIndex = ordered.findIndex((field) => normalizeAutofillField(field) === "family-name");
-    const givenIndex = ordered.findIndex((field) => normalizeAutofillField(field) === "given-name");
-    if (familyIndex >= 0 && givenIndex >= 0 && givenIndex < familyIndex) {
-      const [family] = ordered.splice(familyIndex, 1);
-      ordered.splice(givenIndex, 0, family);
-    }
-    return ordered;
+    return [...controls];
   }
 
   let active = null;
