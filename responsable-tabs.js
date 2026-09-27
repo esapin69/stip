@@ -142,7 +142,7 @@
     if (window.STIPResponsableRequestsLoaded) return;
     if (document.querySelector('script[data-resp-inline-requests="1"]')) return;
     const script = document.createElement("script");
-    script.src = "responsable-demandes.js?v=20260922-tabs1";
+    script.src = "responsable-demandes.js?v=20260927-formux-context1";
     script.dataset.respInlineRequests = "1";
     script.onload = () => {
       window.STIPResponsableRequestsLoaded = true;

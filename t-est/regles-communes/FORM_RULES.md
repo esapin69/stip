@@ -55,6 +55,14 @@ Pour vérifier si le moteur construit depuis **Demander un accès** s’adapte �
 
 Ce formulaire est un **consommateur de test**, pas une nouvelle source de règles. Son comportement ne devient canonique qu’après validation explicite. Tous les autres formulaires historiques restent en `legacy` et ne doivent pas recevoir automatiquement le moteur séquentiel.
 
+### Briques communes ajoutées depuis le pilote
+
+Trois comportements sont désormais explicitement communs :
+
+- **Recherche d’une personne** : une recherche comme « Rechercher un agent » utilise une surface dédiée `data-stip-search-scope`. Quand le clavier est ouvert, la question, le champ et les résultats restent ensemble dans le viewport ; la page complète ne doit pas rester mélangée derrière la recherche.
+- **Menu de choix STIP** : un `select` marqué `data-stip-select-menu` n’utilise plus le grand menu natif Android/iOS comme interface principale. Le moteur affiche un panneau STIP cohérent, lisible et tactile, tout en conservant le vrai `select` comme valeur métier.
+- **Contexte de saisie** : pendant une question plein écran, le moteur peut rappeler **POUR QUI**, **POURQUOI** et l’**ÉTAPE**. Un champ peut ajouter une aide courte **COMMENT** avec `data-stip-help`. Ces informations servent à comprendre ce que l’on est en train de remplir sans alourdir la question.
+
 ## 3. Règle fondamentale
 
 **Un champ actif = une question claire = une action cohérente.**

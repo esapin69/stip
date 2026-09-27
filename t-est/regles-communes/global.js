@@ -27,6 +27,10 @@
   const OVERVIEW_ACTION = ".stip-keyboard-overview-action";
   const NAV_ACTIONS = ".stip-keyboard-nav-actions";
   const QUESTION_CLASS = "stip-keyboard-question";
+  const CONTEXT_CLASS = "stip-keyboard-context";
+  const HELP_CLASS = "stip-keyboard-help";
+  const SEARCH_QUESTION = ".stip-keyboard-search-question";
+  const SELECT_MENU_SELECTOR = "select[data-stip-select-menu]";
   const WRITABLE_SELECTOR = [
     'input:not([type])',
     'input[type="text"]',
@@ -291,6 +295,7 @@
     if (overview) overview.hidden = true;
     const nav = root?.querySelector?.(NAV_ACTIONS);
     if (nav) nav.hidden = true;
+    root?.querySelectorAll?.("." + CONTEXT_CLASS + ",." + HELP_CLASS).forEach((node) => node.remove());
   }
 
   function writableField(field) {
@@ -314,6 +319,8 @@
   }
 
   function searchScopeFor(field) {
+    const explicit = field?.closest?.("[data-stip-search-scope]");
+    if (explicit) return explicit;
     let node = field?.parentElement || null;
     let named = null;
     for (let depth = 0; node && node !== document.body && depth < 7; depth += 1, node = node.parentElement) {
@@ -347,6 +354,7 @@
   function prepareSearchPath(field, root = scope) {
     if (!field || !root || !root.hasAttribute?.(SEARCH_MODE_ATTR)) return;
     root.querySelectorAll?.(".stip-keyboard-search-path").forEach((node) => node.classList.remove("stip-keyboard-search-path"));
+    ensureSearchQuestion(root, field);
     let node = field;
     while (node && node !== root) {
       node.classList?.add?.("stip-keyboard-search-path");
@@ -384,6 +392,19 @@
     ).trim();
   }
 
+  function ensureSearchQuestion(root, field) {
+    if (!root || !field) return null;
+    let question = root.querySelector?.(SEARCH_QUESTION);
+    if (!question) {
+      question = document.createElement("div");
+      question.className = "stip-keyboard-search-question";
+      question.setAttribute("aria-live", "polite");
+      root.prepend(question);
+    }
+    question.textContent = questionText(field);
+    return question;
+  }
+
   function ensureQuestion(field, form) {
     const label = field.labels?.[0] || field.closest?.("label");
     if (label && form?.contains(label)) {
@@ -399,6 +420,185 @@
     }
     if (question) question.textContent = questionText(field);
     return question;
+  }
+
+  function formContextEntries(form, index, total) {
+    if (!form) return [];
+    const entries = [];
+    const who = String(form.dataset.stipContextWho || "").trim();
+    const why = String(form.dataset.stipContextWhy || "").trim();
+    if (who) entries.push(["POUR QUI", who]);
+    if (why) entries.push(["POURQUOI", why]);
+    if (total > 1 && index >= 0) entries.push(["ÉTAPE", (index + 1) + " / " + total]);
+    return entries;
+  }
+
+  function ensureFormContext(form, field, index, total) {
+    if (!form) return null;
+    form.querySelectorAll?.("." + CONTEXT_CLASS).forEach((node) => node.remove());
+    const entries = formContextEntries(form, index, total);
+    if (!entries.length) return null;
+    const box = document.createElement("div");
+    box.className = CONTEXT_CLASS;
+    box.setAttribute("aria-label", "Contexte de la saisie");
+    for (const [label, value] of entries) {
+      const item = document.createElement("span");
+      const small = document.createElement("small");
+      const strong = document.createElement("strong");
+      small.textContent = label;
+      strong.textContent = value;
+      item.append(small, strong);
+      box.appendChild(item);
+    }
+    form.prepend(box);
+    return box;
+  }
+
+  function ensureFieldHelp(form, field) {
+    if (!form) return null;
+    form.querySelectorAll?.("." + HELP_CLASS).forEach((node) => node.remove());
+    const text = String(field?.dataset?.stipHelp || "").trim();
+    if (!text) return null;
+    const help = document.createElement("div");
+    help.className = HELP_CLASS;
+    const small = document.createElement("small");
+    const body = document.createElement("span");
+    small.textContent = "COMMENT";
+    body.textContent = text;
+    help.append(small, body);
+    form.appendChild(help);
+    return help;
+  }
+
+  function selectMenuTitle(select) {
+    const explicit = String(select?.dataset?.stipSelectTitle || "").trim();
+    if (explicit) return explicit;
+    const label = select?.labels?.[0] || select?.closest?.("label");
+    if (!label) return "Choisir";
+    const clone = label.cloneNode(true);
+    clone.querySelectorAll("select,input,textarea,button").forEach((node) => node.remove());
+    return clone.textContent?.replace(/\s+/g, " ").trim() || "Choisir";
+  }
+
+  function syncSelectTrigger(select, trigger) {
+    const option = select?.selectedOptions?.[0] || select?.options?.[select.selectedIndex];
+    trigger.querySelector("strong").textContent = option?.textContent?.trim?.() || "Choisir";
+    trigger.setAttribute("aria-label", selectMenuTitle(select) + " : " + (option?.textContent?.trim?.() || "Choisir"));
+  }
+
+  function openSelectMenu(select, trigger) {
+    if (!select || !trigger || select.disabled) return;
+    try { document.activeElement?.blur?.(); } catch {}
+    clearMode();
+
+    document.querySelectorAll(".stip-select-layer").forEach((node) => node.remove());
+    const layer = document.createElement("div");
+    layer.className = "stip-select-layer";
+    layer.setAttribute("role", "presentation");
+
+    const sheet = document.createElement("section");
+    sheet.className = "stip-select-sheet";
+    sheet.setAttribute("role", "dialog");
+    sheet.setAttribute("aria-modal", "true");
+    sheet.setAttribute("aria-label", selectMenuTitle(select));
+
+    const head = document.createElement("div");
+    head.className = "stip-select-head";
+    const copy = document.createElement("div");
+    const kicker = document.createElement("small");
+    const title = document.createElement("h3");
+    kicker.textContent = "CHOIX";
+    title.textContent = selectMenuTitle(select);
+    copy.append(kicker, title);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "stip-select-close";
+    close.textContent = "×";
+    close.setAttribute("aria-label", "Fermer");
+    head.append(copy, close);
+
+    const options = document.createElement("div");
+    options.className = "stip-select-options";
+
+    const closeLayer = (restoreFocus = true) => {
+      layer.remove();
+      document.body.classList.remove("stip-select-menu-open");
+      if (restoreFocus) {
+        requestAnimationFrame(() => {
+          try { trigger.focus({ preventScroll: true }); } catch { trigger.focus?.(); }
+        });
+      }
+    };
+
+    [...select.options].forEach((option) => {
+      if (option.disabled) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "stip-select-option";
+      const label = document.createElement("span");
+      const mark = document.createElement("b");
+      label.textContent = option.textContent?.trim?.() || option.value;
+      mark.textContent = option.selected ? "✓" : "";
+      button.classList.toggle("is-selected", option.selected);
+      button.setAttribute("aria-pressed", option.selected ? "true" : "false");
+      button.append(label, mark);
+      button.addEventListener("click", () => {
+        if (select.value !== option.value) {
+          select.value = option.value;
+          select.dispatchEvent(new Event("input", { bubbles: true }));
+          select.dispatchEvent(new Event("change", { bubbles: true }));
+        }
+        syncSelectTrigger(select, trigger);
+        closeLayer();
+      });
+      options.appendChild(button);
+    });
+
+    close.addEventListener("click", () => closeLayer());
+    layer.addEventListener("click", (event) => {
+      if (event.target === layer) closeLayer();
+    });
+    layer.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeLayer();
+      }
+    });
+
+    sheet.append(head, options);
+    layer.appendChild(sheet);
+    document.body.appendChild(layer);
+    document.body.classList.add("stip-select-menu-open");
+    requestAnimationFrame(() => {
+      const selected = options.querySelector(".is-selected") || options.querySelector("button");
+      try { selected?.focus?.({ preventScroll: true }); } catch { selected?.focus?.(); }
+      selected?.scrollIntoView?.({ block: "nearest" });
+    });
+  }
+
+  function enhanceSelectMenu(select) {
+    if (!select?.matches?.(SELECT_MENU_SELECTOR) || select.dataset.stipSelectBound === "1") return;
+    select.dataset.stipSelectBound = "1";
+    select.setAttribute("data-stip-keyboard-exempt", "");
+    select.classList.add("stip-select-source");
+    select.tabIndex = -1;
+    select.setAttribute("aria-hidden", "true");
+
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.className = "stip-select-trigger";
+    trigger.setAttribute("data-stip-select-trigger", "");
+    trigger.setAttribute("aria-haspopup", "dialog");
+    trigger.innerHTML = "<strong></strong><span aria-hidden=\"true\">⌄</span>";
+    select.insertAdjacentElement("afterend", trigger);
+    syncSelectTrigger(select, trigger);
+    trigger.addEventListener("click", () => openSelectMenu(select, trigger));
+    select.addEventListener("change", () => syncSelectTrigger(select, trigger));
+  }
+
+  function bindSelectMenus(root = document) {
+    if (root?.matches?.(SELECT_MENU_SELECTOR)) enhanceSelectMenu(root);
+    root?.querySelectorAll?.(SELECT_MENU_SELECTOR).forEach(enhanceSelectMenu);
   }
 
   function syncFormHints(form) {
@@ -440,6 +640,7 @@
   function autoEnroll(root = document) {
     normalizeAutofill(root);
     bindPinToggles(root);
+    bindSelectMenus(root);
     const fields = [];
     if (root?.matches?.(WRITABLE_SELECTOR)) fields.push(root);
     root?.querySelectorAll?.(WRITABLE_SELECTOR).forEach((field) => fields.push(field));
@@ -562,6 +763,8 @@
     const controls = sequentialControls(form);
     const index = controls.indexOf(field);
     if (index < 0) return;
+    ensureFormContext(form, field, index, controls.length);
+    ensureFieldHelp(form, field);
 
     let action = form.querySelector(NEXT_ACTION);
     if (!action) {
@@ -918,6 +1121,6 @@
     normalizeAutofill,
     fields: sequentialControls,
     formMode,
-    version: 26
+    version: 27
   };
 })();

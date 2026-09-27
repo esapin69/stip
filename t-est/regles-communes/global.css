@@ -15,7 +15,8 @@ body.stip-keyboard-focus-lock {
 
 /* Recherche mobile — la barre active devient un écran de recherche commun.
    Les résultats/suggestions déjà présents dans le bloc restent visibles. */
-[data-stip-search-focus] .stip-keyboard-search-exit {
+[data-stip-search-focus] .stip-keyboard-search-exit,
+[data-stip-search-focus] .stip-keyboard-search-question {
   display: none !important;
 }
 [data-stip-search-focus].stip-keyboard-focus-mode {
@@ -38,8 +39,21 @@ body.stip-keyboard-focus-lock {
     radial-gradient(circle at 50% 18%, rgba(8,198,218,.13), transparent 36%),
     linear-gradient(180deg, #fff, #edf8fa) !important;
 }
-[data-stip-search-focus].stip-keyboard-focus-mode > *:not(.stip-keyboard-search-path):not(.stip-keyboard-search-exit):not([class*="result"]):not([id*="result"]):not([class*="suggest"]):not([id*="suggest"]):not([data-picker]):not([class*="list"]):not([id*="list"]):not([id*="List"]) {
+[data-stip-search-focus].stip-keyboard-focus-mode > *:not(.stip-keyboard-search-path):not(.stip-keyboard-search-exit):not(.stip-keyboard-search-question):not([class*="result"]):not([id*="result"]):not([class*="suggest"]):not([id*="suggest"]):not([data-picker]):not([class*="list"]):not([id*="list"]):not([id*="List"]) {
   display: none !important;
+}
+
+[data-stip-search-focus].stip-keyboard-focus-mode .stip-keyboard-search-question {
+  display: block !important;
+  width: 100% !important;
+  max-width: 620px !important;
+  margin: 0 auto 10px !important;
+  color: #164f5d !important;
+  font-size: .82rem !important;
+  line-height: 1.25 !important;
+  font-weight: 950 !important;
+  letter-spacing: .02em !important;
+  text-transform: uppercase !important;
 }
 [data-stip-search-focus].stip-keyboard-focus-mode .stip-keyboard-search-exit {
   position: absolute !important;
@@ -182,7 +196,7 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 }
 
 [data-stip-form-focus].stip-keyboard-focus-mode
-  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-keyboard-nav-actions):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
+  > *:not(.stip-keyboard-path):not(.stip-keyboard-question):not(.stip-keyboard-context):not(.stip-keyboard-help):not(.stip-keyboard-next-action):not(.stip-keyboard-prev-action):not(.stip-keyboard-overview-action):not(.stip-keyboard-nav-actions):not(.stip-autofill-context):not([data-stip-keyboard-accessory]) {
   display: none !important;
 }
 
@@ -208,6 +222,8 @@ dialog.stip-keyboard-dialog-mode::backdrop {
 
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-path,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-question,
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context,
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-help,
 [data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-next-action {
   width: 100% !important;
   max-width: 620px !important;
@@ -375,6 +391,222 @@ dialog.stip-keyboard-dialog-mode::backdrop {
   display: none !important;
 }
 
+
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+  order: -4 !important;
+  margin-bottom: 2px !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context > span {
+  min-width: 0 !important;
+  padding: 7px 10px !important;
+  border: 1px solid rgba(4,82,104,.12) !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,.72) !important;
+  box-shadow: 0 5px 14px rgba(4,82,104,.05) !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context small {
+  display: block !important;
+  margin-bottom: 1px !important;
+  color: #6c858c !important;
+  font-size: .58rem !important;
+  line-height: 1.1 !important;
+  font-weight: 900 !important;
+  letter-spacing: .05em !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-context strong {
+  display: block !important;
+  max-width: min(230px, 58vw) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: #0d5262 !important;
+  font-size: .78rem !important;
+  line-height: 1.2 !important;
+  font-weight: 900 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-help {
+  display: grid !important;
+  grid-template-columns: auto 1fr !important;
+  align-items: start !important;
+  gap: 8px !important;
+  order: -1 !important;
+  margin-top: 1px !important;
+  padding: 9px 11px !important;
+  border-radius: 13px !important;
+  background: rgba(8,198,218,.08) !important;
+  color: #315f69 !important;
+  font-size: .72rem !important;
+  line-height: 1.35 !important;
+}
+
+[data-stip-form-focus].stip-keyboard-focus-mode .stip-keyboard-help small {
+  color: #008ba3 !important;
+  font-size: .58rem !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+
+.stip-select-source {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.stip-select-trigger {
+  width: 100% !important;
+  min-height: 58px !important;
+  padding: 0 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border: 1px solid rgba(4,82,104,.16) !important;
+  border-radius: 18px !important;
+  background: #fff !important;
+  color: #163f4d !important;
+  font: inherit !important;
+  text-align: left !important;
+  box-shadow: 0 5px 14px rgba(4,82,104,.05) !important;
+}
+
+.stip-select-trigger strong {
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  font-size: 1rem !important;
+  font-weight: 850 !important;
+}
+
+.stip-select-trigger > span {
+  flex: 0 0 auto !important;
+  color: #53747c !important;
+  font-size: 1.05rem !important;
+  font-weight: 900 !important;
+}
+
+body.stip-select-menu-open {
+  overflow: hidden !important;
+}
+
+.stip-select-layer {
+  position: fixed !important;
+  z-index: 12000 !important;
+  inset: 0 !important;
+  display: grid !important;
+  align-items: end !important;
+  padding: 18px !important;
+  background: rgba(11,31,39,.34) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+}
+
+.stip-select-sheet {
+  width: min(620px, 100%) !important;
+  max-height: min(72dvh, 620px) !important;
+  margin: 0 auto !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(4,82,104,.12) !important;
+  border-radius: 26px !important;
+  background: #f8fcfd !important;
+  box-shadow: 0 26px 70px rgba(3,42,54,.26) !important;
+}
+
+.stip-select-head {
+  min-height: 72px !important;
+  padding: 15px 16px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border-bottom: 1px solid rgba(4,82,104,.10) !important;
+}
+
+.stip-select-head small {
+  display: block !important;
+  color: #6f858b !important;
+  font-size: .62rem !important;
+  font-weight: 900 !important;
+  letter-spacing: .06em !important;
+}
+
+.stip-select-head h3 {
+  margin: 2px 0 0 !important;
+  color: #103f4c !important;
+  font-size: 1.06rem !important;
+  line-height: 1.2 !important;
+}
+
+.stip-select-close {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(4,82,104,.12) !important;
+  border-radius: 13px !important;
+  background: #fff !important;
+  color: #56757c !important;
+  font-size: 1.25rem !important;
+}
+
+.stip-select-options {
+  max-height: calc(min(72dvh, 620px) - 72px) !important;
+  padding: 8px !important;
+  overflow: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+.stip-select-option {
+  width: 100% !important;
+  min-height: 54px !important;
+  padding: 0 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(4,82,104,.08) !important;
+  background: transparent !important;
+  color: #173f4b !important;
+  font: inherit !important;
+  text-align: left !important;
+}
+
+.stip-select-option:last-child {
+  border-bottom: 0 !important;
+}
+
+.stip-select-option span {
+  font-size: .98rem !important;
+  font-weight: 760 !important;
+}
+
+.stip-select-option b {
+  width: 28px !important;
+  height: 28px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(4,82,104,.16) !important;
+  border-radius: 50% !important;
+  color: #008fa9 !important;
+  background: #fff !important;
+}
+
+.stip-select-option.is-selected {
+  background: rgba(8,198,218,.09) !important;
+  border-radius: 14px !important;
+}
 
 /* STIP PIN contract — a six-digit numeric access code is not a browser
    password. Keep it masked visually without exposing password semantics to

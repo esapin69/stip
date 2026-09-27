@@ -140,15 +140,17 @@
             <i aria-hidden="true">›</i>
           </summary>
           <div class="resp-request-body">
-            <label>Rechercher un agent<input id="search" placeholder="Nom ou prénom" /></label>
-            <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
+            <div class="resp-agent-search" data-stip-search-scope>
+              <label>Rechercher un agent<input id="search" type="search" placeholder="Nom ou prénom" data-stip-question="Rechercher un agent" autocomplete="off" /></label>
+              <div class="agent-list" id="agents"><div class="resp-request-wait">Ouvre ce bloc pour charger les agents.</div></div>
+            </div>
             <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" hidden>
               <input type="hidden" id="agentId" />
-              <label>Type<select id="kind"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
+              <label>Type<select id="kind" data-stip-select-menu data-stip-select-title="Type de demande"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>
-              <label>Titre<input id="title" maxlength="180" required placeholder="Ex. Lire la nouvelle procédure" /></label>
-              <label>Message<textarea id="body" maxlength="1500" placeholder="Écris ton message"></textarea></label>
-              <label id="priorityLabel">Priorité<select id="priority"><option value="50">Normale</option><option value="75">Importante</option><option value="95">Urgente</option></select></label>
+              <label>Titre<input id="title" maxlength="180" required placeholder="Ex. Lire la nouvelle procédure" data-stip-help="Résume en quelques mots ce que l’agent doit comprendre immédiatement." /></label>
+              <label>Message<textarea id="body" maxlength="1500" placeholder="Écris ton message" data-stip-help="Ajoute seulement le contexte utile : ce qui est attendu, pourquoi, et une échéance si nécessaire."></textarea></label>
+              <label id="priorityLabel">Priorité<select id="priority" data-stip-select-menu data-stip-select-title="Priorité"><option value="50">Normale</option><option value="75">Importante</option><option value="95">Urgente</option></select></label>
               <button type="submit" id="sendBtn">Envoyer dans STIP</button>
               <div class="status" id="status"></div>
             </form>
@@ -320,7 +322,7 @@
     <script src="responsable-home.js?v=20260926-network-budget1"></script>
     <script src="responsable-official-documents.js?v=20260922-tabs1"></script>
     <script src="responsable-staffing.js?v=20260926-network-budget1"></script>
-    <script src="responsable-tabs.js?v=20260925-canonical-events6"></script>
+    <script src="responsable-tabs.js?v=20260927-formux-context1"></script>
     <script src="quick-access-universal.js?v=20260926-no-iframe-pages1"></script>
   </body>
 </html>

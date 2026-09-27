@@ -85,6 +85,32 @@ check(
   "Un formulaire legacy ne doit pas être enrôlé automatiquement dans le moteur séquentiel."
 );
 
+const responsableDemandesJs = read("responsable-demandes.js");
+check(
+  responsableHtml.includes('data-stip-search-scope') &&
+    responsableHtml.includes('id="search" type="search"') &&
+    formJs.includes('field?.closest?.("[data-stip-search-scope]")') &&
+    formJs.includes("function ensureSearchQuestion"),
+  "La recherche d’agent pilote doit utiliser la recherche commune plein écran."
+);
+check(
+  responsableHtml.includes('data-stip-select-menu') &&
+    formJs.includes("function enhanceSelectMenu") &&
+    formCss.includes(".stip-select-layer") &&
+    formCss.includes(".stip-select-option"),
+  "Le menu de choix STIP commun doit rester disponible sur le pilote."
+);
+check(
+  responsableHtml.includes('data-stip-help=') &&
+    responsableDemandesJs.includes("stipContextWho") &&
+    responsableDemandesJs.includes("stipContextWhy") &&
+    formJs.includes("function ensureFormContext") &&
+    formJs.includes("function ensureFieldHelp") &&
+    formCss.includes(".stip-keyboard-context") &&
+    formCss.includes(".stip-keyboard-help"),
+  "Le contexte POUR QUI / POURQUOI / COMMENT doit rester branché au pilote."
+);
+
 check(
   rules.includes("pas de **Suivant** sans vraie étape suivante") &&
     rules.includes("dernière étape = action terminale explicite"),
