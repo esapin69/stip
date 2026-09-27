@@ -8,6 +8,7 @@ const has=(text,needle,message)=>{if(!text.includes(needle))fail(message)};
 
 const app=read("communication-app.js");
 const home=read("home-shell.js");
+const appRuntime=read("app.js");
 const hub=read("communication-hub.js");
 const chat=read("team-chat.js");
 const selector=read("stip-agent-selector.js");
@@ -21,6 +22,7 @@ for(const label of ["Chat équipe","DM & groupes","Fauteuils"])has(app,label,"on
 for(const route of ["communication/chat","communication/dm","communication/fauteuils"])has(app,route,"route manquante: "+route);
 has(home,'app("homeChat", "Communication", "communication", "communication")',"l’application Communication n’est pas exposée avec son icône canonique");
 has(home,'communication/fauteuils',"le raccourci Fauteuils n’aboutit pas à Communication/Fauteuils");
+has(appRuntime,"r.startsWith('communication/')","le routeur principal ne conserve pas les routes Communication dans homeView");
 has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canonique d’agents");
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
 has(hub,"Créer un groupe","choix Créer un groupe manquant");
