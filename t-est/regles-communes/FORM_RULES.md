@@ -45,7 +45,7 @@ La **Demande d’accès** (`accessRequestForm`) est la seule référence validé
 
 Les autres formulaires historiques restent en mode `legacy` tant qu’ils n’ont pas été comparés à cette référence et corrigés. Leur comportement actuel ne doit jamais être recopié dans le moteur comme une règle.
 
-**Chat STIP / Fauteuils / DM est hors périmètre de ce contrat pour l’instant.** Son fonctionnement est encore en cours de réglage : aucune règle de son moteur ne doit être promue en règle commune sans validation explicite ultérieure.
+**Communication est désormais un consommateur validé des briques communes compatibles**, sans devenir une source du questionnaire séquentiel. Le shell `Communication` conserve trois vues — Chat équipe, DM & groupes, Fauteuils — et applique les modes explicites suivants : les saisies de message utilisent `composer`, les réglages structurés non séquentiels utilisent `standard`, et toute recherche d’agent réutilise `STIPAgentSelector` avec le moteur de recherche/clavier commun. Les règles métier propres au chat et aux fauteuils restent définies dans `COMMUNICATION_RULES.md` et `AGENTS.md` ; elles ne sont pas automatiquement promues en règles de formulaire.
 
 ### Pilote de compatibilité en cours
 
@@ -56,6 +56,17 @@ Pour vérifier si le moteur construit depuis **Demander un accès** s’adapte �
 Ce formulaire est un **consommateur de test**, pas une nouvelle source de règles. Son comportement ne devient canonique qu’après validation explicite. Tous les autres formulaires historiques restent en `legacy` et ne doivent pas recevoir automatiquement le moteur séquentiel.
 
 Sur ce pilote, le formulaire reste visible dans **Suivi** : la sélection de l’agent ne doit pas masquer les autres champs. Une demande classique crée une action `pending` pour l’agent et une notification associée ; elle reste donc visible dans ses actions d’accueil jusqu’à traitement. Le mode « Message libre · notification seulement » crée uniquement une notification.
+
+### Consommateur Communication
+
+L’univers **Communication** est raccordé aux règles communes suivantes :
+
+- tous les vrais formulaires déclarent explicitement leur `data-stip-form-mode` ;
+- Chat équipe, DM, envoi séparé et dialogue utilisent `composer` ;
+- les réglages et formulaires structurés non séquentiels utilisent `standard` ;
+- « Rechercher un agent » utilise `STIPAgentSelector`, y compris en sélection multiple ;
+- le clavier et la recherche restent pilotés par les primitives `visualViewport` / recherche commune ;
+- aucun compositeur Communication ne doit être transformé en formulaire question-par-question.
 
 ### Briques communes ajoutées depuis le pilote
 
