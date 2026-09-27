@@ -122,12 +122,16 @@ Affichage, impression, PDF et Sheet doivent être des sorties du même modèle, 
 ### Form Engine
 Objectif : mutualiser questionnaires, évaluations, validations, signatures et génération finale lorsque plusieurs workflows suivent la même structure.
 
-Règle universelle de navigation :
-- **« Suivant » n'est affiché que lorsqu'une étape exploitable existe réellement après l'étape courante.**
-- La dernière étape doit afficher une action terminale explicite : l'action métier du formulaire lorsqu'elle existe, sinon **« Valider »** / **« Terminer »**.
-- Une action terminale ne doit jamais conserver une flèche ou un libellé laissant croire qu'une étape suivante existe.
-- Le libellé, la touche Entrée et le clic doivent utiliser le même calcul de prochaine étape afin d'interdire les boutons « Suivant » sans effet.
-- Les contrôles masqués, désactivés, inertes ou purement techniques ne comptent jamais comme une étape suivante.
+Le contrat canonique des formulaires est `t-est/regles-communes/FORM_RULES.md`.
+Le moteur commun est `t-est/regles-communes/global.js` + `global.css`.
+
+Invariants d’architecture :
+- **« Suivant » n’est affiché que lorsqu’une étape exploitable existe réellement après l’étape courante.**
+- La dernière étape utilise une action terminale explicite.
+- Le clic et la touche Entrée partagent le même calcul de progression.
+- Les contrôles invisibles, désactivés, inertes ou techniques ne créent jamais de fausse étape.
+- Une règle universelle de formulaire se corrige dans le moteur commun, pas dans une seule page.
+- Toute évolution du moteur doit mettre à jour `FORM_RULES.md` et son test de contrat.
 
 ## Contrat des pages
 
