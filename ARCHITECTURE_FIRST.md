@@ -88,9 +88,12 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - Supabase `stip_places` et tables liées = référentiel canonique.
 - Aucun catalogue parallèle dans une page, export ou module de chat.
 
-### Chat STIP / Fauteuils
-- Conserver les contrats canoniques documentés dans `AGENTS.md`.
-- Ne pas recréer backends, catalogues ou moteurs de réactions concurrents.
+### Communication / Chat STIP / Fauteuils
+- `COMMUNICATION_RULES.md` est le contrat transverse de l’univers Communication.
+- Le shell canonique est `communication-app.js/.css` avec trois vues : Chat équipe, DM & groupes, Fauteuils.
+- `stip-messages` reste le backend unique ; `STIPAgentSelector` reste le sélecteur d’agents partagé.
+- Conserver les contrats Fauteuils détaillés dans `AGENTS.md`.
+- Ne pas recréer backends, annuaires, systèmes de notifications, catalogues ou moteurs de réactions concurrents.
 
 ## Moteurs à consolider progressivement
 
