@@ -3695,7 +3695,7 @@
   });
   window.addEventListener("stip:session-ended", stopAll);
   const apiSurface = {
-    build: "20260927-communication4",
+    build: "20260927-communication5",
     mount,
     mountPreview,
     unmountFull,
