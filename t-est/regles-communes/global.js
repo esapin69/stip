@@ -8,6 +8,17 @@
   const FORM_FOCUS = "[data-stip-form-focus]";
   const INTENT = "[data-stip-intent-reveal]";
   const NEXT_ACTION = ".stip-keyboard-next-action";
+  const QUESTION_CLASS = "stip-keyboard-question";
+  const WRITABLE_SELECTOR = [
+    'input:not([type])',
+    'input[type="text"]',
+    'input[type="email"]',
+    'input[type="tel"]',
+    'input[type="url"]',
+    'input[type="password"]',
+    'input[type="number"]',
+    'textarea'
+  ].join(",");
   const LOCK_CLASS = "stip-keyboard-focus-lock";
   const MODE_CLASS = "stip-keyboard-focus-mode";
   const viewport = window.visualViewport;
@@ -91,8 +102,89 @@
 
   function clearFormPath(root = scope) {
     root?.querySelectorAll?.(".stip-keyboard-path").forEach((node) => node.classList.remove("stip-keyboard-path"));
+    root?.querySelectorAll?.("." + QUESTION_CLASS).forEach((node) => {
+      if (node.dataset.stipGeneratedQuestion === "1") node.remove();
+      else node.classList.remove(QUESTION_CLASS);
+    });
     const action = root?.querySelector?.(NEXT_ACTION);
     if (action) action.hidden = true;
+  }
+
+  function writableField(field) {
+    return !!field?.matches?.(WRITABLE_SELECTOR);
+  }
+
+  function fieldRole(field) {
+    if (!writableField(field)) return "other";
+    if (field.matches('[data-stip-keyboard-native],[data-stip-keyboard-exempt]') || field.closest('[data-stip-keyboard-native],[data-stip-keyboard-exempt]')) return "native";
+    if (field.matches('input[type="search"]')) return "search";
+    return field.closest("form") ? "form" : "native";
+  }
+
+  function questionText(field) {
+    const explicit = field.dataset.stipQuestion?.trim?.();
+    if (explicit) return explicit;
+    const label = field.labels?.[0] || field.closest?.("label");
+    if (label) {
+      const clone = label.cloneNode(true);
+      clone.querySelectorAll("input,textarea,select,button").forEach((node) => node.remove());
+      const text = clone.textContent?.replace(/\s+/g, " ").trim();
+      if (text) return text;
+    }
+    return (
+      field.getAttribute("aria-label") ||
+      field.getAttribute("placeholder") ||
+      field.getAttribute("name") ||
+      "Votre réponse"
+    ).trim();
+  }
+
+  function ensureQuestion(field, form) {
+    const label = field.labels?.[0] || field.closest?.("label");
+    if (label && form?.contains(label)) {
+      label.classList.add(QUESTION_CLASS);
+      return label;
+    }
+    let question = form?.querySelector?.(':scope > [data-stip-generated-question="1"]');
+    if (!question && form) {
+      question = document.createElement("div");
+      question.className = QUESTION_CLASS;
+      question.dataset.stipGeneratedQuestion = "1";
+      form.prepend(question);
+    }
+    if (question) question.textContent = questionText(field);
+    return question;
+  }
+
+  function syncFormHints(form) {
+    const fields = usableFields(form);
+    const submit = form?.querySelector?.('button[type="submit"],input[type="submit"]');
+    fields.forEach((field, index) => {
+      if (field.tagName === "TEXTAREA" || field.hasAttribute("enterkeyhint")) return;
+      field.setAttribute("enterkeyhint", index < fields.length - 1 ? "next" : submit ? "done" : "next");
+    });
+  }
+
+  function enrollField(field) {
+    if (!writableField(field) || field.matches(FOCUS)) return;
+    const role = fieldRole(field);
+    field.dataset.stipKeyboardRole = role;
+    if (role !== "form") return;
+    const form = field.closest("form");
+    if (!form) return;
+    field.setAttribute("data-stip-keyboard-focus", "");
+    form.setAttribute("data-stip-keyboard-scope", "");
+    form.setAttribute("data-stip-form-focus", "");
+    syncFormHints(form);
+  }
+
+  function autoEnroll(root = document) {
+    const fields = [];
+    if (root?.matches?.(WRITABLE_SELECTOR)) fields.push(root);
+    root?.querySelectorAll?.(WRITABLE_SELECTOR).forEach((field) => fields.push(field));
+    fields.forEach(enrollField);
+    const forms = new Set(fields.map((field) => field.closest?.("form")).filter(Boolean));
+    forms.forEach(syncFormHints);
   }
 
   function usableFields(form) {
@@ -112,6 +204,7 @@
     const form = formFor(field);
     if (!form?.matches?.(FORM_FOCUS)) return;
     clearFormPath(root);
+    ensureQuestion(field, form);
     let node = field;
     while (node && node !== root) { node.classList.add("stip-keyboard-path"); node = node.parentElement; }
     const fields = usableFields(form);
@@ -274,6 +367,15 @@
     return false;
   }
 
+  autoEnroll(document);
+  new MutationObserver((records) => {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node.nodeType === 1) autoEnroll(node);
+      }
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
   pinEntryScroll();
-  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, version: 6 };
+  window.STIPFormUX = { reveal, resetIntents, syncKeyboard, transferFocus, release: clearMode, autoEnroll, version: 7 };
 })();
