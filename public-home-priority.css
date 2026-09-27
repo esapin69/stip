@@ -330,65 +330,6 @@
 }
 #loginView .t-app-link-muted{opacity:.88}
 
-#loginView .t-request-docked{
-  position:relative;
-  z-index:4;
-  width:calc(100% - 48px);
-  min-height:58px;
-  margin:-8px auto 0;
-  padding:8px 10px 8px 18px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 46px;
-  align-items:center;
-  gap:12px;
-  border:1.5px solid rgba(0,176,204,.70);
-  border-top-color:rgba(8,198,218,.92);
-  border-radius:0 0 23px 23px;
-  background:linear-gradient(112deg,#007b99 0%,#08a9c1 48%,#18cddd 100%);
-  color:#fff;
-  text-align:left;
-  box-shadow:
-    0 13px 28px rgba(0,126,154,.28),
-    0 0 0 5px rgba(8,198,218,.10),
-    0 0 30px rgba(8,198,218,.25);
-  -webkit-tap-highlight-color:transparent;
-}
-#loginView .t-request-docked-copy{display:grid;gap:1px}
-#loginView .t-request-docked-copy small{
-  color:rgba(255,255,255,.78);
-  font-size:.62rem;
-  line-height:1.15;
-  font-weight:850;
-}
-#loginView .t-request-docked-copy strong{
-  color:#fff;
-  font-size:.94rem;
-  line-height:1.12;
-  font-weight:950;
-}
-#loginView .t-request-docked-icon{
-  width:42px;
-  height:42px;
-  display:grid;
-  place-items:center;
-  justify-self:end;
-  border-radius:15px;
-  background:rgba(255,255,255,.20);
-  color:#fff;
-  font-size:1.12rem;
-  font-weight:950;
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.24),
-    0 6px 16px rgba(0,86,106,.16);
-}
-#loginView .t-request-docked:active{
-  transform:translateY(1px) scale(.995);
-  box-shadow:
-    0 9px 22px rgba(0,126,154,.24),
-    0 0 0 4px rgba(8,198,218,.12),
-    0 0 23px rgba(8,198,218,.20);
-}
-
 /* Clavier ouvert : aucune géométrie locale.
    Le moteur FormUX commun centre uniquement la question active,
    son champ et son action dans le visualViewport réel. */
@@ -456,25 +397,14 @@
 #loginView.stip-keyboard-focus-mode #accessRequestStatusHost{
   display:none!important;
 }
-#loginView.stip-keyboard-focus-mode .t-request-docked{
-  display:grid!important;
-}
 #loginView.stip-keyboard-focus-mode .t-primary-access{
   display:block!important;
   width:min(100%,620px)!important;
 }
 
 
-/* Focus code d’accès : le moteur commun centre le bloc dans le visualViewport.
-   Le raccourci Demander un accès reste visible comme accessoire du même bloc. */
-#loginView .t-primary-access.stip-keyboard-focus-mode .t-request-docked{
-  order:-1;
-  width:100%;
-  max-width:620px;
-  min-height:50px;
-  margin:0 auto 2px;
-  border-radius:18px;
-}
+/* Focus code d’accès : le moteur commun centre uniquement le bloc de connexion
+   dans le visualViewport. La demande d’accès reste accessible depuis l’icône dédiée. */
 #loginView .t-primary-access.stip-keyboard-focus-mode .t-auth-stage{
   width:100%;
   max-width:620px;
