@@ -110,7 +110,7 @@
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
         <div class="t-entry-shell" data-stip-keyboard-surface>
-          <section class="t-primary-access" aria-label="Accès personnel">
+          <section class="t-primary-access" aria-label="Accès personnel" data-stip-keyboard-scope data-stip-form-focus data-stip-force-focus-mode>
             <div id="accessRequestStatusHost"></div>
             <button
               id="accessIntent"
@@ -136,7 +136,7 @@
             hidden
           >
             <div class="t-auth-focus">
-              <form id="loginForm" class="code-form t-code-form" data-stip-keyboard-keep data-stip-force-focus-mode>
+              <form id="loginForm" class="code-form t-code-form" data-stip-keyboard-keep data-stip-keyboard-native>
                 <div class="stip-code-wrap">
                   <input
                     id="accessCode"
@@ -155,6 +155,8 @@
                     id="toggleAccessCode"
                     class="stip-code-toggle"
                     type="button"
+                    data-stip-keyboard-accessory
+                    data-stip-keyboard-keep
                   >Voir</button>
                 </div>
                 <button class="t-login-submit" type="submit">
@@ -169,6 +171,7 @@
             class="t-request-docked"
             type="button"
             data-open-access-request
+            data-stip-keyboard-accessory
             data-stip-keyboard-keep
           >
             <span class="t-request-docked-copy">
