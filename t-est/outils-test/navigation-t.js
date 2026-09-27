@@ -9,6 +9,7 @@
     try {
       const u = new URL(raw, base);
       if (u.origin !== location.origin) return null;
+      if (u.pathname.startsWith("/t-est/")) return null;
       const found = mirrors.find(x => x.match(u));
       return found?.target || false;
     } catch { return false; }
