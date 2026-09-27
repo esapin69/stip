@@ -122,6 +122,13 @@ Affichage, impression, PDF et Sheet doivent être des sorties du même modèle, 
 ### Form Engine
 Objectif : mutualiser questionnaires, évaluations, validations, signatures et génération finale lorsque plusieurs workflows suivent la même structure.
 
+Règle universelle de navigation :
+- **« Suivant » n'est affiché que lorsqu'une étape exploitable existe réellement après l'étape courante.**
+- La dernière étape doit afficher une action terminale explicite : l'action métier du formulaire lorsqu'elle existe, sinon **« Valider »** / **« Terminer »**.
+- Une action terminale ne doit jamais conserver une flèche ou un libellé laissant croire qu'une étape suivante existe.
+- Le libellé, la touche Entrée et le clic doivent utiliser le même calcul de prochaine étape afin d'interdire les boutons « Suivant » sans effet.
+- Les contrôles masqués, désactivés, inertes ou purement techniques ne comptent jamais comme une étape suivante.
+
 ## Contrat des pages
 
 Une page doit idéalement ne posséder que :
