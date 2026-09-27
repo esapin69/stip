@@ -33,6 +33,8 @@
           "'": "&#39;",
         })[c],
     );
+  const iconHtml = (key, fallback = "", label = "", className = "") =>
+    window.STIPIcons?.markup?.(key, fallback, { label, className }) || esc(fallback || "•");
   async function call(action, body = {}) {
     const r = await fetch(API, {
         method: "POST",
@@ -141,6 +143,13 @@
       { medical: "🩺", intern: "👶", training: "🎓", other: "📌" }[k] || "📌"
     );
   }
+  function typeIconKey(k) {
+    return ({ medical: "medical", intern: "trainee", training: "training", other: "event" }[k] || "event");
+  }
+  function eventIconHtml(x = {}, className = "") {
+    const key = String(x.iconKey || x.icon_key || typeIconKey(x.type || "other"));
+    return iconHtml(key, x.icon || typeIcon(x.type), x.title || typeLabel(x.type), className);
+  }
   function normalize(x, proposal = false, origin = "manager") {
     const g = proposal ? x.metadata?.agenda || {} : x,
       a = resolveAgent(x),
@@ -178,6 +187,7 @@
       place,
       type: k,
       icon: typeIcon(k),
+      iconKey: String(g.icon_key || typeIconKey(k)),
       agent: a,
       agentName: person(a),
       proposal,
@@ -201,6 +211,7 @@
       place: String(x.location || ""),
       type: k,
       icon: String(x.icon || typeIcon(k)),
+      iconKey: String(x.icon_key || typeIconKey(k)),
       agent: a,
       agentName: String(x.person_name || person(a)),
       proposal: false,
@@ -297,7 +308,7 @@
             ? dayEvents
             : dayEvents.filter((x) => x.type === active),
         weekday = d.toLocaleDateString("fr-FR", { weekday: "long" }).replace(".", "").toUpperCase().slice(0,2),
-        markers = shown.slice(0,2).map((x) => `<i class="stip-week-event" title="${esc(x.title || typeLabel(x.type))}">${esc(x.icon || typeIcon(x.type))}</i>`).join(""),
+        markers = shown.slice(0,2).map((x) => `<i class="stip-week-event" title="${esc(x.title || typeLabel(x.type))}">${eventIconHtml(x,"ta-week-event-svg")}</i>`).join(""),
         classes = [
           "stip-week-day",
           "neutral",
@@ -350,7 +361,7 @@
                 const eventsHtml = dayItems
                   .map(
                     (x) =>
-                      `<button type="button" class="ta-item ta-item-event ${String(x.id) === focusId ? "focus" : ""}" data-event="${esc(x.id)}" data-origin="${esc(x.origin)}"><span class="ta-item-icon ${x.type}">${x.icon}</span><span class="ta-item-main"><span class="ta-item-top"><strong>${esc(x.agentName)}</strong><span class="ta-tag ${x.type}">${esc(typeLabel(x.type))}</span></span><p>${esc(x.time || x.title)}</p>${x.place ? `<small>${esc(x.place)}</small>` : x.title && x.time ? `<small>${esc(x.title)}</small>` : ""}</span><span class="ta-chevron">›</span></button>`,
+                      `<button type="button" class="ta-item ta-item-event ${String(x.id) === focusId ? "focus" : ""}" data-event="${esc(x.id)}" data-origin="${esc(x.origin)}"><span class="ta-item-icon ${x.type}">${eventIconHtml(x,"ta-event-svg")}</span><span class="ta-item-main"><span class="ta-item-top"><strong>${esc(x.agentName)}</strong><span class="ta-tag ${x.type}">${esc(typeLabel(x.type))}</span></span><p>${esc(x.time || x.title)}</p>${x.place ? `<small>${esc(x.place)}</small>` : x.title && x.time ? `<small>${esc(x.title)}</small>` : ""}</span><span class="ta-chevron">›</span></button>`,
                   )
                   .join("");
                 return `<section class="ta-day-group"><span class="ta-item-date ta-day-date"><small>${esc(fmtDay(date))}</small><b>${d.getDate().toString().padStart(2, "0")}</b><em>${esc(d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""))}</em></span><div class="ta-day-items">${eventsHtml}</div></section>`;
