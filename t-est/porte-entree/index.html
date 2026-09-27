@@ -35,7 +35,7 @@
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
     <link rel="stylesheet" href="styles.css?v=20260829-public5" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20260927-code-reset1" />
+    <link rel="stylesheet" href="public-home-priority.css?v=20260927-unified-access1" />
     <link rel="stylesheet" href="home-shell.css?v=20260926-touch-core1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu2" />
@@ -81,59 +81,59 @@
               <b aria-hidden="true">→</b>
             </button>
 
-          <section
-            id="accessEntryFields"
-            class="t-auth-stage"
-            aria-label="Code d’accès"
-            data-stip-intent-target
-            hidden
-          >
-            <div class="t-auth-focus">
-              <form id="loginForm" class="code-form t-code-form" data-stip-keyboard-keep data-stip-keyboard-native>
-                <div class="stip-code-wrap">
-                  <input
-                    id="accessCode"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]{6}"
-                    maxlength="6"
-                    autocomplete="off"
-                    data-stip-pin-field="1"
-                    enterkeyhint="done"
-                    aria-label="Code personnel à 6 chiffres"
-                    placeholder="••••••"
-                    data-stip-keyboard-focus
-                    data-stip-autofocus
-                    required
-                  /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button
-                    id="toggleAccessCode"
-                    class="stip-code-toggle"
-                    type="button"
-                    data-stip-keyboard-accessory
-                    data-stip-keyboard-keep
-                  >Voir</button>
-                </div>
-                <button class="t-login-submit" type="submit">
-                  <span>Continuer</span><b aria-hidden="true">→</b>
-                </button>
-              </form>
-              <p id="loginMessage" class="message" aria-live="polite"></p>
-            </div>
-          </section>
+            <section
+              id="accessEntryFields"
+              class="t-auth-stage"
+              aria-label="Code d’accès"
+              data-stip-intent-target
+              hidden
+            >
+              <div class="t-auth-focus">
+                <form id="loginForm" class="code-form t-code-form" data-stip-keyboard-keep data-stip-keyboard-native>
+                  <div class="stip-code-wrap">
+                    <input
+                      id="accessCode"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]{6}"
+                      maxlength="6"
+                      autocomplete="off"
+                      data-stip-pin-field="1"
+                      enterkeyhint="done"
+                      aria-label="Code personnel à 6 chiffres"
+                      placeholder="••••••"
+                      data-stip-keyboard-focus
+                      data-stip-autofocus
+                      required
+                    /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button
+                      id="toggleAccessCode"
+                      class="stip-code-toggle"
+                      type="button"
+                      data-stip-keyboard-accessory
+                      data-stip-keyboard-keep
+                    >Voir</button>
+                  </div>
+                  <button class="t-login-submit" type="submit">
+                    <span>Continuer</span><b aria-hidden="true">→</b>
+                  </button>
+                </form>
+                <p id="loginMessage" class="message" aria-live="polite"></p>
+              </div>
 
-          <button
-            class="t-request-docked"
-            type="button"
-            data-open-access-request
-            data-stip-keyboard-accessory
-            data-stip-keyboard-keep
-          >
-            <span class="t-request-docked-copy">
-              <small>Pas encore d’accès ?</small>
-              <strong>Demander un accès</strong>
-            </span>
-            <span class="t-request-docked-icon" aria-hidden="true">✦</span>
-          </button>
+              <button
+                class="t-request-docked"
+                type="button"
+                data-open-access-request
+                data-stip-keyboard-accessory
+                data-stip-keyboard-keep
+              >
+                <span class="t-request-docked-copy">
+                  <small>Pas encore d’accès ?</small>
+                  <strong>Demander un accès</strong>
+                </span>
+                <span class="t-request-docked-icon" aria-hidden="true">✦</span>
+              </button>
+            </section>
           </section>
 
           <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
@@ -149,9 +149,9 @@
                 <span class="t-app-icon"><img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260831-icons3" alt="" /></span>
                 <strong>Nouvel arrivant Pro</strong>
               </a>
-              <a class="t-app-link t-app-link-muted" href="rejoindre-equipe.html?v=20260926-public-page-upload1" aria-label="Rejoindre l’équipe">
+              <a class="t-app-link t-app-link-muted" href="#demande-acces" aria-label="Demander un accès" data-open-access-request>
                 <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
-                <strong>Rejoindre l’équipe</strong>
+                <strong>Demander un accès</strong>
               </a>
             </nav>
           </section>
@@ -170,76 +170,133 @@
             <header>
               <div>
                 <small>MON ACCÈS</small>
-                <h2>Créer ma demande</h2>
-                <p>
-                  Nom, prénom, un commentaire si nécessaire, puis votre code
-                  personnel.
-                </p>
+                <h2>Demander un accès</h2>
+                <p>STIP adapte la demande à votre situation et ne demande que les informations nécessaires.</p>
               </div>
-              <button id="requestAccessClose" type="button" aria-label="Fermer" autofocus data-stip-overview-focus>
-                ×
-              </button>
+              <button id="requestAccessClose" type="button" aria-label="Fermer" autofocus data-stip-overview-focus>×</button>
             </header>
             <div class="request-form-body">
-            <div class="request-step">
-              <span>1</span>
-              <div>
-                <strong>Qui êtes-vous ?</strong
-                ><small
-                  >La demande sera rapprochée des informations déjà connues avant validation.</small
-                >
+              <div class="request-step">
+                <span>1</span>
+                <div>
+                  <strong>Quelle est votre situation ?</strong>
+                  <small>Le parcours devient plus court si STIP vous connaît déjà.</small>
+                </div>
+              </div>
+              <div class="request-profile-grid" role="radiogroup" aria-label="Votre situation">
+                <label class="request-profile-choice">
+                  <input type="radio" name="request_profile" value="stip" required>
+                  <span><strong>Je fais partie de STIP / GHE</strong><small>Demande rapide, sans planning à envoyer.</small></span>
+                </label>
+                <label class="request-profile-choice">
+                  <input type="radio" name="request_profile" value="brancardier">
+                  <span><strong>Je suis brancardier ailleurs</strong><small>STIP connaît déjà le métier, il faut surtout votre établissement et votre planning.</small></span>
+                </label>
+                <label class="request-profile-choice">
+                  <input type="radio" name="request_profile" value="external">
+                  <span><strong>Je suis extérieur à STIP</strong><small>Quelques informations supplémentaires permettent de comprendre votre planning.</small></span>
+                </label>
+              </div>
+
+              <div id="requestSharedFields" hidden>
+                <div class="request-step">
+                  <span>2</span>
+                  <div>
+                    <strong>Qui êtes-vous ?</strong>
+                    <small>La demande est vérifiée avant activation.</small>
+                  </div>
+                </div>
+                <div class="request-name-grid">
+                  <label class="request-family-name">Nom<input
+                    id="accessRequestLastName"
+                    name="last_name"
+                    type="text"
+                    autocomplete="section-accessrequest family-name"
+                    autocapitalize="words"
+                    data-stip-keyboard-focus
+                    required></label>
+                  <label class="request-given-name">Prénom<input
+                    id="accessRequestFirstName"
+                    name="first_name"
+                    type="text"
+                    autocomplete="section-accessrequest given-name"
+                    autocapitalize="words"
+                    data-stip-keyboard-focus
+                    required></label>
+                </div>
+
+                <div id="requestExternalFields" class="request-external-fields" hidden>
+                  <div class="request-step">
+                    <span>3</span>
+                    <div>
+                      <strong>Votre activité</strong>
+                      <small>Pour interpréter correctement les codes et horaires de votre planning.</small>
+                    </div>
+                  </div>
+                  <label id="requestRoleWrap" class="request-role">Métier / poste<input
+                    id="accessRequestRole"
+                    name="professional_role"
+                    type="text"
+                    maxlength="120"
+                    placeholder="Ex. aide-soignant, agent, technicien…"
+                    data-stip-keyboard-focus></label>
+                  <label class="request-role">Établissement / entreprise<input
+                    id="accessRequestWorkplace"
+                    name="workplace"
+                    type="text"
+                    maxlength="160"
+                    placeholder="Où travaillez-vous ?"
+                    data-stip-keyboard-focus></label>
+
+                  <div class="request-step">
+                    <span>4</span>
+                    <div>
+                      <strong>Votre planning</strong>
+                      <small>Photo, capture d’écran ou PDF · 15 Mo maximum.</small>
+                    </div>
+                  </div>
+                  <label class="request-upload-card">
+                    <input id="accessRequestPlanning" name="planning" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp,image/*,application/pdf">
+                    <b>Choisir mon planning</b>
+                    <span>Le fichier reste privé dans STIP.</span>
+                  </label>
+                  <div id="accessRequestPlanningName" class="request-upload-name"></div>
+                  <label class="request-role">Commentaire <small>(facultatif)</small><textarea
+                    name="comment"
+                    maxlength="800"
+                    rows="3"
+                    placeholder="Une précision utile sur votre planning ou votre organisation."
+                    data-stip-keyboard-focus></textarea></label>
+                </div>
+
+                <div class="request-step">
+                  <span id="requestCodeStepNumber">3</span>
+                  <div>
+                    <strong>Choisissez votre code</strong>
+                    <small>6 chiffres personnels. Ils restent masqués.</small>
+                  </div>
+                </div>
+                <label class="request-code-card">
+                  <span>Code souhaité</span>
+                  <div>
+                    <input
+                      id="requestedAccessCode"
+                      name="requested_code"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]{6}"
+                      maxlength="6"
+                      autocomplete="off"
+                      data-stip-pin-field="1"
+                      data-stip-keyboard-focus
+                      placeholder="••••••"
+                      required><b>6 chiffres</b>
+                  </div>
+                </label>
+                <p id="accessRequestMessage" class="message"></p>
               </div>
             </div>
-            <div class="request-name-grid">
-              <label class="request-given-name"
-                >Prénom<input id="accessRequestFirstName" name="first_name" type="text" autocomplete="section-accessrequest given-name" autocapitalize="words" data-stip-keyboard-focus required
-              /></label
-              ><label class="request-family-name"
-                >Nom<input
-                  id="accessRequestLastName"
-                  name="last_name"
-                  type="text"
-                  autocomplete="section-accessrequest family-name"
-                  autocapitalize="words"
-                  data-stip-keyboard-focus
-                  required /></label>
-            </div>
-            <label class="request-role"
-              >Commentaire libre<textarea
-                name="comment"
-                rows="3"
-                data-stip-keyboard-focus
-                placeholder="Facultatif — précisez seulement ce qui peut aider à comprendre votre demande."
-              ></textarea>
-            </label>
-            <div class="request-step">
-              <span>2</span>
-              <div>
-                <strong>Choisissez votre code</strong
-                ><small>6 chiffres personnels. Ils restent masqués.</small>
-              </div>
-            </div>
-            <label class="request-code-card"
-              ><span>Code souhaité</span>
-              <div>
-                <input
-                  id="requestedAccessCode"
-                  name="requested_code"
-                  type="text"
-                  inputmode="numeric"
-                  pattern="[0-9]{6}"
-                  maxlength="6"
-                  autocomplete="off"
-                  data-stip-pin-field="1"
-                  data-stip-keyboard-focus
-                  placeholder="••••••"
-                  required
-                /><b>6 chiffres</b>
-              </div></label
-            >
-            <p id="accessRequestMessage" class="message"></p>
-            </div>
-            <button class="request-submit" type="submit">
+            <button class="request-submit" type="submit" hidden>
               <span>Demander un accès</span><b>→</b>
             </button>
           </form>
@@ -282,7 +339,7 @@
     <script src="stip-session-continuity.js?v=20260927-authflow1"></script>
     <script src="app.js?v=20260927-pin-contract1"></script>
     <script src="quick-access.js?v=20260926-navigation6"></script>
-    <script src="public-access-request.js?v=20260927-pin-contract1"></script>
+    <script src="public-access-request.js?v=20260927-unified-access1"></script>
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260926-week-clean1"></script>
     <script src="stip-touch-core.js?v=20260926-touch-core1"></script>
