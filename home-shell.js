@@ -1879,12 +1879,6 @@
               when: () => has("admin"),
             },
             {
-              action: "responsable",
-              label: "Responsable",
-              icon: "🧭",
-              when: () => has("admin"),
-            },
-            {
               action: "access",
               label: "Accès & sécurité",
               icon: "🔐",
@@ -2013,24 +2007,36 @@
     </section>`;
   }
 
-  function adminShortcutsLauncher() {
-    if (pilotageRoleKey() !== "admin") return "";
+  function shortcutsLauncher() {
+    const role = pilotageRoleKey(),
+      content = pilotageBlock();
+    if (role === "visiteur" || !content) return "";
     return `<div class="hc-admin-shortcuts-launcher-wrap">
-      <button type="button" class="hc-admin-shortcuts-launcher" data-admin-shortcuts-open aria-haspopup="dialog" aria-controls="hcAdminShortcutsDialog" aria-label="Ouvrir les raccourcis administrateur">
+      <button type="button" class="hc-admin-shortcuts-launcher" data-shortcuts-open aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis">
         <span>Raccourcis</span><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
       </button>
     </div>`;
   }
 
-  function adminPilotagePopup() {
-    if (pilotageRoleKey() !== "admin") return "";
-    return `<dialog id="hcAdminShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcAdminShortcutsTitle">
+  function shortcutsPopup() {
+    const role = pilotageRoleKey(),
+      content = pilotageBlock(),
+      roleLabel =
+        {
+          admin: "ADMIN",
+          cadre: "CADRE",
+          responsable: "RESPONSABLE",
+          agent: "AGENT",
+          stagiaire: "STAGIAIRE",
+        }[role] || "STIP";
+    if (role === "visiteur" || !content) return "";
+    return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcShortcutsTitle">
       <section class="hc-admin-shortcuts-card">
         <header class="hc-admin-shortcuts-head">
-          <div><small>ADMIN</small><h2 id="hcAdminShortcutsTitle">Raccourcis</h2></div>
-          <button type="button" class="hc-admin-shortcuts-close" data-admin-shortcuts-close aria-label="Fermer">×</button>
+          <div><small>${esc(roleLabel)}</small><h2 id="hcShortcutsTitle">Raccourcis</h2></div>
+          <button type="button" class="hc-admin-shortcuts-close" data-shortcuts-close aria-label="Fermer">×</button>
         </header>
-        <div class="hc-admin-shortcuts-body">${pilotageBlock()}</div>
+        <div class="hc-admin-shortcuts-body">${content}</div>
       </section>
     </dialog>`;
   }
@@ -2496,9 +2502,8 @@
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      inlinePilotage = pilotageRoleKey() === "admin" ? "" : pilotageBlock(),
-      profileMarkup = showProfile ? `${profile()}${adminShortcutsLauncher()}` : "";
-    let markup = `${homeModeNav()}${inlinePilotage}${adminPilotagePopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+      profileMarkup = showProfile ? `${profile()}${shortcutsLauncher()}` : "";
+    let markup = `${homeModeNav()}${shortcutsPopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
           ${homeModeBody()}
@@ -2526,23 +2531,23 @@
           writePilotageOpen(openRoles);
         }),
       );
-    const adminShortcutsDialog = root.querySelector("#hcAdminShortcutsDialog");
-    const closeAdminShortcuts = () => {
-      if (!adminShortcutsDialog) return;
-      if (typeof adminShortcutsDialog.close === "function" && adminShortcutsDialog.open)
-        adminShortcutsDialog.close();
-      else adminShortcutsDialog.removeAttribute("open");
+    const shortcutsDialog = root.querySelector("#hcShortcutsDialog");
+    const closeShortcuts = () => {
+      if (!shortcutsDialog) return;
+      if (typeof shortcutsDialog.close === "function" && shortcutsDialog.open)
+        shortcutsDialog.close();
+      else shortcutsDialog.removeAttribute("open");
     };
-    root.querySelector("[data-admin-shortcuts-open]")?.addEventListener("click", () => {
-      if (!adminShortcutsDialog) return;
-      if (typeof adminShortcutsDialog.showModal === "function") adminShortcutsDialog.showModal();
-      else adminShortcutsDialog.setAttribute("open", "");
+    root.querySelector("[data-shortcuts-open]")?.addEventListener("click", () => {
+      if (!shortcutsDialog) return;
+      if (typeof shortcutsDialog.showModal === "function") shortcutsDialog.showModal();
+      else shortcutsDialog.setAttribute("open", "");
     });
-    adminShortcutsDialog
-      ?.querySelector("[data-admin-shortcuts-close]")
-      ?.addEventListener("click", closeAdminShortcuts);
-    adminShortcutsDialog?.addEventListener("click", (event) => {
-      if (event.target === adminShortcutsDialog) closeAdminShortcuts();
+    shortcutsDialog
+      ?.querySelector("[data-shortcuts-close]")
+      ?.addEventListener("click", closeShortcuts);
+    shortcutsDialog?.addEventListener("click", (event) => {
+      if (event.target === shortcutsDialog) closeShortcuts();
     });
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
