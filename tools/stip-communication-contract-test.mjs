@@ -19,7 +19,7 @@ const dmMigration=read("supabase/migrations/20260925151500_notification_push_con
 
 for(const label of ["Chat équipe","DM & groupes","Fauteuils"])has(app,label,"onglet manquant: "+label);
 for(const route of ["communication/chat","communication/dm","communication/fauteuils"])has(app,route,"route manquante: "+route);
-has(home,'app("communication", "Communication"',"l’application Communication n’est pas exposée dans Applications");
+has(home,'app("homeChat", "Communication", "communication", "communication")',"l’application Communication n’est pas exposée avec son icône canonique");
 has(home,'communication/fauteuils',"le raccourci Fauteuils n’aboutit pas à Communication/Fauteuils");
 has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canonique d’agents");
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
