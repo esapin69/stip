@@ -70,17 +70,48 @@
     return "";
   }
 
+  function autocompleteSection(field) {
+    const form = field?.form || field?.closest?.("form");
+    const raw = String(form?.id || form?.getAttribute?.("name") || "stip");
+    const key = raw
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 32) || "stip";
+    return "section-" + key;
+  }
+
   function normalizeAutofillField(field) {
     if (!field?.matches?.("input,textarea,select")) return "";
     const inferred = inferredAutocompleteToken(field);
     const explicit = explicitAutocompleteToken(field);
     if (inferred && (!explicit || PROFILE_AUTOFILL_TOKENS.has(explicit))) {
-      if (explicit !== inferred) field.setAttribute("autocomplete", inferred);
+      const semantic = autocompleteSection(field) + " " + inferred;
+      if (String(field.getAttribute("autocomplete") || "").trim().toLowerCase() !== semantic)
+        field.setAttribute("autocomplete", semantic);
       if ((inferred === "given-name" || inferred === "family-name" || inferred === "name") && !field.hasAttribute("autocapitalize"))
         field.setAttribute("autocapitalize", "words");
+      if ((inferred === "given-name" || inferred === "family-name" || inferred === "name") && !field.hasAttribute("type"))
+        field.setAttribute("type", "text");
       return inferred;
     }
     return explicit || inferred;
+  }
+
+  function normalizeIdentityDomOrder(form) {
+    if (!form) return;
+    const controls = [...form.querySelectorAll("input,textarea,select")];
+    const family = controls.find((field) => normalizeAutofillField(field) === "family-name");
+    const given = controls.find((field) => normalizeAutofillField(field) === "given-name");
+    if (!family || !given) return;
+    const familyWrap = family.closest("label") || family;
+    const givenWrap = given.closest("label") || given;
+    if (!familyWrap.parentElement || familyWrap.parentElement !== givenWrap.parentElement) return;
+    const siblings = [...familyWrap.parentElement.children];
+    if (siblings.indexOf(familyWrap) > siblings.indexOf(givenWrap))
+      familyWrap.parentElement.insertBefore(familyWrap, givenWrap);
   }
 
   function markAutofillContext(form) {
@@ -105,6 +136,7 @@
     forms.forEach((form) => {
       if (!form.hasAttribute("autocomplete")) form.setAttribute("autocomplete", "on");
       form.querySelectorAll("input,textarea,select").forEach(normalizeAutofillField);
+      normalizeIdentityDomOrder(form);
       markAutofillContext(form);
     });
     return forms;
@@ -356,10 +388,18 @@
       overview = document.createElement("button");
       overview.type = "button";
       overview.className = "stip-keyboard-overview-action";
-      overview.textContent = "☰";
-      overview.setAttribute("aria-label", "Voir le formulaire complet");
+      overview.textContent = "Vue complète";
+      overview.setAttribute("aria-label", "Quitter le plein écran et voir le formulaire complet");
       overview.setAttribute("title", "Voir le formulaire complet");
+      overview.setAttribute("data-stip-keyboard-keep", "");
       form.appendChild(overview);
+    }
+
+    for (const button of [action, previous, overview]) {
+      if (!button || button.dataset.stipKeepFocusBound === "1") continue;
+      button.dataset.stipKeepFocusBound = "1";
+      button.setAttribute("data-stip-keyboard-keep", "");
+      button.addEventListener("pointerdown", (event) => event.preventDefault(), { passive: false });
     }
 
     const prev = controls[index - 1] || null;
@@ -454,6 +494,14 @@
     scope.style.setProperty("--stip-vv-height", vvHeight + "px");
     scope.style.setProperty("--stip-vv-top", vvTop + "px");
     const focused = document.activeElement;
+    const stepNavigation = !!formFor(active)?.hasAttribute?.("data-stip-step-nav");
+    if (stepNavigation) {
+      const retained =
+        focused === active ||
+        (focused && scope.contains(focused) && focused.closest?.("[data-stip-keyboard-keep]"));
+      if (retained) setMode(true);
+      return;
+    }
     if (focused !== active) {
       const retained = focused && scope.contains(focused) && (focused.matches?.(NEXT_ACTION) || focused.closest?.("[data-stip-keyboard-keep]"));
       if (retained) return;
@@ -480,7 +528,14 @@
     else if (!continuingSameFlow || !baselineHeight) baselineHeight = Math.max(pendingBaseline || 0, stableHeight || 0, measureFullHeight());
     pendingBaseline = 0;
     prepareFormPath(field, scope);
-    if (preserveKeyboard && previousModeOpen) { modeOpen = true; scope.classList.add(MODE_CLASS); setDialogMode(scope, true); document.body.classList.add(LOCK_CLASS); }
+    const stepNavigation = !!formFor(field)?.hasAttribute?.("data-stip-step-nav");
+    if (stepNavigation || (preserveKeyboard && previousModeOpen)) {
+      modeOpen = true;
+      scope.classList.add(MODE_CLASS);
+      setDialogMode(scope, true);
+      document.body.classList.add(LOCK_CLASS);
+      prepareFormPath(field, scope);
+    }
     syncKeyboard(); scheduleSync(60); scheduleSync(160); scheduleSync(320);
   }
 
@@ -618,6 +673,6 @@
     autoEnroll,
     normalizeAutofill,
     fields: sequentialControls,
-    version: 12
+    version: 13
   };
 })();

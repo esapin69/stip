@@ -220,9 +220,10 @@ dialog.stip-keyboard-dialog-mode::backdrop {
   z-index: 3 !important;
   top: 12px !important;
   right: 14px !important;
-  width: 38px !important;
+  width: auto !important;
+  min-width: 38px !important;
   height: 38px !important;
-  padding: 0 !important;
+  padding: 0 11px !important;
   display: grid !important;
   place-items: center !important;
   border: 1px solid rgba(4,82,104,.15) !important;

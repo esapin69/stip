@@ -48,6 +48,7 @@ function openRequest(options={}){
   if(!d||!form)return;
   window.STIPFormUX?.normalizeAutofill?.(form);
   window.STIPFormUX?.release?.();
+  form.querySelectorAll('input,textarea,select').forEach(control=>control.blur?.());
   try{document.activeElement?.blur?.()}catch{}
 
   const state=options.state||null;
@@ -82,6 +83,8 @@ function closeRequest(collapseHistory=true){
   }else requestHistoryId=''
 }
 openers.forEach(button=>button.addEventListener('click',e=>{e.preventDefault();openRequest()}));
+form?.addEventListener('input',()=>window.STIPFormUX?.normalizeAutofill?.(form),true);
+form?.addEventListener('change',()=>window.STIPFormUX?.normalizeAutofill?.(form),true);
 close?.addEventListener('click',()=>closeRequest(true));
 d?.addEventListener('click',e=>{if(e.target===d)closeRequest(true)});
 d?.addEventListener('cancel',e=>{e.preventDefault();closeRequest(true)});
