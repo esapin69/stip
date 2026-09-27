@@ -1,31 +1,35 @@
-/* Outil T-est uniquement — ne part jamais en production. */
-.t-est-global-bubble{
+/* T-EST LAB ONLY — repère visuel unique. Ne part jamais en production. */
+html[data-t-est="1"]::before{
+  content:"";
   position:fixed;
-  z-index:2147483000;
-  right:max(14px,env(safe-area-inset-right));
-  bottom:max(14px,env(safe-area-inset-bottom));
-  min-width:58px;
-  height:58px;
-  padding:0 15px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-  border:1px solid rgba(0,0,0,.24);
-  border-radius:999px;
-  background:rgba(255,255,255,.96);
-  box-shadow:0 8px 24px rgba(0,0,0,.22);
-  color:#111;
-  text-decoration:none;
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
-  backdrop-filter:blur(10px);
+  z-index:2147483646;
+  inset:0;
+  pointer-events:none;
+  border:clamp(7px,1.15vw,14px) solid transparent;
+  border-radius:clamp(14px,2vw,26px);
+  background:linear-gradient(115deg,#ff2a00 0%,#ff7a00 22%,#ffd400 43%,#ff5a00 63%,#d90000 82%,#ffb000 100%) border-box;
+  -webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  filter:drop-shadow(0 0 8px rgba(255,72,0,.75)) drop-shadow(0 0 18px rgba(255,180,0,.48));
 }
-.t-est-global-bubble:active{transform:scale(.95)}
-.t-est-global-bubble:focus-visible{outline:3px solid #111;outline-offset:3px}
-.t-est-global-bubble-mark{position:relative;display:block;width:29px;height:34px;flex:0 0 29px}
-.t-est-global-bubble-mark::before,.t-est-global-bubble-mark::after{content:"";position:absolute;display:block;border-radius:999px;background:#111}
-.t-est-global-bubble-mark::before{left:2px;right:2px;top:6px;height:5px;transform:rotate(-2deg)}
-.t-est-global-bubble-mark::after{top:6px;bottom:2px;left:50%;width:5px;transform:translateX(-50%) rotate(1deg)}
-.t-est-global-bubble-label{font-size:12px;line-height:1;font-weight:950;letter-spacing:.08em;white-space:nowrap}
-@media (max-width:420px){.t-est-global-bubble{height:52px;padding:0 12px;gap:7px}.t-est-global-bubble-mark{width:24px;height:29px;flex-basis:24px}.t-est-global-bubble-label{font-size:10px}}
+html[data-t-est="1"]::after{
+  content:"T";
+  position:fixed;
+  z-index:2147483647;
+  top:max(8px,env(safe-area-inset-top));
+  right:max(10px,env(safe-area-inset-right));
+  width:30px;
+  height:30px;
+  display:grid;
+  place-items:center;
+  pointer-events:none;
+  border-radius:50%;
+  background:linear-gradient(145deg,#ffdc32,#ff6a00 58%,#d71900);
+  color:#fff;
+  font:950 16px/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  text-shadow:0 1px 3px rgba(80,0,0,.55);
+  box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 18px rgba(255,92,0,.9);
+}
+/* Ancienne bulle supprimée : le cadre feu est désormais l'unique différenciation visuelle T-est. */
+.t-est-global-bubble{display:none!important}
