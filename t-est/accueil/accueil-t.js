@@ -7,25 +7,45 @@
       const doc = frame.contentDocument;
       if (!doc) return;
       window.STIPTNav?.guard(doc, frame.contentWindow.location.href);
-      if (doc.getElementById("t-est-premium-month")) return;
-      const style = doc.createElement("style");
-      style.id = "t-est-premium-month";
+      let style = doc.getElementById("t-est-premium-month");
+      if (!style) { style = doc.createElement("style"); style.id = "t-est-premium-month"; doc.head.appendChild(style); }
       style.textContent = `
-        .hc-month-context-master{position:relative;margin-top:20px!important;padding-top:4px!important}
-        .hc-month-context-master .hc-section-divider,.hc-month-context-master .hc-section-title{letter-spacing:.16em!important;font-weight:850!important;color:#607780!important}
-        .hc-planning-month-subblock{border:1px solid rgba(18,74,86,.12)!important;border-radius:30px!important;background:linear-gradient(155deg,rgba(255,255,255,.98),rgba(246,250,251,.96))!important;box-shadow:0 18px 50px rgba(20,61,72,.10),0 2px 8px rgba(20,61,72,.06)!important;overflow:hidden}
-        .hc-month-header,.hc-planning-month-header{padding:14px 12px 10px!important}
-        .hc-month-title,.hc-planning-month-title{font-weight:950!important;letter-spacing:-.035em!important;color:#123f52!important}
-        .hc-month-grid,.hc-planning-month-grid{gap:7px!important;padding:4px 12px 14px!important}
-        .hc-month-day,.hc-planning-month-day{border:1px solid rgba(23,72,84,.06)!important;border-radius:19px!important;background:linear-gradient(180deg,#f4f8f9,#edf3f5)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 3px 9px rgba(24,64,74,.035)!important;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease!important}
-        .hc-month-day[aria-current="date"],.hc-planning-month-day[aria-current="date"],.hc-month-day.is-selected,.hc-planning-month-day.is-selected{border:2px solid #1298a8!important;background:linear-gradient(180deg,#f8ffff,#e9f7f8)!important;box-shadow:0 0 0 4px rgba(18,152,168,.10),0 9px 22px rgba(18,90,104,.12)!important;transform:translateY(-1px)}
-        .hc-month-day strong,.hc-planning-month-day strong{font-weight:950!important;letter-spacing:-.04em!important}
-        .hc-month-nav button,.hc-planning-month-nav button{background:rgba(255,255,255,.92)!important;border:1px solid rgba(17,71,84,.12)!important;box-shadow:0 6px 18px rgba(17,71,84,.08)!important}
-        @media(max-width:520px){.hc-planning-month-subblock{border-radius:26px!important}.hc-month-grid,.hc-planning-month-grid{gap:6px!important;padding-left:10px!important;padding-right:10px!important}.hc-month-day,.hc-planning-month-day{border-radius:17px!important}}
+/* T-EST — MONTH PREMIUM V2. Visual only: no calendar/data logic changed. */
+.hc-month-context-master{position:relative!important;margin-top:24px!important;padding-top:8px!important}
+.hc-month-context-master .hc-section-divider,.hc-month-context-master .hc-section-title{position:relative!important;z-index:1!important;margin-bottom:10px!important;color:#657b84!important;font-size:.74rem!important;line-height:1!important;font-weight:950!important;letter-spacing:.19em!important;text-transform:uppercase!important}
+.hc-month-context-master .hc-section-divider:before,.hc-month-context-master .hc-section-divider:after{opacity:.62!important}
+.hc-planning-month-subblock{position:relative!important;border:1px solid rgba(21,67,81,.11)!important;border-radius:32px!important;background:linear-gradient(160deg,#ffffff 0%,#fbfdfe 52%,#f3f8fa 100%)!important;box-shadow:0 24px 60px rgba(16,57,70,.13),0 5px 16px rgba(16,57,70,.06),inset 0 1px 0 #fff!important;overflow:hidden!important;isolation:isolate!important}
+.hc-planning-month-subblock:before{content:""!important;position:absolute!important;z-index:-1!important;inset:0 0 auto!important;height:150px!important;background:radial-gradient(ellipse at 50% -15%,rgba(35,167,190,.13),transparent 66%)!important;pointer-events:none!important}
+.stip-month-nav{min-height:76px!important;padding:12px 15px 8px!important;grid-template-columns:54px minmax(0,1fr) 54px!important;gap:12px!important}
+.stip-month-nav>button{width:52px!important;height:52px!important;border:1px solid rgba(20,72,87,.11)!important;background:linear-gradient(145deg,#fff,#f0f6f8)!important;color:#174b5d!important;box-shadow:0 8px 20px rgba(20,62,76,.10),inset 0 1px 0 #fff!important;font-size:1.55rem!important}
+.stip-month-nav>div{display:flex!important;flex-direction:column!important;align-items:center!important;gap:3px!important}
+.stip-month-nav>strong,.stip-month-nav>div>strong{color:#103f53!important;font-size:clamp(1.25rem,5vw,1.55rem)!important;font-weight:950!important;letter-spacing:-.045em!important}
+.stip-month-nav>div>small{color:#1494aa!important;font-size:.58rem!important;letter-spacing:.13em!important}
+.stip-month-weekdays{padding:2px 13px 7px!important;color:#71858d!important;font-size:.65rem!important;font-weight:950!important;letter-spacing:.035em!important}
+.stip-month-calendar{padding:0 12px 10px!important;gap:6px!important}
+.stip-month-calendar .stip-month-day{position:relative!important;min-height:70px!important;border:1px solid rgba(19,66,80,.055)!important;border-radius:17px!important;background:linear-gradient(155deg,rgba(249,252,253,.98),rgba(236,243,246,.96))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 3px 9px rgba(17,61,74,.035)!important;overflow:hidden!important;transition:border-color .16s ease,box-shadow .16s ease,background .16s ease!important}
+.stip-month-calendar .stip-month-day:after{content:"";position:absolute;inset:auto 10px 0;height:2px;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(21,117,137,.10),transparent);opacity:.65}
+.stip-month-calendar .stip-month-day-number{font-size:1.13rem!important;line-height:1!important;font-weight:950!important;letter-spacing:-.045em!important;color:#123f52!important}
+.stip-month-calendar .stip-month-day.is-weekend{background:linear-gradient(155deg,#fafcfd,#f1f5f7)!important}
+.stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number{color:#bb2c3e!important}
+.stip-month-calendar .stip-month-dot{width:18px!important;height:18px!important;border:2px solid rgba(255,255,255,.92)!important;box-shadow:0 4px 9px rgba(20,62,78,.14),inset 0 0 0 1px rgba(0,0,0,.05)!important}
+.stip-month-calendar .stip-month-events{font-size:1.38rem!important;filter:drop-shadow(0 2px 2px rgba(18,55,65,.08))!important}
+.stip-month-calendar .stip-month-day.is-today{border:2px solid rgba(13,148,169,.42)!important;background:linear-gradient(150deg,#f7feff,#eaf7f9)!important;box-shadow:0 0 0 4px rgba(14,151,172,.07),0 9px 20px rgba(16,93,108,.10),inset 0 1px 0 #fff!important}
+.stip-month-calendar .stip-month-day.is-selected{border:2px solid #0b91a9!important;background:linear-gradient(145deg,#f8ffff 0%,#e4f6f8 100%)!important;box-shadow:0 0 0 4px rgba(11,145,169,.11),0 13px 27px rgba(11,111,130,.16),inset 0 1px 0 #fff!important}
+.stip-month-calendar .stip-month-day.is-selected:before{content:""!important;position:absolute!important;left:10px!important;right:10px!important;bottom:5px!important;height:3px!important;border-radius:99px!important;background:linear-gradient(90deg,#16b6c9,#087e9b)!important;box-shadow:0 2px 7px rgba(8,126,155,.25)!important}
+.hc-planning-month-subblock .hc-month-compare,.hc-planning-month-subblock [data-month-compare],.hc-planning-month-subblock a[href*="compare"],.hc-planning-month-subblock button[class*="compare"]{margin:8px 15px 13px!important;padding-top:13px!important;border-top:1px solid rgba(18,76,91,.08)!important;color:#164b59!important;font-weight:950!important;letter-spacing:-.02em!important}
+@media(max-width:520px){
+ .hc-planning-month-subblock{border-radius:28px!important}
+ .stip-month-nav{min-height:70px!important;grid-template-columns:50px minmax(0,1fr) 50px!important;padding-inline:12px!important}
+ .stip-month-nav>button{width:48px!important;height:48px!important}
+ .stip-month-calendar{padding-inline:10px!important;gap:5px!important}
+ .stip-month-weekdays{padding-inline:11px!important}
+ .stip-month-calendar .stip-month-day{min-height:68px!important;border-radius:16px!important}
+}
+@media(min-width:760px){.hc-planning-month-subblock{max-width:820px!important;margin-inline:auto!important}.stip-month-calendar .stip-month-day{min-height:84px!important}}
       `;
-      doc.head.appendChild(style);
     } catch {}
   }
-  frame.addEventListener("load", () => { enhance(); setTimeout(enhance,500); setTimeout(enhance,1500); });
-  setInterval(enhance,2000);
+  frame.addEventListener("load", () => { enhance(); setTimeout(enhance,250); setTimeout(enhance,900); });
+  setInterval(enhance,1500);
 })();
