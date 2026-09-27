@@ -11,6 +11,7 @@ const home=read("home-shell.js");
 const appRuntime=read("app.js");
 const hub=read("communication-hub.js");
 const chat=read("team-chat.js");
+const chatCss=read("team-chat.css");
 const selector=read("stip-agent-selector.js");
 const sw=read("stip-sw.js");
 const messages=read("supabase/functions/stip-messages/index.ts");
@@ -34,7 +35,8 @@ for(const tag of hubForms){
   if(!tag.includes("data-stip-form-mode="))fail("formulaire sans mode explicite: "+tag.slice(0,140));
 }
 has(chat,'data-stip-form-mode="composer"',"le compositeur Chat/Fauteuils n’est pas déclaré composer");
-if(chat.includes('class="tb-dm-shortcut"'))fail("le raccourci DM ne doit plus vivre dans Chat/Fauteuils");
+if(chat.includes('class="tb-dm-shortcut"')||chat.includes("dmState")||chat.includes("[data-dm-"))fail("l’ancien moteur DM ne doit plus vivre dans Chat/Fauteuils");
+if(chatCss.includes(".tb-dm-"))fail("les anciens styles DM ne doivent plus rester dans Chat/Fauteuils");
 
 for(const key of ["dm_received","team_chat_received","wheelchair_received"]){
   has(messages,key,"event_key backend manquant: "+key);
