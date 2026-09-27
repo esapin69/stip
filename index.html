@@ -105,7 +105,7 @@
     <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
     <link rel="stylesheet" href="quick-access.css?v=20260922-appuifinal2" />
     <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide12" />
-    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide12"></script>  </head>
+    <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide13"></script>  </head>
   <body>
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
@@ -238,15 +238,21 @@
               </div>
             </div>
             <div class="request-name-grid">
-              <label class="request-given-name"
-                >Prénom<input id="accessRequestFirstName" name="first_name" type="text" autocomplete="section-accessrequest given-name" autocapitalize="words" data-stip-keyboard-focus required
-              /></label
-              ><label class="request-family-name"
+              <label class="request-family-name"
                 >Nom<input
                   id="accessRequestLastName"
                   name="last_name"
                   type="text"
                   autocomplete="section-accessrequest family-name"
+                  autocapitalize="words"
+                  data-stip-keyboard-focus
+                  required /></label
+              ><label class="request-given-name"
+                >Prénom<input
+                  id="accessRequestFirstName"
+                  name="first_name"
+                  type="text"
+                  autocomplete="section-accessrequest given-name"
                   autocapitalize="words"
                   data-stip-keyboard-focus
                   required /></label>
