@@ -463,3 +463,33 @@
   display:block!important;
   width:min(100%,620px)!important;
 }
+
+
+/* Focus code d’accès : le moteur commun centre le bloc dans le visualViewport.
+   Le raccourci Demander un accès reste visible comme accessoire du même bloc. */
+#loginView .t-primary-access.stip-keyboard-focus-mode .t-request-docked{
+  order:-1;
+  width:100%;
+  max-width:620px;
+  min-height:50px;
+  margin:0 auto 2px;
+  border-radius:18px;
+}
+#loginView .t-primary-access.stip-keyboard-focus-mode .t-auth-stage{
+  width:100%;
+  max-width:620px;
+  margin:0 auto;
+}
+#loginView .t-primary-access.stip-keyboard-focus-mode .t-auth-focus{
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+}
+#loginView .t-primary-access.stip-keyboard-focus-mode .stip-code-wrap{
+  min-height:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
