@@ -8,7 +8,7 @@
   const SNAPSHOT_VERSION = 1;
   const FRESH_MS = 2 * 60 * 1000;
   const MAX_MS = 30 * 60 * 1000;
-  const API = "https://stip-ten.vercel.app/api/stip-access";
+  const API = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access";
   let inFlight = null;
   let inFlightToken = "";
 
