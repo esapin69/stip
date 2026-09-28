@@ -93,6 +93,7 @@ expect(
 );
 
 const accessManage = read("access-manage.js");
+const accessManageBackend = read("supabase/functions/stip-access-manage/index.ts");
 expect(
   "Communication family defaults",
   accessCore.includes('communication_family: "brancardage"') &&
@@ -100,4 +101,13 @@ expect(
     accessManage.includes("PAS BRANCARDIER") &&
     accessManage.includes("BRANCARDIER"),
   "Communication must default brancardage roles together and keep non-brancardiers in a separate temporary family.",
+);
+
+expect(
+  "Access manager preserves Communication family",
+  accessManageBackend.includes("normalizeCommunicationFamily") &&
+    accessManageBackend.includes("out.communication_family") &&
+    accessManageBackend.includes("effectiveRole") &&
+    accessManageBackend.includes("requestedLevels,\n    apps,\n    role,"),
+  "Saving an access, preset, or newly created profile must not drop its Communication family.",
 );
