@@ -22,6 +22,7 @@
     tomorrow: () => explicit("tomorrow"),
     dialog: () => explicit("dialog"),
     messages: () => explicit("messages"),
+    communication: () => explicit("messages"),
     team: () =>
       explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
     agents: () => explicit("agent_directory"),
@@ -146,6 +147,12 @@
     else if (r === "planning/team" || r === "planning/spirit")
       ok = canApp("team");
     else if (r === "planning/change") ok = canApp("change");
+    else if (
+      r === "fauteuils" ||
+      r === "communication" ||
+      r.startsWith("communication/")
+    )
+      ok = canApp("communication");
     else if (r.startsWith("contacts")) ok = canApp("contacts");
     if (!ok) window.STIPRouter?.set?.("home", { replace: true });
   }
@@ -183,6 +190,8 @@
     tomorrow:
       '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
     team: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
+    communication:
+      '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     agents: '<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
     compare:
       '<svg viewBox="0 0 24 24"><path d="M4 7h13l-3-3M20 17H7l3 3"/><path d="M17 7l-3 3M7 17l3-3"/></svg>',
@@ -215,6 +224,7 @@
     ["personal", "Planning perso", "personal"],
     ["tomorrow", "Actions", "tomorrow"],
     ["team", "Esprit d’équipe", "team"],
+    ["communication", "Communication", "communication"],
     ["agents", "Équipe", "agents"],
     ["compare", "Comparer les plannings", "compare"],
     ["change", "Changement", "change"],
@@ -243,6 +253,7 @@
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
     if (k === "team") return openDocument("esprit-equipe.html?entry=access-runtime");
+    if (k === "communication") return window.STIPRouter?.set?.("communication/chat");
     if (k === "agents") return openDocument("agent-directory.html");
     if (k === "compare") return openDocument("planning-compare-app.html");
     if (k === "change") return window.STIPHubs?.planning?.("change");
