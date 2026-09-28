@@ -11,6 +11,14 @@ Ce document est la référence fonctionnelle lisible du calendrier STIP. Toute m
 - Une page peut adapter le contenu d’une carte, mais elle ne doit pas recalculer localement les jours visibles, la semaine relative ou le passage au lundi suivant.
 - Si le moteur maître n’est pas chargé, une page peut afficher une dégradation simple, mais elle ne doit pas recopier une règle métier du moteur.
 
+### 1.1 Tableau planning « Au mois »
+
+- Le rendu du **tableau mensuel** a une source unique : `stip-month-table.css` pour la géométrie/finition et `stip-month-table.js` pour la composition visuelle des semaines.
+- Les pages gardent leur moteur de données et leur navigation métier ; elles exposent seulement les dates ISO au composant commun.
+- Le composant commun gère les séparateurs `Sxx`, la ligne LU→DI répétée par semaine, l’alignement du premier jour, les cases jour, les états aujourd’hui/sélectionné et la suppression des espaces réservés inutiles.
+- `home-shell.js`, `planning-home.js`, `metiers/metiers.js` et le laboratoire T consomment cette même source.
+- Une page ne doit pas recréer localement la géométrie ou la finition de `.stip-month-calendar`. Les variations locales restent limitées au contenu métier placé dans `.stip-month-primary` / `.stip-month-events`.
+
 ## 2. Date et état
 
 - La date réelle est calculée dans le fuseau `Europe/Paris`.
