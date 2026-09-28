@@ -16,6 +16,8 @@ Ce document est la référence fonctionnelle lisible du calendrier STIP. Toute m
 - Le rendu du **tableau mensuel** a une source unique : `stip-month-table.css` pour la géométrie/finition et `stip-month-table.js` pour la composition visuelle des semaines.
 - Les pages gardent leur moteur de données et leur navigation métier ; elles exposent seulement les dates ISO au composant commun.
 - Le composant commun gère les séparateurs `Sxx`, la ligne LU→DI répétée par semaine, l’alignement du premier jour, les cases jour, les états aujourd’hui/sélectionné et la suppression des espaces réservés inutiles.
+- Dans le tableau mensuel, un shift travaillé est toujours rendu comme **badge texte** avec son code visible (`M`, `J`, `J4`, `S`, `N`), jamais comme simple rond de couleur. Une variante étoilée (`J4*`, etc.) conserve l’astérisque affiché mais hérite de la couleur de son shift de base.
+- Les repos, congés et événements restent des pictogrammes/repères séparés ; ils ne remplacent pas le badge du shift travaillé.
 - `home-shell.js`, `planning-home.js`, `metiers/metiers.js` et le laboratoire T consomment cette même source.
 - Une page ne doit pas recréer localement la géométrie ou la finition de `.stip-month-calendar`. Les variations locales restent limitées au contenu métier placé dans `.stip-month-primary` / `.stip-month-events`.
 
