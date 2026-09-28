@@ -117,6 +117,12 @@ Masquer un bouton ne constitue jamais une sécurité.
 ### Notification/Event model
 Objectif : unifier cloche, demandes, changements, alertes et événements autour d’un modèle commun.
 
+Moteur canonique de vigilance future : `stip-agenda-alerts`.
+- sources : `planning`, `formations`, `stip_agent_agenda_items`, `stagiaires` et `stip_shift_definitions` ;
+- une incohérence future produit une clé d’alerte unique, puis plusieurs vues adaptées : carte personnelle, Cloche STIP, push téléphone et Responsable > Suivi ;
+- le moteur compare les horaires, chevauchements, repos/absences, repères FO/VM/ST, événements manquants et référents non résolus ;
+- aucune page ne doit recréer localement un second moteur de détection d’incompatibilités.
+
 ### Export Engine
 Objectif : séparer la sélection de données du format de sortie.
 
