@@ -107,14 +107,11 @@
     const registry = window.STIPShiftRegistry,
       rawDisplay = String(code).trim().toUpperCase().replace(/\s+/g, ""),
       def = registry?.resolve?.(code),
-      canonical = String(def?.code || "").trim().toUpperCase(),
-      variant = Boolean(def?.is_working && canonical && rawDisplay !== canonical),
       color = registry?.color?.(code, "#277b86") || "#277b86",
       icon = registry?.icon?.(code) || "",
-      url = asset(code);
-    if (def?.is_working)
-      return window.STIPMonthTable?.shiftBadgeHtml?.(rawDisplay) ||
-        `<span class="stip-month-shift-badge" style="--stip-month-shift-bg:${esc(color)}" title="${esc(def?.label || canonical || rawDisplay)}">${esc(rawDisplay)}</span>`;
+      url = asset(code),
+      workBadge = window.STIPMonthTable?.shiftBadgeHtml?.(rawDisplay) || "";
+    if (workBadge) return workBadge;
     if (icon)
       return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
