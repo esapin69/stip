@@ -198,14 +198,12 @@
   function communication() {
     if (window.STIPCommunicationApp?.mount) return Promise.resolve(window.STIPCommunicationApp);
     if (communicationPromise) return communicationPromise;
-    // Affiche le shell Communication sans attendre le runtime Chat/Fauteuils.
-    // Le moteur lourd est préchauffé en parallèle puis chargé par l’onglet actif si nécessaire.
+    // Le shell Communication ne doit jamais attendre une feuille de style ou le runtime lourd.
+    // CSS + Chat/Fauteuils sont préchauffés en parallèle ; le JS du shell est la seule dépendance bloquante.
+    void style("communication-app.css").catch(() => {});
+    void style("communication-hub.css").catch(() => {});
     void tableau().catch(() => {});
-    communicationPromise = Promise.all([
-      style("communication-app.css"),
-      style("communication-hub.css"),
-    ])
-      .then(() => load("communication-app.js"))
+    communicationPromise = load("communication-app.js")
       .then(() => {
         if (!window.STIPCommunicationApp?.mount)
           throw new Error("Runtime Communication indisponible.");
