@@ -93,29 +93,7 @@
 
 /* Tableau mensuel : rendu centralisé dans /stip-month-table.css. */
 
-.metiers-shift-code{
-  min-width:32px;
-  height:28px;
-  display:inline-grid;
-  place-items:center;
-  padding:0 7px;
-  border:1px solid color-mix(in srgb,var(--metiers-shift-bg,var(--stip-accent)) 68%,#fff);
-  border-radius:10px;
-  background:var(--metiers-shift-bg,var(--stip-accent-soft));
-  color:var(--metiers-shift-ink,var(--stip-ink));
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.28),
-    0 4px 9px color-mix(in srgb,var(--metiers-shift-bg,var(--stip-accent)) 14%,transparent);
-  font-size:.72rem;
-  font-weight:950;
-  line-height:1;
-}
-
-.metiers-shift-code.code-m{--metiers-shift-bg:var(--stip-shift-m);--metiers-shift-ink:#fff}
-.metiers-shift-code.code-j{--metiers-shift-bg:var(--stip-shift-j);--metiers-shift-ink:#fff}
-.metiers-shift-code.code-j4{--metiers-shift-bg:var(--stip-shift-j4);--metiers-shift-ink:#fff}
-.metiers-shift-code.code-s{--metiers-shift-bg:var(--stip-shift-s);--metiers-shift-ink:var(--stip-shift-s-ink)}
-.metiers-shift-code.code-n{--metiers-shift-bg:var(--stip-shift-n);--metiers-shift-ink:#fff}
+/* Les badges de shift du mois sont centralisés dans /stip-month-table.css. */
 
 
 @media(max-width:430px){
