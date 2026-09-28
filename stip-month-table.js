@@ -60,6 +60,7 @@
       grid.querySelectorAll(":scope > " + WEEKDAYS).length === wanted
     ) {
       calendar.dataset.stipMonthTable = "1";
+      calendar.classList.add("stip-card-signature");
       return;
     }
 
@@ -102,6 +103,7 @@
     });
 
     calendar.dataset.stipMonthTable = "1";
+    calendar.classList.add("stip-card-signature");
     grid.dataset.stipMonthTableSignature = signature;
   }
 
