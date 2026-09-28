@@ -31,6 +31,23 @@ L’ancienne route `fauteuils` reste uniquement une compatibilité d’entrée e
 
 Aucun onglet ne doit recréer un backend, un annuaire agents, un moteur de réactions, une logique de session ou un second système de notifications.
 
+## 2 bis. Familles STIP
+
+Communication reste une seule application et un seul backend, mais les données sont cloisonnées par **famille STIP**.
+
+Règles actuelles :
+- `brancardage` = brancardiers, chefs d’équipe brancardiers, stagiaires rattachés au brancardage et administration opérationnelle ;
+- `hors_brancardage` = type temporaire « pas brancardier » tant qu’un autre corps de métier n’a pas sa propre famille ;
+- un futur métier (par exemple les manipulateurs) recevra sa propre clé de famille sans créer une seconde application Communication.
+
+Invariants :
+- la ligne **Communication** reste visible dans Accès ;
+- l’accès peut être coché/décoché par profil, mais la famille détermine qui peut se voir, se rechercher et communiquer ;
+- Chat équipe, DM & groupes et Fauteuils utilisent tous la même famille ;
+- annuaire, groupes, DM, conversations collectives et notifications sont limités à la famille côté serveur ;
+- aucun simple masquage UI ne remplace ce cloisonnement serveur ;
+- les conversations existantes restent classées dans `brancardage`.
+
 ## 3. Séparation des trois onglets
 
 **Chat équipe**
