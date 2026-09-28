@@ -8,6 +8,10 @@ const has=(text,needle,message)=>{if(!text.includes(needle))fail(message)};
 
 const app=read("communication-app.js");
 const home=read("home-shell.js");
+const quick=read("quick-access.js");
+const accessRuntime=read("access-runtime.js");
+const accessManage=read("access-manage.js");
+const loader=read("stip-loader.js");
 const appRuntime=read("app.js");
 const hub=read("communication-hub.js");
 const chat=read("team-chat.js");
@@ -23,6 +27,13 @@ for(const label of ["Chat équipe","DM & groupes","Fauteuils"])has(app,label,"on
 for(const route of ["communication/chat","communication/dm","communication/fauteuils"])has(app,route,"route manquante: "+route);
 has(home,'app("homeChat", "Communication", "communication", "communication")',"l’application Communication n’est pas exposée avec son icône canonique");
 has(home,'communication/fauteuils',"le raccourci Fauteuils n’aboutit pas à Communication/Fauteuils");
+has(quick,'communication: {',"Communication manque dans le catalogue Applications");
+has(quick,'communication: "messages"',"Communication n’est pas reliée à la permission messages dans Applications");
+has(quick,'route.startsWith("communication/")',"Applications ne reconnaît pas les routes Communication");
+has(accessRuntime,'communication: () => explicit("messages")',"le runtime d’accès ne reconnaît pas Communication");
+has(accessRuntime,'["communication", "Communication", "communication"]',"Communication manque dans la politique de cartes d’accès");
+has(accessManage,'label: "Communication"',"la permission messages n’est pas présentée comme Communication dans Accès");
+has(loader,'void tableau().catch(() => {});',"le shell Communication attend encore le runtime Chat/Fauteuils au lieu de le préchauffer");
 has(appRuntime,"r.startsWith('communication/')","le routeur principal ne conserve pas les routes Communication dans homeView");
 has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canonique d’agents");
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
