@@ -2,27 +2,13 @@
    Scope: monthly planning table only. No data/business logic lives here. */
 
 .stip-month-calendar[data-stip-month-table="1"]{
+  --stip-card-radius:32px;
+  --stip-card-accent:var(--stip-accent);
   padding:0 12px 11px!important;
 }
 .stip-month-calendar[data-stip-month-table="1"]:not(.hc-date-jump-panel){
-  position:relative!important;
   overflow:hidden!important;
-  border:1px solid rgba(17,67,82,.10)!important;
-  border-radius:32px!important;
-  background:linear-gradient(160deg,#fff 0%,#fbfdfe 48%,#f4f9fa 100%)!important;
-  box-shadow:0 28px 68px rgba(15,55,68,.13),0 6px 18px rgba(15,55,68,.055),inset 0 1px 0 #fff!important;
   isolation:isolate!important;
-}
-.stip-month-calendar[data-stip-month-table="1"]:not(.hc-date-jump-panel)::before{
-  content:"";
-  position:absolute;
-  z-index:-1;
-  left:-15%;
-  right:-15%;
-  top:-95px;
-  height:230px;
-  background:radial-gradient(ellipse at center,rgba(27,164,188,.14),rgba(27,164,188,.035) 42%,transparent 70%);
-  pointer-events:none;
 }
 .stip-month-calendar[data-stip-month-table="1"]>.stip-month-weekdays,
 .stip-month-calendar[data-stip-month-table="1"]>.hc-date-jump-weekdays{
@@ -229,7 +215,7 @@
 }
 @media(max-width:520px){
   .stip-month-calendar[data-stip-month-table="1"]{padding-inline:10px!important}
-  .stip-month-calendar[data-stip-month-table="1"]:not(.hc-date-jump-panel){border-radius:28px!important}
+  .stip-month-calendar[data-stip-month-table="1"]{--stip-card-radius:28px}
   .stip-month-calendar[data-stip-month-table="1"] .stip-month-nav{
     min-height:76px!important;
     grid-template-columns:50px minmax(0,1fr) 50px!important;
