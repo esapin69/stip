@@ -50,10 +50,12 @@ assert(theme.includes("stip-theme-base.css?v=20260928-card-signature1"),
   "master theme does not load the versioned card tokens");
 assert(theme.includes("stip-patterns.css?v=20260928-card-signature1"),
   "master theme does not load the versioned card component");
-assert(sw.includes('STIP_SW_BUILD="20260928-card-signature1"'),
-  "service worker cache version was not invalidated for the card signature");
+const uiBuild = index.match(/<meta name="stip-ui-build" content="([^"]+)"/)?.[1] || "";
+const swBuild = sw.match(/STIP_SW_BUILD="([^"]+)"/)?.[1] || "";
+assert(uiBuild && uiBuild === swBuild,
+  "service worker cache version is not synchronized with the UI build");
 assert(index.includes('stip-theme.css?v=20260928-card-signature1'),
-  "main app does not request the new master theme version");
+  "main app does not request the premium card master theme version");
 assert(rules.includes("MAÎTRE VALIDÉ — Signature de carte premium") &&
        rules.includes("liseré supérieur lumineux"),
   "human-readable theme contract does not protect the premium card signature");
