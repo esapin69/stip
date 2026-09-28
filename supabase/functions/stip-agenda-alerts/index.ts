@@ -408,13 +408,22 @@ async function deliver(b,r,st,dry) {
   if(dry)return{alert_key:b.key,recipient:r.id,recipient_kind:r.kind,stage:st,title:cp.title,body:cp.body,metadata:meta};
   const row=await stageRow({alert_key:b.key,recipient_agent_id:r.id,subject_agent_id:b.subject&&b.subject.id||null,source_type:b.sourceType,source_ref:b.sourceRef,event_at:at.toISOString(),stage:st,status:"pending"});
   if(row.processed_at)return{skipped:true,reason:"already_processed"};
+  const claim=await db.rpc("stip_agenda_alert_claim",{p_id:row.id});
+  if(claim.error)throw claim.error;
+  if(!claim.data)return{skipped:true,reason:"claimed_elsewhere"};
   const ex=await existing(b.key,r.id);
-  if(st==="urgent"&&ex.id&&ex.read){await db.from("stip_agenda_alert_deliveries").update({status:"acknowledged",processed_at:new Date().toISOString()}).eq("id",row.id);return{skipped:true,reason:"acknowledged"};}
-  if(st==="urgent"&&ex.id&&!ex.exists){await db.from("stip_agenda_alert_deliveries").update({status:"dismissed",processed_at:new Date().toISOString()}).eq("id",row.id);return{skipped:true,reason:"dismissed"};}
+  if(st==="urgent"&&ex.id&&ex.read){await db.from("stip_agenda_alert_deliveries").update({status:"acknowledged",processed_at:new Date().toISOString(),claimed_at:null}).eq("id",row.id);return{skipped:true,reason:"acknowledged"};}
+  if(st==="urgent"&&ex.id&&!ex.exists){await db.from("stip_agenda_alert_deliveries").update({status:"dismissed",processed_at:new Date().toISOString(),claimed_at:null}).eq("id",row.id);return{skipped:true,reason:"dismissed"};}
   let noteId=ex.exists?ex.id:null;
   if(!noteId){
     const n=await db.from("stip_notifications").insert({agent_id:r.id,type:"agenda_alert",title:cp.title,body:cp.body,source_type:"agenda_alert",source_ref:b.sourceRef,metadata:meta}).select("id").single();
-    if(n.error)throw n.error; noteId=n.data.id;
+    if(n.error){
+      if(n.error.code!=="23505")throw n.error;
+      const q=await db.from("stip_notifications").select("id").eq("agent_id",r.id).eq("type","agenda_alert").contains("metadata",{alert_key:b.key}).limit(1).maybeSingle();
+      if(q.error)throw q.error;
+      if(!q.data?.id)throw n.error;
+      noteId=q.data.id;
+    }else noteId=n.data.id;
   }else{
     const u=await db.from("stip_notifications").update({title:cp.title,body:cp.body,metadata:meta}).eq("id",noteId); if(u.error)throw u.error;
   }
@@ -424,7 +433,7 @@ async function deliver(b,r,st,dry) {
     const url=cp.base+(cp.base.includes("?")?"&":"?")+"alert_key="+encodeURIComponent(b.key);
     sent=await push(r.id,{event_key:"agenda_alert",title:cp.title,body:cp.body,url,tag:"stip-agenda-alert-"+b.key+"-"+r.id,urgency:"high"});
   }
-  const u=await db.from("stip_agenda_alert_deliveries").update({notification_id:noteId,push_sent:sent>0,status:st==="watch"||sent===0?"cloche_only":"sent",processed_at:new Date().toISOString()}).eq("id",row.id);
+  const u=await db.from("stip_agenda_alert_deliveries").update({notification_id:noteId,push_sent:sent>0,status:st==="watch"||sent===0?"cloche_only":"sent",processed_at:new Date().toISOString(),claimed_at:null}).eq("id",row.id);
   if(u.error)throw u.error;
   return{sent,notification_id:noteId};
 }
