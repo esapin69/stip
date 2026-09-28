@@ -62,6 +62,14 @@ for(const key of ["team_chat_received","wheelchair_received"]){
 has(sw,"/images/notifications/dm.webp","icône DM manquante");
 has(sw,"/images/notifications/chat.webp","icône Chat équipe manquante");
 has(sw,"/images/notifications/wheelchair.webp","icône Fauteuils manquante");
+has(messages,"communication_family","le backend Communication ne porte pas la famille STIP");
+has(messages,"activeMessagingAgents(communicationFamily(ctx))","l’annuaire/push Communication n’est pas limité à la famille STIP");
+has(messages,'.eq("communication_family",communicationFamily(ctx))',"les conversations privées ne sont pas filtrées par famille");
+has(messages,"assertCommunicationFamily(ctx","les fils privés ne revérifient pas la famille côté serveur");
+has(messages,"TABLEAU_PREFIX+family+","le Chat/Fauteuils des autres métiers n’est pas séparé du brancardage");
+has(accessManage,"TYPE · ","Accès n’affiche pas le type de famille Communication");
+has(accessManage,"communication_family","Accès ne conserve pas la famille Communication");
+has(rules,"Familles STIP","le contrat Communication ne documente pas les familles");
 has(messages,"quick=communication&tab=dm","une notification DM ne cible pas l’onglet DM");
 has(messages,'tab=wheelchair?"fauteuils":"chat"',"les notifications Chat/Fauteuils ne ciblent pas leur onglet");
 has(rules,"Une seule application, trois vues","contrat Communication incomplet");
