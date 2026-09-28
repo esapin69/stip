@@ -149,6 +149,19 @@ async function authenticated(req) {
   if (r.error) throw r.error;
   return Boolean(r.data && r.data.active && (!r.data.expires_at || new Date(r.data.expires_at) > new Date()));
 }
+async function planningRows(today, horizon) {
+  const rows = [];
+  for (let from = 0; from < 5000; from += 1000) {
+    const r = await db.from("planning")
+      .select("id,agent_id,agent_source_key,date,code,observation,source_value")
+      .gte("date", today).lte("date", horizon).order("date").order("agent_source_key")
+      .range(from, from + 999);
+    if (r.error) throw r.error;
+    rows.push(...(r.data || []));
+    if ((r.data || []).length < 1000) break;
+  }
+  return { data: rows, error: null };
+}
 async function source(now) {
   const today = localDate(now);
   const horizon = addDays(today, HORIZON_DAYS);
@@ -159,7 +172,7 @@ async function source(now) {
     db.from("stip_agent_agenda_items").select("id,agent_id,source_type,source_ref,title,body,event_date,all_day,start_time,end_time,location,importance,status,event_kind").eq("status", "active").gte("event_date", today).lte("event_date", horizon).order("event_date").order("start_time"),
     db.from("stagiaires").select("id,nom,prenom,date_debut,date_fin,horaires,referent,observation").gte("date_fin", today).lte("date_debut", horizon).order("date_debut"),
     db.from("agents").select("id,source_key,nom,prenom,equipe,ghe,role,actif").eq("actif", true),
-    db.from("planning").select("id,agent_id,agent_source_key,date,code,observation,source_value").gte("date", today).lte("date", horizon),
+    planningRows(today, horizon),
     db.from("stip_shift_definitions").select("code,label,start_time,end_time,active").eq("active", true),
     db.from("stip_access_profiles").select("agent_id,role_key,active,permissions").eq("active", true).not("agent_id", "is", null),
   ]);
