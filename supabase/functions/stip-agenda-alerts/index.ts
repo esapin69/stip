@@ -394,6 +394,13 @@ async function existing(alertKey,recipientId) {
 async function stageRow(payload) {
   let q=await db.from("stip_agenda_alert_deliveries").select("*").eq("alert_key",payload.alert_key).eq("recipient_agent_id",payload.recipient_agent_id).eq("stage",payload.stage).maybeSingle();
   if(q.error)throw q.error;
+  if(q.data?.status==="resolved"){
+    const reopened=await db.from("stip_agenda_alert_deliveries").update({
+      status:"pending",processed_at:null,claimed_at:null,notification_id:null,push_sent:false,event_at:payload.event_at
+    }).eq("id",q.data.id).select("*").single();
+    if(reopened.error)throw reopened.error;
+    return reopened.data;
+  }
   if(q.data)return q.data;
   const i=await db.from("stip_agenda_alert_deliveries").insert(payload).select("*").single();
   if(!i.error)return i.data;
