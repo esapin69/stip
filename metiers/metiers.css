@@ -1,126 +1,52 @@
 .metiers-home{
   width:min(100%,760px);
   min-height:100dvh;
-  padding:calc(14px + env(safe-area-inset-top)) 10px calc(34px + env(safe-area-inset-bottom));
+  padding:calc(12px + env(safe-area-inset-top)) 10px calc(38px + env(safe-area-inset-bottom));
 }
 
-/* 3 périodes : un seul contrôle segmenté, plus net qu'une rangée de grosses bulles. */
-.metiers-period-tabs.stip-filter-bubbles{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:4px;
-  margin:0 0 14px;
-  padding:4px;
-  border:1px solid color-mix(in srgb,var(--stip-line) 82%,white);
-  border-radius:21px;
-  background:color-mix(in srgb,var(--stip-surface-soft) 76%,white);
-  box-shadow:0 8px 24px rgba(16,58,85,.08),inset 0 1px 0 rgba(255,255,255,.92);
+.metiers-home-strip{display:grid;gap:9px;margin-bottom:12px}
+.metiers-identity-card,.metiers-now-card,.metiers-week-card,.metiers-month-card,.metiers-collective-card{
+  border:1px solid color-mix(in srgb,var(--stip-line) 84%,white);
+  background:rgba(255,255,255,.94);
+  box-shadow:0 12px 34px rgba(16,58,85,.09),inset 0 1px 0 rgba(255,255,255,.96);
 }
+.metiers-identity-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:11px 12px;border-radius:24px;position:relative;overflow:hidden}
+.metiers-identity-card::before,.metiers-now-card::before,.metiers-week-card::before,.metiers-month-card::before,.metiers-collective-card::before{content:"";display:block;position:absolute;inset:0 0 auto;height:3px;background:linear-gradient(90deg,var(--stip-accent),color-mix(in srgb,var(--stip-accent) 28%,transparent),transparent 78%);pointer-events:none}
+.metiers-avatar,.metiers-person-avatar{display:grid;place-items:center;overflow:hidden;background:color-mix(in srgb,var(--stip-accent) 11%,white);color:var(--stip-accent);font-weight:950;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stip-accent) 18%,transparent)}
+.metiers-avatar{width:52px;height:52px;border-radius:18px;font-size:.9rem}.metiers-avatar img,.metiers-person-avatar img{width:100%;height:100%;object-fit:cover}
+.metiers-identity-copy{min-width:0;display:grid;gap:2px}.metiers-identity-copy small,.metiers-now-card small,.metiers-period-nav small,.metiers-collective-head small,.metiers-day-sheet header small,.metiers-day-events>small{font-size:.62rem;font-weight:950;letter-spacing:.12em;color:var(--stip-accent)}
+.metiers-identity-copy strong{font-size:1.02rem;color:var(--stip-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.metiers-identity-copy span{font-size:.74rem;font-weight:750;color:var(--stip-muted)}
+.metiers-account{display:grid;place-items:center;width:38px;height:38px;border-radius:14px;text-decoration:none;background:var(--stip-surface-soft);color:var(--stip-ink);font-size:1.45rem;font-weight:700}
 
-.metiers-period-tabs .stip-filter-choice{
-  min-height:48px;
-  padding:0 8px;
-  border:0!important;
-  border-radius:17px;
-  background:transparent!important;
-  color:var(--stip-muted);
-  box-shadow:none!important;
-  transform:none!important;
-  overflow:visible;
-}
+.metiers-now-card{position:relative;border-radius:22px;padding:11px 12px;display:grid;gap:9px}.metiers-now-card>div:first-child{display:flex;flex-wrap:wrap;align-items:baseline;gap:5px 8px}.metiers-now-card>div:first-child small{width:100%}.metiers-now-card>div:first-child strong{font-size:.9rem;color:var(--stip-ink)}.metiers-now-card>div:first-child span{font-size:.7rem;font-weight:900;color:var(--stip-muted)}
+.metiers-alert{width:100%;border:0;border-radius:17px;background:color-mix(in srgb,#f59e0b 10%,white);padding:9px 10px;display:grid;grid-template-columns:auto 1fr;gap:9px;text-align:left;color:var(--stip-ink)}.metiers-alert>span{font-size:1.25rem}.metiers-alert div{display:grid;gap:1px}.metiers-alert small{color:#9a5a00}.metiers-alert strong{font-size:.78rem}.metiers-alert em{font-style:normal;font-size:.66rem;color:var(--stip-muted);font-weight:750}
+.metiers-home-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.metiers-home-actions button{min-height:44px;border:1px solid var(--stip-line);border-radius:16px;background:#fff;color:var(--stip-ink);display:flex;align-items:center;justify-content:center;gap:7px;font-weight:900}.metiers-home-actions button span{color:var(--stip-accent)}
 
-.metiers-period-tabs .stip-filter-choice::before{
-  display:none!important;
-}
+.metiers-period-tabs.stip-filter-bubbles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:0 0 12px;padding:4px;border:1px solid color-mix(in srgb,var(--stip-line) 82%,white);border-radius:21px;background:color-mix(in srgb,var(--stip-surface-soft) 76%,white);box-shadow:0 8px 24px rgba(16,58,85,.08),inset 0 1px 0 rgba(255,255,255,.92)}
+.metiers-period-tabs .stip-filter-choice{min-height:48px;padding:0 8px;border:0!important;border-radius:17px;background:transparent!important;color:var(--stip-muted);box-shadow:none!important;transform:none!important;overflow:visible}.metiers-period-tabs .stip-filter-choice::before{display:none!important}.metiers-period-tabs .stip-filter-choice::after{left:50%;bottom:5px;width:30px;height:3px;border-radius:999px;background:var(--stip-accent);box-shadow:none}.metiers-period-tabs .stip-filter-choice:is(.active,[aria-selected="true"]){background:#fff!important;color:var(--stip-ink);box-shadow:0 6px 16px rgba(16,58,85,.10),inset 0 0 0 1px rgba(11,126,166,.10)!important}.metiers-period-tabs .stip-filter-copy{width:100%;align-items:center!important;text-align:center!important}.metiers-period-tabs .stip-filter-copy>strong{width:100%;color:inherit!important;font-size:clamp(.72rem,2.8vw,.84rem);font-weight:950;letter-spacing:-.015em;text-align:center;white-space:nowrap}.metiers-period-panel[hidden]{display:none!important}
 
-.metiers-period-tabs .stip-filter-choice::after{
-  left:50%;
-  bottom:5px;
-  width:30px;
-  height:3px;
-  border-radius:999px;
-  background:var(--stip-accent);
-  box-shadow:none;
-}
+.metiers-period-nav{display:grid;grid-template-columns:42px 1fr 42px;align-items:center;gap:6px;padding:11px 10px 9px;text-align:center}.metiers-period-nav>button{width:38px;height:38px;border:1px solid var(--stip-line);border-radius:14px;background:#fff;color:var(--stip-ink);font-size:1.45rem}.metiers-period-nav>button:disabled{opacity:.28}.metiers-period-nav div{display:grid;gap:2px}.metiers-period-nav strong{font-size:.85rem;color:var(--stip-ink);text-transform:capitalize}
 
-.metiers-period-tabs .stip-filter-choice:is(.active,[aria-selected="true"]){
-  background:#fff!important;
-  color:var(--stip-ink);
-  box-shadow:
-    0 6px 16px rgba(16,58,85,.10),
-    inset 0 0 0 1px rgba(11,126,166,.10)!important;
-}
+.metiers-week-card{position:relative;border-radius:26px;overflow:hidden}.metiers-week-list{display:grid;gap:8px;padding:0 9px 10px}.metiers-week-day{border:1px solid var(--stip-line);border-radius:20px;background:linear-gradient(180deg,#fff,rgba(248,252,253,.96));padding:9px;display:grid;gap:8px}.metiers-week-day.is-today{border-color:color-mix(in srgb,var(--stip-accent) 52%,var(--stip-line));box-shadow:0 0 0 2px color-mix(in srgb,var(--stip-accent) 10%,transparent)}.metiers-week-day>header{display:grid;grid-template-columns:auto auto 1fr;align-items:center;gap:6px}.metiers-week-day>header span{font-size:.68rem;font-weight:950;color:var(--stip-muted)}.metiers-week-day>header b{font-size:.82rem}.metiers-week-day>header em{justify-self:end;font-style:normal;font-size:.64rem;font-weight:900;color:var(--stip-accent);background:color-mix(in srgb,var(--stip-accent) 9%,white);padding:4px 7px;border-radius:999px}
+.metiers-week-shift{width:100%;border:1px solid color-mix(in srgb,var(--stip-line) 82%,white);border-radius:17px;background:#fff;padding:9px 10px;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:9px;text-align:left;color:var(--stip-ink);box-shadow:0 5px 16px rgba(16,58,85,.06)}.metiers-week-shift-visual{display:grid;place-items:center;min-height:42px}.metiers-week-shift-copy{display:grid;gap:2px;min-width:0}.metiers-week-shift-copy strong{font-size:.81rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.metiers-week-shift-copy b{font-size:.75rem;color:var(--stip-accent);font-weight:950}.metiers-week-shift>span:last-child{font-size:1.25rem;color:var(--stip-muted)}
+.metiers-week-events{display:grid;gap:5px}.metiers-week-event{border:0;background:transparent;padding:4px 3px;display:grid;grid-template-columns:24px 1fr;gap:6px;text-align:left;color:var(--stip-ink)}.metiers-week-event div{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.metiers-week-event strong{font-size:.71rem}.metiers-week-event small,.metiers-week-no-event{font-size:.63rem;color:var(--stip-muted);font-weight:750}.metiers-week-no-event{padding:2px 4px}
+.metiers-shift-icon{font-size:1.3rem}.metiers-shift-code,.metiers-shift-empty{display:inline-grid;place-items:center;min-width:34px;height:28px;padding:0 7px;border-radius:10px;background:var(--stip-surface-soft);font-size:.75rem;font-weight:950;color:var(--stip-ink)}
 
-.metiers-period-tabs .stip-filter-copy{
-  width:100%;
-  align-items:center!important;
-  text-align:center!important;
-}
+.metiers-month-card{position:relative;border-radius:26px;padding-bottom:10px;overflow:hidden}.metiers-month-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding:0 9px 9px}.metiers-month-summary span{display:flex;align-items:baseline;justify-content:center;gap:4px;padding:7px 4px;border-radius:13px;background:var(--stip-surface-soft);font-size:.61rem;font-weight:800;color:var(--stip-muted)}.metiers-month-summary b{font-size:.78rem;color:var(--stip-ink)}.metiers-month-day{appearance:none;text-align:inherit;font:inherit;color:inherit}.metiers-month-event-dots{min-height:15px;display:flex;justify-content:center;gap:1px;overflow:hidden}.metiers-month-event-dots i{font-style:normal;font-size:.58rem}.metiers-month-empty{visibility:hidden}
 
-.metiers-period-tabs .stip-filter-copy>strong{
-  width:100%;
-  color:inherit!important;
-  font-size:clamp(.72rem,2.8vw,.84rem);
-  font-weight:950;
-  letter-spacing:-.015em;
-  text-align:center;
-  white-space:nowrap;
-}
+.metiers-collective-card{position:relative;border-radius:26px;overflow:hidden;padding:12px}.metiers-collective-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:2px 2px 11px}.metiers-collective-head>div{display:grid;gap:3px}.metiers-collective-head strong{font-size:1rem;color:var(--stip-ink)}.metiers-collective-head p{margin:0;font-size:.67rem;color:var(--stip-muted);font-weight:700}.metiers-collective-head>b{white-space:nowrap;font-size:.64rem;padding:6px 8px;border-radius:999px;background:color-mix(in srgb,#22c55e 10%,white);color:#16723a}
+.metiers-collective-search{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:7px;border:1px solid var(--stip-line);border-radius:16px;padding:0 11px;background:#fff}.metiers-collective-search span{color:var(--stip-muted);font-size:1.1rem}.metiers-collective-search input{min-width:0;width:100%;height:43px;border:0;outline:0;background:transparent;font:inherit;font-size:.73rem;color:var(--stip-ink)}
+.metiers-collective-filters{display:flex;gap:6px;overflow:auto;padding:9px 0 8px;scrollbar-width:none}.metiers-collective-filters::-webkit-scrollbar{display:none}.metiers-collective-filters button{white-space:nowrap;border:1px solid var(--stip-line);border-radius:999px;background:#fff;padding:7px 10px;font-size:.66rem;font-weight:900;color:var(--stip-muted)}.metiers-collective-filters button[aria-pressed="true"]{background:var(--stip-ink);border-color:var(--stip-ink);color:#fff}
+.metiers-collective-list{display:grid;gap:7px}.metiers-person-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:9px;border:1px solid var(--stip-line);border-radius:18px;padding:8px;background:#fff}.metiers-person-avatar{width:43px;height:43px;border-radius:14px;font-size:.72rem}.metiers-person-copy{display:grid;gap:2px;min-width:0}.metiers-person-copy strong{font-size:.77rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.metiers-person-copy small{font-size:.62rem;color:var(--stip-muted);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.metiers-person-copy span{font-size:.65rem;font-weight:850;color:var(--stip-muted)}.metiers-person-copy span i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;background:#b8c2c7}.metiers-person-card.is-present .metiers-person-copy span{color:#16723a}.metiers-person-card.is-present .metiers-person-copy span i{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12)}.metiers-person-card.is-today .metiers-person-copy span i{background:#f59e0b}.metiers-person-message{width:38px;height:38px;border:1px solid color-mix(in srgb,var(--stip-accent) 25%,var(--stip-line));border-radius:13px;background:color-mix(in srgb,var(--stip-accent) 8%,white);color:var(--stip-accent);font-size:1rem}.metiers-collective-empty{margin:8px 0;padding:20px;text-align:center;color:var(--stip-muted);font-size:.73rem;font-weight:800}
 
-.metiers-period-panel[hidden]{
-  display:none!important;
-}
+.metiers-loading,.metiers-error{min-height:220px;display:grid;place-items:center;padding:28px;border:1px solid var(--stip-line);border-radius:24px;background:rgba(255,255,255,.9);box-shadow:var(--stip-shadow);color:var(--stip-muted);font-size:.78rem;font-weight:850;text-align:center}.metiers-loading-compact{min-height:95px}
 
-.metiers-month-host{
-  width:100%;
-}
-
-.metiers-loading,
-.metiers-error{
-  min-height:260px;
-  display:grid;
-  place-items:center;
-  padding:28px;
-  border:1px solid var(--stip-line);
-  border-radius:26px;
-  background:rgba(255,255,255,.86);
-  box-shadow:var(--stip-shadow);
-  color:var(--stip-muted);
-  font-size:.82rem;
-  font-weight:850;
-  text-align:center;
-}
-
-/* Tableau mensuel : rendu centralisé dans /stip-month-table.css. */
-
-/* Les badges de shift du mois sont centralisés dans /stip-month-table.css. */
-
+.metiers-day-overlay{position:fixed;inset:0;z-index:9500;display:flex;align-items:flex-end;justify-content:center}.metiers-day-backdrop{position:absolute;inset:0;border:0;background:rgba(7,20,27,.42);backdrop-filter:blur(2px)}.metiers-day-sheet{position:relative;width:min(100%,620px);max-height:min(82dvh,760px);overflow:auto;border-radius:28px 28px 0 0;background:#fff;padding:10px 13px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -18px 50px rgba(8,34,48,.2)}.metiers-day-handle{width:42px;height:4px;border-radius:999px;background:#d7dfe3;margin:0 auto 10px}.metiers-day-sheet>header{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 2px 10px}.metiers-day-sheet>header div{display:grid;gap:2px}.metiers-day-sheet>header strong{font-size:.95rem;text-transform:capitalize}.metiers-day-sheet>header button{width:36px;height:36px;border:0;border-radius:13px;background:var(--stip-surface-soft);font-size:1.25rem}.metiers-day-shift{width:100%;border:1px solid var(--stip-line);border-radius:20px;background:linear-gradient(180deg,#fff,var(--stip-surface-soft));padding:11px;display:grid;grid-template-columns:54px 1fr;gap:10px;text-align:left;color:var(--stip-ink);opacity:1}.metiers-day-shift>span{display:grid;place-items:center}.metiers-day-shift>div{display:grid;gap:2px}.metiers-day-shift small{font-size:.61rem;color:var(--stip-accent);font-weight:950}.metiers-day-shift strong{font-size:.86rem}.metiers-day-shift b{font-size:.74rem;color:var(--stip-muted)}.metiers-day-note{margin:8px 0 0;padding:9px 10px;border-radius:15px;background:var(--stip-surface-soft);font-size:.7rem;color:var(--stip-muted);font-weight:750}.metiers-day-events{display:grid;gap:7px;margin-top:12px}.metiers-day-events article{display:grid;grid-template-columns:28px 1fr;gap:7px;padding:8px 4px;border-bottom:1px solid var(--stip-line)}.metiers-day-events article div{display:grid;gap:2px}.metiers-day-events article strong{font-size:.76rem}.metiers-day-events article small,.metiers-day-events article p,.metiers-day-events>p{margin:0;font-size:.65rem;color:var(--stip-muted);font-weight:700}.metiers-sheet-open{overflow:hidden}
 
 @media(max-width:430px){
-  .metiers-home{
-    padding-inline:7px;
-    padding-top:calc(10px + env(safe-area-inset-top));
-  }
-
-  .metiers-period-tabs.stip-filter-bubbles{
-    margin-bottom:11px;
-    border-radius:19px;
-  }
-
-  .metiers-period-tabs .stip-filter-choice{
-    min-height:45px!important;
-    padding-inline:4px!important;
-  }
-
-  .metiers-period-tabs .stip-filter-copy>strong{
-    font-size:.7rem!important;
-    white-space:normal;
-    line-height:1.05;
-  }
-
+  .metiers-home{padding-inline:7px;padding-top:calc(9px + env(safe-area-inset-top))}
+  .metiers-period-tabs.stip-filter-bubbles{margin-bottom:10px;border-radius:19px}.metiers-period-tabs .stip-filter-choice{min-height:45px!important;padding-inline:4px!important}.metiers-period-tabs .stip-filter-copy>strong{font-size:.68rem!important;white-space:normal;line-height:1.05}
+  .metiers-week-list{padding-inline:7px}.metiers-week-day{padding:8px}.metiers-week-shift{grid-template-columns:44px 1fr auto;padding:8px}.metiers-week-event div{display:grid;gap:1px}
+  .metiers-month-summary span{font-size:.57rem}.metiers-collective-card{padding:10px}
 }
-
-@media(max-width:360px){
-  .metiers-home{padding-inline:5px}
-  .metiers-period-tabs .stip-filter-copy>strong{font-size:.64rem!important}
-}
+@media(min-width:640px){.metiers-week-list{grid-template-columns:1fr 1fr}.metiers-week-day:last-child{grid-column:1/-1}.metiers-day-sheet{border-radius:28px;margin-bottom:18px}}
