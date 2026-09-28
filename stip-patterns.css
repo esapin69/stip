@@ -839,3 +839,128 @@
   .stip-context-master>.stip-context-attached-separator{margin-top:14px!important}
   .stip-context-master>.stip-context-attached{padding-top:10px!important}
 }
+
+
+/* 9. SIGNATURE DE CARTE PREMIUM — base officielle validée.
+   Un seul relief, un seul liseré supérieur lumineux ; seule la couleur d'accent varie. */
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+){
+  --stip-card-accent-local:var(--stip-card-accent,var(--stip-accent));
+  --stip-card-radius-local:var(--stip-card-radius,var(--stip-radius-lg));
+  position:relative;
+  border:1px solid color-mix(in srgb,var(--stip-card-accent-local) 13%,var(--stip-line))!important;
+  border-radius:var(--stip-card-radius-local)!important;
+  background:
+    radial-gradient(ellipse at 50% -34px,color-mix(in srgb,var(--stip-card-accent-local) 11%,transparent),transparent 62%),
+    var(--stip-card-surface)!important;
+  box-shadow:var(--stip-card-shadow)!important;
+}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)::before{
+  content:"";
+  position:absolute;
+  z-index:3;
+  top:-1px;
+  left:var(--stip-card-liseret-inset);
+  right:var(--stip-card-liseret-inset);
+  height:var(--stip-card-liseret-height);
+  border-radius:0 0 999px 999px;
+  background:linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb,var(--stip-card-accent-local) 45%,white) 12%,
+    color-mix(in srgb,var(--stip-card-accent-local) 82%,white) 32%,
+    var(--stip-card-accent-local) 50%,
+    color-mix(in srgb,var(--stip-card-accent-local) 82%,white) 68%,
+    color-mix(in srgb,var(--stip-card-accent-local) 45%,white) 88%,
+    transparent 100%
+  );
+  box-shadow:
+    0 2px 9px color-mix(in srgb,var(--stip-card-accent-local) 24%,transparent),
+    0 0 0 1px rgba(255,255,255,.58);
+  pointer-events:none;
+}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="neutral"]{--stip-card-accent-local:var(--stip-ink-2)}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="success"]{--stip-card-accent-local:var(--stip-success)}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="warning"]{--stip-card-accent-local:var(--stip-warning)}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="danger"]{--stip-card-accent-local:var(--stip-danger)}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="lavender"]{--stip-card-accent-local:#7563b6}
+:where(
+  .stip-card-signature,
+  .stip-time-month,
+  .stip-time-week,
+  .stip-action-surface,
+  .stip-catalog-surface,
+  .stip-cockpit-surface,
+  .stip-legend-surface
+)[data-stip-card-tone="active"]{
+  --stip-card-accent-local:var(--stip-accent);
+  box-shadow:var(--stip-card-shadow-active)!important;
+}
+@media(max-width:430px){
+  :where(
+    .stip-card-signature,
+    .stip-time-month,
+    .stip-time-week,
+    .stip-action-surface,
+    .stip-catalog-surface,
+    .stip-cockpit-surface,
+    .stip-legend-surface
+  ){
+    --stip-card-liseret-inset:11px;
+  }
+}
