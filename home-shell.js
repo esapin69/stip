@@ -38,6 +38,7 @@
     communicationConversation: "",
     communicationMessage: "",
     lastRefreshAt: 0,
+    focusedAlertKey: "",
   };
   let planningSlowTimer = 0,
     tableauRuntimePromise = null,
@@ -640,10 +641,13 @@
   function dismissActionNote(n) {
     state.dismissedNotifications[actionNoteKey(n)] = Date.now();
     saveDismissedNotifications();
+    if (n?.source === "stip" && n?.id && !n?.action_id)
+      call(ACTION_API, "dismiss_notification", { notification_id: n.id }).catch(() => {});
     refreshActionCenterUi();
   }
   function noteCategory(n = {}) {
     if (n.category) return n.category;
+    if (n.type === "agenda_alert" || n.source_type === "agenda_alert") return "agenda";
     const s = `${n.title || ""} ${n.body || ""}`.toLowerCase();
     if (/accès|acces|profil|session/.test(s)) return "access";
     if (/signature|signer/.test(s)) return "signatures";
@@ -1689,6 +1693,47 @@
       )
       .join("");
   }
+  function agendaAlertItems() {
+    return notifications()
+      .filter((n) =>
+        (n.type === "agenda_alert" || n.source_type === "agenda_alert") &&
+        n.metadata?.recipient_kind === "target" &&
+        n.metadata?.conflict === true
+      )
+      .sort((a, b) => {
+        const sa = a.metadata?.severity === "danger" ? 0 : 1,
+          sb = b.metadata?.severity === "danger" ? 0 : 1;
+        return sa - sb || String(a.metadata?.event_at || "").localeCompare(String(b.metadata?.event_at || ""));
+      });
+  }
+  function agendaAlertBanner() {
+    const alerts = agendaAlertItems();
+    if (!alerts.length) return "";
+    const n = alerts[0],
+      key = String(n.metadata?.alert_key || n.id || ""),
+      count = alerts.length > 1 ? `<span class="hc-agenda-alert-count">+${alerts.length - 1}</span>` : "",
+      when = [n.metadata?.event_date, n.metadata?.event_time].filter(Boolean).join(" · ");
+    return `<section class="hc-agenda-alert-wrap" aria-label="Alerte planning">
+      <button type="button" class="hc-agenda-alert ${n.metadata?.severity === "warning" ? "is-warning" : "is-danger"}" data-alert-open="${esc(key)}">
+        <img src="/images/notifications/alert-danger.webp?v=20260928-alert1" alt="" aria-hidden="true">
+        <span class="hc-agenda-alert-copy"><small>ALERTE PLANNING</small><strong>${esc(n.title || "Incohérence détectée")}</strong><em>${esc(friendlyNoteBody(n))}</em>${when ? `<b>${esc(when)}</b>` : ""}</span>
+        ${count}<span class="hc-agenda-alert-arrow" aria-hidden="true">›</span>
+      </button>
+    </section>`;
+  }
+  function focusRequestedAlert() {
+    const params = new URLSearchParams(location.search),
+      key = String(params.get("alert_key") || "").trim();
+    if (!key || state.focusedAlertKey === key) return;
+    const note = notifications().find((n) => String(n.metadata?.alert_key || n.id || "") === key);
+    if (!note) return;
+    state.focusedAlertKey = key;
+    openNotificationDetail(note, { focusAction: true });
+    params.delete("alert_key");
+    const query = params.toString();
+    history.replaceState(history.state, "", location.pathname + (query ? "?" + query : "") + location.hash);
+  }
+
   function profile() {
     const template = window.STIPPersonCard;
     if (template?.renderCurrent)
@@ -2129,6 +2174,11 @@
   }
   function noteReason(n = {}) {
     const cat = noteCategory(n);
+    if (n.type === "agenda_alert" || n.source_type === "agenda_alert") {
+      const reasons = Array.isArray(n.metadata?.reasons) ? n.metadata.reasons.filter(Boolean) : [];
+      if (reasons.length) return reasons.join(" · ");
+      return "STIP vous rappelle automatiquement cet événement futur pour éviter qu’il soit manqué.";
+    }
     if (noteIsNetworkError(n) && cat === "access")
       return "Le contrôle automatique des accès n’a pas obtenu de réponse. Cette notification sert à vous signaler que la vérification n’a pas abouti.";
     if (n.source === "admin-access")
@@ -2315,6 +2365,10 @@
   }
   function openNotificationDetail(n, options = {}) {
     document.getElementById("hcNotificationDetail")?.remove();
+    if (n?.source === "stip" && n?.id && !n?.read_at) {
+      n.read_at = new Date().toISOString();
+      call(ACTION_API, "read_notification", { notification_id: n.id }).catch(() => {});
+    }
     const cat = noteCategory(n),
       { cats } = actionCenterData(),
       catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
@@ -2494,7 +2548,7 @@
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      profileMarkup = showProfile ? `${profile()}${shortcutsLauncher()}` : "";
+      profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : "";
     let markup = `${homeModeNav()}${shortcutsPopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
@@ -2511,6 +2565,13 @@
       .forEach(
         (b) => (b.onclick = () => copyText(b.dataset.copy, b.dataset.label)),
       );
+    root.querySelectorAll("[data-alert-open]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const key = String(button.dataset.alertOpen || "");
+        const note = notifications().find((n) => String(n.metadata?.alert_key || n.id || "") === key);
+        if (note) openNotificationDetail(note, { focusAction: true });
+      });
+    });
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
@@ -2956,7 +3017,8 @@
     if (cached) {
       render();
       prefetchContacts();
-      warmHomeRuntimes();
+      requestAnimationFrame(focusRequestedAlert);
+    warmHomeRuntimes();
       if (Date.now() - Number(cached.at || 0) > HOME_CACHE_FRESH_MS)
         setTimeout(() => refresh().catch(() => {}), 180);
       return;
@@ -2993,6 +3055,7 @@
     state.weekPast = false;
     state.renderSig = "";
     state.lastRefreshAt = 0;
+    state.focusedAlertKey = "";
     tableauRuntimePromise = null;
     communicationRuntimePromise = null;
     state.communicationTab = "chat";
