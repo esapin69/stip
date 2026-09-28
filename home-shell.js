@@ -2547,8 +2547,11 @@
 
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning",
+      dutyChiefHost = showProfile
+        ? '<section id="homeDutyChiefNowHost" class="home-duty-chief-host" aria-label="Chef d’équipe présent"></section>'
+        : "",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : "";
+      profileMarkup = showProfile ? `${profile()}${dutyChiefHost}${agendaAlertBanner()}${shortcutsLauncher()}` : "";
     let markup = `${homeModeNav()}${shortcutsPopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
@@ -2560,6 +2563,7 @@
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
     state.renderSig = markup;
     root.innerHTML = markup;
+    window.STIPDutyChiefs?.render?.();
     root
       .querySelectorAll("[data-copy]")
       .forEach(

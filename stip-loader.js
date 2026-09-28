@@ -169,7 +169,7 @@
       .then(() =>
         seq([
           "event-feedback.js",
-          "home-duty-chief.js?v=20260925-chief-hours1",
+          "home-duty-chief.js?v=20260928-home-current-chief1",
           "admin-access-requests-home.js",
         ]),
       )

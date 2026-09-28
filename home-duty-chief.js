@@ -145,7 +145,11 @@
   }
 
   async function fetchDuty(force = false) {
-    if (!document.querySelector("#teamDutyChiefTodayHost")) return null;
+    if (
+      !document.querySelector("#teamDutyChiefTodayHost") &&
+      !document.querySelector("#homeDutyChiefNowHost")
+    )
+      return null;
     if (!localStorage.getItem(STORE)) return null;
     if (!force && data && Date.now() - lastFetch < 5 * 60 * 1000) return data;
     if (loading) return loading;
@@ -244,6 +248,15 @@
     return `<div class="team-chief-state"><strong>Aucun chef présent maintenant</strong><span>${esc(nextText)}</span></div>`;
   }
 
+  function homeNowMarkup() {
+    if (!data) return "";
+    const { current } = dutyState();
+    if (!current.length) return "";
+    return `<div class="team-chief-flat-list">${current
+      .map((item) => flatCard(item, "now"))
+      .join("")}</div>`;
+  }
+
   function todayMarkup() {
     if (loading && !data)
       return '<div class="team-chief-state">Chargement des chefs du jour…</div>';
@@ -318,12 +331,19 @@
     const oldHome = document.querySelector("#homeView .hs-home");
     oldHome?.querySelector("[data-duty-chief]")?.remove();
     oldHome?.querySelector("[data-duty-chief-bubble]")?.remove();
-    oldHome?.querySelector(".hc-duty-chief-host")?.remove();
 
+    const homeHost = document.querySelector("#homeDutyChiefNowHost");
     const todayHost = document.querySelector("#teamDutyChiefTodayHost");
-    if (!todayHost) return;
-    todayHost.innerHTML = todayMarkup();
-    bind(todayHost);
+    if (!homeHost && !todayHost) return;
+
+    if (homeHost) {
+      homeHost.innerHTML = homeNowMarkup();
+      bind(homeHost);
+    }
+    if (todayHost) {
+      todayHost.innerHTML = todayMarkup();
+      bind(todayHost);
+    }
   }
 
   window.STIPDutyChiefs = {
@@ -346,11 +366,14 @@
     refresh() {
       return fetchDuty(true);
     },
+    render,
   };
 
   const style = document.createElement("style");
   style.textContent = `
     .team-duty-chief-host{margin:14px 0 16px}
+    .home-duty-chief-host{margin:14px 0 0}
+    .home-duty-chief-host:empty{display:none}
     .hc-duty-chief-host{position:relative;margin:0}
     .hc-duty-chief-summary-shell{position:relative}
     .hc-duty-chief-card{
