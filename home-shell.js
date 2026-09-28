@@ -300,7 +300,7 @@
       label: meta[1] || code,
       icon,
       iconKey: String(def?.icon_key || ""),
-      work: Boolean(workIcon),
+      work: Boolean(def?.is_working),
     };
   }
 
