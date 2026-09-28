@@ -43,7 +43,9 @@ Règles actuelles :
 Invariants :
 - la ligne **Communication** reste visible dans Accès ;
 - l’accès peut être coché/décoché par profil, mais la famille détermine qui peut se voir, se rechercher et communiquer ;
-- Chat équipe, DM & groupes et Fauteuils utilisent tous la même famille ;
+- Chat équipe et DM & groupes sont communs à toutes les familles, mais restent cloisonnés par famille ;
+- **Fauteuils est un module métier du brancardage uniquement** ; il n’est pas affiché ni utilisable hors de la famille `brancardage` ;
+- pour un futur métier, son éventuel troisième module opérationnel sera défini au moment où ce métier sera branché, sans lui imposer Fauteuils ;
 - annuaire, groupes, DM, conversations collectives et notifications sont limités à la famille côté serveur ;
 - aucun simple masquage UI ne remplace ce cloisonnement serveur ;
 - les conversations existantes restent classées dans `brancardage`.
