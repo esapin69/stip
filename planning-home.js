@@ -112,10 +112,9 @@
       color = registry?.color?.(code, "#277b86") || "#277b86",
       icon = registry?.icon?.(code) || "",
       url = asset(code);
-    if (variant)
-      return `<span class="ph-shift-fallback" style="--shift:${esc(color)}" title="${esc(def?.label || canonical)}">${esc(rawDisplay)}</span>`;
-    if (def?.is_working && url)
-      return `<img class="ph-shift-img" src="${esc(url)}" alt="${esc(def.label || code)}">`;
+    if (def?.is_working)
+      return window.STIPMonthTable?.shiftBadgeHtml?.(rawDisplay) ||
+        `<span class="stip-month-shift-badge" style="--stip-month-shift-bg:${esc(color)}" title="${esc(def?.label || canonical || rawDisplay)}">${esc(rawDisplay)}</span>`;
     if (icon)
       return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
