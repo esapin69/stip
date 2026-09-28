@@ -51,3 +51,7 @@ jobs:
       - name: Check STIP calendar behavior
         if: always()
         run: node tools/stip-calendar-behavior-test.mjs
+
+      - name: Check STIP agenda alert contract
+        if: always()
+        run: node tools/stip-agenda-alert-contract-test.mjs
