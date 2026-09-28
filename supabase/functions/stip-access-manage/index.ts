@@ -163,7 +163,32 @@ async function signAgentRelation(agent: any) {
   return await withSignedAvatar(agent);
 }
 
-function normalizePermissions(raw: any = {}, levels: any = {}, apps: any[]) {
+function defaultCommunicationFamily(role: any) {
+  return ["brancardier", "chef_equipe", "stagiaire", "admin"].includes(
+    String(role || "").toLowerCase(),
+  )
+    ? "brancardage"
+    : "hors_brancardage";
+}
+
+function normalizeCommunicationFamily(value: any, role: any) {
+  const raw = String(value || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48);
+  return raw || defaultCommunicationFamily(role);
+}
+
+function normalizePermissions(
+  raw: any = {},
+  levels: any = {},
+  apps: any[],
+  role: any = "",
+) {
   const out: any = {};
   const normalizedLevels: any = {};
   for (const a of apps) {
@@ -186,6 +211,10 @@ function normalizePermissions(raw: any = {}, levels: any = {}, apps: any[]) {
         : out.admin
           ? "admin"
           : "write";
+    out.communication_family = normalizeCommunicationFamily(
+      raw?.communication_family,
+      role,
+    );
   }
   out.__levels = normalizedLevels;
   return out;
@@ -260,7 +289,13 @@ async function save(b: any, me: any) {
   if (!p) throw Error("Profil introuvable");
   if (role && !rolePresets.some((x: any) => x.role_key === role))
     throw Error("Profil métier invalide");
-  const next = normalizePermissions(b.permissions || {}, b.levels || {}, apps);
+  const effectiveRole = role || p.role_key;
+  const next = normalizePermissions(
+    b.permissions || {},
+    b.levels || {},
+    apps,
+    effectiveRole,
+  );
   const { error } = await db
     .from("stip_access_profiles")
     .update({
@@ -287,6 +322,7 @@ async function savePreset(b: any) {
     b.permissions || {},
     b.levels || {},
     apps,
+    role,
   );
   permissions.notes =
     role === "admin" || role === "chef_equipe" ? permissions.notes : false;
@@ -463,6 +499,7 @@ async function createAccess(b: any, me: any) {
     requestedPermissions,
     requestedLevels,
     apps,
+    role,
   );
   perms.notes =
     role === "admin" || role === "chef_equipe" ? perms.notes : false;
