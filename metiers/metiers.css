@@ -91,142 +91,7 @@
   text-align:center;
 }
 
-/* Calendrier : même moteur canonique, finition dédiée à la vitrine métiers. */
-.metiers-home .metiers-month-card.stip-month-calendar{
-  position:relative;
-  overflow:hidden;
-  padding:13px 11px 15px;
-  border:1px solid rgba(36,71,87,.11)!important;
-  border-radius:27px!important;
-  background:linear-gradient(180deg,#fff 0%,#fbfcfd 100%)!important;
-  box-shadow:
-    0 22px 55px rgba(20,56,71,.13),
-    0 3px 10px rgba(20,56,71,.05)!important;
-}
-
-.metiers-home .metiers-month-card.stip-month-calendar::before{
-  content:"";
-  position:absolute;
-  inset:0 10% auto;
-  height:3px;
-  border-radius:0 0 999px 999px;
-  background:linear-gradient(90deg,transparent,var(--stip-accent),transparent);
-  opacity:.72;
-}
-
-.metiers-home .stip-month-nav{
-  grid-template-columns:46px minmax(0,1fr) 46px!important;
-  gap:10px!important;
-  margin:0 0 9px!important;
-  padding:2px 1px 4px!important;
-}
-
-.metiers-home .stip-month-nav>button{
-  width:44px!important;
-  height:44px!important;
-  min-width:44px!important;
-  min-height:44px!important;
-  border:1px solid color-mix(in srgb,var(--stip-line) 88%,white)!important;
-  border-radius:50%!important;
-  background:linear-gradient(180deg,#fff,#f8fafb)!important;
-  color:var(--stip-ink)!important;
-  box-shadow:0 6px 15px rgba(17,63,79,.08)!important;
-  font-size:1.55rem!important;
-}
-
-.metiers-home .stip-month-nav>button:disabled{
-  opacity:.18!important;
-  box-shadow:none!important;
-}
-
-.metiers-month-title{
-  min-width:0;
-  display:flex;
-  align-items:baseline;
-  justify-content:center;
-  gap:7px;
-  white-space:nowrap;
-}
-
-.metiers-month-title strong{
-  color:var(--stip-ink);
-  font-size:clamp(1.06rem,4.2vw,1.3rem)!important;
-  font-weight:950!important;
-  letter-spacing:-.025em;
-  text-transform:uppercase;
-}
-
-.metiers-month-title small{
-  color:var(--stip-accent);
-  font-size:.72rem!important;
-  font-weight:950!important;
-  letter-spacing:.03em;
-}
-
-.metiers-home .stip-month-weekdays{
-  gap:4px!important;
-  margin:0 0 5px!important;
-  padding:0 1px!important;
-  color:var(--stip-muted)!important;
-  font-size:.62rem!important;
-  font-weight:950!important;
-  letter-spacing:.025em;
-}
-
-.metiers-home .stip-month-calendar .stip-month-grid{
-  gap:5px!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-day{
-  min-height:78px!important;
-  grid-template-rows:20px 30px minmax(22px,auto)!important;
-  gap:3px!important;
-  padding:7px 2px 6px!important;
-  border:1px solid #e8eef1!important;
-  border-radius:15px!important;
-  background:linear-gradient(180deg,#fcfdfe,#f7fafb)!important;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.98)!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-day.is-weekend{
-  background:linear-gradient(180deg,#fffdfd,#fbf7f7)!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-day-number{
-  color:var(--stip-ink)!important;
-  font-size:1rem!important;
-  font-weight:950!important;
-  line-height:1!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-day.is-weekend .stip-month-day-number{
-  color:var(--stip-danger)!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-day.is-today{
-  border-color:color-mix(in srgb,var(--stip-accent) 58%,#fff)!important;
-  background:linear-gradient(180deg,#f6fdff,#eef9fb)!important;
-  box-shadow:
-    inset 0 0 0 2px color-mix(in srgb,var(--stip-accent) 58%,transparent),
-    0 5px 12px rgba(11,126,166,.09)!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-primary,
-.metiers-home .stip-month-calendar .stip-month-events{
-  min-height:28px!important;
-  gap:3px!important;
-}
-
-.metiers-home .stip-month-calendar .stip-month-icon,
-.metiers-home .stip-month-calendar .stip-month-event{
-  width:28px!important;
-  height:28px!important;
-  min-width:28px!important;
-  min-height:28px!important;
-  flex-basis:28px!important;
-  font-size:1.35rem!important;
-  filter:saturate(.92);
-}
+/* Tableau mensuel : rendu centralisé dans /stip-month-table.css. */
 
 .metiers-shift-code{
   min-width:32px;
@@ -252,9 +117,6 @@
 .metiers-shift-code.code-s{--metiers-shift-bg:var(--stip-shift-s);--metiers-shift-ink:var(--stip-shift-s-ink)}
 .metiers-shift-code.code-n{--metiers-shift-bg:var(--stip-shift-n);--metiers-shift-ink:#fff}
 
-.metiers-month-empty{
-  visibility:hidden;
-}
 
 @media(max-width:430px){
   .metiers-home{
@@ -278,49 +140,6 @@
     line-height:1.05;
   }
 
-  .metiers-home .metiers-month-card.stip-month-calendar{
-    padding:10px 7px 11px!important;
-    border-radius:24px!important;
-  }
-
-  .metiers-home .stip-month-nav{
-    grid-template-columns:42px minmax(0,1fr) 42px!important;
-    gap:6px!important;
-  }
-
-  .metiers-home .stip-month-nav>button{
-    width:40px!important;
-    height:40px!important;
-    min-width:40px!important;
-    min-height:40px!important;
-  }
-
-  .metiers-home .stip-month-calendar .stip-month-grid,
-  .metiers-home .stip-month-weekdays{
-    gap:3px!important;
-  }
-
-  .metiers-home .stip-month-calendar .stip-month-day{
-    min-height:72px!important;
-    grid-template-rows:19px 28px minmax(20px,auto)!important;
-    padding:6px 1px 5px!important;
-    border-radius:13px!important;
-  }
-
-  .metiers-home .stip-month-calendar .stip-month-day-number{
-    font-size:.94rem!important;
-  }
-
-  .metiers-home .stip-month-calendar .stip-month-icon,
-  .metiers-home .stip-month-calendar .stip-month-event{
-    width:26px!important;
-    height:26px!important;
-    min-width:26px!important;
-    min-height:26px!important;
-    flex-basis:26px!important;
-    font-size:1.25rem!important;
-  }
-
   .metiers-shift-code{
     min-width:30px;
     height:26px;
@@ -333,5 +152,4 @@
 @media(max-width:360px){
   .metiers-home{padding-inline:5px}
   .metiers-period-tabs .stip-filter-copy>strong{font-size:.64rem!important}
-  .metiers-home .stip-month-calendar .stip-month-day{min-height:68px!important}
 }
