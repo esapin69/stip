@@ -51,7 +51,7 @@
     contacts: "Contacts",
     responsable: "Responsable",
     notifications: "Notifications",
-    messages: "Fauteuils",
+    messages: "Communication",
     places: "Visiter les lieux",
     assistant: "Assistant STIP",
     access: "Accès",
@@ -614,8 +614,8 @@
         if (app.key === "messages")
           return {
             ...app,
-            label: "Fauteuils",
-            help: "Signalements de fauteuils du jour, avec suivi de récupération.",
+            label: "Communication",
+            help: "Chat équipe, DM & groupes et Fauteuils dans une seule application.",
             terrain_access: true,
           };
         return app;
@@ -643,12 +643,12 @@
         if (app.terrain_access) {
           const mode = terrainMode(permissions);
           control =
-            '<div class="access-levels access-terrain-levels" aria-label="Accès Fauteuils">' +
+            '<div class="access-levels access-terrain-levels" aria-label="Accès Communication">' +
             '<button type="button" data-team-mode="read" class="' + (mode === "read" ? "active" : "") + '">Lire</button>' +
             '<button type="button" data-team-mode="write" class="' + (mode === "write" ? "active" : "") + '">Lire + écrire</button>' +
             '<button type="button" data-team-mode="admin" class="' + (mode === "admin" ? "active" : "") + '">Admin</button>' +
             "</div>";
-          levelHelp = "Fauteuils : Lire consulte seulement. Lire + écrire permet de publier. Admin peut aussi gérer et supprimer tous les messages.";
+          levelHelp = "Communication : Lire consulte seulement. Lire + écrire permet de publier dans les espaces autorisés. Admin peut aussi gérer et supprimer les messages.";
         } else if (app.pro_only) {
           control = '<span class="access-single access-maxi-only">MAXI</span>';
           levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";
