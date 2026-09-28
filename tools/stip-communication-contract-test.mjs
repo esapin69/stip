@@ -75,3 +75,8 @@ has(messages,'tab=wheelchair?"fauteuils":"chat"',"les notifications Chat/Fauteui
 has(rules,"Une seule application, trois vues","contrat Communication incomplet");
 
 console.log("STIP Communication contract: OK");
+
+has(communicationApp,"canUseWheelchairs","l’application Communication ne masque pas Fauteuils selon la famille");
+has(communicationApp,'key !== "wheelchair" || canUseWheelchairs()', "l’onglet Fauteuils reste visible hors brancardage");
+has(messages,"requireWheelchairAccess(ctx)","Fauteuils ne sont pas réservés au brancardage côté serveur");
+has(rules,"module métier du brancardage uniquement","le contrat ne réserve pas Fauteuils au brancardage");
