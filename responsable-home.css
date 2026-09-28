@@ -861,3 +861,30 @@ body.resp-tab-equipe .ra-search{top:122px}
   font-size:.66rem;
   letter-spacing:.15em;
 }
+
+
+/* Future-event vigilance uses the same Responsable > Suivi stream, not a new app. */
+.resp-card.agenda-alert{
+  display:grid;grid-template-columns:54px minmax(0,1fr) 20px;align-items:center;gap:11px;
+  border-color:rgba(190,34,34,.34);background:linear-gradient(135deg,#fff,#fff4f2);box-shadow:0 10px 24px rgba(126,24,24,.1)
+}
+.resp-card.agenda-alert.warning{border-color:rgba(184,112,0,.3);background:linear-gradient(135deg,#fff,#fff9ee)}
+.resp-alert-icon{width:54px;height:54px;border-radius:15px;object-fit:cover;box-shadow:0 5px 14px rgba(153,26,26,.18)}
+.resp-alert-copy{min-width:0;display:block}
+.resp-alert-copy h3{margin:5px 0 2px;font-size:.92rem}
+.resp-alert-copy p{margin:0;color:#4c1717}
+.resp-alert-copy p strong{font-size:.72rem}
+.resp-alert-copy small{display:block;margin-top:5px;color:#8f504a;font-size:.64rem}
+.resp-alert-chevron{font-size:1.35rem;color:#a52a25;text-align:center}
+.resp-alert-detail>img{width:82px;height:82px;border-radius:22px;object-fit:cover;display:block;margin:2px auto 12px;box-shadow:0 9px 24px rgba(153,26,26,.2)}
+.resp-alert-detail>p{font-size:.8rem;line-height:1.5;color:#604040}
+.resp-alert-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}
+.resp-alert-facts span{min-width:0;padding:11px;border-radius:13px;background:#fff;border:1px solid #efd9d6}
+.resp-alert-facts small,.resp-alert-facts strong{display:block}
+.resp-alert-facts small{font-size:.57rem;font-weight:950;letter-spacing:.08em;color:#a54940}
+.resp-alert-facts strong{margin-top:4px;font-size:.72rem;line-height:1.3}
+.resp-alert-reasons{margin-top:12px;padding:13px;border-radius:15px;background:#fff3f1;border:1px solid #efcfca}
+.resp-alert-reasons>small{font-size:.59rem;font-weight:950;letter-spacing:.09em;color:#a12620}
+.resp-alert-reasons ul{margin:8px 0 0;padding-left:18px}
+.resp-alert-reasons li{margin:5px 0;font-size:.72rem;line-height:1.4;color:#5b2925}
+@media(max-width:380px){.resp-alert-facts{grid-template-columns:1fr}.resp-card.agenda-alert{grid-template-columns:48px minmax(0,1fr) 18px}.resp-alert-icon{width:48px;height:48px}}
