@@ -39,6 +39,10 @@
       label: "Esprit d’équipe",
       open: () => openDocument("esprit-equipe.html?entry=quick-access"),
     },
+    communication: {
+      label: "Communication",
+      open: () => window.STIPRouter?.set?.("communication/chat"),
+    },
     agents: {
       label: "Équipe",
       open: () => openDocument("agent-directory.html"),
@@ -121,6 +125,7 @@
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
+    communication: ["Communication", "Chat équipe, DM & groupes et Fauteuils.", "Communication"],
     agents: ["Équipe", "Voir les présents, les absents et joindre rapidement un collègue.", "Équipe"],
     compare: ["Comparer les plannings", "Comparer rapidement plusieurs plannings.", "Organisation"],
     change: ["Changement", "Gérer les demandes de changement.", "Organisation"],
@@ -171,6 +176,7 @@
         personal: "planning_personal",
         tomorrow: "tomorrow",
         team: "planning_team",
+        communication: "messages",
         agents: "agent_directory",
         compare: "planning_team",
         change: "change_app",
@@ -265,6 +271,12 @@
   }
   function routeKey(route) {
     route = String(route || "");
+    if (
+      route === "fauteuils" ||
+      route === "communication" ||
+      route.startsWith("communication/")
+    )
+      return "communication";
     if (route.startsWith("planning/personal")) return "personal";
     if (route === "team") return "team";
     if (
@@ -328,6 +340,8 @@
       '<img src="images/icone_app/quick-rocket.svg?v=20260920-appicons2" alt="" aria-hidden="true">',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
+    communication:
+      '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     agents:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
     compare:
@@ -507,7 +521,7 @@
         if (q === "public") showPublic();
         else if (q === "profile") showProfile("home");
         else if (q === "notifications") showProfile("notifications");
-        else if (q === "tableau" || q === "teamchat") window.STIPRouter?.set?.("fauteuils", { replace: true });
+        else if (q === "tableau" || q === "teamchat") window.STIPRouter?.set?.("communication/fauteuils", { replace: true });
         else if (allowed(q)) openKey(q);
       }, 40);
       return;
