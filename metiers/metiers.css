@@ -50,3 +50,6 @@
   .metiers-month-summary span{font-size:.57rem}.metiers-collective-card{padding:10px}
 }
 @media(min-width:640px){.metiers-week-list{grid-template-columns:1fr 1fr}.metiers-week-day:last-child{grid-column:1/-1}.metiers-day-sheet{border-radius:28px;margin-bottom:18px}}
+
+.metiers-home-actions button{position:relative}
+.metiers-home-badge{display:grid;place-items:center;position:absolute;top:5px;right:7px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--stip-accent);color:#fff;font-size:.55rem;font-weight:950;line-height:1;box-shadow:0 3px 9px color-mix(in srgb,var(--stip-accent) 28%,transparent)}

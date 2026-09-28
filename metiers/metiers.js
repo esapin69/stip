@@ -22,6 +22,7 @@
     weekStart: "",
     collective: [],
     messageableIds: new Set(),
+    messageUnread: 0,
     collectiveFilter: "all",
     collectiveQuery: "",
     collectiveLoaded: false
@@ -270,9 +271,19 @@
       ${alert ? `<button type="button" class="metiers-alert" data-open-day="${esc(alert.date)}"><span>${esc(alert.icon || "!")}</span><div><small>À NE PAS MANQUER</small><strong>${esc(alert.title)}</strong><em>${esc([formatDay(alert.date), alert.time].filter(Boolean).join(" · "))}</em></div></button>` : ""}
     </section>
     <div class="metiers-home-actions">
-      <button type="button" data-open-messages><span aria-hidden="true">✉</span><strong>Messages</strong></button>
+      <button type="button" data-open-messages><span aria-hidden="true">🔔</span><strong>Messages</strong>${state.messageUnread ? `<b class="metiers-home-badge">${Math.min(99, state.messageUnread)}</b>` : ""}</button>
       <button type="button" data-go-today><span aria-hidden="true">◎</span><strong>Aujourd’hui</strong></button>
     </div>`;
+  }
+
+  async function loadMessagingSummary() {
+    if (!state.bootstrap?.permissions?.messages) return;
+    try {
+      const messages = await post(MSG_API, "home");
+      state.messageUnread = Number(messages.unread || 0);
+      state.messageableIds = new Set((messages.agents || []).map((agent) => String(agent.id || "")).filter(Boolean));
+      renderHomeStrip();
+    } catch {}
   }
 
   function weekMarkup() {
@@ -555,6 +566,7 @@
       state.loaded = true;
       renderHomeStrip();
       renderWeek();
+      loadMessagingSummary();
     })().catch((error) => {
       const strip = document.getElementById("metiersHomeStrip");
       if (strip) strip.innerHTML = `<div class="metiers-error">${esc(error.message || "Chargement impossible.")}</div>`;
