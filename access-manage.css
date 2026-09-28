@@ -667,3 +667,22 @@
     justify-self:start;
   }
 }
+
+/* communication-family-20260928 */
+.access-communication-control{
+  display:grid;
+  gap:6px;
+  justify-items:stretch;
+}
+.access-family-badge{
+  min-width:0!important;
+  width:100%;
+  box-sizing:border-box;
+  white-space:nowrap;
+  color:var(--stip-accent)!important;
+  background:var(--stip-accent-soft)!important;
+}
+.access-app:not(.is-enabled) .access-family-badge{opacity:.38}
+@media(max-width:560px){
+  .access-communication-control{width:100%}
+}
