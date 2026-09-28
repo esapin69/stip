@@ -16,10 +16,26 @@
     wheelchair: { label: "Fauteuils", icon: "♿", route: "communication/fauteuils" },
   };
 
+  function communicationFamily() {
+    const permissions = {
+      ...(window.STIPBootCache?.permissions || {}),
+      ...(window.STIPSession?.permissions || {}),
+    };
+    return String(permissions.communication_family || "brancardage")
+      .trim()
+      .toLowerCase();
+  }
+
+  function canUseWheelchairs() {
+    return communicationFamily() === "brancardage";
+  }
+
   function normalizeTab(value) {
     const key = String(value || "").toLowerCase();
-    if (key === "fauteuils" || key === "wheelchairs") return "wheelchair";
+    if (key === "fauteuils" || key === "wheelchairs")
+      return canUseWheelchairs() ? "wheelchair" : "chat";
     if (key === "messages" || key === "group" || key === "groups") return "dm";
+    if (key === "wheelchair" && !canUseWheelchairs()) return "chat";
     return TAB_META[key] ? key : "chat";
   }
 
@@ -46,7 +62,9 @@
 
   function shellMarkup() {
     const dmUnread = Math.max(0, Number(window.STIPDMUnread || 0));
-    const tabs = Object.entries(TAB_META).map(([key, meta]) => {
+    const tabs = Object.entries(TAB_META)
+      .filter(([key]) => key !== "wheelchair" || canUseWheelchairs())
+      .map(([key, meta]) => {
       const active = key === state.tab;
       const badge = key === "dm" && dmUnread
         ? '<b class="ca-tab-badge">' + esc(dmUnread > 99 ? "99+" : dmUnread) + "</b>"
@@ -181,7 +199,7 @@
   });
 
   window.STIPCommunicationApp = {
-    build: "20260927-communication5",
+    build: "20260928-family-modules1",
     mount,
     setTab,
     unmount,
