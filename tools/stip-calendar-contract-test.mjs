@@ -15,6 +15,7 @@ const monthTableJs = read("stip-month-table.js");
 const mainIndex = read("index.html");
 const metiersIndex = read("metiers/index.html");
 const metiersCss = read("metiers/metiers.css");
+const metiersJs = read("metiers/metiers.js");
 const tMonthBridge = read("t-est/accueil/accueil-t.js");
 
 assert(theme.includes("@layer stip-calendar-core, stip-calendar-visual;"), "cascade layers are not declared");
@@ -69,9 +70,9 @@ assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("
 
 assert(calendarRules.includes("stip-month-table.css") && calendarRules.includes("stip-month-table.js"),
   "human-readable calendar contract does not protect the shared monthly table");
-assert(mainIndex.includes("stip-month-table.css?v=20260928-card-signature1") && mainIndex.includes("stip-month-table.js?v=20260928-card-signature1"),
+assert(mainIndex.includes("stip-month-table.css?v=20260928-month-badges1") && mainIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
   "main app does not load the shared monthly table");
-assert(metiersIndex.includes("stip-month-table.css?v=20260928-card-signature1") && metiersIndex.includes("stip-month-table.js?v=20260928-card-signature1"),
+assert(metiersIndex.includes("stip-month-table.css?v=20260928-month-badges1") && metiersIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
   "métiers does not load the shared monthly table");
 assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
   "shared monthly table no longer accepts all active date sources");
@@ -79,6 +80,12 @@ assert(monthTableJs.includes("stip-month-table-week-separator") && monthTableJs.
   "shared monthly table week composition is missing");
 assert(monthTableCss.includes('[data-stip-month-table="1"]') && monthTableCss.includes(".stip-month-table-week-separator"),
   "shared monthly table visual scope is missing");
+assert(monthTableJs.includes("shiftBadgeHtml") && monthTableJs.includes("stip-month-shift-badge"),
+  "shared monthly worked-shift badge renderer is missing");
+assert(monthTableCss.includes(".stip-month-shift-badge.code-m") &&
+       monthTableCss.includes(".stip-month-shift-badge.code-j4") &&
+       monthTableCss.includes(".stip-month-shift-badge.code-n"),
+  "shared monthly worked-shift badge palette is incomplete");
 assert(!metiersCss.includes(".metiers-home .stip-month-calendar"),
   "métiers has reintroduced local monthly table styling");
 assert(tMonthBridge.includes("STIPMonthTable") && !tMonthBridge.includes("t-est-premium-month"),
@@ -101,6 +108,14 @@ assert(planning.includes("ph-month-weekdays stip-month-weekdays"),
   "Planning personal still mixes weekday labels into the month grid");
 
 const homeJs = read("home-shell.js");
+assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)") &&
+       !homeJs.includes("hc-date-jump-dot stip-month-dot shift-"),
+  "Accueil monthly planning is not using the validated text badges for worked shifts");
+assert(planning.includes("STIPMonthTable?.shiftBadgeHtml?.(rawDisplay)"),
+  "Planning personal is not using the shared monthly worked-shift badge");
+assert(metiersJs.includes("STIPMonthTable?.shiftBadgeHtml?.(code)") &&
+       !metiersCss.includes(".metiers-shift-code{"),
+  "Métiers has reintroduced a local worked-shift badge implementation");
 const agentJs = read("agent-agenda-view.js");
 const teamJs = read("esprit-equipe.js");
 const rrHomeJs = read("responsable-agenda-home.js");
