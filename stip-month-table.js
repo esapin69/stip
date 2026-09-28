@@ -8,6 +8,39 @@
   const WEEKDAYS = ".stip-month-table-weekdays";
   const LABELS = ["LU","MA","ME","JE","VE","SA","DI"];
 
+  function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, (ch) => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    })[ch]);
+  }
+
+  function shiftBadgeHtml(raw) {
+    const source = String(raw || "").trim().toUpperCase().replace(/\s+/g, "");
+    if (!source) return "";
+    const registry = window.STIPShiftRegistry;
+    const def = registry?.resolve?.(source) || null;
+    const base = String(
+      registry?.baseCode?.(source) ||
+      def?.base_code ||
+      def?.code ||
+      source.replace(/[*★☆✱✳✶✷✸✹✺✻✼✽✾✿︎️]+$/u, "")
+    ).trim().toUpperCase();
+    const workLike = def?.is_working === true || ["M","J","J4","S","N"].includes(base);
+    if (!workLike) return "";
+    const starred = /[*★☆✱✳✶✷✸✹✺✻✼✽✾✿︎️]+$/u.test(source);
+    const display = base + (starred ? "*" : "");
+    const family = String(def?.family || "").trim().toLowerCase();
+    const classKey = ({
+      m:"m", morning:"m",
+      j:"j", day:"j",
+      j4:"j4", late:"j4",
+      s:"s", evening:"s",
+      n:"n", night:"n"
+    })[family] || ({M:"m",J:"j",J4:"j4",S:"s",N:"n"})[base] || "other";
+    const label = String(def?.label || base || source);
+    return `<span class="stip-month-shift-badge code-${esc(classKey)}" data-shift-base="${esc(base)}" title="${esc(label)}" aria-label="${esc(label)}">${esc(display)}</span>`;
+  }
+
   function isoDateOf(day) {
     return String(
       day?.dataset?.calDay ||
@@ -131,7 +164,7 @@
     window.addEventListener("stip:boot-updated", () => schedule(document));
   }
 
-  window.STIPMonthTable = { enhance, enhanceCalendar, schedule };
+  window.STIPMonthTable = { enhance, enhanceCalendar, schedule, shiftBadgeHtml };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start, { once: true });
