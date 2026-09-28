@@ -52,6 +52,32 @@ async function sha(s:string){return hex(await crypto.subtle.digest("SHA-256",enc
 function nick(a:any,p:any){return String(p?.nickname||a?.prenom||a?.nom||"Agent").trim()}
 function display(a:any){return [a?.prenom,a?.nom].filter(Boolean).join(" ").trim()||"Agent"}
 function teamOf(a:any){const t=String(a?.type_planning||a?.equipe||"jour").toLowerCase();return t==="stagiaire"||t==="stage"?"stage":t==="nuit"?"nuit":t.includes("chef")?"chefs":"jour"}
+function normalizeCommunicationFamily(value:any){
+  return String(value||"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .toLowerCase().replace(/[^a-z0-9]+/g,"_")
+    .replace(/^_+|_+$/g,"").slice(0,48)
+}
+function defaultCommunicationFamily(role:any){
+  const key=String(role||"").toLowerCase();
+  return ["brancardier","chef_equipe","stagiaire","admin"].includes(key)
+    ? "brancardage"
+    : "hors_brancardage"
+}
+function profileCommunicationFamily(profile:any){
+  return normalizeCommunicationFamily(profile?.permissions?.communication_family)
+    || defaultCommunicationFamily(profile?.role_key)
+}
+function communicationFamily(ctx:any){
+  return profileCommunicationFamily(ctx?.profile||{})
+}
+function sameCommunicationFamily(ctx:any,row:any){
+  const family=normalizeCommunicationFamily(row?.communication_family)||"brancardage";
+  return family===communicationFamily(ctx)
+}
+function assertCommunicationFamily(ctx:any,row:any){
+  if(!sameCommunicationFamily(ctx,row))throw Error("Conversation non autorisée pour cette famille STIP.")
+}
 function safeTraineeKey(v:any){const key=String(v||"").trim();return /^[a-z0-9_-]{1,100}$/i.test(key)?key:""}
 async function traineeActor(key:string){
   key=safeTraineeKey(key);if(!key)return null;
@@ -129,7 +155,7 @@ async function dmStatus(ctx:any){
   if(!ids.length)return{unread:0};
   const read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
   const{data:convs,error:ce}=await db.from("stip_conversations")
-    .select("id,kind").in("id",ids).in("kind",["direct","group"]);
+    .select("id,kind,communication_family").in("id",ids).in("kind",["direct","group"]).eq("communication_family",communicationFamily(ctx));
   if(ce)throw ce;
   const counts=await Promise.all((convs||[]).map(async(c:any)=>{
     const{count,error:countError}=await db.from("stip_messages").select("id",{count:"exact",head:true})
@@ -140,12 +166,17 @@ async function dmStatus(ctx:any){
   }));
   return{unread:counts.reduce((n:number,x:number)=>n+Number(x||0),0)}
 }
-async function activeMessagingAgents(){
-  const{data:p,error}=await db.from("stip_access_profiles").select("agent_id,permissions").eq("active",true).not("agent_id","is",null);
-  if(error)throw error;return [...new Set((p||[]).filter((x:any)=>x.permissions?.messages).map((x:any)=>String(x.agent_id)))]
+async function activeMessagingAgents(familyRaw=""){
+  const family=normalizeCommunicationFamily(familyRaw);
+  const{data:p,error}=await db.from("stip_access_profiles").select("agent_id,permissions,role_key").eq("active",true).not("agent_id","is",null);
+  if(error)throw error;
+  return [...new Set((p||[])
+    .filter((x:any)=>x.permissions?.messages)
+    .filter((x:any)=>!family||profileCommunicationFamily(x)===family)
+    .map((x:any)=>String(x.agent_id)))]
 }
 async function agents(ctx:any,q=""){
-  const ids=await activeMessagingAgents();if(!ids.length)return[];
+  const ids=await activeMessagingAgents(communicationFamily(ctx));if(!ids.length)return[];
   const{data,error}=await db.from("agents").select("id,source_key,prenom,nom,ghe,equipe,type_planning").in("id",ids).eq("actif",true).order("prenom").order("nom");
   if(error)throw error;
   const{data:profiles}=await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",ids);
@@ -154,7 +185,7 @@ async function agents(ctx:any,q=""){
   return(data||[]).filter((a:any)=>String(a.id)!==String(ctx.agent.id)).map((a:any)=>({...a,nickname:nick(a,by.get(String(a.id)))})).filter((a:any)=>!n||`${a.nickname} ${a.prenom||""} ${a.nom||""} ${a.ghe||""}`.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().includes(n)).slice(0,80)
 }
 async function onDuty(ctx:any){
-  const nowParts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),g=(k:string)=>nowParts.find(x=>x.type===k)?.value||"",today=g("year")+"-"+g("month")+"-"+g("day"),minute=Number(g("hour"))*60+Number(g("minute")),d=new Date(today+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);const yesterday=d.toISOString().slice(0,10),team=teamOf(ctx.agent),allowed=new Set(await activeMessagingAgents());
+  const nowParts=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date()),g=(k:string)=>nowParts.find(x=>x.type===k)?.value||"",today=g("year")+"-"+g("month")+"-"+g("day"),minute=Number(g("hour"))*60+Number(g("minute")),d=new Date(today+"T12:00:00Z");d.setUTCDate(d.getUTCDate()-1);const yesterday=d.toISOString().slice(0,10),team=teamOf(ctx.agent),allowed=new Set(await activeMessagingAgents(communicationFamily(ctx)));
   let q=db.from("planning").select("date,agent_id,code,equipe,agents(id,source_key,prenom,nom,ghe,equipe,type_planning)").in("date",[today,yesterday]);
   q=team==="chefs"?q.in("equipe",["jour","nuit","chefs"]):q.eq("equipe",team);
   const{data,error}=await q;if(error)throw error;
@@ -213,12 +244,14 @@ async function signedDmAttachments(messages:any[]){
 }
 async function direct(ctx:any,target:string){
   if(!target||target===String(ctx.agent.id))throw Error("Destinataire invalide.");
-  const allowed=await activeMessagingAgents();if(!allowed.includes(target))throw Error("Ce professionnel n’a pas accès aux Messages STIP.");
-  const key=[String(ctx.agent.id),target].sort().join(":");
-  let{data:conv,error}=await db.from("stip_conversations").select("id,kind,title,direct_key").eq("direct_key",key).maybeSingle();
+  const family=communicationFamily(ctx),allowed=await activeMessagingAgents(family);
+  if(!allowed.includes(target))throw Error("Ce professionnel n’est pas dans votre famille Communication STIP.");
+  const pair=[String(ctx.agent.id),target].sort().join(":"),
+    key=family==="brancardage"?pair:"family:"+family+":"+pair;
+  let{data:conv,error}=await db.from("stip_conversations").select("id,kind,title,direct_key,communication_family").eq("direct_key",key).eq("communication_family",family).maybeSingle();
   if(error)throw error;
   if(!conv){
-    const r=await db.from("stip_conversations").insert({kind:"direct",direct_key:key,created_by_agent_id:ctx.agent.id}).select("id,kind,title,direct_key").single();
+    const r=await db.from("stip_conversations").insert({kind:"direct",direct_key:key,communication_family:family,created_by_agent_id:ctx.agent.id}).select("id,kind,title,direct_key,communication_family").single();
     if(r.error)throw r.error;conv=r.data;
     const m=await db.from("stip_conversation_members").insert([{conversation_id:conv.id,agent_id:ctx.agent.id,last_read_at:new Date().toISOString()},{conversation_id:conv.id,agent_id:target}]);
     if(m.error)throw m.error
@@ -228,10 +261,11 @@ async function direct(ctx:any,target:string){
 async function group(ctx:any,body:any){
   const ids=[...new Set((Array.isArray(body.agent_ids)?body.agent_ids:[]).map(String).filter(Boolean))].filter(x=>x!==String(ctx.agent.id));
   if(!ids.length)throw Error("Choisis au moins un destinataire.");
-  const allowed=await activeMessagingAgents();for(const id of ids)if(!allowed.includes(id))throw Error("Un destinataire n’a plus accès aux Messages STIP.");
+  const family=communicationFamily(ctx),allowed=await activeMessagingAgents(family);
+  for(const id of ids)if(!allowed.includes(id))throw Error("Un destinataire n’est pas dans votre famille Communication STIP.");
   const title=String(body.title||"").trim().slice(0,80)||null;
   const kind=body.kind==="broadcast"?"broadcast":"group";
-  const{data:conv,error}=await db.from("stip_conversations").insert({kind,title,created_by_agent_id:ctx.agent.id}).select("id,kind,title").single();
+  const{data:conv,error}=await db.from("stip_conversations").insert({kind,title,communication_family:family,created_by_agent_id:ctx.agent.id}).select("id,kind,title,communication_family").single();
   if(error)throw error;
   const members=[ctx.agent.id,...ids].map((id:any)=>({conversation_id:conv.id,agent_id:id,last_read_at:String(id)===String(ctx.agent.id)?new Date().toISOString():null}));
   const r=await db.from("stip_conversation_members").insert(members);if(r.error)throw r.error;
@@ -244,7 +278,7 @@ async function group(ctx:any,body:any){
 }
 async function thread(ctx:any,id:string,afterRaw:any=""){
   if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
-  const{data:conv,error:ce}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at,updated_at").eq("id",id).maybeSingle();if(ce)throw ce;if(!conv)throw Error("Conversation introuvable.");
+  const{data:conv,error:ce}=await db.from("stip_conversations").select("id,kind,title,created_by_agent_id,created_at,last_message_at,updated_at,communication_family").eq("id",id).maybeSingle();if(ce)throw ce;if(!conv)throw Error("Conversation introuvable.");assertCommunicationFamily(ctx,conv);
   const{data:members,error:me}=await db.from("stip_conversation_members").select("agent_id,last_read_at,agents(id,prenom,nom,ghe)").eq("conversation_id",id);if(me)throw me;
   const mids=(members||[]).map((x:any)=>x.agent_id);const{data:profiles}=mids.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",mids):{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
@@ -272,10 +306,11 @@ async function thread(ctx:any,id:string,afterRaw:any=""){
 async function threadProbe(ctx:any,id:string){
   if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
   const{data,error}=await db.from("stip_conversations")
-    .select("id,updated_at,last_message_at")
+    .select("id,updated_at,last_message_at,communication_family")
     .eq("id",id).maybeSingle();
   if(error)throw error;
   if(!data)throw Error("Conversation introuvable.");
+  assertCommunicationFamily(ctx,data);
   return{
     conversation_id:String(data.id),
     version:String(data.updated_at||data.last_message_at||"")
@@ -283,8 +318,8 @@ async function threadProbe(ctx:any,id:string){
 }
 async function send(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
-  const{data:conversation,error:conversationError}=await db.from("stip_conversations").select("kind").eq("id",id).maybeSingle();
-  if(conversationError)throw conversationError;if(!conversation)throw Error("Conversation introuvable.");
+  const{data:conversation,error:conversationError}=await db.from("stip_conversations").select("kind,communication_family").eq("id",id).maybeSingle();
+  if(conversationError)throw conversationError;if(!conversation)throw Error("Conversation introuvable.");assertCommunicationFamily(ctx,conversation);
   const text=String(body.body||"").trim().slice(0,2000);
   let payload=body.payload&&typeof body.payload==="object"?body.payload:{},uploadedPath="";
   try{
@@ -359,7 +394,7 @@ async function home(ctx:any){
   const ids=(member||[]).map((x:any)=>x.conversation_id),read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
   let conversations:any[]=[];
   if(ids.length){
-    const{data:convs,error:ce}=await db.from("stip_conversations").select("id,kind,title,last_message_at,created_by_agent_id").in("id",ids).order("last_message_at",{ascending:false}).limit(30);if(ce)throw ce;
+    const{data:convs,error:ce}=await db.from("stip_conversations").select("id,kind,title,last_message_at,created_by_agent_id,communication_family").in("id",ids).eq("communication_family",communicationFamily(ctx)).order("last_message_at",{ascending:false}).limit(30);if(ce)throw ce;
     for(const c of convs||[]){
       const{data:members}=await db.from("stip_conversation_members").select("agent_id,agents(id,prenom,nom,ghe)").eq("conversation_id",c.id);
       const others=(members||[]).filter((m:any)=>String(m.agent_id)!==String(ctx.agent.id));
@@ -422,24 +457,29 @@ function parisDayKey(value:Date|string|number=new Date()){
   }).formatToParts(d),get=(type:string)=>parts.find(x=>x.type===type)?.value||"";
   return get("year")+"-"+get("month")+"-"+get("day")
 }
-function tableauDayKey(){return TABLEAU_PREFIX+parisDayKey()}
+function tableauDayKey(ctx:any){
+  const family=communicationFamily(ctx);
+  return family==="brancardage"
+    ? TABLEAU_PREFIX+parisDayKey()
+    : TABLEAU_PREFIX+family+":"+parisDayKey()
+}
 async function teamConversation(ctx:any){
-  const key=tableauDayKey();
+  const family=communicationFamily(ctx),key=tableauDayKey(ctx);
   let{data:conv,error}=await db.from("stip_conversations")
-    .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
-    .eq("direct_key",key).maybeSingle();
+    .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family")
+    .eq("direct_key",key).eq("communication_family",family).maybeSingle();
   if(error)throw error;
 
-  if(!conv){
+  if(!conv&&family==="brancardage"){
     const legacy=await db.from("stip_conversations")
-      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
-      .eq("direct_key",LEGACY_TEAM_KEY).maybeSingle();
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family")
+      .eq("direct_key",LEGACY_TEAM_KEY).eq("communication_family",family).maybeSingle();
     if(legacy.error)throw legacy.error;
     if(legacy.data){
       const moved=await db.from("stip_conversations")
         .update({direct_key:key,title:"Tableau STIP",updated_at:new Date().toISOString()})
         .eq("id",legacy.data.id)
-        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family")
         .single();
       if(moved.error)throw moved.error;
       conv=moved.data
@@ -451,13 +491,14 @@ async function teamConversation(ctx:any){
       kind:"team_chat",
       direct_key:key,
       title:"Tableau STIP",
+      communication_family:family,
       created_by_agent_id:ctx.is_trainee?null:ctx.agent.id,
       created_by_stagiaire_key:ctx.is_trainee?ctx.trainee_key:null
-    }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at").single();
+    }).select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family").single();
     if(created.error){
       const again=await db.from("stip_conversations")
-        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
-        .eq("direct_key",key).maybeSingle();
+        .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family")
+        .eq("direct_key",key).eq("communication_family",family).maybeSingle();
       if(again.error||!again.data)throw created.error;
       conv=again.data
     }else conv=created.data
@@ -465,7 +506,7 @@ async function teamConversation(ctx:any){
     const updated=await db.from("stip_conversations")
       .update({title:"Tableau STIP",updated_at:new Date().toISOString()})
       .eq("id",conv.id)
-      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at")
+      .select("id,kind,title,direct_key,created_by_agent_id,created_at,last_message_at,updated_at,communication_family")
       .single();
     if(updated.error)throw updated.error;
     conv=updated.data
@@ -724,7 +765,7 @@ async function teamSend(ctx:any,body:any){
     const eventKey=wheelchair?"wheelchair_received":"team_chat_received",
       eventType=await notificationType(eventKey);
     if(eventType?.push_enabled){
-      const all=await activeMessagingAgents(),
+      const all=await activeMessagingAgents(communicationFamily(ctx)),
         senderId=ctx.is_trainee?"":String(ctx.agent.id||""),
         targets=all.filter((id:string)=>!senderId||String(id)!==senderId),
         senderProfile=ctx.is_trainee?null:await messageProfile(String(ctx.agent.id)),
