@@ -366,6 +366,9 @@
     refresh() {
       return fetchDuty(true);
     },
+    ensure() {
+      return fetchDuty(false);
+    },
     render,
   };
 
