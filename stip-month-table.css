@@ -29,11 +29,22 @@
   display:none!important;
 }
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-nav{
+  display:grid!important;
   min-height:82px!important;
   padding:14px 15px 10px!important;
   grid-template-columns:54px minmax(0,1fr) 54px!important;
   gap:12px!important;
   align-items:center!important;
+}
+.stip-month-calendar[data-stip-month-table="1"] .stip-month-nav>div{
+  min-width:0!important;
+  text-align:center!important;
+}
+.stip-month-calendar[data-stip-month-table="1"] .stip-month-nav>div>span{
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:center!important;
+  gap:7px!important;
 }
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-nav>button{
   width:52px!important;
