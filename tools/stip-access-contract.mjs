@@ -91,3 +91,13 @@ expect(
     homeShell.includes('metiers: "AUTRES MÉTIERS"'),
   "Autres métiers must remain a dedicated role whose initial shortcut is Visiter les lieux.",
 );
+
+const accessManage = read("access-manage.js");
+expect(
+  "Communication family defaults",
+  accessCore.includes('communication_family: "brancardage"') &&
+    accessCore.includes('communication_family: "hors_brancardage"') &&
+    accessManage.includes("PAS BRANCARDIER") &&
+    accessManage.includes("BRANCARDIER"),
+  "Communication must default brancardage roles together and keep non-brancardiers in a separate temporary family.",
+);
