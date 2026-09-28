@@ -419,7 +419,8 @@ async function deliver(b,r,st,dry) {
     const u=await db.from("stip_notifications").update({title:cp.title,body:cp.body,metadata:meta}).eq("id",noteId); if(u.error)throw u.error;
   }
   let sent=0;
-  if(st!=="watch"){
+  const phonePush = st!=="watch" && (r.kind==="target" || st==="urgent");
+  if(phonePush){
     const url=cp.base+(cp.base.includes("?")?"&":"?")+"alert_key="+encodeURIComponent(b.key);
     sent=await push(r.id,{event_key:"agenda_alert",title:cp.title,body:cp.body,url,tag:"stip-agenda-alert-"+b.key+"-"+r.id,urgency:"high"});
   }
