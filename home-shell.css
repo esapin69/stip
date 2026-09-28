@@ -5718,3 +5718,29 @@ body.stip-quick-connected{--stip-quick-clearance:calc(24px + env(safe-area-inset
 /* Unified Communication surface */
 .hc-communication-standalone,.hc-home-pane-communication,#hcCommunicationAppHost{width:100%;min-height:100dvh;margin:0;padding:0}
 .hc-communication-standalone .hc-home-pane{margin:0;padding:0}
+
+
+/* Canonical future-event vigilance card. Only rendered when STIP detects a real conflict. */
+.hc-agenda-alert-wrap{margin:10px 14px 2px}
+.hc-agenda-alert{
+  width:100%;min-height:88px;border:1px solid rgba(195,35,35,.34);border-radius:20px;
+  padding:11px 12px;display:grid;grid-template-columns:58px minmax(0,1fr) auto auto;align-items:center;gap:11px;
+  text-align:left;color:#3d1010;background:linear-gradient(135deg,#fff 0%,#fff5f3 58%,#ffe6e1 100%);
+  box-shadow:0 11px 26px rgba(128,24,24,.12),inset 0 1px 0 rgba(255,255,255,.94)
+}
+.hc-agenda-alert:active{transform:translateY(1px)}
+.hc-agenda-alert>img{width:58px;height:58px;border-radius:16px;object-fit:cover;box-shadow:0 6px 16px rgba(153,26,26,.2)}
+.hc-agenda-alert-copy{min-width:0;display:grid;gap:3px}
+.hc-agenda-alert-copy small{font-size:.59rem;font-weight:950;letter-spacing:.12em;color:#ad1f1f}
+.hc-agenda-alert-copy strong{font-size:.91rem;line-height:1.16;color:#461010}
+.hc-agenda-alert-copy em{font-style:normal;font-size:.7rem;line-height:1.32;color:#754040;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hc-agenda-alert-copy b{font-size:.64rem;color:#9a3b32}
+.hc-agenda-alert-count{align-self:start;min-width:25px;height:25px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#b51e1e;color:#fff;font-size:.62rem;font-weight:950}
+.hc-agenda-alert-arrow{font-size:1.35rem;color:#a92a25}
+.hc-agenda-alert.is-warning{border-color:rgba(190,116,0,.32);background:linear-gradient(135deg,#fff,#fff9ed)}
+@media(max-width:420px){
+  .hc-agenda-alert-wrap{margin-inline:10px}
+  .hc-agenda-alert{grid-template-columns:50px minmax(0,1fr) auto auto;gap:9px;padding:10px}
+  .hc-agenda-alert>img{width:50px;height:50px;border-radius:14px}
+  .hc-agenda-alert-copy strong{font-size:.84rem}
+}
