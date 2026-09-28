@@ -407,6 +407,24 @@
     if (raw === "read" || raw === "write" || raw === "admin") return raw;
     return permissions.admin ? "admin" : "write";
   }
+  function defaultCommunicationFamily(role = selectedRole) {
+    return ["brancardier", "chef_equipe", "stagiaire", "admin"].includes(
+      String(role || "").toLowerCase(),
+    )
+      ? "brancardage"
+      : "hors_brancardage";
+  }
+  function communicationFamily(permissions = {}, role = selectedRole) {
+    const raw = String(permissions.communication_family || "")
+      .trim()
+      .toLowerCase();
+    return raw || defaultCommunicationFamily(role);
+  }
+  function communicationFamilyLabel(value = "") {
+    return communicationFamily({ communication_family: value }) === "brancardage"
+      ? "BRANCARDIER"
+      : "PAS BRANCARDIER";
+  }
 
   async function load() {
     message("");
@@ -641,14 +659,17 @@
             ? "MINI : l’accès unifié actuel. MAXI n’est pas proposé tant qu’aucune différence fonctionnelle réelle n’existe."
             : "MINI : accès disponible actuellement pour cette application.";
         if (app.terrain_access) {
-          const mode = terrainMode(permissions);
+          const mode = terrainMode(permissions),
+            family = communicationFamily(permissions);
           control =
+            '<div class="access-communication-control">' +
+            '<span class="access-family-badge access-single" data-communication-family="' + esc(family) + '">TYPE · ' + esc(communicationFamilyLabel(family)) + '</span>' +
             '<div class="access-levels access-terrain-levels" aria-label="Accès Communication">' +
             '<button type="button" data-team-mode="read" class="' + (mode === "read" ? "active" : "") + '">Lire</button>' +
             '<button type="button" data-team-mode="write" class="' + (mode === "write" ? "active" : "") + '">Lire + écrire</button>' +
             '<button type="button" data-team-mode="admin" class="' + (mode === "admin" ? "active" : "") + '">Admin</button>' +
-            "</div>";
-          levelHelp = "Communication : Lire consulte seulement. Lire + écrire permet de publier dans les espaces autorisés. Admin peut aussi gérer et supprimer les messages.";
+            "</div></div>";
+          levelHelp = "Communication : accès commun, mais les personnes ne voient que leur famille STIP. Brancardiers et chefs sont dans la famille Brancardier ; les autres restent séparés jusqu’au branchement de leur métier.";
         } else if (app.pro_only) {
           control = '<span class="access-single access-maxi-only">MAXI</span>';
           levelHelp = "MAXI : cette application est réservée au niveau le plus complet.";
@@ -732,7 +753,14 @@
       permissions.team_chat_mode =
         $("apps").querySelector("[data-team-mode].active")?.dataset.teamMode ||
         terrainMode(renderBasePermissions);
-    } else delete permissions.team_chat_mode;
+      permissions.communication_family =
+        $("apps").querySelector("[data-communication-family]")?.dataset
+          .communicationFamily ||
+        communicationFamily(renderBasePermissions);
+    } else {
+      delete permissions.team_chat_mode;
+      delete permissions.communication_family;
+    }
 
     const esprit = $("apps").querySelector('[data-bundle="esprit"]');
     if (esprit?.dataset.dirty === "1") {
