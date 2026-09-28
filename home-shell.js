@@ -295,6 +295,7 @@
         (code === "—" || code === "-" ? "" : "•");
     return {
       code,
+      raw,
       type: meta[0],
       label: meta[1] || code,
       icon,
@@ -370,7 +371,8 @@
           ? '<span class="hc-date-jump-skeleton" aria-hidden="true"></span>'
           : shift
             ? shift.work
-              ? `<span class="hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}" aria-hidden="true"></span>`
+              ? (window.STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code) ||
+                `<span class="stip-month-shift-badge" aria-label="${esc(shift.label)}">${esc(shift.code)}</span>`)
               : `<span class="hc-date-jump-icon stip-month-icon" aria-hidden="true">${esc(shift.icon || "•")}</span>`
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
