@@ -4,41 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>Accueil métiers · GHE</title>
-  <link rel="stylesheet" href="/stip-theme.css?v=20260928-card-signature1" />
-  <link rel="stylesheet" href="/stip-patterns.css?v=20260927-metiers1" />
-  <link rel="stylesheet" href="/stip-calendar-core.css?v=20260927-metiers1" />
-  <link rel="stylesheet" href="/stip-calendar-visual.css?v=20260927-metiers1" />
-  <link rel="stylesheet" href="/metiers/metiers.css?v=20260928-month-badges1" />
+  <title>Accueil métiers · STIP</title>
+  <link rel="stylesheet" href="/stip-theme.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/stip-patterns.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/stip-calendar-core.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/stip-calendar-visual.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/stip-month-table.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/communication-hub.css?v=20260928-metiers-home2" />
+  <link rel="stylesheet" href="/metiers/metiers.css?v=20260928-metiers-home2" />
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260927-sitewide21" />
   <script defer src="/t-est/regles-communes/global.js?v=20260927-sitewide21"></script>
-  <link rel="stylesheet" href="/stip-month-table.css?v=20260928-month-badges1" />
-  <script defer src="/stip-month-table.js?v=20260928-month-badges1"></script>
+  <script defer src="/stip-month-table.js?v=20260928-metiers-home2"></script>
 </head>
 <body>
   <main class="stip-page metiers-home">
-    <nav class="stip-filter-bubbles metiers-period-tabs" data-count="3" role="tablist" aria-label="Période">
-      <button class="stip-filter-choice" type="button" role="tab" aria-selected="false" aria-controls="metiersWeek" data-period="week">
+    <section id="metiersHomeStrip" class="metiers-home-strip" aria-live="polite">
+      <div class="metiers-loading metiers-loading-compact">Chargement…</div>
+    </section>
+
+    <nav class="stip-filter-bubbles metiers-period-tabs" data-count="3" role="tablist" aria-label="Accueil planning">
+      <button class="stip-filter-choice active" type="button" role="tab" aria-selected="true" aria-controls="metiersWeek" data-period="week">
         <span class="stip-filter-copy"><strong>Cette semaine</strong></span>
       </button>
-      <button class="stip-filter-choice active" type="button" role="tab" aria-selected="true" aria-controls="metiersMonth" data-period="month">
+      <button class="stip-filter-choice" type="button" role="tab" aria-selected="false" aria-controls="metiersMonth" data-period="month">
         <span class="stip-filter-copy"><strong>Ce mois</strong></span>
       </button>
-      <button class="stip-filter-choice" type="button" role="tab" aria-selected="false" aria-controls="metiersYear" data-period="year">
-        <span class="stip-filter-copy"><strong>À l’année</strong></span>
+      <button class="stip-filter-choice" type="button" role="tab" aria-selected="false" aria-controls="metiersCollective" data-period="collective">
+        <span class="stip-filter-copy"><strong>Collectif</strong></span>
       </button>
     </nav>
 
-    <section id="metiersWeek" class="metiers-period-panel" role="tabpanel" data-panel="week" hidden></section>
-    <section id="metiersMonth" class="metiers-period-panel" role="tabpanel" data-panel="month">
-      <div id="metiersMonthHost" class="metiers-month-host" aria-live="polite">
-        <div class="metiers-loading">Chargement…</div>
-      </div>
+    <section id="metiersWeek" class="metiers-period-panel" role="tabpanel" data-panel="week">
+      <div id="metiersWeekHost" aria-live="polite"></div>
     </section>
-    <section id="metiersYear" class="metiers-period-panel" role="tabpanel" data-panel="year" hidden></section>
+
+    <section id="metiersMonth" class="metiers-period-panel" role="tabpanel" data-panel="month" hidden>
+      <div id="metiersMonthHost" class="metiers-month-host" aria-live="polite"></div>
+    </section>
+
+    <section id="metiersCollective" class="metiers-period-panel" role="tabpanel" data-panel="collective" hidden>
+      <div id="metiersCollectiveHost" aria-live="polite"></div>
+    </section>
   </main>
 
+  <div id="metiersDayDetailRoot"></div>
+
   <script src="/shift-registry.js?v=20260928-native-planning-icons1"></script>
-  <script src="/metiers/metiers.js?v=20260928-month-badges1"></script>
+  <script src="/communication-hub.js?v=20260928-metiers-home2"></script>
+  <script src="/metiers/metiers.js?v=20260928-metiers-home2"></script>
 </body>
 </html>
