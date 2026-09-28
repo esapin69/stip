@@ -118,13 +118,6 @@
     line-height:1.05;
   }
 
-  .metiers-shift-code{
-    min-width:30px;
-    height:26px;
-    padding-inline:6px;
-    font-size:.68rem;
-    border-radius:9px;
-  }
 }
 
 @media(max-width:360px){
