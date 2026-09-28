@@ -161,6 +161,34 @@ Cette direction renforce le thème existant sans créer une seconde identité.
 - Sur mobile et tablette, on gagne d’abord de l’espace en supprimant les wrappers et doublons, jamais en rendant le texte principal minuscule.
 - Toute évolution globale se fait dans les tokens/primitives avant les CSS de page.
 
+### MAÎTRE VALIDÉ — Signature de carte premium
+
+Validé le 28/09/2026. Cette signature est la base officielle des **cartes principales** STIP ; elle ne s’applique pas aux petites cases calendrier/jour ni aux éléments volontairement plats.
+
+Source unique :
+- tokens : `stip-theme-base.css` ;
+- composant et variantes : `stip-patterns.css` ;
+- classe opt-in : `.stip-card-signature`.
+
+La signature comprend toujours :
+- une surface claire très légèrement dégradée ;
+- une bordure fine influencée par la couleur d’accent ;
+- une profondeur courte avec reflet intérieur ;
+- un halo supérieur discret ;
+- un **liseré supérieur lumineux en dégradé**, centré et aminci aux extrémités.
+
+La géométrie et le relief sont communs. Seule la couleur d’accent varie avec `data-stip-card-tone` :
+- `neutral` ;
+- `active` ;
+- `success` ;
+- `warning` ;
+- `danger` ;
+- `lavender`.
+
+Les familles partagées `stip-time-month`, `stip-time-week`, `stip-action-surface`, `stip-catalog-surface`, `stip-cockpit-surface` et `stip-legend-surface` consomment cette signature. Le tableau planning mensuel ajoute automatiquement `.stip-card-signature` via `stip-month-table.js`.
+
+Une page ne doit pas recopier localement le liseré, le halo, la bordure ou l’ombre de cette signature. Une carte spécialisée qui doit rester plate conserve son contrat spécifique et n’est pas forcée dans ce maître.
+
 ## Garde-fou — stabilité visuelle
 
 STIP est considéré comme visuellement validé par défaut. Une amélioration locale ne doit pas devenir une refonte générale implicite.
