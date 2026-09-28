@@ -10,6 +10,12 @@ const visual = read("stip-calendar-visual.css");
 const patterns = read("stip-patterns.css");
 const weekEngine = read("stip-week-engine.js");
 const calendarRules = read("STIP-CALENDAR-RULES.md");
+const monthTableCss = read("stip-month-table.css");
+const monthTableJs = read("stip-month-table.js");
+const mainIndex = read("index.html");
+const metiersIndex = read("metiers/index.html");
+const metiersCss = read("metiers/metiers.css");
+const tMonthBridge = read("t-est/accueil/accueil-t.js");
 
 assert(theme.includes("@layer stip-calendar-core, stip-calendar-visual;"), "cascade layers are not declared");
 const coreImport = theme.indexOf("stip-calendar-core.css");
@@ -60,6 +66,23 @@ assert(visual.includes(".stip-week-next-bridge") && visual.includes("color:#c533
 
 assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("vendredi") && calendarRules.includes("samedi") && calendarRules.includes("dimanche"),
   "human-readable calendar contract is incomplete");
+
+assert(calendarRules.includes("stip-month-table.css") && calendarRules.includes("stip-month-table.js"),
+  "human-readable calendar contract does not protect the shared monthly table");
+assert(mainIndex.includes("stip-month-table.css?v=20260928-shared1") && mainIndex.includes("stip-month-table.js?v=20260928-shared1"),
+  "main app does not load the shared monthly table");
+assert(metiersIndex.includes("stip-month-table.css?v=20260928-shared1") && metiersIndex.includes("stip-month-table.js?v=20260928-shared1"),
+  "métiers does not load the shared monthly table");
+assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
+  "shared monthly table no longer accepts all active date sources");
+assert(monthTableJs.includes("stip-month-table-week-separator") && monthTableJs.includes("stip-month-table-weekdays"),
+  "shared monthly table week composition is missing");
+assert(monthTableCss.includes('[data-stip-month-table="1"]') && monthTableCss.includes(".stip-month-table-week-separator"),
+  "shared monthly table visual scope is missing");
+assert(!metiersCss.includes(".metiers-home .stip-month-calendar"),
+  "métiers has reintroduced local monthly table styling");
+assert(tMonthBridge.includes("STIPMonthTable") && !tMonthBridge.includes("t-est-premium-month"),
+  "T no longer consumes the shared monthly table directly");
 assert(weekEngine.includes("liveTail") && weekEngine.includes("dow>=5") && weekEngine.includes("nextMonday"),
   "late-current-week Friday/Saturday/Sunday bridge rule is missing from the master engine");
 
@@ -72,6 +95,8 @@ assert(!rr.includes("stip-week-day-body rr-events-only"),
   "Responsable still bypasses the canonical week body");
 
 const planning = read("planning-home.js");
+assert(!planning.includes(".ph-month-card{") && !planning.includes(".ph-day-cell{") && !planning.includes(".ph-day-head{"),
+  "Planning personal has reintroduced local monthly table geometry");
 assert(planning.includes("ph-month-weekdays stip-month-weekdays"),
   "Planning personal still mixes weekday labels into the month grid");
 
