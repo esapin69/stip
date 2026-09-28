@@ -10,12 +10,14 @@
   const $ = (s) => document.querySelector(s);
   let items = [],
     changes = [],
+    alerts = [],
     boot = null,
     accessLevel = "visitor";
   const navigationState = window.STIPNav?.read?.() || {};
   const pageParams = new URLSearchParams(location.search),
     pageOpen = String(pageParams.get("open") || "").toLowerCase(),
-    pageTab = String(pageParams.get("tab") || "").toLowerCase();
+    pageTab = String(pageParams.get("tab") || "").toLowerCase(),
+    pageAlertKey = String(pageParams.get("alert_key") || "");
   const trackingMode =
     pageTab === "suivi" || pageOpen === "tracking" || pageOpen === "suivi";
 
@@ -103,14 +105,57 @@
         (_, i) => `<i class="${i === active ? "active" : ""}"></i>`,
       ).join("");
   }
+  function agendaAlertCard(n) {
+    const meta = n.metadata || {},
+      subject = meta.subject_name || "Agent",
+      when = [meta.event_date, meta.event_time].filter(Boolean).join(" · "),
+      severity = meta.severity === "warning" ? "warning" : "danger";
+    return `<button class="resp-card agenda-alert ${severity}" data-alert-key="${esc(meta.alert_key || n.id || "")}" type="button">
+      <img class="resp-alert-icon" src="images/notifications/alert-danger.webp?v=20260928-alert1" alt="" aria-hidden="true">
+      <span class="resp-alert-copy"><span class="resp-status urgent">ALERTE</span><h3>${esc(subject)}</h3><p><strong>${esc(n.title || "Incohérence planning")}</strong></p><small>${esc(when || "Événement futur")}</small></span>
+      <span class="resp-alert-chevron" aria-hidden="true">›</span>
+    </button>`;
+  }
+  function alertByKey(key) {
+    return alerts.find((n) => String(n?.metadata?.alert_key || n?.id || "") === String(key || ""));
+  }
+  function openAgendaAlert(key) {
+    const n = alertByKey(key);
+    if (!n) return;
+    const meta = n.metadata || {}, reasons = Array.isArray(meta.reasons) ? meta.reasons.filter(Boolean) : [],
+      p = $("#respPanel"), b = $("#respPanelBody");
+    p.classList.add("open");
+    p.setAttribute("aria-hidden", "false");
+    $("#respPanelTitle").textContent = meta.subject_name || "Alerte planning";
+    b.innerHTML = `<div class="resp-detail resp-alert-detail">
+      <img src="images/notifications/alert-danger.webp?v=20260928-alert1" alt="" aria-hidden="true">
+      <span class="resp-status urgent">ALERTE STIP</span>
+      <h3>${esc(n.title || "Incohérence détectée")}</h3>
+      <p>${esc(n.body || "")}</p>
+      <div class="resp-alert-facts">
+        <span><small>AGENT</small><strong>${esc(meta.subject_name || "À vérifier")}</strong></span>
+        <span><small>ÉVÉNEMENT</small><strong>${esc(meta.event_title || meta.event_label || "Événement")}</strong></span>
+        <span><small>DATE</small><strong>${esc([meta.event_date, meta.event_time].filter(Boolean).join(" · ") || "À vérifier")}</strong></span>
+        <span><small>LIEU</small><strong>${esc(meta.location || "Non précisé")}</strong></span>
+      </div>
+      <section class="resp-alert-reasons"><small>POURQUOI STIP ALERTE</small><ul>${(reasons.length ? reasons : ["Incohérence détectée entre les informations STIP."]).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>
+    </div>`;
+    if (n.id && !n.read_at) {
+      n.read_at = new Date().toISOString();
+      actionCall("read_notification", { notification_id: n.id }).catch(() => {});
+    }
+  }
+
   function changeCard(x) {
     return `<button class="resp-card change" data-change-id="${esc(x.id)}" type="button"><span class="resp-status urgent">${pro() ? "À valider" : "À consulter"}</span><h3>${esc(name(x.requester))}</h3><p>${esc(fmt(x.date_from))} · ${esc(x.requester_code || "—")} → ${esc(x.context?.target_shift || x.desired_code || "—")}</p><div class="resp-meta"><span>${x.target ? `avec ${esc(name(x.target))}` : "sans collègue"}</span><span>${esc(age(x.created_at))}</span></div></button>`;
   }
   function renderTracking() {
     const car = $("#respCarousel");
     if (!car) return;
-    const active = items.filter((x) => x.status === "pending");
+    const active = items.filter((x) => x.status === "pending"),
+      activeAlerts = alerts.filter((n) => n.type === "agenda_alert" && n.metadata?.recipient_kind === "chief" && n.metadata?.conflict === true);
     const html = [
+      ...activeAlerts.map(agendaAlertCard),
       ...changes.map(changeCard),
       ...active.map(
         (a) =>
@@ -126,6 +171,9 @@
     car.innerHTML = html.join("");
     setDots(html.length, 0);
     car
+      .querySelectorAll("[data-alert-key]")
+      .forEach((b) => (b.onclick = () => openAgendaAlert(b.dataset.alertKey)));
+    car
       .querySelectorAll("[data-id]")
       .forEach((b) => (b.onclick = () => openDetail(b.dataset.id)));
     car
@@ -135,13 +183,15 @@
   async function load() {
     const car = $("#respCarousel");
     try {
-      const [r, c, b] = await Promise.all([
+      const [r, c, b, n] = await Promise.all([
         actionCall("manager_list"),
         changeCall("responsable_list"),
         GHEBase.bootstrap().catch(() => null),
+        actionCall("notifications"),
       ]);
       items = r.actions || [];
       changes = c.items || [];
+      alerts = n.notifications || [];
       boot = b;
       renderTracking();
     } catch (e) {
@@ -292,8 +342,9 @@
     try {
       if (!(await initAccess())) return;
       await GHEAuth.ready;
-      if (trackingMode || navigationState.panelKind === "change" || navigationState.panelKind === "action")
+      if (trackingMode || pageAlertKey || navigationState.panelKind === "change" || navigationState.panelKind === "action")
         await load();
+      if (pageAlertKey) openAgendaAlert(pageAlertKey);
       if (navigationState.panelKind === "change")
         openChange(navigationState.panelItemId);
       if (navigationState.panelKind === "action")
