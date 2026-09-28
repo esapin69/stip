@@ -8,6 +8,7 @@ const home = read('home-shell.js');
 const responsible = read('responsable-home.js');
 const engine = read('supabase/functions/stip-agenda-alerts/index.ts');
 const migration = read('supabase/migrations/20260928120000_agenda_alert_engine.sql');
+const idempotency = read('supabase/migrations/20260928122000_agenda_alert_idempotency.sql');
 const push = read('supabase/functions/stip-push/index.ts');
 const actions = read('supabase/functions/stip-actions/index.ts');
 
@@ -34,5 +35,10 @@ assert(migration.includes('stip_agenda_alert_cron_token'), 'Agenda vigilance cro
 assert(migration.includes("'watch','advance','urgent'"), 'Agenda alert delivery stages must include watch, advance and urgent.');
 assert(migration.includes("'formation','agenda','intern','planning','event_pair'"), 'Agenda alert sources must cover every canonical future-event family.');
 assert(migration.includes('enable row level security'), 'Agenda alert internal tables must have RLS enabled.');
+assert(engine.includes('stip_agenda_alert_claim'), 'Agenda alert delivery must atomically claim each stage before sending.');
+assert(engine.includes('claimed_elsewhere'), 'Concurrent scans must skip work claimed by another scan.');
+assert(idempotency.includes('stip_notifications_agenda_alert_unique'), 'Agenda alert notifications need a unique recipient/alert guard.');
+assert(idempotency.includes("'processing'"), 'Agenda alert delivery must support an in-flight processing state.');
+assert(engine.includes('r.kind==="target" || st==="urgent"'), 'Advance chief alerts must stay in Responsable/Cloche instead of causing push spam.');
 
 console.log('STIP agenda alert contract: OK');
