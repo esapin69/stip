@@ -92,7 +92,7 @@
       const icon = window.STIPShiftRegistry?.icon?.(code) || "";
       return icon
         ? `<span class="stip-month-icon" aria-label="${esc(def.label || code)}">${esc(icon)}</span>`
-        : `<span class="metiers-shift-code">${esc(code)}</span>`;
+        : `<span class="stip-month-shift-badge code-other">${esc(code)}</span>`;
     }
 
     return window.STIPMonthTable?.shiftBadgeHtml?.(code) ||
