@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260928-communication-loader2";
+const STIP_SW_BUILD="20260928-agenda-alert1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
@@ -12,6 +12,7 @@ self.addEventListener("fetch",event=>{const request=event.request;if(request.met
 
 function notificationIcon(data){
   const key=String(data.event_key||data.kind||data.type||data.tag||"").toLowerCase();
+  if(key.includes("agenda_alert")||key.includes("agenda-alert")||key.includes("incoherence"))return "/images/notifications/alert-danger.webp?v=20260928-alert1";
   if(key.includes("wheelchair")||key.includes("fauteuil"))return "/images/notifications/wheelchair.webp?v=20260925-1";
   if(key.includes("team_chat")||key.includes("chat-equipe")||key.includes("team-chat"))return "/images/notifications/chat.webp?v=20260927-communication5";
   if(key.includes("dm")||key.includes("direct")||key.includes("group"))return "/images/notifications/dm.webp?v=20260925-1";
