@@ -69,9 +69,9 @@ assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("
 
 assert(calendarRules.includes("stip-month-table.css") && calendarRules.includes("stip-month-table.js"),
   "human-readable calendar contract does not protect the shared monthly table");
-assert(mainIndex.includes("stip-month-table.css?v=20260928-shared1") && mainIndex.includes("stip-month-table.js?v=20260928-shared1"),
+assert(mainIndex.includes("stip-month-table.css?v=20260928-card-signature1") && mainIndex.includes("stip-month-table.js?v=20260928-card-signature1"),
   "main app does not load the shared monthly table");
-assert(metiersIndex.includes("stip-month-table.css?v=20260928-shared1") && metiersIndex.includes("stip-month-table.js?v=20260928-shared1"),
+assert(metiersIndex.includes("stip-month-table.css?v=20260928-card-signature1") && metiersIndex.includes("stip-month-table.js?v=20260928-card-signature1"),
   "métiers does not load the shared monthly table");
 assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
   "shared monthly table no longer accepts all active date sources");
