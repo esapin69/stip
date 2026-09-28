@@ -130,7 +130,7 @@
       const code = String(item?.code || item?.source_value || "").trim();
       const dow = new Date(`${dateKey}T12:00:00`).getDay();
       const weekend = dow === 0 || dow === 6;
-      cells += `<div class="stip-month-day${weekend ? " is-weekend" : ""}${dateKey === today ? " is-today" : ""}">
+      cells += `<div class="stip-month-day${weekend ? " is-weekend" : ""}${dateKey === today ? " is-today" : ""}" data-stip-date="${dateKey}">
         <b class="stip-month-day-number">${day}</b>
         <div class="stip-month-primary">${codeMarkup(code)}</div>
         <div class="stip-month-events" aria-hidden="true"></div>
