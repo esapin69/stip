@@ -2582,16 +2582,35 @@
         if (communicationHost)
           communicationHost.innerHTML =
             '<div class="tb-runtime-refresh">Chargement de Communication…</div>';
+        const loadingHost = communicationHost;
+        let settled = false;
+        const showRetry = () => {
+          if (settled || !loadingHost?.isConnected) return;
+          loadingHost.innerHTML =
+            '<div class="tb-runtime-refresh"><p>Communication met trop de temps à charger.</p><button type="button" data-communication-runtime-retry>Réessayer</button></div>';
+          loadingHost
+            .querySelector("[data-communication-runtime-retry]")
+            ?.addEventListener("click", () => {
+              communicationRuntimePromise = null;
+              state.renderSig = "";
+              render();
+            });
+        };
+        const watchdog = setTimeout(showRetry, 5000);
         ensureCommunicationRuntime()
           .then(() => {
+            settled = true;
+            clearTimeout(watchdog);
             state.renderSig = "";
             render();
           })
           .catch(() => {
-            if (!communicationHost?.isConnected) return;
-            communicationHost.innerHTML =
+            settled = true;
+            clearTimeout(watchdog);
+            if (!loadingHost?.isConnected) return;
+            loadingHost.innerHTML =
               '<div class="tb-runtime-refresh"><button type="button" data-communication-runtime-retry>Réessayer</button></div>';
-            communicationHost
+            loadingHost
               .querySelector("[data-communication-runtime-retry]")
               ?.addEventListener("click", () => {
                 communicationRuntimePromise = null;
