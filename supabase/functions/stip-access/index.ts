@@ -37,10 +37,14 @@ const FALLBACK: any = {
     messages: true,
     places: true,
     team_chat_mode: "write",
+    communication_family: "brancardage",
     trainee_session: true,
     __levels: { planning_personal: "visitor", places: "visitor" },
   },
   brancardier: {
+    messages: true,
+    team_chat_mode: "write",
+    communication_family: "brancardage",
     planning_personal: true,
     planning_team: true,
     change_app: true,
@@ -53,6 +57,9 @@ const FALLBACK: any = {
     profile_photo: true,
   },
   chef_equipe: {
+    messages: true,
+    team_chat_mode: "write",
+    communication_family: "brancardage",
     planning_personal: true,
     planning_team: true,
     change_app: true,
@@ -66,6 +73,9 @@ const FALLBACK: any = {
     profile_photo: true,
   },
   responsable: {
+    messages: true,
+    team_chat_mode: "write",
+    communication_family: "hors_brancardage",
     contacts: true,
     responsable: true,
     nouveaux_arrivants: true,
@@ -75,6 +85,9 @@ const FALLBACK: any = {
     profile_photo: true,
   },
   cadre: {
+    messages: true,
+    team_chat_mode: "write",
+    communication_family: "hors_brancardage",
     contacts: true,
     responsable: true,
     nouveaux_arrivants: true,
@@ -84,10 +97,16 @@ const FALLBACK: any = {
     profile_photo: true,
   },
   metiers: {
+    messages: true,
+    team_chat_mode: "write",
+    communication_family: "hors_brancardage",
     places: true,
     __levels: { places: "visitor" },
   },
   admin: {
+    messages: true,
+    team_chat_mode: "admin",
+    communication_family: "brancardage",
     planning_personal: true,
     planning_team: true,
     change_app: true,
@@ -114,6 +133,7 @@ const DEFS = [
   ["calendar_subscribe", "Mon agenda"],
   ["agent_dates", "Date des agents"],
   ["contacts", "Contacts"],
+  ["messages", "Communication"],
   ["responsable", "Responsable"],
   ["notes", "Prendre des notes"],
   ["nouveaux_arrivants", "Nouvel agent"],
@@ -144,7 +164,7 @@ const PAGE_LABELS: Record<string, string> = {
   contacts: "Contacts",
   responsable: "Responsable",
   notifications: "Notifications",
-  messages: "Fauteuils",
+  messages: "Communication",
   places: "Visiter les lieux",
   assistant: "Assistant STIP",
   access: "Accès",
@@ -351,7 +371,12 @@ function authoritative(
   for (const [k, v] of Object.entries(over || {})) {
     if (typeof v === "boolean" && p[k] === undefined) p[k] = v;
   }
-  if (roleKey(role) === "chef_equipe") {
+  const currentRole = roleKey(role);
+  if (p.messages && !String(p.communication_family || "").trim())
+    p.communication_family = ["brancardier", "chef_equipe", "stagiaire", "admin"].includes(currentRole)
+      ? "brancardage"
+      : "hors_brancardage";
+  if (currentRole === "chef_equipe") {
     p.responsable = true;
     p.access_manage = false;
     p.admin = false;
