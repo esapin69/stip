@@ -71,6 +71,12 @@ function profileCommunicationFamily(profile:any){
 function communicationFamily(ctx:any){
   return profileCommunicationFamily(ctx?.profile||{})
 }
+function canUseWheelchairs(ctx:any){
+  return communicationFamily(ctx)==="brancardage"
+}
+function requireWheelchairAccess(ctx:any){
+  if(!canUseWheelchairs(ctx))throw Error("Le module Fauteuils est réservé au brancardage.")
+}
 function sameCommunicationFamily(ctx:any,row:any){
   const family=normalizeCommunicationFamily(row?.communication_family)||"brancardage";
   return family===communicationFamily(ctx)
@@ -709,6 +715,8 @@ function inferWheelchairQuantity(text:string,raw:any=null){
 
 async function teamSend(ctx:any,body:any){
   requireTeamWrite(ctx);
+  const wheelchair=body.wheelchair&&typeof body.wheelchair==="object"?body.wheelchair:null;
+  if(wheelchair)requireWheelchairAccess(ctx);
   const conv=await teamConversation(ctx);
   await purgeCurrentTableauRows(String(conv.id));
   await purgePastStorageFolders(String(conv.id));
@@ -716,8 +724,7 @@ async function teamSend(ctx:any,body:any){
   const text=String(body.body||"").trim().replace(/\s*·\s*$/,"").trim().slice(0,2000),
     legacyPhotoPath=String(body.photo_path||"").trim(),
     inlinePhoto=body.photo&&typeof body.photo==="object"?body.photo:null,
-    replyTo=String(body.reply_to_id||"").trim(),
-    wheelchair=body.wheelchair&&typeof body.wheelchair==="object"?body.wheelchair:null;
+    replyTo=String(body.reply_to_id||"").trim();
   if(!text&&!legacyPhotoPath&&!inlinePhoto)throw Error("Message vide.");
   if(legacyPhotoPath&&!legacyPhotoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
 
@@ -810,6 +817,7 @@ async function teamSend(ctx:any,body:any){
 
 async function teamResolve(ctx:any,body:any){
   requireTeamWrite(ctx);
+  requireWheelchairAccess(ctx);
   const conv=await teamConversation(ctx);
   await purgeCurrentTableauRows(String(conv.id));
   await purgePastStorageFolders(String(conv.id));
@@ -847,6 +855,7 @@ async function teamResolve(ctx:any,body:any){
 
 async function teamTake(ctx:any,body:any){
   requireTeamWrite(ctx);
+  requireWheelchairAccess(ctx);
   const conv=await teamConversation(ctx);
   await purgeCurrentTableauRows(String(conv.id));
   await purgePastStorageFolders(String(conv.id));
@@ -919,6 +928,7 @@ async function teamTake(ctx:any,body:any){
 
 async function teamStillThere(ctx:any,body:any){
   requireTeamWrite(ctx);
+  requireWheelchairAccess(ctx);
   const conv=await teamConversation(ctx);
   await purgeCurrentTableauRows(String(conv.id));
   await purgePastStorageFolders(String(conv.id));
@@ -1200,7 +1210,7 @@ Deno.serve(async req=>{
     if(a==="trainees"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await traineeDirectory()})}
     if(a==="trainee_send")return J(await traineeSend(c,b));
     if(a==="trainee_read"){if(!c.is_trainee)throw Error("Accès Stagiaire requis.");return J({ok:true,items:await traineeInbox(c,true)})}
-    if(a==="wheelchair_catalog")return J(await wheelchairCatalog());
+    if(a==="wheelchair_catalog"){requireWheelchairAccess(c);return J(await wheelchairCatalog())}
     if(a==="agents"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await agents(c,String(b.q||""))})}
     if(a==="on_duty"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await onDuty(c)})}
     if(a==="direct"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({conversation:await direct(c,String(b.agent_id||""))})}
