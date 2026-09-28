@@ -95,13 +95,14 @@
         : `<span class="metiers-shift-code">${esc(code)}</span>`;
     }
 
+    const baseCode = window.STIPShiftRegistry?.clean?.(code) || code;
     const cls = {
       M: "code-m",
       J: "code-j",
       J4: "code-j4",
       S: "code-s",
       N: "code-n"
-    }[code] || "";
+    }[baseCode] || "";
 
     return `<span class="metiers-shift-code ${cls}">${esc(code)}</span>`;
   }
