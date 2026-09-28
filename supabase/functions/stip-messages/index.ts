@@ -356,6 +356,8 @@ async function send(ctx:any,body:any){
 }
 async function broadcastUpdate(ctx:any,body:any){
   const id=String(body.conversation_id||"");if(!await isMember(id,String(ctx.agent.id)))throw Error("Conversation non autorisée.");
+  const {data:conversation,error:conversationError}=await db.from("stip_conversations").select("id,communication_family").eq("id",id).maybeSingle();
+  if(conversationError)throw conversationError;if(!conversation)throw Error("Conversation introuvable.");assertCommunicationFamily(ctx,conversation);
   const {data:row,error}=await db.from("stip_operational_broadcasts").select("id,status,quantity").eq("conversation_id",id).maybeSingle();if(error)throw error;if(!row)throw Error("Diffusion introuvable.");
   const action=String(body.update||"confirm"),patch:any={updated_at:new Date().toISOString()};
   if(action==="resolved"){patch.status="resolved";patch.quantity=0}
@@ -583,9 +585,16 @@ async function purgePastStorageFolders(conversationId:string){
   if(paths.length)await removeTeamPhotos(paths)
 }
 async function purgePreviousTableauDays(currentConversationId:string){
+  const{data:current,error:currentError}=await db.from("stip_conversations")
+    .select("id,communication_family")
+    .eq("id",currentConversationId).maybeSingle();
+  if(currentError)throw currentError;
+  if(!current)return 0;
+  const family=normalizeCommunicationFamily(current.communication_family)||"brancardage";
   const{data:conversations,error}=await db.from("stip_conversations")
-    .select("id,direct_key")
-    .eq("kind","team_chat");
+    .select("id,direct_key,communication_family")
+    .eq("kind","team_chat")
+    .eq("communication_family",family);
   if(error)throw error;
   const old=(conversations||[]).filter((x:any)=>String(x.id)!==String(currentConversationId));
   let deleted=0;
