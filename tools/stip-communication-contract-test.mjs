@@ -34,6 +34,9 @@ has(accessRuntime,'communication: () => explicit("messages")',"le runtime d’ac
 has(accessRuntime,'["communication", "Communication", "communication"]',"Communication manque dans la politique de cartes d’accès");
 has(accessManage,'label: "Communication"',"la permission messages n’est pas présentée comme Communication dans Accès");
 has(loader,'void tableau().catch(() => {});',"le shell Communication attend encore le runtime Chat/Fauteuils au lieu de le préchauffer");
+has(loader,'void style("communication-app.css").catch(() => {});',"Communication attend encore le CSS avant de charger son shell");
+has(loader,'communicationPromise = load("communication-app.js")',"le JS du shell Communication n’est pas chargé directement");
+has(home,"Communication met trop de temps à charger.","aucun garde-fou visible si le runtime Communication reste bloqué");
 has(appRuntime,"r.startsWith('communication/')","le routeur principal ne conserve pas les routes Communication dans homeView");
 has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canonique d’agents");
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
