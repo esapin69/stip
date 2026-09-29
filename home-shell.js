@@ -855,10 +855,16 @@
         .format(d)
         .replace(/^./, (c) => c.toUpperCase()),
       adapted = mode && mode !== "standard",
-      rows = [
-        time
-          ? `<div class="hc-shift-detail-row"><span>Horaires</span><strong>${esc(time)}</strong></div>`
-          : "",
+      identityLabel =
+        label.trim().toUpperCase() === String(displayCode).trim().toUpperCase()
+          ? ""
+          : label,
+      timeParts = String(time || "").match(/\d{1,2}(?::|h)\d{2}/g) || [],
+      timeDisplay =
+        timeParts.length >= 2
+          ? `<span>${esc(timeParts[0].replace(":", "h"))}</span><i aria-hidden="true">→</i><span>${esc(timeParts[1].replace(":", "h"))}</span>`
+          : esc(time),
+      detailRows = [
         adapted
           ? `<div class="hc-shift-detail-row"><span>Type</span><strong>Horaire adapté</strong></div>`
           : "",
@@ -876,7 +882,7 @@
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
     wrap.innerHTML =
-      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><div class="hc-shift-detail-handle" aria-hidden="true"></div><header><div><small>${esc(dateLabel)}</small><h3 id="hcShiftDetailTitle"><b>${esc(displayCode)}</b><span>${esc(label)}</span></h3></div><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button></header><div class="hc-shift-detail-body">${rows || '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>'}</div></section>`;
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong></section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}</div></section>`;
     document.body.appendChild(wrap);
     document.body.classList.add("hc-shift-detail-open");
     wrap
