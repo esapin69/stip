@@ -152,7 +152,7 @@
   ];
   const changeCore = [
     "planning-home.js?v=20260930-official-pdf1",
-    "change-workflow.js",
+    "change-workflow.js?v=20260930-mail-recipients1",
     "change-permission-gate.js",
     "staffing-guidance.js",
   ];
