@@ -8,6 +8,8 @@
     conversation: "",
     message: "",
     rendering: false,
+    renderPending: false,
+    renderVersion: 0,
   };
 
   const TAB_META = {
@@ -109,20 +111,35 @@
   }
 
   async function renderBody() {
-    const host = state.root?.querySelector("[data-communication-body]");
-    if (!host || state.rendering) return;
+    const root = state.root;
+    const host = root?.querySelector("[data-communication-body]");
+    if (!host) return;
+    if (state.rendering) {
+      state.renderPending = true;
+      return;
+    }
+
     state.rendering = true;
+    const version = state.renderVersion;
+    const tab = state.tab;
+    const conversation = state.conversation;
+    const focus = state.focus;
+    const message = state.message;
+    const isCurrent = () =>
+      state.root === root &&
+      state.renderVersion === version &&
+      host.isConnected;
+
     try {
-      if (state.tab === "dm") {
+      if (tab === "dm") {
         window.STIPTableau?.unmountFull?.();
+        if (!isCurrent()) return;
         if (!window.STIPCommunication?.mountInbox) {
           host.innerHTML = '<section class="ca-error">Messages privés indisponibles.</section>';
           return;
         }
-        window.STIPCommunication.mountInbox(host, {
-          conversation: state.conversation,
-        });
-        state.conversation = "";
+        window.STIPCommunication.mountInbox(host, { conversation });
+        if (isCurrent() && state.conversation === conversation) state.conversation = "";
         return;
       }
 
@@ -130,26 +147,40 @@
       if (!window.STIPTableau?.mount) {
         if (typeof window.STIPLoad?.tableau === "function") await window.STIPLoad.tableau();
       }
+      if (!isCurrent()) return;
       if (!window.STIPTableau?.mount) {
         host.innerHTML = '<section class="ca-error">Chat indisponible.</section>';
         return;
       }
       window.STIPTableau.mount(host, {
-        mode: state.tab === "wheelchair" ? "wheelchair" : "chat",
-        focus: state.focus,
-        message: state.message,
+        mode: tab === "wheelchair" ? "wheelchair" : "chat",
+        focus,
+        message,
       });
-      state.focus = false;
-      state.message = "";
+      if (isCurrent()) {
+        if (state.focus === focus) state.focus = false;
+        if (state.message === message) state.message = "";
+      }
     } catch (error) {
-      host.innerHTML = '<section class="ca-error">' + esc(error?.message || "Communication indisponible.") + "</section>";
+      if (isCurrent()) {
+        host.innerHTML = '<section class="ca-error">' +
+          esc(error?.message || "Communication indisponible.") +
+          "</section>";
+      }
     } finally {
       state.rendering = false;
+      if (state.renderPending) {
+        state.renderPending = false;
+        queueMicrotask(() => {
+          if (state.root?.isConnected) renderBody();
+        });
+      }
     }
   }
 
   function render() {
     if (!state.root) return;
+    state.renderVersion += 1;
     state.root.innerHTML = shellMarkup();
     bindShell();
     renderBody();
@@ -178,8 +209,10 @@
   function unmount() {
     window.STIPCommunication?.unmountInbox?.();
     window.STIPTableau?.unmountFull?.();
+    state.renderVersion += 1;
     state.root = null;
     state.rendering = false;
+    state.renderPending = false;
     state.conversation = "";
     state.message = "";
   }
@@ -199,7 +232,7 @@
   });
 
   window.STIPCommunicationApp = {
-    build: "20260928-family-modules1",
+    build: "20260929-first-open-race1",
     mount,
     setTab,
     unmount,
