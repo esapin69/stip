@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260929-wheelchair-freshness1";
+const STIP_SW_BUILD="20260929-notification-icons1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
@@ -16,7 +16,7 @@ function notificationIcon(data){
   if(key.includes("wheelchair")||key.includes("fauteuil"))return "/images/notifications/wheelchair.webp?v=20260925-1";
   if(key.includes("team_chat")||key.includes("chat-equipe")||key.includes("team-chat"))return "/images/notifications/chat.webp?v=20260927-communication5";
   if(key.includes("dm")||key.includes("direct")||key.includes("group"))return "/images/notifications/dm.webp?v=20260925-1";
-  return "/images/icone_app/home-bell.svg?v=20260920-nav1";
+  return "/stip-icon-192.png?v=20260927-icon1";
 }
-self.addEventListener("push",event=>{let data={};try{data=event.data?event.data.json():{}}catch{data={body:event.data?.text?.()||""}}const title=data.title||"STIP",options={body:data.body||"Nouvelle information",icon:notificationIcon(data),badge:"/images/icone_app/home-bell.svg?v=20260920-nav1",tag:data.tag||"stip",renotify:true,data:{url:data.url||"/?quick=notifications"}};event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{client.postMessage({type:"stip:push",data})}catch{}}await self.registration.showNotification(title,options)})())});
+self.addEventListener("push",event=>{let data={};try{data=event.data?event.data.json():{}}catch{data={body:event.data?.text?.()||""}}const title=data.title||"STIP",options={body:data.body||"Nouvelle information",icon:notificationIcon(data),badge:notificationIcon(data),tag:data.tag||"stip",renotify:true,data:{url:data.url||"/?quick=notifications"}};event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{client.postMessage({type:"stip:push",data})}catch{}}await self.registration.showNotification(title,options)})())});
 self.addEventListener("notificationclick",event=>{event.notification.close();const url=new URL(event.notification.data?.url||"/?quick=notifications",self.location.origin).href;event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{if("navigate" in client)await client.navigate(url);await client.focus();return}catch{}}if(clients.openWindow)await clients.openWindow(url)})())});
