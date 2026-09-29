@@ -319,7 +319,7 @@
     const c = $("#phContent");
     if (!c) return;
     chooseMonth();
-    c.innerHTML = `<div class="ph-calendar-actions" aria-label="Actions du calendrier"><button type="button" class="ph-calendar-action primary" data-ph-print><span>▣</span><strong>Aperçu A4 paysage</strong></button><button type="button" class="ph-calendar-action" data-cal-subscribe><span>▦</span><strong>Synchroniser</strong></button></div>${monthPanel(monthKey)}<section id="phLegendHost" class="ph-page-legend"></section>${planningOptionsPocket()}`;
+    c.innerHTML = `<div class="ph-calendar-actions" aria-label="Actions du calendrier"><button type="button" class="ph-calendar-action primary" data-ph-print><span>▣</span><strong>PDF planning à jour</strong></button><button type="button" class="ph-calendar-action" data-cal-subscribe><span>▦</span><strong>Synchroniser</strong></button></div>${monthPanel(monthKey)}<section id="phLegendHost" class="ph-page-legend"></section>${planningOptionsPocket()}`;
     c.querySelectorAll("[data-cal-subscribe],[data-ph-calendar-subscribe]").forEach(
       (button) =>
         button.addEventListener("click", () =>
