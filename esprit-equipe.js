@@ -1387,7 +1387,11 @@
     const base = baseShift(code);
     const meta = shiftMeta(base);
     if (!meta || !items.length) return "";
-    const sortedItems = items.slice().sort(compareAgentGhe);
+    const staffRow = shiftStaffingRow(day, base),
+      targetValue = Number(staffRow?.target_count),
+      target = Number.isFinite(targetValue) ? targetValue : null,
+      codeLabel = target == null ? code : `${code} (${target})`,
+      sortedItems = items.slice().sort(compareAgentGhe);
     // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
     // On les conserve dans les données et le total du shift, mais on ne les répète pas dans la liste dépliée.
     const team = sortedItems.filter((item) => !isChefItem(item));
@@ -1404,9 +1408,9 @@
       </button>
       <section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
         <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
-          <b>${esc(code)}</b>
+          <b>${esc(codeLabel)}</b>
           <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-          <em>${sortedItems.length}</em>
+          <em title="Agents listés">${sortedItems.length}</em>
           <i aria-hidden="true">⌄</i>
         </button>
         <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
