@@ -29,7 +29,7 @@ async function finder(ctx:any){const start=new Date().toISOString().slice(0,10),
 async function history(agentId:string){const {data,error}=await db.from('stip_change_requests').select('*').eq('requester_agent_id',agentId).order('created_at',{ascending:false}).limit(60);if(error)throw error;return enrich(data||[])}
 async function planningHistory(agentId:string){
   const {data,error}=await db.from('stip_planning_change_history')
-    .select('id,request_id,planning_id,agent_id,counterpart_agent_id,change_date,base_code,previous_code,new_code,scenario,change_kind,applied_at,metadata')
+    .select('id,request_id,planning_id,agent_id,counterpart_agent_id,change_date,base_code,previous_code,new_code,scenario,change_kind,applied_at,effective,superseded_at,superseded_reason,metadata')
     .eq('agent_id',agentId).order('applied_at',{ascending:false}).limit(120);
   if(error)throw error;
   const ids=[...new Set((data||[]).map((x:any)=>x.counterpart_agent_id).filter(Boolean))];
