@@ -701,10 +701,12 @@
   function syncWheelchairComposerLayout() {
     const root = state.root;
     if (!root) return;
+    const page = root.matches?.(".tb-page") ? root : root.querySelector(".tb-page");
+    if (!page) return;
     const wheelchair = state.surfaceMode === "wheelchair";
     const expanded = !wheelchair || !!state.composerExpanded;
-    root.classList.toggle("is-wheelchair-composer-expanded", wheelchair && expanded);
-    root.classList.toggle("is-wheelchair-composer-collapsed", wheelchair && !expanded);
+    page.classList.toggle("is-wheelchair-composer-expanded", wheelchair && expanded);
+    page.classList.toggle("is-wheelchair-composer-collapsed", wheelchair && !expanded);
     root.querySelectorAll("[data-composer-toggle]").forEach((button) => {
       button.setAttribute("aria-expanded", expanded ? "true" : "false");
       button.setAttribute(
@@ -778,7 +780,10 @@
       Math.ceil(composer.getBoundingClientRect().height) + "px",
     );
 
-    if (!state.root.classList.contains("is-composing")) {
+    const page = state.root.matches?.(".tb-page")
+      ? state.root
+      : state.root.querySelector(".tb-page");
+    if (!page?.classList.contains("is-composing")) {
       state.root.style.removeProperty("--tb-keyboard-inset");
       return;
     }
@@ -892,7 +897,8 @@
       renderComposerState();
     });
     textarea?.addEventListener("focus", () => {
-      root.classList.add("is-composing");
+      const page = root.matches?.(".tb-page") ? root : root.querySelector(".tb-page");
+      page?.classList.add("is-composing");
       syncViewport();
       [60, 180, 360].forEach((delay) => {
         setTimeout(() => {
@@ -905,7 +911,8 @@
       setTimeout(() => {
         const composer = root.querySelector(".tb-composer");
         if (!root.isConnected || composer?.contains(document.activeElement)) return;
-        root.classList.remove("is-composing");
+        const page = root.matches?.(".tb-page") ? root : root.querySelector(".tb-page");
+        page?.classList.remove("is-composing");
         root.style.removeProperty("--tb-keyboard-inset");
         requestAnimationFrame(syncViewport);
       }, 220);
@@ -4124,7 +4131,7 @@
   });
   window.addEventListener("stip:session-ended", stopAll);
   const apiSurface = {
-    build: "20260930-wheelchair-compact-dock3",
+    build: "20260930-wheelchair-compact-dock4",
     mount,
     mountPreview,
     unmountFull,
