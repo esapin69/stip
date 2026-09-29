@@ -834,9 +834,8 @@ async function teamSend(ctx:any,body:any){
       rawPersistence=String(wheelchair.persistence||"").trim().toLowerCase(),
       persistence=["fast","normal","sheltered"].includes(rawPersistence)?rawPersistence:"normal";
     if(type==="empty"&&!building)throw Error("Choisis le bâtiment dont le local fauteuil est vide.");
-    if(type==="spot"&&wheelchairSpotLocationTooVague(location)){
-      throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.")
-    }
+    // Un repère générique (couloir, ascenseur, hall...) reste une information utile.
+    // Les précisions sont encouragées côté interface mais ne bloquent jamais l'envoi.
     payload.wheelchair={
       type,
       status:"active",
