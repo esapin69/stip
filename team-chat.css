@@ -5660,3 +5660,40 @@
 .tb-mode-empty{margin:auto;padding:32px 18px;text-align:center;display:grid;gap:6px;color:#6f858a}.tb-mode-empty strong{font-size:.92rem;color:#45636a}.tb-mode-empty small{font-size:.74rem}
 
 .tb-entry.is-notification-focus,.tb-thread-reply.is-notification-focus{outline:3px solid rgba(24,150,167,.34);outline-offset:3px;box-shadow:0 0 0 8px rgba(24,150,167,.08),0 12px 30px rgba(23,98,107,.14);transition:outline-color .35s ease,box-shadow .35s ease}
+
+/* desktop-communication-20260929 */
+@media (min-width:900px){
+  .ca-body .tb-page,
+  .hc-communication-standalone .tb-page{
+    left:auto!important;
+    right:auto!important;
+    transform:none!important;
+    width:100%!important;
+    max-width:1280px!important;
+    min-height:calc(100dvh - 71px)!important;
+    margin-inline:auto!important;
+  }
+  .ca-body .tb-dialogue,
+  .ca-body .tb-search-shortcuts,
+  .ca-body .tb-composer,
+  .ca-body .tb-selection-bar,
+  .ca-body .tb-mode-pills,
+  .ca-body .tb-building-pulse{
+    min-width:0!important;
+    width:100%;
+    max-width:none!important;
+  }
+  .ca-body .tb-dialogue{
+    padding-left:clamp(18px,3vw,46px);
+    padding-right:clamp(18px,3vw,46px);
+  }
+  .ca-body .tb-page-head,
+  .ca-body .tb-inline-tools,
+  .ca-body .tb-input-dock{
+    padding-left:clamp(18px,3vw,46px);
+    padding-right:clamp(18px,3vw,46px);
+  }
+  .ca-body .tb-page.is-chat-mode{
+    min-height:calc(100dvh - 71px)!important;
+  }
+}
