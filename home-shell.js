@@ -2810,10 +2810,9 @@
           dateJumpPanel.dataset.calendarMonth ||
           state.dateJumpMonth ||
           iso.slice(0, 7);
-        jumpToDate(iso);
         if (hasPlanningDetail)
           requestAnimationFrame(() => openShiftDetail(iso));
-        return;
+        return jumpToDate(day.dataset.calDay);
       }
     });
     root
