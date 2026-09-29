@@ -5697,3 +5697,67 @@
     min-height:calc(100dvh - 71px)!important;
   }
 }
+
+
+/* Fauteuils — alerte local vide */
+.tb-local-empty-action{
+  width:min(100%,690px);
+  min-height:40px;
+  margin:8px auto 0;
+  padding:0 12px;
+  border:1px solid #e7c8be;
+  border-radius:12px;
+  background:linear-gradient(180deg,#fffaf8 0%,#fff3ef 100%);
+  color:#8d4335;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font:inherit;
+  font-size:.66rem;
+  font-weight:950;
+  box-shadow:0 4px 10px rgba(104,55,42,.05);
+}
+.tb-local-empty-action span{font-size:.82rem}
+.tb-local-empty-action:active{transform:translateY(1px)}
+.tb-empty-local-picker{width:min(92vw,430px)}
+.tb-empty-local-choices{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.tb-empty-local-choices button{
+  min-height:52px;
+  padding:8px 10px;
+  border:1px solid #d9e4e5;
+  border-radius:13px;
+  background:#fff;
+  color:#315861;
+  font:inherit;
+  font-size:.72rem;
+  font-weight:950;
+}
+.tb-empty-local-choices button:last-child:nth-child(odd){grid-column:1/-1}
+.tb-entry.is-empty-local .tb-entry-body{
+  border-color:#e7c8be!important;
+  background:linear-gradient(180deg,#fffdfc 0%,#fff7f3 100%)!important;
+}
+.tb-status-chip.is-empty{
+  border-color:#e5b7aa!important;
+  background:#fff0eb!important;
+  color:#994737!important;
+}
+.tb-resolve.is-restock{
+  width:100%!important;
+  min-height:44px!important;
+  margin-top:10px!important;
+  border:1px solid #a9d7c6!important;
+  border-radius:13px!important;
+  background:linear-gradient(180deg,#eefaf5 0%,#e3f5ed 100%)!important;
+  color:#176b54!important;
+}
+@media(max-width:430px){
+  .tb-local-empty-action{min-height:38px;margin-top:7px}
+  .tb-empty-local-choices{grid-template-columns:1fr 1fr}
+}
