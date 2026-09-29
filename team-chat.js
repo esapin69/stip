@@ -790,6 +790,12 @@
         setComposeMode(String(mode.dataset.composeMode || ""));
         return;
       }
+      const localEmpty = event.target.closest?.("[data-local-empty]");
+      if (localEmpty) {
+        event.preventDefault();
+        openEmptyWheelchairLocal();
+        return;
+      }
       const locationSearch = event.target.closest?.("[data-location-search]");
       if (locationSearch) {
         event.preventDefault();
@@ -1284,7 +1290,9 @@
 
   function structuredDraft({ type, building, quantity = 1, level = "", location = "" }) {
     const parts = [];
-    if (type === "search") {
+    if (type === "empty") {
+      parts.push("Local fauteuil vide");
+    } else if (type === "search") {
       parts.push("Je cherche 1 fauteuil");
     } else {
       parts.push(
@@ -1404,6 +1412,9 @@
             '<span aria-hidden="true">☢</span><strong>Médecine nucléaire</strong><small>B14</small>' +
           '</button>' +
         '</div>' +
+        '<button type="button" class="tb-local-empty-action" data-local-empty>' +
+          '<span aria-hidden="true">⚠</span><strong>Local fauteuil vide</strong>' +
+        '</button>' +
       '</div>' +
       '<div class="tb-compose-summary" aria-live="polite"><span aria-hidden="true">' +
         (searchMode ? "🔎" : "🦽") +
@@ -2129,6 +2140,57 @@
     });
   }
 
+  async function openEmptyWheelchairLocal() {
+    await loadWheelchairCatalog();
+    return new Promise((resolve) => {
+      const wrap = document.createElement("div");
+      wrap.className = "tb-modal-wrap";
+      const close = (value = false) => {
+        wrap.remove();
+        resolve(value);
+      };
+
+      wrap.innerHTML =
+        '<section class="tb-confirm tb-empty-local-picker">' +
+          '<div class="tb-confirm-icon">⚠</div>' +
+          "<h3>Quel local est vide ?</h3>" +
+          "<p>Choisis le bâtiment concerné.</p>" +
+          '<div class="tb-empty-local-choices" role="group" aria-label="Choisir le bâtiment">' +
+            BUILDINGS.map((building) =>
+              '<button type="button" data-empty-building="' + esc(building.key) + '">' +
+                '<strong>' + esc(building.label) + '</strong>' +
+              "</button>"
+            ).join("") +
+          "</div>" +
+          '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
+        "</section>";
+
+      wrap.querySelectorAll("[data-empty-building]").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const buildingKey = String(button.dataset.emptyBuilding || "");
+          wrap.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+          try {
+            const sent = await publishStructuredWheelchair({
+              type: "empty",
+              buildingKey,
+            });
+            if (sent) close(true);
+            else wrap.querySelectorAll("button").forEach((item) => { item.disabled = false; });
+          } catch (error) {
+            alert(error.message || "Impossible de signaler le local vide.");
+            wrap.querySelectorAll("button").forEach((item) => { item.disabled = false; });
+          }
+        });
+      });
+
+      wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
+      wrap.addEventListener("click", (event) => {
+        if (event.target === wrap) close(false);
+      });
+      document.body.appendChild(wrap);
+    });
+  }
+
   async function composeBuilding(key) {
     const building = BUILDINGS.find((item) => item.key === key);
     if (!building) return;
@@ -2637,7 +2699,7 @@
       landmark,
       locations: distributedLocations,
       needsPrecision:
-        wheelchair?.type !== "search" &&
+        wheelchair?.type === "spot" &&
         isVagueWheelchairSpotLocation(rawLocation),
     };
   }
@@ -2873,14 +2935,18 @@
       const resolved = wheelchair?.status === "resolved";
       const activeSignal = wheelchair?.status === "active";
       const isSearchType = wheelchair?.type === "search";
+      const isEmptyType = wheelchair?.type === "empty";
       const searchSignal = activeSignal && isSearchType;
-      const stock = isSearchType ? { total: 1, remaining: 1 } : wheelchairStock(message);
+      const stock = isSearchType || isEmptyType
+        ? { total: 0, remaining: 0 }
+        : wheelchairStock(message);
 
       html.push(
         '<article class="tb-entry ' +
           (mine ? "is-mine" : "") +
           (activeSignal ? " is-wheelchair" : "") +
           (searchSignal ? " is-search" : "") +
+          (isEmptyType ? " is-empty-local" : "") +
           (resolved ? " is-resolved" : "") +
           (checked ? " is-selected" : "") +
           '" data-message-id="' +
@@ -2912,10 +2978,12 @@
 
         html.push(
           '<div class="tb-wheelchair-priority">' +
-            '<span class="tb-status-chip' + (searchSignal ? " is-search" : "") + '">' +
-              (isSearchType
-                ? "Je cherche"
-                : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
+            '<span class="tb-status-chip' + (searchSignal ? " is-search" : "") + (isEmptyType ? " is-empty" : "") + '">' +
+              (isEmptyType
+                ? "Local vide"
+                : isSearchType
+                  ? "Je cherche"
+                  : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
             '</span>' +
           '</div>',
         );
@@ -2953,7 +3021,7 @@
             '<span class="tb-wheelchair-location-warning">⚠ Endroit à préciser</span>',
           );
         }
-        if (activeSignal && !isSearchType) {
+        if (activeSignal && !isSearchType && !isEmptyType) {
           html.push(wheelchairFreshnessMarkup(message, wheelchair));
           if (wheelchair?.last_seen_at) {
             html.push(
@@ -2979,7 +3047,11 @@
 
       if (replyParent) {
         const parentWheelchair = replyParent.payload?.wheelchair || null;
-        const parentLabel = parentWheelchair?.type === "search" ? "Demande" : "Signalement";
+        const parentLabel = parentWheelchair?.type === "empty"
+          ? "Alerte local vide"
+          : parentWheelchair?.type === "search"
+            ? "Demande"
+            : "Signalement";
         html.push(
           '<div class="tb-reply-context"><span aria-hidden="true">↪</span><div><strong>' +
             esc(parentLabel + " de " + agentName(replyParent.sender)) +
@@ -3006,7 +3078,13 @@
       }
       html.push(reactionMarkup(message));
       if (activeSignal && !state.selection && state.data?.can_write !== false && state.data?.access_mode !== "read") {
-        if (searchSignal) {
+        if (isEmptyType) {
+          html.push(
+            '<button type="button" class="tb-resolve is-restock" data-resolve="' +
+              esc(id) +
+              '"><span aria-hidden="true">✓</span><strong>Fauteuils remis</strong></button>',
+          );
+        } else if (searchSignal) {
           html.push(
             '<button type="button" class="tb-resolve is-search" data-resolve="' +
               esc(id) +
@@ -3046,9 +3124,10 @@
         }
       } else if (resolved) {
         const wasSearch = wheelchair?.type === "search";
+        const wasEmpty = wheelchair?.type === "empty";
         html.push(
           '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>' +
-            (wasSearch ? "Trouvé" : (stock.total > 1 ? "Tous pris" : "Pris")) +
+            (wasEmpty ? "Réapprovisionné" : wasSearch ? "Trouvé" : (stock.total > 1 ? "Tous pris" : "Pris")) +
             (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
             "</strong>" +
             (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
