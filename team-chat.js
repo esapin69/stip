@@ -1538,9 +1538,8 @@
     const finalLocation = [location, String(precision || "").trim()]
       .filter(Boolean)
       .join(" · ");
-    if (type === "spot" && isVagueWheelchairSpotLocation(finalLocation)) {
-      throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.");
-    }
+    // Une précision supplémentaire peut aider, mais ne doit jamais empêcher
+    // un agent d'envoyer une information déjà utile (bâtiment/étage/repère).
     const body = structuredDraft({
       type,
       building,
@@ -1587,7 +1586,7 @@
       level: payload.level || "",
       location,
     });
-    const needsPrecision = type === "spot" && isVagueWheelchairSpotLocation(location);
+    const couldUsePrecision = type === "spot" && isVagueWheelchairSpotLocation(location);
 
     wrap.innerHTML =
       '<section class="tb-confirm tb-spot-wizard tb-final-review">' +
@@ -1611,11 +1610,11 @@
           : '') +
 
         '<label class="tb-precision-field"><span>' +
-          (needsPrecision ? 'Préciser l’endroit <em>obligatoire</em>' : 'Ajouter une précision <em>facultatif</em>') +
+          (couldUsePrecision ? 'Préciser encore si utile <em>facultatif</em>' : 'Ajouter une précision <em>facultatif</em>') +
           '</span>' +
           '<textarea rows="3" maxlength="160" placeholder="Ex. devant Pneumologie B, ascenseur central…"></textarea>' +
         "</label>" +
-        '<button type="button" class="tb-review-send" data-review-send' + (needsPrecision ? ' disabled' : '') + '>' +
+        '<button type="button" class="tb-review-send" data-review-send>' +
           '<span>' + (type === "search" ? "Envoyer ma demande" : "Envoyer l’info") + '</span><b>↑</b>' +
         "</button>" +
         '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
@@ -1624,13 +1623,10 @@
     const input = wrap.querySelector(".tb-precision-field textarea");
     const syncReviewSend = () => {
       const button = wrap.querySelector("[data-review-send]");
-      if (!button || type !== "spot") return;
-      const candidateLocation = [location, String(input?.value || "").trim()]
-        .filter(Boolean)
-        .join(" · ");
-      const vague = isVagueWheelchairSpotLocation(candidateLocation);
-      button.disabled = vague;
-      button.setAttribute("aria-disabled", vague ? "true" : "false");
+      if (!button) return;
+      // La précision est toujours facultative : le bouton d'envoi reste disponible.
+      button.disabled = false;
+      button.setAttribute("aria-disabled", "false");
     };
     input?.addEventListener("input", syncReviewSend);
     syncReviewSend();
@@ -1851,7 +1847,7 @@
         const contextOptions = activeVague
           ? wheelchairLevelContextOptions(building.key, level, selectedValues)
           : [];
-        const unresolved = vagueSelections.length > 0;
+        const couldUsePrecision = vagueSelections.length > 0;
         const elevatorFollowup = !!activeVague && norm(activeVague).includes("ascenseur");
 
         wrap.innerHTML =
@@ -1874,8 +1870,8 @@
               ? '<section class="tb-place-followup' + (elevatorFollowup ? " is-elevator-panel" : "") + '" aria-label="Préciser le repère choisi">' +
                   '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>' +
                     (elevatorFollowup
-                      ? "Choisis le repère qui correspond à la sortie ou au côté de l’ascenseur."
-                      : "Précise avec un repère du " + esc(wheelchairLevelDisplay(level))) +
+                      ? "Tu peux préciser la sortie ou le côté de l’ascenseur · facultatif."
+                      : "Tu peux ajouter un repère du " + esc(wheelchairLevelDisplay(level)) + " · facultatif.") +
                   '</small></div>' +
                   (contextOptions.length
                     ? '<div class="tb-place-followup-options' + (elevatorFollowup ? " is-elevator-options" : "") + '">' +
@@ -1897,8 +1893,8 @@
                 '<button type="button" class="' + (persistenceOverride === "sheltered" ? "is-selected" : "") + '" data-place-temperature="sheltered" aria-pressed="' + (persistenceOverride === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Plutôt stable</strong></button>' +
               "</div>" +
             "</div>" +
-            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size || unresolved ? " disabled" : "") + '>' +
-              '<span>' + (unresolved ? "Précise le repère ci-dessus" : "Continuer" + (selectedValues.length > 1 ? " · " + selectedValues.length + " endroits" : "")) + '</span><b>›</b>' +
+            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
+              '<span>' + (selectedPlaces.size ? "Valider ces infos" + (selectedValues.length > 1 ? " · " + selectedValues.length + " repères" : "") : "Choisis au moins un endroit") + '</span><b>›</b>' +
             "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
@@ -1948,7 +1944,7 @@
         });
 
         wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
-          if (!selectedPlaces.size || unresolved) return;
+          if (!selectedPlaces.size) return;
           const locations = [...selectedPlaces];
           renderStructuredReview(
             wrap,
