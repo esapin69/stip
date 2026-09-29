@@ -13,11 +13,17 @@ const index=read('index.html');
 const serviceWorker=read('stip-sw.js');
 
 const uiBuild = index.match(/<meta name="stip-ui-build" content="([^"]+)"/)?.[1] || "";
+const loaderAssetBuild = index.match(/stip-loader\.js\?v=([^"&]+)/)?.[1] || "";
+const loaderRuntimeBuild = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1] || "";
 const swAssetBuild = index.match(/\/stip-sw\.js\?v=([^"&]+)/)?.[1] || "";
 const swRuntimeBuild = serviceWorker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1] || "";
 check(
-  !!uiBuild && uiBuild === swAssetBuild && uiBuild === swRuntimeBuild,
-  'Le build UI, le service worker enregistré et son cache doivent rester synchronisés pour invalider les anciens caches.'
+  !!uiBuild &&
+  uiBuild === loaderAssetBuild &&
+  uiBuild === loaderRuntimeBuild &&
+  uiBuild === swAssetBuild &&
+  uiBuild === swRuntimeBuild,
+  'Le build UI, le chargeur lazy, le service worker enregistré et son cache doivent rester synchronisés pour invalider les anciens caches.'
 );
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');

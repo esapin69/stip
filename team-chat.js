@@ -4112,7 +4112,7 @@
   });
   window.addEventListener("stip:session-ended", stopAll);
   const apiSurface = {
-    build: "20260927-communication5",
+    build: "20260930-wheelchair-compact-dock2",
     mount,
     mountPreview,
     unmountFull,

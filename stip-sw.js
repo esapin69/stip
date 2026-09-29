@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260929-agent-notification-avatar1";
+const STIP_SW_BUILD="20260930-wheelchair-compact-dock2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 

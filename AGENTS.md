@@ -152,7 +152,7 @@ Current non-negotiable invariants:
 - The location finder must follow `visualViewport` so the Android/iOS keyboard never covers the search field or traps the results below it.
 - Replies such as `Rien trouvé ici` stay visually and structurally attached to their source signalement.
 - Message text must never collapse into one-character columns. Preserve `minmax(0,1fr)`, full-width message bodies, and normal word breaking.
-- Keep `team-chat.js`, `team-chat.css`, `home-shell.js` and the index asset versions coherent. Mixed versions must self-heal rather than rendering a degraded UI.
+- Keep `team-chat.js`, `team-chat.css`, `home-shell.js`, `stip-loader.js`, the index `stip-ui-build` and the service-worker build/version coherent. Lazy Communication assets must receive a new loader version when their JS/CSS changes; mixed versions must self-heal rather than rendering a degraded UI.
 
 ## 13. Legend completeness contract
 Any STIP surface that contains a legend must explain every informational icon, badge, color marker, or semantic symbol visible on that surface, including symbols that appear in its week, month, digest, or detail sections.
