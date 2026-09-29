@@ -1,11 +1,65 @@
 (()=>{'use strict';
-const MONTHS=['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'],SLUGS=['janvier','fevrier','mars','avril','mai','juin','juillet','aout','septembre','octobre','novembre','decembre'],DAYS=['LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI','SAMEDI','DIMANCHE'],BASE='https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/planning/months/';
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),norm=v=>String(v||'').trim().toUpperCase();
-function currentMonth(){const hero=document.querySelector('.ph-month-hero'),img=hero?.querySelector('.phmh-month img'),alt=img?.alt?.trim().toUpperCase()||'',yearText=hero?.querySelector('.phmh-month b')?.textContent?.trim()||'',header=document.querySelector('.ph-month-card header'),label=alt||header?.querySelector('strong')?.textContent?.trim().toUpperCase()||'',year=Number(yearText||header?.querySelector('small')?.textContent?.trim()||new Date().getFullYear()),idx=MONTHS.indexOf(label);return{year,month:idx>=0?idx+1:new Date().getMonth()+1,label:idx>=0?MONTHS[idx]:MONTHS[new Date().getMonth()]}}
-const boot=()=>window.STIPBootCache||{},agent=()=>boot().agent||window.STIPSession?.agent||{},agentName=a=>[a.prenom,a.nom].filter(Boolean).join(' ')||'Planning STIP';
-function avatarUrl(a){const av=boot().media?.avatars||{};return av[a.source_key]||av[a.id]||a.avatar_signed_url||a.avatar_url_signed||a.avatar_url||a.photo_url_signed||a.photo_url||''}function monthArt(m){return`${BASE}${SLUGS[m-1]}.png`}function shiftAssets(){return boot().media?.shifts||{}}function asset(code){const a=shiftAssets(),k=norm(code);return a[k]||a[`${k}.PNG`]||a[`${k}.JPG`]||a[`${k}.JPEG`]||''}function items(){return boot().personal||boot().items||[]}
-function shiftDef(code){return window.STIPShiftRegistry?.resolve?.(code)||null}function shiftLabel(code){const d=shiftDef(code);return String(d?.label||norm(code)).toLocaleUpperCase('fr-FR')}function shiftTime(code){return window.STIPShiftRegistry?.time?.(code)||''}function shiftColor(code){return window.STIPShiftRegistry?.color?.(code,'#173c4c')||'#173c4c'}
-function monthCells(y,m){const key=`${y}-${String(m).padStart(2,'0')}`,by=new Map(items().filter(x=>String(x.date||'').startsWith(key)).map(x=>[String(x.date),x])),first=new Date(y,m-1,1),pad=(first.getDay()+6)%7,days=new Date(y,m,0).getDate(),out=[];for(let i=0;i<pad;i++)out.push({empty:true});for(let d=1;d<=days;d++){const dk=`${key}-${String(d).padStart(2,'0')}`,it=by.get(dk)||{},code=norm(it.code||it.source_value||''),dow=new Date(`${dk}T12:00:00`).getDay();out.push({day:d,code,weekend:dow===0||dow===6,url:asset(code),label:shiftLabel(code),time:shiftTime(code)})}while(out.length%7)out.push({empty:true});return out}
-function cellHtml(c){if(c.empty)return'<div class="cell empty"></div>';const color=shiftColor(c.code),visual=c.url?`<img src="${esc(c.url)}" alt="${esc(c.code)}">`:`<div class="fallback" style="--c:${color}">${esc(c.code||'—')}</div>`;return`<div class="cell ${c.weekend?'weekend':''}"><div class="date">${c.day}</div><div class="shift">${visual}</div>${c.time?`<div class="time" style="--c:${color}">${esc(c.time)}</div>`:''}${c.label?`<div class="label">${esc(c.label)}</div>`:''}</div>`}
-function openPreview(){const m=currentMonth(),a=agent(),name=agentName(a),avatar=avatarUrl(a),cells=monthCells(m.year,m.month),art=monthArt(m.month),weeks=Math.ceil(cells.length/7),row=weeks>=6?'21.6mm':'26.2mm',win=window.open('','_blank');if(!win){alert('Autorise l’ouverture de la page d’impression.');return}const avatarHtml=avatar?`<img class="avatar" src="${esc(avatar)}" alt="">`:`<div class="avatar fallback-avatar">STIP</div>`;win.document.open();win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(m.label)} ${m.year} — ${esc(name)}</title><style>@page{size:A4 landscape;margin:3mm}*{box-sizing:border-box}html,body{margin:0;background:#dfe4e8;color:#0b2245;font-family:Arial,Helvetica,sans-serif}.toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#0b2245;color:#fff}.toolbar button{border:0;border-radius:10px;padding:10px 16px;background:#fff;color:#0b2245;font-weight:900;font-size:15px}.page{width:291mm;height:204mm;margin:12px auto;background:#fff;padding:3mm;box-shadow:0 14px 40px #0002;overflow:hidden}.hero{height:43mm;display:grid;grid-template-columns:40mm 74mm 1fr;align-items:center;gap:4mm;padding:1mm 1mm 2mm;border-bottom:.35mm solid #e2e7ea;overflow:hidden}.avatar{width:36mm;height:36mm;object-fit:cover;border-radius:8mm;background:#f1f4f6}.fallback-avatar{display:grid;place-items:center;font-size:12pt;font-weight:950;border:2px solid #0b2245}.identity{height:35mm;display:flex;flex-direction:column;justify-content:center;border-right:1mm solid #0b2245;padding-right:4mm;min-width:0}.identity .name{font-size:24pt;font-weight:1000;line-height:.92;text-transform:uppercase;overflow:hidden}.identity .meta{margin-top:2.2mm;font-size:8.4pt;color:#657582;font-weight:800;letter-spacing:.03em}.monthart{height:39mm;display:grid;grid-template-columns:1fr auto;align-items:center;gap:2mm;overflow:hidden}.monthart img{width:100%;height:39mm;object-fit:contain;object-position:center}.year{font-size:22pt;font-weight:1000;color:#0b2245;letter-spacing:.03em;padding-right:1mm}.days{display:grid;grid-template-columns:repeat(7,1fr);gap:.7mm;margin:2mm 0 .8mm}.dayhead{height:7mm;display:grid;place-items:center;background:#0b2245;color:#fff;font-size:8.7pt;font-weight:1000;clip-path:polygon(2% 18%,98% 0,100% 82%,3% 100%,0 40%)}.dayhead.weekend{background:#bd1717}.grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:${row};gap:.7mm}.cell{position:relative;border:.32mm solid #d9dfe3;background:#fff;overflow:hidden;padding:1mm;display:grid;grid-template-rows:auto 1fr auto auto;align-items:center}.cell.empty{background:#fff}.date{position:absolute;top:1.1mm;left:1.4mm;font-size:14pt;font-weight:1000;color:#111}.weekend .date{color:#b51c1c}.shift{height:14.8mm;display:flex;align-items:center;justify-content:center;margin-top:2.1mm}.shift img{display:block;max-width:28mm;max-height:14.8mm;width:auto;height:auto;object-fit:contain}.fallback{width:12mm;height:12mm;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font-size:12pt;font-weight:1000}.time{justify-self:center;padding:.45mm 1.8mm;border-radius:1.2mm;background:var(--c);color:#fff;font-size:6.2pt;font-weight:950;line-height:1}.label{justify-self:center;font-size:5.9pt;font-weight:950;color:#26394a;line-height:1;text-align:center;max-width:94%}.weekend{background:#fffdfb}@media print{html,body{background:#fff}.toolbar{display:none!important}.page{width:291mm;height:204mm;margin:0;padding:3mm;box-shadow:none}.cell{break-inside:avoid}}</style></head><body><div class="toolbar"><strong>Aperçu A4 paysage · ${esc(m.label)} ${m.year}</strong><button onclick="window.print()">🖨️ Imprimer</button></div><main class="page"><section class="hero">${avatarHtml}<div class="identity"><div class="name">${esc(name)}</div><div class="meta">STIP · PORTAIL ÉQUIPE</div></div><div class="monthart"><img src="${esc(art)}" alt="${esc(m.label)}"><div class="year">${m.year}</div></div></section><div class="days">${DAYS.map((d,i)=>`<div class="dayhead ${i>4?'weekend':''}">${d}</div>`).join('')}</div><section class="grid">${cells.map(cellHtml).join('')}</section></main></body></html>`);win.document.close();win.focus()}
-document.addEventListener('click',e=>{const b=e.target.closest?.('[data-ph-print]');if(!b)return;e.preventDefault();e.stopImmediatePropagation();openPreview()},true)})();
+
+const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-planning-pdf';
+const STORE='stip_session_v1';
+const MONTHS=['JANVIER','FÉVRIER','MARS','AVRIL','MAI','JUIN','JUILLET','AOÛT','SEPTEMBRE','OCTOBRE','NOVEMBRE','DÉCEMBRE'];
+
+function currentMonth(){
+  const strong=document.querySelector('.ph-month-card header strong');
+  const small=document.querySelector('.ph-month-card header small');
+  const label=String(strong?.textContent||'').trim().toUpperCase();
+  const year=Number(String(small?.textContent||'').trim())||new Date().getFullYear();
+  const idx=MONTHS.indexOf(label);
+  return {year,month:idx>=0?idx+1:new Date().getMonth()+1};
+}
+
+function monthKey(){
+  const m=currentMonth();
+  return `${m.year}-${String(m.month).padStart(2,'0')}`;
+}
+
+function statusPage(win,message,error=false){
+  if(!win||win.closed)return;
+  win.document.open();
+  win.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Planning STIP</title><style>
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Arial,Helvetica,sans-serif;background:#f3f8f9;color:#123b4b}
+  main{min-height:100vh;display:grid;place-items:center;padding:28px}
+  section{width:min(440px,100%);padding:28px;border:1px solid #d6e7ea;border-radius:22px;background:#fff;box-shadow:0 14px 34px #123b4b14;text-align:center}
+  b{display:block;font-size:1rem;color:${error?'#a83c3c':'#0d4257'}}small{display:block;margin-top:8px;color:#71858d;line-height:1.45}
+  </style></head><body><main><section><b>${String(message||'')}</b><small>${error?'Le planning n\'a pas été modifié.':'Le PDF reprend le modèle cadre et les changements officiels enregistrés dans STIP.'}</small></section></main></body></html>`);
+  win.document.close();
+}
+
+async function openOfficialPdf(){
+  const popup=window.open('','_blank');
+  if(!popup){
+    alert("Autorise l'ouverture du PDF du planning.");
+    return;
+  }
+  statusPage(popup,'Génération du planning…');
+  try{
+    const token=localStorage.getItem(STORE)||'';
+    if(!token)throw Error('Session STIP requise.');
+    const r=await fetch(API,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-STIP-Session':token},
+      body:JSON.stringify({month:monthKey()})
+    });
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.error||!j.url)throw Error(j.error||`Erreur ${r.status}`);
+    popup.location.replace(j.url);
+  }catch(e){
+    statusPage(popup,e?.message||'Impossible de générer le planning.',true);
+  }
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest?.('[data-ph-print]');
+  if(!b)return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  openOfficialPdf();
+},true);
+
+window.STIPPlanningPdf={open:openOfficialPdf,month:monthKey};
+})();
