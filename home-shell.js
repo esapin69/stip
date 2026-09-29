@@ -808,6 +808,83 @@
       .map((t) => `<span>${esc(t.replace("h", ":"))}</span>`)
       .join("");
   }
+  function planningRowForDate(iso) {
+    iso = String(iso || "").slice(0, 10);
+    if (!iso) return null;
+    return (
+      (state.boot?.personal || []).find(
+        (item) => String(item?.date || "").slice(0, 10) === iso,
+      ) || null
+    );
+  }
+  function closeShiftDetail() {
+    document.getElementById("hcShiftDetail")?.remove();
+    document.body.classList.remove("hc-shift-detail-open");
+  }
+  function openShiftDetail(iso) {
+    const row = planningRowForDate(iso);
+    if (!row) return false;
+    const raw = String(row?.code || row?.source_value || "").trim(),
+      code = canonicalShift(raw),
+      def = shiftDefinition(code),
+      label = String(def?.label || shiftMeta(code)[1] || code || "Planning"),
+      time = shiftTime(code, row),
+      displayCode = raw
+        ? raw.toUpperCase().replace(/\s+/g, "")
+        : code || "—",
+      codeKey = code.replace(/[^A-Z0-9]/g, "").toLowerCase() || "other",
+      mode = String(row?.schedule_mode || def?.schedule_mode || "standard"),
+      sourceLabel = String(
+        row?.source_label || row?.schedule_label || def?.source_label || "",
+      ).trim(),
+      note = String(
+        row?.note ||
+          row?.notes ||
+          row?.commentaire ||
+          row?.comment ||
+          row?.description ||
+          "",
+      ).trim(),
+      d = dateObj(iso),
+      dateLabel = new Intl.DateTimeFormat("fr-FR", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+        .format(d)
+        .replace(/^./, (c) => c.toUpperCase()),
+      adapted = mode && mode !== "standard",
+      rows = [
+        time
+          ? `<div class="hc-shift-detail-row"><span>Horaires</span><strong>${esc(time)}</strong></div>`
+          : "",
+        adapted
+          ? `<div class="hc-shift-detail-row"><span>Type</span><strong>Horaire adapté</strong></div>`
+          : "",
+        sourceLabel && sourceLabel.toLowerCase() !== label.toLowerCase()
+          ? `<div class="hc-shift-detail-row"><span>Précision</span><strong>${esc(sourceLabel)}</strong></div>`
+          : "",
+        note
+          ? `<div class="hc-shift-detail-note"><span>Information</span><p>${esc(note)}</p></div>`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("");
+    closeShiftDetail();
+    const wrap = document.createElement("div");
+    wrap.id = "hcShiftDetail";
+    wrap.className = "hc-shift-detail-overlay";
+    wrap.innerHTML =
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><div class="hc-shift-detail-handle" aria-hidden="true"></div><header><div><small>${esc(dateLabel)}</small><h3 id="hcShiftDetailTitle"><b>${esc(displayCode)}</b><span>${esc(label)}</span></h3></div><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button></header><div class="hc-shift-detail-body">${rows || '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>'}</div></section>`;
+    document.body.appendChild(wrap);
+    document.body.classList.add("hc-shift-detail-open");
+    wrap
+      .querySelectorAll("[data-shift-detail-close]")
+      .forEach((button) => (button.onclick = closeShiftDetail));
+    wrap.querySelector(".hc-shift-detail-close")?.focus({ preventScroll: true });
+    return true;
+  }
   function eventType(x = {}) {
     const kind=String(x.event_kind||"").toLowerCase(),
       kindLabel={rendezvous:"Rendez-vous",formation:"Formation",formateur:"Formateur",reunion:"Réunion",information:"Information",autre:"Événement"}[kind];
@@ -2727,11 +2804,16 @@
         return jumpToDate(target);
       }
       if (day) {
+        const iso = String(day.dataset.calDay || "").slice(0, 10),
+          hasPlanningDetail = Boolean(planningRowForDate(iso));
         state.dateJumpMonth =
           dateJumpPanel.dataset.calendarMonth ||
           state.dateJumpMonth ||
-          String(day.dataset.calDay || "").slice(0, 7);
-        return jumpToDate(day.dataset.calDay);
+          iso.slice(0, 7);
+        jumpToDate(iso);
+        if (hasPlanningDetail)
+          requestAnimationFrame(() => openShiftDetail(iso));
+        return;
       }
     });
     root
@@ -2767,7 +2849,13 @@
       .forEach((b) =>
         (b.onclick = () => {
           if (planningLoading() || b.disabled) return;
-          jumpToDate(b.dataset.homeDay);
+          const iso = String(b.dataset.homeDay || "").slice(0, 10),
+            openDetail =
+              b.classList.contains("stip-week-day") &&
+              Boolean(planningRowForDate(iso));
+          jumpToDate(iso);
+          if (openDetail)
+            requestAnimationFrame(() => openShiftDetail(iso));
         }),
       );
     root
@@ -2788,6 +2876,11 @@
         }),
       );
   }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.getElementById("hcShiftDetail"))
+      closeShiftDetail();
+  });
+
   async function copyText(v, l) {
     try {
       await navigator.clipboard.writeText(v);
