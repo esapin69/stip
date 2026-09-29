@@ -344,12 +344,12 @@ async function send(ctx:any,body:any){
         const eventType=await notificationType("dm_received");
         if(eventType?.push_enabled){
           const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
-          const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo";
+          const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo",senderAvatar=String(ctx.agent?.profile_photo_url||ctx.agent?.avatar_url||"").trim();
           await Promise.allSettled((members||[]).map(async(m:any)=>{
             const targetState=await notificationPreference(String(m.agent_id),"dm_received");
             if(!targetState.enabled||!targetState.push_enabled)return;
             const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
-            await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{event_key:"dm_received",title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau DM",url:"/?quick=communication&tab=dm&conversation="+encodeURIComponent(id),tag:"stip-dm-"+id}})});
+            await fetch(URL+"/functions/v1/stip-push",{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+SERVICE},body:JSON.stringify({action:"send_internal",agent_id:m.agent_id,payload:{event_key:"dm_received",title:preview?senderName:"STIP",body:preview?pushText.slice(0,140):"Nouveau DM",avatar_url:preview?senderAvatar:"",url:"/?quick=communication&tab=dm&conversation="+encodeURIComponent(id),tag:"stip-dm-"+id}})});
           }))
         }
       }
@@ -868,6 +868,7 @@ async function teamSend(ctx:any,body:any){
         targets=all.filter((id:string)=>!senderId||String(id)!==senderId),
         senderProfile=ctx.is_trainee?null:await messageProfile(String(ctx.agent.id)),
         senderName=ctx.is_trainee?display(ctx.agent):nick(ctx.agent,senderProfile),
+        senderAvatar=String(ctx.agent?.profile_photo_url||ctx.agent?.avatar_url||"").trim(),
         fallbackBody=wheelchair?"Nouveau signalement fauteuil":"Nouveau message d’équipe",
         notificationBody=(text||fallbackBody).slice(0,140),
         tab=wheelchair?"fauteuils":"chat";
@@ -886,6 +887,7 @@ async function teamSend(ctx:any,body:any){
               event_key:eventKey,
               title:preview?senderName:"STIP",
               body:preview?notificationBody:fallbackBody,
+              avatar_url:preview?senderAvatar:"",
               url:"/?quick=communication&tab="+tab+"&message="+encodeURIComponent(String(data.id)),
               tag:(wheelchair?"stip-wheelchair-":"stip-team-chat-")+String(data.id)
             }
