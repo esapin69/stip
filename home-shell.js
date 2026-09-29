@@ -2542,7 +2542,7 @@
     if (
       state.homeMode === "communication" &&
       has("messages") &&
-      root.querySelector("#hcCommunicationAppHost")
+      root.querySelector("#hcCommunicationAppHost [data-communication-app]")
     ) {
       return;
     }
