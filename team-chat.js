@@ -357,6 +357,42 @@
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
 
+  function wheelchairFieldSearchTargets({ buildingKey = "", level = "" } = {}) {
+    if (!buildingKey || !level) return [];
+    const building = BUILDINGS.find((item) => item.key === buildingKey);
+    if (!building) return [];
+    return wheelchairFieldSpots(buildingKey, level).map((item) => ({
+      buildingKey: building.key,
+      buildingLabel: building.label,
+      level,
+      location: String(item.value || item.label || ""),
+      label: [item.icon || "📍", item.label || item.value || ""].filter(Boolean).join(" "),
+      hint: [building.label, level].filter(Boolean).join(" · "),
+      search: norm([
+        building.label,
+        ...(building.aliases || []),
+        level,
+        levelSearchAliases(level),
+        item.label || "",
+        item.value || "",
+      ].join(" ")),
+    }));
+  }
+
+  function mergeWheelchairLiftLocation(value = "", liftValue = "", liftOptions = []) {
+    let next = String(value || "").trim();
+    for (const item of liftOptions || []) {
+      const candidate = String(item?.value || item?.label || "").trim();
+      if (!candidate) continue;
+      next = next.split(candidate).join("");
+    }
+    next = next
+      .replace(/\s*·\s*·\s*/g, " · ")
+      .replace(/^\s*·\s*|\s*·\s*$/g, "")
+      .trim();
+    return [next, String(liftValue || "").trim()].filter(Boolean).join(" · ");
+  }
+
   function wheelchairLevelDisplay(value = "") {
     const raw = String(value || "").trim();
     if (!raw) return "";
@@ -1004,8 +1040,9 @@
   }
 
   function locationSearchTargets({ buildingKey = "", level = "" } = {}) {
+    const fieldTargets = wheelchairFieldSearchTargets({ buildingKey, level });
     if (WHEELCHAIR_SEARCH_TARGETS.length) {
-      return WHEELCHAIR_SEARCH_TARGETS
+      const catalogTargets = WHEELCHAIR_SEARCH_TARGETS
         .filter((target) => !buildingKey || target.buildingKey === buildingKey)
         .filter((target) => !level || target.level === level)
         .map((target) => {
@@ -1030,9 +1067,19 @@
             search: norm(baseSearch),
           };
         });
+
+      const fieldKeys = new Set(
+        fieldTargets.map((target) => [target.buildingKey, target.level, norm(target.location)].join("|")),
+      );
+      return [
+        ...fieldTargets,
+        ...catalogTargets.filter(
+          (target) => !fieldKeys.has([target.buildingKey, target.level, norm(target.location)].join("|")),
+        ),
+      ];
     }
 
-    const targets = [];
+    const targets = [...fieldTargets];
     for (const building of BUILDINGS) {
       if (buildingKey && building.key !== buildingKey) continue;
       const groups = WHEELCHAIR_LOCATIONS[building.key] || [];
@@ -1158,7 +1205,10 @@
         if (landmark && options.buildingKey && options.level) {
           const building = BUILDINGS.find((item) => item.key === options.buildingKey);
           if (building) {
-            if (landmark.includes("ascenseur")) {
+            if (
+              landmark.includes("ascenseur") &&
+              !matches.some((item) => wheelchairSpotKind(item.location || item.label).startsWith("lift"))
+            ) {
               matches.unshift({
                 buildingKey: building.key,
                 buildingLabel: building.label,
@@ -1587,6 +1637,11 @@
       location,
     });
     const couldUsePrecision = type === "spot" && isVagueWheelchairSpotLocation(location);
+    const reviewLiftShortcuts = type === "spot"
+      ? wheelchairFieldSpots(building.key, payload.level || "")
+          .filter((item) => wheelchairSpotKind(item.value || item.label || "").startsWith("lift"))
+          .slice(0, 2)
+      : [];
 
     wrap.innerHTML =
       '<section class="tb-confirm tb-spot-wizard tb-final-review">' +
@@ -1599,6 +1654,18 @@
         '<button type="button" class="tb-wizard-search compact" data-review-location>' +
           '<span>📍</span><strong>Modifier / préciser l’endroit</strong><small>unité, étage, ascenseur, service…</small>' +
         "</button>" +
+        (reviewLiftShortcuts.length
+          ? '<div class="tb-review-lifts" aria-label="Choisir l’ascenseur">' +
+              '<small>Ascenseur</small><div>' +
+                reviewLiftShortcuts.map((item, index) =>
+                  '<button type="button" data-review-lift="' + index + '"' +
+                    (norm(location).includes(norm(item.value || item.label || "")) ? ' class="is-selected" aria-pressed="true"' : ' aria-pressed="false"') + '>' +
+                    '<span>' + esc(item.icon || "🛗") + '</span><strong>' +
+                      esc(String(item.label || item.value || "").replace(/^Ascenseurs?\s*·\s*/i, "")) +
+                    '</strong></button>'
+                ).join("") +
+              "</div></div>"
+          : "") +
         (type === "spot"
           ? '<div class="tb-confidence-override" aria-label="Information supplémentaire">' +
               '<div class="tb-confidence-label"><strong>Info en plus</strong><small data-confidence-mode>facultatif</small></div>' +
@@ -1664,6 +1731,31 @@
 
     wrap.querySelector("[data-review-back]")?.addEventListener("click", () => back?.());
 
+    wrap.querySelectorAll("[data-review-lift]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const item = reviewLiftShortcuts[Number(button.dataset.reviewLift) || 0];
+        if (!item) return;
+        location = mergeWheelchairLiftLocation(location, item.value || item.label || "", reviewLiftShortcuts);
+        payload.location = location;
+        const summaryNode = wrap.querySelector(".tb-review-summary");
+        if (summaryNode) {
+          summaryNode.textContent = structuredDraft({
+            type,
+            building,
+            quantity: payload.quantity || 1,
+            level: payload.level || "",
+            location,
+          });
+        }
+        wrap.querySelectorAll("[data-review-lift]").forEach((choice) => {
+          const choiceItem = reviewLiftShortcuts[Number(choice.dataset.reviewLift) || 0];
+          const active = !!choiceItem && norm(location).includes(norm(choiceItem.value || choiceItem.label || ""));
+          choice.classList.toggle("is-selected", active);
+          choice.setAttribute("aria-pressed", active ? "true" : "false");
+        });
+      });
+    });
+
     wrap.querySelector("[data-review-location]")?.addEventListener("click", async () => {
       const found = await chooseLocationShortcut({
         buildingKey: building.key,
@@ -1680,8 +1772,12 @@
 
     wrap.querySelector("[data-review-send]")?.addEventListener("click", async (event) => {
       const button = event.currentTarget;
+      const label = button.querySelector("span");
+      const initialLabel = label?.textContent || "";
       button.disabled = true;
       button.classList.add("is-loading");
+      button.setAttribute("aria-busy", "true");
+      if (label) label.textContent = "Envoi…";
       try {
         const sent = await publishStructuredWheelchair({
           ...payload,
@@ -1693,11 +1789,15 @@
         else {
           button.disabled = false;
           button.classList.remove("is-loading");
+          button.setAttribute("aria-busy", "false");
+          if (label) label.textContent = initialLabel;
         }
       } catch (error) {
         alert(error.message || "Publication impossible.");
         button.disabled = false;
         button.classList.remove("is-loading");
+        button.setAttribute("aria-busy", "false");
+        if (label) label.textContent = initialLabel;
       }
     });
 
@@ -3567,7 +3667,7 @@
 
     return new Promise((resolve) => {
       const wrap = document.createElement("div");
-      wrap.className = "tb-modal-wrap";
+      wrap.className = "tb-modal-wrap tb-privacy-wrap";
       wrap.innerHTML =
         '<section class="tb-confirm tb-privacy">' +
         '<div class="tb-confirm-icon">🔒</div>' +
