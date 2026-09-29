@@ -545,7 +545,7 @@ async function listTableauRows(conversationId:string){
 }
 function isActiveWheelchairRow(row:any){
   const wheelchair=row?.payload?.wheelchair;
-  return !!wheelchair&&wheelchair.type!=="search"&&wheelchair.status==="active"
+  return !!wheelchair&&wheelchair.type==="spot"&&wheelchair.status==="active"
 }
 async function removeTableauStorageTree(conversationId:string){
   const root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
