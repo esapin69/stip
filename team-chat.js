@@ -2141,7 +2141,11 @@
   }
 
   async function openEmptyWheelchairLocal() {
-    await loadWheelchairCatalog();
+    try {
+      await loadWheelchairCatalog();
+    } catch (error) {
+      console.error("wheelchair catalog", error);
+    }
     return new Promise((resolve) => {
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap";
@@ -3170,7 +3174,7 @@
         const wasEmpty = wheelchair?.type === "empty";
         html.push(
           '<div class="tb-resolved-line"><span aria-hidden="true">✓</span><strong>' +
-            (wasEmpty ? "Réapprovisionné" : wasSearch ? "Trouvé" : (stock.total > 1 ? "Tous pris" : "Pris")) +
+            (wasEmpty ? "Fauteuils remis" : wasSearch ? "Trouvé" : (stock.total > 1 ? "Tous pris" : "Pris")) +
             (wheelchair.resolved_at ? " à " + esc(fmtTime(wheelchair.resolved_at)) : "") +
             "</strong>" +
             (wheelchair.resolved_by_name ? "<small>" + esc(wheelchair.resolved_by_name) + "</small>" : "") +
