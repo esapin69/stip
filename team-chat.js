@@ -2906,9 +2906,12 @@
         1,
     );
     const elapsed = wheelchairElapsedTimeLabel(age);
-    const timeLabel = lastSeenAtRaw
-      ? (remaining > 1 ? "Vus il y a " : "Vu il y a ") + elapsed
-      : (remaining > 1 ? "Signalés il y a " : "Signalé il y a ") + elapsed;
+    const evidenceSubject = lastSeenAtRaw
+      ? (remaining > 1 ? "Vus" : "Vu")
+      : (remaining > 1 ? "Signalés" : "Signalé");
+    const timeLabel = elapsed === "à l’instant"
+      ? evidenceSubject + " à l’instant"
+      : evidenceSubject + " il y a " + elapsed;
 
     let stage = "frozen";
     let icon = "🧊";
