@@ -126,9 +126,9 @@
     }
   }
   const personalCore = [
-    "planning-home.js?v=20260928-month-badges1",
+    "planning-home.js?v=20260930-official-pdf1",
     "planning-month-hero.js",
-    "planning-print-reference.js",
+    "planning-print-reference.js?v=20260930-official-pdf1",
   ];
   const personalExtras = [
     "agent-agenda-view.js?v=20260928-icon-registry1",
@@ -143,7 +143,7 @@
   ];
   const teamCore = [
     "agent-agenda-view.js?v=20260928-icon-registry1",
-    "planning-home.js?v=20260928-month-badges1",
+    "planning-home.js?v=20260930-official-pdf1",
     "planning-hub-enhance.js?v=20260925-calendar-clean2",
   ];
   const teamExtras = [
@@ -151,7 +151,7 @@
     "calendar-responsable-gate.js",
   ];
   const changeCore = [
-    "planning-home.js?v=20260928-month-badges1",
+    "planning-home.js?v=20260930-official-pdf1",
     "change-workflow.js",
     "change-permission-gate.js",
     "staffing-guidance.js",
