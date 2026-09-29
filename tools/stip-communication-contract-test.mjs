@@ -21,6 +21,7 @@ const selector=read("stip-agent-selector.js");
 const sw=read("stip-sw.js");
 const messages=read("supabase/functions/stip-messages/index.ts");
 const rules=read("COMMUNICATION_RULES.md");
+const agents=read("AGENTS.md");
 const migration=read("supabase/migrations/20260927225000_communication_notification_types.sql");
 const dmMigration=read("supabase/migrations/20260925151500_notification_push_controls.sql");
 
@@ -57,7 +58,7 @@ has(chat,"wheelchairInlineElevatorChoices","le clavier Fauteuils ne sait pas apl
 has(chat,"contexts.length !== 2","l’aplatissement ascenseur n’est pas limité au cas exact de deux choix");
 has(chat,'value: genericValue + " · " + context',"les choix ascenseur directs ne conservent pas le repère composé");
 has(chat,"const quickPlaces = wheelchairInlineElevatorChoices(","la grille principale n’utilise pas l’aplatissement ascenseur");
-has(rules,"no extra follow-up panel opens","le contrat Fauteuils ne protège pas la suppression du panneau ascenseur à deux choix");
+has(agents,"no extra follow-up panel opens","le contrat Fauteuils ne protège pas la suppression du panneau ascenseur à deux choix");
 if(chat.includes('class="tb-dm-shortcut"')||chat.includes("dmState")||chat.includes("[data-dm-"))fail("l’ancien moteur DM ne doit plus vivre dans Chat/Fauteuils");
 if(chatCss.includes(".tb-dm-"))fail("les anciens styles DM ne doivent plus rester dans Chat/Fauteuils");
 
