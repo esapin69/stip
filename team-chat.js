@@ -2723,6 +2723,8 @@
       remaining === 2 ? "two" :
       "one";
 
+    // Repère terrain uniquement : cette fenêtre n'expire jamais un signalement.
+    // Les emplacements abrités/cachés refroidissent volontairement sur plusieurs jours.
     const minutesByPlacement = {
       fast: {
         one: 40,
@@ -2739,11 +2741,11 @@
         many: 210,
       },
       sheltered: {
-        one: 180,
-        two: 210,
-        three: 240,
-        four: 285,
-        many: 330,
+        one: 72 * 60,
+        two: 72 * 60,
+        three: 72 * 60,
+        four: 72 * 60,
+        many: 72 * 60,
       },
     };
 
@@ -2754,45 +2756,62 @@
     return minutes * 60 * 1000;
   }
 
-  function wheelchairFreshnessTimeLabel(ms = 0) {
-    const minutes = Math.max(0, Math.ceil(Number(ms || 0) / 60000));
-    if (minutes <= 0) return "à vérifier";
+  function wheelchairElapsedTimeLabel(ms = 0) {
+    const minutes = Math.max(0, Math.floor(Number(ms || 0) / 60000));
+    if (minutes < 1) return "à l’instant";
     if (minutes < 60) return minutes + " min";
-    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(minutes / 1440);
+    const hours = Math.floor((minutes % 1440) / 60);
     const rest = minutes % 60;
-    return rest ? hours + " h " + String(rest).padStart(2, "0") : hours + " h";
+    if (days > 0) {
+      return days + " j" + (hours ? " " + hours + " h" : "");
+    }
+    return hours + " h" + (rest ? " " + String(rest).padStart(2, "0") : "");
+  }
+
+  function wheelchairExactDateLabel(value = "") {
+    const date = new Date(String(value || ""));
+    if (!Number.isFinite(date.getTime())) return "";
+    return new Intl.DateTimeFormat("fr-FR", {
+      timeZone: "Europe/Paris",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date).replace(",", " ·");
   }
 
   function wheelchairFreshness(message = {}, wheelchair = {}, now = Date.now()) {
-    const rawSeenAt = wheelchair?.last_seen_at || message?.created_at || "";
-    const seenAt = Date.parse(String(rawSeenAt));
+    const reportedAtRaw = String(wheelchair?.reported_at || message?.created_at || "");
+    const lastSeenAtRaw = String(wheelchair?.last_seen_at || "");
+    const basisAtRaw = lastSeenAtRaw || reportedAtRaw;
+    const basisAt = Date.parse(basisAtRaw);
     const windowMs = wheelchairFreshnessWindowMs(wheelchair);
-    const age = Number.isFinite(seenAt) ? Math.max(0, now - seenAt) : windowMs;
-    const progress = Math.min(1, age / windowMs);
-    // The label is a countdown, so the marker must also decrease toward zero.
+    const age = Number.isFinite(basisAt) ? Math.max(0, now - basisAt) : 0;
+    const progress = Math.min(1, age / Math.max(1, windowMs));
     const position = Math.round((1 - progress) * 100);
-    const remainingMs = Math.max(0, windowMs - age);
 
     let stage = "frozen";
     let icon = "🧊";
-    let label = "Très peu probable";
+    let label = "Très ancien · peut toujours être là";
 
     if (progress < 0.24) {
       stage = "hot";
       icon = "🔥";
-      label = "Très probable";
+      label = "Très récent";
     } else if (progress < 0.50) {
       stage = "warm";
       icon = "🔥";
-      label = "Probable";
+      label = "Récent";
     } else if (progress < 0.72) {
       stage = "cooling";
-      icon = "🧊";
-      label = "À surveiller";
+      icon = "◷";
+      label = "À confirmer";
     } else if (progress < 0.90) {
       stage = "cold";
       icon = "🧊";
-      label = "Peu probable";
+      label = "Ancien";
     }
 
     return {
@@ -2800,29 +2819,51 @@
       stage,
       icon,
       label,
-      timeLabel: wheelchairFreshnessTimeLabel(remainingMs),
+      timeLabel: wheelchairElapsedTimeLabel(age),
+      basisLabel: lastSeenAtRaw ? "depuis confirmation" : "depuis signalement",
+      reportedAt: reportedAtRaw,
+      lastSeenAt: lastSeenAtRaw,
+      exactReportedAt: wheelchairExactDateLabel(reportedAtRaw),
+      exactLastSeenAt: wheelchairExactDateLabel(lastSeenAtRaw),
     };
   }
 
   function wheelchairFreshnessMarkup(message, wheelchair) {
     if (!wheelchair || wheelchair.type === "search" || wheelchair.status !== "active") return "";
-    const seenAt = String(wheelchair.last_seen_at || message.created_at || "");
     const freshness = wheelchairFreshness(message, wheelchair);
-    const aria = freshness.timeLabel + " restantes · " + freshness.label;
+    const aria =
+      freshness.timeLabel + " " + freshness.basisLabel +
+      " · " + freshness.label +
+      " · estimation indicative";
+    const exactFacts = [
+      freshness.exactReportedAt
+        ? '<span>Signalé le <strong>' + esc(freshness.exactReportedAt) + '</strong></span>'
+        : "",
+      freshness.exactLastSeenAt
+        ? '<span>Dernière confirmation <strong>' + esc(freshness.exactLastSeenAt) + '</strong></span>'
+        : "",
+    ].filter(Boolean).join("");
+
     return (
       '<div class="tb-wheelchair-freshness is-' + freshness.stage +
-        '" data-wheelchair-freshness data-freshness-at="' + esc(seenAt) +
-        '" data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) +
-        '" data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) +
-        '" title="' + esc(freshness.label) + '">' +
+        '" data-wheelchair-freshness' +
+        ' data-freshness-reported-at="' + esc(freshness.reportedAt) + '"' +
+        ' data-freshness-last-seen="' + esc(freshness.lastSeenAt) + '"' +
+        ' data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) + '"' +
+        ' data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) + '"' +
+        ' title="' + esc("Repère indicatif · " + freshness.label) + '">' +
         '<div class="tb-freshness-track" role="img" aria-label="' + esc(aria) + '">' +
           '<span class="tb-freshness-state">' +
             '<strong data-freshness-time>' + esc(freshness.timeLabel) + '</strong>' +
-            '<small data-freshness-label>' + esc(freshness.label) + '</small>' +
+            '<small data-freshness-label>' + esc(freshness.basisLabel + " · " + freshness.label) + '</small>' +
           '</span>' +
           '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%">' +
             '<span data-freshness-icon>' + freshness.icon + '</span>' +
           '</i>' +
+        '</div>' +
+        '<div class="tb-freshness-exact">' +
+          exactFacts +
+          '<em>Repère indicatif · aucune expiration automatique</em>' +
         '</div>' +
       '</div>'
     );
@@ -2833,13 +2874,14 @@
     if (!root?.isConnected) return;
 
     root.querySelectorAll("[data-wheelchair-freshness]").forEach((node) => {
-      const seenAt = String(node.dataset.freshnessAt || "");
+      const reportedAt = String(node.dataset.freshnessReportedAt || "");
+      const lastSeenAt = String(node.dataset.freshnessLastSeen || "");
       const freshness = wheelchairFreshness(
-        { created_at: seenAt },
+        { created_at: reportedAt },
         {
           status: "active",
           type: "spot",
-          last_seen_at: seenAt,
+          last_seen_at: lastSeenAt,
           persistence: String(node.dataset.freshnessPersistence || "normal"),
           quantity_remaining: Math.max(1, Number(node.dataset.freshnessQuantity) || 1),
         },
@@ -2847,19 +2889,20 @@
 
       node.classList.remove("is-hot", "is-warm", "is-cooling", "is-cold", "is-frozen");
       node.classList.add("is-" + freshness.stage);
-      node.title = freshness.label;
+      node.title = "Repère indicatif · " + freshness.label;
 
       const time = node.querySelector("[data-freshness-time]");
       if (time) time.textContent = freshness.timeLabel;
 
       const label = node.querySelector("[data-freshness-label]");
-      if (label) label.textContent = freshness.label;
+      if (label) label.textContent = freshness.basisLabel + " · " + freshness.label;
 
       const track = node.querySelector(".tb-freshness-track");
       if (track) {
         track.setAttribute(
           "aria-label",
-          freshness.timeLabel + " restantes · " + freshness.label,
+          freshness.timeLabel + " " + freshness.basisLabel +
+          " · " + freshness.label + " · estimation indicative",
         );
       }
 
