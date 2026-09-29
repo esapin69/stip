@@ -123,9 +123,26 @@
     wrap.querySelector("[data-rs-shift-close]")?.addEventListener("click", closeShiftAnalysis);
   }
 
+  function staffingGap(row) {
+    if (row?.gap != null && Number.isFinite(Number(row.gap)))
+      return Number(row.gap);
+    if (row?.planned_count == null || row?.target_count == null) return null;
+    const planned = Number(row.planned_count),
+      target = Number(row.target_count);
+    return Number.isFinite(planned) && Number.isFinite(target)
+      ? planned - target
+      : null;
+  }
+
+  function staffingCount(value) {
+    return value == null || !Number.isFinite(Number(value)) ? "—" : String(value);
+  }
+
   function shiftFallback(row, signal) {
-    const gap = Number(row?.gap || 0);
+    const gap = staffingGap(row);
     if (signal?.detail) return signal.detail;
+    if (gap == null)
+      return "Effectif prévu indisponible dans le tableau source : aucune conclusion automatique.";
     if (gap < 0)
       return `Il manque ${Math.abs(gap)} agent${Math.abs(gap) > 1 ? "s" : ""} par rapport à la cible HCL.`;
     if (gap > 0)
@@ -141,16 +158,18 @@
     if (!row) return;
     closeShiftAnalysis();
     const signal = field()?.shiftStatus?.(data, code),
-      gap = Number(row.gap || 0),
+      gap = staffingGap(row),
       level =
         signal?.level ||
-        (gap < 0
-          ? Number(row.severity) >= 4
-            ? "critical"
-            : "warning"
-          : gap > 0
-            ? "opportunity"
-            : "ok"),
+        (gap == null
+          ? "unknown"
+          : gap < 0
+            ? Number(row.severity) >= 4
+              ? "critical"
+              : "warning"
+            : gap > 0
+              ? "opportunity"
+              : "ok"),
       symbol =
         signal?.symbol ||
         (level === "critical"
@@ -159,18 +178,22 @@
             ? "⚠️"
             : level === "opportunity"
               ? "➕"
-              : "✔"),
+              : level === "unknown"
+                ? "○"
+                : "✔"),
       label =
         signal?.label ||
-        (gap < 0
-          ? "Sous la cible"
-          : gap > 0
-            ? "Marge disponible"
-            : "Effectif conforme"),
+        (gap == null
+          ? "Donnée indisponible"
+          : gap < 0
+            ? "Sous la cible"
+            : gap > 0
+              ? "Marge disponible"
+              : "Effectif conforme"),
       wrap = document.createElement("div");
     wrap.id = "rsShiftAnalysis";
     wrap.className = "rs-shift-overlay";
-    wrap.innerHTML = `<button type="button" class="rs-shift-backdrop" aria-label="Fermer"></button><section class="rs-shift-sheet rs-${esc(level)}" role="dialog" aria-modal="true" aria-label="Analyse du shift ${esc(code)}"><header><div><small>ANALYSE TERRAIN</small><strong>${esc(code)}</strong></div><button type="button" data-rs-shift-close aria-label="Fermer">×</button></header><div class="rs-shift-verdict"><span aria-hidden="true">${esc(symbol)}</span><div><strong>${esc(label)}</strong><small>${esc(row.planned_count)} prévu${Number(row.planned_count) > 1 ? "s" : ""} · cible HCL ${esc(row.target_count)}</small></div></div><p>${esc(shiftFallback(row, signal))}</p>${signal?.proposal ? `<div class="rs-shift-proposal"><strong>Conseil terrain</strong><span>${esc(signal.proposal)}</span></div>` : ""}</section>`;
+    wrap.innerHTML = `<button type="button" class="rs-shift-backdrop" aria-label="Fermer"></button><section class="rs-shift-sheet rs-${esc(level)}" role="dialog" aria-modal="true" aria-label="Analyse du shift ${esc(code)}"><header><div><small>ANALYSE TERRAIN</small><strong>${esc(code)}</strong></div><button type="button" data-rs-shift-close aria-label="Fermer">×</button></header><div class="rs-shift-verdict"><span aria-hidden="true">${esc(symbol)}</span><div><strong>${esc(label)}</strong><small>${esc(staffingCount(row.planned_count))} prévu${Number(row.planned_count) > 1 ? "s" : ""} · cible HCL ${esc(staffingCount(row.target_count))}</small></div></div><p>${esc(shiftFallback(row, signal))}</p>${signal?.proposal ? `<div class="rs-shift-proposal"><strong>Conseil terrain</strong><span>${esc(signal.proposal)}</span></div>` : ""}</section>`;
     document.body.appendChild(wrap);
     wrap.querySelector(".rs-shift-backdrop")?.addEventListener("click", closeShiftAnalysis);
     wrap.querySelector("[data-rs-shift-close]")?.addEventListener("click", closeShiftAnalysis);
@@ -205,23 +228,25 @@
       host.className = `resp-operational rs-${esc(read?.level || s.state || "ok")}`;
       host.innerHTML = `<div class="rs-head"><div><strong>${esc(read?.headline || s.headline || "Couverture du jour")}</strong><small>${esc(read?.detail || "Comparaison prévu / cible HCL")}</small></div><span>${esc(s.planned ?? "—")} / ${esc(s.target ?? "—")}</span></div><div class="rs-grid">${rows
         .map((x) => {
-          const g = Number(x.gap || 0),
+          const g = staffingGap(x),
             signal = field()?.shiftStatus?.(d, x.shift_code),
             cl =
               signal?.level === "opportunity"
                 ? "opportunity"
-                : g < 0
-                  ? Number(x.severity) >= 4
-                    ? "critical"
-                    : Number(x.severity) >= 3
-                      ? "warning"
-                      : "attention"
-                  : g > 0
-                    ? "over"
-                    : "ok",
-            delta = g === 0 ? "OK" : (g > 0 ? "+" : "") + g,
+                : g == null
+                  ? "unknown"
+                  : g < 0
+                    ? Number(x.severity) >= 4
+                      ? "critical"
+                      : Number(x.severity) >= 3
+                        ? "warning"
+                        : "attention"
+                    : g > 0
+                      ? "over"
+                      : "ok",
+            delta = g == null ? "—" : g === 0 ? "OK" : (g > 0 ? "+" : "") + g,
             mark = signal?.level === "opportunity" ? `${signal.symbol} ${delta}` : delta;
-          return `<button type="button" class="rs-shift ${cl}" data-rs-shift="${esc(x.shift_code || "")}" aria-label="Ouvrir l’analyse ${esc(x.shift_code || "")}"><b>${esc(x.shift_code || "—")}</b><span>${esc(x.planned_count)} / ${esc(x.target_count)}</span><em title="${esc(signal?.label || "")}">${esc(mark)}</em></button>`;
+          return `<button type="button" class="rs-shift ${cl}" data-rs-shift="${esc(x.shift_code || "")}" aria-label="Ouvrir l’analyse ${esc(x.shift_code || "")}"><b>${esc(x.shift_code || "—")}</b><span>${esc(staffingCount(x.planned_count))} / ${esc(staffingCount(x.target_count))}</span><em title="${esc(signal?.label || "")}">${esc(mark)}</em></button>`;
         })
         .join("")}</div>${read?.known && read.level !== "ok" ? `<div class="rs-guide ${esc(read.level)}"><strong>${esc(read.symbol)} À retenir</strong><span>${esc(read.detail)}</span>${read.proposal ? `<small>${esc(read.proposal)}</small>` : ""}</div>` : ""}${s.special_count ? `<div class="rs-special">+ ${esc(s.special_count)} agent(s) sur horaires spécifiques, suivis séparément de M/J/J4/S.</div>` : ""}${d.freshness?.planning_imported_at ? `<div class="rs-fresh">Planning mis à jour ${esc(fmtFresh(d.freshness.planning_imported_at))}</div>` : ""}`;
       host.dataset.ready = "true";
