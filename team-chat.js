@@ -94,6 +94,9 @@
     selectedLevel: "",
     selectedLocation: "",
     surfaceMode: "wheelchair",
+    composerExpanded: false,
+    pageScrollHandler: null,
+    lastPageScrollY: 0,
   };
 
   const homeState = {
@@ -630,6 +633,7 @@
         state.selectedLevel = "";
         state.selectedLocation = "";
       }
+      state.composerExpanded = nextMode === "chat";
       state.root = root;
       state.data = null;
       state.selection = false;
@@ -641,6 +645,7 @@
       state.lastSignature = "";
       root.innerHTML = pageMarkup(nextMode);
       bind(root);
+      syncWheelchairComposerLayout();
       const textarea = root.querySelector("textarea");
       if (textarea && state.draft) {
         textarea.value = state.draft;
@@ -654,6 +659,7 @@
     state.focusAfterLoad = !!options.focus;
     state.focusMessageId = String(options.message || "");
     bindViewport();
+    bindPageScroll();
     syncViewport();
     loadFull(false);
     if (!state.timer) {
@@ -689,6 +695,63 @@
     if (state.timer) clearInterval(state.timer);
     state.timer = null;
     unbindViewport();
+    unbindPageScroll();
+  }
+
+  function syncWheelchairComposerLayout() {
+    const root = state.root;
+    if (!root) return;
+    const wheelchair = state.surfaceMode === "wheelchair";
+    const expanded = !wheelchair || !!state.composerExpanded;
+    root.classList.toggle("is-wheelchair-composer-expanded", wheelchair && expanded);
+    root.classList.toggle("is-wheelchair-composer-collapsed", wheelchair && !expanded);
+    root.querySelectorAll("[data-composer-toggle]").forEach((button) => {
+      button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      button.setAttribute(
+        "aria-label",
+        expanded ? "Réduire les actions fauteuils" : "Déployer les actions fauteuils",
+      );
+      button.title = expanded ? "Réduire" : "Déployer";
+    });
+    requestAnimationFrame(syncComposerDock);
+  }
+
+  function setWheelchairComposerExpanded(expanded) {
+    if (state.surfaceMode !== "wheelchair") return;
+    state.composerExpanded = !!expanded;
+    syncWheelchairComposerLayout();
+  }
+
+  function collapseWheelchairComposerFromScroll(delta) {
+    if (
+      state.surfaceMode !== "wheelchair" ||
+      !state.composerExpanded ||
+      state.interacting ||
+      delta >= -12 ||
+      document.querySelector(".tb-modal-wrap")
+    ) return;
+    const textarea = state.root?.querySelector(".tb-composer textarea");
+    if (textarea && document.activeElement === textarea) return;
+    setWheelchairComposerExpanded(false);
+  }
+
+  function bindPageScroll() {
+    if (state.pageScrollHandler) return;
+    state.lastPageScrollY = Math.max(0, window.scrollY || 0);
+    state.pageScrollHandler = () => {
+      const next = Math.max(0, window.scrollY || 0);
+      const delta = next - state.lastPageScrollY;
+      state.lastPageScrollY = next;
+      collapseWheelchairComposerFromScroll(delta);
+    };
+    window.addEventListener("scroll", state.pageScrollHandler, { passive: true });
+  }
+
+  function unbindPageScroll() {
+    if (!state.pageScrollHandler) return;
+    window.removeEventListener("scroll", state.pageScrollHandler);
+    state.pageScrollHandler = null;
+    state.lastPageScrollY = 0;
   }
 
   function syncComposerDock() {
@@ -766,9 +829,10 @@
 
     root.querySelector("[data-form]")?.addEventListener("submit", send);
     bindMessageLongPress(root);
-    root.querySelector("[data-free-toggle]")?.addEventListener("click", () => {
+    const openFreeComposer = () => {
       const textarea = root.querySelector(".tb-composer textarea");
       if (!textarea) return;
+      setWheelchairComposerExpanded(true);
       const current = cleanWheelchairText(textarea.value);
       textarea.hidden = false;
       textarea.dataset.open = "1";
@@ -786,7 +850,17 @@
       } catch {}
       renderComposerState();
       requestAnimationFrame(syncViewport);
-    });
+    };
+    root.querySelector("[data-free-toggle]")?.addEventListener("click", openFreeComposer);
+
+    const feed = root.querySelector("[data-feed]");
+    let lastFeedScrollTop = Math.max(0, feed?.scrollTop || 0);
+    feed?.addEventListener("scroll", () => {
+      const next = Math.max(0, feed.scrollTop || 0);
+      const delta = next - lastFeedScrollTop;
+      lastFeedScrollTop = next;
+      collapseWheelchairComposerFromScroll(delta);
+    }, { passive: true });
 
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => {
@@ -860,6 +934,25 @@
         return;
       }
 
+      const composerToggle = event.target.closest?.("[data-composer-toggle]");
+      if (composerToggle) {
+        event.preventDefault();
+        setWheelchairComposerExpanded(!state.composerExpanded);
+        return;
+      }
+      const composerExpand = event.target.closest?.("[data-composer-expand]");
+      if (composerExpand) {
+        event.preventDefault();
+        setWheelchairComposerExpanded(true);
+        return;
+      }
+      const compactFree = event.target.closest?.("[data-compact-free]");
+      if (compactFree) {
+        event.preventDefault();
+        openFreeComposer();
+        return;
+      }
+
       const modeToggle = event.target.closest?.("[data-mode-toggle]");
       if (modeToggle) {
         event.preventDefault();
@@ -869,7 +962,11 @@
       const mode = event.target.closest?.("[data-compose-mode]");
       if (mode) {
         event.preventDefault();
-        setComposeMode(String(mode.dataset.composeMode || ""));
+        const nextMode = String(mode.dataset.composeMode || "");
+        const wasCollapsed =
+          state.surfaceMode === "wheelchair" && !state.composerExpanded;
+        if (nextMode !== state.composeMode) setComposeMode(nextMode);
+        if (wasCollapsed) setWheelchairComposerExpanded(true);
         return;
       }
       const localEmpty = event.target.closest?.("[data-local-empty]");
@@ -1487,7 +1584,30 @@
       );
     };
 
+    const hasDraft = !!cleanWheelchairText(
+      state.root?.querySelector(".tb-composer textarea")?.value || state.draft,
+    );
+
     host.innerHTML =
+      '<button type="button" class="tb-composer-grip" data-composer-toggle aria-expanded="' +
+        (state.composerExpanded ? "true" : "false") +
+        '" aria-label="' +
+        (state.composerExpanded ? "Réduire les actions fauteuils" : "Déployer les actions fauteuils") +
+        '"><span aria-hidden="true">—</span></button>' +
+      '<div class="tb-shortcuts-compact">' +
+        '<div class="tb-mode-tabs" role="tablist" aria-label="Action">' +
+          modeTab("spot", "👀", "J’ai vu") +
+          modeTab("search", "🔎", "Je cherche") +
+        '</div>' +
+        '<div class="tb-compact-actions" role="group" aria-label="Actions fauteuils rapides">' +
+          '<button type="button" data-composer-expand><span aria-hidden="true">' +
+            (searchMode ? "🔎" : "🦽") +
+            '</span><strong>' + (hasDraft ? "Reprendre" : (searchMode ? "Chercher" : "Signaler")) + '</strong></button>' +
+          '<button type="button" data-location-search><span aria-hidden="true">📍</span><strong>Service / repère</strong></button>' +
+          '<button type="button" data-local-empty><span aria-hidden="true">⚠</span><strong>Local vide</strong></button>' +
+          '<button type="button" data-compact-free><span aria-hidden="true">✎</span><strong>Écrire</strong></button>' +
+        '</div>' +
+      '</div>' +
       '<div class="tb-shortcuts-full">' +
         '<div class="tb-mode-tabs" role="tablist" aria-label="Action">' +
           modeTab("spot", "👀", "J’ai vu") +
@@ -1521,6 +1641,7 @@
           ? '<b>·</b><em>' + esc(String(state.selectedQuantity)) + ' fauteuil' + (state.selectedQuantity > 1 ? 's' : '') + '</em>'
           : '') +
         '</div>';
+    syncWheelchairComposerLayout();
     requestAnimationFrame(syncViewport);
   }
 
@@ -1659,6 +1780,7 @@
     });
 
     clearComposerDraft();
+    setWheelchairComposerExpanded(false);
     await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     return true;
   }
@@ -3579,6 +3701,7 @@
       autoGrow(textarea);
       renderSearchShortcuts();
       renderComposerState();
+      if (state.surfaceMode === "wheelchair") setWheelchairComposerExpanded(false);
       state.scrollToLatestPending = true;
       await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
     } catch (error) {

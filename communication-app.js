@@ -10,6 +10,8 @@
     rendering: false,
     renderPending: false,
     renderVersion: 0,
+    chromeCompact: false,
+    scrollHandler: null,
   };
 
   const TAB_META = {
@@ -77,15 +79,52 @@
         "</strong>" + badge + "</button>";
     }).join("");
 
-    return '<section class="ca-app" data-communication-app>' +
+    return '<section class="ca-app' +
+      (state.tab === "wheelchair" ? " is-wheelchair-tab" : "") +
+      (state.chromeCompact ? " is-chrome-compact" : "") +
+      '" data-communication-app>' +
       '<header class="ca-head">' +
         '<button type="button" class="ca-back" data-communication-close aria-label="Retour à l’accueil"><span aria-hidden="true">‹</span><strong>Accueil</strong></button>' +
-        '<div class="ca-title"><strong>Communication</strong><small>STIP</small></div>' +
+        '<div class="ca-title">' +
+          '<span class="ca-title-default"><strong>Communication</strong><small>STIP</small></span>' +
+          '<span class="ca-title-compact"><span aria-hidden="true">♿</span><strong>Fauteuils</strong></span>' +
+        '</div>' +
         '<button type="button" class="ca-bell" data-communication-notifications aria-label="Ouvrir les notifications"><span aria-hidden="true">🔔</span></button>' +
       '</header>' +
       '<nav class="ca-tabs" role="tablist" aria-label="Communication STIP">' + tabs + '</nav>' +
       '<main class="ca-body" data-communication-body><section class="ca-loading">Chargement…</section></main>' +
     '</section>';
+  }
+
+  function syncChromeCompact() {
+    if (!state.root?.isConnected) return;
+    const app = state.root.querySelector("[data-communication-app]");
+    if (!app) return;
+    if (state.tab !== "wheelchair" || window.innerWidth >= 900) {
+      state.chromeCompact = false;
+      app.classList.remove("is-chrome-compact");
+      return;
+    }
+    const y = Math.max(0, window.scrollY || 0);
+    const next = state.chromeCompact ? y > 12 : y > 72;
+    if (next === state.chromeCompact) return;
+    state.chromeCompact = next;
+    app.classList.toggle("is-chrome-compact", next);
+  }
+
+  function bindShellScroll() {
+    if (state.scrollHandler) return;
+    state.scrollHandler = () => syncChromeCompact();
+    window.addEventListener("scroll", state.scrollHandler, { passive: true });
+    window.addEventListener("resize", state.scrollHandler, { passive: true });
+    syncChromeCompact();
+  }
+
+  function unbindShellScroll() {
+    if (!state.scrollHandler) return;
+    window.removeEventListener("scroll", state.scrollHandler);
+    window.removeEventListener("resize", state.scrollHandler);
+    state.scrollHandler = null;
   }
 
   function bindShell() {
@@ -183,6 +222,7 @@
     state.renderVersion += 1;
     state.root.innerHTML = shellMarkup();
     bindShell();
+    bindShellScroll();
     renderBody();
   }
 
@@ -190,6 +230,7 @@
     if (!root) return;
     state.root = root;
     state.tab = normalizeTab(options.tab || tabFromRoute(window.STIPRouter?.get?.() || ""));
+    state.chromeCompact = false;
     state.focus = !!options.focus;
     state.conversation = String(options.conversation || "");
     state.message = String(options.message || "");
@@ -198,6 +239,7 @@
 
   function setTab(tab, options = {}) {
     const next = normalizeTab(tab);
+    if (next !== state.tab) state.chromeCompact = false;
     state.tab = next;
     if (options.focus != null) state.focus = !!options.focus;
     if (options.conversation) state.conversation = String(options.conversation);
@@ -209,6 +251,7 @@
   function unmount() {
     window.STIPCommunication?.unmountInbox?.();
     window.STIPTableau?.unmountFull?.();
+    unbindShellScroll();
     state.renderVersion += 1;
     state.root = null;
     state.rendering = false;
@@ -232,7 +275,7 @@
   });
 
   window.STIPCommunicationApp = {
-    build: "20260929-first-open-race1",
+    build: "20260930-wheelchair-compact-dock1",
     mount,
     setTab,
     unmount,

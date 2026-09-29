@@ -62,3 +62,50 @@
 @media (min-width:1280px){
   .ca-app{grid-template-columns:280px minmax(0,1fr)}
 }
+
+
+/* Fauteuils — compact reading chrome 20260930 */
+.ca-title-default{display:grid;line-height:1.05}
+.ca-title-compact{display:none}
+@media(max-width:899px){
+  .ca-app.is-wheelchair-tab .ca-head,
+  .ca-app.is-wheelchair-tab .ca-tabs{
+    transition:min-height .18s ease,padding .18s ease,opacity .16s ease,max-height .18s ease,border-color .18s ease;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-head{
+    min-height:52px;
+    padding:5px 10px;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-back,
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-bell{
+    min-height:40px;
+    height:40px;
+    border-radius:14px;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-title-default{display:none}
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-title-compact{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    color:#1c5662;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-title-compact>span{
+    font-size:1rem;
+    line-height:1;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-title-compact>strong{
+    font-size:.9rem;
+    line-height:1;
+    font-weight:950;
+  }
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-tabs{
+    max-height:0;
+    min-height:0;
+    padding:0 8px;
+    overflow:hidden;
+    opacity:0;
+    border-bottom-color:transparent;
+    pointer-events:none;
+  }
+}

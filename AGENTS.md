@@ -130,6 +130,8 @@ The wheelchair workflow lives inside the dedicated routed **Chat STIP** surface.
 Current non-negotiable invariants:
 - The page header is `Chat STIP` with `Fauteuils` as context; do not add a second large body title.
 - The composer exposes two equal compact mode tabs: `J’ai vu` and `Je cherche`. Do not add an `ACTION` heading or explanatory subtitles under those tabs.
+- Fauteuils opens in a compact two-state dock so the thread remains the dominant surface. The collapsed state keeps `J’ai vu` / `Je cherche` plus four direct actions (signal/search, Service / repère, local empty, free write). Expanding restores the full building chooser. Upward reading scroll and successful send collapse the dock; reopening must preserve any in-progress draft.
+- On mobile Fauteuils, scrolling away from the top compacts the Communication chrome to `‹ Accueil | ♿ Fauteuils | 🔔`; the full three-tab navigation returns near the top. Do not apply this collapse to desktop or the other Communication tabs.
 - The location chooser stays compact: four building choices around one central `Service / repère` action.
 - Do not duplicate direct service/repère search inside every later wizard step. In `J’ai vu`, the guided order is building → level → quantity → place. Level and quantity must be visually unmistakable: level buttons say the level explicitly; quantity buttons use a wheelchair cue with `×1`, `×2`, `×3`, etc.
 - Do not render a separate building dashboard above the feed. Building selection exists only in the composer.

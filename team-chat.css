@@ -5881,3 +5881,93 @@
     grid-template-columns:1fr;
   }
 }
+
+
+/* Fauteuils — two-state dock 20260930 */
+.tb-composer-grip{
+  width:52px;
+  height:18px;
+  margin:-2px auto 4px;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#8aa0a4;
+  display:grid;
+  place-items:center;
+  font:inherit;
+  touch-action:manipulation;
+}
+.tb-composer-grip span{
+  display:block;
+  width:34px;
+  height:5px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#b8c9cc;
+  color:transparent;
+}
+.tb-shortcuts-compact{display:none}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-search-shortcuts{
+  padding:6px 10px 7px!important;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-shortcuts-full{
+  display:none!important;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-shortcuts-compact{
+  width:min(100%,690px);
+  margin-inline:auto;
+  display:grid;
+  gap:6px;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-mode-tabs{
+  margin-bottom:0!important;
+}
+.tb-compact-actions{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+.tb-compact-actions button{
+  min-width:0;
+  min-height:42px;
+  padding:5px 4px;
+  border:1px solid #d8e5e5;
+  border-radius:12px;
+  background:#fff;
+  color:#3d626a;
+  display:grid;
+  grid-template-columns:1fr;
+  place-items:center;
+  gap:2px;
+  font:inherit;
+  box-shadow:0 2px 7px rgba(25,69,79,.045);
+  touch-action:manipulation;
+}
+.tb-compact-actions button span{
+  font-size:.76rem;
+  line-height:1;
+}
+.tb-compact-actions button strong{
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  font-size:.52rem;
+  line-height:1.06;
+  font-weight:950;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-composer{
+  display:none!important;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-expanded .tb-shortcuts-compact{
+  display:none!important;
+}
+.tb-page.is-wheelchair-mode.is-wheelchair-composer-expanded .tb-shortcuts-full{
+  display:block!important;
+}
+@media(max-width:390px){
+  .tb-compact-actions{gap:4px}
+  .tb-compact-actions button{min-height:40px;padding-inline:2px}
+  .tb-compact-actions button strong{font-size:.49rem}
+}
