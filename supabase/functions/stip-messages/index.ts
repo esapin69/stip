@@ -543,6 +543,10 @@ async function listTableauRows(conversationId:string){
   }
   return rows
 }
+function isActiveWheelchairRow(row:any){
+  const wheelchair=row?.payload?.wheelchair;
+  return !!wheelchair&&wheelchair.type!=="search"&&wheelchair.status==="active"
+}
 async function removeTableauStorageTree(conversationId:string){
   const root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
   if(root.error)throw root.error;
@@ -564,7 +568,7 @@ async function removeTableauStorageTree(conversationId:string){
 }
 async function purgeCurrentTableauRows(conversationId:string){
   const today=parisDayKey(),rows=await listTableauRows(conversationId),
-    stale=rows.filter((row:any)=>parisDayKey(row.created_at)!==today);
+    stale=rows.filter((row:any)=>parisDayKey(row.created_at)!==today&&!isActiveWheelchairRow(row));
   if(!stale.length)return 0;
   await removeTeamPhotos(stale.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
   const ids=stale.map((m:any)=>m.id);
@@ -575,17 +579,27 @@ async function purgeCurrentTableauRows(conversationId:string){
   return ids.length
 }
 async function purgePastStorageFolders(conversationId:string){
-  const today=parisDayKey(),root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
+  const today=parisDayKey(),
+    rows=await listTableauRows(conversationId),
+    protectedPaths=new Set(rows.filter(isActiveWheelchairRow).map((m:any)=>String(m?.payload?.photo_path||"")).filter(Boolean)),
+    root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
   if(root.error)throw root.error;
   const paths:string[]=[];
   for(const folder of root.data||[]){
     const name=String((folder as any)?.name||"").trim();
     if(!name||name===today)continue;
-    if((folder as any)?.id){paths.push(conversationId+"/"+name);continue}
+    if((folder as any)?.id){
+      const path=conversationId+"/"+name;
+      if(!protectedPaths.has(path))paths.push(path);
+      continue
+    }
     const listed=await db.storage.from(TEAM_BUCKET).list(conversationId+"/"+name,{limit:1000,offset:0});
     if(listed.error)throw listed.error;
     for(const file of listed.data||[]){
-      if((file as any)?.id&&(file as any)?.name)paths.push(conversationId+"/"+name+"/"+String((file as any).name))
+      if((file as any)?.id&&(file as any)?.name){
+        const path=conversationId+"/"+name+"/"+String((file as any).name);
+        if(!protectedPaths.has(path))paths.push(path)
+      }
     }
   }
   if(paths.length)await removeTeamPhotos(paths)
@@ -605,16 +619,19 @@ async function purgePreviousTableauDays(currentConversationId:string){
   const old=(conversations||[]).filter((x:any)=>String(x.id)!==String(currentConversationId));
   let deleted=0;
   for(const conversation of old){
-    const rows=await listTableauRows(String(conversation.id));
-    if(rows.length){
-      await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
-      const ids=rows.map((m:any)=>m.id);
+    const rows=await listTableauRows(String(conversation.id)),
+      kept=rows.filter(isActiveWheelchairRow),
+      stale=rows.filter((row:any)=>!isActiveWheelchairRow(row));
+    if(stale.length){
+      await removeTeamPhotos(stale.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
+      const ids=stale.map((m:any)=>m.id);
       for(let i=0;i<ids.length;i+=200){
         const del=await db.from("stip_messages").delete().in("id",ids.slice(i,i+200));
         if(del.error)throw del.error
       }
       deleted+=ids.length
     }
+    if(kept.length)continue;
     await removeTableauStorageTree(String(conversation.id));
     const gone=await db.from("stip_conversations").delete().eq("id",conversation.id);
     if(gone.error)throw gone.error
@@ -634,20 +651,71 @@ async function signedTeamPhotos(messages:any[]){
     return path&&urls.has(path)?{...m,payload:{...(m.payload||{}),photo_url:urls.get(path)}}:m
   })
 }
+async function teamCarryoverMessages(ctx:any,currentConversationId:string){
+  const family=communicationFamily(ctx),conversationIds:string[]=[];
+  for(let from=0;;from+=1000){
+    const{data,error}=await db.from("stip_conversations")
+      .select("id")
+      .eq("kind","team_chat")
+      .eq("communication_family",family)
+      .neq("id",currentConversationId)
+      .order("created_at",{ascending:false})
+      .range(from,from+999);
+    if(error)throw error;
+    const batch=(data||[]).map((x:any)=>String(x.id)).filter(Boolean);
+    conversationIds.push(...batch);
+    if(batch.length<1000)break
+  }
+  if(!conversationIds.length)return[];
+  const rows:any[]=[];
+  for(let offset=0;offset<conversationIds.length;offset+=100){
+    const ids=conversationIds.slice(offset,offset+100);
+    for(let from=0;;from+=1000){
+      const{data,error}=await db.from("stip_messages")
+        .select("id,conversation_id,body,payload,created_at,sender_agent_id,sender_stagiaire_key,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
+        .in("conversation_id",ids)
+        .is("deleted_at",null)
+        .order("created_at")
+        .range(from,from+999);
+      if(error)throw error;
+      const batch=data||[];
+      rows.push(...batch.filter(isActiveWheelchairRow));
+      if(batch.length<1000)break
+    }
+  }
+  return rows
+}
+async function teamFamilyVersion(ctx:any){
+  const{data,error}=await db.from("stip_conversations")
+    .select("updated_at,last_message_at,created_at")
+    .eq("kind","team_chat")
+    .eq("communication_family",communicationFamily(ctx))
+    .order("updated_at",{ascending:false})
+    .limit(1);
+  if(error)throw error;
+  const row=(data||[])[0];
+  return String(row?.updated_at||row?.last_message_at||row?.created_at||"")
+}
 async function teamThread(ctx:any){
   const conv=await teamConversation(ctx);
-  const{data:messages,error}=await db.from("stip_messages")
-    .select("id,body,payload,created_at,sender_agent_id,sender_stagiaire_key,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
-    .eq("conversation_id",conv.id)
-    .order("created_at")
-    .limit(300);
+  const[{data:currentMessages,error},carryover]=await Promise.all([
+    db.from("stip_messages")
+      .select("id,conversation_id,body,payload,created_at,sender_agent_id,sender_stagiaire_key,sender:agents!stip_messages_sender_agent_id_fkey(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)")
+      .eq("conversation_id",conv.id)
+      .is("deleted_at",null)
+      .order("created_at")
+      .limit(300),
+    teamCarryoverMessages(ctx,String(conv.id))
+  ]);
   if(error)throw error;
-  const senderIds=[...new Set((messages||[]).map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
+  const messages=[...carryover,...(currentMessages||[])]
+    .sort((a:any,b:any)=>String(a.created_at||"").localeCompare(String(b.created_at||"")));
+  const senderIds=[...new Set(messages.map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
   const{data:profiles}=senderIds.length
     ?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",senderIds)
     :{data:[] as any[]};
   const by=new Map((profiles||[]).map((p:any)=>[String(p.agent_id),p]));
-  const withNames=(messages||[]).map((m:any)=>{
+  const withNames=messages.map((m:any)=>{
     if(m.sender_agent_id)return{...m,sender:{...m.sender,nickname:nick(m.sender,by.get(String(m.sender_agent_id)))}};
     const actor=m?.payload?.actor||{},key=String(m.sender_stagiaire_key||actor.key||"");
     const sender={id:`stagiaire:${key}`,source_key:`stagiaire:${key}`,prenom:actor.prenom||"Stagiaire",nom:actor.nom||"",ghe:null,equipe:"stage",profile_photo_url:TRAINEE_DEFAULT_AVATAR,avatar_url:TRAINEE_DEFAULT_AVATAR,nickname:actor.prenom||"Stagiaire",identity_kind:"stagiaire"};
@@ -663,7 +731,7 @@ async function teamThread(ctx:any){
     access_mode:accessMode,
     can_write:accessMode!=="read",
     admin:accessMode==="admin",
-    version:String(conv.updated_at||conv.last_message_at||conv.created_at||""),
+    version:await teamFamilyVersion(ctx),
     messages:signed
   }
 }
@@ -672,8 +740,25 @@ async function teamProbe(ctx:any){
   const conv=await teamConversation(ctx);
   return{
     conversation_id:String(conv.id),
-    version:String(conv.updated_at||conv.last_message_at||conv.created_at||"")
+    version:await teamFamilyVersion(ctx)
   }
+}
+async function teamMessageTarget(ctx:any,messageId:string){
+  const{data:row,error}=await db.from("stip_messages")
+    .select("id,conversation_id,body,payload,created_at,sender_agent_id,sender_stagiaire_key")
+    .eq("id",messageId)
+    .is("deleted_at",null)
+    .maybeSingle();
+  if(error)throw error;
+  if(!row)throw Error("Ce message n’est plus disponible.");
+  const{data:conversation,error:conversationError}=await db.from("stip_conversations")
+    .select("id,kind,communication_family")
+    .eq("id",row.conversation_id)
+    .maybeSingle();
+  if(conversationError)throw conversationError;
+  if(!conversation||conversation.kind!=="team_chat"||normalizeCommunicationFamily(conversation.communication_family)!==communicationFamily(ctx))
+    throw Error("Ce message n’est plus disponible.");
+  return{row,conversation}
 }
 
 async function storeTeamPhoto(conv:any,body:any){
