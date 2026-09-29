@@ -2811,10 +2811,17 @@
         Number(wheelchair?.quantity_total) ||
         1,
     );
-    const persistence = normalizeWheelchairPersistence(
-      wheelchair?.persistence || "normal",
-      remaining,
-    );
+
+    // Le choix manuel 🧊/🔥 prime. Sans choix manuel ("normal"),
+    // l'emplacement réel décide automatiquement du rythme de vieillissement.
+    const rawPersistence = String(wheelchair?.persistence || "").trim().toLowerCase();
+    const persistence =
+      rawPersistence === "fast" || rawPersistence === "sheltered"
+        ? rawPersistence
+        : inferWheelchairPersistence({
+            quantity: remaining,
+            location: String(wheelchair?.location || ""),
+          });
 
     const quantityBand =
       remaining >= 6 ? "many" :
@@ -2823,29 +2830,30 @@
       remaining === 2 ? "two" :
       "one";
 
-    // Repère terrain uniquement : cette fenêtre n'expire jamais un signalement.
-    // Les emplacements abrités/cachés refroidissent volontairement sur plusieurs jours.
+    // Repère interne uniquement : jamais affiché comme un compte à rebours
+    // et jamais utilisé pour supprimer automatiquement un signalement.
+    // Plus il reste de fauteuils, plus la confiance décroît lentement.
     const minutesByPlacement = {
       fast: {
-        one: 40,
-        two: 55,
-        three: 75,
-        four: 100,
+        one: 35,
+        two: 50,
+        three: 70,
+        four: 90,
         many: 120,
       },
       normal: {
-        one: 80,
+        one: 75,
         two: 105,
-        three: 135,
-        four: 180,
-        many: 210,
+        three: 150,
+        four: 210,
+        many: 270,
       },
       sheltered: {
-        one: 72 * 60,
-        two: 72 * 60,
+        one: 48 * 60,
+        two: 60 * 60,
         three: 72 * 60,
-        four: 72 * 60,
-        many: 72 * 60,
+        four: 84 * 60,
+        many: 96 * 60,
       },
     };
 
@@ -2891,6 +2899,16 @@
     const age = Number.isFinite(basisAt) ? Math.max(0, now - basisAt) : 0;
     const progress = Math.min(1, age / Math.max(1, windowMs));
     const position = Math.round((1 - progress) * 100);
+    const remaining = Math.max(
+      1,
+      Number(wheelchair?.quantity_remaining) ||
+        Number(wheelchair?.quantity_total) ||
+        1,
+    );
+    const elapsed = wheelchairElapsedTimeLabel(age);
+    const timeLabel = lastSeenAtRaw
+      ? (remaining > 1 ? "Vus il y a " : "Vu il y a ") + elapsed
+      : (remaining > 1 ? "Signalés il y a " : "Signalé il y a ") + elapsed;
 
     let stage = "frozen";
     let icon = "🧊";
@@ -2919,8 +2937,7 @@
       stage,
       icon,
       label,
-      timeLabel: wheelchairElapsedTimeLabel(age),
-      basisLabel: lastSeenAtRaw ? "depuis confirmation" : "depuis signalement",
+      timeLabel,
       reportedAt: reportedAtRaw,
       lastSeenAt: lastSeenAtRaw,
       exactReportedAt: wheelchairExactDateLabel(reportedAtRaw),
@@ -2932,7 +2949,7 @@
     if (!wheelchair || wheelchair.type !== "spot" || wheelchair.status !== "active") return "";
     const freshness = wheelchairFreshness(message, wheelchair);
     const aria =
-      freshness.timeLabel + " " + freshness.basisLabel +
+      freshness.timeLabel +
       " · " + freshness.label +
       " · estimation indicative";
     const exactFacts = [
@@ -2950,12 +2967,13 @@
         ' data-freshness-reported-at="' + esc(freshness.reportedAt) + '"' +
         ' data-freshness-last-seen="' + esc(freshness.lastSeenAt) + '"' +
         ' data-freshness-persistence="' + esc(String(wheelchair.persistence || "normal")) + '"' +
+        ' data-freshness-location="' + esc(String(wheelchair.location || "")) + '"' +
         ' data-freshness-quantity="' + esc(String(wheelchair.quantity_remaining || wheelchair.quantity_total || 1)) + '"' +
         ' title="' + esc("Repère indicatif · " + freshness.label) + '">' +
         '<div class="tb-freshness-track" role="img" aria-label="' + esc(aria) + '">' +
           '<span class="tb-freshness-state">' +
             '<strong data-freshness-time>' + esc(freshness.timeLabel) + '</strong>' +
-            '<small data-freshness-label>' + esc(freshness.basisLabel + " · " + freshness.label) + '</small>' +
+            '<small data-freshness-label>' + esc(freshness.label) + '</small>' +
           '</span>' +
           '<i class="tb-freshness-marker" style="--freshness-position:' + freshness.position + '%">' +
             '<span data-freshness-icon>' + freshness.icon + '</span>' +
@@ -2983,6 +3001,7 @@
           type: "spot",
           last_seen_at: lastSeenAt,
           persistence: String(node.dataset.freshnessPersistence || "normal"),
+          location: String(node.dataset.freshnessLocation || ""),
           quantity_remaining: Math.max(1, Number(node.dataset.freshnessQuantity) || 1),
         },
       );
@@ -2995,13 +3014,13 @@
       if (time) time.textContent = freshness.timeLabel;
 
       const label = node.querySelector("[data-freshness-label]");
-      if (label) label.textContent = freshness.basisLabel + " · " + freshness.label;
+      if (label) label.textContent = freshness.label;
 
       const track = node.querySelector(".tb-freshness-track");
       if (track) {
         track.setAttribute(
           "aria-label",
-          freshness.timeLabel + " " + freshness.basisLabel +
+          freshness.timeLabel +
           " · " + freshness.label + " · estimation indicative",
         );
       }
