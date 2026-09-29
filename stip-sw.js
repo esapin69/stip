@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20260929-communication-first-open1";
+const STIP_SW_BUILD="20260929-wheelchair-freshness1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
