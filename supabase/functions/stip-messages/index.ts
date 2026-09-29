@@ -744,13 +744,15 @@ async function teamSend(ctx:any,body:any){
   if(photoPath)payload.photo_path=photoPath;
   if(replyTo)payload.reply_to_id=replyTo;
   if(wheelchair){
-    const type=wheelchair.type==="search"?"search":"spot",
+    const rawType=String(wheelchair.type||"").trim().toLowerCase(),
+      type=rawType==="search"||rawType==="empty"?rawType:"spot",
       quantity=type==="spot"?inferWheelchairQuantity(text,wheelchair.quantity):1,
       building=String(wheelchair.building||"").trim().slice(0,32),
       level=String(wheelchair.level||"").trim().slice(0,24),
       location=String(wheelchair.location||"").trim().slice(0,120),
       rawPersistence=String(wheelchair.persistence||"").trim().toLowerCase(),
       persistence=["fast","normal","sheltered"].includes(rawPersistence)?rawPersistence:"normal";
+    if(type==="empty"&&!building)throw Error("Choisis le bâtiment dont le local fauteuil est vide.");
     if(type==="spot"&&wheelchairSpotLocationTooVague(location)){
       throw Error("Précise l’endroit pour que le fauteuil puisse être retrouvé.")
     }
@@ -873,7 +875,7 @@ async function teamTake(ctx:any,body:any){
   if(!row)throw Error("Ce signalement n’est plus disponible.");
 
   const wheelchair=row?.payload?.wheelchair;
-  if(!wheelchair||wheelchair.type==="search")throw Error("Ce message n’est pas un fauteuil disponible.");
+  if(!wheelchair||wheelchair.type!=="spot")throw Error("Ce message n’est pas un fauteuil disponible.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true,remaining:0};
 
   const total=inferWheelchairQuantity(String(row.body||""),wheelchair.quantity_total),
@@ -946,7 +948,7 @@ async function teamStillThere(ctx:any,body:any){
   if(!row)throw Error("Ce signalement n’est plus disponible.");
 
   const wheelchair=row?.payload?.wheelchair;
-  if(!wheelchair||wheelchair.type==="search")throw Error("Ce message n’est pas un fauteuil disponible.");
+  if(!wheelchair||wheelchair.type!=="spot")throw Error("Ce message n’est pas un fauteuil disponible.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
 
   const seenAt=new Date().toISOString(),
