@@ -2833,7 +2833,7 @@
   }
 
   function wheelchairFreshnessMarkup(message, wheelchair) {
-    if (!wheelchair || wheelchair.type === "search" || wheelchair.status !== "active") return "";
+    if (!wheelchair || wheelchair.type !== "spot" || wheelchair.status !== "active") return "";
     const freshness = wheelchairFreshness(message, wheelchair);
     const aria =
       freshness.timeLabel + " " + freshness.basisLabel +
