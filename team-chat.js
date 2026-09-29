@@ -349,6 +349,52 @@
     return options;
   }
 
+  // Quand un étage n'a que deux repères canoniques pour préciser "Ascenseur",
+  // on évite le panneau intermédiaire : les deux choix précis remplacent
+  // directement leurs cartes génériques dans la grille principale.
+  function wheelchairInlineElevatorChoices(buildingKey = "", level = "", spots = []) {
+    const source = Array.isArray(spots) ? spots : [];
+    const genericLift = source.find((item) => {
+      const key = norm(item?.value || item?.label || "");
+      return key === "ascenseur" || key === "ascenseurs";
+    });
+    if (!genericLift) return source;
+
+    const contexts = wheelchairLevelContextOptions(buildingKey, level, []);
+    if (contexts.length !== 2) return source;
+
+    const visibleKeys = new Set(
+      source.map((item) => norm(item?.value || item?.label || "")),
+    );
+    if (!contexts.every((label) => visibleKeys.has(norm(label)))) return source;
+
+    const contextByKey = new Map(
+      contexts.map((label) => [norm(label), String(label || "").trim()]),
+    );
+    const genericValue =
+      String(genericLift.value || genericLift.label || "Ascenseur").trim() || "Ascenseur";
+    const genericKey = norm(genericValue);
+
+    return source.flatMap((item) => {
+      const raw = String(item?.value || item?.label || "").trim();
+      const key = norm(raw);
+
+      if (key === genericKey) return [];
+
+      const context = contextByKey.get(key);
+      if (!context) return [item];
+
+      return [{
+        ...item,
+        label: context,
+        value: genericValue + " · " + context,
+        icon: "🛗",
+        persistence: genericLift.persistence || item.persistence || "normal",
+        elevatorInline: true,
+      }];
+    });
+  }
+
   const norm = (value) =>
     String(value ?? "")
       .normalize("NFD")
@@ -1938,7 +1984,12 @@
       };
 
       const renderPlaces = () => {
-        const quickPlaces = wheelchairFieldSpots(building.key, level);
+        const baseQuickPlaces = wheelchairFieldSpots(building.key, level);
+        const quickPlaces = wheelchairInlineElevatorChoices(
+          building.key,
+          level,
+          baseQuickPlaces,
+        );
         const selectedValues = [...selectedPlaces];
         const vagueSelections = selectedValues.filter((value) =>
           isVagueWheelchairSpotLocation(value),

@@ -53,6 +53,11 @@ for(const tag of hubForms){
   if(!tag.includes("data-stip-form-mode="))fail("formulaire sans mode explicite: "+tag.slice(0,140));
 }
 has(chat,'data-stip-form-mode="composer"',"le compositeur Chat/Fauteuils n’est pas déclaré composer");
+has(chat,"wheelchairInlineElevatorChoices","le clavier Fauteuils ne sait pas aplatir les deux choix d’ascenseur");
+has(chat,"contexts.length !== 2","l’aplatissement ascenseur n’est pas limité au cas exact de deux choix");
+has(chat,'value: genericValue + " · " + context',"les choix ascenseur directs ne conservent pas le repère composé");
+has(chat,"const quickPlaces = wheelchairInlineElevatorChoices(","la grille principale n’utilise pas l’aplatissement ascenseur");
+has(rules,"no extra follow-up panel opens","le contrat Fauteuils ne protège pas la suppression du panneau ascenseur à deux choix");
 if(chat.includes('class="tb-dm-shortcut"')||chat.includes("dmState")||chat.includes("[data-dm-"))fail("l’ancien moteur DM ne doit plus vivre dans Chat/Fauteuils");
 if(chatCss.includes(".tb-dm-"))fail("les anciens styles DM ne doivent plus rester dans Chat/Fauteuils");
 
