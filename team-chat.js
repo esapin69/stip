@@ -741,9 +741,24 @@
       const next = Math.max(0, window.scrollY || 0);
       const delta = next - state.lastPageScrollY;
       state.lastPageScrollY = next;
+
+      if (
+        state.surfaceMode === "wheelchair" &&
+        state.composerExpanded &&
+        next > 72 &&
+        !document.querySelector(".tb-modal-wrap")
+      ) {
+        const textarea = state.root?.querySelector(".tb-composer textarea");
+        if (!textarea || document.activeElement !== textarea) {
+          setWheelchairComposerExpanded(false);
+          return;
+        }
+      }
+
       collapseWheelchairComposerFromScroll(delta);
     };
     window.addEventListener("scroll", state.pageScrollHandler, { passive: true });
+    state.pageScrollHandler();
   }
 
   function unbindPageScroll() {
@@ -962,10 +977,7 @@
       if (mode) {
         event.preventDefault();
         const nextMode = String(mode.dataset.composeMode || "");
-        const wasCollapsed =
-          state.surfaceMode === "wheelchair" && !state.composerExpanded;
         if (nextMode !== state.composeMode) setComposeMode(nextMode);
-        if (wasCollapsed) setWheelchairComposerExpanded(true);
         return;
       }
       const localEmpty = event.target.closest?.("[data-local-empty]");
@@ -4112,7 +4124,7 @@
   });
   window.addEventListener("stip:session-ended", stopAll);
   const apiSurface = {
-    build: "20260930-wheelchair-compact-dock2",
+    build: "20260930-wheelchair-compact-dock3",
     mount,
     mountPreview,
     unmountFull,
