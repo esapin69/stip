@@ -47,7 +47,7 @@ async function allRows(conversationId: string) {
 function isActiveWheelchairRow(row: any) {
   const wheelchair = row?.payload?.wheelchair;
   return !!wheelchair &&
-    wheelchair.type !== "search" &&
+    wheelchair.type === "spot" &&
     wheelchair.status === "active";
 }
 
