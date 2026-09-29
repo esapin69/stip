@@ -52,8 +52,8 @@ async function render(agent:any,month:string){
     db.from('contacts_ghe').select('nom,prenom,source_key').eq('source_key',agent.source_key).eq('actif',true).maybeSingle()
   ]);if(re)throw re;if(ae)throw ae;if(ce)console.warn(ce);if(!rows?.length)throw Error('Aucune donnée de planning pour ce mois.')
   const {data:changes,error:he}=await db.from('stip_planning_change_history')
-    .select('change_date,base_code,previous_code,new_code,scenario,change_kind,applied_at,request_id')
-    .eq('agent_id',agent.id).gte('change_date',start).lte('change_date',end)
+    .select('change_date,base_code,previous_code,new_code,scenario,change_kind,applied_at,request_id,effective')
+    .eq('agent_id',agent.id).eq('effective',true).gte('change_date',start).lte('change_date',end)
     .order('applied_at',{ascending:true});
   if(he)throw he
   const mmKey=String(mon).padStart(2,'0'),template=assets?.find((a:any)=>a.asset_type==='template'&&a.asset_key==='CALENDAR_TEMPLATE'),monthAsset=assets?.find((a:any)=>a.asset_type==='month'&&a.asset_key===mmKey),avatar=assets?.find((a:any)=>a.asset_type==='avatar'&&a.agent_source_key===agent.source_key)||assets?.find((a:any)=>a.asset_type==='fallback'&&a.asset_key==='DEFAULT_AVATAR')
