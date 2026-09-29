@@ -4,6 +4,8 @@ const read=(p)=>fs.readFileSync(new URL('../'+p,import.meta.url),'utf8');
 const assert=(ok,msg)=>{if(!ok){console.error('❌ '+msg);process.exitCode=1}else console.log('✓ '+msg)};
 
 const client=read('planning-print-reference.js');
+const changeClient=read('change-workflow.js');
+
 const home=read('planning-home.js');
 const change=read('supabase/functions/stip-change/index.ts');
 const pdf=read('supabase/functions/stip-planning-pdf/index.ts');
@@ -17,6 +19,11 @@ assert(home.includes('PDF planning à jour'),'planning action is labelled as the
 
 assert(change.includes("db.rpc('stip_apply_change_request'"),'responsible approval applies the canonical planning change RPC');
 assert(change.includes("action==='planning_change_history'"),'planning exchange history is exposed by the change engine');
+assert(changeClient.includes('selectedRecipientIds'),'planning change UI supports multiple official mail recipients');
+assert(changeClient.includes('data-cw-recipient'),'planning change UI renders chef/cadre recipient choices');
+assert(changeClient.includes('recipient_ids:selectedRecipientIds'),'planning change UI sends selected recipient IDs');
+assert(change.includes('resolveRecipients'),'planning change backend validates selected recipients');
+assert(change.includes('routed_recipients:recipients'),'planning change backend snapshots selected recipients');
 
 assert(pdf.includes("from('stip_planning_change_history')"),'PDF reads planning change history');
 assert(pdf.includes(".eq('effective',true)"),'PDF renders only currently effective STIP changes');
