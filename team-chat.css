@@ -4560,6 +4560,32 @@
   margin-top:7px;
   display:block!important;
 }
+.tb-freshness-exact{
+  margin-top:6px;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:4px 10px;
+  color:#536d73;
+  font-size:.61rem;
+  line-height:1.25;
+}
+.tb-freshness-exact span{
+  display:inline-flex;
+  gap:3px;
+  align-items:baseline;
+}
+.tb-freshness-exact strong{
+  color:#2f5058;
+  font-weight:950;
+}
+.tb-freshness-exact em{
+  width:100%;
+  color:#71858a;
+  font-size:.55rem;
+  font-style:normal;
+  font-weight:800;
+}
 .tb-freshness-track{
   position:relative;
   width:100%;
