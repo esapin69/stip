@@ -75,6 +75,11 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - `shift-registry.js` : registre canonique des shifts.
 - Toute page qui interprète des codes de shift doit utiliser ce registre.
 - Ne pas recréer localement les horaires, couleurs, variantes ou codes de base.
+- `planning.source_value` conserve la donnée importée du planning cadre ; `planning.code` porte l'état effectif exploité par STIP.
+- `stip_planning_change_history` est l'historique canonique des changements/échanges validés via STIP. Une décision acceptée ne doit jamais effacer la valeur cadre ni perdre la trace avant/après.
+- `stip_apply_change_request` applique atomiquement un changement validé et son historique. Les pages ne modifient pas directement `planning.code` pour simuler un échange.
+- Un nouvel import cadre réconcilie les overrides STIP : ancien cadre inchangé = override réappliqué ; cadre déjà mis à jour = override absorbé ; nouvelle décision cadre différente = cadre prioritaire et historique conservé.
+- Le PDF planning officiel est produit par `stip-planning-pdf` à partir du modèle cadre : shift cadre sur la ligne principale et shift STIP effectif sur la ligne additionnelle uniquement tant que l'override reste effectif.
 
 ### Intelligence terrain
 - `stip-field-intelligence.js` : moteur partagé d’analyse terrain.
