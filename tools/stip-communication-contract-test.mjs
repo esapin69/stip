@@ -7,6 +7,7 @@ const fail=(message)=>{throw new Error("[Communication contract] "+message)};
 const has=(text,needle,message)=>{if(!text.includes(needle))fail(message)};
 
 const app=read("communication-app.js");
+const communicationApp=app;
 const home=read("home-shell.js");
 const quick=read("quick-access.js");
 const accessRuntime=read("access-runtime.js");
@@ -25,6 +26,8 @@ const dmMigration=read("supabase/migrations/20260925151500_notification_push_con
 
 for(const label of ["Chat équipe","DM & groupes","Fauteuils"])has(app,label,"onglet manquant: "+label);
 for(const route of ["communication/chat","communication/dm","communication/fauteuils"])has(app,route,"route manquante: "+route);
+has(app,"renderPending","Communication ne rejoue pas un changement d’onglet arrivé pendant un chargement");
+has(app,"renderVersion","Communication ne protège pas les rendus asynchrones obsolètes");
 has(home,'app("homeChat", "Communication", "communication", "communication")',"l’application Communication n’est pas exposée avec son icône canonique");
 has(home,'communication/fauteuils',"le raccourci Fauteuils n’aboutit pas à Communication/Fauteuils");
 has(quick,'communication: {',"Communication manque dans le catalogue Applications");
@@ -37,6 +40,7 @@ has(loader,'void tableau().catch(() => {});',"le shell Communication attend enco
 has(loader,'void style("communication-app.css").catch(() => {});',"Communication attend encore le CSS avant de charger son shell");
 has(loader,'communicationPromise = load("communication-app.js")',"le JS du shell Communication n’est pas chargé directement");
 has(home,"Communication met trop de temps à charger.","aucun garde-fou visible si le runtime Communication reste bloqué");
+has(home,'root.querySelector("#hcCommunicationAppHost [data-communication-app]")',"le garde-fou Communication bloque encore le premier montage sur l’écran Chargement");
 has(appRuntime,"r.startsWith('communication/')","le routeur principal ne conserve pas les routes Communication dans homeView");
 has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canonique d’agents");
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
