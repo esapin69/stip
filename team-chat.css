@@ -5787,3 +5787,97 @@
   .tb-local-empty-action{min-height:38px;margin-top:7px}
   .tb-empty-local-choices{grid-template-columns:1fr 1fr}
 }
+
+
+/* 20260929-wheelchair-review-touchfix */
+/* Final wheelchair review: field use must stay one-tap, without Android text-selection stealing taps. */
+.tb-final-review,
+.tb-final-review .tb-review-summary,
+.tb-final-review .tb-wizard-search,
+.tb-final-review .tb-confidence-override,
+.tb-final-review .tb-review-lifts,
+.tb-final-review .tb-review-send,
+.tb-final-review .tb-take-cancel{
+  -webkit-user-select:none!important;
+  user-select:none!important;
+}
+.tb-final-review textarea,
+.tb-final-review input{
+  -webkit-user-select:text!important;
+  user-select:text!important;
+}
+.tb-final-review .tb-review-send{
+  position:relative!important;
+  z-index:2!important;
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:transparent!important;
+}
+.tb-final-review .tb-review-send.is-loading{
+  cursor:progress!important;
+}
+.tb-privacy-wrap{
+  z-index:10040!important;
+}
+
+.tb-review-lifts{
+  margin-top:9px;
+  padding:8px;
+  border:1px solid #d7e5e6;
+  border-radius:13px;
+  background:#f8fbfb;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:8px;
+}
+.tb-review-lifts>small{
+  color:#5b747a;
+  font-size:.56rem;
+  line-height:1;
+  font-weight:950;
+}
+.tb-review-lifts>div{
+  min-width:0;
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:5px;
+}
+.tb-review-lifts button{
+  min-width:0;
+  min-height:38px;
+  padding:5px 7px;
+  border:1px solid #d4e2e4;
+  border-radius:11px;
+  background:#fff;
+  color:#47676e;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  align-items:center;
+  gap:5px;
+  font:inherit;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.tb-review-lifts button span{
+  font-size:.9rem;
+  line-height:1;
+}
+.tb-review-lifts button strong{
+  min-width:0;
+  font-size:.54rem;
+  line-height:1.05;
+  font-weight:950;
+  text-align:left;
+}
+.tb-review-lifts button.is-selected{
+  border-color:#75c2d0;
+  background:#e6f7fa;
+  color:#176478;
+  box-shadow:0 0 0 2px rgba(117,194,208,.12);
+}
+@media(max-width:390px){
+  .tb-review-lifts{
+    grid-template-columns:1fr;
+  }
+}
