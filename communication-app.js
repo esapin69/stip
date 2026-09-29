@@ -113,7 +113,10 @@
   }
 
   function bindShellScroll() {
-    if (state.scrollHandler) return;
+    if (state.scrollHandler) {
+      syncChromeCompact();
+      return;
+    }
     state.scrollHandler = () => syncChromeCompact();
     window.addEventListener("scroll", state.scrollHandler, { passive: true });
     window.addEventListener("resize", state.scrollHandler, { passive: true });

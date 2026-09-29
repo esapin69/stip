@@ -726,7 +726,6 @@
     if (
       state.surfaceMode !== "wheelchair" ||
       !state.composerExpanded ||
-      state.interacting ||
       delta >= -12 ||
       document.querySelector(".tb-modal-wrap")
     ) return;
