@@ -813,11 +813,7 @@ async function teamSend(ctx:any,body:any){
   if(!text&&!legacyPhotoPath&&!inlinePhoto)throw Error("Message vide.");
   if(legacyPhotoPath&&!legacyPhotoPath.startsWith(String(conv.id)+"/"))throw Error("Photo invalide.");
 
-  if(replyTo){
-    const parent=await db.from("stip_messages").select("id").eq("id",replyTo).eq("conversation_id",conv.id).maybeSingle();
-    if(parent.error)throw parent.error;
-    if(!parent.data)throw Error("Le message auquel vous répondez n’est plus disponible.")
-  }
+  if(replyTo)await teamMessageTarget(ctx,replyTo);
 
   let photoPath=legacyPhotoPath,createdPhoto="";
   if(inlinePhoto){
@@ -911,13 +907,9 @@ async function teamResolve(ctx:any,body:any){
   await purgePreviousTableauDays(String(conv.id));
   const messageId=String(body.message_id||"").trim();
   if(!messageId)throw Error("Signalement invalide.");
-  const{data:row,error}=await db.from("stip_messages")
-    .select("id,payload")
-    .eq("id",messageId)
-    .eq("conversation_id",conv.id)
-    .maybeSingle();
-  if(error)throw error;
-  if(!row)throw Error("Ce signalement n’est plus disponible.");
+  const target=await teamMessageTarget(ctx,messageId),
+    row=target.row,
+    targetConversationId=String(target.conversation.id);
   const wheelchair=row?.payload?.wheelchair;
   if(!wheelchair)throw Error("Ce message n’est pas un signalement de fauteuil.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
@@ -934,9 +926,9 @@ async function teamResolve(ctx:any,body:any){
         resolved_by_name:resolvedBy
       }
     };
-  const update=await db.from("stip_messages").update({payload}).eq("id",messageId).eq("conversation_id",conv.id);
+  const update=await db.from("stip_messages").update({payload}).eq("id",messageId).eq("conversation_id",targetConversationId);
   if(update.error)throw update.error;
-  await db.from("stip_conversations").update({updated_at:resolvedAt}).eq("id",conv.id);
+  await db.from("stip_conversations").update({updated_at:resolvedAt}).eq("id",targetConversationId);
   return{ok:true,resolved_at:resolvedAt,resolved_by_name:resolvedBy}
 }
 
@@ -951,15 +943,10 @@ async function teamTake(ctx:any,body:any){
   const messageId=String(body.message_id||"").trim();
   if(!messageId)throw Error("Signalement invalide.");
 
-  const{data:row,error}=await db.from("stip_messages")
-    .select("id,body,payload")
-    .eq("id",messageId)
-    .eq("conversation_id",conv.id)
-    .maybeSingle();
-  if(error)throw error;
-  if(!row)throw Error("Ce signalement n’est plus disponible.");
-
-  const wheelchair=row?.payload?.wheelchair;
+  const target=await teamMessageTarget(ctx,messageId),
+    row=target.row,
+    targetConversationId=String(target.conversation.id),
+    wheelchair=row?.payload?.wheelchair;
   if(!wheelchair||wheelchair.type!=="spot")throw Error("Ce message n’est pas un fauteuil disponible.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true,remaining:0};
 
@@ -976,6 +963,8 @@ async function teamTake(ctx:any,body:any){
     takenById=actorKey(ctx),
     nextRemaining=Math.max(0,remaining-taken),
     takes=Array.isArray(wheelchair.takes)?wheelchair.takes.slice(-19):[],
+    sightings=Array.isArray(wheelchair.sightings)?wheelchair.sightings.slice(-29):[],
+    remainingSeen=nextRemaining>0,
     nextWheelchair={
       ...wheelchair,
       type:"spot",
@@ -990,6 +979,17 @@ async function teamTake(ctx:any,body:any){
       last_taken_at:takenAt,
       last_taken_by_agent_id:takenById,
       last_taken_by_name:takenBy,
+      ...(remainingSeen?{
+        sightings:[...sightings,{
+          seen_at:takenAt,
+          seen_by_agent_id:takenById,
+          seen_by_name:takenBy,
+          reason:"take"
+        }],
+        last_seen_at:takenAt,
+        last_seen_by_agent_id:takenById,
+        last_seen_by_name:takenBy
+      }:{}),
       ...(nextRemaining===0?{
         status:"resolved",
         resolved_at:takenAt,
@@ -1002,16 +1002,15 @@ async function teamTake(ctx:any,body:any){
   const update=await db.from("stip_messages")
     .update({payload})
     .eq("id",messageId)
-    .eq("conversation_id",conv.id);
+    .eq("conversation_id",targetConversationId);
   if(update.error)throw update.error;
 
   await db.from("stip_conversations")
     .update({updated_at:takenAt})
-    .eq("id",conv.id);
+    .eq("id",targetConversationId);
 
   return{ok:true,taken,remaining:nextRemaining,total,taken_by_name:takenBy,taken_at:takenAt}
 }
-
 
 async function teamStillThere(ctx:any,body:any){
   requireTeamWrite(ctx);
@@ -1024,15 +1023,10 @@ async function teamStillThere(ctx:any,body:any){
   const messageId=String(body.message_id||"").trim();
   if(!messageId)throw Error("Signalement invalide.");
 
-  const{data:row,error}=await db.from("stip_messages")
-    .select("id,payload")
-    .eq("id",messageId)
-    .eq("conversation_id",conv.id)
-    .maybeSingle();
-  if(error)throw error;
-  if(!row)throw Error("Ce signalement n’est plus disponible.");
-
-  const wheelchair=row?.payload?.wheelchair;
+  const target=await teamMessageTarget(ctx,messageId),
+    row=target.row,
+    targetConversationId=String(target.conversation.id),
+    wheelchair=row?.payload?.wheelchair;
   if(!wheelchair||wheelchair.type!=="spot")throw Error("Ce message n’est pas un fauteuil disponible.");
   if(wheelchair.status==="resolved")return{ok:true,already_resolved:true};
 
@@ -1056,16 +1050,15 @@ async function teamStillThere(ctx:any,body:any){
   const update=await db.from("stip_messages")
     .update({payload})
     .eq("id",messageId)
-    .eq("conversation_id",conv.id);
+    .eq("conversation_id",targetConversationId);
   if(update.error)throw update.error;
 
   await db.from("stip_conversations")
     .update({updated_at:seenAt})
-    .eq("id",conv.id);
+    .eq("id",targetConversationId);
 
   return{ok:true,seen_at:seenAt,seen_by_name:seenBy}
 }
-
 
 function cleanReactionEmoji(value:any){
   const emoji=String(value||"").trim();
@@ -1085,13 +1078,9 @@ async function teamReact(ctx:any,body:any){
     emoji=cleanReactionEmoji(body.emoji);
   if(!messageId)throw Error("Message invalide.");
 
-  const{data:row,error}=await db.from("stip_messages")
-    .select("id,payload")
-    .eq("id",messageId)
-    .eq("conversation_id",conv.id)
-    .maybeSingle();
-  if(error)throw error;
-  if(!row)throw Error("Ce message n’est plus disponible.");
+  const target=await teamMessageTarget(ctx,messageId),
+    row=target.row,
+    targetConversationId=String(target.conversation.id);
 
   const agentId=actorKey(ctx),
     reactedAt=new Date().toISOString(),
@@ -1112,12 +1101,12 @@ async function teamReact(ctx:any,body:any){
   const update=await db.from("stip_messages")
     .update({payload})
     .eq("id",messageId)
-    .eq("conversation_id",conv.id);
+    .eq("conversation_id",targetConversationId);
   if(update.error)throw update.error;
 
   await db.from("stip_conversations")
     .update({updated_at:reactedAt})
-    .eq("id",conv.id);
+    .eq("id",targetConversationId);
 
   return{ok:true,reactions:next}
 }
@@ -1131,20 +1120,42 @@ async function teamDelete(ctx:any,body:any){
   const ids=[...new Set((Array.isArray(body.message_ids)?body.message_ids:[]).map(String).filter(Boolean))].slice(0,300);
   if(!ids.length)throw Error("Aucun message sélectionné.");
   const{data:rows,error}=await db.from("stip_messages")
-    .select("id,payload,sender_agent_id,sender_stagiaire_key")
-    .eq("conversation_id",conv.id)
-    .in("id",ids);
+    .select("id,conversation_id,payload,sender_agent_id,sender_stagiaire_key")
+    .in("id",ids)
+    .is("deleted_at",null);
   if(error)throw error;
   if(!rows?.length)return{ok:true,deleted:0};
+
+  const conversationIds=[...new Set(rows.map((m:any)=>String(m.conversation_id)).filter(Boolean))];
+  const{data:conversations,error:conversationError}=await db.from("stip_conversations")
+    .select("id,kind,communication_family")
+    .in("id",conversationIds);
+  if(conversationError)throw conversationError;
+  const valid=new Set((conversations||[])
+    .filter((item:any)=>item.kind==="team_chat"&&normalizeCommunicationFamily(item.communication_family)===communicationFamily(ctx))
+    .map((item:any)=>String(item.id)));
+  if(rows.some((row:any)=>!valid.has(String(row.conversation_id))))
+    throw Error("Suppression non autorisée.");
   if(!admin&&rows.some((m:any)=>senderOwnerKey(m)!==actorKey(ctx)))
     throw Error("Suppression non autorisée.");
+
   await removeTeamPhotos(rows.map((m:any)=>m?.payload?.photo_path).filter(Boolean));
   const realIds=rows.map((m:any)=>m.id),
     del=await db.from("stip_messages").delete().in("id",realIds);
   if(del.error)throw del.error;
-  const{data:last}=await db.from("stip_messages").select("created_at").eq("conversation_id",conv.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
-  const stamp=last?.created_at||new Date().toISOString();
-  await db.from("stip_conversations").update({last_message_at:stamp,updated_at:new Date().toISOString()}).eq("id",conv.id);
+
+  for(const conversationId of conversationIds){
+    const{data:last}=await db.from("stip_messages")
+      .select("created_at")
+      .eq("conversation_id",conversationId)
+      .order("created_at",{ascending:false})
+      .limit(1)
+      .maybeSingle();
+    const stamp=last?.created_at||new Date().toISOString();
+    await db.from("stip_conversations")
+      .update({last_message_at:stamp,updated_at:new Date().toISOString()})
+      .eq("id",conversationId)
+  }
   return{ok:true,deleted:realIds.length}
 }
 
