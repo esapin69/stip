@@ -44,6 +44,19 @@ async function allRows(conversationId: string) {
   return rows;
 }
 
+function isActiveWheelchairRow(row: any) {
+  const wheelchair = row?.payload?.wheelchair;
+  return !!wheelchair &&
+    wheelchair.type !== "search" &&
+    wheelchair.status === "active";
+}
+
+function isCurrentTableauKey(value: any) {
+  const key = String(value || "");
+  const match = key.match(/(\d{4}-\d{2}-\d{2})$/);
+  return !!match && match[1] === parisDayKey();
+}
+
 async function removePaths(paths: string[]) {
   const unique = [
     ...new Set(paths.map((path) => String(path || "").trim()).filter(Boolean)),
@@ -115,8 +128,16 @@ async function purgeCurrentConversation(conversation: any) {
   if (!conversation?.id) return { messages: 0, photos: 0 };
   const today = parisDayKey();
   const rows = await allRows(String(conversation.id));
+  const protectedPaths = new Set(
+    rows
+      .filter(isActiveWheelchairRow)
+      .map((row: any) => String(row?.payload?.photo_path || "").trim())
+      .filter(Boolean),
+  );
   const stale = rows.filter(
-    (row: any) => parisDayKey(row.created_at) !== today,
+    (row: any) =>
+      parisDayKey(row.created_at) !== today &&
+      !isActiveWheelchairRow(row),
   );
 
   const photos = await removePaths(
@@ -134,15 +155,17 @@ async function purgeCurrentConversation(conversation: any) {
     const name = String(entry?.name || "").trim();
     if (!name || name === today) continue;
     if (entry?.id) {
-      oldFolderPaths.push(String(conversation.id) + "/" + name);
+      const path = String(conversation.id) + "/" + name;
+      if (!protectedPaths.has(path)) oldFolderPaths.push(path);
       continue;
     }
     const files = await listFolder(String(conversation.id) + "/" + name);
     for (const file of files) {
-      if (file?.id && file?.name)
-        oldFolderPaths.push(
-          String(conversation.id) + "/" + name + "/" + String(file.name),
-        );
+      if (file?.id && file?.name) {
+        const path =
+          String(conversation.id) + "/" + name + "/" + String(file.name);
+        if (!protectedPaths.has(path)) oldFolderPaths.push(path);
+      }
     }
   }
   const orphanPhotos = await removePaths(oldFolderPaths);
@@ -181,7 +204,6 @@ async function purgeExpiredDmMedia() {
 
 async function purgePreviousDays() {
   const deletedDmPhotos = await purgeExpiredDmMedia();
-  const todayKey = TABLEAU_PREFIX + parisDayKey();
   const { data: conversations, error } = await db
     .from("stip_conversations")
     .select("id,direct_key")
@@ -189,33 +211,45 @@ async function purgePreviousDays() {
 
   if (error) throw error;
 
-  const current = (conversations || []).find(
-    (conversation: any) => String(conversation.direct_key || "") === todayKey,
+  const current = (conversations || []).filter(
+    (conversation: any) => isCurrentTableauKey(conversation.direct_key),
   );
   const old = (conversations || []).filter(
-    (conversation: any) => String(conversation.direct_key || "") !== todayKey,
+    (conversation: any) => !isCurrentTableauKey(conversation.direct_key),
   );
 
-  const currentCleanup = await purgeCurrentConversation(current);
-  let deletedMessages = currentCleanup.messages;
-  let deletedPhotos = currentCleanup.photos;
+  let deletedMessages = 0;
+  let deletedPhotos = 0;
   let deletedConversations = 0;
+  let preservedWheelchairs = 0;
+
+  for (const conversation of current) {
+    const cleanup = await purgeCurrentConversation(conversation);
+    deletedMessages += cleanup.messages;
+    deletedPhotos += cleanup.photos;
+  }
 
   for (const conversation of old) {
     const id = String(conversation.id);
     const rows = await allRows(id);
+    const kept = rows.filter(isActiveWheelchairRow);
+    const stale = rows.filter((row: any) => !isActiveWheelchairRow(row));
+
+    preservedWheelchairs += kept.length;
 
     deletedPhotos += await removePaths(
-      rows
+      stale
         .map((row: any) => String(row?.payload?.photo_path || "").trim())
         .filter(Boolean),
     );
 
-    const ids = rows.map((row: any) => String(row.id));
+    const ids = stale.map((row: any) => String(row.id));
     if (ids.length) {
       await deleteMessages(ids);
       deletedMessages += ids.length;
     }
+
+    if (kept.length) continue;
 
     deletedPhotos += await removeStorageTree(id);
 
@@ -233,6 +267,7 @@ async function purgePreviousDays() {
     deleted_messages: deletedMessages,
     deleted_photos: deletedPhotos,
     deleted_conversations: deletedConversations,
+    preserved_active_wheelchairs: preservedWheelchairs,
     deleted_dm_photos: deletedDmPhotos,
   };
 }
