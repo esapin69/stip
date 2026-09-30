@@ -177,71 +177,145 @@
   function feedbackProfile(kind) {
     const profiles = {
       medical: {
-        mode: "administrative",
-        rating: false,
-        reasonTitle: "PROBLÈME RENCONTRÉ",
-        reasons: [
-          ["cancelled", "Rendez-vous annulé"],
-          ["delay", "Retard important"],
-          ["location", "Lieu / adresse incorrecte"],
-          ["convocation", "Convocation manquante"],
-          ["organization", "Autre problème d’organisation"],
-        ],
+        sectionTitle: "RÉSULTAT DU RENDEZ-VOUS",
+        labels: {
+          ok: "Rendez-vous réalisé",
+          problem: "Avec un problème",
+          absent: "Rendez-vous non réalisé",
+        },
+        reasons: {
+          problem: [
+            ["delay", "Retard important"],
+            ["location", "Lieu / adresse incorrecte"],
+            ["convocation", "Convocation manquante"],
+            ["organization", "Problème d’organisation"],
+            ["other", "Autre"],
+          ],
+          absent: [
+            ["cancelled", "Rendez-vous annulé"],
+            ["convocation", "Convocation manquante"],
+            ["location", "Lieu / adresse incorrecte"],
+            ["unavailable", "Impossible de le réaliser"],
+            ["other", "Autre"],
+          ],
+        },
+        allowNote: false,
       },
       training: {
-        mode: "rated",
-        rating: true,
-        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
-        reasons: [
-          ["content", "Contenu"],
-          ["facilitator", "Formateur"],
-          ["organization", "Organisation"],
-          ["schedule", "Horaires"],
-          ["usefulness", "Utilité"],
-          ["other", "Autre"],
-        ],
+        sectionTitle: "RÉSULTAT DE LA FORMATION",
+        labels: {
+          ok: "Formation réalisée",
+          problem: "Différente du prévu",
+          absent: "Formation non réalisée",
+        },
+        reasons: {
+          problem: [
+            ["schedule", "Horaires différents"],
+            ["location", "Lieu différent"],
+            ["organization", "Organisation différente"],
+            ["facilitator", "Formateur / intervenant"],
+            ["information", "Information manquante"],
+            ["other", "Autre"],
+          ],
+          absent: [
+            ["cancelled", "Formation annulée"],
+            ["not_informed", "Je n’avais pas l’information"],
+            ["schedule", "Horaires / date incorrects"],
+            ["location", "Lieu incorrect"],
+            ["unavailable", "Impossible d’y participer"],
+            ["other", "Autre"],
+          ],
+        },
+        allowNote: true,
       },
       intern: {
-        mode: "rated",
-        rating: true,
-        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
-        reasons: [
-          ["reception", "Accueil"],
-          ["supervision", "Encadrement"],
-          ["autonomy", "Autonomie"],
-          ["organization", "Organisation"],
-          ["communication", "Communication"],
-          ["other", "Autre"],
-        ],
+        sectionTitle: "RÉSULTAT DE L’ACCOMPAGNEMENT",
+        labels: {
+          ok: "Accompagnement réalisé",
+          problem: "Différent du prévu",
+          absent: "Accompagnement non réalisé",
+        },
+        reasons: {
+          problem: [
+            ["schedule", "Horaires différents"],
+            ["organization", "Organisation différente"],
+            ["supervision", "Encadrement différent"],
+            ["information", "Information manquante"],
+            ["communication", "Communication"],
+            ["other", "Autre"],
+          ],
+          absent: [
+            ["trainee_absent", "Stagiaire absent"],
+            ["not_informed", "Je n’avais pas été informé"],
+            ["not_found", "Je ne l’ai pas vu / trouvé"],
+            ["schedule", "Horaires / présence différents"],
+            ["organization", "Organisation modifiée"],
+            ["other", "Autre"],
+          ],
+        },
+        allowNote: true,
       },
       meeting: {
-        mode: "rated",
-        rating: true,
-        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
-        reasons: [
-          ["organization", "Organisation"],
-          ["schedule", "Horaires"],
-          ["usefulness", "Utilité"],
-          ["communication", "Communication"],
-          ["clarity", "Clarté"],
-          ["other", "Autre"],
-        ],
+        sectionTitle: "RÉSULTAT DE LA RÉUNION",
+        labels: {
+          ok: "Réunion réalisée",
+          problem: "Avec un imprévu",
+          absent: "Réunion non réalisée",
+        },
+        reasons: {
+          problem: [
+            ["schedule", "Horaires différents"],
+            ["organization", "Organisation"],
+            ["participants", "Participants"],
+            ["information", "Information manquante"],
+            ["communication", "Communication"],
+            ["other", "Autre"],
+          ],
+          absent: [
+            ["cancelled", "Réunion annulée"],
+            ["not_informed", "Je n’avais pas l’information"],
+            ["schedule", "Horaires / date incorrects"],
+            ["location", "Lieu incorrect"],
+            ["other", "Autre"],
+          ],
+        },
+        allowNote: true,
       },
       other: {
-        mode: "rated",
-        rating: true,
-        reasonTitle: "CE QUI EXPLIQUE TA NOTE",
-        reasons: [
-          ["organization", "Organisation"],
-          ["schedule", "Horaires"],
-          ["communication", "Communication"],
-          ["usefulness", "Utilité"],
-          ["process", "Déroulement"],
-          ["other", "Autre"],
-        ],
+        sectionTitle: "RÉSULTAT",
+        labels: {
+          ok: "Prévu réalisé",
+          problem: "Déroulement différent",
+          absent: "Non réalisé",
+        },
+        reasons: {
+          problem: [
+            ["schedule", "Horaires"],
+            ["organization", "Organisation"],
+            ["information", "Information manquante"],
+            ["communication", "Communication"],
+            ["process", "Déroulement"],
+            ["other", "Autre"],
+          ],
+          absent: [
+            ["cancelled", "Annulé"],
+            ["not_informed", "Je n’avais pas l’information"],
+            ["schedule", "Horaires / date"],
+            ["location", "Lieu"],
+            ["unavailable", "Impossible à réaliser"],
+            ["other", "Autre"],
+          ],
+        },
+        allowNote: true,
       },
     };
     return profiles[kind] || profiles.other;
+  }
+
+  function outcomeName(value) {
+    return { ok: "realized", problem: "different", absent: "not_realized" }[
+      value
+    ] || "";
   }
 
   function normalizeEvents() {
@@ -490,50 +564,18 @@
     modal.setAttribute("aria-modal", "true");
     modal.setAttribute("aria-labelledby", "hcFeedbackTitle");
 
-    const noteBlock =
-      event.kind === "medical"
-        ? ""
-        : '<section class="hc-feedback-note"><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Une information utile, si nécessaire"></textarea></section>';
-    const custom = event.question && event.kind !== "medical"
+    const noteBlock = profile.allowNote
+      ? '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Ajoute seulement l’information utile"></textarea></section>'
+      : "";
+    const custom = event.question
       ? `<section class="hc-feedback-question hc-feedback-custom" hidden><span>QUESTION LIÉE À CET ÉVÉNEMENT</span><strong>${esc(
           event.question,
         )}</strong><div class="hc-feedback-pair"><button type="button" data-custom="yes">Oui</button><button type="button" data-custom="no">Non</button></div></section>`
       : "";
-
-    const attendanceProblemLabel = profile.rating
-      ? "J’étais présent, mais…"
-      : "J’ai rencontré un problème";
-    const attendanceOkLabel = profile.rating
-      ? "Tout s’est bien déroulé"
-      : "Rendez-vous terminé sans problème";
-    const ratingBlock = profile.rating
-      ? `<section class="hc-feedback-rating hc-feedback-rating-hero" hidden>
-          <div class="hc-feedback-rating-title"><span>APPRÉCIATION DE L’ÉVÉNEMENT</span><strong>Comment l’évaluer ?</strong></div>
-          <div class="hc-feedback-rating-bar" role="group" aria-label="Note sur 5">
-            <button type="button" data-rating="1" aria-label="1 sur 5"><b>1</b></button>
-            <button type="button" data-rating="2" aria-label="2 sur 5"><b>2</b></button>
-            <button type="button" data-rating="3" aria-label="3 sur 5"><b>3</b></button>
-            <button type="button" data-rating="4" aria-label="4 sur 5"><b>4</b></button>
-            <button type="button" data-rating="5" aria-label="5 sur 5"><b>5</b></button>
-          </div>
-          <div class="hc-feedback-rating-labels"><small>À revoir</small><small>Très bien</small></div>
-          <small class="hc-feedback-rating-hint">Choisis une note, puis ce qui l’explique.</small>
-        </section>`
-      : "";
-    const reasonBlock = `<section class="hc-feedback-reason" hidden>
-      <span>${esc(profile.reasonTitle)}</span>
-      <div class="hc-feedback-reason-options">
-        ${profile.reasons
-          .map(
-            ([code, label]) =>
-              `<button type="button" data-reason="${esc(code)}">${esc(label)}</button>`,
-          )
-          .join("")}
-      </div>
-    </section>`;
-    const medicalBlock = profile.rating
-      ? ""
-      : '<section class="hc-feedback-medical-summary"><strong>Suivi administratif</strong><span>Aucune note ni information médicale n’est demandée.</span></section>';
+    const medicalBlock =
+      event.kind === "medical"
+        ? '<section class="hc-feedback-medical-summary"><strong>Suivi administratif</strong><span>Aucune information médicale n’est demandée ni enregistrée.</span></section>'
+        : "";
 
     modal.innerHTML = `<div class="hc-feedback-dialog">
       <header class="hc-feedback-head">
@@ -549,57 +591,63 @@
         )}</p></div>
       </section>
       ${medicalBlock}
-      <div class="hc-feedback-section-separator"><span>COMMENT ÇA S’EST PASSÉ ?</span></div>
+      <div class="hc-feedback-section-separator"><span>${esc(profile.sectionTitle)}</span></div>
       <section class="hc-feedback-presence">
         <div class="hc-feedback-presence-options">
-          <button type="button" data-attendance="absent"><span class="hc-feedback-choice-mark" aria-hidden="true">×</span><strong>Je n’étais pas présent</strong></button>
-          <button type="button" data-attendance="problem"><span class="hc-feedback-choice-mark" aria-hidden="true">!</span><strong>${esc(attendanceProblemLabel)}</strong></button>
-          <button type="button" data-attendance="ok"><span class="hc-feedback-choice-mark" aria-hidden="true">✓</span><strong>${esc(attendanceOkLabel)}</strong></button>
+          <button type="button" data-attendance="ok"><span class="hc-feedback-choice-mark" aria-hidden="true">✓</span><strong>${esc(profile.labels.ok)}</strong></button>
+          <button type="button" data-attendance="problem"><span class="hc-feedback-choice-mark" aria-hidden="true">!</span><strong>${esc(profile.labels.problem)}</strong></button>
+          <button type="button" data-attendance="absent"><span class="hc-feedback-choice-mark" aria-hidden="true">×</span><strong>${esc(profile.labels.absent)}</strong></button>
         </div>
       </section>
       <div class="hc-feedback-following" hidden>
-        ${ratingBlock}
-        ${reasonBlock}
+        <section class="hc-feedback-reason" hidden>
+          <span>QUE S’EST-IL PASSÉ ?</span>
+          <div class="hc-feedback-reason-options"></div>
+        </section>
+        ${custom}
+        ${noteBlock}
         <section class="hc-feedback-question" data-follow-section hidden>
           <span>SUITE</span>
-          <strong>Une suite est-elle nécessaire ?</strong>
+          <strong>Une action est-elle nécessaire ?</strong>
           <div class="hc-feedback-pair">
             <button type="button" data-follow="yes">Oui</button>
             <button type="button" data-follow="no">Non</button>
           </div>
         </section>
         <section class="hc-feedback-mail-actions" hidden>
-          <div class="hc-feedback-section-separator"><span>COMMENT POURSUIVRE ?</span></div>
-          <div class="hc-feedback-mail-paths">
-            <button type="button" data-mail-flow="prepare"><span aria-hidden="true">✉</span><div><strong>Préparer le mail ici</strong><small>Destinataires, objet et texte déjà préparés</small></div><b>›</b></button>
-            <button type="button" data-mail-flow="native"><span aria-hidden="true">↗</span><div><strong>Ouvrir ma boîte mail</strong><small>STIP remplit le mail avant l’ouverture</small></div><b>›</b></button>
-          </div>
+          <button type="button" class="hc-feedback-mail-one" data-mail-flow="prepare">
+            <span aria-hidden="true">✉</span>
+            <div><strong>Préparer un mail</strong><small>STIP propose le bon destinataire et un texte adapté</small></div>
+            <b aria-hidden="true">›</b>
+          </button>
         </section>
         <section class="hc-feedback-mail-compose" hidden>
           <header class="hc-feedback-mail-compose-head">
-            <div><small>MAIL DE SUIVI</small><strong>Prêt à envoyer</strong></div>
+            <div><small>MAIL DE SUIVI</small><strong>Mail proposé</strong></div>
             <button type="button" data-mail-back aria-label="Retour">‹</button>
           </header>
-          <div class="hc-feedback-mail-sender" data-mail-sender>Préparation des destinataires…</div>
+          <div class="hc-feedback-mail-sender" data-mail-sender></div>
           <div class="hc-feedback-mail-recipient-group">
-            <div class="hc-feedback-mail-recipient-title"><strong>À</strong><small>Destinataire principal</small></div>
+            <div class="hc-feedback-mail-recipient-title"><strong>À</strong><small>Destinataire conseillé</small></div>
             <div class="hc-feedback-mail-recipient-list" data-mail-to-list></div>
           </div>
-          <div class="hc-feedback-mail-recipient-group">
-            <div class="hc-feedback-mail-recipient-title"><strong>Cc</strong><small>Copie rapide</small></div>
+          <div class="hc-feedback-mail-recipient-group" data-mail-cc-group>
+            <div class="hc-feedback-mail-recipient-title"><strong>Cc</strong><small>Copies facultatives</small></div>
             <div class="hc-feedback-mail-recipient-list compact" data-mail-cc-list></div>
           </div>
-          <label class="hc-feedback-mail-field"><span>Objet</span><input type="text" maxlength="180" data-mail-subject></label>
-          <label class="hc-feedback-mail-field"><span>Message</span><textarea rows="8" maxlength="5000" data-mail-body></textarea></label>
-          <p class="hc-feedback-mail-privacy" data-mail-privacy hidden>Événement sensible : les collègues du shift ne sont pas proposés comme destinataires.</p>
+          <div class="hc-feedback-mail-preview" data-mail-preview></div>
+          <details class="hc-feedback-mail-edit">
+            <summary>Voir ou modifier le mail</summary>
+            <label class="hc-feedback-mail-field"><span>Objet</span><input type="text" maxlength="180" data-mail-subject></label>
+            <label class="hc-feedback-mail-field"><span>Message</span><textarea rows="8" maxlength="5000" data-mail-body></textarea></label>
+          </details>
+          <p class="hc-feedback-mail-privacy" data-mail-privacy hidden>Événement sensible : seuls les destinataires administratifs utiles sont proposés.</p>
           <p class="hc-feedback-mail-status" data-mail-status aria-live="polite"></p>
           <div class="hc-feedback-mail-buttons">
-            <button type="button" class="hc-feedback-mail-send" data-mail-send>Envoyer depuis STIP</button>
+            <button type="button" class="hc-feedback-mail-send" data-mail-send hidden>Envoyer maintenant</button>
             <button type="button" class="hc-feedback-mail-native" data-mail-native>Ouvrir dans ma boîte mail</button>
           </div>
         </section>
-        ${custom}
-        ${noteBlock}
         <p class="hc-feedback-error" aria-live="polite"></p>
         <button type="button" class="hc-feedback-submit" disabled>Valider mon retour</button>
       </div>
@@ -609,23 +657,22 @@
     document.body.appendChild(modal);
 
     let attendance = "",
-      rating = 0,
       reasonCode = "",
       followUp = null,
       customAnswer = "",
       mailContext = null,
-      mailContextAttendance = "",
-      mailMode = "",
+      mailContextKey = "",
       nativeOpened = false,
       mailLoading = false;
     const mailTo = new Set(),
       mailCc = new Set();
 
     const following = modal.querySelector(".hc-feedback-following"),
-      ratingBox = modal.querySelector(".hc-feedback-rating"),
       reasonBox = modal.querySelector(".hc-feedback-reason"),
+      reasonOptions = modal.querySelector(".hc-feedback-reason-options"),
       followSection = modal.querySelector("[data-follow-section]"),
       customBox = modal.querySelector(".hc-feedback-custom"),
+      noteBox = modal.querySelector("[data-feedback-note]"),
       submit = modal.querySelector(".hc-feedback-submit"),
       error = modal.querySelector(".hc-feedback-error"),
       note = modal.querySelector("#hcFeedbackNote"),
@@ -634,6 +681,8 @@
       mailSender = modal.querySelector("[data-mail-sender]"),
       mailToList = modal.querySelector("[data-mail-to-list]"),
       mailCcList = modal.querySelector("[data-mail-cc-list]"),
+      mailCcGroup = modal.querySelector("[data-mail-cc-group]"),
+      mailPreview = modal.querySelector("[data-mail-preview]"),
       mailSubject = modal.querySelector("[data-mail-subject]"),
       mailBody = modal.querySelector("[data-mail-body]"),
       mailPrivacy = modal.querySelector("[data-mail-privacy]"),
@@ -648,33 +697,24 @@
 
     const coreValid = () => {
       if (!attendance) return false;
-      if (attendance === "absent") return true;
-      if (profile.rating && (!rating || !reasonCode)) return false;
-      if (!profile.rating && attendance === "problem" && !reasonCode)
-        return false;
-      if (event.question && !customAnswer) return false;
+      if (attendance !== "ok" && !reasonCode) return false;
+      if (event.question && attendance !== "absent" && !customAnswer) return false;
       return true;
     };
 
     const feedbackBody = () => ({
       event_key: event.eventKey,
       attendance,
-      rating:
-        attendance === "absent" || !profile.rating ? null : rating,
-      reason_code:
-        attendance === "absent" ||
-        (!profile.rating && attendance !== "problem")
-          ? null
-          : reasonCode || null,
+      outcome: outcomeName(attendance),
+      rating: null,
+      reason_code: attendance === "ok" ? null : reasonCode || null,
       follow_up: followUp,
       custom_answer:
-        attendance === "absent" || !profile.rating
-          ? null
-          : customAnswer || null,
+        attendance === "absent" ? null : customAnswer || null,
       note:
-        !profile.rating || !note
-          ? null
-          : String(note.value || "").trim() || null,
+        profile.allowNote && note
+          ? String(note.value || "").trim() || null
+          : null,
     });
 
     const finish = (message) => {
@@ -687,8 +727,7 @@
 
     const resetMailFlow = () => {
       mailContext = null;
-      mailContextAttendance = "";
-      mailMode = "";
+      mailContextKey = "";
       nativeOpened = false;
       mailLoading = false;
       mailTo.clear();
@@ -696,6 +735,14 @@
       if (mailCompose) mailCompose.hidden = true;
       if (mailStatus) mailStatus.textContent = "";
     };
+
+    const currentMailKey = () =>
+      JSON.stringify({
+        attendance,
+        reasonCode,
+        customAnswer,
+        note: note ? String(note.value || "").trim() : "",
+      });
 
     const syncMailSelections = () => {
       if (!mailContext) return;
@@ -719,69 +766,69 @@
     };
 
     const renderMailContext = (ctx) => {
-      const candidates = Array.isArray(ctx?.candidates) ? ctx.candidates : [];
-      if (!mailTo.size && candidates.length) {
+      const candidates = Array.isArray(ctx?.candidates) ? ctx.candidates : [],
+        toCandidates = candidates.filter((x) => x.bucket !== "cc"),
+        ccCandidates = candidates.filter((x) => x.bucket === "cc");
+
+      if (!mailTo.size && toCandidates.length) {
         const preferred =
-          candidates.find((x) => x.recommended && x.kind === "encadrement") ||
-          candidates.find((x) => x.recommended) ||
-          candidates[0];
+          toCandidates.find((x) => x.recommended) || toCandidates[0];
         if (preferred?.email) mailTo.add(preferred.email);
       }
+
       if (mailToList)
         mailToList.innerHTML =
-          candidates.map((x) => recipientMarkup(x, "to")).join("") ||
-          '<span class="hc-feedback-mail-empty">Aucun destinataire avec adresse professionnelle n’a été trouvé.</span>';
+          toCandidates.map((x) => recipientMarkup(x, "to")).join("") ||
+          '<span class="hc-feedback-mail-empty">Aucun destinataire professionnel directement lié n’a été trouvé.</span>';
+
       if (mailCcList)
         mailCcList.innerHTML =
-          candidates.map((x) => recipientMarkup(x, "cc")).join("") ||
-          '<span class="hc-feedback-mail-empty">Aucune copie proposée.</span>';
+          ccCandidates.map((x) => recipientMarkup(x, "cc")).join("") ||
+          '<span class="hc-feedback-mail-empty">Aucune copie utile proposée.</span>';
+      if (mailCcGroup) mailCcGroup.hidden = !ccCandidates.length;
+
       if (mailSubject) mailSubject.value = ctx?.draft?.subject || "";
       if (mailBody) mailBody.value = ctx?.draft?.body || "";
+      if (mailPreview) {
+        const body = String(ctx?.draft?.body || "").replace(/\s+/g, " ").trim();
+        const excerpt = body.length > 190 ? body.slice(0, 187) + "…" : body;
+        mailPreview.innerHTML = `<strong>${esc(ctx?.draft?.subject || "Mail de suivi")}</strong><p>${esc(excerpt)}</p>`;
+      }
       if (mailPrivacy) mailPrivacy.hidden = !ctx?.event?.sensitive;
       if (mailSender) {
-        const reply = ctx?.sender?.reply_to
-          ? ` · réponses vers ${ctx.sender.reply_to}`
-          : "";
         mailSender.textContent = ctx?.direct_send
-          ? `Envoi : ${ctx.sender.from || "STIP"}${reply}`
-          : `Envoi direct STIP à activer${reply}. La boîte mail native reste disponible.`;
+          ? "Tu peux l’envoyer directement depuis STIP ou l’ouvrir dans ta messagerie."
+          : "Le mail sera ouvert dans ta messagerie avec les champs déjà remplis.";
       }
-      if (mailSend) {
-        mailSend.textContent = ctx?.direct_send
-          ? "Envoyer depuis STIP"
-          : "Envoi direct STIP à activer";
-      }
+      if (mailSend) mailSend.hidden = !ctx?.direct_send;
       syncMailSelections();
     };
 
-    const loadMailContext = async (mode) => {
+    const loadMailContext = async () => {
       if (!coreValid() || mailLoading) return;
-      mailMode = mode;
       nativeOpened = false;
       mailActions.hidden = true;
       mailCompose.hidden = false;
-      if (mailContext && mailContextAttendance === attendance) {
+      const key = currentMailKey();
+      if (mailContext && mailContextKey === key) {
         renderMailContext(mailContext);
         mailCompose.scrollIntoView({ behavior: "smooth", block: "nearest" });
         return;
       }
       mailLoading = true;
-      mailStatus.textContent = "STIP cherche les destinataires utiles…";
+      mailStatus.textContent = "STIP cherche les destinataires liés à cet événement…";
       mailTo.clear();
       mailCc.clear();
       try {
-        const ctx = await post("event_mail_context", {
-          event_key: event.eventKey,
-          attendance,
-        });
+        const ctx = await post("event_mail_context", feedbackBody());
         mailContext = ctx;
-        mailContextAttendance = attendance;
+        mailContextKey = key;
         renderMailContext(ctx);
         mailStatus.textContent = "";
       } catch (e) {
         mailContext = null;
         mailStatus.textContent =
-          "Impossible de préparer les destinataires pour le moment.";
+          "Impossible de préparer le mail pour le moment.";
       } finally {
         mailLoading = false;
         mailCompose.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -801,51 +848,33 @@
       if (body) params.set("body", body);
       nativeOpened = true;
       mailStatus.textContent =
-        "La boîte mail va s’ouvrir. Au retour, finalise simplement le retour dans STIP.";
+        "La messagerie va s’ouvrir. Au retour, tu pourras clôturer ce retour.";
       sync();
       window.location.href = `mailto:${path}?${params.toString()}`;
     };
 
+    const renderReasons = () => {
+      const options = profile.reasons?.[attendance] || [];
+      if (reasonOptions)
+        reasonOptions.innerHTML = options
+          .map(
+            ([code, label]) =>
+              `<button type="button" data-reason="${esc(code)}">${esc(label)}</button>`,
+          )
+          .join("");
+      if (reasonBox)
+        reasonBox.hidden = attendance === "ok" || !options.length;
+    };
+
     const sync = () => {
       following.hidden = !attendance;
+      renderReasons();
 
-      if (ratingBox)
-        ratingBox.hidden =
-          !profile.rating || !attendance || attendance === "absent";
-
-      const showReason =
-        !!attendance &&
-        attendance !== "absent" &&
-        ((profile.rating && rating > 0) ||
-          (!profile.rating && attendance === "problem"));
-      if (reasonBox) reasonBox.hidden = !showReason;
+      if (noteBox) noteBox.hidden = !attendance;
 
       if (customBox)
         customBox.hidden =
-          !attendance ||
-          attendance === "absent" ||
-          !profile.rating ||
-          !rating ||
-          !reasonCode;
-
-      if (attendance === "absent") {
-        rating = 0;
-        reasonCode = "";
-        customAnswer = "";
-        modal
-          .querySelectorAll("[data-rating],[data-reason],[data-custom]")
-          .forEach((b) => b.classList.remove("selected", "current"));
-      }
-
-      if (ratingBox) {
-        const ratingHint = ratingBox.querySelector(
-          ".hc-feedback-rating-hint",
-        );
-        if (ratingHint)
-          ratingHint.textContent = rating
-            ? `Note sélectionnée : ${rating}/5 · choisis ce qui l’explique.`
-            : "Choisis une note, puis ce qui l’explique.";
-      }
+          !attendance || attendance === "absent" || !event.question;
 
       const validCore = coreValid();
       if (followSection) followSection.hidden = !validCore;
@@ -854,10 +883,12 @@
       mailActions.hidden = !(valid && followUp === true) || !mailCompose.hidden;
       if ((!validCore || followUp !== true) && !mailCompose.hidden)
         resetMailFlow();
+
       submit.hidden = followUp === null || (followUp === true && !nativeOpened);
       submit.textContent =
-        followUp === true ? "Finaliser mon retour" : "Valider mon retour";
+        followUp === true ? "Clôturer mon retour" : "Valider mon retour";
       submit.disabled = !valid || (followUp === true && !nativeOpened);
+
       modal.querySelectorAll("[data-mail-flow]").forEach((b) => {
         b.disabled = !validCore;
       });
@@ -876,19 +907,16 @@
     modal.querySelectorAll("[data-attendance]").forEach((button) => {
       button.onclick = () => {
         const next = button.dataset.attendance || "";
-        if (attendance && attendance !== next) {
+        if (attendance !== next) {
           resetMailFlow();
-          rating = 0;
+          attendance = next;
           reasonCode = "";
           customAnswer = "";
           followUp = null;
           modal
-            .querySelectorAll(
-              "[data-rating],[data-reason],[data-custom],[data-follow]",
-            )
+            .querySelectorAll("[data-custom],[data-follow]")
             .forEach((b) => b.classList.remove("selected", "current"));
         }
-        attendance = next;
         modal
           .querySelectorAll("[data-attendance]")
           .forEach((b) => b.classList.toggle("selected", b === button));
@@ -896,26 +924,16 @@
       };
     });
 
-    modal.querySelectorAll("[data-rating]").forEach((button) => {
-      button.onclick = () => {
-        rating = Number(button.dataset.rating || 0);
-        modal.querySelectorAll("[data-rating]").forEach((b) => {
-          const value = Number(b.dataset.rating || 0);
-          b.classList.toggle("selected", value <= rating);
-          b.classList.toggle("current", value === rating);
-        });
-        sync();
-      };
-    });
-
-    modal.querySelectorAll("[data-reason]").forEach((button) => {
-      button.onclick = () => {
-        reasonCode = button.dataset.reason || "";
-        modal
-          .querySelectorAll("[data-reason]")
-          .forEach((b) => b.classList.toggle("selected", b === button));
-        sync();
-      };
+    reasonBox?.addEventListener("click", (clickEvent) => {
+      const button = clickEvent.target.closest("[data-reason]");
+      if (!button) return;
+      const next = button.dataset.reason || "";
+      if (reasonCode !== next) resetMailFlow();
+      reasonCode = next;
+      reasonBox
+        .querySelectorAll("[data-reason]")
+        .forEach((b) => b.classList.toggle("selected", b === button));
+      sync();
     });
 
     modal.querySelectorAll("[data-follow]").forEach((button) => {
@@ -931,7 +949,9 @@
 
     modal.querySelectorAll("[data-custom]").forEach((button) => {
       button.onclick = () => {
-        customAnswer = button.dataset.custom || "";
+        const next = button.dataset.custom || "";
+        if (customAnswer !== next) resetMailFlow();
+        customAnswer = next;
         modal
           .querySelectorAll("[data-custom]")
           .forEach((b) => b.classList.toggle("selected", b === button));
@@ -939,8 +959,13 @@
       };
     });
 
+    note?.addEventListener("input", () => {
+      if (mailContext) resetMailFlow();
+      sync();
+    });
+
     modal.querySelectorAll("[data-mail-flow]").forEach((button) => {
-      button.onclick = () => loadMailContext(button.dataset.mailFlow || "prepare");
+      button.onclick = loadMailContext;
     });
 
     modal.querySelector("[data-mail-back]")?.addEventListener("click", () => {
@@ -958,16 +983,10 @@
       if (!email) return;
       if (bucket === "to") {
         if (mailTo.has(email)) mailTo.delete(email);
-        else {
-          mailTo.add(email);
-          mailCc.delete(email);
-        }
+        else mailTo.add(email);
       } else {
         if (mailCc.has(email)) mailCc.delete(email);
-        else {
-          mailCc.add(email);
-          mailTo.delete(email);
-        }
+        else mailCc.add(email);
       }
       syncMailSelections();
     });
@@ -992,7 +1011,7 @@
       } catch (e) {
         mailStatus.textContent =
           e?.message === "ENVOI_MAIL_STIP_NON_CONFIGURE"
-            ? "L’envoi direct STIP n’est pas encore activé. Utilise la boîte mail native."
+            ? "L’envoi direct STIP n’est pas activé. Utilise ta boîte mail."
             : "Le mail n’a pas été envoyé. Vérifie les destinataires puis réessaie.";
         syncMailSelections();
       }
@@ -1013,12 +1032,12 @@
       } catch (e) {
         submit.disabled = false;
         submit.textContent =
-          followUp === true ? "Finaliser mon retour" : "Valider mon retour";
+          followUp === true ? "Clôturer mon retour" : "Valider mon retour";
         error.textContent =
           e?.message === "RETOUR_TROP_TOT"
             ? "Ce retour sera disponible une heure après la fin prévue."
             : e?.message === "RETOUR_MOTIF_REQUIS"
-              ? "Choisis ce qui explique ton retour."
+              ? "Choisis ce qui explique ce résultat."
               : "Impossible d’enregistrer le retour. Réessaie.";
       }
     };
