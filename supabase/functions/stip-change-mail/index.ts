@@ -26,7 +26,7 @@ async function selected(ids:any){
  const {data,error}=await db.from('contacts_ghe').select('id,nom,prenom,email_pro,role_metier,actif').in('id',all);
  if(error)throw error;const map=new Map((data||[]).map((x:any)=>[x.id,x]));
  return all.map(id=>{const x:any=map.get(id),r=String(x?.role_metier||'').toLowerCase();
- if(!x?.actif||!x.email_pro||!/^\\S+@\\S+\\.\\S+$/.test(x.email_pro)||(!r.includes('cadre')&&!r.includes('chef')))throw Error('DESTINATAIRE_A_REVOIR');
+ if(!x?.actif||!x.email_pro||!/^\S+@\S+\.\S+$/.test(x.email_pro)||(!r.includes('cadre')&&!r.includes('chef')))throw Error('DESTINATAIRE_A_REVOIR');
  return{contact_id:id,name:name(x),email:String(x.email_pro).toLowerCase(),role:r.includes('cadre')?'cadre':'chef'};
  });
 }
