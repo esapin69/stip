@@ -29,7 +29,8 @@ check(
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
 const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator()'), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator()')));
-const homeRenderSection = home.slice(home.indexOf('function render() {', home.indexOf('function homeModeBody()')), home.indexOf('const onHome =', home.indexOf('function render() {', home.indexOf('function homeModeBody()')));
+const renderStart = home.indexOf('function render() {', home.indexOf('function homeModeBody()'));
+const homeRenderSection = home.slice(renderStart, home.indexOf('const onHome =', renderStart));
 check(chiefDateSection.includes('id="homeDutyChiefNowHost"'), 'Le chef présent doit rester sous la date dans Mon profil.');
 check((home.match(/id="homeDutyChiefNowHost"/g) || []).length === 1, 'Le chef présent ne doit pas être dupliqué.');
 check(!homeRenderSection.includes('dutyChiefHost') && !homeRenderSection.includes('state.homeMode === "apps"') && /profileMarkup\s*=\s*showProfile\s*\?[\s\S]*:\s*"";/.test(homeRenderSection), 'La page Applications ne doit pas afficher la carte du chef.');
