@@ -278,7 +278,7 @@
   });
 
   window.STIPCommunicationApp = {
-    build: "20260930-wheelchair-compact-dock4",
+    build: "20260930-wheelchair-three-actions2",
     mount,
     setTab,
     unmount,

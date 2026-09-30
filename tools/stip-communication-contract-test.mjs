@@ -59,6 +59,12 @@ has(chat,"contexts.length !== 2","l’aplatissement ascenseur n’est pas limit�
 has(chat,'value: genericValue + " · " + context',"les choix ascenseur directs ne conservent pas le repère composé");
 has(chat,"const quickPlaces = wheelchairInlineElevatorChoices(","la grille principale n’utilise pas l’aplatissement ascenseur");
 has(chat,"composerExpanded: false","Fauteuils n’a pas d’état compact explicite");
+has(chat,"composerWriting: false","Fauteuils doit avoir un mode Écrire minimal");
+has(chat,'data-compact-mode="spot"',"J’ai vu doit lancer le parcours guidé");
+has(chat,'data-compact-mode="search"',"Je cherche doit lancer le parcours guidé");
+has(chat,"openFreeComposer(true)","Écrire doit lancer une saisie libre seule");
+has(chatCss,"grid-template-columns:repeat(3,minmax(0,1fr))","trois boutons compacts attendus");
+if(chat.includes("data-composer-expand") || chat.includes("tb-compact-actions") || chatCss.includes(".tb-compact-actions"))fail("ancien bloc d’actions compactes redondant");
 has(chat,"tb-shortcuts-compact","le dock Fauteuils compact n’est pas rendu");
 has(chat,"data-composer-toggle","la poignée de déploiement/réduction Fauteuils manque");
 has(chat,"collapseWheelchairComposerFromScroll","le dock Fauteuils ne se replie pas pendant la lecture vers le haut");
@@ -67,6 +73,7 @@ has(chatCss,"is-wheelchair-composer-collapsed","les styles du dock compact Faute
 has(communicationApp,"syncChromeCompact","le shell Communication ne compacte pas son chrome en lecture Fauteuils");
 has(communicationApp,"is-chrome-compact","le shell Communication n’expose pas l’état compact");
 has(agents,"compact two-state dock","le contrat Fauteuils ne protège pas le dock compact à deux états");
+has(agents,"exactly three direct buttons","le contrat Fauteuils doit imposer trois choix");
 has(agents,"Accueil | ♿ Fauteuils | 🔔","le contrat Fauteuils ne protège pas le chrome mobile compact");
 has(agents,"no extra follow-up panel opens","le contrat Fauteuils ne protège pas la suppression du panneau ascenseur à deux choix");
 if(chat.includes('class="tb-dm-shortcut"')||chat.includes("dmState")||chat.includes("[data-dm-"))fail("l’ancien moteur DM ne doit plus vivre dans Chat/Fauteuils");
