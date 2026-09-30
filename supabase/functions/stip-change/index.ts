@@ -25,7 +25,7 @@ async function resolveRecipients(raw:any){
   return rows.map((x:any)=>({contact_id:Number(x.id),name:[x.prenom,x.nom].filter(Boolean).join(' '),email:String(x.email_pro),role:String(x.role_metier||'')}))
 }
 function frDate(v:any){const s=String(v||'');const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s}
-function requestLabel(r:any){const kind=r?.request_type==='absence'?'Absence':r?.request_type==='delay'?'Retard':r?.request_type==='exchange'?'Échange':'Changement',d=frDate(r?.date_from),from=String(r?.requester_code||'').trim(),to=String(r?.context?.target_shift||r?.desired_code||'').trim(),move=from&&to&&from!==to?` · ${from} → ${to}`:'';return `${kind}${d?' du '+d:''}${move}`}
+function requestLabel(r:any){const kind=r?.request_type==='leave'?'Congés':r?.request_type==='absence'?'Absence':r?.request_type==='delay'?'Retard':r?.request_type==='exchange'?'Échange':'Changement',d=frDate(r?.date_from),from=String(r?.requester_code||'').trim(),to=String(r?.context?.target_shift||r?.desired_code||'').trim(),move=from&&to&&from!==to?` · ${from} → ${to}`:'';return `${kind}${d?' du '+d:''}${move}`}
 async function clearRequestNotifs(requestId:string){await db.from('stip_notifications').delete().eq('source_type','stip_change').eq('source_ref',requestId)}
 async function notifyAgent(agentId:string,title:string,body:string,requestId:string,kind='info'){await clearRequestNotifs(requestId);await db.from('stip_notifications').insert({agent_id:agentId,type:kind,title,body,source_type:'stip_change',source_ref:requestId,metadata:{target_url:'https://stip.esapin.com/#/planning',section:'day_workflow',change_request_id:requestId}})}
 async function notifyResponsables(request:any,title:string,body:string){await clearRequestNotifs(request.id);const {data:p}=await db.from('stip_access_profiles').select('agent_id,permissions,active').eq('active',true);const ids=(p||[]).filter((x:any)=>x.permissions?.workflow_responsible===true||x.permissions?.responsable===true).map((x:any)=>x.agent_id).filter(Boolean);if(!ids.length)return;const {data:a}=await db.from('agents').select('id,actif,role,equipe,type_planning').in('id',ids);const valid=new Set((a||[]).filter((x:any)=>x.actif&&isChef(x)).map((x:any)=>x.id));const rows=ids.filter((id:string)=>valid.has(id)).map((id:string)=>({agent_id:id,type:'action_required',title,body,source_type:'stip_change',source_ref:request.id,metadata:{target_url:'https://stip.esapin.com/responsable.html',section:'requests',change_request_id:request.id}}));if(rows.length)await db.from('stip_notifications').insert(rows)}
@@ -50,6 +50,73 @@ async function inbox(agentId:string){const {data,error}=await db.from('stip_chan
 async function submit(ctx:any,b:any){const scenario=['simple_change','same_day_exchange','cross_day_exchange','period_exchange','complex'].includes(String(b.scenario))?String(b.scenario):'simple_change';if((scenario.includes('exchange')||scenario==='simple_change')&&!perm(ctx,'day_exchange','planning'))throw Error('ACCES_ECHANGE_REFUSE');const from=date(b.date_from,scenario!=='complex'),to=date(b.date_to),targetDate=date(b.target_date),desired=text(b.desired_code,20)||null,message=text(b.message,800)||null,targetId=uid(b.target_agent_id,false),recipients=await resolveRecipients(b.recipient_ids);if((scenario.includes('exchange')||scenario==='simple_change')&&!recipients.length)throw Error('DESTINATAIRE_REQUIS');let requestType='change',target:any=null,requesterShift:any=null,targetShift:any=null;if(from)requesterShift=await planning(ctx.agent.id,from);if(scenario!=='complex'&&!requesterShift)throw Error('PLANNING_DEMANDEUR_INTROUVABLE');if(targetId){target=await activeAgent(targetId);if(teamOf(target)!==teamOf(ctx.agent))throw Error('EQUIPE_INCOMPATIBLE')}
 if(scenario==='simple_change'){if(!desired)throw Error('CODE_SOUHAITE_REQUIS');if(String(requesterShift?.code||'').toUpperCase()===String(desired).toUpperCase())throw Error('HORAIRE_IDENTIQUE_A_L_ACTUEL')}else if(scenario==='same_day_exchange'){requestType='exchange';if(!targetId)throw Error('AGENT_CIBLE_REQUIS');targetShift=await planning(targetId,from!);if(!targetShift)throw Error('PLANNING_CIBLE_INTROUVABLE')}else if(scenario==='cross_day_exchange'){requestType='exchange';if(!targetId||!targetDate)throw Error('AGENT_ET_JOUR_CIBLE_REQUIS');targetShift=await planning(targetId,targetDate);if(!targetShift)throw Error('PLANNING_CIBLE_INTROUVABLE')}else if(scenario==='period_exchange'){requestType='exchange';if(!targetId||!to||to<from!)throw Error('PERIODE_INVALIDE')}else if(scenario==='complex'){requestType='other';if(!message)throw Error('EXPLICATION_REQUISE')}
 const {data:dup}=from?await db.from('stip_change_requests').select('id,status').eq('requester_agent_id',ctx.agent.id).eq('date_from',from).in('status',['submitted','awaiting_colleague','awaiting_responsible']).limit(1):{data:[]};if(dup?.length)throw Error('DEMANDE_DEJA_EN_COURS');const status=targetId?'awaiting_colleague':'awaiting_responsible',context:any={requester_shift:requesterShift?.code||null,target_shift:targetShift?.code||null,target_agent_name:target?[target.prenom,target.nom].filter(Boolean).join(' '):null,target_date:targetDate||null,analysis:from?await dayAnalysis(ctx,from):null,mail_recipients:recipients.map((x:any)=>({name:x.name,role:x.role}))};const primary=recipients[0]||null;const row={requester_agent_id:ctx.agent.id,target_agent_id:targetId,request_type:requestType,scenario,date_from:from,date_to:to,target_date:targetDate,requester_code:requesterShift?.code||null,desired_code:desired,message,status,automatic_apply_allowed:false,context,routed_recipients:recipients,routed_contact_id:primary?.contact_id||null,routed_name:primary?.name||null,routed_email:primary?.email||null,routed_at:primary?new Date().toISOString():null,routed_by_agent_id:primary?ctx.agent.id:null};const {data,error}=await db.from('stip_change_requests').insert(row).select('*').single();if(error)throw error;await ev(data.id,'created',ctx,null,status,{scenario,request_type:requestType,recipients:recipients.map((x:any)=>({contact_id:x.contact_id,name:x.name,role:x.role}))});if(targetId)await createTargetAction(data,ctx,target);else await notifyResponsables(data,`Demande de changement · ${frDate(from)}`,`${[ctx.agent.prenom,ctx.agent.nom].filter(Boolean).join(' ')} · ${requestLabel(data)}`);return data}
+// STIP GHE: simple multi-date congés panier. This does not reuse the legacy leave form.
+function cartDays(raw:any){
+  if(!Array.isArray(raw)||!raw.length||raw.length>45)throw Error('PANIER_INVALIDE');
+  const allowed=new Set(['CP','RTT','AUTRE']);
+  const seen=new Set<string>();
+  const days=raw.map((item:any)=>{
+    const iso=String(item?.date||'');
+    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(iso)||!Number.isFinite(Date.parse(iso+'T12:00:00Z'))||
+       new Date(iso+'T12:00:00Z').toISOString().slice(0,10)!==iso)throw Error('DATE_INVALIDE');
+    if(seen.has(iso))throw Error('JOUR_EN_DOUBLE');
+    seen.add(iso);
+    const kind=String(item?.kind||'CP').toUpperCase();
+    if(!allowed.has(kind))throw Error('TYPE_CONGE_INVALIDE');
+    return {date:iso,kind};
+  }).sort((a:any,b:any)=>a.date.localeCompare(b.date));
+  const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'})
+    .format(new Date());
+  if(days[0].date<today)throw Error('DATE_PASSEE');
+  const span=(Date.parse(days.at(-1)!.date+'T12:00:00Z')-Date.parse(days[0].date+'T12:00:00Z'))/86400000;
+  if(span>366)throw Error('PERIODE_TROP_LONGUE');
+  return days;
+}
+async function leaveCartSubmit(ctx:any,b:any){
+  if(ctx.profile?.permissions?.day_leave===false)throw Error('ACCES_CONGE_REFUSE');
+  const chosen=cartDays(b.days);
+  const from=chosen[0].date,to=chosen.at(-1)!.date;
+  // Intersect exact saved days; older single-range leave requests still block duplicate periods.
+  const {data:pending,error:pe}=await db.from('stip_change_requests')
+    .select('id,date_from,date_to,context').eq('requester_agent_id',ctx.agent.id)
+    .eq('request_type','leave').in('status',['submitted','awaiting_responsible'])
+    .lte('date_from',to).gte('date_to',from).limit(120);
+  if(pe)throw pe;
+  const wanted=new Set(chosen.map((x:any)=>x.date));
+  for(const old of pending||[]){
+    const oldDays=Array.isArray(old?.context?.days)
+      ?old.context.days.map((x:any)=>typeof x==='string'?x:x?.date)
+      :null;
+    if(oldDays?.length){
+      if(oldDays.some((d:any)=>wanted.has(d)))throw Error('DEMANDE_DEJA_EN_COURS');
+    }else{
+      const collision=chosen.some((x:any)=>x.date>=old.date_from&&x.date<=String(old.date_to||old.date_from));
+      if(collision)throw Error('DEMANDE_DEJA_EN_COURS');
+    }
+  }
+  const dates=chosen.map((x:any)=>x.date);
+  const {data:shifts,error:se}=await db.from('planning').select('date,code')
+    .eq('agent_id',ctx.agent.id).in('date',dates);
+  if(se)throw se;
+  const codeByDate=new Map((shifts||[]).map((x:any)=>[x.date,x.code]));
+  const days=chosen.map((x:any)=>({...x,code:codeByDate.get(x.date)||null}));
+  const row={
+    requester_agent_id:ctx.agent.id,request_type:'leave',scenario:'leave',
+    date_from:from,date_to:to,requester_code:days[0].code,
+    message:null,status:'awaiting_responsible',automatic_apply_allowed:false,
+    official_state:'to_review',
+    context:{days,selection_mode:'cart',no_auto_planning_change:true,
+      privacy:'no_personal_reason_stored',created_from:'stip_ghe_leave_cart'}
+  };
+  const {data:created,error:ce}=await db.from('stip_change_requests').insert(row).select('*').single();
+  if(ce)throw ce;
+  await ev(created.id,'leave_cart_created',ctx,null,'awaiting_responsible',
+    {days:days.map((x:any)=>({date:x.date,kind:x.kind,code:x.code})),count:days.length});
+  await notifyResponsables(created,'Nouvelle demande de congés · '+days.length+' jour'+(days.length>1?'s':''),
+    [ctx.agent.prenom,ctx.agent.nom].filter(Boolean).join(' ')+
+    ' · '+days.map((x:any)=>frDate(x.date)).join(', '));
+  return created;
+}
 async function absenceSubmit(ctx:any,b:any){if(!perm(ctx,'day_absence','planning'))throw Error('ACCES_ABSENCE_REFUSE');const from=date(b.date_from,true)!,to=date(b.date_to)||from;const me=await planning(ctx.agent.id,from);if(!me)throw Error('PLANNING_DEMANDEUR_INTROUVABLE');const {data:dup}=await db.from('stip_change_requests').select('id').eq('requester_agent_id',ctx.agent.id).eq('date_from',from).eq('request_type','absence').in('status',['submitted','awaiting_responsible']).limit(1);if(dup?.length)throw Error('DEMANDE_DEJA_EN_COURS');const analysis=await dayAnalysis(ctx,from);const row={requester_agent_id:ctx.agent.id,request_type:'absence',scenario:'absence',date_from:from,date_to:to,requester_code:me.code,message:null,status:'awaiting_responsible',automatic_apply_allowed:false,official_state:'to_review',context:{analysis,privacy:'no_medical_detail_stored'}};const {data,error}=await db.from('stip_change_requests').insert(row).select('*').single();if(error)throw error;await ev(data.id,'absence_created',ctx,null,'awaiting_responsible',{date_from:from,date_to:to,analysis});await notifyResponsables(data,`Demande d’absence · ${frDate(from)}`,`${[ctx.agent.prenom,ctx.agent.nom].filter(Boolean).join(' ')} · ${from===to?frDate(from):frDate(from)+' → '+frDate(to)}`);return data}
 async function delaySubmit(ctx:any,b:any){if(!perm(ctx,'day_delay','planning'))throw Error('ACCES_RETARD_REFUSE');const from=date(b.date_from,true)!,eta=text(b.eta,8);const me=await planning(ctx.agent.id,from);if(!me)throw Error('PLANNING_DEMANDEUR_INTROUVABLE');const row={requester_agent_id:ctx.agent.id,request_type:'delay',scenario:'delay',date_from:from,requester_code:me.code,message:null,status:'awaiting_responsible',automatic_apply_allowed:false,official_state:'reported',context:{eta:eta||null}};const {data,error}=await db.from('stip_change_requests').insert(row).select('*').single();if(error)throw error;await ev(data.id,'delay_reported',ctx,null,'awaiting_responsible',{eta});await notifyResponsables(data,'Retard signalé',`${[ctx.agent.prenom,ctx.agent.nom].filter(Boolean).join(' ')} · ${from}${eta?' · arrivée '+eta:''}`);return data}
 async function targetDecide(ctx:any,b:any){const id=uid(b.id)!,decision=String(b.decision);if(!['accept','refuse'].includes(decision))throw Error('DECISION_INVALIDE');const {data:row,error}=await db.from('stip_change_requests').select('*').eq('id',id).eq('target_agent_id',ctx.agent.id).maybeSingle();if(error)throw error;if(!row||row.status!=='awaiting_colleague')throw Error('DEMANDE_NON_DISPONIBLE');const now=new Date().toISOString(),status=decision==='accept'?'awaiting_responsible':'target_refused',context={...(row.context||{}),colleague_decision:decision,colleague_decided_at:now};const {data,error:ue}=await db.from('stip_change_requests').update({status,context,updated_at:now}).eq('id',id).select('*').single();if(ue)throw ue;await ev(id,decision==='accept'?'colleague_accepted':'colleague_refused',ctx,row.status,status,{});await closeTargetAction(id,ctx.agent.id,'completed');if(decision==='accept')await notifyResponsables(data,`Échange à traiter · ${frDate(row.date_from)}`,`${requestLabel(data)} · les deux agents sont d’accord.`);else await notifyAgent(row.requester_agent_id,`${requestLabel(data)} · refusé`,`Le collègue sollicité a refusé cette proposition.`,id);return data}
@@ -78,7 +145,7 @@ if(decision==='accept'&&['simple_change','same_day_exchange'].includes(String(ro
   data=fresh;
   await ev(id,'planning_applied',ctx,row.status,'completed',{scenario:row.scenario,application:applied||{}});
 }else{
-  const status=decision==='accept'?'completed':'refused',official=decision==='accept'?'completed':'refused';
+  const status=decision==='accept'?'completed':'refused',official=decision==='accept'&&row.request_type==='leave'?'approved_pending_manual':decision==='accept'?'completed':'refused';
   const {data:updated,error:ue}=await db.from('stip_change_requests').update({
     status,
     official_state:official,
@@ -95,8 +162,8 @@ if(decision==='accept'&&['simple_change','same_day_exchange'].includes(String(ro
 const label=requestLabel(data);
 await notifyAgent(
   row.requester_agent_id,
-  decision==='accept'?`${label} · effectué`:`${label} · refusé`,
-  decision==='accept'?'Le changement validé est maintenant intégré au planning STIP et à son historique. Appuie sur OK pour le classer.':'Le responsable a refusé cette demande.',
+  decision==='accept'?`${label} · ${row.request_type==='leave'?'avis favorable':'effectué'}`:`${label} · ${row.request_type==='leave'?'avis défavorable':'refusé'}`,
+  row.request_type==='leave'?(decision==='accept'?'Avis favorable enregistré dans STIP. La validation officielle et le planning restent à confirmer.':'Avis défavorable enregistré dans STIP. Contacte ton responsable pour la suite.'):(decision==='accept'?'Le changement validé est maintenant intégré au planning STIP et à son historique. Appuie sur OK pour le classer.':'Le responsable a refusé cette demande.'),
   id,
   decision==='accept'?'action_required':'info'
 );
@@ -106,4 +173,4 @@ async function acknowledge(ctx:any,b:any){const id=uid(b.id)!;const {data:row}=a
 async function trace(ctx:any,id:string){const {data:r,error}=await db.from('stip_change_requests').select('*').eq('id',id).maybeSingle();if(error)throw error;if(!r)throw Error('DEMANDE_INTROUVABLE');if(r.requester_agent_id!==ctx.agent.id&&!canResp(ctx)&&!perm(ctx,'workflow_admin_view','admin'))throw Error('ACCES_TRACE_REFUSE');const {data:e,error:ee}=await db.from('stip_request_events').select('*').eq('request_id',id).order('created_at',{ascending:true});if(ee)throw ee;return{request:(await enrich([r]))[0],events:e||[]}}
 async function adminList(){const {data,error}=await db.from('stip_change_requests').select('*').order('created_at',{ascending:false}).limit(300);if(error)throw error;return enrich(data||[])}
 async function adminTrace(id:string){const {data:r,error}=await db.from('stip_change_requests').select('*').eq('id',id).maybeSingle();if(error)throw error;if(!r)throw Error('DEMANDE_INTROUVABLE');const {data:e,error:ee}=await db.from('stip_request_events').select('*').eq('request_id',id).order('created_at');if(ee)throw ee;return{request:(await enrich([r]))[0],events:e||[]}}
-Deno.serve(async req=>{const c=cors(req);if(!c.ok)return J(req,{error:'ORIGINE_REFUSEE'},403);if(req.method==='OPTIONS')return new Response('ok',{headers:c.h});if(req.method!=='POST')return J(req,{error:'METHODE_NON_AUTORISEE'},405);try{const b=await req.json().catch(()=>({})),action=String(b.action||'');if(action.startsWith('admin_')){await adminCtx(req);if(action==='admin_list')return J(req,{items:await adminList(),recipients:await recipientChoices()});if(action==='admin_trace')return J(req,await adminTrace(uid(b.id)!));return J(req,{error:'ACTION_INVALIDE'},400)}const s=await stipCtx(req);if(action==='finder')return J(req,await finder(s));if(action==='history')return J(req,{items:await history(s.agent.id)});if(action==='planning_change_history')return J(req,{items:await planningHistory(s.agent.id)});if(action==='inbox')return J(req,{items:await inbox(s.agent.id)});if(action==='day_context')return J(req,{analysis:await dayAnalysis(s,date(b.date,true)!),recipients:await recipientChoices(),permissions:s.profile.permissions});if(action==='submit')return J(req,{item:await submit(s,b)});if(action==='absence_submit')return J(req,{item:await absenceSubmit(s,b)});if(action==='delay_submit')return J(req,{item:await delaySubmit(s,b)});if(action==='target_decide')return J(req,{item:await targetDecide(s,b)});if(action==='responsable_list')return J(req,{items:await responsableList(s),recipients:await recipientChoices()});if(action==='route_official')return J(req,{item:await routeOfficial(s,b)});if(action==='declare_sent')return J(req,{item:await declareSent(s,b)});if(action==='responsable_decide')return J(req,{item:await responsableDecide(s,b)});if(action==='acknowledge')return J(req,{item:await acknowledge(s,b)});if(action==='trace')return J(req,await trace(s,uid(b.id)!));return J(req,{error:'ACTION_INVALIDE'},400)}catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J(req,{error:m},/SESSION/.test(m)?401:/ACCES|ADMIN|ORIGINE/.test(m)?403:400)}})
+Deno.serve(async req=>{const c=cors(req);if(!c.ok)return J(req,{error:'ORIGINE_REFUSEE'},403);if(req.method==='OPTIONS')return new Response('ok',{headers:c.h});if(req.method!=='POST')return J(req,{error:'METHODE_NON_AUTORISEE'},405);try{const b=await req.json().catch(()=>({})),action=String(b.action||'');if(action.startsWith('admin_')){await adminCtx(req);if(action==='admin_list')return J(req,{items:await adminList(),recipients:await recipientChoices()});if(action==='admin_trace')return J(req,await adminTrace(uid(b.id)!));return J(req,{error:'ACTION_INVALIDE'},400)}const s=await stipCtx(req);if(action==='finder')return J(req,await finder(s));if(action==='history')return J(req,{items:await history(s.agent.id)});if(action==='planning_change_history')return J(req,{items:await planningHistory(s.agent.id)});if(action==='inbox')return J(req,{items:await inbox(s.agent.id)});if(action==='day_context')return J(req,{analysis:await dayAnalysis(s,date(b.date,true)!),recipients:await recipientChoices(),permissions:s.profile.permissions});if(action==='submit')return J(req,{item:await submit(s,b)});if(action==='leave_cart_submit')return J(req,{item:await leaveCartSubmit(s,b)});if(action==='absence_submit')return J(req,{item:await absenceSubmit(s,b)});if(action==='delay_submit')return J(req,{item:await delaySubmit(s,b)});if(action==='target_decide')return J(req,{item:await targetDecide(s,b)});if(action==='responsable_list')return J(req,{items:await responsableList(s),recipients:await recipientChoices()});if(action==='route_official')return J(req,{item:await routeOfficial(s,b)});if(action==='declare_sent')return J(req,{item:await declareSent(s,b)});if(action==='responsable_decide')return J(req,{item:await responsableDecide(s,b)});if(action==='acknowledge')return J(req,{item:await acknowledge(s,b)});if(action==='trace')return J(req,await trace(s,uid(b.id)!));return J(req,{error:'ACTION_INVALIDE'},400)}catch(e){console.error(e);const m=e instanceof Error?e.message:String(e);return J(req,{error:m},/SESSION/.test(m)?401:/ACCES|ADMIN|ORIGINE/.test(m)?403:400)}})
