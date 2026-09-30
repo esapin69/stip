@@ -109,9 +109,68 @@ has(messages,"quick=communication&tab=dm","une notification DM ne cible pas l’
 has(messages,'tab=wheelchair?"fauteuils":"chat"',"les notifications Chat/Fauteuils ne ciblent pas leur onglet");
 has(rules,"Une seule application, trois vues","contrat Communication incomplet");
 
-console.log("STIP Communication contract: OK");
-
 has(communicationApp,"canUseWheelchairs","l’application Communication ne masque pas Fauteuils selon la famille");
 has(communicationApp,'key !== "wheelchair" || canUseWheelchairs()', "l’onglet Fauteuils reste visible hors brancardage");
 has(messages,"requireWheelchairAccess(ctx)","Fauteuils ne sont pas réservés au brancardage côté serveur");
 has(rules,"module métier du brancardage uniquement","le contrat ne réserve pas Fauteuils au brancardage");
+
+/* Audit team-chat 2026-09-30: preserve reviewed CSS rules and avoid duplicate JS functions. */
+const guardedChatCssSelectors = new Set([
+  ".tb-resolve:active",
+  ".tb-resolve:disabled",
+  ".tb-composer textarea",
+  ".tb-pulse-stock",
+  ".tb-pulse-search",
+  ".tb-search-shortcuts-grid",
+  ".tb-wheelchair-actions",
+  ".tb-search-shortcuts",
+  ".tb-wheelchair-freshness.is-hot .tb-freshness-track::after",
+  ".tb-wheelchair-freshness.is-warm .tb-freshness-track::after",
+  ".tb-wheelchair-freshness.is-cold .tb-freshness-track::after, .tb-wheelchair-freshness.is-frozen .tb-freshness-track::after",
+]);
+const normalizedCss = (s) => s.replace(/\s+/g, " ").trim();
+const cssWithoutComments = chatCss.replace(/\/\*[\s\S]*?\*\//g, "");
+const seenChatCssRules = new Set();
+const cssDepth = [];
+let cssStart = 0, cssQuote = "";
+const cssChildren = [];
+for (let i = 0; i < cssWithoutComments.length; i++) {
+  const c = cssWithoutComments[i];
+  if (cssQuote) {
+    if (c === "\\") { i++; continue; }
+    if (c === cssQuote) cssQuote = "";
+    continue;
+  }
+  if (c === '"' || c === "'") { cssQuote = c; continue; }
+  if (c === "{") {
+    const rule = normalizedCss(cssWithoutComments.slice(cssStart, i));
+    if (cssChildren.length) cssChildren[cssChildren.length - 1]++;
+    cssDepth.push(rule);
+    cssChildren.push(0);
+    cssStart = i + 1;
+    continue;
+  }
+  if (c === "}") {
+    const children = cssChildren.pop();
+    const rule = cssDepth.pop();
+    if (children === 0 && guardedChatCssSelectors.has(rule)) {
+      const context = cssDepth.join(" > ");
+      const declarations = normalizedCss(cssWithoutComments.slice(cssStart, i));
+      const key = [context, rule, declarations].join("|");
+      if (seenChatCssRules.has(key)) fail("règle CSS Team Chat identique réintroduite: " + rule);
+      seenChatCssRules.add(key);
+    }
+    cssStart = i + 1;
+  }
+}
+for (const rule of guardedChatCssSelectors) {
+  if (![...seenChatCssRules].some((key) => key.includes("|" + rule + "|"))) {
+    fail("règle CSS Team Chat protégée absente: " + rule);
+  }
+}
+const namedTeamFunctions = [...chat.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]);
+const duplicatedTeamFunctions = namedTeamFunctions.filter((name, index) => namedTeamFunctions.indexOf(name) !== index);
+if (duplicatedTeamFunctions.length) {
+  fail("fonction JavaScript Team Chat déclarée plusieurs fois: " + [...new Set(duplicatedTeamFunctions)].join(", "));
+}
+console.log("STIP Communication contract: OK");

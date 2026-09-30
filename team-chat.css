@@ -795,8 +795,8 @@
   font-weight:950;
   cursor:pointer;
 }
-.tb-resolve:active{transform:translateY(1px)}
-.tb-resolve:disabled{opacity:.55;pointer-events:none}
+
+
 .tb-resolved-line{
   margin-top:8px;
   color:#4d7268;
@@ -810,11 +810,7 @@
   background:rgba(247,250,250,.98)!important;
   box-shadow:0 -10px 28px rgba(23,63,73,.07)!important;
 }
-.tb-composer textarea{
-  min-height:46px!important;
-  max-height:120px!important;
-  resize:none!important;
-}
+
 @media(max-width:390px){
   .tb-page-head{grid-template-columns:42px minmax(0,1fr) auto auto!important}
   .tb-active-count{padding:0 7px;font-size:.59rem}
@@ -934,9 +930,9 @@
   font-weight:850;
   text-align:center;
 }
-.tb-pulse-stock{background:#edf8f3!important}
+
 .tb-pulse-stock em{color:#176b54}
-.tb-pulse-search{background:#edf5fb!important}
+
 .tb-pulse-search em{color:#316c94}
 .tb-pulse-card>time{
   display:block;
@@ -1748,7 +1744,7 @@
   .tb-search-shortcuts{padding:10px 9px 8px!important}
   .tb-mode-toggle{min-height:58px!important;grid-template-columns:40px minmax(0,1fr) 50px!important}
   .tb-mode-toggle-icon{width:40px!important;height:40px!important}
-  .tb-search-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+  
   .tb-search-shortcut{min-height:50px!important}
   .tb-composer{padding-inline:9px!important}
   .tb-send{min-width:104px!important}
@@ -2647,9 +2643,7 @@
 .tb-missing-send b{font-size:.95rem!important}
 .tb-missing-send:disabled{opacity:.55!important;box-shadow:none!important}
 
-@media(max-width:380px){
-  .tb-wheelchair-actions{grid-template-columns:1fr!important}
-}
+
 
 /* Fauteuils V17 — standalone building cards */
 .hc-tableau-standalone .tb-building-pulse{
@@ -3442,7 +3436,7 @@
 }
 
 @media(max-width:430px){
-  .tb-search-shortcuts{padding:7px 9px 5px!important}
+  
   .tb-action-current{min-height:42px;margin-bottom:5px}
   .tb-action-current-copy{grid-template-columns:auto 27px minmax(0,1fr);gap:5px}
   .tb-action-current-copy>span{width:27px;height:27px}
@@ -4698,10 +4692,9 @@
   line-height:1;
   transform:translateY(-.5px);
 }
-.tb-wheelchair-freshness.is-hot .tb-freshness-track::after{animation-duration:2.4s}
-.tb-wheelchair-freshness.is-warm .tb-freshness-track::after{animation-duration:3.2s}
-.tb-wheelchair-freshness.is-cold .tb-freshness-track::after,
-.tb-wheelchair-freshness.is-frozen .tb-freshness-track::after{animation-duration:7s}
+
+
+
 @keyframes tbFreshnessSweep{
   from{background-position:180% 0}
   to{background-position:-80% 0}
