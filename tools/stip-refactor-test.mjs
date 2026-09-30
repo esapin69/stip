@@ -29,11 +29,18 @@ check(
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
 const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator('), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator(')));
+const homeNavSection=home.slice(home.indexOf('function homeModeNav()'),home.indexOf('function shortcutsLauncher()'));
 const renderStart = home.indexOf('function render() {', home.indexOf('function homeModeBody()'));
 const homeRenderSection = home.slice(renderStart, home.indexOf('const onHome =', renderStart));
-check(chiefDateSection.includes('id="homeDutyChiefNowHost"'), 'Le chef présent doit rester sous la date dans Mon profil.');
+check(
+  chiefDateSection.includes('id="homeDutyChiefNowHost"') && chiefDateSection.includes('showChief ?') && homeNavSection.includes('showChief: state.homeMode === "planning"'),
+  'Le chef présent doit rester sous la date et uniquement en mode profil.'
+);
 check((home.match(/id="homeDutyChiefNowHost"/g) || []).length === 1, 'Le chef présent ne doit pas être dupliqué.');
-check(!homeRenderSection.includes('dutyChiefHost') && !homeRenderSection.includes('state.homeMode === "apps"') && home.includes('showChief: state.homeMode === "planning"'), 'La page Applications ne doit pas afficher la carte du chef.');
+check(
+  homeNavSection.includes('todayFullDateSeparator({ showChief: state.homeMode === "planning" })') && !homeModeBody.includes('homeDutyChiefNowHost') && !homeRenderSection.includes('dutyChiefHost'),
+  'Le bloc chef ne doit pas revenir dans le contenu Applications.'
+);
 check(
   homeModeBody.indexOf('planningWeekSeparator()') >= 0 &&
   homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('planningWeekSeparator()') &&
@@ -49,9 +56,17 @@ check(home.includes('Esprit d’équipe'),'L’accueil ne référence pas Esprit
 check(!home.includes('hc-calendar-edge'),'Une bulle calendrier flottante reste active.');
 check(home.includes('Synchroniser mon calendrier'),'L’entrée calendrier centrale n’a pas son libellé validé.');
 const planningHome=read('planning-home.js');
+const officialPdfClient=read('planning-print-reference.js');
+const officialPdfEdge=read('supabase/functions/stip-planning-pdf/index.ts');
 check(!planningHome.includes('Envoyer PDF'),'L’action obsolète Envoyer PDF est encore affichée.');
-check(planningHome.includes('Aperçu A4 paysage'),'L’aperçu PDF A4 paysage n’est pas explicite.');
-check(read('planning-print-reference.js').includes('@page{size:A4 landscape'),'L’aperçu imprimable a perdu le format A4 paysage.');
+check(
+  planningHome.includes('PDF planning à jour') && officialPdfClient.includes('functions/v1/stip-planning-pdf') && officialPdfClient.includes('popup.location.replace(j.url)'),
+  'Le planning doit déléguer son PDF au générateur Supabase canonique.'
+);
+check(
+  officialPdfEdge.includes('pageW=mm(297),pageH=mm(210)') && officialPdfEdge.includes('PDFDocument.create()') && !officialPdfClient.includes('@page{size:A4 landscape'),
+  'Le générateur Supabase doit produire le PDF A4 paysage sans ancienne prévisualisation locale.'
+);
 
 const spiritHtml=read('esprit-equipe.html');
 const spirit=read('esprit-equipe.js');
@@ -66,6 +81,7 @@ check(spirit.includes('Array.from({ length: 7 }'),'Esprit d’équipe ne constru
 check(spirit.includes('loadCore(addDays(state.weekStart, -7))')&&spirit.includes('loadCore(addDays(state.weekStart, 7))'),'Le préchargement des semaines adjacentes a disparu.');
 
 const selector=read('stip-agent-selector.js');
+const sharedAgentSelectorCss=read('stip-agent-selector.css');
 const personActions=read('stip-person-actions.js');
 const personActionsCss=read('stip-person-actions.css');
 const shiftRegistry=read('shift-registry.js');
@@ -77,10 +93,8 @@ check(
 );
 check(selector.includes('sas-absence-divider')&&selector.includes('sas-absent'),'Le sélecteur commun ne sépare plus les absents.');
 check(
-  read('stip-agent-selector.css').includes('aspect-ratio:4/5') &&
-  read('stip-agent-selector.css').includes('object-fit:cover') &&
-  read('stip-agent-selector.css').includes('object-position:50% var(--sas-photo-y,42%)'),
-  'Le mur commun a perdu le portrait ovale 4:5 ou la protection anti-déformation des images.'
+  sharedAgentSelectorCss.includes('.sas-wall-grid') && sharedAgentSelectorCss.includes('.sas-wall-agent') && sharedAgentSelectorCss.includes('.sas-wall-ghe') && selector.includes('function pickerCard(') && selector.includes('sas-wall-copy') && !selector.includes('sas-wall-photo'),
+  'Le mur commun de cartes texte du 26/09 ne doit pas régresser vers un second mur de portraits.'
 );
 check(read('responsable-agents.js').includes('STIPAgentSelector.mount'),'Responsable ne réutilise plus le sélecteur commun.');
 check(
@@ -135,8 +149,8 @@ check(
   'Ajouter un événement ne repose plus sur la source manager_agents ou peut encore ouvrir un mur vide.'
 );
 check(
-  read('responsable-tabs.js').includes('responsable-agenda.js?v=20260924-agent-picker-stable3'),
-  'Le chemin Agenda peut encore charger une ancienne version du moteur de sélection.'
+  !!responsableAgenda.match(/version:\s*"([^"]+)"/) && read('responsable-tabs.js').includes('responsable-agenda.js?v='+responsableAgenda.match(/version:\s*"([^"]+)"/)[1]) && read('responsable-tabs.js').includes('STIPResponsableAgenda?.version === "'+responsableAgenda.match(/version:\s*"([^"]+)"/)[1]+'"'),
+  'Le chargeur Responsable Agenda doit référencer la version effective de son runtime.'
 );
 check(
   read('responsable-agenda-home.js').includes('STIPResponsableTabs?.openAgendaAdd') &&
@@ -156,8 +170,14 @@ check(/class="[^"]*op-day\b/.test(read('responsable-intelligence.js')),'Le cockp
 const theme=read('stip-theme-base.css');
 const calendarCore=read('stip-calendar-core.css');
 const calendarVisual=read('stip-calendar-visual.css');
-check(theme.includes('--stip-bg:#f6f7f8'),'Le fond maître neutre n’est plus appliqué.');
-check(theme.includes('--stip-accent:#176b93'),'L’accent bleu HCL n’est plus appliqué.');
+check(
+  theme.includes('--stip-bg:#f3f6f8'),
+  'Le fond maître neutre révisé a changé.'
+);
+check(
+  theme.includes('--stip-accent:#0b7ea6'),
+  'L’accent bleu maître révisé a changé.'
+);
 check(!read('assistant.css').trimStart().startsWith(':root'),'Assistant recrée une palette locale.');
 check(!read('responsable-home.css').trimStart().startsWith(':root'),'Responsable recrée une palette locale.');
 
@@ -208,11 +228,8 @@ const loadingJs=read('stip-loading.js');
 
 check(home.includes('hc-profile-bell')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée à la barre d’accueil.');
 check(
-  home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" }') &&
-  home.includes('{ key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" }') &&
-  home.includes('{ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" }') &&
-  home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
-  'La navigation principale Applications / Mon espace / Esprit d’équipe et l’accès Actions ne sont plus conformes.'
+  homeNavSection.includes('{ key: "apps", label: "Applications"') && homeNavSection.includes('{ key: "planning", label: "Mon espace"') && homeNavSection.includes('{ key: "team", label: "Esprit d’équipe"') && home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
+  'La navigation principale Applications / Mon espace / Esprit d’équipe ou Actions a régressé.'
 );
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(
@@ -237,9 +254,8 @@ check(
 );
 check(accessManage.includes('>MINI</button>')&&accessManage.includes('>MAXI</button>'),'La gestion des accès n’affiche plus MINI / MAXI.');
 check(
-  accessManage.includes('STIPAgentSelector.mountWall') &&
-  read('access-manage.html').includes('stip-agent-selector.js?v=20260925-person-actions1'),
-  'ADMIN > Accès ne réutilise plus le mur canonique des agents.'
+  accessManage.includes('STIPAgentSelector.mountWall') && /<script\s+src="stip-agent-selector\.js\?v=[^"]+"/.test(read('access-manage.html')),
+  'ADMIN > Accès ne charge plus le sélecteur commun ni son mur d’agents.'
 );
 check(
   accessManage.includes('STIPPersonActions.open') &&
@@ -308,10 +324,8 @@ check(!read('responsable.html').includes('assistant-presence.js'),'Responsable c
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
 check(
-  home.includes('<div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator({ showChief: state.homeMode === "planning" })}</div>') &&
-  home.includes('<div class="hc-home-identity">${profile()}</div>') &&
-  home.indexOf('<div class="hc-home-identity">${profile()}</div>') < home.indexOf('<nav class="hc-home-filters"'),
-  'La carte identité doit figurer entre la date et les trois onglets du bandeau commun.'
+  homeNavSection.includes('<div class="hc-home-identity">${profile()}</div>') && homeNavSection.indexOf('hc-home-meta-date') < homeNavSection.indexOf('hc-home-identity') && homeNavSection.indexOf('hc-home-identity') < homeNavSection.indexOf('hc-home-filters') && homeRenderSection.includes('`${homeModeNav()}${shortcutsPopup()}'),
+  'La carte identité doit rester dans le nouvel en-tête commun, entre date et onglets.'
 );
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
@@ -326,10 +340,8 @@ check(
 check(home.includes('function planningCalendarOverview')&&home.includes('hc-date-jump-permanent'),'Le calendrier mensuel permanent a disparu du planning.');
 check(!home.includes('data-date-jump-toggle')&&!home.includes('data-cal-close'),'Le calendrier mensuel ne doit plus fonctionner comme un pop-up refermable.');
 check(
-  home.includes('work: Boolean(workIcon)') &&
-  home.includes('shift.work') &&
-  home.includes('hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}'),
-  'Le calendrier doit réserver la pastille colorée aux shifts réellement travaillés.'
+  home.includes('work: Boolean(def?.is_working)') && home.includes('shift?.work ? "is-worked" : ""') && home.includes('STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)') && !home.includes('hc-date-jump-dot stip-month-dot shift-${esc(shift.type)}'),
+  'Le mois personnel doit réserver les badges texte colorés aux shifts travaillés.'
 );
 check(
   home.includes('hc-date-jump-day-number') &&
@@ -389,11 +401,8 @@ check(
   'Le calendrier mensuel permanent a quitté le gabarit mensuel commun.'
 );
 check(
-  home.includes('hc-week-events-slot') &&
-  home.includes('hc-week-event-chip') &&
-  homeCss.includes('.hc-calendar-driven-planning .hc-days-landscape .hc-week-events-slot') &&
-  homeCss.includes('.hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip'),
-  'Les repères événement intégrés dans les cartes de shift ont disparu.'
+  home.includes('hc-week-events-slot stip-week-events') && home.includes('hc-week-event-chip stip-week-event') && calendarVisual.includes('.stip-week-events{font-size:1.45rem!important}'),
+  'Les événements intégrés doivent consommer le modèle et le style commun de la semaine.'
 );
 check(
   home.includes('hc-planning-week-separator stip-section-separator') &&
@@ -460,12 +469,8 @@ check(
   'Une page redéfinit encore localement la taille des icônes du calendrier mensuel.'
 );
 check(
-  home.includes('stip-month-dot') &&
-  agentMonthSource.includes('stip-month-dot') &&
-  calendarCore.includes('.stip-month-calendar .stip-month-dot') &&
-  calendarCore.includes('width:19px!important') &&
-  !patterns.includes('.stip-month-dot{'),
-  'Les pastilles de couleur doivent garder une taille commune, légèrement inférieure aux pictogrammes.'
+  home.includes('STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)') && read('stip-month-table.css').includes('.stip-month-shift-badge') && agentMonthSource.includes('stip-month-dot') && calendarCore.includes('.stip-month-calendar .stip-month-dot') && calendarCore.includes('width:19px!important') && !patterns.includes('.stip-month-dot{'),
+  'Les badges et pastilles mensuels doivent garder leurs tailles partagées selon le contexte.'
 );
 check(
   calendarCore.includes('grid-template-columns:repeat(7,minmax(0,1fr))!important') &&
@@ -511,23 +516,18 @@ const espritHtml=read('esprit-equipe.html');
 const espritJs=read('esprit-equipe.js');
 check(['stip-time-stack','stip-time-month','stip-time-week','stip-time-days'].every(key=>patterns.includes(key)),'La navigation temporelle canonique 2/3 niveaux a disparu du thème partagé.');
 check(
-  espritHtml.includes('id="teamDutyChiefTodayHost"') &&
-  espritJs.includes('function weekControlsMarkup()') &&
-  espritJs.includes('id="teamWeekControls"') &&
-  espritJs.includes('id="teamDays"') &&
-  espritJs.includes('body = weekControlsMarkup() + daySeparator + staffing + teamDaySummary(bundle, day)') &&
-  /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) &&
-  espritHtml.includes('id="teamDateJumpPanel"'),
-  'Esprit d’équipe a perdu la hiérarchie validée Aujourd’hui / Cette semaine / shifts / Ce mois.'
+  espritHtml.includes('id="teamDutyChiefTodayHost"') && espritJs.includes('function weekControlsMarkup()') && espritJs.includes('id="teamWeekControls"') && espritJs.includes('id="teamDays"') && espritJs.includes('weekControlsMarkup()') && espritJs.includes('return dayCard + daySeparator + dayDetails;') && /class="[^"]*\bteam-month-zone\b[^"]*"/.test(espritHtml) && espritHtml.includes('id="teamDateJumpPanel"'),
+  'Esprit d’équipe a perdu son enchaînement aujourd’hui, semaine, détails des shifts, mois.'
 );
 check(espritJs.includes('function monthContext')&&espritJs.includes('dayFocus'),'Esprit d’équipe ne conserve plus le contexte mois/semaine/jour.');
 check(!espritJs.includes('scrollIntoView({ behavior: "smooth", block: "start" })'),'Le filtre Jour d’Esprit d’équipe ne doit plus faire défiler la page vers une journée plus bas.');
-check(read('THEME_FIRST.md').includes('Navigation temporelle canonique'),'Le contrat THEME_FIRST ne documente plus le filtre temporel de référence.');
 check(
-  read('THEME_FIRST.md').includes('Calendrier 1 mois canonique') &&
-  read('THEME_FIRST.md').includes('stip-month-calendar') &&
-  read('THEME_FIRST.md').includes('stip-month-primary'),
-  'Le contrat THEME_FIRST ne documente plus le template obligatoire des calendriers mensuels.'
+  read('THEME_FIRST.md').includes('Navigation temporelle canonique') && read('THEME_FIRST.md').includes('STIP-CALENDAR-RULES.md'),
+  'Le thème ne renvoie plus au contrat temporel canonique.'
+);
+check(
+  read('THEME_FIRST.md').includes('Calendrier 1 mois canonique') && read('THEME_FIRST.md').includes('stip-month-table.css') && read('THEME_FIRST.md').includes('stip-month-calendar') && read('THEME_FIRST.md').includes('stip-month-primary'),
+  'Le thème ne référence plus la table mensuelle partagée.'
 );
 
 const espritInteractiveHtml=read('esprit-equipe.html');
@@ -635,12 +635,8 @@ check(
   'Les repères terrain M/J/J4/S/N doivent rester de vrais boutons ouvrant leur analyse.'
 );
 check(
-  home.includes('function bindEmbeddedViewportLayer') &&
-  home.includes('#teamShiftAnalysisOverlay') &&
-  home.includes('#respPanel.open') &&
-  home.includes('.ta-sheet.open') &&
-  home.includes('frame.dataset.stipViewportLayer === "1"'),
-  'Une fenêtre modale embarquée peut de nouveau se retrouver hors du viewport visible.'
+  home.includes('window.STIPOverlayNav?.trackElement?.(wrap') && spirit.includes('window.STIPOverlayNav?.trackElement?.(overlay') && read('t-est/regles-communes/global.js').includes('window.visualViewport') && read('stip-overlay-navigation.js').includes('function trackElement(') && read('esprit-equipe.css').includes('max-height:min(88vh,760px)'),
+  'Les modales modernes doivent être suivies par le moteur global et rester bornées au mobile.'
 );
 check(
   spirit.includes('async function loadAssistant(start, force = false)') &&
@@ -651,11 +647,7 @@ check(
   'Esprit d’équipe peut de nouveau bloquer le premier rendu avec les enrichissements secondaires.'
 );
 
-if(failures.length){
-  console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
-  process.exit(1);
-}
-console.log('OK — invariants de refonte STIP vérifiés.');
+// Le verdict n'est calculé qu'après TOUS les contrôles, y compris l'audit de fin de fichier.
 
 
 // Pending-work audit: agent calendar + Responsable shift drill-down
@@ -736,3 +728,12 @@ check(
   agentsContract.includes('Do not operate Vercel directly'),
   'Le contrat GitHub/Supabase de Visiter les lieux n’est plus documenté dans AGENTS.md.'
 );
+
+check(!home.includes('<div class="hc-home-identity"${profile()}</div>'), 'En-tête GHE : conteneur identité mal formé.');
+check(!sharedAgentSelectorCss.includes('*/\\n.sas-selector'), 'Sélecteur agents : échappement CSS littéral parasite.');
+check(!read('access-manage.html').includes('</script>\\n    <script'), 'ADMIN > Accès : échappement HTML littéral parasite.');
+if (failures.length) {
+  console.error(failures.map(x=>`FAIL — ${x}`).join('\n'));
+  process.exit(1);
+}
+console.log('OK — invariants STIP contrôlés intégralement, aucun verdict prématuré.');

@@ -85,14 +85,13 @@ Le socle brut du mois doit rester lisible sans couche de finition : numéro, rep
 
 **Statut : MAÎTRE VALIDÉ UTILISATEUR**
 
-Référence visuelle validée : le module de recherche d’agents visible dans **ACCÈS & SÉCURITÉ > Accès** au 25/09/2026 :
-- barre de recherche ;
-- filtres de tri `Nom / Prénom / GHE` ;
+Référence actuelle : composant partagé d’**ACCÈS & SÉCURITÉ > Accès**. Le mur avec portraits du 25/09/2026 a été volontairement remplacé le 26/09/2026 par un **mur de cartes texte**, sans portrait. Ne pas rétablir l’ancienne interface uniquement pour satisfaire un test hérité.
+- barre de recherche commune et stable avec le clavier ;
+- filtres de tri `Prénoms / Noms / GHE` ;
 - séparateurs alphabétiques ou GHE ;
-- mur de portraits ;
-- photo ronde avec initiales en secours ;
-- tampon GHE superposé ;
-- identité hiérarchisée selon le filtre actif.
+- mur unique de cartes texte `.sas-wall-agent` ;
+- tampon GHE en haut et repère de sélection ;
+- identité hiérarchisée selon le filtre actif. Les photos restent disponibles dans les autres composants qui les utilisent.
 
 Le maître ne comprend **pas** les éléments propres à la page Accès & Sécurité (onglets `Accès / Historique / Contrôle`, filtres `Avec accès / Sans accès`, éditeur de droits). Seul le composant de recherche/sélection d’une personne et son comportement sont enregistrés comme référence globale.
 
@@ -104,7 +103,7 @@ Moteur maître :
 - `STIPAgentSelector.mountPicker(...)` pour une intégration complète embarquée.
 
 Règles :
-- toute nouvelle sélection d’agent se branche sur ce moteur au lieu de recréer cartes, photos, tampons GHE, séparateurs, recherche ou logique de tri ;
+- toute nouvelle sélection d’agent se branche sur ce moteur au lieu de recréer cartes, tampons GHE, séparateurs, recherche ou logique de tri ;
 - les corrections visuelles communes se font dans `stip-agent-selector.css` et les corrections de comportement dans `stip-agent-selector.js` ;
 - une page appelante fournit seulement ses agents, sa sélection et son action métier ;
 - ce maître ne doit pas être remplacé par une autre variante sans validation explicite d’Eddy.

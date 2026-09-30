@@ -1142,8 +1142,10 @@
   }
 
 
-  function closeShiftAnalysis() {
-    document.getElementById("teamShiftAnalysisOverlay")?.remove();
+  function closeShiftAnalysis(fromHistory = false) {
+    const overlay = document.getElementById("teamShiftAnalysisOverlay");
+    if (overlay && !fromHistory && window.STIPOverlayNav?.closeElement?.(overlay)) return;
+    overlay?.remove();
   }
 
   function shiftStaffingRow(day, base) {
@@ -1248,7 +1250,7 @@
     });
   }
 
-  function openShiftAnalysis(day, code) {
+  function openShiftAnalysis(day, code, fromHistory = false) {
     const base = baseShift(code);
     if (!base) return;
     const signal = shiftSignalForDate(day, base) || {
@@ -1340,7 +1342,7 @@
           "</div></section>"
         : "";
 
-    closeShiftAnalysis();
+    closeShiftAnalysis(true);
     const overlay = document.createElement("div");
     overlay.id = "teamShiftAnalysisOverlay";
     overlay.className = "team-shift-analysis-overlay";
@@ -1377,10 +1379,18 @@
     document.body.appendChild(overlay);
     overlay
       .querySelector(".team-shift-analysis-backdrop")
-      ?.addEventListener("click", closeShiftAnalysis);
+      ?.addEventListener("click", () => closeShiftAnalysis());
     overlay
       .querySelector(".team-shift-analysis-close")
-      ?.addEventListener("click", closeShiftAnalysis);
+      ?.addEventListener("click", () => closeShiftAnalysis());
+    if (!fromHistory) {
+      const track = () => window.STIPOverlayNav?.trackElement?.(overlay, {
+        close: () => closeShiftAnalysis(true),
+        reopen: () => openShiftAnalysis(day, code, true),
+      });
+      if (window.STIPOverlayNav) track();
+      else window.STIPOverlayNavigationReady?.then(track);
+    }
   }
 
   function shiftBlock(day, code, items) {

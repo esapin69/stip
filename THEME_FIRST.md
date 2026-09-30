@@ -146,6 +146,14 @@ Quand un motif est utilisé au moins deux fois, il doit devenir un composant com
 
 
 
+### Navigation temporelle canonique
+
+Le parcours date/semaine/mois suit `STIP-CALENDAR-RULES.md` et `stip-week-engine.js`. La semaine personnelle reste le maître visuel ; Esprit d’équipe conserve sa composition métier. Aucun écran ne recalcule localement le pont du lundi ou les règles du vendredi au dimanche.
+
+### Calendrier 1 mois canonique
+
+`stip-month-calendar` et ses emplacements `stip-month-primary` / `stip-month-events` partagent `stip-calendar-core.css`, `stip-calendar-visual.css` et `stip-month-table.css` / `stip-month-table.js`. Les shifts travaillés portent des badges texte ; les repos et les événements conservent leurs pictogrammes. Chaque jour fournit sa date ISO au moteur commun, qui gère les séparateurs des semaines.
+
 ## Direction visuelle — lisibilité premium
 
 Cette direction renforce le thème existant sans créer une seconde identité.
@@ -212,7 +220,7 @@ STIP garde **un seul thème maître**. Les catégories ci-dessous ne sont pas de
 
 Toute interface dont l’objectif principal est de **choisir un agent** appartient à ce modèle. Un ancien `<select>` natif doit être retiré à la source et remplacé par le sélecteur partagé ; il ne doit jamais être simplement recouvert.
 
-Référence enregistrée : le module actuel de **ACCÈS & SÉCURITÉ > Accès** est la source visuelle validée du maître. Les contrôles propres à Accès & Sécurité restent hors du maître ; seuls la recherche, les filtres Nom/Prénom/GHE, le mur, les séparateurs, portraits, tampons GHE et la logique de sélection appartiennent au composant partagé.
+Référence actuelle : composant commun **ACCÈS & SÉCURITÉ > Accès** / **Rechercher un agent**. La refonte du 26/09/2026 a remplacé les portraits du 25/09 par des cartes texte. Les filtres Prénoms/Noms/GHE, les regroupements, le tampon GHE et la sélection restent dans le même moteur. Les photos restent disponibles pour d’autres composants autorisés, mais ne font plus partie du mur commun.
 
 Contrat validé :
 - ouverture dans une vraie vue STIP via `STIPAgentSelector.openPicker(...)` ; plein écran sur téléphone, surface adaptée sur écran large ;
@@ -222,8 +230,8 @@ Contrat validé :
 - filtre initial : `Prénoms` ; le filtre actif zoome légèrement et passe en gras + majuscules ;
 - `Prénoms` et `Noms` regroupent le mur par séparateurs `A`, `B`, `C`… et ne rendent jamais de groupe vide ;
 - `GHE` regroupe dynamiquement en `SANS GHE`, puis par numéro réel `GHE 1`, `GHE 2`, etc., avec `AUTRE GHE` uniquement si une valeur existe mais n’est pas interprétable ;
-- affichage sous forme de **mur de portraits ovales verticaux (4:5)** : photo importante, initiales en secours, tampon GHE superposé au bas du portrait sans masquer le visage ; les images utilisent `object-fit: cover` afin de conserver leurs proportions sans jamais les étirer ;
-- le **mur de portraits d’ADMIN > Accès est la référence visuelle canonique**. Il est rendu par `STIPAgentSelector.mountWall(...)` et consommé par ADMIN comme par `Rechercher un agent` ; aucun des deux écrans ne possède une copie locale des cartes, séparateurs, photos ou tampons GHE ;
+- affichage sous forme de **mur de cartes texte** avec tampon GHE en tête, identité prioritaire, information secondaire compacte et repère de sélection ;
+- le **mur de cartes texte partagé** est rendu par `STIPAgentSelector.mountWall(...)` et consommé par ADMIN comme par `Rechercher un agent` ; aucun des deux écrans ne possède une copie locale des cartes, séparateurs ou tampons GHE ;
 - filtre `Prénoms` : prénom prioritaire en gras/majuscules puis nom ; filtre `Noms` : nom prioritaire puis prénom ; filtre `GHE` : tampon GHE visuellement renforcé puis identité ;
 - toute la vignette est cliquable ; l’agent déjà sélectionné possède un repère commun ;
 - une sélection ferme la vue et restitue immédiatement l’agent à la page appelante sans perdre les autres champs déjà saisis ;
@@ -253,7 +261,7 @@ Le clic sur une personne peut ouvrir un **pop commun d’actions** via `STIPPers
 
 Règles :
 - le pop est un bottom-sheet sur mobile et une fenêtre centrée sur écran large ;
-- son en-tête réutilise le portrait ovale, l’identité et le tampon GHE du maître Personnes ;
+- son en-tête réutilise l’identité et le tampon GHE ; une éventuelle photo appartient au composant Actions, sans recréer des portraits dans le mur commun ;
 - la page appelante fournit uniquement les actions pertinentes et déjà autorisées ; le composant visuel ne décide jamais lui-même des permissions métier ;
 - une action sensible reste revalidée côté métier/serveur au moment de son exécution ;
 - **Rechercher un agent dans un formulaire reste une exception volontaire** : le clic sélectionne immédiatement l’agent et revient au formulaire, sans pop intermédiaire ;
