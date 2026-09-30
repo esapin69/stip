@@ -71,6 +71,11 @@ has(chat,"collapseWheelchairComposerFromScroll","le dock Fauteuils ne se replie 
 has(chat,"setWheelchairComposerExpanded(false)","le dock Fauteuils ne revient pas compact après envoi");
 has(chatCss,"is-wheelchair-composer-collapsed","les styles du dock compact Fauteuils manquent");
 has(chatCss,"20260930-wheelchair-card-fit1","le correctif responsive des cartes Fauteuils a disparu");
+has(chatCss,"20260930-wheelchair-premium-card1","les styles premium des cartes Fauteuils ont disparu");
+has(chatCss,"linear-gradient(137deg,#147f78 0%,#09685f 100%)","l’action prioritaire Fauteuils a perdu son contraste");
+has(chatCss,"center bottom / 100% 8px no-repeat","la bande de fraîcheur premium n’a plus sa progression lisible");
+has(chat,"html.push('</div>');","la ligne des métadonnées Fauteuils doit être fermée après l’étage");
+has(agents,"Premium wheelchair card presentation","le contrat des cartes premium Fauteuils est absent");
 has(chatCss,"overflow-wrap:anywhere!important","la fraîcheur et les dates des cartes peuvent déborder sur mobile");
 has(agents,"stack freshness time and probability on two lines","le contrat de lisibilité mobile des cartes Fauteuils est absent");
 has(communicationApp,"syncChromeCompact","le shell Communication ne compacte pas son chrome en lecture Fauteuils");

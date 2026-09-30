@@ -3346,8 +3346,7 @@
                 : isSearchType
                   ? "Je cherche"
                   : (stock.remaining > 1 ? stock.remaining + " disponibles" : "1 disponible")) +
-            '</span>' +
-          '</div>',
+            '</span>',
         );
 
         if (detail.level) {
@@ -3358,6 +3357,7 @@
             '</div>',
           );
         }
+        html.push('</div>');
 
         if (detail.service) {
           html.push(
