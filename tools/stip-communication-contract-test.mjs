@@ -70,6 +70,9 @@ has(chat,"data-composer-toggle","la poignée de déploiement/réduction Fauteuil
 has(chat,"collapseWheelchairComposerFromScroll","le dock Fauteuils ne se replie pas pendant la lecture vers le haut");
 has(chat,"setWheelchairComposerExpanded(false)","le dock Fauteuils ne revient pas compact après envoi");
 has(chatCss,"is-wheelchair-composer-collapsed","les styles du dock compact Fauteuils manquent");
+has(chatCss,"20260930-wheelchair-card-fit1","le correctif responsive des cartes Fauteuils a disparu");
+has(chatCss,"overflow-wrap:anywhere!important","la fraîcheur et les dates des cartes peuvent déborder sur mobile");
+has(agents,"stack freshness time and probability on two lines","le contrat de lisibilité mobile des cartes Fauteuils est absent");
 has(communicationApp,"syncChromeCompact","le shell Communication ne compacte pas son chrome en lecture Fauteuils");
 has(communicationApp,"is-chrome-compact","le shell Communication n’expose pas l’état compact");
 has(agents,"compact two-state dock","le contrat Fauteuils ne protège pas le dock compact à deux états");
