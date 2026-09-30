@@ -1,0 +1,36 @@
+name: STIP GHE leave cart contract
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'leave-cart.js'
+      - 'leave-cart.css'
+      - 'day-workflow.js'
+      - 'home-shell.js'
+      - 'responsable-day-workflow.js'
+      - 'stip-loader.js'
+      - 'index.html'
+      - 'supabase/functions/stip-change/index.ts'
+      - 'tools/stip-leave-cart-contract-test.mjs'
+      - '.github/workflows/stip-leave-cart-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-leave-cart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check JavaScript modules
+        run: |
+          node --check leave-cart.js
+          node --check home-shell.js
+          node --check day-workflow.js
+          node --check responsable-day-workflow.js
+      - name: Type-check authenticated backend
+        run: deno check supabase/functions/stip-change/index.ts
+      - name: Verify multi-day cart behavior without submissions
+        run: node tools/stip-leave-cart-contract-test.mjs
