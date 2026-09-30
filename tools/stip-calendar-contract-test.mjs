@@ -147,6 +147,10 @@ for (const [name, source] of calendarConsumers) {
     `${name} duplicates the late-week business rule instead of consuming the master engine`);
 }
 assert(homeJs.includes("hc-next-monday-bridge"), "home no longer renders the canonical next-Monday bridge");
+assert(/const openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
+  "weekly day button no longer declares its detail-state locally");
+assert(!/\n\s*openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
+  "weekly day button can throw by assigning an undeclared openDetail");
 assert(teamJs.includes("stip-week-next-bridge"), "team no longer renders the canonical next-Monday bridge");
 assert(agentJs.includes("stip-week-next-bridge"), "agent agenda no longer renders the canonical next-Monday bridge");
 assert(rrHomeJs.includes("stip-week-next-bridge"), "Responsable no longer renders the canonical next-Monday bridge");
