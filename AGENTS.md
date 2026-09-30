@@ -261,3 +261,6 @@ Règles obligatoires :
 
 Objectif : **une anomalie technique détectée = une trace dans Contrôle = une action claire ou un état résolu**.
 
+
+- Pendant la sélection, les jours retenus doivent être soulignés dans les calendriers Accueil et Planning personnel, y compris après changement de mois.
+- Les responsables doivent consulter le détail exact de chaque date/type/shift du panier, jamais seulement l'intervalle min-max; leur avis n'est pas présenté comme une autorisation officielle.

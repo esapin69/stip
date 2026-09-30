@@ -53,8 +53,18 @@ function row(x){
   KINDS.map(k=>'<option value="'+k+'"'+(k===x.kind?' selected':'')+'>'+(k==="AUTRE"?"Autre":k)+'</option>').join("")+
   '</select></label><button type="button" class="lc-remove" data-lc-remove="'+esc(x.date)+'" aria-label="Retirer ce jour">×</button></article>';
 }
+function markDays(){
+ const chosen=new Set(items.map(x=>x.date));
+ const nodes=document.querySelectorAll("#homeView [data-home-day],#homeView [data-cal-day],#planningView .ph-day-cell");
+ nodes.forEach(node=>{
+  const iso=String(node.dataset.homeDay||node.dataset.calDay||node.dataset.phDate||"").slice(0,10);
+  node.classList.toggle("is-lc-selected",chosen.has(iso));
+  if(chosen.has(iso))node.dataset.lcSelected="1";else delete node.dataset.lcSelected;
+ });
+}
 function render(){
- if(!load()||!items.length||!visible()){if(root)root.hidden=true;return}
+ if(!load()||!items.length||!visible()){markDays();if(root)root.hidden=true;return}
+ markDays();
  const host=ensure();host.hidden=false;
  const n=items.length;
  host.innerHTML=(open?'<section class="lc-panel" aria-label="Demande en cours">'+
@@ -141,5 +151,12 @@ window.addEventListener("stip:session-ended",()=>{
 });
 window.addEventListener("stip:route",render);
 window.addEventListener("stip:home-rendered",render);
+function watchMonth(){
+ const month=document.getElementById("planningView");
+ if(!month||typeof MutationObserver!=="function")return;
+ const watcher=new MutationObserver(()=>requestAnimationFrame(markDays));
+ watcher.observe(month,{childList:true,subtree:true});
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",watchMonth,{once:true});else watchMonth();
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",render,{once:true});else render();
 })();
