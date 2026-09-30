@@ -354,7 +354,7 @@
           iso === todayIso ? "is-today" : "",
           iso === selectedIso ? "is-selected" : "",
           weekend ? "is-weekend" : "",
-          shift ? "is-worked" : "",
+          shift?.work ? "is-worked" : "",
         ]
           .filter(Boolean)
           .join(" "),
