@@ -443,12 +443,10 @@
       host = document.createElement("section");
       host.id = "hcEventFeedbackHost";
       host.className = "hc-feedback-pending";
-      const before =
-        planning.querySelector(".hc-home-date-kicker") ||
-        planning.querySelector(".hc-home-today-separator") ||
-        planning.querySelector(".hc-planning-details-subblock") ||
-        planning.querySelector(".hc-planning-week-separator");
-      if (before) planning.insertBefore(host, before);
+      // Keep the dated weekly overview immediately below the common header.
+      // insertBefore requires a direct child, not a nested week/detail node.
+      const week = planning.querySelector(":scope > .hc-week-context-master");
+      if (week) week.insertAdjacentElement("afterend", host);
       else planning.prepend(host);
     }
 

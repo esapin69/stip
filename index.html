@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20260930-ghe-leave-cart1" />
+    <meta name="stip-ui-build" content="20260930-ghe-common-header1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -150,7 +150,8 @@
     <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1" />
     <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
     <link rel="stylesheet" href="/stip-month-table.css?v=20260928-month-badges1" />
-    <script defer src="/stip-month-table.js?v=20260928-month-badges1"></script>  </head>
+    <script defer src="/stip-month-table.js?v=20260928-month-badges1"></script>    <link rel="stylesheet" href="stip-home-header.css?v=20260930-compact-header1" />
+</head>
   <body>
     <main class="app-shell">
       <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
@@ -433,11 +434,12 @@
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20260926-nextmonday1"></script>
     <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>
-    <script src="stip-loader.js?v=20260930-ghe-leave-cart1"></script>
+    <script src="stip-loader.js?v=20260930-ghe-common-header1"></script>
     <link rel="stylesheet" href="leave-cart.css?v=20260930-ghe-leave-cart1">
     <script src="person-card-template.js?v=20260928-person-card1"></script>
     <script src="leave-cart.js?v=20260930-ghe-leave-cart1"></script>
-    <script src="home-shell.js?v=20260930-home-chef-placement1"></script>
+    <script src="home-shell.js?v=20260930-compact-header1"></script>
+    <script src="stip-home-scroll.js?v=20260930-compact-header1"></script>
     <script src="stip-field-intelligence.js?v=20260922-field6"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
     <script src="tomorrow-ui.js?v=20260926-touch-core1"></script>
@@ -450,7 +452,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20260930-ghe-leave-cart1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20260930-ghe-common-header1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
