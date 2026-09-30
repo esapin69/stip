@@ -1417,7 +1417,7 @@
     if (d > 2) return `Dans ${d} jours`;
     return fmtDateRange({ date: iso, endDate: iso });
   }
-  function todayFullDateSeparator() {
+  function todayFullDateSeparator({ showChief = true } = {}) {
     const date = dateObj(parisIso()),
       formatter = new Intl.DateTimeFormat("fr-FR", {
         weekday: "long",
@@ -1435,7 +1435,7 @@
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
       month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div><section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-under-date" aria-label="Chef d’équipe présent"></section>`;
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div>${showChief ? '<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-under-date" aria-label="Chef d’équipe présent"></section>' : ""}`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -2137,8 +2137,8 @@
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
-      <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator()}</div>
-      <div class="hc-home-identity">${profile()}</div>
+      <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator({ showChief: state.homeMode === "planning" })}</div>
+      <div class="hc-home-identity"${profile()}</div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map(
           (item) =>
