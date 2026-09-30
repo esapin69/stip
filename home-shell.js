@@ -2138,7 +2138,7 @@
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator({ showChief: state.homeMode === "planning" })}</div>
-      <div class="hc-home-identity"${profile()}</div>
+      <div class="hc-home-identity">${profile()}</div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map(
           (item) =>
