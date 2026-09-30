@@ -64,11 +64,12 @@ async function send(id:string,agent:any){
  const successes:string[]=[],failures:any[]=[];
  for(const x of list){
   const before:any=old.get(x.contact_id);
-  if(before&&['sent','advised','decided','superseded'].includes(before.state))continue;
+  if(before&&['advised','decided','superseded'].includes(before.state))continue;
+  if(before?.state==='sent'&&new Date(before.expires_at)>new Date())continue;
   if(before?.state==='sending'&&Date.now()-new Date(before.updated_at).getTime()<300000)continue;
   const secret=token(),now=new Date().toISOString(),row={request_id:id,contact_id:x.contact_id,recipient_email:x.email,recipient_name:x.name,recipient_role:x.role,token_hash:await hash(secret),state:'sending',sent_at:null,provider_id:null,sent_error:null,expires_at:new Date(Date.now()+72*3600000).toISOString(),updated_at:now};
   let mailId:string;
-  if(before){const q=await db.from('stip_change_mail_actions').update(row).eq('id',before.id).in('state',['prepared','failed','sending']);if(q.error)throw q.error;mailId=before.id;}
+  if(before){const q=await db.from('stip_change_mail_actions').update(row).eq('id',before.id).in('state',['prepared','failed','sending','sent']);if(q.error)throw q.error;mailId=before.id;}
   else{const q=await db.from('stip_change_mail_actions').insert(row).select('id').single();if(q.error)throw q.error;mailId=q.data.id;}
   const link=base()+'?t='+secret;
   const button=(label:string,v:string,color:string)=>'<a href="'+link+'&view='+v+'" style="display:inline-block;margin:5px;padding:12px;background:'+color+';color:white;text-decoration:none;border-radius:8px">'+label+'</a>';
