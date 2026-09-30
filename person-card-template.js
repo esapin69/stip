@@ -57,6 +57,21 @@
     return [first, last].filter(Boolean).join(" ") || "Utilisateur";
   }
 
+  function phoneValue(agent = {}) {
+    return String(
+      agent.telephone || agent.phone || agent.mobile || agent.portable || "",
+    ).trim();
+  }
+
+  function phoneHref(value = "") {
+    const raw = String(value || "").trim();
+    if (!raw) return "";
+    let normalized = raw.replace(/[^0-9+]/g, "");
+    if (normalized.startsWith("00")) normalized = "+" + normalized.slice(2);
+    if (!normalized) return "";
+    return "tel:" + normalized;
+  }
+
   function secondary(agent = {}) {
     const role = String(
         agent.role_metier || agent.role || agent.metier || "",
@@ -89,6 +104,8 @@
       ini = initials(agent),
       name = fullName(agent),
       sub = String(options.subtitle || secondary(agent)).trim(),
+      phone = phoneValue(agent),
+      phoneLink = phoneHref(phone),
       rootClasses = [
         "stip-person-card",
         compact ? "is-compact" : "",
@@ -111,6 +128,7 @@
         <small>${esc(label)}</small>
         <strong>${esc(name)}</strong>
         ${sub ? `<span>${esc(sub)}</span>` : ""}
+        ${phone ? `<a class="stip-person-card-phone" href="${esc(phoneLink)}" aria-label="Appeler ${esc(name)}">☎ ${esc(phone)}</a>` : ""}
       </div>
       ${self ? '<span class="stip-person-card-menu-hint" aria-hidden="true">•••</span>' : ""}
     </section>`;
@@ -152,6 +170,8 @@
     .stip-person-card-copy small{color:#168297;font-size:.58rem;font-weight:950;letter-spacing:.09em}
     .stip-person-card-copy strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.15}
     .stip-person-card-copy>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#70858d;font-size:.69rem;font-weight:760}
+    .stip-person-card-phone{width:max-content;max-width:100%;color:#2c737c;font-size:.69rem;font-weight:900;line-height:1.18;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
     .stip-person-card-menu-hint{justify-self:end;color:#8aa0a8;font-size:.78rem;font-weight:950;letter-spacing:.02em}
     .stip-person-card.is-self .stip-person-card-avatar{cursor:pointer;-webkit-tap-highlight-color:transparent}
     .stip-person-card.is-self .stip-person-card-avatar:focus-visible{outline:3px solid rgba(10,145,170,.28);outline-offset:3px}
