@@ -1389,7 +1389,9 @@
     if (!meta || !items.length) return "";
     const staffRow = shiftStaffingRow(day, base),
       targetValue = Number(staffRow?.target_count),
-      target = Number.isFinite(targetValue) ? targetValue : null,
+      target = staffRow?.target_count != null && Number.isFinite(targetValue) ? targetValue : null,
+      plannedValue = Number(staffRow?.planned_count),
+      planned = staffRow?.planned_count != null && Number.isFinite(plannedValue) ? plannedValue : null,
       sortedItems = items.slice().sort(compareAgentGhe);
     // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
     // On les conserve dans les données et le total du shift, mais on ne les répète pas dans la liste dépliée.
@@ -1412,7 +1414,7 @@
         <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
           <b>${esc(code)}</b>
           <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-          <em title="Agents listés">${sortedItems.length}</em>
+          <em title="${planned == null ? "Effectif prévu indisponible" : "Effectif prévu — tableau Cumul par Horaire"}">${planned == null ? "—" : esc(planned)}</em>
           <i aria-hidden="true">⌄</i>
         </button>
         <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
