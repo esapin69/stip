@@ -1,7 +1,7 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,db=createClient(URL,SERVICE,{auth:{persistSession:false}})
-const ORIGINS=new Set(['https://stip.esapin.com','https://admin.esapin.com','https://admin-ghe.esapin.com','https://esapin69.github.io'])
+const ORIGINS=new Set(['https://stip.esapin.com','https://ghe.esapin.com','https://admin.esapin.com','https://admin-ghe.esapin.com','https://esapin69.github.io'])
 const WORK=new Set(['M','J','J4','S','N']);
 function cors(req:Request){const o=req.headers.get('origin')||'';const ok=!o||ORIGINS.has(o);return{ok,h:{'Access-Control-Allow-Origin':ok&&o?o:'https://stip.esapin.com','Access-Control-Allow-Headers':'content-type,x-stip-session,authorization','Access-Control-Allow-Methods':'POST,OPTIONS','Vary':'Origin'}}}
 function J(req:Request,b:unknown,s=200){const c=cors(req);return new Response(JSON.stringify(b),{status:s,headers:{...c.h,'Content-Type':'application/json','Cache-Control':'no-store'}})}
