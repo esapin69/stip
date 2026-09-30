@@ -42,9 +42,10 @@
           </button>
         </div>
       </div>
-      <div class="hc-home-meta-date hc-calendar-driven-planning">${todayHeader()}</div>
-      <div class="hc-home-identity" id="stipSharedIdentity"></div>
-      <nav class="hc-home-filters" data-count="3" aria-label="Accueil GHE">
+      <div class="ghe-home-header-stack">
+        <div class="hc-home-meta-date hc-calendar-driven-planning">${todayHeader()}</div>
+        <div class="hc-home-identity" id="stipSharedIdentity"></div>
+        <nav class="hc-home-filters" data-count="3" aria-label="Accueil GHE">
         <button type="button" data-shared-page="apps" aria-label="Applications">
           <span class="hc-home-filter-art"><img src="images/icone_app/home-access-applications.webp?v=20260922-topimages3" alt="" aria-hidden="true"></span>
           <strong>Applications</strong>
@@ -57,7 +58,8 @@
           <span class="hc-home-filter-art"><img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true"></span>
           <strong>Esprit d’équipe</strong>
         </button>
-      </nav>
+        </nav>
+      </div>
     </section>`;
 
   function renderSharedIdentity(snapshot = window.STIPContinuity?.read?.()) {
