@@ -63,3 +63,7 @@ jobs:
       - name: Check STIP planning exchange / PDF contract
         if: always()
         run: node tools/stip-planning-exchange-contract-test.mjs
+
+      - name: Check STIP planning mail decision contract
+        if: always()
+        run: node tools/stip-planning-mail-contract-test.mjs
