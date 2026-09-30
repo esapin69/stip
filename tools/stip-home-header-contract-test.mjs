@@ -21,5 +21,7 @@ assert(css.includes("data-header-compact") && css.includes("prefers-reduced-moti
 for (const file of ["index.html","esprit-equipe.html","responsable.html"]) {
   const page=read(file);
   assert(page.includes("stip-home-header.css?v="), file+" missing shared styles");
+  assert(page.includes("stip-home-scroll.js?v="), file+" missing return-to-top control");
 }
+assert(read("stip-home-scroll.js").includes("window.scrollY > 500"), "Return-to-top must stay contextual");
 console.log("GHE common header contract: OK");
