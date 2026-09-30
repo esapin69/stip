@@ -45,7 +45,11 @@ async function updateRecipients(id:string,agent:any,ids:any){
  if(error)throw error;await db.from('stip_change_mail_actions').delete().eq('request_id',id).in('state',['prepared','failed']);return data;
 }
 async function send(id:string,agent:any){
- const r=await myRequest(id,agent);
+ if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('ID_INVALIDE');
+ const {data:r,error:re}=await db.from('stip_change_requests').select('*').eq('id',id).maybeSingle();
+ if(re)throw re;if(!r)throw Error('DEMANDE_INTROUVABLE');
+ const targetCanSend=r.target_agent_id===agent.id&&r.context?.colleague_decision==='accept';
+ if(r.requester_agent_id!==agent.id&&!targetCanSend)throw Error('ACCES_REFUSE');
  if(!['awaiting_responsible','submitted'].includes(r.status)||r.decided_at||r.context?.mail_decision)throw Error('DEMANDE_NON_ENVOYABLE');
  if(!ready())throw Error('EXPEDITEUR_NON_CONFIGURE');
  const stored=Array.isArray(r.routed_recipients)?r.routed_recipients:[];
