@@ -68,6 +68,10 @@ jobs:
         if: always()
         run: node tools/stip-agenda-alert-contract-test.mjs
 
+      - name: Check STIP event feedback contract
+        if: always()
+        run: node tools/stip-event-feedback-contract-test.mjs
+
       - name: Check STIP planning exchange / PDF contract
         if: always()
         run: node tools/stip-planning-exchange-contract-test.mjs
