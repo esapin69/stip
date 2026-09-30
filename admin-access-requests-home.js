@@ -95,9 +95,10 @@
     d.innerHTML =
       '<div class="aar-shell"><header><div><span>ADMINISTRATION STIP</span><h2>Accès & preuves</h2></div><button type="button" data-aar-close aria-label="Fermer">×</button></header><div id="aarBody"></div></div>';
     document.body.appendChild(d);
-    d.querySelector("[data-aar-close]").onclick = () => d.close();
+    d.querySelector("[data-aar-close]").onclick = () =>
+      window.STIPOverlayNav?.close(d) || d.close();
     d.addEventListener("click", (e) => {
-      if (e.target === d) d.close();
+      if (e.target === d) window.STIPOverlayNav?.close(d) || d.close();
     });
     return d;
   }
@@ -122,27 +123,40 @@
       return manage + '<div class="aar-empty"><strong>Rien à traiter</strong><p>Tous les accès contrôlables sont actuellement reliés à une source.</p></div>';
     return manage + `<div class="aar-list">${sec.map((r, i) => `<button type="button" class="aar-alert" data-aar-security="${i}"><span><strong>${esc(r.agent?.prenom || "")} ${esc(r.agent?.nom || "")}</strong><small>Sécurité · absent du planning actuel · accès suspendu/revue</small></span><b>›</b></button>`).join("")}${req.map((r) => `<button type="button" data-aar-request="${esc(r.id)}"><span><strong>${esc(r.first_name)} ${esc(r.last_name)}</strong><small>${r.unresolved ? "Accès accordé mais non relié" : "Demande en attente"} · ${esc(fmtDate(r.created_at))}</small></span><b>›</b></button>`).join("")}</div>`;
   }
+  function renderListView() {
+    const d = ensureDialog(),
+      body = d.querySelector("#aarBody");
+    body.innerHTML = listMarkup();
+    body
+      .querySelectorAll("[data-aar-manage]")
+      .forEach((b) => (b.onclick = () => location.assign("access-manage.html")));
+    body
+      .querySelectorAll("[data-aar-request]")
+      .forEach((b) => (b.onclick = () => openRequest(b.dataset.aarRequest)));
+    body
+      .querySelectorAll("[data-aar-security]")
+      .forEach(
+        (b) =>
+          (b.onclick = () => openSecurity(Number(b.dataset.aarSecurity))),
+      );
+  }
+  function returnToList() {
+    const d = ensureDialog();
+    if (window.STIPOverlayNav?.back(d)) return;
+    renderListView();
+  }
   async function openList() {
     const d = ensureDialog(),
       body = d.querySelector("#aarBody");
-    d.showModal();
-    body.innerHTML = '<div class="aar-loading">Chargement…</div>';
+    await Promise.resolve(window.STIPOverlayNavigationReady);
+    if (!d.open) d.showModal();
+    window.STIPOverlayNav?.track(d);
+    if (data) renderListView();
+    else body.innerHTML = '<div class="aar-loading">Chargement…</div>';
     try {
       data = await api("list");
       renderCard();
-      body.innerHTML = listMarkup();
-      body
-        .querySelectorAll("[data-aar-manage]")
-        .forEach((b) => (b.onclick = () => location.assign("access-manage.html")));
-      body
-        .querySelectorAll("[data-aar-request]")
-        .forEach((b) => (b.onclick = () => openRequest(b.dataset.aarRequest)));
-      body
-        .querySelectorAll("[data-aar-security]")
-        .forEach(
-          (b) =>
-            (b.onclick = () => openSecurity(Number(b.dataset.aarSecurity))),
-        );
+      renderListView();
     } catch (e) {
       body.innerHTML =
         '<div class="aar-error"><strong>Vérification impossible</strong><p>STIP n’a pas pu joindre le service des accès.</p><button type="button" data-aar-retry>Réessayer</button></div>';
@@ -161,7 +175,7 @@
       .join("");
     return `<div class="aar-evidence ${ev.planning_match ? "is-ok" : ev.checkable === false ? "is-soft" : "is-warn"}"><span>PREUVE / SOURCE</span><strong>${esc(ev.label || "À contrôler")}</strong><p>${esc(ev.note || "")}</p>${ev.source_file ? `<dl><div><dt>Fichier</dt><dd>${esc(ev.source_file)}</dd></div>${ev.source_sheet ? `<div><dt>Onglet</dt><dd>${esc(ev.source_sheet)}</dd></div>` : ""}${ev.last_date ? `<div><dt>Présence jusqu’au</dt><dd>${esc(ev.last_date)}</dd></div>` : ""}</dl>` : ""}${fresh ? `<ul>${fresh}</ul>` : ""}${source}</div>`;
   }
-  function openRequest(id) {
+  function openRequest(id, recordHistory = true) {
     const r = (data?.items || []).find((x) => String(x.id) === String(id));
     if (!r) return;
     const body = document.getElementById("aarBody"),
@@ -170,7 +184,12 @@
       matched = r.matched_agent,
       approved = r.status === "approved";
     body.innerHTML = `<button type="button" class="aar-back" id="aarBack">‹ Tous les contrôles</button><section class="aar-request"><span class="aar-kicker">${approved ? "ACCÈS NON RÉSOLU" : "DEMANDE D’ACCÈS"}</span><h3>${esc(r.first_name)} ${esc(r.last_name)}</h3>${r.comment ? `<dl><div><dt>Commentaire libre</dt><dd>${esc(r.comment)}</dd></div></dl>` : ""}${evidenceMarkup(r.evidence)}${matched ? `<div class="aar-match"><span>CORRESPONDANCE</span><strong>${esc(matched.prenom || "")} ${esc(matched.nom || "")}</strong><small>${esc(matched.equipe || matched.type_planning || "Agent STIP")}</small></div>` : '<div class="aar-match is-missing"><span>CORRESPONDANCE</span><strong>Aucune personne exacte retrouvée</strong><small>Ne pas inventer de rattachement.</small></div>'}${!approved ? `<label>Code choisi<div class="aar-request-code"><span id="aarRequestedCode">••••••</span><button type="button" id="aarToggleRequestedCode">Voir</button></div></label><label>Accès proposé<select id="aarRole">${(data?.roles || []).map((x) => `<option value="${esc(x.key)}" ${x.key === recommended ? "selected" : ""}>${esc(x.label)}</option>`).join("")}</select></label><label>Message pour la personne<textarea id="aarDecisionNote" rows="3" placeholder="Message facultatif"></textarea></label><div class="aar-actions"><button type="button" class="aar-reject" id="aarReject">Refuser</button><button type="button" class="aar-grant" id="aarGrant">Valider l’accès</button></div>` : `<p class="aar-hint">Cet accès reste volontairement visible tant qu’il n’est pas relié à une personne suivie par une source probante ou supprimé.</p><div class="aar-actions aar-actions-danger">${matched && r.evidence?.planning_match ? '<button type="button" class="aar-link" id="aarLink">Relier à cette personne</button>' : ""}<button type="button" class="aar-delete" id="aarDelete">Supprimer tout l’accès STIP</button></div>`}<p id="aarMessage" class="aar-message"></p></section>`;
-    document.getElementById("aarBack").onclick = openList;
+    document.getElementById("aarBack").onclick = returnToList;
+    if (recordHistory)
+      window.STIPOverlayNav?.step(ensureDialog(), {
+        back: renderListView,
+        forward: () => openRequest(id, false),
+      });
     if (!approved) {
       let visible = false;
       document.getElementById("aarToggleRequestedCode").onclick = () => {
@@ -191,13 +210,18 @@
       document.getElementById("aarDelete").onclick = () => deleteTrace(r.id);
     }
   }
-  function openSecurity(i) {
+  function openSecurity(i, recordHistory = true) {
     const r = (data?.security_items || [])[i];
     if (!r) return;
     const body = document.getElementById("aarBody");
     body.innerHTML = `<button type="button" class="aar-back" id="aarBack">‹ Tous les contrôles</button><section class="aar-request"><span class="aar-kicker">SÉCURITÉ D’ACCÈS</span><h3>${esc(r.agent?.prenom || "")} ${esc(r.agent?.nom || "")}</h3>${evidenceMarkup(r.evidence)}<p class="aar-hint">Règle douce mais ferme : si une source planning actuelle existe et que la personne n’y figure plus, son accès opérationnel ne doit pas rester utilisable. La source n’est jamais supprimée.</p><div class="aar-actions"><button type="button" class="aar-delete" id="aarRevoke">Confirmer la révocation</button><button type="button" id="aarBack2">Retour</button></div><p id="aarMessage" class="aar-message"></p></section>`;
-    document.getElementById("aarBack").onclick = openList;
-    document.getElementById("aarBack2").onclick = openList;
+    document.getElementById("aarBack").onclick = returnToList;
+    document.getElementById("aarBack2").onclick = returnToList;
+    if (recordHistory)
+      window.STIPOverlayNav?.step(ensureDialog(), {
+        back: renderListView,
+        forward: () => openSecurity(i, false),
+      });
     document.getElementById("aarRevoke").onclick = () =>
       revokeProfile(r.profile_id);
   }
@@ -211,7 +235,7 @@
     try {
       await api("reject", { request_id: id, decision_note: note });
       await refresh();
-      openList();
+      returnToList();
     } catch (e) {
       m.textContent = e.message;
     }
@@ -244,7 +268,7 @@
       if (actions) {
         actions.innerHTML =
           '<button type="button" class="aar-reject" id="aarDoneBack">Tous les contrôles</button><button type="button" class="aar-manage-access" id="aarDoneManage">Gérer les accès</button>';
-        document.getElementById("aarDoneBack").onclick = openList;
+        document.getElementById("aarDoneBack").onclick = returnToList;
         document.getElementById("aarDoneManage").onclick = () =>
           location.assign("access-manage.html");
       }
@@ -264,7 +288,7 @@
     try {
       await api("link", { request_id: id, agent_id: agentId });
       await refresh();
-      openList();
+      returnToList();
     } catch (e) {
       m.textContent = e.message;
     }
@@ -281,7 +305,7 @@
     try {
       await api("delete_trace", { request_id: id });
       await refresh();
-      openList();
+      returnToList();
     } catch (e) {
       m.textContent = e.message;
     }
@@ -293,7 +317,7 @@
     try {
       await api("revoke_profile", { profile_id: profileId });
       await refresh();
-      openList();
+      returnToList();
     } catch (e) {
       m.textContent = e.message;
     }
@@ -318,7 +342,9 @@
       if (!data) data = await api("list");
       renderCard();
       const d = ensureDialog();
+      await Promise.resolve(window.STIPOverlayNavigationReady);
       if (!d.open) d.showModal();
+      window.STIPOverlayNav?.track(d);
       if (detail.request_id) return openRequest(detail.request_id);
       if (Number.isInteger(detail.security_index))
         return openSecurity(detail.security_index);
