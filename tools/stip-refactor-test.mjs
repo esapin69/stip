@@ -28,12 +28,19 @@ check(
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
-const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator()'), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator()')));
+const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator('), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator(')));
+const homeNavSection=home.slice(home.indexOf('function homeModeNav()'),home.indexOf('function shortcutsLauncher()'));
 const renderStart = home.indexOf('function render() {', home.indexOf('function homeModeBody()'));
 const homeRenderSection = home.slice(renderStart, home.indexOf('const onHome =', renderStart));
-check(chiefDateSection.includes('id="homeDutyChiefNowHost"'), 'Le chef présent doit rester sous la date dans Mon profil.');
+check(
+  chiefDateSection.includes('id="homeDutyChiefNowHost"') && chiefDateSection.includes('showChief ?') && homeNavSection.includes('showChief: state.homeMode === "planning"'),
+  'Le chef présent doit rester sous la date et uniquement en mode profil.'
+);
 check((home.match(/id="homeDutyChiefNowHost"/g) || []).length === 1, 'Le chef présent ne doit pas être dupliqué.');
-check(!homeRenderSection.includes('dutyChiefHost') && !homeRenderSection.includes('state.homeMode === "apps"') && /profileMarkup\s*=\s*showProfile\s*\?[\s\S]*:\s*"";/.test(homeRenderSection), 'La page Applications ne doit pas afficher la carte du chef.');
+check(
+  homeNavSection.includes('todayFullDateSeparator({ showChief: state.homeMode === "planning" })') && !homeModeBody.includes('homeDutyChiefNowHost') && !homeRenderSection.includes('dutyChiefHost'),
+  'Le bloc chef ne doit pas revenir dans le contenu Applications.'
+);
 check(
   homeModeBody.indexOf('planningWeekSeparator()') >= 0 &&
   homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('planningWeekSeparator()') &&
@@ -221,11 +228,8 @@ const loadingJs=read('stip-loading.js');
 
 check(home.includes('hc-profile-bell')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée à la barre d’accueil.');
 check(
-  home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" }') &&
-  home.includes('{ key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" }') &&
-  home.includes('{ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" }') &&
-  home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
-  'La navigation principale Applications / Mon profil / Esprit d’équipe et l’accès Actions ne sont plus conformes.'
+  homeNavSection.includes('{ key: "apps", label: "Applications"') && homeNavSection.includes('{ key: "planning", label: "Mon espace"') && homeNavSection.includes('{ key: "team", label: "Esprit d’équipe"') && home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
+  'La navigation principale Applications / Mon espace / Esprit d’équipe ou Actions a régressé.'
 );
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(
@@ -320,8 +324,8 @@ check(!read('responsable.html').includes('assistant-presence.js'),'Responsable c
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
 check(
-  /\bshowProfile\s*=\s*state\.homeMode\s*===\s*"planning"/.test(home) && home.includes('profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : "";') && home.includes('`${homeModeNav()}${shortcutsPopup()}${profileMarkup}'),
-  'La carte identité doit rester réservée au profil et placée après la navigation rapide.'
+  homeNavSection.includes('<div class="hc-home-identity">${profile()}</div>') && homeNavSection.indexOf('hc-home-meta-date') < homeNavSection.indexOf('hc-home-identity') && homeNavSection.indexOf('hc-home-identity') < homeNavSection.indexOf('hc-home-filters') && homeRenderSection.includes('`${homeModeNav()}${shortcutsPopup()}'),
+  'La carte identité doit rester dans le nouvel en-tête commun, entre date et onglets.'
 );
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
@@ -725,6 +729,7 @@ check(
   'Le contrat GitHub/Supabase de Visiter les lieux n’est plus documenté dans AGENTS.md.'
 );
 
+check(!home.includes('<div class="hc-home-identity"${profile()}</div>'), 'En-tête GHE : conteneur identité mal formé.');
 check(!sharedAgentSelectorCss.includes('*/\\n.sas-selector'), 'Sélecteur agents : échappement CSS littéral parasite.');
 check(!read('access-manage.html').includes('</script>\\n    <script'), 'ADMIN > Accès : échappement HTML littéral parasite.');
 if (failures.length) {
