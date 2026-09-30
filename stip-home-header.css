@@ -99,6 +99,11 @@
   font-size:clamp(.64rem,2.85vw,.81rem)!important;line-height:1.13!important;font-weight:900!important;
   text-align:center!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;transform:none!important
 }
+/* Old launcher glows must not escape the shared compact panel. */
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button::before,
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button::after{
+  content:none!important;display:none!important;box-shadow:none!important
+}
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button.active{
   z-index:1!important;border:2px solid var(--stip-accent,#148ca5)!important;border-radius:18px!important;
   box-shadow:0 0 0 2px var(--stip-accent-soft,#e7f7fa)!important;
