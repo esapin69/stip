@@ -3,7 +3,7 @@ const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-change',ST
 const published={exchange:new Set(),retain:new Set(),timeline:new Set()};
 function today(){return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris'}).format(new Date())}
 function fmt(d){try{return new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}catch{return String(d||'')}}
-function typeLabel(x){return x.request_type==='exchange'?'Échange':x.request_type==='absence'?'Absence':x.request_type==='delay'?'Retard':'Changement'}
+function typeLabel(x){return x.request_type==='leave'?'Congés':x.request_type==='exchange'?'Échange':x.request_type==='absence'?'Absence':x.request_type==='delay'?'Retard':'Changement'}
 function statusLabel(x){if(x.status==='awaiting_colleague')return'En attente du collègue';if(x.status==='awaiting_responsible')return x.official_state==='mail_required'?'Action requise':x.official_state==='sent_waiting'?'En attente de réponse':'En attente du responsable';if(x.status==='completed')return x.acknowledged_at?'Classé':'Changement effectué';if(x.status==='refused'||x.status==='target_refused')return'Refusé';if(x.status==='cancelled')return'Annulé';return x.status||'En cours'}
 function closed(x){return ['refused','target_refused','cancelled'].includes(String(x.status||''))||!!x.acknowledged_at}
 async function call(){const token=localStorage.getItem(STORE)||'';if(!token)return[];const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'history'})});if(!r.ok)return[];const j=await r.json().catch(()=>({}));return j.items||[]}

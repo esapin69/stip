@@ -889,8 +889,12 @@
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
     wrap.innerHTML =
-      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong></section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}</div></section>`;
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong></section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}</div><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></section>`;
     document.body.appendChild(wrap);
+    wrap.querySelector("[data-shift-leave-action]")?.addEventListener("click",()=>{
+      window.STIPLeaveCart?.toggle?.(iso,code);
+      closeShiftDetail();
+    });
     document.body.classList.add("hc-shift-detail-open");
     wrap
       .querySelectorAll("[data-shift-detail-close]")
@@ -2823,6 +2827,11 @@
         return jumpToDate(target);
       }
       if (day) {
+        const selected=String(day.dataset.calDay || "").slice(0, 10);
+        if(window.STIPLeaveCart?.isSelecting?.()){
+          window.STIPLeaveCart.toggle(selected,planningRowForDate(selected)?.code||"");
+          return;
+        }
         const iso = String(day.dataset.calDay || "").slice(0, 10),
           hasPlanningDetail = Boolean(planningRowForDate(iso));
         state.dateJumpMonth =
@@ -2867,7 +2876,11 @@
       .forEach((b) =>
         (b.onclick = () => {
           if (planningLoading() || b.disabled) return;
-          const iso = String(b.dataset.homeDay || "").slice(0, 10),
+          const iso = String(b.dataset.homeDay || "").slice(0, 10);
+          if(window.STIPLeaveCart?.isSelecting?.()){
+            window.STIPLeaveCart.toggle(iso,planningRowForDate(iso)?.code||"");
+            return;
+          }
             openDetail =
               b.classList.contains("stip-week-day") &&
               Boolean(planningRowForDate(iso));

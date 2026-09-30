@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20260930-wheelchair-premium-card1";
+    V = "20260930-ghe-leave-cart1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -138,7 +138,6 @@
     "planning-agenda-extras.js",
     "change-permission-gate.js",
     "day-workflow.js",
-    "day-workflow-leave.js",
     "day-workflow-home-bridge.js",
   ];
   const teamCore = [

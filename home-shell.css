@@ -5783,3 +5783,5 @@ body.hc-shift-detail-open{overflow:hidden}
   .hc-shift-detail-sheet h2{font-size:1.24rem;letter-spacing:-.045em}
   .hc-shift-detail-time strong{gap:8px;font-size:1.8rem}
 }
+
+.hc-shift-leave-action{display:block;width:calc(100% - 28px);margin:0 14px 14px;min-height:47px;border:1px solid #8bc9bd;border-radius:13px;background:linear-gradient(130deg,#e9f8f2,#fff);color:#176f63;font:inherit;font-size:.88rem;font-weight:900;touch-action:manipulation}
