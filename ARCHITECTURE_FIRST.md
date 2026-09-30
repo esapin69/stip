@@ -51,6 +51,7 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 
 ### Navigation
 - Réutiliser le moteur de navigation STIP existant et ses états de reprise.
+- Les fenêtres modales et vues superposées sont des niveaux de navigation : le bouton/gesture Précédent doit d’abord fermer le niveau visible, jamais sortir de STIP. Le moteur commun est `stip-overlay-navigation.js`; ne pas recréer de `pushState/popstate` local pour une popup.
 - Ne pas créer de logique retour/reprise propre à une page lorsque le moteur commun peut la porter.
 
 ### Continuité de session et retour navigateur
