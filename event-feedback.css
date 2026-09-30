@@ -821,3 +821,107 @@
 
 /* The pending-event tray follows the visible week; it never obscures the home header. */
 .hc-planning-group > .hc-feedback-pending{margin:14px 0 16px}
+
+
+/* 20261001-feedback-outcome-flow1 — résultat réel + mail compact */
+.hc-feedback-mail-actions{
+  display:block;
+}
+.hc-feedback-mail-one{
+  width:100%;
+  min-height:62px;
+  display:grid;
+  grid-template-columns:38px minmax(0,1fr) 18px;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border:1px solid #cfe1e5;
+  border-radius:17px;
+  background:#fff;
+  color:#214b5a;
+  text-align:left;
+  box-shadow:0 5px 14px rgba(20,62,78,.05);
+}
+.hc-feedback-mail-one>span{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  background:#eaf8fa;
+  color:#087f97;
+  font-size:1.08rem;
+  font-weight:950;
+}
+.hc-feedback-mail-one strong{
+  display:block;
+  font-size:.92rem;
+  line-height:1.1;
+  font-weight:950;
+}
+.hc-feedback-mail-one small{
+  display:block;
+  margin-top:3px;
+  color:#738890;
+  font-size:.66rem;
+  line-height:1.25;
+  font-weight:750;
+}
+.hc-feedback-mail-one>b{
+  color:#829aa3;
+  font-size:1.3rem;
+}
+.hc-feedback-mail-preview{
+  margin:12px;
+  padding:11px 12px;
+  border:1px solid #d8e7ea;
+  border-radius:14px;
+  background:#f8fbfc;
+  color:#294f5d;
+}
+.hc-feedback-mail-preview strong{
+  display:block;
+  font-size:.78rem;
+  line-height:1.2;
+  font-weight:950;
+}
+.hc-feedback-mail-preview p{
+  margin:6px 0 0;
+  color:#607a84;
+  font-size:.7rem;
+  line-height:1.4;
+  font-weight:700;
+}
+.hc-feedback-mail-edit{
+  margin:0 12px 4px;
+  border-top:1px solid #e1ebed;
+}
+.hc-feedback-mail-edit summary{
+  padding:11px 0 4px;
+  color:#53717c;
+  cursor:pointer;
+  font-size:.68rem;
+  font-weight:850;
+}
+.hc-feedback-mail-edit .hc-feedback-mail-field{
+  margin-left:0;
+  margin-right:0;
+}
+.hc-feedback-mail-buttons:has(.hc-feedback-mail-send[hidden]){
+  grid-template-columns:1fr;
+}
+.hc-feedback-mail-buttons:has(.hc-feedback-mail-send[hidden]) .hc-feedback-mail-native{
+  min-height:50px;
+  font-size:.78rem;
+}
+.hc-feedback-reason-options button{
+  flex:1 1 calc(50% - 7px);
+}
+.hc-feedback-presence-options>button strong{
+  line-height:1.12;
+}
+@media(max-width:400px){
+  .hc-feedback-reason-options button{
+    flex-basis:100%;
+  }
+}
