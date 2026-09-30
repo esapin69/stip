@@ -80,6 +80,9 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - `stip_apply_change_request` applique atomiquement un changement validé et son historique. Les pages ne modifient pas directement `planning.code` pour simuler un échange.
 - Un nouvel import cadre réconcilie les overrides STIP : ancien cadre inchangé = override réappliqué ; cadre déjà mis à jour = override absorbé ; nouvelle décision cadre différente = cadre prioritaire et historique conservé.
 - Le PDF planning officiel est produit par `stip-planning-pdf` à partir du modèle cadre : shift cadre sur la ligne principale et shift STIP effectif sur la ligne additionnelle uniquement tant que l'override reste effectif.
+- Les destinataires e-mail sont sélectionnés depuis `contacts_ghe` (adresses professionnelles seulement) et enregistrés dans `stip_change_requests.routed_recipients`. Le moteur unique `stip-change-mail` envoie les demandes, journalise chaque destinataire dans `stip_change_mail_actions` et reçoit la réponse via un lien unique temporaire : GET affiche seulement la confirmation, POST appelle `stip_change_mail_decide`.
+- L'avis du chef ne modifie jamais le planning ; seule la décision finale d'un cadre peut déclencher `stip_apply_change_request`. Une demande complexe approuvée conserve un état `approved_pending_manual` tant que son application n'est pas vérifiée.
+- Le prestataire d'e-mail demande un expéditeur professionnel vérifié : `STIP_CHANGE_FROM_EMAIL` et `RESEND_API_KEY` dans les secrets Supabase. Si cet expéditeur manque, l'envoi reste bloqué sans annoncer faussement une transmission.
 
 ### Intelligence terrain
 - `stip-field-intelligence.js` : moteur partagé d’analyse terrain.
