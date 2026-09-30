@@ -114,8 +114,8 @@ has(communicationApp,'key !== "wheelchair" || canUseWheelchairs()', "l’onglet 
 has(messages,"requireWheelchairAccess(ctx)","Fauteuils ne sont pas réservés au brancardage côté serveur");
 has(rules,"module métier du brancardage uniquement","le contrat ne réserve pas Fauteuils au brancardage");
 
-/* Audit team-chat 2026-09-30: preserve single-source blocks after safe CSS consolidation. */
-const guardedChatCssSelectors=new Set([
+/* Audit team-chat 2026-09-30: preserve reviewed CSS rules and avoid duplicate JS functions. */
+const guardedChatCssSelectors = new Set([
   ".tb-resolve:active",
   ".tb-resolve:disabled",
   ".tb-composer textarea",
@@ -128,37 +128,49 @@ const guardedChatCssSelectors=new Set([
   ".tb-wheelchair-freshness.is-warm .tb-freshness-track::after",
   ".tb-wheelchair-freshness.is-cold .tb-freshness-track::after, .tb-wheelchair-freshness.is-frozen .tb-freshness-track::after",
 ]);
-const normalizedCss=(s)=>s.replace(/\\s+/g," ").trim();
-const cssWithoutComments=chatCss.replace(/\\/\\*[\\s\\S]*?\\*\\//g,"");
-const seenChatCssRules=new Set();
-let cssDepth=[],cssStart=0,cssQuote="",cssChildren=[];
-for(let i=0;i<cssWithoutComments.length;i++){
-  const c=cssWithoutComments[i];
-  if(cssQuote){if(c==="\\\\"){i++;continue}if(c===cssQuote)cssQuote="";continue}
-  if(c==='"'||c==="'"){cssQuote=c;continue}
-  if(c==="{"){
-    const rule=normalizedCss(cssWithoutComments.slice(cssStart,i));
-    if(cssChildren.length)cssChildren[cssChildren.length-1]++;
-    cssDepth.push(rule);cssChildren.push(0);cssStart=i+1;continue;
+const normalizedCss = (s) => s.replace(/\s+/g, " ").trim();
+const cssWithoutComments = chatCss.replace(/\/\*[\s\S]*?\*\//g, "");
+const seenChatCssRules = new Set();
+const cssDepth = [];
+let cssStart = 0, cssQuote = "";
+const cssChildren = [];
+for (let i = 0; i < cssWithoutComments.length; i++) {
+  const c = cssWithoutComments[i];
+  if (cssQuote) {
+    if (c === "\\") { i++; continue; }
+    if (c === cssQuote) cssQuote = "";
+    continue;
   }
-  if(c==="}"){
-    const children=cssChildren.pop();
-    const rule=cssDepth.pop();
-    if(children===0 && guardedChatCssSelectors.has(rule)){
-      const context=cssDepth.join(" > ");
-      const declarations=normalizedCss(cssWithoutComments.slice(cssStart,i));
-      const key=[context,rule,declarations].join("|");
-      if(seenChatCssRules.has(key))fail("règle CSS Team Chat identique réintroduite: "+rule);
+  if (c === '"' || c === "'") { cssQuote = c; continue; }
+  if (c === "{") {
+    const rule = normalizedCss(cssWithoutComments.slice(cssStart, i));
+    if (cssChildren.length) cssChildren[cssChildren.length - 1]++;
+    cssDepth.push(rule);
+    cssChildren.push(0);
+    cssStart = i + 1;
+    continue;
+  }
+  if (c === "}") {
+    const children = cssChildren.pop();
+    const rule = cssDepth.pop();
+    if (children === 0 && guardedChatCssSelectors.has(rule)) {
+      const context = cssDepth.join(" > ");
+      const declarations = normalizedCss(cssWithoutComments.slice(cssStart, i));
+      const key = [context, rule, declarations].join("|");
+      if (seenChatCssRules.has(key)) fail("règle CSS Team Chat identique réintroduite: " + rule);
       seenChatCssRules.add(key);
     }
-    cssStart=i+1;
+    cssStart = i + 1;
   }
 }
-for(const rule of guardedChatCssSelectors){
-  if(![...seenChatCssRules].some(key=>key.includes("|"+rule+"|")))fail("règle CSS Team Chat protégée absente: "+rule);
+for (const rule of guardedChatCssSelectors) {
+  if (![...seenChatCssRules].some((key) => key.includes("|" + rule + "|"))) {
+    fail("règle CSS Team Chat protégée absente: " + rule);
+  }
 }
-const namedTeamFunctions=[...chat.matchAll(/\\b(?:async\\s+)?function\\s+([A-Za-z_$][\\w$]*)\\s*\\(/g)].map(m=>m[1]);
-const duplicatedTeamFunctions=namedTeamFunctions.filter((name,index)=>namedTeamFunctions.indexOf(name)!==index);
-if(duplicatedTeamFunctions.length)fail("fonction JavaScript Team Chat déclarée plusieurs fois: "+[...new Set(duplicatedTeamFunctions)].join(", "));
-
+const namedTeamFunctions = [...chat.matchAll(/\b(?:async\s+)?function\s+([A-Za-z_$][\w$]*)\s*\(/g)].map((m) => m[1]);
+const duplicatedTeamFunctions = namedTeamFunctions.filter((name, index) => namedTeamFunctions.indexOf(name) !== index);
+if (duplicatedTeamFunctions.length) {
+  fail("fonction JavaScript Team Chat déclarée plusieurs fois: " + [...new Set(duplicatedTeamFunctions)].join(", "));
+}
 console.log("STIP Communication contract: OK");
