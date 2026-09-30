@@ -20,6 +20,7 @@ Ce document est la référence fonctionnelle lisible du calendrier STIP. Toute m
 - Les repos, congés et événements restent des pictogrammes/repères séparés ; ils ne remplacent pas le badge du shift travaillé.
 - `home-shell.js`, `planning-home.js`, `metiers/metiers.js` et le laboratoire T consomment cette même source.
 - Une page ne doit pas recréer localement la géométrie ou la finition de `.stip-month-calendar`. Les variations locales restent limitées au contenu métier placé dans `.stip-month-primary` / `.stip-month-events`.
+- Chaque calendrier consommateur expose une date ISO par jour (`data-cal-day`, `data-ph-date` ou `data-stip-date`) et appelle le moteur `STIPMonthTable.enhance` après un remplacement de son DOM. Le moteur partagé, et non la page, insère les séparateurs de semaines, les en-têtes des jours et aligne le premier jour ; une page ne génère pas de cases vides artificielles.
 
 ## 2. Date et état
 

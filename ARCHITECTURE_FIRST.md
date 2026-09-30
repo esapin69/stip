@@ -27,6 +27,12 @@ Avant toute modification :
 9. Supprimer les anciennes couches remplacées au lieu d’en ajouter une nouvelle.
 10. Vérifier les régressions sur les autres consommateurs de la même source.
 
+## Critère de consolidation vérifiable
+
+Un nettoyage de code n’est pas une amélioration fonctionnelle par défaut. Avant de retirer une couche, identifier le défaut concret (double calcul, moteur non utilisé, comportements divergents, écran cassé), ses consommateurs et le bénéfice attendu. Ne jamais présenter le seul nombre de lignes ou de `!important` supprimés comme un gain de performance.
+
+Pour chaque consolidation : démontrer que le composant canonique prend réellement la main sur les pages concernées (données, attributs, ordre de chargement et rendu) ; éliminer seulement les constructions locales remplacées ; compléter les tests de contrat existants ; vérifier les fonctions conservées et annoncer séparément les vérifications visuelles restant à effectuer.
+
 ## Hiérarchie de décision
 
 Quand plusieurs solutions sont possibles, respecter cet ordre :
