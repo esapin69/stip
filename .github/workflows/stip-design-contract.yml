@@ -37,6 +37,10 @@ jobs:
         if: always()
         run: node tools/stip-form-contract-test.mjs
 
+      - name: Check STIP overlay navigation contract
+        if: always()
+        run: node tools/stip-overlay-navigation-test.mjs
+
       - name: Check STIP refactor invariants
         run: node tools/stip-refactor-test.mjs
 

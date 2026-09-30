@@ -817,11 +817,18 @@
       ) || null
     );
   }
-  function closeShiftDetail() {
-    document.getElementById("hcShiftDetail")?.remove();
+  function closeShiftDetail(fromHistory = false) {
+    const wrap = document.getElementById("hcShiftDetail");
+    if (
+      wrap &&
+      !fromHistory &&
+      window.STIPOverlayNav?.closeElement?.(wrap)
+    )
+      return;
+    wrap?.remove();
     document.body.classList.remove("hc-shift-detail-open");
   }
-  function openShiftDetail(iso) {
+  function openShiftDetail(iso, fromHistory = false) {
     const row = planningRowForDate(iso);
     if (!row) return false;
     const raw = String(row?.code || row?.source_value || "").trim(),
@@ -887,7 +894,16 @@
     document.body.classList.add("hc-shift-detail-open");
     wrap
       .querySelectorAll("[data-shift-detail-close]")
-      .forEach((button) => (button.onclick = closeShiftDetail));
+      .forEach((button) => (button.onclick = () => closeShiftDetail()));
+    if (!fromHistory) {
+      const track = () =>
+        window.STIPOverlayNav?.trackElement?.(wrap, {
+          close: () => closeShiftDetail(true),
+          reopen: () => openShiftDetail(iso, true),
+        });
+      if (window.STIPOverlayNav) track();
+      else window.STIPOverlayNavigationReady?.then(track);
+    }
     wrap.querySelector(".hc-shift-detail-close")?.focus({ preventScroll: true });
     return true;
   }
