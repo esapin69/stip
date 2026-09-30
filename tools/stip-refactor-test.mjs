@@ -33,13 +33,15 @@ const homeNavSection=home.slice(home.indexOf('function homeModeNav()'),home.inde
 const renderStart = home.indexOf('function render() {', home.indexOf('function homeModeBody()'));
 const homeRenderSection = home.slice(renderStart, home.indexOf('const onHome =', renderStart));
 check(
-  chiefDateSection.includes('id="homeDutyChiefNowHost"') && chiefDateSection.includes('showChief ?') && homeNavSection.includes('showChief: state.homeMode === "planning"'),
-  'Le chef présent doit rester sous la date et uniquement en mode profil.'
+  !chiefDateSection.includes('id="homeDutyChiefNowHost"') && !homeNavSection.includes('homeDutyChiefNowHost') &&
+  homeModeBody.includes('id="homeDutyChiefNowHost"') && homeModeBody.indexOf('${weekWidget()}') < homeModeBody.indexOf('id="homeDutyChiefNowHost"'),
+  'Le chef présent doit être sous la semaine, hors du bandeau commun.'
 );
 check((home.match(/id="homeDutyChiefNowHost"/g) || []).length === 1, 'Le chef présent ne doit pas être dupliqué.');
 check(
-  homeNavSection.includes('todayFullDateSeparator({ showChief: state.homeMode === "planning" })') && !homeModeBody.includes('homeDutyChiefNowHost') && !homeRenderSection.includes('dutyChiefHost'),
-  'Le bloc chef ne doit pas revenir dans le contenu Applications.'
+  homeNavSection.includes('todayFullDateSeparator()') && !homeNavSection.includes('homeDutyChiefNowHost') &&
+  homeModeBody.indexOf('id="homeDutyChiefNowHost"') > homeModeBody.indexOf('${weekWidget()}') && !homeRenderSection.includes('dutyChiefHost'),
+  'Le bloc chef ne doit pas apparaître dans le bandeau ni dans Applications.'
 );
 check(
   homeModeBody.indexOf('planningWeekSeparator()') >= 0 &&
