@@ -116,6 +116,14 @@ assert(planning.includes("STIPMonthTable?.shiftBadgeHtml?.(rawDisplay)"),
 assert(metiersJs.includes("STIPMonthTable?.shiftBadgeHtml?.(code)") &&
        !metiersCss.includes(".metiers-shift-code{"),
   "Métiers has reintroduced a local worked-shift badge implementation");
+assert(metiersJs.includes('data-stip-date="${dateKey}"') &&
+       metiersJs.includes("window.STIPMonthTable?.enhance?.(host)"),
+  "Métiers renders dates but does not pass them to the shared monthly table engine");
+assert(metiersJs.includes("stip-month-nav metiers-period-nav") &&
+       metiersJs.includes("stip-month-events metiers-month-event-dots") &&
+       !metiersJs.includes("metiers-month-empty") &&
+       !metiersJs.includes('class="stip-month-weekdays"'),
+  "Métiers still rebuilds monthly geometry instead of consuming the shared engine");
 const agentJs = read("agent-agenda-view.js");
 const teamJs = read("esprit-equipe.js");
 const rrHomeJs = read("responsable-agenda-home.js");

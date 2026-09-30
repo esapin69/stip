@@ -8,7 +8,6 @@
     "JANVIER", "FÉVRIER", "MARS", "AVRIL", "MAI", "JUIN",
     "JUILLET", "AOÛT", "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"
   ];
-  const DAYS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 
   const state = {
     loaded: false,
@@ -135,13 +134,13 @@
 
   function shiftVisual(item) {
     if (!item) return '<span class="metiers-shift-empty">—</span>';
-    const raw = String(item.code || item.source_value || "").trim().toUpperCase();
-    const def = shiftDef(raw);
-    const icon = window.STIPShiftRegistry?.icon?.(raw) || def?.icon || "";
-    const badge = window.STIPMonthTable?.shiftBadgeHtml?.(raw) || "";
+    const code = String(item.code || item.source_value || "").trim().toUpperCase();
+    const def = shiftDef(code);
+    const icon = window.STIPShiftRegistry?.icon?.(code) || def?.icon || "";
+    const badge = window.STIPMonthTable?.shiftBadgeHtml?.(code) || "";
     if (badge && isWorking(item)) return badge;
-    if (icon) return `<span class="metiers-shift-icon" title="${esc(def?.label || raw)}">${esc(icon)}</span>`;
-    return `<span class="metiers-shift-code">${esc(shiftCode(item))}</span>`;
+    if (icon) return `<span class="metiers-shift-icon" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
+    return `<span class="metiers-shift-fallback">${esc(shiftCode(item))}</span>`;
   }
 
   function normalizeEvents(data) {
@@ -336,13 +335,10 @@
   function monthMarkup(key) {
     const [year, month] = key.split("-").map(Number);
     const byDate = new Map(state.items.filter((item) => String(item.date || "").startsWith(key)).map((item) => [String(item.date), item]));
-    const first = new Date(Date.UTC(year, month - 1, 1, 12));
     const daysInMonth = new Date(Date.UTC(year, month, 0, 12)).getUTCDate();
-    const pad = (first.getUTCDay() + 6) % 7;
     const index = state.months.indexOf(key);
     let working = 0, rest = 0, eventCount = 0, cells = "";
-
-    for (let i = 0; i < pad; i += 1) cells += '<span class="stip-month-day metiers-month-empty" aria-hidden="true"></span>';
+    const currentDay = today();
 
     for (let day = 1; day <= daysInMonth; day += 1) {
       const dateKey = `${key}-${String(day).padStart(2, "0")}`;
@@ -352,24 +348,20 @@
       eventCount += events.length;
       const dow = new Date(`${dateKey}T12:00:00Z`).getUTCDay();
       const weekend = dow === 0 || dow === 6;
-      cells += `<button type="button" class="stip-month-day metiers-month-day${weekend ? " is-weekend" : ""}${dateKey === today() ? " is-today" : ""}" data-open-day="${dateKey}">
+      cells += `<button type="button" class="stip-month-day metiers-month-day${weekend ? " is-weekend" : ""}${dateKey === currentDay ? " is-today" : ""}${events.length ? " has-event" : ""}" data-stip-date="${dateKey}" data-open-day="${dateKey}">
         <b class="stip-month-day-number">${day}</b>
         <div class="stip-month-primary">${shiftVisual(item)}</div>
-        <div class="metiers-month-event-dots" aria-label="${events.length} événement(s)">${events.slice(0, 3).map((event) => `<i>${esc(event.icon || "•")}</i>`).join("")}</div>
+        <div class="stip-month-events metiers-month-event-dots" aria-label="${events.length} événement(s)">${events.slice(0, 3).map((event) => `<i>${esc(event.icon || "•")}</i>`).join("")}</div>
       </button>`;
     }
 
-    const used = pad + daysInMonth;
-    for (let i = 0; i < (7 - (used % 7)) % 7; i += 1) cells += '<span class="stip-month-day metiers-month-empty" aria-hidden="true"></span>';
-
     return `<section class="stip-month-calendar metiers-month-card" data-month-swipe aria-label="Calendrier du mois">
-      <header class="metiers-period-nav">
+      <header class="stip-month-nav metiers-period-nav">
         <button type="button" data-month-step="-1" aria-label="Mois précédent" ${index <= 0 ? "disabled" : ""}>‹</button>
         <div><small>MON MOIS</small><strong>${MONTHS[month - 1]} ${year}</strong></div>
         <button type="button" data-month-step="1" aria-label="Mois suivant" ${index < 0 || index >= state.months.length - 1 ? "disabled" : ""}>›</button>
       </header>
       <div class="metiers-month-summary"><span><b>${working}</b> travaillés</span><span><b>${rest}</b> repos</span><span><b>${eventCount}</b> événements</span></div>
-      <div class="stip-month-weekdays">${DAYS.map((day) => `<span>${day}</span>`).join("")}</div>
       <div class="stip-month-grid">${cells}</div>
     </section>`;
   }
@@ -378,6 +370,8 @@
     const host = document.getElementById("metiersMonthHost");
     if (!host) return;
     host.innerHTML = monthMarkup(state.monthKey);
+    // Le moteur commun compose les semaines et aligne les dates ISO.
+    window.STIPMonthTable?.enhance?.(host);
     bindSwipe(host.querySelector("[data-month-swipe]"), (direction) => moveMonth(direction));
   }
 
