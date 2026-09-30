@@ -1,0 +1,44 @@
+name: STIP planning mail runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/stip-change-mail/**'
+      - 'supabase/migrations/*cadre_mail_decision_workflow*'
+      - 'tools/stip-planning-mail-contract-test.mjs'
+      - '.github/workflows/stip-planning-mail-runtime.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-mail:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Type-check STIP mail Edge Function
+        run: deno check supabase/functions/stip-change-mail/index.ts
+      - name: Verify GitHub source contract
+        run: node tools/stip-planning-mail-contract-test.mjs
+      - name: Live public health check (no actual emails)
+        shell: bash
+        run: |
+          response=$(curl --connect-timeout 8 --max-time 20 -fsS \
+            -H 'Origin: https://stip.esapin.com' \
+            -H 'Content-Type: application/json' \
+            -d '{"action":"health"}' \
+            https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-change-mail)
+          echo "$response" | node -e '
+            let t="";process.stdin.on("data",b=>t+=b);
+            process.stdin.on("end",()=>{
+              const r=JSON.parse(t);
+              if(r.ok!==true||r.final_authority!=="cadre_only"){console.error("Health contract failed");process.exit(1)}
+              console.log("Mail function reachable; verified sender configured: "+r.sending_configured);
+              console.log("Link expiry hours: "+r.link_expiry_hours);
+            });
+          '
