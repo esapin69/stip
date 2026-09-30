@@ -1417,7 +1417,7 @@
     if (d > 2) return `Dans ${d} jours`;
     return fmtDateRange({ date: iso, endDate: iso });
   }
-  function todayFullDateSeparator() {
+  function todayFullDateSeparator({ showChief = true } = {}) {
     const date = dateObj(parisIso()),
       formatter = new Intl.DateTimeFormat("fr-FR", {
         weekday: "long",
@@ -1435,7 +1435,7 @@
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
       month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div><section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-under-date" aria-label="Chef d’équipe présent"></section>`;
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div>${showChief ? '<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-under-date" aria-label="Chef d’équipe présent"></section>' : ""}`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -1843,7 +1843,6 @@
     const template = window.STIPPersonCard;
     if (template?.renderCurrent)
       return `<section class="hc-profile-section" aria-label="Carte STIP">
-        <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
         ${template.renderCurrent({ label: "MON PROFIL", compact: true })}
       </section>`;
 
@@ -1852,7 +1851,6 @@
       nom = cap(String(a.nom || "").trim()),
       ini = ((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "ST";
     return `<section class="hc-profile-section" aria-label="Carte STIP">
-      <div class="stip-section-separator hc-profile-card-separator" aria-hidden="true"><span>CARTE STIP</span></div>
       <section class="stip-person-card is-compact is-self hc-id-card">
         <div class="stip-person-card-avatar hc-avatar" data-avatar-fallback="${esc(ini)}"><span>${esc(ini)}</span></div>
         <div class="stip-person-card-copy"><small>MON PROFIL</small><strong>${esc([prenom, nom].filter(Boolean).join(" ") || "Utilisateur")}</strong></div>
@@ -2128,17 +2126,19 @@
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
-        { key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" },
+        { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
       ];
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     const tDoor = tDoorShortcut();
-    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}">
+    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}" data-header-compact>
       <div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
+      <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator({ showChief: state.homeMode === "planning" })}</div>
+      <div class="hc-home-identity">${profile()}</div>
       <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
         .map(
           (item) =>
@@ -2634,7 +2634,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning">${todayFullDateSeparator()}<section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning"><section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section>${agendaAlertBanner()}${shortcutsLauncher()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -2651,10 +2651,8 @@
     }
 
     const isCommunication = state.homeMode === "communication" && has("messages"),
-      showProfile = state.homeMode === "planning",
-      profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : "";
-    let markup = `${homeModeNav()}${shortcutsPopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+      showProfile = state.homeMode === "planning";
+    let markup = `${homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
           ${homeModeBody()}
