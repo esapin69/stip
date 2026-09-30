@@ -603,6 +603,41 @@ body.team-page {
   box-shadow:var(--stip-shadow-soft);
 }
 
+.team-shift-left{
+  width:48px;
+  display:grid;
+  justify-items:center;
+  align-content:center;
+  gap:5px;
+}
+.team-shift-target{
+  min-width:42px;
+  min-height:31px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  padding:4px 6px;
+  border:1px solid var(--stip-line);
+  border-radius:999px;
+  background:var(--stip-surface);
+  color:var(--stip-ink-2);
+  box-shadow:var(--stip-shadow-soft);
+  line-height:1;
+}
+.team-shift-target small{
+  font-size:.48rem;
+  font-weight:950;
+  letter-spacing:.04em;
+}
+.team-shift-target b{
+  font-size:.78rem;
+  font-weight:950;
+}
+.team-shift-left .team-shift-analysis-trigger{
+  margin:0;
+}
+
 .team-shift{
   box-shadow:0 8px 20px color-mix(in srgb,var(--shift) 10%,transparent),var(--stip-shadow-soft);
   transition:box-shadow var(--stip-motion),transform var(--stip-motion),border-color var(--stip-motion);
