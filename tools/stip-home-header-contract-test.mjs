@@ -24,4 +24,5 @@ for (const file of ["index.html","esprit-equipe.html","responsable.html"]) {
   assert(page.includes("stip-home-scroll.js?v="), file+" missing return-to-top control");
 }
 assert(read("stip-home-scroll.js").includes("window.scrollY > 500"), "Return-to-top must stay contextual");
+assert(read("event-feedback.js").includes('week.insertAdjacentElement("afterend", host)'), "Pending feedback must follow, not bury, the week");
 console.log("GHE common header contract: OK");

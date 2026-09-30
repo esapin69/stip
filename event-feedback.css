@@ -818,3 +818,6 @@
     flex:1 1 calc(50% - 7px);
   }
 }
+
+/* The pending-event tray follows the visible week; it never obscures the home header. */
+.hc-planning-group > .hc-feedback-pending{margin:14px 0 16px}
