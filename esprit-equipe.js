@@ -1390,7 +1390,6 @@
     const staffRow = shiftStaffingRow(day, base),
       targetValue = Number(staffRow?.target_count),
       target = Number.isFinite(targetValue) ? targetValue : null,
-      codeLabel = target == null ? code : `${code} (${target})`,
       sortedItems = items.slice().sort(compareAgentGhe);
     // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
     // On les conserve dans les données et le total du shift, mais on ne les répète pas dans la liste dépliée.
@@ -1403,12 +1402,15 @@
         ? `<section class="team-agent-group ${className}"><div class="team-agent-group-label">${esc(label)}</div>${rows.map(agentRow).join("")}</section>`
         : "";
     return `<div class="team-shift-row">
-      <button class="team-shift-analysis-trigger status-${esc(signal.level)}" type="button" data-team-shift-analysis="${esc(day)}|${esc(base)}" title="${esc(signal.label)}" aria-label="Ouvrir l’analyse ${esc(meta.label)} · ${esc(signal.label)}">
-        <span aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>
-      </button>
+      <div class="team-shift-left">
+        ${target == null ? "" : `<span class="team-shift-target" title="Référence établissement" aria-label="Référence établissement : ${esc(target)}"><small>HCL</small><b>${esc(target)}</b></span>`}
+        <button class="team-shift-analysis-trigger status-${esc(signal.level)}" type="button" data-team-shift-analysis="${esc(day)}|${esc(base)}" title="${esc(signal.label)}" aria-label="Ouvrir l’analyse ${esc(meta.label)} · ${esc(signal.label)}">
+          <span aria-hidden="true">${esc(statusSymbol(signal.level, signal.symbol))}</span>
+        </button>
+      </div>
       <section class="team-shift shift-${base.toLowerCase()} ${open ? "open" : ""}">
         <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
-          <b>${esc(codeLabel)}</b>
+          <b>${esc(code)}</b>
           <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
           <em title="Agents listés">${sortedItems.length}</em>
           <i aria-hidden="true">⌄</i>
