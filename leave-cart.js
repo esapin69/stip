@@ -7,27 +7,46 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const dayName=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"long"});
 const valid=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||""))&&Number.isFinite(Date.parse(d+"T12:00:00Z"))&&new Date(d+"T12:00:00Z").toISOString().slice(0,10)===d;
+function storedState(id){
+ const key=PREFIX+id;
+ try{
+  const persistent=localStorage.getItem(key);
+  if(persistent)return {raw:persistent,source:"local"};
+ }catch{}
+ try{
+  const session=sessionStorage.getItem(key);
+  if(session)return {raw:session,source:"session"};
+ }catch{}
+ return {raw:"",source:""};
+}
+function save(){
+ if(!agent)return;
+ const key=PREFIX+agent,state=JSON.stringify({items,selecting,open});
+ try{
+  if(items.length)localStorage.setItem(key,state);else localStorage.removeItem(key);
+  try{sessionStorage.removeItem(key)}catch{}
+  return;
+ }catch{}
+ try{
+  if(items.length)sessionStorage.setItem(key,state);else sessionStorage.removeItem(key);
+ }catch{}
+}
 function load(){
  const id=String(window.STIPSession?.agent?.id||"");
  if(!id){agent="";items=[];selecting=false;open=false;return false}
  if(id===agent)return true;
  agent=id;items=[];selecting=false;open=false;
  try{
-  const state=JSON.parse(sessionStorage.getItem(PREFIX+id)||"null"),seen=new Set();
+  const stored=storedState(id),state=JSON.parse(stored.raw||"null"),seen=new Set();
   items=(Array.isArray(state?.items)?state.items:[])
    .filter(x=>{if(!valid(x.date)||seen.has(x.date))return false;seen.add(x.date);return true})
    .slice(0,45).map(x=>({date:x.date,code:String(x.code||"").slice(0,24),
     kind:KINDS.includes(x.kind)?x.kind:"CP"})).sort((a,b)=>a.date.localeCompare(b.date));
   selecting=!!items.length&&state?.selecting!==false;
+  open=!!items.length&&state?.open!==false;
+  if(items.length&&stored.source==="session")save();
  }catch{}
  return true;
-}
-function save(){
- if(!agent)return;
- try{
-  if(items.length)sessionStorage.setItem(PREFIX+agent,JSON.stringify({items,selecting}));
-  else sessionStorage.removeItem(PREFIX+agent);
- }catch{}
 }
 function visible(){
  const r=String(window.STIPRouter?.get?.()||"home");
@@ -89,13 +108,15 @@ function add(date,code=""){
  if(window.STIPSession?.permissions?.day_leave===false){toast("Fonction non autorisée pour cet accès.",true);return false}
  const today=new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
  if(date<today){toast("Choisis une date à venir.",true);return false}
- const exists=items.find(x=>x.date===date);
+ const exists=items.find(x=>x.date===date),first=!items.length;
  if(!exists){
   if(items.length>=45){toast("45 jours maximum dans une demande.",true);return false}
   items.push({date,code:String(code||"").slice(0,24),kind:"CP"});
   items.sort((a,b)=>a.date.localeCompare(b.date));
  }
- selecting=true;open=false;error="";save();render();
+ selecting=true;
+ if(!exists&&first)open=true;
+ error="";save();render();
  if(!exists)toast("Jour ajouté. Touche les autres dates pour les sélectionner.");
  return true;
 }
@@ -127,8 +148,8 @@ async function submit(){
 }
 function handleClick(event){
  const el=event.target.closest("button");if(!el||sending)return;
- if(el.hasAttribute("data-lc-toggle")){open=!open;render()}
- else if(el.hasAttribute("data-lc-close")){open=false;render()}
+ if(el.hasAttribute("data-lc-toggle")){open=!open;save();render()}
+ else if(el.hasAttribute("data-lc-close")){open=false;save();render()}
  else if(el.hasAttribute("data-lc-remove"))remove(el.dataset.lcRemove);
  else if(el.hasAttribute("data-lc-mode")){selecting=!selecting;save();render()}
  else if(el.hasAttribute("data-lc-clear")){
@@ -143,10 +164,9 @@ function handleChange(event){
  if(item&&KINDS.includes(select.value)){item.kind=select.value;save();render()}
 }
 window.STIPLeaveCart={add,toggle,has:d=>(load(),items.some(x=>x.date===d)),
- isSelecting:()=>load()&&selecting&&items.length>0,open:()=>{open=true;render()},refresh:render};
+ isSelecting:()=>load()&&selecting&&items.length>0,open:()=>{open=true;save();render()},refresh:render};
 window.addEventListener("stip:session-ready",render);
 window.addEventListener("stip:session-ended",()=>{
- if(agent)try{sessionStorage.removeItem(PREFIX+agent)}catch{}
  agent="";items=[];selecting=false;open=false;render()
 });
 window.addEventListener("stip:route",render);
