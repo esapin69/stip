@@ -28,12 +28,12 @@ check(
 
 check(/today\s*=\s*dateObj\(parisIso\(\)\)/.test(home),'Le bloc mois doit rester ancré sur la date réelle.');
 const homeModeBody=home.slice(home.indexOf('function homeModeBody()'),home.indexOf('function render()',home.indexOf('function homeModeBody()')));
-const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator()'), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator()')));
+const chiefDateSection = home.slice(home.indexOf('function todayFullDateSeparator('), home.indexOf('function renderFutureHub(', home.indexOf('function todayFullDateSeparator(')));
 const renderStart = home.indexOf('function render() {', home.indexOf('function homeModeBody()'));
 const homeRenderSection = home.slice(renderStart, home.indexOf('const onHome =', renderStart));
 check(chiefDateSection.includes('id="homeDutyChiefNowHost"'), 'Le chef présent doit rester sous la date dans Mon profil.');
 check((home.match(/id="homeDutyChiefNowHost"/g) || []).length === 1, 'Le chef présent ne doit pas être dupliqué.');
-check(!homeRenderSection.includes('dutyChiefHost') && !homeRenderSection.includes('state.homeMode === "apps"') && /profileMarkup\s*=\s*showProfile\s*\?[\s\S]*:\s*"";/.test(homeRenderSection), 'La page Applications ne doit pas afficher la carte du chef.');
+check(!homeRenderSection.includes('dutyChiefHost') && !homeRenderSection.includes('state.homeMode === "apps"') && home.includes('showChief: state.homeMode === "planning"'), 'La page Applications ne doit pas afficher la carte du chef.');
 check(
   homeModeBody.indexOf('planningWeekSeparator()') >= 0 &&
   homeModeBody.indexOf('${weekWidget()}') > homeModeBody.indexOf('planningWeekSeparator()') &&
@@ -209,10 +209,10 @@ const loadingJs=read('stip-loading.js');
 check(home.includes('hc-profile-bell')&&home.includes('🔔')&&home.includes('data-home-mode="notifications"'),'La cloche de communication n’est plus intégrée à la barre d’accueil.');
 check(
   home.includes('{ key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" }') &&
-  home.includes('{ key: "planning", label: "Mon profil", art: ICON.homeHome, mode: "home" }') &&
+  home.includes('{ key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" }') &&
   home.includes('{ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" }') &&
   home.includes('app("tomorrow", "Actions", "tomorrow", "tomorrow")'),
-  'La navigation principale Applications / Mon profil / Esprit d’équipe et l’accès Actions ne sont plus conformes.'
+  'La navigation principale Applications / Mon espace / Esprit d’équipe et l’accès Actions ne sont plus conformes.'
 );
 check(!home.includes('quick-card.svg')&&!home.includes('home-planning.webp'),'Les anciens visuels Profil/Planning sont revenus dans l’accueil.');
 check(
@@ -308,9 +308,10 @@ check(!read('responsable.html').includes('assistant-presence.js'),'Responsable c
 check(!read('index.html').includes('quick-access-icons.css'),'index.html charge encore la feuille legacy quick-access-icons.css.');
 
 check(
-  /\bshowProfile\s*=\s*state\.homeMode\s*===\s*"planning"/.test(home) &&
-  /showProfile\s*\?\s*profile\(\)(?:\s*\+\s*[A-Za-z0-9_$]+\([^)]*\))*\s*:\s*""/.test(home),
-  'La carte identité doit rester sous les accès rapides et uniquement dans Mon profil.'
+  home.includes('<div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator({ showChief: state.homeMode === "planning" })}</div>') &&
+  home.includes('<div class="hc-home-identity">${profile()}</div>') &&
+  home.indexOf('<div class="hc-home-identity">${profile()}</div>') < home.indexOf('<nav class="hc-home-filters"'),
+  'La carte identité doit figurer entre la date et les trois onglets du bandeau commun.'
 );
 const notificationsBlock=home.slice(home.indexOf('function notificationsPane()'),home.indexOf('function homeModeBody()'));
 check(!notificationsBlock.includes('${profile()}'),'La carte identité est dupliquée dans la page Notifications.');
