@@ -14,6 +14,19 @@
     }
   }
 
+  // Common modal history is independent of the form keyboard engine.
+  // Expose a readiness promise so lazy popups cannot outrun the first load.
+  if (!window.STIPOverlayNavigationReady) {
+    window.STIPOverlayNavigationReady = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "/stip-overlay-navigation.js?v=20260930-safari-overlay-history1";
+      script.async = false;
+      script.onload = () => resolve(window.STIPOverlayNav || null);
+      script.onerror = () => resolve(null);
+      document.head.appendChild(script);
+    });
+  }
+
   if (window.STIPFormUX) return;
 
   const FOCUS = "[data-stip-keyboard-focus]";
