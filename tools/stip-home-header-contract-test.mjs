@@ -10,8 +10,10 @@ assert(nav.indexOf('hc-home-top-tools') < nav.indexOf('hc-home-meta-date') &&
   nav.indexOf('hc-home-meta-date') < nav.indexOf('hc-home-identity') &&
   nav.indexOf('hc-home-identity') < nav.indexOf('hc-home-filters'), "Personal header order changed");
 assert(nav.includes('label: "Mon espace"'), "Personal header tab name changed");
-assert(nav.includes('showChief: state.homeMode === "planning"'), "Duty chief must not leak onto Applications or Notifications");
+assert(!nav.includes('homeDutyChiefNowHost'), "Duty chief must remain outside header");
 assert(!body.includes("todayFullDateSeparator()"), "Duplicate date in planning body");
+assert(nav.includes("ghe-home-header-stack") && shared.includes("ghe-home-header-stack"), "Common visual component missing");
+assert(body.indexOf('weekWidget()') < body.indexOf('id="homeDutyChiefNowHost"') && body.indexOf('id="homeDutyChiefNowHost"') < body.indexOf('AU MOIS'), "Chief must be below week");
 assert(body.indexOf("weekWidget()") < body.indexOf("agendaAlertBanner()"), "Week must precede expanded alert banner");
 assert(shared.indexOf('hc-home-top-tools') < shared.indexOf('hc-home-meta-date') &&
   shared.indexOf('hc-home-meta-date') < shared.indexOf('hc-home-identity') &&
