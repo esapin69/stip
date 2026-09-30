@@ -2632,11 +2632,8 @@
 
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning",
-      dutyChiefHost = state.homeMode === "apps"
-        ? '<section id="homeDutyChiefNowHost" class="home-duty-chief-host" aria-label="Chef d’équipe présent"></section>'
-        : "",
       profileBreak = showProfile ? '<div class="hc-home-major-separator" aria-hidden="true"></div>' : "",
-      profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : dutyChiefHost;
+      profileMarkup = showProfile ? `${profile()}${agendaAlertBanner()}${shortcutsLauncher()}` : "";
     let markup = `${homeModeNav()}${shortcutsPopup()}${profileMarkup}${profileBreak}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
