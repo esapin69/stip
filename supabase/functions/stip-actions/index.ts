@@ -68,75 +68,128 @@ function feedbackKindOf(v:any){
 }
 function feedbackReasonCodes(kind:string){
   const map:Record<string,string[]>={
-    medical:['cancelled','delay','location','convocation','organization'],
-    training:['content','facilitator','organization','schedule','usefulness','other'],
-    intern:['reception','supervision','autonomy','organization','communication','other'],
-    meeting:['organization','schedule','usefulness','communication','clarity','other'],
-    other:['organization','schedule','communication','usefulness','process','other']
+    medical:['cancelled','delay','location','convocation','organization','unavailable','other'],
+    training:['schedule','location','organization','facilitator','information','cancelled','not_informed','unavailable','other'],
+    intern:['schedule','organization','supervision','information','communication','trainee_absent','not_informed','not_found','other'],
+    meeting:['schedule','organization','participants','information','communication','cancelled','not_informed','location','other'],
+    other:['schedule','organization','information','communication','process','cancelled','not_informed','location','unavailable','other']
   };
   return map[kind]||map.other;
 }
+function feedbackReasonLabel(kind:string,code:string){
+  const labels:Record<string,string>={
+    cancelled:'Annulé',
+    delay:'Retard important',
+    location:'Lieu / adresse différent ou incorrect',
+    convocation:'Convocation manquante',
+    organization:'Organisation',
+    unavailable:'Impossible à réaliser',
+    schedule:'Horaires / date différents',
+    facilitator:'Formateur / intervenant',
+    information:'Information manquante',
+    not_informed:'Information non reçue',
+    supervision:'Encadrement différent',
+    communication:'Communication',
+    trainee_absent:'Stagiaire absent',
+    not_found:'Stagiaire non vu / non trouvé',
+    participants:'Participants',
+    process:'Déroulement',
+    other:'Autre'
+  };
+  return labels[code]||code||'';
+}
+function outcomeOfAttendance(v:string){return v==='ok'?'realized':v==='problem'?'different':v==='absent'?'not_realized':''}
 async function feedbackEvent(c:any,eventKey:string){
   const m=eventKey.match(/^(agenda|formation|stagiaire):([0-9a-f-]{36})$/i);if(!m)throw Error('EVENEMENT_RETOUR_INVALIDE');
   const kind=m[1].toLowerCase(),id=m[2];
   if(kind==='agenda'){
-    const q=await db.from('stip_agent_agenda_items').select('id,title,event_date,start_time,end_time,all_day,location,event_kind,source_type,feedback_enabled,feedback_question,status').eq('id',id).eq('agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||x.status!=='active')throw Error('EVENEMENT_INTROUVABLE');if(x.feedback_enabled===false)throw Error('RETOUR_NON_REQUIS');
+    const q=await db.from('stip_agent_agenda_items').select('id,title,body,event_date,start_time,end_time,all_day,location,event_kind,source_type,source_ref,created_by_agent_id,feedback_enabled,feedback_question,status').eq('id',id).eq('agent_id',c.agent.id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||x.status!=='active')throw Error('EVENEMENT_INTROUVABLE');if(x.feedback_enabled===false)throw Error('RETOUR_NON_REQUIS');
     const date=String(x.event_date||'').slice(0,10),clock=x.all_day?'18:00':text(x.end_time,8).slice(0,5)||text(x.start_time,8).slice(0,5)||'18:00',feedbackKind=feedbackKindOf(x),sensitive=feedbackKind==='medical';
-    return{key:eventKey,type:'agenda',title:text(x.title,180),date,endDate:date,time:x.all_day?'Toute la journée':[text(x.start_time,8).slice(0,5),text(x.end_time,8).slice(0,5)].filter(Boolean).join('–'),location:text(x.location,240),question:sensitive?'':text(x.feedback_question,240),sensitive,feedbackKind,due:localPlus(date,clock,60)}
+    return{key:eventKey,type:'agenda',title:text(x.title,180),date,endDate:date,time:x.all_day?'Toute la journée':[text(x.start_time,8).slice(0,5),text(x.end_time,8).slice(0,5)].filter(Boolean).join('–'),location:text(x.location,240),question:sensitive?'':text(x.feedback_question,240),sensitive,feedbackKind,due:localPlus(date,clock,60),createdByAgentId:x.created_by_agent_id||null,sourceType:text(x.source_type,80),sourceRef:x.source_ref||null,body:text(x.body,1000)}
   }
   if(kind==='formation'){
-    const q=await db.from('formations').select('id,agent_source_key,intitule,date_debut,date_fin,lieu,horaire,statut').eq('id',id).eq('agent_source_key',c.agent.source_key).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x)throw Error('EVENEMENT_INTROUVABLE');const date=parisDateOf(x.date_debut),endDate=parisDateOf(x.date_fin||x.date_debut),fromTs=parisTimeOf(x.date_fin||''),clock=lastClock(x.horaire)||(fromTs&&fromTs!=='00:00'?fromTs:'18:00');
-    return{key:eventKey,type:'formation',title:text(x.intitule,180)||'Formation',date,endDate,time:text(x.horaire,120),location:text(x.lieu,240),question:'',sensitive:false,feedbackKind:'training',due:localPlus(endDate,clock,60)}
+    const q=await db.from('formations').select('id,agent_source_key,intitule,date_debut,date_fin,lieu,horaire,statut,observation,source_file,source_sheet').eq('id',id).eq('agent_source_key',c.agent.source_key).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x)throw Error('EVENEMENT_INTROUVABLE');const date=parisDateOf(x.date_debut),endDate=parisDateOf(x.date_fin||x.date_debut),fromTs=parisTimeOf(x.date_fin||''),clock=lastClock(x.horaire)||(fromTs&&fromTs!=='00:00'?fromTs:'18:00');
+    return{key:eventKey,type:'formation',title:text(x.intitule,180)||'Formation',date,endDate,time:text(x.horaire,120),location:text(x.lieu,240),question:'',sensitive:false,feedbackKind:'training',due:localPlus(endDate,clock,60),observation:text(x.observation,500),sourceFile:text(x.source_file,200),sourceSheet:text(x.source_sheet,120)}
   }
-  const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';
-  return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',sensitive:false,feedbackKind:'intern',due:localPlus(endDate,clock,60)}
+  const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,observation,source_file,source_sheet').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';
+  return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',sensitive:false,feedbackKind:'intern',due:localPlus(endDate,clock,60),referent:text(x.referent,240),observation:text(x.observation,500),sourceFile:text(x.source_file,200),sourceSheet:text(x.source_sheet,120)}
 }
 async function submitEventFeedback(c:any,b:any){
   const eventKey=text(b.event_key,180),attendance=text(b.attendance,20),follow=typeof b.follow_up==='boolean'?b.follow_up:null,rawRating=Number(b.rating),incomingReason=text(b.reason_code,48)||null,rawCustom=text(b.custom_answer,20)||null,rawNote=text(b.note,500)||null;
   if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');
   if(follow===null)throw Error('RETOUR_SUIVI_REQUIS');
   const ev=await feedbackEvent(c,eventKey);if(parisStamp()<ev.due)throw Error('RETOUR_TROP_TOT');
-  const rated=ev.feedbackKind!=='medical',allowed=feedbackReasonCodes(ev.feedbackKind);
-  let rating:any=null,reasonCode:string|null=null,custom:string|null=null,note:string|null=null;
-  if(attendance!=='absent'){
-    if(rated){
-      if(!Number.isInteger(rawRating)||rawRating<1||rawRating>5)throw Error('RETOUR_NOTE_REQUISE');
-      if(!incomingReason||!allowed.includes(incomingReason))throw Error('RETOUR_MOTIF_REQUIS');
-      rating=rawRating;
-      reasonCode=incomingReason;
-      if(ev.question){
-        if(!['yes','no'].includes(rawCustom||''))throw Error('RETOUR_QUESTION_REQUISE');
-        custom=rawCustom;
-      }
-      note=rawNote;
-    }else if(attendance==='problem'){
-      if(!incomingReason||!allowed.includes(incomingReason))throw Error('RETOUR_MOTIF_REQUIS');
-      reasonCode=incomingReason;
-    }
+  const allowed=feedbackReasonCodes(ev.feedbackKind);
+  let rating:any=Number.isInteger(rawRating)&&rawRating>=1&&rawRating<=5?rawRating:null,
+      reasonCode:string|null=null,
+      custom:string|null=null,
+      note:string|null=ev.sensitive?null:rawNote;
+  if(attendance!=='ok'){
+    if(!incomingReason||!allowed.includes(incomingReason))throw Error('RETOUR_MOTIF_REQUIS');
+    reasonCode=incomingReason;
   }
-  if(ev.sensitive){rating=null;custom=null;note=null;if(attendance!=='problem')reasonCode=null}
-  const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,reason_code:reasonCode,follow_up:follow,custom_answer:custom,note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type,feedback_kind:ev.feedbackKind,feedback_mode:rated?'rated':'administrative'},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,reason_code,follow_up,custom_answer,note,submitted_at').single();if(q.error)throw q.error;return q.data
+  if(ev.question&&attendance!=='absent'){
+    if(!['yes','no'].includes(rawCustom||''))throw Error('RETOUR_QUESTION_REQUISE');
+    custom=rawCustom;
+  }
+  if(ev.sensitive){rating=null;custom=null;note=null}
+  const outcome=outcomeOfAttendance(attendance);
+  const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,reason_code:reasonCode,follow_up:follow,custom_answer:custom,note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type,feedback_kind:ev.feedbackKind,feedback_mode:'outcome',outcome},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,reason_code,follow_up,custom_answer,note,event_snapshot,submitted_at').single();if(q.error)throw q.error;return q.data
 }
 
 function validEmail(v:any){const s=text(v,320).toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:''}
 function shiftBase(v:any){const c=text(v,24).toUpperCase().replace(/\*+$/,'');if(/^J4/.test(c))return'J4';if(/^M/.test(c))return'M';if(/^J/.test(c))return'J';if(/^S/.test(c))return'S';if(/^N/.test(c))return'N';return c}
 function mailDate(v:any){const s=text(v,10);if(!/^\d{4}-\d{2}-\d{2}$/.test(s))return s;return new Intl.DateTimeFormat('fr-FR',{timeZone:'Europe/Paris',weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date(s+'T12:00:00+02:00'))}
 function personName(a:any,f='Agent'){return [text(a?.prenom,80),text(a?.nom,120)].filter(Boolean).join(' ').trim()||f}
-function mailDraft(c:any,ev:any,attendance:string){
-  const date=mailDate(ev.endDate||ev.date),name=personName(c.agent),sensitive=!!ev.sensitive;
-  let subject='',body='';
-  if(sensitive){
-    subject=`Suite administrative · ${date}`;
-    if(attendance==='absent')body=`Bonjour,\n\nJe n’ai pas pu être présent au rendez-vous prévu le ${date}. Pouvez-vous m’indiquer la démarche à suivre pour régulariser la situation ou le reprogrammer si nécessaire ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
-    else if(attendance==='problem')body=`Bonjour,\n\nÀ la suite de mon rendez-vous du ${date}, une suite administrative est nécessaire. Pouvez-vous m’indiquer la prochaine démarche à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
-    else body=`Bonjour,\n\nMon rendez-vous du ${date} s’est bien déroulé. Une suite administrative reste toutefois nécessaire. Pouvez-vous m’indiquer la prochaine étape à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
-  }else{
-    subject=`Suite · ${text(ev.title,120)||'Événement'} · ${date}`;
-    if(attendance==='absent')body=`Bonjour,\n\nJe n’ai pas pu être présent à « ${text(ev.title,180)} » prévu le ${date}. Je souhaite savoir quelle démarche effectuer pour régulariser la situation ou reprogrammer si nécessaire.\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
-    else if(attendance==='problem')body=`Bonjour,\n\nÀ la suite de « ${text(ev.title,180)} » du ${date}, un point nécessite un suivi. Pouvez-vous m’indiquer la démarche à effectuer ou la personne à contacter pour finaliser la suite ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
-    else body=`Bonjour,\n\n« ${text(ev.title,180)} » du ${date} s’est bien déroulé. Une suite reste toutefois nécessaire. Pouvez-vous m’indiquer la prochaine étape à effectuer ?\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`;
+function compactNorm(v:any){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'')}
+function feedbackSubject(ev:any,date:string){
+  if(ev.sensitive)return `Suivi rendez-vous · ${date}`;
+  if(ev.feedbackKind==='intern')return `Suivi accompagnement · ${text(ev.title,100)} · ${date}`;
+  if(ev.feedbackKind==='training')return `Suivi formation · ${text(ev.title,100)} · ${date}`;
+  if(ev.feedbackKind==='meeting')return `Suivi réunion · ${text(ev.title,100)} · ${date}`;
+  return `Suivi · ${text(ev.title,110)||'Événement'} · ${date}`;
+}
+function feedbackOutcomeSentence(ev:any,attendance:string,date:string){
+  const title=text(ev.title,180)||'cet événement';
+  if(ev.sensitive){
+    if(attendance==='ok')return `Le rendez-vous prévu le ${date} a été réalisé.`;
+    if(attendance==='problem')return `Le rendez-vous prévu le ${date} a rencontré un problème d’organisation.`;
+    return `Le rendez-vous prévu le ${date} n’a pas pu être réalisé.`;
   }
-  return{subject,body};
+  if(ev.feedbackKind==='intern'){
+    if(attendance==='ok')return `L’accompagnement de « ${title} » prévu le ${date} a été réalisé.`;
+    if(attendance==='problem')return `L’accompagnement de « ${title} » prévu le ${date} s’est déroulé différemment de ce qui était prévu.`;
+    return `L’accompagnement de « ${title} » prévu le ${date} n’a pas pu être réalisé.`;
+  }
+  if(ev.feedbackKind==='training'){
+    if(attendance==='ok')return `La formation « ${title} » prévue le ${date} a été réalisée.`;
+    if(attendance==='problem')return `La formation « ${title} » prévue le ${date} s’est déroulée différemment de ce qui était prévu.`;
+    return `La formation « ${title} » prévue le ${date} n’a pas pu être réalisée.`;
+  }
+  if(ev.feedbackKind==='meeting'){
+    if(attendance==='ok')return `La réunion « ${title} » prévue le ${date} a eu lieu.`;
+    if(attendance==='problem')return `La réunion « ${title} » prévue le ${date} a eu lieu avec un imprévu.`;
+    return `La réunion « ${title} » prévue le ${date} n’a pas pu avoir lieu.`;
+  }
+  if(attendance==='ok')return `« ${title} » prévu le ${date} a été réalisé.`;
+  if(attendance==='problem')return `« ${title} » prévu le ${date} s’est déroulé différemment de ce qui était prévu.`;
+  return `« ${title} » prévu le ${date} n’a pas pu être réalisé.`;
+}
+function mailDraft(c:any,ev:any,b:any){
+  const attendance=text(b.attendance,20),date=mailDate(ev.endDate||ev.date),name=personName(c.agent),reason=feedbackReasonLabel(ev.feedbackKind,text(b.reason_code,48)),note=ev.sensitive?'':text(b.note,500);
+  const lines=[feedbackOutcomeSentence(ev,attendance,date)];
+  if(attendance!=='ok'&&reason)lines.push(`Motif indiqué : ${reason}.`);
+  if(note)lines.push(`Précision : ${note}`);
+  const ask=attendance==='absent'
+    ? 'Pouvez-vous m’indiquer la suite à donner et, si nécessaire, s’il faut reprogrammer ?'
+    : 'Pouvez-vous m’indiquer la suite à donner si une action reste nécessaire ?';
+  return{subject:feedbackSubject(ev,date),body:`Bonjour,\n\n${lines.join('\n')}\n\n${ask}\n\nMerci par avance pour votre retour.\n\nCordialement,\n${name}`};
+}
+function personMatchesReferent(v:any,a:any){
+  const q=refNorm(v);if(!q)return false;
+  const vals=[a?.source_key,a?.prenom,a?.nom,[a?.prenom,a?.nom].filter(Boolean).join(' '),[a?.nom,a?.prenom].filter(Boolean).join(' ')].map(refNorm);
+  const parts=String(a?.source_key||'').split('_').filter(Boolean);if(parts.length)vals.push(refNorm(parts.at(-1)));
+  return vals.includes(q);
 }
 async function eventMailCandidates(c:any,ev:any){
   const current=await db.from('agents').select('id,source_key,nom,prenom,email,ghe,role').eq('id',c.agent.id).maybeSingle();if(current.error)throw current.error;
@@ -145,47 +198,94 @@ async function eventMailCandidates(c:any,ev:any){
     const ownContact=await db.from('contacts_ghe').select('email_pro').eq('source_key',c.agent.source_key).eq('actif',true).maybeSingle();
     replyTo=validEmail(ownContact.data?.email_pro);
   }
+  const cq=await db.from('contacts_ghe').select('source_key,categorie,ghe,nom,prenom,alias,email_pro,role_metier,equipe,ordre').eq('actif',true);if(cq.error)throw cq.error;
+  const aq=await db.from('agents').select('id,source_key,nom,prenom,email,ghe,role,equipe').eq('actif',true);if(aq.error)throw aq.error;
+  const contacts:any[]=cq.data||[],agents:any[]=aq.data||[];
   const byEmail=new Map<string,any>(),add=(x:any)=>{
     const email=validEmail(x.email);if(!email||email===replyTo)return;
+    const candidate={email,name:text(x.name,180)||email,role:text(x.role,180),kind:text(x.kind,40),reason:text(x.reason,180),recommended:!!x.recommended,bucket:x.bucket==='cc'?'cc':'to',score:Number(x.score??50)};
     const old=byEmail.get(email);
-    if(old){old.recommended=old.recommended||!!x.recommended;if(!old.reason.includes(x.reason))old.reason+=` · ${x.reason}`;return}
-    byEmail.set(email,{email,name:text(x.name,180)||email,role:text(x.role,180),kind:text(x.kind,40),reason:text(x.reason,180),recommended:!!x.recommended});
+    if(old){
+      old.recommended=old.recommended||candidate.recommended;
+      if(candidate.bucket==='to')old.bucket='to';
+      old.score=Math.min(Number(old.score??50),candidate.score);
+      if(candidate.reason&&!String(old.reason||'').includes(candidate.reason))old.reason=[old.reason,candidate.reason].filter(Boolean).join(' · ');
+      return;
+    }
+    byEmail.set(email,candidate);
   };
-  const cq=await db.from('contacts_ghe').select('source_key,categorie,ghe,nom,prenom,email_pro,role_metier').eq('actif',true);if(cq.error)throw cq.error;
-  for(const x of cq.data||[]){
-    const role=text(x.role_metier,180),cat=text(x.categorie,80).toLowerCase();
-    if(!(cat==='chef'||/cadre|responsable|chef/i.test(role)))continue;
-    const sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
-    add({email:x.email_pro,name:personName(x,role||'Encadrement'),role:role||(/chef/.test(cat)?'Chef d’équipe':'Encadrement'),kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':/responsable/i.test(role)?'Responsable':cat==='chef'?'Chef d’équipe':'Encadrement',recommended:sameGhe});
+  const addAgent=(a:any,meta:any)=>add({email:a?.email,name:personName(a),role:text(a?.role,180)||'Agent',...meta});
+  const addContact=(x:any,meta:any)=>add({email:x?.email_pro,name:personName(x,text(x?.nom,180)||'Contact'),role:text(x?.role_metier,180)||text(x?.categorie,80),...meta});
+
+  if(ev.createdByAgentId){
+    const creator=agents.find((a:any)=>String(a.id)===String(ev.createdByAgentId)&&String(a.id)!==String(c.agent.id));
+    if(creator)addAgent(creator,{kind:'linked',reason:'Lié à cet événement',recommended:true,bucket:'to',score:0});
   }
-  const aq=await db.from('agents').select('id,source_key,nom,prenom,email,ghe,role').eq('actif',true);if(aq.error)throw aq.error;
-  for(const x of aq.data||[]){
-    const role=text(x.role,180);
-    if(!/cadre|responsable|chef/i.test(role))continue;
-    const sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
-    add({email:x.email,name:personName(x),role,kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':/responsable/i.test(role)?'Responsable':'Chef d’équipe',recommended:sameGhe});
+
+  if(ev.feedbackKind==='intern'&&ev.referent){
+    const refs=String(ev.referent).split(/\s*(?:\+|\/|;|&|\bet\b)\s*/i).map((x:string)=>x.trim()).filter(Boolean);
+    for(const ref of refs){
+      for(const a of agents){
+        if(String(a.id)===String(c.agent.id))continue;
+        if(personMatchesReferent(ref,a))addAgent(a,{kind:'linked',reason:'Référent de cet accompagnement',recommended:true,bucket:'to',score:1});
+      }
+      for(const x of contacts){
+        const vals=[x.source_key,x.prenom,x.nom,[x.prenom,x.nom].filter(Boolean).join(' '),[x.nom,x.prenom].filter(Boolean).join(' ')].map(refNorm);
+        if(vals.includes(refNorm(ref)))addContact(x,{kind:'linked',reason:'Référent de cet accompagnement',recommended:true,bucket:'to',score:1});
+      }
+    }
   }
+
+  const eventDomain=compactNorm([ev.title,ev.location,ev.observation,ev.sourceType].filter(Boolean).join(' '));
+  for(const x of contacts){
+    const email=validEmail(x.email_pro);if(!email)continue;
+    const fields=[x.source_key,x.alias,x.nom,x.role_metier].map(compactNorm).filter((v:string)=>v.length>=5);
+    const direct=eventDomain.length>=5&&fields.some((v:string)=>eventDomain.includes(v)||v.includes(eventDomain));
+    const roleText=[x.nom,x.alias,x.role_metier,x.source_key].filter(Boolean).join(' ').toLowerCase();
+    const thematic=
+      (ev.feedbackKind==='training'&&/formateur|formation|mobilit/.test(roleText))||
+      (ev.feedbackKind==='intern'&&/stag|ecole|formation|encadrement/.test(roleText));
+    if(direct||thematic)addContact(x,{kind:'domain',reason:'Lié au domaine de cet événement',recommended:true,bucket:'to',score:direct?2:5});
+  }
+
+  for(const x of contacts){
+    const role=text(x.role_metier,180),cat=text(x.categorie,80).toLowerCase(),sameGhe=!x.ghe||!c.agent.ghe||String(x.ghe)===String(c.agent.ghe);
+    if(ev.sensitive&&cat==='administration'){
+      addContact(x,{kind:'administrative',reason:'Contact administratif',recommended:true,bucket:'to',score:sameGhe?8:12});
+      continue;
+    }
+    if(/cadre|responsable/i.test(role)){
+      addContact(x,{kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':'Responsable',recommended:sameGhe,bucket:'to',score:sameGhe?15:25});
+    }else if(cat==='chef'||/chef/i.test(role)){
+      addContact(x,{kind:'encadrement',reason:'Chef d’équipe',recommended:false,bucket:'cc',score:sameGhe?30:40});
+    }
+  }
+  for(const a of agents){
+    const role=text(a.role,180),sameGhe=!a.ghe||!c.agent.ghe||String(a.ghe)===String(c.agent.ghe);
+    if(/cadre|responsable/i.test(role))addAgent(a,{kind:'encadrement',reason:/cadre/i.test(role)?'Cadre':'Responsable',recommended:sameGhe,bucket:'to',score:sameGhe?16:26});
+    else if(/chef/i.test(role))addAgent(a,{kind:'encadrement',reason:'Chef d’équipe',recommended:false,bucket:'cc',score:sameGhe?31:41});
+  }
+
   if(!ev.sensitive){
     const date=text(ev.endDate||ev.date,10),selfPlan=await db.from('planning').select('code,equipe').eq('agent_id',c.agent.id).eq('date',date).maybeSingle();if(selfPlan.error)throw selfPlan.error;
     const base=shiftBase(selfPlan.data?.code),team=text(selfPlan.data?.equipe,80);
     if(base||team){
-      const pq=await db.from('planning').select('code,equipe,agent_id,agents(id,source_key,nom,prenom,email,ghe,role)').eq('date',date);if(pq.error)throw pq.error;
+      const pq=await db.from('planning').select('code,equipe,agent_id,agents(id,source_key,nom,prenom,email,ghe,role,equipe)').eq('date',date);if(pq.error)throw pq.error;
       for(const row of pq.data||[]){
         const a:any=row.agents;if(!a||String(a.id)===String(c.agent.id))continue;
         const sameBase=base&&shiftBase(row.code)===base,sameTeam=team&&String(row.equipe||'')===team;
         if(!sameBase&&!sameTeam)continue;
-        add({email:a.email,name:personName(a),role:text(a.role,180)||'Agent',kind:'shift',reason:sameBase?`Même shift ${base}`:'Même équipe',recommended:!!sameBase});
+        addAgent(a,{kind:'colleague',reason:sameBase?`Même shift ${base}`:'Même équipe',recommended:false,bucket:'cc',score:sameBase?50:55});
       }
     }
   }
-  const order=(x:any)=>x.kind==='encadrement'?(x.recommended?0:1):(x.recommended?2:3);
-  return{reply_to:replyTo,candidates:[...byEmail.values()].sort((a,b)=>order(a)-order(b)||a.name.localeCompare(b.name,'fr')).slice(0,24)};
+  return{reply_to:replyTo,candidates:[...byEmail.values()].sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name,'fr')).slice(0,24).map(({score,...x})=>x)};
 }
 async function eventMailContext(c:any,b:any){
   const eventKey=text(b.event_key,180),attendance=text(b.attendance,20);
   if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');
-  const ev=await feedbackEvent(c,eventKey),recipients=await eventMailCandidates(c,ev),draft=mailDraft(c,ev,attendance);
-  return{event:{event_key:eventKey,title:ev.title,date:ev.date,end_date:ev.endDate,sensitive:!!ev.sensitive},sender:{display_name:personName(c.agent),reply_to:recipients.reply_to||null,from:STIP_MAIL_FROM||null},direct_send:Boolean(RESEND_API_KEY&&STIP_MAIL_FROM),candidates:recipients.candidates,draft};
+  const ev=await feedbackEvent(c,eventKey),recipients=await eventMailCandidates(c,ev),draft=mailDraft(c,ev,b);
+  return{event:{event_key:eventKey,title:ev.title,date:ev.date,end_date:ev.endDate,sensitive:!!ev.sensitive,feedback_kind:ev.feedbackKind,outcome:outcomeOfAttendance(attendance)},sender:{display_name:personName(c.agent),reply_to:recipients.reply_to||null,from:STIP_MAIL_FROM||null},direct_send:Boolean(RESEND_API_KEY&&STIP_MAIL_FROM),candidates:recipients.candidates,draft};
 }
 async function sendEventMail(c:any,b:any){
   if(!RESEND_API_KEY||!STIP_MAIL_FROM)throw Error('ENVOI_MAIL_STIP_NON_CONFIGURE');
