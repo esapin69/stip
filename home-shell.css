@@ -5784,4 +5784,5 @@ body.hc-shift-detail-open{overflow:hidden}
   .hc-shift-detail-time strong{gap:8px;font-size:1.8rem}
 }
 
-.hc-shift-leave-action{display:block;width:calc(100% - 28px);margin:0 14px 14px;min-height:47px;border:1px solid #8bc9bd;border-radius:13px;background:linear-gradient(130deg,#e9f8f2,#fff);color:#176f63;font:inherit;font-size:.88rem;font-weight:900;touch-action:manipulation}
+.hc-shift-detail-actions{display:block;width:100%;padding-top:4px}
+.hc-shift-leave-action{display:block;width:100%;margin:0;min-height:50px;border:1px solid #8bc9bd;border-radius:14px;background:linear-gradient(130deg,#e9f8f2,#fff);color:#176f63;font:inherit;font-size:.9rem;font-weight:900;touch-action:manipulation;box-shadow:0 5px 14px rgba(23,111,99,.08)}
