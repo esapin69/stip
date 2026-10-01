@@ -305,28 +305,26 @@
       ? sourceLevel.places.map(sourcedWheelchairSpot).filter(Boolean)
       : [];
 
+    // Distinct canonical lifts must remain distinct. Prioritize terrain landmarks,
+    // but keep every canonical service available on this floor.
+    const landmarks = sourced.filter((item) => /ascenseur|local.*fauteuil/.test(norm(item.value)));
     const candidates = [
+      ...landmarks,
       ...featured.map((item) => ({ ...item, featured:true })),
-      ...sourced.map((item) => ({ ...item, featured:false })),
-      ...common.map((item) => ({ ...item, featured:false })),
+      ...sourced,
+      ...common,
     ];
-
     const seenValues = new Set();
-    const seenKinds = new Set();
     const result = [];
-
     for (const item of candidates) {
       const valueKey = norm(item.value || item.label || "");
-      const kind = wheelchairSpotKind(item.value || item.label || "");
       if (!valueKey || seenValues.has(valueKey)) continue;
-
-      // A sourced, more precise lift/hall/accueil replaces the generic version.
-      if (seenKinds.has(kind)) continue;
-
+      // Suppress only an imprecise fallback when precise canonical variants exist.
+      const kind = wheelchairSpotKind(item.value || item.label || "");
+      if (!item.sourced && isVagueWheelchairSpotLocation(item.value) &&
+          sourced.some((place) => wheelchairSpotKind(place.value) === kind)) continue;
       seenValues.add(valueKey);
-      seenKinds.add(kind);
       result.push(item);
-      if (result.length >= 5) break;
     }
 
     return result;
@@ -347,7 +345,7 @@
       if (isVagueWheelchairSpotLocation(label)) continue;
       seen.add(key);
       options.push(label);
-      if (options.length >= 6) break;
+
     }
 
     return options;
@@ -663,6 +661,7 @@
     bindViewport();
     bindPageScroll();
     syncViewport();
+    if (nextMode === "wheelchair") void loadWheelchairCatalog();
     loadFull(false);
     if (!state.timer) {
       state.timer = setInterval(() => {
@@ -3179,10 +3178,10 @@
             '<span data-freshness-icon>' + freshness.icon + '</span>' +
           '</i>' +
         '</div>' +
-        '<div class="tb-freshness-exact">' +
+        '<details class="tb-freshness-exact"><summary>Historique · repère indicatif</summary>' +
           exactFacts +
           '<em>Repère indicatif · aucune expiration automatique</em>' +
-        '</div>' +
+        '</details>' +
       '</div>'
     );
   }
@@ -3463,11 +3462,11 @@
                 '<button type="button" class="tb-still-there" data-still-there="' +
                   esc(id) +
                   '"><span aria-hidden="true">👁</span><strong>' +
-                  (stock.remaining > 1 ? "Je confirme qu’ils sont là" : "Je confirme qu’il est là") +
+                  "Toujours là" +
                   '</strong></button>' +
                 '<button type="button" class="tb-report-missing" data-report-missing="' +
                   esc(id) +
-                  '"><span aria-hidden="true">⚠️</span><strong>Je n’ai pas trouvé</strong></button>' +
+                  '"><span aria-hidden="true">⚠️</span><strong>Pas trouvé</strong></button>' +
               '</div>' +
             "</div>",
           );
