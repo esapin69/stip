@@ -127,6 +127,17 @@
     try {
       directory = await call("directory");
       renderDirectory();
+      const requested = String(
+        new URLSearchParams(location.search).get("agent") || "",
+      ).trim();
+      if (requested) {
+        const agent = (directory?.items || []).find((item) =>
+          [item?.source_key, item?.id, item?.matricule]
+            .map((value) => String(value || "").trim())
+            .includes(requested),
+        );
+        if (agent) requestAnimationFrame(() => openAgent(agent));
+      }
     } catch (error) {
       root.innerHTML =
         header() +
