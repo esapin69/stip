@@ -147,7 +147,7 @@ async function syncAudience(itemId:string,meetingId:string,mode:string,selected:
     if(!audience.length)throw Error('DESTINATAIRE_REQUIS')
   }
   if(audience.length){
-    await checked(db.from('stip_meeting_item_recipients').upsert(audience.map(agent_id=>({item_id:itemId,agent_id,status:'open',response_text:'',updated_at:new Date().toISOString()})),{onConflict:'item_id,agent_id'}))
+    await checked(db.from('stip_meeting_item_recipients').upsert(audience.map((agent_id:string)=>({item_id:itemId,agent_id,status:'open',response_text:'',updated_at:new Date().toISOString()})),{onConflict:'item_id,agent_id'}))
   }
 }
 
@@ -225,11 +225,11 @@ async function listHome(c:any){
   const items=itemIds.length?await checked(db.from('stip_meeting_items').select('id,meeting_id,topic,kind,body,lane_key,visibility').in('id',itemIds).eq('visibility','shared'))||[]:[]
   const meetingIds=[...new Set(items.map((x:any)=>x.meeting_id))]
   const finals=meetingIds.length?await checked(db.from('stip_meeting_notes').select('id,title,meeting_at,finalized_at,phase').in('id',meetingIds).eq('phase','finalized'))||[]:[]
-  const finalMap=new Map(finals.map((x:any)=>[x.id,x]))
+  const finalMap=new Map<string,any>(finals.map((x:any)=>[String(x.id),x]))
   const recMap=new Map(rec.map((x:any)=>[x.item_id,x]))
   return {
     pending_invites:pendingMeetings.map((m:any)=>({meeting_id:m.id,title:m.title,meeting_at:m.meeting_at,organizer_name:ownerMap.get(m.owner_agent_id)||'Organisateur'})),
-    followups:items.map((i:any)=>{const m=finalMap.get(i.meeting_id);if(!m)return null;return {...i,meeting_title:m.title,meeting_at:m.meeting_at,finalized_at:m.finalized_at,recipient:recMap.get(i.id)}}).filter(Boolean).sort((a:any,b:any)=>String(b.finalized_at||'').localeCompare(String(a.finalized_at||''))).slice(0,30)
+    followups:items.map((i:any)=>{const m:any=finalMap.get(String(i.meeting_id));if(!m)return null;return {...i,meeting_title:m.title,meeting_at:m.meeting_at,finalized_at:m.finalized_at,recipient:recMap.get(i.id)}}).filter(Boolean).sort((a:any,b:any)=>String(b.finalized_at||'').localeCompare(String(a.finalized_at||''))).slice(0,30)
   }
 }
 
