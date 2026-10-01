@@ -246,6 +246,21 @@
       dayFocus: state.dayFocus,
     };
   }
+  function resetWeekToCurrent(options = {}) {
+    const today = parisIso(),
+      shared =
+        window.STIPWeekEngine?.currentState?.({ today }) ||
+        window.STIPWeekEngine?.stateForDate?.(today, { today });
+    if (!applySharedWeekState(shared)) {
+      state.weekOffset = 0;
+      state.weekPast = false;
+      state.weekFull = false;
+      state.dayFocus = today;
+    }
+    state.dateJumpMonth = today.slice(0, 7);
+    state.renderSig = "";
+    if (options.render) render();
+  }
   function jumpToDate(iso) {
     iso = String(iso || "").slice(0, 10);
     if (!iso) return;
@@ -776,6 +791,7 @@
     saveDismissedNotifications();
     if (n?.source === "stip" && n?.id && !n?.action_id)
       call(ACTION_API, "dismiss_notification", { notification_id: n.id }).catch(() => {});
+    resetWeekToCurrent();
     refreshActionCenterUi();
   }
   function noteCategory(n = {}) {
@@ -1167,13 +1183,16 @@
       state.dayFocus = "";
     }
 
-    const navWeek = navigationWeek();
+    const navWeek = navigationWeek(),
+      visibleWeek = selectedWeek();
 
-    // Une navigation de semaine sélectionne toujours le premier jour visible.
-    // Sur une semaine complète, cela correspond au lundi.
-    state.dayFocus = navWeek[0]?.iso || parisIso();
+    // Une navigation de semaine sélectionne toujours le premier jour réellement visible.
+    // Sur la période courante, ce jour est aujourd'hui ; sur une semaine complète, c'est lundi.
+    state.dayFocus = visibleWeek[0]?.iso || parisIso();
 
-    state.dateJumpMonth = navWeek[0]?.iso?.slice(0, 7) || state.dateJumpMonth;
+    state.dateJumpMonth =
+      (visibleWeek[0]?.iso || navWeek[0]?.iso)?.slice(0, 7) ||
+      state.dateJumpMonth;
     state.renderSig = "";
     render();
 
@@ -1366,7 +1385,7 @@
     const w = navigationWeek(),
       mi = weekMonthInfo(w),
       returnToCurrentWeek =
-        state.weekOffset !== 0
+        state.weekOffset !== 0 || state.weekPast
           ? '<button type="button" class="hc-week-today hc-week-return-current" data-week-today>Revenir à cette semaine</button>'
           : "";
     return `<header class="hc-planning-primary-head"><div class="hc-week-nav hc-week-nav-global hc-week-nav-hero"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><div class="hc-week-context"><small class="hc-week-hero-kicker">PLANNING · ${esc(mi.heading)} ${esc(mi.yearLabel)}</small><strong>${esc(weekRangeLabel(w))}</strong><span>SEMAINE ${weekNo(w[0].d)}</span></div><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${homeDayStrip(w)}${returnToCurrentWeek}</header>`;
@@ -3025,7 +3044,7 @@
       .forEach((b) => (b.onclick = () => moveWeek(b.dataset.weekStep)));
     root
       .querySelector("[data-week-today]")
-      ?.addEventListener("click", () => jumpToDate(parisIso()));
+      ?.addEventListener("click", () => resetWeekToCurrent({ render: true }));
     root
       .querySelectorAll("[data-home-day]")
       .forEach((b) =>
@@ -3241,8 +3260,10 @@
     return state.refreshing;
   }
   function ready(e) {
+    const firstReady = !state.ready;
     state.ready = true;
     state.session = e?.detail || window.STIPSession || state.session;
+    if (firstReady) resetWeekToCurrent();
     loadDismissedNotifications();
     const routedRoute = window.STIPRouter?.get?.() || "home";
     if (
@@ -3447,6 +3468,8 @@
       window.STIPRouter?.set?.("home", { replace: true });
       return;
     }
+    if (next === "planning" && state.homeMode !== "planning")
+      resetWeekToCurrent();
     state.tableauFocus = false;
     if (next === "communication") {
       state.communicationTab = communicationTabForRoute(route);
@@ -3474,6 +3497,7 @@
       return;
     }
     state.homeMode = "planning";
+    resetWeekToCurrent();
     state.tableauFocus = false;
     state.renderSig = "";
     render();

@@ -19,6 +19,15 @@ vm.runInContext(source, sandbox, { filename: "stip-week-engine.js" });
 
 const engine = sandbox.window.STIPWeekEngine;
 assert(engine && typeof engine.display === "function", "moteur STIPWeekEngine indisponible");
+assert(typeof engine.currentState === "function", "retour canonique vers la semaine courante indisponible");
+
+const current = JSON.parse(JSON.stringify(engine.currentState({ today: "2026-10-01" })));
+same(current, {
+  weekOffset: 0,
+  weekPast: false,
+  weekFull: false,
+  dayFocus: "2026-10-01"
+}, "currentState doit revenir exactement sur la semaine courante et aujourd’hui");
 
 const model = (today, state = {}) =>
   JSON.parse(JSON.stringify(engine.display(state, { today })));

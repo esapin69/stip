@@ -92,6 +92,8 @@ assert(tMonthBridge.includes("STIPMonthTable") && !tMonthBridge.includes("t-est-
   "T no longer consumes the shared monthly table directly");
 assert(weekEngine.includes("liveTail") && weekEngine.includes("dow>=5") && weekEngine.includes("nextMonday"),
   "late-current-week Friday/Saturday/Sunday bridge rule is missing from the master engine");
+assert(weekEngine.includes("function currentState") && weekEngine.includes("stateForDate(today,{today})"),
+  "master engine no longer exposes the canonical current-week reset state");
 
 const rr = read("responsable-agenda-home.js");
 assert(rr.includes("stip-week-events stip-events-vertical rr-week-marks"),
@@ -164,6 +166,10 @@ assert(!/\.team-cal-icon\s*\{[^}]*translateY/s.test(teamCss), "team month still 
 assert(!/\.aav-cal-shift\s+\.aav-dot\s*\{/s.test(agentCss), "agent month still resizes dots locally");
 assert(!/#rrWeek\s+\.stip-week-day\s*\{/s.test(rrCss), "Responsable still owns week day geometry");
 assert(!/#rrMonth\s+\.stip-month-day\s*\{/s.test(rrCss), "Responsable still owns month day geometry");
+assert(homeJs.includes("STIPWeekEngine?.currentState") &&
+       homeJs.includes("state.weekOffset !== 0 || state.weekPast") &&
+       homeJs.includes("visibleWeek[0]?.iso"),
+  "home no longer guarantees a reliable return to the current week/day");
 assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal reserved-row layout");
 assert(homeJs.includes("stip-week-work-marker"), "home worked shift does not use the smaller canonical marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");

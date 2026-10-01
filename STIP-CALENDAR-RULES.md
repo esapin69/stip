@@ -51,6 +51,10 @@ Cette prévisualisation existe uniquement le vendredi, le samedi et le dimanche 
 - Depuis cette partie passée, « suivant » revient à la période courante avant de passer à la semaine suivante.
 - Une semaine passée/future complète reste toujours lundi → dimanche.
 - Changer de semaine ne doit pas fabriquer une sélection incohérente ; la sélection reste dans la période visible.
+- Le moteur expose `currentState` pour revenir sans ambiguïté à la période courante avec `dayFocus = today`.
+- Sur l’Accueil personnel, « Revenir à cette semaine » est proposé dès que l’affichage n’est plus la période courante exacte, y compris lorsqu’on consulte la partie déjà écoulée de la semaine (`weekPast`).
+- L’ouverture normale de l’Accueil personnel et le retour vers Mon espace repartent sur la semaine courante et le jour réel. Un saut volontaire vers une date reste possible pendant la consultation en cours.
+- Après le traitement ou la clôture d’une action depuis l’Accueil personnel, le prochain affichage du planning revient à la semaine courante.
 
 ## 5. Carte du jour commune
 
