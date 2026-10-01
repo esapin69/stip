@@ -517,18 +517,6 @@
       headerToast("Recherche indisponible pour le moment");
     }
   }
-  function currentHeaderGhe() {
-    const agent = {
-        ...(state.boot?.agent || {}),
-        ...(state.session?.agent || {}),
-        ...(window.STIPSession?.agent || {}),
-      },
-      raw = String(
-        agent.ghe || agent.ghe_numero || agent.numero_ghe || "",
-      ).trim(),
-      match = raw.match(/\d+/);
-    return match ? `GHE ${Number(match[0])}` : "";
-  }
   function openHeaderDateSearch() {
     document.getElementById("hcHeaderDateDialog")?.remove();
     const dialog = document.createElement("dialog");
@@ -1584,12 +1572,8 @@
       raw = formatter.format(date),
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
-      month = String(parts.month || "").toUpperCase(),
-      ghe = currentHeaderGhe(),
-      gheTag = ghe
-        ? `<button type="button" class="hc-home-ghe-tag" data-header-ghe-search aria-label="Rechercher un numéro GHE"><span>GHE</span><b>${esc(ghe.replace(/^GHE\s*/i, ""))}</b></button>`
-        : "";
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-date-center"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button>${gheTag}</span></div>`;
+      month = String(parts.month || "").toUpperCase();
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -2293,7 +2277,6 @@
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <div class="ghe-home-header-stack">
-        ${shortcutsLauncher()}
         <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator()}</div>
         <div class="hc-home-identity">${profile()}</div>
         <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
@@ -2302,6 +2285,7 @@
             `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
         )
         .join("")}</nav>
+        ${shortcutsLauncher()}
       </div>
     </section>`;
   }
