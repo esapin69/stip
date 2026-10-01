@@ -80,7 +80,7 @@
     const agent = rawOptions.agent || {},
       actions = (Array.isArray(rawOptions.actions) ? rawOptions.actions : [])
         .filter((action) => action && action.visible !== false && action.hidden !== true)
-        .slice(0, 5);
+        .slice(0, 12);
 
     if (!actions.length) return null;
 
@@ -102,15 +102,21 @@
         </header>
         <div class="spa-actions">
           ${actions.map((action, index) => {
-            const cls = [
-              "spa-action",
-              action.primary ? "primary" : "",
-              action.danger ? "danger" : "",
-            ].filter(Boolean).join(" ");
-            const inner = `<span class="spa-action-icon" aria-hidden="true">${esc(action.icon || "›")}</span><span class="spa-action-copy"><strong>${esc(action.label || "Action")}</strong>${action.detail ? `<small>${esc(action.detail)}</small>` : ""}</span><em aria-hidden="true">›</em>`;
+            const toggle = action.toggle === true,
+              checked = action.checked === true,
+              cls = [
+                "spa-action",
+                action.primary ? "primary" : "",
+                action.danger ? "danger" : "",
+                toggle ? "toggle" : "",
+              ].filter(Boolean).join(" "),
+              tail = toggle
+                ? `<span class="spa-toggle${checked ? " on" : ""}" aria-hidden="true"><i></i></span>`
+                : '<em aria-hidden="true">›</em>',
+              inner = `<span class="spa-action-icon" aria-hidden="true">${esc(action.icon || "›")}</span><span class="spa-action-copy"><strong>${esc(action.label || "Action")}</strong>${action.detail ? `<small>${esc(action.detail)}</small>` : ""}</span>${tail}`;
             if (action.href)
               return `<a class="${cls}" data-spa-index="${index}" href="${esc(action.href)}">${inner}</a>`;
-            return `<button class="${cls}" data-spa-index="${index}" type="button" ${action.disabled ? "disabled" : ""}>${inner}</button>`;
+            return `<button class="${cls}" data-spa-index="${index}" type="button" ${toggle ? `aria-pressed="${checked}"` : ""} ${action.disabled ? "disabled" : ""}>${inner}</button>`;
           }).join("")}
         </div>
         <button class="spa-cancel" type="button">Annuler</button>
@@ -140,7 +146,7 @@
           return;
         }
         event.preventDefault();
-        const shouldClose = action.closeOnSelect !== false;
+        const shouldClose = action.closeOnSelect !== false && action.toggle !== true;
         if (shouldClose) close();
         Promise.resolve(action.onSelect?.(agent, action)).catch((error) => {
           console.error("STIPPersonActions", error);
