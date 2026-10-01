@@ -57,7 +57,7 @@ function openProfileMenu(){
     ]
   });
 }
-document.addEventListener("click",e=>{const a=e.target.closest?.(".hc-id-card .hc-avatar,.hc-id-card .stip-person-card-ghe");if(!a)return;e.preventDefault();openProfileMenu()},true);
+document.addEventListener("click",e=>{const a=e.target.closest?.(".hc-id-card .hc-avatar");if(!a)return;e.preventDefault();openProfileMenu()},true);
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target?.matches?.(".hc-id-card .hc-avatar")){e.preventDefault();openProfileMenu()}});
 function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;paint()})}
 ["stip:session-ready","stip:boot-updated","stip:route"].forEach(e=>window.addEventListener(e,schedule));
