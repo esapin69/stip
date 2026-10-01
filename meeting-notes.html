@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<title>Notes de réunion · GHE</title>
+<link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1">
+<link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
+<link rel="stylesheet" href="meeting-notes.css?v=20261001-meeting-notes1">
+<link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
+<script defer src="stip-session-continuity.js?v=20260927-pin-security1"></script>
+<script defer src="stip-navigation.js?v=20260926-navigation5"></script>
+<script defer src="stip-overlay-navigation.js?v=20260930-safari-overlay-history1"></script>
+<script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
+<script defer src="meeting-notes.js?v=20261001-meeting-notes1"></script>
+</head><body>
+<main class="stip-page meeting-page">
+  <header class="meeting-page-head">
+    <button type="button" class="stip-btn secondary" data-stip-back data-back-fallback="index.html#/apps">‹ Retour</button>
+    <div><small>PERSONNEL</small><h1 class="stip-title">Notes de réunion</h1></div>
+    <button type="button" class="stip-btn secondary" data-meeting-refresh aria-label="Actualiser">↻</button>
+  </header>
+  <section class="meeting-toolbar">
+    <button type="button" class="stip-btn meeting-new" data-meeting-new>＋ Nouvelle note</button>
+    <label class="meeting-search"><span>Rechercher</span><input type="search" data-meeting-search placeholder="Titre, participant, décision…" autocomplete="off"></label>
+  </section>
+  <nav class="meeting-tabs" aria-label="Filtrer les notes">
+    <button type="button" class="active" data-meeting-tab="active">En cours <b data-meeting-count-active>0</b></button>
+    <button type="button" data-meeting-tab="archived">Archivées <b data-meeting-count-archived>0</b></button>
+  </nav>
+  <p id="meetingStatus" role="status" aria-live="polite"></p>
+  <section id="meetingList" class="meeting-list" aria-live="polite"></section>
+</main>
+<dialog id="meetingEditor" class="meeting-editor">
+  <form method="dialog" class="meeting-editor-shell" data-meeting-form>
+    <header><button type="button" class="meeting-close" data-meeting-close aria-label="Fermer">‹</button><div><small>NOTE DE RÉUNION</small><h2 data-meeting-editor-title>Nouvelle note</h2></div><span></span></header>
+    <div class="meeting-fields">
+      <label><span>Titre</span><input name="title" maxlength="160" required placeholder="Objet de la réunion"></label>
+      <label><span>Date et heure</span><input name="meeting_at" type="datetime-local" required></label>
+      <label><span>Participants</span><input name="participants" maxlength="1000" placeholder="Noms ou équipe"></label>
+      <label><span>Notes</span><textarea name="notes" maxlength="20000" rows="8" placeholder="Ce qui est dit, contexte, éléments utiles…"></textarea></label>
+      <label><span>Décisions</span><textarea name="decisions" maxlength="10000" rows="4" placeholder="Ce qui a été décidé"></textarea></label>
+      <label><span>Actions à suivre</span><textarea name="actions" maxlength="10000" rows="4" placeholder="Qui fait quoi, échéances, relances…"></textarea></label>
+    </div>
+    <p class="meeting-form-status" data-meeting-form-status role="status" aria-live="polite"></p>
+    <footer>
+      <button type="button" class="stip-btn secondary meeting-archive" data-meeting-archive hidden>Archiver</button>
+      <button type="submit" class="stip-btn">Enregistrer</button>
+    </footer>
+  </form>
+</dialog>
+</body></html>
