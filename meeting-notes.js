@@ -59,7 +59,8 @@
   function openEditor(id=""){
     const d=$("#meetingEditor"),form=$("[data-meeting-form]",d);
     const n=id?state.notes.find(x=>x.id===id):null;state.editing=n||null;
-    form.reset();form.title.value=n?.title||"";form.meeting_at.value=localInput(n?.meeting_at);form.participants.value=n?.participants||"";form.notes.value=n?.notes||"";form.decisions.value=n?.decisions||"";form.actions.value=n?.actions||"";
+    const field=(name)=>form.elements.namedItem(name);
+    form.reset();field("title").value=n?.title||"";field("meeting_at").value=localInput(n?.meeting_at);field("participants").value=n?.participants||"";field("notes").value=n?.notes||"";field("decisions").value=n?.decisions||"";field("actions").value=n?.actions||"";
     $("[data-meeting-editor-title]",d).textContent=n?"Modifier la note":"Nouvelle note";
     const arch=$("[data-meeting-archive]",d);arch.hidden=!n;arch.textContent=n?.status==="archived"?"Restaurer":"Archiver";
     $("[data-meeting-form-status]",d).textContent="";
@@ -69,11 +70,13 @@
   async function save(event){
     event.preventDefault();
     const d=$("#meetingEditor"),form=$("[data-meeting-form]",d),msg=$("[data-meeting-form-status]",d),btn=form.querySelector('button[type="submit"]');
-    const when=form.meeting_at.value?new Date(form.meeting_at.value):null;
+    const meetingAt=form.elements.namedItem("meeting_at");
+    const when=meetingAt?.value?new Date(meetingAt.value):null;
     if(!when||Number.isNaN(when.getTime())){msg.textContent="Vérifie la date et l’heure.";return}
     btn.disabled=true;msg.textContent="Enregistrement…";
     try{
-      const j=await post({action:"save",id:state.editing?.id||null,meeting_at:when.toISOString(),title:form.title.value,participants:form.participants.value,notes:form.notes.value,decisions:form.decisions.value,actions:form.actions.value});
+      const field=(name)=>form.elements.namedItem(name);
+      const j=await post({action:"save",id:state.editing?.id||null,meeting_at:when.toISOString(),title:field("title").value,participants:field("participants").value,notes:field("notes").value,decisions:field("decisions").value,actions:field("actions").value});
       state.notes=j.notes||state.notes;closeEditor();status("Note enregistrée.");render();setTimeout(()=>status(""),1200);
     }catch(e){msg.textContent=e.message||"Impossible d’enregistrer."}
     finally{btn.disabled=false}
