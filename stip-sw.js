@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261001-leisure-chat1";
+const STIP_SW_BUILD="20261001-week-current2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
