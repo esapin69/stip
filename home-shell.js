@@ -4,6 +4,8 @@
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data",
     ACTION_API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-actions",
+    AGENT_READ_API =
+      "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly",
     STORE = "stip_session_v1",
     HOME_CACHE_KEY = "stip_home_runtime_cache_v2",
     HOME_CACHE_VERSION = 2,
@@ -42,7 +44,9 @@
   };
   let planningSlowTimer = 0,
     tableauRuntimePromise = null,
-    communicationRuntimePromise = null;
+    communicationRuntimePromise = null,
+    headerDirectoryPromise = null,
+    headerDirectoryCache = null;
   function planningLoading() {
     return (
       state.bootStatus === "loading" &&
