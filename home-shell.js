@@ -1845,7 +1845,7 @@
     const template = window.STIPPersonCard;
     if (template?.renderCurrent)
       return `<section class="hc-profile-section" aria-label="Carte STIP">
-        ${template.renderCurrent({ label: "MON PROFIL", compact: true })}
+        ${template.renderCurrent({ label: "MON PROFIL", compact: true, headerIdentity: true })}
       </section>`;
 
     const a = state.boot?.agent || state.session?.agent || {},
@@ -1856,7 +1856,6 @@
       <section class="stip-person-card is-compact is-self hc-id-card">
         <div class="stip-person-card-avatar hc-avatar" data-avatar-fallback="${esc(ini)}"><span>${esc(ini)}</span></div>
         <div class="stip-person-card-copy"><small>MON PROFIL</small><strong>${esc([prenom, nom].filter(Boolean).join(" ") || "Utilisateur")}</strong></div>
-        <span class="stip-person-card-menu-hint" aria-hidden="true">•••</span>
       </section>
     </section>`;
   }
