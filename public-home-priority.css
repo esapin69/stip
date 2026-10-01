@@ -330,6 +330,44 @@
 }
 #loginView .t-app-link-muted{opacity:.88}
 
+#loginView .t-request-inline{
+  width:100%;
+  min-height:48px;
+  margin-top:2px;
+  padding:0 15px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  border:1px solid rgba(4,82,104,.20);
+  border-radius:16px;
+  background:rgba(255,255,255,.92);
+  color:#426a74;
+  box-shadow:0 7px 18px rgba(4,82,104,.07);
+  font-size:.76rem;
+  cursor:pointer;
+}
+#loginView .t-request-inline span{
+  color:#748d93;
+  font-weight:750;
+}
+#loginView .t-request-inline strong{
+  color:#0b6072;
+  font-weight:950;
+}
+#loginView .t-request-inline:active{
+  background:#f4fbfc;
+  border-color:rgba(0,143,172,.34);
+}
+#loginView .t-primary-access.stip-keyboard-focus-mode .t-request-inline{
+  display:flex!important;
+  min-height:44px;
+  margin-top:2px;
+  background:rgba(255,255,255,.96);
+  border-color:rgba(4,82,104,.22);
+  box-shadow:0 6px 16px rgba(4,82,104,.06);
+}
+
 /* Clavier ouvert : aucune géométrie locale.
    Le moteur FormUX commun centre uniquement la question active,
    son champ et son action dans le visualViewport réel. */
