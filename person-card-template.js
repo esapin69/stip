@@ -125,11 +125,12 @@
       image = photoUrl(agent, media),
       ini = initials(agent),
       name = fullName(agent),
+      firstName = cap(agent.prenom),
+      lastName = cap(agent.nom),
       email = emailValue(agent),
       sub = String(headerIdentity ? email : options.subtitle || secondary(agent)).trim(),
       phone = phoneValue(agent),
       phoneLink = phoneHref(phone),
-      ghe = gheValue(agent),
       rootClasses = [
         "stip-person-card",
         compact ? "is-compact" : "",
@@ -151,11 +152,14 @@
       </div>
       <div class="stip-person-card-copy">
         <small>${esc(label)}</small>
-        <strong>${esc(name)}</strong>
+        ${
+          headerIdentity
+            ? `<button class="stip-person-card-name" type="button" data-profile-person-search aria-label="Rechercher un agent par nom ou prénom"><span class="stip-person-card-first">${esc(firstName || name)}</span>${lastName ? `<span class="stip-person-card-last">${esc(lastName)}</span>` : ""}</button>`
+            : `<strong>${esc(name)}</strong>`
+        }
         ${sub ? (headerIdentity ? `<a class="stip-person-card-email" href="mailto:${esc(sub)}" aria-label="Écrire à ${esc(name)}">${esc(sub)}</a>` : `<span>${esc(sub)}</span>`) : ""}
         ${phone ? `<a class="stip-person-card-phone" href="${esc(phoneLink)}" aria-label="Appeler ${esc(name)}">☎ ${esc(phone)}</a>` : ""}
       </div>
-      ${headerIdentity ? `<button class="stip-person-card-ghe" type="button" data-profile-actions aria-label="Ouvrir le profil de ${esc(name)}"><small>GHE</small><strong>${esc(ghe || "—")}</strong></button>` : ""}
     </section>`;
   }
 
@@ -195,11 +199,10 @@
     .stip-person-card-copy small{color:#168297;font-size:.58rem;font-weight:950;letter-spacing:.09em}
     .stip-person-card-copy strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.15}
     .stip-person-card-copy>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#70858d;font-size:.69rem;font-weight:760}
+    .stip-person-card-name{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:baseline;justify-content:center;gap:.28em;width:max-content;max-width:100%;padding:0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .stip-person-card-first,.stip-person-card-last{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .stip-person-card-email,.stip-person-card-phone{width:max-content;max-width:100%;color:#2c737c;font-size:.69rem;font-weight:900;line-height:1.18;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .stip-person-card-email:focus-visible,.stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
-    .stip-person-card-ghe{display:grid;place-items:center;align-content:center;gap:0;width:48px;height:48px;padding:0;border:1px solid #d8e7ea;border-radius:14px;background:#f8fcfd;color:#164e60;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-    .stip-person-card-ghe small{font-size:.48rem;font-weight:950;letter-spacing:.12em;line-height:1}
-    .stip-person-card-ghe strong{font-size:1.04rem;font-weight:950;line-height:1.05}
+    .stip-person-card-name:focus-visible,.stip-person-card-email:focus-visible,.stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
     .stip-person-card.is-self .stip-person-card-avatar{cursor:pointer;-webkit-tap-highlight-color:transparent}
     .stip-person-card.is-self .stip-person-card-avatar:focus-visible{outline:3px solid rgba(10,145,170,.28);outline-offset:3px}
     @media(max-width:380px){
