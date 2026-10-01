@@ -9,7 +9,7 @@
  const drafts=new Map();
  const find=id=>state.events.find(e=>e.id===id);
  const active=e=>e.status==='active'&&e.dates.some(d=>d>=today());
- function reset(){state.events=[];state.loaded=false;state.can_create=false;state.error='';state.token='';drafts.clear();document.querySelector('#leisureDialog')?.close();notify()}
+ function reset(){state.events=[];state.loaded=false;state.can_create=false;state.error='Connecte-toi sur l’accueil pour ouvrir les sorties.';state.token='';drafts.clear();document.querySelector('#leisureDialog')?.close();notify()}
  function notify(){window.dispatchEvent(new CustomEvent('stip:leisure-updated'));renderApp()}
  async function post(body){
   const token=localStorage.getItem(STORE)||'';if(!token)throw Error('Connecte-toi pour répondre.');
@@ -77,7 +77,7 @@
  }
  function renderApp(){
   const root=document.querySelector('#leisureApp');if(!root)return;
-  if(!state.loaded){root.innerHTML=`<p role="status">${esc(state.error||'Chargement des sorties…')}</p>${state.error?'<button type="button" class="stip-btn" data-leisure-refresh>Réessayer</button>':''}`;return}
+  if(!state.loaded){root.innerHTML=`<p role="status">${esc(state.error||'Chargement des sorties…')}</p>${!(localStorage.getItem(STORE)||'')?'<a class="stip-btn secondary" href="index.html#/home">Me connecter</a>':state.error?'<button type="button" class="stip-btn" data-leisure-refresh>Réessayer</button>':''}`;return}
   root.innerHTML=`${state.can_create?'<button type="button" class="stip-btn" data-leisure-create>Proposer une sortie</button>':''}<div class="leisure-grid">${state.events.map(e=>`<article class="leisure-card stip-surface stip-card-signature" data-stip-card-tone="${active(e)?'active':'neutral'}"><h2>${esc(e.title)}</h2><p>${esc(e.location||'Lieu à fixer')}</p><p>${esc(e.time_label||'Horaire à fixer')}</p><p>${e.status==='cancelled'?'Annulée':!active(e)?'Terminée':e.needs_response?'Ta réponse est attendue':e.response?.declined?'Tu ne participes pas':'Ta réponse est enregistrée'}</p><div class="leisure-date-summary">${e.dates.map(d=>`<span><strong>${esc(fmt(d))}</strong> · ${e.participants.filter(p=>p.selected_dates.includes(d)).length} inscrit(s)</span>`).join('')}</div><button type="button" class="stip-btn" data-leisure-event="${esc(e.id)}">${active(e)?e.response?'Voir / modifier ma réponse':'Choisir mes dates':'Voir les participants'}</button>${e.can_manage?`<button type="button" class="stip-btn secondary" data-leisure-manage="${esc(e.id)}">Gérer</button>`:''}</article>`).join('')||'<p>Aucune sortie proposée pour l’instant.</p>'}</div>`;
  }
  document.addEventListener('click',e=>{const b=e.target.closest?.('[data-leisure-event],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');if(!b)return;if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);else if(b.hasAttribute('data-leisure-create'))openEditor();else refresh()});
