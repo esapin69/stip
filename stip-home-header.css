@@ -102,44 +102,55 @@
 .hc-home-top-nav[data-header-compact] .stip-person-card-ghe:focus-visible{
   outline:3px solid rgba(20,140,165,.22)!important;outline-offset:2px!important
 }
+/* Primary Home launchers — single canonical owner.
+   home-shell.css must not redefine these selectors. */
 .hc-home-top-nav[data-header-compact] .hc-home-filters{
-  --launcher-art-rest:clamp(57px,17vw,76px);--launcher-art-active:clamp(60px,17.6vw,79px);
+  --launcher-art-rest:88%;
+  --launcher-art-active:98%;
   box-sizing:border-box!important;display:grid!important;width:100%!important;min-width:0!important;max-width:100%!important;
   grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:stretch!important;
   gap:clamp(4px,1.4vw,9px)!important;margin:0!important;padding:0!important
 }
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button{
-  box-sizing:border-box!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
-  align-self:stretch!important;min-width:0!important;min-height:0!important;padding:7px 3px 8px!important;gap:6px!important;
-  border:1px solid var(--stip-line,#dbe8eb)!important;border-radius:17px!important;
-  background:var(--stip-surface,#fff)!important;box-shadow:none!important;transform:none!important
+  box-sizing:border-box!important;position:relative!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+  align-self:stretch!important;width:100%!important;min-width:0!important;min-height:0!important;padding:7px 3px 8px!important;gap:6px!important;
+  border:1px solid var(--stip-line,#dbe8eb)!important;border-radius:17px!important;background:var(--stip-surface,#fff)!important;box-shadow:none!important;
+  color:var(--stip-ink,#173f50)!important;font:inherit!important;cursor:pointer!important;touch-action:manipulation!important;-webkit-tap-highlight-color:transparent!important;
+  overflow:visible!important;transform:none!important;
+  transition:border-color var(--stip-motion,160ms ease),box-shadow var(--stip-motion,160ms ease),background var(--stip-motion,160ms ease)!important
 }
 .hc-home-top-nav[data-header-compact] .hc-home-filters .hc-home-filter-art{
-  box-sizing:border-box!important;width:var(--launcher-art-rest)!important;max-width:calc(100% - 6px)!important;
-  height:auto!important;flex:0 0 auto!important;aspect-ratio:1!important;margin:0 auto!important;
-  border-radius:15px!important;transform:none!important;transform-origin:center center!important;
-  transition:transform var(--stip-motion,160ms ease)!important;box-shadow:none!important
+  box-sizing:border-box!important;position:relative!important;z-index:1!important;display:block!important;width:var(--launcher-art-rest)!important;max-width:none!important;
+  height:auto!important;flex:0 0 auto!important;aspect-ratio:1!important;margin:0 auto!important;overflow:hidden!important;border:0!important;border-radius:15px!important;
+  background:transparent!important;box-shadow:0 3px 9px rgba(20,62,78,.09)!important;transform:translateY(0) scale(1)!important;transform-origin:center center!important;
+  transition:width .2s cubic-bezier(.2,.8,.2,1),transform .2s cubic-bezier(.2,.8,.2,1),box-shadow var(--stip-motion,160ms ease),filter var(--stip-motion,160ms ease)!important;
+  will-change:width,transform
 }
 .hc-home-top-nav[data-header-compact] .hc-home-filters .hc-home-filter-art img{
-  width:100%!important;height:100%!important;object-fit:contain!important;transform:none!important
+  display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;border-radius:15px!important;
+  transform:scale(1)!important;transform-origin:center center!important;
+  transition:transform .2s cubic-bezier(.2,.8,.2,1),filter var(--stip-motion,160ms ease)!important
 }
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button>strong{
-  width:100%!important;max-width:100%!important;min-height:1.12em!important;margin:0!important;
-  font-size:clamp(.64rem,2.85vw,.81rem)!important;line-height:1.13!important;font-weight:900!important;
-  text-align:center!important;white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;transform:none!important
+  position:relative!important;z-index:1!important;display:block!important;width:100%!important;max-width:100%!important;min-height:1.12em!important;margin:0!important;
+  color:var(--stip-ink,#173f50)!important;font-size:clamp(.64rem,2.85vw,.81rem)!important;line-height:1.13!important;font-weight:900!important;text-align:center!important;
+  white-space:normal!important;overflow-wrap:normal!important;word-break:normal!important;transform:none!important;
+  transition:color var(--stip-motion,160ms ease),text-shadow var(--stip-motion,160ms ease)!important
 }
-/* Old launcher glows must not escape the shared compact panel. */
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button::before,
-.hc-home-top-nav[data-header-compact] .hc-home-filters>button::after{
-  content:none!important;display:none!important;box-shadow:none!important
-}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button::after{content:none!important;display:none!important;box-shadow:none!important}
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button.active{
-  z-index:1!important;border:2px solid var(--stip-accent,#148ca5)!important;border-radius:18px!important;
-  box-shadow:0 0 0 2px var(--stip-accent-soft,#e7f7fa)!important;
-  background:var(--stip-surface,#fff)!important;transform:none!important
+  z-index:2!important;border:2px solid var(--stip-accent,#148ca5)!important;border-radius:18px!important;background:var(--stip-surface,#fff)!important;
+  box-shadow:0 0 0 2px var(--stip-accent-soft,#e7f7fa),0 8px 18px rgba(21,67,82,.08)!important;transform:none!important
 }
-.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active .hc-home-filter-art{transform:scale(1.06)!important}
-.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active .hc-home-filter-art img{transform:none!important}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active .hc-home-filter-art{
+  width:var(--launcher-art-active)!important;transform:translateY(-1px) scale(1.025)!important;
+  box-shadow:0 8px 18px rgba(20,62,78,.14),0 0 0 2px rgba(255,255,255,.92)!important;filter:saturate(1.06) contrast(1.02)!important
+}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active .hc-home-filter-art img{transform:scale(1.025)!important;filter:saturate(1.05) contrast(1.02)!important}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active>strong{color:var(--stip-accent,#148ca5)!important;text-shadow:0 1px 0 rgba(255,255,255,.9)!important}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button:active .hc-home-filter-art{transform:translateY(1px) scale(.97)!important}
+.hc-home-top-nav[data-header-compact] .hc-home-filters>button.active:active .hc-home-filter-art{width:var(--launcher-art-active)!important;transform:translateY(0) scale(1.01)!important}
 .hc-home-top-nav[data-header-compact] .hc-home-identity-link{display:block;width:100%;color:inherit;text-decoration:none}
 .hc-home-top-nav[data-header-compact] .hc-home-identity-link:focus-visible,
 .hc-home-top-nav[data-header-compact] .hc-home-filters>button:focus-visible{
@@ -149,7 +160,7 @@
  .hc-home-top-nav[data-header-compact] .ghe-home-header-stack{padding:6px 7px 9px}
  .hc-home-top-nav[data-header-compact] .hc-home-today-label{font-size:.87rem!important;gap:.17em!important}
  .hc-home-top-nav[data-header-compact] .hc-home-filters{
-  --launcher-art-rest:clamp(52px,16vw,62px);--launcher-art-active:clamp(55px,16.5vw,65px);gap:4px!important
+  gap:4px!important
  }
 }
 .hc-planning-group>.hc-home-duty-chief-lower{

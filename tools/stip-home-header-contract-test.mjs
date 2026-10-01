@@ -4,6 +4,7 @@ const assert = (value, msg) => { if (!value) throw Error(msg); };
 const home = read("home-shell.js");
 const shared = read("stip-page-header.js");
 const css = read("stip-home-header.css");
+const legacyHomeCss = read("home-shell.css");
 const person = read("person-card-template.js");
 const nav = home.slice(home.indexOf("function homeModeNav()"), home.indexOf("function shortcutsLauncher()"));
 const body = home.slice(home.indexOf("function homeModeBody()"), home.indexOf("function render()"));
@@ -21,6 +22,8 @@ assert(shared.indexOf('hc-home-top-tools') < shared.indexOf('hc-home-meta-date')
   shared.indexOf('hc-home-identity') < shared.indexOf('hc-home-filters'), "Shared native header order changed");
 assert(shared.includes('<strong>Mon espace</strong>'), "Native tab label changed");
 assert(css.includes("data-header-compact") && css.includes("prefers-reduced-motion"), "Shared responsive header styles missing");
+assert(!legacyHomeCss.includes(".hc-home-filters") && !legacyHomeCss.includes(".hc-home-filter-art"), "Legacy Home CSS still competes with the canonical launcher component");
+assert(css.includes("--launcher-art-rest:88%") && css.includes("--launcher-art-active:98%") && css.includes("width:var(--launcher-art-active)!important") && css.includes("transform:scale(1.025)!important"), "Active launcher artwork must visibly grow from the canonical rest size");
 assert(person.includes("stip-person-card-phone") && person.includes("agent.telephone"), "Shared identity phone is missing");
 for (const file of ["index.html","esprit-equipe.html","responsable.html"]) {
   const page=read(file);
