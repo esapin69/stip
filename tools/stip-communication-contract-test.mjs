@@ -54,10 +54,9 @@ for(const tag of hubForms){
   if(!tag.includes("data-stip-form-mode="))fail("formulaire sans mode explicite: "+tag.slice(0,140));
 }
 has(chat,'data-stip-form-mode="composer"',"le compositeur Chat/Fauteuils n’est pas déclaré composer");
-has(chat,"wheelchairInlineElevatorChoices","le clavier Fauteuils ne sait pas aplatir les deux choix d’ascenseur");
-has(chat,"contexts.length !== 2","l’aplatissement ascenseur n’est pas limité au cas exact de deux choix");
-has(chat,'value: genericValue + " · " + context',"les choix ascenseur directs ne conservent pas le repère composé");
-has(chat,"const quickPlaces = wheelchairInlineElevatorChoices(","la grille principale n’utilise pas l’aplatissement ascenseur");
+has(chat,"WHEELCHAIR_PLACE_DETAILS","Fauteuils doit conserver les métadonnées canoniques des repères");
+has(chat,"place.nearby.join", "Les services proches doivent être visibles sous le repère");
+has(chat,"const quickPlaces = wheelchairFieldSpots", "Le sélecteur doit utiliser les lieux réels sans transformer un service en ascenseur");
 has(chat,"composerExpanded: false","Fauteuils n’a pas d’état compact explicite");
 has(chat,"composerWriting: false","Fauteuils doit avoir un mode Écrire minimal");
 has(chat,'data-compact-mode="spot"',"J’ai vu doit lancer le parcours guidé");

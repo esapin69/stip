@@ -1199,6 +1199,23 @@ async function wheelchairCatalog(){
     .order("display_name");
   if(error)throw error;
   const rows=data||[];
+  const [stopsQ,relationsQ]=await Promise.all([
+    db.from("stip_place_elevator_stops").select("elevator_id,stop_label,linked_place_id,is_served,visibility").in("visibility",["public","internal_stip"]),
+    db.from("stip_place_relations").select("from_place_id,to_place_id,relation_type,visibility").in("relation_type",["near","exit_near","located_in","visitor_reference"]).in("visibility",["public","internal_stip"])
+  ]);
+  if(stopsQ.error)throw stopsQ.error;
+  if(relationsQ.error)throw relationsQ.error;
+  const rowById=new Map(rows.map((p:any)=>[String(p.id),p]));
+  const sameLevel=(a:any,b:any)=>wheelchairLevelRank(a)===wheelchairLevelRank(b);
+  const nearbyFor=(id:string,level:string)=>(relationsQ.data||[])
+    .filter((r:any)=>String(r.from_place_id)===id)
+    .map((r:any)=>rowById.get(String(r.to_place_id)) as any)
+    .filter((p:any)=>p&&p.level&&sameLevel(p.level,level)&&!["level","elevator","elevator_group"].includes(p.place_type));
+  const liftAtLevel=(p:any,level:string)=>{
+    const stops=(stopsQ.data||[]).filter((s:any)=>String(s.elevator_id)===String(p.id)&&sameLevel((rowById.get(String(s.linked_place_id)) as any)?.level||s.stop_label,level));
+    if(stops.some((s:any)=>s.is_served===false))return false;
+    return stops.some((s:any)=>s.is_served===true)||nearbyFor(String(p.id),level).length>0;
+  };
   const rowIds=rows.map((p:any)=>p.id);
   let aliasRows:any[]=[];
   if(rowIds.length){
@@ -1255,13 +1272,13 @@ async function wheelchairCatalog(){
       levels:levels.map(level=>{
         const seen=new Set<string>(),places:any[]=[];
         for(const p of scoped
-          .filter((x:any)=>String(x.level||"").trim()===level&&WHEELCHAIR_PICKER_TYPES.has(String(x.place_type||"")))
+          .filter((x:any)=>WHEELCHAIR_PICKER_TYPES.has(String(x.place_type||""))&&(String(x.level||"").trim()===level||(["elevator","elevator_group"].includes(x.place_type)&&liftAtLevel(x,level))))
           .sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name||"").localeCompare(String(b.display_name||""),"fr"))){
           const label=String(p.display_name||p.official_name||"").trim();
           const key=wheelchairNorm(label);
           if(!label||!key||seen.has(key))continue;
           seen.add(key);
-          places.push({id:p.id,label,type:p.place_type,summary:p.summary||"",evidence_status:p.evidence_status||"",aliases:aliasesBy.get(String(p.id))||[]})
+          places.push({id:p.id,label,type:p.place_type,summary:p.summary||"",nearby:nearbyFor(String(p.id),level).map((n:any)=>({id:n.id,label:n.display_name||n.official_name})),evidence_status:p.evidence_status||"",aliases:aliasesBy.get(String(p.id))||[]})
         }
         return{level,places}
       })

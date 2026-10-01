@@ -141,6 +141,7 @@
   // Catalogue des lieux : une seule source de vérité, stip_places via stip-messages.
   // Aucun service/niveau n'est maintenu en double dans ce fichier.
   const WHEELCHAIR_LOCATIONS = Object.create(null);
+  const WHEELCHAIR_PLACE_DETAILS = new Map();
   let WHEELCHAIR_SEARCH_TARGETS = [];
   let wheelchairCatalogPromise = null;
 
@@ -150,6 +151,7 @@
       const catalog = await api("wheelchair_catalog");
       for (const key of Object.keys(WHEELCHAIR_LOCATIONS)) delete WHEELCHAIR_LOCATIONS[key];
 
+      WHEELCHAIR_PLACE_DETAILS.clear();
       const merged = new Map(BUILDINGS.map((building) => [building.key, building]));
       for (const building of catalog?.all_buildings || catalog?.buildings || []) {
         if (!building?.key) continue;
@@ -165,6 +167,10 @@
 
       for (const building of catalog?.buildings || []) {
         if (!building?.key) continue;
+        for (const group of building.levels || []) for (const place of group.places || []) {
+          if (typeof place === "object" && place?.label)
+            WHEELCHAIR_PLACE_DETAILS.set([building.key, group.level, place.label].join("|"), place);
+        }
         WHEELCHAIR_LOCATIONS[building.key] = (building.levels || []).map((group) => ({
           level: String(group.level || ""),
           places: (group.places || [])
@@ -302,7 +308,11 @@
       (item) => String(item.level || "") === String(level || ""),
     );
     const sourced = Array.isArray(sourceLevel?.places)
-      ? sourceLevel.places.map(sourcedWheelchairSpot).filter(Boolean)
+      ? sourceLevel.places.map((label) => {
+          const spot = sourcedWheelchairSpot(label);
+          const detail = WHEELCHAIR_PLACE_DETAILS.get([key,level,label].join("|"));
+          return spot ? {...spot, nearby:(detail?.nearby || []).map((place) => place.label).filter(Boolean)} : null;
+        }).filter(Boolean)
       : [];
 
     // Distinct canonical lifts must remain distinct. Prioritize terrain landmarks,
@@ -351,52 +361,6 @@
     return options;
   }
 
-  // Quand un étage n'a que deux repères canoniques pour préciser "Ascenseur",
-  // on évite le panneau intermédiaire : les deux choix précis remplacent
-  // directement leurs cartes génériques dans la grille principale.
-  function wheelchairInlineElevatorChoices(buildingKey = "", level = "", spots = []) {
-    const source = Array.isArray(spots) ? spots : [];
-    const genericLift = source.find((item) => {
-      const key = norm(item?.value || item?.label || "");
-      return key === "ascenseur" || key === "ascenseurs";
-    });
-    if (!genericLift) return source;
-
-    const contexts = wheelchairLevelContextOptions(buildingKey, level, []);
-    if (contexts.length !== 2) return source;
-
-    const visibleKeys = new Set(
-      source.map((item) => norm(item?.value || item?.label || "")),
-    );
-    if (!contexts.every((label) => visibleKeys.has(norm(label)))) return source;
-
-    const contextByKey = new Map(
-      contexts.map((label) => [norm(label), String(label || "").trim()]),
-    );
-    const genericValue =
-      String(genericLift.value || genericLift.label || "Ascenseur").trim() || "Ascenseur";
-    const genericKey = norm(genericValue);
-
-    return source.flatMap((item) => {
-      const raw = String(item?.value || item?.label || "").trim();
-      const key = norm(raw);
-
-      if (key === genericKey) return [];
-
-      const context = contextByKey.get(key);
-      if (!context) return [item];
-
-      return [{
-        ...item,
-        label: context,
-        value: genericValue + " · " + context,
-        icon: "🛗",
-        persistence: genericLift.persistence || item.persistence || "normal",
-        elevatorInline: true,
-      }];
-    });
-  }
-
   const norm = (value) =>
     String(value ?? "")
       .normalize("NFD")
@@ -423,6 +387,7 @@
         levelSearchAliases(level),
         item.label || "",
         item.value || "",
+        ...(item.nearby || []),
       ].join(" ")),
     }));
   }
@@ -1804,7 +1769,8 @@
 
     clearComposerDraft();
     setWheelchairComposerExpanded(false);
-    await Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]);
+    // The mutation is confirmed. Refresh readers without delaying the completed action.
+    void Promise.all([loadFull(false), loadPreview(false), loadHomeStatus(false)]).catch(console.error);
     return true;
   }
 
@@ -2129,12 +2095,17 @@
       };
 
       const renderPlaces = () => {
-        const baseQuickPlaces = wheelchairFieldSpots(building.key, level);
-        const quickPlaces = wheelchairInlineElevatorChoices(
-          building.key,
-          level,
-          baseQuickPlaces,
-        );
+        const quickPlaces = wheelchairFieldSpots(building.key, level);
+        const primaryPlaces = quickPlaces.filter((place) => /ascenseur|local.*fauteuil/.test(norm(place.value)) || place.featured);
+        const secondaryPlaces = primaryPlaces.length ? quickPlaces.filter((place) => !primaryPlaces.includes(place)) : [];
+        const visiblePlaces = primaryPlaces.length ? primaryPlaces : quickPlaces;
+        const placeMarkup = (place) => {
+          const selected = selectedPlaces.has(place.value);
+          return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" aria-pressed="' + selected + '">' +
+            '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span>' +
+            '<span class="tb-place-copy"><strong>' + esc(place.label) + '</strong>' +
+            (place.nearby?.length ? '<small>' + esc(place.nearby.join(' · ')) + '</small>' : '') + '</span></button>';
+        };
         const selectedValues = [...selectedPlaces];
         const vagueSelections = selectedValues.filter((value) =>
           isVagueWheelchairSpotLocation(value),
@@ -2153,15 +2124,10 @@
             "<h3>Où exactement ?</h3>" +
             "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + " · 🦽 ×" + esc(quantity) + "</p>" +
             '<div class="tb-place-choices tb-field-spot-choices">' +
-              quickPlaces.map((place) => {
-                const selected = selectedPlaces.has(place.value);
-                return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" aria-pressed="' + (selected ? "true" : "false") + '">' +
-                  '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span>' +
-                  '<strong>' + esc(place.label) + '</strong>' +
-                "</button>";
-              }).join("") +
+              visiblePlaces.map(placeMarkup).join("") +
               '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
             "</div>" +
+            (secondaryPlaces.length ? '<details class="tb-secondary-places"><summary>Services et autres endroits · ' + secondaryPlaces.length + '</summary><div class="tb-place-choices tb-field-spot-choices">' + secondaryPlaces.map(placeMarkup).join("") + '</div></details>' : '') +
             (activeVague
               ? '<section class="tb-place-followup' + (elevatorFollowup ? " is-elevator-panel" : "") + '" aria-label="Préciser le repère choisi">' +
                   '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>' +
@@ -2190,7 +2156,7 @@
               "</div>" +
             "</div>" +
             '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
-              '<span>' + (selectedPlaces.size ? "Valider ces infos" + (selectedValues.length > 1 ? " · " + selectedValues.length + " repères" : "") : "Choisis au moins un endroit") + '</span><b>›</b>' +
+              '<span>' + (selectedPlaces.size ? "Envoyer" + (selectedValues.length > 1 ? " · " + selectedValues.length + " repères" : "") : "Choisis au moins un endroit") + '</span><b>›</b>' +
             "</button>" +
             '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
           "</section>";
@@ -2202,7 +2168,14 @@
             const value = String(button.dataset.place || "");
             if (selectedPlaces.has(value)) selectedPlaces.delete(value);
             else selectedPlaces.add(value);
-            renderPlaces();
+            if (isVagueWheelchairSpotLocation(value) || activeVague) renderPlaces();
+            else {
+              button.classList.toggle("is-selected", selectedPlaces.has(value));
+              button.setAttribute("aria-pressed", String(selectedPlaces.has(value)));
+              const next = wrap.querySelector("[data-place-continue]");
+              next.disabled = !selectedPlaces.size;
+              next.querySelector("span").textContent = selectedPlaces.size ? "Envoyer" + (selectedPlaces.size > 1 ? " · " + selectedPlaces.size + " repères" : "") : "Choisis au moins un endroit";
+            }
           });
         });
 
@@ -2235,26 +2208,45 @@
           button.addEventListener("click", () => {
             const value = String(button.dataset.placeTemperature || "");
             persistenceOverride = persistenceOverride === value ? "" : value;
-            renderPlaces();
+            wrap.querySelectorAll("[data-place-temperature]").forEach((item) => {
+              const selected = item.dataset.placeTemperature === persistenceOverride;
+              item.classList.toggle("is-selected", selected);
+              item.setAttribute("aria-pressed", String(selected));
+            });
           });
         });
 
-        wrap.querySelector("[data-place-continue]")?.addEventListener("click", () => {
+        wrap.querySelector("[data-place-continue]")?.addEventListener("click", async () => {
           if (!selectedPlaces.size) return;
           const locations = [...selectedPlaces];
-          renderStructuredReview(
-            wrap,
-            {
-              type:"spot",
-              buildingKey:building.key,
-              quantity,
-              level,
-              location:locations.join(" | "),
-              persistence:persistenceOverride || "normal",
-              persistenceOverride,
-            },
-            { back:renderPlaces, close },
-          );
+          const payload = {
+            type:"spot", buildingKey:building.key, quantity, level,
+            location:locations.join(" | "),
+            persistence:persistenceOverride || "normal", persistenceOverride,
+          };
+          if (locations.some(isVagueWheelchairSpotLocation)) {
+            renderStructuredReview(wrap, payload, {back:renderPlaces, close});
+            return;
+          }
+          const submit = wrap.querySelector("[data-place-continue]");
+          if (submit.disabled) return;
+          submit.disabled = true;
+          submit.querySelector("span").textContent = "Envoi…";
+          try {
+            if (await publishStructuredWheelchair(payload)) close(true);
+            else { submit.disabled = false; submit.querySelector("span").textContent = "Envoyer"; }
+          } catch (error) {
+            submit.disabled = false;
+            submit.querySelector("span").textContent = "Réessayer";
+            let message = wrap.querySelector("[data-send-error]");
+            if (!message) {
+              message = document.createElement("p");
+              message.dataset.sendError = "1";
+              message.setAttribute("role","alert");
+              submit.before(message);
+            }
+            message.textContent = error.message || "Envoi impossible.";
+          }
         });
 
         wrap.querySelector("[data-place-other]")?.addEventListener("click", searchHere);

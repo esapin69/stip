@@ -264,3 +264,9 @@ Objectif : **une anomalie technique détectée = une trace dans Contrôle = une 
 
 - Pendant la sélection, les jours retenus doivent être soulignés dans les calendriers Accueil et Planning personnel, y compris après changement de mois.
 - Les responsables doivent consulter le détail exact de chaque date/type/shift du panier, jamais seulement l'intervalle min-max; leur avis n'est pas présenté comme une autorisation officielle.
+
+### Repères Fauteuils (01/10/2026)
+- Ascenseur = lieu physique canonique ; ne jamais transformer les unités/services du même étage en ascenseurs par heuristique.
+- `stip_place_elevator_stops` et les relations `near` / `exit_near` / `located_in` / `visitor_reference` alimentent les ascenseurs par étage ; un arrêt explicitement non desservi reste exclu.
+- Les services liés du même étage figurent sous le titre du repère, dans la même cible tactile. Les lieux complémentaires restent disponibles.
+- La sélection précise et le réglage de stabilité ne reconstruisent pas la fenêtre.

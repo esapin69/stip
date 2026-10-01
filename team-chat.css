@@ -5438,7 +5438,7 @@
 
 /* 20260924-sourced-spots1 — sourced terrain shortcuts + automatic ice/fire clue */
 .tb-field-spot-choices .tb-place-toggle{
-  padding-bottom:14px!important;
+  padding-bottom:8px!important;
 }
 .tb-place-confidence{
   position:absolute!important;
@@ -6300,3 +6300,11 @@
     transition:none!important;
   }
 }
+
+/* Canonical location title and confirmed nearby services share one touch target. */
+.tb-place-copy{display:grid;gap:4px;min-width:0;padding-right:14px}
+.tb-place-copy strong{overflow-wrap:anywhere}
+.tb-place-copy small{font-size:.75rem;line-height:1.25;color:var(--stip-muted);font-weight:500;overflow-wrap:anywhere}
+
+.tb-secondary-places{margin-top:8px}
+.tb-secondary-places summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--stip-ink);font-weight:700}
