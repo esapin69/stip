@@ -35,6 +35,76 @@ function openNotifications(){
   try{sessionStorage.setItem("stip_home_mode_once","notifications")}catch{}
   location.href="index.html?quick=notifications";
 }
+function notificationIcon(eventKey){
+  return eventKey==="dm_received"?"✉":eventKey==="team_chat_received"?"💬":eventKey==="wheelchair_received"?"♿":"🔔";
+}
+function openSettings(){
+  const menu=window.STIPPersonActions;
+  if(!menu?.open){openAccount();return}
+  menu.open({
+    agent:currentAgent(),
+    contextLabel:"PARAMÈTRES",
+    subtitle:"Réglages de mon compte",
+    actions:[
+      {icon:"🔔",label:"Notifications",detail:"Choisir les alertes que je reçois",onSelect:openNotificationSettings}
+    ]
+  });
+}
+async function openNotificationSettings(){
+  const menu=window.STIPPersonActions,engine=window.STIPCommunication;
+  if(!menu?.open||!engine?.notificationSettings){openAccount();return}
+  menu.open({
+    agent:currentAgent(),
+    contextLabel:"NOTIFICATIONS",
+    subtitle:"Chargement des réglages…",
+    actions:[{icon:"…",label:"Chargement…",detail:"Récupération de vos préférences",disabled:true}]
+  });
+  try{
+    const settings=await engine.notificationSettings(),
+      items=Array.isArray(settings?.items)?settings.items:[],
+      actions=items.map(item=>{
+        const enabled=item.enabled!==false,locked=item.push_enabled===false;
+        return{
+          icon:notificationIcon(String(item.event_key||"")),
+          label:item.label||"Notification",
+          detail:locked?"Désactivée par l’administrateur":enabled?"Activée":"Désactivée",
+          toggle:true,
+          checked:enabled,
+          disabled:locked,
+          closeOnSelect:false,
+          onSelect:async()=>{
+            await engine.setNotificationPreference(String(item.event_key||""),!enabled);
+            await openNotificationSettings();
+          }
+        };
+      });
+    actions.push({
+      icon:"👁",
+      label:"Aperçu des messages",
+      detail:"Afficher le nom et le message dans la notification",
+      toggle:true,
+      checked:settings?.notification_preview!==false,
+      closeOnSelect:false,
+      onSelect:async()=>{
+        await engine.setNotificationPreview(settings?.notification_preview===false);
+        await openNotificationSettings();
+      }
+    });
+    menu.open({
+      agent:currentAgent(),
+      contextLabel:"NOTIFICATIONS",
+      subtitle:"Cochez ou décochez ce que vous voulez recevoir",
+      actions
+    });
+  }catch(error){
+    menu.open({
+      agent:currentAgent(),
+      contextLabel:"NOTIFICATIONS",
+      subtitle:"Réglages indisponibles",
+      actions:[{icon:"↻",label:"Réessayer",detail:error?.message||"Impossible de charger les notifications",onSelect:openNotificationSettings}]
+    });
+  }
+}
 function logout(){
   const button=document.getElementById("logoutBtn");
   if(button){button.click();return}
@@ -53,6 +123,7 @@ function openProfileMenu(){
       {icon:"✎",label:"Modifier l’image",detail:"Changer ou gérer ma photo",primary:true,onSelect:openPhoto},
       {icon:"🔔",label:"Voir les notifications",detail:"Ouvrir les éléments à traiter",onSelect:openNotifications},
       {icon:"👤",label:"Ouvrir mon profil",detail:"Accéder à Mon compte",onSelect:openAccount},
+      {icon:"⚙",label:"Paramètres",detail:"Notifications",onSelect:openSettings},
       {icon:"⏻",label:"Déconnexion",detail:"Quitter cette session",danger:true,onSelect:logout}
     ]
   });
