@@ -35,7 +35,7 @@
 .hc-home-top-nav[data-header-compact] .stip-person-card.is-self.hc-id-card{
   box-sizing:border-box!important;position:relative!important;display:grid!important;
   width:100%!important;max-width:100%!important;min-width:0!important;
-  grid-template-columns:50px minmax(0,1fr) 22px!important;align-items:center!important;justify-items:stretch!important;gap:10px!important;
+  grid-template-columns:54px minmax(0,1fr) 54px!important;align-items:center!important;justify-items:stretch!important;gap:10px!important;
   min-height:57px!important;padding:3px 4px!important;margin:0!important;
   border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;
   transform:none!important;filter:none!important;overflow:hidden!important
@@ -56,14 +56,14 @@
 }
 .hc-home-top-nav[data-header-compact] .stip-person-card-copy{
   box-sizing:border-box!important;display:grid!important;grid-column:2!important;grid-row:1!important;
-  align-content:center!important;justify-items:start!important;justify-self:stretch!important;
+  align-content:center!important;justify-items:center!important;justify-self:stretch!important;
   width:100%!important;min-width:0!important;margin:0!important;padding:0!important;gap:3px!important;
-  text-align:left!important;transform:none!important
+  text-align:center!important;transform:none!important
 }
 .hc-home-top-nav[data-header-compact] .stip-person-card-copy small{display:none!important}
 .hc-home-top-nav[data-header-compact] .stip-person-card-copy strong{
   display:block!important;width:100%!important;max-width:100%!important;min-width:0!important;
-  font-size:clamp(.99rem,3.4vw,1.14rem)!important;line-height:1.13!important;text-align:left!important;
+  font-size:clamp(1.02rem,3.65vw,1.19rem)!important;line-height:1.13!important;text-align:center!important;
   overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important
 }
 .hc-home-top-nav[data-header-compact] .stip-person-card-copy>span{
@@ -71,8 +71,36 @@
   font-size:clamp(.68rem,2.55vw,.81rem)!important;line-height:1.17!important;
   white-space:normal!important;overflow-wrap:break-word!important
 }
-.hc-home-top-nav[data-header-compact] .stip-person-card-menu-hint{
-  grid-column:3!important;grid-row:1!important;align-self:center!important;justify-self:end!important;transform:none!important
+.hc-home-top-nav[data-header-compact] .stip-person-card-menu-hint{display:none!important}
+.hc-home-top-nav[data-header-compact] .stip-person-card-email,
+.hc-home-top-nav[data-header-compact] .stip-person-card-phone{
+  justify-self:center!important;max-width:100%!important;text-align:center!important;
+  font-size:clamp(.66rem,2.4vw,.79rem)!important;line-height:1.12!important
+}
+.hc-home-top-nav[data-header-compact] .stip-person-card-email{
+  color:var(--stip-muted,#70858d)!important;font-weight:760!important
+}
+.hc-home-top-nav[data-header-compact] .stip-person-card-ghe{
+  box-sizing:border-box!important;grid-column:3!important;grid-row:1!important;
+  justify-self:end!important;align-self:center!important;
+  width:50px!important;height:50px!important;margin:0!important;padding:0!important;
+  border:1px solid rgba(20,140,165,.22)!important;border-radius:15px!important;
+  background:linear-gradient(180deg,#ffffff 0%,#eef9fb 100%)!important;
+  color:var(--stip-ink,#173f50)!important;
+  box-shadow:0 5px 14px rgba(21,67,82,.08),inset 0 1px 0 rgba(255,255,255,.95)!important;
+  transform:none!important
+}
+.hc-home-top-nav[data-header-compact] .stip-person-card-ghe small{
+  display:block!important;margin:0 0 1px!important;color:var(--stip-accent,#148ca5)!important;
+  font-size:.48rem!important;font-weight:950!important;letter-spacing:.13em!important;line-height:1!important
+}
+.hc-home-top-nav[data-header-compact] .stip-person-card-ghe strong{
+  display:block!important;width:auto!important;overflow:visible!important;
+  color:var(--stip-ink,#173f50)!important;font-size:1.18rem!important;font-weight:950!important;
+  line-height:1!important;text-align:center!important;white-space:nowrap!important
+}
+.hc-home-top-nav[data-header-compact] .stip-person-card-ghe:focus-visible{
+  outline:3px solid rgba(20,140,165,.22)!important;outline-offset:2px!important
 }
 .hc-home-top-nav[data-header-compact] .hc-home-filters{
   --launcher-art-rest:clamp(57px,17vw,76px);--launcher-art-active:clamp(60px,17.6vw,79px);
