@@ -29,12 +29,16 @@ async function photo(raw:unknown){
 async function list(c:any){
  const events=await checked(db.from('stip_leisure_events').select('*').eq('family',c.family).order('created_at',{ascending:false}).limit(200))||[]
  const ids=events.map((e:any)=>e.id)
+ const chats=ids.length&&c.permissions?.messages?await checked(db.from('stip_leisure_chats').select('event_id,event_date,conversation_id').in('event_id',ids)):[]
+ const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
+ const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
  const responses=ids.length?await checked(db.from('stip_leisure_responses').select('event_id,agent_id,selected_dates,declined,revision,updated_at,agent:agents(id,prenom,nom,profile_photo_url,avatar_url)').in('event_id',ids)):[]
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
  return {can_create:!!c.agent_id,events:events.map((e:any)=>{
   const rs=(responses||[]).filter((r:any)=>r.event_id===e.id),mine=rs.find((r:any)=>r.agent_id===c.agent_id)||null
   const active=e.status==='active'&&e.dates.some((d:string)=>d>=today())
   return {...e,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
+   chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
    needs_response:active&&!!c.agent_id&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
@@ -63,3 +67,4 @@ Deno.serve(async req=>{
   return J({error:'ACTION_INVALIDE'},400)
  }catch(e){const message=e instanceof Error?e.message:text((e as any)?.message||e,500);return J({error:message},/SESSION/.test(message)?401:/ACCES/.test(message)?403:/MODIFIEES/.test(message)?409:400)}
 })
+

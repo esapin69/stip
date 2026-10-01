@@ -114,6 +114,7 @@ La Cloche peut agréger les événements, mais elle ne doit pas effacer leur ori
 - Le bouton Retour utilise `STIPRouter` et l’historique STIP.
 - Le raccourci Fauteuils ouvre `Communication > Fauteuils`.
 - Tout futur raccourci Chat ou DM doit ouvrir le même shell sur son onglet.
+- Les inscriptions Sorties & loisirs alimentent automatiquement un groupe canonique par date via `stip_leisure_chats`. Une désinscription retire la personne du groupe concerné. Les raccourcis ouvrent DM & groupes sur la conversation ; le backend messages et les permissions existants restent communs.
 - Changer d’onglet ne recharge pas la session et ne passe pas par une page HTML autonome.
 
 ## 8. Stabilité mobile

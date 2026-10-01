@@ -17,7 +17,15 @@ for(const declined of [false,true]){
 response.events[0].needs_response=true;response.events[0].revision=2;
 await window.STIPLeisure.refresh();assert.match(window.STIPLeisure.pendingHTML(),/Dates modifiées/);
 response.events[0].status='cancelled';await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
+response.events[0]={...response.events[0],status:'active',needs_response:false,chats:[{date:'2099-10-09',conversation_id:'chat-9'},{date:'2099-10-16',conversation_id:'chat-16'}]};
+await window.STIPLeisure.refresh();
+const shortcuts=window.STIPLeisure.pendingHTML();
+assert.match(shortcuts,/conversation=chat-9/);assert.match(shortcuts,/conversation=chat-16/);
+assert.match(shortcuts,/#\/communication\/dm/);assert.doesNotMatch(shortcuts,/leisure-invite/);
+assert.match(shortcuts,/Ma réponse/);
+response.events[0].chats=[];await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
 listeners.get('stip:session-ended')();assert.equal(window.STIPLeisure.pendingHTML(),'');
 const home=readFileSync('home-shell.js','utf8');assert(home.indexOf('STIPLeisure?.pendingHTML')<home.indexOf('${planningWeekSeparator()}<section'));
 const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('stip-overlay-navigation.js'));assert(app.includes('leisure-runtime.js'));
 console.log('Leisure: pending invitation, accepted/declined visibility, revision, cancellation, logout, home placement and common runtime passed.');
+console.log('Date chats: home shortcuts use canonical Communication DM route; no invitation returns after registration.');
