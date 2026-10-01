@@ -216,12 +216,28 @@
       : '<div class="cal-ok">✓ Adresse d’abonnement copiée</div><small>Colle cette adresse dans la fonction « Ajouter à partir de l’URL » de ton calendrier.</small>';
   }
 
+  async function shareLink(url, status, title = "Calendrier") {
+    if (typeof navigator.share !== "function") return copyLink(url, status);
+    try {
+      await navigator.share({
+        title: String(title || "Calendrier"),
+        text: "Adresse d’abonnement au calendrier",
+        url,
+      });
+      status.innerHTML =
+        '<div class="cal-ok">✓ Adresse d’abonnement partagée</div><small>Le lien reste valable et le calendrier continuera à se mettre à jour.</small>';
+    } catch (e) {
+      if (e?.name === "AbortError") return;
+      return copyLink(url, status);
+    }
+  }
+
   function methods(j, title, status) {
     const android = isAndroid();
     status.innerHTML = android
       ? `<div class="cal-methods"><div class="cal-method-title"><b>${esc(
           title,
-        )}</b><small>Android détecté · on évite le lien webcal qui peut afficher « chargement impossible ».</small></div><button type="button" class="cal-method primary" data-cal-android><span>⧉</span><div><strong>Configurer Google Agenda</strong><small>Copier l’adresse d’abonnement puis l’ajouter depuis le Web</small></div></button><button type="button" class="cal-method" data-cal-copy><span>⧉</span><div><strong>Copier seulement l’adresse</strong><small>Pour une autre application de calendrier compatible</small></div></button><button type="button" class="cal-method-back" data-cal-method-back>‹ Choisir un autre calendrier</button></div>`
+        )}</b><small>Android détecté · on évite le lien webcal qui peut afficher « chargement impossible ».</small></div><button type="button" class="cal-method primary" data-cal-android><span>⧉</span><div><strong>Configurer Google Agenda</strong><small>Copier l’adresse d’abonnement puis l’ajouter depuis le Web</small></div></button><button type="button" class="cal-method" data-cal-share><span>↗</span><div><strong>Partager l’adresse</strong><small>Envoyer l’adresse vers une autre application</small></div></button><button type="button" class="cal-method-back" data-cal-method-back>‹ Choisir un autre calendrier</button></div>`
       : `<div class="cal-methods"><div class="cal-method-title"><b>${esc(
           title,
         )}</b><small>L’adresse reste la même et STIP maintient le calendrier à jour.</small></div><button type="button" class="cal-method primary" data-cal-direct><span>↗</span><div><strong>S’abonner directement</strong><small>Apple Calendrier et applications compatibles webcal</small></div></button><button type="button" class="cal-method" data-cal-copy><span>⧉</span><div><strong>Copier l’adresse d’abonnement</strong><small>Google Agenda et calendriers demandant une URL</small></div></button><button type="button" class="cal-method-back" data-cal-method-back>‹ Choisir un autre calendrier</button></div>`;
@@ -234,6 +250,9 @@
     );
     status.querySelector("[data-cal-copy]")?.addEventListener("click", () =>
       copyLink(j.https_url, status, android),
+    );
+    status.querySelector("[data-cal-share]")?.addEventListener("click", () =>
+      shareLink(j.https_url, status, title),
     );
     status
       .querySelector("[data-cal-method-back]")
