@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261001-week-current1" />
+    <meta name="stip-ui-build" content="20261001-notification-settings1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -139,9 +139,9 @@
     <link rel="stylesheet" href="public-home-priority.css?v=20261001-access-request-inline1" />
     <link rel="stylesheet" href="home-shell.css?v=20261001-leave-shift1" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
-    <link rel="stylesheet" href="stip-person-actions.css?v=20260926-profile-menu4" />
+    <link rel="stylesheet" href="stip-person-actions.css?v=20261001-notification-settings1" />
     <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
-    <link rel="stylesheet" href="communication-hub.css?v=20260929-desktop-communication1" />
+    <link rel="stylesheet" href="communication-hub.css?v=20261001-notification-settings1" />
     <link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
@@ -437,7 +437,7 @@
     <script src="stip-entry-router.js?v=20260927-authflow2"></script>
     <script src="stip-workspace.js?v=20260925-workspace3"></script>
     <script src="stip-agent-selector.js?v=20260927-communication5"></script>
-    <script src="stip-person-actions.js?v=20260926-profile-menu4"></script>
+    <script src="stip-person-actions.js?v=20261001-notification-settings1"></script>
     <script src="stip-session-continuity.js?v=20260927-pin-security1"></script>
     <script src="app.js?v=20260927-communication5"></script>
     <script src="quick-access.js?v=20261001-wheelchair-landmarks3"></script>
@@ -445,7 +445,7 @@
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20261001-week-current1"></script>
     <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>
-    <script src="stip-loader.js?v=20261001-wheelchair-landmarks3"></script>
+    <script src="stip-loader.js?v=20261001-notification-settings1"></script>
     <link rel="stylesheet" href="leave-cart.css?v=20261001-leave-shift1">
     <script src="person-card-template.js?v=20261001-header-search1"></script>
     <script src="leave-cart.js?v=20261001-leave-shift1"></script>
@@ -458,13 +458,13 @@
     <script src="tomorrow-network.js?v=20260922-opportunity1"></script>
     <script src="activity-runtime.js?v=20260924-history2"></script>
     <script src="access-runtime.js?v=20261001-wheelchair-landmarks3"></script>
-    <script src="communication-hub.js?v=20260927-communication5"></script>
-    <script src="profile-photo.js?v=20261001-profile-identity1"></script>
+    <script src="communication-hub.js?v=20261001-notification-settings1"></script>
+    <script src="profile-photo.js?v=20261001-notification-settings1"></script>
     <script id="stip-sw-register">
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261001-wheelchair-landmarks3", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261001-notification-settings1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
