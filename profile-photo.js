@@ -57,13 +57,13 @@ function openProfileMenu(){
     ]
   });
 }
-document.addEventListener("click",e=>{const a=e.target.closest?.(".hc-id-card .hc-avatar");if(!a)return;e.preventDefault();openProfileMenu()},true);
+document.addEventListener("click",e=>{const a=e.target.closest?.(".hc-id-card .hc-avatar,.hc-id-card .stip-person-card-ghe");if(!a)return;e.preventDefault();openProfileMenu()},true);
 document.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target?.matches?.(".hc-id-card .hc-avatar")){e.preventDefault();openProfileMenu()}});
 function schedule(){if(raf)return;raf=requestAnimationFrame(()=>{raf=0;paint()})}
 ["stip:session-ready","stip:boot-updated","stip:route"].forEach(e=>window.addEventListener(e,schedule));
 window.addEventListener("pageshow",schedule);
 const st=document.createElement("style");
-st.textContent=".hc-id-card .hc-avatar.profile-photo-interactive{cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}.hc-id-card .hc-avatar.profile-photo-interactive:active{transform:scale(.985)}.hc-id-card .hc-avatar.profile-photo-interactive:after{content:'⋯';position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#fff;border:1px solid #d7e5e8;color:#176075;font-size:15px;line-height:1;font-weight:950;box-shadow:0 2px 8px rgba(0,0,0,.12)}";
+st.textContent=".hc-id-card .hc-avatar.profile-photo-interactive{cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}.hc-id-card .hc-avatar.profile-photo-interactive:active,.hc-id-card .stip-person-card-ghe:active{transform:scale(.985)}";
 document.head.appendChild(st);
 schedule();
 })();
