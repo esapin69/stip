@@ -1,0 +1,59 @@
+name: STIP meeting notes contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'meeting-notes.html'
+      - 'meeting-notes.css'
+      - 'meeting-notes.js'
+      - 'access-runtime.js'
+      - 'quick-access.js'
+      - 'quick-access-universal.js'
+      - 'home-shell.js'
+      - 'supabase/functions/stip-meeting-notes/**'
+      - 'supabase/migrations/*meeting_notes*'
+      - '.github/workflows/stip-meeting-notes.yml'
+  pull_request:
+    paths:
+      - 'meeting-notes.html'
+      - 'meeting-notes.css'
+      - 'meeting-notes.js'
+      - 'access-runtime.js'
+      - 'quick-access.js'
+      - 'quick-access-universal.js'
+      - 'home-shell.js'
+      - 'supabase/functions/stip-meeting-notes/**'
+      - 'supabase/migrations/*meeting_notes*'
+      - '.github/workflows/stip-meeting-notes.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  meeting-notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Check JavaScript
+        run: |
+          node --check meeting-notes.js
+          node --check access-runtime.js
+          node --check quick-access.js
+          node --check quick-access-universal.js
+          node --check home-shell.js
+      - name: Type-check meeting notes backend
+        run: deno check supabase/functions/stip-meeting-notes/index.ts
+      - name: Verify old and new note apps remain distinct
+        shell: bash
+        run: |
+          grep -q "'meeting_notes'" supabase/migrations/*meeting_notes*.sql
+          grep -q "'notes'" supabase/migrations/20260919105541_canonical_access_catalog.sql
+          grep -q "meeting-notes.html" quick-access.js
