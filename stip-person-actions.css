@@ -30,6 +30,12 @@ html.spa-open,html.spa-open body{overflow:hidden}
 .spa-action-copy strong{font-size:.82rem;font-weight:950}
 .spa-action-copy small{margin-top:3px;overflow:hidden;color:var(--stip-muted);font-size:.64rem;font-weight:700;text-overflow:ellipsis;white-space:nowrap}
 .spa-action>em{color:var(--stip-muted-2);font-style:normal;font-size:1.1rem}
+.spa-action.toggle{grid-template-columns:42px minmax(0,1fr) 48px}
+.spa-toggle{position:relative;display:block;width:46px;height:28px;border:1px solid var(--stip-line);border-radius:999px;background:var(--stip-surface-soft);transition:background .16s ease,border-color .16s ease}
+.spa-toggle i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--stip-surface);box-shadow:0 2px 7px rgba(13,44,56,.18);transition:transform .16s ease}
+.spa-toggle.on{border-color:color-mix(in srgb,var(--stip-accent) 54%,var(--stip-line));background:var(--stip-accent)}
+.spa-toggle.on i{transform:translateX(18px)}
+.spa-action.toggle:disabled .spa-toggle{opacity:.65}
 .spa-cancel{width:100%;min-height:46px;border:0;border-radius:15px;background:var(--stip-surface-soft);color:var(--stip-ink-2);font-weight:900}
 .spa-action:focus-visible,.spa-close:focus-visible,.spa-cancel:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:2px}
 @media(min-width:720px){
