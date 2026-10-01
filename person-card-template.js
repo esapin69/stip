@@ -72,6 +72,27 @@
     return "tel:" + normalized;
   }
 
+  function emailValue(agent = {}) {
+    return String(
+      agent.email ||
+        agent.mail ||
+        agent.email_pro ||
+        agent.mail_pro ||
+        agent.email_professionnel ||
+        agent.courriel ||
+        "",
+    ).trim();
+  }
+
+  function gheValue(agent = {}) {
+    const raw = String(
+      agent.ghe || agent.ghe_numero || agent.numero_ghe || "",
+    ).trim();
+    if (!raw) return "";
+    const match = raw.match(/\d+/);
+    return match ? String(Number(match[0])) : raw.replace(/^GHE\s*/i, "").trim();
+  }
+
   function secondary(agent = {}) {
     const role = String(
         agent.role_metier || agent.role || agent.metier || "",
@@ -99,17 +120,21 @@
       media = options.media || window.STIPBootCache?.media || {},
       self = options.self !== false,
       compact = options.compact !== false,
+      headerIdentity = options.headerIdentity === true,
       label = String(options.label || (self ? "MON PROFIL" : "PERSONNE")).trim(),
       image = photoUrl(agent, media),
       ini = initials(agent),
       name = fullName(agent),
-      sub = String(options.subtitle || secondary(agent)).trim(),
+      email = emailValue(agent),
+      sub = String(headerIdentity ? email : options.subtitle || secondary(agent)).trim(),
       phone = phoneValue(agent),
       phoneLink = phoneHref(phone),
+      ghe = gheValue(agent),
       rootClasses = [
         "stip-person-card",
         compact ? "is-compact" : "",
         self ? "is-self hc-id-card" : "",
+        headerIdentity ? "is-header-identity" : "",
       ]
         .filter(Boolean)
         .join(" "),
@@ -127,10 +152,10 @@
       <div class="stip-person-card-copy">
         <small>${esc(label)}</small>
         <strong>${esc(name)}</strong>
-        ${sub ? `<span>${esc(sub)}</span>` : ""}
+        ${sub ? (headerIdentity ? `<a class="stip-person-card-email" href="mailto:${esc(sub)}" aria-label="Écrire à ${esc(name)}">${esc(sub)}</a>` : `<span>${esc(sub)}</span>`) : ""}
         ${phone ? `<a class="stip-person-card-phone" href="${esc(phoneLink)}" aria-label="Appeler ${esc(name)}">☎ ${esc(phone)}</a>` : ""}
       </div>
-      ${self ? '<span class="stip-person-card-menu-hint" aria-hidden="true">•••</span>' : ""}
+      ${headerIdentity ? `<button class="stip-person-card-ghe" type="button" data-profile-actions aria-label="Ouvrir le profil de ${esc(name)}"><small>GHE</small><strong>${esc(ghe || "—")}</strong></button>` : ""}
     </section>`;
   }
 
@@ -170,9 +195,11 @@
     .stip-person-card-copy small{color:#168297;font-size:.58rem;font-weight:950;letter-spacing:.09em}
     .stip-person-card-copy strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:1rem;line-height:1.15}
     .stip-person-card-copy>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#70858d;font-size:.69rem;font-weight:760}
-    .stip-person-card-phone{width:max-content;max-width:100%;color:#2c737c;font-size:.69rem;font-weight:900;line-height:1.18;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
-    .stip-person-card-menu-hint{justify-self:end;color:#8aa0a8;font-size:.78rem;font-weight:950;letter-spacing:.02em}
+    .stip-person-card-email,.stip-person-card-phone{width:max-content;max-width:100%;color:#2c737c;font-size:.69rem;font-weight:900;line-height:1.18;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .stip-person-card-email:focus-visible,.stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
+    .stip-person-card-ghe{display:grid;place-items:center;align-content:center;gap:0;width:48px;height:48px;padding:0;border:1px solid #d8e7ea;border-radius:14px;background:#f8fcfd;color:#164e60;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .stip-person-card-ghe small{font-size:.48rem;font-weight:950;letter-spacing:.12em;line-height:1}
+    .stip-person-card-ghe strong{font-size:1.04rem;font-weight:950;line-height:1.05}
     .stip-person-card.is-self .stip-person-card-avatar{cursor:pointer;-webkit-tap-highlight-color:transparent}
     .stip-person-card.is-self .stip-person-card-avatar:focus-visible{outline:3px solid rgba(10,145,170,.28);outline-offset:3px}
     @media(max-width:380px){
