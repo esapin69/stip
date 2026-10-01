@@ -32,7 +32,8 @@ const relay = read("stip-edge-relay.js");
 expect(
   "Network relay is fallback only",
   /mode:\s*"direct-first-fallback(?:\+circuit-breaker)?"/.test(relay) &&
-    relay.indexOf("nativeFetch(input, init)") < relay.indexOf("relay(input, init, rawUrl)"),
+    relay.indexOf("return observe(await nativeFetch(input, init))") <
+      relay.indexOf("return observe(await relay(input, init, rawUrl))"),
   "Authenticated data must use Supabase directly and relay only on network failure.",
 );
 
