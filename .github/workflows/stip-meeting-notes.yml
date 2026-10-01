@@ -57,3 +57,20 @@ jobs:
           grep -q "'meeting_notes'" supabase/migrations/*meeting_notes*.sql
           grep -q "'notes'" supabase/migrations/20260919105541_canonical_access_catalog.sql
           grep -q "meeting-notes.html" quick-access.js
+      - name: Verify live authentication gate
+        shell: bash
+        run: |
+          endpoint='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-meeting-notes'
+          headers=$(curl --connect-timeout 8 --max-time 20 -sS -D - -o /dev/null -X OPTIONS \
+            -H 'Origin: https://ghe.esapin.com' \
+            -H 'Access-Control-Request-Method: POST' \
+            -H 'Access-Control-Request-Headers: content-type,x-stip-session' \
+            "$endpoint")
+          echo "$headers" | grep -qi 'access-control-allow-origin: https://ghe.esapin.com'
+          code=$(curl --connect-timeout 8 --max-time 20 -sS -o /tmp/meeting-notes-response.json -w '%{http_code}' \
+            -H 'Origin: https://ghe.esapin.com' \
+            -H 'Content-Type: application/json' \
+            -d '{"action":"list"}' \
+            "$endpoint")
+          test "$code" = "401"
+          grep -q 'SESSION_STIP_REQUISE' /tmp/meeting-notes-response.json
