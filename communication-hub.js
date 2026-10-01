@@ -1,12 +1,12 @@
 (() => {
   "use strict";
-  const CLIENT_VERSION="20260927-communication5";
+  const CLIENT_VERSION="20261001-notification-settings1";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
   const VAPID_PUBLIC="BGCXc9jLIjbzcsWqgH7PJDIIiI278kJmjpg3qHkjlutQ0mQFeX685llxQMiWXv8tK3li6BxMjgcDf8Nf_dUPFzI";
   const STORE="stip_session_v1",ACTIVE_THREAD_POLL_MS=60000,PASSIVE_HOME_POLL_MS=300000;
-  let home=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",pushPrefs=null,pushPrompt=null,exchangeQuickOpened=false,dialogContext={},dialogHistory=[];
+  let home=null,dialog=null,thread=null,threadTimer=null,homeTimer=null,pushState="idle",pushPrefs=null,exchangeQuickOpened=false,dialogContext={},dialogHistory=[];
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const can=k=>window.STIPAccess?.has?.(k) ?? !!({...window.STIPSession?.permissions,...window.STIPBootCache?.permissions}[k]);
   async function post(url,action,body={}){
@@ -80,33 +80,30 @@
   function isTrainee(){return String(window.STIPSession?.role_key||"")==="stagiaire"}
   function setUnread(n,dm=n){const next=Number(n)||0,dmNext=Number(dm)||0,prev=Number(window.STIPMessagesUnread||0),dmPrev=Number(window.STIPDMUnread||0);window.STIPMessagesUnread=next;window.STIPDMUnread=dmNext;if(next!==prev||dmNext!==dmPrev)window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:next,dmCount:dmNext}}))}
   function vapidBytes(v){const pad="=".repeat((4-v.length%4)%4),raw=atob((v+pad).replace(/-/g,"+").replace(/_/g,"/")),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
-  function pushText(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return"Notifications DM indisponibles";if(Notification.permission==="denied")return"Notifications DM bloquées par le téléphone";if(pushState==="on")return"Notifications DM actives · même STIP fermé";return"Autoriser les notifications DM"}
   async function refreshPushState(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){pushState="unsupported";return}try{const reg=await navigator.serviceWorker.getRegistration(),sub=await reg?.pushManager.getSubscription();pushState=Notification.permission==="granted"&&sub?"on":Notification.permission==="denied"?"denied":"off"}catch{pushState="off"}}
   async function enablePush(button=null){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return false;if(Notification.permission==="denied"){pushState="denied";renderHost();return false}if(button){button.disabled=true;button.textContent="Activation…"}try{const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();if(permission!=="granted"){pushState=permission==="denied"?"denied":"off";renderHost();return false}const reg=await navigator.serviceWorker.register("./stip-sw.js?v=20260925-dm-push1",{updateViaCache:"none"}),sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidBytes(VAPID_PUBLIC)}),json=sub.toJSON();await push("subscribe",{subscription:{endpoint:json.endpoint,keys:json.keys}});pushState="on";renderHost();return true}catch(e){pushState="off";if(button){button.disabled=false;button.textContent="Réessayer"}alert(e.message||"Activation impossible.");return false}}
-  function dmPreference(){const items=pushPrefs?.items||[],item=items.find(x=>String(x.event_key)==="dm_received");if(item)return item;if(home?.me)return{event_key:"dm_received",enabled:home.me.dm_push_enabled!==false,push_enabled:home.me.dm_push_available!==false};return{event_key:"dm_received",enabled:true,push_enabled:true}}
-  function syncDmPreference(enabled){if(!pushPrefs)pushPrefs={items:[]};const items=pushPrefs.items||[],index=items.findIndex(x=>String(x.event_key)==="dm_received"),next={...(index>=0?items[index]:{}),event_key:"dm_received",enabled:!!enabled};if(index>=0)items[index]=next;else items.push(next);pushPrefs.items=items;if(home?.me)home.me.dm_push_enabled=!!enabled}
-  async function setDmPush(enabled,button=null){try{if(enabled){const ok=await enablePush(button);if(!ok)return false}const result=await msg("notification_set",{event_key:"dm_received",enabled:!!enabled});syncDmPreference(result.enabled!==false);renderHost();window.dispatchEvent(new CustomEvent("stip:dm-push-state",{detail:{enabled:result.enabled!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}));return true}catch(e){if(button)button.disabled=false;alert(e.message||"Impossible de modifier les notifications DM.");return false}}
-  function pushPromptKey(){const a=window.STIPSession?.agent||window.STIPBootCache?.agent||{};return"stip_dm_push_prompt_v1:"+(a.id||a.source_key||"local")}
-  function closePushPrompt(mark=false){if(mark)try{localStorage.setItem(pushPromptKey(),String(Date.now()))}catch{};pushPrompt?.remove();pushPrompt=null}
-  function openPushPrompt(){if(pushPrompt||document.querySelector(".ch-push-consent-wrap"))return;const wrap=document.createElement("div");wrap.className="ch-push-consent-wrap";wrap.innerHTML='<section class="ch-push-consent"><span class="ch-push-consent-icon" aria-hidden="true">🔔</span><div><small>COMMUNICATION</small><h3>Recevoir les notifications même quand STIP est fermé ?</h3><p>Une seule autorisation téléphone couvre Chat équipe, DM & groupes et Fauteuils. Chaque type conserve son propre réglage.</p></div><div class="ch-push-consent-actions"><button type="button" data-push-allow>Autoriser</button><button type="button" class="secondary" data-push-later>Plus tard</button></div></section>';document.body.appendChild(wrap);pushPrompt=wrap;wrap.querySelector("[data-push-later]").onclick=()=>closePushPrompt(true);wrap.querySelector("[data-push-allow]").onclick=async e=>{const b=e.currentTarget;const ok=await enablePush(b);if(ok){syncDmPreference(true);closePushPrompt(true)}}}
-  async function maybePromptDmPush(){if(isTrainee()||!can("messages")||!("Notification" in window)||!("serviceWorker" in navigator)||!("PushManager" in window))return;try{pushPrefs=await msg("notification_preferences");const pref=dmPreference();if(!pref.push_enabled||pref.enabled===false)return;await refreshPushState();if(Notification.permission==="granted"){if(pushState!=="on")await enablePush();return}if(Notification.permission==="denied")return;let seen=false;try{seen=!!localStorage.getItem(pushPromptKey())}catch{}if(!seen)openPushPrompt()}catch{}}
+  function notificationPreference(eventKey){const items=pushPrefs?.items||[],item=items.find(x=>String(x.event_key)===String(eventKey));return item||null}
+  function dmPreference(){const item=notificationPreference("dm_received");if(item)return item;if(home?.me)return{event_key:"dm_received",enabled:home.me.dm_push_enabled!==false,push_enabled:home.me.dm_push_available!==false};return{event_key:"dm_received",enabled:true,push_enabled:true}}
+  function syncNotificationPreference(eventKey,enabled){if(!pushPrefs)pushPrefs={items:[]};const items=pushPrefs.items||[],index=items.findIndex(x=>String(x.event_key)===String(eventKey)),next={...(index>=0?items[index]:{}),event_key:String(eventKey),enabled:!!enabled};if(index>=0)items[index]=next;else items.push(next);pushPrefs.items=items;if(String(eventKey)==="dm_received"&&home?.me)home.me.dm_push_enabled=!!enabled}
+  async function notificationSettings(){if(!home?.me)home=await msg("home");pushPrefs=await msg("notification_preferences");await refreshPushState();return{items:[...(pushPrefs?.items||[])],notification_preview:home?.me?.notification_preview!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}
+  async function setNotificationPreference(eventKey,enabled,button=null){try{if(!pushPrefs)pushPrefs=await msg("notification_preferences");const pref=notificationPreference(eventKey);if(pref?.push_enabled===false)return false;if(enabled&&pref?.push_enabled!==false){const ok=await enablePush(button);if(!ok)return false}const result=await msg("notification_set",{event_key:String(eventKey),enabled:!!enabled});syncNotificationPreference(String(eventKey),result.enabled!==false);window.dispatchEvent(new CustomEvent("stip:notification-preference",{detail:{event_key:String(eventKey),enabled:result.enabled!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}));return result}catch(e){if(button)button.disabled=false;alert(e.message||"Impossible de modifier les notifications.");return false}}
+  async function setNotificationPreview(enabled){try{if(!home?.me)home=await msg("home");const result=await msg("profile_set",{nickname:home?.me?.nickname||"",notification_preview:!!enabled});if(home?.me)home.me.notification_preview=!!enabled;return result}catch(e){alert(e.message||"Impossible de modifier l’aperçu des notifications.");return false}}
+  async function setDmPush(enabled,button=null){const result=await setNotificationPreference("dm_received",enabled,button);window.dispatchEvent(new CustomEvent("stip:dm-push-state",{detail:{enabled:!!result&&result.enabled!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}));return result}
   function conversationTitle(c){if(c.kind==="direct")return name(c.others?.[0]);return c.title||c.others?.slice(0,3).map(name).join(", ")||"Conversation"}
   document.addEventListener("error",e=>{const img=e.target;if(!(img instanceof HTMLImageElement))return;const host=img.closest?.(".ch-avatar,.ch-thread-avatar,.ch-mini-avatar,.ch-result-avatar");if(!host)return;host.textContent=host.dataset.avatarFallback||"ST"},true);
   function bubbleAgent(a){return '<button class="ch-person-bubble" type="button" data-agent="'+esc(a.id)+'">'+avatar(a)+'<strong>'+esc(name(a))+'</strong><small>'+esc(a.prenom&&a.nickname?a.prenom:(a.ghe?"GHE "+a.ghe:""))+'</small></button>'}
   function renderHost(){
     const host=document.getElementById("hcCommunicationHub");if(!host)return;
     const messagesOk=can("messages"),trainee=isTrainee();
-    const recent=home?.conversations||[],unread=recent.filter(c=>Number(c.unread||0)>0),dmUnread=unread.filter(c=>c.kind==="direct"||c.kind==="group"),otherUnread=unread.filter(c=>c.kind!=="direct"&&c.kind!=="group"),traineeNotes=home?.trainee_messages||[],unreadCount=trainee?Number(home?.unread||0):unread.reduce((n,c)=>n+Number(c.unread||0),0),dmCount=dmUnread.reduce((n,c)=>n+Number(c.unread||0),0),dmPref=dmPreference(),dmSettingOn=dmPref.enabled!==false;
+    const recent=home?.conversations||[],unread=recent.filter(c=>Number(c.unread||0)>0),dmUnread=unread.filter(c=>c.kind==="direct"||c.kind==="group"),otherUnread=unread.filter(c=>c.kind!=="direct"&&c.kind!=="group"),traineeNotes=home?.trainee_messages||[],unreadCount=trainee?Number(home?.unread||0):unread.reduce((n,c)=>n+Number(c.unread||0),0),dmCount=dmUnread.reduce((n,c)=>n+Number(c.unread||0),0);
     host.innerHTML='<section class="ch-hub ch-hub-compact">'+
       '<header class="ch-hub-head"><div><span class="stip-kicker">COMMUNICATION</span><h2>Cloche STIP</h2><p>'+(unreadCount?unreadCount+' message'+(unreadCount>1?'s':'')+' non lu'+(unreadCount>1?'s':'')+'.':(trainee?'Les informations qui te sont adressées apparaissent ici.':'Tout ce qui demande votre attention, sans bruit.'))+'</p></div></header>'+
       (!trainee&&messagesOk?'<button type="button" class="ch-exchange-entry ch-dm-entry'+(dmCount?" has-unread":"")+'" data-exchanges-open><span aria-hidden="true">✉</span><div><strong>DM · Messages privés</strong><small>'+(dmCount?dmCount+' non lu'+(dmCount>1?'s':''):'Ouvrir mes conversations privées')+'</small></div>'+(dmCount?'<b class="ch-dm-entry-badge">'+Math.min(99,dmCount)+'</b>':'<b>›</b>')+'</button>':"")+
       (trainee?'<div class="ch-trainee-inbox">'+(traineeNotes.length?traineeNotes.slice(0,20).map(n=>'<article class="ch-trainee-note'+(!n.read_at?' is-unread':'')+'">'+avatar(n.sender||{},"ch-thread-avatar")+'<div><strong>'+esc(name(n.sender||{})||"STIP")+'</strong><p>'+esc(n.body||"")+'</p><time>'+new Date(n.created_at).toLocaleString("fr-FR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})+'</time></div></article>').join(""):'<p class="ch-empty">Aucune information pour toi pour le moment.</p>')+'</div>':"")+
       (!trainee&&dmUnread.length?'<div class="ch-recent ch-unread-only ch-dm-unread-list"><small class="ch-unread-label">DM NON LUS</small>'+dmUnread.slice(0,5).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Nouveau message")+'</small></div><b>'+Number(c.unread||0)+'</b></button>').join("")+'</div>':"")+
       (!trainee&&otherUnread.length?'<div class="ch-recent ch-unread-only ch-other-unread-list"><small class="ch-unread-label">AUTRES ÉCHANGES</small>'+otherUnread.slice(0,5).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Nouvel échange")+'</small></div><b>'+Number(c.unread||0)+'</b></button>').join("")+'</div>':"")+
-      (!trainee&&messagesOk?'<button type="button" class="ch-dm-push-toggle'+(dmSettingOn?" is-on":"")+'" data-dm-push-toggle aria-pressed="'+(dmSettingOn?"true":"false")+'" '+(!dmPref.push_enabled?'disabled':'')+'><span aria-hidden="true">🔔</span><div><strong>Notifications DM sur le téléphone</strong><small>'+(!dmPref.push_enabled?'Désactivées par l’administrateur':dmSettingOn?pushText():'Désactivées pour moi')+'</small></div><b>'+(dmSettingOn?"✓":"")+'</b></button>':"")+
     '</section>';
     host.querySelectorAll("[data-exchanges-open]").forEach(b=>b.addEventListener("click",exchangeSheet));
-    host.querySelector("[data-dm-push-toggle]")?.addEventListener("click",e=>setDmPush(!dmSettingOn,e.currentTarget));
     host.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>openThread(b.dataset.conv)));
   }
   async function loadHome(force=false){
@@ -245,7 +242,7 @@
     wrap.innerHTML='<section class="ch-sheet ch-exchange-sheet"><header><div><small>COMMUNICATION STIP</small><h3>Échanges</h3></div><button type="button" data-close>×</button></header>'+
       '<div class="ch-exchange-actions"><button type="button" data-new-message><span>＋</span><strong>Nouveau message</strong></button><button type="button" data-broadcast><span>↗</span><strong>Diffuser</strong></button><button type="button" data-trainee-message><span>👶</span><strong>Informer un stagiaire</strong></button></div>'+
       (recent.length?'<div class="ch-exchange-recent"><small>CONVERSATIONS</small><div class="ch-recent">'+recent.slice(0,20).map(c=>'<button type="button" class="ch-conversation" data-conv="'+esc(c.id)+'">'+(c.others?.[0]?avatar(c.others[0],"ch-thread-avatar"):'<span class="ch-thread-avatar">ST</span>')+'<div><strong>'+esc(conversationTitle(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></div>'+(c.unread?'<b>'+c.unread+'</b>':"")+'</button>').join("")+'</div></div>':'<p class="ch-empty">Aucune conversation pour l’instant.</p>')+
-      '<div class="ch-exchange-settings"><button type="button" data-dm-push-sheet>'+esc(dmPreference().enabled!==false?pushText():"Activer les notifications DM")+'</button>'+(home?.me?'<button type="button" data-msg-profile>Réglages messages</button>':"")+'</div></section>';
+      (home?.me?'<div class="ch-exchange-settings"><button type="button" data-msg-profile>Réglages messages</button></div>':"")+'</section>';
     document.body.appendChild(wrap);
     const close=()=>wrap.remove();
     wrap.querySelector("[data-close]").onclick=close;
@@ -253,7 +250,6 @@
     wrap.querySelector("[data-new-message]")?.addEventListener("click",()=>{close();recipientSheet(false)});
     wrap.querySelector("[data-broadcast]")?.addEventListener("click",()=>{close();broadcastSheet()});
     wrap.querySelector("[data-trainee-message]")?.addEventListener("click",()=>{close();traineeRecipientSheet()});
-    wrap.querySelector("[data-dm-push-sheet]")?.addEventListener("click",e=>setDmPush(dmPreference().enabled===false,e.currentTarget));
     wrap.querySelector("[data-msg-profile]")?.addEventListener("click",()=>{close();profileSheet()});
     wrap.querySelectorAll("[data-conv]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.conv;close();openThread(id)}));
   }
@@ -285,12 +281,11 @@
     }catch(e){wrap.querySelector("[data-state]").textContent=e.message||"Sélection indisponible."}
   }
   function profileSheet(){
-    if(!home?.me)return;const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>MON IDENTITÉ MESSAGES</small><h3>Pseudo</h3></div><button type="button" data-close>×</button></header><form class="ch-profile-form" data-stip-form-mode="standard"><label>Pseudo visible<input name="nickname" maxlength="32" value="'+esc(home.me.nickname||"")+'" placeholder="'+esc(home.me.prenom||"Prénom")+'"></label><label class="ch-check"><input type="checkbox" name="preview" '+(home.me.notification_preview!==false?"checked":"")+'> Afficher le nom et le message dans les futures notifications téléphone</label><button type="submit">Enregistrer</button></form></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await msg("profile_set",{nickname:f.get("nickname"),notification_preview:f.get("preview")==="on"});close();loadHome(true)}catch(err){alert(err.message)}}
+    if(!home?.me)return;const wrap=document.createElement("div");wrap.className="ch-sheet-wrap";wrap.innerHTML='<section class="ch-sheet"><header><div><small>MON IDENTITÉ MESSAGES</small><h3>Pseudo</h3></div><button type="button" data-close>×</button></header><form class="ch-profile-form" data-stip-form-mode="standard"><label>Pseudo visible<input name="nickname" maxlength="32" value="'+esc(home.me.nickname||"")+'" placeholder="'+esc(home.me.prenom||"Prénom")+'"></label><button type="submit">Enregistrer</button></form></section>';document.body.appendChild(wrap);const close=()=>wrap.remove();wrap.querySelector("[data-close]").onclick=close;wrap.querySelector("form").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await msg("profile_set",{nickname:f.get("nickname"),notification_preview:home.me.notification_preview!==false});close();loadHome(true)}catch(err){alert(err.message)}}
   }
   function onRender(){if(currentMode()==="notifications"){renderHost();loadHome();clearInterval(homeTimer);homeTimer=setInterval(()=>{if(currentMode()==="notifications"&&!document.hidden)loadHome(true)},PASSIVE_HOME_POLL_MS)}else{clearInterval(homeTimer);homeTimer=null}}
   ["stip:home-rendered","stip:permissions-live","stip:session-ready"].forEach(e=>window.addEventListener(e,()=>setTimeout(onRender,0)));
-  window.addEventListener("stip:session-ready",()=>setTimeout(maybePromptDmPush,650));
-  window.addEventListener("stip:session-ended",()=>{home=null;pushPrefs=null;setUnread(0,0);closePushPrompt(false);closeDialog();closeThread()});
+  window.addEventListener("stip:session-ended",()=>{home=null;pushPrefs=null;setUnread(0,0);closeDialog();closeThread()});
   function refreshVisibleCommunication(){
     if(document.hidden)return;
     if(currentMode()==="notifications")loadHome(true);
@@ -304,7 +299,6 @@
   window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
   window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
-  setTimeout(maybePromptDmPush,900);
 
   const inboxState={root:null,selected:new Set(),status:"",loading:false,conversation:"",selector:null};
 
@@ -333,14 +327,12 @@
       ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>',
       selectedCount=inboxState.selected.size;
     root.innerHTML='<section class="ch-inline-inbox">'+
-      '<button type="button" class="ch-inbox-push '+(dmPreference().enabled!==false?"is-on":"")+'" data-inbox-push><span aria-hidden="true">🔔</span><span><strong>Notifications DM</strong><small>'+esc(dmPreference().enabled!==false?pushText():"Désactivées pour moi")+'</small></span><b>'+(dmPreference().enabled!==false?"✓":"›")+'</b></button>'+
       '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>Discussions</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
       '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span data-inbox-selected-count>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
       '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
       '<div class="ch-inbox-agent-selector" data-inbox-agent-selector></div></section>'+
       (inboxState.status?'<p class="ch-inbox-status" role="status">'+esc(inboxState.status)+'</p>':'')+
       '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer></section>';
-    root.querySelector("[data-inbox-push]")?.addEventListener("click",e=>setDmPush(dmPreference().enabled===false,e.currentTarget));
     root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-continue]")?.addEventListener("click",continueInbox);
@@ -401,5 +393,5 @@
     inboxState.root=null;inboxState.selected.clear();inboxState.status="";inboxState.loading=false;inboxState.conversation=""
   }
 
-  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}) ,mountInbox,unmountInbox};
+  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),notificationSettings,setNotificationPreference,setNotificationPreview,setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}),mountInbox,unmountInbox};
 })();
