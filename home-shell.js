@@ -70,6 +70,8 @@
       '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>',
     tomorrow:
       '<img src="images/icone_app/pour-demain.svg?v=20260920-app1" alt="" aria-hidden="true">',
+    meeting_notes:
+      '<svg viewBox="0 0 24 24"><path d="M6 3h12a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
     agents:
@@ -2062,6 +2064,8 @@
       s += app("personal", "Planning perso", "personal", "personal");
     if (has("tomorrow"))
       s += app("tomorrow", "Actions", "tomorrow", "tomorrow");
+    if (has("meeting_notes"))
+      s += app("meeting_notes", "Notes de réunion", "meeting-notes", "meeting_notes");
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       s += app("team", "Esprit d’équipe", "team", "team");
     if (has("messages"))
@@ -2930,6 +2934,7 @@
   function openApp(k) {
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
+    if (k === "meeting_notes") return (location.href = "meeting-notes.html");
     if (k === "team") return (location.href = "esprit-equipe.html?entry=home-app");
     if (k === "communication") return window.STIPRouter?.set?.("communication/chat");
     if (k === "agents") return (location.href = "agent-directory.html");
