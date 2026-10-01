@@ -90,6 +90,7 @@
     access: { label: "Accès & sécurité", home: "access-manage.html" },
     personal: { label: "Planning perso", home: "index.html?quick=personal" },
     tomorrow: { label: "Pour demain", home: "index.html?quick=tomorrow" },
+    meeting_notes: { label: "Notes de réunion", home: "meeting-notes.html" },
     team: { label: "Esprit d’équipe", home: "esprit-equipe.html" },
     compare: {
       label: "Comparer les plannings",
@@ -116,6 +117,7 @@
     access: "access_manage",
     personal: "planning_personal",
     tomorrow: "tomorrow",
+    meeting_notes: "meeting_notes",
     team: "planning_team",
     compare: "planning_team",
     change: "change_app",
@@ -130,6 +132,7 @@
     if (p === "esprit-equipe.html") return "team";
     if (p === "places.html" || p === "places-app.html") return "places";
     if (p === "planning-compare-app.html") return "compare";
+    if (p === "meeting-notes.html") return "meeting_notes";
     if (/^responsable(?:-|\.)/.test(p)) return "responsable";
     if (p === "assistant.html") return "assistant";
     if (p === "cadre-activite.html") return "activity";
