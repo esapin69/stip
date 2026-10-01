@@ -131,6 +131,7 @@
       sub = String(headerIdentity ? email : options.subtitle || secondary(agent)).trim(),
       phone = phoneValue(agent),
       phoneLink = phoneHref(phone),
+      ghe = gheValue(agent),
       rootClasses = [
         "stip-person-card",
         compact ? "is-compact" : "",
@@ -160,6 +161,7 @@
         ${sub ? (headerIdentity ? `<a class="stip-person-card-email" href="mailto:${esc(sub)}" aria-label="Écrire à ${esc(name)}">${esc(sub)}</a>` : `<span>${esc(sub)}</span>`) : ""}
         ${phone ? `<a class="stip-person-card-phone" href="${esc(phoneLink)}" aria-label="Appeler ${esc(name)}">☎ ${esc(phone)}</a>` : ""}
       </div>
+      ${headerIdentity ? `<button class="stip-person-card-ghe" type="button" data-header-ghe-search aria-label="Rechercher un numéro GHE"><small>GHE</small><strong>${esc(ghe || "—")}</strong></button>` : ""}
     </section>`;
   }
 
@@ -203,6 +205,9 @@
     .stip-person-card-first,.stip-person-card-last{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .stip-person-card-email,.stip-person-card-phone{width:max-content;max-width:100%;color:#2c737c;font-size:.69rem;font-weight:900;line-height:1.18;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .stip-person-card-name:focus-visible,.stip-person-card-email:focus-visible,.stip-person-card-phone:focus-visible{outline:3px solid rgba(10,145,170,.22);outline-offset:2px;border-radius:6px}
+    .stip-person-card-ghe{appearance:none;-webkit-appearance:none;display:grid;place-items:center;align-content:center;gap:1px;width:64px;height:64px;padding:0;border:1px solid #d8e7ea;border-radius:16px;background:#f8fcfd;color:#164e60;font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .stip-person-card-ghe small{font-size:.5rem;font-weight:950;letter-spacing:.13em;line-height:1}
+    .stip-person-card-ghe strong{font-size:1.14rem;font-weight:950;line-height:1}
     .stip-person-card.is-self .stip-person-card-avatar{cursor:pointer;-webkit-tap-highlight-color:transparent}
     .stip-person-card.is-self .stip-person-card-avatar:focus-visible{outline:3px solid rgba(10,145,170,.28);outline-offset:3px}
     @media(max-width:380px){
