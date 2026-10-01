@@ -271,3 +271,11 @@ Un chantier n’est pas réellement terminé si :
 Le résultat attendu n’est pas seulement « ça marche ici ».
 
 Le résultat attendu est : **la règle correcte vit au bon niveau et toutes les vues compatibles en héritent.**
+
+
+### Sorties & loisirs
+- `sorties-loisirs.html` : application collective à dates multiples, distincte du planning professionnel.
+- `stip_leisure_events` et `stip_leisure_responses` : source unique ; `stip-leisure` vérifie les sessions, le périmètre d’équipe et l’organisateur.
+- `leisure-runtime.js/.css` : invitation compacte au-dessus de la semaine et même fenêtre de réponse dans l’application. Une fermeture n’est pas un refus. La carte disparaît uniquement après une réponse enregistrée pour la révision courante.
+- Réutiliser STIPNav, STIPOverlayNav, FormUX standard et les primitives du thème. Les modifications des dates demandent une nouvelle confirmation tout en conservant les réponses précédentes.
+- Régression : `node tools/stip-leisure-test.mjs` ; le catalogue/favoris et Esprit d’équipe sont les portes d’entrée vers cette application.

@@ -1,0 +1,23 @@
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const listeners=new Map();
+let response={can_create:true,events:[{id:'event',title:'Foot <test>',status:'active',dates:['2099-10-09','2099-10-16'],revision:1,response:null,needs_response:true,participants:[]}]};
+const document={querySelector:()=>null,addEventListener:()=>{},hidden:false};
+const window={STIPSession:true,addEventListener:(name,fn)=>listeners.set(name,fn),dispatchEvent:()=>{}};
+const sandbox={window,document,localStorage:{getItem:()=> 'test-session'},Intl,Date,Set,Map,CustomEvent:class{},setInterval:()=>{},fetch:async()=>({ok:true,json:async()=>response})};
+vm.runInNewContext(readFileSync('leisure-runtime.js','utf8'),sandbox);
+await window.STIPLeisure.refresh();
+assert.match(window.STIPLeisure.pendingHTML(),/data-leisure-event="event"/);
+assert.match(window.STIPLeisure.pendingHTML(),/Foot &lt;test&gt;/);
+for(const declined of [false,true]){
+ response={can_create:true,events:[{...response.events[0],response:{declined,selected_dates:declined?[]:['2099-10-09'],revision:1},needs_response:false}]};
+ await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
+}
+response.events[0].needs_response=true;response.events[0].revision=2;
+await window.STIPLeisure.refresh();assert.match(window.STIPLeisure.pendingHTML(),/Dates modifiées/);
+response.events[0].status='cancelled';await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
+listeners.get('stip:session-ended')();assert.equal(window.STIPLeisure.pendingHTML(),'');
+const home=readFileSync('home-shell.js','utf8');assert(home.indexOf('STIPLeisure?.pendingHTML')<home.indexOf('${planningWeekSeparator()}<section'));
+const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('stip-overlay-navigation.js'));assert(app.includes('leisure-runtime.js'));
+console.log('Leisure: pending invitation, accepted/declined visibility, revision, cancellation, logout, home placement and common runtime passed.');

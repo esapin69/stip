@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261001-feedback-outcome1";
+const STIP_SW_BUILD="20261001-leisure1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
@@ -20,3 +20,4 @@ function notificationIcon(data){
 }
 self.addEventListener("push",event=>{let data={};try{data=event.data?event.data.json():{}}catch{data={body:event.data?.text?.()||""}}const avatar=String(data.avatar_url||"").trim(),safeAvatar=/^https:\/\//i.test(avatar)?avatar:"",typeIcon=notificationIcon(data),title=data.title||"STIP",options={body:data.body||"Nouvelle information",icon:safeAvatar||typeIcon,badge:typeIcon,tag:data.tag||"stip",renotify:true,data:{url:data.url||"/?quick=notifications"}};event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{client.postMessage({type:"stip:push",data})}catch{}}await self.registration.showNotification(title,options)})())});
 self.addEventListener("notificationclick",event=>{event.notification.close();const url=new URL(event.notification.data?.url||"/?quick=notifications",self.location.origin).href;event.waitUntil((async()=>{const list=await clients.matchAll({type:"window",includeUncontrolled:true});for(const client of list){try{if("navigate" in client)await client.navigate(url);await client.focus();return}catch{}}if(clients.openWindow)await clients.openWindow(url)})())});
+

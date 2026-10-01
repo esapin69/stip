@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261001-feedback-outcome1";
+    V = "20261001-leisure1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -71,6 +71,7 @@
     agents: "agent-directory.html",
     compare: "planning-compare-app.html",
     dates: "agent-dates.html",
+    leisure: "sorties-loisirs.html",
     places: "places-app.html",
     assistant: "esprit-equipe.html?tab=assistant",
     activity: "esprit-equipe.html?tab=activity",
@@ -315,3 +316,4 @@
     0,
   );
 })();
+

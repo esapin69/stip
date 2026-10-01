@@ -39,6 +39,7 @@
       label: "Esprit d’équipe",
       open: () => openDocument("esprit-equipe.html?entry=quick-access"),
     },
+    leisure: { label: "Sorties & loisirs", open: () => openDocument("sorties-loisirs.html") },
     communication: {
       label: "Communication",
       open: () => window.STIPRouter?.set?.("communication/chat"),
@@ -125,6 +126,7 @@
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
+    leisure: ["Sorties & loisirs", "Proposer une sortie, choisir ses dates et consulter les inscrits.", "Équipe"],
     communication: ["Communication", "Chat équipe, DM & groupes et Fauteuils.", "Communication"],
     agents: ["Équipe", "Voir les présents, les absents et joindre rapidement un collègue.", "Équipe"],
     compare: ["Comparer les plannings", "Comparer rapidement plusieurs plannings.", "Organisation"],
@@ -177,6 +179,7 @@
         tomorrow: "tomorrow",
         team: "planning_team",
         communication: "messages",
+        leisure: "messages",
         agents: "agent_directory",
         compare: "planning_team",
         change: "change_app",
@@ -340,6 +343,7 @@
       '<img src="images/icone_app/quick-rocket.svg?v=20260920-appicons2" alt="" aria-hidden="true">',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
+    leisure: '<span aria-hidden="true">🎉</span>',
     communication:
       '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
     agents:
@@ -543,3 +547,4 @@
   prepareCode();
   mount();
 })();
+

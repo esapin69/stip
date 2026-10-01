@@ -1,0 +1,16 @@
+name: GHE leisure behavior
+on:
+  push:
+    paths: ['leisure-runtime.*', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs']
+  pull_request:
+    paths: ['leisure-runtime.*', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs']
+jobs:
+  leisure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node tools/stip-leisure-test.mjs
+      - run: node --check leisure-runtime.js

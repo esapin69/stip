@@ -23,6 +23,7 @@
     dialog: () => explicit("dialog"),
     messages: () => explicit("messages"),
     communication: () => explicit("messages"),
+    leisure: () => !Object.prototype.hasOwnProperty.call(p(), "leisure") || p().leisure !== false ? (explicit("messages") || explicit("planning_team") || explicit("admin")) : false,
     team: () =>
       explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
     agents: () => explicit("agent_directory"),
@@ -394,3 +395,4 @@
   };
   schedule();
 })();
+
