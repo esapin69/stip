@@ -15,6 +15,9 @@ const accessManage=read("access-manage.js");
 const loader=read("stip-loader.js");
 const appRuntime=read("app.js");
 const hub=read("communication-hub.js");
+const hubCss=read("communication-hub.css");
+const profilePhoto=read("profile-photo.js");
+const personActions=read("stip-person-actions.js");
 const chat=read("team-chat.js");
 const chatCss=read("team-chat.css");
 const selector=read("stip-agent-selector.js");
@@ -47,6 +50,19 @@ has(hub,"STIPAgentSelector.mountPicker","DM n’utilise pas le sélecteur canoni
 has(selector,"setSelectedIds","STIPAgentSelector ne supporte pas la sélection multiple commune");
 has(hub,"Créer un groupe","choix Créer un groupe manquant");
 has(hub,"Envoyer séparément","choix Envoyer séparément manquant");
+has(profilePhoto,'label:"Paramètres"',"le menu profil n’expose pas Paramètres");
+has(profilePhoto,'label:"Notifications"',"Paramètres n’expose pas le réglage Notifications");
+has(profilePhoto,"notificationSettings()","le panneau profil ne charge pas la liste canonique des notifications");
+has(hub,"async function notificationSettings()","le moteur Communication n’expose pas la liste canonique des préférences");
+has(hub,"async function setNotificationPreference(","le moteur Communication n’expose pas le réglage générique par event_key");
+has(hub,"async function setNotificationPreview(","l’aperçu des notifications n’est pas centralisé dans le moteur");
+has(personActions,"action.toggle === true","la feuille d’actions ne supporte pas les réglages cochés/décochés");
+for(const legacyNotificationAccess of ["data-dm-push-toggle","data-dm-push-sheet","data-inbox-push",'name="preview"',"maybePromptDmPush"]){
+  if(hub.includes(legacyNotificationAccess))fail("ancien accès notification encore présent dans Communication: "+legacyNotificationAccess);
+}
+for(const legacyNotificationStyle of [".ch-dm-push-toggle",".ch-push-consent-wrap",".ch-inbox-push"]){
+  if(hubCss.includes(legacyNotificationStyle))fail("ancien style d’accès notification encore présent: "+legacyNotificationStyle);
+}
 
 const hubForms=[...hub.matchAll(/<form\b[^>]*>/g)].map((match)=>match[0]);
 if(!hubForms.length)fail("aucun formulaire Communication trouvé");
@@ -107,6 +123,7 @@ has(rules,"Familles STIP","le contrat Communication ne documente pas les famille
 has(messages,"quick=communication&tab=dm","une notification DM ne cible pas l’onglet DM");
 has(messages,'tab=wheelchair?"fauteuils":"chat"',"les notifications Chat/Fauteuils ne ciblent pas leur onglet");
 has(rules,"Une seule application, trois vues","contrat Communication incomplet");
+has(rules,"Mon profil > Paramètres > Notifications","le contrat ne protège pas la centralisation des réglages de notifications");
 
 has(communicationApp,"canUseWheelchairs","l’application Communication ne masque pas Fauteuils selon la famille");
 has(communicationApp,'key !== "wheelchair" || canUseWheelchairs()', "l’onglet Fauteuils reste visible hors brancardage");
