@@ -65,7 +65,7 @@ jobs:
           grep -q "stip_meeting_item_recipients" supabase/migrations/*meeting_workspace*.sql
           grep -q "visibility==='shared'" supabase/functions/stip-meeting-notes/index.ts
           grep -q "status==='accepted'" supabase/functions/stip-meeting-notes/index.ts
-          grep -q "notes privées" docs/meeting-notes.md
+          grep -q "note privée" docs/meeting-notes.md
           grep -q "meeting-runtime.js" index.html
           grep -q "STIPMeeting" home-shell.js
       - name: Verify old and new note apps remain distinct
