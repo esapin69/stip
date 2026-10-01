@@ -2274,6 +2274,7 @@
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>
       <div class="ghe-home-header-stack">
+        ${shortcutsLauncher()}
         <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator()}</div>
         <div class="hc-home-identity">${profile()}</div>
         <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
@@ -2288,11 +2289,20 @@
 
   function shortcutsLauncher() {
     const role = pilotageRoleKey(),
-      content = pilotageBlock();
+      content = pilotageBlock(),
+      label =
+        {
+          admin: "Raccourcis",
+          cadre: "Cadre",
+          responsable: "Responsable",
+          agent: "Agent",
+          stagiaire: "Stagiaire",
+          metiers: "Autres métiers",
+        }[role] || "Raccourcis";
     if (role === "visiteur" || !content) return "";
-    return `<div class="hc-admin-shortcuts-launcher-wrap">
-      <button type="button" class="hc-admin-shortcuts-launcher" data-shortcuts-open aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis">
-        <span>Raccourcis</span><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
+    return `<div class="hc-admin-shortcuts-launcher-wrap hc-header-shortcuts-wrap">
+      <button type="button" class="hc-admin-shortcuts-launcher hc-header-shortcuts" data-shortcuts-open aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis ${esc(label)}">
+        <small>${role === "admin" ? "ACCÈS" : "PROFIL"}</small><strong>${esc(label)}</strong><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
       </button>
     </div>`;
   }
@@ -2772,7 +2782,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${window.STIPLeisure?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section>${agendaAlertBanner()}${shortcutsLauncher()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${window.STIPLeisure?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -2815,6 +2825,15 @@
         if (note) openNotificationDetail(note, { focusAction: true });
       });
     });
+    root
+      .querySelector("[data-profile-person-search]")
+      ?.addEventListener("click", () => openHeaderDirectorySearch("first"));
+    root
+      .querySelector("[data-header-ghe-search]")
+      ?.addEventListener("click", () => openHeaderDirectorySearch("ghe"));
+    root
+      .querySelector("[data-header-date-search]")
+      ?.addEventListener("click", openHeaderDateSearch);
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
