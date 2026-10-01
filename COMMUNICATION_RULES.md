@@ -107,6 +107,13 @@ Chaque notification transporte son `event_key`, utilise l’icône de son univer
 - le bon onglet ;
 - la conversation ou le message concerné lorsqu’un identifiant est disponible.
 
+Les préférences personnelles sont centralisées dans **Mon profil > Paramètres > Notifications** :
+- la liste est dérivée de `stip_notification_types` / `stip_notification_preferences` ;
+- chaque type actif est coché ou décoché depuis cette seule surface ;
+- l’aperçu du contenu des messages y est réglé au même endroit ;
+- Chat équipe, DM & groupes, Fauteuils, la Cloche et « Réglages messages » ne portent aucun interrupteur de notification concurrent ;
+- l’autorisation téléphone est demandée uniquement quand l’utilisateur active un type nécessitant le push depuis ce panneau central.
+
 La Cloche peut agréger les événements, mais elle ne doit pas effacer leur origine.
 
 ## 7. Navigation et raccourcis
