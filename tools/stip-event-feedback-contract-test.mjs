@@ -29,6 +29,6 @@ must(api.includes("Lié au domaine de cet événement"), "domain recipient routi
 must(!api.includes("un point nécessite un suivi"), "generic off-topic mail draft must not return");
 must(api.includes("Précision :"), "mail draft must be able to include the user's useful precision");
 
-must(loader.includes('V = "20261001-feedback-outcome1"'), "feedback cache build not bumped");
+const build = loader.match(/V = "(\\d{8})-[^"]+"/);\nmust(build && build[1] >= "20261001", "feedback cache build predates the outcome runtime");
 
 console.log("STIP event feedback contract: OK");
