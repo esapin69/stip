@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261001-header-mirror1";
+    V = "20261001-week-current3";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);

@@ -722,6 +722,11 @@
       state.loadedAt = Date.now();
       close();
       render();
+      window.dispatchEvent(
+        new CustomEvent("stip:event-feedback-completed", {
+          detail: { event_key: event.eventKey },
+        }),
+      );
       toast(message);
     };
 

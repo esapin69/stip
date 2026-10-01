@@ -2,6 +2,7 @@ import fs from "node:fs";
 
 const read = (p) => fs.readFileSync(new URL("../" + p, import.meta.url), "utf8");
 const ui = read("event-feedback.js");
+const home = read("home-shell.js");
 const api = read("supabase/functions/stip-actions/index.ts");
 const loader = read("stip-loader.js");
 
@@ -19,6 +20,12 @@ must(ui.includes("Préparer un mail"), "compact mail action missing");
 must(ui.includes("Destinataire conseillé"), "mail recipient hierarchy missing");
 must(ui.includes("Copies facultatives"), "optional CC hierarchy missing");
 must(!ui.includes("profile.rating"), "rating must not drive feedback completion anymore");
+must(ui.includes('stip:event-feedback-completed'), "completed feedback must notify the Home planning surface");
+must(
+  home.includes('window.addEventListener("stip:event-feedback-completed"') &&
+    home.includes("resetWeekToCurrent();"),
+  "Home must return to the real current week after a completed feedback"
+);
 
 must(api.includes("feedback_mode:'outcome'"), "backend must persist outcome semantics");
 must(api.includes("outcomeOfAttendance"), "legacy attendance codes must map to explicit outcomes");

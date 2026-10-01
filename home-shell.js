@@ -3487,6 +3487,12 @@
     render();
   });
   window.addEventListener("stip:leisure-updated", () => { state.renderSig = ""; render(); });
+  window.addEventListener("stip:event-feedback-completed", () => {
+    if (!state.ready || state.homeMode !== "planning") return;
+    resetWeekToCurrent();
+    state.renderSig = "";
+    render();
+  });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
