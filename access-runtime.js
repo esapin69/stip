@@ -34,6 +34,7 @@
     contacts: () => explicit("contacts"),
     responsable: () => explicit("responsable"),
     notes: () => explicit("notes") && infoLevel("notes") === "pro",
+    meeting_notes: () => explicit("meeting_notes"),
     newagent: () => explicit("nouveaux_arrivants"),
     upload: () => explicit("file_upload"),
     activity: () => explicit("activity"),
