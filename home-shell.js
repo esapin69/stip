@@ -1565,8 +1565,12 @@
       raw = formatter.format(date),
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
-      month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-today-label"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></span></div>`;
+      month = String(parts.month || "").toUpperCase(),
+      ghe = currentHeaderGhe(),
+      gheTag = ghe
+        ? `<button type="button" class="hc-home-ghe-tag" data-header-ghe-search aria-label="Rechercher un numéro GHE"><span>GHE</span><b>${esc(ghe.replace(/^GHE\s*/i, ""))}</b></button>`
+        : "";
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><span class="hc-home-date-center"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button>${gheTag}</span></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
