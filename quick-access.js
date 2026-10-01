@@ -35,6 +35,10 @@
       label: "Actions",
       open: () => setTimeout(() => window.STIPTomorrowUI?.open?.(), 0),
     },
+    meeting_notes: {
+      label: "Notes de réunion",
+      open: () => openDocument("meeting-notes.html"),
+    },
     team: {
       label: "Esprit d’équipe",
       open: () => openDocument("esprit-equipe.html?entry=quick-access"),
@@ -125,6 +129,7 @@
   const APP_STORE_COPY = {
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
+    meeting_notes: ["Notes de réunion", "Saisir, retrouver et archiver vos notes de réunion personnelles.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
     leisure: ["Sorties & loisirs", "Proposer une sortie, choisir ses dates et consulter les inscrits.", "Équipe"],
     communication: ["Communication", "Chat équipe, DM & groupes et Fauteuils.", "Communication"],
@@ -177,6 +182,7 @@
     const map = {
         personal: "planning_personal",
         tomorrow: "tomorrow",
+        meeting_notes: "meeting_notes",
         team: "planning_team",
         communication: "messages",
         leisure: "messages",
@@ -341,6 +347,8 @@
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M7.5 14h3M13.5 14h3M7.5 18h3"/></svg>',
     tomorrow:
       '<img src="images/icone_app/quick-rocket.svg?v=20260920-appicons2" alt="" aria-hidden="true">',
+    meeting_notes:
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
     team:
       '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
     leisure: '<span aria-hidden="true">🎉</span>',
