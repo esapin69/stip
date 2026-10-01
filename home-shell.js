@@ -435,6 +435,131 @@
       clearTimeout(t);
     }
   }
+  async function headerDirectory(force = false) {
+    if (!force && headerDirectoryCache) return headerDirectoryCache;
+    if (headerDirectoryPromise) return headerDirectoryPromise;
+    headerDirectoryPromise = call(AGENT_READ_API, "directory")
+      .then((data) => {
+        headerDirectoryCache = data || { items: [] };
+        return headerDirectoryCache;
+      })
+      .finally(() => {
+        headerDirectoryPromise = null;
+      });
+    return headerDirectoryPromise;
+  }
+  function headerDirectoryAgentKey(agent = {}) {
+    return String(agent.source_key || agent.id || agent.matricule || "").trim();
+  }
+  function openHeaderDirectoryAgent(agent = {}) {
+    const key = headerDirectoryAgentKey(agent);
+    if (!key) return;
+    location.href =
+      "agent-directory.html?agent=" +
+      encodeURIComponent(key) +
+      "&from=home-header";
+  }
+  function headerToast(message = "") {
+    let toast = document.querySelector(".hc-toast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "hc-toast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = String(message || "Action indisponible");
+    toast.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+  async function openHeaderDirectorySearch(filter = "first") {
+    try {
+      const directory = await headerDirectory(),
+        items = Array.isArray(directory?.items) ? directory.items : [],
+        openPicker = window.STIPAgentSelector?.openPicker;
+      if (!openPicker) {
+        location.href = "agent-directory.html?from=home-header";
+        return;
+      }
+      openPicker({
+        title:
+          filter === "ghe"
+            ? "Rechercher un n° GHE"
+            : "Rechercher un nom ou prénom",
+        items,
+        date: directory?.date,
+        privacy: "team",
+        showPhone: true,
+        filter: filter === "ghe" ? "ghe" : "first",
+        autoFocus: true,
+        emptyText:
+          filter === "ghe"
+            ? "Aucun GHE correspondant."
+            : "Aucun agent correspondant.",
+        onSelect: openHeaderDirectoryAgent,
+      });
+    } catch (error) {
+      console.error("Header directory search", error);
+      headerToast("Recherche indisponible pour le moment");
+    }
+  }
+  function currentHeaderGhe() {
+    const agent = {
+        ...(state.boot?.agent || {}),
+        ...(state.session?.agent || {}),
+        ...(window.STIPSession?.agent || {}),
+      },
+      raw = String(
+        agent.ghe || agent.ghe_numero || agent.numero_ghe || "",
+      ).trim(),
+      match = raw.match(/\d+/);
+    return match ? `GHE ${Number(match[0])}` : "";
+  }
+  function openHeaderDateSearch() {
+    document.getElementById("hcHeaderDateDialog")?.remove();
+    const dialog = document.createElement("dialog");
+    dialog.id = "hcHeaderDateDialog";
+    dialog.className = "hc-header-date-dialog";
+    dialog.innerHTML = `<section class="hc-header-date-card"><header><div><small>RECHERCHE</small><h2>Aller à une date</h2><p>Planning, événements et détails disponibles pour le jour choisi.</p></div><button type="button" data-header-date-close aria-label="Fermer">×</button></header><div class="hc-header-date-calendar" data-header-date-calendar></div></section>`;
+    document.body.appendChild(dialog);
+    const calendar = dialog.querySelector("[data-header-date-calendar]");
+    let month = String(state.dayFocus || parisIso()).slice(0, 7);
+    const paint = () => renderDateJumpCalendar(calendar, month);
+    const close = () => {
+      if (typeof dialog.close === "function" && dialog.open) dialog.close();
+      else dialog.remove();
+    };
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    dialog.querySelector("[data-header-date-close]")?.addEventListener("click", close);
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) {
+        close();
+        return;
+      }
+      const step = event.target.closest?.("[data-cal-step]"),
+        day = event.target.closest?.("[data-cal-day]");
+      if (step) {
+        month = shiftMonthKey(
+          calendar?.dataset.calendarMonth || month,
+          step.dataset.calStep,
+        );
+        paint();
+        return;
+      }
+      if (!day) return;
+      const iso = String(day.dataset.calDay || "").slice(0, 10);
+      if (!iso) return;
+      close();
+      jumpToDate(iso);
+      setTimeout(() => {
+        document
+          .querySelector(".hc-week-context-master")
+          ?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    });
+    paint();
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+  }
   function perms() {
     return {
       ...(state.session?.permissions || {}),
