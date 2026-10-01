@@ -7,24 +7,30 @@ on:
       - 'meeting-notes.html'
       - 'meeting-notes.css'
       - 'meeting-notes.js'
+      - 'meeting-runtime.css'
+      - 'meeting-runtime.js'
+      - 'index.html'
       - 'access-runtime.js'
       - 'quick-access.js'
       - 'quick-access-universal.js'
       - 'home-shell.js'
       - 'supabase/functions/stip-meeting-notes/**'
-      - 'supabase/migrations/*meeting_notes*'
+      - 'supabase/migrations/*meeting*'
       - '.github/workflows/stip-meeting-notes.yml'
   pull_request:
     paths:
       - 'meeting-notes.html'
       - 'meeting-notes.css'
       - 'meeting-notes.js'
+      - 'meeting-runtime.css'
+      - 'meeting-runtime.js'
+      - 'index.html'
       - 'access-runtime.js'
       - 'quick-access.js'
       - 'quick-access-universal.js'
       - 'home-shell.js'
       - 'supabase/functions/stip-meeting-notes/**'
-      - 'supabase/migrations/*meeting_notes*'
+      - 'supabase/migrations/*meeting*'
       - '.github/workflows/stip-meeting-notes.yml'
 
 permissions:
@@ -45,12 +51,23 @@ jobs:
       - name: Check JavaScript
         run: |
           node --check meeting-notes.js
+          node --check meeting-runtime.js
           node --check access-runtime.js
           node --check quick-access.js
           node --check quick-access-universal.js
           node --check home-shell.js
       - name: Type-check meeting notes backend
         run: deno check supabase/functions/stip-meeting-notes/index.ts
+      - name: Verify privacy and invitation contract
+        shell: bash
+        run: |
+          grep -q "stip_meeting_invites" supabase/migrations/*meeting_workspace*.sql
+          grep -q "stip_meeting_item_recipients" supabase/migrations/*meeting_workspace*.sql
+          grep -q "visibility==='shared'" supabase/functions/stip-meeting-notes/index.ts
+          grep -q "status==='accepted'" supabase/functions/stip-meeting-notes/index.ts
+          grep -q "notes privées" docs/meeting-notes.md
+          grep -q "meeting-runtime.js" index.html
+          grep -q "STIPMeeting" home-shell.js
       - name: Verify old and new note apps remain distinct
         shell: bash
         run: |

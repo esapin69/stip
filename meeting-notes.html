@@ -5,47 +5,116 @@
 <title>Notes de réunion · GHE</title>
 <link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1">
 <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
-<link rel="stylesheet" href="meeting-notes.css?v=20261001-meeting-notes1">
+<link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1">
+<link rel="stylesheet" href="meeting-notes.css?v=20261001-meeting-board2">
 <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
 <script defer src="stip-session-continuity.js?v=20260927-pin-security1"></script>
 <script defer src="stip-navigation.js?v=20260926-navigation5"></script>
 <script defer src="stip-overlay-navigation.js?v=20260930-safari-overlay-history1"></script>
 <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
-<script defer src="meeting-notes.js?v=20261001-meeting-notes1"></script>
+<script defer src="stip-agent-selector.js?v=20260927-communication5"></script>
+<script defer src="meeting-notes.js?v=20261001-meeting-board2"></script>
 </head><body>
 <main class="stip-page meeting-page">
-  <header class="meeting-page-head">
-    <button type="button" class="stip-btn secondary" data-stip-back data-back-fallback="index.html#/apps">‹ Retour</button>
-    <div><small>PERSONNEL</small><h1 class="stip-title">Notes de réunion</h1></div>
-    <button type="button" class="stip-btn secondary" data-meeting-refresh aria-label="Actualiser">↻</button>
-  </header>
-  <section class="meeting-toolbar">
-    <button type="button" class="stip-btn meeting-new" data-meeting-new>＋ Nouvelle note</button>
-    <label class="meeting-search"><span>Rechercher</span><input type="search" data-meeting-search placeholder="Titre, participant, décision…" autocomplete="off"></label>
+  <section id="meetingListView">
+    <header class="meeting-page-head">
+      <button type="button" class="stip-btn secondary" data-stip-back data-back-fallback="index.html#/apps">‹ Retour</button>
+      <div><small>RÉUNIONS</small><h1 class="stip-title">Notes de réunion</h1></div>
+      <button type="button" class="stip-btn secondary" data-meeting-refresh aria-label="Actualiser">↻</button>
+    </header>
+    <section class="meeting-intro stip-surface">
+      <div><small>TABLEAU VIVANT</small><strong>Les idées se rangent à leur place, pas dans un fil de messages.</strong></div>
+      <button type="button" class="stip-btn" data-meeting-new>＋ Nouvelle réunion</button>
+    </section>
+    <section id="meetingPending" class="meeting-pending" aria-live="polite"></section>
+    <p id="meetingStatus" role="status" aria-live="polite"></p>
+    <section id="meetingList" class="meeting-list" aria-live="polite"></section>
   </section>
-  <nav class="meeting-tabs" aria-label="Filtrer les notes">
-    <button type="button" class="active" data-meeting-tab="active">En cours <b data-meeting-count-active>0</b></button>
-    <button type="button" data-meeting-tab="archived">Archivées <b data-meeting-count-archived>0</b></button>
-  </nav>
-  <p id="meetingStatus" role="status" aria-live="polite"></p>
-  <section id="meetingList" class="meeting-list" aria-live="polite"></section>
-</main>
-<dialog id="meetingEditor" class="meeting-editor">
-  <form method="dialog" class="meeting-editor-shell" data-meeting-form>
-    <header><button type="button" class="meeting-close" data-meeting-close aria-label="Fermer">‹</button><div><small>NOTE DE RÉUNION</small><h2 data-meeting-editor-title>Nouvelle note</h2></div><span></span></header>
-    <div class="meeting-fields">
-      <label><span>Titre</span><input name="title" maxlength="160" required placeholder="Objet de la réunion"></label>
-      <label><span>Date et heure</span><input name="meeting_at" type="datetime-local" required></label>
-      <label><span>Participants</span><input name="participants" maxlength="1000" placeholder="Noms ou équipe"></label>
-      <label><span>Notes</span><textarea name="notes" maxlength="20000" rows="8" placeholder="Ce qui est dit, contexte, éléments utiles…"></textarea></label>
-      <label><span>Décisions</span><textarea name="decisions" maxlength="10000" rows="4" placeholder="Ce qui a été décidé"></textarea></label>
-      <label><span>Actions à suivre</span><textarea name="actions" maxlength="10000" rows="4" placeholder="Qui fait quoi, échéances, relances…"></textarea></label>
-    </div>
-    <p class="meeting-form-status" data-meeting-form-status role="status" aria-live="polite"></p>
-    <footer>
-      <button type="button" class="stip-btn secondary meeting-archive" data-meeting-archive hidden>Archiver</button>
-      <button type="submit" class="stip-btn">Enregistrer</button>
+
+  <section id="meetingWorkspace" class="meeting-workspace" hidden>
+    <header class="meeting-workspace-head">
+      <button type="button" class="meeting-back" data-meeting-back aria-label="Retour">‹</button>
+      <div><small data-meeting-phase>RÉUNION</small><h1 data-meeting-title>Réunion</h1><p data-meeting-date></p></div>
+      <button type="button" class="meeting-settings-btn" data-meeting-settings aria-label="Réglages de la réunion">⚙</button>
+    </header>
+
+    <section class="meeting-members stip-surface">
+      <header><div><small>ACCÈS</small><strong>Participants autorisés</strong></div><button type="button" class="stip-btn secondary" data-meeting-invite>＋ Inviter</button></header>
+      <div data-meeting-members></div>
+      <p>Une personne seulement citée dans les notes n’obtient jamais d’accès.</p>
+    </section>
+
+    <section class="meeting-board-tools">
+      <div><small>TABLEAU</small><strong data-meeting-board-hint>Chaque ajout se greffe au bon sujet.</strong></div>
+      <button type="button" class="stip-btn" data-meeting-add>＋ Ajouter</button>
+    </section>
+    <p class="meeting-workspace-status" data-meeting-workspace-status role="status" aria-live="polite"></p>
+    <section id="meetingBoard" class="meeting-board" aria-live="polite"></section>
+
+    <footer class="meeting-final-actions" data-meeting-final-actions>
+      <button type="button" class="stip-btn secondary" data-meeting-discard>Abandonner</button>
+      <button type="button" class="stip-btn" data-meeting-finalize>Finaliser la réunion</button>
     </footer>
+  </section>
+</main>
+
+<dialog id="meetingCreate" class="meeting-dialog">
+  <form method="dialog" data-meeting-create-form class="meeting-dialog-shell">
+    <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>NOUVELLE RÉUNION</small><h2>Démarrer le tableau</h2></div><span></span></header>
+    <div class="meeting-dialog-body">
+      <label><span>Objet</span><input name="title" maxlength="160" required placeholder="Ex. Nouvelle application, organisation, entretien…"></label>
+      <label><span>Date et heure</span><input name="meeting_at" type="datetime-local" required></label>
+      <p>Les colonnes pourront être renommées ensuite : « 1 app / sans l’app », « App A / App B », « équipe / cadre », etc.</p>
+      <p data-dialog-status role="status"></p>
+    </div>
+    <footer><button type="submit" class="stip-btn">Créer la réunion</button></footer>
+  </form>
+</dialog>
+
+<dialog id="meetingCompose" class="meeting-dialog meeting-compose-dialog">
+  <form method="dialog" data-meeting-compose-form class="meeting-dialog-shell">
+    <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>AJOUTER AU TABLEAU</small><h2 data-compose-title>Nouvel élément</h2></div><span></span></header>
+    <div class="meeting-dialog-body">
+      <div class="meeting-compose-grid">
+        <label><span>Sujet / ligne</span><input name="topic" maxlength="160" required placeholder="Ex. Planning, nouvelle app, formation…"></label>
+        <label><span>Colonne</span><select name="lane_key" required></select></label>
+      </div>
+      <div class="meeting-kind-block"><span>Qu’est-ce que tu viens d’entendre ?</span><div data-kind-choices></div><input type="hidden" name="kind" value="info"></div>
+      <label><span>Note</span><textarea name="body" maxlength="4000" rows="5" required placeholder="Écris l’idée, la décision, la question ou ce qu’il faut retenir…"></textarea></label>
+      <fieldset class="meeting-visibility"><legend>Visibilité</legend>
+        <label><input type="radio" name="visibility" value="private" checked> <span><b>Privé</b><small>Visible uniquement par l’organisateur. Sera purgé après l’export final.</small></span></label>
+        <label><input type="radio" name="visibility" value="shared"> <span><b>Partager</b><small>Uniquement avec les participants ayant accepté l’invitation.</small></span></label>
+      </fieldset>
+      <section class="meeting-audience" data-meeting-audience hidden>
+        <label><input type="radio" name="audience_mode" value="all" checked> Tous les participants acceptés</label>
+        <label><input type="radio" name="audience_mode" value="selected"> Choisir certains participants</label>
+        <div data-audience-people hidden></div>
+      </section>
+      <p data-dialog-status role="status"></p>
+    </div>
+    <footer><button type="button" class="stip-btn secondary meeting-delete-item" data-delete-item hidden>Supprimer</button><button type="submit" class="stip-btn">Ajouter au tableau</button></footer>
+  </form>
+</dialog>
+
+<dialog id="meetingSettings" class="meeting-dialog">
+  <form method="dialog" data-meeting-settings-form class="meeting-dialog-shell">
+    <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>RÉGLAGES</small><h2>Structure de la réunion</h2></div><span></span></header>
+    <div class="meeting-dialog-body">
+      <label><span>Objet</span><input name="title" maxlength="160" required></label>
+      <label><span>Date et heure</span><input name="meeting_at" type="datetime-local" required></label>
+      <section class="meeting-lane-editor"><header><span>Colonnes du tableau</span><button type="button" class="stip-btn secondary" data-add-lane>＋ Colonne</button></header><div data-lane-rows></div></section>
+      <p>Renomme les côtés selon la discussion. Une colonne déjà utilisée ne peut pas être retirée sans déplacer ses notes.</p>
+      <p data-dialog-status role="status"></p>
+    </div>
+    <footer><button type="submit" class="stip-btn">Enregistrer</button></footer>
+  </form>
+</dialog>
+
+<dialog id="meetingFollowup" class="meeting-dialog">
+  <form method="dialog" data-followup-form class="meeting-dialog-shell">
+    <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>SUITE DE RÉUNION</small><h2 data-followup-title>Mettre à jour</h2></div><span></span></header>
+    <div class="meeting-dialog-body"><p data-followup-body></p><label><span>Retour / précision</span><textarea name="response_text" maxlength="2000" rows="5" placeholder="Ajoute ton retour si nécessaire…"></textarea></label><p data-dialog-status role="status"></p></div>
+    <footer><button type="button" class="stip-btn secondary" data-followup-open>Garder en attente</button><button type="submit" class="stip-btn">Terminer</button></footer>
   </form>
 </dialog>
 </body></html>
