@@ -17,8 +17,8 @@
     if(!r.ok||j.error)throw Error(errMap[j.error]||j.error||'Impossible de terminer cette action.');
     return j;
   }
-  function closeDialog(d){if(!d)return;if(window.STIPOverlayNav?.close)window.STIPOverlayNav.close(d);else d.close();}
-  function openDialog(d){if(!d.open)d.showModal();window.STIPOverlayNav?.track?.(d);}
+  function closeDialog(d){if(!d)return;if(d.open)d.close();}
+  function openDialog(d){if(!d)return;d.dataset.stipOverlayHistory='off';if(!d.open)d.showModal();}
   function meetingById(id){return state.meetings.find(x=>x.id===id)}
   function kindLabel(k){return KINDS[k]?.[0]||'Info'}
   function kindIcon(k){return ({info:'•',idea:'✦',decision:'✓',action:'→',question:'?',verify:'⌕',waiting:'…',test:'↻',important:'!'}[k]||'•')}
@@ -37,9 +37,8 @@
     pending.innerHTML=state.pending.map(x=>`<article class="meeting-invite-card"><span><strong>${esc(x.title)}</strong><small>${esc(x.organizer_name)} · ${esc(fmt(x.meeting_at))}</small></span><span class="meeting-invite-actions"><button type="button" data-invite-accept="${esc(x.meeting_id)}">Accepter</button><button type="button" class="secondary" data-invite-decline="${esc(x.meeting_id)}">Refuser</button></span></article>`).join('');
     const list=$('#meetingList');
     list.innerHTML=state.meetings.length?state.meetings.map(m=>`<button type="button" class="meeting-card" data-open-meeting="${esc(m.id)}"><span><small>${m.phase==='finalized'?'FINALISÉE':m.access_role==='organizer'?'ORGANISATEUR':'PARTICIPANT'}</small><strong>${esc(m.title)}</strong><span>${esc(fmt(m.meeting_at))}${m.organizer_name?` · ${esc(m.organizer_name)}`:''}</span></span><i>›</i></button>`).join(''):'<div class="meeting-empty"><strong>Aucune réunion</strong><p>Crée un tableau quand une discussion mérite d’être structurée.</p></div>';
-    $$('[data-open-meeting]',list).forEach(b=>b.onclick=()=>openMeeting(b.dataset.openMeeting));
-    $$('[data-invite-accept]').forEach(b=>b.onclick=()=>respondInvite(b.dataset.inviteAccept,'accepted'));
-    $$('[data-invite-decline]').forEach(b=>b.onclick=()=>respondInvite(b.dataset.inviteDecline,'declined'));
+    // Les clics sont gérés par délégation globale afin de rester fiables après chaque re-rendu.
+
   }
   async function respondInvite(id,decision){
     status(decision==='accepted'?'Acceptation…':'Refus…');
@@ -93,8 +92,31 @@
     const d=$('#meetingCreate'),f=$('[data-meeting-create-form]',d);f.reset();f.elements.meeting_at.value=localInput();$('[data-dialog-status]',d).textContent='';openDialog(d);setTimeout(()=>f.elements.title.focus(),60);
   }
   async function createMeeting(event){
-    event.preventDefault();const f=event.currentTarget,d=$('#meetingCreate'),msg=$('[data-dialog-status]',d),submit=f.querySelector('[type="submit"]');submit.disabled=true;msg.textContent='Création…';
-    try{const j=await post({action:'create',title:f.elements.title.value,meeting_at:new Date(f.elements.meeting_at.value).toISOString(),lanes:[{key:'a',label:'Moi'},{key:'b',label:'Interlocuteur'},{key:'suite',label:'Suite'}]});closeDialog(d);state.current={meeting:j.meeting,members:j.members,items:j.items,recipients:j.recipients};await loadList(false);await openMeeting(j.meeting.id)}catch(e){msg.textContent=e.message}finally{submit.disabled=false}
+    event.preventDefault();
+    const f=event.currentTarget,d=$('#meetingCreate'),msg=$('[data-dialog-status]',d),submit=f.querySelector('[type="submit"]');
+    if(submit.disabled)return;
+    submit.disabled=true;msg.textContent='Création…';
+    try{
+      const j=await post({action:'create',title:f.elements.title.value,meeting_at:new Date(f.elements.meeting_at.value).toISOString(),lanes:[{key:'a',label:'Moi'},{key:'b',label:'Interlocuteur'},{key:'suite',label:'Suite'}]});
+      const current={meeting:j.meeting,members:j.members||[],items:j.items||[],recipients:j.recipients||[]};
+      state.current=current;
+      const summary={...j.meeting,access_role:'organizer',organizer_name:''};
+      state.meetings=[summary,...state.meetings.filter(x=>x.id!==summary.id)];
+      closeDialog(d);
+      renderList();
+      $('#meetingListView').hidden=true;
+      $('#meetingWorkspace').hidden=false;
+      renderWorkspace();
+      history.replaceState(null,'','meeting-notes.html?meeting='+encodeURIComponent(j.meeting.id));
+      wstatus('Réunion créée.');
+      setTimeout(()=>wstatus(''),900);
+      window.dispatchEvent(new CustomEvent('stip:meeting-refresh'));
+      post({action:'list'}).then(fresh=>{
+        state.meetings=fresh.meetings||state.meetings;
+        state.pending=fresh.pending_invites||state.pending;
+      }).catch(()=>{});
+    }catch(e){msg.textContent=e.message}
+    finally{submit.disabled=false}
   }
   function acceptedMembers(){return (state.current?.members||[]).filter(x=>x.status==='accepted')}
   function renderKinds(active='info'){$('[data-kind-choices]').innerHTML=Object.entries(KINDS).map(([k,[label,help]])=>`<button type="button" class="meeting-kind-choice${k===active?' active':''}" data-kind="${k}" title="${esc(help)}">${esc(label)}</button>`).join('');$$('[data-kind]').forEach(b=>b.onclick=()=>{$$('[data-kind]').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('[data-meeting-compose-form]').elements.kind.value=b.dataset.kind})}
@@ -138,6 +160,15 @@
   }
   async function updateFollowup(item,statusValue,response){wstatus('Mise à jour…');try{await post({action:'followup_update',item_id:item.id,status:statusValue,response_text:response});await openMeeting(state.current.meeting.id,false);window.dispatchEvent(new CustomEvent('stip:meeting-refresh'));wstatus(statusValue==='open'?'Toujours en attente.':'Suite mise à jour.')}catch(e){wstatus(e.message)}}
   async function submitFollowup(event){event.preventDefault();const f=event.currentTarget,d=$('#meetingFollowup');if(!state.followupItem)return;closeDialog(d);await updateFollowup(state.followupItem,'done',f.elements.response_text.value)}
+
+  document.addEventListener('click',event=>{
+    const open=event.target.closest?.('[data-open-meeting]');
+    if(open){event.preventDefault();openMeeting(open.dataset.openMeeting);return}
+    const accept=event.target.closest?.('[data-invite-accept]');
+    if(accept){event.preventDefault();respondInvite(accept.dataset.inviteAccept,'accepted');return}
+    const decline=event.target.closest?.('[data-invite-decline]');
+    if(decline){event.preventDefault();respondInvite(decline.dataset.inviteDecline,'declined');}
+  });
 
   document.addEventListener('DOMContentLoaded',()=>{
     $('[data-meeting-new]').onclick=openCreate;$('[data-meeting-refresh]').onclick=()=>loadList(false);$('[data-meeting-back]').onclick=leaveMeeting;$('[data-meeting-add]').onclick=()=>openCompose();$('[data-meeting-invite]').onclick=invite;$('[data-meeting-settings]').onclick=openSettings;$('[data-meeting-finalize]').onclick=finalize;$('[data-meeting-discard]').onclick=discard;$('[data-add-lane]').onclick=addLane;$('[data-delete-item]').onclick=deleteItem;
