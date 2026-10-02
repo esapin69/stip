@@ -13,7 +13,7 @@
 <script defer src="stip-overlay-navigation.js?v=20260930-safari-overlay-history1"></script>
 <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
 <script defer src="stip-agent-selector.js?v=20260927-communication5"></script>
-<script defer src="meeting-notes.js?v=20261001-meeting-board2"></script>
+<script defer src="meeting-notes.js?v=20261002-meeting-create-fix1"></script>
 </head><body>
 <main class="stip-page meeting-page">
   <section id="meetingListView">
@@ -58,7 +58,7 @@
   </section>
 </main>
 
-<dialog id="meetingCreate" class="meeting-dialog">
+<dialog id="meetingCreate" class="meeting-dialog" data-stip-overlay-history="off">
   <form method="dialog" data-meeting-create-form class="meeting-dialog-shell">
     <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>NOUVELLE RÉUNION</small><h2>Démarrer le tableau</h2></div><span></span></header>
     <div class="meeting-dialog-body">
@@ -71,7 +71,7 @@
   </form>
 </dialog>
 
-<dialog id="meetingCompose" class="meeting-dialog meeting-compose-dialog">
+<dialog id="meetingCompose" class="meeting-dialog meeting-compose-dialog" data-stip-overlay-history="off">
   <form method="dialog" data-meeting-compose-form class="meeting-dialog-shell">
     <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>AJOUTER AU TABLEAU</small><h2 data-compose-title>Nouvel élément</h2></div><span></span></header>
     <div class="meeting-dialog-body">
@@ -96,7 +96,7 @@
   </form>
 </dialog>
 
-<dialog id="meetingSettings" class="meeting-dialog">
+<dialog id="meetingSettings" class="meeting-dialog" data-stip-overlay-history="off">
   <form method="dialog" data-meeting-settings-form class="meeting-dialog-shell">
     <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>RÉGLAGES</small><h2>Structure de la réunion</h2></div><span></span></header>
     <div class="meeting-dialog-body">
@@ -110,7 +110,7 @@
   </form>
 </dialog>
 
-<dialog id="meetingFollowup" class="meeting-dialog">
+<dialog id="meetingFollowup" class="meeting-dialog" data-stip-overlay-history="off">
   <form method="dialog" data-followup-form class="meeting-dialog-shell">
     <header><button type="button" data-dialog-close aria-label="Fermer">×</button><div><small>SUITE DE RÉUNION</small><h2 data-followup-title>Mettre à jour</h2></div><span></span></header>
     <div class="meeting-dialog-body"><p data-followup-body></p><label><span>Retour / précision</span><textarea name="response_text" maxlength="2000" rows="5" placeholder="Ajoute ton retour si nécessaire…"></textarea></label><p data-dialog-status role="status"></p></div>
