@@ -71,7 +71,7 @@ async function access(c:any,m:any){
 }
 async function organizer(c:any,id:string){
   const m=await meeting(id)
-  if(String(m.owner_agent_id)!==String(c.agent_id)&&!c.isAdmin)throw Error('ACCES_ORGANISATEUR_REQUIS')
+  if(String(m.owner_agent_id)!==String(c.agent_id))throw Error('ACCES_ORGANISATEUR_REQUIS')
   return m
 }
 async function candidateAllowed(agentId:string){
@@ -109,7 +109,7 @@ async function detail(c:any,id:string){
   const members=await acceptedRows(id)
   let items:any[]=[]
   let myRecipients:any[]=[]
-  if(a.role==='organizer'||c.isAdmin){
+  if(a.role==='organizer'){
     items=await checked(db.from('stip_meeting_items').select('*').eq('meeting_id',id).order('created_at',{ascending:true}))||[]
     const itemIds=items.map((x:any)=>x.id)
     myRecipients=itemIds.length?await checked(db.from('stip_meeting_item_recipients').select('item_id,agent_id,status,response_text,updated_at').in('item_id',itemIds))||[]:[]
@@ -121,7 +121,7 @@ async function detail(c:any,id:string){
     myRecipients=rec.filter((x:any)=>visible.has(x.item_id))
   }
   return {
-    meeting:{...m,access_role:a.role,can_manage:a.role==='organizer'||c.isAdmin},
+    meeting:{...m,access_role:a.role,can_manage:a.role==='organizer'},
     members:members.map((x:any)=>({...x,agent_name:personName(x.agent)})),
     items,
     recipients:myRecipients
