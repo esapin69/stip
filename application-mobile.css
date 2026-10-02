@@ -1,0 +1,14 @@
+html,body{margin:0;min-height:100%;background:#f7fbfc;color:#18343c;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}
+.mobile-app-page{width:min(100% - 28px,680px);margin:0 auto;padding:22px 0 40px}
+.mobile-app-back{display:inline-flex;min-height:44px;align-items:center;color:#0b6072;text-decoration:none;font-weight:800}
+.mobile-app-card{margin-top:18px;padding:24px;display:flex;gap:18px;align-items:center;border:1px solid rgba(4,82,104,.16);border-radius:24px;background:#fff;box-shadow:0 12px 30px rgba(4,82,104,.08)}
+.mobile-app-mark{width:64px;height:64px;flex:0 0 64px;display:grid;place-items:center;border-radius:20px;background:#eef9fb;font-size:2rem}
+.mobile-app-card small{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:#5f7980}
+.mobile-app-card h1{margin:5px 0 7px;font-size:1.7rem;line-height:1.1}
+.mobile-app-card p{margin:0;color:#60787f;line-height:1.45}
+.mobile-app-platforms{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mobile-app-platforms article{padding:18px;border:1px solid rgba(4,82,104,.13);border-radius:18px;background:#fff}
+.mobile-app-platforms strong,.mobile-app-platforms span{display:block}
+.mobile-app-platforms span{margin-top:5px;color:#71878d;font-size:.86rem}
+@media(max-width:520px){.mobile-app-card{align-items:flex-start;padding:20px}.mobile-app-platforms{grid-template-columns:1fr}}
