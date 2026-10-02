@@ -1,11 +1,27 @@
 (()=>{"use strict";
 let raf=0;
 const avatarNodes=()=>document.querySelectorAll(".hc-id-card .hc-avatar");
-const current=()=>window.STIPAgentSelector?.photoUrl?.(currentAgent())||currentAgent().profile_photo_url||currentAgent().avatar_url||"";
 const currentAgent=()=>{
   const session=window.STIPSession?.agent||{},boot=window.STIPBootCache?.agent||{};
-  return {...boot,...session,profile_photo_url:session.profile_photo_url||boot.profile_photo_url||""};
+  return {
+    ...boot,
+    ...session,
+    source_key:session.source_key||boot.source_key||"",
+    profile_photo_url:session.profile_photo_url||boot.profile_photo_url||"",
+    avatar_url:session.avatar_url||boot.avatar_url||"",
+    avatar_signed_url:session.avatar_signed_url||boot.avatar_signed_url||""
+  };
 };
+const photoCandidates=()=>{
+  const agent=currentAgent(),media=window.STIPBootCache?.media||{};
+  return [...new Set([
+    agent.profile_photo_url,
+    agent.avatar_url,
+    media?.avatars?.[agent.source_key],
+    agent.avatar_signed_url
+  ].map(v=>String(v||"").trim()).filter(Boolean))];
+};
+const current=()=>photoCandidates()[0]||"";
 function paint(){
   const url=current();
   avatarNodes().forEach(a=>{
@@ -13,7 +29,19 @@ function paint(){
     if(url){
       let img=a.querySelector("img");
       if(!img){a.innerHTML='<img alt="">';img=a.querySelector("img")}
-      if(img&&img.getAttribute("src")!==url)img.src=url;
+      const candidates=photoCandidates();
+      if(img){
+        img.onerror=()=>{
+          const failed=img.getAttribute("src")||"";
+          const failedUrls=String(img.dataset.failedUrls||"").split("|").filter(Boolean);
+          const next=candidates.find(candidate=>candidate!==failed&&!failedUrls.includes(candidate));
+          img.dataset.failedUrls=[...failedUrls,failed].filter(Boolean).join("|");
+          if(next){img.src=next;return}
+          a.innerHTML=a.dataset.profileFallbackHtml||a.dataset.avatarFallback||"ST";
+          delete a.dataset.profileApplied;
+        };
+        if(img.getAttribute("src")!==url)img.src=url;
+      }
       a.dataset.profileApplied="1";
     }else if(a.dataset.profileApplied==="1"){
       a.innerHTML=a.dataset.profileFallbackHtml||"";
