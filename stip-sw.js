@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261001-header-launcher-clean1";
+const STIP_SW_BUILD="20261002-header-identity-fix1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
