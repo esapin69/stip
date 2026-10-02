@@ -141,8 +141,17 @@ async function submit(){
   toast("Demande transmise dans STIP. En attente de traitement.");
   window.dispatchEvent(new CustomEvent("stip:leave-request-created",{detail:{id:j.item.id}}));
  }catch(e){
-  error=e?.message==="DEMANDE_DEJA_EN_COURS"?"Certains jours font déjà partie d’une demande en cours.":
-    String(e?.message||"Transmission impossible. Tes jours restent enregistrés.");
+  const code=String(e?.message||"");
+  const messages={
+   DEMANDE_DEJA_EN_COURS:"Certains jours font déjà partie d’une demande en cours.",
+   DATE_INVALIDE:"La date sélectionnée est invalide. Recharge le planning puis réessaie.",
+   DATE_PASSEE:"Choisis une date à venir.",
+   TYPE_CONGE_INVALIDE:"Le type de congé sélectionné n’est pas valide.",
+   PANIER_INVALIDE:"La sélection de congés est invalide. Vérifie les jours choisis.",
+   PERIODE_TROP_LONGUE:"La période sélectionnée est trop longue.",
+   ACCES_CONGE_REFUSE:"Ton accès ne permet pas d’envoyer cette demande."
+  };
+  error=messages[code]||"Transmission impossible. Tes jours restent enregistrés.";
   toast(error,true);
  }finally{sending=false;render()}
 }
