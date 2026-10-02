@@ -507,3 +507,5 @@
 .request-upload-choice:active{transform:scale(.985);border-color:#14acc3;background:#eefbfc}
 .request-upload-name:not(:empty){margin-top:9px;padding:9px 11px;border:1px solid rgba(25,139,103,.16);border-radius:13px;background:#f1faf6;color:#176f53}
 @media(max-width:380px){.request-upload-actions{grid-template-columns:1fr}.request-upload-choice-wide{grid-column:auto}}
+
+#loginView .t-mobile-app-shortcut{text-decoration:none}
