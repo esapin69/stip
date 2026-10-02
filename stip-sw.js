@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261002-header-identity-fix1";
+const STIP_SW_BUILD="20261003-mobile-app-link1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
