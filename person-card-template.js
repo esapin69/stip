@@ -27,8 +27,10 @@
     return {
       ...boot,
       ...session,
-      profile_photo_url:
-        session.profile_photo_url || boot.profile_photo_url || "",
+      source_key: session.source_key || boot.source_key || "",
+      profile_photo_url: session.profile_photo_url || boot.profile_photo_url || "",
+      avatar_url: session.avatar_url || boot.avatar_url || "",
+      avatar_signed_url: session.avatar_signed_url || boot.avatar_signed_url || "",
     };
   }
 
@@ -36,10 +38,10 @@
     return String(
       window.STIPAgentSelector?.photoUrl?.(agent) ||
         agent.profile_photo_url ||
+        agent.avatar_url ||
         media?.avatars?.[agent.source_key] ||
         window.STIPBootCache?.media?.avatars?.[agent.source_key] ||
         agent.avatar_signed_url ||
-        agent.avatar_url ||
         "",
     );
   }
