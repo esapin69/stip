@@ -57,7 +57,7 @@ function cartDays(raw:any){
   const seen=new Set<string>();
   const days=raw.map((item:any)=>{
     const iso=String(item?.date||'');
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(iso)||!Number.isFinite(Date.parse(iso+'T12:00:00Z'))||
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)||!Number.isFinite(Date.parse(iso+'T12:00:00Z'))||
        new Date(iso+'T12:00:00Z').toISOString().slice(0,10)!==iso)throw Error('DATE_INVALIDE');
     if(seen.has(iso))throw Error('JOUR_EN_DOUBLE');
     seen.add(iso);
