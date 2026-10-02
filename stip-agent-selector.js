@@ -84,9 +84,9 @@
   function photoUrl(agent) {
     return String(
       agent?.profile_photo_url ||
+      agent?.avatar_url ||
       window.STIPBootCache?.media?.avatars?.[agent?.source_key] ||
       agent?.avatar_signed_url ||
-      agent?.avatar_url ||
       "",
     );
   }
