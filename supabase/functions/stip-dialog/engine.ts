@@ -17,7 +17,8 @@ import { exchangeAnswer, colleaguesAnswer, leaveLookupAnswer, onDutyRoster, orga
 import { contactAnswer, messagingHelp, placeAnswer } from "./handlers-lookup.ts";
 import { baseContext, choiceResponse, contextSubjects, findAgents, personCard, personResponse } from "./presentation.ts";
 import { directory, shiftDefinitions, todayParis } from "./runtime.ts";
-import { semanticRoute } from "./llm.ts";\nimport { semanticText, type AppTarget } from "./semantic.ts";
+import { semanticRoute } from "./llm.ts";
+import { semanticText, type AppTarget } from "./semantic.ts";
 import type { Agent, SessionCtx } from "./types.ts";
 
 function defaultScope(intent: Intent): DateScope {
