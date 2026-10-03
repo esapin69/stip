@@ -17,7 +17,7 @@ import { exchangeAnswer, colleaguesAnswer, leaveLookupAnswer, onDutyRoster, orga
 import { contactAnswer, messagingHelp, placeAnswer } from "./handlers-lookup.ts";
 import { baseContext, choiceResponse, contextSubjects, findAgents, personCard, personResponse } from "./presentation.ts";
 import { directory, shiftDefinitions, todayParis } from "./runtime.ts";
-import { semanticClassify, semanticText, type AppTarget } from "./semantic.ts";
+import { semanticRoute } from "./llm.ts";\nimport { semanticText, type AppTarget } from "./semantic.ts";
 import type { Agent, SessionCtx } from "./types.ts";
 
 function defaultScope(intent: Intent): DateScope {
@@ -141,7 +141,7 @@ export async function answer(c: SessionCtx, body: any) {
     kind:"context",title:"Date oubliée",text:"Je ne garde plus la date ou la période précédente.",
     cards:[],actions:[],context:baseContext(old,{date_scope:null,date:null}),suggestions:["Et maintenant ?"]
   };
-  const semantic = semanticClassify(raw, old);
+  const semantic = await semanticRoute(raw, old);
   let intent: Intent = semantic.intent !== "help" ? semantic.intent : classifyIntent(raw);
   const option = offeredOptionIntent(raw, old.offered_options || []);
   if (option === "planning") intent = "planning";
