@@ -216,20 +216,42 @@
       : '<div class="cal-ok">✓ Adresse d’abonnement copiée</div><small>Colle cette adresse dans la fonction « Ajouter à partir de l’URL » de ton calendrier.</small>';
   }
 
-  async function shareLink(url, status, title = "Calendrier") {
+  async function nativeShare(url, status, title = "Calendrier", text = "Adresse d’abonnement au calendrier") {
     if (typeof navigator.share !== "function") return copyLink(url, status);
     try {
-      await navigator.share({
-        title: String(title || "Calendrier"),
-        text: "Adresse d’abonnement au calendrier",
-        url,
-      });
+      await navigator.share({ title: String(title || "Calendrier"), text, url });
       status.innerHTML =
         '<div class="cal-ok">✓ Adresse d’abonnement partagée</div><small>Le lien reste valable et le calendrier continuera à se mettre à jour.</small>';
     } catch (e) {
       if (e?.name === "AbortError") return;
       return copyLink(url, status);
     }
+  }
+
+  function shareLink(j, status, title = "Calendrier") {
+    status.innerHTML = `<div class="cal-methods cal-share-targets">
+      <div class="cal-method-title"><b>Partager · ${esc(title)}</b><small>Choisis le téléphone ou le calendrier de la personne qui va recevoir l’adresse.</small></div>
+      <button type="button" class="cal-method primary" data-cal-share-apple><span></span><div><strong>Apple · iPhone / iPad / Mac</strong><small>Partager l’adresse compatible Apple Calendrier</small></div></button>
+      <button type="button" class="cal-method" data-cal-share-google><span>G</span><div><strong>Google Agenda · Android</strong><small>Partager l’adresse d’abonnement et les instructions</small></div></button>
+      <button type="button" class="cal-method" data-cal-share-other><span>↗</span><div><strong>Autre application</strong><small>WhatsApp, Messages, Signal, mail…</small></div></button>
+      <button type="button" class="cal-method" data-cal-share-copy><span>⧉</span><div><strong>Copier l’adresse</strong><small>Copier uniquement le lien d’abonnement</small></div></button>
+      <button type="button" class="cal-method-back" data-cal-share-back>‹ Retour</button>
+    </div>`;
+    status.querySelector("[data-cal-share-apple]")?.addEventListener("click", () =>
+      nativeShare(j.webcal_url, status, title, "Abonnement Apple Calendrier"),
+    );
+    status.querySelector("[data-cal-share-google]")?.addEventListener("click", () =>
+      nativeShare(j.https_url, status, title, "Abonnement Google Agenda · Ajouter ce lien depuis Google Agenda sur le Web → Autres agendas → + → À partir de l’URL"),
+    );
+    status.querySelector("[data-cal-share-other]")?.addEventListener("click", () =>
+      nativeShare(j.https_url, status, title),
+    );
+    status.querySelector("[data-cal-share-copy]")?.addEventListener("click", () =>
+      copyLink(j.https_url, status),
+    );
+    status.querySelector("[data-cal-share-back]")?.addEventListener("click", () =>
+      methods(j, title, status),
+    );
   }
 
   function methods(j, title, status) {
@@ -252,7 +274,7 @@
       copyLink(j.https_url, status, android),
     );
     status.querySelector("[data-cal-share]")?.addEventListener("click", () =>
-      shareLink(j.https_url, status, title),
+      shareLink(j, status, title),
     );
     status
       .querySelector("[data-cal-method-back]")
