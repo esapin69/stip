@@ -348,3 +348,53 @@
   .rs-shift-proposal>span{font-size:.84rem!important}
   :where(.rs-day-point,.rs-decision,.staffing-line) small{font-size:.79rem!important}
 }
+
+
+/* Canonical overlays — centered premium dialog rule (2026-10-03)
+   All popup/dialog surfaces must open in the viewport, never as bottom sheets.
+   Legacy components keep their own content styling; this layer owns placement. */
+:root{
+  --stip-dialog-width:520px;
+  --stip-dialog-gutter:clamp(14px,4vw,28px);
+  --stip-dialog-radius:var(--stip-radius-lg,24px);
+  --stip-dialog-shadow:0 26px 72px rgba(16,58,85,.22),0 6px 20px rgba(16,58,85,.09);
+  --stip-dialog-backdrop:rgba(13,42,52,.22);
+}
+:where(
+  .cal-quick-backdrop,
+  .modal-backdrop,
+  .dialog-backdrop,
+  .popup-backdrop,
+  .sheet-backdrop,
+  [data-stip-overlay]
+){
+  align-items:center!important;
+  justify-content:center!important;
+  padding:max(var(--stip-dialog-gutter),env(safe-area-inset-top)) var(--stip-dialog-gutter) max(var(--stip-dialog-gutter),env(safe-area-inset-bottom))!important;
+}
+.cal-quick-backdrop{
+  display:flex!important;
+  background:var(--stip-dialog-backdrop)!important;
+  backdrop-filter:blur(7px)!important;
+  -webkit-backdrop-filter:blur(7px)!important;
+}
+:where(
+  .cal-quick,
+  [role="dialog"].stip-dialog,
+  .stip-dialog,
+  .stip-modal,
+  .stip-popup
+){
+  width:min(100%,var(--stip-dialog-width))!important;
+  max-height:min(82dvh,760px)!important;
+  overflow:auto!important;
+  overscroll-behavior:contain;
+  border-radius:var(--stip-dialog-radius)!important;
+  box-shadow:var(--stip-dialog-shadow)!important;
+}
+@media(max-width:430px){
+  :root{--stip-dialog-gutter:16px;--stip-dialog-radius:24px}
+  :where(.cal-quick,[role="dialog"].stip-dialog,.stip-dialog,.stip-modal,.stip-popup){
+    max-height:calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  }
+}
