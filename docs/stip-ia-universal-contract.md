@@ -24,6 +24,20 @@ Principe : **surprise utile, jamais invention**.
 - Le moteur sémantique sert à comprendre les formulations inconnues, les fautes, les fragments et les demandes composées.
 - Aucun écran/case n’est supprimé avant validation de parité.
 
+## Moteur hybride OpenAI — première étape réelle
+
+Le moteur conversationnel utilise une stratégie hybride :
+
+- les formulations déjà sûres et connues restent traitées par le moteur déterministe STIP ;
+- les formulations inconnues, fautives ou moins certaines peuvent être routées par l’API OpenAI Responses ;
+- le modèle ne reçoit ni tables Supabase, ni jeton de session, ni permissions détaillées, ni données métier brutes ;
+- le modèle produit uniquement une intention structurée parmi les intentions et applications autorisées ;
+- le serveur STIP revalide ensuite la session, les permissions, les personnes, les dates et les données avant toute réponse ;
+- l’absence de `OPENAI_API_KEY`, un timeout, une erreur fournisseur ou une sortie modèle invalide provoque un retour automatique au moteur déterministe ;
+- `STIP_AI_MODEL` permet de changer le modèle serveur sans modifier le client ; le modèle par défaut est `gpt-6-luna` ;
+- les appels Responses utilisent `store:false` ;
+- ce premier hybride n’autorise aucun COMMIT direct. Les écritures continuent d’exiger PREPARE puis confirmation explicite puis COMMIT par le moteur métier serveur.
+
 ## Parité des cases actuelles
 
 | app_key | Case actuelle | Ce que STIP IA doit savoir faire |
