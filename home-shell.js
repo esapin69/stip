@@ -2145,6 +2145,18 @@
           ],
         },
         {
+          key: "external",
+          label: "RACCOURCIS · Comptes externes",
+          items: [
+            {
+              href: "external-access.html",
+              label: "Gérer les comptes externes",
+              icon: "🔑",
+              when: () => has("admin"),
+            },
+          ],
+        },
+        {
           key: "admin",
           label: "RACCOURCIS · Admin",
           items: [
