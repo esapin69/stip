@@ -481,7 +481,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261006-le-nouveau1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261006-chrome-resume-fix1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
