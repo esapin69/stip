@@ -27,6 +27,7 @@
     openDocument("responsable.html" + (query ? "?" + query : ""));
   }
   const META = {
+    nouveau: { label: "Le Nouveau", open: () => openDocument("le-nouveau.html") },
     personal: {
       label: "Planning perso",
       open: () => window.STIPHubs?.planning?.("personal"),
@@ -131,6 +132,7 @@
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     meeting_notes: ["Notes de réunion", "Saisir, retrouver et archiver vos notes de réunion personnelles.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
+    nouveau: ["Le Nouveau", "Décide de la suite et raconte ta galère : fiction interactive de brancardier.", "Découvrir"],
     leisure: ["Sorties & loisirs", "Proposer une sortie, choisir ses dates et consulter les inscrits.", "Équipe"],
     communication: ["Communication", "Chat équipe, DM & groupes et Fauteuils.", "Communication"],
     agents: ["Équipe", "Voir les présents, les absents et joindre rapidement un collègue.", "Équipe"],
@@ -158,6 +160,7 @@
     lastTouch = { key: "", at: 0 };
   function allowed(k) {
     if (!META[k]) return false;
+    if (k === "nouveau") return !!localStorage.getItem("stip_session_v1");
     const sessionRole = String(
       window.STIPSession?.role_key ||
         window.STIPSession?.profile?.role_key ||
