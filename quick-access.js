@@ -27,7 +27,7 @@
     openDocument("responsable.html" + (query ? "?" + query : ""));
   }
   const META = {
-    nouveau: { label: "Le Nouveau", open: () => openDocument("le-nouveau.html") },
+    nouveau: { label: "Le Nouveau", open: () => openDocument("le-nouveau.html?v=20261006-3") },
     personal: {
       label: "Planning perso",
       open: () => window.STIPHubs?.planning?.("personal"),
