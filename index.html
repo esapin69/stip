@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261006-le-nouveau1" />
+    <meta name="stip-ui-build" content="20261006-white-screen-fix1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -20,6 +20,17 @@
     <style id="stip-session-resume-style">
       html.stip-session-resume #loginView { visibility: hidden !important; }
     </style>
+    <script id="stip-session-resume-watchdog">
+      (() => {
+        // Never leave the site on a permanent white screen if session restoration
+        // or a cached runtime fails before it can clear stip-session-resume.
+        const release = () => document.documentElement.classList.remove("stip-session-resume");
+        addEventListener("DOMContentLoaded", () => setTimeout(release, 3500), { once: true });
+        addEventListener("pageshow", (event) => {
+          if (event.persisted) setTimeout(release, 500);
+        });
+      })();
+    </script>
     <script id="stip-asset-self-heal">
       (() => {
         let probeTimer = 0;
