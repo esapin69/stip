@@ -2065,8 +2065,8 @@
           label: "RACCOURCIS · Stagiaire",
           items: [
             {
-              href: "le-nouveau.html?v=20261006-3",
-              label: "Le Nouveau",
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
               icon: "🎬",
             },
             {
@@ -2082,8 +2082,8 @@
           label: "RACCOURCIS · Agent",
           items: [
             {
-              href: "le-nouveau.html?v=20261006-3",
-              label: "Le Nouveau",
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
               icon: "🎬",
             },
             {
@@ -2099,8 +2099,8 @@
           label: "RACCOURCIS · Responsable",
           items: [
             {
-              href: "le-nouveau.html?v=20261006-3",
-              label: "Le Nouveau",
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
               icon: "🎬",
             },
             {
@@ -2122,8 +2122,8 @@
           label: "RACCOURCIS · Cadre",
           items: [
             {
-              href: "le-nouveau.html?v=20261006-3",
-              label: "Le Nouveau",
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
               icon: "🎬",
             },
             {
@@ -2151,8 +2151,8 @@
           label: "RACCOURCIS · Autres métiers",
           items: [
             {
-              href: "le-nouveau.html?v=20261006-3",
-              label: "Le Nouveau",
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
               icon: "🎬",
             },
             {
