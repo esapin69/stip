@@ -2065,6 +2065,11 @@
           label: "RACCOURCIS · Stagiaire",
           items: [
             {
+              href: "le-nouveau.html",
+              label: "Le Nouveau",
+              icon: "🎬",
+            },
+            {
               href: "places-app.html",
               label: "Visiter les lieux",
               icon: "📍",
@@ -2077,6 +2082,11 @@
           label: "RACCOURCIS · Agent",
           items: [
             {
+              href: "le-nouveau.html",
+              label: "Le Nouveau",
+              icon: "🎬",
+            },
+            {
               href: "places-app.html",
               label: "Visiter les lieux",
               icon: "📍",
@@ -2088,6 +2098,11 @@
           key: "responsable",
           label: "RACCOURCIS · Responsable",
           items: [
+            {
+              href: "le-nouveau.html",
+              label: "Le Nouveau",
+              icon: "🎬",
+            },
             {
               action: "responsable",
               label: "Responsable",
@@ -2106,6 +2121,11 @@
           key: "cadre",
           label: "RACCOURCIS · Cadre",
           items: [
+            {
+              href: "le-nouveau.html",
+              label: "Le Nouveau",
+              icon: "🎬",
+            },
             {
               href: "cadre-activite.html",
               label: "Activité",
@@ -2130,6 +2150,11 @@
           key: "metiers",
           label: "RACCOURCIS · Autres métiers",
           items: [
+            {
+              href: "le-nouveau.html",
+              label: "Le Nouveau",
+              icon: "🎬",
+            },
             {
               href: "places-app.html",
               label: "Visiter les lieux",
