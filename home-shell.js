@@ -2065,7 +2065,7 @@
           label: "RACCOURCIS · Stagiaire",
           items: [
             {
-              href: "le-nouveau.html",
+              href: "le-nouveau.html?v=20261006-3",
               label: "Le Nouveau",
               icon: "🎬",
             },
@@ -2082,7 +2082,7 @@
           label: "RACCOURCIS · Agent",
           items: [
             {
-              href: "le-nouveau.html",
+              href: "le-nouveau.html?v=20261006-3",
               label: "Le Nouveau",
               icon: "🎬",
             },
@@ -2099,7 +2099,7 @@
           label: "RACCOURCIS · Responsable",
           items: [
             {
-              href: "le-nouveau.html",
+              href: "le-nouveau.html?v=20261006-3",
               label: "Le Nouveau",
               icon: "🎬",
             },
@@ -2122,7 +2122,7 @@
           label: "RACCOURCIS · Cadre",
           items: [
             {
-              href: "le-nouveau.html",
+              href: "le-nouveau.html?v=20261006-3",
               label: "Le Nouveau",
               icon: "🎬",
             },
@@ -2151,7 +2151,7 @@
           label: "RACCOURCIS · Autres métiers",
           items: [
             {
-              href: "le-nouveau.html",
+              href: "le-nouveau.html?v=20261006-3",
               label: "Le Nouveau",
               icon: "🎬",
             },
