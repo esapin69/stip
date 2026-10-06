@@ -14,11 +14,15 @@ async function context(req:Request){
  if(!p?.active)throw Error('ACCES_DESACTIVE')
  return {...p,isAdmin:p.permissions?.admin===true}
 }
+function options(e:any){
+ const raw=Array.isArray(e?.world_state?.decision_options)?e.world_state.decision_options:[]
+ return raw.slice(0,5).map((x:any,i:number)=>({key:txt(x?.key||('option_'+(i+1)),40),label:txt(x?.label||x?.text,120)})).filter((x:any)=>x.key&&x.label)
+}
 async function feed(c:any){
- const episodes=await checked(db.from('stip_nouveau_episodes').select('id,episode_no,title,hook,story_text,video_url,status,decision_prompt,canonical_outcome,published_at,created_at').in('status',['open','resolved']).order('episode_no',{ascending:false}).limit(20))||[]
+ const episodes=await checked(db.from('stip_nouveau_episodes').select('id,episode_no,title,hook,story_text,video_url,status,decision_prompt,canonical_outcome,published_at,created_at,world_state').in('status',['open','resolved']).order('episode_no',{ascending:false}).limit(20))||[]
  const ids=episodes.map((x:any)=>x.id)
  const votes=ids.length?await checked(db.from('stip_nouveau_choices').select('episode_id,agent_id,choice_key,choice_text').in('episode_id',ids))||[]:[]
- return {episodes:episodes.map((e:any)=>{const rows=votes.filter((v:any)=>v.episode_id===e.id),mine=rows.find((v:any)=>v.agent_id===c.agent_id),counts=rows.reduce((m:any,v:any)=>{m[v.choice_key]=(m[v.choice_key]||0)+1;return m},{});return {...e,vote_count:rows.length,counts,my_choice:mine?{key:mine.choice_key,text:mine.choice_text}:null}})}
+ return {episodes:episodes.map((e:any)=>{const rows=votes.filter((v:any)=>v.episode_id===e.id),mine=rows.find((v:any)=>v.agent_id===c.agent_id),counts=rows.reduce((m:any,v:any)=>{m[v.choice_key]=(m[v.choice_key]||0)+1;return m},{});const {world_state,...safe}=e;return {...safe,decision_options:options(e),vote_count:rows.length,counts,my_choice:mine?{key:mine.choice_key,text:mine.choice_text}:null}})}
 }
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:C})
@@ -30,15 +34,18 @@ Deno.serve(async req=>{
   if(b.action==='vote'){
    const episode=txt(b.episode_id,60),key=txt(b.choice_key,40),choice=txt(b.choice_text,240)
    if(!/^[a-f0-9-]{36}$/i.test(episode)||!key)throw Error('CHOIX_INVALIDE')
-   const open=await checked(db.from('stip_nouveau_episodes').select('id,status').eq('id',episode).maybeSingle())
+   const open=await checked(db.from('stip_nouveau_episodes').select('id,status,world_state').eq('id',episode).maybeSingle())
    if(!open||open.status!=='open')throw Error('EPISODE_FERME')
+   const allowed=options(open).map((x:any)=>x.key)
+   if(key!=='libre'&&allowed.length&&!allowed.includes(key))throw Error('CHOIX_INVALIDE')
    await checked(db.from('stip_nouveau_choices').upsert({episode_id:episode,agent_id:c.agent_id,choice_key:key,choice_text:choice},{onConflict:'episode_id,agent_id'}))
    return J({ok:true,...await feed(c)})
   }
   if(b.action==='anecdote'){
-   const category=['galere','combine','incomprehensible','autre'].includes(b.category)?b.category:'autre',raw=txt(b.text,3000)
+   const allowed=['idee','probleme','temoignage','galere','positif','combine','incomprehensible','autre']
+   const category=allowed.includes(b.category)?b.category:'autre',raw=txt(b.text,3000)
    if(raw.length<12)throw Error('ANECDOTE_TROP_COURTE')
-   const row=await checked(db.from('stip_nouveau_anecdotes').insert({agent_id:c.agent_id,category,raw_text:raw,consent_future_episode:b.consent!==false,notify_if_used:b.notify!==false}).select('id').single())
+   const row=await checked(db.from('stip_nouveau_anecdotes').insert({agent_id:c.agent_id,category,raw_text:raw,consent_future_episode:b.consent===true,notify_if_used:b.notify===true}).select('id').single())
    return J({ok:true,id:row.id})
   }
   return J({error:'ACTION_INVALIDE'},400)
