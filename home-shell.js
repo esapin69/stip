@@ -2818,7 +2818,7 @@
   }
 
   function leNouveauHomeCard() {
-    return `<a class="hc-nouveau-tv" href="le-nouveau.html?v=20261006-3" aria-label="Regarder Le Nouveau"><span class="hc-nouveau-tv-screen" aria-hidden="true"><span class="hc-nouveau-tv-live">● EN COURS</span><span class="hc-nouveau-tv-person">👤</span><span class="hc-nouveau-tv-play">▶</span></span><span class="hc-nouveau-tv-copy"><small>LA SÉRIE DU GHE</small><strong>Le Nouveau</strong><span>Voir l’épisode et retrouver les épisodes précédents</span></span><b aria-hidden="true">›</b></a>`;
+    return `<a class="hc-nouveau-tv" href="le-nouveau.html?v=20261006-dudy1" aria-label="Ouvrir Divertissement et Dudy"><span class="hc-nouveau-tv-screen" aria-hidden="true"><span class="hc-nouveau-tv-live">● DIMANCHE</span><span class="hc-nouveau-tv-person">D</span><span class="hc-nouveau-tv-play">▶</span></span><span class="hc-nouveau-tv-copy"><small>DIVERTISSEMENT</small><strong>Dudy au GHE</strong><span>Épisode · Dis-le à Dudy · décisions de la communauté</span></span><b aria-hidden="true">›</b></a>`;
   }
 
   function homeModeBody() {
