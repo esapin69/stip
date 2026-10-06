@@ -5128,3 +5128,17 @@ body.hc-shift-detail-open{overflow:hidden}
 
 .hc-shift-detail-actions{display:block;width:100%;padding-top:4px}
 .hc-shift-leave-action{display:block;width:100%;margin:0;min-height:50px;border:1px solid #8bc9bd;border-radius:14px;background:linear-gradient(130deg,#e9f8f2,#fff);color:#176f63;font:inherit;font-size:.9rem;font-weight:900;touch-action:manipulation;box-shadow:0 5px 14px rgba(23,111,99,.08)}
+
+
+/* Le Nouveau — prominent editorial entry on the shared home */
+.hc-nouveau-tv{display:grid;grid-template-columns:116px 1fr auto;align-items:center;gap:14px;margin:22px 0 10px;padding:13px;border:1px solid #d7e6ea;border-radius:24px;background:linear-gradient(145deg,#fff,#eef6f7);color:#153a4a;text-decoration:none;box-shadow:0 10px 28px rgba(20,64,80,.09);touch-action:manipulation}
+.hc-nouveau-tv-screen{position:relative;display:grid;place-items:center;height:82px;border:5px solid #173f4e;border-radius:17px;background:linear-gradient(145deg,#dceff1,#f7fbfc);box-shadow:inset 0 0 0 2px rgba(255,255,255,.65)}
+.hc-nouveau-tv-live{position:absolute;top:6px;left:7px;padding:3px 6px;border-radius:999px;background:#fff;color:#9a2631;font-size:.51rem;font-weight:950;letter-spacing:.05em}
+.hc-nouveau-tv-person{font-size:2rem;filter:grayscale(.2)}
+.hc-nouveau-tv-play{position:absolute;right:7px;bottom:6px;display:grid;place-items:center;width:23px;height:23px;border-radius:50%;background:#173f4e;color:#fff;font-size:.62rem}
+.hc-nouveau-tv-copy{display:grid;gap:3px;min-width:0}
+.hc-nouveau-tv-copy small{color:#6d858e;font-size:.59rem;font-weight:950;letter-spacing:.12em}
+.hc-nouveau-tv-copy strong{font-size:1.2rem;font-weight:950;letter-spacing:-.025em}
+.hc-nouveau-tv-copy span{color:#5e7780;font-size:.76rem;font-weight:700;line-height:1.3}
+.hc-nouveau-tv>b{font-size:1.55rem}
+@media(max-width:390px){.hc-nouveau-tv{grid-template-columns:96px 1fr auto;gap:10px;padding:11px}.hc-nouveau-tv-screen{height:74px}.hc-nouveau-tv-copy span{font-size:.7rem}}
