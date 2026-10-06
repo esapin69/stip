@@ -2186,15 +2186,15 @@
           label: "RACCOURCIS · Admin",
           items: [
             {
-              action: "admin",
-              label: "Administration",
-              icon: "⚙️",
+              href: "dudy-admin.html",
+              label: "Dudy · Préparer dimanche",
+              icon: "🎬",
               when: () => has("admin"),
             },
             {
-              action: "access",
-              label: "Accès & sécurité",
-              icon: "🔐",
+              action: "admin",
+              label: "Administration",
+              icon: "⚙️",
               when: () => has("admin"),
             },
           ],
@@ -2259,7 +2259,7 @@
       s += app("newagent", "Nouvel agent", "newagent", "newagent");
     if (has("file_upload")) s += app("upload", "Importer", "upload", "upload");
     if (has("admin")) s += app("admin", "Admin", "admin", "admin");
-    if (has("access_manage") || has("admin"))
+    if (!has("admin") && has("access_manage"))
       s += app("access", "Accès & sécurité", "access", "access");
     return s || '<p class="hc-empty">Aucune application autorisée.</p>';
   }
