@@ -1,0 +1,35 @@
+name: Publish GHE Android APK
+
+on:
+  push:
+    paths:
+      - ".github/workflows/publish-ghe-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download signed APK from EAS
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3             "https://expo.dev/artifacts/eas/7tNdLEAVBz81obMCDXQSHnsIv_ZUUIE3QLayapV_QlE.apk"             --output GHE-Android.apk
+          test -s GHE-Android.apk
+          ls -lh GHE-Android.apk
+
+      - name: Publish permanent direct-download release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="ghe-android-current"
+          REPO="$GITHUB_REPOSITORY"
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release delete-asset "$TAG" "GHE-Android.apk" --yes --repo "$REPO" >/dev/null 2>&1 || true
+            gh release upload "$TAG" "GHE-Android.apk" --clobber --repo "$REPO"
+          else
+            gh release create "$TAG" "GHE-Android.apk"               --repo "$REPO"               --title "GHE Android — APK direct"               --notes "APK Android officiel GHE, version 0.2.0 (build 4), signé via EAS. Ce lien de téléchargement reste stable pour le site GHE."
+          fi
