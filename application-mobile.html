@@ -4,12 +4,18 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
     <meta name="theme-color" content="#f7fbfc" />
-    <title>Application GHE</title>
+    <meta name="application-name" content="GHE" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="GHE" />
+    <title>Installer l’application GHE</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png" />
     <link rel="stylesheet" href="stip-theme-base.css" />
-    <link rel="stylesheet" href="application-mobile.css" />
+    <link rel="stylesheet" href="application-mobile.css?v=20261007-install1" />
     <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
-</head>
+    <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
+    <script defer src="application-mobile.js?v=20261007-install1"></script>
+  </head>
   <body>
     <main class="mobile-app-page">
       <a class="mobile-app-back" href="index.html" aria-label="Retour à GHE">‹ Retour</a>
@@ -18,21 +24,71 @@
         <span class="mobile-app-mark" aria-hidden="true">📱</span>
         <div>
           <small>GHE</small>
-          <h1 id="mobileAppTitle">Application mobile</h1>
-          <p>Cette page est le point d’accès permanent à l’application GHE.</p>
+          <h1 id="mobileAppTitle">Installer GHE sur votre téléphone</h1>
+          <p>Choisissez l’accès qui vous convient. L’installation depuis le site fonctionne déjà, sans passer par un store.</p>
         </div>
       </section>
 
-      <section class="mobile-app-platforms" aria-label="Versions de l’application">
-        <article>
-          <strong>Android</strong>
-          <span>Version en construction</span>
+      <section class="mobile-app-primary" aria-labelledby="webInstallTitle">
+        <div class="mobile-app-choice-head">
+          <span class="mobile-app-choice-icon" aria-hidden="true">⚡</span>
+          <div>
+            <small>DISPONIBLE MAINTENANT</small>
+            <h2 id="webInstallTitle">Installer le raccourci GHE</h2>
+          </div>
+        </div>
+        <p>Ajoute GHE à l’écran d’accueil et l’ouvre comme une application. C’est l’accès déjà utilisé par de nombreux utilisateurs.</p>
+        <button id="installWebApp" class="mobile-app-action" type="button">Installer GHE</button>
+        <div id="installHelp" class="mobile-app-help" hidden aria-live="polite"></div>
+      </section>
+
+      <section class="mobile-app-platforms" aria-label="Autres versions de l’application">
+        <article class="mobile-app-platform-card mobile-app-platform-live">
+          <div class="mobile-app-choice-head">
+            <span class="mobile-app-choice-icon" aria-hidden="true">🤖</span>
+            <div>
+              <small>ANDROID</small>
+              <strong>APK direct</strong>
+            </div>
+          </div>
+          <p>Installation Android directe depuis le site, comme sur votre exemple. Version actuelle : 0.2.0 (build 4).</p>
+          <a class="mobile-app-action mobile-app-action-secondary"
+             href="https://github.com/esapin69/stip/releases/download/ghe-android-current/GHE-Android.apk">
+            Télécharger l’APK
+          </a>
+          <span class="mobile-app-note">Android peut demander d’autoriser l’installation depuis votre navigateur.</span>
         </article>
-        <article>
-          <strong>iPhone</strong>
-          <span>Version en construction</span>
+
+        <article class="mobile-app-platform-card">
+          <div class="mobile-app-choice-head">
+            <span class="mobile-app-choice-icon" aria-hidden="true">▶</span>
+            <div>
+              <small>ANDROID</small>
+              <strong>Google Play</strong>
+            </div>
+          </div>
+          <p>Le test fermé Google Play reste la voie officielle en cours de finalisation.</p>
+          <span class="mobile-app-coming">Bientôt disponible ici</span>
+        </article>
+
+        <article class="mobile-app-platform-card">
+          <div class="mobile-app-choice-head">
+            <span class="mobile-app-choice-icon" aria-hidden="true"></span>
+            <div>
+              <small>IPHONE</small>
+              <strong>App Store</strong>
+            </div>
+          </div>
+          <p>En attendant l’App Store, l’installation du raccourci GHE ci-dessus fonctionne déjà sur iPhone.</p>
+          <span class="mobile-app-coming">App Store à venir</span>
         </article>
       </section>
+
+      <section class="mobile-app-info" aria-label="Choisir une méthode">
+        <strong>À retenir</strong>
+        <p>Vous pouvez utiliser GHE dès maintenant avec le raccourci web. Sur Android, vous avez en plus l’APK direct. Les boutons Google Play et App Store seront ajoutés dès que leurs fiches seront prêtes.</p>
+      </section>
     </main>
-  <script src="stip-navigation.js?v=20260925-workspace-auto1"></script></body>
+    <script src="stip-navigation.js?v=20260925-workspace-auto1"></script>
+  </body>
 </html>
