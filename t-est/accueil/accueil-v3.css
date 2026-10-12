@@ -18,7 +18,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 .t-separator span{white-space:nowrap}
 .t-separator.is-first{margin-top:3px}
 .t-carousel{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 20px)/3);gap:10px;width:100%;overflow-x:auto;overflow-y:hidden;
-  scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;padding:2px 0 6px;touch-action:pan-x pan-y}
+  scroll-snap-type:x proximity;overscroll-behavior-x:auto;scrollbar-width:none;padding:2px 0 6px;touch-action:auto;-webkit-overflow-scrolling:touch}
 .t-carousel::-webkit-scrollbar{display:none}
 .t-carousel>[role="tab"],.t-carousel>.com-carte{scroll-snap-align:start;min-width:0}
 .accueil-carte,.com-carte{appearance:none;border-radius:17px;border:1.5px solid #d4e2e8;background:#fff;color:#163f53;
@@ -133,3 +133,7 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 .pop-choix [data-existing-channel] small{white-space:nowrap;text-overflow:ellipsis;overflow:hidden;display:block}
 .t-ensemble-bloc{margin-top:20px}
 #tEnsembleExpanded{margin-top:14px}
+
+/* Une seule page native : ne pas bloquer le geste tactile sur les carrousels. */
+.t-bloc>.t-expanded-region:not([hidden]),#tEnsembleExpanded:not([hidden]){min-height:calc(100dvh - var(--t-est-history-height,54px) - 160px)}
+.t-carousel>.com-carte,.t-carousel>.accueil-carte{scroll-snap-align:start}
