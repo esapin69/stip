@@ -17,3 +17,32 @@
 
 .training-shortcuts{display:flex;gap:7px;overflow-x:auto;padding:5px 0}
 .training-shortcuts button{background:#ecf7f7;border:1px solid #bddbdc;border-radius:10px;padding:10px;font:inherit;font-size:.86rem;font-weight:750;white-space:nowrap;min-height:42px;color:#174959}
+
+/* Ensemble compact composer */
+.ensemble-page .training-section{padding:0;border:0;border-radius:0;box-shadow:none;background:transparent}
+.ensemble-page .training-head{gap:10px;margin:8px 0 16px}
+.ensemble-page .training-head>span{padding:9px;font-size:1.28rem}
+.ensemble-page .training-head h2{font-size:1.1rem;margin:0 0 4px;font-weight:900}
+.ensemble-page .training-head p{font-size:.83rem;margin:0;color:#607b82}
+.ensemble-page .training-form{display:grid;gap:13px}
+.ensemble-page .training-schedule{background:#e9f5f1;border:1px solid #cfe6e1;border-radius:13px;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.ensemble-page .training-schedule strong{font-weight:900;font-size:.92rem}
+.ensemble-page .training-schedule span{font-size:.76rem;color:#517972}
+.ensemble-page .training-days{max-height:none;overflow:visible;gap:6px}
+.ensemble-page .training-days span{border:0;background:#eef7f5;padding:7px 9px;font-size:.76rem;font-weight:700}
+.ensemble-page .training-days small{font-size:.73rem;padding:8px;color:#5d7880}
+.ensemble-page .training-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:3px 0}
+.ensemble-page .training-shortcuts button{font-size:.74rem;min-width:0;padding:8px 3px;white-space:nowrap;background:#f3f8f8}
+.ensemble-page .training-form label{font-size:.87rem;color:#1b4856}
+.ensemble-page .training-pick{border-top:1px solid #e2eded;padding-top:12px}
+.ensemble-page .training-people{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:194px;overflow:auto}
+.ensemble-page .training-person{min-width:0;min-height:39px;padding:7px;font-size:.79rem;border-radius:10px}
+.ensemble-page .training-person span{overflow:hidden;text-overflow:ellipsis}
+.ensemble-page .training-options{border:1px solid #dbe9e8;border-radius:12px;padding:11px 13px}
+.ensemble-page .training-options summary{font-weight:800;font-size:.86rem;color:#38616b;cursor:pointer}
+.ensemble-page .training-options[open]{display:grid;gap:11px}
+.ensemble-page .training-options>label:first-of-type{margin-top:10px}
+.ensemble-page #trainingCreateStatus:empty{display:none}
+.ensemble-page #trainingCreateStatus{font-size:.84rem;line-height:1.4;color:#986621}
+.ensemble-page .training-form>.ensemble-primary{width:100%}
+@media(max-width:400px){.ensemble-page .training-people{grid-template-columns:1fr}}
