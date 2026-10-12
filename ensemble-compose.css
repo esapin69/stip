@@ -1,0 +1,68 @@
+
+/* GHE · planner-first activity creation */
+.ec-compose{color:#214656;max-width:760px;margin:auto}
+.ec-intro{margin:0 0 16px;color:#5d7881;font-size:.87rem;line-height:1.45}
+.ec-compose form{display:grid;gap:18px}
+.ec-compose label{display:grid;gap:6px;font-size:.84rem;font-weight:800;color:#1d4c5a}
+.ec-compose input:not([type=radio]):not([type=checkbox]),.ec-compose textarea{border:1px solid #c3d9d9;border-radius:12px;min-height:43px;padding:10px 12px;background:#fff;box-sizing:border-box;font:inherit;color:#183c4b;width:100%}
+.ec-compose input[type=radio],.ec-compose input[type=checkbox]{accent-color:#168c8d;min-width:17px;min-height:17px}
+.ec-activity,.ec-dates,.ec-attendees{display:grid;gap:10px}
+.ec-activity>strong,.ec-heading strong,.ec-attendees>strong{font-size:.96rem;font-weight:900;color:#18475a}
+.ec-activities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.ec-activities button{font:inherit;font-size:.79rem;font-weight:800;color:#2b6172;min-height:42px;border:1px solid #d5e5e5;border-radius:12px;background:#f5faf9;cursor:pointer}
+.ec-activities button.is-selected{background:#dff4f1;border-color:#168e90;color:#0e6d76;box-shadow:inset 0 0 0 1px #168e90}
+.ec-heading,.ec-picked-head{display:flex;align-items:center;justify-content:space-between;gap:9px;flex-wrap:wrap}
+.ec-heading span,.ec-picked-head span{color:#67818a;font-size:.76rem}
+#ensembleCalendar{border:1px solid #d6e8e7;border-radius:17px;padding:12px;background:#fff}
+.ec-month{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;gap:8px}
+.ec-month strong{text-transform:capitalize;font-size:.99rem;color:#235362}
+.ec-month button{border:0;border-radius:10px;background:#edf7f6;color:#176477;font-size:1.6rem;width:39px;height:37px;cursor:pointer}
+.ec-week,.ec-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.ec-week span{font-size:.7rem;font-weight:850;color:#749096;text-align:center;padding-bottom:5px}
+.ec-spacer{min-height:58px}
+.ec-day{position:relative;min-width:0;min-height:62px;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:8px 1px 7px;border:1px solid #e3eded;border-radius:11px;background:#f8fbfa;color:#546e78;font:inherit;cursor:pointer}
+.ec-day-number{font-size:.89rem;font-weight:900}
+.ec-day-shift{font-size:.64rem;font-weight:850;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ec-day.shift-morning{background:#e6f3ff;color:#246999;border-color:#cbe1f5}
+.ec-day.shift-day{background:#e7f5e9;color:#257a4b;border-color:#c8e4ce}
+.ec-day.shift-evening{background:#eeeafd;color:#6344a5;border-color:#d6cef6}
+.ec-day.shift-night{background:#e3ebf4;color:#365b85;border-color:#cad8e9}
+.ec-day.shift-rest{background:#f0f2f5;color:#5b6576;border-color:#e2e7ec}
+.ec-day.shift-absence{background:#fff1e1;color:#98642d;border-color:#f8dec0}
+.ec-day.is-picked{outline:3px solid #109d98;outline-offset:-2px;box-shadow:0 0 0 1px #fff;transform:translateY(-1px)}
+.ec-day.is-picked::after{content:"✓";position:absolute;right:2px;top:1px;display:grid;place-items:center;width:14px;height:14px;border-radius:50%;background:#118b83;color:#fff;font-size:.61rem}
+.ec-day:disabled{opacity:.27;cursor:default;filter:grayscale(.7)}
+.ec-legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ec-legend span{font-size:.68rem;padding:5px 7px;border-radius:7px;font-weight:800}
+.ec-legend .shift-morning{background:#e6f3ff;color:#246999}
+.ec-legend .shift-day{background:#e7f5e9;color:#257a4b}
+.ec-legend .shift-evening{background:#eeeafd;color:#6344a5}
+.ec-legend .shift-rest{background:#f0f2f5;color:#5b6576}
+.ec-legend .shift-absence{background:#fff1e1;color:#98642d}
+.ec-anydate{padding:9px 11px;background:#f6f9f9;border:1px solid #e3eded;border-radius:12px}
+.ec-picked-head{font-size:.83rem}
+.ec-picked{display:flex;gap:6px;flex-wrap:wrap}
+.ec-picked button{font:inherit;font-size:.75rem;background:#e2f5f2;color:#167366;border:1px solid #c5e8e2;border-radius:9px;padding:8px 9px;cursor:pointer}
+.ec-scopes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ec-scopes label{font-size:.78rem;border:1px solid #cbdede;background:#f4f9f9;border-radius:12px;padding:11px 7px;display:flex;flex-direction:row;align-items:center;gap:8px}
+.ec-scope-info{font-size:.78rem;line-height:1.45;color:#617e87;margin:0}
+.ec-pick-actions{display:flex;justify-content:space-between;gap:8px}
+.ec-pick-actions button,.ec-smart>button{background:#eaf6f4;border:1px solid #d0e5e1;padding:9px 11px;border-radius:10px;font:inherit;font-size:.78rem;color:#17636d;font-weight:850;cursor:pointer}
+.ec-people{max-height:195px;overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.ec-person{display:flex!important;align-items:center;gap:8px;padding:10px 9px;background:#f5f9f9;border:1px solid #e3eeee;border-radius:11px;font-size:.79rem!important;min-width:0;font-weight:700!important}
+.ec-person span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ensemblePeopleCount{font-size:.76rem;color:#61818a;font-weight:850}
+.ec-smart{display:grid;gap:8px}
+.ec-smart>button{justify-self:start}
+.ec-suggestions{display:flex;flex-wrap:wrap;gap:6px}
+.ec-suggestions button{display:flex;flex-direction:column;gap:4px;border:1px solid #bdded8;border-radius:10px;background:#eef8f5;padding:8px;color:#195f69;font:inherit;font-size:.76rem;font-weight:800}
+.ec-suggestions button small{font-size:.68rem;color:#538078}
+#ensembleSmartDates p{font-size:.78rem;color:#62808a}
+.ec-details{border:1px solid #d6e7e5;padding:13px;border-radius:13px}
+.ec-details summary{cursor:pointer;font-size:.83rem;font-weight:900;color:#285b64}
+.ec-details[open]{display:grid;gap:11px}
+.ec-details>label:first-of-type{margin-top:13px}
+#ensembleComposeError{font-size:.84rem;color:#ae3740;margin:0}
+#ensembleComposeError:empty{display:none}
+.ec-submit{width:100%}
+@media(max-width:450px){.ec-people{grid-template-columns:1fr}.ec-spacer{min-height:54px}.ec-grid,.ec-week{gap:3px}.ec-day{min-height:56px;padding:7px 0}.ec-day-number{font-size:.82rem}.ec-day-shift{font-size:.59rem}.ec-scopes{grid-template-columns:1fr}.ec-pick-actions button{font-size:.72rem;padding:8px 5px}}
