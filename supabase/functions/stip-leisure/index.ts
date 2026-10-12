@@ -101,7 +101,7 @@ async function matches(c:any,target:string){
 
 async function ownCalendar(c:any){
  if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
- const from=today(),to=plusDays(from,92);
+ const from=today(),to=plusDays(from,123);
  const [planning,registry]=await Promise.all([
   checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',from).lte('date',to)),
   checked(db.from('stip_shift_registry').select('code,label,icon,color_hex,soft_color_hex,on_color_hex,is_working').eq('active',true))
@@ -120,7 +120,7 @@ async function ownCalendar(c:any){
 async function createActivity(c:any,b:any){
  if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
  const title=text(b.title,120),selected=dates(b.dates);
- if(!title||selected.length<1||selected.length>24||selected.some((d:string)=>d<today()||d>plusDays(today(),365)))throw Error('DATES_INVALIDES');
+ if(!title||selected.length<1||selected.length>24||selected.some((d:string)=>d<today()))throw Error('DATES_INVALIDES');
  const guests=Array.isArray(b.agent_ids)?[...new Set(b.agent_ids)]:[];
  if(guests.length>120||guests.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
  const accessible=new Set((await colleagues(c)).map((a:any)=>a.id));
