@@ -42,4 +42,4 @@ body{padding-top:var(--t-est-history-height)}
   #tEstHistoryBar .t-history-step{max-width:110px;font-size:.71rem}
 }
 /* Le T du laboratoire reste visible mais ne recouvre pas le fil d'historique. */
-html[data-t-est="1"]::after{top:max(12px,env(safe-area-inset-top))}
+html[data-t-est="1"]::after{top:max(12px,env(safe-area-inset-top))!important}
