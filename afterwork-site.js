@@ -13,6 +13,7 @@
  const panelHTML=()=>'<section id="awPanel" class="aw-panel stip-surface"><h2>🏃 Après le travail</h2><p>Retrouve les prochaines fins de service compatibles et propose une activité.</p>'+
   '<form id="awForm" class="aw-form"><label>Collègue<select name="target" required id="awTarget"><option value="">Choisir un collègue</option></select></label>'+
   '<div id="awDays" aria-live="polite"></div>'+
+  '<div class="aw-activities" role="group" aria-label="Activités rapides"><button type="button" data-aw-activity="Foot">⚽ Foot</button><button type="button" data-aw-activity="Boxe">🥊 Boxe</button><button type="button" data-aw-activity="Muscu">💪 Muscu</button><button type="button" data-aw-activity="Restaurant">🍽️ Resto</button><button type="button" data-aw-activity="Cinéma">🎬 Ciné</button><button type="button" data-aw-activity="Autre">＋ Autre</button></div>'+
   '<label>Activité<input name="title" maxlength="120" required placeholder="Musculation, boxe, restaurant…"></label>'+
   '<label>Lieu ou adresse<input name="location" maxlength="240" placeholder="À fixer"></label>'+
   '<label>Heure du rendez-vous<input name="time_label" maxlength="240" placeholder="Après le service"></label>'+
@@ -74,6 +75,13 @@
  function bindPanel(){
   const form=document.getElementById("awForm");if(!form)return;
   const select=document.getElementById("awTarget");
+  form.querySelectorAll('[data-aw-activity]').forEach(button=>button.onclick=()=>{
+    const field=form.elements.title;
+    if(button.dataset.awActivity!=='Autre')field.value=button.dataset.awActivity;
+    else field.value='';
+    form.querySelectorAll('[data-aw-activity]').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+    field.focus();
+  });
   if(state.ready){select.innerHTML='<option value="">Choisir un collègue</option>'+state.agents.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>').join("");select.value=state.target;}
   select.onchange=()=>{state.target=select.value;state.days=[];state.selectedDays=[];state.autoTime="";if(state.target)getDays();else show();};
   form.onsubmit=async e=>{e.preventDefault();const message=document.getElementById("awStatus"),send=document.getElementById("awSubmit");if(!state.target||!state.selectedDays.length){message.textContent="Choisis un collègue et au moins une date.";return;}
