@@ -158,3 +158,10 @@
     padding:28px clamp(28px,3vw,48px);
   }
 }
+
+/* Native notification readiness is separate from personal notification preferences. */
+.ch-push-check{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--stip-surface,#eef9f5);border:1px solid #b8dad1;border-radius:13px;margin:0 0 12px;padding:12px}
+.ch-push-check span{font-size:.85rem;font-weight:700;line-height:1.4;flex:1 1 190px}
+.ch-push-check button{font:inherit;font-size:.83rem;font-weight:800;padding:9px 12px;min-height:42px;background:var(--stip-accent,#127c89);color:white;border:0;border-radius:11px;cursor:pointer}
+.ch-push-check button:disabled{opacity:.55;cursor:default}
+.ch-push-warning{background:#fff9e9;border-color:#e9d89e}
