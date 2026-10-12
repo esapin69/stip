@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const CLIENT_VERSION="20261001-notification-settings1";
+  const CLIENT_VERSION="20261012-dm-device-push4";
   const MSG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages";
   const DIALOG_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-dialog";
   const PUSH_API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-push";
@@ -84,6 +84,7 @@
   async function enablePush(button=null){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return false;if(Notification.permission==="denied"){pushState="denied";renderHost();return false}if(button){button.disabled=true;button.textContent="Activation…"}try{const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();if(permission!=="granted"){pushState=permission==="denied"?"denied":"off";renderHost();return false}const reg=await navigator.serviceWorker.register("./stip-sw.js?v=20260925-dm-push1",{updateViaCache:"none"}),sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidBytes(VAPID_PUBLIC)}),json=sub.toJSON();await push("subscribe",{subscription:{endpoint:json.endpoint,keys:json.keys}});pushState="on";renderHost();return true}catch(e){pushState="off";if(button){button.disabled=false;button.textContent="Réessayer"}alert(e.message||"Activation impossible.");return false}}
   function notificationPreference(eventKey){const items=pushPrefs?.items||[],item=items.find(x=>String(x.event_key)===String(eventKey));return item||null}
   function dmPreference(){const item=notificationPreference("dm_received");if(item)return item;if(home?.me)return{event_key:"dm_received",enabled:home.me.dm_push_enabled!==false,push_enabled:home.me.dm_push_available!==false};return{event_key:"dm_received",enabled:true,push_enabled:true}}
+  function syncDmPreference(enabled){syncNotificationPreference('dm_received',enabled)} // Backward compatibility with cached DM callers.
   function syncNotificationPreference(eventKey,enabled){if(!pushPrefs)pushPrefs={items:[]};const items=pushPrefs.items||[],index=items.findIndex(x=>String(x.event_key)===String(eventKey)),next={...(index>=0?items[index]:{}),event_key:String(eventKey),enabled:!!enabled};if(index>=0)items[index]=next;else items.push(next);pushPrefs.items=items;if(String(eventKey)==="dm_received"&&home?.me)home.me.dm_push_enabled=!!enabled}
   async function notificationSettings(){if(!home?.me)home=await msg("home");pushPrefs=await msg("notification_preferences");await refreshPushState();return{items:[...(pushPrefs?.items||[])],notification_preview:home?.me?.notification_preview!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}
   async function setNotificationPreference(eventKey,enabled,button=null){try{if(!pushPrefs)pushPrefs=await msg("notification_preferences");const pref=notificationPreference(eventKey);if(pref?.push_enabled===false)return false;if(enabled&&pref?.push_enabled!==false){const ok=await enablePush(button);if(!ok)return false}const result=await msg("notification_set",{event_key:String(eventKey),enabled:!!enabled});syncNotificationPreference(String(eventKey),result.enabled!==false);window.dispatchEvent(new CustomEvent("stip:notification-preference",{detail:{event_key:String(eventKey),enabled:result.enabled!==false,pushState,permission:"Notification" in window?Notification.permission:"unsupported"}}));return result}catch(e){if(button)button.disabled=false;alert(e.message||"Impossible de modifier les notifications.");return false}}
@@ -326,14 +327,30 @@
         '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'"><span><strong>'+esc(inboxConversationLabel(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></span>'+(Number(c.unread||0)?'<b>'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+'</button>'
       ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>',
       selectedCount=inboxState.selected.size;
-    root.innerHTML='<section class="ch-inline-inbox">'+
+    const pushInfo=pushState==='on'
+      ?'<section class="ch-push-check"><span>🔔 Notifications de cet appareil : autorisées</span><button type="button" data-inbox-test-push>Tester</button></section>'
+      :'<section class="ch-push-check ch-push-warning"><span>'+ (pushState==='denied'?'🔕 Notifications bloquées dans les réglages du navigateur.':'🔔 Notifications du téléphone non activées sur cet appareil.') +'</span><button type="button" data-inbox-test-push '+(pushState==='denied'||pushState==='unsupported'?'disabled':'')+'>'+(pushState==='unsupported'?'Non compatible':'Activer et tester')+'</button></section>';
+    root.innerHTML='<section class="ch-inline-inbox">'+pushInfo+
       '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>Discussions</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
       '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span data-inbox-selected-count>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
       '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
       '<div class="ch-inbox-agent-selector" data-inbox-agent-selector></div></section>'+
       (inboxState.status?'<p class="ch-inbox-status" role="status">'+esc(inboxState.status)+'</p>':'')+
       '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer></section>';
-    root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
+    root.querySelector("[data-inbox-test-push]")?.addEventListener("click",async(event)=>{
+      const button=event.currentTarget;button.disabled=true;button.textContent="Vérification…";
+      try{
+       const ok=await enablePush(button);
+       if(!ok){
+        inboxState.status=pushState==='denied'?'Notifications bloquées : autorise les notifications du site dans les paramètres Chrome.':'Impossible d’activer cet appareil. Vérifie les autorisations.';
+       }else{
+        const result=await push("test");
+        inboxState.status=Number(result.sent)>0?"Test envoyé à cet appareil. Vérifie la notification sur ton téléphone.":"Aucun abonnement push utilisable : réessaie ou vérifie les autorisations du navigateur.";
+       }
+      }catch(e){inboxState.status="Test impossible : "+(e.message||"Erreur de connexion.");}
+      finally{await refreshPushState();renderInbox();}
+    });
+     root.querySelector("[data-inbox-duty]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.on_duty||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-continue]")?.addEventListener("click",continueInbox);
     root.querySelectorAll("[data-inbox-conversation]").forEach(b=>b.addEventListener("click",()=>openThread(String(b.dataset.inboxConversation||""))));
@@ -372,7 +389,7 @@
     try{
       home=await msg("home");
       setUnread(home?.unread,home?.dm_unread);
-      
+      await refreshPushState();
       renderInbox();
       const id=String(options.conversation||inboxState.conversation||"");
       inboxState.conversation="";
