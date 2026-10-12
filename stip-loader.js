@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261012-agent-page-prewarm1";
+    V = "20261013-agent-data-warm1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -187,7 +187,14 @@
         if (generation !== warmGeneration ||
             localStorage.getItem("stip_session_v1") !== token ||
             window.STIPPreview?.active) return;
-        await warmDocumentResources(page);
+        const dataKind = page === "agent-directory.html" ? "directory"
+          : page === "agent-dates.html" ? "dates" : "";
+        await Promise.allSettled([
+          warmDocumentResources(page),
+          dataKind
+            ? (window.STIPReadCache?.agentWarm?.warm(dataKind, session) || Promise.resolve(false))
+            : Promise.resolve(false),
+        ]);
       }
     };
     if ("requestIdleCallback" in window)
