@@ -109,7 +109,7 @@
   async function loadHome(force=false){
     if(!can("messages")){home=null;setUnread(0);renderHost();return}
     try{
-      home=await msg("home");setUnread(home.unread,home.dm_unread);if(home?.me)syncDmPreference(home.me.dm_push_enabled!==false);if(!isTrainee())await refreshPushState();renderHost();
+      home=await msg("home");setUnread(home.unread,home.dm_unread);if(!isTrainee())await refreshPushState();renderHost();
       if(currentMode()==="notifications"){
         if(isTrainee()&&Number(home?.unread||0)>0){msg("trainee_read").then(()=>{home.unread=0;(home.trainee_messages||[]).forEach(x=>x.read_at=x.read_at||new Date().toISOString());setUnread(0);renderHost()}).catch(()=>{})}
         let pending="",openExchange=false;
@@ -372,7 +372,7 @@
     try{
       home=await msg("home");
       setUnread(home?.unread,home?.dm_unread);
-      if(home?.me)syncDmPreference(home.me.dm_push_enabled!==false);
+      
       renderInbox();
       const id=String(options.conversation||inboxState.conversation||"");
       inboxState.conversation="";
