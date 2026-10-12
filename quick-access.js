@@ -44,7 +44,7 @@
       label: "Esprit d’équipe",
       open: () => openDocument("esprit-equipe.html?entry=quick-access"),
     },
-    leisure: { label: "Sorties & loisirs", open: () => openDocument("sorties-loisirs.html") },
+    leisure: { label: "Ensemble", open: () => openDocument("sorties-loisirs.html") },
     communication: {
       label: "Communication",
       open: () => window.STIPRouter?.set?.("communication/chat"),
@@ -133,7 +133,7 @@
     meeting_notes: ["Notes de réunion", "Saisir, retrouver et archiver vos notes de réunion personnelles.", "Organisation"],
     team: ["Esprit d’équipe", "Planning d’équipe et outils collectifs.", "Équipe"],
     nouveau: ["Le Nouveau", "Décide de la suite et raconte ta galère : fiction interactive de brancardier.", "Découvrir"],
-    leisure: ["Sorties & loisirs", "Proposer une sortie, choisir ses dates et consulter les inscrits.", "Équipe"],
+    leisure: ["Ensemble", "Activités, invitations et covoiturage entre collègues.", "Équipe"],
     communication: ["Communication", "Chat équipe, DM & groupes et Fauteuils.", "Communication"],
     agents: ["Équipe", "Voir les présents, les absents et joindre rapidement un collègue.", "Équipe"],
     compare: ["Comparer les plannings", "Comparer rapidement plusieurs plannings.", "Organisation"],
