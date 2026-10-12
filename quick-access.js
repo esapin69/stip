@@ -172,8 +172,8 @@
     const p = window.STIPPreview?.active
       ? { ...(window.STIPSession?.permissions || {}) }
       : {
-          ...(window.STIPSession?.permissions || {}),
           ...(window.STIPBootCache?.permissions || {}),
+          ...(window.STIPSession?.permissions || {}),
         };
     if (k.startsWith("resp_")) {
       if (!p.responsable) return false;
