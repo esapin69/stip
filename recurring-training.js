@@ -17,7 +17,7 @@
    area.innerHTML=visible.map(person=>'<label class="training-person"><input type="checkbox" data-training-person="'+esc(person.id)+'" '+(state.selected.has(person.id)?'checked':'')+'><span>'+esc(person.name)+'</span></label>').join("")||"<p>Aucun collègue trouvé.</p>";
    $("#trainingRecCount").textContent=state.selected.size+" collègue(s) sélectionné(s)";
    area.querySelectorAll("[data-training-person]").forEach(el=>el.onchange=()=>{
-     if(el.checked){if(state.selected.size>=24){el.checked=false;return;}state.selected.add(el.dataset.trainingPerson);}
+     if(el.checked){if(state.selected.size>=120){el.checked=false;return;}state.selected.add(el.dataset.trainingPerson);}
      else state.selected.delete(el.dataset.trainingPerson);
      $("#trainingRecCount").textContent=state.selected.size+" collègue(s) sélectionné(s)";
    });
@@ -34,7 +34,7 @@
        !state.loaded?'<button class="ensemble-subtle" type="button" id="trainingRetry">Réessayer</button>':
        '<form id="trainingCreate" class="training-form" data-stip-form-mode="standard">'+
         '<div class="training-schedule"><strong>'+state.days.length+' dates possibles</strong><span>Selon ton planning · fermeture à 21 h</span></div>'+
-        (state.days.length?'<div class="training-days">'+state.days.slice(0,4).map(date=>'<span>✓ '+esc(label(date))+'</span>').join("")+
+        (state.days.length?'<div class="training-days">'+state.days.slice(0,4).map(date=>'<span>🟡 '+esc(label(date))+'</span>').join("")+
           (state.days.length>4?'<small>＋ '+(state.days.length-4)+' autres</small>':'')+'</div>':
           '<p class="training-error">Aucune fermeture prévue dans les 31 prochains jours. Réessaie après la mise à jour du planning.</p>')+
         '<label>Quelle activité ?<div class="training-shortcuts">'+
@@ -44,7 +44,7 @@
           '<button type="button" data-training-shortcut="">✏️ Autre</button></div>'+
           '<input name="title" value="Muscu après la fermeture" maxlength="120" required aria-label="Titre de l’activité"></label>'+
         '<div class="training-pick"><label>Avec qui ?<input type="search" id="trainingRecSearch" placeholder="Chercher un collègue"></label>'+
-        '<div id="trainingRecPeople" class="training-people"></div><p id="trainingRecCount"></p></div>'+
+        '<div class="training-select-tools"><button type="button" data-training-select-all>✓ Inviter tout le monde</button><button type="button" data-training-select-none>Tout retirer</button></div><div id="trainingRecPeople" class="training-people"></div><p id="trainingRecCount"></p></div>'+
         '<details class="training-options"><summary>Lieu, horaire et précisions</summary>'+
           '<label>Lieu (facultatif)<input name="location" maxlength="240" placeholder="Salle / adresse à fixer"></label>'+
           '<label>Heure de rendez-vous<input name="time_label" maxlength="240" value="21:20"></label>'+
@@ -57,6 +57,10 @@
    root.querySelector("#trainingRetry")?.addEventListener("click",()=>load());
    if(state.loaded){
     renderPeople();
+    root.querySelector('[data-training-select-all]').onclick=()=>{
+     state.colleagues.forEach(p=>state.selected.add(p.id));renderPeople();
+    };
+    root.querySelector('[data-training-select-none]').onclick=()=>{state.selected.clear();renderPeople()};
     $("#trainingRecSearch").value=state.filter;
     $("#trainingRecSearch").oninput=e=>{state.filter=e.target.value;renderPeople()};
     root.querySelectorAll("[data-training-shortcut]").forEach(button=>button.onclick=()=>{
