@@ -80,6 +80,7 @@
     if(definitions.length)window.STIPShiftRegistry?.set?.(definitions);
     asOf=timestamp;
     drawCards();
+    if(dialog.open&&dialog.dataset.day!==undefined)refreshDayPop(Number(dialog.dataset.day));
     window.dispatchEvent(new CustomEvent('t-est:planning-updated'));
   }
   function drawCards(){
@@ -174,6 +175,10 @@
     if(loading)html+='<p class="pop-live">Actualisation des données en cours…</p>';
     return html;
   }
+  function refreshDayPop(day){
+    if(day!==0&&day!==1)return;
+    show(day===0?'Aujourd’hui':'Demain',dayHTML(day),day);
+  }
   function channels(){
     // Le bloc Communication est l'unique entrée pour les conversations.
     // La liste des discussions et la création sont remplies par accueil-v3-canaux.js.
@@ -200,6 +205,7 @@
           String(e.message||'Planning indisponible.');
       }finally{
         loading=false;clearTimeout(timeout);currentRequest=null;
+        if(dialog.open&&dialog.dataset.day!==undefined)refreshDayPop(Number(dialog.dataset.day));
         window.dispatchEvent(new CustomEvent('t-est:planning-updated'));
       }
     })();
@@ -217,8 +223,16 @@
     window.setTimeout(()=>{if(localStorage.getItem(STORE)===token)refresh(token,hash);},160);
   }
 
-  window.TEstAccueilPlanning={htmlFor:dayHTML,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
+  window.TEstAccueilPlanning={htmlFor:dayHTML,showPopup:refreshDayPop,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
+  document.querySelectorAll('[data-block="planning"] [data-jour]').forEach(b=>b.addEventListener('click',()=>refreshDayPop(Number(b.dataset.jour))));
   document.querySelectorAll('[data-canaux-open]').forEach(b=>b.addEventListener('click',channels));
+  popBody.addEventListener('click',e=>{
+    if(e.target.closest('[data-open-planning]')){
+      dialog.close();
+      window.TEstDashboard?.open('planning','personal',{forceOpen:true});
+    }
+  });
+  dialog.addEventListener('close',()=>{delete dialog.dataset.day});
   document.getElementById('fermerPop').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   window.addEventListener('pageshow',()=>{if(!document.hidden)drawCards();});
