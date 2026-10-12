@@ -13,3 +13,32 @@
 
 
 .leisure-home-chats{display:grid;gap:12px;margin-bottom:16px}.leisure-home-chats>div{padding:12px;border-bottom:1px solid var(--stip-line)}.leisure-home-chats .leisure-actions{margin-top:8px}.leisure-date>.stip-btn{margin:8px 0 0 32px;white-space:normal}
+
+/* Compact activity overview; the activity is the unit, not each conversation. */
+.leisure-home-chats{display:grid;gap:10px;margin:14px 0 18px}
+.leisure-home-card{border:1px solid var(--stip-line,#d6e5e8);border-radius:20px;padding:12px 14px;box-shadow:0 7px 20px rgba(15,56,72,.055)}
+.leisure-home-title{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.leisure-home-icon{display:grid;place-items:center;font-size:1.5rem;width:48px;height:48px;border-radius:14px;background:var(--stip-soft,#e8f4f4)}
+.leisure-home-title strong{display:block;font-size:1rem;line-height:1.3;color:var(--stip-ink,#153e52)}
+.leisure-home-title small{display:block;margin-top:3px;font-size:.82rem;color:var(--stip-muted,#607986)}
+.leisure-home-card .leisure-quick-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:6px}
+.leisure-quick-line small{font-size:.78rem;color:var(--stip-muted,#607986)}
+.leisure-home-card .stip-btn,.leisure-quick-line .stip-btn{flex:0 0 auto;min-height:38px;padding:7px 11px;font-size:.86rem;max-width:100%;text-decoration:none;box-shadow:none}
+.leisure-home-card details{border-top:1px solid var(--stip-line,#dbe7e9);padding-top:8px}
+.leisure-home-card details summary{cursor:pointer;font-size:.86rem;font-weight:700;min-height:32px;list-style-position:inside}
+.leisure-home-card details .leisure-quick-line+ .leisure-quick-line{padding-top:9px;border-top:1px solid var(--stip-line,#dce8e8)}
+.leisure-invite-form{display:grid;gap:12px}
+.leisure-invite-form>label{display:grid;gap:6px;font-weight:700}
+.leisure-invite-form input[type=search]{padding:12px;border:1px solid var(--stip-line,#d3e1e4);border-radius:12px;font:inherit;background:var(--stip-surface,#fff);color:var(--stip-ink,#123d4d);width:100%;box-sizing:border-box}
+.leisure-candidate-list{max-height:min(45vh,360px);overflow:auto;display:grid;gap:4px;padding:4px}
+.leisure-candidate{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--stip-line,#d3e1e4);border-radius:12px;cursor:pointer;min-height:44px}
+.leisure-candidate[hidden]{display:none}
+.leisure-candidate input{width:21px;height:21px;accent-color:var(--stip-accent,#148599)}
+.leisure-invite-count{font-size:.88rem;font-weight:700;color:var(--stip-ink,#123d4d)}
+.leisure-card{padding:15px;box-shadow:0 6px 18px rgba(8,56,72,.06);border-radius:18px}
+.leisure-card h2{font-size:1.16rem;margin-bottom:7px}
+.leisure-card p{margin:6px 0;color:var(--stip-muted,#607986);font-size:.9rem}
+.leisure-card .leisure-actions{gap:7px;margin-top:9px}
+.leisure-card .leisure-actions .stip-btn{flex:0 1 auto;min-height:40px;font-size:.88rem;padding:8px 11px}
+.leisure-date-summary{gap:5px;margin:11px 0}
+@media(max-width:420px){.leisure-home-card{padding:12px}.leisure-home-card .leisure-quick-line{gap:6px}.leisure-home-card .stip-btn{font-size:.83rem}.leisure-card .leisure-actions .stip-btn{flex-basis:auto}}
