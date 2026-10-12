@@ -1,0 +1,12 @@
+.aw-panel{padding:1rem;margin:1rem 0 1.5rem;border:1px solid #cbdfe1;border-radius:1rem;box-sizing:border-box}
+.aw-panel h2{margin:0 0 .4rem;font-size:1.3rem}
+.aw-panel p{font-size:.9rem}
+.aw-form{display:grid;gap:.75rem}
+.aw-form label{display:grid;gap:.3rem;font-weight:650}
+.aw-form input,.aw-form textarea,.aw-form select{min-height:42px;width:100%;box-sizing:border-box;padding:.6rem .7rem;border:1px solid #b4ced2;border-radius:.65rem;font:inherit;background:white;color:#193b40}
+.aw-form textarea{resize:vertical}
+.aw-slots{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+.aw-slot{display:grid;gap:.25rem;border:1px solid #b3cacc;border-radius:.7rem;background:#f0f8f8;padding:.65rem;color:#173f45;font-weight:700}
+.aw-slot.selected{border:2px solid #137480;background:#d9f0f1}
+.aw-slot small{font-size:.7rem;font-weight:400}
+#awSubmit{justify-self:start}
