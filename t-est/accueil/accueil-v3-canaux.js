@@ -67,6 +67,7 @@
     const clean=(Array.isArray(incoming)?incoming:[]).map(safeGroup).filter(Boolean);
     groups=[...new Map(clean.map(x=>[x.id,x])).values()];
     draw();store();
+    paintChoices();
   }
   async function post(action,body={},wait=12000){
     const value=token();
@@ -107,16 +108,21 @@
     }).finally(()=>{memberLoading=null});
     return memberLoading;
   }
+  function paintChoices(){
+    const body=$('#popBody'),list=body?.querySelector('[data-channel-list]');
+    if(!list)return;
+    const cards=groups.map(g=>
+      '<button type="button" data-existing-channel="'+esc(g.id)+'"><span aria-hidden="true">💬</span>'+
+      '<span><strong>'+esc(g.title)+'</strong><small>Ouvrir le fil et écrire un message</small></span></button>'
+    ).join('');
+    list.innerHTML=(cards||'<p class="pop-info">Aucun canal collectif pour le moment.</p>')+
+      '<button type="button" class="pop-primary pop-create-channel" data-new-channel>＋ Créer un canal collectif</button>';
+  }
   function buildChoice(){
     const body=$('#popBody');
-    if(!body)return;
-    if(body.querySelector('[data-new-channel]'))return;
-    const div=document.createElement('div');
-    div.className='pop-new-channel-entry';
-    div.innerHTML='<button type="button" class="pop-primary pop-create-channel" data-new-channel>＋ Créer un nouveau canal collectif</button>'+
-      '<p class="pop-info">Une fois créé avec des collègues, il s’ajoute aux cartes Communication.</p>';
-    body.append(div);
-    refreshGroups();
+    if(!body?.querySelector('[data-channel-list]'))return;
+    paintChoices();
+    refreshGroups().then(paintChoices);
   }
   function renderForm(message=''){
     const body=$('#popBody');
@@ -169,6 +175,14 @@
   document.addEventListener('click',e=>{
     if(e.target.closest('[data-canaux-open]')){buildChoice();return;}
     if(e.target.closest('[data-new-channel]')){renderForm();return;}
+    const existing=e.target.closest('[data-existing-channel]');
+    if(existing){
+      const id=existing.dataset.existingChannel;
+      if(groups.some(g=>g.id===id)){
+        $('#accueilPop').close();
+        openConversation(id);
+      }
+    }
   });
   window.addEventListener('popstate',currentSelection);
   window.addEventListener('pageshow',()=>{
