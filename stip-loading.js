@@ -33,7 +33,23 @@ const AGENT_WARM={
   directory:{permission:'agent_directory',url:'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly',action:'directory'},
   dates:{permission:'agent_dates',url:'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates',action:'list'}
 };
-function agentWarmKey(kind){return AGENT_WARM_PREFIX+sessionKey()+':'+kind}
+function agentWarmSession(){
+  const token=localStorage.getItem('stip_session_v1')||'';
+  if(!token)return null;
+  if(window.STIPSession)return window.STIPSession;
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('stip_session_snapshot_v1')||'null');
+    if(saved?.version===1&&saved.token===token.slice(-16)&&
+       Date.now()-Number(saved.at||0)<120000)return saved.session||null;
+  }catch{}
+  return null;
+}
+function agentWarmOwner(session=agentWarmSession()){
+  const agent=session?.agent||{};
+  const id=String(agent.id||agent.source_key||agent.matricule||'').trim();
+  return id?[session.role_key||'',id].join(':'):'';
+}
+function agentWarmKey(kind){const owner=agentWarmOwner();return owner?AGENT_WARM_PREFIX+sessionKey()+':'+encodeURIComponent(owner)+':'+kind:''}
 function clearAgentWarm(kind=''){
   try{for(let i=sessionStorage.length-1;i>=0;i--){const key=sessionStorage.key(i)||'';
     if(key.startsWith(AGENT_WARM_PREFIX)&&(!kind||key.endsWith(':'+kind)))sessionStorage.removeItem(key);
@@ -43,14 +59,15 @@ function clearAgentWarm(kind=''){
 function readAgentWarm(kind){
   const config=AGENT_WARM[kind],token=localStorage.getItem('stip_session_v1')||'';
   if(!config||!token||window.STIPPreview?.active)return null;
-  const session=window.STIPSession||window.STIPContinuity?.readFresh?.();
-  if(session?.permissions?.[config.permission]!==undefined&&session.permissions[config.permission]!==true)return null;
+  const session=agentWarmSession();
+  if(!session||session.permissions?.[config.permission]!==true||!agentWarmOwner(session))return null;
   const data=readCache(agentWarmKey(kind),AGENT_WARM_TTL);
   return Array.isArray(data?.items)?data:null;
 }
 function writeAgentWarm(kind,data,expectedToken=localStorage.getItem('stip_session_v1')||''){
-  if(!AGENT_WARM[kind]||!expectedToken||expectedToken!==localStorage.getItem('stip_session_v1')||!Array.isArray(data?.items))return false;
-  writeCache(agentWarmKey(kind),data);return true;
+  const key=agentWarmKey(kind);
+  if(!AGENT_WARM[kind]||!key||!expectedToken||expectedToken!==localStorage.getItem('stip_session_v1')||!Array.isArray(data?.items))return false;
+  writeCache(key,data);return true;
 }
 function warmAgentData(kind,session=window.STIPSession){
   const config=AGENT_WARM[kind],token=localStorage.getItem('stip_session_v1')||'';
@@ -59,6 +76,7 @@ function warmAgentData(kind,session=window.STIPSession){
      window.STIPPreview?.active||document.hidden||conn.saveData||/(?:^|-)2g$/.test(conn.effectiveType||''))return Promise.resolve(false);
   if(readAgentWarm(kind))return Promise.resolve(true);
   const key=agentWarmKey(kind);
+  if(!key)return Promise.resolve(false);
   if(agentWarmInflight.has(key))return agentWarmInflight.get(key);
   const headers=kind==='directory'
     ?{'Content-Type':'application/json','X-STIP-Session':token}
@@ -73,8 +91,8 @@ function warmAgentData(kind,session=window.STIPSession){
     const data=await response.json().catch(()=>null);
     if(data?.error||!Array.isArray(data?.items))return false;
     if(localStorage.getItem('stip_session_v1')!==token||window.STIPPreview?.active)return false;
-    const current=window.STIPSession;
-    if(current?.permissions?.[config.permission]===false)return false;
+    const current=agentWarmSession();
+    if(current?.permissions?.[config.permission]!==true||agentWarmOwner(current)!==agentWarmOwner(session))return false;
     return writeAgentWarm(kind,data,token);
   }).catch(()=>false).finally(()=>agentWarmInflight.delete(key));
   agentWarmInflight.set(key,request);
