@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261012-chat-push-fix5";
+const STIP_SW_BUILD="20261012-recurring-brand-v2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
