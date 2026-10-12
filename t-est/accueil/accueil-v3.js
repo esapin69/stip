@@ -80,11 +80,13 @@
     if(definitions.length)window.STIPShiftRegistry?.set?.(definitions);
     asOf=timestamp;
     drawCards();
-    if(dialog.open&&dialog.dataset.day!==undefined)showDay(Number(dialog.dataset.day));
+    window.dispatchEvent(new CustomEvent('t-est:planning-updated'));
   }
   function drawCards(){
     $$('.accueil-carte[data-jour]').forEach(el=>{
-      const shift=meta(getRow(Number(el.dataset.jour))),caption=el.querySelector('[data-shift]');
+      const caption=el.querySelector('[data-shift]');
+      if(!caption)return;
+      const shift=meta(getRow(Number(el.dataset.jour)));
       el.style.removeProperty('--carte-shift');
       el.style.removeProperty('--carte-soft');
       el.removeAttribute('data-loaded');
@@ -149,7 +151,8 @@
         when:String(x.horaires||''),where:'',detail:''});
     return all;
   }
-  function showDay(delta){
+  function dayHTML(delta){
+    if(delta===7)return '<p class="pop-info">Le détail de la semaine sera ajouté ici.</p>';
     const iso=dayIso(delta),m=meta(getRow(delta)),events=dayEvents(iso),title=delta?'Demain':'Aujourd’hui';
     let html='<p class="pop-date">'+esc(shiftDay(iso))+'</p>';
     if(m){
@@ -169,56 +172,13 @@
       :'<p class="pop-info">'+(loading&&!asOf?'Recherche des informations du jour…':'Aucun événement personnel signalé.')+'</p>';
     html+='<footer class="pop-footer"><button type="button" class="pop-primary" data-open-planning>Voir mon planning complet ›</button></footer>';
     if(loading)html+='<p class="pop-live">Actualisation des données en cours…</p>';
-    show(title,html,delta);
+    return html;
   }
   function channels(){
     // Le bloc Communication est l'unique entrée pour les conversations.
     // La liste des discussions et la création sont remplies par accueil-v3-canaux.js.
     show('Ouvrir / créer une discussion',
       '<div class="pop-choix" data-channel-list><p class="pop-info">Tes discussions collectives disponibles apparaissent ici.</p></div>');
-  }
-  function locationFor(bloc,vue){
-    const next=new URL(window.location.href);
-    next.searchParams.delete('conversation');
-    if(!bloc){next.searchParams.delete('bloc');next.searchParams.delete('vue');}
-    else{next.searchParams.set('bloc',bloc);next.searchParams.set('vue',vue);}
-    return next.pathname+next.search+next.hash;
-  }
-  function navigate(bloc,vue){
-    const next=locationFor(bloc,vue);
-    if(next!==location.pathname+location.search+location.hash)history.pushState({tEst:true,bloc,vue},'',next);
-    view();
-    window.dispatchEvent(new CustomEvent('t-est:page-open'));
-    window.scrollTo({top:0,behavior:'instant'});
-  }
-  function view(){
-    const params=new URLSearchParams(location.search);
-    const bloc=params.get('bloc')||'',vue=params.get('vue')||'';
-    const communication=bloc==='communication'&&['fauteuils','dm'].includes(vue);
-    const planning=bloc==='planning'&&vue==='personnel';
-    const detail=communication||planning;
-    document.body.classList.toggle('accueil-mode-detail',detail);
-    $('#tAccueilHome').hidden=detail;
-    $('#tAccueilSousPage').hidden=!detail;
-    if(!detail){
-      $('#tAccueilSousPage').classList.remove('t-inner-scrolling');
-      return;
-    }
-    $('#tModuleTitre').textContent=communication?'Communication':'Mon planning';
-    $('[data-carousel-detail]').hidden=!communication;
-    $('[data-planning-detail]').hidden=!planning;
-    $('#tAccueilSousPage .canal-action').hidden=!communication;
-    $$('#tAccueilSousPage [data-ouverture]').forEach(b=>b.setAttribute('aria-current',String(communication&&b.dataset.ouverture===vue)));
-    const frame=$('#tModuleFrame'),destination=DESTINATIONS[vue],url=new URL(destination,location.origin);
-    if(communication && vue==='dm' && params.get('conversation'))url.searchParams.set('conversation',params.get('conversation'));
-    if(frame.dataset.source!==url.href){
-      $('#tAccueilSousPage').classList.remove('t-inner-scrolling');
-      frame.dataset.source=url.href;
-      frame.src=url.href;
-      frame.title=(communication?'Communication : ':'Planning : ')+(vue==='dm'?'DM · privé':vue==='loisirs'?'Événements':vue==='fauteuils'?'Fauteuils':'Personnel');
-    }
-    $('#tModuleStatut').textContent='';
-    requestAnimationFrame(sizeDetailFrame);
   }
   async function refresh(token,hash){
     if(currentRequest)return currentRequest;
@@ -240,13 +200,13 @@
           String(e.message||'Planning indisponible.');
       }finally{
         loading=false;clearTimeout(timeout);currentRequest=null;
-        if(dialog.open&&dialog.dataset.day!==undefined)showDay(Number(dialog.dataset.day));
+        window.dispatchEvent(new CustomEvent('t-est:planning-updated'));
       }
     })();
     return currentRequest;
   }
   async function initialize(){
-    view();drawCards();
+    drawCards();
     const token=localStorage.getItem(STORE)||'';
     if(!token){error='Connecte-toi à GHE pour voir ton planning.';return;}
     account=owner();
@@ -256,87 +216,11 @@
     if(asOf&&Date.now()-asOf<120000)return; // Données fraîches : pas de requête lourde inutile.
     window.setTimeout(()=>{if(localStorage.getItem(STORE)===token)refresh(token,hash);},160);
   }
-  $$('.accueil-carte[data-jour]').forEach(b=>b.addEventListener('click',()=>showDay(Number(b.dataset.jour))));
-  $$('[data-ouverture]').forEach(b=>b.addEventListener('click',()=>navigate('communication',b.dataset.ouverture)));
-  $$('[data-canaux-open]').forEach(b=>b.addEventListener('click',channels));
-  $('[data-retour]').addEventListener('click',()=>navigate('',''));
-  $('#fermerPop').addEventListener('click',()=>dialog.close());
-  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
-  dialog.addEventListener('close',()=>{delete dialog.dataset.day;});
-  popBody.addEventListener('click',e=>{
-    const channel=e.target.closest('[data-canal]');
-    if(channel){dialog.close();navigate('communication',channel.dataset.canal);return;}
-    if(e.target.closest('[data-open-planning]')){dialog.close();navigate('planning','personnel');}
-  });
-  // Le défilement des sous-pages s'effectue dans l'iframe.
-  // Il doit aussi libérer le haut de la page d'accueil T-est : titre et carrousel.
-  const detailShell=$('#tAccueilSousPage');
-  // Calcule la vraie place disponible : bande d'historique + haut de page.
-  // Empêche le parent et l'iframe d'avoir deux défilements verticaux concurrents.
-  function sizeDetailFrame(){
-    if(detailShell.hidden)return;
-    const band=document.getElementById('tEstHistoryBar')?.offsetHeight||40;
-    const head=detailShell.classList.contains('t-inner-scrolling')?0:
-      (detailShell.querySelector('.t-nav-fixed')?.offsetHeight||0);
-    const status=detailShell.querySelector('#tModuleStatut')?.offsetHeight||0;
-    detailShell.style.setProperty('--t-est-detail-offset',Math.ceil(band+head+status)+'px');
-  }
-  let detachScroll=()=>{};
-  const syncInnerScroll=e=>{
-    if(detailShell.hidden)return;
-    const doc=moduleFrame.contentDocument;
-    if(!doc)return;
-    const target=e?.target;
-    const targetIsScrollable=target?.nodeType===1&&target.scrollHeight>target.clientHeight+16;
-    const targetY=targetIsScrollable?Number(target.scrollTop||0):0;
-    const documentY=Math.max(
-      Number(moduleFrame.contentWindow?.scrollY||0),
-      Number(doc.scrollingElement?.scrollTop||0),
-      Number(doc.documentElement?.scrollTop||0)
-    );
-    const scrolled=Math.max(documentY,targetY)>12;
-    if(detailShell.classList.contains('t-inner-scrolling')!==scrolled){
-      detailShell.classList.toggle('t-inner-scrolling',scrolled);
-      requestAnimationFrame(sizeDetailFrame);
-    }
-  };
-  // T-est uniquement : les en-tetes defilent, les onglets internes restent visibles.
-  const moduleFrame=$('#tModuleFrame');
-  moduleFrame?.addEventListener('load',()=>{
-    detachScroll();
-    detailShell.classList.remove('t-inner-scrolling');
-    requestAnimationFrame(sizeDetailFrame);
-    try{
-      const innerDoc=moduleFrame.contentDocument,innerWin=moduleFrame.contentWindow;
-      if(innerDoc&&innerWin){
-        const listener=e=>syncInnerScroll(e);
-        innerDoc.addEventListener('scroll',listener,{capture:true,passive:true});
-        innerWin.addEventListener('scroll',listener,{passive:true});
-        detachScroll=()=>{
-          innerDoc.removeEventListener('scroll',listener,true);
-          innerWin.removeEventListener('scroll',listener);
-        };
-      }
-    }catch{}
 
-    try{
-      const doc=moduleFrame.contentDocument;
-      if(!doc||doc.getElementById('t-est-tabs-only'))return;
-      const rules=doc.createElement('style');
-      rules.id='t-est-tabs-only';
-      rules.textContent=[
-        '.ca-head,.ensemble-topbar,.ensemble-hero{position:static!important;top:auto!important;}',
-        '.ca-app .ca-tabs,.ca-app.is-wheelchair-tab.is-chrome-compact .ca-tabs{',
-        'position:sticky!important;top:0!important;z-index:40!important;',
-        'opacity:1!important;max-height:none!important;overflow:visible!important;',
-        'pointer-events:auto!important;}',
-        '.ensemble-nav{position:sticky!important;top:0!important;z-index:40!important;}'
-      ].join('');
-      doc.head.appendChild(rules);
-    }catch{}
-  });
-  window.addEventListener('resize',sizeDetailFrame,{passive:true});
-  window.addEventListener('popstate',view);
+  window.TEstAccueilPlanning={htmlFor:dayHTML,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
+  document.querySelectorAll('[data-canaux-open]').forEach(b=>b.addEventListener('click',channels));
+  document.getElementById('fermerPop').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   window.addEventListener('pageshow',()=>{if(!document.hidden)drawCards();});
   initialize();
 })();
