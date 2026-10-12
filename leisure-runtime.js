@@ -6,6 +6,7 @@
  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
  const state={events:[],can_create:false,token:'',loaded:false,inflight:null,error:''};
+ let deepLinkOpened=false;
  const drafts=new Map();
  const find=id=>state.events.find(e=>e.id===id);
  const chatURL=id=>'index.html?quick=communication&tab=dm&conversation='+encodeURIComponent(id)+'#/communication/dm';
@@ -36,7 +37,13 @@
   const token=localStorage.getItem(STORE)||'';if(!token){reset();return}
   if(state.token&&state.token!==token)reset();
   if(state.inflight)return state.inflight;
-  state.inflight=post({action:'list'}).catch(e=>{state.error=e.message;renderApp()}).finally(()=>{state.inflight=null});return state.inflight;
+  state.inflight=post({action:'list'}).then(()=>{
+   if(deepLinkOpened||!document.querySelector('#leisureApp'))return;
+   const id=new URLSearchParams(location.search).get('event');
+   if(id&&state.events.some(e=>e.id===id)){
+    deepLinkOpened=true;setTimeout(()=>openEvent(id),100);
+   }
+  }).catch(e=>{state.error=e.message;renderApp()}).finally(()=>{state.inflight=null});return state.inflight;
  }
  function pendingHTML(){
   if(state.token!==(localStorage.getItem(STORE)||''))return '';
