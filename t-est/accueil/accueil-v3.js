@@ -201,7 +201,10 @@
     document.body.classList.toggle('accueil-mode-detail',detail);
     $('#tAccueilHome').hidden=detail;
     $('#tAccueilSousPage').hidden=!detail;
-    if(!detail)return;
+    if(!detail){
+      $('#tAccueilSousPage').classList.remove('t-inner-scrolling');
+      return;
+    }
     $('#tModuleTitre').textContent=communication?'Communication':'Mon planning';
     $('[data-carousel-detail]').hidden=!communication;
     $('[data-planning-detail]').hidden=!planning;
@@ -210,6 +213,7 @@
     const frame=$('#tModuleFrame'),destination=DESTINATIONS[vue],url=new URL(destination,location.origin);
     if(communication && vue==='dm' && params.get('conversation'))url.searchParams.set('conversation',params.get('conversation'));
     if(frame.dataset.source!==url.href){
+      $('#tAccueilSousPage').classList.remove('t-inner-scrolling');
       frame.dataset.source=url.href;
       frame.src=url.href;
       frame.title=(communication?'Communication : ':'Planning : ')+(vue==='dm'?'DM · privé':vue==='loisirs'?'Événements':vue==='fauteuils'?'Fauteuils':'Personnel');
@@ -264,9 +268,42 @@
     if(channel){dialog.close();navigate('communication',channel.dataset.canal);return;}
     if(e.target.closest('[data-open-planning]')){dialog.close();navigate('planning','personnel');}
   });
+  // Le défilement des sous-pages s'effectue dans l'iframe.
+  // Il doit aussi libérer le haut de la page d'accueil T-est : titre et carrousel.
+  const detailShell=$('#tAccueilSousPage');
+  let detachScroll=()=>{};
+  const syncInnerScroll=e=>{
+    if(detailShell.hidden)return;
+    const doc=moduleFrame.contentDocument;
+    if(!doc)return;
+    const target=e?.target;
+    const targetIsScrollable=target?.nodeType===1&&target.scrollHeight>target.clientHeight+16;
+    const targetY=targetIsScrollable?Number(target.scrollTop||0):0;
+    const documentY=Math.max(
+      Number(moduleFrame.contentWindow?.scrollY||0),
+      Number(doc.scrollingElement?.scrollTop||0),
+      Number(doc.documentElement?.scrollTop||0)
+    );
+    detailShell.classList.toggle('t-inner-scrolling',Math.max(documentY,targetY)>12);
+  };
   // T-est uniquement : les en-tetes defilent, les onglets internes restent visibles.
   const moduleFrame=$('#tModuleFrame');
   moduleFrame?.addEventListener('load',()=>{
+    detachScroll();
+    detailShell.classList.remove('t-inner-scrolling');
+    try{
+      const innerDoc=moduleFrame.contentDocument,innerWin=moduleFrame.contentWindow;
+      if(innerDoc&&innerWin){
+        const listener=e=>syncInnerScroll(e);
+        innerDoc.addEventListener('scroll',listener,{capture:true,passive:true});
+        innerWin.addEventListener('scroll',listener,{passive:true});
+        detachScroll=()=>{
+          innerDoc.removeEventListener('scroll',listener,true);
+          innerWin.removeEventListener('scroll',listener);
+        };
+      }
+    }catch{}
+
     try{
       const doc=moduleFrame.contentDocument;
       if(!doc||doc.getElementById('t-est-tabs-only'))return;
