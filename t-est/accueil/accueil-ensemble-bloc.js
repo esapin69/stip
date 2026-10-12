@@ -11,8 +11,10 @@
   let currentHeight=0,ro=null,mo=null;
   function scrollBlock(){
     requestAnimationFrame(()=>{
+      const line=block.querySelector('[data-carousel="ensemble"]');
+      if(!line)return;
       const band=document.getElementById("tEstHistoryBar")?.offsetHeight||54;
-      const y=window.scrollY+block.getBoundingClientRect().top-band-10;
+      const y=window.scrollY+line.getBoundingClientRect().top-band-8;
       window.scrollTo({top:Math.max(0,y),behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"});
     });
   }
@@ -76,6 +78,7 @@
   function open(tab,{forceOpen=false,scroll=true,push=true,create=false}={}){
     if(!valid.has(tab))return;
     const opening=forceOpen||active!==tab;
+    if(opening)window.dispatchEvent(new CustomEvent("t-est:before-section-open",{detail:{block:"ensemble",id:tab}}));
     active=opening?tab:null;
     needsCreate=Boolean(create);
     region.hidden=!opening;
@@ -106,6 +109,11 @@
     if(p.get("bloc")==="ensemble"&&valid.has(p.get("vue"))){
       const tab=p.get("vue");if(active!==tab)open(tab,{forceOpen:true,push:false,scroll:false});
     }else if(active){active=null;region.hidden=true;updateButtons();}
+  });
+  addEventListener("t-est:before-section-open",e=>{
+    if(e.detail?.block!=="ensemble"){
+      active=null;region.hidden=true;updateButtons();
+    }
   });
   addEventListener("t-est:section-reset",()=>{active=null;region.hidden=true;updateButtons()});
   window.TEstEnsemble={open:(tab,options={})=>open(tab,{...options,forceOpen:true}),current:()=>active};
