@@ -7,7 +7,7 @@
   <title>T-est — Accueil GHE</title>
   <link rel="stylesheet" href="/stip-theme-base.css?v=20260928-card-signature1">
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
-  <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-dm2">
+  <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-dm3">
   <link rel="stylesheet" href="/t-est/accueil/accueil-historique.css?v=20261013-inline3">
   <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
   <script defer src="/stip-session-continuity.js?v=20260927-pin-security1"></script>
@@ -20,7 +20,7 @@
   <script defer src="/t-est/accueil/accueil-v3-canaux.js?v=20261013-dm2"></script>
   <script defer src="/t-est/accueil/accueil-depliants.js?v=20261013-dm2"></script>
   <script defer src="/t-est/accueil/accueil-ensemble-bloc.js?v=20261013-ensemble-return1"></script>
-  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-dm2"></script>
+  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-dm3"></script>
 </head>
 <body>
   <nav id="tEstHistoryBar" aria-label="Historique des pages GHE">
@@ -40,7 +40,7 @@
           <button class="accueil-carte" id="carte-aujourdhui" data-jour="0" type="button" aria-expanded="false">
             <span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span>
           </button>
-          <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-haspopup="dialog">
+          <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-expanded="false">
             <span class="carte-label">Demain</span><span class="carte-shift" data-shift></span>
           </button>
           <button class="accueil-carte" id="carte-semaine" type="button" data-jour="7" aria-expanded="false"><span class="carte-label">Cette semaine</span></button>
@@ -51,7 +51,7 @@
         <div class="t-separator"><span>Communication</span></div>
         <nav class="t-carousel" data-carousel="communication" aria-label="Communication">
           <button class="com-carte" type="button" data-ouverture="fauteuils"><span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span></button>
-          <button class="com-carte" type="button" data-ouverture="dm"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span></button>
+          <button class="com-carte" type="button" data-ouverture="dm" aria-haspopup="dialog"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span></button>
 
         </nav>
         <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
