@@ -132,6 +132,7 @@ async function createActivity(c:any,b:any){
   dates:selected,family:c.family,organizer_agent_id:c.agent_id,visibility
  }).select('id').single());
  try{
+  await checked(db.rpc('stip_leisure_sync_series_chat',{p_event:event.id}));
   if(guests.length){
    await checked(db.from('stip_leisure_invites').insert(guests.map((agent_id:any)=>({event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'}))));
    await checked(db.from('stip_notifications').insert(guests.map((agent_id:any)=>({
@@ -453,7 +454,7 @@ Deno.serve(async req=>{
    await checked(db.rpc('stip_leisure_sync_series_chat',{p_event:b.event_id}));
    return J({ok:true,id:b.event_id,...await list(c)});
   }
-  if(b.action==='calendar'){
+  if(b.action==='calendar_preview'){
    if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
    const start=typeof b.start==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(b.start)?b.start:today();
    const end=plusDays(start,Math.max(0,Math.min(185,Number(b.days)||62)));
