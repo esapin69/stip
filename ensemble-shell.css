@@ -1,0 +1,81 @@
+
+/* Ensemble GHE — primary layout; intentionally separate from legacy panels. */
+.ensemble-page{--ensemble-ink:#163b49;--ensemble-muted:#5e7881;--ensemble-stroke:#d5e4e5;--ensemble-cta:#154b61;max-width:900px;margin:0 auto;padding:12px clamp(14px,3vw,28px) 64px;box-sizing:border-box;color:var(--ensemble-ink)}
+.ensemble-page [hidden],.ensemble-page [hidden] *{display:none!important}
+.ensemble-topbar{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:2px 0 14px}
+.ensemble-back,.ensemble-reload{border:1px solid var(--ensemble-stroke);background:#fff;color:var(--ensemble-ink);font:inherit;font-weight:800;cursor:pointer;min-height:43px;border-radius:15px}
+.ensemble-back{padding:7px 14px;font-size:1.18rem}.ensemble-back span{font-size:.88rem}
+.ensemble-reload{font-size:1.4rem;width:45px;display:grid;place-items:center}
+.ensemble-brand{font-size:.72rem;letter-spacing:.11em;font-weight:850;text-transform:uppercase;color:#4e7780}.ensemble-brand b{color:#72c7bf}
+.ensemble-hero{padding:16px 2px 22px}
+.ensemble-kicker,.ensemble-eyebrow{font-size:.68rem;letter-spacing:.16em;font-weight:950;color:#168c82}
+.ensemble-hero h1{font-size:clamp(2.35rem,7vw,3.45rem);letter-spacing:-.065em;line-height:1.06;margin:8px 0 11px;font-weight:950;color:#163e4d}
+.ensemble-spark{color:#17a394}
+.ensemble-hero p{font-size:.96rem;line-height:1.52;max-width:650px;color:var(--ensemble-muted);margin:0}
+.ensemble-nav{position:sticky;top:0;z-index:25;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0 -5px 15px;padding:8px 5px;background:rgba(244,249,248,.96);backdrop-filter:blur(18px);border-bottom:1px solid var(--ensemble-stroke)}
+.ensemble-nav button{appearance:none;font:inherit;min-width:0;min-height:47px;display:flex;justify-content:center;align-items:center;gap:6px;border:0;border-radius:12px;background:transparent;color:#627d84;font-size:.85rem;font-weight:800;cursor:pointer;white-space:nowrap;padding:6px}
+.ensemble-nav button span{font-size:1.16rem}
+.ensemble-nav button.is-active{background:#fff;color:#105a69;box-shadow:0 3px 12px rgba(25,61,70,.09)}
+.ensemble-nav b{display:grid;place-items:center;min-width:18px;height:18px;font-size:.66rem;background:#c3435b;color:#fff;border-radius:20px}
+.ensemble-status{margin:0 0 12px;font-size:.86rem;color:var(--ensemble-muted)}
+.ensemble-status:empty{display:none}
+.ensemble-sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 13px}
+.ensemble-sectionhead h2{font-size:1.22rem;letter-spacing:-.03em;line-height:1.22;margin:0;color:var(--ensemble-ink);font-weight:950}
+.ensemble-sectionhead p{font-size:.8rem;color:var(--ensemble-muted);margin:3px 0 0}
+.ensemble-count{font-size:.72rem;color:#638087;font-weight:800}
+.ensemble-primary{background:var(--ensemble-cta);color:#fff;border:1px solid var(--ensemble-cta);min-height:46px;border-radius:14px;font:inherit;font-size:.87rem;font-weight:850;padding:10px 14px;cursor:pointer;box-shadow:none}
+.ensemble-subtle{background:#fff;border:1px solid var(--ensemble-stroke);color:#1d5261;min-height:43px;border-radius:13px;font:inherit;font-size:.86rem;font-weight:800;padding:8px 13px;cursor:pointer}
+.ensemble-cta{display:flex;align-items:center;justify-content:space-between;gap:13px;background:linear-gradient(120deg,#e5f4f0,#f4faf9);border:1px solid #d2e8e4;border-radius:20px;padding:16px;margin:6px 0 22px}
+.ensemble-cta h3{font-weight:900;font-size:.99rem;line-height:1.35;margin:0 0 4px}
+.ensemble-cta p{font-size:.79rem;line-height:1.35;color:#55747a;margin:0}
+.ensemble-empty{background:#fff;border:1px dashed #b9d7d8;border-radius:20px;padding:24px;text-align:center;margin:14px 0}
+.ensemble-empty>span{font-size:2rem;display:block;margin-bottom:8px}
+.ensemble-empty strong{display:block;font-weight:900;font-size:1.01rem}
+.ensemble-empty p{font-size:.86rem;color:var(--ensemble-muted);margin:7px 0 0}
+.ensemble-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:13px}
+.ensemble-activity{background:#fff;border:1px solid var(--ensemble-stroke);border-radius:22px;padding:17px;box-shadow:0 7px 21px rgba(27,64,76,.045);display:flex;flex-direction:column;gap:13px;min-width:0}
+.ensemble-activity-head{display:flex;align-items:center;gap:12px}
+.ensemble-activity-icon{height:51px;width:51px;flex:0 0 51px;display:grid;place-items:center;background:#eaf5f2;border-radius:15px;font-size:1.75rem}
+.ensemble-activity-title{flex:1;min-width:0}
+.ensemble-activity-title h3{font-size:1.07rem;letter-spacing:-.025em;margin:0 0 4px;line-height:1.3;overflow-wrap:anywhere}
+.ensemble-activity-title small{font-size:.78rem;color:var(--ensemble-muted);display:block}
+.ensemble-statuschip{font-size:.68rem;font-weight:850;white-space:nowrap;border-radius:99px;padding:5px 8px;background:#e5f4f2;color:#207266}
+.ensemble-statuschip.is-pending{color:#8c5e20;background:#fbf2dc}
+.ensemble-statuschip.is-closed{color:#7c8084;background:#eceeee}
+.ensemble-activity-meta{font-size:.82rem;color:#5c747f;line-height:1.38}
+.ensemble-activity-meta span+span::before{content:" · "}
+.ensemble-date-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.ensemble-day{display:grid;place-items:center;gap:2px;text-align:center;border-radius:13px;background:#f1f7f7;padding:10px 4px;min-height:76px;box-sizing:border-box}
+.ensemble-day.is-unavailable{opacity:.55}
+.ensemble-day small{font-size:.69rem;color:#63818a;font-weight:850;text-transform:uppercase}
+.ensemble-day b{font-size:1.28rem;line-height:1.05}
+.ensemble-day span{font-size:.69rem;color:#526e74}
+.ensemble-no-dates{font-size:.83rem;color:#6c858b;margin:0}
+.ensemble-card-actions{display:flex;align-items:center;gap:8px;margin-top:auto}
+.ensemble-card-actions .ensemble-primary{flex:1}
+.ensemble-card-actions .ensemble-subtle{flex:0 0 auto}
+.ensemble-more{margin-top:12px;border:1px solid var(--ensemble-stroke);border-radius:15px;background:#fff;padding:12px 14px}
+.ensemble-more summary{font-weight:800;cursor:pointer}
+.ensemble-more .ensemble-cards{margin-top:13px}
+.ensemble-creator{border-radius:23px;border:1px solid #c9e1e0;background:#fff;padding:17px;margin:3px 0 20px;box-shadow:0 7px 24px rgba(20,71,82,.05)}
+.ensemble-creator-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:13px}
+.ensemble-creator-top h2{font-size:1.2rem;margin:4px 0 0;letter-spacing:-.03em}
+.ensemble-creator-top button{background:#f2f7f7;border:0;border-radius:12px;width:40px;height:40px;color:#355e64;font-size:1.65rem}
+.ensemble-ways{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.ensemble-ways button{background:#f5faf9;border:1px solid #d8e8e7;border-radius:16px;padding:12px 6px;display:flex;flex-direction:column;gap:5px;align-items:center;text-align:center;min-width:0;color:#285161;font:inherit;cursor:pointer}
+.ensemble-ways button.is-selected{border-color:#168f92;background:#e6f6f4;box-shadow:0 0 0 1px #168f92}
+.ensemble-ways button>span{font-size:1.6rem}
+.ensemble-ways button strong{font-size:.8rem;line-height:1.2}
+.ensemble-ways button small{font-size:.69rem;line-height:1.25;color:#607c84}
+.ensemble-creator #ensembleAfterworkCreate,.ensemble-creator #trainingRecurringApp{margin-top:14px}
+.ensemble-creator #awPanel{margin:0}
+.ensemble-creator .training-section{margin:0}
+.ensemble-creator .training-head{margin-bottom:11px}
+.ensemble-creator .training-head p{font-size:.82rem}
+.ensemble-creator .training-content{margin-top:0}
+.ensemble-creator .training-form{gap:13px}
+.ensemble-page #carpoolApp{margin-top:6px;border-top:0;padding-top:0}
+.ensemble-page #carpoolApp .cp-head{margin-bottom:16px}
+.ensemble-page #carpoolApp .cp-head h2{font-size:1.3rem}
+.ensemble-page #carpoolApp .cp-card{background:#fff}
+@media(max-width:520px){.ensemble-page{padding:10px 14px 65px}.ensemble-topbar{padding-bottom:7px}.ensemble-hero{padding:14px 2px 16px}.ensemble-hero h1{font-size:2.55rem}.ensemble-hero p{font-size:.88rem}.ensemble-nav{margin:0 -3px 15px;padding:7px 3px}.ensemble-nav button{font-size:.78rem;padding:6px 1px;gap:4px}.ensemble-nav button span{font-size:1rem}.ensemble-cta{flex-direction:column;align-items:stretch;gap:11px}.ensemble-cta .ensemble-primary{width:100%}.ensemble-ways button{padding:10px 4px}.ensemble-ways button strong{font-size:.73rem}.ensemble-ways button small{font-size:.64rem}.ensemble-cards{grid-template-columns:1fr}.ensemble-activity{padding:15px}.ensemble-activity-icon{height:45px;width:45px;flex-basis:45px}}
