@@ -11,7 +11,10 @@
  const drafts=new Map();
  const find=id=>state.events.find(e=>e.id===id);
  const chatURL=id=>'index.html?quick=communication&tab=dm&conversation='+encodeURIComponent(id)+'#/communication/dm';
- function chatsHTML(e){return (e.chats||[]).map(c=>`<a class="stip-btn secondary" href="${esc(chatURL(c.conversation_id))}">Chat du ${esc(fmt(c.date))}</a>`).join('')}
+ function chatsHTML(e){
+  if(e.series_conversation_id)return '<a class="stip-btn secondary" href="'+esc(chatURL(e.series_conversation_id))+'">💬 Groupe de l’activité</a>';
+  return (e.chats||[]).map(c=>`<a class="stip-btn secondary" href="${esc(chatURL(c.conversation_id))}">Chat du ${esc(fmt(c.date))}</a>`).join('');
+ }
  const iconFor=title=>{
   const t=String(title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   if(/foot|soccer|futsal/.test(t))return '⚽';
@@ -95,7 +98,7 @@
   let saved=drafts.get(id);if(saved?.revision!==e.revision)saved=null;
   const chosen=new Set(saved?.dates||e.response?.selected_dates||[]),declined=saved? saved.declined:!!e.response?.declined,editable=active(e);
   const series=!!e.recurring_closing,host=series&&e.is_organizer,unavailable=new Set(e.organizer_unavailable_dates||[]);
-  body.innerHTML=`<p class="leisure-description">${esc(e.description)}</p><p><strong>Lieu :</strong> ${esc(e.location||'À fixer')}<br><strong>Horaire :</strong> ${esc(e.time_label||'À fixer')}</p>${!editable?`<p>${e.status==='cancelled'?'Sortie annulée':'Sortie terminée'}</p>`:''}<form data-stip-form-mode="standard" class="leisure-response"><fieldset><legend>${host?'Mes disponibilités · cochées par défaut':editable?'Quelles dates choisis-tu ? Plusieurs choix possibles.':'Dates et participants'}</legend>${e.dates.map(d=>`<section class="leisure-date"><label><input type="checkbox" name="dates" value="${esc(d)}" ${(host?!unavailable.has(d):chosen.has(d)&&!unavailable.has(d))?'checked':''} ${!editable||d<today()||(!host&&unavailable.has(d))?'disabled':''}><strong>${esc(fmt(d))}</strong><span>${unavailable.has(d)?'Organisateur indisponible':e.participants.filter(p=>p.selected_dates.includes(d)).length+' inscrit(s)'}</span></label>${participantsHTML(e,d)}${chatsHTML({...e,chats:(e.chats||[]).filter(c=>c.date===d)})}</section>`).join('')}</fieldset>${host?'<p class="leisure-organizer-note">Tu es disponible par défaut à chaque fermeture. Décoche seulement les jours où tu ne peux pas venir ; la modification est enregistrée immédiatement.</p>':''}${editable&&!host?`<label class="leisure-decline"><input type="checkbox" name="declined" ${declined?'checked':''}> Je ne participe pas</label><p role="status" aria-live="polite" data-leisure-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Valider ma réponse</button><button class="stip-btn secondary" type="button" data-leisure-later>Plus tard</button></footer>`:''}</form><div class="leisure-actions"><a class="stip-btn secondary" href="sorties-loisirs.html">Voir toutes les sorties</a>${e.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-edit>✏️ Modifier</button>':''}${e.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-invite>＋ Inviter des collègues</button>':''}</div>`;
+  body.innerHTML=`${e.series_conversation_id?'<p class="leisure-series-chat">'+chatsHTML(e)+'</p>':''}<p class="leisure-description">${esc(e.description)}</p><p><strong>Lieu :</strong> ${esc(e.location||'À fixer')}<br><strong>Horaire :</strong> ${esc(e.time_label||'À fixer')}</p>${!editable?`<p>${e.status==='cancelled'?'Sortie annulée':'Sortie terminée'}</p>`:''}<form data-stip-form-mode="standard" class="leisure-response"><fieldset><legend>${host?'Mes disponibilités · cochées par défaut':editable?'Quelles dates choisis-tu ? Plusieurs choix possibles.':'Dates et participants'}</legend>${e.dates.map(d=>`<section class="leisure-date"><label><input type="checkbox" name="dates" value="${esc(d)}" ${(host?!unavailable.has(d):chosen.has(d)&&!unavailable.has(d))?'checked':''} ${!editable||d<today()||(!host&&unavailable.has(d))?'disabled':''}><strong>${esc(fmt(d))}</strong><span>${unavailable.has(d)?'Organisateur indisponible':e.participants.filter(p=>p.selected_dates.includes(d)).length+' inscrit(s)'}</span></label>${participantsHTML(e,d)}${series?'':chatsHTML({...e,chats:(e.chats||[]).filter(c=>c.date===d)})}</section>`).join('')}</fieldset>${host?'<p class="leisure-organizer-note">Tu es disponible par défaut à chaque fermeture. Décoche seulement les jours où tu ne peux pas venir ; la modification est enregistrée immédiatement.</p>':''}${editable&&!host?`<label class="leisure-decline"><input type="checkbox" name="declined" ${declined?'checked':''}> Je ne participe pas</label><p role="status" aria-live="polite" data-leisure-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Valider ma réponse</button><button class="stip-btn secondary" type="button" data-leisure-later>Plus tard</button></footer>`:''}</form><div class="leisure-actions"><a class="stip-btn secondary" href="sorties-loisirs.html">Voir toutes les sorties</a>${e.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-edit>✏️ Modifier</button>':''}${e.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-invite>＋ Inviter des collègues</button>':''}</div>`;
   const form=body.querySelector('form'),decline=form.elements.declined;
   function draft(){drafts.set(id,{revision:e.revision,dates:[...form.querySelectorAll('input[name="dates"]:checked')].map(x=>x.value),declined:!!decline?.checked})}
   form.addEventListener('change',async event=>{
@@ -109,6 +112,13 @@
   body.querySelector('[data-leisure-later]')?.addEventListener('click',()=>close(dialog));
   body.querySelector('[data-leisure-edit]')?.addEventListener('click',()=>close(dialog,()=>openEditor(id)));
   body.querySelector('[data-leisure-invite]')?.addEventListener('click',()=>close(dialog,()=>openInvite(id)));
+  if(e.is_organizer){
+   const deleteButton=document.createElement('button');
+   deleteButton.type='button';deleteButton.className='stip-btn secondary leisure-delete-action';
+   deleteButton.textContent='🗑️ Supprimer définitivement';
+   body.querySelector('.leisure-actions:last-child')?.append(deleteButton);
+   deleteButton.onclick=()=>close(dialog,()=>openDelete(id));
+  }
   form.addEventListener('submit',async event=>{
    event.preventDefault();if(!editable||host)return;draft();const d=drafts.get(id),status=body.querySelector('[data-leisure-error]');
    if(!d.declined&&!d.dates.length){status.textContent='Choisis une date ou « Je ne participe pas ».';return}
@@ -196,7 +206,7 @@
    return '<div class="ensemble-day'+(unavailable.has(d)?' is-unavailable':'')+'"><small>'+esc(weekday)+'</small><b>'+day+'</b><span>'+ (unavailable.has(d)?'Indisponible':count+' partant'+(count>1?'s':''))+'</span></div>';
   }).join('');
   const future=active(e);
-  const firstChat=(e.chats||[]).find(c=>c.date>=today())||(e.chats||[])[0];
+  const firstChat=e.series_conversation_id?{conversation_id:e.series_conversation_id}:(e.chats||[]).find(c=>c.date>=today())||(e.chats||[])[0];
   return '<article class="ensemble-activity'+(future?'':' is-archived')+'">'+
     '<header class="ensemble-activity-head"><span class="ensemble-activity-icon" aria-hidden="true">'+iconFor(e.title)+'</span>'+
     '<div class="ensemble-activity-title"><h3>'+esc(e.title)+'</h3><small>'+esc(role)+'</small></div>'+
