@@ -6,7 +6,6 @@
   const DESTINATIONS={
     fauteuils:'/index.html?quick=communication&tab=fauteuils#/communication/fauteuils',
     dm:'/index.html?quick=communication&tab=dm#/communication/dm',
-    loisirs:'/sorties-loisirs.html',
     personnel:'/index.html#/planning/personal'
   };
   const COLORS={
@@ -176,7 +175,7 @@
     show('Créer / ouvrir un canal','<div class="pop-choix">'+
       '<button type="button" data-canal="fauteuils"><span aria-hidden="true">♿</span><span><strong>Fauteuils</strong><small>Ouvrir le canal existant</small></span></button>'+
       '<button type="button" data-canal="dm"><span aria-hidden="true">✉️</span><span><strong>DM · privé / groupe</strong><small>Créer ou retrouver une conversation</small></span></button>'+
-      '<button type="button" data-canal="loisirs"><span aria-hidden="true">🎉</span><span><strong>Événements · loisirs</strong><small>Voir ou créer une activité validée</small></span></button></div>');
+      '</div>');
   }
   function locationFor(bloc,vue){
     const next=new URL(window.location.href);
@@ -195,7 +194,7 @@
   function view(){
     const params=new URLSearchParams(location.search);
     const bloc=params.get('bloc')||'',vue=params.get('vue')||'';
-    const communication=bloc==='communication'&&Object.hasOwn(DESTINATIONS,vue)&&vue!=='personnel';
+    const communication=bloc==='communication'&&['fauteuils','dm'].includes(vue);
     const planning=bloc==='planning'&&vue==='personnel';
     const detail=communication||planning;
     document.body.classList.toggle('accueil-mode-detail',detail);
