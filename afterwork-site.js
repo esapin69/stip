@@ -86,7 +86,7 @@
   select.onchange=()=>{state.target=select.value;state.days=[];state.selectedDays=[];state.autoTime="";if(state.target)getDays();else show();};
   form.onsubmit=async e=>{e.preventDefault();const message=document.getElementById("awStatus"),send=document.getElementById("awSubmit");if(!state.target||!state.selectedDays.length){message.textContent="Choisis un collègue et au moins une date.";return;}
    send.disabled=true;message.textContent="Envoi…";
-   try{await call("propose",{target_agent_id:state.target,dates:state.selectedDays,title:form.elements.title.value,location:form.elements.location.value,time_label:form.elements.time_label.value,description:form.elements.description.value});
+   try{await call("propose",{target_agent_id:state.target,dates:state.selectedDays,title:form.elements.title.value,location:form.elements.location.value,time_label:'Après le travail · '+(form.elements.time_label.value.trim().replace(/^Après (?:le travail|le service|la fermeture)\s*[·:–-]?\s*/i,'')||'horaire à convenir'),description:form.elements.description.value});
     await window.STIPLeisure?.refresh?.();const banner=document.getElementById("leisureStatus");if(banner)banner.textContent="Invitation enregistrée. Elle figure dans les sorties."; }
    catch(err){message.textContent=err.message||"Envoi impossible.";}finally{send.disabled=false;}
   };
