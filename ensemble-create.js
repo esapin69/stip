@@ -9,7 +9,7 @@ const parse=d=>new Date(d+'T12:00:00');
 const long=d=>parse(d).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
 const today=iso(new Date());
 const state={loaded:false,loading:false,open:false,month:new Date(new Date().getFullYear(),new Date().getMonth(),1),
- days:[],people:[],dates:new Set(),guests:new Set(),mode:'invite',scheduleMode:'free',query:'',title:'Muscu',place:'',time:'',details:'',error:'',notice:'',sending:false};
+ days:[],people:[],dates:new Set(),guests:new Set(),mode:'invite',scheduleMode:'free',query:'',title:'',place:'',time:'',details:'',error:'',notice:'',sending:false};
 async function call(action,payload={}){
  const token=localStorage.getItem('stip_session_v1');if(!token)throw Error('Connexion GHE requise');
  const response=await fetch(API,{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-stip-session':token},body:JSON.stringify({action,...payload})});
