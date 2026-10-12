@@ -285,7 +285,7 @@
   else if(b.hasAttribute('data-leisure-create'))openEditor();
   else refresh();
  });
- window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite,openCreator,setTab:setView};
+ window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite,openCreator,closeCreator:()=>{view.createOpen=false;setView('activities')},setTab:setView};
  ['stip:session-ready','stip:boot-updated'].forEach(e=>window.addEventListener(e,refresh));
  ['stip:session-ended','stip:session-expired'].forEach(e=>window.addEventListener(e,reset));
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
