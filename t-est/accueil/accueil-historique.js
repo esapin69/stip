@@ -13,8 +13,12 @@
       const s=JSON.parse(sessionStorage.getItem(STORE)||"null");
       if(!s||Date.now()-s.at>8*3600000)return;
       steps=(Array.isArray(s.steps)?s.steps:[]).filter(x=>
-        x&&["planning","communication","ensemble"].includes(x.block)&&typeof x.id==="string"
-        &&typeof x.label==="string"
+        x&&typeof x.id==="string"&&typeof x.label==="string"&&(
+          (x.block==="planning"&&x.id==="personal")||
+          (x.block==="communication"&&(x.id==="fauteuils"||x.id==="dm"||
+            /^thread:[a-f0-9-]{36}$/i.test(x.id)))||
+          (x.block==="ensemble"&&["activities","trips","invitations"].includes(x.id))
+        )
       ).slice(-MAX);
     }catch{}
   }
