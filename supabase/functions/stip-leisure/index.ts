@@ -154,7 +154,7 @@ async function carpoolMatches(c:any,pref:any,shifts:any[]){
  return nearby.map((p:any)=>({
   agent_id:p.agent_id,
   name:all.find((a:any)=>a.id===p.agent_id)?.name||'Collègue',
-  has_car:p.has_car,common_dates:(potential.get(p.agent_id)||[]).sort().slice(0,3)
+  has_car:p.has_car,can_message:!!c.permissions?.messages,common_dates:(potential.get(p.agent_id)||[]).sort().slice(0,3)
  })).sort((a:any,b:any)=>Number(b.common_dates.length>0)-Number(a.common_dates.length>0)||Number(b.has_car)-Number(a.has_car)||a.name.localeCompare(b.name,'fr')).slice(0,12);
 }
 async function carpoolHome(c:any){
