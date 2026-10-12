@@ -18,7 +18,8 @@
   <script defer src="/t-est/outils-test/navigation-t.js?v=20260928-mirror3"></script>
   <script defer src="/t-est/accueil/accueil-v3.js?v=20261013-fils2"></script>
   <script defer src="/t-est/accueil/accueil-v3-canaux.js?v=20261013-fils2"></script>
-  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-fils2"></script>
+  <script defer src="/t-est/accueil/accueil-depliants.js?v=20261013-inline1"></script>
+  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-inline1"></script>
 </head>
 <body>
   <nav id="tEstHistoryBar" aria-label="Historique des pages GHE">
@@ -32,19 +33,20 @@
   </nav>
   <main id="t-est-accueil">
     <div id="tAccueilHome" class="t-shell">
-      <section aria-label="Mon planning">
+      <section aria-label="Mon planning" class="t-bloc" data-block="planning">
         <div class="t-separator is-first"><span>Mon planning</span></div>
         <nav class="t-carousel" data-carousel="planning" aria-label="Mon planning">
-          <button class="accueil-carte" id="carte-aujourdhui" data-jour="0" type="button" aria-haspopup="dialog">
+          <button class="accueil-carte" id="carte-aujourdhui" data-jour="0" type="button" aria-expanded="false">
             <span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span>
           </button>
           <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-haspopup="dialog">
             <span class="carte-label">Demain</span><span class="carte-shift" data-shift></span>
           </button>
-          <div class="accueil-carte" id="carte-semaine"><span class="carte-label">Cette semaine</span></div>
+          <button class="accueil-carte" id="carte-semaine" type="button" data-jour="7" aria-expanded="false"><span class="carte-label">Cette semaine</span></button>
         </nav>
+        <div class="t-expanded-region" data-expanded="planning" hidden aria-live="polite"></div>
       </section>
-      <section aria-label="Communication" class="com-bloc">
+      <section aria-label="Communication" class="com-bloc t-bloc" data-block="communication">
         <div class="t-separator"><span>Communication</span></div>
         <nav class="t-carousel" data-carousel="communication" aria-label="Communication">
           <button class="com-carte" type="button" data-ouverture="fauteuils"><span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span></button>
@@ -52,32 +54,11 @@
 
         </nav>
         <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
+        <div class="t-expanded-region" data-expanded="communication" hidden aria-live="polite"></div>
       </section>
 
     </div>
-    <div id="tAccueilSousPage" hidden>
-      <header class="t-nav-fixed">
-        <div class="t-shell">
-          <div class="t-subnav"><button type="button" class="t-retour" data-retour>‹ Accueil GHE</button></div>
-          <h2 class="com-titre" id="tModuleTitre">Communication</h2>
-          <nav class="t-carousel" data-carousel="communication" data-carousel-detail aria-label="Communication">
-            <button class="com-carte" type="button" data-ouverture="fauteuils"><span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span></button>
-            <button class="com-carte" type="button" data-ouverture="dm"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span></button>
-  
-          </nav>
-          <nav class="t-carousel" data-carousel="planning" data-planning-detail aria-label="Mon planning" hidden>
-            <button class="accueil-carte" data-jour="0" type="button" aria-haspopup="dialog"><span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span></button>
-            <button class="accueil-carte" data-jour="1" type="button" aria-haspopup="dialog"><span class="carte-label">Demain</span><span class="carte-shift" data-shift></span></button>
-            <div class="accueil-carte"><span class="carte-label">Cette semaine</span></div>
-          </nav>
-          <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
-        </div>
-      </header>
-      <section class="t-module-body" aria-label="Contenu de la rubrique">
-        <p class="t-module-status" id="tModuleStatut" role="status"></p>
-        <iframe id="tModuleFrame" class="t-module-iframe" title="Rubrique GHE" loading="eager" referrerpolicy="same-origin"></iframe>
-      </section>
-    </div>
+
   </main>
   <dialog class="accueil-pop" id="accueilPop" aria-labelledby="popTitre">
     <section class="pop-contenu">
