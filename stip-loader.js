@@ -103,7 +103,7 @@
       .then((response) => {
         if (!response.ok) return false;
         // Only HTML presentation files are warmed: no business request or private API response.
-        if (/\\.html?$/i.test(url.pathname) && !url.search) {
+        if (/\.html?$/i.test(url.pathname) && !url.search) {
           documentMarkup.set(key, response.clone().text().catch(() => ""));
         }
         return true;
@@ -124,12 +124,12 @@
   // The existing service worker stores these files for the following navigation.
   async function warmDocumentResources(raw) {
     const url = documentUrl(raw);
-    if (!url || url.search || !/\\.html?$/i.test(url.pathname)) return false;
+    if (!url || url.search || !/\.html?$/i.test(url.pathname)) return false;
     if (!(await warmDocument(url.href))) return false;
     const key = url.pathname;
     const markup = await documentMarkup.get(key);
     if (!markup || typeof DOMParser !== "function") return true;
-    const stem = url.pathname.split("/").pop().replace(/\\.html?$/i, "");
+    const stem = url.pathname.split("/").pop().replace(/\.html?$/i, "");
     const parsed = new DOMParser().parseFromString(markup, "text/html");
     const urls = [...parsed.querySelectorAll('link[rel="stylesheet"][href], script[src]')]
       .map((element) => element.getAttribute("href") || element.getAttribute("src"))
@@ -139,7 +139,7 @@
       .filter((resource) =>
         resource &&
         resource.origin === location.origin &&
-        /\\.(?:js|css)$/i.test(resource.pathname) &&
+        /\.(?:js|css)$/i.test(resource.pathname) &&
         resource.pathname.split("/").pop().startsWith(stem + ".")
       )
       .slice(0, 2);
