@@ -27,6 +27,12 @@ async function photo(raw:unknown){
  return data?.signedUrl||''
 }
 
+function shiftCode(raw:string){
+ const cleaned=String(raw||'').trim().toUpperCase().replace(/\s+/g,'').replace(/[*★☆✱✳✶✷✸✹✺✻✼✽✾✿]+$/u,'');
+ if(/^J4\d+$/.test(cleaned))return 'J4';
+ if(/^[MJSN]\d+$/.test(cleaned))return cleaned[0];
+ return cleaned;
+}
 const minutes=(s:string)=>{const [h,m]=s.split(':').map(Number);return h*60+m};
 const plusDays=(date:string,count:number)=>{const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+count);return d.toISOString().slice(0,10)};
 async function colleagues(c:any){
@@ -55,8 +61,8 @@ async function matches(c:any,target:string){
  const other=new Map((otherRows||[]).map((x:any)=>[x.date,x.code]));
  const days:any[]=[];
  for(const row of myRows||[]){
-  const myEnd=shifts.get(row.code) as string|undefined;
-  const hisEnd=shifts.get(other.get(row.date)) as string|undefined;
+  const myEnd=shifts.get(shiftCode(row.code)) as string|undefined;
+  const hisEnd=shifts.get(shiftCode(String(other.get(row.date)||''))) as string|undefined;
   if(!myEnd||!hisEnd)continue;
   const delta=Math.abs(minutes(myEnd)-minutes(hisEnd));
   if(delta>30)continue;
