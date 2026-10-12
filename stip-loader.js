@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261013-agent-data-warm1";
+    V = "20261013-general-prewarm1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -68,15 +68,30 @@
   }
   const documentWarm = new Map();
   const documentMarkup = new Map();
+  const documentAssetWarm = new Map();
+  // Single catalogue for page warming, navigation shortcuts and permission gating.
+  // Reading HTML/JS/CSS never executes a business action. The APIs remain authoritative.
+  const PAGE_CATALOG = [
+    { app: "account", page: "mon-compte.html", allowed: () => true },
+    { app: "agents", page: "agent-directory.html", allowed: (p) => p.agent_directory === true, data: "directory" },
+    { app: "dates", page: "agent-dates.html", allowed: (p) => p.agent_dates === true, data: "dates" },
+    { app: "team", page: "esprit-equipe.html", allowed: (p) =>
+      p.planning_team === true || p.activity === true || p.assistant_enabled === true },
+    { app: "leisure", page: "sorties-loisirs.html", allowed: (p) => p.leisure === true || p.sorties_loisirs === true },
+    { app: "meeting_notes", page: "meeting-notes.html", allowed: (p) => p.meeting_notes === true },
+    { app: "compare", page: "planning-compare-app.html", allowed: (p) =>
+      p.planning_personal === true && p.planning_team === true },
+    { app: "places", page: "places-app.html", allowed: (p) => p.places === true },
+    { app: "responsable", page: "responsable.html", allowed: (p) => p.responsable === true || p.admin === true },
+    { app: "upload", page: "depot.html", allowed: (p) => p.file_upload === true },
+    { app: "access", page: "access-manage.html", allowed: (p) => p.admin === true || p.access_manage === true },
+  ];
+  const PAGE_BY_APP = new Map(PAGE_CATALOG.map((page) => [page.app, page]));
   const DOCUMENT_APP_TARGET = {
-    agents: "agent-directory.html",
-    compare: "planning-compare-app.html",
-    dates: "agent-dates.html",
-    leisure: "sorties-loisirs.html",
-    places: "places-app.html",
+    ...Object.fromEntries(PAGE_CATALOG.map(({ app, page }) => [app, page])),
     assistant: "esprit-equipe.html?tab=assistant",
     activity: "esprit-equipe.html?tab=activity",
-    access: "access-manage.html",
+    admin: "access-manage.html",
   };
   function documentUrl(raw) {
     try {
@@ -120,78 +135,89 @@
     return promise;
   }
 
-  // Prefetch only the static shell and its own CSS/JS, without running the scripts.
-  // The existing service worker stores these files for the following navigation.
-  async function warmDocumentResources(raw) {
+  // General rule: stage a small set of navigable page shells and their own
+  // presentation assets, never API responses or scripts executed in the background.
+  function warmDocumentResources(raw) {
     const url = documentUrl(raw);
-    if (!url || url.search || !/\.html?$/i.test(url.pathname)) return false;
-    if (!(await warmDocument(url.href))) return false;
+    if (!url || url.search || !/\.html?$/i.test(url.pathname)) return Promise.resolve(false);
     const key = url.pathname;
-    const markup = await documentMarkup.get(key);
-    if (!markup || typeof DOMParser !== "function") return true;
-    const stem = url.pathname.split("/").pop().replace(/\.html?$/i, "");
-    const parsed = new DOMParser().parseFromString(markup, "text/html");
-    const urls = [...parsed.querySelectorAll('link[rel="stylesheet"][href], script[src]')]
-      .map((element) => element.getAttribute("href") || element.getAttribute("src"))
-      .map((rawUrl) => {
-        try { return new URL(rawUrl, url.href); } catch { return null; }
-      })
-      .filter((resource) =>
-        resource &&
-        resource.origin === location.origin &&
-        /\.(?:js|css)$/i.test(resource.pathname) &&
-        resource.pathname.split("/").pop().startsWith(stem + ".")
-      )
-      .slice(0, 2);
-    await Promise.allSettled(
-      urls.map((resource) =>
-        fetch(resource.href, { method: "GET", credentials: "same-origin", cache: "default" })
-      ),
-    );
-    documentMarkup.delete(key);
-    return true;
+    if (documentAssetWarm.has(key)) return documentAssetWarm.get(key);
+    const job = (async () => {
+      if (!(await warmDocument(url.href))) return false;
+      const markup = await documentMarkup.get(key);
+      if (!markup || typeof DOMParser !== "function") return true;
+      const stem = url.pathname.split("/").pop().replace(/\.html?$/i, "");
+      const parsed = new DOMParser().parseFromString(markup, "text/html");
+      const urls = [...parsed.querySelectorAll('link[rel="stylesheet"][href], script[src]')]
+        .map((element) => element.getAttribute("href") || element.getAttribute("src"))
+        .map((rawUrl) => {
+          try { return new URL(rawUrl, url.href); } catch { return null; }
+        })
+        .filter((resource) =>
+          resource &&
+          resource.origin === location.origin &&
+          /\.(?:js|css)$/i.test(resource.pathname) &&
+          resource.pathname.split("/").pop().startsWith(stem + ".")
+        )
+        .slice(0, 2);
+      await Promise.allSettled(
+        urls.map((resource) =>
+          fetch(resource.href, { method: "GET", credentials: "same-origin", cache: "default" })
+        ),
+      );
+      documentMarkup.delete(key);
+      return true;
+    })().catch(() => false).then((ok) => {
+      if (!ok) documentAssetWarm.delete(key);
+      return ok;
+    });
+    documentAssetWarm.set(key, job);
+    return job;
   }
 
-  // Agent-specific permission gates mirror the canonical home application catalogue.
-  // This does not download agent data; authorization remains enforced by existing APIs.
-  const AGENT_PAGE_TARGETS = [
-    ["mon-compte.html", () => true],
-    ["agent-directory.html", (p) => p.agent_directory === true],
-    ["agent-dates.html", (p) => p.agent_dates === true],
-    ["esprit-equipe.html", (p) =>
-      p.planning_team === true || p.activity === true || p.assistant_enabled === true],
-  ];
+  function canPrefetchInBackground() {
+    const connection = navigator.connection || {};
+    return !document.hidden && !window.STIPPreview?.active && !connection.saveData &&
+      !/(?:^|-)2g$/.test(connection.effectiveType || "");
+  }
+  const PREFETCH_MAX_PAGES = 6;
+  // A bounded initial batch protects slower telephones; further pages warm on
+  // the next relevant pointer/focus interaction or when they become visible.
+  function authorizedPage(app, session = window.STIPSession) {
+    const normalized = app === "assistant" || app === "activity" ? "team"
+      : app === "admin" ? "access" : app;
+    const candidate = PAGE_BY_APP.get(normalized);
+    if (app === "admin" && session?.permissions?.admin !== true) return false;
+    return !!(candidate && session?.agent && candidate.allowed(session.permissions || {}));
+  }
   let warmGeneration = 0;
   let warmedIdentity = "";
+  let lastIntent = "";
+  function rememberIntent(app) {
+    if (PAGE_BY_APP.has(app)) lastIntent = app;
+  }
   function warmAgentPages(session = window.STIPSession) {
     const token = localStorage.getItem("stip_session_v1") || "";
     if (!token || !session?.agent || window.STIPPreview?.active) return;
-    const permissions = session.permissions || {};
-    const pages = AGENT_PAGE_TARGETS
-      .filter(([, allowed]) => allowed(permissions))
-      .slice(0, 4)
-      .map(([url]) => url);
+    if (!canPrefetchInBackground()) return;
+    const pages = PAGE_CATALOG
+      .filter((candidate) => candidate.allowed(session.permissions || {}))
+      .sort((a, b) => Number(b.app === lastIntent) - Number(a.app === lastIntent))
+      .slice(0, PREFETCH_MAX_PAGES);
     const identity = [token, session.agent.id || session.agent.source_key || "",
-      session.role_key || "", pages.join("|")].join("::");
+      session.role_key || "", pages.map((page) => page.app).join("|")].join("::");
     if (identity === warmedIdentity) return;
     warmedIdentity = identity;
     const generation = ++warmGeneration;
     const run = async () => {
-      const connection = navigator.connection || {};
-      if (document.hidden || connection.saveData || /(?:^|-)2g$/.test(connection.effectiveType || "")) {
-        warmedIdentity = "";
-        return;
-      }
       for (const page of pages) {
-        if (generation !== warmGeneration ||
+        if (generation !== warmGeneration || document.hidden ||
             localStorage.getItem("stip_session_v1") !== token ||
             window.STIPPreview?.active) return;
-        const dataKind = page === "agent-directory.html" ? "directory"
-          : page === "agent-dates.html" ? "dates" : "";
         await Promise.allSettled([
-          warmDocumentResources(page),
-          dataKind
-            ? (window.STIPReadCache?.agentWarm?.warm(dataKind, session) || Promise.resolve(false))
+          warmDocumentResources(page.page),
+          page.data
+            ? (window.STIPReadCache?.agentWarm?.warm(page.data, session) || Promise.resolve(false))
             : Promise.resolve(false),
         ]);
       }
@@ -206,11 +232,19 @@
     ++warmGeneration;
     warmedIdentity = "";
     documentMarkup.clear();
+    documentAssetWarm.clear();
+    lastIntent = "";
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && !warmedIdentity) warmAgentPages();
   });
   if (window.STIPSession) warmAgentPages();
+  window.addEventListener("stip:home-rendered", () => {
+    if (!window.STIPSession || !canPrefetchInBackground()) return;
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(() => warmVisibleDocuments(3), { timeout: 2200 });
+    else setTimeout(() => warmVisibleDocuments(3), 750);
+  });
 
   function navigateDocument(raw) {
     const url = new URL(String(raw || ""), location.href);
@@ -218,6 +252,8 @@
     location.assign(url.href);
   }
   function warmVisibleDocuments(limit = 4) {
+    if (!window.STIPSession || !localStorage.getItem("stip_session_v1") ||
+        !canPrefetchInBackground()) return;
     const keys = [
       ...new Set(
         [...document.querySelectorAll("[data-app]")]
@@ -228,10 +264,18 @@
     let count = 0;
     for (const key of keys) {
       const target = DOCUMENT_APP_TARGET[key];
-      if (!target) continue;
-      warmDocument(target);
+      if (!target || !authorizedPage(key)) continue;
+      void warmDocumentResources(new URL(target, location.href).pathname);
       count += 1;
-      if (count >= limit) break;
+      if (count >= limit) return;
+    }
+    // Other internal links use the same mechanism, without an individual page patch.
+    for (const anchor of document.querySelectorAll("a[href]")) {
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) continue;
+      const target = documentUrl(anchor.href);
+      if (!target || !/\.html?$/i.test(target.pathname)) continue;
+      void warmDocumentResources(target.pathname);
+      if (++count >= limit) return;
     }
   }
   const personalCore = [
@@ -369,6 +413,8 @@
     idle: later,
     warmDocument,
     warmAgentPages,
+    warmDocumentResources,
+    authorizedPage,
     navigateDocument,
     documentTarget: (key) => DOCUMENT_APP_TARGET[key] || "",
   };
@@ -400,6 +446,26 @@
   if ("requestIdleCallback" in window)
     requestIdleCallback(idle, { timeout: 2200 });
   else setTimeout(idle, 900);
+  // Anticipate a user's next click on any authorized application or same-site link.
+  function warmInteraction(event) {
+    if (!localStorage.getItem("stip_session_v1") || !window.STIPSession ||
+        window.STIPPreview?.active || document.hidden) return;
+    if (!canPrefetchInBackground()) return;
+    const button = event.target.closest?.("[data-app]");
+    if (button && authorizedPage(button.dataset.app)) {
+      rememberIntent(button.dataset.app);
+      const page = DOCUMENT_APP_TARGET[button.dataset.app];
+      if (page) void warmDocumentResources(new URL(page, location.href).pathname);
+      return;
+    }
+    const anchor = event.target.closest?.("a[href]");
+    if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+    const target = documentUrl(anchor.href);
+    if (target && /\.html?$/i.test(target.pathname))
+      void warmDocumentResources(target.pathname);
+  }
+  document.addEventListener("pointerover", warmInteraction, { passive: true, capture: true });
+  document.addEventListener("focusin", warmInteraction, true);
   document.addEventListener(
     "pointerdown",
     (e) => {
@@ -409,7 +475,10 @@
       if (!b) return;
       const k = b.dataset.app;
       const documentTarget = DOCUMENT_APP_TARGET[k];
-      if (documentTarget) warmDocument(documentTarget);
+      if (documentTarget && authorizedPage(k)) {
+        rememberIntent(k);
+        void warmDocumentResources(new URL(documentTarget, location.href).pathname);
+      }
       if (k === "communication") communication().catch(() => {});
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();

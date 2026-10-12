@@ -116,6 +116,6 @@ assert.match(directorySource, /const fresh = await call\("directory"\)/);
 assert.match(datesSource, /agentWarm\?\.read\("dates"\)/);
 assert.doesNotMatch(datesSource, /localStorage\.setItem\(\s*CACHE/);
 assert.match(datesHTML, /stip-loading\.js/);
-assert.match(loaderSource, /agentWarm\?\.warm\(dataKind, session\)/);
+assert.match(loaderSource, /agentWarm\?\.warm\(page\.data, session\)/);
 
 console.log("GHE warm agent data: authorized fetches, cross-document speedup, session isolation, revalidation and data saver OK.");
