@@ -4,8 +4,8 @@
       window.STIPPreview?.active
         ? { ...(window.STIPSession?.permissions || {}) }
         : {
-            ...(window.STIPSession?.permissions || {}),
             ...(window.STIPBootCache?.permissions || {}),
+            ...(window.STIPSession?.permissions || {}),
           },
     depth = (k) =>
       window.STIPPreview?.active
