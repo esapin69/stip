@@ -97,6 +97,125 @@ async function list(c:any){
    response_count:rs.length,declined_count:rs.filter((r:any)=>r.declined).length}
  })}
 }
+
+const normalizeSector=(v:unknown)=>text(v,80).toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+const validClock=(v:unknown)=>typeof v==='string'&&/^([01]\d|2[0-3]):[0-5]\d$/.test(v);
+const carpoolToday=()=>today();
+async function carpoolPreference(c:any){
+ if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
+ const p=await checked(db.from('stip_carpool_preferences').select('opted_in,sector,has_car').eq('agent_id',c.agent_id).maybeSingle());
+ return p||{opted_in:false,sector:'',has_car:false};
+}
+async function carpoolShifts(c:any){
+ const from=carpoolToday(),to=plusDays(from,31);
+ const [rows,defs]=await Promise.all([
+  checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',from).lte('date',to)),
+  checked(db.from('stip_shift_registry').select('code,is_working,start_time,end_time,window_start,window_end,schedule_mode').eq('is_working',true))
+ ]);
+ const map=new Map((defs||[]).map((d:any)=>[d.code,d]));
+ return (rows||[]).flatMap((r:any)=>{
+  const d:any=map.get(r.code)||map.get(shiftCode(r.code));
+  if(!d?.is_working)return [];
+  const precise=d.schedule_mode!=='flexible';
+  return [{date:r.date,code:r.code,mode:d.schedule_mode,start:precise?(d.schedule_mode==='fixed'?d.window_start:d.start_time)?.slice(0,5)||null:null,
+    end:precise?(d.schedule_mode==='fixed'?d.window_end:d.end_time)?.slice(0,5)||null:null}];
+ }).sort((a:any,b:any)=>a.date.localeCompare(b.date));
+}
+async function carpoolHome(c:any){
+ const pref=await carpoolPreference(c);
+ if(!pref.opted_in)return {preference:pref,trips:[],shifts:[]};
+ const from=carpoolToday(),until=plusDays(from,31);
+ const [trips,shifts]=await Promise.all([
+  checked(db.from('stip_carpool_trips').select('*,organizer:agents!stip_carpool_trips_organizer_agent_id_fkey(id,prenom,nom)').eq('family',c.family).gte('trip_date',from).lte('trip_date',until).order('trip_date',{ascending:true}).limit(150)),
+  carpoolShifts(c)
+ ]);
+ const ids=(trips||[]).map((t:any)=>t.id);
+ const interests=ids.length?await checked(db.from('stip_carpool_interests').select('trip_id,agent_id,status,agent:agents!stip_carpool_interests_agent_id_fkey(prenom,nom)').in('trip_id',ids)):[];
+ return {preference:pref,shifts,trips:(trips||[]).filter((t:any)=>t.status==='active'||t.organizer_agent_id===c.agent_id).map((t:any)=>{
+  const rs=(interests||[]).filter((r:any)=>r.trip_id===t.id);
+  const mine=rs.find((r:any)=>r.agent_id===c.agent_id);
+  const owner=t.organizer_agent_id===c.agent_id,confirmed=mine?.status==='accepted';
+  const approved=rs.filter((r:any)=>r.status==='accepted');
+  return {
+   id:t.id,kind:t.kind,direction:t.direction,trip_date:t.trip_date,
+   departure_time:String(t.departure_time||'').slice(0,5),sector:t.sector,seats:t.seats,
+   status:t.status,organizer_agent_id:t.organizer_agent_id,
+   organizer_name:[t.organizer?.prenom,t.organizer?.nom].filter(Boolean).join(' ')||'Collègue',
+   is_mine:owner,my_status:mine?.status||null,
+   accepted_count:approved.length,spots_left:Math.max(0,(t.kind==='offer'?t.seats:1)-approved.length),
+   same_sector:normalizeSector(t.sector)===normalizeSector(pref.sector),
+   meeting_point:owner||confirmed?t.meeting_point:'',
+   note:owner||confirmed?t.note:'',
+   applicants:owner?rs.filter((r:any)=>r.status!=='withdrawn').map((r:any)=>({
+    agent_id:r.agent_id,name:[r.agent?.prenom,r.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:r.status
+   })):[],
+   peer_agent_id:owner?(approved[0]?.agent_id||null):(confirmed?t.organizer_agent_id:null),
+   can_message:!!c.permissions?.messages
+  };
+ }).sort((a:any,b:any)=>Number(b.is_mine)-Number(a.is_mine)||Number(b.same_sector)-Number(a.same_sector)||a.trip_date.localeCompare(b.trip_date))};
+}
+async function carpoolNotify(agent_id:string,kind:string,trip_id:string,detail:string){
+ try{
+  await checked(db.from('stip_notifications').insert({
+   agent_id,type:kind,title:'Covoiturage GHE',body:detail,source_type:'stip_carpool_trips',source_ref:trip_id
+  }));
+ }catch(e){console.error('carpool notification',e)}
+}
+async function carpoolAction(c:any,b:any){
+ if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
+ if(b.action==='carpool_home')return carpoolHome(c);
+ if(b.action==='carpool_preferences'){
+  const enabled=b.opted_in===true,has_car=b.has_car===true,sector=text(b.sector,80);
+  if(enabled&&(sector.length<2||sector.length>80))throw Error('SECTEUR_REQUIS');
+  await checked(db.from('stip_carpool_preferences').upsert({
+   agent_id:c.agent_id,opted_in:enabled,has_car,sector:enabled?sector:'',updated_at:new Date().toISOString()
+  },{onConflict:'agent_id'}));
+  if(!enabled){
+   await checked(db.from('stip_carpool_trips').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('organizer_agent_id',c.agent_id).eq('status','active'));
+   await checked(db.from('stip_carpool_interests').update({status:'withdrawn',updated_at:new Date().toISOString()}).eq('agent_id',c.agent_id).in('status',['pending','accepted']));
+  }
+  return {ok:true,...await carpoolHome(c)};
+ }
+ const pref=await carpoolPreference(c);
+ if(!pref.opted_in)throw Error('CARPOOL_OPTIN_REQUIS');
+ if(b.action==='carpool_create'){
+  const kind=b.kind,direction=b.direction,day=b.date,clock=b.time;
+  if(!['offer','request'].includes(kind)||!['to_work','from_work'].includes(direction)
+   ||typeof day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(day)||day<carpoolToday()||day>plusDays(carpoolToday(),31)
+   ||!validClock(clock)||!Number.isInteger(b.seats)||b.seats<1||b.seats>6)throw Error('TRAJET_INVALIDE');
+  if(kind==='offer'&&!pref.has_car)throw Error('CARPOOL_VOITURE_REQUISE');
+  const points=text(b.meeting_point,200),note=text(b.note,400);
+  const result=await checked(db.from('stip_carpool_trips').insert({
+   organizer_agent_id:c.agent_id,family:c.family,kind,direction,trip_date:day,
+   departure_time:clock,sector:pref.sector,seats:kind==='offer'?b.seats:1,
+   meeting_point:points,note
+  }).select('id').single());
+  return {ok:true,id:result.id,...await carpoolHome(c)};
+ }
+ if(!uuid(b.trip_id))throw Error('TRAJET_INVALIDE');
+ const trip=await checked(db.from('stip_carpool_trips').select('id,family,organizer_agent_id,kind,status').eq('id',b.trip_id).eq('family',c.family).maybeSingle());
+ if(!trip)throw Error('CARPOOL_INTROUVABLE');
+ if(b.action==='carpool_cancel'){
+  if(trip.organizer_agent_id!==c.agent_id)throw Error('CARPOOL_NON_AUTORISE');
+  await checked(db.from('stip_carpool_trips').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',trip.id));
+  const responders=await checked(db.from('stip_carpool_interests').select('agent_id').eq('trip_id',trip.id).in('status',['pending','accepted']));
+  await Promise.all((responders||[]).map((r:any)=>carpoolNotify(r.agent_id,'carpool_cancel',trip.id,'Un trajet auquel tu avais répondu a été annulé.')));
+  return {ok:true,...await carpoolHome(c)};
+ }
+ if(b.action==='carpool_apply'||b.action==='carpool_withdraw'){
+  const value=await checked(db.rpc('stip_carpool_decide',{p_trip:trip.id,p_actor:c.agent_id,p_family:c.family,p_action:b.action==='carpool_apply'?'apply':'withdraw'}));
+  if(b.action==='carpool_apply')await carpoolNotify(trip.organizer_agent_id,'carpool_request',trip.id,'Un collègue souhaite organiser un trajet avec toi.');
+  return {ok:true,status:value,...await carpoolHome(c)};
+ }
+ if(b.action==='carpool_review'){
+  if(trip.organizer_agent_id!==c.agent_id||!uuid(b.target_agent_id)||!['accepted','declined'].includes(b.decision))throw Error('CARPOOL_NON_AUTORISE');
+  const value=await checked(db.rpc('stip_carpool_review',{p_trip:trip.id,p_owner:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_decision:b.decision}));
+  await carpoolNotify(b.target_agent_id,'carpool_response',trip.id,b.decision==='accepted'?'Ton covoiturage est confirmé.':'Le conducteur ne peut pas assurer ce trajet.');
+  return {ok:true,status:value,...await carpoolHome(c)};
+ }
+ throw Error('ACTION_INVALIDE');
+}
+
 function dates(v:unknown){if(!Array.isArray(v)||v.length>24||v.some(d=>typeof d!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d)||Number.isNaN(Date.parse(d))||new Date(d+'T12:00:00Z').toISOString().slice(0,10)!==d))throw Error('DATES_INVALIDES');return [...new Set(v)].sort()}
 Deno.serve(async req=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:C})
@@ -104,6 +223,7 @@ Deno.serve(async req=>{
  try{
   const c=await context(req),b=await req.json()
 
+  if(String(b.action||'').startsWith('carpool_'))return J(await carpoolAction(c,b))
   if(b.action==='list')return J(await list(c))
   if(b.action==='colleagues')return J({colleagues:await colleagues(c)})
   if(b.action==='matches')return J(await matches(c,text(b.target_agent_id,80)))
