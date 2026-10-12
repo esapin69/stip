@@ -66,3 +66,28 @@ assert.match(apiSource,/stip_leisure_sync_series_chat/);
 assert.match(apiSource,/recurring_details/);
 console.log('Recurring group: one permanent DM conversation linked from the card, secure confirmed deletion UI, dedicated recurring editor and API hooks passed.');
 
+const composeSrc=readFileSync('ensemble-create.js','utf8');
+assert.match(composeSrc,/data-en-select-all/);
+assert.match(composeSrc,/data-en-visibility="invite"/);
+assert.match(composeSrc,/data-en-visibility="team"/);
+assert.match(composeSrc,/data-en-remove-date/);
+assert.match(composeSrc,/ensembleCustomDate/);
+assert.match(composeSrc,/data-en-person/);
+assert.match(composeSrc,/soft_color/);
+assert.match(composeSrc,/call\('create'/);
+const plannerApi=readFileSync('supabase/functions/stip-leisure/index.ts','utf8');
+assert.match(plannerApi,/async function ownCalendar/);
+assert.match(plannerApi,/async function createActivity/);
+assert.match(plannerApi,/if\(b.action==='uninvite'\)/);
+assert.match(plannerApi,/visibility=b.visibility==='team'/);
+assert.match(plannerApi,/async function colleagues/);
+assert.match(plannerApi,/p_target:b.target_agent_id/);
+const homePage=readFileSync('sorties-loisirs.html','utf8');
+assert.match(homePage,/ensemble-create.js/);
+assert.match(homePage,/ensembleCreatePanel/);
+assert.match(source,/data-invite-all/);
+assert.match(source,/data-remove-invite/);
+assert.match(source,/STIPEnsembleCreate/);
+console.log('Ensemble creation: unrestricted dates, shift colors, public/private choice, check-all, add/remove invitees, and persistent group links passed.');
+
+
