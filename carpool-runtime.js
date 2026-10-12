@@ -5,13 +5,13 @@ const root=()=>document.querySelector("#carpoolApp");
 const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 const iso=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
-const state={preference:{opted_in:false,sector:"",has_car:false},trips:[],shifts:[],loaded:false,message:"",error:"",busy:false};
+const state={preference:{opted_in:false,sector:"",has_car:false},trips:[],shifts:[],matches:[],loaded:false,message:"",error:"",busy:false};
 async function post(action,payload={},url=API){
  const token=localStorage.getItem("stip_session_v1");if(!token)throw Error("Connexion GHE requise.");
  const r=await fetch(url,{method:"POST",cache:"no-store",headers:{"Content-Type":"application/json","X-STIP-Session":token},body:JSON.stringify({action,...payload})});
  const j=await r.json().catch(()=>({}));if(!r.ok||j.error)throw Error(j.error||"Une erreur est survenue.");return j;
 }
-function update(d){state.loaded=true;state.preference=d.preference||state.preference;state.trips=d.trips||[];state.shifts=d.shifts||[];}
+function update(d){state.loaded=true;state.preference=d.preference||state.preference;state.trips=d.trips||[];state.shifts=d.shifts||[];state.matches=d.matches||[];}
 async function refresh(){if(state.busy)return;state.busy=true;
  try{update(await post("carpool_home"));state.error="";}catch(e){state.error=e.message;}
  finally{state.busy=false;render();}
@@ -47,7 +47,10 @@ function render(){
  '<label class="cp-check"><input type="checkbox" name="has_car" '+(p.has_car?'checked':'')+'> J’ai une voiture et je peux proposer des places</label>'+
  '<div class="cp-actions"><button type="submit" class="stip-btn">'+(p.opted_in?"Mettre à jour":"Activer le covoiturage")+'</button>'+
  (p.opted_in?'<button type="button" class="stip-btn secondary" id="cpDisable">Me retirer</button>':'')+'</div></form></section>'+
- (p.opted_in?'<section class="cp-card stip-surface"><h3>Nouveau trajet</h3><form id="cpCreate" class="cp-form" data-stip-form-mode="standard">'+
+ (p.opted_in?'<section class="cp-card stip-surface"><h3>Collègues du même secteur</h3><p class="cp-muted">Suggestion uniquement entre collègues volontaires. Les horaires communs sont estimés depuis le planning, sans garantir leur disponibilité.</p>'+
+(state.matches.length?state.matches.map(m=>'<div class="cp-person-match"><strong>'+esc(m.name)+'</strong><span>'+esc(m.has_car?'A une voiture':'Sans voiture déclarée')+'</span><small>'+esc(m.common_dates.length?'Prochains jours compatibles : '+m.common_dates.map(fmt).join(', '):'Pas de fin de service commune identifiée')+'</small>'+
+(m.can_message?'<button type="button" class="stip-btn secondary" data-cp-chat="'+esc(m.agent_id)+'">Échanger</button>':'')+'</div>').join(""):'<p class="cp-muted">Aucun collègue volontaire dans ton secteur pour le moment.</p>')+'</section>':'')+
+(p.opted_in?'<section class="cp-card stip-surface"><h3>Nouveau trajet</h3><form id="cpCreate" class="cp-form" data-stip-form-mode="standard">'+
  '<label>Je souhaite<select name="kind"><option value="offer"'+(!p.has_car?' disabled':'')+'>Proposer des places</option><option value="request"'+(!p.has_car?' selected':'')+'>Chercher un conducteur</option></select></label>'+
  '<label>Direction<select name="direction"><option value="from_work">Rentrer après le travail</option><option value="to_work">Aller au travail</option></select></label>'+
  '<label>Date<input type="date" name="date" min="'+esc(iso())+'" required></label>'+
