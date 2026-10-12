@@ -63,6 +63,9 @@ local.setItem("stip_session_v1", "token-A");
 assert.equal(await first.window.STIPReadCache.agentWarm.warm("directory", { agent: {}, permissions: {} }), false);
 assert.equal(first.calls.length, 0, "Unauthorized sessions must never prewarm");
 first.window.STIPSession = session;
+storage.setItem("stip_session_snapshot_v1", JSON.stringify({
+  version: 1, token: "token-A".slice(-16), at: Date.now(), session,
+}));
 assert.equal(await first.window.STIPReadCache.agentWarm.warm("directory", session), true);
 assert.equal(first.calls.length, 1);
 assert.ok(first.calls[0].url.endsWith("/stip-agent-readonly"));
@@ -78,11 +81,16 @@ assert.equal(JSON.parse(first.calls[1].options.body).session_token, "token-A");
 const destination = createPage({ localStorage: local, sessionStorage: storage });
 assert.ok(destination.window.STIPReadCache.agentWarm.read("directory"), "Next document must see fresh scoped data");
 assert.ok(destination.window.STIPReadCache.agentWarm.read("dates"));
+destination.window.STIPSession = {
+  ...session, agent: { id: "B" },
+};
+assert.equal(destination.window.STIPReadCache.agentWarm.read("directory"), null, "Never show the previous agent's data under a shared code");
+destination.window.STIPSession = null;
 
 local.setItem("stip_session_v1", "token-B");
 assert.equal(destination.window.STIPReadCache.agentWarm.read("directory"), null, "Never show agent A data to agent B");
 destination.emit("stip:session-ended");
-assert.equal(storage.length, 0, "Logout removes all tab-level prewarming");
+assert.equal([...storage.map.keys()].filter((k) => k.includes(":agent-warm:")).length, 0, "Logout removes all agent data snapshots");
 
 const metered = createPage({ saveData: true });
 metered.localStorage.setItem("stip_session_v1", "token-C");
