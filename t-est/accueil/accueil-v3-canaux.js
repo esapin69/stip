@@ -24,7 +24,7 @@
       .map(x=>String(x.nickname||[x.prenom,x.nom].filter(Boolean).join(' ')||'').trim())
       .filter(Boolean);
     const name=c.kind==='group'?String(c.title||'Groupe').trim().slice(0,80):
-      (names.join(', ')||'Message privé');
+      (names.join(', ')||String(c.title||'Message privé').trim().slice(0,80));
     return {id,kind:c.kind,title:name,unread:Math.max(0,Number(c.unread||0)),
       last:String(c.last_message?.body||c.last||'').slice(0,100)};
   }
@@ -63,7 +63,7 @@
       body.innerHTML='<div data-channel-list class="pop-choix"></div>';
       if(!dialog.open)dialog.showModal();
       paintChoices();
-      refreshGroups(true);
+      refreshGroups();
     },
     openThread:id=>openConversation(id)
   };
@@ -91,7 +91,7 @@
     refreshAt=Date.now();
     snapshotLoading=post('home',{},18000).then(data=>{
       addOrRefresh((data.conversations||[]).filter(c=>['direct','group'].includes(c.kind)));
-    }).catch(err=>{lastError=String(err.message||'Discussions indisponibles.');paintChoices()})
+    }).catch(err=>{refreshAt=0;lastError=String(err.message||'Discussions indisponibles.');paintChoices()})
       .finally(()=>{snapshotLoading=null});
     return snapshotLoading;
   }
