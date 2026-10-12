@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - "stip-loader.js"
+      - "stip-loading.js"
+      - "agent-directory.js"
+      - "agent-dates.js"
+      - "agent-dates.html"
+      - "tools/stip-agent-data-warm-test.mjs"
       - "tools/stip-agent-page-prewarm-test.mjs"
       - ".github/workflows/stip-agent-page-prewarm.yml"
   pull_request:
@@ -22,4 +27,8 @@ jobs:
         with:
           node-version: "22"
       - run: node --check stip-loader.js
+      - run: node --check stip-loading.js
+      - run: node --check agent-directory.js
+      - run: node --check agent-dates.js
       - run: node tools/stip-agent-page-prewarm-test.mjs
+      - run: node tools/stip-agent-data-warm-test.mjs
