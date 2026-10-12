@@ -7,7 +7,7 @@
   <title>T-est — Accueil GHE</title>
   <link rel="stylesheet" href="/stip-theme-base.css?v=20260928-card-signature1">
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
-  <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-ensemble4">
+  <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-communication-only1">
   <link rel="stylesheet" href="/t-est/accueil/accueil-historique.css?v=20261013-hist1">
   <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
   <script defer src="/stip-session-continuity.js?v=20260927-pin-security1"></script>
@@ -16,10 +16,9 @@
   <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260927-fire2">
   <script defer src="/t-est/outils-test/bulle-t.js?v=20260927-fire2"></script>
   <script defer src="/t-est/outils-test/navigation-t.js?v=20260928-mirror3"></script>
-  <script defer src="/t-est/accueil/accueil-v3.js?v=20261013-ensemble3"></script>
+  <script defer src="/t-est/accueil/accueil-v3.js?v=20261013-communication-only1"></script>
   <script defer src="/t-est/accueil/accueil-v3-canaux.js?v=20261013-canaux1"></script>
-  <script defer src="/t-est/accueil/accueil-ensemble.js?v=20261013-ensemble3"></script>
-  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-ensemble3"></script>
+  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-communication-only1"></script>
 </head>
 <body>
   <nav id="tEstHistoryBar" aria-label="Historique des pages GHE">
@@ -54,19 +53,7 @@
         </nav>
         <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
       </section>
-      <section id="tEnsembleBloc" class="ensemble-bloc" aria-label="Ensemble · Après le travail">
-        <div class="t-separator"><span>Ensemble · Après le travail</span></div>
-        <nav class="t-carousel" data-carousel="ensemble" aria-label="Ensemble — activités, trajets et invitations">
-          <button class="com-carte" type="button" data-ensemble-view="activities"><span class="com-icone" aria-hidden="true">🏋️</span><span class="com-libelle">Activités</span></button>
-          <button class="com-carte" type="button" data-ensemble-view="trips"><span class="com-icone" aria-hidden="true">🚕</span><span class="com-libelle">Trajets</span></button>
-          <button class="com-carte" type="button" data-ensemble-view="invitations"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">Invitations</span></button>
-        </nav>
-        <button class="canal-action ensemble-proposer" type="button" data-ensemble-create>＋ Proposer une activité</button>
-        <section class="ensemble-inline" id="tEnsemblePanel" aria-label="Contenu Ensemble" hidden>
-          <p class="ensemble-inline-loading" id="tEnsembleLoading" role="status">Chargement du contenu Ensemble…</p>
-          <iframe id="tEnsembleFrame" class="ensemble-inline-frame" title="Ensemble : activités, trajets et invitations" scrolling="no" loading="lazy"></iframe>
-        </section>
-      </section>
+
     </div>
     <div id="tAccueilSousPage" hidden>
       <header class="t-nav-fixed">
