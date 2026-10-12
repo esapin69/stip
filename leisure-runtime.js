@@ -129,48 +129,78 @@
  }
  async function openInvite(id){
   if(!state.loaded)await refresh();
-  const e=find(id);if(!e||!e.can_invite)return;
-  const dialog=dialogShell('Inviter des collègues · '+e.title);if(!dialog)return;
+  const e=find(id);if(!e?.can_invite)return;
+  const dialog=dialogShell('Participants et invitations · '+e.title);if(!dialog)return;
   const body=dialog.querySelector('[data-leisure-body]');
-  const existing=new Set((e.invited_colleagues||[]).map(p=>p.id));
-  body.innerHTML='<p class="leisure-invite-description">Ajoute des personnes à cette sortie sans la recréer. Chacune recevra une invitation pour les dates existantes.</p>'+
-   '<form data-stip-form-mode="standard" class="leisure-invite-form"><label>Rechercher un collègue<input type="search" data-leisure-agent-search placeholder="Prénom ou nom" autocomplete="off"></label>'+
-   '<div class="leisure-candidate-list" data-leisure-candidates aria-label="Collègues disponibles">Chargement des collègues…</div>'+
+  const existing=e.invited_colleagues||[],present=new Set(existing.map(p=>p.id)),selected=new Set();
+  body.innerHTML='<p class="leisure-invite-description">Coche les personnes à inviter. Tu peux aussi retirer un invité existant, sans recréer la sortie.</p>'+
+   (e.visibility==='team'?'<p class="leisure-invite-hint">Cette sortie est ouverte à l’équipe : retirer une invitation ne masque pas l’activité publique.</p>':'')+
+   '<section class="leisure-existing-invites"><h3>Déjà invités · '+existing.length+'</h3>'+
+   '<div data-existing-invites>'+ (existing.length?existing.map(person=>
+      '<div class="leisure-existing-person"><span>'+esc(person.name)+' <small>'+
+      esc(person.status==='accepted'?'Partant':person.status==='declined'?'Décliné':'En attente')+
+      '</small></span><button type="button" class="leisure-remove-invite" data-remove-invite="'+esc(person.id)+
+      '" data-remove-name="'+esc(person.name)+'">Retirer</button></div>').join(''):
+    '<p class="leisure-invite-hint">Aucun invité pour le moment.</p>')+'</div></section>'+
+   '<form class="leisure-invite-form" data-stip-form-mode="standard">'+
+   '<label>Ajouter des collègues<input type="search" data-leisure-agent-search placeholder="Rechercher un prénom ou un nom" autocomplete="off"></label>'+
+   '<div class="leisure-invite-toolbar"><button type="button" data-invite-all>✓ Inviter tout le monde</button>'+
+   '<button type="button" data-invite-clear>Effacer</button></div>'+
+   '<div class="leisure-candidate-list" data-leisure-candidates aria-label="Collègues à inviter">Chargement…</div>'+
    '<p class="leisure-invite-count" data-leisure-count>0 collègue sélectionné</p>'+
-   '<p role="status" data-leisure-invite-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Envoyer les invitations</button><button class="stip-btn secondary" type="button" data-leisure-close-invite>Annuler</button></footer></form>';
-  const form=body.querySelector('form'),list=body.querySelector('[data-leisure-candidates]'),search=body.querySelector('[data-leisure-agent-search]'),count=body.querySelector('[data-leisure-count]'),error=body.querySelector('[data-leisure-invite-error]');
+   '<p role="status" data-leisure-invite-error></p>'+
+   '<footer class="leisure-actions"><button class="stip-btn" type="submit">Envoyer les invitations</button>'+
+   '<button class="stip-btn secondary" type="button" data-leisure-close-invite>Fermer</button></footer></form>';
+  const form=body.querySelector('form'),list=body.querySelector('[data-leisure-candidates]');
+  const search=body.querySelector('[data-leisure-agent-search]');
+  const count=body.querySelector('[data-leisure-count]'),error=body.querySelector('[data-leisure-invite-error]');
   let people=[];
-  function renderCandidates(){
+  function renderPeople(){
    const needle=search.value.trim().toLocaleLowerCase('fr');
-   const checked=new Set([...list.querySelectorAll('input:checked')].map(x=>x.value));
-   list.innerHTML=people.map(p=>'<label class="leisure-candidate" data-name="'+esc(p.name.toLocaleLowerCase('fr'))+'"><input type="checkbox" value="'+esc(p.id)+'" '+(checked.has(p.id)?'checked':'')+'><span>'+esc(p.name)+'</span></label>').join('')||'<p>Tous les collègues éligibles sont déjà invités.</p>';
-   list.querySelectorAll('[data-name]').forEach(row=>row.hidden=!!needle&&!row.dataset.name.includes(needle));
-   count.textContent=checked.size+' collègue'+(checked.size>1?'s':'')+' sélectionné'+(checked.size>1?'s':'');
+   list.innerHTML=people.filter(p=>p.name.toLocaleLowerCase('fr').includes(needle))
+    .map(p=>'<label class="leisure-candidate"><input type="checkbox" value="'+esc(p.id)+'" '+
+    (selected.has(p.id)?'checked':'')+'><span>'+esc(p.name)+'</span></label>').join('')||
+    '<p class="leisure-invite-hint">Aucun autre collègue correspondant.</p>';
+   count.textContent=selected.size+' collègue'+(selected.size>1?'s':'')+' sélectionné'+(selected.size>1?'s':'');
   }
-  search.addEventListener('input',()=>{
-   const needle=search.value.trim().toLocaleLowerCase('fr');
-   list.querySelectorAll('[data-name]').forEach(row=>row.hidden=!!needle&&!row.dataset.name.includes(needle));
+  search.addEventListener('input',renderPeople);
+  list.addEventListener('change',ev=>{
+   const field=ev.target.closest('input[type="checkbox"]');if(!field)return;
+   if(field.checked)selected.add(field.value);else selected.delete(field.value);
+   count.textContent=selected.size+' collègue'+(selected.size>1?'s':'')+' sélectionné'+(selected.size>1?'s':'');
   });
-  list.addEventListener('change',()=>{const n=list.querySelectorAll('input:checked').length;count.textContent=n+' collègue'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');});
+  body.querySelector('[data-invite-all]').onclick=()=>{
+   people.forEach(person=>selected.add(person.id));renderPeople();
+  };
+  body.querySelector('[data-invite-clear]').onclick=()=>{selected.clear();renderPeople()};
   body.querySelector('[data-leisure-close-invite]').onclick=()=>close(dialog);
+  body.querySelectorAll('[data-remove-invite]').forEach(button=>button.onclick=async()=>{
+   const agent=button.dataset.removeInvite,name=button.dataset.removeName;
+   if(!confirm('Retirer '+name+' de cette activité ? Son inscription et son accès au groupe seront retirés.'))return;
+   button.disabled=true;error.textContent='Retrait en cours…';
+   try{
+    await post({action:'uninvite',event_id:id,target_agent_id:agent});
+    close(dialog,()=>openInvite(id));
+   }catch(ex){error.textContent=ex.message;button.disabled=false}
+  });
   try{
    const token=localStorage.getItem(STORE)||'';
-   const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'colleagues'})});
-   const json=await r.json();if(!r.ok||json.error)throw Error(json.error||'Annuaire indisponible');
-   people=(json.colleagues||[]).filter(p=>!existing.has(p.id));renderCandidates();
-  }catch(err){error.textContent='Annuaire inaccessible : '+err.message;list.textContent='';}
-  form.onsubmit=async event=>{
-   event.preventDefault();
-   const ids=[...list.querySelectorAll('input:checked')].map(x=>x.value);
-   if(!ids.length){error.textContent='Choisis au moins un collègue.';return;}
-   const btn=form.querySelector('[type="submit"]');btn.disabled=true;error.textContent='Envoi…';
+   const resp=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},
+    body:JSON.stringify({action:'colleagues'})});
+   const data=await resp.json();if(!resp.ok||data.error)throw Error(data.error||'Annuaire indisponible');
+   people=(data.colleagues||[]).filter(p=>!present.has(p.id));renderPeople();
+  }catch(ex){error.textContent='Impossible de charger les collègues : '+ex.message;list.textContent=''}
+  form.onsubmit=async ev=>{
+   ev.preventDefault();const ids=[...selected];
+   if(!ids.length){error.textContent='Coche au moins un collègue.';return}
+   if(ids.length>=10&&!confirm('Envoyer une invitation à '+ids.length+' collègues ?'))return;
+   const submit=form.querySelector('[type="submit"]');submit.disabled=true;error.textContent='Envoi…';
    try{
-    const result=await post({action:'invite',event_id:e.id,agent_ids:ids});
+    const result=await post({action:'invite',event_id:id,agent_ids:ids});
     close(dialog);
     const status=document.querySelector('#leisureStatus');
-    if(status)status.textContent=result.added+' nouvelle(s) invitation(s) envoyée(s) à '+e.title+'.';
-   }catch(err){error.textContent=err.message;}
-   finally{btn.disabled=false;}
+    if(status)status.textContent=result.added+' nouvelle(s) invitation(s) envoyée(s).';
+   }catch(ex){error.textContent=ex.message;submit.disabled=false}
   };
  }
 
