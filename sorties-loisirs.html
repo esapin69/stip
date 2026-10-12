@@ -1,6 +1,58 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><title>Sorties & loisirs · GHE</title>
-<link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1"><link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1"><link rel="stylesheet" href="recurring-training.css?v=20261012-recurring-release3"><link rel="stylesheet" href="afterwork-site.css?v=20261012-leisure-ux2"><link rel="stylesheet" href="carpool-runtime.css?v=20261012-1"><link rel="stylesheet" href="leisure-runtime.css?v=20261012-recurring1"><link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
-<script defer src="stip-session-continuity.js?v=20260927-pin-security1"></script><script defer src="stip-navigation.js?v=20260926-navigation5"></script><script defer src="stip-overlay-navigation.js?v=20260930-safari-overlay-history1"></script><script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script><script defer src="recurring-training.js?v=20261012-chat-muscu-fix2"></script><script defer src="afterwork-site.js?v=20261012-chat-muscu-fix2"></script><script defer src="carpool-runtime.js?v=20261012-1"></script><script defer src="leisure-runtime.js?v=20261012-chat-muscu-fix2"></script>
-</head><body><main class="stip-page"><header class="leisure-page-head"><button type="button" class="stip-btn secondary" data-stip-back data-back-fallback="index.html#/home">‹ Retour</button><h1 class="stip-title">Sorties & loisirs</h1><button type="button" class="stip-btn secondary" data-leisure-refresh>↻ Actualiser</button></header><p id="leisureStatus" role="status" aria-live="polite"></p><nav class="cp-nav"><a class="stip-btn secondary" href="#leisureApp">Sorties & loisirs</a> <a class="stip-btn secondary" href="#carpoolApp">Covoiturage</a></nav><section id="trainingRecurringApp" aria-label="Entraînements récurrents après la fermeture"></section><section id="leisureApp" aria-live="polite"></section><section id="carpoolApp" aria-label="Covoiturage entre collègues"></section></main></body></html>
-
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Ensemble · GHE</title>
+<link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1">
+<link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1">
+<link rel="stylesheet" href="leisure-runtime.css?v=20261012-ensemble-v1">
+<link rel="stylesheet" href="afterwork-site.css?v=20261012-ensemble-v1">
+<link rel="stylesheet" href="recurring-training.css?v=20261012-ensemble-v1">
+<link rel="stylesheet" href="carpool-runtime.css?v=20261012-ensemble-v1">
+<link rel="stylesheet" href="ensemble-shell.css?v=20261012-ensemble-v1">
+<link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
+<script defer src="stip-session-continuity.js?v=20260927-pin-security1"></script>
+<script defer src="stip-navigation.js?v=20260926-navigation5"></script>
+<script defer src="stip-overlay-navigation.js?v=20260930-safari-overlay-history1"></script>
+<script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
+<script defer src="recurring-training.js?v=20261012-ensemble-v1"></script>
+<script defer src="afterwork-site.js?v=20261012-ensemble-v1"></script>
+<script defer src="carpool-runtime.js?v=20261012-ensemble-v1"></script>
+<script defer src="leisure-runtime.js?v=20261012-ensemble-v1"></script>
+</head>
+<body>
+<main class="ensemble-page stip-page">
+  <header class="ensemble-topbar">
+    <button type="button" class="ensemble-back" data-stip-back data-back-fallback="index.html#/home" aria-label="Retour à GHE">‹ <span>Accueil</span></button>
+    <span class="ensemble-brand">GHE <b>·</b> Communauté</span>
+    <button type="button" class="ensemble-reload" data-leisure-refresh aria-label="Actualiser les activités" title="Actualiser">↻</button>
+  </header>
+  <section class="ensemble-hero" aria-labelledby="ensembleTitle">
+    <span class="ensemble-kicker">APRÈS LE TRAVAIL</span>
+    <h1 id="ensembleTitle">Ensemble<span class="ensemble-spark">.</span></h1>
+    <p>Un moment à partager ? Retrouvez vos collègues, choisissez vos dates et organisez-vous simplement.</p>
+  </section>
+  <nav class="ensemble-nav" role="tablist" aria-label="Ensemble">
+    <button type="button" role="tab" aria-selected="true" class="is-active" data-ensemble-tab="activities"><span aria-hidden="true">🏋️</span> Activités</button>
+    <button type="button" role="tab" aria-selected="false" data-ensemble-tab="trips"><span aria-hidden="true">🚕</span> Trajets</button>
+    <button type="button" role="tab" aria-selected="false" data-ensemble-tab="invitations"><span aria-hidden="true">✉️</span> Invitations <b id="ensembleInviteBadge" hidden></b></button>
+  </nav>
+  <p id="leisureStatus" class="ensemble-status" role="status" aria-live="polite"></p>
+  <section id="ensembleCreator" class="ensemble-creator" aria-label="Créer une activité" hidden>
+    <div class="ensemble-creator-top"><div><span class="ensemble-eyebrow">PROPOSER</span><h2>On fait quoi ensemble ?</h2></div><button type="button" data-ensemble-close aria-label="Fermer la préparation">×</button></div>
+    <div class="ensemble-ways" role="group" aria-label="Type d'activité">
+      <button type="button" data-ensemble-option="matched"><span>👥</span><strong>Avec un collègue</strong><small>Nos fins de service communes</small></button>
+      <button type="button" data-ensemble-option="recurring"><span>🏋️</span><strong>À chaque fermeture</strong><small>Selon mon planning</small></button>
+      <button type="button" data-ensemble-option="date"><span>📅</span><strong>Une sortie</strong><small>Une ou plusieurs dates</small></button>
+    </div>
+    <section id="trainingRecurringApp" aria-label="Activité récurrente" hidden></section>
+    <section id="ensembleAfterworkCreate" aria-label="Activité avec un collègue" hidden></section>
+  </section>
+  <section id="leisureApp" aria-live="polite" role="tabpanel" aria-label="Activités"></section>
+  <section id="carpoolApp" role="tabpanel" aria-label="Covoiturage entre collègues" hidden></section>
+</main>
+</body>
+</html>
