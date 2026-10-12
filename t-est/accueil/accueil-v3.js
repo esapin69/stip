@@ -225,7 +225,6 @@
 
   window.TEstAccueilPlanning={htmlFor:dayHTML,showPopup:refreshDayPop,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
   document.querySelectorAll('[data-block="planning"] [data-jour]').forEach(b=>b.addEventListener('click',()=>refreshDayPop(Number(b.dataset.jour))));
-  document.querySelectorAll('[data-canaux-open]').forEach(b=>b.addEventListener('click',channels));
   popBody.addEventListener('click',e=>{
     if(e.target.closest('[data-open-planning]')){
       dialog.close();
