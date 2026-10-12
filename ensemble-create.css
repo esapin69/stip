@@ -19,3 +19,11 @@
 .en-extra{border:1px solid #d8e8e9;border-radius:12px;padding:12px}.en-extra summary{font-size:.84rem;font-weight:800;cursor:pointer}.en-extra[open]{display:grid;gap:11px}.en-extra .en-field:first-of-type{margin-top:11px}
 .en-compose-status{font-size:.82rem;color:#9d582f;min-height:10px}.en-compose .ensemble-primary{width:100%}
 @media(max-width:390px){.en-calendar{gap:3px}.en-calendar-day{min-height:57px;border-radius:9px}.en-day-shift{font-size:.59rem}.en-people{grid-template-columns:1fr}}
+
+/* Timing is a first-class option, distinct from the choice of dates. */
+.en-schedule-choice{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.en-schedule-choice button{display:grid;gap:4px;align-content:center;text-align:left;border:1px solid #cbdedd;border-radius:13px;background:#f4f9f8;color:#214e5b;padding:11px;min-height:72px;font:inherit;cursor:pointer}
+.en-schedule-choice button span{font-size:.84rem;font-weight:850}
+.en-schedule-choice button small{font-size:.72rem;color:#627e83}
+.en-schedule-choice button.is-selected{border-color:#168f92;background:#e5f6f2;box-shadow:inset 0 0 0 1px #168f92}
+.en-schedule-choice button.is-selected span{color:#145d64}
