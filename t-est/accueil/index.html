@@ -1,103 +1,70 @@
 <!doctype html>
 <html lang="fr" data-t-est="1">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" />
-  <meta name="robots" content="noindex,nofollow" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="robots" content="noindex,nofollow">
   <title>T-est — Accueil GHE</title>
-  <link rel="stylesheet" href="/stip-theme-base.css?v=20260928-card-signature1" />
-  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1" />
+  <link rel="stylesheet" href="/stip-theme-base.css?v=20260928-card-signature1">
+  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
+  <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-carousel1">
   <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
+  <script defer src="/stip-session-continuity.js?v=20260927-pin-security1"></script>
   <script defer src="/shift-registry.js?v=20260928-planning-fast5"></script>
-  <!-- T-EST LAB ONLY : repères qui ne doivent jamais être promus en production. -->
-  <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260927-fire2" />
+  <!-- T-EST LAB ONLY : le repère de test ne doit pas aller sur la vraie page. -->
+  <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260927-fire2">
   <script defer src="/t-est/outils-test/bulle-t.js?v=20260927-fire2"></script>
   <script defer src="/t-est/outils-test/navigation-t.js?v=20260928-mirror3"></script>
-  <style>
-    *,*::before,*::after{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:#f5f9fa;color:#123c4c;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
-    button{font-family:inherit;cursor:pointer}
-    button:focus-visible{outline:3px solid #1286a2;outline-offset:3px}
-    #t-est-accueil{max-width:780px;min-height:100dvh;margin:0 auto;padding:clamp(24px,5vw,42px) 14px 44px}
-    .accueil-cartes,.com-cartes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
-    .accueil-carte,.com-carte{min-width:0;border-radius:18px;border:1.5px solid #d4e2e8;background:#fff;color:#163f53;
-      box-shadow:0 5px 18px rgba(17,59,80,.065);font-weight:850;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-    .accueil-carte{min-height:112px;padding:13px 5px;gap:6px;--carte-shift:#c9d7dc;--carte-soft:#fff;border-color:var(--carte-shift);background:var(--carte-soft)}
-    .accueil-carte[data-loaded="true"]{border-width:2px;box-shadow:0 5px 15px rgba(17,59,80,.07)}
-    .carte-label{display:block;line-height:1.1;font-size:clamp(12px,3.5vw,17px);letter-spacing:-.025em}
-    .carte-shift{font-size:.75rem;line-height:1.12;font-weight:800;color:#385a63;max-width:100%;overflow-wrap:anywhere}
-    .carte-shift:empty{display:none}
-    .com-bloc{margin-top:28px}
-    .com-titre{font-size:1.45rem;font-weight:900;letter-spacing:-.035em;margin:0 0 14px;color:#123d50}
-    .com-carte{min-height:126px;gap:9px;padding:12px 5px;line-height:1.14;font-size:clamp(11px,3.3vw,17px);overflow-wrap:break-word}
-    .com-icone{font-size:clamp(30px,8vw,42px);line-height:1}
-    .com-libelle{display:block;font-weight:850}
-    .com-precisions{display:block;font-size:clamp(9px,2.7vw,12px);font-weight:650;color:#62808b}
-    .canal-action{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;
-      margin-top:13px;border:1.5px solid #137e99;border-radius:16px;color:#fff;background:#167c98;
-      box-shadow:0 6px 16px rgba(20,107,132,.14);font-size:1rem;font-weight:850}
-    .canal-action .plus{font-size:1.5rem;font-weight:500;line-height:1}
-    .accueil-pop{max-width:min(450px,calc(100vw - 28px));width:100%;max-height:min(82dvh,700px);border:0;padding:0;
-      border-radius:22px;background:#fff;color:#143d51;box-shadow:0 20px 65px rgba(8,45,61,.25)}
-    .accueil-pop::backdrop{background:rgba(5,25,37,.55)}
-    .pop-contenu{padding:21px 20px 24px}
-    .pop-entete{display:flex;justify-content:space-between;align-items:center;gap:8px}
-    .pop-entete h2{font-size:1.35rem;line-height:1.2;margin:0;font-weight:900}
-    .pop-close{border:1px solid #dce8eb;border-radius:50%;background:#f3f8fa;width:38px;height:38px;font-size:1.45rem;color:#274e5c}
-    .pop-body{padding-top:18px}
-    .pop-date{font-size:.85rem;font-weight:750;color:#637d87;text-transform:capitalize;margin:0 0 12px}
-    .pop-shift{border:2px solid var(--carte-shift,#dae5e7);background:var(--carte-soft,#f8fbfc);
-      border-radius:17px;padding:18px;margin:0 0 15px}
-    .pop-shift strong{font-size:1.25rem;display:block;color:#153c4c}
-    .pop-shift .code{font-size:.78rem;font-weight:900;color:#526a72}
-    .pop-ligne{padding:10px 0;border-top:1px solid #e8eef0;display:flex;justify-content:space-between;gap:16px;font-size:.92rem}
-    .pop-ligne span{color:#587580}
-    .pop-ligne strong{text-align:right}
-    .pop-info{font-size:.9rem;line-height:1.5;color:#566f79}
-    .pop-choix{display:flex;flex-direction:column;gap:10px}
-    .pop-choix button{display:flex;align-items:center;gap:13px;text-align:left;width:100%;padding:14px;border-radius:15px;
-      background:#f7fbfc;border:1px solid #d4e5e9;color:#18465a}
-    .pop-choix button>span:first-child{font-size:1.65rem}
-    .pop-choix button strong{display:block;font-size:1rem}
-    .pop-choix button small{display:block;font-size:.77rem;margin-top:2px;color:#5e7c88}
-    @media(max-width:360px){
-      #t-est-accueil{padding-inline:11px}.accueil-cartes,.com-cartes{gap:6px}
-      .accueil-carte,.com-carte{border-radius:14px}
-      .com-carte{padding:10px 3px}
-    }
-  </style>
+  <script defer src="/t-est/accueil/accueil-v3.js?v=20261013-carousel1"></script>
 </head>
 <body>
   <main id="t-est-accueil">
-    <nav class="accueil-cartes" aria-label="Planning selon la période">
-      <button class="accueil-carte" id="carte-aujourdhui" data-jour="0" type="button" aria-haspopup="dialog">
-        <span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span>
-      </button>
-      <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-haspopup="dialog">
-        <span class="carte-label">Demain</span><span class="carte-shift" data-shift></span>
-      </button>
-      <div class="accueil-carte" id="carte-semaine">
-        <span class="carte-label">Cette semaine</span>
-      </div>
-    </nav>
-    <section class="com-bloc" aria-label="Communication">
-      <h1 class="com-titre">Communication</h1>
-      <div class="com-cartes">
-        <button class="com-carte" type="button" data-ouverture="fauteuils">
-          <span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span>
-        </button>
-        <button class="com-carte" type="button" data-ouverture="dm">
-          <span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span>
-        </button>
-        <button class="com-carte" type="button" data-ouverture="loisirs">
-          <span class="com-icone" aria-hidden="true">🎉</span><span class="com-libelle">Événements</span>
-          <span class="com-precisions">Hors travail · loisirs</span>
-        </button>
-      </div>
-      <button class="canal-action" id="ouvrirCanaux" type="button" aria-haspopup="dialog">
-        <span class="plus" aria-hidden="true">＋</span> Créer / ouvrir un canal
-      </button>
-    </section>
+    <div id="tAccueilHome" class="t-shell">
+      <section aria-label="Mon planning">
+        <div class="t-separator is-first"><span>Mon planning</span></div>
+        <nav class="t-carousel" data-carousel="planning" aria-label="Mon planning">
+          <button class="accueil-carte" id="carte-aujourdhui" data-jour="0" type="button" aria-haspopup="dialog">
+            <span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span>
+          </button>
+          <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-haspopup="dialog">
+            <span class="carte-label">Demain</span><span class="carte-shift" data-shift></span>
+          </button>
+          <div class="accueil-carte" id="carte-semaine"><span class="carte-label">Cette semaine</span></div>
+        </nav>
+      </section>
+      <section aria-label="Communication" class="com-bloc">
+        <div class="t-separator"><span>Communication</span></div>
+        <nav class="t-carousel" data-carousel="communication" aria-label="Communication">
+          <button class="com-carte" type="button" data-ouverture="fauteuils"><span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span></button>
+          <button class="com-carte" type="button" data-ouverture="dm"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span></button>
+          <button class="com-carte" type="button" data-ouverture="loisirs"><span class="com-icone" aria-hidden="true">🎉</span><span class="com-libelle">Événements</span><span class="com-precisions">Hors travail · loisirs</span></button>
+        </nav>
+        <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
+      </section>
+    </div>
+    <div id="tAccueilSousPage" hidden>
+      <header class="t-nav-fixed">
+        <div class="t-shell">
+          <div class="t-subnav"><button type="button" class="t-retour" data-retour>‹ Accueil GHE</button></div>
+          <h2 class="com-titre" id="tModuleTitre">Communication</h2>
+          <nav class="t-carousel" data-carousel="communication" data-carousel-detail aria-label="Communication">
+            <button class="com-carte" type="button" data-ouverture="fauteuils"><span class="com-icone" aria-hidden="true">♿</span><span class="com-libelle">Fauteuils</span></button>
+            <button class="com-carte" type="button" data-ouverture="dm"><span class="com-icone" aria-hidden="true">✉️</span><span class="com-libelle">DM · privé</span></button>
+            <button class="com-carte" type="button" data-ouverture="loisirs"><span class="com-icone" aria-hidden="true">🎉</span><span class="com-libelle">Événements</span><span class="com-precisions">Hors travail · loisirs</span></button>
+          </nav>
+          <nav class="t-carousel" data-carousel="planning" data-planning-detail aria-label="Mon planning" hidden>
+            <button class="accueil-carte" data-jour="0" type="button" aria-haspopup="dialog"><span class="carte-label">Aujourd’hui</span><span class="carte-shift" data-shift></span></button>
+            <button class="accueil-carte" data-jour="1" type="button" aria-haspopup="dialog"><span class="carte-label">Demain</span><span class="carte-shift" data-shift></span></button>
+            <div class="accueil-carte"><span class="carte-label">Cette semaine</span></div>
+          </nav>
+          <button class="canal-action" type="button" data-canaux-open aria-haspopup="dialog"><span class="plus" aria-hidden="true">＋</span>Créer / ouvrir un canal</button>
+        </div>
+      </header>
+      <section class="t-module-body" aria-label="Contenu de la rubrique">
+        <p class="t-module-status" id="tModuleStatut" role="status"></p>
+        <iframe id="tModuleFrame" class="t-module-iframe" title="Rubrique GHE" loading="eager" referrerpolicy="same-origin"></iframe>
+      </section>
+    </div>
   </main>
   <dialog class="accueil-pop" id="accueilPop" aria-labelledby="popTitre">
     <section class="pop-contenu">
@@ -105,126 +72,5 @@
       <div class="pop-body" id="popBody"></div>
     </section>
   </dialog>
-  <script>
-    (() => {
-      'use strict';
-      const DATA_API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data';
-      const ROUTES={
-        fauteuils:'/index.html?quick=communication&tab=wheelchair#/communication/fauteuils',
-        dm:'/index.html?quick=communication&tab=dm#/communication/dm',
-        loisirs:'/sorties-loisirs.html'
-      };
-      const DEFAULT_COLORS={M:['#087cff','#dcebff'],J:['#00b85a','#dcf8e8'],J4:['#ff9500','#fff0d6'],S:['#ffd500','#fff3a3'],N:['#000000','#eceff1']};
-      const pop=document.getElementById('accueilPop');
-      const popBody=document.getElementById('popBody');
-      const popTitle=document.getElementById('popTitre');
-      const cards=[...document.querySelectorAll('[data-jour]')];
-      let planning=[],definitions=[],loading=true,error='';
-      const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-      const validHex=s=>/^#[0-9a-f]{6}$/i.test(String(s||''))?String(s):'';
-      function parisDate(offset=0){
-        const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
-        const n=key=>Number(parts.find(p=>p.type===key)?.value||0);
-        const d=new Date(Date.UTC(n('year'),n('month')-1,n('day')+offset,12));
-        return d.toISOString().slice(0,10);
-      }
-      const displayDate=iso=>new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric',timeZone:'Europe/Paris'}).format(new Date(iso+'T12:00:00Z'));
-      function rowFor(day){return planning.find(r=>String(r?.date||'').slice(0,10)===parisDate(day))||null;}
-      function baseCode(raw){
-        const original=String(raw||'').trim().toUpperCase().replace(/[*★☆✱✳✶✷✸✹✺✻✼✽✾✿]+$/u,'');
-        const known=window.STIPShiftRegistry?.baseCode?.(original);
-        if(known&&known!=='—')return known;
-        if(/^J4\d+$/.test(original))return 'J4';
-        const match=original.match(/^(M|J|S|N)\d+$/);
-        return match?match[1]:original;
-      }
-      function meta(row){
-        if(!row)return null;
-        const raw=String(row.code||row.source_value||'').trim();
-        if(!raw)return null;
-        const code=baseCode(raw);
-        const def=window.STIPShiftRegistry?.resolve?.(raw)||definitions.find(d=>String(d.code||'').toUpperCase()===code);
-        const standard=DEFAULT_COLORS[code]||['#7d8996','#edf2f4'];
-        const color=validHex(def?.color_hex)||standard[0],soft=validHex(def?.soft_color_hex)||standard[1];
-        const label=String(def?.label||raw);
-        const time=String(row.horaire||row.horaires||row.shift_time||'').trim()||
-          [row.start_time,row.end_time].filter(Boolean).map(t=>String(t).slice(0,5)).join('–')||
-          window.STIPShiftRegistry?.time?.(raw)||'';
-        const note=String(row.note||row.notes||row.commentaire||row.comment||row.description||'').trim();
-        return {raw,code,label,color,soft,time,note,icon:String(def?.icon||'')};
-      }
-      function repaint(){
-        for(const card of cards){
-          const day=Number(card.dataset.jour),item=meta(rowFor(day)),label=card.querySelector('[data-shift]');
-          card.style.removeProperty('--carte-shift');card.style.removeProperty('--carte-soft');
-          card.removeAttribute('data-loaded');
-          if(item){
-            card.style.setProperty('--carte-shift',item.color);
-            card.style.setProperty('--carte-soft',item.soft);
-            card.dataset.loaded='true';
-            label.textContent=item.raw;
-          }else{
-            label.textContent='';
-          }
-        }
-      }
-      function showPop(title,html){
-        popTitle.textContent=title;popBody.innerHTML=html;
-        if(!pop.open) pop.showModal();
-      }
-      function showDay(day){
-        const iso=parisDate(day),m=meta(rowFor(day));
-        if(!m){
-          return showPop(day?'Demain':'Aujourd’hui',
-            '<p class="pop-date">'+esc(displayDate(iso))+'</p><p class="pop-info">'+
-            (loading?'Chargement de ton planning…':error?esc(error):'Aucun shift renseigné pour cette date.')+'</p>');
-        }
-        const list=[['Shift',m.raw],['Horaire',m.time],['Précision',m.note]].filter(x=>x[1]);
-        showPop(day?'Demain':'Aujourd’hui',
-          '<p class="pop-date">'+esc(displayDate(iso))+'</p>'+
-          '<div class="pop-shift" style="--carte-shift:'+esc(m.color)+';--carte-soft:'+esc(m.soft)+'">'+
-          '<strong>'+esc((m.icon?m.icon+' ':'')+m.label)+'</strong><span class="code">'+esc(m.raw)+'</span></div>'+
-          list.map(([k,v])=>'<div class="pop-ligne"><span>'+esc(k)+'</span><strong>'+esc(v)+'</strong></div>').join(''));
-      }
-      function openRoute(key){
-        if(ROUTES[key])window.location.assign(ROUTES[key]);
-      }
-      function showChannels(){
-        showPop('Créer / ouvrir un canal',
-          '<div class="pop-choix">'+
-          '<button type="button" data-canal="fauteuils"><span aria-hidden="true">♿</span><span><strong>Fauteuils</strong><small>Ouvrir le canal de service</small></span></button>'+
-          '<button type="button" data-canal="dm"><span aria-hidden="true">✉️</span><span><strong>DM · privé / groupe</strong><small>Ouvrir ou démarrer une conversation</small></span></button>'+
-          '<button type="button" data-canal="loisirs"><span aria-hidden="true">🎉</span><span><strong>Événements · loisirs</strong><small>Ouvrir les activités ou en proposer une</small></span></button>'+
-          '</div>');
-      }
-      async function loadShifts(){
-        const token=localStorage.getItem('stip_session_v1')||'';
-        if(!token){loading=false;error='Connecte-toi à GHE pour consulter ton shift.';return;}
-        try{
-          const res=await fetch(DATA_API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'bootstrap'})});
-          const payload=await res.json().catch(()=>({}));
-          if(!res.ok||payload.error)throw Error('Planning indisponible pour le moment.');
-          if(token!==(localStorage.getItem('stip_session_v1')||''))return;
-          planning=Array.isArray(payload.personal)?payload.personal:[];
-          definitions=Array.isArray(payload.shift_definitions)?payload.shift_definitions:[];
-          window.STIPShiftRegistry?.set?.(definitions);
-          error='';
-        }catch(e){
-          error=planning.length?'':String(e.message||'Planning indisponible pour le moment.');
-        }finally{
-          loading=false;repaint();
-          if(pop.open&&pop.dataset.openDay!==undefined)showDay(Number(pop.dataset.openDay));
-        }
-      }
-      for(const card of cards)card.addEventListener('click',()=>{pop.dataset.openDay=card.dataset.jour;showDay(Number(card.dataset.jour));});
-      document.querySelectorAll('[data-ouverture]').forEach(b=>b.addEventListener('click',()=>openRoute(b.dataset.ouverture)));
-      document.getElementById('ouvrirCanaux').addEventListener('click',()=>{delete pop.dataset.openDay;showChannels();});
-      popBody.addEventListener('click',e=>{const target=e.target.closest('[data-canal]');if(target)openRoute(target.dataset.canal);});
-      document.getElementById('fermerPop').addEventListener('click',()=>pop.close());
-      pop.addEventListener('close',()=>{delete pop.dataset.openDay;});
-      pop.addEventListener('click',e=>{if(e.target===pop)pop.close();});
-      loadShifts();
-    })();
-  </script>
 </body>
 </html>
