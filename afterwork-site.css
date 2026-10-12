@@ -10,3 +10,10 @@
 .aw-slot.selected{border:2px solid #137480;background:#d9f0f1}
 .aw-slot small{font-size:.7rem;font-weight:400}
 #awSubmit{justify-self:start}
+.aw-hint{font-size:.82rem;color:#536b77;margin:.35rem 0 .55rem}
+.aw-selection{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:space-between;margin-top:.65rem;font-weight:700;color:#164c5b}
+.aw-selection-actions{display:flex;flex-wrap:wrap;gap:.4rem}
+.aw-selection-actions .stip-btn{font-size:.79rem;min-height:38px;padding:.4rem .65rem}
+.aw-slot{min-width:125px;min-height:61px;position:relative}
+.aw-slot[aria-pressed="true"]{box-shadow:0 0 0 1px #137480;background:#d9f0f1}
+.aw-check{position:absolute;top:3px;right:7px;font-size:.75rem;color:#16717e}
