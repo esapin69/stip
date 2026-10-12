@@ -60,6 +60,7 @@
       clearTimeout(t);
     }
   }
+  try { localStorage.removeItem("stip_agent_dates_cache_v2"); } catch {}
   function cached() {
     // The shared cache is scoped to this session and expires quickly.
     // Never reuse another agent's six-hour localStorage snapshot.
