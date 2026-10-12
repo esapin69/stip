@@ -13,7 +13,7 @@
       const s=JSON.parse(sessionStorage.getItem(STORE)||"null");
       if(!s||Date.now()-s.at>8*3600000)return;
       steps=(Array.isArray(s.steps)?s.steps:[]).filter(x=>
-        x&&["planning","communication"].includes(x.block)&&typeof x.id==="string"
+        x&&["planning","communication","ensemble"].includes(x.block)&&typeof x.id==="string"
         &&typeof x.label==="string"
       ).slice(-MAX);
     }catch{}
@@ -31,7 +31,8 @@
       if(key(s.block,s.id)===currentKey)b.setAttribute("aria-current","page");
       b.addEventListener("click",()=>{
         steps=steps.slice(0,index+1);save();
-        window.TEstDashboard?.open(s.block,s.id,{forceOpen:true});
+        if(s.block==="ensemble")window.TEstEnsemble?.open(s.id,{forceOpen:true});
+        else window.TEstDashboard?.open(s.block,s.id,{forceOpen:true});
         paint();
       });
       li.append(arrow,b);list.append(li);
@@ -60,5 +61,7 @@
   read();
   const state=window.TEstDashboard?.current?.()||{};
   for(const [block,id] of Object.entries(state))if(id)record({block,id,open:true,label:steps.find(s=>s.block===block&&s.id===id)?.label||id});
+  const ensemble=window.TEstEnsemble?.current?.();
+  if(ensemble)record({block:"ensemble",id:ensemble,open:true,label:({activities:"Activités",trips:"Trajets",invitations:"Invitations"})[ensemble]||"Ensemble"});
   paint();
 })();
