@@ -98,6 +98,55 @@ async function matches(c:any,target:string){
  return {colleague:peer,days:days.slice(0,12)};
 }
 
+
+async function ownCalendar(c:any){
+ if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
+ const from=today(),to=plusDays(from,92);
+ const [planning,registry]=await Promise.all([
+  checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',from).lte('date',to)),
+  checked(db.from('stip_shift_registry').select('code,label,icon,color_hex,soft_color_hex,on_color_hex,is_working').eq('active',true))
+ ]);
+ const rules=new Map<string,any>((registry||[]).map((r:any)=>[r.code,r]));
+ const own=new Map<string,string>((planning||[]).map((r:any)=>[r.date,r.code]));
+ const days:any[]=[];
+ for(let date=from;date<=to;date=plusDays(date,1)){
+  const code=own.get(date)||'',shift=rules.get(code)||rules.get(shiftCode(code));
+  days.push({date,code,icon:shift?.icon||'·',label:shift?.label||'Non renseigné',
+    color:shift?.color_hex||'#839299',soft_color:shift?.soft_color_hex||'#f0f4f5',
+    on_color:shift?.on_color_hex||'#fff',is_working:shift?.is_working??null});
+ }
+ return {days,colleagues:await colleagues(c),max_dates:24};
+}
+async function createActivity(c:any,b:any){
+ if(!c.agent_id)throw Error('ACCES_AGENT_REQUIS');
+ const title=text(b.title,120),selected=dates(b.dates);
+ if(!title||selected.length<1||selected.length>24||selected.some((d:string)=>d<today()||d>plusDays(today(),365)))throw Error('DATES_INVALIDES');
+ const guests=Array.isArray(b.agent_ids)?[...new Set(b.agent_ids)]:[];
+ if(guests.length>120||guests.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
+ const accessible=new Set((await colleagues(c)).map((a:any)=>a.id));
+ if(guests.some((id:any)=>!accessible.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
+ const visibility=b.visibility==='team'?'team':'invite';
+ if(visibility==='invite'&&!guests.length)throw Error('CHOISIR_INVITES_OU_OUVRIR');
+ const event=await checked(db.from('stip_leisure_events').insert({
+  title,description:text(b.description,2000),location:text(b.location,240),time_label:text(b.time_label,240),
+  dates:selected,family:c.family,organizer_agent_id:c.agent_id,visibility
+ }).select('id').single());
+ try{
+  if(guests.length){
+   await checked(db.from('stip_leisure_invites').insert(guests.map((agent_id:any)=>({event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'}))));
+   await checked(db.from('stip_notifications').insert(guests.map((agent_id:any)=>({
+     agent_id,type:'leisure_invite',title:'Invitation à une activité',body:title,source_type:'stip_leisure_events',source_ref:event.id
+   }))));
+   await Promise.allSettled(guests.map((id:any)=>notifyPhone(id,'leisure_invite',event.id,'Invitation à une activité',title)));
+  }
+ }catch(error){
+  try{await checked(db.rpc('stip_leisure_delete_event',{p_event:event.id,p_actor:c.agent_id,p_family:c.family}))}
+  catch(cleanup){console.error('event cleanup failed',cleanup)}
+  throw error;
+ }
+ return {ok:true,id:event.id,...await list(c)};
+}
+
 async function closingDates(actor:string,closeTime='21:00'){
  const from=today(),to=plusDays(from,31);
  const [rows,registry]=await Promise.all([
@@ -477,6 +526,15 @@ Deno.serve(async req=>{
    return J({ok:true,removed:1,...await list(c)});
   }
 
+  if(b.action==='calendar')return J(await ownCalendar(c));
+  if(b.action==='create')return J(await createActivity(c,b));
+  if(b.action==='uninvite'){
+   if(!c.agent_id||!uuid(b.event_id)||!uuid(b.target_agent_id))throw Error('INVITATION_INVALIDE');
+   const removed=await checked(db.rpc('stip_leisure_remove_invitee',{p_event:b.event_id,p_actor:c.agent_id,
+     p_target:b.target_agent_id,p_family:c.family}));
+   if(!removed)throw Error('INVITATION_INTROUVABLE');
+   return J({ok:true,removed:true,...await list(c)});
+  }
   if(b.action==='recurring_preview')return J({dates:c.agent_id?await closingDates(c.agent_id):[],colleagues:await colleagues(c)})
   if(b.action==='recurring_create')return J(await recurringCreate(c,b))
   if(b.action==='recurring_toggle')return J(await recurringToggle(c,b))
