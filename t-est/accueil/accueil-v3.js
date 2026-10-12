@@ -219,6 +219,7 @@
       frame.title=(communication?'Communication : ':'Planning : ')+(vue==='dm'?'DM · privé':vue==='loisirs'?'Événements':vue==='fauteuils'?'Fauteuils':'Personnel');
     }
     $('#tModuleStatut').textContent='';
+    requestAnimationFrame(sizeDetailFrame);
   }
   async function refresh(token,hash){
     if(currentRequest)return currentRequest;
@@ -271,6 +272,16 @@
   // Le défilement des sous-pages s'effectue dans l'iframe.
   // Il doit aussi libérer le haut de la page d'accueil T-est : titre et carrousel.
   const detailShell=$('#tAccueilSousPage');
+  // Calcule la vraie place disponible : bande d'historique + haut de page.
+  // Empêche le parent et l'iframe d'avoir deux défilements verticaux concurrents.
+  function sizeDetailFrame(){
+    if(detailShell.hidden)return;
+    const band=document.getElementById('tEstHistoryBar')?.offsetHeight||40;
+    const head=detailShell.classList.contains('t-inner-scrolling')?0:
+      (detailShell.querySelector('.t-nav-fixed')?.offsetHeight||0);
+    const status=detailShell.querySelector('#tModuleStatut')?.offsetHeight||0;
+    detailShell.style.setProperty('--t-est-detail-offset',Math.ceil(band+head+status)+'px');
+  }
   let detachScroll=()=>{};
   const syncInnerScroll=e=>{
     if(detailShell.hidden)return;
@@ -284,13 +295,18 @@
       Number(doc.scrollingElement?.scrollTop||0),
       Number(doc.documentElement?.scrollTop||0)
     );
-    detailShell.classList.toggle('t-inner-scrolling',Math.max(documentY,targetY)>12);
+    const scrolled=Math.max(documentY,targetY)>12;
+    if(detailShell.classList.contains('t-inner-scrolling')!==scrolled){
+      detailShell.classList.toggle('t-inner-scrolling',scrolled);
+      requestAnimationFrame(sizeDetailFrame);
+    }
   };
   // T-est uniquement : les en-tetes defilent, les onglets internes restent visibles.
   const moduleFrame=$('#tModuleFrame');
   moduleFrame?.addEventListener('load',()=>{
     detachScroll();
     detailShell.classList.remove('t-inner-scrolling');
+    requestAnimationFrame(sizeDetailFrame);
     try{
       const innerDoc=moduleFrame.contentDocument,innerWin=moduleFrame.contentWindow;
       if(innerDoc&&innerWin){
@@ -320,6 +336,7 @@
       doc.head.appendChild(rules);
     }catch{}
   });
+  window.addEventListener('resize',sizeDetailFrame,{passive:true});
   window.addEventListener('popstate',view);
   window.addEventListener('pageshow',()=>{if(!document.hidden)drawCards();});
   initialize();
