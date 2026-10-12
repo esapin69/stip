@@ -108,14 +108,6 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
   position:static!important;
   top:auto!important;
 }
-
-/* Bloc Ensemble : les anciennes pages deviennent des contenus du bloc d'accueil.
-   Les trois cartes remplacent les onglets de la page Ensemble, sans doublon. */
-.ensemble-bloc{margin-top:22px}
-.ensemble-inline{margin-top:14px;min-width:0;border:1px solid #dce8eb;border-radius:19px;overflow:hidden;background:#fff;box-shadow:0 6px 20px rgba(18,61,79,.06)}
-.ensemble-inline-loading{font-size:.86rem;color:#607a85;padding:17px 14px;margin:0}
-.ensemble-inline-loading:empty{display:none}
-.ensemble-inline-frame{display:block;width:100%;min-height:0;height:420px;border:0;background:#fff;overflow:hidden}
-#tEnsembleBloc [data-ensemble-view][aria-current="true"]{border:2px solid #1689a2;background:#e9f8fa}
-
-#tEnsembleBloc{scroll-margin-top:calc(var(--t-est-history-height,40px) + 10px)}
+/* Un seul bloc Communication pour les fils, les canaux et le bouton de création. */
+.pop-choix [data-new-channel]{justify-content:center;background:#167c98;color:#fff;border-color:#167c98;min-height:50px}
+.pop-choix [data-new-channel]:focus-visible{outline:3px solid #145875;outline-offset:2px}
