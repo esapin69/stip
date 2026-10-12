@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261012-afterwork1";
+    V = "20261012-leisure-ux2";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
