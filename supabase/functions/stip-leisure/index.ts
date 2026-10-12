@@ -14,7 +14,7 @@ async function context(req:Request){
  if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error('SESSION_EXPIREE')
  const p=await checked(db.from('stip_access_profiles').select('id,agent_id,active,permissions,role_key').eq('id',s.profile_id).maybeSingle())
  if(!p?.active)throw Error('ACCES_DESACTIVE')
- const perms=p.permissions||{};if(perms.leisure===false||!(perms.messages||perms.planning_team||perms.admin))throw Error('ACCES_EQUIPE_REQUIS')
+ const perms=p.permissions||{};if(perms.leisure===false||!(perms.leisure===true||perms.messages||perms.planning_team||perms.admin))throw Error('ACCES_EQUIPE_REQUIS')
  const family=perms.communication_family==='hors_brancardage'?'hors_brancardage':'brancardage'
  return {...p,family,isAdmin:perms.admin===true}
 }
