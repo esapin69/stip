@@ -40,8 +40,8 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
   margin-top:13px;border:1.5px solid #137e99;border-radius:16px;color:#fff;background:#167c98;
   box-shadow:0 6px 16px rgba(20,107,132,.14);font-size:1rem;font-weight:850}
 .canal-action .plus{font-size:1.5rem;font-weight:500;line-height:1}
-.t-module-body{min-height:calc(100dvh - 200px);background:#fff}
-.t-module-iframe{border:0;display:block;width:100%;height:calc(100dvh - 192px);min-height:420px;background:#fff}
+.t-module-body{min-height:0;background:#fff}
+.t-module-iframe{border:0;display:block;width:100%;height:max(220px,calc(100dvh - var(--t-est-detail-offset, 192px)));min-height:0;background:#fff}
 .t-module-status{padding:12px 14px;font-size:.82rem;color:#607c86}
 .accueil-pop{max-width:min(470px,calc(100vw - 28px));width:100%;max-height:min(84dvh,730px);border:0;padding:0;
   border-radius:23px;background:#fff;color:#143d51;box-shadow:0 20px 65px rgba(8,45,61,.25)}
