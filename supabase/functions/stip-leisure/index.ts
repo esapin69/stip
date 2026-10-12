@@ -80,6 +80,7 @@ async function list(c:any){
  const visibleEvents=events.filter((e:any)=>e.visibility!=='invite'||e.organizer_agent_id===c.agent_id||invited.has(e.id));
  events.splice(0,events.length,...visibleEvents);
  const ids=events.map((e:any)=>e.id)
+ const allInvitations=ids.length?await checked(db.from('stip_leisure_invites').select('event_id,agent_id,status,agent:agents(id,prenom,nom)').in('event_id',ids)):[]
  const chats=ids.length&&c.permissions?.messages?await checked(db.from('stip_leisure_chats').select('event_id,event_date,conversation_id').in('event_id',ids)):[]
  const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
  const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
@@ -91,6 +92,7 @@ async function list(c:any){
   return {...e,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    invitation_status:invited.get(e.id)||null,
+   invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
    needs_response:active&&!!c.agent_id&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
@@ -263,6 +265,25 @@ Deno.serve(async req=>{
   if(String(b.action||'').startsWith('carpool_'))return J(await carpoolAction(c,b))
   if(b.action==='list')return J(await list(c))
   if(b.action==='colleagues')return J({colleagues:await colleagues(c)})
+  if(b.action==='invite'){
+   if(!c.agent_id||!uuid(b.event_id)||!Array.isArray(b.agent_ids))throw Error('INVITATION_INVALIDE');
+   const requested=[...new Set(b.agent_ids)];
+   if(!requested.length||requested.length>24||requested.some((id:unknown)=>!uuid(id)||id===c.agent_id))throw Error('INVITATION_INVALIDE');
+   const event=await checked(db.from('stip_leisure_events').select('id,title,status,family,organizer_agent_id,visibility').eq('id',b.event_id).eq('family',c.family).maybeSingle());
+   if(!event||event.status!=='active'||event.organizer_agent_id!==c.agent_id)throw Error('ACCES_ORGANISATEUR_REQUIS');
+   const allowed=new Set((await colleagues(c)).map((a:any)=>a.id));
+   if(requested.some((id:unknown)=>!allowed.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
+   const inserted=await checked(db.from('stip_leisure_invites').upsert(
+    requested.map((agent_id:any)=>({event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'})),
+    {onConflict:'event_id,agent_id',ignoreDuplicates:true}
+   ).select('agent_id'))||[];
+   if(inserted.length)await checked(db.from('stip_notifications').insert(inserted.map((r:any)=>({
+    agent_id:r.agent_id,type:'leisure_invite',title:'Invitation à une sortie',
+    body:text(event.title,120),source_type:'stip_leisure_events',source_ref:event.id
+   }))));
+   return J({ok:true,added:inserted.length,...await list(c)});
+  }
+
   if(b.action==='matches')return J(await matches(c,text(b.target_agent_id,80)))
   if(b.action==='propose'){
    if(!c.agent_id||!uuid(b.target_agent_id))throw Error('PROPOSITION_INVALIDE');
