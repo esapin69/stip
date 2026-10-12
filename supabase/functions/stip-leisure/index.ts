@@ -265,10 +265,16 @@ Deno.serve(async req=>{
   if(b.action==='colleagues')return J({colleagues:await colleagues(c)})
   if(b.action==='matches')return J(await matches(c,text(b.target_agent_id,80)))
   if(b.action==='propose'){
-   if(!c.agent_id||!uuid(b.target_agent_id)||typeof b.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.date))throw Error('PROPOSITION_INVALIDE');
+   if(!c.agent_id||!uuid(b.target_agent_id))throw Error('PROPOSITION_INVALIDE');
+   const proposed=dates(Array.isArray(b.dates)?b.dates:[b.date]);
+   if(proposed.length<1||proposed.length>12||proposed.some((day:string)=>day<today()||day>plusDays(today(),31)))
+    throw Error('DATES_INVALIDES');
    const title=text(b.title,120);if(!title)throw Error('TITRE_REQUIS');
-   const id=await checked(db.rpc('stip_afterwork_propose',{
-    p_actor:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_day:b.date,
+   const available=await matches(c,String(b.target_agent_id));
+   const compatible=new Set(available.days.map((row:any)=>row.date));
+   if(proposed.some((day:string)=>!compatible.has(day)))throw Error('HORAIRES_NON_COMPATIBLES');
+   const id=await checked(db.rpc('stip_afterwork_propose_many',{
+    p_actor:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_days:proposed,
     p_title:title,p_description:text(b.description,2000),p_location:text(b.location,240),p_time:text(b.time_label,240)
    }));
    return J({ok:true,id,...await list(c)});
