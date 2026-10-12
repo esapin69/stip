@@ -76,9 +76,9 @@
       <button class="accueil-carte" id="carte-demain" data-jour="1" type="button" aria-haspopup="dialog">
         <span class="carte-label">Demain</span><span class="carte-shift" data-shift></span>
       </button>
-      <button class="accueil-carte" id="carte-semaine" type="button">
+      <div class="accueil-carte" id="carte-semaine">
         <span class="carte-label">Cette semaine</span>
-      </button>
+      </div>
     </nav>
     <section class="com-bloc" aria-label="Communication">
       <h1 class="com-titre">Communication</h1>
@@ -201,20 +201,6 @@
         const token=localStorage.getItem('stip_session_v1')||'';
         if(!token){loading=false;error='Connecte-toi à GHE pour consulter ton shift.';return;}
         try{
-          const c=JSON.parse(sessionStorage.getItem('stip_home_runtime_cache_v2')||'null');
-          if(c?.version===2&&c?.boot&&Date.now()-Number(c.at||0)<600000){
-            const session=window.STIPContinuity?.read?.()||{};
-            const ownerId=String(c.owner||''),agent=c.boot.agent||{};
-            const cacheAgentId=String(agent.id||agent.source_key||'');
-            if(cacheAgentId && ownerId.startsWith(cacheAgentId+'::')){
-              planning=Array.isArray(c.boot.personal)?c.boot.personal:[];
-              definitions=c.boot.shift_definitions||[];
-              window.STIPShiftRegistry?.set?.(definitions);
-              repaint();
-            }
-          }
-        }catch{}
-        try{
           const res=await fetch(DATA_API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'bootstrap'})});
           const payload=await res.json().catch(()=>({}));
           if(!res.ok||payload.error)throw Error('Planning indisponible pour le moment.');
@@ -231,7 +217,6 @@
         }
       }
       for(const card of cards)card.addEventListener('click',()=>{pop.dataset.openDay=card.dataset.jour;showDay(Number(card.dataset.jour));});
-      document.getElementById('carte-semaine').addEventListener('click',()=>{});
       document.querySelectorAll('[data-ouverture]').forEach(b=>b.addEventListener('click',()=>openRoute(b.dataset.ouverture)));
       document.getElementById('ouvrirCanaux').addEventListener('click',()=>{delete pop.dataset.openDay;showChannels();});
       popBody.addEventListener('click',e=>{const target=e.target.closest('[data-canal]');if(target)openRoute(target.dataset.canal);});
