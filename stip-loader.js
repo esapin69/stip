@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261012-ensemble-calendar-v5";
+    V = "20261012-agent-page-prewarm1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -67,6 +67,7 @@
     else setTimeout(run, 900);
   }
   const documentWarm = new Map();
+  const documentMarkup = new Map();
   const DOCUMENT_APP_TARGET = {
     agents: "agent-directory.html",
     compare: "planning-compare-app.html",
@@ -99,11 +100,112 @@
       credentials: "same-origin",
       cache: "default",
     })
-      .then((response) => response.ok)
-      .catch(() => false);
+      .then((response) => {
+        if (!response.ok) return false;
+        // Only HTML presentation files are warmed: no business request or private API response.
+        if (/\.html?$/i.test(url.pathname) && !url.search) {
+          documentMarkup.set(key, response.clone().text().catch(() => ""));
+        }
+        return true;
+      })
+      .catch(() => false)
+      .then((ok) => {
+        if (!ok) {
+          documentWarm.delete(key); // Offline and transient errors must be retryable.
+          documentMarkup.delete(key);
+        }
+        return ok;
+      });
     documentWarm.set(key, promise);
     return promise;
   }
+
+  // Prefetch only the static shell and its own CSS/JS, without running the scripts.
+  // The existing service worker stores these files for the following navigation.
+  async function warmDocumentResources(raw) {
+    const url = documentUrl(raw);
+    if (!url || url.search || !/\.html?$/i.test(url.pathname)) return false;
+    if (!(await warmDocument(url.href))) return false;
+    const key = url.pathname;
+    const markup = await documentMarkup.get(key);
+    if (!markup || typeof DOMParser !== "function") return true;
+    const stem = url.pathname.split("/").pop().replace(/\.html?$/i, "");
+    const parsed = new DOMParser().parseFromString(markup, "text/html");
+    const urls = [...parsed.querySelectorAll('link[rel="stylesheet"][href], script[src]')]
+      .map((element) => element.getAttribute("href") || element.getAttribute("src"))
+      .map((rawUrl) => {
+        try { return new URL(rawUrl, url.href); } catch { return null; }
+      })
+      .filter((resource) =>
+        resource &&
+        resource.origin === location.origin &&
+        /\.(?:js|css)$/i.test(resource.pathname) &&
+        resource.pathname.split("/").pop().startsWith(stem + ".")
+      )
+      .slice(0, 2);
+    await Promise.allSettled(
+      urls.map((resource) =>
+        fetch(resource.href, { method: "GET", credentials: "same-origin", cache: "default" })
+      ),
+    );
+    documentMarkup.delete(key);
+    return true;
+  }
+
+  // Agent-specific permission gates mirror the canonical home application catalogue.
+  // This does not download agent data; authorization remains enforced by existing APIs.
+  const AGENT_PAGE_TARGETS = [
+    ["mon-compte.html", () => true],
+    ["agent-directory.html", (p) => p.agent_directory === true],
+    ["agent-dates.html", (p) => p.agent_dates === true],
+    ["esprit-equipe.html", (p) =>
+      p.planning_team === true || p.activity === true || p.assistant_enabled === true],
+    ["agent-date-detail.html", (p) => p.agent_dates === true],
+  ];
+  let warmGeneration = 0;
+  let warmedIdentity = "";
+  function warmAgentPages(session = window.STIPSession) {
+    const token = localStorage.getItem("stip_session_v1") || "";
+    if (!token || !session?.agent || window.STIPPreview?.active) return;
+    const permissions = session.permissions || {};
+    const pages = AGENT_PAGE_TARGETS
+      .filter(([, allowed]) => allowed(permissions))
+      .slice(0, 4)
+      .map(([url]) => url);
+    const identity = [token, session.agent.id || session.agent.source_key || "",
+      session.role_key || "", pages.join("|")].join("::");
+    if (identity === warmedIdentity) return;
+    warmedIdentity = identity;
+    const generation = ++warmGeneration;
+    const run = async () => {
+      const connection = navigator.connection || {};
+      if (document.hidden || connection.saveData || /(?:^|-)2g$/.test(connection.effectiveType || "")) {
+        warmedIdentity = "";
+        return;
+      }
+      for (const page of pages) {
+        if (generation !== warmGeneration ||
+            localStorage.getItem("stip_session_v1") !== token ||
+            window.STIPPreview?.active) return;
+        await warmDocumentResources(page);
+      }
+    };
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(() => { void run(); }, { timeout: 3500 });
+    else setTimeout(() => { void run(); }, 1400);
+  }
+  window.addEventListener("stip:session-ready", (e) => warmAgentPages(e.detail));
+  window.addEventListener("stip:session-refreshed", (e) => warmAgentPages(e.detail));
+  window.addEventListener("stip:session-ended", () => {
+    ++warmGeneration;
+    warmedIdentity = "";
+    documentMarkup.clear();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && !warmedIdentity) warmAgentPages();
+  });
+  if (window.STIPSession) warmAgentPages();
+
   function navigateDocument(raw) {
     const url = new URL(String(raw || ""), location.href);
     if (url.origin === location.origin) warmDocument(url.href);
@@ -260,6 +362,7 @@
     homeExtras,
     idle: later,
     warmDocument,
+    warmAgentPages,
     navigateDocument,
     documentTarget: (key) => DOCUMENT_APP_TARGET[key] || "",
   };
@@ -285,7 +388,8 @@
   function idle() {
     if (new URLSearchParams(location.search).has("view_agent"))
       load("readonly-view-as.js").catch(console.error);
-    warmVisibleDocuments();
+    if (window.STIPSession && localStorage.getItem("stip_session_v1"))
+      warmVisibleDocuments();
   }
   if ("requestIdleCallback" in window)
     requestIdleCallback(idle, { timeout: 2200 });
