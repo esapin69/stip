@@ -25,13 +25,13 @@
   function render(){
    const root=$("#trainingRecurringApp");if(!root)return;
    const existing=(window.STIPLeisureRecurringExisting||[]);
-   root.innerHTML='<section class="training-section stip-surface"><div class="training-head"><span aria-hidden="true">💪</span><div><h2>Muscu à chaque fermeture</h2><p>Tu es partant par défaut après tes services du soir. Tes collègues choisissent librement les dates où ils te rejoignent.</p></div></div>'+
+   root.innerHTML='<section class="training-section stip-surface"><div class="training-head"><span aria-hidden="true">🔁</span><div><h2>Une activité à chaque fermeture</h2><p>Muscu, boxe, foot… Tu es partant par défaut après tes services du soir. Tes collègues choisissent librement les dates où ils te rejoignent.</p></div></div>'+
      '<button type="button" class="stip-btn" id="trainingOpen">'+(state.open?"Masquer la préparation":"Créer mon invitation permanente")+'</button>'+
      (state.open?'<div class="training-content">'+(state.error?'<p class="training-error" role="alert">'+esc(state.error)+'</p>':'')+
        (!state.loaded?'<p>Recherche de tes prochaines fermetures…</p>':
        '<form id="trainingCreate" class="training-form" data-stip-form-mode="standard"><p class="training-brief"><strong>'+state.days.length+' journées finissant à 21 h</strong> détectées sur les 31 prochains jours. Tu seras disponible par défaut à chacune. Tu pourras ensuite te retirer d’une date depuis la fiche.</p>'+
        '<div class="training-days">'+state.days.map(date=>'<span>✓ '+esc(label(date))+'</span>').join("")+'</div>'+
-       '<label>Activité<input name="title" value="Muscu après la fermeture" maxlength="120" required></label>'+
+       '<label>Activité<div class="training-shortcuts"><button type="button" data-training-shortcut="Muscu">💪 Muscu</button><button type="button" data-training-shortcut="Boxe">🥊 Boxe</button><button type="button" data-training-shortcut="Foot">⚽ Foot</button><button type="button" data-training-shortcut="">✏️ Autre</button></div><input name="title" value="Muscu après la fermeture" maxlength="120" required></label>'+
        '<label>Lieu (facultatif)<input name="location" maxlength="240" placeholder="Salle ou adresse à fixer"></label>'+
        '<label>Rendez-vous habituel<input name="time_label" maxlength="240" value="21:20" placeholder="Après la fermeture"></label>'+
        '<label>Précisions (facultatif)<textarea name="description" maxlength="2000" rows="2" placeholder="Chacun s’inscrit aux jours qui lui conviennent."></textarea></label>'+
@@ -44,6 +44,11 @@
     renderPeople();
     $("#trainingRecSearch").value=state.filter;
     $("#trainingRecSearch").oninput=e=>{state.filter=e.target.value;renderPeople()};
+    document.querySelectorAll("[data-training-shortcut]").forEach(button=>button.onclick=()=>{
+     const title=$("#trainingCreate").elements.title;
+     title.value=button.dataset.trainingShortcut?button.dataset.trainingShortcut+" après la fermeture":"";
+     title.focus();
+    });
     $("#trainingCreate").onsubmit=async e=>{
      e.preventDefault();
      const form=e.currentTarget,status=$("#trainingCreateStatus"),button=form.querySelector('[type="submit"]');
