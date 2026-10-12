@@ -179,7 +179,10 @@
   // A bounded initial batch protects slower telephones; further pages warm on
   // the next relevant pointer/focus interaction or when they become visible.
   function authorizedPage(app, session = window.STIPSession) {
-    const candidate = PAGE_BY_APP.get(app);
+    const normalized = app === "assistant" || app === "activity" ? "team"
+      : app === "admin" ? "access" : app;
+    const candidate = PAGE_BY_APP.get(normalized);
+    if (app === "admin" && session?.permissions?.admin !== true) return false;
     return !!(candidate && session?.agent && candidate.allowed(session.permissions || {}));
   }
   let warmGeneration = 0;
@@ -255,7 +258,15 @@
       if (!target || !authorizedPage(key)) continue;
       void warmDocumentResources(new URL(target, location.href).pathname);
       count += 1;
-      if (count >= limit) break;
+      if (count >= limit) return;
+    }
+    // Other internal links use the same mechanism, without an individual page patch.
+    for (const anchor of document.querySelectorAll("a[href]")) {
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) continue;
+      const target = documentUrl(anchor.href);
+      if (!target || !/\.html?$/i.test(target.pathname)) continue;
+      void warmDocumentResources(target.pathname);
+      if (++count >= limit) return;
     }
   }
   const personalCore = [
@@ -426,6 +437,27 @@
   if ("requestIdleCallback" in window)
     requestIdleCallback(idle, { timeout: 2200 });
   else setTimeout(idle, 900);
+  // Anticipate a user's next click on any authorized application or same-site link.
+  function warmInteraction(event) {
+    if (!localStorage.getItem("stip_session_v1") || !window.STIPSession ||
+        window.STIPPreview?.active || document.hidden) return;
+    const connection = navigator.connection || {};
+    if (connection.saveData || /(?:^|-)2g$/.test(connection.effectiveType || "")) return;
+    const button = event.target.closest?.("[data-app]");
+    if (button && authorizedPage(button.dataset.app)) {
+      rememberIntent(button.dataset.app);
+      const page = DOCUMENT_APP_TARGET[button.dataset.app];
+      if (page) void warmDocumentResources(new URL(page, location.href).pathname);
+      return;
+    }
+    const anchor = event.target.closest?.("a[href]");
+    if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+    const target = documentUrl(anchor.href);
+    if (target && /\.html?$/i.test(target.pathname))
+      void warmDocumentResources(target.pathname);
+  }
+  document.addEventListener("pointerover", warmInteraction, { passive: true, capture: true });
+  document.addEventListener("focusin", warmInteraction, true);
   document.addEventListener(
     "pointerdown",
     (e) => {
