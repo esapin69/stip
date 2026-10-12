@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="afterwork-site.css?v=20261012-ensemble-calendar-v5">
 <link rel="stylesheet" href="recurring-training.css?v=20261012-ensemble-calendar-v5">
 <link rel="stylesheet" href="carpool-runtime.css?v=20261012-ensemble-calendar-v5">
-<link rel="stylesheet" href="ensemble-shell.css?v=20261013-shift-labels-v1">
+<link rel="stylesheet" href="ensemble-shell.css?v=20261013-afterwork-v2">
 <link rel="stylesheet" href="ensemble-create.css?v=20261012-ensemble-calendar-v5">
 <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
 <script defer src="stip-session-continuity.js?v=20260927-pin-security1"></script>
@@ -22,8 +22,8 @@
 <script defer src="recurring-training.js?v=20261012-ensemble-calendar-v5"></script>
 <script defer src="afterwork-site.js?v=20261012-ensemble-calendar-v5"></script>
 <script defer src="carpool-runtime.js?v=20261012-ensemble-calendar-v5"></script>
-<script defer src="ensemble-create.js?v=20261012-ensemble-calendar-v5"></script>
-<script defer src="leisure-runtime.js?v=20261013-shift-labels-v1"></script>
+<script defer src="ensemble-create.js?v=20261013-afterwork-v2"></script>
+<script defer src="leisure-runtime.js?v=20261013-afterwork-v2"></script>
 </head>
 <body>
 <main class="ensemble-page stip-page">
@@ -45,12 +45,13 @@
   <p id="leisureStatus" class="ensemble-status" role="status" aria-live="polite"></p>
   <section id="ensembleCreator" class="ensemble-creator" aria-label="Créer une activité" hidden>
     <div class="ensemble-creator-top"><div><span class="ensemble-eyebrow">PROPOSER</span><h2>On fait quoi ensemble ?</h2></div><button type="button" data-ensemble-close aria-label="Fermer la préparation">×</button></div>
-    <div class="ensemble-ways" role="group" aria-label="Type d'activité">
+    <div class="ensemble-ways" role="group" aria-label="Proposer ou retrouver une activité">
       <button type="button" data-ensemble-option="matched"><span>👥</span><strong>Avec des collègues</strong><small>Toutes les dates possibles</small></button>
-      <button type="button" data-ensemble-option="recurring"><span>🏋️</span><strong>À chaque fermeture</strong><small>Selon mon planning</small></button>
+      <button type="button" data-ensemble-option="afterwork"><span>🕔</span><strong>Après le travail</strong><small>Mes activités et invitations</small></button>
       <button type="button" data-ensemble-option="date"><span>📅</span><strong>Une sortie</strong><small>Dates et invités au choix</small></button>
     </div>
-    <section id="trainingRecurringApp" aria-label="Activité récurrente" hidden></section>
+    <section id="ensembleAfterworkEvents" aria-label="Activités après le travail" hidden></section>
+    <section id="trainingRecurringApp" aria-label="Activité récurrente existante" hidden></section>
     <section id="ensembleCreatePanel" aria-label="Proposer une activité libre" hidden></section>
 <section id="ensembleAfterworkCreate" aria-label="Activité avec un collègue" hidden></section>
   </section>
