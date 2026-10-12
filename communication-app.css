@@ -109,3 +109,19 @@
     pointer-events:none;
   }
 }
+
+/* GHE · Ne jamais masquer Chat équipe / DM & groupes / Fauteuils au défilement. */
+@media(max-width:899px){
+  .ca-app.is-wheelchair-tab.is-chrome-compact .ca-tabs{
+    position:sticky;
+    top:64px;
+    z-index:29;
+    max-height:none;
+    min-height:0;
+    padding:8px;
+    overflow:visible;
+    opacity:1;
+    border-bottom-color:#dce8e5;
+    pointer-events:auto;
+  }
+}
