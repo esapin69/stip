@@ -250,10 +250,20 @@ async function list(c:any){
  const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
  const responses=ids.length?await checked(db.from('stip_leisure_responses').select('event_id,agent_id,selected_dates,declined,revision,updated_at,agent:agents!stip_leisure_responses_agent_id_fkey(id,prenom,nom,profile_photo_url,avatar_url)').in('event_id',ids)):[]
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
+ const [viewerPlan,shiftPalette]=c.agent_id&&ids.length?await Promise.all([
+  checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',today()).lte('date',plusDays(today(),123))),
+  checked(db.from('stip_shift_registry').select('code,label,icon,color_hex,soft_color_hex').eq('active',true))
+ ]):[[],[]];
+ const shiftMap=new Map((shiftPalette||[]).map((x:any)=>[x.code,x]));
+ const viewerDays=new Map((viewerPlan||[]).map((x:any)=>{
+  const d:any=shiftMap.get(x.code)||shiftMap.get(shiftCode(x.code||''))||{};
+  return [x.date,{date:x.date,code:x.code||'',label:d.label||x.code||'Non renseigné',
+    icon:d.icon||'·',color:d.color_hex||'#647988',soft_color:d.soft_color_hex||'#eef3f4'}];
+ }));
  return {can_create:!!c.agent_id,events:events.map((e:any)=>{
   const rs=(responses||[]).filter((r:any)=>r.event_id===e.id),mine=rs.find((r:any)=>r.agent_id===c.agent_id)||null
   const active=e.status==='active'&&(e.dates.some((d:string)=>d>=today())||!!recurringById.get(e.id)?.active)
-  return {...e,recurring_closing:!!recurringById.get(e.id)?.active,
+  return {...e,my_schedule:e.dates.map((d:string)=>viewerDays.get(d)).filter(Boolean),recurring_closing:!!recurringById.get(e.id)?.active,
    organizer_unavailable_dates:recurringById.get(e.id)?.excluded_dates||[],
    closing_time:recurringById.get(e.id)?.closing_time||null,
    series_conversation_id:seriesConversations.find((x:any)=>x.event_id===e.id&&seriesMemberIds.has(x.conversation_id))?.conversation_id||null,
