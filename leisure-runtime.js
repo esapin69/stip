@@ -288,7 +288,9 @@
      esc(future?action:'Voir les détails')+'</button>'+
     (e.can_invite&&future?'<button type="button" class="ensemble-subtle" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':
      firstChat?'<a class="ensemble-subtle" href="'+esc(chatURL(firstChat.conversation_id))+'">Discuter</a>':'')+
-    '</div></article>';
+    '</div>'+
+    (e.series_conversation_id?'<a class="ensemble-group-link" href="'+esc(chatURL(e.series_conversation_id))+'">💬 Discussion du groupe · toutes les séances</a>':'')+
+    '</article>';
  }
  function setView(tab){
   if(!['activities','trips','invitations'].includes(tab))tab='activities';
