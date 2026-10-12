@@ -261,6 +261,25 @@
     if(channel){dialog.close();navigate('communication',channel.dataset.canal);return;}
     if(e.target.closest('[data-open-planning]')){dialog.close();navigate('planning','personnel');}
   });
+  // T-est uniquement : les en-tetes defilent, les onglets internes restent visibles.
+  const moduleFrame=$('#tModuleFrame');
+  moduleFrame?.addEventListener('load',()=>{
+    try{
+      const doc=moduleFrame.contentDocument;
+      if(!doc||doc.getElementById('t-est-tabs-only'))return;
+      const rules=doc.createElement('style');
+      rules.id='t-est-tabs-only';
+      rules.textContent=[
+        '.ca-head,.ensemble-topbar,.ensemble-hero{position:static!important;top:auto!important;}',
+        '.ca-app .ca-tabs,.ca-app.is-wheelchair-tab.is-chrome-compact .ca-tabs{',
+        'position:sticky!important;top:0!important;z-index:40!important;',
+        'opacity:1!important;max-height:none!important;overflow:visible!important;',
+        'pointer-events:auto!important;}',
+        '.ensemble-nav{position:sticky!important;top:0!important;z-index:40!important;}'
+      ].join('');
+      doc.head.appendChild(rules);
+    }catch{}
+  });
   window.addEventListener('popstate',view);
   window.addEventListener('pageshow',()=>{if(!document.hidden)drawCards();});
   initialize();
