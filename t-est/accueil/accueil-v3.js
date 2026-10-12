@@ -178,6 +178,7 @@
   }
   function locationFor(bloc,vue){
     const next=new URL(window.location.href);
+    next.searchParams.delete('conversation');
     if(!bloc){next.searchParams.delete('bloc');next.searchParams.delete('vue');}
     else{next.searchParams.set('bloc',bloc);next.searchParams.set('vue',vue);}
     return next.pathname+next.search+next.hash;
@@ -204,6 +205,7 @@
     $('#tAccueilSousPage .canal-action').hidden=!communication;
     $$('#tAccueilSousPage [data-ouverture]').forEach(b=>b.setAttribute('aria-current',String(communication&&b.dataset.ouverture===vue)));
     const frame=$('#tModuleFrame'),destination=DESTINATIONS[vue],url=new URL(destination,location.origin);
+    if(communication && vue==='dm' && params.get('conversation'))url.searchParams.set('conversation',params.get('conversation'));
     if(frame.dataset.source!==url.href){
       frame.dataset.source=url.href;
       frame.src=url.href;
