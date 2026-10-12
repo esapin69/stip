@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261012-leisure-ux3" />
+    <meta name="stip-ui-build" content="20261012-chat-push-fix5" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -152,7 +152,7 @@
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20261002-header-identity-fix1" />
     <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
-    <link rel="stylesheet" href="communication-hub.css?v=20261001-notification-settings1" />
+    <link rel="stylesheet" href="communication-hub.css?v=20261012-chat-push-fix5" />
     <link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1" />
     <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
     <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
@@ -461,7 +461,7 @@
     <script src="stip-legend.js?v=20260924-legend3"></script>
     <script src="stip-week-engine.js?v=20261001-week-current3"></script>
     <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>
-    <script src="stip-loader.js?v=20261012-leisure-ux3"></script>
+    <script src="stip-loader.js?v=20261012-chat-push-fix5"></script>
     <link rel="stylesheet" href="leave-cart.css?v=20261001-leave-shift1">
     <script src="person-card-template.js?v=20261002-header-identity-fix1"></script>
     <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
@@ -475,13 +475,13 @@
     <script src="tomorrow-network.js?v=20260922-opportunity1"></script>
     <script src="activity-runtime.js?v=20260924-history2"></script>
     <script src="access-runtime.js?v=20261001-wheelchair-landmarks3"></script>
-    <script src="communication-hub.js?v=20261012-leisure-ux3"></script>
+    <script src="communication-hub.js?v=20261012-chat-push-fix5"></script>
     <script src="profile-photo.js?v=20261002-header-identity-fix1"></script>
     <script id="stip-sw-register">
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261012-leisure-ux3", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261012-chat-push-fix5", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
