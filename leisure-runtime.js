@@ -27,7 +27,7 @@
   if(/course|running|jogg|marche/.test(t))return '🏃';
   return '🎉';
  };
-  const active=e=>e.status==='active'&&e.dates.some(d=>d>=today());
+  const active=e=>e.status==='active'&&(e.dates.some(d=>d>=today())||e.recurring_closing);
  function reset(){state.events=[];state.loaded=false;state.can_create=false;state.error='Connecte-toi sur l’accueil pour ouvrir les sorties.';state.token='';drafts.clear();document.querySelector('#leisureDialog')?.close();notify()}
  function notify(){window.dispatchEvent(new CustomEvent('stip:leisure-updated'));renderApp()}
  async function post(body){
