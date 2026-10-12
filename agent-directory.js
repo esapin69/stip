@@ -78,6 +78,7 @@
         primary: true,
         onSelect: () => openAgent(agent),
       },
+      { key: "afterwork", icon: "🏃", label: "Proposer après le travail", detail: "Voir vos prochaines fins de service compatibles", href: "sorties-loisirs.html?with=" + encodeURIComponent(agent.id || "") },
       agent?.telephone
         ? {
             key: "call",
