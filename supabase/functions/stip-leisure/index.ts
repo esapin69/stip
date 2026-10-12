@@ -7,6 +7,31 @@ const text=(v:unknown,n=1000)=>String(v??'').trim().slice(0,n)
 const uuid=(v:unknown)=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(String(v||''))
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())
 async function checked(q:any){const r=await q;if(r.error)throw r.error;return r.data}
+
+async function notifyPhone(target:string,kind:'leisure_invite'|'leisure_response',eventId:string,title:string,summary:string){
+ try{
+  if(!uuid(target)||!uuid(eventId))return;
+  const [type,pref,sub]=await Promise.all([
+   checked(db.from('stip_notification_types').select('active,push_enabled,default_user_enabled').eq('event_key',kind).maybeSingle()),
+   checked(db.from('stip_notification_preferences').select('enabled').eq('agent_id',target).eq('event_key',kind).maybeSingle()),
+   checked(db.from('stip_push_subscriptions').select('id').eq('agent_id',target).eq('active',true).limit(1))
+  ]);
+  if(!type?.active||!type.push_enabled||(pref?.enabled??type.default_user_enabled)===false)return;
+  if(!sub?.length){console.info('leisure push: no active device subscription',kind);return;}
+  const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const response=await fetch(URL+'/functions/v1/stip-push',{
+   method:'POST',headers:{'content-type':'application/json','authorization':'Bearer '+SERVICE},
+   body:JSON.stringify({action:'send_internal',agent_id:target,payload:{
+    event_key:kind,title:text(title,90),body:text(summary,140),
+    url:'/sorties-loisirs.html?event='+encodeURIComponent(eventId)+'#leisureApp',
+    tag:'stip-'+kind+'-'+eventId
+   }})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||result.error||!result.sent)console.warn('leisure push not delivered',kind,response.status,result.error||'0 device');
+ }catch(error){console.error('leisure push failure',kind,error)}
+}
+
 async function context(req:Request){
  const raw=req.headers.get('x-stip-session')||'';if(!raw||raw.length>256)throw Error('SESSION_STIP_REQUISE')
  const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(raw)))].map(b=>b.toString(16).padStart(2,'0')).join('')
@@ -278,10 +303,13 @@ Deno.serve(async req=>{
     requested.map((agent_id:any)=>({event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'})),
     {onConflict:'event_id,agent_id',ignoreDuplicates:true}
    ).select('agent_id'))||[];
-   if(inserted.length)await checked(db.from('stip_notifications').insert(inserted.map((r:any)=>({
-    agent_id:r.agent_id,type:'leisure_invite',title:'Invitation à une sortie',
-    body:text(event.title,120),source_type:'stip_leisure_events',source_ref:event.id
-   }))));
+   if(inserted.length){
+    await checked(db.from('stip_notifications').insert(inserted.map((r:any)=>({
+     agent_id:r.agent_id,type:'leisure_invite',title:'Invitation à une sortie',
+     body:text(event.title,120),source_type:'stip_leisure_events',source_ref:event.id
+    }))));
+    await Promise.allSettled(inserted.map((r:any)=>notifyPhone(r.agent_id,'leisure_invite',event.id,'Invitation à une sortie',event.title)));
+   }
    return J({ok:true,added:inserted.length,...await list(c)});
   }
 
@@ -316,6 +344,7 @@ Deno.serve(async req=>{
       agent_id:b.target_agent_id,type:'leisure_invite',title:'Invitation après le travail',body:text(title,120),
       source_type:'stip_leisure_events',source_ref:identical.id
      }));
+     await notifyPhone(b.target_agent_id,'leisure_invite',identical.id,'Invitation après le travail',title);
     }
     return J({ok:true,id:identical.id,reused:true,...await list(c)});
    }
@@ -323,13 +352,14 @@ Deno.serve(async req=>{
     p_actor:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_days:proposed,
     p_title:title,p_description:text(b.description,2000),p_location:text(b.location,240),p_time:text(b.time_label,240)
    }));
+   await notifyPhone(b.target_agent_id,'leisure_invite',id,'Invitation après le travail',title);
    return J({ok:true,id,...await list(c)});
   }
   if(!c.agent_id&&b.action!=='save')throw Error('ACCES_AGENT_REQUIS')
   if(b.action==='respond'){
    if(!uuid(b.event_id)||typeof b.declined!=='boolean'||!Number.isInteger(b.revision))throw Error('CHOIX_INVALIDE')
 
-   const ev=await checked(db.from('stip_leisure_events').select('id,visibility,organizer_agent_id').eq('id',b.event_id).eq('family',c.family).maybeSingle());
+   const ev=await checked(db.from('stip_leisure_events').select('id,title,visibility,organizer_agent_id').eq('id',b.event_id).eq('family',c.family).maybeSingle());
    if(!ev)throw Error('SORTIE_INTROUVABLE');
    if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
     const invite=await checked(db.from('stip_leisure_invites').select('event_id').eq('event_id',b.event_id).eq('agent_id',c.agent_id).maybeSingle());
@@ -338,6 +368,15 @@ Deno.serve(async req=>{
    await checked(db.rpc('stip_leisure_respond',{p_event:b.event_id,p_agent:c.agent_id,p_family:c.family,p_revision:b.revision,p_dates:dates(b.selected_dates),p_declined:b.declined}))
    if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
     await checked(db.from('stip_leisure_invites').update({status:b.declined?'declined':'accepted',responded_at:new Date().toISOString()}).eq('event_id',b.event_id).eq('agent_id',c.agent_id));
+    if(ev.organizer_agent_id){
+     await checked(db.from('stip_notifications').insert({
+      agent_id:ev.organizer_agent_id,type:'leisure_response',title:'Réponse à une invitation',
+      body:text(ev.title,120)+' : '+(b.declined?'invitation déclinée':'participation acceptée'),
+      source_type:'stip_leisure_events',source_ref:ev.id
+     }));
+     await notifyPhone(ev.organizer_agent_id,'leisure_response',ev.id,'Réponse à une invitation',
+       text(ev.title,120)+' : '+(b.declined?'invitation déclinée':'participation acceptée'));
+    }
    }
    return J({ok:true,...await list(c)})
   }
