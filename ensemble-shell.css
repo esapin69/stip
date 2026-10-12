@@ -129,3 +129,13 @@
 .leisure-existing-person{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid #edf2f1;font-size:.84rem}
 .leisure-existing-person small{color:#65818a;font-size:.76rem;margin-left:5px}
 .leisure-invite-hint{color:#66808a;font-size:.8rem;line-height:1.4}
+
+/* Full shift name first; abbreviations only when a date tile is too narrow. */
+.leisure-own-shift,.ensemble-day-shift{white-space:nowrap;max-width:100%;box-sizing:border-box}
+.leisure-own-shift .shift-label-short,.ensemble-day-shift .shift-label-short{display:none}
+.ensemble-day{container-name:ensemble-shift;container-type:inline-size}
+.ensemble-day .ensemble-day-shift{text-transform:none}
+@container ensemble-shift (max-width:90px){
+ .ensemble-day-shift .shift-label-full{display:none}
+ .ensemble-day-shift .shift-label-short{display:inline}
+}
