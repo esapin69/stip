@@ -1,0 +1,15 @@
+#carpoolApp{margin-top:24px;border-top:1px solid var(--stip-line,#d6e5e8);padding-top:20px}
+.cp-head h2{font-size:1.4rem;margin:0}.cp-head p{color:var(--stip-muted,#5b7078);font-size:.92rem}
+.cp-card{border:1px solid var(--stip-line,#d4e5e8);padding:16px;border-radius:18px;margin:14px 0}
+.cp-card h3{margin:0 0 10px;font-size:1.15rem}.cp-form{display:grid;gap:12px}
+.cp-form label{display:grid;gap:5px;font-weight:650;font-size:.9rem}
+.cp-form input:not([type=checkbox]),.cp-form select,.cp-form textarea{min-height:44px;border:1px solid #b9cdd0;border-radius:10px;padding:9px;width:100%;box-sizing:border-box;font:inherit;background:white;color:#183d49}
+.cp-form textarea{resize:vertical}.cp-form .cp-check{display:flex;flex-direction:row;align-items:center;gap:8px}
+.cp-form .cp-check input{width:21px;height:21px;accent-color:var(--stip-accent,#128594)}
+.cp-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cp-muted{font-size:.85rem;color:var(--stip-muted,#5b7078)}
+.cp-trip{border:1px solid #d5e4e6;border-radius:12px;padding:14px;margin:10px 0}
+.cp-trip p{font-size:.88rem;overflow-wrap:anywhere}.cp-triphead{display:flex;align-items:center;justify-content:space-between}
+.cp-triphead small{background:#e2f6ee;color:#167458;padding:4px 8px;border-radius:20px}
+.cp-applicants{border-top:1px solid #dae5e7;padding-top:9px;margin-top:12px;display:grid;gap:8px}
+.cp-applicants>div{display:flex;align-items:center;flex-wrap:wrap;gap:7px}.cp-applicants span{flex:1;min-width:100px}
+.cp-error{color:#b42318}.cp-success{color:#146c53;font-weight:650}
