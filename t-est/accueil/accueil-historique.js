@@ -76,8 +76,12 @@
     });
     requestAnimationFrame(()=>{
       const current=list.querySelector('[aria-current="page"]');
-      if(current)current.scrollIntoView({block:"nearest",inline:"end",behavior:"instant"});
-      else scroller.scrollLeft=scroller.scrollWidth;
+      if(!current){scroller.scrollLeft=scroller.scrollWidth;return;}
+      const windowRect=scroller.getBoundingClientRect(),buttonRect=current.getBoundingClientRect();
+      if(buttonRect.right>windowRect.right-9)
+        scroller.scrollLeft+=buttonRect.right-windowRect.right+12;
+      if(buttonRect.left<windowRect.left+9)
+        scroller.scrollLeft-=windowRect.left-buttonRect.left+12;
     });
   }
   function pushRoute(next){
