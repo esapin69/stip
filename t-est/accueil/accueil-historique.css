@@ -1,5 +1,5 @@
 /* T-est — fil d'historique compact : Accueil fixe, étapes horizontales, jamais deux lignes. */
-:root{--t-est-history-height:40px}
+:root{--t-est-history-height:54px}
 body{padding-top:var(--t-est-history-height)}
 #tEstHistoryBar{
   position:fixed;top:0;left:0;right:0;
@@ -7,14 +7,14 @@ body{padding-top:var(--t-est-history-height)}
   background:rgba(248,251,252,.98);border-bottom:1px solid #d8e5e9;
   box-shadow:0 2px 8px rgba(15,58,74,.08);
   z-index:1000;color:#254c5f;
-  padding:0 max(43px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
+  padding:0 max(48px,env(safe-area-inset-right)) 0 max(12px,env(safe-area-inset-left));
   font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 #tEstHistoryBar button{appearance:none;border:0;background:transparent;white-space:nowrap;min-width:0}
 #tEstHistoryBar .t-history-home{
   flex:0 0 auto;display:flex;align-items:center;gap:6px;
-  height:100%;padding:0 12px 0 3px;border-right:1px solid #d6e5eb;
-  color:#0b728e;font-size:.78rem;font-weight:900;
+  height:100%;padding:0 14px 0 4px;border-right:1px solid #d6e5eb;
+  color:#0b728e;font-size:.88rem;font-weight:900;
 }
 #tEstHistoryBar .t-history-home svg{width:17px;height:17px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}
 #tEstHistoryBar .t-history-home[aria-current="page"]{color:#153d50}
@@ -31,8 +31,8 @@ body{padding-top:var(--t-est-history-height)}
 #tEstHistoryBar .t-history-chevron{font-size:.85rem;line-height:1;color:#a1b1b9;padding:0 4px;user-select:none}
 #tEstHistoryBar .t-history-step{
   max-width:154px;display:block;overflow:hidden;text-overflow:ellipsis;
-  height:31px;padding:0 7px;border-radius:7px;color:#517581;
-  font-size:.75rem;font-weight:750;line-height:31px;
+  height:39px;padding:0 9px;border-radius:7px;color:#517581;
+  font-size:.75rem;font-weight:750;line-height:39px;
 }
 #tEstHistoryBar .t-history-step[aria-current="page"]{font-weight:950;color:#124d63;background:#e5f4f7}
 #tEstHistoryBar button:focus-visible{outline:2px solid #198aa3;outline-offset:-2px}
@@ -42,4 +42,4 @@ body{padding-top:var(--t-est-history-height)}
   #tEstHistoryBar .t-history-step{max-width:110px;font-size:.71rem}
 }
 /* Le T du laboratoire reste visible mais ne recouvre pas le fil d'historique. */
-html[data-t-est="1"]::after{top:calc(max(8px,env(safe-area-inset-top)) + var(--t-est-history-height))}
+html[data-t-est="1"]::after{top:max(12px,env(safe-area-inset-top))}
