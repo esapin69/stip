@@ -55,7 +55,7 @@
   const invitations=pending.length?'<section class="leisure-pending" aria-label="Invitations à traiter">'+pending.map(e=>
    '<button type="button" class="leisure-invite stip-surface stip-card-signature" data-stip-card-tone="active" data-leisure-event="'+esc(e.id)+'"><span aria-hidden="true">'+iconFor(e.title)+'</span><span><strong>'+esc(e.title)+'</strong><small>'+esc(e.recurring_closing?'Tous tes jours de fermeture · Coche ceux qui te conviennent':e.dates.filter(d=>d>=today()).map(fmt).join(' · '))+(e.response?' · Dates modifiées · confirme tes choix':' · Réponse attendue')+'</small></span><b>Répondre ›</b></button>').join('')+'</section>':'';
   const groups=new Map();
-  state.events.filter(e=>active(e)&&!e.recurring_closing).forEach(e=>{
+  state.events.filter(e=>active(e)&&!e.recurring_closing&&!e.series_conversation_id).forEach(e=>{
    (e.chats||[]).filter(c=>c.date>=today()).forEach(chat=>{
     const key=e.title.trim().toLocaleLowerCase('fr')+'|'+chat.date;
     const current=groups.get(key)||{title:e.title,date:chat.date,items:[]};
@@ -74,12 +74,19 @@
    return '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">'+iconFor(group.title)+'</span><div><strong>'+esc(group.title)+'</strong><small>'+esc(fmt(group.date))+(duplicated?' · '+group.items.length+' propositions':'')+'</small></div></div>'+
    (duplicated?'<details><summary>Gérer les '+group.items.length+' propositions</summary>'+lines+'</details>':lines)+'</section>';
   });
+  const groupCards=state.events.filter(e=>active(e)&&e.series_conversation_id&&!e.recurring_closing&&!e.needs_response).map(e=>
+   '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">'+iconFor(e.title)+'</span><div><strong>'+esc(e.title)+'</strong><small>'+
+   esc(e.dates.filter(d=>d>=today()).map(fmt).slice(0,3).join(' · '))+'</small></div></div>'+
+   '<div class="leisure-quick-line"><a class="stip-btn secondary" href="'+esc(chatURL(e.series_conversation_id))+'">💬 Groupe de l’activité</a>'+
+   '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(e.id)+'">Choisir mes dates</button>'+
+   (e.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':'')+
+   '</div></section>').join('');
   const recurringCards=state.events.filter(e=>active(e)&&e.recurring_closing&&!e.needs_response).map(e=>
    '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">🏋️</span><div><strong>'+esc(e.title)+'</strong><small>À chaque fermeture · '+e.dates.filter(d=>d>=today()).length+' prochaines dates</small></div></div><div class="leisure-quick-line">'+
    '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(e.id)+'">'+(e.is_organizer?'Mes disponibilités':'Choisir mes dates')+'</button>'+
    (e.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':'')+
    '</div></section>').join('');
-  return invitations+(recurringCards?'<section class="leisure-home-chats">'+recurringCards+'</section>':'')+(cards.length?'<section class="leisure-home-chats" aria-label="Mes activités à venir">'+cards.join('')+'</section>':'');
+  return invitations+((groupCards||recurringCards)?'<section class="leisure-home-chats">'+groupCards+recurringCards+'</section>':'')+(cards.length?'<section class="leisure-home-chats" aria-label="Mes activités à venir">'+cards.join('')+'</section>':'');
  }
  function participantsHTML(e,d){
   const ps=e.participants.filter(p=>p.selected_dates.includes(d));
@@ -320,7 +327,8 @@
     (e.can_invite&&future?'<button type="button" class="ensemble-subtle" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':
      firstChat?'<a class="ensemble-subtle" href="'+esc(chatURL(firstChat.conversation_id))+'">Discuter</a>':'')+
     '</div>'+
-    (e.series_conversation_id?'<a class="ensemble-group-link" href="'+esc(chatURL(e.series_conversation_id))+'">💬 Discussion du groupe · toutes les séances</a>':'')+
+    (e.series_conversation_id?'<a class="ensemble-group-link" href="'+esc(chatURL(e.series_conversation_id))+'">💬 Groupe de l’activité</a>':
+      e.visibility==='invite'&&!e.is_organizer?'<p class="ensemble-pending-chat">🔒 Choisis une date et accepte pour rejoindre le groupe.</p>':'')+
     '</article>';
  }
  function setView(tab){
