@@ -117,3 +117,5 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 .ensemble-inline-loading:empty{display:none}
 .ensemble-inline-frame{display:block;width:100%;min-height:0;height:420px;border:0;background:#fff;overflow:hidden}
 #tEnsembleBloc [data-ensemble-view][aria-current="true"]{border:2px solid #1689a2;background:#e9f8fa}
+
+#tEnsembleBloc{scroll-margin-top:calc(var(--t-est-history-height,40px) + 10px)}
