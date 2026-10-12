@@ -26,8 +26,52 @@ async function photo(raw:unknown){
  const {data}=await db.storage.from('planning-pdf').createSignedUrl(path,3600)
  return data?.signedUrl||''
 }
+
+const minutes=(s:string)=>{const [h,m]=s.split(':').map(Number);return h*60+m};
+const plusDays=(date:string,count:number)=>{const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+count);return d.toISOString().slice(0,10)};
+async function colleagues(c:any){
+ if(!c.agent_id) return [];
+ const profiles=await checked(db.from('stip_access_profiles').select('agent_id,active,permissions,agent:agents(id,prenom,nom)').eq('active',true).not('agent_id','is',null))||[];
+ const seen=new Set<string>();
+ return profiles.filter((p:any)=>{
+  const family=p.permissions?.communication_family==='hors_brancardage'?'hors_brancardage':'brancardage';
+  const ok=family===c.family && p.agent_id!==c.agent_id && p.permissions?.leisure!==false && !seen.has(p.agent_id);
+  if(ok)seen.add(p.agent_id);return ok;
+ }).map((p:any)=>({id:p.agent_id,name:[p.agent?.prenom,p.agent?.nom].filter(Boolean).join(' ').trim()||'Collègue'}))
+ .sort((a:any,b:any)=>a.name.localeCompare(b.name,'fr'));
+}
+async function matches(c:any,target:string){
+ if(!c.agent_id||!uuid(target)||target===c.agent_id)throw Error('COLLEGUE_INVALIDE');
+ const colleaguesList=await colleagues(c);
+ const peer=colleaguesList.find((p:any)=>p.id===target);
+ if(!peer)throw Error('COLLEGUE_INDISPONIBLE');
+ const from=today(),to=plusDays(from,31);
+ const [myRows,otherRows,shiftDefs]=await Promise.all([
+  checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',from).lte('date',to)),
+  checked(db.from('planning').select('date,code').eq('agent_id',target).gte('date',from).lte('date',to)),
+  checked(db.from('stip_shift_definitions').select('code,end_time,is_working').eq('is_working',true).not('end_time','is',null))
+ ]);
+ const shifts=new Map((shiftDefs||[]).map((x:any)=>[x.code,x.end_time]));
+ const other=new Map((otherRows||[]).map((x:any)=>[x.date,x.code]));
+ const days:any[]=[];
+ for(const row of myRows||[]){
+  const myEnd=shifts.get(row.code) as string|undefined;
+  const hisEnd=shifts.get(other.get(row.date)) as string|undefined;
+  if(!myEnd||!hisEnd)continue;
+  const delta=Math.abs(minutes(myEnd)-minutes(hisEnd));
+  if(delta>30)continue;
+  days.push({date:row.date,my_end:myEnd.slice(0,5),peer_end:hisEnd.slice(0,5),minutes_apart:delta});
+ }
+ days.sort((a,b)=>a.date.localeCompare(b.date));
+ return {colleague:peer,days:days.slice(0,12)};
+}
 async function list(c:any){
  const events=await checked(db.from('stip_leisure_events').select('*').eq('family',c.family).order('created_at',{ascending:false}).limit(200))||[]
+
+ const personalInvites=c.agent_id?await checked(db.from('stip_leisure_invites').select('event_id,status').eq('agent_id',c.agent_id))||[]:[];
+ const invited=new Map(personalInvites.map((r:any)=>[r.event_id,r.status]));
+ const visibleEvents=events.filter((e:any)=>e.visibility!=='invite'||e.organizer_agent_id===c.agent_id||invited.has(e.id));
+ events.splice(0,events.length,...visibleEvents);
  const ids=events.map((e:any)=>e.id)
  const chats=ids.length&&c.permissions?.messages?await checked(db.from('stip_leisure_chats').select('event_id,event_date,conversation_id').in('event_id',ids)):[]
  const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
@@ -39,6 +83,7 @@ async function list(c:any){
   const active=e.status==='active'&&e.dates.some((d:string)=>d>=today())
   return {...e,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
+   invitation_status:invited.get(e.id)||null,
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
    needs_response:active&&!!c.agent_id&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
@@ -51,11 +96,33 @@ Deno.serve(async req=>{
  if(req.method!=='POST')return J({error:'METHODE_INVALIDE'},405)
  try{
   const c=await context(req),b=await req.json()
+
   if(b.action==='list')return J(await list(c))
+  if(b.action==='colleagues')return J({colleagues:await colleagues(c)})
+  if(b.action==='matches')return J(await matches(c,text(b.target_agent_id,80)))
+  if(b.action==='propose'){
+   if(!c.agent_id||!uuid(b.target_agent_id)||typeof b.date!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.date))throw Error('PROPOSITION_INVALIDE');
+   const title=text(b.title,120);if(!title)throw Error('TITRE_REQUIS');
+   const id=await checked(db.rpc('stip_afterwork_propose',{
+    p_actor:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_day:b.date,
+    p_title:title,p_description:text(b.description,2000),p_location:text(b.location,240),p_time:text(b.time_label,240)
+   }));
+   return J({ok:true,id,...await list(c)});
+  }
   if(!c.agent_id&&b.action!=='save')throw Error('ACCES_AGENT_REQUIS')
   if(b.action==='respond'){
    if(!uuid(b.event_id)||typeof b.declined!=='boolean'||!Number.isInteger(b.revision))throw Error('CHOIX_INVALIDE')
+
+   const ev=await checked(db.from('stip_leisure_events').select('id,visibility,organizer_agent_id').eq('id',b.event_id).eq('family',c.family).maybeSingle());
+   if(!ev)throw Error('SORTIE_INTROUVABLE');
+   if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
+    const invite=await checked(db.from('stip_leisure_invites').select('event_id').eq('event_id',b.event_id).eq('agent_id',c.agent_id).maybeSingle());
+    if(!invite)throw Error('ACCES_INVITATION_REQUIS');
+   }
    await checked(db.rpc('stip_leisure_respond',{p_event:b.event_id,p_agent:c.agent_id,p_family:c.family,p_revision:b.revision,p_dates:dates(b.selected_dates),p_declined:b.declined}))
+   if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
+    await checked(db.from('stip_leisure_invites').update({status:b.declined?'declined':'accepted',responded_at:new Date().toISOString()}).eq('event_id',b.event_id).eq('agent_id',c.agent_id));
+   }
    return J({ok:true,...await list(c)})
   }
   if(b.action==='save'){
