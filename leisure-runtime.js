@@ -281,7 +281,7 @@
     (!future?'<span class="ensemble-statuschip is-closed">'+esc(e.status==='cancelled'?'Annulée':'Terminée')+'</span>':'')+
     '</header>'+
     '<div class="ensemble-activity-meta">'+esc([e.location||'',e.time_label||''].filter(Boolean).join(' · ')||'Lieu et horaire à préciser')+
-    (e.recurring_closing?'<br>↻ Se renouvelle avec le planning':'')+'</div>'+
+    (e.recurring_closing?'<br>↻ Se renouvelle avec le planning':'')+ '<br>'+esc(e.visibility==='invite'?'🔒 Seulement les invités':'🌐 Ouvert à l’équipe')+'</div>'+
     (when.length?'<div class="ensemble-date-strip" aria-label="Prochaines dates">'+dayHTML+'</div>':
      '<p class="ensemble-no-dates">Aucune date à venir</p>')+
     '<div class="ensemble-card-actions"><button type="button" class="ensemble-primary" data-leisure-event="'+esc(e.id)+'">'+
@@ -333,30 +333,38 @@
   root.innerHTML=content;
   setView(view.tab);
  }
- function openCreator(mode=''){
+ function openCreator(mode='date'){
   const parent=document.querySelector('#ensembleCreator');if(!parent)return;
   view.tab='activities';view.createOpen=true;view.createMode=mode;
   setView('activities');
   document.querySelectorAll('[data-ensemble-option]').forEach(el=>{
-   const yes=el.dataset.ensembleOption===mode;el.classList.toggle('is-selected',yes);el.setAttribute('aria-pressed',yes?'true':'false');
+   const active=el.dataset.ensembleOption===mode;el.classList.toggle('is-selected',active);
+   el.setAttribute('aria-pressed',active?'true':'false');
   });
-  const recur=document.querySelector('#trainingRecurringApp'),matched=document.querySelector('#ensembleAfterworkCreate');
-  if(recur)recur.hidden=mode!=='recurring';
-  if(matched)matched.hidden=mode!=='matched';
-  if(mode==='recurring')window.STIPTrainingRecurring?.open?.();
-  if(mode==='matched'&&matched){
-   if(!matched.querySelector('#awPanel'))matched.innerHTML=window.STIPAfterwork?.panelHTML?.()||'<p>Le module de proposition est indisponible.</p>';
-   window.STIPAfterwork?.bindPanel?.();
+  const series=document.querySelector('#trainingRecurringApp'),free=document.querySelector('#ensembleCreatePanel');
+  const oldMatched=document.querySelector('#ensembleAfterworkCreate');
+  if(series)series.hidden=mode!=='recurring';
+  if(free)free.hidden=mode==='recurring';
+  if(oldMatched)oldMatched.hidden=true;
+  if(mode==='recurring'){
+   window.STIPEnsembleCreate?.close?.();
+   window.STIPTrainingRecurring?.open?.();
+  }else{
+   window.STIPTrainingRecurring?.close?.();
+   window.STIPEnsembleCreate?.open?.();
   }
-  if(mode==='date'){view.createOpen=false;setView('activities');openEditor();return;}
   if(mode)parent.scrollIntoView({block:'start',behavior:'smooth'});
+ }
+ function closeCreator(){
+  view.createOpen=false;window.STIPEnsembleCreate?.close?.();window.STIPTrainingRecurring?.close?.();
+  setView('activities');
  }
  document.addEventListener('click',e=>{
   const b=e.target.closest?.('[data-ensemble-tab],[data-ensemble-create],[data-ensemble-close],[data-ensemble-option],[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');
   if(!b)return;
   if(b.hasAttribute('data-ensemble-tab')){setView(b.dataset.ensembleTab);renderApp();}
   else if(b.hasAttribute('data-ensemble-create'))openCreator();
-  else if(b.hasAttribute('data-ensemble-close')){view.createOpen=false;setView('activities');}
+  else if(b.hasAttribute('data-ensemble-close'))closeCreator();
   else if(b.hasAttribute('data-ensemble-option'))openCreator(b.dataset.ensembleOption);
   else if(b.hasAttribute('data-leisure-add-invite'))openInvite(b.dataset.leisureAddInvite);
   else if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);
@@ -364,7 +372,7 @@
   else if(b.hasAttribute('data-leisure-create'))openEditor();
   else refresh();
  });
- window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite,openCreator,closeCreator:()=>{view.createOpen=false;setView('activities')},setTab:setView};
+ window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite,openCreator,closeCreator,setTab:setView};
  ['stip:session-ready','stip:boot-updated'].forEach(e=>window.addEventListener(e,refresh));
  ['stip:session-ended','stip:session-expired'].forEach(e=>window.addEventListener(e,reset));
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
