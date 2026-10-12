@@ -90,3 +90,16 @@
 .ensemble-page .cp-person-match{display:grid;gap:5px;padding:12px;border-top:1px solid #e4eeee}
 .ensemble-page .cp-person-match>span,.ensemble-page .cp-person-match>small{color:#607e87;font-size:.82rem}
 .ensemble-page .cp-person-match .stip-btn{justify-self:start}
+
+/* Activity management and safe deletion */
+.ensemble-group-link{display:block;text-align:center;min-height:40px;line-height:20px;padding:9px 12px;border-radius:13px;background:#ebf5f3;border:1px solid #d1e7e3;color:#176674;font-size:.85rem;font-weight:850;text-decoration:none}
+.leisure-series-chat{background:#e6f4f1;padding:10px;border-radius:12px;margin:9px 0}
+.leisure-series-chat a{display:block;text-decoration:none;text-align:center;min-height:42px}
+.leisure-delete-action{color:#a83337!important;border-color:#e7b6b9!important;background:#fff5f5!important}
+.leisure-danger{border:1px solid #e9b8b8;background:#fff2f2;border-radius:14px;padding:14px 16px;margin:14px 0;color:#853136}
+.leisure-danger strong{font-size:1rem}.leisure-danger p{font-size:.88rem;line-height:1.5;margin:7px 0 0}
+.leisure-delete-form{display:grid;gap:13px}.leisure-delete-form label{display:grid;gap:7px;font-weight:800}
+.leisure-delete-form input{min-height:46px;border:1px solid #d4b0b0;border-radius:12px;padding:12px;font:inherit;background:#fff;color:#823131}
+.leisure-delete-submit{background:#ad303a!important;border-color:#ad303a!important;color:#fff!important}
+.leisure-delete-submit:disabled{opacity:.43;cursor:not-allowed}
+.leisure-recurring-notice{padding:12px;background:#e8f5f3;border-radius:13px;font-size:.85rem;color:#2d6266;line-height:1.4}
