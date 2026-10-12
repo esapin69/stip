@@ -29,3 +29,40 @@ const home=readFileSync('home-shell.js','utf8');assert(home.indexOf('STIPLeisure
 const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('stip-overlay-navigation.js'));assert(app.includes('leisure-runtime.js'));
 console.log('Leisure: pending invitation, accepted/declined visibility, revision, cancellation, logout, home placement and common runtime passed.');
 console.log('Date chats: home shortcuts use canonical Communication DM route; no invitation returns after registration.');
+
+const root={innerHTML:'',hidden:false};
+const badge={hidden:false,textContent:''};
+const controls={};
+const document2={
+ querySelector:(selector)=>selector==='#leisureApp'?root:selector==='#ensembleInviteBadge'?badge:null,
+ querySelectorAll:()=>[],addEventListener:()=>{},hidden:false
+};
+const window2={STIPSession:true,STIPContinuity:{validate:async()=>true},addEventListener:()=>{},dispatchEvent:()=>{}};
+const groupResponse={can_create:true,events:[{
+ id:'weekly-1',title:'Muscu récurrente',status:'active',dates:['2099-10-09','2099-10-16'],
+ recurring_closing:true,is_organizer:true,can_invite:true,
+ participants:[{agent_id:'admin',selected_dates:['2099-10-09']}],
+ chats:[],series_conversation_id:'permanent-conversation-1',
+ response:null,needs_response:false,description:'',location:'Salle',time_label:'21:20'
+}]};
+vm.runInNewContext(readFileSync('leisure-runtime.js','utf8'),{
+ window:window2,document:document2,localStorage:{getItem:()=> 'test-session'},Intl,Date,Set,Map,
+ CustomEvent:class{},setInterval:()=>{},
+ fetch:async()=>({ok:true,json:async()=>groupResponse})
+});
+await window2.STIPLeisure.refresh();
+assert.match(root.innerHTML,/Muscu récurrente/);
+assert.match(root.innerHTML,/Discussion du groupe/);
+assert.match(root.innerHTML,/conversation=permanent-conversation-1/);
+assert.doesNotMatch(root.innerHTML,/Chat du vendredi|Chat du lundi/);
+const source=readFileSync('leisure-runtime.js','utf8');
+assert.match(source,/function openDelete\(id\)/);
+assert.match(source,/function openRecurringEditor\(id\)/);
+assert.match(source,/confirm:'SUPPRIMER'/);
+assert.match(source,/series_conversation_id/);
+const apiSource=readFileSync('supabase/functions/stip-leisure/index.ts','utf8');
+assert.match(apiSource,/stip_leisure_delete_event/);
+assert.match(apiSource,/stip_leisure_sync_series_chat/);
+assert.match(apiSource,/recurring_details/);
+console.log('Recurring group: one permanent DM conversation linked from the card, secure confirmed deletion UI, dedicated recurring editor and API hooks passed.');
+
