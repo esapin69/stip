@@ -173,7 +173,67 @@
    finally{btn.disabled=false;}
   };
  }
+
+ function openDelete(id){
+  const e=find(id);if(!e?.is_organizer)return;
+  const dialog=dialogShell('Supprimer · '+e.title);if(!dialog)return;
+  const body=dialog.querySelector('[data-leisure-body]');
+  body.innerHTML='<div class="leisure-danger"><strong>Suppression définitive</strong>'+
+    '<p>Tu effaceras cette activité, ses invitations, ses participations et tous les messages de ses discussions. Cette opération est irréversible.</p></div>'+
+    '<form class="leisure-delete-form"><label>Écris <strong>SUPPRIMER</strong> pour confirmer :'+
+    '<input name="confirmation" required autocomplete="off" spellcheck="false" placeholder="SUPPRIMER"></label>'+
+    '<p role="alert" data-delete-error></p>'+
+    '<footer class="leisure-actions"><button type="button" class="stip-btn secondary" data-delete-cancel>Conserver</button>'+
+    '<button type="submit" class="stip-btn leisure-delete-submit" disabled>Supprimer définitivement</button></footer></form>';
+  const form=body.querySelector('form'),button=form.querySelector('[type="submit"]'),field=form.elements.confirmation;
+  field.addEventListener('input',()=>{button.disabled=field.value.trim().toLocaleUpperCase('fr')!=='SUPPRIMER'});
+  body.querySelector('[data-delete-cancel]').onclick=()=>close(dialog);
+  form.onsubmit=async event=>{
+   event.preventDefault();if(button.disabled)return;
+   button.disabled=true;const error=body.querySelector('[data-delete-error]');
+   error.textContent='Suppression en cours…';
+   try{
+    await post({action:'delete',event_id:id,confirm:'SUPPRIMER'});
+    drafts.delete(id);close(dialog);
+    const status=document.querySelector('#leisureStatus');if(status)status.textContent='Activité supprimée définitivement.';
+   }catch(err){error.textContent=err.message;button.disabled=false}
+  };
+ }
+ function openRecurringEditor(id){
+  const e=find(id);if(!e?.is_organizer)return;
+  const dialog=dialogShell('Gérer · '+e.title);if(!dialog)return;
+  const body=dialog.querySelector('[data-leisure-body]');
+  body.innerHTML='<form class="leisure-editor"><p class="leisure-recurring-notice">↻ Les séances suivent tes fermetures. Pour annuler une date seulement, utilise « Mes disponibilités ».</p>'+
+   '<label>Titre<input name="title" required maxlength="120" value="'+esc(e.title)+'"></label>'+
+   '<label>Informations<textarea name="description" maxlength="2000">'+esc(e.description)+'</textarea></label>'+
+   '<label>Lieu<input name="location" maxlength="240" value="'+esc(e.location)+'"></label>'+
+   '<label>Rendez-vous<input name="time_label" maxlength="240" value="'+esc(e.time_label)+'"></label>'+
+   '<p role="alert" data-leisure-error></p>'+
+   '<footer class="leisure-actions"><button type="submit" class="stip-btn">Enregistrer</button>'+
+   '<button type="button" class="stip-btn secondary" data-invite-more>＋ Inviter</button>'+
+   '<button type="button" class="stip-btn secondary" data-stop-series>Arrêter la série</button>'+
+   '<button type="button" class="stip-btn secondary leisure-delete-action" data-delete-series>🗑️ Supprimer définitivement</button></footer></form>';
+  const form=body.querySelector('form'),error=body.querySelector('[data-leisure-error]');
+  form.onsubmit=async ev=>{
+   ev.preventDefault();const submit=form.querySelector('[type="submit"]');submit.disabled=true;
+   error.textContent='Enregistrement…';
+   try{
+    await post({action:'recurring_details',event_id:id,revision:e.revision,title:form.elements.title.value,
+      description:form.elements.description.value,location:form.elements.location.value,
+      time_label:form.elements.time_label.value});
+    close(dialog);
+   }catch(err){error.textContent=err.message;submit.disabled=false}
+  };
+  body.querySelector('[data-invite-more]').onclick=()=>close(dialog,()=>openInvite(id));
+  body.querySelector('[data-delete-series]').onclick=()=>close(dialog,()=>openDelete(id));
+  body.querySelector('[data-stop-series]').onclick=async()=>{
+   if(!confirm('Arrêter les prochaines séances ? La discussion sera conservée.'))return;
+   try{await post({action:'recurring_stop',event_id:id});close(dialog)}
+   catch(err){error.textContent=err.message}
+  };
+ }
  function openEditor(id=''){
+  if(id&&find(id)?.recurring_closing)return openRecurringEditor(id);
   const e=id?find(id):null;if(e&&!e.can_manage||!e&&!state.can_create)return;
   const dialog=dialogShell(e?'Gérer la sortie':'Proposer une sortie');if(!dialog)return;
   const body=dialog.querySelector('[data-leisure-body]');
@@ -188,7 +248,14 @@
    try{await post({action:'save',id:e?.id,revision:e?.revision,title:form.elements.title.value,description:form.elements.description.value,location:form.elements.location.value,time_label:form.elements.time_label.value,dates:ds,status});close(dialog)}catch(err){error.textContent=err.message}finally{buttons.forEach(x=>x.disabled=false)}
   }
   form.addEventListener('submit',event=>{event.preventDefault();save(e?.status||'active')});
-  body.querySelector('[data-invite-event]')?.addEventListener('click',()=>close(dialog,()=>openInvite(e.id)));body.querySelector('[data-cancel-event]')?.addEventListener('click',()=>{const target=e.status==='cancelled'?'active':'cancelled';if(confirm(target==='cancelled'?'Annuler cette sortie ? Les réponses seront conservées.':'Rouvrir cette sortie ?'))save(target)});
+  body.querySelector('[data-invite-event]')?.addEventListener('click',()=>close(dialog,()=>openInvite(e.id)));
+  if(e?.is_organizer){
+   const deleteButton=document.createElement('button');
+   deleteButton.type='button';deleteButton.className='stip-btn secondary leisure-delete-action';
+   deleteButton.textContent='🗑️ Supprimer définitivement';
+   body.querySelector('.leisure-editor footer')?.append(deleteButton);
+   deleteButton.onclick=()=>close(dialog,()=>openDelete(e.id));
+  }body.querySelector('[data-cancel-event]')?.addEventListener('click',()=>{const target=e.status==='cancelled'?'active':'cancelled';if(confirm(target==='cancelled'?'Annuler cette sortie ? Les réponses seront conservées.':'Rouvrir cette sortie ?'))save(target)});
  }
 
  function cardHTML(e){
