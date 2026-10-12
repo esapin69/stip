@@ -40,9 +40,9 @@
  }
  function pendingHTML(){
   if(state.token!==(localStorage.getItem(STORE)||''))return '';
-  const pending=state.events.filter(e=>e.needs_response&&active(e)&&e.organizer_agent_id!==undefined);
+  const pending=state.events.filter(e=>e.needs_response&&active(e));
   const invitations=pending.length?'<section class="leisure-pending" aria-label="Invitations à traiter">'+pending.map(e=>
-   '<button type="button" class="leisure-invite stip-surface stip-card-signature" data-stip-card-tone="active" data-leisure-event="'+esc(e.id)+'"><span aria-hidden="true">'+iconFor(e.title)+'</span><span><strong>'+esc(e.title)+'</strong><small>'+esc(e.dates.filter(d=>d>=today()).map(fmt).join(' · '))+' · Réponse attendue</small></span><b>Répondre ›</b></button>').join('')+'</section>':'';
+   '<button type="button" class="leisure-invite stip-surface stip-card-signature" data-stip-card-tone="active" data-leisure-event="'+esc(e.id)+'"><span aria-hidden="true">'+iconFor(e.title)+'</span><span><strong>'+esc(e.title)+'</strong><small>'+esc(e.dates.filter(d=>d>=today()).map(fmt).join(' · '))+(e.response?' · Dates modifiées · confirme tes choix':' · Réponse attendue')+'</small></span><b>Répondre ›</b></button>').join('')+'</section>':'';
   const groups=new Map();
   state.events.filter(e=>active(e)).forEach(e=>{
    (e.chats||[]).filter(c=>c.date>=today()).forEach(chat=>{
@@ -56,7 +56,7 @@
    const lines=group.items.map((item,index)=>
     '<div class="leisure-quick-line">'+(duplicated?'<small>Proposition '+(index+1)+'</small>':'')+
     '<a class="stip-btn secondary" href="'+esc(chatURL(item.chat.conversation_id))+'">💬 Discussion</a>'+
-    '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(item.event.id)+'">Voir</button>'+
+    '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(item.event.id)+'">Ma réponse</button>'+
     (item.event.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(item.event.id)+'">＋ Inviter</button>':'')+
     '</div>').join('');
    return '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">'+iconFor(group.title)+'</span><div><strong>'+esc(group.title)+'</strong><small>'+esc(fmt(group.date))+(duplicated?' · '+group.items.length+' propositions':'')+'</small></div></div>'+
