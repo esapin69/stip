@@ -119,4 +119,42 @@ metered.emit("stip:session-ready", session);
 await metered.flush();
 assert.deepEqual(metered.requests, [], "Respect data saver");
 
+const manager = harness();
+manager.storage.set("stip_session_v1", "manager-token");
+const managerSession = {
+  agent: { id: "manager-B" },
+  role_key: "responsable",
+  permissions: {
+    admin: true, responsable: true, places: true,
+    agent_directory: true, agent_dates: true,
+    planning_personal: true, planning_team: true,
+    meeting_notes: true, file_upload: true,
+  },
+};
+manager.window.STIPSession = managerSession;
+manager.emit("stip:session-ready", managerSession);
+await manager.flush();
+for (const file of [
+  "mon-compte.html", "agent-directory.html", "agent-dates.html",
+  "esprit-equipe.html", "meeting-notes.html", "planning-compare-app.html"
+]) {
+  assert.ok(manager.requests.includes("/" + file), "Expected authorized page: " + file);
+}
+assert.ok(!manager.requests.includes("/responsable.html"),
+  "Initial prefetch is bounded even for users with many applications");
+assert.equal(manager.window.STIPLoad.authorizedPage("responsable"), true);
+assert.equal(manager.window.STIPLoad.authorizedPage("admin"), true);
+assert.equal(manager.window.STIPLoad.authorizedPage("agents"), true);
+assert.equal(manager.window.STIPLoad.authorizedPage("assistant"), true,
+  "Team aliases inherit the one shared permission rule");
+assert.equal(app.window.STIPLoad.authorizedPage("responsable"), false);
+assert.equal(app.window.STIPLoad.authorizedPage("admin"), false);
+assert.equal(await manager.window.STIPLoad.warmDocumentResources("responsable.html"), true,
+  "Additional authorized pages are warmed opportunistically");
+assert.ok(manager.requests.includes("/responsable.js?v=1"));
+const afterManual = manager.requests.length;
+assert.equal(await manager.window.STIPLoad.warmDocumentResources("responsable.html"), true);
+assert.equal(manager.requests.length, afterManual, "Shared prewarming deduplicates repeated intentions");
+assert.ok(manager.requests.every((url) => !url.includes("/functions/") && !url.includes("/api/")));
+
 console.log("GHE agent-page prewarming: authorization, assets, session, and data saver OK.");
