@@ -97,7 +97,79 @@ async function matches(c:any,target:string){
  days.sort((a,b)=>a.date.localeCompare(b.date));
  return {colleague:peer,days:days.slice(0,12)};
 }
+
+async function closingDates(actor:string,closeTime='21:00'){
+ const from=today(),to=plusDays(from,31);
+ const [rows,registry]=await Promise.all([
+  checked(db.from('planning').select('date,code').eq('agent_id',actor).gte('date',from).lte('date',to)),
+  checked(db.from('stip_shift_registry').select('code,end_time,window_end,schedule_mode,is_working').eq('is_working',true))
+ ]);
+ const rules=new Map((registry||[]).map((d:any)=>[d.code,d]));
+ return (rows||[]).filter((r:any)=>{
+  const d:any=rules.get(r.code)||rules.get(shiftCode(r.code));
+  return !!d&&d.is_working&&['standard','fixed'].includes(d.schedule_mode)
+   &&String(d.schedule_mode==='fixed'?d.window_end:d.end_time).slice(0,5)===closeTime;
+ }).map((r:any)=>r.date).sort();
+}
+async function recurringCreate(c:any,b:any){
+ if(!c.agent_id||!Array.isArray(b.agent_ids))throw Error('INVITATION_INVALIDE');
+ const invited=[...new Set(b.agent_ids)];
+ if(!invited.length||invited.length>24||invited.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
+ const known=new Set((await colleagues(c)).map((x:any)=>x.id));
+ if(invited.some((id:any)=>!known.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
+ const name=text(b.title,120)||'Muscu après la fermeture',location=text(b.location,240);
+ const timeLabel=text(b.time_label,240)||'Après la fermeture · 21 h 20';
+ const days=await closingDates(c.agent_id);
+ if(!days.length)throw Error('AUCUNE_FERMETURE_DANS_LE_PLANNING');
+ const candidates=await checked(db.from('stip_leisure_events')
+  .select('id').eq('organizer_agent_id',c.agent_id).eq('family',c.family)
+  .eq('status','active').eq('visibility','invite').eq('title',name).order('created_at',{ascending:false}).limit(30))||[];
+ const candidateIds=candidates.map((r:any)=>r.id);
+ const repeats=candidateIds.length?await checked(db.from('stip_leisure_recurring').select('event_id').eq('active',true).in('event_id',candidateIds)):[];
+ if(repeats?.length)throw Error('ENTRAINEMENT_RECURRENT_EXISTANT');
+ const event=await checked(db.from('stip_leisure_events').insert({
+  title:name,description:text(b.description,2000)||'Entraînement libre après mon service du soir. Chacun choisit ses dates.',
+  location,time_label:timeLabel,dates:days,family:c.family,organizer_agent_id:c.agent_id,visibility:'invite'
+ }).select('id').single());
+ try{
+  await checked(db.from('stip_leisure_recurring').insert({event_id:event.id,closing_time:'21:00'}));
+  await checked(db.rpc('stip_leisure_refresh_recurring'));
+  await checked(db.from('stip_leisure_invites').insert(invited.map((agent_id:any)=>({
+   event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'
+  }))));
+  await checked(db.from('stip_notifications').insert(invited.map((agent_id:any)=>({
+   agent_id,type:'leisure_invite',title:'Invitation aux entraînements',
+   body:name+' · tous mes jours de fermeture',source_type:'stip_leisure_events',source_ref:event.id
+  }))));
+  await Promise.allSettled(invited.map((agent_id:any)=>notifyPhone(agent_id,'leisure_invite',event.id,'Entraînements après le travail',name)));
+ }catch(error){
+  await db.from('stip_leisure_events').delete().eq('id',event.id).eq('organizer_agent_id',c.agent_id);
+  throw error;
+ }
+ return {ok:true,id:event.id,...await list(c)};
+}
+async function recurringToggle(c:any,b:any){
+ if(!c.agent_id||!uuid(b.event_id)||typeof b.date!=='string'||! /^\d{4}-\d{2}-\d{2}$/.test(b.date)||typeof b.available!=='boolean')throw Error('DISPONIBILITE_INVALIDE');
+ const e=await checked(db.from('stip_leisure_events').select('id,dates,organizer_agent_id,status,family').eq('id',b.event_id).eq('family',c.family).maybeSingle());
+ const r=await checked(db.from('stip_leisure_recurring').select('event_id,excluded_dates,active').eq('event_id',b.event_id).maybeSingle());
+ if(!e||!r?.active||e.status!=='active'||e.organizer_agent_id!==c.agent_id||!e.dates.includes(b.date)||b.date<today())throw Error('ACCES_ORGANISATEUR_REQUIS');
+ const absent=new Set<string>(r.excluded_dates||[]);
+ if(b.available)absent.delete(b.date);else absent.add(b.date);
+ await checked(db.from('stip_leisure_recurring').update({excluded_dates:[...absent].sort()}).eq('event_id',b.event_id));
+ await checked(db.rpc('stip_leisure_refresh_recurring'));
+ return {ok:true,...await list(c)};
+}
+async function recurringStop(c:any,b:any){
+ if(!c.agent_id||!uuid(b.event_id))throw Error('SORTIE_INVALIDE');
+ const e=await checked(db.from('stip_leisure_events').select('id,organizer_agent_id,family').eq('id',b.event_id).eq('family',c.family).maybeSingle());
+ if(!e||e.organizer_agent_id!==c.agent_id)throw Error('ACCES_ORGANISATEUR_REQUIS');
+ await checked(db.from('stip_leisure_recurring').update({active:false}).eq('event_id',e.id));
+ await checked(db.from('stip_leisure_events').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',e.id));
+ return {ok:true,...await list(c)};
+}
+
 async function list(c:any){
+ await checked(db.rpc('stip_leisure_refresh_recurring'));
  const events=await checked(db.from('stip_leisure_events').select('*').eq('family',c.family).order('created_at',{ascending:false}).limit(200))||[]
 
  const personalInvites=c.agent_id?await checked(db.from('stip_leisure_invites').select('event_id,status').eq('agent_id',c.agent_id))||[]:[];
@@ -105,6 +177,8 @@ async function list(c:any){
  const visibleEvents=events.filter((e:any)=>e.visibility!=='invite'||e.organizer_agent_id===c.agent_id||invited.has(e.id));
  events.splice(0,events.length,...visibleEvents);
  const ids=events.map((e:any)=>e.id)
+ const recurring=ids.length?await checked(db.from('stip_leisure_recurring').select('event_id,active,excluded_dates,closing_time').in('event_id',ids)):[];
+ const recurringById=new Map((recurring||[]).map((x:any)=>[x.event_id,x]));
  const allInvitations=ids.length?await checked(db.from('stip_leisure_invites').select('event_id,agent_id,status,agent:agents(id,prenom,nom)').in('event_id',ids)):[]
  const chats=ids.length&&c.permissions?.messages?await checked(db.from('stip_leisure_chats').select('event_id,event_date,conversation_id').in('event_id',ids)):[]
  const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
@@ -114,7 +188,10 @@ async function list(c:any){
  return {can_create:!!c.agent_id,events:events.map((e:any)=>{
   const rs=(responses||[]).filter((r:any)=>r.event_id===e.id),mine=rs.find((r:any)=>r.agent_id===c.agent_id)||null
   const active=e.status==='active'&&e.dates.some((d:string)=>d>=today())
-  return {...e,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
+  return {...e,recurring_closing:!!recurringById.get(e.id)?.active,
+   organizer_unavailable_dates:recurringById.get(e.id)?.excluded_dates||[],
+   closing_time:recurringById.get(e.id)?.closing_time||null,
+   is_organizer:e.organizer_agent_id===c.agent_id,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    invitation_status:invited.get(e.id)||null,
    can_invite:e.organizer_agent_id===c.agent_id,
@@ -289,6 +366,10 @@ Deno.serve(async req=>{
   const c=await context(req),b=await req.json()
 
   if(String(b.action||'').startsWith('carpool_'))return J(await carpoolAction(c,b))
+  if(b.action==='recurring_preview')return J({dates:c.agent_id?await closingDates(c.agent_id):[],colleagues:await colleagues(c)})
+  if(b.action==='recurring_create')return J(await recurringCreate(c,b))
+  if(b.action==='recurring_toggle')return J(await recurringToggle(c,b))
+  if(b.action==='recurring_stop')return J(await recurringStop(c,b))
   if(b.action==='list')return J(await list(c))
   if(b.action==='colleagues')return J({colleagues:await colleagues(c)})
   if(b.action==='invite'){
@@ -364,6 +445,11 @@ Deno.serve(async req=>{
    if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
     const invite=await checked(db.from('stip_leisure_invites').select('event_id').eq('event_id',b.event_id).eq('agent_id',c.agent_id).maybeSingle());
     if(!invite)throw Error('ACCES_INVITATION_REQUIS');
+   }
+   const series=await checked(db.from('stip_leisure_recurring').select('excluded_dates,active').eq('event_id',b.event_id).maybeSingle());
+   if(series?.active){
+    if(ev.organizer_agent_id===c.agent_id)throw Error('UTILISER_DISPONIBILITE_ORGANISATEUR');
+    if(dates(b.selected_dates).some((day:string)=>(series.excluded_dates||[]).includes(day)))throw Error('ORGANISATEUR_INDISPONIBLE');
    }
    await checked(db.rpc('stip_leisure_respond',{p_event:b.event_id,p_agent:c.agent_id,p_family:c.family,p_revision:b.revision,p_dates:dates(b.selected_dates),p_declined:b.declined}))
    if(ev.visibility==='invite'&&ev.organizer_agent_id!==c.agent_id){
