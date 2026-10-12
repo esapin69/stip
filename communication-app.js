@@ -97,19 +97,12 @@
   }
 
   function syncChromeCompact() {
+    // Garder les trois onglets visibles en permanence, y compris pendant
+    // le défilement de la page Fauteuils sur un téléphone.
     if (!state.root?.isConnected) return;
     const app = state.root.querySelector("[data-communication-app]");
-    if (!app) return;
-    if (state.tab !== "wheelchair" || window.innerWidth >= 900) {
-      state.chromeCompact = false;
-      app.classList.remove("is-chrome-compact");
-      return;
-    }
-    const y = Math.max(0, window.scrollY || 0);
-    const next = state.chromeCompact ? y > 12 : y > 72;
-    if (next === state.chromeCompact) return;
-    state.chromeCompact = next;
-    app.classList.toggle("is-chrome-compact", next);
+    state.chromeCompact = false;
+    app?.classList.remove("is-chrome-compact");
   }
 
   function bindShellScroll() {
@@ -287,7 +280,7 @@
   });
 
   window.STIPCommunicationApp = {
-    build: "20260930-wheelchair-three-actions2",
+    build: "20261012-sticky-all-three-tabs",
     mount,
     setTab,
     unmount,
