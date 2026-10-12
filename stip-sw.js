@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261012-visible-communication-tabs";
+const STIP_SW_BUILD="20261012-per-account-communication-fix1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
