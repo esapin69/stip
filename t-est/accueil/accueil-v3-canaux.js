@@ -1,13 +1,14 @@
 (() => {
   'use strict';
-  // Les nouveaux canaux correspondent à des conversations de groupe réelles.
-  // Le carrousel gagne autant de cartes que de canaux auxquels l'agent participe.
+  // DM est l'entrée unique des conversations directes et collectives.
+  // Aucune conversation individuelle n'est ajoutée au carrousel Communication.
   const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages';
-  const KEY='stip_session_v1', CACHE='t_est_communication_groups_v1';
+  const KEY='stip_session_v1', CACHE='t_est_communication_threads_v2';
   const $=selector=>document.querySelector(selector);
   const $$=selector=>[...document.querySelectorAll(selector)];
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
-  let groups=[],members=[],memberLoading=null,snapshotLoading=null,sessionSignature='',refreshAt=0;
+  let conversations=[],members=[],memberLoading=null,snapshotLoading=null,sessionSignature='',refreshAt=0;
+  let lastError='';
   let pending=false;
   const VALID_GROUP_ID=/^[a-f0-9-]{36}$/i;
   function token(){return localStorage.getItem(KEY)||''}
@@ -16,54 +17,56 @@
     const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
     return [...new Uint8Array(b)].map(n=>n.toString(16).padStart(2,'0')).join('');
   }
-  function safeGroup(c){
-    const id=String(c?.id||'').trim(),title=String(c?.title||'').trim().slice(0,80);
-    return c?.kind==='group'&&/^[a-f0-9-]{36}$/i.test(id)?{id,title:title||'Canal collectif',kind:'group'}:null;
+  function safeConversation(c){
+    const id=String(c?.id||'').trim();
+    if(!VALID_GROUP_ID.test(id)||!['group','direct'].includes(c?.kind))return null;
+    const names=(Array.isArray(c.others)?c.others:[])
+      .map(x=>String(x.nickname||[x.prenom,x.nom].filter(Boolean).join(' ')||'').trim())
+      .filter(Boolean);
+    const name=c.kind==='group'?String(c.title||'Groupe').trim().slice(0,80):
+      (names.join(', ')||'Message privé');
+    return {id,kind:c.kind,title:name,unread:Math.max(0,Number(c.unread||0)),
+      last:String(c.last_message?.body||c.last||'').slice(0,100)};
   }
   function store(){
     if(!sessionSignature)return;
-    try{sessionStorage.setItem(CACHE,JSON.stringify({signature:sessionSignature,groups,at:Date.now()}))}catch{}
+    try{sessionStorage.setItem(CACHE,JSON.stringify({signature:sessionSignature,conversations,at:Date.now()}))}catch{}
   }
   function hydrate(){
     if(!sessionSignature)return;
     try{
       const cached=JSON.parse(sessionStorage.getItem(CACHE)||'null');
       if(cached?.signature===sessionSignature&&Date.now()-cached.at<3600000){
-        groups=(Array.isArray(cached.groups)?cached.groups:[]).map(safeGroup).filter(Boolean);
-        draw();
+        conversations=(Array.isArray(cached.conversations)?cached.conversations:[]).map(safeConversation).filter(Boolean);
+        paintChoices();
       }
     }catch{}
   }
-  function draw(){
-    $$('[data-carousel="communication"]').forEach(nav=>{
-      nav.querySelectorAll('[data-conversation-id]').forEach(node=>node.remove());
-      for(const g of groups){
-        const b=document.createElement('button');
-        b.className='com-carte com-carte-canal';
-        b.type='button';
-        b.dataset.conversationId=g.id;
-        b.title=g.title;
-        b.innerHTML='<span class="com-icone" aria-hidden="true">💬</span><span class="com-libelle">'+esc(g.title)+'</span><span class="com-precisions">Canal collectif</span>';
-        nav.append(b);
-      }
-    });
-    currentSelection();
-    window.dispatchEvent(new CustomEvent('t-est:channels-redrawn'));
-  }
-  function currentSelection(){
-    const selected=window.TEstDashboard?.current?.().communication||'';
-    $$('[data-conversation-id]').forEach(b=>b.setAttribute('aria-current',String('group:'+b.dataset.conversationId===selected)));
-  }
   function openConversation(id){
-    if(!VALID_GROUP_ID.test(String(id)))return;
-    window.TEstDashboard?.open('communication','group:'+id,{forceOpen:true});
+    const conv=conversations.find(x=>x.id===id);
+    if(!conv)return;
+    window.TEstDashboard?.open('communication','thread:'+id,{forceOpen:true});
   }
   function addOrRefresh(incoming){
-    const clean=(Array.isArray(incoming)?incoming:[]).map(safeGroup).filter(Boolean);
-    groups=[...new Map(clean.map(x=>[x.id,x])).values()];
-    draw();store();
-    paintChoices();
+    const clean=(Array.isArray(incoming)?incoming:[]).map(safeConversation).filter(Boolean);
+    conversations=[...new Map(clean.map(x=>[x.id,x])).values()];
+    lastError='';
+    store();paintChoices();
   }
+  window.TEstChats={
+    label:id=>conversations.find(c=>c.id===id)?.title||'Discussion',
+    openPicker:()=> {
+      const dialog=document.getElementById('accueilPop');
+      const title=document.getElementById('popTitre'),body=document.getElementById('popBody');
+      if(!dialog||!title||!body)return;
+      title.textContent='Choisir une discussion';
+      body.innerHTML='<div data-channel-list class="pop-choix"></div>';
+      if(!dialog.open)dialog.showModal();
+      paintChoices();
+      refreshGroups(true);
+    },
+    openThread:id=>openConversation(id)
+  };
   async function post(action,body={},wait=12000){
     const value=token();
     if(!value)throw Error('Reconnecte-toi à GHE pour accéder à tes canaux.');
@@ -83,12 +86,13 @@
   }
   async function refreshGroups(force=false){
     if(snapshotLoading)return snapshotLoading;
-    if(!token())return;
+    if(!token()) {lastError='Connecte-toi à GHE pour voir tes discussions.';paintChoices();return;}
     if(!force&&Date.now()-refreshAt<90000)return;
     refreshAt=Date.now();
     snapshotLoading=post('home',{},18000).then(data=>{
-      addOrRefresh((data.conversations||[]).filter(c=>c.kind==='group'));
-    }).catch(()=>{}).finally(()=>{snapshotLoading=null});
+      addOrRefresh((data.conversations||[]).filter(c=>['direct','group'].includes(c.kind)));
+    }).catch(err=>{lastError=String(err.message||'Discussions indisponibles.');paintChoices()})
+      .finally(()=>{snapshotLoading=null});
     return snapshotLoading;
   }
   async function loadMembers(){
@@ -104,20 +108,27 @@
     return memberLoading;
   }
   function paintChoices(){
-    const body=$('#popBody'),list=body?.querySelector('[data-channel-list]');
+    const list=$('#popBody')?.querySelector('[data-channel-list]');
     if(!list)return;
-    const cards=groups.map(g=>
-      '<button type="button" data-existing-channel="'+esc(g.id)+'"><span aria-hidden="true">💬</span>'+
-      '<span><strong>'+esc(g.title)+'</strong><small>Ouvrir le fil et écrire un message</small></span></button>'
-    ).join('');
-    list.innerHTML=(cards||'<p class="pop-info">Aucun canal collectif pour le moment.</p>')+
-      '<button type="button" class="pop-primary pop-create-channel" data-new-channel>＋ Créer un canal collectif</button>';
+    const filter=(kind,heading)=>{
+      const items=conversations.filter(c=>c.kind===kind);
+      if(!items.length)return '';
+      return '<h3 class="t-dm-picker-heading">'+heading+'</h3>'+items.map(c=>
+        '<button type="button" data-existing-channel="'+esc(c.id)+'"><span aria-hidden="true">'+
+        (kind==='direct'?'✉️':'💬')+'</span><span><strong>'+esc(c.title)+'</strong>'+
+        '<small>'+esc(c.last||'Ouvrir la discussion et écrire')+'</small></span>'+
+        (c.unread?'<b class="t-dm-count">'+Math.min(99,c.unread)+'</b>':'')+'</button>'
+      ).join('');
+    };
+    list.innerHTML=filter('direct','Messages privés')+filter('group','Discussions de groupe')+
+      (!conversations.length?'<p class="pop-info">'+esc(lastError||'Aucune discussion existante.')+'</p>':'')+
+      '<button type="button" class="pop-primary pop-create-channel" data-new-dm>＋ Nouveau message privé</button>'+
+      '<button type="button" class="pop-primary pop-create-channel" data-new-channel>＋ Créer un groupe</button>';
   }
   function buildChoice(){
-    const body=$('#popBody');
-    if(!body?.querySelector('[data-channel-list]'))return;
-    paintChoices();
-    Promise.resolve(refreshGroups()).then(paintChoices);
+    const list=$('#popBody')?.querySelector('[data-channel-list]');
+    if(!list)return;
+    paintChoices();refreshGroups(true);
   }
   function renderForm(message=''){
     const body=$('#popBody');
@@ -152,8 +163,8 @@
         const response=await post('group',{title,agent_ids:[...selected]});
         const id=String(response.conversation?.id||'');
         if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('Le canal a été créé mais son identifiant est manquant.');
-        const c={id,kind:'group',title};
-        groups=[c,...groups.filter(x=>x.id!==id)];draw();store();
+        const c={id,kind:'group',title,unread:0,last:''};
+        conversations=[c,...conversations.filter(x=>x.id!==id)];store();paintChoices();
         $('#accueilPop').close();openConversation(id);
         refreshAt=0;
       }catch(err){message.textContent=err.message||'Création impossible.'}
@@ -168,20 +179,23 @@
     },{once:true});
   }
   document.addEventListener('click',e=>{
-    if(e.target.closest('[data-canaux-open]')){buildChoice();return;}
+    if(e.target.closest('[data-canaux-open]')){window.TEstChats.openPicker();return;}
     if(e.target.closest('[data-new-channel]')){renderForm();return;}
+    if(e.target.closest('[data-new-dm]')){
+      $('#accueilPop').close();
+      window.TEstDashboard?.open('communication','dm',{forceOpen:true});
+      return;
+    }
     const existing=e.target.closest('[data-existing-channel]');
     if(existing){
       const id=existing.dataset.existingChannel;
-      if(groups.some(g=>g.id===id)){
+      if(conversations.some(c=>c.id===id)){
         $('#accueilPop').close();
         openConversation(id);
       }
     }
   });
-  window.addEventListener('popstate',currentSelection);
   window.addEventListener('pageshow',()=>{
-    currentSelection();
     if(!document.hidden&&sessionSignature)refreshGroups();
   });
   async function init(){
