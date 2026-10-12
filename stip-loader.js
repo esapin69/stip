@@ -160,7 +160,6 @@
     ["agent-dates.html", (p) => p.agent_dates === true],
     ["esprit-equipe.html", (p) =>
       p.planning_team === true || p.activity === true || p.assistant_enabled === true],
-    ["agent-date-detail.html", (p) => p.agent_dates === true],
   ];
   let warmGeneration = 0;
   let warmedIdentity = "";
