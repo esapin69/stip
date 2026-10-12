@@ -1,0 +1,25 @@
+name: STIP agent-page prewarm
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "stip-loader.js"
+      - "tools/stip-agent-page-prewarm-test.mjs"
+      - ".github/workflows/stip-agent-page-prewarm.yml"
+  pull_request:
+    paths:
+      - "stip-loader.js"
+      - "tools/stip-agent-page-prewarm-test.mjs"
+      - ".github/workflows/stip-agent-page-prewarm.yml"
+
+jobs:
+  prewarm-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --check stip-loader.js
+      - run: node tools/stip-agent-page-prewarm-test.mjs
