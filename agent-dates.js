@@ -3,7 +3,6 @@
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates",
     STORE = "stip_session_v1",
-    CACHE = "stip_agent_dates_cache_v2",
     $ = (s) => document.querySelector(s),
     all = (s) => [...document.querySelectorAll(s)];
   const navigationState = window.STIPNav?.read?.() || {};
@@ -62,30 +61,12 @@
     }
   }
   function cached() {
-    try {
-      const x = JSON.parse(localStorage.getItem(CACHE) || "null");
-      if (
-        !x ||
-        !Array.isArray(x.items) ||
-        Date.now() - Number(x.saved_at || 0) > 21600000
-      )
-        return null;
-      return x;
-    } catch {
-      return null;
-    }
+    // The shared cache is scoped to this session and expires quickly.
+    // Never reuse another agent's six-hour localStorage snapshot.
+    return window.STIPReadCache?.agentWarm?.read("dates") || null;
   }
   function saveCache(r) {
-    try {
-      localStorage.setItem(
-        CACHE,
-        JSON.stringify({
-          saved_at: Date.now(),
-          generated_at: r.generated_at || "",
-          items: r.items || [],
-        }),
-      );
-    } catch {}
+    window.STIPReadCache?.agentWarm?.write("dates", r);
   }
   function dobj(v) {
     return new Date(String(v).slice(0, 10) + "T12:00:00");
@@ -323,6 +304,7 @@
       } catch (e) {
         last = e;
         if (e?.status === 401 || e?.status === 403) {
+          window.STIPReadCache?.agentWarm?.clear("dates");
           location.replace("index.html");
           return;
         }
