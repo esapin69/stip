@@ -17,7 +17,24 @@
     if(bloc==="communication"&&vue==="loisirs")return "activities"; // ancien lien
     return "";
   }
+  function updateCounts(){
+    try{
+      const doc=frame.contentDocument, badge=doc?.getElementById('ensembleInviteBadge');
+      const button=buttons.find(x=>x.dataset.ensembleView==='invitations');
+      if(!button||!badge)return;
+      let indication=button.querySelector('[data-ensemble-count]');
+      if(!indication){
+        indication=document.createElement('span');
+        indication.className='com-precisions';
+        indication.dataset.ensembleCount='1';
+        button.append(indication);
+      }
+      indication.textContent=!badge.hidden&&Number(badge.textContent)>0?badge.textContent.trim()+' en attente':'';
+      indication.hidden=!indication.textContent;
+    }catch{}
+  }
   function setHeight(){
+    updateCounts();
     try{
       const doc=frame.contentDocument;
       if(!doc)return;
@@ -34,7 +51,7 @@
     style.textContent=[
       "html,body{margin:0!important;padding:0!important;overflow-x:hidden!important;background:transparent!important}",
       ".ensemble-page{max-width:none!important;margin:0!important;padding:6px 4px 24px!important}",
-      ".ensemble-topbar,.ensemble-hero,.ensemble-nav{display:none!important}",
+      ".ensemble-topbar,.ensemble-hero,.ensemble-nav,.ensemble-cta{display:none!important}",
       ".ensemble-status:empty{display:none!important}",
       ".ensemble-page .ensemble-cta{margin-top:8px!important}"
     ].join("");
