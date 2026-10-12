@@ -187,6 +187,7 @@
     const next=locationFor(bloc,vue);
     if(next!==location.pathname+location.search+location.hash)history.pushState({tEst:true,bloc,vue},'',next);
     view();
+    window.dispatchEvent(new CustomEvent('t-est:page-open'));
     window.scrollTo({top:0,behavior:'instant'});
   }
   function view(){
