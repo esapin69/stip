@@ -14,3 +14,6 @@
 .training-person{display:flex!important;gap:8px!important;align-items:center;background:#f4f9f9;border:1px solid #d1e0e2;border-radius:11px;padding:9px;font-size:.9rem;font-weight:600!important;min-height:43px}
 .training-person input{width:19px;height:19px;accent-color:#13798c}
 .training-error{color:#aa2525}
+
+.training-shortcuts{display:flex;gap:7px;overflow-x:auto;padding:5px 0}
+.training-shortcuts button{background:#ecf7f7;border:1px solid #bddbdc;border-radius:10px;padding:10px;font:inherit;font-size:.86rem;font-weight:750;white-space:nowrap;min-height:42px;color:#174959}
