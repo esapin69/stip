@@ -92,6 +92,7 @@ async function list(c:any){
   return {...e,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    invitation_status:invited.get(e.id)||null,
+   can_invite:e.organizer_agent_id===c.agent_id,
    invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
    needs_response:active&&!!c.agent_id&&(!mine||mine.revision!==e.revision),
@@ -294,6 +295,30 @@ Deno.serve(async req=>{
    const available=await matches(c,String(b.target_agent_id));
    const compatible=new Set(available.days.map((row:any)=>row.date));
    if(proposed.some((day:string)=>!compatible.has(day)))throw Error('HORAIRES_NON_COMPATIBLES');
+   const candidates=await checked(db.from('stip_leisure_events')
+    .select('id,title,dates,location,time_label')
+    .eq('organizer_agent_id',c.agent_id).eq('family',c.family)
+    .eq('visibility','invite').eq('status','active')
+    .order('created_at',{ascending:false}).limit(60))||[];
+   const identical=candidates.find((e:any)=>
+     String(e.title).trim().toLocaleLowerCase('fr')===title.toLocaleLowerCase('fr')
+     &&String(e.location||'').trim().toLocaleLowerCase('fr')===text(b.location,240).toLocaleLowerCase('fr')
+     &&String(e.time_label||'').trim().toLocaleLowerCase('fr')===text(b.time_label,240).toLocaleLowerCase('fr')
+     &&proposed.every((d:string)=>(e.dates||[]).includes(d))
+   );
+   if(identical){
+    const already=await checked(db.from('stip_leisure_invites').select('agent_id').eq('event_id',identical.id).eq('agent_id',b.target_agent_id).maybeSingle());
+    if(!already){
+     await checked(db.from('stip_leisure_invites').insert({
+      event_id:identical.id,agent_id:b.target_agent_id,invited_by:c.agent_id,status:'pending'
+     }));
+     await checked(db.from('stip_notifications').insert({
+      agent_id:b.target_agent_id,type:'leisure_invite',title:'Invitation après le travail',body:text(title,120),
+      source_type:'stip_leisure_events',source_ref:identical.id
+     }));
+    }
+    return J({ok:true,id:identical.id,reused:true,...await list(c)});
+   }
    const id=await checked(db.rpc('stip_afterwork_propose_many',{
     p_actor:c.agent_id,p_target:b.target_agent_id,p_family:c.family,p_days:proposed,
     p_title:title,p_description:text(b.description,2000),p_location:text(b.location,240),p_time:text(b.time_label,240)
