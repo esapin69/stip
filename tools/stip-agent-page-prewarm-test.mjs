@@ -59,7 +59,7 @@ function harness({ saveData = false } = {}) {
   runInNewContext(source, {
     window, document, location, navigator: { connection: { saveData } },
     localStorage: { getItem: (key) => storage.get(key) || "" },
-    fetch, DOMParser, URL, Promise, Map, Set, CustomEvent: class {},
+    fetch, DOMParser, URL, URLSearchParams, Promise, Map, Set, CustomEvent: class {},
     setTimeout: () => 1, console,
     requestIdleCallback: window.requestIdleCallback,
   }, { filename: "stip-loader.js" });
