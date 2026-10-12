@@ -202,7 +202,7 @@ async function list(c:any){
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
  return {can_create:!!c.agent_id,events:events.map((e:any)=>{
   const rs=(responses||[]).filter((r:any)=>r.event_id===e.id),mine=rs.find((r:any)=>r.agent_id===c.agent_id)||null
-  const active=e.status==='active'&&e.dates.some((d:string)=>d>=today())
+  const active=e.status==='active'&&(e.dates.some((d:string)=>d>=today())||!!recurringById.get(e.id)?.active)
   return {...e,recurring_closing:!!recurringById.get(e.id)?.active,
    organizer_unavailable_dates:recurringById.get(e.id)?.excluded_dates||[],
    closing_time:recurringById.get(e.id)?.closing_time||null,
@@ -213,7 +213,7 @@ async function list(c:any){
    can_invite:e.organizer_agent_id===c.agent_id,
    invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
-   needs_response:active&&!!c.agent_id&&(!mine||mine.revision!==e.revision),
+   needs_response:active&&e.dates.some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
    response_count:rs.length,declined_count:rs.filter((r:any)=>r.declined).length}
  })}
