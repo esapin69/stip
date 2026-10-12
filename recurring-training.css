@@ -1,0 +1,16 @@
+.training-section{padding:16px;margin:14px 0;border:1px solid #b9d7dd;border-radius:20px;background:var(--stip-surface,#fff)}
+.training-head{display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.training-head>span{font-size:1.6rem;background:#e7f5f4;border-radius:13px;padding:10px}
+.training-head h2{font-size:1.25rem;margin:2px 0 6px}
+.training-head p{color:#58707b;margin:0;font-size:.91rem;line-height:1.45}
+.training-content{margin-top:14px}.training-form{display:grid;gap:12px}
+.training-form label{display:grid;gap:5px;font-weight:700}
+.training-form input:not([type=checkbox]),.training-form textarea{width:100%;min-height:44px;box-sizing:border-box;border:1px solid #bbd2d6;border-radius:12px;padding:11px;font:inherit;color:#184254;background:#fff}
+.training-brief{font-size:.9rem;line-height:1.45}
+.training-days{display:flex;gap:6px;flex-wrap:wrap;max-height:170px;overflow:auto}
+.training-days span{font-size:.82rem;border:1px solid #bddbd6;padding:7px 9px;border-radius:10px;background:#e8f7f2}
+.training-pick{border-top:1px solid #d5e4e5;padding-top:12px}
+.training-people{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:7px;max-height:250px;overflow:auto;margin:10px 0}
+.training-person{display:flex!important;gap:8px!important;align-items:center;background:#f4f9f9;border:1px solid #d1e0e2;border-radius:11px;padding:9px;font-size:.9rem;font-weight:600!important;min-height:43px}
+.training-person input{width:19px;height:19px;accent-color:#13798c}
+.training-error{color:#aa2525}
