@@ -140,3 +140,14 @@
  .ensemble-day-shift .shift-label-full{display:none}
  .ensemble-day-shift .shift-label-short{display:inline}
 }
+
+/* One grouped card for after-work events addressed to this agent. */
+.ensemble-afterwork-group{background:#f2faf8;border:1px solid #bfded9;display:grid;gap:12px}
+.ensemble-afterwork-preview{display:flex;flex-wrap:wrap;gap:6px}
+.ensemble-afterwork-preview span{border-radius:9px;background:#fff;padding:7px 9px;font-size:.78rem;font-weight:750;color:#28535c;border:1px solid #dcece9}
+.ensemble-afterwork-group>.ensemble-primary{width:100%}
+.ensemble-afterwork-list{display:grid;gap:13px;margin-top:15px}
+.ensemble-afterwork-list .ensemble-sectionhead{margin:4px 0}
+.ensemble-afterwork-list .ensemble-sectionhead h3{font-size:1.14rem;margin:0}
+.ensemble-afterwork-list>.ensemble-primary{width:100%}
+.ensemble-afterwork-alert{font-size:.82rem;font-weight:800;color:#87521e;margin:0}
