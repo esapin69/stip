@@ -101,6 +101,24 @@
     return String(row?.label || clean(raw) || "—");
   }
 
+  // Règle UI GHE : un nom complet est prioritaire, jamais "S · Soir".
+  // Le code reste disponible séparément pour les grilles réellement compactes.
+  function displayName(raw, compact = false) {
+    if (compact) return baseCode(raw);
+    const code = baseCode(raw);
+    const registered = String(resolve(raw)?.label || "").trim();
+    const fullNames = { M: "Matin", J: "Journée", J4: "J4", S: "Soir", N: "Nuit" };
+    if (registered && clean(registered) !== clean(raw) && clean(registered) !== clean(code))
+      return registered;
+    return fullNames[code] || registered || clean(raw) || "—";
+  }
+
+  // « Équipe de jour » est implicite ; seule l'équipe de nuit est informative.
+  function nightTeam(team) {
+    const name = String(team || "").trim();
+    return /\bnuit\b/i.test(name) ? name : "";
+  }
+
   function icon(raw) {
     return String(resolve(raw)?.icon || "");
   }
@@ -160,6 +178,8 @@
     clean,
     baseCode,
     label,
+    displayName,
+    nightTeam,
     icon,
     family,
     kind,
