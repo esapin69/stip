@@ -42,15 +42,15 @@ function render(){
  root().innerHTML='<header class="cp-head"><h2>🚗 Covoiturage</h2><p>Proposer une voiture ou chercher une place, pour venir ou repartir après le service.</p></header>'+
  (state.error?'<p class="cp-error" role="alert">'+esc(state.error)+'</p>':'')+
  (state.message?'<p class="cp-success" role="status">'+esc(state.message)+'</p>':'')+
- (!state.loaded?'<p>Chargement…</p>': '<section class="cp-card stip-surface"><h3>Mes préférences</h3><p class="cp-muted">Participation volontaire. Indique seulement une commune ou un quartier, jamais ton adresse.</p>'+
+ (!state.loaded?'<p>Chargement…</p>': '<details class="cp-card stip-surface cp-collapsible" '+(p.opted_in?'':'open')+'><summary>⚙️ Mon secteur'+(p.opted_in?' · '+esc(p.sector):' · À renseigner')+'</summary><p class="cp-muted">Volontaire : partage uniquement ta commune ou ton quartier, jamais ton adresse.</p>'+
  '<form id="cpPref" data-stip-form-mode="standard" class="cp-form"><label>Mon secteur<input name="sector" maxlength="80" required value="'+esc(p.sector)+'" placeholder="Bron, Vénissieux, Lyon 8e…"></label>'+
  '<label class="cp-check"><input type="checkbox" name="has_car" '+(p.has_car?'checked':'')+'> J’ai une voiture et je peux proposer des places</label>'+
  '<div class="cp-actions"><button type="submit" class="stip-btn">'+(p.opted_in?"Mettre à jour":"Activer le covoiturage")+'</button>'+
- (p.opted_in?'<button type="button" class="stip-btn secondary" id="cpDisable">Me retirer</button>':'')+'</div></form></section>'+
+ (p.opted_in?'<button type="button" class="stip-btn secondary" id="cpDisable">Me retirer</button>':'')+'</div></form></details>'+
  (p.opted_in?'<section class="cp-card stip-surface"><h3>Collègues du même secteur</h3><p class="cp-muted">Suggestion uniquement entre collègues volontaires. Les horaires communs sont estimés depuis le planning, sans garantir leur disponibilité.</p>'+
 (state.matches.length?state.matches.map(m=>'<div class="cp-person-match"><strong>'+esc(m.name)+'</strong><span>'+esc(m.has_car?'A une voiture':'Sans voiture déclarée')+'</span><small>'+esc(m.common_dates.length?'Prochains jours compatibles : '+m.common_dates.map(fmt).join(', '):'Pas de fin de service commune identifiée')+'</small>'+
 (m.can_message?'<button type="button" class="stip-btn secondary" data-cp-chat="'+esc(m.agent_id)+'">Échanger</button>':'')+'</div>').join(""):'<p class="cp-muted">Aucun collègue volontaire dans ton secteur pour le moment.</p>')+'</section>':'')+
-(p.opted_in?'<section class="cp-card stip-surface"><h3>Nouveau trajet</h3><form id="cpCreate" class="cp-form" data-stip-form-mode="standard">'+
+(p.opted_in?'<details class="cp-card stip-surface cp-collapsible"><summary>＋ Proposer ou chercher un trajet</summary><form id="cpCreate" class="cp-form" data-stip-form-mode="standard">'+
  '<label>Je souhaite<select name="kind"><option value="offer"'+(!p.has_car?' disabled':'')+'>Proposer des places</option><option value="request"'+(!p.has_car?' selected':'')+'>Chercher un conducteur</option></select></label>'+
  '<label>Direction<select name="direction"><option value="from_work">Rentrer après le travail</option><option value="to_work">Aller au travail</option></select></label>'+
  '<label>Date<input type="date" name="date" min="'+esc(iso())+'" required></label>'+
@@ -59,7 +59,7 @@ function render(){
  '<label>Places proposées<select name="seats">'+[1,2,3,4,5,6].map(n=>'<option value="'+n+'">'+n+' place(s)</option>').join("")+'</select></label>'+
  '<label>Point de rendez-vous <small>(privé avant confirmation)</small><input name="meeting_point" maxlength="200" placeholder="Lieu public, arrêt de bus…"></label>'+
  '<label>Précisions <small>(privées avant confirmation)</small><textarea name="note" rows="2" maxlength="400"></textarea></label>'+
- '<button class="stip-btn" type="submit">Publier</button></form></section>'+
+ '<button class="stip-btn" type="submit">Publier le trajet</button></form></details>'+
  '<section class="cp-card stip-surface"><h3>Trajets proposés</h3><p class="cp-muted">Ton secteur apparaît en priorité. Les horaires doivent être confirmés entre collègues.</p>'+
  (state.trips.length?state.trips.map(tripCard).join(""):'<p class="cp-muted">Aucun trajet proposé pour le moment.</p>')+'</section>':''));
  bind();
