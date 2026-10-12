@@ -28,7 +28,9 @@
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.error) {
       const raw = data.error || `Erreur ${response.status}`;
-      throw Error(typeof raw === "string" ? raw : raw?.message || "Erreur");
+      const error = Error(typeof raw === "string" ? raw : raw?.message || "Erreur");
+      error.status = response.status;
+      throw error;
     }
     return data;
   }
@@ -125,9 +127,19 @@
   }
 
   (async () => {
-    try {
-      directory = await call("directory");
+    // Show an authorized recent snapshot immediately; revalidate it in the background.
+    const preloaded = window.STIPReadCache?.agentWarm?.read("directory");
+    if (preloaded) {
+      directory = preloaded;
       renderDirectory();
+    }
+    try {
+      const fresh = await call("directory");
+      const changed = !directory ||
+        JSON.stringify([directory.date, directory.items]) !== JSON.stringify([fresh.date, fresh.items]);
+      directory = fresh;
+      window.STIPReadCache?.agentWarm?.write("directory", fresh);
+      if (changed) renderDirectory();
       const requested = String(
         new URLSearchParams(location.search).get("agent") || "",
       ).trim();
@@ -140,6 +152,13 @@
         if (agent) requestAnimationFrame(() => openAgent(agent));
       }
     } catch (error) {
+      if (error?.status === 401 || error?.status === 403) {
+        window.STIPReadCache?.agentWarm?.clear("directory");
+        directory = null;
+      } else if (directory) {
+        // Keep the last working view if a temporary network error occurs.
+        return;
+      }
       root.innerHTML =
         header() +
         `<div class="ad-error page"><strong>Accès indisponible</strong><span>${esc(error.message || "Erreur")}</span><button type="button" data-ad-home>Retour à l’accueil</button></div>`;

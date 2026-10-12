@@ -25,6 +25,87 @@ const t=start(action);const run=(async()=>{try{const r=await baseFetch(input,ini
 if(!isData)return (await run).response;
 const dataPromise=run.then(x=>x.data!==null?x.data:readJsonResponse(x.response)).finally(()=>inflight.delete(key));inflight.set(key,dataPromise);
 const out=await run;return out.response};
-window.STIPReadCache={clear(action=''){try{const prefix=CACHE_PREFIX+sessionKey()+':'+action;for(let i=sessionStorage.length-1;i>=0;i--){const k=sessionStorage.key(i)||'';if(k.startsWith(prefix))sessionStorage.removeItem(k)}}catch{}},requestContacts(){contactsRequestedUntil=Date.now()+5000}};
+
+// A short-lived, session-scoped handoff of two approved agent readings between documents.
+// API responses remain private to the current tab, never in service-worker/HTTP caches.
+const AGENT_WARM_PREFIX=CACHE_PREFIX+'agent-warm:',AGENT_WARM_TTL=90000,agentWarmInflight=new Map();
+const AGENT_WARM={
+  directory:{permission:'agent_directory',url:'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly',action:'directory'},
+  dates:{permission:'agent_dates',url:'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-dates',action:'list'}
+};
+function agentWarmSession(){
+  const token=localStorage.getItem('stip_session_v1')||'';
+  if(!token)return null;
+  if(window.STIPSession)return window.STIPSession;
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('stip_session_snapshot_v1')||'null');
+    if(saved?.version===1&&saved.token===token.slice(-16)&&
+       Date.now()-Number(saved.at||0)<120000)return saved.session||null;
+  }catch{}
+  return null;
+}
+function agentWarmOwner(session=agentWarmSession()){
+  const agent=session?.agent||{};
+  const id=String(agent.id||agent.source_key||agent.matricule||'').trim();
+  return id?[session.role_key||'',id].join(':'):'';
+}
+function agentWarmKey(kind){const owner=agentWarmOwner();return owner?AGENT_WARM_PREFIX+sessionKey()+':'+encodeURIComponent(owner)+':'+kind:''}
+function clearAgentWarm(kind=''){
+  try{for(let i=sessionStorage.length-1;i>=0;i--){const key=sessionStorage.key(i)||'';
+    if(key.startsWith(AGENT_WARM_PREFIX)&&(!kind||key.endsWith(':'+kind)))sessionStorage.removeItem(key);
+  }}catch{}
+  if(!kind)agentWarmInflight.clear();
+}
+function readAgentWarm(kind){
+  const config=AGENT_WARM[kind],token=localStorage.getItem('stip_session_v1')||'';
+  if(!config||!token||window.STIPPreview?.active)return null;
+  const session=agentWarmSession();
+  if(!session||session.permissions?.[config.permission]!==true||!agentWarmOwner(session))return null;
+  const data=readCache(agentWarmKey(kind),AGENT_WARM_TTL);
+  return Array.isArray(data?.items)?data:null;
+}
+function writeAgentWarm(kind,data,expectedToken=localStorage.getItem('stip_session_v1')||''){
+  const key=agentWarmKey(kind);
+  if(!AGENT_WARM[kind]||!key||!expectedToken||expectedToken!==localStorage.getItem('stip_session_v1')||!Array.isArray(data?.items))return false;
+  writeCache(key,data);return true;
+}
+function warmAgentData(kind,session=window.STIPSession){
+  const config=AGENT_WARM[kind],token=localStorage.getItem('stip_session_v1')||'';
+  const conn=navigator.connection||{};
+  if(!config||!token||!session?.agent||session?.permissions?.[config.permission]!==true||
+     window.STIPPreview?.active||document.hidden||conn.saveData||/(?:^|-)2g$/.test(conn.effectiveType||''))return Promise.resolve(false);
+  if(readAgentWarm(kind))return Promise.resolve(true);
+  const key=agentWarmKey(kind);
+  if(!key)return Promise.resolve(false);
+  if(agentWarmInflight.has(key))return agentWarmInflight.get(key);
+  const headers=kind==='directory'
+    ?{'Content-Type':'application/json','X-STIP-Session':token}
+    :{'Content-Type':'text/plain;charset=UTF-8'};
+  const body=kind==='directory'
+    ?{action:config.action}
+    :{action:config.action,session_token:token};
+  const request=baseFetch(config.url,{
+    method:'POST',cache:'no-store',headers,body:JSON.stringify(body)
+  }).then(async response=>{
+    if(!response.ok)return false;
+    const data=await response.json().catch(()=>null);
+    if(data?.error||!Array.isArray(data?.items))return false;
+    if(localStorage.getItem('stip_session_v1')!==token||window.STIPPreview?.active)return false;
+    const current=agentWarmSession();
+    if(current?.permissions?.[config.permission]!==true||agentWarmOwner(current)!==agentWarmOwner(session))return false;
+    return writeAgentWarm(kind,data,token);
+  }).catch(()=>false).finally(()=>agentWarmInflight.delete(key));
+  agentWarmInflight.set(key,request);
+  return request;
+}
+window.addEventListener('stip:session-ended',()=>clearAgentWarm());
+window.addEventListener('stip:session-refreshed',e=>{
+  const permissions=e.detail?.permissions||{};
+  for(const [kind,config] of Object.entries(AGENT_WARM)){
+    if(permissions[config.permission]!==true)clearAgentWarm(kind);
+  }
+});
+
+window.STIPReadCache={clear(action=''){try{const prefix=CACHE_PREFIX+sessionKey()+':'+action;for(let i=sessionStorage.length-1;i>=0;i--){const k=sessionStorage.key(i)||'';if(k.startsWith(prefix))sessionStorage.removeItem(k)}}catch{}},requestContacts(){contactsRequestedUntil=Date.now()+5000},agentWarm:{read:readAgentWarm,write:writeAgentWarm,warm:warmAgentData,clear:clearAgentWarm}};
 window.STIPLoading={start:(label='Chargement',kind='generic')=>{const id=++seq,t={id,action:'manual',kind,label,started:performance.now(),progress:18,phase:'Lecture des données…',shown:true,timer:null,showTimer:null};active.set(id,t);paint(t);return()=>done(t,true)},active:()=>active.size};
 })();

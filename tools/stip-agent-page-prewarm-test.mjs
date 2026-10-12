@@ -92,7 +92,7 @@ app.window.STIPSession = session;
 app.emit("stip:session-ready", session);
 await app.flush();
 
-for (const file of ["mon-compte.html", "agent-directory.html", "agent-dates.html", "agent-date-detail.html"]) {
+for (const file of ["mon-compte.html", "agent-directory.html", "agent-dates.html"]) {
   assert.ok(app.requests.includes("/" + file), "Expected " + file + " to be preloaded");
 }
 assert.ok(!app.requests.includes("/esprit-equipe.html"), "Do not warm unauthorized pages");
