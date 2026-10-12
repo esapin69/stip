@@ -13,7 +13,7 @@
  const panelHTML=()=>'<section id="awPanel" class="aw-panel stip-surface"><h2>🏃 Après le travail</h2><p>Retrouve les prochaines fins de service compatibles et propose une activité.</p>'+
   '<form id="awForm" class="aw-form"><label>Collègue<select name="target" required id="awTarget"><option value="">Choisir un collègue</option></select></label>'+
   '<div id="awDays" aria-live="polite"></div>'+
-  '<div class="aw-activities" role="group" aria-label="Activités rapides"><button type="button" data-aw-activity="Foot">⚽ Foot</button><button type="button" data-aw-activity="Boxe">🥊 Boxe</button><button type="button" data-aw-activity="Muscu">💪 Muscu</button><button type="button" data-aw-activity="Restaurant">🍽️ Resto</button><button type="button" data-aw-activity="Cinéma">🎬 Ciné</button><button type="button" data-aw-activity="Autre">＋ Autre</button></div>'+
+  '<div class="aw-activities" role="group" aria-label="Activités rapides"><button type="button" data-aw-activity="Foot">⚽ Foot</button><button type="button" data-aw-activity="Boxe">🥊 Boxe</button><button type="button" data-aw-activity="Muscu">🏋️ Muscu</button><button type="button" data-aw-activity="Restaurant">🍽️ Resto</button><button type="button" data-aw-activity="Cinéma">🎬 Ciné</button><button type="button" data-aw-activity="Autre">＋ Autre</button></div>'+
   '<label>Activité<input name="title" maxlength="120" required placeholder="Musculation, boxe, restaurant…"></label>'+
   '<label>Lieu ou adresse<input name="location" maxlength="240" placeholder="À fixer"></label>'+
   '<label>Heure du rendez-vous<input name="time_label" maxlength="240" placeholder="Après le service"></label>'+
