@@ -172,10 +172,10 @@
     show(title,html,delta);
   }
   function channels(){
-    show('Créer / ouvrir un canal','<div class="pop-choix">'+
-      '<button type="button" data-canal="fauteuils"><span aria-hidden="true">♿</span><span><strong>Fauteuils</strong><small>Ouvrir le canal existant</small></span></button>'+
-      '<button type="button" data-canal="dm"><span aria-hidden="true">✉️</span><span><strong>DM · privé / groupe</strong><small>Créer ou retrouver une conversation</small></span></button>'+
-      '</div>');
+    // Le bloc Communication est l'unique entrée pour les conversations.
+    // La liste des discussions et la création sont remplies par accueil-v3-canaux.js.
+    show('Ouvrir / créer une discussion',
+      '<div class="pop-choix" data-channel-list><p class="pop-info">Tes discussions collectives disponibles apparaissent ici.</p></div>');
   }
   function locationFor(bloc,vue){
     const next=new URL(window.location.href);
