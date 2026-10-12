@@ -121,9 +121,45 @@ async function carpoolShifts(c:any){
     end:precise?(d.schedule_mode==='fixed'?d.window_end:d.end_time)?.slice(0,5)||null:null}];
  }).sort((a:any,b:any)=>a.date.localeCompare(b.date));
 }
+
+async function carpoolMatches(c:any,pref:any,shifts:any[]){
+ if(!pref.opted_in||!pref.sector)return [];
+ const all=await colleagues(c);
+ if(!all.length)return [];
+ const ps=await checked(db.from('stip_carpool_preferences').select('agent_id,sector,has_car').eq('opted_in',true))||[];
+ const area=normalizeSector(pref.sector);
+ const nearby=ps.filter((p:any)=>normalizeSector(p.sector)===area && all.some((a:any)=>a.id===p.agent_id)).slice(0,16);
+ if(!nearby.length)return [];
+ const ids=nearby.map((p:any)=>p.agent_id);
+ const [rows,defs]=await Promise.all([
+  checked(db.from('planning').select('agent_id,date,code').in('agent_id',ids).gte('date',carpoolToday()).lte('date',plusDays(carpoolToday(),31))),
+  checked(db.from('stip_shift_registry').select('code,start_time,end_time,window_start,window_end,schedule_mode,is_working').eq('is_working',true))
+ ]);
+ const defsMap=new Map((defs||[]).map((d:any)=>[d.code,d]));
+ const my=new Map(shifts.map((x:any)=>[x.date,x]));
+ const potential=new Map<string,any[]>();
+ for(const r of rows||[]){
+  const own:any=my.get(r.date);
+  const rule:any=defsMap.get(r.code)||defsMap.get(shiftCode(r.code));
+  if(!own||!rule?.is_working||rule.schedule_mode==='flexible')continue;
+  const start=(rule.schedule_mode==='fixed'?rule.window_start:rule.start_time)?.slice(0,5);
+  const end=(rule.schedule_mode==='fixed'?rule.window_end:rule.end_time)?.slice(0,5);
+  const together=!!((own.start&&start&&Math.abs(minutes(own.start)-minutes(start))<=30)
+    ||(own.end&&end&&Math.abs(minutes(own.end)-minutes(end))<=30));
+  if(!together)continue;
+  const list=potential.get(r.agent_id)||[];
+  if(!list.includes(r.date))list.push(r.date);
+  potential.set(r.agent_id,list);
+ }
+ return nearby.map((p:any)=>({
+  agent_id:p.agent_id,
+  name:all.find((a:any)=>a.id===p.agent_id)?.name||'Collègue',
+  has_car:p.has_car,common_dates:(potential.get(p.agent_id)||[]).sort().slice(0,3)
+ })).sort((a:any,b:any)=>Number(b.common_dates.length>0)-Number(a.common_dates.length>0)||Number(b.has_car)-Number(a.has_car)||a.name.localeCompare(b.name,'fr')).slice(0,12);
+}
 async function carpoolHome(c:any){
  const pref=await carpoolPreference(c);
- if(!pref.opted_in)return {preference:pref,trips:[],shifts:[]};
+ if(!pref.opted_in)return {preference:pref,trips:[],shifts:[],matches:[]};
  const from=carpoolToday(),until=plusDays(from,31);
  const [trips,shifts]=await Promise.all([
   checked(db.from('stip_carpool_trips').select('*,organizer:agents!stip_carpool_trips_organizer_agent_id_fkey(id,prenom,nom)').eq('family',c.family).gte('trip_date',from).lte('trip_date',until).order('trip_date',{ascending:true}).limit(150)),
@@ -131,7 +167,8 @@ async function carpoolHome(c:any){
  ]);
  const ids=(trips||[]).map((t:any)=>t.id);
  const interests=ids.length?await checked(db.from('stip_carpool_interests').select('trip_id,agent_id,status,agent:agents!stip_carpool_interests_agent_id_fkey(prenom,nom)').in('trip_id',ids)):[];
- return {preference:pref,shifts,trips:(trips||[]).filter((t:any)=>t.status==='active'||t.organizer_agent_id===c.agent_id).map((t:any)=>{
+ const matches=await carpoolMatches(c,pref,shifts);
+ return {preference:pref,shifts,matches,trips:(trips||[]).filter((t:any)=>t.status==='active'||t.organizer_agent_id===c.agent_id).map((t:any)=>{
   const rs=(interests||[]).filter((r:any)=>r.trip_id===t.id);
   const mine=rs.find((r:any)=>r.agent_id===c.agent_id);
   const owner=t.organizer_agent_id===c.agent_id,confirmed=mine?.status==='accepted';
