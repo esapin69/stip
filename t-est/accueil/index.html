@@ -4,16 +4,85 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>T-est — Accueil STIP</title>
+  <title>T-est — Accueil GHE</title>
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1" />
   <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
   <!-- T-EST LAB ONLY -->
   <link rel="stylesheet" href="/t-est/outils-test/bulle-t.css?v=20260927-fire2" />
   <script defer src="/t-est/outils-test/bulle-t.js?v=20260927-fire2"></script>
   <script defer src="/t-est/outils-test/navigation-t.js?v=20260928-mirror3"></script>
-  <style>html,body{margin:0;min-height:100%;background:#fff}</style>
+  <style>
+    :root { color-scheme: light; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #f7fafc; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #153e54; }
+    #t-est-accueil { min-height: 100dvh; padding: 24px 14px; }
+    .accueil-cartes {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .accueil-carte {
+      appearance: none;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      min-width: 0;
+      min-height: 116px;
+      padding: 12px 6px;
+      border: 1px solid #d4e1e8;
+      border-radius: 19px;
+      background: white;
+      box-shadow: 0 6px 16px rgba(15, 56, 78, .07);
+      font: 800 clamp(13px, 3.7vw, 19px)/1.2 inherit;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: clamp(13px, 3.7vw, 19px);
+      line-height: 1.2;
+      text-align: center;
+      color: #153e54;
+      cursor: pointer;
+      overflow-wrap: break-word;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .accueil-carte[aria-selected="true"] {
+      border: 2px solid #1685a1;
+      color: #0f728e;
+      background: #f1fbfe;
+      box-shadow: 0 6px 18px rgba(22, 133, 161, .15);
+    }
+    .accueil-carte:focus-visible { outline: 3px solid #1685a1; outline-offset: 3px; }
+  </style>
 </head>
 <body>
-  <main id="t-est-accueil"></main>
+  <main id="t-est-accueil">
+    <nav class="accueil-cartes" aria-label="Période" role="tablist">
+      <button class="accueil-carte" id="tab-aujourdhui" type="button" role="tab" aria-selected="true" aria-controls="contenu-aujourdhui" data-tab="aujourdhui">Aujourd’hui</button>
+      <button class="accueil-carte" id="tab-demain" type="button" role="tab" aria-selected="false" aria-controls="contenu-demain" data-tab="demain">Demain</button>
+      <button class="accueil-carte" id="tab-semaine" type="button" role="tab" aria-selected="false" aria-controls="contenu-semaine" data-tab="semaine">Cette semaine</button>
+    </nav>
+    <section id="contenu-aujourdhui" role="tabpanel" aria-labelledby="tab-aujourdhui"></section>
+    <section id="contenu-demain" role="tabpanel" aria-labelledby="tab-demain" hidden></section>
+    <section id="contenu-semaine" role="tabpanel" aria-labelledby="tab-semaine" hidden></section>
+  </main>
+  <script>
+    (() => {
+      const root = document.getElementById("t-est-accueil");
+      const tabs = [...root.querySelectorAll(".accueil-carte")];
+      function selectTab(active) {
+        for (const tab of tabs) {
+          const selected = tab === active;
+          tab.setAttribute("aria-selected", String(selected));
+          document.getElementById(tab.getAttribute("aria-controls")).hidden = !selected;
+        }
+      }
+      for (const tab of tabs) {
+        tab.addEventListener("click", () => selectTab(tab));
+      }
+    })();
+  </script>
 </body>
 </html>
