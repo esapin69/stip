@@ -608,7 +608,18 @@
       state.interactionReleaseTimer = 0;
       state.scrollToLatestPending = true;
       state.lastSignature = "";
-      root.innerHTML = pageMarkup(nextMode);
+      // Certains anciens liens Fauteuils montent le module sans
+      // l'enveloppe Communication : offrir alors la même navigation.
+      const hasCommunicationShell = !!root.closest("[data-communication-app]");
+      const canChat = window.STIPAccess?.has?.("messages") === true;
+      const fallbackTabs = !hasCommunicationShell && canChat
+        ? '<nav class="tb-fallback-tabs" aria-label="Communication GHE">' +
+          '<a href="/index.html?__stip_probe=1#/communication/chat">💬 Chat équipe</a>' +
+          '<a href="/index.html?__stip_probe=1#/communication/dm">✉️ DM & groupes</a>' +
+          '<a href="/index.html?__stip_probe=1#/communication/fauteuils" aria-current="' + (nextMode === "wheelchair" ? "page" : "false") + '">♿ Fauteuils</a>' +
+          '</nav>'
+        : "";
+      root.innerHTML = fallbackTabs + pageMarkup(nextMode);
       bind(root);
       syncWheelchairComposerLayout();
       const textarea = root.querySelector("textarea");
