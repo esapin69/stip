@@ -60,12 +60,15 @@
       ||definitions.find(x=>String(x.code||'').toUpperCase()===code);
     const tone=COLORS[code]||['#7d8996','#edf2f4'];
     const color=hex(def?.color_hex)||tone[0],soft=hex(def?.soft_color_hex)||tone[1];
-    const label=String(def?.label||raw);
+    const label=window.STIPShiftRegistry?.displayName?.(raw)||String(def?.label||raw);
     const time=String(row.horaire||row.horaires||row.shift_time||'').trim()||
       [row.start_time,row.end_time].filter(Boolean).map(x=>String(x).slice(0,5)).join(' – ')||
       window.STIPShiftRegistry?.time?.(raw)||'';
     const note=String(row.observation||row.note||row.notes||row.commentaire||row.comment||'').trim();
-    const service=String(row.equipe||'').trim();
+    const serviceRaw=String(row.equipe||'').trim();
+    const service=window.STIPShiftRegistry?.nightTeam
+      ? window.STIPShiftRegistry.nightTeam(serviceRaw)
+      : (/\bnuit\b/i.test(serviceRaw)?serviceRaw:'');
     return {raw,code,label,color,soft,time,note,service,icon:String(def?.icon||'')};
   }
   function setData(data, timestamp=Date.now()){
@@ -90,7 +93,7 @@
         el.style.setProperty('--carte-shift',shift.color);
         el.style.setProperty('--carte-soft',shift.soft);
         el.dataset.loaded='true';
-        caption.textContent=shift.raw+(shift.time?' · '+shift.time:'');
+        caption.textContent=shift.label+(shift.time?' · '+shift.time:'');
       }else caption.textContent='';
     });
   }
@@ -152,9 +155,8 @@
     let html='<p class="pop-date">'+esc(shiftDay(iso))+'</p>';
     if(m){
       html+='<div class="pop-shift" style="--carte-shift:'+esc(m.color)+';--carte-soft:'+esc(m.soft)+'">'+
-        '<strong>'+esc((m.icon?m.icon+' ':'')+m.label)+'</strong>'+
-        '<span class="code">'+esc(m.raw)+'</span></div>';
-      const rows=[['Horaires',m.time],['Équipe',m.service],['Observation',m.note]].filter(x=>x[1]);
+        '<strong>'+esc((m.icon?m.icon+' ':'')+m.label)+'</strong></div>';
+      const rows=[['Horaires',m.time],...(m.service?[['Équipe',m.service]]:[]),['Observation',m.note]].filter(x=>x[1]);
       html+=rows.map(x=>'<div class="pop-ligne"><span>'+esc(x[0])+'</span><strong>'+esc(x[1])+'</strong></div>').join('');
     }else{
       const msg=error||(!asOf?'Chargement en cours. Tu peux déjà ouvrir ton planning complet.':
