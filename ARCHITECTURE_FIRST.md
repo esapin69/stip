@@ -181,6 +181,14 @@ Elle ne doit pas posséder une copie locale :
 
 ## Chargement et stabilité
 
+### Préchauffage transversal et contrôlé
+
+- Le site et son raccourci installable (PWA) préparent opportunément les documents HTML et les ressources CSS/JS des pages autorisées, à partir du catalogue commun `PAGE_CATALOG` dans `stip-loader.js`. Ne pas créer un second moteur par page.
+- L'accueil préchauffe au maximum six pages pertinentes après une session reconnue ; les autres liens internes visibles ou survolés peuvent être préchauffés progressivement. Le préchauffage ne doit pas gêner le premier rendu, saturer les réseaux lents ni ignorer l'économiseur de données.
+- Les lectures métier anticipées nécessitent un contrat de lecture explicite et une autorisation par rôle et identité. `STIPReadCache.agentWarm` en est le point commun pour les lectures agent déjà validées. Les données récentes sont montrées puis actualisées silencieusement ; la revalidation serveur reste obligatoire.
+- Les messages, les actes métier, les refus de permission, les données sensibles et les contenus très volatils ne doivent jamais être rendus fiables par un simple cache local. Aucun préchauffage ne doit exécuter une opération de mutation.
+- L'application native Expo reste un client distinct : ne pas prétendre que le cache du site accélère automatiquement son code natif. Elle doit consommer les mêmes sources et contrats si l'optimisation y est reprise.
+
 Règle générale :
 
 **premier rendu cohérent, puis actualisation silencieuse.**
