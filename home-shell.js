@@ -564,11 +564,13 @@
     else dialog.setAttribute("open", "");
   }
   function perms() {
+    // Le cache du tableau de bord ne doit jamais remplacer les droits
+    // de la session active, notamment pour l’accès à Communication.
     return {
-      ...(state.session?.permissions || {}),
-      ...(window.STIPSession?.permissions || {}),
       ...(state.boot?.permissions || {}),
       ...(window.STIPBootCache?.permissions || {}),
+      ...(state.session?.permissions || {}),
+      ...(window.STIPSession?.permissions || {}),
     };
   }
   function has(k) {
@@ -3536,6 +3538,11 @@
   window.addEventListener("stip:event-feedback-completed", () => {
     if (!state.ready || state.homeMode !== "planning") return;
     resetWeekToCurrent();
+    state.renderSig = "";
+    render();
+  });
+  window.addEventListener("stip:permissions-live", () => {
+    if (!state.ready) return;
     state.renderSig = "";
     render();
   });
