@@ -55,14 +55,15 @@ async function matches(c:any,target:string){
  const [myRows,otherRows,shiftDefs]=await Promise.all([
   checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',from).lte('date',to)),
   checked(db.from('planning').select('date,code').eq('agent_id',target).gte('date',from).lte('date',to)),
-  checked(db.from('stip_shift_definitions').select('code,end_time,is_working').eq('is_working',true).not('end_time','is',null))
+  checked(db.from('stip_shift_registry').select('code,end_time,window_end,schedule_mode,is_working').eq('is_working',true))
  ]);
- const shifts=new Map((shiftDefs||[]).map((x:any)=>[x.code,x.end_time]));
+ const shifts=new Map((shiftDefs||[]).map((x:any)=>[x.code,x.schedule_mode==='flexible'?null:x.schedule_mode==='fixed'?x.window_end:x.end_time]));
+ const resolveEnd=(raw:string)=>shifts.has(raw)?shifts.get(raw):shifts.get(shiftCode(raw));
  const other=new Map((otherRows||[]).map((x:any)=>[x.date,x.code]));
  const days:any[]=[];
  for(const row of myRows||[]){
-  const myEnd=shifts.get(shiftCode(row.code)) as string|undefined;
-  const hisEnd=shifts.get(shiftCode(String(other.get(row.date)||''))) as string|undefined;
+  const myEnd=resolveEnd(row.code) as string|undefined;
+  const hisEnd=resolveEnd(String(other.get(row.date)||'')) as string|undefined;
   if(!myEnd||!hisEnd)continue;
   const delta=Math.abs(minutes(myEnd)-minutes(hisEnd));
   if(delta>30)continue;
