@@ -17,3 +17,7 @@
 .aw-slot{min-width:125px;min-height:61px;position:relative}
 .aw-slot[aria-pressed="true"]{box-shadow:0 0 0 1px #137480;background:#d9f0f1}
 .aw-check{position:absolute;top:3px;right:7px;font-size:.75rem;color:#16717e}
+
+.aw-activities{display:flex;gap:7px;overflow-x:auto;padding:3px 1px 8px;scroll-snap-type:x proximity}
+.aw-activities button{border:1px solid var(--stip-line,#c4dadd);background:var(--stip-surface,#fff);color:var(--stip-ink,#1a4152);padding:10px 13px;border-radius:13px;font:inherit;font-weight:700;white-space:nowrap;cursor:pointer;min-height:44px;scroll-snap-align:start}
+.aw-activities button[aria-pressed="true"]{background:#dff2f4;border-color:#158295;box-shadow:0 0 0 1px #158295}
