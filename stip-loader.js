@@ -175,6 +175,11 @@
     return job;
   }
 
+  function canPrefetchInBackground() {
+    const connection = navigator.connection || {};
+    return !document.hidden && !window.STIPPreview?.active && !connection.saveData &&
+      !/(?:^|-)2g$/.test(connection.effectiveType || "");
+  }
   const PREFETCH_MAX_PAGES = 6;
   // A bounded initial batch protects slower telephones; further pages warm on
   // the next relevant pointer/focus interaction or when they become visible.
@@ -194,8 +199,7 @@
   function warmAgentPages(session = window.STIPSession) {
     const token = localStorage.getItem("stip_session_v1") || "";
     if (!token || !session?.agent || window.STIPPreview?.active) return;
-    const connection = navigator.connection || {};
-    if (document.hidden || connection.saveData || /(?:^|-)2g$/.test(connection.effectiveType || "")) return;
+    if (!canPrefetchInBackground()) return;
     const pages = PAGE_CATALOG
       .filter((candidate) => candidate.allowed(session.permissions || {}))
       .sort((a, b) => Number(b.app === lastIntent) - Number(a.app === lastIntent))
@@ -236,7 +240,10 @@
   });
   if (window.STIPSession) warmAgentPages();
   window.addEventListener("stip:home-rendered", () => {
-    if (window.STIPSession) warmVisibleDocuments(3);
+    if (!window.STIPSession || !canPrefetchInBackground()) return;
+    if ("requestIdleCallback" in window)
+      requestIdleCallback(() => warmVisibleDocuments(3), { timeout: 2200 });
+    else setTimeout(() => warmVisibleDocuments(3), 750);
   });
 
   function navigateDocument(raw) {
@@ -245,6 +252,8 @@
     location.assign(url.href);
   }
   function warmVisibleDocuments(limit = 4) {
+    if (!window.STIPSession || !localStorage.getItem("stip_session_v1") ||
+        !canPrefetchInBackground()) return;
     const keys = [
       ...new Set(
         [...document.querySelectorAll("[data-app]")]
@@ -441,8 +450,7 @@
   function warmInteraction(event) {
     if (!localStorage.getItem("stip_session_v1") || !window.STIPSession ||
         window.STIPPreview?.active || document.hidden) return;
-    const connection = navigator.connection || {};
-    if (connection.saveData || /(?:^|-)2g$/.test(connection.effectiveType || "")) return;
+    if (!canPrefetchInBackground()) return;
     const button = event.target.closest?.("[data-app]");
     if (button && authorizedPage(button.dataset.app)) {
       rememberIntent(button.dataset.app);
