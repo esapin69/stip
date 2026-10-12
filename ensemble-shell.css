@@ -103,3 +103,16 @@
 .leisure-delete-submit{background:#ad303a!important;border-color:#ad303a!important;color:#fff!important}
 .leisure-delete-submit:disabled{opacity:.43;cursor:not-allowed}
 .leisure-recurring-notice{padding:12px;background:#e8f5f3;border-radius:13px;font-size:.85rem;color:#2d6266;line-height:1.4}
+
+/* Invitation list and bulk selection */
+.leisure-existing-invites{border:1px solid #d6e6e6;border-radius:16px;padding:12px;margin:10px 0 16px;background:#f7fbfa}
+.leisure-existing-invites h3{margin:0 0 8px;font-size:.93rem;color:#1b5361}
+.leisure-existing-person{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e1eded;padding:9px 0;font-size:.85rem;font-weight:750}
+.leisure-existing-person span{min-width:0;overflow-wrap:anywhere}
+.leisure-existing-person small{display:block;font-size:.71rem;color:#627c81;font-weight:650;margin-top:3px}
+.leisure-remove-invite{font:inherit;background:#fff;border:1px solid #e5c8c8;color:#a4494d;padding:7px 11px;border-radius:9px;min-height:36px;cursor:pointer;white-space:nowrap;font-size:.77rem;font-weight:800}
+.leisure-invite-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:7px 0}
+.leisure-invite-toolbar button{font:inherit;border:1px solid #cbdfe0;border-radius:11px;background:#edf7f5;color:#245563;font-weight:850;font-size:.81rem;padding:8px 11px;min-height:41px}
+.leisure-invite-hint{color:#617e85;font-size:.8rem;line-height:1.44;margin:7px 0}
+.leisure-invite-form .leisure-candidate-list{max-height:245px;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:7px}
+.leisure-invite-form .leisure-candidate{border:1px solid #d6e7e6;border-radius:10px;background:#f6fafa;padding:8px;font-size:.83rem;font-weight:750;min-height:41px}
