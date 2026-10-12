@@ -10,7 +10,19 @@
  const find=id=>state.events.find(e=>e.id===id);
  const chatURL=id=>'index.html?quick=communication&tab=dm&conversation='+encodeURIComponent(id)+'#/communication/dm';
  function chatsHTML(e){return (e.chats||[]).map(c=>`<a class="stip-btn secondary" href="${esc(chatURL(c.conversation_id))}">Chat du ${esc(fmt(c.date))}</a>`).join('')}
- const active=e=>e.status==='active'&&e.dates.some(d=>d>=today());
+ const iconFor=title=>{
+  const t=String(title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  if(/foot|soccer|futsal/.test(t))return '⚽';
+  if(/box|combat|kickbox/.test(t))return '🥊';
+  if(/muscu|fitness|salle|gym/.test(t))return '💪';
+  if(/voitur|trajet|transport/.test(t))return '🚗';
+  if(/resto|repas|diner|dejeuner/.test(t))return '🍽️';
+  if(/cinema|cine|film/.test(t))return '🎬';
+  if(/cafe|verre|boisson/.test(t))return '☕';
+  if(/course|running|jogg|marche/.test(t))return '🏃';
+  return '🎉';
+ };
+  const active=e=>e.status==='active'&&e.dates.some(d=>d>=today());
  function reset(){state.events=[];state.loaded=false;state.can_create=false;state.error='Connecte-toi sur l’accueil pour ouvrir les sorties.';state.token='';drafts.clear();document.querySelector('#leisureDialog')?.close();notify()}
  function notify(){window.dispatchEvent(new CustomEvent('stip:leisure-updated'));renderApp()}
  async function post(body){
@@ -28,10 +40,29 @@
  }
  function pendingHTML(){
   if(state.token!==(localStorage.getItem(STORE)||''))return '';
-  const pending=state.events.filter(e=>e.needs_response&&active(e));
-  const invitations=pending.length?`<section class="leisure-pending" aria-label="Sorties en attente de réponse">${pending.map(e=>`<button type="button" class="leisure-invite stip-surface stip-card-signature" data-stip-card-tone="active" data-leisure-event="${esc(e.id)}"><span aria-hidden="true">🎉</span><span><strong>${esc(e.title)}</strong><small>${e.response?'Dates modifiées · confirme tes choix':'Choisis tes dates ou indique que tu ne participes pas'}</small></span><b>Répondre ›</b></button>`).join('')}</section>`:'';
-  const mine=state.events.filter(e=>active(e)&&(e.chats||[]).some(c=>c.date>=today()));
-  return invitations+(mine.length?`<section class="leisure-home-chats" aria-label="Chats de mes sorties">${mine.map(e=>`<div><strong>${esc(e.title)}</strong><div class="leisure-actions">${chatsHTML({...e,chats:e.chats.filter(c=>c.date>=today())})}<button type="button" class="stip-btn secondary" data-leisure-event="${esc(e.id)}">Ma réponse</button></div></div>`).join('')}</section>`:'');
+  const pending=state.events.filter(e=>e.needs_response&&active(e)&&e.organizer_agent_id!==undefined);
+  const invitations=pending.length?'<section class="leisure-pending" aria-label="Invitations à traiter">'+pending.map(e=>
+   '<button type="button" class="leisure-invite stip-surface stip-card-signature" data-stip-card-tone="active" data-leisure-event="'+esc(e.id)+'"><span aria-hidden="true">'+iconFor(e.title)+'</span><span><strong>'+esc(e.title)+'</strong><small>'+esc(e.dates.filter(d=>d>=today()).map(fmt).join(' · '))+' · Réponse attendue</small></span><b>Répondre ›</b></button>').join('')+'</section>':'';
+  const groups=new Map();
+  state.events.filter(e=>active(e)).forEach(e=>{
+   (e.chats||[]).filter(c=>c.date>=today()).forEach(chat=>{
+    const key=e.title.trim().toLocaleLowerCase('fr')+'|'+chat.date;
+    const current=groups.get(key)||{title:e.title,date:chat.date,items:[]};
+    current.items.push({event:e,chat});groups.set(key,current);
+   });
+  });
+  const cards=[...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)).map(group=>{
+   const first=group.items[0],duplicated=group.items.length>1;
+   const lines=group.items.map((item,index)=>
+    '<div class="leisure-quick-line">'+(duplicated?'<small>Proposition '+(index+1)+'</small>':'')+
+    '<a class="stip-btn secondary" href="'+esc(chatURL(item.chat.conversation_id))+'">💬 Discussion</a>'+
+    '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(item.event.id)+'">Voir</button>'+
+    (item.event.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(item.event.id)+'">＋ Inviter</button>':'')+
+    '</div>').join('');
+   return '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">'+iconFor(group.title)+'</span><div><strong>'+esc(group.title)+'</strong><small>'+esc(fmt(group.date))+(duplicated?' · '+group.items.length+' propositions':'')+'</small></div></div>'+
+   (duplicated?'<details><summary>Gérer les '+group.items.length+' propositions</summary>'+lines+'</details>':lines)+'</section>';
+  });
+  return invitations+(cards.length?'<section class="leisure-home-chats" aria-label="Mes activités à venir">'+cards.join('')+'</section>':'');
  }
  function participantsHTML(e,d){
   const ps=e.participants.filter(p=>p.selected_dates.includes(d));
@@ -49,12 +80,13 @@
   const dialog=dialogShell(e.title);if(!dialog)return;const body=dialog.querySelector('[data-leisure-body]');
   let saved=drafts.get(id);if(saved?.revision!==e.revision)saved=null;
   const chosen=new Set(saved?.dates||e.response?.selected_dates||[]),declined=saved? saved.declined:!!e.response?.declined,editable=active(e);
-  body.innerHTML=`<p class="leisure-description">${esc(e.description)}</p><p><strong>Lieu :</strong> ${esc(e.location||'À fixer')}<br><strong>Horaire :</strong> ${esc(e.time_label||'À fixer')}</p>${!editable?`<p>${e.status==='cancelled'?'Sortie annulée':'Sortie terminée'}</p>`:''}<form data-stip-form-mode="standard" class="leisure-response"><fieldset><legend>${editable?'Quelles dates choisis-tu ? Plusieurs choix possibles.':'Dates et participants'}</legend>${e.dates.map(d=>`<section class="leisure-date"><label><input type="checkbox" name="dates" value="${esc(d)}" ${chosen.has(d)?'checked':''} ${!editable||d<today()?'disabled':''}><strong>${esc(fmt(d))}</strong><span>${e.participants.filter(p=>p.selected_dates.includes(d)).length} inscrit(s)</span></label>${participantsHTML(e,d)}${chatsHTML({...e,chats:(e.chats||[]).filter(c=>c.date===d)})}</section>`).join('')}</fieldset>${editable?`<label class="leisure-decline"><input type="checkbox" name="declined" ${declined?'checked':''}> Je ne participe pas</label><p role="status" aria-live="polite" data-leisure-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Valider ma réponse</button><button class="stip-btn secondary" type="button" data-leisure-later>Plus tard</button></footer>`:''}</form><div class="leisure-actions"><a class="stip-btn secondary" href="sorties-loisirs.html">Voir toutes les sorties</a>${e.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-edit>Gérer la sortie</button>':''}</div>`;
+  body.innerHTML=`<p class="leisure-description">${esc(e.description)}</p><p><strong>Lieu :</strong> ${esc(e.location||'À fixer')}<br><strong>Horaire :</strong> ${esc(e.time_label||'À fixer')}</p>${!editable?`<p>${e.status==='cancelled'?'Sortie annulée':'Sortie terminée'}</p>`:''}<form data-stip-form-mode="standard" class="leisure-response"><fieldset><legend>${editable?'Quelles dates choisis-tu ? Plusieurs choix possibles.':'Dates et participants'}</legend>${e.dates.map(d=>`<section class="leisure-date"><label><input type="checkbox" name="dates" value="${esc(d)}" ${chosen.has(d)?'checked':''} ${!editable||d<today()?'disabled':''}><strong>${esc(fmt(d))}</strong><span>${e.participants.filter(p=>p.selected_dates.includes(d)).length} inscrit(s)</span></label>${participantsHTML(e,d)}${chatsHTML({...e,chats:(e.chats||[]).filter(c=>c.date===d)})}</section>`).join('')}</fieldset>${editable?`<label class="leisure-decline"><input type="checkbox" name="declined" ${declined?'checked':''}> Je ne participe pas</label><p role="status" aria-live="polite" data-leisure-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Valider ma réponse</button><button class="stip-btn secondary" type="button" data-leisure-later>Plus tard</button></footer>`:''}</form><div class="leisure-actions"><a class="stip-btn secondary" href="sorties-loisirs.html">Voir toutes les sorties</a>${e.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-edit>✏️ Modifier</button><button type="button" class="stip-btn secondary" data-leisure-invite>＋ Inviter des collègues</button>':''}</div>`;
   const form=body.querySelector('form'),decline=form.elements.declined;
   function draft(){drafts.set(id,{revision:e.revision,dates:[...form.querySelectorAll('input[name="dates"]:checked')].map(x=>x.value),declined:!!decline?.checked})}
   form.addEventListener('change',event=>{if(event.target===decline&&decline.checked)form.querySelectorAll('[name="dates"]').forEach(x=>x.checked=false);else if(event.target.name==='dates'&&event.target.checked&&decline)decline.checked=false;draft()});
   body.querySelector('[data-leisure-later]')?.addEventListener('click',()=>close(dialog));
   body.querySelector('[data-leisure-edit]')?.addEventListener('click',()=>close(dialog,()=>openEditor(id)));
+  body.querySelector('[data-leisure-invite]')?.addEventListener('click',()=>close(dialog,()=>openInvite(id)));
   form.addEventListener('submit',async event=>{
    event.preventDefault();if(!editable)return;draft();const d=drafts.get(id),status=body.querySelector('[data-leisure-error]');
    if(!d.declined&&!d.dates.length){status.textContent='Choisis une date ou « Je ne participe pas ».';return}
@@ -63,11 +95,57 @@
    catch(error){status.textContent=error.message;refresh()}finally{submit.disabled=false}
   });
  }
+ async function openInvite(id){
+  if(!state.loaded)await refresh();
+  const e=find(id);if(!e||!e.can_manage)return;
+  const dialog=dialogShell('Inviter des collègues · '+e.title);if(!dialog)return;
+  const body=dialog.querySelector('[data-leisure-body]');
+  const existing=new Set((e.invited_colleagues||[]).map(p=>p.id));
+  body.innerHTML='<p class="leisure-invite-description">Ajoute des personnes à cette sortie sans la recréer. Chacune recevra une invitation pour les dates existantes.</p>'+
+   '<form data-stip-form-mode="standard" class="leisure-invite-form"><label>Rechercher un collègue<input type="search" data-leisure-agent-search placeholder="Prénom ou nom" autocomplete="off"></label>'+
+   '<div class="leisure-candidate-list" data-leisure-candidates aria-label="Collègues disponibles">Chargement des collègues…</div>'+
+   '<p class="leisure-invite-count" data-leisure-count>0 collègue sélectionné</p>'+
+   '<p role="status" data-leisure-invite-error></p><footer class="leisure-actions"><button class="stip-btn" type="submit">Envoyer les invitations</button><button class="stip-btn secondary" type="button" data-leisure-close-invite>Annuler</button></footer></form>';
+  const form=body.querySelector('form'),list=body.querySelector('[data-leisure-candidates]'),search=body.querySelector('[data-leisure-agent-search]'),count=body.querySelector('[data-leisure-count]'),error=body.querySelector('[data-leisure-invite-error]');
+  let people=[];
+  function renderCandidates(){
+   const needle=search.value.trim().toLocaleLowerCase('fr');
+   const checked=new Set([...list.querySelectorAll('input:checked')].map(x=>x.value));
+   list.innerHTML=people.map(p=>'<label class="leisure-candidate" data-name="'+esc(p.name.toLocaleLowerCase('fr'))+'"><input type="checkbox" value="'+esc(p.id)+'" '+(checked.has(p.id)?'checked':'')+'><span>'+esc(p.name)+'</span></label>').join('')||'<p>Tous les collègues éligibles sont déjà invités.</p>';
+   list.querySelectorAll('[data-name]').forEach(row=>row.hidden=!!needle&&!row.dataset.name.includes(needle));
+   count.textContent=checked.size+' collègue'+(checked.size>1?'s':'')+' sélectionné'+(checked.size>1?'s':'');
+  }
+  search.addEventListener('input',()=>{
+   const needle=search.value.trim().toLocaleLowerCase('fr');
+   list.querySelectorAll('[data-name]').forEach(row=>row.hidden=!!needle&&!row.dataset.name.includes(needle));
+  });
+  list.addEventListener('change',()=>{const n=list.querySelectorAll('input:checked').length;count.textContent=n+' collègue'+(n>1?'s':'')+' sélectionné'+(n>1?'s':'');});
+  body.querySelector('[data-leisure-close-invite]').onclick=()=>close(dialog);
+  try{
+   const token=localStorage.getItem(STORE)||'';
+   const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify({action:'colleagues'})});
+   const json=await r.json();if(!r.ok||json.error)throw Error(json.error||'Annuaire indisponible');
+   people=(json.colleagues||[]).filter(p=>!existing.has(p.id));renderCandidates();
+  }catch(err){error.textContent='Annuaire inaccessible : '+err.message;list.textContent='';}
+  form.onsubmit=async event=>{
+   event.preventDefault();
+   const ids=[...list.querySelectorAll('input:checked')].map(x=>x.value);
+   if(!ids.length){error.textContent='Choisis au moins un collègue.';return;}
+   const btn=form.querySelector('[type="submit"]');btn.disabled=true;error.textContent='Envoi…';
+   try{
+    const result=await post({action:'invite',event_id:e.id,agent_ids:ids});
+    close(dialog);
+    const status=document.querySelector('#leisureStatus');
+    if(status)status.textContent=result.added+' nouvelle(s) invitation(s) envoyée(s) à '+e.title+'.';
+   }catch(err){error.textContent=err.message;}
+   finally{btn.disabled=false;}
+  };
+ }
  function openEditor(id=''){
   const e=id?find(id):null;if(e&&!e.can_manage||!e&&!state.can_create)return;
   const dialog=dialogShell(e?'Gérer la sortie':'Proposer une sortie');if(!dialog)return;
   const body=dialog.querySelector('[data-leisure-body]');
-  body.innerHTML=`<form data-stip-form-mode="standard" class="leisure-editor"><label>Titre<input name="title" required maxlength="120" value="${esc(e?.title||'')}"></label><label>Informations<textarea name="description" maxlength="2000">${esc(e?.description||'')}</textarea></label><label>Lieu<input name="location" maxlength="240" value="${esc(e?.location||'')}"></label><label>Horaire<input name="time_label" maxlength="240" value="${esc(e?.time_label||'')}"></label><fieldset><legend>Dates proposées</legend><div data-leisure-dates></div><button type="button" class="stip-btn secondary" data-add-date>Ajouter une date</button></fieldset><p role="status" data-leisure-error></p><footer class="leisure-actions"><button type="submit" class="stip-btn">${e?'Enregistrer':'Créer la sortie'}</button>${e?`<button type="button" class="stip-btn secondary" data-cancel-event>${e.status==='cancelled'?'Rouvrir la sortie':'Annuler la sortie'}</button>`:''}</footer></form>`;
+  body.innerHTML=`<form data-stip-form-mode="standard" class="leisure-editor"><label>Titre<input name="title" required maxlength="120" value="${esc(e?.title||'')}"></label><label>Informations<textarea name="description" maxlength="2000">${esc(e?.description||'')}</textarea></label><label>Lieu<input name="location" maxlength="240" value="${esc(e?.location||'')}"></label><label>Horaire<input name="time_label" maxlength="240" value="${esc(e?.time_label||'')}"></label><fieldset><legend>Dates proposées</legend><div data-leisure-dates></div><button type="button" class="stip-btn secondary" data-add-date>Ajouter une date</button></fieldset><p role="status" data-leisure-error></p><footer class="leisure-actions"><button type="submit" class="stip-btn">${e?'Enregistrer':'Créer la sortie'}</button>${e?`<button type="button" class="stip-btn secondary" data-invite-event>＋ Inviter des collègues</button><button type="button" class="stip-btn secondary" data-cancel-event>${e.status==='cancelled'?'Rouvrir la sortie':'Annuler la sortie'}</button>`:''}</footer></form>`;
   const form=body.querySelector('form'),rows=body.querySelector('[data-leisure-dates]');
   function add(d=''){if(rows.children.length>=24)return;const row=document.createElement('div');row.className='leisure-date-editor';row.innerHTML=`<input type="date" name="date" aria-label="Date proposée" value="${esc(d)}" required><button type="button" class="stip-btn secondary" aria-label="Retirer cette date">×</button>`;row.querySelector('button').onclick=()=>row.remove();rows.appendChild(row)}
   (e?.dates||['']).forEach(add);body.querySelector('[data-add-date]').onclick=()=>add();
@@ -77,7 +155,8 @@
    buttons.forEach(x=>x.disabled=true);error.textContent='Enregistrement…';
    try{await post({action:'save',id:e?.id,revision:e?.revision,title:form.elements.title.value,description:form.elements.description.value,location:form.elements.location.value,time_label:form.elements.time_label.value,dates:ds,status});close(dialog)}catch(err){error.textContent=err.message}finally{buttons.forEach(x=>x.disabled=false)}
   }
-  form.addEventListener('submit',event=>{event.preventDefault();save(e?.status||'active')});body.querySelector('[data-cancel-event]')?.addEventListener('click',()=>{const target=e.status==='cancelled'?'active':'cancelled';if(confirm(target==='cancelled'?'Annuler cette sortie ? Les réponses seront conservées.':'Rouvrir cette sortie ?'))save(target)});
+  form.addEventListener('submit',event=>{event.preventDefault();save(e?.status||'active')});
+  body.querySelector('[data-invite-event]')?.addEventListener('click',()=>close(dialog,()=>openInvite(e.id)));body.querySelector('[data-cancel-event]')?.addEventListener('click',()=>{const target=e.status==='cancelled'?'active':'cancelled';if(confirm(target==='cancelled'?'Annuler cette sortie ? Les réponses seront conservées.':'Rouvrir cette sortie ?'))save(target)});
  }
  function renderApp(){
   const root=document.querySelector('#leisureApp');if(!root)return;
@@ -85,7 +164,7 @@
   root.innerHTML=`${window.STIPAfterwork?.panelHTML?.()||''}${state.can_create?'<button type="button" class="stip-btn" data-leisure-create>Proposer une sortie</button>':''}<div class="leisure-grid">${state.events.map(e=>`<article class="leisure-card stip-surface stip-card-signature" data-stip-card-tone="${active(e)?'active':'neutral'}"><h2>${esc(e.title)}</h2><p>${esc(e.location||'Lieu à fixer')}</p><p>${esc(e.time_label||'Horaire à fixer')}</p><p>${e.status==='cancelled'?'Annulée':!active(e)?'Terminée':e.needs_response?'Ta réponse est attendue':e.response?.declined?'Tu ne participes pas':'Ta réponse est enregistrée'}</p><div class="leisure-date-summary">${e.dates.map(d=>`<span><strong>${esc(fmt(d))}</strong> · ${e.participants.filter(p=>p.selected_dates.includes(d)).length} inscrit(s)</span>`).join('')}</div><button type="button" class="stip-btn" data-leisure-event="${esc(e.id)}">${active(e)?e.response?'Voir / modifier ma réponse':'Choisir mes dates':'Voir les participants'}</button><div class="leisure-actions">${chatsHTML(e)}</div>${e.can_manage?`<button type="button" class="stip-btn secondary" data-leisure-manage="${esc(e.id)}">Gérer</button>`:''}</article>`).join('')||'<p>Aucune sortie proposée pour l’instant.</p>'}</div>`;
   window.STIPAfterwork?.bindPanel?.();
  }
- document.addEventListener('click',e=>{const b=e.target.closest?.('[data-leisure-event],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');if(!b)return;if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);else if(b.hasAttribute('data-leisure-create'))openEditor();else refresh()});
+ document.addEventListener('click',e=>{const b=e.target.closest?.('[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');if(!b)return;if(b.hasAttribute('data-leisure-add-invite'))openInvite(b.dataset.leisureAddInvite);else if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);else if(b.hasAttribute('data-leisure-create'))openEditor();else refresh()});
  window.STIPLeisure={refresh,pendingHTML,openEvent};
  ['stip:session-ready','stip:boot-updated'].forEach(e=>window.addEventListener(e,refresh));
  ['stip:session-ended','stip:session-expired'].forEach(e=>window.addEventListener(e,reset));
