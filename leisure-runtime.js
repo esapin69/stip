@@ -6,6 +6,7 @@
  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
  const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'long'});
  const state={events:[],can_create:false,token:'',loaded:false,inflight:null,error:''};
+ const view={tab:'activities',createMode:'',createOpen:false};
  let deepLinkOpened=false;
  const drafts=new Map();
  const find=id=>state.events.find(e=>e.id===id);
@@ -29,7 +30,7 @@
  async function post(body){
   const token=localStorage.getItem(STORE)||'';if(!token)throw Error('Connecte-toi pour répondre.');
   const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json','X-STIP-Session':token},body:JSON.stringify(body)}),j=await r.json().catch(()=>({}));
-  if(!r.ok||j.error){const messages={DATES_MODIFIEES:'Les dates ont changé. Ferme puis rouvre la proposition pour actualiser tes choix.',SORTIE_FERMEE:'Cette sortie est terminée ou annulée.',ACCES_ORGANISATEUR_REQUIS:'Seul l’organisateur peut modifier cette sortie.',CHOIX_INVALIDE:'Choisis au moins une date ou « Je ne participe pas ».',ACCES_AGENT_REQUIS:'Un profil agent est nécessaire pour s’inscrire.'};throw Error(messages[j.error]||'Impossible d’enregistrer. Réessaie dans un instant.')}
+  if(!r.ok||j.error){if(/PGRST201|more than one relationship|multiple relationships/i.test(String(j.error||'')))throw Error('Le chargement des invités est momentanément bloqué. La correction serveur est en cours.');const messages={DATES_MODIFIEES:'Les dates ont changé. Ferme puis rouvre la proposition pour actualiser tes choix.',SORTIE_FERMEE:'Cette sortie est terminée ou annulée.',ACCES_ORGANISATEUR_REQUIS:'Seul l’organisateur peut modifier cette sortie.',CHOIX_INVALIDE:'Choisis au moins une date ou « Je ne participe pas ».',ACCES_AGENT_REQUIS:'Un profil agent est nécessaire pour s’inscrire.'};throw Error(messages[j.error]||'Impossible d’enregistrer. Réessaie dans un instant.')}
   if(token!==(localStorage.getItem(STORE)||''))throw Error('La session a changé.');
   state.events=j.events||[];state.can_create=!!j.can_create;state.loaded=true;state.token=token;state.error='';notify();return j;
  }
@@ -71,7 +72,7 @@
    (duplicated?'<details><summary>Gérer les '+group.items.length+' propositions</summary>'+lines+'</details>':lines)+'</section>';
   });
   const recurringCards=state.events.filter(e=>active(e)&&e.recurring_closing&&!e.needs_response).map(e=>
-   '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">💪</span><div><strong>'+esc(e.title)+'</strong><small>À chaque fermeture · '+e.dates.filter(d=>d>=today()).length+' prochaines dates</small></div></div><div class="leisure-quick-line">'+
+   '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">🏋️</span><div><strong>'+esc(e.title)+'</strong><small>À chaque fermeture · '+e.dates.filter(d=>d>=today()).length+' prochaines dates</small></div></div><div class="leisure-quick-line">'+
    '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(e.id)+'">'+(e.is_organizer?'Mes disponibilités':'Choisir mes dates')+'</button>'+
    (e.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':'')+
    '</div></section>').join('');
@@ -179,14 +180,112 @@
   form.addEventListener('submit',event=>{event.preventDefault();save(e?.status||'active')});
   body.querySelector('[data-invite-event]')?.addEventListener('click',()=>close(dialog,()=>openInvite(e.id)));body.querySelector('[data-cancel-event]')?.addEventListener('click',()=>{const target=e.status==='cancelled'?'active':'cancelled';if(confirm(target==='cancelled'?'Annuler cette sortie ? Les réponses seront conservées.':'Rouvrir cette sortie ?'))save(target)});
  }
+
+ function cardHTML(e){
+  const upcoming=(e.dates||[]).filter(d=>d>=today()).sort();
+  const when=upcoming.slice(0,3);
+  const status=!active(e)?'Terminé':e.is_organizer?'J’organise':e.needs_response?'À répondre':e.response?.declined?'Décliné':'Partant';
+  const role=e.is_organizer?'Organisateur':e.recurring_closing?'Séances récurrentes':'Sortie entre collègues';
+  const unavailable=new Set(e.organizer_unavailable_dates||[]);
+  const action=e.recurring_closing?(e.is_organizer?'Mes disponibilités':'Choisir mes dates'):e.is_organizer?'Gérer':'Mes dates';
+  const dayHTML=when.map(d=>{
+   const date=new Date(d+'T12:00:00');
+   const weekday=date.toLocaleDateString('fr-FR',{weekday:'short'}).replace('.','');
+   const day=date.getDate();
+   const count=(e.participants||[]).filter(p=>(p.selected_dates||[]).includes(d)).length;
+   return '<div class="ensemble-day'+(unavailable.has(d)?' is-unavailable':'')+'"><small>'+esc(weekday)+'</small><b>'+day+'</b><span>'+ (unavailable.has(d)?'Indisponible':count+' partant'+(count>1?'s':''))+'</span></div>';
+  }).join('');
+  const future=active(e);
+  const firstChat=(e.chats||[]).find(c=>c.date>=today())||(e.chats||[])[0];
+  return '<article class="ensemble-activity'+(future?'':' is-archived')+'">'+
+    '<header class="ensemble-activity-head"><span class="ensemble-activity-icon" aria-hidden="true">'+iconFor(e.title)+'</span>'+
+    '<div class="ensemble-activity-title"><h3>'+esc(e.title)+'</h3><small>'+esc(role)+'</small></div>'+
+    (e.needs_response&&!e.is_organizer?'<span class="ensemble-statuschip is-pending">À répondre</span>':'')+
+    (!future?'<span class="ensemble-statuschip is-closed">'+esc(e.status==='cancelled'?'Annulée':'Terminée')+'</span>':'')+
+    '</header>'+
+    '<div class="ensemble-activity-meta">'+esc([e.location||'',e.time_label||''].filter(Boolean).join(' · ')||'Lieu et horaire à préciser')+
+    (e.recurring_closing?'<br>↻ Se renouvelle avec le planning':'')+'</div>'+
+    (when.length?'<div class="ensemble-date-strip" aria-label="Prochaines dates">'+dayHTML+'</div>':
+     '<p class="ensemble-no-dates">Aucune date à venir</p>')+
+    '<div class="ensemble-card-actions"><button type="button" class="ensemble-primary" data-leisure-event="'+esc(e.id)+'">'+
+     esc(future?action:'Voir les détails')+'</button>'+
+    (e.can_invite&&future?'<button type="button" class="ensemble-subtle" data-leisure-add-invite="'+esc(e.id)+'">＋ Inviter</button>':
+     firstChat?'<a class="ensemble-subtle" href="'+esc(chatURL(firstChat.conversation_id))+'">Discuter</a>':'')+
+    '</div></article>';
+ }
+ function setView(tab){
+  if(!['activities','trips','invitations'].includes(tab))tab='activities';
+  view.tab=tab;
+  const leisure=document.querySelector('#leisureApp'),carpool=document.querySelector('#carpoolApp'),creator=document.querySelector('#ensembleCreator');
+  if(leisure)leisure.hidden=tab==='trips';
+  if(carpool)carpool.hidden=tab!=='trips';
+  if(creator)creator.hidden=tab!=='activities'||!view.createOpen;
+  document.querySelectorAll('[data-ensemble-tab]').forEach(button=>{
+   const selected=button.dataset.ensembleTab===tab;
+   button.classList.toggle('is-active',selected);
+   button.setAttribute('aria-selected',selected?'true':'false');
+  });
+ }
  function renderApp(){
   const root=document.querySelector('#leisureApp');if(!root)return;
-  if(!state.loaded){root.innerHTML=`<p role="status">${esc(state.error||'Chargement des sorties…')}</p>${!(localStorage.getItem(STORE)||'')?'<a class="stip-btn secondary" href="index.html#/home">Me connecter</a>':state.error?'<button type="button" class="stip-btn" data-leisure-refresh>Réessayer</button>':''}`;return}
-  root.innerHTML=`${window.STIPAfterwork?.panelHTML?.()||''}${state.can_create?'<button type="button" class="stip-btn" data-leisure-create>Proposer une sortie</button>':''}<div class="leisure-grid">${state.events.map(e=>`<article class="leisure-card stip-surface stip-card-signature" data-stip-card-tone="${active(e)?'active':'neutral'}"><h2><span aria-hidden="true">${iconFor(e.title)}</span> ${esc(e.title)}</h2><p>${esc(e.location||'Lieu à fixer')}</p><p>${esc(e.time_label||'Horaire à fixer')}</p><p>${e.status==='cancelled'?'Annulée':!active(e)?'Terminée':e.recurring_closing?(e.is_organizer?'Disponible par défaut à chaque fermeture':'Choisis librement tes dates'):e.needs_response?'Ta réponse est attendue':e.response?.declined?'Tu ne participes pas':'Ta réponse est enregistrée'}</p><div class="leisure-date-summary">${e.dates.filter(d=>d>=today()).slice(0,e.recurring_closing?5:30).map(d=>`<span><strong>${esc(fmt(d))}</strong> · ${e.organizer_unavailable_dates?.includes(d)?'Organisateur absent':e.participants.filter(p=>p.selected_dates.includes(d)).length+' inscrit(s)'}</span>`).join('')}${e.recurring_closing&&e.dates.filter(d=>d>=today()).length>5?`<small>＋ ${e.dates.filter(d=>d>=today()).length-5} autres dates</small>`:''}</div><button type="button" class="stip-btn" data-leisure-event="${esc(e.id)}">${active(e)?e.recurring_closing?(e.is_organizer?'Mes disponibilités':'Choisir mes dates'):e.response?'Voir / modifier ma réponse':'Choisir mes dates':'Voir les participants'}</button><div class="leisure-actions">${chatsHTML(e)}</div>${e.can_invite?`<button type="button" class="stip-btn secondary" data-leisure-add-invite="${esc(e.id)}">＋ Inviter</button>`:''}${e.can_manage?`<button type="button" class="stip-btn secondary" data-leisure-manage="${esc(e.id)}">✏️ Modifier</button>`:''}</article>`).join('')||'<p>Aucune sortie proposée pour l’instant.</p>'}</div>`;
-  window.STIPAfterwork?.bindPanel?.();
+  if(!state.loaded){
+   root.innerHTML='<section class="ensemble-empty" role="status"><span aria-hidden="true">⏳</span><strong>Chargement des activités</strong>'+
+     '<p>'+esc(state.error||'Récupération de tes sorties en cours…')+'</p>'+
+     (state.error?'<button type="button" class="ensemble-subtle" data-leisure-refresh style="margin-top:14px">Réessayer</button>':'')+
+     (!localStorage.getItem(STORE)?'<a class="ensemble-subtle" href="index.html#/home">Se connecter</a>':'')+
+     '</section>';setView(view.tab);return;
+  }
+  const activities=state.events.filter(e=>active(e)).sort((a,b)=>(a.dates||[]).filter(d=>d>=today())[0]?.localeCompare((b.dates||[]).filter(d=>d>=today())[0]||'9999-12-31')||0);
+  const archives=state.events.filter(e=>!active(e));
+  const invitations=activities.filter(e=>e.needs_response&&!e.is_organizer);
+  const badge=document.querySelector('#ensembleInviteBadge');if(badge){badge.hidden=!invitations.length;badge.textContent=invitations.length;}
+  const stats=document.querySelector('#ensembleSummary');
+  if(stats)stats.textContent=activities.length+' activité'+(activities.length>1?'s':'')+' en cours';
+  const ct='<section class="ensemble-cta"><div><h3>Un moment à partager ?</h3><p>Propose une activité, on s’occupe des invitations.</p></div>'+
+    (state.can_create?'<button type="button" class="ensemble-primary" data-ensemble-create>＋ Proposer</button>':'')+'</section>';
+  const content=view.tab==='invitations'
+    ?'<header class="ensemble-sectionhead"><div><h2>Mes invitations</h2><p>Les propositions qui attendent ta réponse</p></div><span class="ensemble-count">'+invitations.length+'</span></header>'+
+      (invitations.length?'<div class="ensemble-cards">'+invitations.map(cardHTML).join('')+'</div>':
+      '<div class="ensemble-empty"><span aria-hidden="true">✉️</span><strong>Tout est à jour</strong><p>Aucune invitation en attente pour le moment.</p></div>')
+    :ct+'<header class="ensemble-sectionhead"><div><h2>Mes activités</h2><p>Choisis une date ou retrouve tes sorties.</p></div><span class="ensemble-count">'+activities.length+'</span></header>'+
+     (activities.length?'<div class="ensemble-cards">'+activities.map(cardHTML).join('')+'</div>':
+      '<div class="ensemble-empty"><span aria-hidden="true">🏋️</span><strong>On organise quelque chose ?</strong><p>Les propositions et entraînements apparaîtront ici.</p></div>')+
+     (archives.length?'<details class="ensemble-more"><summary>Sorties passées et annulées · '+archives.length+'</summary><div class="ensemble-cards">'+archives.slice(0,20).map(cardHTML).join('')+'</div></details>':'');
+  root.innerHTML=content;
+  setView(view.tab);
  }
- document.addEventListener('click',e=>{const b=e.target.closest?.('[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');if(!b)return;if(b.hasAttribute('data-leisure-add-invite'))openInvite(b.dataset.leisureAddInvite);else if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);else if(b.hasAttribute('data-leisure-create'))openEditor();else refresh()});
- window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite};
+ function openCreator(mode=''){
+  const parent=document.querySelector('#ensembleCreator');if(!parent)return;
+  view.tab='activities';view.createOpen=true;view.createMode=mode;
+  setView('activities');
+  document.querySelectorAll('[data-ensemble-option]').forEach(el=>{
+   const yes=el.dataset.ensembleOption===mode;el.classList.toggle('is-selected',yes);el.setAttribute('aria-pressed',yes?'true':'false');
+  });
+  const recur=document.querySelector('#trainingRecurringApp'),matched=document.querySelector('#ensembleAfterworkCreate');
+  if(recur)recur.hidden=mode!=='recurring';
+  if(matched)matched.hidden=mode!=='matched';
+  if(mode==='recurring')window.STIPTrainingRecurring?.open?.();
+  if(mode==='matched'&&matched){
+   if(!matched.querySelector('#awPanel'))matched.innerHTML=window.STIPAfterwork?.panelHTML?.()||'<p>Le module de proposition est indisponible.</p>';
+   window.STIPAfterwork?.bindPanel?.();
+  }
+  if(mode==='date'){view.createOpen=false;setView('activities');openEditor();return;}
+  if(mode)parent.scrollIntoView({block:'start',behavior:'smooth'});
+ }
+ document.addEventListener('click',e=>{
+  const b=e.target.closest?.('[data-ensemble-tab],[data-ensemble-create],[data-ensemble-close],[data-ensemble-option],[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');
+  if(!b)return;
+  if(b.hasAttribute('data-ensemble-tab')){setView(b.dataset.ensembleTab);renderApp();}
+  else if(b.hasAttribute('data-ensemble-create'))openCreator();
+  else if(b.hasAttribute('data-ensemble-close')){view.createOpen=false;setView('activities');}
+  else if(b.hasAttribute('data-ensemble-option'))openCreator(b.dataset.ensembleOption);
+  else if(b.hasAttribute('data-leisure-add-invite'))openInvite(b.dataset.leisureAddInvite);
+  else if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);
+  else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);
+  else if(b.hasAttribute('data-leisure-create'))openEditor();
+  else refresh();
+ });
+ window.STIPLeisure={refresh,pendingHTML,openEvent,openInvite,openCreator,setTab:setView};
  ['stip:session-ready','stip:boot-updated'].forEach(e=>window.addEventListener(e,refresh));
  ['stip:session-ended','stip:session-expired'].forEach(e=>window.addEventListener(e,reset));
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
