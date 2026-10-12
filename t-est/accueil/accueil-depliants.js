@@ -24,10 +24,7 @@
     if(block==="planning")return ({"day:0":"Aujourd’hui","day:1":"Demain","day:7":"Cette semaine",personal:"Mon planning"})[id]||"Planning";
     if(id==="fauteuils")return "Fauteuils";
     if(id==="dm")return "DM privé";
-    if(id.startsWith("group:")){
-      const card=[...document.querySelectorAll("[data-conversation-id]")].find(el=>"group:"+el.dataset.conversationId===id);
-      return card?.querySelector(".com-libelle")?.textContent?.trim()||"Canal collectif";
-    }
+    if(id.startsWith("thread:"))return window.TEstChats?.label?.(id.slice(7))||"Discussion";
     return "Communication";
   };
   function route(){
@@ -37,7 +34,7 @@
       if(id)return {block:"planning",id};
     }
     if(bloc==="communication"){
-      if(vue==="dm"&&conversation&&VALID_GROUP.test(conversation))return {block:"communication",id:"group:"+conversation};
+      if(vue==="dm"&&conversation&&VALID_GROUP.test(conversation))return {block:"communication",id:"thread:"+conversation};
       if(["fauteuils","dm"].includes(vue))return {block:"communication",id:vue};
     }
     return null;
@@ -51,7 +48,7 @@
     }else if(next?.block==="communication"){
       u.searchParams.set("bloc","communication");
       u.searchParams.set("vue",next.id==="fauteuils"?"fauteuils":"dm");
-      if(next.id.startsWith("group:"))u.searchParams.set("conversation",next.id.slice(6));
+      if(next.id.startsWith("thread:"))u.searchParams.set("conversation",next.id.slice(7));
     }
     return u.pathname+u.search+u.hash;
   }
@@ -65,10 +62,9 @@
     });
   }
   function updateButtons(block){
-    blocs[block].querySelectorAll("[data-jour],[data-ouverture],[data-conversation-id]").forEach(el=>{
+    blocs[block].querySelectorAll("[data-jour],[data-ouverture]").forEach(el=>{
       let id=null;
       if(el.hasAttribute("data-jour"))id="day:"+el.dataset.jour;
-      else if(el.hasAttribute("data-conversation-id"))id="group:"+el.dataset.conversationId;
       else if(el.hasAttribute("data-ouverture"))id=el.dataset.ouverture;
       const selected=id===active[block];
       el.setAttribute("aria-expanded",String(selected));
@@ -140,7 +136,7 @@
     }else{
       const url=id==="personal"?DEST.personnel:id==="fauteuils"?DEST.fauteuils:DEST.dm;
       const parsed=new URL(url,location.origin);
-      if(id.startsWith("group:"))parsed.searchParams.set("conversation",id.slice(6));
+      if(id.startsWith("thread:"))parsed.searchParams.set("conversation",id.slice(7));
       slot.innerHTML='<p class="t-inline-wait" role="status">Chargement de '+esc(label(block,id))+'…</p>';
       const frame=document.createElement("iframe");
       frame.className="t-inline-iframe";
@@ -157,7 +153,7 @@
   function select(block,id,{forceOpen=false,push=true,scroll=true}={}){
     if(!regions[block]||!id)return;
     if(block==="planning"&&!["day:0","day:1","day:7","personal"].includes(id))return;
-    if(block==="communication"&&!["fauteuils","dm"].includes(id)&&!(id.startsWith("group:")&&VALID_GROUP.test(id.slice(6))))return;
+    if(block==="communication"&&!["fauteuils","dm"].includes(id)&&!(id.startsWith("thread:")&&VALID_GROUP.test(id.slice(7))))return;
     const wasOpen=active[block]===id;
     const open=forceOpen||!wasOpen;
     active[block]=open?id:null;
@@ -207,10 +203,11 @@
   document.addEventListener("click",e=>{
     const day=e.target.closest('[data-block="planning"] [data-jour]');
     if(day){select("planning","day:"+day.dataset.jour);return;}
-    const conv=e.target.closest('[data-block="communication"] [data-conversation-id]');
-    if(conv){select("communication","group:"+conv.dataset.conversationId);return;}
     const module=e.target.closest('[data-block="communication"] [data-ouverture]');
-    if(module){select("communication",module.dataset.ouverture);return;}
+    if(module){
+      if(module.dataset.ouverture==="dm"){window.TEstChats?.openPicker?.();return;}
+      select("communication",module.dataset.ouverture);return;
+    }
     if(e.target.closest('[data-open-planning]')){select("planning","personal",{forceOpen:true});}
   });
   window.addEventListener("popstate",restoreURL);
