@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/stip-theme-base.css?v=20260928-card-signature1">
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1">
   <link rel="stylesheet" href="/t-est/accueil/accueil-v3.css?v=20261013-tabs-only2">
+  <link rel="stylesheet" href="/t-est/accueil/accueil-historique.css?v=20261013-hist1">
   <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
   <script defer src="/stip-session-continuity.js?v=20260927-pin-security1"></script>
   <script defer src="/shift-registry.js?v=20260928-planning-fast5"></script>
@@ -17,8 +18,18 @@
   <script defer src="/t-est/outils-test/navigation-t.js?v=20260928-mirror3"></script>
   <script defer src="/t-est/accueil/accueil-v3.js?v=20261013-tabs-only2"></script>
   <script defer src="/t-est/accueil/accueil-v3-canaux.js?v=20261013-canaux1"></script>
+  <script defer src="/t-est/accueil/accueil-historique.js?v=20261013-hist1"></script>
 </head>
 <body>
+  <nav id="tEstHistoryBar" aria-label="Historique des pages GHE">
+    <button type="button" class="t-history-home" data-history-home aria-label="Retourner à l’accueil">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5V21h-7v-7h-4v7H3z"/></svg>
+      <span>Accueil</span>
+    </button>
+    <div id="tEstHistoryScroll" class="t-history-window" aria-label="Pages visitées, défilement horizontal">
+      <ol class="t-history-items" id="tEstHistorySteps"></ol>
+    </div>
+  </nav>
   <main id="t-est-accueil">
     <div id="tAccueilHome" class="t-shell">
       <section aria-label="Mon planning">
