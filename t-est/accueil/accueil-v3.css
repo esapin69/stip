@@ -92,3 +92,19 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 .t-channel-member:last-child{border-bottom:0}
 .t-channel-member input{width:20px;height:20px;flex:0 0 20px;accent-color:#167c98}
 .pop-create-channel{margin-top:14px}
+
+/* Quand la sous-page défile dans son cadre intégré, le haut de page
+   (titre, bouton retour, carrousel de cartes et action) défile également.
+   Seules la bande d'historique et les véritables onglets internes restent visibles. */
+#tAccueilSousPage.t-inner-scrolling > .t-nav-fixed{
+  display:none!important;
+}
+#tAccueilSousPage.t-inner-scrolling .t-module-status:empty{display:none}
+#tAccueilSousPage.t-inner-scrolling .t-module-iframe{
+  height:calc(100dvh - var(--t-est-history-height, 40px));
+  min-height:calc(100dvh - var(--t-est-history-height, 40px));
+}
+#tAccueilSousPage:not(.t-inner-scrolling)>.t-nav-fixed{
+  position:static!important;
+  top:auto!important;
+}
