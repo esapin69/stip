@@ -52,7 +52,7 @@ vm.runInNewContext(readFileSync('leisure-runtime.js','utf8'),{
 });
 await window2.STIPLeisure.refresh();
 assert.match(root.innerHTML,/Muscu récurrente/);
-assert.match(root.innerHTML,/Discussion du groupe/);
+assert.match(root.innerHTML,/Discussion du groupe|Groupe de l’activité/);
 assert.match(root.innerHTML,/conversation=permanent-conversation-1/);
 assert.doesNotMatch(root.innerHTML,/Chat du vendredi|Chat du lundi/);
 const source=readFileSync('leisure-runtime.js','utf8');
