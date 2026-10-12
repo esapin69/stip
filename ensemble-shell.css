@@ -79,3 +79,14 @@
 .ensemble-page #carpoolApp .cp-head h2{font-size:1.3rem}
 .ensemble-page #carpoolApp .cp-card{background:#fff}
 @media(max-width:520px){.ensemble-page{padding:10px 14px 65px}.ensemble-topbar{padding-bottom:7px}.ensemble-hero{padding:14px 2px 16px}.ensemble-hero h1{font-size:2.55rem}.ensemble-hero p{font-size:.88rem}.ensemble-nav{margin:0 -3px 15px;padding:7px 3px}.ensemble-nav button{font-size:.78rem;padding:6px 1px;gap:4px}.ensemble-nav button span{font-size:1rem}.ensemble-cta{flex-direction:column;align-items:stretch;gap:11px}.ensemble-cta .ensemble-primary{width:100%}.ensemble-ways button{padding:10px 4px}.ensemble-ways button strong{font-size:.73rem}.ensemble-ways button small{font-size:.64rem}.ensemble-cards{grid-template-columns:1fr}.ensemble-activity{padding:15px}.ensemble-activity-icon{height:45px;width:45px;flex-basis:45px}}
+
+.ensemble-page .cp-collapsible{border-radius:18px;margin:12px 0;box-shadow:0 6px 18px rgba(16,63,70,.04);padding:0}
+.ensemble-page .cp-collapsible>summary{font-size:.95rem;font-weight:900;color:#214d5b;cursor:pointer;padding:16px;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ensemble-page .cp-collapsible>summary::-webkit-details-marker{display:none}
+.ensemble-page .cp-collapsible>summary::after{content:"⌄";font-size:1.2rem;color:#60818a}
+.ensemble-page .cp-collapsible[open]>summary::after{transform:rotate(180deg)}
+.ensemble-page .cp-collapsible>form,.ensemble-page .cp-collapsible>p{margin:0 16px 16px}
+.ensemble-page .cp-collapsible>.cp-form{padding-top:12px;border-top:1px solid #e3efed}
+.ensemble-page .cp-person-match{display:grid;gap:5px;padding:12px;border-top:1px solid #e4eeee}
+.ensemble-page .cp-person-match>span,.ensemble-page .cp-person-match>small{color:#607e87;font-size:.82rem}
+.ensemble-page .cp-person-match .stip-btn{justify-self:start}
