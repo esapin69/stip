@@ -54,10 +54,11 @@
   const cards=[...groups.values()].sort((a,b)=>a.date.localeCompare(b.date)).map(group=>{
    const first=group.items[0],duplicated=group.items.length>1;
    const lines=group.items.map((item,index)=>
-    '<div class="leisure-quick-line">'+(duplicated?'<small>Proposition '+(index+1)+'</small>':'')+
+    '<div class="leisure-quick-line">'+(duplicated?'<small>Proposition '+(index+1)+' · '+esc(item.event.location||'Lieu à fixer')+' · '+esc(item.event.time_label||'Horaire à fixer')+'</small>':'')+
     '<a class="stip-btn secondary" href="'+esc(chatURL(item.chat.conversation_id))+'">💬 Discussion</a>'+
     '<button type="button" class="stip-btn secondary" data-leisure-event="'+esc(item.event.id)+'">Ma réponse</button>'+
     (item.event.can_invite?'<button type="button" class="stip-btn secondary" data-leisure-add-invite="'+esc(item.event.id)+'">＋ Inviter</button>':'')+
+    (item.event.can_manage?'<button type="button" class="stip-btn secondary" data-leisure-manage="'+esc(item.event.id)+'">✏️ Modifier</button>':'')+
     '</div>').join('');
    return '<section class="leisure-home-card stip-surface"><div class="leisure-home-title"><span class="leisure-home-icon">'+iconFor(group.title)+'</span><div><strong>'+esc(group.title)+'</strong><small>'+esc(fmt(group.date))+(duplicated?' · '+group.items.length+' propositions':'')+'</small></div></div>'+
    (duplicated?'<details><summary>Gérer les '+group.items.length+' propositions</summary>'+lines+'</details>':lines)+'</section>';
