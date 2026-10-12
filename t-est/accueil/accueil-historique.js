@@ -13,12 +13,10 @@
   function route(){
     const url=new URL(location.href),bloc=url.searchParams.get("bloc")||"",vue=url.searchParams.get("vue")||"";
     const conv=url.searchParams.get("conversation")||"";
-    if(bloc==="communication"&&["fauteuils","dm","loisirs"].includes(vue))
+    if(bloc==="communication"&&["fauteuils","dm"].includes(vue))
       return {key:"communication:"+vue+(vue==="dm"&&conv?":"+conv:""),bloc,vue,conv};
     if(bloc==="planning"&&vue==="personnel")
       return {key:"planning:personnel",bloc,vue,conv:""};
-    if(bloc==="ensemble"&&["activities","trips","invitations"].includes(vue))
-      return {key:"ensemble:"+vue,bloc,vue,conv:""};
     return {key:"home",bloc:"",vue:"",conv:""};
   }
   function titleOf(r){
@@ -29,8 +27,7 @@
       return node?.querySelector(".com-libelle")?.textContent?.trim()||"Canal collectif";
     }
     return {
-      fauteuils:"Fauteuils",dm:"DM privé",personnel:"Mon planning",
-      activities:"Activités",trips:"Trajets",invitations:"Invitations"
+      fauteuils:"Fauteuils",dm:"DM privé",personnel:"Mon planning"
     }[r.vue]||"Page";
   }
   function pathOf(r){
@@ -53,7 +50,7 @@
       const state=JSON.parse(sessionStorage.getItem(STORAGE)||"null");
       if(!state||Date.now()-state.date>8*3600*1000)return;
       steps=(Array.isArray(state.steps)?state.steps:[])
-        .filter(s=>s&&/^(communication:(fauteuils|dm)(:[a-f0-9-]{36})?|planning:personnel|ensemble:(activities|trips|invitations))$/.test(String(s.key||"")))
+        .filter(s=>s&&/^(communication:(fauteuils|dm)(:[a-f0-9-]{36})?|planning:personnel)$/.test(String(s.key||"")))
         .slice(-MAX_STEPS);
     }catch{steps=[]}
   }
