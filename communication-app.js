@@ -205,9 +205,18 @@
       }
     } catch (error) {
       if (isCurrent()) {
-        host.innerHTML = '<section class="ca-error">' +
-          esc(error?.message || "Communication indisponible.") +
-          "</section>";
+        const reason=String(error?.message||"Communication indisponible.");
+        const accessDenied=/Messages non autorisés|accès.*messages|permission/i.test(reason);
+        host.innerHTML='<section class="ca-error" role="alert"><p>'+
+          esc(accessDenied?"Ce compte n’a pas accès à la messagerie. Un responsable doit vérifier son profil GHE.":reason)+
+          '</p><button type="button" class="ca-chat-retry" data-chat-retry>'+
+          'Recharger la messagerie</button></section>';
+        host.querySelector('[data-chat-retry]')?.addEventListener('click',()=>{
+          const url=new URL(location.href);
+          url.searchParams.set('__stip_probe','1');
+          url.searchParams.set('chat_reload','20261012-v2');
+          location.replace(url.href);
+        });
       }
     } finally {
       state.rendering = false;
