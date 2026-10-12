@@ -9,6 +9,7 @@
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
   let groups=[],members=[],memberLoading=null,snapshotLoading=null,sessionSignature='',refreshAt=0;
   let pending=false;
+  const VALID_GROUP_ID=/^[a-f0-9-]{36}$/i;
   function token(){return localStorage.getItem(KEY)||''}
   async function digest(v){
     if(!v||!crypto?.subtle)return '';
@@ -43,25 +44,19 @@
         b.dataset.conversationId=g.id;
         b.title=g.title;
         b.innerHTML='<span class="com-icone" aria-hidden="true">💬</span><span class="com-libelle">'+esc(g.title)+'</span><span class="com-precisions">Canal collectif</span>';
-        b.addEventListener('click',()=>openConversation(g.id));
         nav.append(b);
       }
     });
     currentSelection();
+    window.dispatchEvent(new CustomEvent('t-est:channels-redrawn'));
   }
   function currentSelection(){
-    const u=new URL(location.href),selected=u.searchParams.get('conversation')||'';
-    $$('[data-conversation-id]').forEach(b=>b.setAttribute('aria-current',String(b.dataset.conversationId===selected&&selected!=='')));
+    const selected=window.TEstDashboard?.current?.().communication||'';
+    $$('[data-conversation-id]').forEach(b=>b.setAttribute('aria-current',String('group:'+b.dataset.conversationId===selected)));
   }
   function openConversation(id){
-    const url=new URL(location.href);
-    url.searchParams.set('bloc','communication');
-    url.searchParams.set('vue','dm');
-    url.searchParams.set('conversation',id);
-    history.pushState({tEst:true,bloc:'communication',vue:'dm'},'',url.pathname+url.search+url.hash);
-    dispatchEvent(new PopStateEvent('popstate'));
-    currentSelection();
-    scrollTo({top:0,behavior:'instant'});
+    if(!VALID_GROUP_ID.test(String(id)))return;
+    window.TEstDashboard?.open('communication','group:'+id,{forceOpen:true});
   }
   function addOrRefresh(incoming){
     const clean=(Array.isArray(incoming)?incoming:[]).map(safeGroup).filter(Boolean);
