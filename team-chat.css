@@ -6308,3 +6308,8 @@
 
 .tb-secondary-places{margin-top:8px}
 .tb-secondary-places summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--stip-ink);font-weight:700}
+
+/* Navigation de secours pour les anciens écrans fauteuils sans cadre Communication. */
+.tb-fallback-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:9px;background:#f4f8f7;position:sticky;top:0;z-index:45;border-bottom:1px solid #d4e6e6}
+.tb-fallback-tabs a{font:inherit;font-weight:750;font-size:.78rem;min-height:46px;display:grid;place-items:center;text-align:center;border-radius:13px;border:1px solid #d0e3e4;color:#285867;background:#fff;text-decoration:none;padding:6px 4px}
+.tb-fallback-tabs a[aria-current=page]{background:#e6f7f8;border-color:#68c4c9;color:#096976}
