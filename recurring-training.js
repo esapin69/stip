@@ -24,27 +24,42 @@
   }
   function render(){
    const root=$("#trainingRecurringApp");if(!root)return;
-   const existing=(window.STIPLeisureRecurringExisting||[]);
-   root.innerHTML='<section class="training-section stip-surface"><div class="training-head"><span aria-hidden="true">🔁</span><div><h2>Une activité à chaque fermeture</h2><p>Muscu, boxe, foot… Tu es partant par défaut après tes services du soir. Tes collègues choisissent librement les dates où ils te rejoignent.</p></div></div>'+
-     '<button type="button" class="stip-btn" id="trainingOpen">'+(state.open?"Masquer la préparation":"Créer mon invitation permanente")+'</button>'+
-     (state.open?'<div class="training-content">'+(state.error?'<p class="training-error" role="alert">'+esc(state.error)+'</p>':'')+
-       (!state.loaded?'<p>Recherche de tes prochaines fermetures…</p>':
-       '<form id="trainingCreate" class="training-form" data-stip-form-mode="standard"><p class="training-brief"><strong>'+state.days.length+' journées finissant à 21 h</strong> détectées sur les 31 prochains jours. Tu seras disponible par défaut à chacune. Tu pourras ensuite te retirer d’une date depuis la fiche.</p>'+
-       '<div class="training-days">'+state.days.map(date=>'<span>✓ '+esc(label(date))+'</span>').join("")+'</div>'+
-       '<label>Activité<div class="training-shortcuts"><button type="button" data-training-shortcut="Muscu">🏋️ Muscu</button><button type="button" data-training-shortcut="Boxe">🥊 Boxe</button><button type="button" data-training-shortcut="Foot">⚽ Foot</button><button type="button" data-training-shortcut="">✏️ Autre</button></div><input name="title" value="Muscu après la fermeture" maxlength="120" required></label>'+
-       '<label>Lieu (facultatif)<input name="location" maxlength="240" placeholder="Salle ou adresse à fixer"></label>'+
-       '<label>Rendez-vous habituel<input name="time_label" maxlength="240" value="21:20" placeholder="Après la fermeture"></label>'+
-       '<label>Précisions (facultatif)<textarea name="description" maxlength="2000" rows="2" placeholder="Chacun s’inscrit aux jours qui lui conviennent."></textarea></label>'+
-       '<div class="training-pick"><label>Qui veux-tu inviter ?<input type="search" id="trainingRecSearch" placeholder="Rechercher un collègue"></label>'+
-       '<div id="trainingRecPeople" class="training-people"></div><p id="trainingRecCount"></p></div>'+
-       '<p id="trainingCreateStatus" role="status"></p><button type="submit" class="stip-btn" '+(!state.days.length?'disabled':'')+'>Envoyer une seule invitation récurrente</button></form>')+
-       '</div>':'')+'</section>';
-   $("#trainingOpen").onclick=async()=>{state.open=!state.open;render();if(state.open&&!state.loaded&&!state.busy)await load()};
-   if(state.open&&state.loaded){
+   if(!state.open){root.innerHTML="";return;}
+   const section=state.error?'<p class="training-error" role="alert">'+esc(state.error)+'</p>':'';
+   const loading=state.busy&&!state.loaded;
+   root.innerHTML='<section class="training-section stip-surface"><div class="training-head">'+
+     '<span aria-hidden="true">🏋️</span><div><h2>Après mes fermetures</h2><p>Tu es disponible par défaut. Chaque invité choisit ses séances.</p></div></div>'+
+     section+
+     (loading?'<p role="status">Lecture de ton planning…</p>':
+       !state.loaded?'<button class="ensemble-subtle" type="button" id="trainingRetry">Réessayer</button>':
+       '<form id="trainingCreate" class="training-form" data-stip-form-mode="standard">'+
+        '<div class="training-schedule"><strong>'+state.days.length+' dates possibles</strong><span>Selon ton planning · fermeture à 21 h</span></div>'+
+        (state.days.length?'<div class="training-days">'+state.days.slice(0,4).map(date=>'<span>✓ '+esc(label(date))+'</span>').join("")+
+          (state.days.length>4?'<small>＋ '+(state.days.length-4)+' autres</small>':'')+'</div>':
+          '<p class="training-error">Aucune fermeture prévue dans les 31 prochains jours. Réessaie après la mise à jour du planning.</p>')+
+        '<label>Quelle activité ?<div class="training-shortcuts">'+
+          '<button type="button" data-training-shortcut="Muscu">🏋️ Muscu</button>'+
+          '<button type="button" data-training-shortcut="Boxe">🥊 Boxe</button>'+
+          '<button type="button" data-training-shortcut="Foot">⚽ Foot</button>'+
+          '<button type="button" data-training-shortcut="">✏️ Autre</button></div>'+
+          '<input name="title" value="Muscu après la fermeture" maxlength="120" required aria-label="Titre de l’activité"></label>'+
+        '<div class="training-pick"><label>Avec qui ?<input type="search" id="trainingRecSearch" placeholder="Chercher un collègue"></label>'+
+        '<div id="trainingRecPeople" class="training-people"></div><p id="trainingRecCount"></p></div>'+
+        '<details class="training-options"><summary>Lieu, horaire et précisions</summary>'+
+          '<label>Lieu (facultatif)<input name="location" maxlength="240" placeholder="Salle / adresse à fixer"></label>'+
+          '<label>Heure de rendez-vous<input name="time_label" maxlength="240" value="21:20"></label>'+
+          '<label>Un détail à préciser ?<textarea name="description" maxlength="2000" rows="2" placeholder="Chacun choisit les jours qui lui conviennent."></textarea></label>'+
+        '</details>'+
+        '<p id="trainingCreateStatus" role="status"></p>'+
+        '<button type="submit" class="ensemble-primary" '+(!state.days.length?'disabled':'')+'>Inviter les collègues sélectionnés</button>'+
+       '</form>')+
+    '</section>';
+   root.querySelector("#trainingRetry")?.addEventListener("click",()=>load());
+   if(state.loaded){
     renderPeople();
     $("#trainingRecSearch").value=state.filter;
     $("#trainingRecSearch").oninput=e=>{state.filter=e.target.value;renderPeople()};
-    document.querySelectorAll("[data-training-shortcut]").forEach(button=>button.onclick=()=>{
+    root.querySelectorAll("[data-training-shortcut]").forEach(button=>button.onclick=()=>{
      const title=$("#trainingCreate").elements.title;
      title.value=button.dataset.trainingShortcut?button.dataset.trainingShortcut+" après la fermeture":"";
      title.focus();
@@ -55,20 +70,26 @@
      if(!state.selected.size){status.textContent="Choisis au moins un collègue.";return;}
      button.disabled=true;status.textContent="Enregistrement…";
      try{
+      const data=new FormData(form);
       await call("recurring_create",{
-       title:form.elements.title.value,
-       location:form.elements.location.value,
-       time_label:form.elements.time_label.value,
-       description:form.elements.description.value,
+       title:String(data.get("title")||"Muscu après la fermeture"),
+       location:String(data.get("location")||""),
+       time_label:String(data.get("time_label")||"21:20"),
+       description:String(data.get("description")||""),
        agent_ids:[...state.selected]
       });
-      state.open=false;state.error="";state.status="Entraînement récurrent créé. Les collègues invités choisiront leurs jours.";
+      state.open=false;state.error="";state.status="Invitation créée. Chaque collègue peut choisir ses dates.";
+      state.selected.clear();state.loaded=false;render();
       await window.STIPLeisure?.refresh?.();
-      render();
-      const statusArea=$("#leisureStatus");if(statusArea)statusArea.textContent=state.status;
+      window.STIPLeisure?.closeCreator?.();
+      const area=$("#leisureStatus");if(area)area.textContent=state.status;
      }catch(err){status.textContent=String(err.message||err);button.disabled=false;}
     };
    }
+  }
+  async function open(){
+   state.open=true;render();
+   if(!state.loaded&&!state.busy)await load();
   }
   async function load(){
    if(state.busy)return;state.busy=true;
@@ -79,6 +100,6 @@
    }catch(e){state.error=String(e.message||e);state.loaded=false}
    finally{state.busy=false;render()}
   }
-  window.STIPTrainingRecurring={refresh:load};
+  window.STIPTrainingRecurring={refresh:load,open,close:()=>{state.open=false;render()}};
   document.addEventListener("DOMContentLoaded",render,{once:true});
 })();
