@@ -122,7 +122,7 @@
     const body=$('#popBody');
     if(!body?.querySelector('[data-channel-list]'))return;
     paintChoices();
-    refreshGroups().then(paintChoices);
+    Promise.resolve(refreshGroups()).then(paintChoices);
   }
   function renderForm(message=''){
     const body=$('#popBody');
