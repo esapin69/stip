@@ -15,7 +15,7 @@
   const t=String(title||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   if(/foot|soccer|futsal/.test(t))return '⚽';
   if(/box|combat|kickbox/.test(t))return '🥊';
-  if(/muscu|fitness|salle|gym/.test(t))return '💪';
+  if(/muscu|fitness|salle|gym/.test(t))return '🏋️';
   if(/voitur|trajet|transport/.test(t))return '🚗';
   if(/resto|repas|diner|dejeuner/.test(t))return '🍽️';
   if(/cinema|cine|film/.test(t))return '🎬';
