@@ -135,6 +135,7 @@
 .leisure-own-shift .shift-label-short,.ensemble-day-shift .shift-label-short{display:none}
 .ensemble-day{container-name:ensemble-shift;container-type:inline-size}
 .ensemble-day .ensemble-day-shift{text-transform:none}
+.leisure-date label .leisure-own-shift span,.ensemble-day .ensemble-day-shift span{color:inherit;font-size:inherit}
 @container ensemble-shift (max-width:90px){
  .ensemble-day-shift .shift-label-full{display:none}
  .ensemble-day-shift .shift-label-short{display:inline}
