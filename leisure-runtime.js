@@ -35,6 +35,8 @@
   return '🎉';
  };
   const active=e=>e.status==='active'&&(e.dates.some(d=>d>=today())||e.recurring_closing);
+ const afterwork=e=>!!e.recurring_closing||/^apr[eè]s\s+(?:le travail|la fermeture|mon service|le service)/i.test(String(e.time_label||''));
+ const concerned=e=>e.is_organizer||!!e.invitation_status||!!e.response;
  function reset(){state.events=[];state.loaded=false;state.can_create=false;state.error='Connecte-toi sur l’accueil pour ouvrir les sorties.';state.token='';drafts.clear();document.querySelector('#leisureDialog')?.close();notify()}
  function notify(){window.dispatchEvent(new CustomEvent('stip:leisure-updated'));renderApp()}
  async function post(body){
@@ -338,6 +340,32 @@
       e.visibility==='invite'&&!e.is_organizer?'<p class="ensemble-pending-chat">🔒 Choisis une date et accepte pour rejoindre le groupe.</p>':'')+
     '</article>';
  }
+ function afterworkGroup(events){
+  if(!events.length)return '';
+  const pending=events.filter(e=>e.needs_response).length;
+  const titles=events.slice(0,3).map(e=>'<span>'+iconFor(e.title)+' '+esc(e.title)+'</span>').join('');
+  return '<article class="ensemble-activity ensemble-afterwork-group">'+
+    '<header class="ensemble-activity-head"><span class="ensemble-activity-icon" aria-hidden="true">🕔</span>'+
+    '<div class="ensemble-activity-title"><h3>Après le travail</h3><small>'+events.length+' activité'+(events.length>1?'s':'')+' qui te concernent</small></div>'+
+    (pending?'<span class="ensemble-statuschip is-pending">'+pending+' à répondre</span>':'')+'</header>'+
+    '<div class="ensemble-afterwork-preview">'+titles+'</div>'+
+    '<button type="button" class="ensemble-primary" data-ensemble-afterwork-show>Voir mes activités après le travail ›</button>'+
+  '</article>';
+ }
+ function renderAfterworkEvents(){
+  const root=document.querySelector('#ensembleAfterworkEvents');if(!root)return;
+  if(!state.loaded){root.innerHTML='<p role="status">Chargement de tes activités…</p>';return}
+  const events=state.events.filter(e=>active(e)&&afterwork(e)&&concerned(e))
+    .sort((a,b)=>((a.dates||[]).find(d=>d>=today())||'9999').localeCompare((b.dates||[]).find(d=>d>=today())||'9999'));
+  const pending=events.filter(e=>e.needs_response).length;
+  root.innerHTML='<section class="ensemble-afterwork-list"><header class="ensemble-sectionhead"><div><h3>🕔 Mes après-travail</h3>'+
+    '<p>Sport, repas, loisirs : tes propositions et celles où tu es invité.</p></div><span class="ensemble-count">'+events.length+'</span></header>'+
+    (pending?'<p class="ensemble-afterwork-alert">'+pending+' invitation'+(pending>1?'s':'')+' en attente de réponse</p>':'')+
+    (events.length?'<div class="ensemble-cards">'+events.map(cardHTML).join('')+'</div>':
+     '<p class="en-hint">Aucune activité après le travail pour le moment. Les prochaines invitations apparaîtront ici.</p>')+
+    (state.can_create?'<button type="button" class="ensemble-primary" data-ensemble-afterwork-new>＋ Proposer une activité après le travail</button>':'')+
+    '</section>';
+ }
  function setView(tab){
   if(!['activities','trips','invitations'].includes(tab))tab='activities';
   view.tab=tab;
@@ -363,6 +391,10 @@
   const activities=state.events.filter(e=>active(e)).sort((a,b)=>(a.dates||[]).filter(d=>d>=today())[0]?.localeCompare((b.dates||[]).filter(d=>d>=today())[0]||'9999-12-31')||0);
   const archives=state.events.filter(e=>!active(e));
   const invitations=activities.filter(e=>e.needs_response&&!e.is_organizer);
+  const grouped=activities.filter(e=>afterwork(e)&&concerned(e));
+  const withoutGroup=activities.filter(e=>!grouped.includes(e));
+  const otherInvitations=invitations.filter(e=>!grouped.includes(e));
+  const invitationsGroup=grouped.filter(e=>e.needs_response);
   const badge=document.querySelector('#ensembleInviteBadge');if(badge){badge.hidden=!invitations.length;badge.textContent=invitations.length;}
   const stats=document.querySelector('#ensembleSummary');
   if(stats)stats.textContent=activities.length+' activité'+(activities.length>1?'s':'')+' en cours';
@@ -370,16 +402,17 @@
     (state.can_create?'<button type="button" class="ensemble-primary" data-ensemble-create>＋ Proposer</button>':'')+'</section>';
   const content=view.tab==='invitations'
     ?'<header class="ensemble-sectionhead"><div><h2>Mes invitations</h2><p>Les propositions qui attendent ta réponse</p></div><span class="ensemble-count">'+invitations.length+'</span></header>'+
-      (invitations.length?'<div class="ensemble-cards">'+invitations.map(cardHTML).join('')+'</div>':
+      (invitations.length?'<div class="ensemble-cards">'+(invitationsGroup.length?afterworkGroup(grouped):'')+otherInvitations.map(cardHTML).join('')+'</div>':
       '<div class="ensemble-empty"><span aria-hidden="true">✉️</span><strong>Tout est à jour</strong><p>Aucune invitation en attente pour le moment.</p></div>')
     :ct+'<header class="ensemble-sectionhead"><div><h2>Mes activités</h2><p>Choisis une date ou retrouve tes sorties.</p></div><span class="ensemble-count">'+activities.length+'</span></header>'+
-     (activities.length?'<div class="ensemble-cards">'+activities.map(cardHTML).join('')+'</div>':
+     (activities.length?'<div class="ensemble-cards">'+afterworkGroup(grouped)+withoutGroup.map(cardHTML).join('')+'</div>':
       '<div class="ensemble-empty"><span aria-hidden="true">🏋️</span><strong>On organise quelque chose ?</strong><p>Les propositions et entraînements apparaîtront ici.</p></div>')+
      (archives.length?'<details class="ensemble-more"><summary>Sorties passées et annulées · '+archives.length+'</summary><div class="ensemble-cards">'+archives.slice(0,20).map(cardHTML).join('')+'</div></details>':'');
   root.innerHTML=content;
+  if(view.createOpen&&view.createMode==='afterwork')renderAfterworkEvents();
   setView(view.tab);
  }
- function openCreator(mode='date'){
+ function openCreator(mode='date',options={}){
   const parent=document.querySelector('#ensembleCreator');if(!parent)return;
   view.tab='activities';view.createOpen=true;view.createMode=mode;
   setView('activities');
@@ -388,16 +421,21 @@
    el.setAttribute('aria-pressed',active?'true':'false');
   });
   const series=document.querySelector('#trainingRecurringApp'),free=document.querySelector('#ensembleCreatePanel');
-  const oldMatched=document.querySelector('#ensembleAfterworkCreate');
+  const hub=document.querySelector('#ensembleAfterworkEvents'),oldMatched=document.querySelector('#ensembleAfterworkCreate');
   if(series)series.hidden=mode!=='recurring';
-  if(free)free.hidden=mode==='recurring';
+  if(free)free.hidden=mode==='recurring'||mode==='afterwork';
+  if(hub)hub.hidden=mode!=='afterwork';
   if(oldMatched)oldMatched.hidden=true;
   if(mode==='recurring'){
    window.STIPEnsembleCreate?.close?.();
    window.STIPTrainingRecurring?.open?.();
+  }else if(mode==='afterwork'){
+   window.STIPTrainingRecurring?.close?.();
+   window.STIPEnsembleCreate?.close?.();
+   renderAfterworkEvents();
   }else{
    window.STIPTrainingRecurring?.close?.();
-   window.STIPEnsembleCreate?.open?.();
+   window.STIPEnsembleCreate?.open?.(options);
   }
   if(mode)parent.scrollIntoView({block:'start',behavior:'smooth'});
  }
@@ -406,12 +444,14 @@
   setView('activities');
  }
  document.addEventListener('click',e=>{
-  const b=e.target.closest?.('[data-ensemble-tab],[data-ensemble-create],[data-ensemble-close],[data-ensemble-option],[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');
+  const b=e.target.closest?.('[data-ensemble-tab],[data-ensemble-create],[data-ensemble-close],[data-ensemble-option],[data-ensemble-afterwork-show],[data-ensemble-afterwork-new],[data-leisure-event],[data-leisure-add-invite],[data-leisure-manage],[data-leisure-create],[data-leisure-refresh]');
   if(!b)return;
   if(b.hasAttribute('data-ensemble-tab')){setView(b.dataset.ensembleTab);renderApp();}
   else if(b.hasAttribute('data-ensemble-create'))openCreator();
   else if(b.hasAttribute('data-ensemble-close'))closeCreator();
   else if(b.hasAttribute('data-ensemble-option'))openCreator(b.dataset.ensembleOption);
+  else if(b.hasAttribute('data-ensemble-afterwork-show'))openCreator('afterwork');
+  else if(b.hasAttribute('data-ensemble-afterwork-new'))openCreator('date',{scheduleMode:'afterwork'});
   else if(b.hasAttribute('data-leisure-add-invite'))openInvite(b.dataset.leisureAddInvite);
   else if(b.hasAttribute('data-leisure-event'))openEvent(b.dataset.leisureEvent);
   else if(b.hasAttribute('data-leisure-manage'))openEditor(b.dataset.leisureManage);
