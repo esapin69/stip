@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  // Une page verticale. Chaque bloc conserve le DOM de chaque carte repliée.
+  // Une page verticale : un seul onglet de page ouvert sur tous les blocs.
   // Aucune iframe n'est rechargée au second clic : fils, saisies, scrolls sont préservés.
   const DEST={
     fauteuils:"/index.html?quick=communication&tab=fauteuils#/communication/fauteuils",
@@ -30,7 +30,7 @@
   function route(){
     const p=new URLSearchParams(location.search),bloc=p.get("bloc"),vue=p.get("vue"),conversation=p.get("conversation");
     if(bloc==="planning"){
-      const id={"aujourdhui":"day:0","demain":"day:1","semaine":"day:7","personnel":"personal"}[vue];
+      const id={"personnel":"personal"}[vue];
       if(id)return {block:"planning",id};
     }
     if(bloc==="communication"){
@@ -53,19 +53,18 @@
     return u.pathname+u.search+u.hash;
   }
   function scrollToBlock(block){
-    const el=blocs[block];
-    if(!el)return;
+    const line=blocs[block]?.querySelector('[data-carousel="'+block+'"]');
+    if(!line)return;
     requestAnimationFrame(()=>{
       const band=document.getElementById("tEstHistoryBar")?.getBoundingClientRect().height||54;
-      const y=window.scrollY+el.getBoundingClientRect().top-band-10;
+      const y=window.scrollY+line.getBoundingClientRect().top-band-8;
       window.scrollTo({top:Math.max(0,y),behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"instant":"smooth"});
     });
   }
   function updateButtons(block){
-    blocs[block].querySelectorAll("[data-jour],[data-ouverture]").forEach(el=>{
+    blocs[block].querySelectorAll("[data-ouverture]").forEach(el=>{
       let id=null;
-      if(el.hasAttribute("data-jour"))id="day:"+el.dataset.jour;
-      else if(el.hasAttribute("data-ouverture"))id=el.dataset.ouverture;
+      if(el.hasAttribute("data-ouverture"))id=el.dataset.ouverture;
       const selected=id===active[block];
       el.setAttribute("aria-expanded",String(selected));
       el.setAttribute("aria-current",String(selected));
@@ -152,10 +151,12 @@
   }
   function select(block,id,{forceOpen=false,push=true,scroll=true}={}){
     if(!regions[block]||!id)return;
-    if(block==="planning"&&!["day:0","day:1","day:7","personal"].includes(id))return;
+    if(block==="planning"&&id!=="personal")return;
     if(block==="communication"&&!["fauteuils","dm"].includes(id)&&!(id.startsWith("thread:")&&VALID_GROUP.test(id.slice(7))))return;
     const wasOpen=active[block]===id;
     const open=forceOpen||!wasOpen;
+    // Pas de navigation, pas de gestion du swipe. Fermeture des autres pages uniquement au clic.
+    if(open)window.dispatchEvent(new CustomEvent("t-est:before-section-open",{detail:{block,id}}));
     active[block]=open?id:null;
     for(const [name,slot] of cached[block])slot.hidden=name!==active[block];
     if(open){
@@ -201,14 +202,23 @@
     current:()=>({...active})
   };
   document.addEventListener("click",e=>{
-    const day=e.target.closest('[data-block="planning"] [data-jour]');
-    if(day){select("planning","day:"+day.dataset.jour);return;}
     const module=e.target.closest('[data-block="communication"] [data-ouverture]');
     if(module){
       if(module.dataset.ouverture==="dm"){window.TEstChats?.openPicker?.();return;}
       select("communication",module.dataset.ouverture);return;
     }
     if(e.target.closest('[data-open-planning]')){select("planning","personal",{forceOpen:true});}
+  });
+  // Un seul onglet de page ouvert dans tout l'accueil. Les pop-ups restent indépendants.
+  window.addEventListener("t-est:before-section-open",e=>{
+    if(e.detail?.block==="ensemble"){
+      for(const block of ["planning","communication"]){
+        active[block]=null;
+        regions[block].hidden=true;
+        for(const slot of cached[block].values())slot.hidden=true;
+        updateButtons(block);
+      }
+    }
   });
   window.addEventListener("popstate",restoreURL);
   window.addEventListener("t-est:planning-updated",()=>{
