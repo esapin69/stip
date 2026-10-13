@@ -207,3 +207,10 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 .t-native-leisure-tabs{display:none!important}
 .t-native-leisure .ensemble-cta{display:none!important}
 @media(min-width:560px){.t-native-week{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* Annuaire DM natif, sans ouverture de l'ancienne page. */
+.t-native-inbox .t-native-new-dm{background:#e8f6fa;color:#146c86;border-color:#b0d9e3;justify-content:center;font-weight:850}
+.t-native-agent-search{width:100%;min-height:43px;border:1.5px solid #bfd5dd;border-radius:11px;padding:9px 10px;font:inherit;margin:7px 0}
+[data-native-dm-directory]{padding:10px 8px;border:1px solid #dce9ed;border-radius:14px;background:#f7fafb}
+[data-native-dm-directory] [data-native-agent-list]{max-height:290px;overflow-y:auto}
+[data-native-dm-directory] [data-native-agent-list] button{min-height:42px;margin:4px 0}
