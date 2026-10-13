@@ -105,6 +105,7 @@
       host.innerHTML=leisureMarkup();
     }else if(leisureHost!==host){
       // Déplacer le même DOM conserve l'état des formulaires en cours.
+      host.replaceChildren();
       while(leisureHost.firstChild)host.append(leisureHost.firstChild);
       leisureHost=host;
     }
@@ -117,8 +118,11 @@
       })().catch(error=>{leisurePromise=null;throw error});
     }
     await leisurePromise;
-    window.STIPLeisure.setTab(tab);
-    await window.STIPCarpool?.refresh?.();
+    // Le bouton interne invisible applique le rendu métier complet (pas juste l'onglet).
+    const nativeTab=host.querySelector('[data-ensemble-tab="'+tab+'"]');
+    if(nativeTab)nativeTab.click();
+    else window.STIPLeisure.setTab(tab);
+    if(tab==='trips')await window.STIPCarpool?.refresh?.();
     host.dataset.nativeReady='leisure';
     window.dispatchEvent(new CustomEvent('t-est:leisure-ready'));
   }
