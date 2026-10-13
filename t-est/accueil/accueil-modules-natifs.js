@@ -48,6 +48,7 @@
     host.innerHTML='<p class="t-native-status" role="status">'+esc(message)+'</p>';
   }
   function mountPlanning(host){
+    if(host.dataset.nativeReady==='planning')return;
     function paint(){
       if(!host.isConnected)return;
       host.innerHTML=window.TEstAccueilPlanning?.weekHTML?.()||
@@ -119,6 +120,7 @@
     window.STIPLeisure.setTab(tab);
     await window.STIPCarpool?.refresh?.();
     host.dataset.nativeReady='leisure';
+    window.dispatchEvent(new CustomEvent('t-est:leisure-ready'));
   }
   const me=()=>String(window.STIPContinuity?.read?.()?.agent?.id||
     window.STIPBootCache?.agent?.id||'');
@@ -194,6 +196,7 @@
     await threadLoad(host,id,{force:true});
   }
   async function mountDM(host){
+    if(host.dataset.nativeReady==='dm')return;
     status(host,'Chargement des messages…');
     const data=await post('home');
     if(!host.isConnected)return;
