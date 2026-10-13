@@ -9,11 +9,6 @@
   if(!blocks.planning||!blocks.communication||!regions.planning||!regions.communication||!pop)return;
   const leisure=new Set(['activities','trips','invitations']);
   const threadKey=/^thread:[a-f0-9-]{36}$/i;
-  const tabs={
-    fauteuils:{title:'Fauteuils',url:'/index.html?quick=communication&tab=fauteuils#/communication/fauteuils'},
-    personal:{title:'Mon planning',url:'/index.html#/planning/personal'},
-    dm:{title:'Messages privés',url:'/index.html?quick=communication&tab=dm#/communication/dm'}
-  };
   const pageSlots=new Map();
   let selected=null,selectedKind=null,leisureFrame=null,leisureTab=null,leisureLoaded=false;
   let popKey='',priorPopNodes=new Map(),priorPopTitles=new Map();
@@ -121,88 +116,16 @@
     }}));
     if(!id)dispatchEvent(new CustomEvent('t-est:section-reset'));
   }
-  function frameHeight(frame,{leisure=false}={}){
-    const doc=frame.contentDocument;
-    if(!doc)return;
-    // Le viewport du chat ne doit pas faire croître son iframe en boucle.
-    // Aucun listener tactile et aucune modification du swipe du site.
-    const normal=Math.max(620,innerHeight-135);
-    const content=leisure?doc.querySelector('.ensemble-page')?.scrollHeight:
-      doc.querySelector('.ca-body')?.scrollHeight;
-    const height=leisure?
-      Math.min(13000,Math.max(320,Math.ceil(content||320)+18)):
-      Math.min(11000,Math.max(normal,Math.ceil(content||0)+145));
-    if(Math.abs(frame.getBoundingClientRect().height-height)>5)frame.style.height=height+'px';
-  }
-  function trackFrame(frame,{leisure=false}={}){
-    frame.addEventListener('load',()=>{
-      try{
-        const doc=frame.contentDocument;
-        if(!doc)return;
-        if(!doc.getElementById('t-est-unified-inline-style')){
-          const style=doc.createElement('style');
-          style.id='t-est-unified-inline-style';
-          style.textContent=leisure?
-            'html,body{margin:0!important;overflow-x:hidden!important;background:#fff!important}' +
-            '.ensemble-page{max-width:none!important;margin:0!important;padding:10px!important}' +
-            '.ensemble-topbar,.ensemble-hero,.ensemble-nav,.ensemble-cta{display:none!important}':
-            '.ca-head,.ca-tabs{display:none!important}.ca-app{min-height:0!important}';
-          doc.head.append(style);
-        }
-        const target=(leisure?doc.querySelector('.ensemble-page'):doc.querySelector('.ca-app,.app-shell,#app,main'))||doc.body;
-        if(typeof ResizeObserver!=='undefined'){
-          const ro=new ResizeObserver(()=>requestAnimationFrame(()=>frameHeight(frame,{leisure})));
-          ro.observe(target);
-        }
-      }catch{}
-      if(leisure){leisureLoaded=true;setLeisureTab(leisureTab)}
-      requestAnimationFrame(()=>frameHeight(frame,{leisure}));
-    });
-  }
-  function setLeisureTab(id){
-    if(!leisureLoaded||!leisure.has(id))return;
-    try{
-      const doc=leisureFrame.contentDocument;
-      const button=doc?.querySelector('[data-ensemble-tab="'+id+'"]');
-      if(button&&button.getAttribute('aria-selected')!=='true')button.click();
-      requestAnimationFrame(()=>frameHeight(leisureFrame,{leisure:true}));
-    }catch{}
-  }
   function slotFor(id){
-    const block=blockFor(id),key=block+':'+id,region=regions[block];
-    if(leisure.has(id)){
-      if(!leisureFrame){
-        const container=document.createElement('section');
-        container.className='t-inline-content';container.setAttribute('aria-label','Ensemble');
-        leisureFrame=document.createElement('iframe');
-        leisureFrame.title='Ensemble';leisureFrame.className='t-inline-iframe';
-        leisureFrame.loading='eager';container.append(leisureFrame);
-        trackFrame(leisureFrame,{leisure:true});
-        region.append(container);
-        pageSlots.set('communication:leisure',container);
-        leisureFrame.src='/sorties-loisirs.html?ghe_embedded=ensemble';
-      }
-      leisureTab=id;
-      setLeisureTab(id);
-      return pageSlots.get('communication:leisure');
-    }
+    const key=blockFor(id)+':'+id,region=regions[blockFor(id)];
     if(pageSlots.has(key))return pageSlots.get(key);
     const container=document.createElement('section');
     container.className='t-inline-content';
     container.setAttribute('aria-label',pageLabel(id));
-    const loading=document.createElement('p');
-    loading.className='t-inline-wait';loading.textContent='Chargement de '+pageLabel(id)+'…';
-    container.append(loading);
-    const iframe=document.createElement('iframe');
-    iframe.className='t-inline-iframe';iframe.title=pageLabel(id);iframe.loading='eager';
-    const url=new URL(id==='personal'?tabs.personal.url:id==='fauteuils'?tabs.fauteuils.url:tabs.dm.url,location.origin);
-    if(id.startsWith('thread:'))url.searchParams.set('conversation',id.slice(7));
-    iframe.addEventListener('load',()=>{loading.hidden=true});
-    trackFrame(iframe);
-    container.append(iframe);
+    container.innerHTML='<p class="t-native-status" role="status">Chargement de '+esc(pageLabel(id))+'…</p>';
     region.append(container);
     pageSlots.set(key,container);
-    iframe.src=url.href;
+    window.TEstNativeModules?.mount(container,id);
     return container;
   }
   function select(id,{forceOpen=false,scroll=true,push=true}={}){
@@ -231,8 +154,8 @@
       pop.hidden=true;
       const slot=slotFor(id);
       slot.hidden=false;
-      const frame=slot.querySelector('iframe');
-      if(frame)requestAnimationFrame(()=>frameHeight(frame,{leisure:leisure.has(id)}));
+      // Un composant métier est monté une fois, pas une page complète.
+      if(leisure.has(id))window.TEstNativeModules?.mount(slot,id);
     }
     syncUrl(id,push);
     updateButtons();
@@ -284,8 +207,9 @@
     }
     if(e.target.closest('[data-action="activity"]')){
       select('activities',{forceOpen:true});
-      const run=()=>{try{leisureFrame?.contentWindow?.STIPLeisure?.openCreator?.()}catch{}};
-      if(leisureLoaded)run();else leisureFrame?.addEventListener('load',run,{once:true});
+      const run=()=>{try{window.STIPLeisure?.openCreator?.()}catch{}};
+      if(pageSlots.get('communication:activities')?.dataset.nativeReady==='leisure')run();
+      else window.addEventListener('t-est:leisure-ready',run,{once:true});
       return;
     }
     if(e.target.closest('[data-open-planning]')){select('personal',{forceOpen:true});return;}
