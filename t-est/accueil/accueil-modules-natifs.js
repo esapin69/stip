@@ -11,6 +11,15 @@
     'ensemble-create.js','leisure-runtime.js'];
   const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const uuid=/^[a-f0-9-]{36}$/i;
+  // Les modules existants lisent encore STIPSession : synchroniser la session
+  // T-est sans changer son identité ni contourner les droits API.
+  function syncSession(session){
+    const value=session||window.STIPContinuity?.read?.();
+    if(value?.agent)window.STIPSession=value;
+  }
+  syncSession();
+  window.addEventListener('stip:session-snapshot',e=>syncSession(e.detail));
+
   const threadCache=new Map();
   const token=()=>localStorage.getItem(TOKEN_KEY)||'';
   async function post(action,fields={}){
