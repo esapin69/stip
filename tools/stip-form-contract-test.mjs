@@ -1,206 +1,30 @@
 #!/usr/bin/env node
-
 import fs from "node:fs";
 import path from "node:path";
-
-const ROOT = process.cwd();
-const read = (file) => fs.readFileSync(path.join(ROOT, file), "utf8");
-const failures = [];
-const check = (condition, message) => {
-  if (!condition) failures.push(message);
-};
-
-function walkHtml(dir) {
-  const out = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name === ".git" || entry.name === "node_modules") continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walkHtml(full));
-    else if (entry.isFile() && entry.name.toLowerCase().endsWith(".html")) out.push(full);
-  }
-  return out;
-}
-
-const rules = read("t-est/regles-communes/FORM_RULES.md");
-const formJs = read("t-est/regles-communes/global.js");
-const formCss = read("t-est/regles-communes/global.css");
-const legacyJs = read("t-est/regles-communes/form-engine-v2.js");
-const legacyCss = read("t-est/regles-communes/form-engine-v2.css");
-const architecture = read("ARCHITECTURE_FIRST.md");
-const agents = read("AGENTS.md");
-
-check(
-  rules.includes("contrat canonique") &&
-    rules.includes("global.js") &&
-    rules.includes("global.css") &&
-    rules.includes("une seule référence UX est validée") &&
-    rules.includes("accessRequestForm") &&
-    rules.includes("Communication est désormais un consommateur validé") &&
-    rules.includes("sans devenir une source du questionnaire séquentiel"),
-  "FORM_RULES.md doit garder Demander un accès comme seule référence UX tout en autorisant Communication comme consommateur compatible."
-);
-
-const allowedModes = new Set(["sequential", "standard", "search", "composer", "native", "legacy", "exempt"]);
-const formModeProblems = [];
-for (const file of walkHtml(ROOT)) {
-  const source = fs.readFileSync(file, "utf8");
-  for (const match of source.matchAll(/<form\\b([^>]*)>/gi)) {
-    const attrs = match[1] || "";
-    const modeMatch = attrs.match(/\\bdata-stip-form-mode=["']([^"']+)["']/i);
-    const relative = path.relative(ROOT, file).replaceAll("\\\\", "/");
-    if (!modeMatch) formModeProblems.push(`${relative}: formulaire sans data-stip-form-mode`);
-    else if (!allowedModes.has(String(modeMatch[1]).toLowerCase()))
-      formModeProblems.push(`${relative}: mode inconnu "${modeMatch[1]}"`);
-  }
-}
-check(
-  formModeProblems.length === 0,
-  "Chaque formulaire HTML doit déclarer un mode FormUX explicite. " + formModeProblems.join(" | ")
-);
-
-check(
-  formJs.includes('const FORM_MODE_ATTR = "data-stip-form-mode"') &&
-    formJs.includes('"sequential", "standard", "search", "composer", "native", "legacy", "exempt"') &&
-    formJs.includes("function formMode(form)"),
-  "Le moteur commun doit interpréter les modes explicites documentés."
-);
-
-const responsableHtml = read("responsable.html");
-const responsableDemandesHtml = read("responsable-demandes.html");
-const responsableAgendaHtml = read("responsable-agenda.html");
-const responsableEvaluationsHtml = read("responsable-evaluations.html");
-
-check(
-  responsableHtml.includes('<form id="form"') &&
-    responsableHtml.includes('data-stip-form-mode="sequential"') &&
-    responsableHtml.includes('data-stip-form-pilot="access-request-v1"') &&
-    responsableHtml.includes('data-stip-flow-origin="Suivi"') &&
-    responsableHtml.includes('data-stip-flow-label="Envoyer à un agent"'),
-  "Le pilote FormUX doit rester limité à Responsable > Suivi > Envoyer à un agent."
-);
-check(
-  responsableDemandesHtml.includes('data-stip-form-mode="legacy"') &&
-    responsableAgendaHtml.includes('data-stip-form-mode="legacy"') &&
-    responsableEvaluationsHtml.includes('data-stip-form-mode="legacy"'),
-  "Les autres formulaires historiques ne doivent pas être promus avant validation."
-);
-check(
-  formJs.includes('mode === "legacy") return "native"') &&
-    formJs.includes('mode === "legacy" || mode === "exempt") return;'),
-  "Un formulaire legacy ne doit pas être enrôlé automatiquement dans le moteur séquentiel."
-);
-
-const responsableDemandesJs = read("responsable-demandes.js");
-const responsableTabsJs = read("responsable-tabs.js");
-check(
-  responsableHtml.includes('id="requestAgentPicker"') &&
-    responsableDemandesJs.includes("STIPAgentSelector.openPicker") &&
-    responsableDemandesJs.includes('stip-agent-readonly') &&
-    !responsableHtml.includes('id="search" type="search"'),
-  "La recherche d’agent pilote doit réutiliser le sélecteur canonique STIPAgentSelector."
-);
-check(
-  responsableHtml.includes('data-stip-select-menu') &&
-    formJs.includes("function enhanceSelectMenu") &&
-    formCss.includes(".stip-select-layer") &&
-    formCss.includes(".stip-select-option"),
-  "Le menu de choix STIP commun doit rester disponible sur le pilote."
-);
-check(
-  responsableHtml.includes('data-stip-help=') &&
-    responsableHtml.includes('data-stip-flow-origin="Suivi"') &&
-    responsableHtml.includes('data-stip-flow-label="Envoyer à un agent"') &&
-    responsableDemandesJs.includes("stipContextWho") &&
-    responsableDemandesJs.includes("stipContextWhy") &&
-    formJs.includes("function ensureFlowHeader") &&
-    formCss.includes(".stip-keyboard-flow-header") &&
-    formCss.includes(".stip-keyboard-flow-progress"),
-  "Le repère de flux doit garder origine, destination, type, étape et aide visibles."
-);
-
-check(
-  responsableHtml.includes('data-stip-persistent-open open') &&
-    !responsableHtml.includes('data-stip-context-why-fallback="Demande" hidden') &&
-    responsableTabsJs.includes("ensureRequests();"),
-  "Le formulaire pilote doit rester visible et branché dès l’ouverture de Suivi."
-);
-
-check(
-  formCss.includes('bottom: max(10px, env(safe-area-inset-bottom))') &&
-    formCss.includes('bottom: max(76px, calc(env(safe-area-inset-bottom) + 70px))') &&
-    formCss.includes("Invariant clavier"),
-  "Le clavier ne doit masquer ni navigation, ni Vue complète, ni champ actif."
-);
-
-check(
-  rules.includes("pas de **Suivant** sans vraie étape suivante") &&
-    rules.includes("dernière étape = action terminale explicite"),
-  "Le contrat doit protéger la différence entre progression et action terminale."
-);
-
-check(
-  formJs.includes('function finalActionLabel(submit)') &&
-    formJs.includes('if (!submit) return "Terminer"') &&
-    formJs.includes('? "Valider" : label'),
-  "Le moteur doit conserver Valider/Terminer sur la dernière étape."
-);
-
-check(
-  formJs.includes('const isFinal = !next') &&
-    formJs.includes('isFinal ? "  ✓" : "  →"'),
-  "Une action terminale ne doit pas conserver la flèche de progression."
-);
-
-check(
-  formJs.includes('[hidden],.hidden,[aria-hidden="true"],[inert]') &&
-    formJs.includes('["hidden", "submit", "reset", "button", "image"]'),
-  "Les contrôles invisibles ou techniques ne doivent pas créer de fausse étape."
-);
-
-check(
-  formJs.includes('if (event.key !== "Enter"') &&
-    formJs.includes('if (!field || field.tagName === "TEXTAREA") return;') &&
-    formJs.includes("advanceFromField(field);"),
-  "Entrée doit suivre le moteur commun, sauf dans les textarea."
-);
-
-check(
-  formJs.includes("window.visualViewport") &&
-    formCss.includes("--stip-vv-height") &&
-    formJs.includes('overview.textContent = "Vue complète"'),
-  "Le contrat clavier doit rester basé sur le viewport visible et conserver Vue complète."
-);
-
-check(
-  formJs.includes('return "given-name"') &&
-    formJs.includes('return "family-name"') &&
-    formJs.includes("function identityOrdered(controls)"),
-  "Le moteur ne doit pas reperdre la sémantique Nom/Prénom ni réordonner les champs."
-);
-
-check(
-  formJs.includes("function normalizePinField(field)") &&
-    formJs.includes('field.setAttribute("inputmode", "numeric")') &&
-    formJs.includes('field.setAttribute("autocomplete", "off")') &&
-    formCss.includes('input[data-stip-pin-field="1"]'),
-  "Le contrat commun des codes personnels à 6 chiffres a disparu."
-);
-
-check(
-  legacyJs.includes("Adaptateur ciblé de compatibilité") &&
-    legacyCss.includes("Adaptateur ciblé de compatibilité"),
-  "form-engine-v2 doit rester identifié comme adaptateur ciblé, pas comme moteur canonique."
-);
-
-check(
-  architecture.includes("t-est/regles-communes/FORM_RULES.md") &&
-    agents.includes("t-est/regles-communes/FORM_RULES.md"),
-  "Les contrats d’architecture doivent pointer vers FORM_RULES.md."
-);
-
-if (failures.length) {
-  console.error(failures.map((message) => `FAIL — ${message}`).join("\n"));
-  process.exit(1);
-}
-
-console.log("STIP form contract OK");
+const root=process.cwd();
+const read=(f)=>fs.readFileSync(path.join(root,f),"utf8");
+const js=read("t-est/regles-communes/global.js");
+const css=read("t-est/regles-communes/global.css");
+const rules=read("t-est/regles-communes/FORM_RULES.md");
+const login=read("index.html");
+const resp=read("responsable.html");
+const legacy=read("public-access-request-legacy.js");
+const hub=read("communication-hub.js");
+const hubCss=read("communication-hub.css");
+const failures=[];
+function check(ok,message){if(!ok)failures.push(message)}
+check(rules.includes("Contrat de saisie native"),"Contrat natif non documenté");
+check(js.includes('inputMode: "native"'),"Mode natif STIPFormUX non exposé");
+check(!js.includes('addEventListener("focusin"')&&!js.includes('addEventListener("keydown"'),"Le moteur intercepte encore focus/Entrée");
+check(!js.includes("visualViewport")&&!js.includes("scrollIntoView"),"Le moteur recale encore le viewport ou le scroll");
+check(!js.includes("stip-keyboard-focus-mode"),"Plein écran programmé encore actif");
+check(!css.includes(".stip-keyboard-focus-mode")&&!css.includes(".stip-select-source"),"Ancien mode plein écran / faux select CSS encore présent");
+check(js.includes('setAttribute("inputmode", "numeric")')&&js.includes('dataset.stipPinField'),"Code 6 chiffres non préservé");
+check(login.includes('id="accessRequestForm"')&&login.includes('data-stip-form-mode="standard"'),"Demande d’accès pas en formulaire standard");
+check(resp.includes('id="form" data-stip-form-mode="standard"'),"Suivi agent pas en formulaire standard");
+check(!resp.includes('data-stip-select-menu'),"Le faux select du suivi est toujours activé");
+check(!legacy.includes("recordField")&&!legacy.includes("focusStep")&&!legacy.includes("stip:form-previous-request"),"Historique par champ encore branché");
+check(!hub.includes("keepActiveComposerVisible")&&!hub.includes("queueViewportSync"),"Défilement chat piloté par JS");
+check(!hubCss.includes("ch-keyboard-open .ch-dialog-form"),"Saisie chat déplacée avec le clavier");
+if(failures.length){console.error(failures.map(x=>"FAIL — "+x).join("\n"));process.exit(1)}
+console.log("STIP native form contract OK");

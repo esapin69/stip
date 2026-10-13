@@ -26,34 +26,12 @@ const tracking=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'null')}cat
 const pending=()=>{try{return JSON.parse(localStorage.getItem(PENDING)||'null')}catch{return null}};
 const profile=()=>profileInputs.find(x=>x.checked)?.value||'';
 
-function requestFields(){
-  const canonical=window.STIPFormUX?.fields?.(form);
-  return [...(canonical||form?.querySelectorAll?.('[data-stip-keyboard-focus]')||[])].filter(field=>!field.disabled&&!field.readOnly&&!field.closest('[hidden]'));
-}
 function requestState(state=history.state){return state?.stipAccessRequest||null}
 function requestMarker(view,index,depth){return{id:requestHistoryId,view,index,depth}}
-function showOverview(){
-  window.STIPFormUX?.exit?.(form,{restore:false});
-  requestAnimationFrame(()=>requestAnimationFrame(()=>d?.scrollTo?.({top:0,behavior:'auto'})));
-}
-function focusStep(index){
-  const field=requestFields()[Number(index)];
-  if(!field){showOverview();return}
-  requestAnimationFrame(()=>{field.focus({preventScroll:true});window.STIPFormUX?.enter?.(form,field)});
-}
+function showOverview(){window.STIPFormUX?.release?.()}
 function beginHistory(){
   requestHistoryId='access-'+Date.now();
   history.pushState({...history.state,stipAccessRequest:requestMarker('overview',-1,1)},'',location.href);
-}
-function recordField(field){
-  const fields=requestFields(),index=fields.indexOf(field);
-  if(index<0)return;
-  const current=requestState();
-  if(current?.id===requestHistoryId&&current.view==='step'&&Number(current.index)===index)return;
-  let depth=current?.id===requestHistoryId?Math.max(1,Number(current.depth)||1):1,start=index;
-  if(current?.id===requestHistoryId&&current.view==='overview')start=0;
-  else if(current?.id===requestHistoryId&&current.view==='step'&&Number(current.index)<index)start=Number(current.index)+1;
-  for(let i=start;i<=index;i++){depth++;history.pushState({...history.state,stipAccessRequest:requestMarker('step',i,depth)},'',location.href)}
 }
 function syncProfile(){
   const p=profile(),isExternal=p==='external';
@@ -100,21 +78,6 @@ openers.forEach(button=>button.addEventListener('click',e=>{e.preventDefault();o
 close?.addEventListener('click',()=>closeRequest(true));
 d?.addEventListener('click',e=>{if(e.target===d)closeRequest(true)});
 d?.addEventListener('cancel',e=>{e.preventDefault();closeRequest(true)});
-form?.addEventListener('focusin',e=>{const field=e.target?.closest?.('[data-stip-keyboard-focus]');if(field&&d?.open&&!restoringHistory)recordField(field)});
-window.addEventListener('stip:form-previous-request',e=>{
-  if(e.detail?.form!==form)return;
-  e.preventDefault?.();
-  const state=requestState();
-  if(state?.id!==requestHistoryId||state.view!=='step'){showOverview();return}
-  const index=Number(state.index);
-  if(index<=0){
-    history.back();
-  }else{
-    restoringHistory=true;
-    history.back();
-    setTimeout(()=>{restoringHistory=false},120);
-  }
-});
 window.addEventListener('popstate',e=>{
   if(closingHistory){closingHistory=false;requestHistoryId='';return}
   const state=requestState(e.state);
@@ -125,7 +88,7 @@ window.addEventListener('popstate',e=>{
   requestHistoryId=state.id||requestHistoryId;
   if(!d?.open){restoringHistory=true;d.showModal();d.dataset.requestOpen='1'}
   restoringHistory=true;
-  if(state.view==='overview')showOverview();else focusStep(state.index);
+  showOverview();
   setTimeout(()=>{restoringHistory=false},100);
 });
 

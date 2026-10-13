@@ -16,64 +16,9 @@
     return j;
   }
   const msg=(a,b)=>post(MSG_API,a,b),ask=(text,context)=>post(DIALOG_API,"answer",{text,context}),push=(a,b)=>post(PUSH_API,a,b);
-  let viewportBaseHeight=0,viewportSyncTimer=0;
-  function syncVisualViewport(forceBase=false){
-    const vv=window.visualViewport,
-      docH=Math.round(document.documentElement.clientHeight||0),
-      innerH=Math.round(window.innerHeight||0),
-      visualH=Math.round(vv?.height||innerH||docH||0),
-      visualTop=Math.max(0,Math.round(vv?.offsetTop||0)),
-      keyboardOpen=document.documentElement.classList.contains("ch-keyboard-open");
-    if(forceBase||!keyboardOpen)
-      viewportBaseHeight=Math.max(viewportBaseHeight,docH,innerH,visualH+visualTop);
-    const base=Math.max(viewportBaseHeight,visualH+visualTop),
-      keyboardInset=keyboardOpen?Math.max(0,base-visualH-visualTop):0,
-      layoutVisibleH=Math.max(1,innerH-visualTop),
-      layoutLooksKeyboardResized=keyboardOpen&&base>0&&innerH<base-80,
-      visualGap=layoutVisibleH-visualH,
-      panelH=layoutLooksKeyboardResized&&visualGap>0&&visualGap<180?layoutVisibleH:visualH;
-    document.documentElement.style.setProperty("--ch-keyboard-inset",keyboardInset+"px");
-    document.documentElement.style.setProperty("--ch-viewport-top",visualTop+"px");
-    document.documentElement.style.setProperty("--ch-viewport-height",Math.max(1,panelH)+"px");
-    document.documentElement.classList.toggle("ch-visual-viewport",!!vv);
-  }
-  function keepActiveComposerVisible(){
-    const active=document.activeElement;
-    if(!active?.matches?.("input,textarea"))return;
-    const panel=active.closest?.(".ch-dialog,.ch-thread");
-    if(!panel||panel.hidden)return;
-    const body=panel.querySelector(".ch-dialog-body,[data-thread-body]");
-    requestAnimationFrame(()=>{
-      if(body)body.scrollTop=body.scrollHeight;
-      try{active.scrollIntoView({block:"nearest",inline:"nearest",behavior:"auto"})}catch{}
-    });
-  }
-  function queueViewportSync(){
-    clearTimeout(viewportSyncTimer);
-    syncVisualViewport();
-    keepActiveComposerVisible();
-    viewportSyncTimer=setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},80);
-    setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},220);
-    setTimeout(()=>{syncVisualViewport();keepActiveComposerVisible()},420);
-  }
-  function bindKeyboardTracking(root){
-    root.addEventListener("focusin",(e)=>{
-      if(!e.target.matches("input,textarea"))return;
-      syncVisualViewport(true);
-      document.documentElement.classList.add("ch-keyboard-open");
-      queueViewportSync();
-      setTimeout(keepActiveComposerVisible,40);
-    });
-    root.addEventListener("focusout",(e)=>{
-      if(!e.target.matches("input,textarea"))return;
-      setTimeout(()=>{
-        const active=document.activeElement;
-        if(root.contains(active)&&active?.matches("input,textarea"))return;
-        document.documentElement.classList.remove("ch-keyboard-open");
-        syncVisualViewport(true);
-      },120);
-    });
-  }
+  // Keyboard/scroll positioning is now handled by the browser, not by Chat/DM.
+  function syncVisualViewport(){}
+  function bindKeyboardTracking(){}
   function name(a={}){return a.nickname||[a.prenom,a.nom].filter(Boolean).join(" ").trim()||"Agent"}
   function avatar(a={},cls="ch-avatar"){const ini=[a.prenom?.[0],a.nom?.[0]].filter(Boolean).join("").toUpperCase()||String(name(a)).slice(0,2).toUpperCase(),signed=window.STIPBootCache?.media?.avatars?.[a.source_key]||"",src=a.profile_photo_url||signed||a.avatar_signed_url||a.avatar||a.avatar_url||"";return '<span class="'+cls+'" data-avatar-fallback="'+esc(ini)+'">'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy">':esc(ini))+'</span>'}
   function currentMode(){return document.querySelector('#homeView [data-home-mode-current]')?.dataset.homeModeCurrent||""}
@@ -81,7 +26,7 @@
   function setUnread(n,dm=n){const next=Number(n)||0,dmNext=Number(dm)||0,prev=Number(window.STIPMessagesUnread||0),dmPrev=Number(window.STIPDMUnread||0);window.STIPMessagesUnread=next;window.STIPDMUnread=dmNext;if(next!==prev||dmNext!==dmPrev)window.dispatchEvent(new CustomEvent("stip:messages-unread",{detail:{count:next,dmCount:dmNext}}))}
   function vapidBytes(v){const pad="=".repeat((4-v.length%4)%4),raw=atob((v+pad).replace(/-/g,"+").replace(/_/g,"/")),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);return out}
   async function refreshPushState(){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window)){pushState="unsupported";return}try{const reg=await navigator.serviceWorker.getRegistration(),sub=await reg?.pushManager.getSubscription();pushState=Notification.permission==="granted"&&sub?"on":Notification.permission==="denied"?"denied":"off"}catch{pushState="off"}}
-  async function enablePush(button=null){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return false;if(Notification.permission==="denied"){pushState="denied";renderHost();return false}if(button){button.disabled=true;button.textContent="Activation…"}try{const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();if(permission!=="granted"){pushState=permission==="denied"?"denied":"off";renderHost();return false}const reg=await navigator.serviceWorker.register("./stip-sw.js?v=20261012-chat-push-fix5",{updateViaCache:"none"}),sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidBytes(VAPID_PUBLIC)}),json=sub.toJSON();await push("subscribe",{subscription:{endpoint:json.endpoint,keys:json.keys}});pushState="on";renderHost();return true}catch(e){pushState="off";if(button){button.disabled=false;button.textContent="Réessayer"}alert(e.message||"Activation impossible.");return false}}
+  async function enablePush(button=null){if(!("serviceWorker" in navigator)||!("PushManager" in window)||!("Notification" in window))return false;if(Notification.permission==="denied"){pushState="denied";renderHost();return false}if(button){button.disabled=true;button.textContent="Activation…"}try{const permission=Notification.permission==="granted"?"granted":await Notification.requestPermission();if(permission!=="granted"){pushState=permission==="denied"?"denied":"off";renderHost();return false}const reg=await navigator.serviceWorker.register("./stip-sw.js?v=20261014-native-inputs1",{updateViaCache:"none"}),sub=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:vapidBytes(VAPID_PUBLIC)}),json=sub.toJSON();await push("subscribe",{subscription:{endpoint:json.endpoint,keys:json.keys}});pushState="on";renderHost();return true}catch(e){pushState="off";if(button){button.disabled=false;button.textContent="Réessayer"}alert(e.message||"Activation impossible.");return false}}
   function notificationPreference(eventKey){const items=pushPrefs?.items||[],item=items.find(x=>String(x.event_key)===String(eventKey));return item||null}
   function dmPreference(){const item=notificationPreference("dm_received");if(item)return item;if(home?.me)return{event_key:"dm_received",enabled:home.me.dm_push_enabled!==false,push_enabled:home.me.dm_push_available!==false};return{event_key:"dm_received",enabled:true,push_enabled:true}}
   function syncDmPreference(enabled){syncNotificationPreference('dm_received',enabled)} // Backward compatibility with cached DM callers.
@@ -295,10 +240,6 @@
   window.addEventListener("focus",()=>setTimeout(refreshVisibleCommunication,80));
   document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(refreshVisibleCommunication,80)});
   navigator.serviceWorker?.addEventListener?.("message",event=>{if(event.data?.type==="stip:push")refreshVisibleCommunication()});
-  syncVisualViewport(true);
-  window.addEventListener("resize",queueViewportSync,{passive:true});
-  window.visualViewport?.addEventListener("resize",queueViewportSync,{passive:true});
-  window.visualViewport?.addEventListener("scroll",queueViewportSync,{passive:true});
   setTimeout(onRender,300);
 
   const inboxState={root:null,selected:new Set(),status:"",loading:false,conversation:"",selector:null};

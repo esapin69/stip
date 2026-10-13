@@ -26,8 +26,8 @@
       rel="stylesheet"
       href="responsable-agents-native.css?v=20260827-native5"
     />
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20260930-safari-overlay-history1" />
-  <script defer src="/t-est/regles-communes/global.js?v=20260930-safari-overlay-history1"></script>
+    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1" />
+  <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
   <link rel="stylesheet" href="stip-home-header.css?v=20261001-header-launcher-clean1" />
 </head>
   <body class="responsable-home-page">
@@ -153,13 +153,13 @@
               </button>
               <p id="requestAgentLoadStatus" class="resp-request-target-status" aria-live="polite">Chargement de l’annuaire…</p>
             </section>
-            <form id="form" data-stip-form-mode="sequential" data-stip-form-pilot="access-request-v1" data-stip-flow-origin="Suivi" data-stip-flow-label="Envoyer à un agent" data-stip-context-who-fallback="Choisir un agent" data-stip-context-why-fallback="Demande">
+            <form id="form" data-stip-form-mode="standard" data-stip-form-pilot="access-request-v1" data-stip-flow-origin="Suivi" data-stip-flow-label="Envoyer à un agent" data-stip-context-who-fallback="Choisir un agent" data-stip-context-why-fallback="Demande">
               <input type="hidden" id="agentId" />
-              <label>Type<select id="kind" data-stip-select-menu data-stip-select-title="Type de demande"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
+              <label>Type<select id="kind" data-stip-select-title="Type de demande"><option value="request">Demande</option><option value="validation">Validation</option><option value="read">Information à lire</option><option value="document">Document à compléter</option><option value="notification">Message libre · notification seulement</option></select></label>
               <div class="mode-note" id="modeNote"></div>
               <label>Titre<input id="title" maxlength="180" required placeholder="Ex. Lire la nouvelle procédure" data-stip-help="Résume en quelques mots ce que l’agent doit comprendre immédiatement." /></label>
               <label>Message<textarea id="body" maxlength="1500" placeholder="Écris ton message" data-stip-help="Ajoute seulement le contexte utile : ce qui est attendu, pourquoi, et une échéance si nécessaire."></textarea></label>
-              <label id="priorityLabel">Priorité<select id="priority" data-stip-select-menu data-stip-select-title="Priorité"><option value="50">Normale</option><option value="75">Importante</option><option value="95">Urgente</option></select></label>
+              <label id="priorityLabel">Priorité<select id="priority" data-stip-select-title="Priorité"><option value="50">Normale</option><option value="75">Importante</option><option value="95">Urgente</option></select></label>
               <button type="submit" id="sendBtn">Envoyer dans STIP</button>
               <div class="status" id="status"></div>
             </form>
