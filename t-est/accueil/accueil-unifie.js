@@ -26,14 +26,22 @@
     activities:'Activités',trips:'Trajets',invitations:'Invitations',dm:'Messages privés'
   })[id]||(id.startsWith('thread:')?(window.TEstChats?.label?.(id.slice(7))||'Discussion'):'Page');
   function visibleKey(){return selected?selected.block+':'+selected.id:''}
+  const scrollSpacer=document.createElement('div');
+  scrollSpacer.setAttribute('aria-hidden','true');
+  scrollSpacer.style.cssText='height:0;pointer-events:none';
+  $('#tAccueilHome').append(scrollSpacer);
   function scrollLine(block){
     const line=blocks[block]?.querySelector('.t-carousel');
     if(!line)return;
-    // Ce déplacement est déclenché par un clic, jamais par swipe ou scroll tactile.
+    // Seulement après un clic. Les gestes de glissement restent entièrement natifs.
     requestAnimationFrame(()=>{
       const band=$('#tEstHistoryBar')?.getBoundingClientRect().height||54;
-      const target=window.scrollY+line.getBoundingClientRect().top-band-8;
-      window.scrollTo({top:Math.max(0,target),behavior:'instant'});
+      const target=Math.max(0,window.scrollY+line.getBoundingClientRect().top-band-8);
+      const maxScroll=Math.max(0,document.documentElement.scrollHeight-innerHeight);
+      // Compléter uniquement le bas de page si le navigateur ne peut pas aligner la rangée.
+      const missing=Math.max(0,target-maxScroll+12);
+      if(missing>0)scrollSpacer.style.height=(Math.ceil(missing)+8)+'px';
+      window.scrollTo({top:target,behavior:'instant'});
     });
   }
   function updateButtons(){
@@ -231,6 +239,7 @@
     if(scroll)scrollLine(block);
   }
   function close(){
+    scrollSpacer.style.height="0px";
     const last=selected?.id||null;
     selected=null;selectedKind=null;
     hideAll();syncUrl(null,false);updateButtons();emit(false,last);
