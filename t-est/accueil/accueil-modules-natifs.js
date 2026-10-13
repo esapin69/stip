@@ -202,6 +202,8 @@
     if(!host.isConnected)return;
     const items=(data.conversations||[]).filter(c=>['direct','group'].includes(c.kind));
     host.innerHTML='<section class="t-native-inbox"><h3>Mes discussions</h3>'+
+      '<button type="button" class="t-native-new-dm" data-native-new-dm>＋ Nouveau message privé</button>'+
+      '<div data-native-dm-directory hidden></div>'+
       (items.length?items.map(c=>{
         const label=String(c.kind==='group'?c.title||
           'Groupe':(c.others||[]).map(p=>p.nickname||[p.prenom,p.nom].filter(Boolean).join(' ')).join(', ')||'Message privé');
@@ -211,6 +213,45 @@
     host.querySelectorAll('[data-open-conv]').forEach(btn=>btn.addEventListener('click',()=>{
       window.TEstDashboard?.open('communication','thread:'+btn.dataset.openConv,{forceOpen:true});
     }));
+    const directory=host.querySelector('[data-native-dm-directory]');
+    host.querySelector('[data-native-new-dm]')?.addEventListener('click',async()=>{
+      directory.hidden=!directory.hidden;
+      if(directory.hidden)return;
+      directory.innerHTML='<p class="t-native-status">Chargement des collègues…</p>';
+      try{
+        const result=await post('agents');
+        const people=(Array.isArray(result.items)?result.items:[]).filter(x=>x.id);
+        directory.innerHTML='<input type="search" aria-label="Rechercher un collègue" placeholder="Rechercher un collègue…" class="t-native-agent-search">'+
+          '<div data-native-agent-list></div><p data-native-agent-feedback role="status"></p>';
+        const input=directory.querySelector('input');
+        const list=directory.querySelector('[data-native-agent-list]');
+        const feedback=directory.querySelector('[data-native-agent-feedback]');
+        const render=()=>{
+          const query=input.value.trim().toLocaleLowerCase('fr');
+          const found=people.filter(x=>[x.prenom,x.nom,x.nickname,x.ghe].filter(Boolean)
+            .join(' ').toLocaleLowerCase('fr').includes(query)).slice(0,30);
+          list.replaceChildren();
+          if(!found.length){list.textContent='Aucun collègue trouvé.';return;}
+          for(const person of found){
+            const button=document.createElement('button');
+            button.type='button';
+            button.textContent=[person.prenom,person.nom].filter(Boolean).join(' ')||person.nickname||'Collègue';
+            button.addEventListener('click',async()=>{
+              button.disabled=true;feedback.textContent='Ouverture de la discussion…';
+              try{
+                const response=await post('direct',{agent_id:String(person.id)});
+                const id=String(response.conversation?.id||'');
+                if(!uuid.test(id))throw Error('Conversation non trouvée.');
+                window.TEstDashboard?.open('communication','thread:'+id,{forceOpen:true});
+              }catch(e){feedback.textContent=String(e.message||'Impossible de créer le DM.');button.disabled=false;}
+            });
+            list.append(button);
+          }
+        };
+        input.addEventListener('input',render);
+        render();
+      }catch(e){directory.textContent=String(e.message||'Annuaire indisponible.');}
+    });
     host.dataset.nativeReady='dm';
   }
   const modules={
