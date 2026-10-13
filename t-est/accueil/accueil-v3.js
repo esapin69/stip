@@ -207,7 +207,29 @@
 
 
   // Le contrôleur unifié est seul responsable des cartes et des panneaux.
-  window.TEstAccueilPlanning={htmlFor:dayHTML,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
+  function weekHTML(){
+    const anchor=new Date(dayIso(0)+'T12:00:00Z');
+    const weekday=(anchor.getUTCDay()+6)%7;
+    const monday=new Date(anchor.getTime()-weekday*86400000);
+    let result='<section class="t-native-planning"><h3>Ma semaine</h3><div class="t-native-week">';
+    for(let d=0;d<7;d++){
+      const iso=new Date(monday.getTime()+d*86400000).toISOString().slice(0,10);
+      const row=personal.find(x=>String(x?.date||'').slice(0,10)===iso),shift=meta(row);
+      const color=shift?.color||'#cbdbe0',soft=shift?.soft||'#f6fafb';
+      const label=shift?.label||'Non renseigné';
+      const time=shift?.time||'';
+      const dow=new Intl.DateTimeFormat('fr-FR',{weekday:'short',timeZone:'UTC'}).format(new Date(iso+'T12:00:00Z'));
+      result+='<article class="t-native-weekday" style="--carte-shift:'+esc(color)+';--carte-soft:'+esc(soft)+'">'+
+        '<strong>'+esc(dow)+' '+esc(iso.slice(8))+'</strong><span>'+esc(label)+'</span>'+
+        (time?'<small>'+esc(time)+'</small>':'')+'</article>';
+    }
+    return result+'</div><p class="pop-info">Planning personnel synchronisé avec GHE. Le calendrier détaillé sera reconstruit ici, sans réintégrer l’ancienne page.</p></section>';
+  }
+  function nativeSnapshot(){
+    return {personal:personal.slice(),shift_definitions:definitions.slice(),agenda_items:agenda.slice(),
+      personal_formations:formations.slice(),personal_stagiaires:stagiaires.slice(),loaded:!!asOf};
+  }
+  window.TEstAccueilPlanning={htmlFor:dayHTML,weekHTML,snapshot:nativeSnapshot,hasData:()=>Boolean(asOf),pending:()=>Boolean(loading)};
   window.addEventListener('pageshow',()=>{if(!document.hidden)drawCards();});
   initialize();
 })();
