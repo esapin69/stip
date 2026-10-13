@@ -60,7 +60,15 @@
     window.TEstDashboard?.reset();
     paint();
   });
-  window.addEventListener("t-est:section-state",e=>record(e.detail||{}));
+  window.addEventListener("t-est:section-state",e=>{
+    const detail=e.detail||{};
+    // Les pop-ups sélectionnent une carte sans devenir une page de l'historique.
+    if(detail.kind==="pop"){
+      if(detail.open){currentKey="";paint()}
+      return;
+    }
+    record(detail);
+  });
   window.addEventListener("t-est:section-reset",()=>{currentKey="";paint()});
   read();
   const state=window.TEstDashboard?.current?.()||{};
