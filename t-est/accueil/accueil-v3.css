@@ -164,3 +164,46 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 [data-block="communication"] .com-carte{scroll-snap-align:start}
 [data-expanded="planning"] .t-inline-pop .pop-contenu{padding:13px 14px 17px}
 /* Un seul défilement vertical natif : aucune règle touch-action ajoutée. */
+
+/* T-est : les composants sont montés directement, pas les anciennes pages. */
+.t-inline-content{width:100%;min-width:0;overflow:visible;padding:6px 10px 14px}
+.t-native-status{padding:14px 8px;color:#567785;font-size:.88rem;line-height:1.4}
+.t-native-planning{padding:8px 2px 15px}
+.t-native-planning h3{margin:5px 0 12px;font-size:1.03rem;font-weight:900}
+.t-native-week{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.t-native-weekday{border:1.5px solid var(--carte-shift,#d4e0e4);background:var(--carte-soft,#fff);
+  border-radius:13px;padding:12px 10px;display:grid;gap:4px;font-size:.81rem}
+.t-native-weekday strong{font-size:.76rem;text-transform:capitalize}
+.t-native-weekday span{font-weight:850}
+.t-native-weekday small{color:#53707a}
+.t-native-inbox{padding:4px 0}
+.t-native-inbox h3{font-size:1rem;margin:4px 0 13px}
+.t-native-inbox button{appearance:none;background:#fff;border:1px solid #dce8ec;border-radius:12px;
+  display:flex;align-items:center;gap:10px;min-height:56px;width:100%;margin:7px 0;padding:11px;text-align:left;
+  font-size:.91rem;color:#164557}
+.t-native-inbox button span{font-size:1.3rem}
+.t-native-inbox button strong{flex:1}
+.t-native-inbox button b{min-width:22px;text-align:center;background:#197f9b;color:#fff;padding:4px 6px;border-radius:100px}
+.t-native-thread{display:flex;flex-direction:column;gap:10px;min-width:0}
+.t-native-thread-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 8px;border-bottom:1px solid #e0e9ec}
+.t-native-thread-top strong{font-size:1.02rem}
+.t-native-thread-top button{border:1px solid #bad4dc;border-radius:10px;background:#f5fafc;color:#1c657d;padding:8px;font-size:.78rem;font-weight:800}
+.t-native-thread-messages{display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;
+  min-height:220px;max-height:65dvh;scrollbar-width:thin;overscroll-behavior-y:contain;padding:10px}
+.t-native-bubble{max-width:88%;align-self:flex-start;padding:11px 12px;border-radius:14px;
+  border:1px solid #e1e8eb;background:#f4f7f8;font-size:.9rem;overflow-wrap:anywhere}
+.t-native-bubble.mine{align-self:flex-end;background:#e4f7ed;border-color:#c4e7d7}
+.t-native-bubble strong{font-size:.78rem;color:#537684}
+.t-native-bubble p{margin:5px 0;white-space:pre-wrap}
+.t-native-bubble time{display:block;font-size:.7rem;color:#6e8991;text-align:right}
+.t-native-bubble a{display:block;margin-top:8px}
+.t-native-compose{display:flex;gap:8px;align-items:flex-end;padding:8px 0 0}
+.t-native-compose textarea{flex:1;resize:vertical;min-height:45px;max-height:180px;
+  border:1.5px solid #c5d9e1;border-radius:13px;padding:10px;font:inherit}
+.t-native-compose button{border:0;border-radius:12px;background:#167f9c;color:#fff;
+  padding:13px 12px;font-weight:850}
+.t-native-compose button:disabled{opacity:.55}
+.t-native-leisure{max-width:none!important;margin:0!important;padding:4px 2px 12px!important}
+.t-native-leisure-tabs{display:none!important}
+.t-native-leisure .ensemble-cta{display:none!important}
+@media(min-width:560px){.t-native-week{grid-template-columns:repeat(4,minmax(0,1fr))}}
