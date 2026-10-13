@@ -16,7 +16,7 @@
   };
   const pageSlots=new Map();
   let selected=null,selectedKind=null,leisureFrame=null,leisureTab=null,leisureLoaded=false;
-  let popKey='',priorPopNodes=new Map();
+  let popKey='',priorPopNodes=new Map(),priorPopTitles=new Map();
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const isPop=id=>id==='day:0'||id==='day:1'||id==='dm-picker'||id==='create';
   const blockFor=id=>id.startsWith('day:')||id==='personal'?'planning':'communication';
@@ -57,6 +57,7 @@
   }
   function rememberPop(){
     if(!popKey)return;
+    priorPopTitles.set(popKey,popTitle.textContent);
     const fragment=document.createDocumentFragment();
     while(popBody.firstChild)fragment.append(popBody.firstChild);
     priorPopNodes.set(popKey,fragment);
@@ -70,7 +71,7 @@
       popKey=id;
     }
     const ready=popBody.childNodes.length>0;
-    popTitle.textContent=pageLabel(id);
+    popTitle.textContent=priorPopTitles.get(id)||pageLabel(id);
     if(id==='dm-picker'){
       if(!ready)window.TEstChats?.openPicker?.();
     }else if(id.startsWith('day:')){
