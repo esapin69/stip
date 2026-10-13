@@ -56,12 +56,10 @@
   window.TEstChats={
     label:id=>conversations.find(c=>c.id===id)?.title||'Discussion',
     openPicker:()=> {
-      const dialog=document.getElementById('accueilPop');
       const title=document.getElementById('popTitre'),body=document.getElementById('popBody');
-      if(!dialog||!title||!body)return;
+      if(!title||!body)return;
       title.textContent='Choisir une discussion';
       body.innerHTML='<div data-channel-list class="pop-choix"></div>';
-      if(!dialog.open)dialog.showModal();
       paintChoices();
       refreshGroups();
     },
@@ -165,7 +163,7 @@
         if(!/^[a-f0-9-]{36}$/i.test(id))throw Error('Le canal a été créé mais son identifiant est manquant.');
         const c={id,kind:'group',title,unread:0,last:''};
         conversations=[c,...conversations.filter(x=>x.id!==id)];store();paintChoices();
-        $('#accueilPop').close();openConversation(id);
+        openConversation(id);
         refreshAt=0;
       }catch(err){message.textContent=err.message||'Création impossible.'}
       finally{pending=false;send.disabled=false;}
@@ -179,10 +177,8 @@
     },{once:true});
   }
   document.addEventListener('click',e=>{
-    if(e.target.closest('[data-canaux-open]')){window.TEstChats.openPicker();return;}
     if(e.target.closest('[data-new-channel]')){renderForm();return;}
     if(e.target.closest('[data-new-dm]')){
-      $('#accueilPop').close();
       window.TEstDashboard?.open('communication','dm',{forceOpen:true});
       return;
     }
@@ -190,7 +186,6 @@
     if(existing){
       const id=existing.dataset.existingChannel;
       if(conversations.some(c=>c.id===id)){
-        $('#accueilPop').close();
         openConversation(id);
       }
     }
