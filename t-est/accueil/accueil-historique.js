@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   // Historique des sélections réelles sur l'accueil unique, pas un chemin de dossiers.
-  const MAX=7, STORE="t_est_page_history_inline_v2";
+  const MAX=7, STORE="t_est_page_history_unified_v3";
   const bar=document.getElementById("tEstHistoryBar"),list=document.getElementById("tEstHistorySteps");
   const scroller=document.getElementById("tEstHistoryScroll");
   const home=bar?.querySelector("[data-history-home]");
@@ -72,7 +72,10 @@
   window.addEventListener("t-est:section-reset",()=>{currentKey="";paint()});
   read();
   const state=window.TEstDashboard?.current?.()||{};
-  for(const [block,id] of Object.entries(state))if(id)record({block,id,open:true,label:steps.find(s=>s.block===block&&s.id===id)?.label||id});
+  const names={personal:"Mon planning",fauteuils:"Fauteuils",dm:"DM privé",activities:"Activités",trips:"Trajets",invitations:"Invitations"};
+  for(const [block,id] of Object.entries(state))if(id)record({
+    block,id,open:true,label:steps.find(s=>s.block===block&&s.id===id)?.label||names[id]||id
+  });
   const ensemble=window.TEstEnsemble?.current?.();
   if(ensemble)record({block:"ensemble",id:ensemble,open:true,label:({activities:"Activités",trips:"Trajets",invitations:"Invitations"})[ensemble]||"Ensemble"});
   paint();
