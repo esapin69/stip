@@ -63,7 +63,8 @@
       paintChoices();
       refreshGroups();
     },
-    openThread:id=>openConversation(id)
+    openThread:id=>openConversation(id),
+    newGroup:()=>renderForm()
   };
   async function post(action,body={},wait=12000){
     const value=token();
