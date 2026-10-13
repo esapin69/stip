@@ -137,3 +137,30 @@ button:focus-visible,a:focus-visible{outline:3px solid #1286a2;outline-offset:3p
 /* Une seule page native : ne pas bloquer le geste tactile sur les carrousels. */
 .t-bloc>.t-expanded-region:not([hidden]),#tEnsembleExpanded:not([hidden]){min-height:calc(100dvh - var(--t-est-history-height,54px) - 160px)}
 .t-carousel>.com-carte,.t-carousel>.accueil-carte{scroll-snap-align:start}
+
+/* T-est : Communication et Ensemble ne sont qu'un seul carrousel. */
+[data-block="communication"] .t-carousel{margin-bottom:0}
+[data-block="communication"] [data-unified-create]{
+  width:auto;min-width:0;min-height:38px;
+  margin:9px 0 0 auto;padding:7px 13px;
+  display:flex;align-items:center;justify-content:center;
+  background:#fff;color:#227d96;border:1px solid #b7d8e0;
+  border-radius:999px;box-shadow:none;
+  font-size:.82rem;font-weight:800;line-height:1.2;
+}
+[data-unified-create][aria-expanded="true"]{
+  background:#e9f7fa!important;border-color:#17869e!important;
+  color:#13556a!important;
+}
+[data-block="communication"] .t-expanded-region{margin-top:13px}
+.t-inline-pop{position:static;display:block;max-width:none;width:100%;
+  background:transparent;border:0;border-radius:17px;box-shadow:none;
+}
+.t-inline-pop[hidden]{display:none!important}
+.t-inline-pop .pop-contenu{padding:13px 14px 17px}
+.t-inline-pop .pop-body{max-height:none;overflow:visible}
+.t-inline-pop .pop-entete h2{font-size:1.06rem}
+.t-inline-pop .pop-close{width:33px;height:33px;font-size:1.2rem}
+[data-block="communication"] .com-carte{scroll-snap-align:start}
+[data-expanded="planning"] .t-inline-pop .pop-contenu{padding:13px 14px 17px}
+/* Un seul défilement vertical natif : aucune règle touch-action ajoutée. */
