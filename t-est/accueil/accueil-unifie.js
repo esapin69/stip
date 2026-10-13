@@ -115,11 +115,14 @@
   function frameHeight(frame,{leisure=false}={}){
     const doc=frame.contentDocument;
     if(!doc)return;
-    const main=leisure?doc.querySelector('.ensemble-page'):doc.querySelector('.ca-app,.app-shell,#app,main');
-    const height=Math.min(13000,Math.max(
-      leisure?320:Math.max(620,innerHeight-135),
-      Math.ceil(main?.scrollHeight||0)+12
-    ));
+    // Le viewport du chat ne doit pas faire croître son iframe en boucle.
+    // Aucun listener tactile et aucune modification du swipe du site.
+    const normal=Math.max(620,innerHeight-135);
+    const content=leisure?doc.querySelector('.ensemble-page')?.scrollHeight:
+      doc.querySelector('.ca-body')?.scrollHeight;
+    const height=leisure?
+      Math.min(13000,Math.max(320,Math.ceil(content||320)+18)):
+      Math.min(11000,Math.max(normal,Math.ceil(content||0)+145));
     if(Math.abs(frame.getBoundingClientRect().height-height)>5)frame.style.height=height+'px';
   }
   function trackFrame(frame,{leisure=false}={}){
