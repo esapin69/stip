@@ -1122,8 +1122,7 @@
   }
 }
 
-/* 2026-10-14 · ajustement ciblé : événements au-dessus, shift carré inchangé,
-   collègues en bandeau fin, centré et de la même largeur que le carré. */
+/* Événements au-dessus ; collègues en bandeau fin sous le symbole du poste. */
 .hc-days-grid .thf-day-card .thf-day-post{
   display:flex!important;
   flex-direction:column!important;
@@ -1141,7 +1140,7 @@
 .hc-days-grid .thf-day-card .thf-day-post .thf-shift-content{
   width:min(100%,126px)!important;
   max-width:126px!important;
-  aspect-ratio:1 / 1!important;
+  aspect-ratio:auto!important;
   flex:0 0 auto!important;
   align-self:center!important;
   margin:0!important;
@@ -1191,7 +1190,7 @@
   }
 }
 
-/* La pile introduite par le HTML garde exactement la largeur du carré J4. */
+/* Largeur stable pour le bouton collègues, indépendamment du badge de shift. */
 .hc-days-grid .thf-day-card .thf-shift-stack{
   display:flex!important;flex-direction:column!important;align-items:center!important;
   gap:7px!important;width:min(100%,126px)!important;max-width:126px!important;
