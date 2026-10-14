@@ -25,3 +25,48 @@
 .stip-context-links{display:grid;gap:6px}
 .stip-context-link{position:relative;min-height:48px;display:flex;align-items:center;gap:10px;padding:7px 11px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--stip-ink);font-weight:900;text-decoration:none;transition:border-color var(--stip-motion),background var(--stip-motion),box-shadow var(--stip-motion)}
 .stip-context-link .stip-context-icon{flex:0 0 auto;font-size:1.35rem;line-height:1}.stip-context-link .stip-context-chevron{margin-left:auto;color:var(--stip-accent);font-size:1.25rem;font-weight:950}.stip-context-link:is(.active,.is-current,[aria-current="page"]){border-color:color-mix(in srgb,var(--stip-accent) 58%,var(--stip-line))!important;background:linear-gradient(135deg,color-mix(in srgb,var(--stip-accent) 10%,#fff),#fff 78%)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--stip-accent) 9%,transparent),0 8px 18px rgba(17,63,79,.10)!important}.stip-context-link:focus-visible{outline:3px solid var(--stip-focus-ring);outline-offset:2px}
+
+/* Personal-week shift symbols: the month's canonical coloured badge is the
+   single work mark. Real start/end hours visually belong to the badge. */
+.stip-week-day.stip-week-personal-layout .stip-week-main-work .stip-month-shift-badge{
+  width:auto!important;max-width:100%!important;
+  min-width:clamp(28px,8vw,37px)!important;
+  height:clamp(27px,7.6vw,34px)!important;
+  border-radius:11px!important;
+  padding-inline:3px!important;
+  font-size:clamp(.64rem,2.3vw,.8rem)!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-hours{
+  box-sizing:border-box!important;
+  color:var(--stip-week-accent,var(--stip-ink-2))!important;
+  font-size:clamp(7px,1.85vw,9px)!important;
+  letter-spacing:-.06em!important;
+  font-weight:950!important;
+  line-height:1.1!important;
+  font-variant-numeric:tabular-nums!important;
+  text-shadow:0 1px #ffffffbd!important;
+}
+.stip-week-day.stip-week-personal-layout.code-s .stip-week-work-hours{
+  color:#a27c00!important;
+}
+.stip-week-day.stip-week-personal-layout.code-n .stip-week-work-hours{
+  color:#293a49!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-hours>i{
+  color:var(--stip-muted)!important;
+  font-size:.8em!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-main-special .stip-week-main-icon{
+  width:30px!important;height:30px!important;
+  min-width:30px!important;min-height:30px!important;
+  font-size:1.55rem!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-events:not(.is-empty){
+  font-size:1.1rem!important;
+}
+.stip-legend-item:has(.stip-month-shift-badge){
+  grid-template-columns:2.4rem .6rem minmax(0,1fr)!important;
+}
+.stip-legend-item:has(.stip-month-shift-badge) .stip-legend-icon{
+  width:2.4rem!important;
+}
