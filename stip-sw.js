@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261015-popup-close-stable2";
+const STIP_SW_BUILD="20261015-ghe-safe-flip-release1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
