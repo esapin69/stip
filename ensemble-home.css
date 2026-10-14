@@ -1,0 +1,19 @@
+/* Ensemble calendar markers: always after professional appointments; never inside À clôturer. */
+.ev3-home-section{display:grid;gap:8px;padding:14px 0 10px;margin:7px 0 6px;border-top:1px solid #dce8e7}
+.ev3-home-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ev3-home-head strong{font-size:.74rem;color:#5b7981;letter-spacing:.07em;font-weight:850}
+.ev3-home-head a,.ev3-home-more{font-size:.76rem;color:#1a6774;text-decoration:none;font-weight:850}
+.ev3-home-items{display:grid;gap:7px}
+.ev3-home-card{display:flex;align-items:center;gap:10px;min-height:65px;border:1px solid #dbe7e8;border-left:4px solid #6198a9;border-radius:14px;background:#fff;padding:10px 12px;text-decoration:none;color:#204852;min-width:0}
+.ev3-home-card.ev3-confirmed{border-left-color:#35a36d;background:#f7fffa}
+.ev3-home-card.ev3-pending{border-left-color:#e9a84c;background:#fffdf7}
+.ev3-home-card.ev3-declined{border-left-color:#c38a8a}
+.ev3-home-icon{height:41px;flex:0 0 41px;display:grid;place-items:center;background:#edf7f5;border-radius:12px;font-size:1.5rem}
+.ev3-home-copy{display:grid;gap:4px;flex:1;min-width:0}
+.ev3-home-copy strong{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev3-home-copy small{font-size:.74rem;color:#68818a;line-height:1.2}
+.ev3-home-state{font-size:.68rem;font-weight:850;padding:5px 8px;border-radius:30px;background:#e8f1f2;color:#396c78;flex-shrink:0}
+.ev3-pending .ev3-home-state{color:#946118;background:#fff1d0}
+.ev3-confirmed .ev3-home-state{color:#25794f;background:#e3f4e9}
+.ev3-home-more{display:block;text-align:center;padding:6px}
+@media(max-width:440px){.ev3-home-card{padding:9px;gap:7px}.ev3-home-state{font-size:.62rem;padding:5px}.ev3-home-icon{flex-basis:36px;height:36px;font-size:1.3rem}}
