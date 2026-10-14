@@ -41,8 +41,8 @@
       style.id="t-est-ensemble-in-block";
       style.textContent=[
         "html,body{margin:0!important;overflow-x:hidden!important;background:#fff!important}",
-        ".ensemble-page{padding:8px 10px 18px!important;margin:0!important;max-width:none!important}",
-        ".ensemble-topbar,.ensemble-hero,.ensemble-nav,.ensemble-cta{display:none!important}",
+        ".ensemble-page,.ev3-page{padding:8px 10px 18px!important;margin:0!important;max-width:none!important}",
+        ".ensemble-topbar,.ensemble-hero,.ensemble-nav,.ensemble-cta,.ev3-header,.ev3-tabs{display:none!important}",
         ".ensemble-status:empty{display:none!important}"
       ].join("");
       doc.head.append(style);
@@ -53,24 +53,30 @@
     try{
       const doc=frame.contentDocument;
       if(!doc)return;
-      const page=doc.querySelector(".ensemble-page")||doc.body;
+      const page=doc.querySelector(".ev3-page,.ensemble-page")||doc.body;
       const measured=Math.min(14000,Math.max(340,Math.ceil(page.scrollHeight)+22));
       if(Math.abs(measured-currentHeight)>5){currentHeight=measured;frame.style.height=measured+"px"}
     }catch{}
   }
   function selectNative(tab){
-    if(!loaded||!valid.has(tab))return;
-    try{
-      const d=frame.contentDocument,btn=d?.querySelector('[data-ensemble-tab="'+tab+'"]');
-      if(btn)btn.click();
-      if(needsCreate&&tab==="activities"){
-        const api=frame.contentWindow?.STIPLeisure;
-        if(api?.openCreator){needsCreate=false;api.openCreator();}
-      }
-      requestAnimationFrame(measure);
-    }catch{}
-  }
-  function ensureFrame(){
+     if(!loaded||!valid.has(tab))return;
+     try{
+       const app=frame.contentWindow?.STIPEnsembleV3;
+       if(app?.setView){
+         app.setView(tab);
+         if(needsCreate&&tab==="activities"){needsCreate=false;app.openCreator()}
+       }else{
+         const doc=frame.contentDocument,btn=doc?.querySelector('[data-ensemble-tab="'+tab+'"]');
+         if(btn)btn.click();
+         if(needsCreate&&tab==="activities"){
+           const legacy=frame.contentWindow?.STIPLeisure;
+           if(legacy?.openCreator){needsCreate=false;legacy.openCreator()}
+         }
+       }
+       requestAnimationFrame(measure);
+     }catch(err){console.warn("Ensemble embedded view",err)}
+   }
+   function ensureFrame(){
     if(frame.dataset.started)return;
     frame.dataset.started="true";
     frame.src="/sorties-loisirs.html?ghe_embedded=ensemble";
@@ -92,7 +98,7 @@
   frame.addEventListener("load",()=>{
     loaded=true;skin();
     try{
-      const doc=frame.contentDocument,body=doc.querySelector(".ensemble-page")||doc.body;
+      const doc=frame.contentDocument,body=doc.querySelector(".ev3-page,.ensemble-page")||doc.body;
       ro?.disconnect();mo?.disconnect();
       if(typeof ResizeObserver!=="undefined"){ro=new ResizeObserver(()=>requestAnimationFrame(measure));ro.observe(body);}
       mo=new MutationObserver(()=>requestAnimationFrame(measure));
