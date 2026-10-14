@@ -33,7 +33,7 @@
     weekFull: false,
     weekPast: false,
     dayFocus: parisIso(),
-    monthDayFocus: parisIso(),
+    monthDayFocus: "",
     homeMode: "planning",
     dateJumpMonth: parisIso().slice(0, 7),
     tableauFocus: false,
@@ -288,6 +288,19 @@
     state.renderSig = "";
     render();
   }
+  function selectWeekDay(iso) {
+    const selected = String(iso || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
+    const currentWeek = navigationWeek().some((day) => day.iso === selected) ||
+      selectedWeek().some((day) => day.iso === selected);
+    if (!currentWeek) return jumpToDate(selected);
+    state.dayFocus = selected;
+    document.querySelectorAll(".hc-week-context-master [data-home-day]").forEach((button) => {
+      const active = button.dataset.homeDay === selected;
+      button.classList.toggle("selected", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
   function dateIsoLocal(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
@@ -401,21 +414,30 @@
     panel.setAttribute("aria-busy", loading ? "true" : "false");
     panel.innerHTML = `<div class="hc-date-jump-head stip-month-nav"><button type="button" data-cal-step="-1" aria-label="Mois précédent"${loading ? " disabled" : ""}>‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant"${loading ? " disabled" : ""}>›</button></div><div class="hc-date-jump-weekdays stip-month-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid stip-month-grid">${cells.join("")}</div>`;
   }
+  // Selection affects only the month calendar DOM, never the weekly planning.
+  function markMonthSelection(panel) {
+    panel?.querySelectorAll("[data-cal-day]").forEach((button) => {
+      const selected = button.dataset.calDay === state.monthDayFocus;
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+  }
   function moveCalendarMonth(step) {
     state.dateJumpMonth = shiftMonthKey(
       state.dateJumpMonth || parisIso().slice(0, 7),
       step,
     );
-    state.renderSig = "";
-    render();
+    renderMonthContext();
   }
   function selectMonthDay(iso) {
     const selected = String(iso || "").slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
     state.monthDayFocus = selected;
     state.dateJumpMonth = selected.slice(0, 7);
-    state.renderSig = "";
-    render();
+    const panel = document.querySelector(".hc-month-context-master [data-date-jump-panel]");
+    if (!panel || panel.dataset.calendarMonth !== state.dateJumpMonth)
+      return renderMonthContext();
+    markMonthSelection(panel);
   }
 
   function weekRangeLabel(w = []) {
@@ -3203,6 +3225,10 @@
       '<div class="hc-week-event-key-list">' + top + extra + '</div></section>';
   }
 
+  function monthContextMarkup() {
+    const monthDetails = monthEventsWidget();
+    return `<div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}`;
+  }
   // Separateurs natifs du site, sans ajouter de cartes ou dupliquer le contenu.
   function homeTimelineSeparator(label,kind) {
     return `<div class="stip-section-separator hc-home-timeline-separator hc-home-separator-${esc(kind)}" role="separator" aria-label="${esc(label)}"><span>${esc(label)}</span></div>`;
@@ -3215,9 +3241,8 @@
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const weeklyDetails = futureWidget(),
-      monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="ghe-live-wide-host">${liveCardMarkup()}</div><div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="ghe-live-wide-host">${liveCardMarkup()}</div><div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month">${monthContextMarkup()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3241,6 +3266,49 @@
     align();
   }
 
+  // Month navigation can rebuild this month alone without remounting home or week.
+  function renderMonthContext() {
+    const month = document.querySelector(".hc-month-context-master");
+    if (!month) return;
+    month.innerHTML = monthContextMarkup();
+    const panel = month.querySelector("[data-date-jump-panel]");
+    renderDateJumpCalendar(panel, state.dateJumpMonth);
+    window.STIPMonthTable?.enhanceCalendar?.(panel);
+    const legend = document.querySelector(".hc-planning-legend-subblock");
+    if (legend) legend.innerHTML = fixedShiftLegend();
+  }
+  async function openMonthCalendarSubscription() {
+    try {
+      if (!window.STIPCalendars?.quick)
+        await window.STIPLoad?.script?.("calendar-subscriptions.js");
+      window.STIPCalendars?.quick?.("personal");
+    } catch {}
+  }
+  function bindMonthContext(month) {
+    month?.addEventListener("click", (event) => {
+      if (planningLoading()) return;
+      const step = event.target.closest("[data-cal-step]");
+      if (step) return moveCalendarMonth(step.dataset.calStep);
+      const day = event.target.closest("[data-cal-day]");
+      if (day) {
+        const iso = String(day.dataset.calDay || "").slice(0, 10);
+        if (!iso) return;
+        if (window.STIPLeaveCart?.isSelecting?.()) {
+          window.STIPLeaveCart.toggle(iso, planningRowForDate(iso)?.code || "");
+          return;
+        }
+        selectMonthDay(iso);
+        if (planningRowForDate(iso)) openShiftDetail(iso);
+        return;
+      }
+      const app = event.target.closest("[data-app]");
+      if (app) return openApp(app.dataset.app);
+      const widget = event.target.closest("[data-widget-open]");
+      if (widget) return openWidget(widget.dataset.widgetOpen, widget.dataset.futureId || "");
+      if (event.target.closest("[data-home-calendar-subscribe]"))
+        openMonthCalendarSubscription();
+    });
+  }
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
@@ -3446,34 +3514,10 @@
           dateJumpPanel.dataset.calendarMonth ||
           "",
       );
-    dateJumpPanel?.addEventListener("click", (event) => {
-      if (planningLoading()) return;
-      const step = event.target.closest("[data-cal-step]");
-      if (step) return moveCalendarMonth(step.dataset.calStep);
-      const day = event.target.closest("[data-cal-day]");
-      if (!day) return;
-      const iso = String(day.dataset.calDay || "").slice(0, 10);
-      if (!iso) return;
-      if (window.STIPLeaveCart?.isSelecting?.()) {
-        window.STIPLeaveCart.toggle(iso, planningRowForDate(iso)?.code || "");
-        return;
-      }
-      selectMonthDay(iso);
-      if (planningRowForDate(iso))
-        requestAnimationFrame(() => openShiftDetail(iso));
-    });
-    root
-      .querySelector("[data-home-calendar-subscribe]")
-      ?.addEventListener("click", async () => {
-        try {
-          if(!window.STIPCalendars?.quick)
-            await window.STIPLoad?.script?.("calendar-subscriptions.js");
-          window.STIPCalendars?.quick?.("personal");
-        } catch {}
-      });
+    bindMonthContext(root.querySelector(".hc-month-context-master"));
     root
       .querySelectorAll("[data-app]")
-      .forEach((b) => (b.onclick = () => openApp(b.dataset.app)));
+      .forEach((b) => { if (!b.closest(".hc-month-context-master")) b.onclick = () => openApp(b.dataset.app); });
     root.querySelector("[data-trainee-session-change]")?.addEventListener("click", () => {
       window.dispatchEvent(new CustomEvent("stip:trainee-change"));
     });
@@ -3482,7 +3526,7 @@
       .forEach(
         (b) =>
           (b.onclick = () =>
-            openWidget(b.dataset.widgetOpen, b.dataset.futureId || "")),
+            b.closest(".hc-month-context-master") ? undefined : openWidget(b.dataset.widgetOpen, b.dataset.futureId || "")),
       );
     root
       .querySelectorAll("[data-week-step]")
@@ -3503,9 +3547,9 @@
           const openDetail =
             b.classList.contains("stip-week-day") &&
             Boolean(planningRowForDate(iso));
-          jumpToDate(iso);
+          selectWeekDay(iso);
           if (openDetail)
-            requestAnimationFrame(() => openShiftDetail(iso));
+            openShiftDetail(iso);
         }),
       );
     root
@@ -3927,7 +3971,7 @@
     state.weekFull = false;
     state.weekPast = false;
     state.dayFocus = parisIso();
-    state.monthDayFocus = parisIso();
+    state.monthDayFocus = "";
     state.dateJumpMonth = parisIso().slice(0, 7);
     state.renderSig = "";
     state.lastRefreshAt = 0;
