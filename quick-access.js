@@ -419,6 +419,7 @@
     host.innerHTML = '<section class="stip-app-store"><header><button type="button" class="stip-store-back" data-store-back aria-label="Retour à mes applications">‹</button>' +
       '<div><small>STIP</small><h2>Applications</h2><p>Choisissez les outils à afficher sur votre écran.</p></div></header>' +
       appSearchMarkup() +
+      '<div class="stip-store-feature"><small>À DÉCOUVRIR</small><strong>Construisez votre STIP</strong><p>Ajoutez uniquement les applications utiles à votre quotidien.</p></div>' +
       '<div class="stip-store-list" data-store-list></div></section>';
     const input = host.querySelector("[data-app-search]");
     const list = host.querySelector("[data-store-list]");
@@ -469,12 +470,14 @@
         ? found.map((key) => '<button type="button" class="stip-my-app" data-my-app="' + key + '">' +
             appStoreIcon(key) + '<strong>' + META[key].label + '</strong>' +
             (term && !chosen.includes(key) ? '<small class="stip-app-result-note">Disponible</small>' : '') + '</button>').join("")
-        : '<p class="stip-app-grid-empty">' +
-            (term ? 'Aucune application trouvée.' : 'Aucune application ajoutée. Utilisez « Ajouter » pour choisir vos outils.') + '</p>';
+        : term
+          ? '<p class="stip-app-grid-empty">Aucune application trouvée.</p>'
+          : '<div class="stip-app-grid-empty">Aucune application ajoutée.<button type="button" class="stip-store-browse" data-store-browse-empty>Parcourir les applications</button></div>';
     }
     paintApps();
     input.addEventListener("input", paintApps);
     grid.addEventListener("click", (event) => {
+      if (event.target.closest("[data-store-browse-empty]")) { renderStore(host); return; }
       const button = event.target.closest("[data-my-app]");
       if (button) openKey(button.dataset.myApp);
     });
