@@ -47,14 +47,14 @@ function card(e){
  '<span class="ev3-chip">'+escapeHTML(label)+'</span><span aria-hidden="true">›</span></button>';
 }
 function chosenCards(){
- const events=state.events.filter(e=>concerned(e)&&activeDates(e).length&&e.status==="active");
+ const events=state.events.filter(e=>concerned(e)&&(e.dates||[]).some(d=>d>=today)&&e.status==="active");
  if(state.agendaFilter==="invitations"){
   const invited=events.filter(e=>!!e.invitation_status||(e.is_organizer&&(e.invited_colleagues||[]).length>0));
   return '<div class="ev3-section-title"><h2>Invitations</h2><small>'+invited.length+' activité'+(invited.length>1?"s":"")+'</small></div>'+
    (invited.length?'<div class="ev3-stack">'+invited.map(card).join("")+"</div>":'<div class="ev3-empty"><strong>Aucune invitation en cours.</strong><p>Les invitations reçues et envoyées apparaîtront ici.</p></div>');
  }
  const pending=events.filter(e=>e.needs_response&&!e.is_organizer);
- const other=events.filter(e=>!pending.includes(e));
+ const other=events.filter(e=>!pending.includes(e)&&!e.response?.declined);
  const header='<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>';
  return header+(pending.length?'<h3 class="ev3-small-title">Réponse attendue</h3><div class="ev3-stack">'+pending.map(card).join("")+'</div>':"")+
  (other.length?'<h3 class="ev3-small-title">À venir</h3><div class="ev3-stack">'+other.map(card).join("")+'</div>':"")+
@@ -133,7 +133,7 @@ function formHTML(){
  '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
  '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
  '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
- (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Chaque collègue verra uniquement les jours où sa fin de service correspond à la tienne.</p>')+
+ (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Chaque invité verra ses propres jours compatibles avec sa fin de service. Les réponses et présences seront visibles date par date.</p>')+
  '<label class="ev3-form-title">3. Les dates</label>'+calendarHTML()+
  '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
  '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label>'+
@@ -218,34 +218,92 @@ function showActivityDialog(d){
  }else d.showModal();
 }
 function closeModal(){const d=byId("ev3Dialog");if(d?.open)d.close()}
+function rosterDateHTML(event,day){
+ const roster=Array.isArray(event.date_roster?.[day])?event.date_roster[day]:[];
+ const num=st=>roster.filter(p=>p.state===st).length;
+ const confirmed=num("accepted")+num("organizer"),pending=num("pending"),refused=num("declined");
+ const values=[
+  ["organizer","Organisateur"],["accepted","Présent"],["pending","En attente"],
+  ["declined","A refusé"],["not_selected","Ne vient pas ce jour"],
+  ["incompatible","Horaires différents"],["unavailable","Indisponible"]
+ ];
+ return '<details class="ev3-date-roster"><summary>'+
+  '<span class="ev3-roster-qty is-confirmed">✓ '+confirmed+'</span>'+
+  '<span class="ev3-roster-qty is-waiting">◷ '+pending+'</span>'+
+  (refused?'<span class="ev3-roster-qty is-refused">✕ '+refused+'</span>':"")+
+  '<b>Qui vient ? ›</b></summary><div class="ev3-roster-groups">'+
+  values.map(([state,label])=>{
+   const people=roster.filter(p=>p.state===state);
+   return people.length?'<section class="ev3-roster-group ev3-roster-'+state+'">'+
+    '<div class="ev3-roster-heading"><span>'+escapeHTML(label)+' · '+people.length+'</span></div>'+
+    '<div class="ev3-roster-names">'+people.map(p=>'<span>'+escapeHTML(p.name)+'</span>').join("")+'</div></section>':"";
+  }).join("")+'</div></details>';
+}
 function openEvent(id){
- const e=state.events.find(x=>x.id===id);if(!e)return;
- const ds=activeDates(e),choice=e.response?.selected_dates||[], [tone,status]=kindStatus(e);
- const d=dialog(id);
- d.innerHTML='<header class="ev3-modal-head"><span class="ev3-bigicon">'+escapeHTML(e.icon||"📌")+'</span><div><strong>'+escapeHTML(e.title)+'</strong><small class="ev3-status-text ev3-'+tone+'">'+escapeHTML(status)+'</small></div><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
+ const event=state.events.find(x=>x.id===id);if(!event)return;
+ const ds=activeDates(event),allDays=(event.dates||[]).filter(day=>day>=today),choice=event.response?.selected_dates||[];
+ const [tone,status]=kindStatus(event),isOrganizer=!!event.is_organizer;
+ const dialogEl=dialog(id);
+ dialogEl.innerHTML='<header class="ev3-modal-head"><span class="ev3-bigicon">'+escapeHTML(event.icon||"📌")+
+ '</span><div><strong>'+escapeHTML(event.title)+'</strong><small class="ev3-status-text ev3-'+tone+'">'+escapeHTML(status)+
+ '</small></div><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
  '<div class="ev3-modal-body">'+
- (e.description?'<p>'+escapeHTML(e.description)+'</p>':"")+
- '<p>📍 '+escapeHTML(e.location||"Lieu à définir")+' · '+escapeHTML(e.schedule_mode==="afterwork"?"À la fin de ton service":e.time_label||"Horaire à fixer")+'</p>'+
- '<section class="ev3-modal-section"><strong>Dates proposées</strong><div class="ev3-respond-dates">'+ds.map(day=>
- '<label class="ev3-date-choice"><input type="checkbox" name="dates" value="'+escapeHTML(day)+'" '+(choice.includes(day)||e.is_organizer?"checked":"")+' '+(e.is_organizer?"disabled":"")+'><span>'+escapeHTML(fmt(day))+(e.schedule_mode==='afterwork'&&e.visible_end_times?.[day]?' · '+escapeHTML(e.visible_end_times[day]):'')+'</span></label>').join("")+'</div></section>'+
- (e.invited_colleagues?.length?'<section class="ev3-modal-section"><strong>Invitations</strong><p>'+e.invited_colleagues.map(p=>escapeHTML(p.name)+" · "+escapeHTML(p.status)).join(" · ")+'</p></section>':"")+
- (e.participants?.length?'<section class="ev3-modal-section"><strong>Participants</strong><p>'+e.participants.map(p=>escapeHTML(p.name)).join(", ")+'</p></section>':"")+
+ (event.description?'<p>'+escapeHTML(event.description)+'</p>':"")+
+ '<p>📍 '+escapeHTML(event.location||"Lieu à définir")+' · '+
+ escapeHTML(event.schedule_mode==="afterwork"?"À la fin du service":event.time_label||"Horaire à fixer")+'</p>'+
+ '<section class="ev3-modal-section"><strong>Dates proposées · présences et réponses</strong>'+
+ '<p class="ev3-dates-help">Les jours compatibles avec tes horaires peuvent être sélectionnés. Les invités disposent chacun de leurs propres dates compatibles.</p>'+
+ '<div class="ev3-respond-dates ev3-respond-dates-advanced">'+allDays.map(day=>{
+   const compatible=ds.includes(day)&&!(event.organizer_unavailable_dates||[]).includes(day);
+   return '<div class="ev3-date-choice-card '+(compatible?"is-compatible":"is-incompatible")+'">'+
+   '<label class="ev3-date-choice"><input type="checkbox" name="dates" value="'+escapeHTML(day)+'" '+
+   ((choice.includes(day)||isOrganizer)&&compatible?"checked ":"")+
+   ((isOrganizer||!compatible)?"disabled ":"")+
+   '><span><strong>'+escapeHTML(fmt(day))+'</strong><small>'+
+   (compatible?(event.schedule_mode==='afterwork'?escapeHTML(event.visible_end_times?.[day]||"Fin du service"):"Horaire compatible"):
+   "Pas d’horaire compatible")+
+   '</small></span></label>'+rosterDateHTML(event,day)+'</div>';
+ }).join("")+'</div></section>'+
  '<div class="ev3-modal-actions">'+
- (!e.is_organizer&&e.status==="active"?'<button type="button" class="ev3-primary" data-ev3-answer="accept">Enregistrer mes dates</button><button type="button" data-ev3-answer="decline">Décliner</button>':"")+
- (meetingLink(e)?'<a class="ev3-modal-link" href="'+escapeHTML(meetingLink(e))+'">💬 Dialogue commun</a>':"")+
- (e.can_invite?'<button type="button" data-ev3-invite>＋ Inviter</button>':"")+
- (e.can_manage?'<button type="button" data-ev3-edit>✎ Modifier</button><button type="button" data-ev3-cancel>Annuler</button>':"")+'</div>'+
+ (!isOrganizer&&event.status==="active"?'<button type="button" class="ev3-primary" data-ev3-answer="accept">Valider mes dates</button>'+
+ '<button type="button" data-ev3-answer="decline">Je ne participe pas</button>':"")+
+ (meetingLink(event)?'<a class="ev3-modal-link" href="'+escapeHTML(meetingLink(event))+'">💬 Discussion</a>':"")+
+ (event.can_invite?'<button type="button" data-ev3-invite>＋ Inviter</button>':"")+
+ (event.can_manage?'<button type="button" data-ev3-edit>✎ Modifier</button>'+
+ '<button type="button" data-ev3-cancel>Annuler</button>':"")+'</div>'+
  '<p class="ev3-modal-error" role="status"></p></div>';
- d.querySelector("[data-ev3-close]").onclick=closeModal;
- d.querySelectorAll("[data-ev3-answer]").forEach(b=>b.onclick=async()=>{
-  const decline=b.dataset.ev3Answer==="decline",selected=[...d.querySelectorAll('input[name="dates"]:checked')].map(x=>x.value);
-  if(!decline&&!selected.length){d.querySelector(".ev3-modal-error").textContent="Sélectionne au moins une date.";return}
-  b.disabled=true;try{const j=await call("respond",{event_id:e.id,revision:e.revision,selected_dates:decline?[]:selected,declined:decline});state.events=j.events||[];closeModal();message("Réponse enregistrée.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message;b.disabled=false}
+ dialogEl.querySelector("[data-ev3-close]").onclick=closeModal;
+ dialogEl.querySelectorAll("[data-ev3-answer]").forEach(button=>button.onclick=async()=>{
+  const decline=button.dataset.ev3Answer==="decline",
+   selected=[...dialogEl.querySelectorAll('input[name="dates"]:checked')].map(x=>x.value);
+  if(!decline&&!selected.length){
+   dialogEl.querySelector(".ev3-modal-error").textContent="Sélectionne au moins une date ou indique que tu ne participes pas.";return;
+  }
+  button.disabled=true;
+  try{
+   const updated=await call("respond",{event_id:event.id,revision:event.revision,
+    selected_dates:decline?[]:selected,declined:decline});
+   state.events=updated.events||[];
+   closeModal();
+   message(decline?"Refus enregistré. L'invitation ne nécessite plus de réponse.":"Réponse enregistrée.");
+   render();
+  }catch(err){
+   dialogEl.querySelector(".ev3-modal-error").textContent=err.message;
+   button.disabled=false;
+  }
  });
- d.querySelector("[data-ev3-invite]")?.addEventListener("click",()=>openInvite(e));
- d.querySelector("[data-ev3-edit]")?.addEventListener("click",()=>openEditor(e));
- d.querySelector("[data-ev3-cancel]")?.addEventListener("click",async()=>{if(!confirm("Annuler cette proposition pour tous les collègues ?"))return;try{const j=await call("save",{id:e.id,revision:e.revision,title:e.title,description:e.description,location:e.location,time_label:e.time_label,dates:e.dates,status:"cancelled",icon:e.icon});state.events=j.events||[];closeModal();message("Proposition annulée.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message}});
- showActivityDialog(d);
+ dialogEl.querySelector("[data-ev3-invite]")?.addEventListener("click",()=>openInvite(event));
+ dialogEl.querySelector("[data-ev3-edit]")?.addEventListener("click",()=>openEditor(event));
+ dialogEl.querySelector("[data-ev3-cancel]")?.addEventListener("click",async()=>{
+  if(!confirm("Annuler cette proposition pour tous les collègues ?"))return;
+  try{
+   const updated=await call("save",{id:event.id,revision:event.revision,title:event.title,
+    description:event.description,location:event.location,time_label:event.time_label,dates:event.dates,
+    status:"cancelled",icon:event.icon});
+   state.events=updated.events||[];closeModal();message("Proposition annulée.");render();
+  }catch(err){dialogEl.querySelector(".ev3-modal-error").textContent=err.message}
+ });
+ showActivityDialog(dialogEl);
 }
 function openInvite(e,notice=""){
  const event=state.events.find(x=>x.id===e.id)||e;
