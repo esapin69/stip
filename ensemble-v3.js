@@ -11,7 +11,7 @@ const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
 const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
-const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
+const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Ensemble désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
 const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
@@ -101,17 +101,19 @@ function calendarHTML(){
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
- const unactivated=state.people.filter(p=>p.access_ready===false).length;
- return '<label class="ev3-search-label">Inviter des collègues <small>'+state.people.length+' collègues disponibles</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
+ const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
+ const restricted=state.people.filter(p=>p.can_invite===false).length;
+ return '<label class="ev3-search-label">Inviter des collègues <small>'+state.people.filter(p=>p.can_invite!==false).length+' collègues invitables</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+peopleOptions("")+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
- (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès à Ensemble.</p>':"");
+ (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès à Ensemble.</p>':"")+
+ (restricted?'<p class="ev3-directory-hint">« Ensemble désactivé » : ce collègue est dans l’annuaire, mais un administrateur doit réactiver son accès avant une nouvelle invitation.</p>':"");
 }
 function peopleOptions(query){
  const q=normalizedName(query);
  const matches=state.people.filter(p=>normalizedName(p.name).includes(q));
  return matches.map(p=>
-  '<label class="ev3-person"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+'>'+personMarkup(p)+'</label>').join("")||
+  '<label class="ev3-person'+(p.can_invite===false?' is-restricted':'')+'"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+' '+(p.can_invite===false?'disabled aria-label="Invitation indisponible"':'')+'>'+personMarkup(p)+'</label>').join("")||
  (state.peopleError?'<p>Annuaire indisponible : actualise la page.</p>':'<p>Aucun collègue correspondant à cette recherche.</p>');
 }
 function formHTML(){
@@ -257,14 +259,14 @@ function openInvite(e,notice=""){
  '<div class="ev3-invited-person"><span><b>'+escapeHTML(person.name)+'</b><small>'+escapeHTML(statusName(person.status))+'</small></span>'+
  '<button type="button" data-ev3-uninvite="'+escapeHTML(person.id)+'" data-name="'+escapeHTML(person.name)+'" aria-label="Retirer '+escapeHTML(person.name)+'">Retirer</button></div>').join("")+'</div>':
  '<p>Personne n’a encore été invité.</p>')+'</section>'+
- '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div></section>'+
+ '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div><p class="ev3-directory-hint">Les collègues dont Ensemble est désactivé restent visibles mais ne peuvent pas recevoir de nouvelle invitation.</p></section>'+
  '<button type="button" class="ev3-primary" id="ev3SendInvites">Envoyer les invitations</button>'+
  '<p class="ev3-modal-error" role="status">'+escapeHTML(notice)+'</p></div>';
  const error=d.querySelector(".ev3-modal-error");
  const draw=()=>{
   const q=normalizedName(byId("ev3InviteSearch")?.value||"");
   byId("ev3InviteList").innerHTML=state.people.filter(p=>!invitedIds.has(p.id)&&normalizedName(p.name).includes(q)).map(p=>
-   '<label class="ev3-person"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+'>'+personMarkup(p)+'</label>').join("")||"<p>Aucun autre collègue.</p>";
+   '<label class="ev3-person'+(p.can_invite===false?' is-restricted':'')+'"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+' '+(p.can_invite===false?'disabled aria-label="Invitation indisponible"':'')+'>'+personMarkup(p)+'</label>').join("")||"<p>Aucun autre collègue.</p>";
   byId("ev3InviteList").querySelectorAll("[data-person]").forEach(input=>input.onchange=()=>{
    if(input.checked)selected.add(input.dataset.person);else selected.delete(input.dataset.person);
   });
@@ -281,7 +283,7 @@ function openInvite(e,notice=""){
   }catch(err){error.textContent=err.message;button.disabled=false}
  });
  byId("ev3SendInvites").onclick=async()=>{
-  if(!selected.size){error.textContent="Sélectionne au moins un collègue.";return}
+  if(!selected.size){error.textContent="Sélectionne un collègue pouvant recevoir une invitation. Les accès désactivés doivent être réactivés par un administrateur.";return}
   const send=byId("ev3SendInvites");send.disabled=true;error.textContent="Envoi des invitations…";
   try{
    const j=await call("invite",{event_id:event.id,agent_ids:[...selected]});
