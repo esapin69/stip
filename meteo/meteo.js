@@ -14,7 +14,7 @@
     location: readLocation(),
     payload: null,
     updated: 0,
-    selected: 0,
+    selected: null,
     loading: false,
     request: null,
     cityAbort: null,
@@ -151,14 +151,14 @@
     const day = data && data.daily;
     const hour = data && data.hourly;
     return !!(data && data.current && day &&
-      Array.isArray(day.time) && day.time.length >= 7 &&
-      Array.isArray(day.temperature_2m_max) && day.temperature_2m_max.length >= 7 &&
-      Array.isArray(day.temperature_2m_min) && day.temperature_2m_min.length >= 7 &&
+      Array.isArray(day.time) && day.time.length >= 16 &&
+      Array.isArray(day.temperature_2m_max) && day.temperature_2m_max.length >= 16 &&
+      Array.isArray(day.temperature_2m_min) && day.temperature_2m_min.length >= 16 &&
       Array.isArray(day.precipitation_probability_max) &&
-      day.precipitation_probability_max.length >= 7 &&
-      Array.isArray(day.rain_sum) && day.rain_sum.length >= 7 &&
-      Array.isArray(day.weather_code) && day.weather_code.length >= 7 &&
-      hour && Array.isArray(hour.time) && hour.time.length >= 7 &&
+      day.precipitation_probability_max.length >= 16 &&
+      Array.isArray(day.rain_sum) && day.rain_sum.length >= 16 &&
+      Array.isArray(day.weather_code) && day.weather_code.length >= 16 &&
+      hour && Array.isArray(hour.time) && hour.time.length >= 16 &&
       Array.isArray(hour.temperature_2m) &&
       Array.isArray(hour.precipitation_probability) &&
       Array.isArray(hour.rain) && Array.isArray(hour.weather_code));
@@ -191,11 +191,15 @@
   function renderDays() {
     const day = state.payload && state.payload.daily;
     if (!day) return;
-    $("forecast-grid").innerHTML = day.time.slice(0, 7).map((dateIso, i) => {
+    const grid = $("forecast-grid");
+    const panel = $("detail-section");
+    // Move the details outside the grid before replacing card markup.
+    if (panel.parentElement === grid) grid.after(panel);
+    grid.innerHTML = day.time.slice(0, 16).map((dateIso, i) => {
       const condition = forecastStatus(day.weather_code[i]);
       const selected = state.selected === i;
       return '<button class="day-card' + (selected ? ' is-active' : '') +
-        '" type="button" data-index="' + i + '" aria-pressed="' + selected +
+        '" type="button" data-index="' + i + '" aria-controls="detail-section" aria-expanded="' + selected +
         '" aria-label="' + esc(labelForDate(dateIso, i) + " " + shortDate(dateIso) +
         ", " + condition[0] + ", maximale " +
         temperature(day.temperature_2m_max[i]) + ", minimale " +
@@ -215,15 +219,39 @@
         esc(percent(day.precipitation_probability_max[i])) + '</strong></span>' +
         '<span class="card-metric"><span class="metric-label">💧 Pluie prévue</span><strong class="rain-mm">' +
         esc(rainfall(day.rain_sum[i])) + '</strong></span></span>' +
-        '<span class="card-cta">Voir heure par heure →</span></button>';
+        '<span class="card-cta">' + (selected ? "Masquer le détail ↑" : "Voir heure par heure ↓") + '</span></button>';
     }).join("");
-    $("forecast-grid").setAttribute("aria-busy", "false");
+    grid.setAttribute("aria-busy", "false");
+    positionDetails();
+  }
+
+  function detailColumns() {
+    // These match the three CSS grid breakpoints.
+    if (window.matchMedia("(max-width: 650px)").matches) return 2;
+    if (window.matchMedia("(max-width: 1020px)").matches) return 4;
+    return 7;
+  }
+
+  function positionDetails() {
+    const panel = $("detail-section");
+    const grid = $("forecast-grid");
+    if (state.selected === null) {
+      panel.hidden = true;
+      return;
+    }
+    const columns = detailColumns();
+    const lastIndex = Math.min(
+      Math.floor(state.selected / columns) * columns + columns - 1,
+      15
+    );
+    const lastCard = grid.querySelector('button[data-index="' + lastIndex + '"]');
+    if (lastCard) lastCard.after(panel);
   }
 
   function renderDetails() {
     const payload = state.payload;
     const section = $("detail-section");
-    if (!payload) {
+    if (!payload || state.selected === null) {
       section.hidden = true;
       return;
     }
@@ -252,6 +280,7 @@
     }
     $("hourly-list").innerHTML = cards || '<p>Données horaires indisponibles pour ce jour.</p>';
     $("hourly-scroll").scrollLeft = 0;
+    positionDetails();
     section.hidden = false;
   }
 
@@ -269,7 +298,7 @@
       latitude: String(state.location.lat),
       longitude: String(state.location.lon),
       timezone: "auto",
-      forecast_days: "7",
+      forecast_days: "16",
       current: [
         "temperature_2m", "apparent_temperature", "weather_code",
         "is_day", "wind_speed_10m", "precipitation"
@@ -361,7 +390,7 @@
   function selectLocation(loc) {
     if (state.cityAbort) state.cityAbort.abort();
     state.location = loc;
-    state.selected = 0;
+    state.selected = null;
     persistLocation();
     $("city-input").value = "";
     $("city-results").replaceChildren();
@@ -423,16 +452,33 @@
     const card = event.target.closest("button[data-index]");
     if (!card || !state.payload) return;
     const index = Number(card.dataset.index);
-    if (!Number.isInteger(index) || index < 0 || index > 6) return;
-    state.selected = index;
+    if (!Number.isInteger(index) || index < 0 || index > 15) return;
+    state.selected = state.selected === index ? null : index;
     renderDays();
     renderDetails();
-    $("detail-section").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (state.selected !== null) {
+      // The panel is now directly under the selected row, never at the page bottom.
+      $("detail-section").scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "instant" : "smooth",
+        block: "nearest"
+      });
+    }
+    $("forecast-grid").querySelector('button[data-index="' + index + '"]')?.focus({
+      preventScroll: true
+    });
   });
 
   $("close-detail").addEventListener("click", () => {
-    $("detail-section").hidden = true;
-    $("forecast-grid").querySelector('[data-index="' + state.selected + '"]')?.focus();
+    const previous = state.selected;
+    state.selected = null;
+    renderDays();
+    renderDetails();
+    if (previous !== null) {
+      $("forecast-grid").querySelector('[data-index="' + previous + '"]')?.focus({
+        preventScroll: true
+      });
+    }
   });
 
   $("refresh-btn").addEventListener("click", () => updateForecast(true));
@@ -487,6 +533,14 @@
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 10 * 60 * 1000 }
     );
+  });
+
+  let resizeTimer;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (state.selected !== null) positionDetails();
+    }, 130);
   });
 
   document.addEventListener("visibilitychange", () => {
