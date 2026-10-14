@@ -316,7 +316,8 @@ async function list(c:any){
   });
   // Ne pas divulguer les horaires individuels : exposer uniquement la compatibilité des dates.
   const endOfOrganizer=ends.get(e.organizer_agent_id)||new Map<string,string>();
-  const dateRoster=Object.fromEntries((e.dates||[]).filter((day:string)=>day>=today()).map((day:string)=>{
+  const canReadRoster=e.organizer_agent_id===c.agent_id||invited.has(e.id)||!!mine;
+  const dateRoster=Object.fromEntries((e.dates||[]).filter((day:string)=>day>=today()&&canReadRoster).map((day:string)=>{
     const roster:any[]=[];
     if(e.organizer_agent_id)roster.push({agent_id:e.organizer_agent_id,
       name:organizerNames.get(e.organizer_agent_id)||'Organisateur',
@@ -347,7 +348,7 @@ async function list(c:any){
    can_invite:e.organizer_agent_id===c.agent_id,
    invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
-   needs_response:active&&(e.dates||[]).some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&(!mine||mine.revision!==e.revision),
+   needs_response:active&&(e.dates||[]).some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&invited.get(e.id)!=='declined'&&!mine?.declined&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
    response_count:rs.length,declined_count:rs.filter((r:any)=>r.declined).length}
  }).filter(Boolean)}
