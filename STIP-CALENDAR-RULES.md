@@ -68,6 +68,21 @@ La carte peut afficher selon le contexte : jour + numéro, shift, pictogramme pr
 
 Les événements restent attachés à leur date ISO. Ajouter le lundi suivant ne doit jamais décaler les événements des autres jours.
 
+### 5.1 Représentation hebdomadaire des shifts
+
+- **Poste travaillé** : un seul badge de la famille du **tableau mensuel**
+  (`STIPMonthTable.shiftBadgeHtml`) au lieu du couple code + pictogramme.
+  Les deux horaires exacts, s'ils sont renseignés, apparaissent dessous
+  sur **une seule ligne**, avec la couleur du shift.
+- **Jour non travaillé** : un seul pictogramme provenant du registre
+  (`STIPShiftRegistry.icon`), sans deuxième rangée de code.
+- **Rendez-vous/événements** : rangée séparée uniquement si elle contient
+  des informations. Le retour au jour courant, les clics et le swipe restent inchangés.
+- **Légendes** : incluent seulement les symboles et événements présents
+  dans la semaine visible et le mois affiché ; leurs libellés et horaires
+  découlent des mêmes lignes de planning que les cases, pas d'une palette figée.
+- Les vues Responsables, équipe et la géométrie mensuelle sont préservées.
+
 ## 6. États visuels protégés
 
 - « Aujourd’hui » et « sélectionné » sont deux états différents.
