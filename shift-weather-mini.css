@@ -69,3 +69,26 @@
 
 /* Flexible slots are availability windows, not confirmed work hours. */
 .hc-shift-detail-time.is-flexible>strong{font-size:clamp(1rem,4vw,1.35rem);line-height:1.3;white-space:normal;overflow-wrap:anywhere}
+
+/* Shift endpoint temperatures: reused by the detailed planning dialog. */
+.hc-shift-detail-time .hc-shift-weather-mini .thf-weather-endpoints{
+  display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+  align-items:center;gap:7px;width:100%;max-width:100%;
+  min-width:0;font-variant-numeric:tabular-nums;
+}
+.hc-shift-detail-time .hc-shift-weather-mini .thf-weather-point{
+  display:flex;flex-direction:column;gap:2px;align-items:center;min-width:0;
+}
+.hc-shift-detail-time .hc-shift-weather-mini .thf-weather-point small{
+  font-size:.66rem;line-height:1.1;font-weight:800;color:#547687;
+}
+.hc-shift-detail-time .hc-shift-weather-mini .thf-weather-point strong{
+  font-size:1.12rem;line-height:1.12;font-weight:900;color:#164b61;
+}
+.hc-shift-detail-time .hc-shift-weather-mini .thf-weather-arrow{
+  font-size:1rem;font-weight:900;color:#678c9c;
+}
+.hc-shift-detail-time .hc-shift-weather-mini .hc-shift-weather-state{
+  display:block;font-size:.69rem;line-height:1.25;
+  font-weight:850;color:#396577;max-width:100%;text-align:center;
+}

@@ -2,98 +2,118 @@ import { readFileSync } from "node:fs";
 import assert from "node:assert/strict";
 import vm from "node:vm";
 
-const read = path => readFileSync(path, "utf8");
+const read = name => readFileSync(name, "utf8");
 const home = read("team-home-fusion.js");
 const css = read("team-home-fusion.css");
 const weather = read("shift-weather-mini.js");
-const html = read("index.html");
-const sw = read("stip-sw.js");
+const index = read("index.html");
 const loader = read("stip-loader.js");
+const worker = read("stip-sw.js");
 
-const seasonSource = home.match(/function seasonForDay\(day\) \{([\s\S]*?)\n  \}/)?.[1];
-const periodSource = home.match(/function periodForShift\(hours\) \{([\s\S]*?)\n  \}/)?.[1];
-assert(seasonSource && periodSource, "Season and service-hour classifiers are required");
-const seasonForDay = new Function("day", seasonSource);
-const periodForShift = new Function("range", "hours", periodSource);
-assert.equal(seasonForDay("2026-03-01"), "spring");
-assert.equal(seasonForDay("2026-07-10"), "summer");
-assert.equal(seasonForDay("2026-10-14"), "autumn");
-assert.equal(seasonForDay("2026-12-25"), "winter");
-assert.equal(periodForShift(v => v, [610, 1080]), "day");
-assert.equal(periodForShift(v => v, [1170, 1230]), "evening");
-assert.equal(periodForShift(v => v, [1300, 1500]), "night");
+assert.match(home, /function seasonForDay\(day\)/);
+assert.match(home, /class="thf-weather-stage thf-weather-sky"/);
+assert.doesNotMatch(home, /IntersectionObserver|watchWeather|periodForShift/);
+assert.doesNotMatch(home, /thf-lightning|thf-cloud cloud-one/);
+assert.doesNotMatch(css, /@keyframes thf-|thf-weather-cloud-drift|thf-weather-fall\b|thf-flash|animation:\s*thf-/);
+assert.doesNotMatch(css, /#19305cb8|data-period="night"/);
+for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
+  "rain", "heavy-rain", "storm", "snow", "mixed"]) {
+  assert(css.includes('data-sky="' + sky + '"'), "Static visual missing: " + sky);
+}
+const start = home.indexOf("thf-weather-stage thf-weather-sky");
+const shift = home.indexOf("thf-day-post", start);
+const colleagues = home.indexOf("thf-shift-colleagues", shift);
+const chief = home.indexOf("thf-day-chief", colleagues);
+assert(start >= 0 && shift > start && colleagues > shift && chief > colleagues);
+assert(home.slice(colleagues, chief).includes("'</div></div><div"), "Weather must end before chiefs");
 
-const sceneStart = home.indexOf('thf-weather-stage thf-weather-sky');
-const header = home.indexOf('thf-day-trigger', sceneStart);
-const stageBody = home.indexOf('thf-weather-body', header);
-const post = home.indexOf('thf-day-post', stageBody);
-const colleagues = home.indexOf('thf-shift-colleagues', post);
-const chiefs = home.indexOf('thf-day-chief', colleagues);
-assert(sceneStart >= 0 && sceneStart < header && header < stageBody &&
-  stageBody < post && post < colleagues && colleagues < chiefs,
-  "The scene must include date, shift and colleagues but exclude chiefs");
-assert(home.includes("watchWeather(host);") &&
-  home.includes("IntersectionObserver") &&
-  home.includes("visibilitychange"), "Offscreen and background pause are required");
-assert(css.includes("prefers-reduced-motion:reduce") &&
-  css.includes("prefers-reduced-data:reduce") &&
-  css.includes("thf-weather-page-hidden"), "Respect motion and data-saving modes");
-const effects = css.slice(css.indexOf("/* Météo légère et saisonnière"));
-assert(effects && !/url\(|@import|image-set\(/i.test(effects),
-  "Weather animation cannot download media assets");
+const build = index.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
+assert(build);
+assert.equal(loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1], build);
+assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], build);
+for (const asset of ["team-home-fusion.css", "team-home-fusion.js",
+  "stip-loader.js", "stip-sw.js", "shift-weather-mini.js"])
+  assert(index.includes(asset + "?v=" + build), "Cache version: " + asset);
+assert.match(weather, /const CACHE_TTL = 20 \* 60 \* 1000/);
+assert.match(weather, /const API = "https:\/\/api\.open-meteo\.com\/v1\/forecast"/);
 
-const build = html.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
-const loaderBuild = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
-const swBuild = sw.match(/STIP_SW_BUILD="([^"]+)"/)?.[1];
-assert(build && build === loaderBuild && build === swBuild, "Runtime builds must match");
-for (const asset of ["team-home-fusion.js", "team-home-fusion.css", "stip-loader.js", "stip-sw.js"])
-  assert(html.includes(asset + "?v=" + build), "Asset cache version mismatch: " + asset);
-
-// Existing Open-Meteo client: two cards must share the original single forecast fetch.
-const parts = new Intl.DateTimeFormat("en-GB", {
+const fmt = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Paris", year: "numeric", month: "2-digit", day: "2-digit"
 }).formatToParts(new Date());
-const part = type => parts.find(p => p.type === type).value;
+const part = type => fmt.find(x => x.type === type).value;
 const day = part("year") + "-" + part("month") + "-" + part("day");
-const rows = [];
-for (let d = 0; d < 16; d++) {
+const next = new Date(day + "T12:00:00Z");
+next.setUTCDate(next.getUTCDate() + 1);
+const tomorrow = next.toISOString().slice(0, 10);
+const time = [];
+for (let n = 0; n < 16; n++) {
   const date = new Date(day + "T12:00:00Z");
-  date.setUTCDate(date.getUTCDate() + d);
+  date.setUTCDate(date.getUTCDate() + n);
   for (let hour = 0; hour < 24; hour++)
-    rows.push(date.toISOString().slice(0, 10) + "T" + String(hour).padStart(2, "0") + ":00");
+    time.push(date.toISOString().slice(0, 10) + "T" +
+      String(hour).padStart(2, "0") + ":00");
 }
-const data = {hourly: {
-  time:rows,
-  temperature_2m:rows.map(() => 15),
-  precipitation_probability:rows.map(() => 10),
-  precipitation:rows.map(() => 0),
-  weather_code:rows.map(() => 45),
-  cloud_cover:rows.map(() => 95)
-}};
-let requests = 0;
+const hour = s => Number(s.slice(11, 13));
+const hourly = {
+  time,
+  temperature_2m:time.map(s => ({10:10,11:16,18:20,21:12,22:14,5:7})[hour(s)] ?? 16),
+  precipitation_probability:time.map(() => 10),
+  precipitation:time.map(() => 0),
+  weather_code:time.map(s => s === day + "T10:00" ? 45 : 3),
+  cloud_cover:time.map(() => 95)
+};
+let calls = 0;
+const element = tag => ({
+  tagName:tag, className:"", textContent:"", children:[],
+  append(...children){this.children.push(...children)},
+  setAttribute(name,value){this[name]=value}
+});
 const sandbox = {
-  window: {},
-  document: {createElement: tag => ({tagName:tag, className:"", textContent:"", title:""})},
-  fetch: async () => {requests++; return {ok:true,json:async()=>data}},
-  localStorage: {getItem:()=>null,setItem:()=>{}},
+  window:{}, document:{createElement:element},
+  localStorage:{getItem:()=>null,setItem:()=>{}},
+  fetch:async () => {calls++; return {ok:true,json:async()=>({hourly})}},
   URLSearchParams,AbortController,setTimeout,clearTimeout,Date,Intl
 };
 vm.runInNewContext(weather, sandbox);
-const makeHost = () => {
+const mount = sandbox.window.STIPShiftWeather.mount;
+const host = () => {
   const scene = {dataset:{},setAttribute(){}};
-  return {scene,isConnected:true,hidden:true,
+  return {scene,hidden:true,isConnected:true,children:[],
     closest:()=>scene,replaceChildren(){this.children=[]},
-    append(...children){this.children.push(...children)}};
+    append(...nodes){this.children.push(...nodes)}};
 };
-const first = makeHost(), second = makeHost();
-await sandbox.window.STIPShiftWeather.mount(first, {
-  date:day,start:"10h10",end:"18h00",isWorking:true,compact:true
-});
-await sandbox.window.STIPShiftWeather.mount(second, {
-  date:day,start:"10h10",end:"18h00",isWorking:true,compact:true
-});
-assert.equal(requests, 1, "Both cards must reuse the same cached weather data");
-assert.equal(first.scene.dataset.sky, "fog", "Actual forecast must drive the scene");
-assert.equal(second.scene.dataset.sky, "fog");
-assert.equal(first.hidden,false,"Weather values must appear");
-console.log("Weather ambience: seasons, stage boundary, motion safety, builds, cache and real sky OK");
+const one=host(), two=host(), nextDay=host();
+const args={date:day,start:"10h10",end:"18h00",isWorking:true,compact:true};
+await Promise.all([mount(one,args),mount(two,args),
+  mount(nextDay,{...args,date:tomorrow})]);
+assert.equal(calls,1,"Concurrent agents must share one forecast fetch");
+const values = root => root.children[0].children;
+assert.equal(values(one)[0].children[0].textContent,"10h10");
+assert.equal(values(one)[0].children[1].textContent,"11°",
+  "10:10 must interpolate 10:00 and 11:00 forecasts");
+assert.equal(values(one)[2].children[0].textContent,"18h00");
+assert.equal(values(one)[2].children[1].textContent,"20°",
+  "18:00 must use the 18:00 forecast, not the shift maximum");
+assert.equal(one.scene.dataset.sky,"cloudy",
+  "One foggy hour must not label the entire shift as fog");
+assert.equal(two.scene.dataset.sky,"cloudy");
+assert.equal(JSON.stringify(one.children),JSON.stringify(two.children),
+  "Same day and shift must produce identical temperatures and sky");
+assert.equal(one.hidden,false);
+await mount(one,args);
+assert.equal(calls,1,"Cached forecasts must not be downloaded again");
+
+// Different hours read the same forecast, including overnight service.
+const overnight=host();
+await mount(overnight,{date:day,start:"21h30",end:"05h00",isWorking:true,compact:true});
+assert.equal(calls,1);
+assert.equal(values(overnight)[0].children[1].textContent,"13°");
+assert.equal(values(overnight)[2].children[0].textContent,"05h00");
+assert.equal(values(overnight)[2].children[1].textContent,"7°");
+
+// If a forecast for the service's endpoint is missing, never invent it.
+const impossible=host();
+await mount(impossible,{date:day,start:"10h10",end:"10h10",isWorking:true,compact:true});
+assert.equal(impossible.hidden,true);
+
+console.log("Shift weather: hourly endpoints, dominant sky, overnight, static visuals, cache and mobile assets OK");

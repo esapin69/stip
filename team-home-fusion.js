@@ -7,41 +7,13 @@
   const weeks = new Map(), days = new Map(), assistants = new Map(), activities = new Map(), chiefsCache = new Map();
   let owner = "";
   let activeHost = null;
-  // Only visible cards animate; a single observer is reused across repaints.
-  let weatherObserver = null;
-  function watchWeather(host) {
-    if (host._thfWeatherScene && weatherObserver)
-      weatherObserver.unobserve(host._thfWeatherScene);
-    const scene = host.querySelector(".thf-weather-stage");
-    host._thfWeatherScene = scene;
-    if (!scene) return;
-    if (typeof IntersectionObserver !== "function") {
-      scene.classList.add("is-weather-visible");
-      return;
-    }
-    if (!weatherObserver) weatherObserver = new IntersectionObserver(entries => {
-      for (const entry of entries)
-        entry.target.classList.toggle("is-weather-visible", entry.isIntersecting);
-    }, { threshold: 0.01 });
-    weatherObserver.observe(scene);
-  }
+  // Seasonal accent is purely decorative. No animation or time-of-phone theme.
   function seasonForDay(day) {
     const month = Number(String(day).slice(5, 7));
     return month >= 3 && month <= 5 ? "spring" :
       month >= 6 && month <= 8 ? "summer" :
       month >= 9 && month <= 11 ? "autumn" : "winter";
   }
-  function periodForShift(hours) {
-    const window = range(hours);
-    if (!window) return "day";
-    const mid = ((window[0] + window[1]) / 2) % 1440;
-    return mid < 420 || mid >= 1260 ? "night" :
-      mid >= 1110 ? "evening" : mid < 540 ? "morning" : "day";
-  }
-  const updatePageVisibility = () =>
-    document.documentElement.classList.toggle("thf-weather-page-hidden", document.hidden);
-  document.addEventListener("visibilitychange", updatePageVisibility);
-  updatePageVisibility();
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const dateObj = (v) => new Date(String(v).slice(0,10) + "T12:00:00");
   const iso = (d) => [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
@@ -324,9 +296,8 @@
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
       '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence")+'">'+
-      '<div class="thf-weather-stage thf-weather-sky" data-sky="unknown" data-season="'+seasonForDay(day)+'" data-period="'+periodForShift(myTime)+'">'+
-      '<span class="thf-weather-art" aria-hidden="true"><i class="thf-sun"></i><i class="thf-cloud cloud-one"></i>'+
-      '<i class="thf-cloud cloud-two"></i><i class="thf-rain"></i><i class="thf-snow"></i><i class="thf-lightning"></i><i class="thf-season-detail"></i></span>'+
+      '<div class="thf-weather-stage thf-weather-sky" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
+      '<span class="thf-weather-art" aria-hidden="true"></span>'+
       '<button type="button" class="thf-day-trigger" data-thf-open="day" '+
       'aria-label="Détails du '+esc(longDate)+'">'+
       '<span class="thf-day-heading" aria-label="'+esc(longDate)+'"><span>'+esc(dateWeek)+'</span>'+
@@ -364,7 +335,6 @@
       '</div>'+
       '<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>'+
       '</article>';
-    watchWeather(host);
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
       const hours=String(myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
@@ -391,8 +361,7 @@
     const info=(host._thfNotes||[]).length;
     const sky=host.querySelector?.(".thf-weather-sky")?.dataset?.sky||"unknown";
     showDialog('<header class="thf-popup-hero thf-weather-sky" data-sky="'+esc(sky)+'">'+
-      '<div class="thf-weather-art" aria-hidden="true"><i class="thf-sun"></i><i class="thf-cloud cloud-one"></i>'+
-      '<i class="thf-cloud cloud-two"></i><i class="thf-rain"></i><i class="thf-snow"></i><i class="thf-lightning"></i></div>'+
+      '<span class="thf-weather-art" aria-hidden="true"></span>'+
       '<h2>'+esc(s.longDate)+'</h2>'+
       '<div class="thf-popup-weather-summary">'+
       (s.working?'<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>':

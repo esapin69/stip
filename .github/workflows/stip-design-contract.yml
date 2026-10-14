@@ -30,6 +30,9 @@ jobs:
             git push
           fi
 
+      - name: Check shift weather endpoints and static art
+        run: node tools/stip-weather-ambience-contract-test.mjs
+
       - name: Check STIP visual contract
         run: node tools/stip-design-audit.mjs
 
