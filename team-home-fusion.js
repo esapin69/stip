@@ -183,12 +183,20 @@
       team.planning.filter(x=>String(x.date||"").slice(0,10)===day&&isChef(x)):[];
     const fallback=Array.isArray(cached(chiefsCache,"duty")?.items)?
       cached(chiefsCache,"duty").items.filter(x=>String(x.date||"").slice(0,10)===day):[];
+    // Seuls les shifts effectivement travaillés : les codes RH, F0, CP, maladie,
+    // formation et toute absence ne désignent jamais un chef en poste.
     const all=listed.length?listed:fallback;
-    // Afficher TOUS les chefs planifiés du jour, et leurs horaires complets.
-    // Ne pas limiter aux chevauchements du poste personnel.
+    const registry=window.STIPShiftRegistry;
+    const workingChief=x=>{
+      const def=registry?.resolveFor?.(x.code,{team:"chefs"})||definition(x.code);
+      return Boolean(def?.is_working)&&Boolean(
+        range(shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}}))
+      );
+    };
     const seen=new Set();
     return all.filter(x=>{
-      const key=[x.agents?.source_key||name(x.agents),x.code].join("|");
+      if(!workingChief(x))return false;
+      const key=[x.agents?.source_key||name(x.agents),base(x.code)].join("|");
       if(seen.has(key))return false;seen.add(key);return true;
     }).sort((a,b)=>String(shiftTime(a.code,{...a,agents:{...a.agents,role:"chef",type_planning:"chefs"}}))
        .localeCompare(String(shiftTime(b.code,{...b,agents:{...b.agents,role:"chef",type_planning:"chefs"}}))));
@@ -241,37 +249,59 @@
     const hcl=planned!=null&&target!=null?planned+"/"+target:"—";
     const status=delta==null?"unknown":delta<0?"warning":delta>0?"opportunity":"ok";
     const badge=delta==null?"○":delta<0?"⚠":delta>0?"+":"✓";
-    const chefNames=chiefs.map(x=>name(x.agents)).filter(Boolean);
-    const chiefLabel=chefNames.length?chefNames[0]+(chefNames.length>1?" +"+(chefNames.length-1):""):
-      loaded?"Chef non renseigné":"Chargement du chef…";
-    const chefDisplay=chiefs.length?chiefs.map(x=>{
+    const chiefLabel=chiefs.length?chiefs.map(x=>name(x.agents)).join(", "):
+      loaded?"Aucun chef en poste renseigné":"Chargement du planning chef…";
+    const chiefDisplay=chiefs.length?chiefs.slice(0,2).map(x=>{
       const hours=shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}});
       return '<span class="thf-chief-line"><strong>'+esc(name(x.agents))+'</strong>'+
-        '<em>'+esc([shiftLabel(x.code),hours||"Horaires non renseignés"].filter(Boolean).join(" · "))+'</em></span>';
-    }).join(""):'<strong class="thf-chief-missing">'+esc(chiefLabel)+'</strong>';
+        '<em>'+esc(hours||"Horaires non renseignés")+'</em></span>';
+    }).join("")+(chiefs.length>2?'<small>+'+(chiefs.length-2)+' autre(s) ›</small>':""):
+      '<span class="thf-chief-missing">'+esc(chiefLabel)+'</span>';
     const leisureEvents=window.STIPLeisure?.dayItems?.(day)||[];
     host._thfLeisureEvents=leisureEvents;
+    // Une colonne est une fiche lisible ; chaque action est un bouton distinct,
+    // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
-      '<button type="button" class="thf-day-open '+(working?shiftClass(myCode):"shift-absence")+
-      '" data-thf-open="day" aria-label="Afficher le détail '+esc(label)+'">'+
+      '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence")+'">'+
+      '<button type="button" class="thf-day-trigger" data-thf-open="day" aria-label="Détails '+esc(label)+'">'+
       '<span class="thf-day-heading"><strong>'+esc(label)+'</strong><small>'+esc(dayLabel)+'</small></span>'+
-      '<span class="thf-day-post"><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
-      '</strong><small>'+esc(myTime||"")+'</small></span>'+
-      '<span class="thf-day-chief"><span class="thf-day-chief-icon" aria-hidden="true">🎨</span><span class="thf-day-chief-person"><small>Chef du service</small>'+chefDisplay+'</span></span>'+
+      '<span class="thf-trigger-chevron" aria-hidden="true">›</span></button>'+
+      '<div class="thf-day-body">'+
+      '<div class="thf-day-post"><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
+      '</strong><small>'+esc(myTime||"Pas de service")+'</small></div>'+
+      '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
+      '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
+      '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
       (working&&myTime?
-        '<span class="thf-day-weather"><span class="thf-weather-heading">🌤 Météo du shift</span>'+
-        '<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span><small class="thf-weather-fallback">Prévisions indisponibles</small></span>':
-        '<span class="thf-day-weather thf-day-weather-empty">Pas de météo de poste</span>')+
-      '<span class="thf-day-numbers">'+
-      (perm.planning_team?'<span title="Collègues sur le même poste">👥 <b>'+(loaded?exact.length:"…")+'</b></span>':"")+
-      (perm.planning_team?'<span title="Effectifs / cible HCL" class="status-'+esc(status)+'"><i>'+badge+'</i> <b>'+esc(hcl)+'</b> HCL</span>':"")+
-      '</span>'+
-      (leisureEvents.length?'<span class="thf-day-events" aria-label="Rendez-vous entre collègues du jour">'+
-        leisureEvents.slice(0,2).map(item=>'<span class="thf-day-event"><span aria-hidden="true">'+esc(item.icon)+'</span>'+
-          '<strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small></span>').join("")+
-        (leisureEvents.length>2?'<small>+'+(leisureEvents.length-2)+' autres</small>':"")+'</span>':"")+
-      (uniqueInfos.length?'<span class="thf-day-brief">📌 '+uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir</span>':"")+
-      '<span class="thf-day-more">Voir la journée <span aria-hidden="true">›</span></span></button>';
+        '<div class="thf-day-weather"><div class="thf-section-label">🌤 MÉTÉO PENDANT MON POSTE</div>'+
+        '<div class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></div>'+
+        '<small class="thf-weather-fallback">Prévisions indisponibles</small></div>':
+        '')+
+      '<div class="thf-day-numbers">'+
+      (perm.planning_team?'<button type="button" data-thf-open="people" aria-label="Voir mes collègues '+esc(label)+'">👥 <b>'+
+        (loaded?exact.length:"…")+'</b><small>collègues</small></button>':"")+
+      (perm.planning_team?'<button type="button" data-thf-open="staff" class="status-'+esc(status)+
+        '" aria-label="Voir les effectifs HCL '+esc(label)+'"><i>'+badge+'</i> <b>'+esc(hcl)+
+        '</b><small>HCL</small></button>':"")+
+      '</div>'+
+      (leisureEvents.length?'<section class="thf-day-events" aria-label="Activités du jour">'+
+        '<div class="thf-section-label">📅 APRÈS LE SERVICE</div>'+
+        leisureEvents.slice(0,2).map(item=>
+          '<button type="button" class="thf-day-event" data-ev3-preview="'+esc(item.id)+
+          '" aria-label="'+esc(item.title)+' · '+esc(item.stateLabel||item.status||"")+'">'+
+          '<span class="thf-event-icon" aria-hidden="true">'+esc(item.icon)+'</span>'+
+          '<span class="thf-event-copy"><strong>'+esc(item.title)+'</strong>'+
+          '<small>'+esc(item.time)+'</small>'+
+          '<em class="'+esc(item.confirmed?"is-confirmed":"is-proposed")+'">'+
+          esc(item.stateLabel||item.status||"Proposition")+'</em></span>'+
+          '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
+        (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
+          (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
+      (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
+        uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir ›</button>':"")+
+      '</div>'+
+      '<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>'+
+      '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
       const hours=String(myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
@@ -296,7 +326,7 @@
     showDialog('<small>MA JOURNÉE · ÉQUIPE</small><h2>'+esc(s.label)+' · '+esc(s.longDate)+'</h2>'+
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
-      '<section class="thf-day-popup-group"><h3>🎨 Chef sur ce créneau</h3>'+chiefHTML+'</section>'+
+      '<section class="thf-day-popup-group"><h3>🎨 Chefs en service ce jour</h3>'+chiefHTML+'</section>'+
       (s.working?'<section class="thf-day-popup-group"><h3>🌤 Météo pendant le poste</h3><p>'+esc(weatherText)+'</p></section>':"")+
       ((host._thfLeisureEvents||[]).length?'<section class="thf-day-popup-group"><h3>📅 Rendez-vous entre collègues</h3>'+
         host._thfLeisureEvents.map(item=>'<button type="button" class="thf-day-popup-event" data-ev3-preview="'+esc(item.id)+'">'+
