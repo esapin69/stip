@@ -343,9 +343,10 @@ async function send(ctx:any,body:any){
       if(["direct","group"].includes(String(conversation.kind||""))){
         const eventType=await notificationType("dm_received");
         if(eventType?.push_enabled){
-          const {data:members}=await db.from("stip_conversation_members").select("agent_id").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
+          const {data:members}=await db.from("stip_conversation_members").select("agent_id,muted").eq("conversation_id",id).neq("agent_id",ctx.agent.id);
           const senderProfile=await messageProfile(String(ctx.agent.id)),senderName=nick(ctx.agent,senderProfile),pushText=text||"Photo",senderAvatar=String(ctx.agent?.profile_photo_url||ctx.agent?.avatar_url||"").trim();
           await Promise.allSettled((members||[]).map(async(m:any)=>{
+            if(m.muted)return; // Event guests who have not accepted retain access, without message notifications.
             const targetState=await notificationPreference(String(m.agent_id),"dm_received");
             if(!targetState.enabled||!targetState.push_enabled)return;
             const targetProfile=await messageProfile(String(m.agent_id)),preview=targetProfile.notification_preview!==false;
@@ -403,8 +404,27 @@ async function home(ctx:any){
   let conversations:any[]=[];
   if(ids.length){
     const{data:convs,error:ce}=await db.from("stip_conversations").select("id,kind,title,last_message_at,created_by_agent_id,communication_family").in("id",ids).eq("communication_family",communicationFamily(ctx)).order("last_message_at",{ascending:false}).limit(30);if(ce)throw ce;
+    // Resolve events by the caller's authorized conversation IDs, not by duplicate titles.
+    const {data:eventLinks,error:linksError}=await db.from("stip_leisure_series_chat")
+      .select("conversation_id,event_id").in("conversation_id",ids);
+    if(linksError)throw linksError;
+    const linkedEventIds=[...new Set((eventLinks||[]).map((x:any)=>x.event_id))];
+    const {data:linkedEvents,error:eventsError}=linkedEventIds.length
+      ?await db.from("stip_leisure_events")
+        .select("id,title,icon,dates,location,time_label,status,organizer_agent_id")
+        .in("id",linkedEventIds)
+      :{data:[] as any[],error:null};
+    if(eventsError)throw eventsError;
+    const {data:linkedInvites,error:invitesError}=linkedEventIds.length
+      ?await db.from("stip_leisure_invites")
+        .select("event_id,agent_id,status").in("event_id",linkedEventIds)
+      :{data:[] as any[],error:null};
+    if(invitesError)throw invitesError;
+    const eventById=new Map((linkedEvents||[]).map((x:any)=>[String(x.id),x]));
+    const eventIdByConversation=new Map((eventLinks||[]).map((x:any)=>[String(x.conversation_id),String(x.event_id)]));
+    const inviteStatusByKey=new Map((linkedInvites||[]).map((x:any)=>[String(x.event_id)+"|"+String(x.agent_id),x.status]));
     for(const c of convs||[]){
-      const{data:members}=await db.from("stip_conversation_members").select("agent_id,agents(id,prenom,nom,ghe)").eq("conversation_id",c.id);
+      const{data:members}=await db.from("stip_conversation_members").select("agent_id,muted,agents(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",c.id);
       const others=(members||[]).filter((m:any)=>String(m.agent_id)!==String(ctx.agent.id));
       const otherIds=others.map((m:any)=>m.agent_id);
       const{data:profs}=otherIds.length?await db.from("stip_message_profiles").select("agent_id,nickname").in("agent_id",otherIds):{data:[] as any[]};
@@ -412,7 +432,26 @@ async function home(ctx:any){
       const{data:last}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id").eq("conversation_id",c.id).is("deleted_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();
       const lastRead=read.get(String(c.id));
       const{count}=await db.from("stip_messages").select("id",{count:"exact",head:true}).eq("conversation_id",c.id).is("deleted_at",null).neq("sender_agent_id",ctx.agent.id).gt("created_at",lastRead||"1970-01-01T00:00:00Z");
-      conversations.push({...c,others:others.map((m:any)=>({...m.agents,nickname:nick(m.agents,pb.get(String(m.agent_id)))})),last_message:last||null,unread:count||0})
+      const eventId=eventIdByConversation.get(String(c.id))||"";
+      const event=eventById.get(eventId)||null;
+      const people=(members||[]).map((m:any)=>({
+        ...m.agents,
+        nickname:nick(m.agents,pb.get(String(m.agent_id))),
+        invite_status:event
+          ?(String(event.organizer_agent_id)===String(m.agent_id)?"organizer"
+            :inviteStatusByKey.get(eventId+"|"+String(m.agent_id))||"participant")
+          :null,
+        muted:!!m.muted
+      }));
+      conversations.push({
+        ...c,
+        event:event?{id:event.id,title:event.title,icon:event.icon||"",dates:event.dates||[],
+          location:event.location||"",time_label:event.time_label||"",status:event.status}:null,
+        participants:people,
+        others:people.filter((x:any)=>String(x.id)!==String(ctx.agent.id)),
+        last_message:last||null,
+        unread:count||0
+      })
     }
   }
   const [agentDirectory,duty,profile,dmPush]=await Promise.all([
