@@ -66,9 +66,11 @@ redondants dans les vues semaine personnelle et les légendes concernées.
   pour les vues affichées ; même symbole que le mois et la semaine.
 - **Moteur :** `STIPShiftRegistry` détermine code/horaires/statut ;
   `STIPMonthTable.shiftBadgeHtml` dessine le badge partagé.
-- Les vues métier non équivalentes (HCL, boutons J4 dans les cartes
-  Aujourd'hui/Demain, plannings d'équipe) ne changent pas de géométrie
-  sans examen propre à leur rôle.
+- **Aujourd’hui / Demain :** le grand carré du shift est remplacé
+  par le même badge du mois, suivi des horaires réels sur une ligne.
+  L'atmosphère météo, le bouton collègues et « Chefs en poste » restent distincts.
+- Les autres vues métier non équivalentes (HCL, plannings d'équipe,
+  agenda Responsable) ne changent pas de géométrie sans examen propre à leur rôle.
 
 La géométrie et les couleurs de cette déclinaison restent **en cours de
 validation visuelle sur téléphone** : ne pas propager aveuglément au site entier.
