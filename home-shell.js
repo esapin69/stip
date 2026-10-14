@@ -2637,7 +2637,7 @@
   function homeModeNav(part = "all") {
     const active =
         state.homeMode === "responsable" ? "" : state.homeMode || "planning",
-      count = notifications().length + Number(window.STIPMessagesUnread || 0),
+      count = notifications().length,
       items = [
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
@@ -2649,7 +2649,7 @@
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     const tDoor = tDoorShortcut();
     const tools = `<div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
-        <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
+        <button type="button" class="hc-profile-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications${count ? ` : ${count} à consulter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>`;
@@ -2991,7 +2991,7 @@
         '<div class="hc-confirm-actions"><button type="button" data-confirm-no><span>❌</span><strong>Annuler</strong></button><button type="button" class="is-confirm" data-confirm-yes><span>✔</span><strong>' +
         esc(confirmLabel) +
         "</strong></button></div></section>";
-      document.body.appendChild(wrap);
+      (document.querySelector("#hcBellDialog[open]") || document.body).appendChild(wrap);
       const done = (v) => {
         wrap.remove();
         resolve(v);
@@ -3063,8 +3063,8 @@
         <button type="button" class="danger" data-detail-delete>Supprimer</button>
       </div>
     </main>`;
-    document.body.appendChild(page);
-    const close = () => page.remove();
+    (options.bellHost || document.body).appendChild(page);
+    const close = () => { page.remove(); options.onClose?.(); };
     page.querySelector("[data-detail-close]").onclick = close;
     page.querySelector("[data-detail-manage]")?.addEventListener("click", () => {
       close();
@@ -3078,8 +3078,8 @@
       }
     });
     page.querySelector("[data-detail-done]")?.addEventListener("click", () => {
-      close();
       dismissActionNote(n);
+      close();
     });
     page.querySelector("[data-detail-delete]").onclick = async () => {
       const ok = await bigConfirm({
@@ -3088,8 +3088,8 @@
         confirmLabel: "Confirmer",
       });
       if (!ok) return;
-      close();
       dismissActionNote(n);
+      close();
     };
     if (options.focusAction)
       requestAnimationFrame(() =>
@@ -3097,6 +3097,7 @@
           .querySelector("[data-detail-manage],[data-detail-done]")
           ?.focus({ preventScroll: false }),
       );
+    return page;
   }
   function bindNoteCard(card, note) {
     if (!card || card.dataset.stipClickBound === "1") return;
@@ -3106,6 +3107,10 @@
         "button,a,input,textarea,label,select",
       );
       if (interactive && interactive !== card && card.contains(interactive)) return;
+      if (card.closest("#hcBellDialog")) {
+        openBellItem(note);
+        return;
+      }
       // Une invitation ou proposition ouvre directement le pop-up de dates.
       // Aucun doublon de rendez-vous n'est affiché sur l'accueil.
       if (note?.source === "leisure" && note?.event_id) {
@@ -3352,10 +3357,13 @@
       if (level >= 1) return;
       location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
     });
+    root.querySelectorAll("[data-bell-open]").forEach(b=>b.onclick=openNotifications);
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
           const next = b.dataset.homeMode || "planning";
+          // Anciennes entrées vers Notifications : une fenêtre, pas une nouvelle page.
+          if (next === "notifications") { openNotifications(); return; }
           if (next === "team") {
             location.href = "esprit-equipe.html?entry=home-header";
             return;
@@ -3616,9 +3624,114 @@
       return;
     }
   }
-  function openNotifications() {
-    panel(true, "À traiter");
-    renderActionCenter("all");
+  // La cloche a un seul dialogue et plusieurs niveaux internes :
+  // choix de catégorie → liste → détail. Aucun empilement de fenêtres.
+  let bellFilter = "all";
+  function ensureBellDialog() {
+    let dialog = document.getElementById("hcBellDialog");
+    if (dialog) return dialog;
+    dialog = document.createElement("dialog");
+    dialog.id = "hcBellDialog";
+    dialog.className = "hc-bell-dialog";
+    dialog.setAttribute("aria-label", "Notifications");
+    dialog.innerHTML =
+      '<section class="hc-bell-shell"><header class="hc-bell-head">'+
+        '<button type="button" data-bell-back aria-label="Retour">‹</button>'+
+        '<h2 id="hcBellTitle">Notifications</h2>'+
+        '<button type="button" data-bell-close aria-label="Fermer">×</button>'+
+      '</header><div class="hc-bell-content" id="hcBellContent"></div></section>';
+    document.body.appendChild(dialog);
+    dialog.querySelector("[data-bell-close]").onclick = () => dialog.close();
+    dialog.querySelector("[data-bell-back]").onclick = () => {
+      const view = dialog.dataset.view;
+      if (view === "detail") renderBellEntries(bellFilter);
+      else if (view === "list") renderBellChoices();
+      else dialog.close();
+    };
+    dialog.addEventListener("click", event => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.addEventListener("close", () => {
+      dialog.querySelector("#hcNotificationDetail")?.remove();
+      dialog.dataset.view = "";
+    });
+    return dialog;
+  }
+  function bellView(view, title, html) {
+    const dialog = ensureBellDialog(),content = dialog.querySelector("#hcBellContent");
+    dialog.dataset.view = view;
+    dialog.querySelector("#hcBellTitle").textContent = title;
+    dialog.querySelector("[data-bell-back]").hidden = view === "choices";
+    content.innerHTML = html;
+    content.scrollTop = 0;
+    return content;
+  }
+  function renderBellChoices() {
+    const { ns, cats, counts } = actionCenterData("all");
+    const available = cats.filter(([key]) => key !== "all" && counts[key] > 0);
+    const types = {
+      agenda:["📅","Invitations et rendez-vous"],
+      access:["🔐","Demandes d’accès"],
+      signatures:["✍️","Signatures"],
+      reminders:["⏰","Rappels"],
+      other:["📌","Autres notifications"]
+    };
+    const html = ns.length
+      ? '<p class="hc-bell-intro">Choisis ce que tu veux consulter.</p>'+
+        '<div class="hc-bell-categories">'+
+        available.map(([key,label]) =>
+          '<button type="button" data-bell-category="'+esc(key)+'">'+
+            '<span aria-hidden="true">'+(types[key]?.[0] || "🔔")+'</span>'+
+            '<strong>'+esc(types[key]?.[1] || label)+'</strong>'+
+            '<b>'+counts[key]+'</b><i aria-hidden="true">›</i></button>'
+        ).join("")+
+        (available.length>1?
+          '<button type="button" data-bell-category="all"><span aria-hidden="true">🔔</span>'+
+          '<strong>Toutes les notifications</strong><b>'+ns.length+'</b><i aria-hidden="true">›</i></button>':"")+
+        '</div>'
+      : '<div class="hc-bell-empty">✓ Aucune notification à traiter.</div>';
+    const content=bellView("choices","🔔 Notifications",html);
+    content.querySelectorAll("[data-bell-category]").forEach(b=>
+      b.onclick=()=>renderBellEntries(b.dataset.bellCategory));
+  }
+  function renderBellEntries(filter = "all") {
+    bellFilter = filter;
+    const { cats } = actionCenterData(filter);
+    const category = cats.find(([key]) => key === filter)?.[1] || "Notifications";
+    const content=bellView("list",category,actionCenterMarkup(filter,false) ||
+      '<p class="hc-bell-empty">Aucune notification.</p>');
+    content.querySelectorAll("[data-action-filter]").forEach(b=>
+      b.onclick=()=>renderBellEntries(b.dataset.actionFilter));
+    const { shown }=actionCenterData(filter);
+    content.querySelectorAll(".hc-note-card[data-note-index]").forEach(card=>{
+      const note=shown[Number(card.dataset.noteIndex)];
+      if(note) bindNoteCard(card,note);
+    });
+  }
+  function openBellItem(note) {
+    const dialog=ensureBellDialog();
+    if(note?.source==="leisure" && note.event_id){
+      // Le pop d'activité existant remplace temporairement celui de la cloche.
+      dialog.close();
+      const shown=window.STIPLeisure?.openPreview?.(String(note.event_id));
+      const preview=document.getElementById("ev3HomePreview");
+      if(preview?.open){
+        preview.addEventListener("close",()=>openNotifications(bellFilter),{once:true});
+      } else if(shown===false) openNotifications(bellFilter);
+      return;
+    }
+    const content=bellView("detail","Détail de la notification","");
+    const page=openNotificationDetail(note,{
+      bellHost:content,
+      onClose:()=>renderBellEntries(bellFilter)
+    });
+    if(page)page.querySelector("[data-detail-close]")?.focus({preventScroll:true});
+  }
+  function openNotifications(filter = "") {
+    const dialog=ensureBellDialog();
+    if(!dialog.open)dialog.showModal();
+    if(filter)renderBellEntries(filter);
+    else renderBellChoices();
   }
   function renderActionCenter(filter = state.actionFilter) {
     const body = $("#hsPanelBody");
@@ -4002,6 +4115,7 @@
     render();
   });
   window.addEventListener("stip:session-ready", ready);
+  window.addEventListener("stip:session-ended", () => document.getElementById("hcBellDialog")?.close?.());
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
