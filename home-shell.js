@@ -33,8 +33,9 @@
     weekFull: false,
     weekPast: false,
     dayFocus: parisIso(),
+    monthDayFocus: parisIso(),
     homeMode: "planning",
-    dateJumpMonth: "",
+    dateJumpMonth: parisIso().slice(0, 7),
     tableauFocus: false,
     communicationTab: "chat",
     communicationFocus: false,
@@ -258,7 +259,6 @@
       state.weekFull = false;
       state.dayFocus = today;
     }
-    state.dateJumpMonth = today.slice(0, 7);
     state.renderSig = "";
     if (options.render) render();
   }
@@ -347,13 +347,7 @@
     for(const x of b.personal_stagiaires||[])if(inside(x.date_debut,x.date_fin||x.date_debut))push({iconKey:"trainee",icon:"👶",label:"Stagiaire"});
     return icons.slice(0,2);
   }
-  function firstMondayOfMonth(key){
-    const d=dateObj(`${key}-01`),dow=d.getDay()||7;
-    if(dow!==1)d.setDate(d.getDate()+((8-dow)%7));
-    return dateIsoLocal(d);
-  }
-
-  function renderDateJumpCalendar(panel, key = "") {
+  function renderDateJumpCalendar(panel, key = "", selectedIso = state.monthDayFocus) {
     if (!panel) return;
     const basis = key
         ? dateObj(`${key}-01`)
@@ -364,7 +358,6 @@
       last = new Date(y, m + 1, 0, 12),
       leading = (first.getDay() + 6) % 7,
       todayIso = parisIso(),
-      selectedIso = state.dayFocus || todayIso,
       loading = planningLoading(),
       cells = [];
     for (let day = 1; day <= last.getDate(); day++) {
@@ -399,16 +392,32 @@
             : '<span class="hc-date-jump-marker-empty" aria-hidden="true"></span>',
         eventIcons=loading ? [] : calendarEventIcons(iso);
       cells.push(
-        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map((item) => `<i class="stip-month-event" aria-hidden="true">${esc(item.icon || "•")}</i>`).join("")}</small></button>`,
+        `<button type="button" class="stip-month-day ${cls} ${loading ? "is-loading" : ""} ${eventIcons.length?"has-event":""}"${gridStart} data-cal-day="${iso}" data-cal-month="${monthKeyOf(d)}" aria-pressed="${iso === selectedIso}" aria-label="${esc(aria)}"${loading ? ' disabled aria-disabled="true"' : ""}><b class="hc-date-jump-day-number stip-month-day-number">${day}</b><span class="hc-date-jump-marker stip-month-primary">${marker}</span><small class="hc-date-jump-events stip-month-events">${eventIcons.map((item) => `<i class="stip-month-event" aria-hidden="true">${esc(item.icon || "•")}</i>`).join("")}</small></button>`,
       );
     }
     const monthKey = monthKeyOf(first);
-    state.dateJumpMonth = monthKey;
     panel.dataset.calendarMonth = monthKey;
     panel.classList.toggle("is-loading", loading);
     panel.setAttribute("aria-busy", loading ? "true" : "false");
     panel.innerHTML = `<div class="hc-date-jump-head stip-month-nav"><button type="button" data-cal-step="-1" aria-label="Mois précédent"${loading ? " disabled" : ""}>‹</button><strong>${cap(first.toLocaleDateString("fr-FR", { month: "long" }))} ${y}</strong><button type="button" data-cal-step="1" aria-label="Mois suivant"${loading ? " disabled" : ""}>›</button></div><div class="hc-date-jump-weekdays stip-month-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Je</span><span>Ve</span><span>Sa</span><span>Di</span></div><div class="hc-date-jump-grid stip-month-grid">${cells.join("")}</div>`;
   }
+  function moveCalendarMonth(step) {
+    state.dateJumpMonth = shiftMonthKey(
+      state.dateJumpMonth || parisIso().slice(0, 7),
+      step,
+    );
+    state.renderSig = "";
+    render();
+  }
+  function selectMonthDay(iso) {
+    const selected = String(iso || "").slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
+    state.monthDayFocus = selected;
+    state.dateJumpMonth = selected.slice(0, 7);
+    state.renderSig = "";
+    render();
+  }
+
   function weekRangeLabel(w = []) {
     const rows = w.filter(Boolean);
     if (!rows.length) return "";
@@ -527,7 +536,7 @@
     document.body.appendChild(dialog);
     const calendar = dialog.querySelector("[data-header-date-calendar]");
     let month = String(state.dayFocus || parisIso()).slice(0, 7);
-    const paint = () => renderDateJumpCalendar(calendar, month);
+    const paint = () => renderDateJumpCalendar(calendar, month, state.dayFocus || parisIso());
     const close = () => {
       if (typeof dialog.close === "function" && dialog.open) dialog.close();
       else dialog.remove();
@@ -1282,16 +1291,12 @@
       state.dayFocus = "";
     }
 
-    const navWeek = navigationWeek(),
-      visibleWeek = selectedWeek();
+    const visibleWeek = selectedWeek();
 
     // Une navigation de semaine sélectionne toujours le premier jour réellement visible.
     // Sur la période courante, ce jour est aujourd'hui ; sur une semaine complète, c'est lundi.
     state.dayFocus = visibleWeek[0]?.iso || parisIso();
 
-    state.dateJumpMonth =
-      (visibleWeek[0]?.iso || navWeek[0]?.iso)?.slice(0, 7) ||
-      state.dateJumpMonth;
     state.renderSig = "";
     render();
 
@@ -3463,35 +3468,21 @@
           dateJumpPanel.dataset.calendarMonth ||
           "",
       );
-    dateJumpPanel?.addEventListener("click", (e) => {
+    dateJumpPanel?.addEventListener("click", (event) => {
       if (planningLoading()) return;
-      const step = e.target.closest("[data-cal-step]"),
-        day = e.target.closest("[data-cal-day]");
-      if (step) {
-        state.dateJumpMonth = shiftMonthKey(
-          dateJumpPanel.dataset.calendarMonth,
-          step.dataset.calStep,
-        );
-        const todayIso=parisIso(),
-          target=todayIso.startsWith(state.dateJumpMonth)?todayIso:firstMondayOfMonth(state.dateJumpMonth);
-        return jumpToDate(target);
+      const step = event.target.closest("[data-cal-step]");
+      if (step) return moveCalendarMonth(step.dataset.calStep);
+      const day = event.target.closest("[data-cal-day]");
+      if (!day) return;
+      const iso = String(day.dataset.calDay || "").slice(0, 10);
+      if (!iso) return;
+      if (window.STIPLeaveCart?.isSelecting?.()) {
+        window.STIPLeaveCart.toggle(iso, planningRowForDate(iso)?.code || "");
+        return;
       }
-      if (day) {
-        const selected=String(day.dataset.calDay || "").slice(0, 10);
-        if(window.STIPLeaveCart?.isSelecting?.()){
-          window.STIPLeaveCart.toggle(selected,planningRowForDate(selected)?.code||"");
-          return;
-        }
-        const iso = String(day.dataset.calDay || "").slice(0, 10),
-          hasPlanningDetail = Boolean(planningRowForDate(iso));
-        state.dateJumpMonth =
-          dateJumpPanel.dataset.calendarMonth ||
-          state.dateJumpMonth ||
-          iso.slice(0, 7);
-        if (hasPlanningDetail)
-          requestAnimationFrame(() => openShiftDetail(iso));
-        return jumpToDate(day.dataset.calDay);
-      }
+      selectMonthDay(iso);
+      if (planningRowForDate(iso))
+        requestAnimationFrame(() => openShiftDetail(iso));
     });
     root
       .querySelector("[data-home-calendar-subscribe]")
@@ -3953,6 +3944,9 @@
     state.weekOffset = 0;
     state.weekFull = false;
     state.weekPast = false;
+    state.dayFocus = parisIso();
+    state.monthDayFocus = parisIso();
+    state.dateJumpMonth = parisIso().slice(0, 7);
     state.renderSig = "";
     state.lastRefreshAt = 0;
     state.focusedAlertKey = "";
