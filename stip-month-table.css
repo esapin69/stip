@@ -180,7 +180,7 @@
   filter:drop-shadow(0 2px 2px rgba(16,54,65,.07))!important;
 }
 
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge{
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge{
   --stip-month-shift-bg:var(--stip-accent);
   --stip-month-shift-ink:#fff;
   min-width:32px!important;
@@ -200,14 +200,14 @@
   line-height:1!important;
   white-space:nowrap!important;
 }
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-m{--stip-month-shift-bg:var(--stip-shift-m)}
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-j{--stip-month-shift-bg:var(--stip-shift-j)}
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-j4{--stip-month-shift-bg:var(--stip-shift-j4)}
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-s{
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge.code-m{--stip-month-shift-bg:var(--stip-shift-m)}
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge.code-j{--stip-month-shift-bg:var(--stip-shift-j)}
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge.code-j4{--stip-month-shift-bg:var(--stip-shift-j4)}
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge.code-s{
   --stip-month-shift-bg:var(--stip-shift-s);
   --stip-month-shift-ink:var(--stip-shift-s-ink);
 }
-.stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-n{--stip-month-shift-bg:var(--stip-shift-n)}
+:is(.stip-month-calendar[data-stip-month-table="1"],.stip-week-day,.stip-legend-item,.thf-day-post) .stip-month-shift-badge.code-n{--stip-month-shift-bg:var(--stip-shift-n)}
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-events:empty{
   display:none!important;
   min-height:0!important;

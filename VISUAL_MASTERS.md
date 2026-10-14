@@ -50,6 +50,31 @@ Règle :
 - **socle brut obligatoire** : même si une couche locale ou décorative ne charge pas, chaque code, pictogramme et événement reste centré sur un axe unique dans un emplacement carré stable ; aucune page ne dépend d’un décalage de baseline, d’une marge corrective ou d’un calcul local pour obtenir l’alignement de base.
 - **exception Accueil personnel uniquement** : la composition « deux lignes shift → séparateur → ligne événements secondaires » n’est pas une règle commune. Elle est activée explicitement par `.stip-week-personal-layout` sur l’Accueil personnel ; ailleurs, aucune ligne ni séparateur vide n’est réservé.
 
+### Symbole de shift commun — choix utilisateur (15/10/2026)
+
+**Référence visuelle retenue :** badge de shift travaillé du tableau mensuel
+`stip-month-table.js` / `stip-month-table.css`. Ce badge coloré
+(M, J, J4, S, N et variantes étoilées) remplace les pastilles/carrés
+redondants dans les vues semaine personnelle et les légendes concernées.
+
+- **Semaine personnelle :** un seul badge travaillé ; heures **réelles**
+  immédiatement dessous sur une même ligne, teintées comme le shift.
+- **Repos / congé / absence :** pictogramme du référentiel, sans code répété.
+- **Événements :** restent distincts et visibles lorsque présents ; pas
+  de rangée vide artificielle.
+- **Légendes :** dérivées des dates, shifts et horaires réellement chargés
+  pour les vues affichées ; même symbole que le mois et la semaine.
+- **Moteur :** `STIPShiftRegistry` détermine code/horaires/statut ;
+  `STIPMonthTable.shiftBadgeHtml` dessine le badge partagé.
+- **Aujourd’hui / Demain :** le grand carré du shift est remplacé
+  par le même badge du mois, suivi des horaires réels sur une ligne.
+  L'atmosphère météo, le bouton collègues et « Chefs en poste » restent distincts.
+- Les autres vues métier non équivalentes (HCL, plannings d'équipe,
+  agenda Responsable) ne changent pas de géométrie sans examen propre à leur rôle.
+
+La géométrie et les couleurs de cette déclinaison restent **en cours de
+validation visuelle sur téléphone** : ne pas propager aveuglément au site entier.
+
 ## 2. Navigation temporelle complète mois → semaine → jours
 
 **Statut : RÉFÉRENCE FONCTIONNELLE**
