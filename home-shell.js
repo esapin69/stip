@@ -977,9 +977,10 @@
     if (!row) return false;
     const raw = String(row?.code || row?.source_value || "").trim(),
       code = canonicalShift(raw),
-      def = shiftDefinition(code),
+      // Resolve the exact shift: M0130 (flexible) is not identical to M.
+      def = shiftDefinition(raw || code) || shiftDefinition(code),
       label = String(def?.label || shiftMeta(code)[1] || code || "Planning"),
-      time = shiftTime(code, row),
+      time = shiftTime(raw || code, row),
       displayCode = raw
         ? raw.toUpperCase().replace(/\s+/g, "")
         : code || "—",
@@ -1012,14 +1013,14 @@
           : label,
       timeParts = String(time || "").match(/\d{1,2}(?::|h)\d{2}/g) || [],
       timeDisplay =
-        timeParts.length >= 2
+        mode !== "flexible" && timeParts.length >= 2
           ? `<span>${esc(timeParts[0].replace(":", "h"))}</span><i aria-hidden="true">→</i><span>${esc(timeParts[1].replace(":", "h"))}</span>`
           : esc(time),
       weatherEligible =
         timeParts.length >= 2 &&
         mode !== "flexible" &&
         row?.is_working !== false &&
-        Boolean(def?.is_working || window.STIPShiftRegistry?.isWorking?.(code)),
+        Boolean(def?.is_working || window.STIPShiftRegistry?.isWorking?.(raw || code)),
       detailRows = [
         adapted
           ? `<div class="hc-shift-detail-row"><span>Type</span><strong>Horaire adapté</strong></div>`
@@ -1038,7 +1039,7 @@
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
     wrap.innerHTML =
-      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong>${weatherEligible ? '<aside class="hc-shift-weather-mini" id="hcShiftWeather" aria-label="Prévisions météorologiques limitées aux horaires de ce service" aria-live="polite" hidden></aside>' : ""}</section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time${mode === "flexible" ? " is-flexible" : ""}" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong>${weatherEligible ? '<aside class="hc-shift-weather-mini" id="hcShiftWeather" aria-label="Prévisions météorologiques limitées aux horaires de ce service" aria-live="polite" hidden></aside>' : ""}</section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
     document.body.appendChild(wrap);
     if (weatherEligible) {
       window.STIPShiftWeather?.mount?.(wrap.querySelector("#hcShiftWeather"), {
