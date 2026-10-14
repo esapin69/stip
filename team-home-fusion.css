@@ -291,3 +291,20 @@
   .thf-popup .thf-staff-row .thf-shift>summary{padding:9px 8px!important}
   .thf-popup .thf-shift-count{min-width:39px;height:40px}
 }
+
+/* Météo du shift : reprend le moteur horaire existant et reste masquée sans prévision. */
+.hc-team-fusion .thf-inline-weather[hidden]{display:none!important}
+.hc-team-fusion .thf-inline-weather{
+  display:flex!important;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:4px 10px;margin:0 0 8px;padding:7px 10px;
+  border:1px solid #d8e9ed;border-radius:10px;background:#f5fafc;
+  color:#234d5b;min-height:30px
+}
+.hc-team-fusion .thf-inline-weather .hc-shift-weather-label{
+  font-size:.65rem;font-weight:800;letter-spacing:.03em
+}
+.hc-team-fusion .thf-inline-weather .hc-shift-weather-values{
+  display:flex;flex-wrap:wrap;gap:7px;align-items:center;font-size:.74rem
+}
+.hc-team-fusion .thf-inline-weather .hc-shift-weather-values strong{font-weight:850}
+.hc-team-fusion .thf-inline-weather .hc-shift-weather-source{display:none!important}
