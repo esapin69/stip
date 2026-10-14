@@ -8,6 +8,7 @@
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly",
     STORE = "stip_session_v1",
     HOME_CACHE_KEY = "stip_home_runtime_cache_v2",
+    SHIFT_CACHE_KEY = "stip_home_shift_snapshot_v1",
     HOME_CACHE_VERSION = 3,
     HOME_CACHE_FRESH_MS = 45 * 1000,
     HOME_CACHE_MAX_MS = Number.POSITIVE_INFINITY,
@@ -601,6 +602,73 @@
     // Never reuse one agent's data after a different code/session logs in.
     return active ? HOME_CACHE_KEY + ":" + active.slice(-16) : "";
   }
+  // Compact projection of the canonical bootstrap planning, not another data source.
+  // Unlike the full home snapshot it stays well within mobile storage limits.
+  function shiftSnapshotKey() {
+    const active = token();
+    return active ? SHIFT_CACHE_KEY + ":" + active.slice(-16) : "";
+  }
+  function saveShiftSnapshot(boot) {
+    const key = shiftSnapshotKey();
+    if (!key || !state.ready || window.STIPPreview?.active ||
+        !Array.isArray(boot?.personal)) return false;
+    const fields = [
+      "date", "code", "source_value", "horaire", "horaires", "shift_time",
+      "start_time", "end_time", "role_metier", "role", "equipe", "team",
+      "type_planning", "schedule_mode", "source_label", "schedule_label",
+      "note", "notes", "commentaire", "comment", "description", "is_working"
+    ];
+    const personal = boot.personal.map((row) => {
+      if (!row || typeof row !== "object") return null;
+      const compact = {};
+      for (const field of fields)
+        if (row[field] != null) compact[field] = row[field];
+      return compact;
+    }).filter(Boolean);
+    const saved = {
+      version: 1, owner: cacheOwner(), token: token().slice(-16),
+      at: Date.now(), personal,
+      shift_definitions: Array.isArray(boot.shift_definitions)
+        ? boot.shift_definitions : []
+    };
+    const encoded = JSON.stringify(saved);
+    try { localStorage.setItem(key, encoded); return true; } catch {}
+    try { sessionStorage.setItem(key, encoded); return true; } catch {}
+    return false;
+  }
+  function readShiftSnapshot() {
+    const key = shiftSnapshotKey();
+    if (!key || window.STIPPreview?.active) return null;
+    for (const store of [localStorage, sessionStorage]) {
+      try {
+        const saved = JSON.parse(store.getItem(key) || "null");
+        if (!saved || saved.version !== 1 || saved.owner !== cacheOwner() ||
+            saved.token !== token().slice(-16) ||
+            !Array.isArray(saved.personal) ||
+            !Number.isFinite(Number(saved.at)) ||
+            Number(saved.at) > Date.now() + 60000) continue;
+        return {
+          agent: state.session?.agent || {},
+          permissions: state.session?.permissions || {},
+          personal: saved.personal,
+          shift_definitions: saved.shift_definitions || [],
+          media: { shifts: {} }
+        };
+      } catch {}
+    }
+    return null;
+  }
+  function clearShiftSnapshot() {
+    for (const store of [localStorage, sessionStorage]) {
+      try {
+        for (let i = store.length - 1; i >= 0; i--) {
+          const key = store.key(i) || "";
+          if (key === SHIFT_CACHE_KEY || key.startsWith(SHIFT_CACHE_KEY + ":"))
+            store.removeItem(key);
+        }
+      } catch {}
+    }
+  }
   function readHomeCache() {
     const key = homeSnapshotKey();
     if (!key || window.STIPPreview?.active) return null;
@@ -660,6 +728,7 @@
     state.bootError = "";
     stopPlanningLoading();
     publishBoot(hydratedBoot);
+    saveShiftSnapshot(hydratedBoot);
     return cached;
   }
   function ensureTableauRuntime() {
@@ -3410,13 +3479,16 @@
     state.bootError = "";
     startPlanningLoading();
     const a = state.session?.agent || {};
-    publishBoot({
+    const lastShifts = readShiftSnapshot();
+    publishBoot(lastShifts || {
       agent: a,
       permissions: state.session?.permissions || {},
       team: a.type_planning || a.equipe || "",
       personal: [],
       media: { avatars: {}, shifts: {} },
     });
+    // The last saved shifts appear on the first render; unrelated API
+    // requests must never keep a user's week or month hidden.
     render();
     refresh()
       .then(() => warmHomeRuntimes())
@@ -3446,6 +3518,7 @@
     state.communicationConversation = "";
     state.communicationMessage = "";
     clearHomeCache();
+    clearShiftSnapshot();
     window.STIPBootCache = null;
     panel(false);
   }
@@ -3587,6 +3660,7 @@
     state.bootError = "";
     state.lastRefreshAt = Date.now();
     publishBoot(fresh);
+    saveShiftSnapshot(fresh);
     writeHomeCache();
     state.renderSig = "";
     render();
