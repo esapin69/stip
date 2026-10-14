@@ -120,7 +120,11 @@
         String(Math.floor(endMinute / 60)).padStart(2, "0") + ":00",
       // Partial final hour overlaps work; include that hourly bucket.
       lastHasPartialHour: endMinute % 60 !== 0,
-      overnight
+      overnight,
+      startText: String(Math.floor(startMinute / 60)).padStart(2, "0") + "h" +
+        String(startMinute % 60).padStart(2, "0"),
+      endText: String(Math.floor(endMinute / 60)).padStart(2, "0") + "h" +
+        String(endMinute % 60).padStart(2, "0")
     };
   }
 
@@ -143,25 +147,25 @@
     return { min, max, risk };
   }
 
-  function show(host, values) {
+  function show(host, values, shift) {
     if (!host?.isConnected) return;
     host.replaceChildren();
     const tag = document.createElement("span");
     tag.className = "hc-shift-weather-label";
-    tag.textContent = "🌦️ MÉTÉO DU POSTE";
+    tag.textContent = "🌦️ PRÉVISIONS PENDANT VOS HORAIRES";
     const numbers = document.createElement("span");
     numbers.className = "hc-shift-weather-values";
     const temps = document.createElement("strong");
-    temps.textContent = values.min + "° / " + values.max + "°";
+    temps.textContent = "Min. " + values.min + "° · Max. " + values.max + "°";
     temps.title = "Températures minimale et maximale estimées pendant les heures du service";
     const rain = document.createElement("strong");
     rain.className = "hc-shift-weather-rain";
-    rain.textContent = "☂ " + values.risk + " %";
+    rain.textContent = "☂ Risque max. " + values.risk + " %";
     rain.title = "Risque maximal horaire de précipitations pendant les heures du service";
     numbers.append(temps, rain);
     const source = document.createElement("span");
     source.className = "hc-shift-weather-source";
-    source.textContent = "Lyon · prévisions horaires · Open-Meteo";
+    source.textContent = shift.startText + " → " + shift.endText + (shift.overnight ? " (+1 jour)" : "") + " · Lyon · prévisions horaires";
     host.append(tag, numbers, source);
     host.hidden = false;
   }
@@ -176,7 +180,7 @@
       // Stale overlay results must never change the next day's popup.
       if (!host.isConnected) return;
       const values = calculate(data, shift);
-      if (values) show(host, values);
+      if (values) show(host, values, shift);
     } catch (_) {
       // Optional information must not block or clutter the planning modal.
       if (host.isConnected) host.hidden = true;
