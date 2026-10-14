@@ -39,7 +39,9 @@ async function context(req:Request){
  if(!s||s.revoked_at||new Date(s.expires_at)<=new Date())throw Error('SESSION_EXPIREE')
  const p=await checked(db.from('stip_access_profiles').select('id,agent_id,active,permissions,role_key').eq('id',s.profile_id).maybeSingle())
  if(!p?.active)throw Error('ACCES_DESACTIVE')
- const perms=p.permissions||{};if(perms.leisure===false||!(perms.leisure===true||perms.messages||perms.planning_team||perms.admin))throw Error('ACCES_EQUIPE_REQUIS')
+ // Invitations are a core GHE service. Visibility of the Sorties app is not an invitation permission.
+ if(!p.agent_id)throw Error('ACCES_AGENT_REQUIS')
+ const perms=p.permissions||{}
  const family=perms.communication_family==='hors_brancardage'?'hors_brancardage':'brancardage'
  return {...p,family,isAdmin:perms.admin===true}
 }
@@ -63,7 +65,7 @@ const plusDays=(date:string,count:number)=>{const d=new Date(date+'T12:00:00Z');
 async function colleagues(c:any){
  if(!c.agent_id)return [];
  // GHE roster is the source of truth for an employee's presence.
- // A site access profile only determines whether the employee can receive the invitation now.
+ // An app tile permission must never prevent an eligible colleague from receiving an invitation.
  const [roster,profiles]=await Promise.all([
   checked(db.from('agents').select('id,prenom,nom').eq('actif',true).eq('afficher_dans_liste',true).order('prenom',{ascending:true})),
   checked(db.from('stip_access_profiles').select('agent_id,active,permissions').not('agent_id','is',null))
@@ -83,13 +85,13 @@ async function colleagues(c:any){
   // Do not expose members of an explicitly different communication family.
   if(access.length&&!inFamily.length)continue;
   if(!access.length&&c.family!=='brancardage')continue;
-  const restricted=inFamily.length>0&&inFamily.every((p:any)=>p.permissions?.leisure===false);
-  const hasEligibleAccess=inFamily.some((p:any)=>p.permissions?.leisure!==false);
+  // A colleague is eligible if they are in the active GHE roster and the authorized communication family.
+  // Having no account yet (or having a disabled app tile) does not block an invitation.
+  const hasActiveAccount=inFamily.length>0;
   const name=[a.prenom,a.nom].filter(Boolean).join(' ').trim();
   if(!name)continue;
-  // Always show the person in the directory, but keep invitation permission separate.
-  list.push({id:a.id,name,access_ready:hasEligibleAccess,can_invite:!restricted,
-    restriction:restricted?'leisure_disabled':null});
+  list.push({id:a.id,name,access_ready:hasActiveAccount,can_invite:true,
+    restriction:null});
  }
  return list.sort((a:any,b:any)=>a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
 }
