@@ -240,10 +240,10 @@
     const badge=delta==null?"○":delta<0?"⚠":delta>0?"+":"✓";
     const chefNames=chiefs.map(x=>name(x.agents)).filter(Boolean);
     const chiefLabel=chefNames.length?chefNames[0]+(chefNames.length>1?" +"+(chefNames.length-1):""):
-      loaded&&cached(chiefsCache,"duty")?"Non renseigné":"En recherche…";
+      loaded&&cached(chiefsCache,"duty")?"Planning chef manquant":"Recherche du chef…";
     const chefDisplay=chefNames.length?chefNames.slice(0,2).map(value=>'<strong>'+esc(value)+'</strong>').join("")+
       (chefNames.length>2?'<small>+'+(chefNames.length-2)+' autres</small>':""):
-      '<strong>'+esc(chiefLabel)+'</strong>';
+      '<strong class="thf-chief-missing">'+esc(chiefLabel)+'</strong>';
     host.innerHTML=
       '<button type="button" class="thf-day-open '+(working?shiftClass(myCode):"shift-absence")+
       '" data-thf-open="day" aria-label="Afficher le détail '+esc(label)+'">'+
@@ -276,7 +276,7 @@
     if(!s)return;
     const chiefs=host._thfChiefs||[];
     const chiefHTML=chiefs.length?
-      chiefs.map(x=>agentHtml(x)).join(""):'<p class="thf-empty">Chef non renseigné sur ce créneau.</p>';
+      chiefs.map(x=>agentHtml(x)).join(""):'<p class="thf-empty">Aucune affectation de chef disponible dans le planning pour ce jour. Les données ne sont pas encore transmises.</p>';
     const weather=host.querySelector?.("[data-thf-weather]");
     const weatherText=weather&&!weather.hidden?String(weather.textContent||"").replace(/\s+/g," ").trim():"Prévision indisponible pour les horaires du service";
     const same=(host._thfSets?.exact||[]).length;
