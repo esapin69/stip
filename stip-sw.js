@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261014-events-first-colleagues-under-shift1";
+const STIP_SW_BUILD="20261014-events-before-shift-colleagues-below2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
