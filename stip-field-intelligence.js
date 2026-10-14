@@ -375,15 +375,19 @@
       };
     }
 
-    if (gap > 0 && donor) {
+    // Un effectif supérieur à la cible est une marge, même sans transfert possible.
+    // Le transfert éventuel enrichit le conseil, il ne détermine pas le statut.
+    if (gap > 0) {
       return {
         ...statusMeta("opportunity"),
         gap,
         planned,
         target,
-        detail: `${base} a +${gap} de marge et recouvre ${donor.toShift} de ${donor.start} à ${donor.end}.`,
-        proposal: transferProposal(donor),
-        transfer: donor,
+        detail: donor
+          ? `${base} a +${gap} de marge et recouvre ${donor.toShift} de ${donor.start} à ${donor.end}.`
+          : `${planned} prévus pour ${target} : +${gap} au-dessus de la cible HCL.`,
+        proposal: donor ? transferProposal(donor) : "",
+        transfer: donor || null,
       };
     }
 
