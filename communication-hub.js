@@ -262,9 +262,9 @@
     const people=inboxParticipants(c),total=people.length,other=c.others||[],
       names=other.slice(0,3).map(name).join(", "),
       more=Math.max(0,other.length-3),
-      day=c.event?.dates?.length?c.event.dates.slice().sort()[0]:"",
+      day=c.event?.session_date||(c.event?.dates?.length?c.event.dates.slice().sort()[0]:""),
       date=day?new Date(day+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):"",
-      dateCount=Math.max(0,(c.event?.dates?.length||0)-1),
+      dateCount=c.event?.session_date?0:Math.max(0,(c.event?.dates?.length||0)-1),
       context=c.event?[date+(dateCount?" · +"+dateCount+" dates":""),c.event.time_label,c.event.location].filter(Boolean).join(" · "):c.kind==="direct"?"Message privé":"Groupe",
       inactive=people.filter(p=>p.invite_status==="declined").length,
       pending=people.filter(p=>p.invite_status==="pending").length,
@@ -273,7 +273,7 @@
       preview=c.last_message?.body?.trim()||"Aucun message pour le moment";
     return '<article class="ch-inbox-entry">'+
       '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'">'+
-      '<span class="ch-inbox-conversation-main"><strong>'+(c.event?.icon?'<span aria-hidden="true">'+esc(c.event.icon)+'</span> ':'')+esc(inboxConversationLabel(c))+'</strong>'+
+      '<span class="ch-inbox-conversation-main"><strong>'+(c.event?.icon?'<span aria-hidden="true">'+esc(c.event.icon)+'</span> ':'')+esc(inboxConversationLabel(c))+(c.event?.legacy?' <small class="ch-inbox-legacy">· ancienne séance</small>':'')+'</strong>'+
       '<small class="ch-inbox-context">'+esc(context)+'</small>'+
       '<small class="ch-inbox-preview">'+esc(preview)+'</small></span>'+
       (Number(c.unread||0)?'<b aria-label="'+Number(c.unread||0)+' messages non lus">'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+
