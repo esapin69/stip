@@ -2339,7 +2339,11 @@
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
       ];
-    if (has("planning_team") || has("activity") || has("assistant_enabled"))
+    // Esprit d’équipe rejoint l’accueil : le raccourci illustré ouvre Communication.
+    // Sans droit Messages, garder l’ancien accès Équipe pour ne pas bloquer l’utilisateur.
+    if (has("messages"))
+      items.push({ key: "communication", label: "Communication", art: ICON.homeChat, mode: "home" });
+    else if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     const tDoor = tDoorShortcut();
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}" data-header-compact>
