@@ -28,11 +28,21 @@ function iconFor(x){return String(x.icon||"📌")}
 function dayItems(day){
  if(!ready||!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))return [];
  return events.filter(x=>x.status==="active"&&concerned(x)&&confirmedDates(x).includes(day))
-  .map(x=>({
-   id:String(x.id),icon:iconFor(x),title:String(x.title||"Activité"),
-   time:String(x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer")),
-   status:status(x)[1]
-  }));
+  .map(x=>{
+   // L'organisateur a proposé plusieurs dates : cela ne signifie PAS qu'un collègue a accepté.
+   const roster=Array.isArray(x.date_roster?.[day])?x.date_roster[day]:[];
+   const attending=roster.filter(person=>person.state==="accepted").length;
+   const proposed=Boolean(x.is_organizer)&&attending===0;
+   const inviteeConfirmed=!x.is_organizer&&hasResponse(x)&&x.response.revision===x.revision;
+   const confirmed=!proposed&&(attending>0||inviteeConfirmed);
+   return {
+    id:String(x.id),icon:iconFor(x),title:String(x.title||"Activité"),
+    time:String(x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer")),
+    confirmed,
+    stateLabel:proposed?"Proposé · réponses attendues":attending>0?attending+" participant"+(attending>1?"s":"")+" confirmé"+(attending>1?"s":""):"Participation confirmée",
+    status:status(x)[1]
+   };
+  });
 }
 
 function cards(from,to){
