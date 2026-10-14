@@ -1364,7 +1364,7 @@
           : statusIcon
             ? `<span class="hc-shift-main stip-week-main hc-shift-main-special" title="${esc(shiftLabel)}"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span></span>`
             : shiftDefinition(canonical)?.is_working
-              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="stip-week-work-symbol">${weekWorkSymbol(x.row?.code || x.code)}</span>${weekTimeHtml(x.time)}</span>`
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="stip-week-work-symbol">${weekWorkSymbol(x.row?.code || x.row?.source_value || x.code)}</span>${weekTimeHtml(x.time)}</span>`
               : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
       selected=landscape&&x.iso===state.dayFocus,
