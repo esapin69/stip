@@ -24,6 +24,17 @@ function status(x){
  return ["pending","À répondre"];
 }
 function iconFor(x){return String(x.icon||"📌")}
+/* Une seule source de rendez-vous, réutilisée par semaine, jour et fenêtre. */
+function dayItems(day){
+ if(!ready||!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))return [];
+ return events.filter(x=>x.status==="active"&&concerned(x)&&confirmedDates(x).includes(day))
+  .map(x=>({
+   id:String(x.id),icon:iconFor(x),title:String(x.title||"Activité"),
+   time:String(x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer")),
+   status:status(x)[1]
+  }));
+}
+
 function cards(from,to){
  if(!ready||!from||!to)return "";
  const items=events.filter(x=>x.status==="active"&&concerned(x)&&confirmedDates(x).some(d=>d>=from&&d<=to))
@@ -169,6 +180,7 @@ const go=(id="",tab="agenda")=>{location.href="sorties-loisirs.html?tab="+encode
 window.STIPLeisure={
  refresh,
  pendingHTML,
+ dayItems,
  weekHTML:(start,end)=>cards(start,end),
  monthHTML:key=>{const [a,b]=firstLastOfMonth(key);return cards(a,b)},
  openEvent:id=>go(id),
