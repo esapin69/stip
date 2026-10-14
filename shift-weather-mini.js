@@ -147,9 +147,23 @@
     return { min, max, risk };
   }
 
-  function show(host, values, shift) {
+  function show(host, values, shift, options = {}) {
     if (!host?.isConnected) return;
     host.replaceChildren();
+    // Carte comparative : garder les mêmes valeurs horaires, uniquement raccourcir les libellés.
+    if (options.compact === true) {
+      const temps = document.createElement("strong");
+      temps.className = "hc-shift-weather-compact-temp";
+      temps.textContent = values.min + "–" + values.max + "°";
+      temps.title = "Températures min. et max. pendant le poste";
+      const rain = document.createElement("strong");
+      rain.className = "hc-shift-weather-compact-rain";
+      rain.textContent = "☂ " + values.risk + " %";
+      rain.title = "Risque maximal de précipitations pendant le poste";
+      host.append(temps, rain);
+      host.hidden = false;
+      return;
+    }
     const tag = document.createElement("span");
     tag.className = "hc-shift-weather-label";
     tag.textContent = "🌦️ PRÉVISIONS PENDANT VOS HORAIRES";
@@ -180,7 +194,7 @@
       // Stale overlay results must never change the next day's popup.
       if (!host.isConnected) return;
       const values = calculate(data, shift);
-      if (values) show(host, values, shift);
+      if (values) show(host, values, shift, args);
     } catch (_) {
       // Optional information must not block or clutter the planning modal.
       if (host.isConnected) host.hidden = true;
