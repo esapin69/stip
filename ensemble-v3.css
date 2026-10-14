@@ -5,27 +5,27 @@
 body{margin:0;background:#f7fbfc}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
-.ev3-page{width:min(800px,100%);margin:0 auto;padding:16px clamp(14px,3vw,28px) 65px}
-.ev3-header{display:flex;align-items:center;gap:12px;margin:0 0 20px}
+.ev3-page{width:min(760px,100%);margin:0 auto;padding:12px clamp(12px,3vw,24px) 92px}
+.ev3-header{display:flex;align-items:center;gap:9px;margin:0 0 13px}
 .ev3-header>div{flex:1}
 .ev3-header small{font-size:.66rem;font-weight:800;letter-spacing:.16em;color:#32877f}
-.ev3-header h1{font-size:clamp(1.55rem,5.7vw,2.65rem);margin:0;letter-spacing:-.075em;font-weight:930;line-height:1.1}
+.ev3-header h1{font-size:clamp(1.5rem,5.2vw,2.25rem);margin:0;letter-spacing:-.055em;font-weight:900;line-height:1.1}
 .ev3-header h1 span{color:#10a68f}
-.ev3-back,.ev3-header>button{color:#194b59;text-decoration:none;border:1px solid #d2e4e7;border-radius:14px;background:#fff;padding:10px 13px;min-height:44px;font-weight:800}
+.ev3-back,.ev3-header>button{color:#194b59;text-decoration:none;border:1px solid #d2e4e7;border-radius:13px;background:#fff;padding:8px 10px;min-height:42px;font-weight:800}
 .ev3-header>button{font-size:1.3rem;line-height:1}
-.ev3-tabs{display:grid;grid-template-columns:1.22fr 1fr .8fr;gap:6px;background:#eef5f6;padding:5px;border-radius:17px;margin-bottom:18px}
-.ev3-tabs button{background:transparent;border:0;border-radius:12px;color:#59737e;font-size:.83rem;font-weight:850;min-height:46px;padding:8px 3px}
+.ev3-tabs{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.95fr) minmax(0,.7fr);gap:4px;background:#eef5f6;padding:4px;border-radius:15px;margin-bottom:12px}
+.ev3-tabs button{background:transparent;border:0;border-radius:11px;color:#59737e;font-size:.81rem;font-weight:800;min-height:43px;padding:7px 3px;line-height:1.2}
 .ev3-tabs button.is-current{color:#155a62;background:#fff;box-shadow:0 2px 7px #142f3b11}
 .ev3-feedback{font-size:.86rem;color:#25786c;margin:6px 0 14px}
 .ev3-feedback:empty{display:none}
 .ev3-feedback.is-error,.ev3-modal-error{color:#b04343}
-.ev3-section-title{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:10px 0 15px}
-.ev3-section-title h2{font-size:1.28rem;letter-spacing:-.035em;margin:0}
+.ev3-section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 11px}
+.ev3-section-title h2{font-size:1.2rem;letter-spacing:-.03em;margin:0}
 .ev3-section-title small{color:#65838a;font-size:.79rem}
 .ev3-section-title button{font-weight:850;border:1px solid #cce2e0;background:#fff;border-radius:12px;color:#26677b;padding:9px}
-.ev3-small-title{font-size:.83rem;letter-spacing:.03em;color:#5e7782;font-weight:850;margin:20px 0 10px}
-.ev3-stack{display:grid;gap:10px;margin-bottom:16px}
-.ev3-card{display:flex;align-items:center;gap:12px;padding:14px;text-align:left;border:1px solid #d8e4e8;border-left:4px solid #5c91a6;border-radius:16px;background:#fff;color:#163945;box-shadow:0 3px 13px #16455308;min-width:0;width:100%;transition:transform .15s ease}
+.ev3-small-title{font-size:.8rem;letter-spacing:.02em;color:#5e7782;font-weight:850;margin:14px 0 8px}
+.ev3-stack{display:grid;gap:8px;margin-bottom:12px}
+.ev3-card{display:flex;align-items:center;gap:10px;padding:11px 12px;min-height:76px;text-align:left;border:1px solid #d8e4e8;border-left:4px solid #5c91a6;border-radius:15px;background:#fff;color:#163945;box-shadow:0 3px 13px #16455308;min-width:0;width:100%;transition:transform .15s ease}
 .ev3-card:active{transform:scale(.99)}
 .ev3-card.ev3-confirmed{border-left-color:#2b9f6b;background:#f8fffa}
 .ev3-card.ev3-pending{border-left-color:#e6a441;background:#fffdf7}
@@ -43,21 +43,21 @@ button{cursor:pointer}
 .ev3-empty span{display:block;font-size:2rem;margin-bottom:10px}
 .ev3-empty strong{display:block;color:#214b55}
 .ev3-empty p{font-size:.85rem;margin:7px 0 0}
-.ev3-panel{background:#fff;border:1px solid #d4e5e7;border-radius:20px;padding:clamp(15px,3vw,24px);box-shadow:0 5px 20px #29475009}
+.ev3-panel{background:#fff;border:1px solid #d4e5e7;border-radius:17px;padding:clamp(12px,2.5vw,20px);box-shadow:0 4px 14px #29475008}
 .ev3-panel h2{margin:0;font-size:1.2rem}
-.ev3-panel form{display:grid;gap:15px}
-.ev3-panel label:not(.ev3-person):not(.ev3-inline),.ev3-modal-body label:not(.ev3-person):not(.ev3-date-choice){display:grid;gap:6px;font-size:.86rem;font-weight:780;color:#27515c}
+.ev3-panel form{display:grid;gap:12px}
+.ev3-panel label:not(.ev3-person):not(.ev3-inline),.ev3-modal-body label:not(.ev3-person):not(.ev3-date-choice){display:grid;gap:4px;font-size:.86rem;font-weight:780;color:#27515c}
 .ev3-panel label small{font-size:.72rem;font-weight:550;color:#729098}
 .ev3-panel input:not([type=checkbox]),.ev3-panel select,.ev3-panel textarea,.ev3-modal-body input:not([type=checkbox]),.ev3-modal-body textarea{width:100%;min-height:46px;border-radius:12px;border:1px solid #cedfe3;background:#fff;color:#244e58;padding:10px 12px;outline-offset:2px}
-.ev3-form-title{margin:8px 0 0;font-weight:900!important}
-.ev3-icons{display:flex;flex-wrap:wrap;gap:7px}
-.ev3-emoji{width:51px;height:51px;border-radius:14px;font-size:1.5rem;border:1px solid #dbe9e9;background:#f4f9f9}
+.ev3-form-title{margin:4px 0 0;font-weight:850!important}
+.ev3-icons{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+.ev3-emoji{width:100%;min-width:0;height:45px;border-radius:12px;font-size:1.45rem;border:1px solid #dbe9e9;background:#f4f9f9}
 .ev3-emoji.is-selected{background:#def4ed;border-color:#299d83;box-shadow:inset 0 0 0 2px #299d83}
 .ev3-custom{color:#246779;font-weight:900}
 .ev3-switch{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 .ev3-switch button{border:1px solid #d0e3e4;color:#2a616d;background:#f7faf9;min-height:47px;border-radius:13px;font-size:.79rem;font-weight:850;padding:7px}
 .ev3-switch button.is-active{background:#ddf3ed;border-color:#20a58c;color:#125a56}
-.ev3-hint{font-size:.79rem;line-height:1.4;color:#54747e;background:#edf7f5;border-radius:10px;padding:10px;margin:0}
+.ev3-hint{font-size:.77rem;line-height:1.3;color:#54747e;background:#edf7f5;border-radius:10px;padding:8px 10px;margin:0}
 .ev3-month-nav,.ev3-month-quick{display:flex;gap:9px;align-items:center;justify-content:space-between}
 .ev3-month-nav strong{text-transform:capitalize;font-size:.93rem}
 .ev3-month-nav button{width:38px;height:38px;background:#f0f7f7;border:1px solid #d9e9e8;border-radius:10px;font-size:1.5rem}
@@ -72,8 +72,8 @@ button{cursor:pointer}
 .ev3-day.is-working{background:#edf6f7}
 .ev3-day.is-selected{border-color:#0c9687;background:#d6f3e9;color:#12544e;box-shadow:inset 0 0 0 1px #0c9687}
 .ev3-day:disabled{opacity:.33;cursor:default}
-.ev3-person-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:7px;max-height:210px;overflow:auto;border-radius:10px}
-.ev3-person{display:flex;align-items:center;gap:8px;background:#f7faf9;border:1px solid #e0edeb;border-radius:10px;min-height:41px;padding:8px;font-size:.82rem;font-weight:700;cursor:pointer}
+.ev3-person-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;max-height:185px;overflow:auto;border-radius:10px}
+.ev3-person{display:flex;align-items:center;gap:7px;background:#f7faf9;border:1px solid #e0edeb;border-radius:10px;min-height:40px;padding:7px;font-size:.81rem;font-weight:700;cursor:pointer}
 .ev3-person input,.ev3-inline input{accent-color:#0d9585;width:18px;height:18px;flex-shrink:0}
 .ev3-inline{display:flex!important;gap:8px;align-items:center;flex-wrap:wrap}
 .ev3-open-team{padding:8px 0;color:#375e6a;font-size:.84rem}
@@ -114,16 +114,27 @@ button:disabled{cursor:not-allowed;opacity:.6}
 .ev3-home-section .ev3-card-icon{height:40px;flex-basis:40px;font-size:1.4rem}
 .ev3-home-section .ev3-card-body small{font-size:.72rem}
 @media(max-width:460px){
- .ev3-page{padding:12px 13px 64px}
- .ev3-header{margin-bottom:16px}
- .ev3-header h1{font-size:clamp(1.55rem,5.7vw,2rem)}
- .ev3-tabs button{font-size:.76rem}
- .ev3-card{gap:8px;padding:12px}
- .ev3-card-icon{flex-basis:43px;height:43px;font-size:1.4rem}
- .ev3-chip{font-size:.62rem;padding:5px 6px}
- .ev3-emoji{width:46px;height:46px}
- .ev3-day{min-height:43px}
- .ev3-modal-body{padding:16px}
+ .ev3-page{padding:10px 12px 105px}
+ .ev3-header{margin-bottom:12px}
+ .ev3-header h1{font-size:clamp(1.42rem,5.6vw,1.9rem)}
+ .ev3-header small{font-size:.61rem;letter-spacing:.11em}
+ .ev3-back,.ev3-header>button{padding:8px 9px;min-height:40px}
+ .ev3-tabs button{font-size:.75rem;min-height:41px}
+ .ev3-card{gap:8px;padding:10px 9px;min-height:72px}
+ .ev3-card-icon{flex-basis:38px;height:38px;font-size:1.32rem}
+ .ev3-card-body strong{font-size:.92rem}
+ .ev3-card-body small{font-size:.73rem}
+ .ev3-chip{font-size:.62rem;padding:4px 6px}
+ .ev3-panel{padding:12px}
+ .ev3-panel form{gap:10px}
+ .ev3-icons{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+ .ev3-emoji{height:43px;font-size:1.4rem}
+ .ev3-day{min-height:40px}
+ .ev3-calendar{gap:3px}
+ .ev3-month-quick{gap:5px}
+ .ev3-modal-body{padding:14px}
+ .ev3-trip-toolbar{flex-wrap:wrap}
+ .ev3-trip-toolbar button{margin-left:auto}
 }
 
 /* Contextual activity invitations: one activity, editable invitees, one conversation. */
@@ -191,3 +202,31 @@ html[data-t-est="1"] .t-native-leisure .ev3-dialog[open]{
  font-size:.72rem;font-weight:750;color:#315968}
 .ev3-roster-accepted .ev3-roster-names>span,.ev3-roster-organizer .ev3-roster-names>span{background:#e3f6e9;color:#217248}
 .ev3-roster-declined .ev3-roster-names>span{background:#f8e7e9;color:#91444f}
+
+/* Sorties & trajets — useful, compact states during independent data loading. */
+.ev3-loading{display:grid;gap:10px;padding:6px 0 12px;min-width:0}
+.ev3-loading-caption{font-size:.82rem;color:#607d85;font-weight:750}
+.ev3-loading-card{display:flex;align-items:center;gap:11px;padding:12px;border:1px solid #e2ecee;border-radius:15px;background:#fff;min-height:66px}
+.ev3-loading-card>i{display:block;flex:0 0 40px;height:40px;border-radius:12px;background:#e8f0f1}
+.ev3-loading-card>span{display:grid;gap:9px;flex:1}
+.ev3-loading-card b,.ev3-loading-card small{display:block;height:11px;border-radius:999px;background:#e8f0f1}
+.ev3-loading-card b{width:55%}
+.ev3-loading-card small{width:78%;height:8px}
+.ev3-loading-card>i,.ev3-loading-card b,.ev3-loading-card small{animation:ev3Skeleton 1.6s ease-in-out infinite alternate}
+@keyframes ev3Skeleton{from{opacity:.65}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.ev3-loading-card>i,.ev3-loading-card b,.ev3-loading-card small{animation:none}}
+.ev3-quiet-empty{display:flex;flex-wrap:wrap;gap:7px;align-items:center;padding:14px 15px;border:1px solid #dbe8e9;border-radius:14px;color:#5a7781;background:#fff;font-size:.82rem;line-height:1.4}
+.ev3-quiet-empty strong{color:#204b59;font-size:.9rem}
+.ev3-quiet-empty span{flex:1 1 180px}
+.ev3-quiet-empty button{border:1px solid #b9dbd9;border-radius:10px;color:#155e63;background:#f0f9f7;min-height:38px;padding:6px 11px;font-weight:800;font-size:.8rem}
+.ev3-quiet-empty.is-error{border-color:#edc9c9}
+.ev3-quiet-empty.is-error strong{color:#a73f3f}
+.ev3-trip-toolbar{display:flex;align-items:center;justify-content:space-between;gap:9px;margin:4px 0 14px;min-height:43px}
+.ev3-trip-toolbar>span{font-size:.85rem;color:#607e87;overflow-wrap:anywhere}
+.ev3-trip-toolbar button{min-height:41px;padding:8px 11px;border:1px solid #bedcde;border-radius:11px;background:#f1f9f8;color:#195969;font-size:.81rem;font-weight:850}
+.ev3-panel-compact .ev3-intro{margin:0 0 12px;font-size:.83rem;color:#5a7680}
+.ev3-inline-status{margin:3px 0 8px;color:#627f87;font-size:.79rem;line-height:1.4}
+.ev3-inline-status.is-error{color:#b04343}
+.ev3-tabs button:focus-visible,.ev3-trip-toolbar button:focus-visible,.ev3-emoji:focus-visible{outline:2px solid #129b9a;outline-offset:2px}
+/* The existing workspace return tab remains usable without covering the middle of a form. */
+body:has(.ev3-page) .stip-workspace-launcher{bottom:max(12px,env(safe-area-inset-bottom));transform:scale(.86);transform-origin:bottom right}
