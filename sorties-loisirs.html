@@ -7,14 +7,28 @@
  <meta name="color-scheme" content="light only">
  <title>Sorties &amp; trajets · GHE</title>
  <meta name="description" content="Proposer une activité, gérer ses rendez-vous entre collègues et organiser un covoiturage.">
- <link rel="stylesheet" href="ensemble-v3.css?v=20261014-rsvp3">
+ <link rel="stylesheet" href="ensemble-v3.css?v=20261014-progressive-mobile1">
  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1">
  <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
- <script defer src="ensemble-v3.js?v=20261014-create-deeplink1"></script>
+ <script defer src="ensemble-v3.js?v=20261014-progressive-mobile1"></script>
 </head>
 <body>
  <main id="ensembleV3" class="ev3-page" aria-label="Sorties et trajets — rendez-vous entre collègues">
-  <p role="status">Chargement des rendez-vous…</p>
+  <header class="ev3-header">
+   <a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a>
+   <div><small>ENTRE COLLÈGUES</small><h1>Sorties <span>&amp;</span> trajets</h1></div>
+   <button type="button" disabled aria-label="Actualisation en cours">↻</button>
+  </header>
+  <nav class="ev3-tabs" aria-label="Sorties et trajets">
+   <button type="button" disabled>📅 Mes rendez-vous</button>
+   <button type="button" disabled>＋ Proposer</button>
+   <button type="button" disabled>🚗 Trajets</button>
+  </nav>
+  <section class="ev3-loading" role="status" aria-live="polite">
+   <span class="ev3-loading-caption">Ouverture des rendez-vous…</span>
+   <div class="ev3-loading-card"><i></i><span><b></b><small></small></span></div>
+   <div class="ev3-loading-card"><i></i><span><b></b><small></small></span></div>
+  </section>
  </main>
 <script src="stip-navigation.js?v=20260925-workspace-auto1"></script></body>
 </html>

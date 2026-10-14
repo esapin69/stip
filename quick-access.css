@@ -168,18 +168,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
   font:inherit;font-size:.91rem;color:#123f50;-webkit-appearance:none;appearance:none;
 }
 .stip-app-search input::placeholder{color:#718b95;opacity:1}
-.stip-app-propose{
-  width:100%;min-height:66px;display:flex!important;align-items:center!important;gap:11px!important;
-  margin:0 0 16px;padding:10px 13px!important;text-align:left!important;
-  border:1px solid #cde8e5!important;border-radius:16px!important;
-  background:#f1faf8!important;color:#104a48!important;box-shadow:none!important;
-}
-.stip-app-propose .stip-store-icon{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:12px!important}
-.stip-app-propose>span:not(.stip-store-icon){min-width:0;display:flex;flex-direction:column;gap:3px}
-.stip-app-propose strong{font-size:.9rem!important;line-height:1.2!important;font-weight:850!important}
-.stip-app-propose small{font-size:.72rem!important;line-height:1.2!important;color:#507977!important}
-.stip-app-propose>b{margin-left:auto;font-size:1.4rem;color:#188b85}
-.stip-app-propose:active{background:#e3f5f0!important}
 .stip-app-grid-empty{grid-column:1/-1;margin:12px 0;padding:18px 10px;color:#657e87;text-align:center;font-size:.85rem}
 .stip-app-grid-empty .stip-store-browse{display:block;margin:12px auto 0}
 .stip-app-result-note{font-size:.66rem;color:#5b8188}
@@ -189,7 +177,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 @media(max-width:370px){
   .stip-store-browse-add{min-height:42px!important;padding:7px 10px!important;gap:6px!important}
   .stip-store-browse-add>strong{font-size:.79rem!important}
-  .stip-app-propose{padding:8px 10px!important}
 }
 /* Illustrated GHE application tiles: rich artwork only where space allows. */
 .stip-store-icon.is-illustrated{background:transparent!important;box-shadow:none!important;color:inherit!important;letter-spacing:normal!important}

@@ -13,8 +13,28 @@ const byId=id=>document.getElementById(id);
 const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
 const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Accès aux sorties désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
 const entryTab=new URLSearchParams(location.search).get("tab");
-const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
+let refreshSequence=0;
+let pendingVisualRefresh=false;
+function renderWhenIdle(){
+ if(byId("ev3Dialog")?.open){pendingVisualRefresh=true;return}
+ const active=document.activeElement;
+ // Keep the original mobile input and keyboard in place while data arrive.
+ if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
+  pendingVisualRefresh=true;
+  const submit=byId("ev3Compose")?.querySelector('[type="submit"]');
+  if(submit)submit.disabled=!state.calendarLoaded||!state.peopleLoaded;
+  return;
+ }
+ pendingVisualRefresh=false;
+ render();
+}
+document.addEventListener("focusout",()=>{
+ if(!pendingVisualRefresh)return;
+ setTimeout(()=>{if(pendingVisualRefresh)renderWhenIdle()},280);
+});
+
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
  const r=await fetch(API,{method:"POST",cache:"no-store",headers:{"content-type":"application/json","x-stip-session":session()},body:JSON.stringify({action,...data})});
@@ -49,18 +69,19 @@ function card(e){
 }
 function chosenCards(){
  const events=state.events.filter(e=>concerned(e)&&(e.dates||[]).some(d=>d>=today)&&e.status==="active");
+ const open=state.events.filter(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active");
  if(state.agendaFilter==="invitations"){
   const invited=events.filter(e=>!!e.invitation_status||(e.is_organizer&&(e.invited_colleagues||[]).length>0));
   return '<div class="ev3-section-title"><h2>Invitations</h2><small>'+invited.length+' activité'+(invited.length>1?"s":"")+'</small></div>'+
-   (invited.length?'<div class="ev3-stack">'+invited.map(card).join("")+"</div>":'<div class="ev3-empty"><strong>Aucune invitation en cours.</strong><p>Les invitations reçues et envoyées apparaîtront ici.</p></div>');
+    (invited.length?'<div class="ev3-stack">'+invited.map(card).join("")+'</div>':'<div class="ev3-quiet-empty">Aucune invitation à traiter actuellement.</div>');
  }
  const pending=events.filter(e=>e.needs_response&&!e.is_organizer);
  const other=events.filter(e=>!pending.includes(e)&&!e.response?.declined);
- const header='<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>';
- return header+(pending.length?'<h3 class="ev3-small-title">Réponse attendue</h3><div class="ev3-stack">'+pending.map(card).join("")+'</div>':"")+
- (other.length?'<h3 class="ev3-small-title">À venir</h3><div class="ev3-stack">'+other.map(card).join("")+'</div>':"")+
- (!events.length?'<div class="ev3-empty"><span>📅</span><strong>Aucun rendez-vous personnel à venir.</strong><p>Les propositions envoyées et reçues apparaîtront ici.</p></div>':"")+
- (state.events.some(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active")?'<h3 class="ev3-small-title">Ouvert à l’équipe</h3><div class="ev3-stack">'+state.events.filter(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active").map(card).join("")+"</div>":"");
+ return '<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>'+
+  (pending.length?'<h3 class="ev3-small-title">Réponse attendue</h3><div class="ev3-stack">'+pending.map(card).join("")+'</div>':"")+
+  (other.length?'<h3 class="ev3-small-title">À venir</h3><div class="ev3-stack">'+other.map(card).join("")+'</div>':"")+
+  (!events.length&&!open.length?'<div class="ev3-quiet-empty"><strong>Aucun rendez-vous prévu.</strong><span>Organise une activité ou invite des collègues.</span><button type="button" data-ev3-tab="create">＋ Proposer une activité</button></div>':"")+
+  (open.length?'<h3 class="ev3-small-title">Ouvert à l’équipe</h3><div class="ev3-stack">'+open.map(card).join("")+'</div>':"");
 }
 function tripStatus(t){
  const m={pending:"En attente",accepted:"Confirmé",declined:"Refusé",withdrawn:"Retiré"};
@@ -79,11 +100,13 @@ function tripCard(t){
  (t.is_mine&&t.applicants?.some(a=>a.status==="pending")?'<div class="ev3-requests">'+t.applicants.filter(a=>a.status==="pending").map(a=>'<p>'+escapeHTML(a.name)+' <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="accepted">Accepter</button> <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="declined">Refuser</button></p>').join("")+'</div>':"")+'</article>';
 }
 function tripsHTML(){
+ if(!state.tripLoaded)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+loadingHTML("Recherche des trajets…");
+ if(state.tripError)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div><div class="ev3-quiet-empty is-error"><strong>Trajets momentanément indisponibles.</strong><span>'+escapeHTML(state.tripError)+'</span><button type="button" data-ev3-refresh>Réessayer</button></div>';
  const p=state.pref||{opted_in:false,sector:"",has_car:false};
- return '<div class="ev3-section-title"><h2>Covoiturage</h2></div>'+
- (!p.opted_in?'<section class="ev3-panel"><p>Indique uniquement ton secteur, jamais ton adresse personnelle.</p><form id="ev3Prefs"><label>Mon secteur<input name="sector" required maxlength="80" placeholder="Lyon 8e, Bron…"></label><label class="ev3-inline"><input name="has_car" type="checkbox"> Je peux conduire</label><button type="submit" class="ev3-primary">Activer</button></form></section>':
- '<section class="ev3-trip-head"><small>Mon secteur : '+escapeHTML(p.sector||"")+'</small><button type="button" data-ev3-mode="carpool">＋ Proposer un trajet</button></section>'+
- '<div class="ev3-stack">'+(state.trips.length?state.trips.map(tripCard).join(""):'<div class="ev3-empty">Aucun trajet disponible.</div>')+'</div>');
+ return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+
+  (!p.opted_in?'<section class="ev3-panel ev3-panel-compact"><p class="ev3-intro">Partage uniquement ton secteur, jamais ton adresse personnelle.</p><form id="ev3Prefs"><label>Mon secteur<input name="sector" required maxlength="80" placeholder="Lyon 8e, Bron…"></label><label class="ev3-inline"><input name="has_car" type="checkbox"> Je peux conduire</label><button type="submit" class="ev3-primary">Activer le covoiturage</button></form></section>':
+  '<section class="ev3-trip-toolbar"><span>📍 '+escapeHTML(p.sector||"Secteur à définir")+'</span><button type="button" data-ev3-mode="carpool">＋ Proposer un trajet</button></section>'+
+  (state.trips.length?'<div class="ev3-stack">'+state.trips.map(tripCard).join("")+'</div>':'<div class="ev3-quiet-empty"><strong>Aucun trajet proposé.</strong><span>Tu peux proposer le premier, ou revenir plus tard.</span></div>'));
 }
 function calendarHTML(){
  const first=state.month,year=first.getFullYear(),month=first.getMonth();
@@ -94,19 +117,19 @@ function calendarHTML(){
  for(let i=1;i<=daysIn;i++){
   const d=dateISO(new Date(year,month,i)),meta=palette.get(d),past=d<today,selected=state.dates.has(d);
   const ineligible=state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false);
-  const disabled=past||ineligible;
+  const disabled=past||(state.mode==="afterwork"&&(!state.calendarLoaded||!!state.calendarError))||ineligible;
   body+='<button type="button" '+(disabled?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'" title="'+escapeHTML(ineligible?"Pas de fin de service vérifiée pour ce jour":meta?.label||"Date libre")+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
  }
- return '<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
- '<div class="ev3-month-quick"><button type="button" data-ev3-all="1">✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
+ return (state.calendarError?'<p class="ev3-inline-status is-error">'+escapeHTML(state.calendarError)+'</p>':!state.calendarLoaded?'<p class="ev3-inline-status">Vérification de tes disponibilités…</p>':"")+'<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
+ '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
  const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
  const restricted=state.people.filter(p=>p.can_invite===false).length;
- return '<label class="ev3-search-label">Inviter des collègues <small>'+state.people.filter(p=>p.can_invite!==false).length+' collègues invitables</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
+ return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
- '<div class="ev3-person-list" id="ev3PeopleList">'+peopleOptions("")+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
+ '<div class="ev3-person-list" id="ev3PeopleList">'+(state.peopleLoaded?peopleOptions(""):'<p class="ev3-inline-status">Chargement de la liste des collègues…</p>')+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
  (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès aux sorties.</p>':"")+
  (restricted?'<p class="ev3-directory-hint">« Accès aux sorties désactivé » : ce collègue est dans l’annuaire, mais un administrateur doit réactiver son accès avant une nouvelle invitation.</p>':"");
 }
@@ -126,35 +149,40 @@ function formHTML(){
   '<label>Point de rendez-vous<input name="meeting_point" maxlength="200"></label><label>Précisions<textarea name="note" rows="2" maxlength="400"></textarea></label><button type="submit" class="ev3-primary">Proposer le trajet</button></form></section>';
  }
  const iconButtons=choices.map(([ic,title])=>'<button type="button" class="ev3-emoji '+(state.icon===ic?"is-selected":"")+'" data-ev3-icon="'+escapeHTML(ic)+'" aria-pressed="'+(state.icon===ic)+'" title="'+escapeHTML(title)+'">'+ic+'</button>').join("");
- return '<section class="ev3-panel"><div class="ev3-section-title"><h2>Proposer une activité</h2><button type="button" data-ev3-mode="carpool">🚗 Covoiturage ›</button></div>'+
+ return '<section class="ev3-panel"><div class="ev3-section-title"><h2>Proposer une activité</h2></div>'+
  '<form id="ev3Compose">'+
- '<label class="ev3-form-title">1. Quelle activité ? <small>Icône obligatoire</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
+ '<label class="ev3-form-title">1. Ton activité <small>Choisis une icône</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
  (state.customOpen?'<label>Autre icône <input id="ev3OtherIcon" type="text" maxlength="16" autocomplete="off" placeholder="Choisir un emoji" value="'+escapeHTML(state.icon)+'"></label>':"")+
  '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label>'+
  '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
  '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
  '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
- (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Chaque invité verra ses propres jours compatibles avec sa fin de service. Les réponses et présences seront visibles date par date.</p>')+
+ (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Les collègues pourront choisir leurs dates compatibles après le service.</p>')+
  '<label class="ev3-form-title">3. Les dates</label>'+calendarHTML()+
  '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
  '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label>'+
  '<label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
  '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label>'+
- '<button type="submit" class="ev3-primary">Envoyer la proposition</button></form></section>';
+ '<button type="submit" class="ev3-primary" '+(!state.calendarLoaded||!state.peopleLoaded?'disabled aria-label="Chargement des disponibilités et des collègues"':'')+'>Envoyer la proposition</button></form></section>';
+}
+function loadingHTML(label="Chargement des rendez-vous…"){
+ return '<section class="ev3-loading" role="status" aria-live="polite"><span class="ev3-loading-caption">'+escapeHTML(label)+'</span>'+
+  '<div class="ev3-loading-card"><i></i><span><b></b><small></small></span></div>'+
+  '<div class="ev3-loading-card"><i></i><span><b></b><small></small></span></div></section>';
 }
 function render(){
  const app=byId("ensembleV3");if(!app)return;
  app.innerHTML='<header class="ev3-header"><a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a><div><small>ENTRE COLLÈGUES</small><h1>Sorties <span>&amp;</span> trajets</h1></div><button type="button" data-ev3-refresh title="Actualiser" aria-label="Actualiser">↻</button></header>'+
- '<nav class="ev3-tabs" aria-label="Sorties et trajets"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda">📅 Mes rendez-vous</button><button type="button" class="'+(state.tab==="create"?"is-current":"")+'" data-ev3-tab="create">＋ Proposer</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips">🚗 Trajets</button></nav>'+
+ '<nav class="ev3-tabs" aria-label="Sorties et trajets"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda" aria-current="'+(state.tab==="agenda"?"page":"false")+'">📅 Mes rendez-vous</button><button type="button" class="'+(state.tab==="create"?"is-current":"")+'" data-ev3-tab="create" aria-current="'+(state.tab==="create"?"page":"false")+'">＋ Proposer</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips" aria-current="'+(state.tab==="trips"?"page":"false")+'">🚗 Trajets</button></nav>'+
  '<p id="ev3Feedback" class="ev3-feedback '+(state.error?"is-error":"")+'" role="status">'+escapeHTML(state.status)+'</p>'+
- (!state.loaded?'<div class="ev3-empty">Chargement des propositions…</div>':
- state.tab==="agenda"?chosenCards():state.tab==="trips"?tripsHTML():formHTML())+
+ (state.tab==="create"?formHTML():state.tab==="trips"?tripsHTML():!state.loaded?loadingHTML():
+  state.eventsError?'<div class="ev3-quiet-empty is-error"><strong>Rendez-vous momentanément indisponibles.</strong><span>'+escapeHTML(state.eventsError)+'</span><button type="button" data-ev3-refresh>Réessayer</button></div>':chosenCards())+
  '<dialog id="ev3Dialog" class="ev3-dialog" aria-label="Détails de l’activité"></dialog>';
  bind();
 }
 function bind(){
- document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;state.agendaFilter="all";state.status="";render()});
- byId("ensembleV3")?.querySelector("[data-ev3-refresh]")?.addEventListener("click",refresh);
+ document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;if(state.tab==="create")state.formKind="activity";state.agendaFilter="all";state.status="";render()});
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-refresh]").forEach(b=>b.addEventListener("click",refresh));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{persistTitle();state.icon=b.dataset.ev3Icon;state.customOpen=false;render()});
@@ -217,6 +245,7 @@ function showActivityDialog(d){
   d.show();
   requestAnimationFrame(()=>d.scrollIntoView({block:"nearest",behavior:"smooth"}));
  }else d.showModal();
+ d.addEventListener("close",()=>{if(pendingVisualRefresh)renderWhenIdle()},{once:true});
 }
 function closeModal(){const d=byId("ev3Dialog");if(d?.open)d.close()}
 function rosterDateHTML(event,day){
@@ -364,27 +393,66 @@ function openEditor(e){
  showActivityDialog(d);
 }
 async function refresh(){
- try{
-  const [events,calendar,peers,trips,preview]=await Promise.allSettled([call("list"),call("calendar"),call("colleagues"),call("carpool_home"),call("calendar_preview",{start:today,days:123})]);
-  if(events.status==="rejected")throw events.reason;
-  state.events=events.value.events||[];
-  if(calendar.status==="fulfilled")state.calendar=calendar.value.days||[];
-  state.calendarPreviewReady=preview.status==="fulfilled";
-  if(state.calendarPreviewReady){const ends=new Map((preview.value.shifts||[]).map(x=>[x.date,x.end]));state.calendar=state.calendar.map(x=>({...x,end:ends.get(x.date)||null}));}
-  if(peers.status==="fulfilled"){
-   state.people=peers.value.colleagues||[];
-   state.peopleError="";
-  }else{
-   state.peopleError="Impossible de charger l’annuaire. Appuie sur ↻ pour réessayer.";
-  }
-  if(trips.status==="fulfilled"){state.trips=trips.value.trips||[];state.pref=trips.value.preference||null}
-  state.loaded=true;state.error="";state.status="";render();
-  const id=new URLSearchParams(location.search).get("event");if(id&&!deepLinked&&state.events.some(e=>e.id===id)){deepLinked=true;openEvent(id)}
- }catch(err){state.loaded=true;state.error=err.message;state.status=err.message;render()}
+ const sequence=++refreshSequence;
+ const current=()=>sequence===refreshSequence;
+ const renderCurrent=()=>{if(current())renderWhenIdle()};
+ const jobs=[
+  call("list").then(j=>{
+   if(!current())return;
+   state.events=j.events||[];
+   state.loaded=true;state.eventsError="";state.error="";state.status="";
+   renderCurrent();
+   const id=new URLSearchParams(location.search).get("event");
+   if(id&&!deepLinked&&state.events.some(e=>e.id===id)){
+    deepLinked=true;openEvent(id);
+   }
+  }).catch(err=>{
+   if(!current())return;
+   state.loaded=true;state.eventsError=err.message;state.error=err.message;state.status=err.message;renderCurrent();
+  }),
+  call("calendar").then(j=>{
+   if(!current())return;
+   state.calendar=(j.days||[]).map(day=>({...day,end:state.previewEnds.get(day.date)||day.end||null}));
+   state.calendarLoaded=true;state.calendarError="";renderCurrent();
+  }).catch(()=>{
+   if(!current())return;
+   state.calendarLoaded=false;state.calendarError="Planning indisponible. Actualise pour choisir tes dates.";renderCurrent();
+  }),
+  call("colleagues").then(j=>{
+   if(!current())return;
+   state.people=j.colleagues||[];state.peopleLoaded=true;state.peopleError="";renderCurrent();
+  }).catch(()=>{
+   if(!current())return;
+   state.peopleLoaded=false;state.peopleError="Annuaire indisponible. Actualise pour inviter des collègues.";renderCurrent();
+  }),
+  call("carpool_home").then(j=>{
+   if(!current())return;
+   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;renderCurrent();
+  }).catch(()=>{
+   if(!current())return;
+   state.tripLoaded=true;state.tripError="Impossible de charger les trajets. Actualise la page.";renderCurrent();
+  }),
+  call("calendar_preview",{start:today,days:123}).then(j=>{
+   if(!current())return;
+   state.previewEnds=new Map((j.shifts||[]).map(x=>[x.date,x.end]));
+   state.calendarPreviewReady=true;
+   state.calendar=state.calendar.map(x=>({...x,end:state.previewEnds.get(x.date)||null}));
+   if(state.mode==="afterwork"&&state.calendarLoaded){
+    const byDate=new Map(state.calendar.map(x=>[x.date,x]));
+    for(const day of state.dates)if(!validClock(byDate.get(day)?.end))state.dates.delete(day);
+   }
+   renderCurrent();
+  }).catch(()=>{
+   if(!current())return;
+   state.calendarPreviewReady=false;renderCurrent();
+  })
+ ];
+ await Promise.allSettled(jobs);
 }
 function setView(view){state.agendaFilter=view==="invitations"?"invitations":"all";state.tab=view==="trips"?"trips":"agenda";state.status="";render()}
 function openCreator(){state.formKind="activity";state.agendaFilter="all";state.tab="create";render()}
 window.STIPEnsembleV3={refresh,openEvent,setView,openCreator};
-document.addEventListener("DOMContentLoaded",refresh,{once:true});
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{render();void refresh()},{once:true});
+else{render();void refresh()}
 window.addEventListener("pageshow",e=>{if(e.persisted)refresh()});
 })();

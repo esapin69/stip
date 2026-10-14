@@ -1,9 +1,9 @@
 name: GHE leisure behavior
 on:
   push:
-    paths: ['leisure-runtime.*', 'ensemble-v3.*', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
+    paths: ['leisure-runtime.*', 'ensemble-v3.*', 'quick-access.js', 'quick-access.css', 'index.html', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 'tools/stip-ensemble-mobile-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
   pull_request:
-    paths: ['leisure-runtime.*', 'ensemble-v3.*', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
+    paths: ['leisure-runtime.*', 'ensemble-v3.*', 'quick-access.js', 'quick-access.css', 'index.html', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 'tools/stip-ensemble-mobile-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
 jobs:
   leisure:
     runs-on: ubuntu-latest
@@ -12,8 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node --check ensemble-v3.js
+      - run: node tools/stip-ensemble-mobile-test.mjs
       - run: node tools/stip-leisure-test.mjs
       - run: node --check leisure-runtime.js
-      - run: node --check ensemble-v3.js
       - run: node --check t-est/accueil/accueil-modules-natifs.js
       - run: node --check t-est/accueil/accueil-unifie.js
