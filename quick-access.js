@@ -27,6 +27,7 @@
     openDocument("responsable.html" + (query ? "?" + query : ""));
   }
   const META = {
+    meteo: { label: "Météo", open: () => openDocument("meteo/") },
     nouveau: { label: "Le Nouveau", open: () => openDocument("le-nouveau.html?v=20261006-3") },
     personal: {
       label: "Planning perso",
@@ -128,6 +129,7 @@
     },
   };
   const APP_STORE_COPY = {
+    meteo: ["Météo", "Températures, risques de pluie et tendances jusqu’à 35 jours.", "Pratique"],
     personal: ["Planning perso", "Votre planning personnel et vos horaires.", "Organisation"],
     tomorrow: ["Actions", "Préparer et consulter les jours à venir.", "Organisation"],
     meeting_notes: ["Notes de réunion", "Saisir, retrouver et archiver vos notes de réunion personnelles.", "Organisation"],
@@ -160,6 +162,7 @@
     lastTouch = { key: "", at: 0 };
   function allowed(k) {
     if (!META[k]) return false;
+    if (k === "meteo") return !!window.STIPSession || !!localStorage.getItem("stip_session_v1");
     if (k === "nouveau") return !!localStorage.getItem("stip_session_v1");
     const sessionRole = String(
       window.STIPSession?.role_key ||
@@ -242,6 +245,15 @@
     "resp_directory",
     "resp_agenda",
   ];
+  function ensureWeatherApp() {
+    if (!allowed("meteo")) return;
+    const marker = "stip_weather_app_added_v1";
+    try {
+      if (localStorage.getItem(marker)) return;
+      writeFav(["meteo", ...readFav()]);
+      localStorage.setItem(marker, "1");
+    } catch {}
+  }
   function ensureResponsibleApps() {
     if (!allowed("responsable")) return;
     const marker = "stip_responsable_apps_migrated_v1";
@@ -346,6 +358,7 @@
     });
   }
   const APP_ICON = {
+    meteo: '<span aria-hidden="true">🌦️</span>',
     personal:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M7.5 14h3M13.5 14h3M7.5 18h3"/></svg>',
     tomorrow:
@@ -427,6 +440,7 @@
   }
   function renderApps(host) {
     if (!host) return;
+    ensureWeatherApp();
     ensureResponsibleApps();
     const chosen=readFav().filter(allowed);
     host.innerHTML = chosen.length
