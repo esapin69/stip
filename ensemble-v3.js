@@ -13,10 +13,11 @@ const byId=id=>document.getElementById(id);
 const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
 const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Accès aux sorties désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
 const entryTab=new URLSearchParams(location.search).get("tab");
-const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
 function renderWhenIdle(){
+ if(byId("ev3Dialog")?.open)return;
  const active=document.activeElement;
  // Never replace an input or textarea while the mobile keyboard is in use.
  if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))return;
@@ -89,6 +90,7 @@ function tripCard(t){
 }
 function tripsHTML(){
  if(!state.tripLoaded)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+loadingHTML("Recherche des trajets…");
+ if(state.tripError)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div><div class="ev3-quiet-empty is-error"><strong>Trajets momentanément indisponibles.</strong><span>'+escapeHTML(state.tripError)+'</span><button type="button" data-ev3-refresh>Réessayer</button></div>';
  const p=state.pref||{opted_in:false,sector:"",has_car:false};
  return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+
   (!p.opted_in?'<section class="ev3-panel ev3-panel-compact"><p class="ev3-intro">Partage uniquement ton secteur, jamais ton adresse personnelle.</p><form id="ev3Prefs"><label>Mon secteur<input name="sector" required maxlength="80" placeholder="Lyon 8e, Bron…"></label><label class="ev3-inline"><input name="has_car" type="checkbox"> Je peux conduire</label><button type="submit" class="ev3-primary">Activer le covoiturage</button></form></section>':
@@ -108,13 +110,13 @@ function calendarHTML(){
   body+='<button type="button" '+(disabled?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'" title="'+escapeHTML(ineligible?"Pas de fin de service vérifiée pour ce jour":meta?.label||"Date libre")+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
  }
  return (state.calendarError?'<p class="ev3-inline-status is-error">'+escapeHTML(state.calendarError)+'</p>':!state.calendarLoaded?'<p class="ev3-inline-status">Vérification de tes disponibilités…</p>':"")+'<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
- '<div class="ev3-month-quick"><button type="button" data-ev3-all="1">✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
+ '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
  const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
  const restricted=state.people.filter(p=>p.can_invite===false).length;
- return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
+ return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+(state.peopleLoaded?peopleOptions(""):'<p class="ev3-inline-status">Chargement de la liste des collègues…</p>')+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
  (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès aux sorties.</p>':"")+
@@ -413,10 +415,10 @@ async function refresh(){
   }),
   call("carpool_home").then(j=>{
    if(!current())return;
-   state.trips=j.trips||[];state.pref=j.preference||null;state.tripLoaded=true;renderCurrent();
+   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;renderCurrent();
   }).catch(()=>{
    if(!current())return;
-   state.tripLoaded=true;state.trips=[];state.pref=null;renderCurrent();
+   state.tripLoaded=true;state.tripError="Impossible de charger les trajets. Actualise la page.";renderCurrent();
   }),
   call("calendar_preview",{start:today,days:123}).then(j=>{
    if(!current())return;
