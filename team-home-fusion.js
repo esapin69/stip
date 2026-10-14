@@ -123,6 +123,8 @@
   function noteButtons(items) {
     return items.map((x,i)=>'<button class="thf-note status-'+esc(x.level||"info")+'" type="button" data-thf-note="'+i+'"><span>'+esc(x.icon||"ℹ")+'</span><strong>'+esc(x.title)+'</strong><span aria-hidden="true">›</span></button>').join("");
   }
+  // L'accueil ne déroule jamais le personnel : uniquement une synthèse compacte.
+  // Les listes et les effectifs détaillés sont montés sur demande, dans un dialogue.
   function paint(host,opts) {
     if(!host?.isConnected)return;
     const day=String(opts.day||"").slice(0,10),start=monday(day);
@@ -130,43 +132,102 @@
     const myCode=String(row?.code||row?.source_value||"").trim();
     const working=Boolean(definition(myCode)?.is_working);
     const myTime=working?shiftTime(myCode,row):"";
-    const myInterval=range(myTime),myBase=base(myCode);
-    const perm=opts.permissions||{};
-    const team=cached(weeks,start),staff=cached(days,day),
-      assistant=perm.assistant_enabled?cached(assistants,start):null,
-      activity=perm.activity?cached(activities,day):null;
+    const myBase=base(myCode), myInterval=range(myTime),perm=opts.permissions||{};
+    const team=perm.planning_team?cached(weeks,start):null;
+    const staff=perm.planning_team?cached(days,day):null;
+    const assistant=perm.assistant_enabled?cached(assistants,start):null;
+    const activity=perm.activity?cached(activities,day):null;
     const loaded=Array.isArray(team?.planning);
     const agents=loaded?team.planning.filter(x=>String(x.date||"").slice(0,10)===day):[];
-    const visible=agents.filter(x=>!isChef(x)&&String(x.agents?.source_key||"")!==String(opts.sourceKey||""));
-    const same=visible.filter(x=>working && (myInterval&&range(shiftTime(x.code,x))?overlap(myInterval,range(shiftTime(x.code,x))):base(x.code)===myBase));
-    const others=visible.filter(x=>!same.includes(x));
+    const visible=agents.filter(x=>!isChef(x)&&
+      (!opts.sourceKey||String(x.agents?.source_key||"")!==String(opts.sourceKey)) &&
+      (!opts.ghe||String(x.agents?.ghe||"").replace(/^GHE\s*/i,"")!==String(opts.ghe).replace(/^GHE\s*/i,"")));
+    const exact=working?visible.filter(x=>base(x.code)===myBase):[];
+    const adjacent=working?visible.filter(x=>base(x.code)!==myBase&&
+      myInterval&&overlap(myInterval,range(shiftTime(x.code,x)))):[];
+    const elsewhere=visible.filter(x=>!exact.includes(x)&&!adjacent.includes(x));
     const groups=new Map();
-    for(const x of agents){const code=base(x.code);if(!definition(code)?.is_working)continue;
-      if(!groups.has(code))groups.set(code,[]);groups.get(code).push(x);}
-    // Include HCL shifts with zero people; otherwise missing capacity vanishes.
-    for(const entry of staffRows(staff)){const code=base(entry.shift_code||entry.shift||entry.code);
+    for(const x of agents){
+      const code=base(x.code);
+      if(!definition(code)?.is_working)continue;
+      if(!groups.has(code))groups.set(code,[]);
+      groups.get(code).push(x);
+    }
+    for(const x of staffRows(staff)){
+      const code=base(x.shift_code||x.shift||x.code);
       if(definition(code)?.is_working&&!groups.has(code))groups.set(code,[]);
     }
-    const ord=(x)=>Number(definition(x)?.sort_order||999);
-    const shifts=[...groups].sort((a,b)=>ord(a[0])-ord(b[0])).map(([code,list])=>shiftHtml(code,list,staff)).join("");
-    const appts=appointments(opts.boot,day), allNotes=notes(assistant,activity,staff,day), displayed=[...appts,...allNotes];
-    host._thfNotes=displayed;host._thfAgents=agents;
+    const ord=x=>Number(definition(x)?.sort_order||999);
+    const shifts=[...groups].sort((a,b)=>ord(a[0])-ord(b[0]))
+      .map(([code,list])=>shiftHtml(code,list,staff)).join("");
+    const infos=[...appointments(opts.boot,day),...notes(assistant,activity,staff,day)];
+    const uniqueInfos=[];
+    const seen=new Set();
+    for(const item of infos){
+      const key=(item.title+"|"+(item.detail||"")).toLowerCase();
+      if(!seen.has(key)){seen.add(key);uniqueInfos.push(item);}
+    }
+    host._thfAgents=agents;
+    host._thfNotes=uniqueInfos;
+    host._thfSets={exact:exact.sort(sortPeople),adjacent:adjacent.sort(sortPeople),
+      elsewhere:elsewhere.sort(sortPeople)};
+    host._thfShifts=shifts;
     const nDate=dateObj(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
     const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
-    const openOther=host.querySelector("details.thf-others")?.open||false;
-    const openShifts=[...host.querySelectorAll("details.thf-shift[open]")].map(x=>x.querySelector("summary strong")?.textContent||"");
-    host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+(day===today?'Aujourd’hui':'Jour sélectionné')+'</h2><p>'+esc(nDate)+'</p></div><button type="button" data-thf-refresh title="Actualiser les effectifs" aria-label="Actualiser les effectifs">↻</button></div>'+
-      '<div class="thf-my"><div><small>MON POSTE</small><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Aucun poste enregistré")+'</strong>'+
-      (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div><div><small>MÊME CRÉNEAU</small><strong>'+ (loaded?esc(same.length):"…") +'</strong><span>collègues</span></div></div>'+
-      (perm.planning_team?'<section class="thf-colleagues"><h3>Collègues sur mes horaires</h3>'+
-        (loaded?(same.length?same.sort(sortPeople).map(agentHtml).join(""):'<p class="thf-empty">'+(working?"Aucun collègue confirmé sur ce créneau.":"Pas de service personnel à comparer.")+'</p>'):'<p class="thf-empty">Chargement des collègues…</p>')+
-        (loaded&&others.length?'<details class="thf-others" '+(openOther?"open":"")+'><summary>Autres horaires <b>'+others.length+'</b> <span aria-hidden="true">⌄</span></summary><div>'+others.sort(sortPeople).map(x=>'<div class="thf-other-time"><small>'+esc(shiftLabel(x.code))+' · '+esc(shiftTime(x.code,x))+'</small>'+agentHtml(x)+'</div>').join("")+'</div></details>':"")+
-        '</section><section class="thf-staff"><h3>Effectifs · HCL</h3>'+(loaded?(shifts||'<p class="thf-empty">Aucun agent planifié pour ce jour.</p>'):'<p class="thf-empty">Chargement des effectifs…</p>')+'</section>':"")+
-      (displayed.length?'<section class="thf-notes"><h3>Rendez-vous et informations du jour</h3>'+noteButtons(displayed)+'</section>':"")+
-      '<p class="thf-foot">Données du jour sélectionné · ton planning, les collègues et les effectifs sont synchronisés.</p>';
-    for(const details of host.querySelectorAll("details.thf-shift")){
-      if(openShifts.includes(details.querySelector("summary strong")?.textContent||""))details.open=true;
-    }
+    const ownStaff=working?staffFor(staff,myBase):null;
+    const ownTarget=ownStaff?.target_count,ownPlanned=ownStaff?.planned_count,ownGap=gap(ownStaff);
+    const ownLevel=ownGap==null?"unknown":ownGap<0?"warning":ownGap>0?"opportunity":"ok";
+    const symbol=ownGap==null?"○":ownGap<0?"⚠️":ownGap>0?"+":"✓";
+    const ownHCL=ownPlanned!=null&&ownTarget!=null?String(ownPlanned)+" / HCL "+ownTarget:"Voir les effectifs";
+    const ownLabel=working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Aucun poste enregistré";
+    const count=loaded?String(exact.length):"…";
+    const more=loaded?(adjacent.length?adjacent.length+" créneaux chevauchants":"Autres horaires"):"Équipe du jour";
+    host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+
+      (day===today?"Aujourd’hui":"Jour sélectionné")+'</h2><p>'+esc(nDate)+'</p></div>'+
+      '<button type="button" data-thf-refresh aria-label="Actualiser">↻</button></div>'+
+      '<div class="thf-my"><div><small>MON POSTE</small><strong>'+esc(ownLabel)+'</strong>'+
+      (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div>'+
+      (perm.planning_team?'<div><small>MÊME POSTE</small><strong>'+esc(count)+'</strong><span>collègues</span></div>':"")+'</div>'+
+      '<div class="thf-actions">'+
+      (perm.planning_team?'<button type="button" data-thf-open="people"><span aria-hidden="true">👥</span><span><strong>Collègues</strong><small>'+esc(more)+'</small></span><b>›</b></button>':"")+
+      (perm.planning_team?'<button type="button" data-thf-open="staff"><span class="thf-hcl-symbol status-'+esc(ownLevel)+'" aria-hidden="true">'+symbol+'</span><span><strong>Effectifs · HCL</strong><small>'+esc(working?ownLabel+" : "+ownHCL:ownHCL)+'</small></span><b>›</b></button>':"")+
+      (uniqueInfos.length?'<button type="button" data-thf-open="notes"><span aria-hidden="true">📌</span><span><strong>À retenir</strong><small>'+uniqueInfos.length+' information'+(uniqueInfos.length>1?"s":"")+'</small></span><b>›</b></button>':"")+
+      '</div>';
+  }
+  function peoplePanel(host,kind) {
+    const sets=host?._thfSets||{},rows=sets[kind]||[];
+    const panel=document.getElementById("thfPopupResults");
+    if(!panel)return;
+    panel.innerHTML=rows.length?rows.map(x=>
+      (kind==="exact"?"":'<div class="thf-other-time"><small>'+esc(shiftLabel(x.code))+
+        (shiftTime(x.code,x)?" · "+esc(shiftTime(x.code,x)):"")+'</small></div>')+
+      agentHtml(x)).join(""):'<p class="thf-empty">Aucun collègue sur ce type de créneau.</p>';
+    document.querySelectorAll("#thfPopup [data-thf-people-tab]").forEach(button=>
+      button.setAttribute("aria-pressed",String(button.dataset.thfPeopleTab===kind)));
+    panel.scrollTop=0;
+  }
+  function openPeople(host) {
+    const sets=host._thfSets||{},numbers={
+      exact:(sets.exact||[]).length,adjacent:(sets.adjacent||[]).length,
+      elsewhere:(sets.elsewhere||[]).length
+    };
+    showDialog('<small>PLANNING ÉQUIPE</small><h2>Collègues du jour</h2>'+
+      '<div class="thf-people-tabs" role="group" aria-label="Filtrer les collègues">'+
+      '<button type="button" data-thf-people-tab="exact" aria-pressed="true">Même poste <b>'+numbers.exact+'</b></button>'+
+      '<button type="button" data-thf-people-tab="adjacent" aria-pressed="false">Chevauchent <b>'+numbers.adjacent+'</b></button>'+
+      '<button type="button" data-thf-people-tab="elsewhere" aria-pressed="false">Autres <b>'+numbers.elsewhere+'</b></button>'+
+      '</div><div class="thf-popup-scroll" id="thfPopupResults"></div>');
+    peoplePanel(host,"exact");
+  }
+  function openStaff(host) {
+    showDialog('<small>EFFECTIFS · HCL</small><h2>Effectifs par horaire</h2>'+
+      '<p class="thf-popup-intro">Appuie sur un horaire pour voir les agents et l’écart HCL.</p>'+
+      '<div class="thf-popup-scroll">'+
+      (host._thfShifts||'<p class="thf-empty">Aucune information disponible.</p>')+'</div>');
+  }
+  function openNotes(host) {
+    showDialog('<small>INFORMATIONS DU JOUR</small><h2>À retenir</h2>'+
+      '<div class="thf-popup-scroll">'+noteButtons(host._thfNotes||[])+'</div>');
   }
   function openNote(host,index) {
     const note=host?._thfNotes?.[index];if(!note)return;
@@ -198,14 +259,22 @@
     }).catch(()=>{if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);});
   }
   document.addEventListener("click",async(event)=>{
-    const el=event.target.closest?.("[data-thf-agent],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe]");
+    const el=event.target.closest?.("[data-thf-agent],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el)return;
-    const host=el.closest("#hcTeamFusion");
+    const host=el.closest("#hcTeamFusion")||document.getElementById("hcTeamFusion");
     if(el.hasAttribute("data-thf-team-subscribe")){
       if(!window.STIPCalendars?.quick)await window.STIPLoad?.script?.("calendar-subscriptions.js").catch(()=>{});
       window.STIPCalendars?.quick?.("team");return;
     }
     if(!host)return;
+    if(el.hasAttribute("data-thf-people-tab")){peoplePanel(host,el.dataset.thfPeopleTab);return;}
+    if(el.hasAttribute("data-thf-open")){
+      const kind=el.dataset.thfOpen;
+      if(kind==="people")openPeople(host);
+      if(kind==="staff")openStaff(host);
+      if(kind==="notes")openNotes(host);
+      return;
+    }
     if(el.hasAttribute("data-thf-refresh")){
       for(const map of [weeks,days,assistants,activities])map.clear();
       mount(host._thfOptions);return;
@@ -218,6 +287,8 @@
         const css=document.createElement("link");css.rel="stylesheet";css.href="agent-agenda-view.css";document.head.appendChild(css);
         await window.STIPLoad?.script?.("agent-agenda-view.js").catch(()=>{});
       }
+      const oldPopup=document.getElementById("thfPopup");
+      if(oldPopup){oldPopup.close?.();oldPopup.remove();}
       if(window.STIPAgentAgenda?.open)window.STIPAgentAgenda.open(el.dataset.thfAgent,row.agents);
       else showDialog('<h2>'+esc(name(row.agents))+'</h2><p>GHE '+esc(row.agents?.ghe||"")+'</p>');
     }
