@@ -50,13 +50,28 @@ assert(home.slice(colleagues, chief).includes("'</div></div><div"), "Weather mus
 
 // Global shell updates independently. Only the two illustrated assets need a
 // new URL to bypass the existing service worker's cache-first policy.
+// Two-day summary uses the very same monthly badge, not the old oversized J4 square.
+assert(home.includes("STIPMonthTable?.shiftBadgeHtml?.(myCode)"),
+  "Today/Tomorrow must reuse the canonical month shift symbol");
+assert(home.includes('class="thf-shift-symbol"') &&
+       home.includes('class="thf-shift-hours"'),
+  "Day cards must keep a single symbol with exact hours underneath");
+assert(!home.includes('class="thf-shift-content"><strong>'),
+  "Day cards still duplicate the shift as a large square/code");
+const squarePart = css.slice(css.indexOf("/* Cartes météo : badge canonique"),
+  css.indexOf("/* Scène météo fixe"));
+assert(squarePart && !squarePart.includes("aspect-ratio:1 / 1"),
+  "An obsolete large shift-square aspect ratio remains active");
+assert(css.includes(".thf-shift-symbol .stip-month-shift-badge"),
+  "The day-card month badge must receive appropriate compact sizing");
+
 const globalBuild = index.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
 assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
 for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
-  assert(index.includes(asset + "?v=20261014-weather-art-static2"),
+  assert(index.includes(asset + "?v=20261015-week-shift-symbols1"),
     "Illustrated asset URL not refreshed: " + asset);
 assert(index.includes("shift-weather-mini.js?v=20261014-shift-weather-static1"));
 assert.match(weather, /const CACHE_TTL = 20 \* 60 \* 1000/);
