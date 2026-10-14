@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+<title id="t">Météo, soleil et nuages</title>
+<rect width="128" height="128" rx="26" fill="#FFFFFF"/>
+<g stroke="#1B1A1C" stroke-width="4.8" stroke-linecap="round">
+<path d="M52 7v9M52 81v8M17 45h-8M92 45h-9M21 14l7 7M83 14l-7 7M15 73l7-6M84 74l-6-6" fill="none"/>
+</g>
+<circle cx="52" cy="46" r="27" fill="#FFC531" stroke="#17191F" stroke-width="5.4"/>
+<path d="M34 44c4-14 13-18 24-16" fill="none" stroke="#FFE483" stroke-width="4.5" stroke-linecap="round"/>
+<path d="M35 110c-14 0-24-10-24-23 0-12 9-21 21-22 3-12 15-22 29-22 13 0 24 7 30 18 15-2 27 9 27 24 0 14-10 25-26 25H35Z" fill="#8FD6FA" stroke="#17191F" stroke-width="5.5" stroke-linejoin="round"/>
+<path d="M25 86c0-7 5-13 12-14M54 57c6-6 15-8 24-5" stroke="#E7FAFF" stroke-width="5" stroke-linecap="round" fill="none"/>
+<path d="M33 104h57" stroke="#439CC9" stroke-width="3.4" stroke-linecap="round"/>
+</svg>
