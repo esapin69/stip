@@ -120,3 +120,5 @@ h2{font-size:clamp(22px,3vw,27px);letter-spacing:-.04em;line-height:1.14;margin-
 .outlook-agreement strong{font-size:15px;color:#1c6297}
 .outlook-legend{font-size:11px;margin:14px 0 0}
 @media(max-width:650px){.outlook{padding:20px 14px;border-radius:20px;margin-top:25px}.outlook-grid{grid-auto-columns:155px}.forecast-grid>.details{padding:17px 13px;margin:0}.day-card .card-confidence{flex-wrap:wrap}.day-card .card-confidence strong{text-align:left}}
+
+.accuracy-explainer{font-size:11px;color:#65798e;line-height:1.5;margin:14px 0 0;max-width:870px}
