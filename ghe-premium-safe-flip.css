@@ -241,76 +241,38 @@
 }
 
 
-/* Shopify-inspired navigation: a single hamburger at the top left. The
-   authenticated avatar remains in the card; no duplicate Raccourcis button. */
-.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-shop-menu-launcher {
-  box-sizing:border-box!important;display:inline-flex!important;align-items:center;
-  justify-content:center;gap:8px;flex:0 0 auto;min-width:82px;min-height:45px;
-  margin:0!important;padding:8px 10px!important;
-  border:1px solid #badce5!important;border-radius:13px!important;
-  background:linear-gradient(165deg,#fff,#edf8fa)!important;
-  box-shadow:0 4px 13px rgba(28,83,107,.10),inset 0 1px #fff!important;
-  color:#14566d!important;cursor:pointer;
-  font:850 .8rem/1 system-ui,-apple-system,sans-serif!important;
+/* Flat, non-raised surfaces; 3D rotation remains strictly for switching faces. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-front,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back {
+  box-shadow:none!important;
+  background:#f8fcfd!important;
 }
-.hc-home-top-nav[data-header-compact] .ghe-shop-menu-bars {
-  box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;
-  align-items:stretch;gap:4px;flex:0 0 20px;width:20px;height:24px;
+.hc-home-top-nav[data-header-compact] .ghe-premium-back {
+  background:#fff9fb!important;
 }
-.hc-home-top-nav[data-header-compact] .ghe-shop-menu-bars i {
-  display:block;width:20px;height:2.5px;border-radius:4px;
-  background:currentColor;transform:none;
+.hc-home-top-nav[data-header-compact] .ghe-premium-turn {
+  box-shadow:none!important;
+  background:#e51447!important;
+  border:1px solid #d81041!important;
+  transform:none!important;
 }
-.hc-home-top-nav[data-header-compact] .ghe-shop-menu-launcher strong {
-  font:inherit!important;color:inherit!important;letter-spacing:0!important;
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-avatar,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-ghe {
+  box-shadow:none!important;
 }
-.hc-home-top-nav[data-header-compact] .ghe-shop-menu-launcher:focus-visible{
-  outline:3px solid #289db7;outline-offset:3px;
-}
-.hc-home-top-nav[data-header-compact] .ghe-home-paint-name{
-  flex:1 1 auto!important;min-width:25px!important;
+.hc-home-top-nav[data-header-compact] .ghe-premium-total,
+.hc-home-top-nav[data-header-compact] .ghe-premium-distribution,
+.hc-home-top-nav[data-header-compact] .ghe-premium-activity button {
+  box-shadow:none!important;
+  background:#fff!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-premium-front-footer {
   justify-content:flex-end!important;
-  border-top:1px solid #d6e8ed!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-premium-front-footer .ghe-premium-turn {
   flex:0 0 auto!important;max-width:100%!important;
 }
-/* Keep the existing permissions-aware shortcuts content; only the dialog
-   presentation changes, never access grants or existing navigation handlers. */
-dialog.hc-admin-shortcuts-dialog.ghe-shop-menu-dialog {
-  box-sizing:border-box!important;position:fixed!important;
-  inset:0 auto 0 0!important;top:0!important;bottom:0!important;left:0!important;right:auto!important;
-  margin:0!important;padding:0!important;
-  width:min(88vw,380px)!important;max-width:min(88vw,380px)!important;
-  height:100dvh!important;max-height:100dvh!important;
-  border:0!important;border-radius:0 23px 23px 0!important;
-  overflow:hidden!important;background:#fff!important;
-  box-shadow:15px 0 58px rgba(6,34,48,.24)!important;
-}
-dialog.hc-admin-shortcuts-dialog.ghe-shop-menu-dialog>.hc-admin-shortcuts-card {
-  box-sizing:border-box!important;height:100%!important;max-height:100dvh!important;
-  border:0!important;border-radius:0 23px 23px 0!important;
-  background:linear-gradient(160deg,#fff,#f6fbfc)!important;
-  box-shadow:none!important;
-}
-dialog.ghe-shop-menu-dialog .hc-admin-shortcuts-body {
-  box-sizing:border-box!important;flex:1 1 auto!important;
-  min-height:0!important;overflow:auto!important;
-  overscroll-behavior:contain!important;
-  padding-bottom:max(16px,env(safe-area-inset-bottom))!important;
-}
-@media (max-width:360px) {
-  .hc-home-top-nav[data-header-compact] .ghe-home-topbar{gap:5px!important;}
-  .hc-home-top-nav[data-header-compact] .ghe-shop-menu-launcher{
-    min-width:73px;padding:7px!important;gap:5px;
-  }
-}
-@media (prefers-reduced-motion:no-preference) {
-  dialog.ghe-shop-menu-dialog[open]{animation:ghe-shop-menu-arrive .23s ease-out both;}
-  @keyframes ghe-shop-menu-arrive{
-    from{transform:translateX(-22px);opacity:.96;}
-    to{transform:translateX(0);opacity:1;}
-  }
+.hc-home-top-nav[data-header-compact] .ghe-home-paint-name {
+  flex:1 1 auto!important;min-width:30px!important;
 }
