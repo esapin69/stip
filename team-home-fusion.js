@@ -283,8 +283,13 @@
       '<span class="thf-day-heading"><strong>'+esc(label)+'</strong><small>'+esc(dayLabel)+'</small></span>'+
       '<span class="thf-trigger-chevron" aria-hidden="true">›</span></button>'+
       '<div class="thf-day-body">'+
-      '<div class="thf-day-post"><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
-      '</strong><small>'+esc(myTime||"Pas de service")+'</small></div>'+
+      '<div class="thf-day-post"><span class="thf-shift-content"><strong>'+
+      esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
+      '</strong><small>'+esc(myTime||"Pas de service")+'</small></span>'+
+      (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
+        'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
+        '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
+      '</div>'+
       '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
       '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
       '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
@@ -294,8 +299,6 @@
         '<small class="thf-weather-fallback">Prévisions indisponibles</small></div>':
         '')+
       '<div class="thf-day-numbers">'+
-      (perm.planning_team?'<button type="button" data-thf-open="people" aria-label="Voir mes collègues '+esc(label)+'">👥 <b>'+
-        (loaded?exact.length:"…")+'</b><small>collègues</small></button>':"")+
       (perm.planning_team?'<button type="button" data-thf-open="staff" class="status-'+esc(status)+
         '" aria-label="Voir les effectifs HCL '+esc(label)+'"><i>'+badge+'</i> <b>'+esc(hcl)+
         '</b><small>HCL</small></button>':"")+
