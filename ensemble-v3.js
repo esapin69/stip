@@ -9,7 +9,8 @@ const today=dateISO(new Date());
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
-const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",loaded:false,error:"",status:"",busy:false,details:null,editing:false};
+const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false};
+let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
  const r=await fetch(API,{method:"POST",cache:"no-store",headers:{"content-type":"application/json","x-stip-session":session()},body:JSON.stringify({action,...data})});
@@ -105,14 +106,15 @@ function formHTML(){
  return '<section class="ev3-panel"><div class="ev3-section-title"><h2>Proposer une activité</h2><button type="button" data-ev3-mode="carpool">🚗 Covoiturage ›</button></div>'+
  '<form id="ev3Compose">'+
  '<label class="ev3-form-title">1. Quelle activité ? <small>Icône obligatoire</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
+ (state.customOpen?'<label>Autre icône <input id="ev3OtherIcon" type="text" maxlength="16" autocomplete="off" placeholder="Choisir un emoji" value="'+escapeHTML(state.icon)+'"></label>':"")+
  '<label>Nom ou précision <small>(facultatif)</small><input name="title" maxlength="120" placeholder="Ex. Foot à 5, resto…" value="'+escapeHTML(state.title)+'"></label>'+
  '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
  '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
  '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
- (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required></label>':'<p class="ev3-hint">Chaque collègue verra uniquement les jours où sa fin de service correspond à la tienne.</p>')+
+ (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Chaque collègue verra uniquement les jours où sa fin de service correspond à la tienne.</p>')+
  '<label class="ev3-form-title">3. Les dates</label>'+calendarHTML()+
- '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble"></label>'+
- '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2"></textarea></label>'+
+ '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
+ '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label>'+
  '<label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
  '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label>'+
  '<button type="submit" class="ev3-primary">Envoyer la proposition</button></form></section>';
@@ -131,21 +133,22 @@ function bind(){
  document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;state.status="";render()});
  byId("ensembleV3")?.querySelector("[data-ev3-refresh]")?.addEventListener("click",refresh);
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
- byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{state.icon=b.dataset.ev3Icon;render();byId("ev3Compose")?.elements?.title?.focus()});
- byId("ensembleV3")?.querySelector("[data-ev3-custom]")?.addEventListener("click",()=>{const icon=window.prompt("Choisis une icône (emoji)","");if(icon?.trim()){state.icon=icon.trim().slice(0,12);render()}});
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{persistTitle();state.icon=b.dataset.ev3Icon;state.customOpen=false;render()});
+ byId("ensembleV3")?.querySelector("[data-ev3-custom]")?.addEventListener("click",()=>{persistTitle();state.customOpen=!state.customOpen;render();byId("ev3OtherIcon")?.focus()});
+ const other=byId("ev3OtherIcon");if(other)other.oninput=()=>{state.icon=other.value.trim().slice(0,16)};
  byId("ensembleV3")?.querySelectorAll("[data-ev3-schedule]").forEach(b=>b.onclick=()=>{persistTitle();state.mode=b.dataset.ev3Schedule;render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-month]").forEach(b=>b.onclick=()=>{persistTitle();state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.ev3Month),1);render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-all]").forEach(b=>b.onclick=()=>{persistTitle();const select=b.dataset.ev3All==="1";const y=state.month.getFullYear(),m=state.month.getMonth();for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const d=dateISO(new Date(y,m,i));if(d<today)continue;if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d)}render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-day]").forEach(b=>b.onclick=()=>{persistTitle();const d=b.dataset.ev3Day;if(state.dates.has(d))state.dates.delete(d);else if(state.dates.size<62)state.dates.add(d);else return message("62 dates maximum.",true);render()});
  const search=byId("ev3PeopleSearch");if(search)search.oninput=()=>{byId("ev3PeopleList").innerHTML=peopleOptions(search.value);bindPeople()};
  bindPeople();
- const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>state.visibility=f.elements.public.checked?"team":"invite";f.elements.title.oninput=()=>state.title=f.elements.title.value;f.onsubmit=submitActivity;}
+ const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>state.visibility=f.elements.public.checked?"team":"invite";f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
  const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
  const cf=byId("ev3CarForm");if(cf)cf.onsubmit=submitTrip;
  byId("ensembleV3")?.querySelectorAll("[data-ev3-trip-act]").forEach(b=>b.onclick=async()=>{if(b.dataset.ev3TripAct==="carpool_cancel"&&!confirm("Annuler ce trajet ?"))return;b.disabled=true;try{const j=await call(b.dataset.ev3TripAct,{trip_id:b.dataset.trip,target_agent_id:b.dataset.peer,decision:b.dataset.decision});state.trips=j.trips||[];message("Trajet mis à jour.");render()}catch(err){message(err.message,true);b.disabled=false}});
 }
-function persistTitle(){const form=byId("ev3Compose");if(form)state.title=form.elements.title.value||""}
+function persistTitle(){const f=byId("ev3Compose");if(!f)return;state.title=f.elements.title.value||"";state.time=f.elements.time?.value||"";state.place=f.elements.location?.value||"";state.details=f.elements.description?.value||""}
 function bindPeople(){
  byId("ev3PeopleList")?.querySelectorAll("[data-ev3-person]").forEach(input=>input.onchange=()=>{
   if(input.checked)state.guests.add(input.dataset.ev3Person);else state.guests.delete(input.dataset.ev3Person);
@@ -165,7 +168,7 @@ async function submitActivity(ev){
    time_label:state.mode==="afterwork"?"À la fin du service":f.elements.time?.value||"Horaire à définir",visibility:state.visibility,
    location:f.elements.location.value,description:f.elements.description.value,agent_ids:[...state.guests]});
   state.events=result.events||[];
-  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.tab="agenda";
+  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.time="";state.place="";state.details="";state.customOpen=false;state.tab="agenda";
   message("Proposition créée et invitations envoyées.");render();
  }catch(err){message(err.message,true);submit.disabled=false}
 }
@@ -244,6 +247,7 @@ async function refresh(){
   if(peers.status==="fulfilled")state.people=peers.value.colleagues||[];
   if(trips.status==="fulfilled"){state.trips=trips.value.trips||[];state.pref=trips.value.preference||null}
   state.loaded=true;state.error="";state.status="";render();
+  const id=new URLSearchParams(location.search).get("event");if(id&&!deepLinked&&state.events.some(e=>e.id===id)){deepLinked=true;openEvent(id)}
  }catch(err){state.loaded=true;state.error=err.message;state.status=err.message;render()}
 }
 window.STIPEnsembleV3={refresh,openEvent};
