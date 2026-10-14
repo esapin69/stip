@@ -2111,7 +2111,7 @@
         form?.addEventListener("submit", async (event) => {
           event.preventDefault();
           if (sending) return;
-          const location = String(input?.value || "").replace(/\\s+/g, " ").trim();
+          const location = String(input?.value || "").replace(/\s+/g, " ").trim();
           if (!location) {
             input?.setCustomValidity("Écris un endroit avant de valider.");
             input?.reportValidity();
