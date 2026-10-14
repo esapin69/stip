@@ -115,11 +115,26 @@
       state.location.lon.toFixed(3);
   }
 
+  function matchesForecastDay(data) {
+    try {
+      if (!data || typeof data.timezone !== "string" ||
+          !data.daily || !Array.isArray(data.daily.time)) return false;
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: data.timezone, year: "numeric", month: "2-digit", day: "2-digit"
+      }).formatToParts(new Date());
+      const value = (type) => parts.find((part) => part.type === type)?.value;
+      return data.daily.time[0] === value("year") + "-" + value("month") + "-" + value("day");
+    } catch (_) {
+      return false;
+    }
+  }
+
   function loadCache() {
     try {
       const value = JSON.parse(localStorage.getItem(cacheKey()));
       if (!value || !numeric(value.at) || Date.now() - value.at > STALE_MS ||
-          value.at > Date.now() + 60000 || !validPayload(value.data)) return null;
+          value.at > Date.now() + 60000 || !validPayload(value.data) ||
+          !matchesForecastDay(value.data)) return null;
       return value;
     } catch (_) { return null; }
   }
