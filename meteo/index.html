@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#edf5fc">
   <meta name="color-scheme" content="light">
   <meta name="robots" content="noindex,nofollow">
-  <meta name="description" content="Météo GHE : conditions actuelles et prévisions sur sept jours.">
+  <meta name="description" content="Météo GHE : prévisions détaillées à 16 jours et tendances à 35 jours.">
   <title>Météo · GHE</title>
-  <link rel="stylesheet" href="./meteo.css?v=1">
-  <script src="./meteo.js?v=1" defer></script>
+  <link rel="stylesheet" href="./meteo.css?v=2">
+  <script src="./meteo.js?v=2" defer></script>
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1" />
   <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
 </head>
@@ -20,14 +20,14 @@
         <span class="brand-mark" aria-hidden="true">☀</span>
         <span class="brand-name">GHE <span class="brand-divider">/</span> Météo</span>
       </div>
-      <span class="topbar-tag">Prévisions sur 7 jours</span>
+      <span class="topbar-tag">Jusqu’à 35 jours</span>
     </header>
 
     <main id="main">
       <section class="heading" aria-labelledby="heading-title">
         <p class="eyebrow">La météo, au bon endroit</p>
-        <h1 id="heading-title">Prévoir les 7 prochains jours</h1>
-        <p class="lead">Températures, pluie prévue et risque maximal de précipitations, jour par jour.</p>
+        <h1 id="heading-title">Prévoir les jours à venir</h1>
+        <p class="lead">Prévisions détaillées sur 16 jours, puis tendances d’ensemble jusqu’à 35 jours. Les échéances lointaines restent très incertaines.</p>
       </section>
 
       <section class="place-panel" aria-label="Lieu des prévisions">
@@ -74,13 +74,26 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">La semaine à venir</p>
-            <h2 id="forecast-title">Prévisions sur 7 jours</h2>
+            <h2 id="forecast-title">Prévisions détaillées · 16 jours</h2>
           </div>
           <button id="refresh-btn" class="btn btn-light refresh-btn" type="button" aria-label="Actualiser les prévisions">↻ Actualiser</button>
         </div>
         <div id="forecast-grid" class="forecast-grid" aria-busy="true">
-          <p class="empty-state">Préparation des sept cartes météo…</p>
+          <p class="empty-state">Préparation des seize cartes météo…</p>
         </div>
+      </section>
+
+      <section class="outlook" aria-labelledby="outlook-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Tendance à plus longue échéance</p>
+            <h2 id="outlook-title">Jours 17 à 35</h2>
+          </div>
+        </div>
+        <p class="outlook-explainer">Estimations issues de scénarios météo d’ensemble. Il ne s’agit pas d’une prévision exacte : les températures et les précipitations peuvent changer fortement.</p>
+        <div id="outlook-status" class="outlook-status" role="status" aria-live="polite">Chargement des tendances…</div>
+        <div id="outlook-grid" class="outlook-grid" aria-label="Tendances météorologiques après 16 jours"></div>
+        <p class="outlook-legend">Le pourcentage « scénarios proches » indique la part des simulations prévoyant une température maximale à ±2 °C de la médiane. Ce n’est <strong>pas</strong> le pourcentage de chances que la prévision soit exacte.</p>
       </section>
 
       <section id="detail-section" class="details" aria-labelledby="details-title" hidden>
@@ -101,9 +114,9 @@
         <div class="footnote">
           <span id="updated-at">En attente des données</span>
           <span class="dot" aria-hidden="true">·</span>
-          <span id="data-state">Prévisions et non observations garanties</span>
+          <span id="data-state">Les prévisions ne sont pas garanties</span>
         </div>
-        <p>Source : <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (modèles de prévision météorologique). Le risque de pluie affiché est le maximum horaire prévu pour chaque jour ; il ne représente pas la probabilité de pluie sur l'ensemble de la journée. Les prévisions deviennent moins certaines avec l'échéance.</p>
+        <p>Source : <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (modèles de prévision météorologique). Le risque de pluie des 16 premiers jours est le maximum horaire prévu, pas la probabilité de pluie sur une journée entière. Au-delà, seules des tendances issues de scénarios d’ensemble sont indiquées. Aucun pourcentage affiché ne mesure les chances que la météo soit exactement juste.</p>
       </footer>
     </main>
   </div>
