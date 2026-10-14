@@ -16,7 +16,10 @@ const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw E
 async function call(action,data={}){
  const r=await fetch(API,{method:"POST",cache:"no-store",headers:{"content-type":"application/json","x-stip-session":session()},body:JSON.stringify({action,...data})});
  const json=await r.json().catch(()=>({}));
- if(!r.ok||json.error)throw Error(typeof json.error==="string"?json.error:"Service indisponible");
+ if(!r.ok||json.error){
+  const codes={ICONE_REQUISE:"Choisis une icône.",DATES_INVALIDES:"Vérifie les dates sélectionnées.",CHOISIS_UN_COLLEGUE:"Choisis au moins un collègue.",AUCUNE_FIN_DE_SERVICE_SUR_CES_DATES:"Aucune fin de service disponible sur les dates choisies.",AUCUN_HORAIRE_COMMUN_AVEC_LES_COLLEGUES:"Aucune date avec une fin de service commune aux collègues sélectionnés.",HORAIRE_INCOMPATIBLE:"Une de ces dates ne correspond pas à ta fin de service.",DATES_MODIFIEES:"Cette proposition vient d’être modifiée. Actualise-la.",SESSION_EXPIREE:"Ta session a expiré. Reconnecte-toi."};
+  throw Error(codes[json.error]|| (typeof json.error==="string"?json.error:"Service indisponible"));
+ }
  return json;
 }
 function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}}
@@ -35,10 +38,10 @@ function meetingLink(e){
  return id?"index.html?quick=communication&tab=dm&conversation="+encodeURIComponent(id)+"#/communication/dm":"";
 }
 function card(e){
- const [tone,label]=kindStatus(e),days=activeDates(e);
+ const [tone,label]=kindStatus(e),days=activeDates(e),time=e.schedule_mode==="afterwork"?(e.visible_end_times?.[days[0]]||"Fin du service"):e.time_label||"Horaire à fixer";
  return '<button type="button" class="ev3-card ev3-'+tone+'" data-ev3-open="'+escapeHTML(e.id)+'">'+
  '<span class="ev3-card-icon" aria-hidden="true">'+escapeHTML(e.icon||"📌")+'</span>'+
- '<span class="ev3-card-body"><strong>'+escapeHTML(e.title)+'</strong><small>'+escapeHTML(days.length?fmt(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"Aucune date à venir")+' · '+escapeHTML(e.schedule_mode==="afterwork"?"Fin du service":e.time_label||"Horaire à fixer")+'</small><small>'+escapeHTML(e.location||"Lieu à définir")+'</small></span>'+
+ '<span class="ev3-card-body"><strong>'+escapeHTML(e.title)+'</strong><small>'+escapeHTML(days.length?fmt(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"Aucune date à venir")+' · '+escapeHTML(time)+'</small><small>'+escapeHTML(e.location||"Lieu à définir")+'</small></span>'+
  '<span class="ev3-chip">'+escapeHTML(label)+'</span><span aria-hidden="true">›</span></button>';
 }
 function chosenCards(){
@@ -195,9 +198,9 @@ function openEvent(id){
  d.innerHTML='<header class="ev3-modal-head"><span class="ev3-bigicon">'+escapeHTML(e.icon||"📌")+'</span><div><strong>'+escapeHTML(e.title)+'</strong><small class="ev3-status-text ev3-'+tone+'">'+escapeHTML(status)+'</small></div><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
  '<div class="ev3-modal-body">'+
  (e.description?'<p>'+escapeHTML(e.description)+'</p>':"")+
- '<p>📍 '+escapeHTML(e.location||"Lieu à définir")+' · '+escapeHTML(e.schedule_mode==="afterwork"?"À la fin du service":e.time_label||"Horaire à fixer")+'</p>'+
+ '<p>📍 '+escapeHTML(e.location||"Lieu à définir")+' · '+escapeHTML(e.schedule_mode==="afterwork"?"À la fin de ton service":e.time_label||"Horaire à fixer")+'</p>'+
  '<section class="ev3-modal-section"><strong>Dates proposées</strong><div class="ev3-respond-dates">'+ds.map(day=>
- '<label class="ev3-date-choice"><input type="checkbox" name="dates" value="'+escapeHTML(day)+'" '+(choice.includes(day)||e.is_organizer?"checked":"")+' '+(e.is_organizer?"disabled":"")+'><span>'+escapeHTML(fmt(day))+'</span></label>').join("")+'</div></section>'+
+ '<label class="ev3-date-choice"><input type="checkbox" name="dates" value="'+escapeHTML(day)+'" '+(choice.includes(day)||e.is_organizer?"checked":"")+' '+(e.is_organizer?"disabled":"")+'><span>'+escapeHTML(fmt(day))+(e.schedule_mode==='afterwork'&&e.visible_end_times?.[day]?' · '+escapeHTML(e.visible_end_times[day]):'')+'</span></label>').join("")+'</div></section>'+
  (e.invited_colleagues?.length?'<section class="ev3-modal-section"><strong>Invitations</strong><p>'+e.invited_colleagues.map(p=>escapeHTML(p.name)+" · "+escapeHTML(p.status)).join(" · ")+'</p></section>':"")+
  (e.participants?.length?'<section class="ev3-modal-section"><strong>Participants</strong><p>'+e.participants.map(p=>escapeHTML(p.name)).join(", ")+'</p></section>':"")+
  '<div class="ev3-modal-actions">'+
