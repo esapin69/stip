@@ -152,3 +152,8 @@ html[data-t-est="1"] .t-native-leisure .ev3-dialog[open]{
 .ev3-person-access{color:#7d697a;font-weight:600;font-size:.7rem}
 .ev3-directory-hint{font-size:.75rem;line-height:1.4;color:#607984;margin:0}
 .ev3-error{font-size:.79rem;color:#b04343;margin:2px 0}
+
+/* Explicit entitlement restrictions stay visible in employee search. */
+.ev3-person.is-restricted{background:#f5f6f6;cursor:default;border-style:dashed}
+.ev3-person.is-restricted input:disabled{opacity:.4}
+.ev3-person-restricted{font-size:.69rem;color:#986252;font-weight:650;line-height:1.25}
