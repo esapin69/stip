@@ -154,11 +154,11 @@
     if (options.compact === true) {
       const temps = document.createElement("strong");
       temps.className = "hc-shift-weather-compact-temp";
-      temps.textContent = values.min + "–" + values.max + "°";
+      temps.textContent = "🌡 " + values.min + "–" + values.max + " °C";
       temps.title = "Températures min. et max. pendant le poste";
       const rain = document.createElement("strong");
       rain.className = "hc-shift-weather-compact-rain";
-      rain.textContent = "☂ " + values.risk + " %";
+      rain.textContent = "☂ " + values.risk + " % pluie";
       rain.title = "Risque maximal de précipitations pendant le poste";
       host.append(temps, rain);
       host.hidden = false;
