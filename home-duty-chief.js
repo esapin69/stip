@@ -134,7 +134,11 @@
   }
   function shiftText(item) {
     const meta = shiftMeta(item?.code);
-    return [meta?.code, meta?.label].filter(Boolean).join(" · ");
+    if (!meta) return "";
+    const hours=meta.start&&meta.end
+      ?meta.start.replace(":","h")+"–"+meta.end.replace(":","h")
+      :"Horaires non renseignés";
+    return [meta.code,meta.label,hours].filter(Boolean).join(" · ");
   }
   function shiftBadge(item) {
     const meta = shiftMeta(item?.code),
@@ -250,11 +254,12 @@
 
   function homeNowMarkup() {
     if (!data) return "";
-    const { current } = dutyState();
-    if (!current.length) return "";
-    return `<div class="team-chief-flat-list">${current
-      .map((item) => flatCard(item, "now"))
-      .join("")}</div>`;
+    const { current, next, now } = dutyState();
+    // Présent maintenant + relève du jour : qui est là, et à quelle heure.
+    const following=next&&String(next.date||"").slice(0,10)===now.date?[next]:[];
+    const list=[...current.map(item=>flatCard(item,"now")),
+      ...following.map(item=>flatCard(item,"next"))];
+    return list.length?'<div class="team-chief-flat-list">'+list.join("")+'</div>':"";
   }
 
   function todayMarkup() {
