@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#edf5fc">
+  <meta name="color-scheme" content="light">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Météo GHE : conditions actuelles et prévisions sur sept jours.">
+  <title>Météo · GHE</title>
+  <link rel="stylesheet" href="./meteo.css?v=1">
+  <script src="./meteo.js?v=1" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">☀</span>
+        <span class="brand-name">GHE <span class="brand-divider">/</span> Météo</span>
+      </div>
+      <span class="topbar-tag">Prévisions sur 7 jours</span>
+    </header>
+
+    <main id="main">
+      <section class="heading" aria-labelledby="heading-title">
+        <p class="eyebrow">La météo, au bon endroit</p>
+        <h1 id="heading-title">Prévoir les 7 prochains jours</h1>
+        <p class="lead">Températures, pluie prévue et risque maximal de précipitations, jour par jour.</p>
+      </section>
+
+      <section class="place-panel" aria-label="Lieu des prévisions">
+        <div class="place-current">
+          <span class="location-icon" aria-hidden="true">⌖</span>
+          <div>
+            <p class="field-label">Localisation</p>
+            <strong id="place-name">Lyon, France</strong>
+          </div>
+        </div>
+        <div class="place-actions">
+          <button id="locate-btn" class="btn btn-light" type="button" title="Utiliser ma position actuelle">⌖ <span>Me localiser</span></button>
+          <button id="search-toggle" class="btn btn-primary" type="button" aria-expanded="false" aria-controls="location-search">Changer de ville</button>
+        </div>
+        <form id="location-search" class="search-panel" hidden autocomplete="off">
+          <label for="city-input">Rechercher une ville</label>
+          <input id="city-input" name="city" placeholder="Lyon, Grenoble, Paris…" maxlength="100" autocomplete="off" spellcheck="false">
+          <div id="city-results" class="city-results" aria-live="polite"></div>
+        </form>
+      </section>
+
+      <div id="notice" class="notice" role="status" aria-live="polite">Chargement des prévisions…</div>
+
+      <section class="today-panel" aria-labelledby="today-title">
+        <div class="today-main">
+          <div class="today-copy">
+            <p class="eyebrow">Conditions actuelles</p>
+            <h2 id="today-title">Aujourd'hui</h2>
+            <p id="current-condition" class="condition-text">Chargement…</p>
+          </div>
+          <div class="now-visual">
+            <span id="current-icon" class="current-icon" aria-hidden="true">⛅</span>
+            <span id="current-temp" class="current-temp">—°</span>
+          </div>
+        </div>
+        <div class="today-stats">
+          <div class="today-stat"><span>Ressenti</span><strong id="feels-like">—</strong></div>
+          <div class="today-stat"><span>Vent</span><strong id="current-wind">—</strong></div>
+          <div class="today-stat"><span>Pluie maintenant</span><strong id="current-rain">—</strong></div>
+        </div>
+      </section>
+
+      <section class="forecast" aria-labelledby="forecast-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">La semaine à venir</p>
+            <h2 id="forecast-title">Prévisions sur 7 jours</h2>
+          </div>
+          <button id="refresh-btn" class="btn btn-light refresh-btn" type="button" aria-label="Actualiser les prévisions">↻ Actualiser</button>
+        </div>
+        <div id="forecast-grid" class="forecast-grid" aria-busy="true">
+          <p class="empty-state">Préparation des sept cartes météo…</p>
+        </div>
+      </section>
+
+      <section id="detail-section" class="details" aria-labelledby="details-title" hidden>
+        <div class="section-heading detail-title-row">
+          <div>
+            <p class="eyebrow">Détails de la journée</p>
+            <h2 id="details-title">Prévisions horaires</h2>
+          </div>
+          <button id="close-detail" class="btn btn-light" type="button">Fermer</button>
+        </div>
+        <p id="details-summary" class="details-summary"></p>
+        <div id="hourly-scroll" class="hourly-scroll" tabindex="0" aria-label="Prévisions heure par heure">
+          <div id="hourly-list" class="hourly-list"></div>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <div class="footnote">
+          <span id="updated-at">En attente des données</span>
+          <span class="dot" aria-hidden="true">·</span>
+          <span id="data-state">Prévisions et non observations garanties</span>
+        </div>
+        <p>Source : <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (modèles de prévision météorologique). Le risque de pluie affiché est le maximum horaire prévu pour chaque jour ; il ne représente pas la probabilité de pluie sur l'ensemble de la journée. Les prévisions deviennent moins certaines avec l'échéance.</p>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
