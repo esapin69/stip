@@ -25,8 +25,8 @@ assert.match(shortcuts,/#\/communication\/dm/);assert.doesNotMatch(shortcuts,/le
 assert.match(shortcuts,/Ma réponse/);
 response.events[0].chats=[];await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
 listeners.get('stip:session-ended')();assert.equal(window.STIPLeisure.pendingHTML(),'');
-const home=readFileSync('home-shell.js','utf8');assert(home.indexOf('STIPLeisure?.pendingHTML')<home.indexOf('${planningWeekSeparator()}<section'));
-const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('stip-overlay-navigation.js'));assert(app.includes('leisure-runtime.js'));
+const home=readFileSync('home-shell.js','utf8');assert.match(home,/STIPLeisure\?\.weekHTML/);assert.match(home,/STIPLeisure\?\.monthHTML/);
+const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('ensemble-v3.js'));assert(!app.includes('leisure-runtime.js'));
 console.log('Leisure: pending invitation, accepted/declined visibility, revision, cancellation, logout, home placement and common runtime passed.');
 console.log('Date chats: home shortcuts use canonical Communication DM route; no invitation returns after registration.');
 
@@ -83,11 +83,25 @@ assert.match(plannerApi,/visibility=b.visibility==='team'/);
 assert.match(plannerApi,/async function colleagues/);
 assert.match(plannerApi,/p_target:b.target_agent_id/);
 const homePage=readFileSync('sorties-loisirs.html','utf8');
-assert.match(homePage,/ensemble-create.js/);
-assert.match(homePage,/ensembleCreatePanel/);
+assert.match(homePage,/ensemble-v3.js/);
+assert.doesNotMatch(homePage,/ensemble-create.js/);
 assert.match(source,/data-invite-all/);
 assert.match(source,/data-remove-invite/);
 assert.match(source,/STIPEnsembleCreate/);
 console.log('Ensemble creation: unrestricted dates, shift colors, public/private choice, check-all, add/remove invitees, and persistent group links passed.');
 
 
+
+// The current Ensemble is one contextual engine; no parallel legacy runtime in T.
+const v3=readFileSync('ensemble-v3.js','utf8');
+assert.match(v3,/function setView\(view\)/);
+assert.match(v3,/data-ev3-uninvite/);
+assert.match(v3,/calendar_preview/);
+assert.match(v3,/series_conversation_id/);
+assert.match(v3,/function showActivityDialog/);
+const native=readFileSync('t-est/accueil/accueil-modules-natifs.js','utf8');
+assert.match(native,/STIPEnsembleV3\.setView/);
+assert.doesNotMatch(native,/['"]leisure-runtime\.js['"]/);
+const unified=readFileSync('t-est/accueil/accueil-unifie.js','utf8');
+assert.match(unified,/STIPEnsembleV3\?\.openCreator/);
+console.log('GHE T: one activity engine, contextual invitation lens, inline details and verified end-of-shift selection passed.');
