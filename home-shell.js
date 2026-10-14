@@ -34,6 +34,7 @@
     weekPast: false,
     dayFocus: parisIso(),
     homeMode: "planning",
+    homeFlipped: false,
     dateJumpMonth: "",
     tableauFocus: false,
     communicationTab: "chat",
@@ -2419,16 +2420,22 @@
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>`;
-    const identity = `<div class="ghe-home-header-stack">
-        <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator()}</div>
-        <div class="hc-home-identity">${profile()}</div>
-        <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
-        .map(
-          (item) =>
-            `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`,
-        )
-        .join("")}</nav>
-        ${shortcutsLauncher()}
+    const identity = `<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">${todayFullDateSeparator()}</div>
+      <div class="ghe-home-flip" data-home-flip data-flipped="${state.homeFlipped ? "true" : "false"}">
+        <div class="ghe-home-flip-inner">
+          <div class="ghe-home-header-stack ghe-home-flip-front ghe-home-flip-face"${state.homeFlipped ? " inert" : ""}>
+            <div class="hc-home-identity">${profile()}</div>
+            <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items.map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`).join("")}</nav>
+            <footer class="ghe-home-flip-footer">
+              <button type="button" class="ghe-live-button" data-home-flip-open aria-controls="gheLiveBack" aria-expanded="${state.homeFlipped ? "true" : "false"}" aria-label="Afficher le verso En direct"><span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span><span class="ghe-live-flip-icon" aria-hidden="true">↻</span></button>
+            </footer>
+          </div>
+          <section id="gheLiveBack" class="ghe-home-header-stack ghe-home-flip-back ghe-home-flip-face" aria-label="Verso En direct"${state.homeFlipped ? "" : " inert"}>
+            <header class="ghe-live-back-top"><span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span><button type="button" class="ghe-live-back-button" data-home-flip-close aria-label="Revenir au recto de la carte">↩ Retour</button></header>
+            <div class="ghe-live-back-center"><div class="ghe-live-back-visual" aria-hidden="true"><span></span></div><h2>Votre espace en direct</h2><p>Cette nouvelle face est prête à accueillir les fonctionnalités que nous allons construire.</p></div>
+            ${shortcutsLauncher()}
+          </section>
+        </div>
       </div>`;
     const wrapper = (part === "tools" ? " hc-home-tools-only" : part === "identity" ? " hc-home-identity-only" : "");
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}${wrapper}" data-header-compact>${part === "identity" ? "" : tools}${part === "tools" ? "" : identity}</section>`;
@@ -3066,6 +3073,19 @@
     root
       .querySelector("[data-header-date-search]")
       ?.addEventListener("click", openHeaderDateSearch);
+    const flip = root.querySelector("[data-home-flip]");
+    const flipTo = (back) => {
+      if (!flip) return;
+      state.homeFlipped = Boolean(back);
+      flip.dataset.flipped = String(state.homeFlipped);
+      flip.querySelector(".ghe-home-flip-front")?.toggleAttribute("inert", state.homeFlipped);
+      flip.querySelector(".ghe-home-flip-back")?.toggleAttribute("inert", !state.homeFlipped);
+      flip.querySelector("[data-home-flip-open]")?.setAttribute("aria-expanded", String(state.homeFlipped));
+      const target = flip.querySelector(state.homeFlipped ? "[data-home-flip-close]" : "[data-home-flip-open]");
+      if (target) requestAnimationFrame(() => target.focus({ preventScroll: true }));
+    };
+    flip?.querySelector("[data-home-flip-open]")?.addEventListener("click", () => flipTo(true));
+    flip?.querySelector("[data-home-flip-close]")?.addEventListener("click", () => flipTo(false));
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
@@ -3109,6 +3129,7 @@
       (b) =>
         (b.onclick = () => {
           const next = b.dataset.homeMode || "planning";
+          state.homeFlipped = false;
           if (next === "team") {
             location.href = "esprit-equipe.html?entry=home-header";
             return;
