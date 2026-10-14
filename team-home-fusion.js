@@ -184,11 +184,14 @@
     const fallback=Array.isArray(cached(chiefsCache,"duty")?.items)?
       cached(chiefsCache,"duty").items.filter(x=>String(x.date||"").slice(0,10)===day):[];
     const all=listed.length?listed:fallback;
-    const ownHours=working?range(myTime):null;
-    const withHours=all.map(x=>({
-      row:x,minutes:range(shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}}))
-    }));
-    return ownHours?withHours.filter(x=>x.minutes?overlap(ownHours,x.minutes):false).map(x=>x.row):all;
+    // Afficher TOUS les chefs planifiés du jour, et leurs horaires complets.
+    // Ne pas limiter aux chevauchements du poste personnel.
+    const seen=new Set();
+    return all.filter(x=>{
+      const key=[x.agents?.source_key||name(x.agents),x.code].join("|");
+      if(seen.has(key))return false;seen.add(key);return true;
+    }).sort((a,b)=>String(shiftTime(a.code,{...a,agents:{...a.agents,role:"chef",type_planning:"chefs"}}))
+       .localeCompare(String(shiftTime(b.code,{...b,agents:{...b.agents,role:"chef",type_planning:"chefs"}}))));
   }
   function paint(host,opts){
     if(!host?.isConnected)return;
@@ -241,9 +244,13 @@
     const chefNames=chiefs.map(x=>name(x.agents)).filter(Boolean);
     const chiefLabel=chefNames.length?chefNames[0]+(chefNames.length>1?" +"+(chefNames.length-1):""):
       loaded?"Chef non renseigné":"Chargement du chef…";
-    const chefDisplay=chefNames.length?chefNames.slice(0,2).map(value=>'<strong>'+esc(value)+'</strong>').join("")+
-      (chefNames.length>2?'<small>+'+(chefNames.length-2)+' autres</small>':""):
-      '<strong class="thf-chief-missing">'+esc(chiefLabel)+'</strong>';
+    const chefDisplay=chiefs.length?chiefs.map(x=>{
+      const hours=shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}});
+      return '<span class="thf-chief-line"><strong>'+esc(name(x.agents))+'</strong>'+
+        '<em>'+esc([shiftLabel(x.code),hours||"Horaires non renseignés"].filter(Boolean).join(" · "))+'</em></span>';
+    }).join(""):'<strong class="thf-chief-missing">'+esc(chiefLabel)+'</strong>';
+    const leisureEvents=window.STIPLeisure?.dayItems?.(day)||[];
+    host._thfLeisureEvents=leisureEvents;
     host.innerHTML=
       '<button type="button" class="thf-day-open '+(working?shiftClass(myCode):"shift-absence")+
       '" data-thf-open="day" aria-label="Afficher le détail '+esc(label)+'">'+
@@ -259,6 +266,10 @@
       (perm.planning_team?'<span title="Collègues sur le même poste">👥 <b>'+(loaded?exact.length:"…")+'</b></span>':"")+
       (perm.planning_team?'<span title="Effectifs / cible HCL" class="status-'+esc(status)+'"><i>'+badge+'</i> <b>'+esc(hcl)+'</b> HCL</span>':"")+
       '</span>'+
+      (leisureEvents.length?'<span class="thf-day-events" aria-label="Rendez-vous entre collègues du jour">'+
+        leisureEvents.slice(0,2).map(item=>'<span class="thf-day-event"><span aria-hidden="true">'+esc(item.icon)+'</span>'+
+          '<strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small></span>').join("")+
+        (leisureEvents.length>2?'<small>+'+(leisureEvents.length-2)+' autres</small>':"")+'</span>':"")+
       (uniqueInfos.length?'<span class="thf-day-brief">📌 '+uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir</span>':"")+
       '<span class="thf-day-more">Voir la journée <span aria-hidden="true">›</span></span></button>';
     const weather=host.querySelector?.("[data-thf-weather]");
@@ -287,6 +298,10 @@
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
       '<section class="thf-day-popup-group"><h3>🎨 Chef sur ce créneau</h3>'+chiefHTML+'</section>'+
       (s.working?'<section class="thf-day-popup-group"><h3>🌤 Météo pendant le poste</h3><p>'+esc(weatherText)+'</p></section>':"")+
+      ((host._thfLeisureEvents||[]).length?'<section class="thf-day-popup-group"><h3>📅 Rendez-vous entre collègues</h3>'+
+        host._thfLeisureEvents.map(item=>'<button type="button" class="thf-day-popup-event" data-ev3-preview="'+esc(item.id)+'">'+
+          '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
+        '</section>':"")+
       '<div class="thf-day-popup-actions">'+
       '<button type="button" data-thf-open="people">👥 Collègues · '+same+' même poste, '+others+' chevauchent ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
@@ -365,6 +380,11 @@
       if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);
     }).catch(()=>{if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);});
   }
+  // Une fenêtre d'événement remplace la fenêtre du jour, sans deux modales empilées.
+  document.addEventListener("click",event=>{
+    if(event.target.closest?.("#thfPopup [data-ev3-preview]"))
+      document.getElementById("thfPopup")?.close?.();
+  },true);
   document.addEventListener("click",async(event)=>{
     const el=event.target.closest?.("[data-thf-agent],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el)return;
