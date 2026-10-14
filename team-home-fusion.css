@@ -945,7 +945,7 @@
 .hc-days-grid .thf-day-card .thf-day-trigger,
 .thf-popup .thf-popup-hero{
   position:relative;isolation:isolate;overflow:hidden;
-  box-sizing:border-box;background:linear-gradient(140deg,#d8eef8,#faf7e8 88%)!important;
+  box-sizing:border-box;background:var(--thf-sky-bg,linear-gradient(140deg,#d8eef8,#faf7e8 88%))!important;
   border:0!important;border-bottom:1px solid #cee0e8!important;
   color:#183e51;--sky-text:#183e51;
 }
@@ -996,23 +996,23 @@
   font-weight:900;color:#27617a;line-height:1.3
 }
 .hc-days-grid .thf-weather-no-shift{font-size:.7rem;position:relative;z-index:2;font-weight:800}
-.thf-weather-sky[data-sky="sunny"]{background:linear-gradient(155deg,#aee5fc 2%,#fff0af 94%)!important}
-.thf-weather-sky[data-sky="partly"]{background:linear-gradient(140deg,#b0e1f1 5%,#f1eee0 72%,#ffe9ae)!important}
+.thf-weather-sky[data-sky="sunny"]{--thf-sky-bg:linear-gradient(155deg,#aee5fc 2%,#fff0af 94%);}
+.thf-weather-sky[data-sky="partly"]{--thf-sky-bg:linear-gradient(140deg,#b0e1f1 5%,#f1eee0 72%,#ffe9ae);}
 .thf-weather-sky[data-sky="cloudy"],.thf-weather-sky[data-sky="fog"]{
-  background:linear-gradient(155deg,#adbeca,#e8eff1 84%)!important
+  --thf-sky-bg:linear-gradient(155deg,#adbeca,#e8eff1 84%);
 }
-.thf-weather-sky[data-sky="drizzle"]{background:linear-gradient(155deg,#9bcbdf,#d4e5ed 85%)!important}
-.thf-weather-sky[data-sky="rain"]{background:linear-gradient(150deg,#76a8c1,#cbdde9)!important}
+.thf-weather-sky[data-sky="drizzle"]{--thf-sky-bg:linear-gradient(155deg,#9bcbdf,#d4e5ed 85%);}
+.thf-weather-sky[data-sky="rain"]{--thf-sky-bg:linear-gradient(150deg,#76a8c1,#cbdde9);}
 .thf-weather-sky[data-sky="heavy-rain"],.thf-weather-sky[data-sky="storm"]{
-  background:linear-gradient(145deg,#526e85 0%,#879eb0 62%,#bdccd5 100%)!important;
+  --thf-sky-bg:linear-gradient(145deg,#526e85 0%,#879eb0 62%,#bdccd5 100%);;
   --sky-text:#fff
 }
 .thf-weather-sky[data-sky="snow"],.thf-weather-sky[data-thermal="cold"]{
-  background:linear-gradient(145deg,#bee1ef,#eaf7fd 86%)!important
+  --thf-sky-bg:linear-gradient(145deg,#bee1ef,#eaf7fd 86%);
 }
 .thf-weather-sky[data-sky="sunny"][data-thermal="hot"],
 .thf-weather-sky[data-sky="partly"][data-thermal="hot"]{
-  background:linear-gradient(140deg,#ffc66a,#ffe4ab 85%)!important
+  --thf-sky-bg:linear-gradient(140deg,#ffc66a,#ffe4ab 85%);
 }
 .thf-weather-sky .thf-weather-art{
   position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.92;
