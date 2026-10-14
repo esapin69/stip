@@ -513,29 +513,58 @@
     toast._t = setTimeout(() => toast.classList.remove("show"), 1800);
   }
   async function openHeaderDirectorySearch(filter = "first") {
+    const openPicker = window.STIPAgentSelector?.openPicker;
+    // The GHE badge is a direct entry to the full-screen GHE results page.
+    // Open the existing selector immediately; never show a preliminary menu.
+    if (filter === "ghe" && typeof openPicker === "function") {
+      let picker = null;
+      try {
+        const cached = headerDirectoryCache;
+        picker = openPicker({
+          title: "Rechercher un n° GHE",
+          items: Array.isArray(cached?.items) ? cached.items : [],
+          date: cached?.date,
+          privacy: "team",
+          showPhone: true,
+          filter: "ghe",
+          autoFocus: true,
+          emptyText: "Aucun GHE correspondant.",
+          onSelect: openHeaderDirectoryAgent,
+        });
+        if (!cached) {
+          const results = picker?.element?.querySelector(".sas-wall");
+          if (results)
+            results.innerHTML = '<p class="sas-empty sas-wall-empty">Chargement des agents…</p>';
+        }
+        const directory = await headerDirectory();
+        if (picker?.element?.isConnected)
+          picker.selector?.setItems(Array.isArray(directory?.items) ? directory.items : []);
+      } catch (error) {
+        console.error("Header GHE search", error);
+        if (picker?.element?.isConnected) {
+          const results = picker.element.querySelector(".sas-wall");
+          if (results)
+            results.innerHTML = '<p class="sas-empty sas-wall-empty">Recherche indisponible. Réessayez plus tard.</p>';
+        } else headerToast("Recherche indisponible pour le moment");
+      }
+      return;
+    }
     try {
       const directory = await headerDirectory(),
-        items = Array.isArray(directory?.items) ? directory.items : [],
-        openPicker = window.STIPAgentSelector?.openPicker;
+        items = Array.isArray(directory?.items) ? directory.items : [];
       if (!openPicker) {
         location.href = "agent-directory.html?from=home-header";
         return;
       }
       openPicker({
-        title:
-          filter === "ghe"
-            ? "Rechercher un n° GHE"
-            : "Rechercher un nom ou prénom",
+        title: "Rechercher un nom ou prénom",
         items,
         date: directory?.date,
         privacy: "team",
         showPhone: true,
-        filter: filter === "ghe" ? "ghe" : "first",
+        filter: "first",
         autoFocus: true,
-        emptyText:
-          filter === "ghe"
-            ? "Aucun GHE correspondant."
-            : "Aucun agent correspondant.",
+        emptyText: "Aucun agent correspondant.",
         onSelect: openHeaderDirectoryAgent,
       });
     } catch (error) {
@@ -3365,7 +3394,11 @@
       ?.addEventListener("click", () => openHeaderDirectorySearch("first"));
     root
       .querySelector("[data-header-ghe-search]")
-      ?.addEventListener("click", () => openHeaderDirectorySearch("ghe"));
+      ?.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openHeaderDirectorySearch("ghe");
+      });
     root
       .querySelector("[data-header-date-search]")
       ?.addEventListener("click", openHeaderDateSearch);
