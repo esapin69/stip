@@ -8,8 +8,8 @@
   <meta name="robots" content="noindex,nofollow">
   <meta name="description" content="Météo GHE : prévisions détaillées à 16 jours et tendances à 35 jours.">
   <title>Météo · GHE</title>
-  <link rel="stylesheet" href="./meteo.css?v=3">
-  <script src="./meteo.js?v=3" defer></script>
+  <link rel="stylesheet" href="./meteo.css?v=4">
+  <script src="./meteo.js?v=4" defer></script>
   <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1" />
   <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
 </head>
@@ -121,5 +121,16 @@
       </footer>
     </main>
   </div>
+  <script>
+    // Keep the service worker current even when the standalone weather page
+    // is opened without first visiting the main GHE home page.
+    if ("serviceWorker" in navigator) {
+      addEventListener("load", () => {
+        navigator.serviceWorker.register("/stip-sw.js?v=20261014-meteo-fresh2", {
+          updateViaCache: "none"
+        }).then(registration => registration.update()).catch(() => {});
+      }, { once: true });
+    }
+  </script>
 </body>
 </html>
