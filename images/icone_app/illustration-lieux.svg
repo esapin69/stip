@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+<title id="t">Visiter les lieux, hôpital et repère</title>
+<rect width="128" height="128" rx="26" fill="#FFFFFF"/>
+<path d="M14 109V43h82v66" fill="#DCE7F0" stroke="#243344" stroke-width="4.7" stroke-linejoin="round"/>
+<path d="M24 109V35h66v74" fill="#EAF2F6" stroke="#243344" stroke-width="4.7" stroke-linejoin="round"/>
+<path d="M30 35h53" stroke="#243344" stroke-width="4.7" stroke-linecap="round"/>
+<circle cx="58" cy="29" r="20" fill="#FFDE55" stroke="#25313D" stroke-width="5"/>
+<path d="M53 17h10v8h8v9h-8v8H53v-8h-8v-9h8Z" fill="#FFFFFF" stroke="#25313D" stroke-width="3" stroke-linejoin="round"/>
+<g fill="#52B2E9" stroke="#25313D" stroke-width="2.8">
+<rect x="32" y="58" width="11" height="12" rx="1"/><rect x="50" y="58" width="11" height="12" rx="1"/>
+<rect x="68" y="58" width="11" height="12" rx="1"/><rect x="32" y="77" width="11" height="12" rx="1"/>
+<rect x="50" y="77" width="11" height="12" rx="1"/><rect x="68" y="77" width="11" height="12" rx="1"/>
+</g>
+<path d="M49 109V94h18v15" fill="#FFC655" stroke="#243344" stroke-width="3.2"/>
+<path d="M16 111h90" stroke="#25313D" stroke-width="4.5" stroke-linecap="round"/>
+<path d="M97 49c-15 0-26 11-26 26 0 20 26 41 26 41s26-21 26-41c0-15-11-26-26-26Z" fill="#F56550" stroke="#243344" stroke-width="5" stroke-linejoin="round"/>
+<circle cx="97" cy="75" r="10.6" fill="#FFFFFF" stroke="#243344" stroke-width="4"/>
+<path d="M88 55c4-2 8-3 12-2" stroke="#FFA696" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+</svg>
