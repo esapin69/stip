@@ -241,13 +241,16 @@
     const chefNames=chiefs.map(x=>name(x.agents)).filter(Boolean);
     const chiefLabel=chefNames.length?chefNames[0]+(chefNames.length>1?" +"+(chefNames.length-1):""):
       loaded&&cached(chiefsCache,"duty")?"Non renseigné":"En recherche…";
+    const chefDisplay=chefNames.length?chefNames.slice(0,2).map(value=>'<strong>'+esc(value)+'</strong>').join("")+
+      (chefNames.length>2?'<small>+'+(chefNames.length-2)+' autres</small>':""):
+      '<strong>'+esc(chiefLabel)+'</strong>';
     host.innerHTML=
       '<button type="button" class="thf-day-open '+(working?shiftClass(myCode):"shift-absence")+
       '" data-thf-open="day" aria-label="Afficher le détail '+esc(label)+'">'+
       '<span class="thf-day-heading"><strong>'+esc(label)+'</strong><small>'+esc(dayLabel)+'</small></span>'+
       '<span class="thf-day-post"><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
       '</strong><small>'+esc(myTime||"")+'</small></span>'+
-      '<span class="thf-day-chief"><span class="thf-day-chief-icon" aria-hidden="true">🎨</span><span class="thf-day-chief-person"><small>Chef sur le créneau</small><strong>'+esc(chiefLabel)+'</strong></span></span>'+
+      '<span class="thf-day-chief"><span class="thf-day-chief-icon" aria-hidden="true">🎨</span><span class="thf-day-chief-person"><small>Chef sur le créneau</small>'+chefDisplay+'</span></span>'+
       (working&&myTime?
         '<span class="thf-day-weather"><span class="thf-weather-heading">🌤 Météo du shift</span>'+
         '<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span><small class="thf-weather-fallback">Prévisions indisponibles</small></span>':
