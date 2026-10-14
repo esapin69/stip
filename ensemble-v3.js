@@ -217,19 +217,50 @@ function openEvent(id){
  d.querySelector("[data-ev3-cancel]")?.addEventListener("click",async()=>{if(!confirm("Annuler cette proposition pour tous les collègues ?"))return;try{const j=await call("save",{id:e.id,revision:e.revision,title:e.title,description:e.description,location:e.location,time_label:e.time_label,dates:e.dates,status:"cancelled",icon:e.icon});state.events=j.events||[];closeModal();message("Proposition annulée.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message}});
  if(!d.open)d.showModal();
 }
-function openInvite(e){
- const d=dialog();
- d.innerHTML='<header class="ev3-modal-head"><strong>＋ Inviter à '+escapeHTML(e.title)+'</strong><button data-ev3-close type="button">×</button></header>'+
- '<div class="ev3-modal-body"><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue"><div id="ev3InviteList" class="ev3-person-list"></div>'+
- '<button type="button" class="ev3-primary" id="ev3SendInvites">Envoyer les invitations</button><p class="ev3-modal-error"></p></div>';
- const existing=new Set((e.invited_colleagues||[]).map(x=>x.id)),selected=new Set();
- const draw=()=>{const q=(byId("ev3InviteSearch")?.value||"").toLocaleLowerCase("fr");
- byId("ev3InviteList").innerHTML=state.people.filter(p=>!existing.has(p.id)&&p.name.toLocaleLowerCase("fr").includes(q)).map(p=>
- '<label class="ev3-person"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+'>'+escapeHTML(p.name)+'</label>').join("")||"<p>Aucun autre collègue.</p>";
- byId("ev3InviteList").querySelectorAll("[data-person]").forEach(x=>x.onchange=()=>x.checked?selected.add(x.dataset.person):selected.delete(x.dataset.person));
+function openInvite(e,notice=""){
+ const event=state.events.find(x=>x.id===e.id)||e;
+ if(!event.can_invite)return openEvent(event.id);
+ const d=dialog(),invited=event.invited_colleagues||[];
+ const invitedIds=new Set(invited.map(x=>x.id)),selected=new Set();
+ const statusName=s=>s==="accepted"?"Participe":s==="declined"?"Décliné":"En attente";
+ d.innerHTML='<header class="ev3-modal-head"><button type="button" data-ev3-back aria-label="Revenir à l’activité">‹</button><strong>Invitations · '+escapeHTML(event.title)+'</strong><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
+ '<div class="ev3-modal-body"><section class="ev3-modal-section"><strong>Déjà invités · '+invited.length+'</strong>'+
+ (invited.length?'<div class="ev3-invited-list">'+invited.map(person=>
+ '<div class="ev3-invited-person"><span><b>'+escapeHTML(person.name)+'</b><small>'+escapeHTML(statusName(person.status))+'</small></span>'+
+ '<button type="button" data-ev3-uninvite="'+escapeHTML(person.id)+'" data-name="'+escapeHTML(person.name)+'" aria-label="Retirer '+escapeHTML(person.name)+'">Retirer</button></div>').join("")+'</div>':
+ '<p>Personne n’a encore été invité.</p>')+'</section>'+
+ '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div></section>'+
+ '<button type="button" class="ev3-primary" id="ev3SendInvites">Envoyer les invitations</button>'+
+ '<p class="ev3-modal-error" role="status">'+escapeHTML(notice)+'</p></div>';
+ const error=d.querySelector(".ev3-modal-error");
+ const draw=()=>{
+  const q=(byId("ev3InviteSearch")?.value||"").trim().toLocaleLowerCase("fr");
+  byId("ev3InviteList").innerHTML=state.people.filter(p=>!invitedIds.has(p.id)&&p.name.toLocaleLowerCase("fr").includes(q)).map(p=>
+   '<label class="ev3-person"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+'><span>'+escapeHTML(p.name)+'</span></label>').join("")||"<p>Aucun autre collègue.</p>";
+  byId("ev3InviteList").querySelectorAll("[data-person]").forEach(input=>input.onchange=()=>{
+   if(input.checked)selected.add(input.dataset.person);else selected.delete(input.dataset.person);
+  });
  };
- draw();byId("ev3InviteSearch").oninput=draw;d.querySelector("[data-ev3-close]").onclick=closeModal;
- byId("ev3SendInvites").onclick=async()=>{if(!selected.size)return;try{const j=await call("invite",{event_id:e.id,agent_ids:[...selected]});state.events=j.events||[];closeModal();message("Invitations ajoutées.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message}};
+ draw();byId("ev3InviteSearch").oninput=draw;
+ d.querySelector("[data-ev3-close]").onclick=closeModal;
+ d.querySelector("[data-ev3-back]").onclick=()=>openEvent(event.id);
+ d.querySelectorAll("[data-ev3-uninvite]").forEach(button=>button.onclick=async()=>{
+  if(!confirm("Retirer "+button.dataset.name+" de l’activité ? Cette personne perdra aussi son accès au groupe lié."))return;
+  button.disabled=true;error.textContent="Mise à jour des participants…";
+  try{
+   const j=await call("uninvite",{event_id:event.id,target_agent_id:button.dataset.ev3Uninvite});
+   state.events=j.events||[];openInvite(state.events.find(x=>x.id===event.id)||event,"Invitation retirée.");
+  }catch(err){error.textContent=err.message;button.disabled=false}
+ });
+ byId("ev3SendInvites").onclick=async()=>{
+  if(!selected.size){error.textContent="Sélectionne au moins un collègue.";return}
+  const send=byId("ev3SendInvites");send.disabled=true;error.textContent="Envoi des invitations…";
+  try{
+   const j=await call("invite",{event_id:event.id,agent_ids:[...selected]});
+   state.events=j.events||[];openInvite(state.events.find(x=>x.id===event.id)||event,
+    j.added?"Invitations envoyées.":"Ces collègues étaient déjà invités.");
+  }catch(err){error.textContent=err.message;send.disabled=false}
+ };
  if(!d.open)d.showModal();
 }
 function openEditor(e){
