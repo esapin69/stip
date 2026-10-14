@@ -1042,12 +1042,15 @@
     return window.STIPShiftRegistry?.time?.(code, context) || "";
   }
   function weekTimeHtml(v) {
+    // Full-precision work hours, on one line beneath the common shift badge.
     const parts = String(v || "").match(/\d{1,2}(?::|h)\d{2}/g) || [];
-    if (!parts.length) return "";
-    return parts
-      .slice(0, 2)
-      .map((t) => `<span>${esc(t.replace("h", ":"))}</span>`)
-      .join("");
+    if (parts.length < 2) return "";
+    const times = parts.slice(0, 2).map(t => t.replace(":", "h"));
+    return `<span class="stip-week-work-hours" aria-label="Horaires ${esc(times[0])} à ${esc(times[1])}"><span>${esc(times[0])}</span><i aria-hidden="true">–</i><span>${esc(times[1])}</span></span>`;
+  }
+  function weekWorkSymbol(raw) {
+    // Reuses the monthly master: no second badge design or family mapping.
+    return window.STIPMonthTable?.shiftBadgeHtml?.(raw) || shiftBadge(raw);
   }
   function planningRowForDate(iso) {
     iso = String(iso || "").slice(0, 10);
@@ -1342,13 +1345,12 @@
       landscapeMain = loading
         ? '<span class="hc-shift-main stip-week-main hc-loading-main" aria-hidden="true"><span class="hc-loading-orb stip-week-main-icon"></span></span>'
         : pending
-          ? '<span class="hc-shift-main stip-week-main"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
+          ? '<span class="hc-shift-main stip-week-main" title="Planning non renseigné"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
-            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span></span>`
-            : workIcon
-              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workVisual}</span></span>`
+            ? `<span class="hc-shift-main stip-week-main hc-shift-main-special" title="${esc(shiftLabel)}"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span></span>`
+            : shiftDefinition(canonical)?.is_working
+              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="stip-week-work-symbol">${weekWorkSymbol(x.row?.code || x.code)}</span>${weekTimeHtml(x.time)}</span>`
               : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
-      landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
       selected=landscape&&x.iso===state.dayFocus,
       tag=landscape?"button":"span",
@@ -1357,8 +1359,8 @@
         : "",
       visual=landscape
         ? loading
-          ? `<span class="hc-shift-core stip-week-core"><span class="hc-shift-code stip-week-code hc-loading-code" aria-hidden="true"></span>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot stip-week-events hc-loading-event-slot is-empty" aria-hidden="true"></span>`
-          : `<span class="hc-shift-core stip-week-core"><strong class="hc-shift-code stip-week-code">${esc(landscapeCode)}</strong>${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
+          ? `<span class="hc-shift-core stip-week-core">${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider is-empty" aria-hidden="true"></span><span class="hc-week-events-slot stip-week-events hc-loading-event-slot is-empty" aria-hidden="true"></span>`
+          : `<span class="hc-shift-core stip-week-core">${landscapeMain}</span><span class="hc-week-extra-separator stip-week-divider ${hasSupplements ? "" : "is-empty"}" aria-hidden="true"></span>${weekEventBadges(x)}`
         : normalVisual;
     return `<${tag}${attrs} class="${cls} ${landscape ? "stip-week-personal-layout" : ""} ${x.today ? "today" : ""} ${selected?"selected":""} ${weekend ? "weekend" : ""} ${loading ? "loading" : pending ? "pending" : (shiftDefinition(canonical)?.is_working === false ? "rest" : "work")} code-${code}" ${x.today ? 'aria-current="date"' : ""}><span class="${landscape ? "stip-week-day-head" : "hc-day-head"}"><i>${esc(day)}</i><b>${x.d.getDate()}</b></span><span class="${landscape ? "stip-week-day-body" : "hc-week-visual"}">${visual}</span></${tag}>`;
   }
@@ -1942,13 +1944,14 @@
         const code = shift.code,
           def = shiftDefinition(code);
         if (def?.is_working) {
-          const family = String(def.family || "other").toLowerCase(),
-            dot = `<i class="hc-legend-shift-dot shift-${esc(family)}"></i>`;
+          // Live shift legend: the same symbol and the actual schedule as the card.
+          const raw = shift.raw || code,
+            time = shiftTime(raw, planningRowForDate(iso) || {});
           add(
-            "shift:" + code,
-            dot,
+            "shift:" + raw + "|" + time,
+            weekWorkSymbol(raw),
             def.label || code,
-            shiftTime(code),
+            time,
           );
         } else {
           const label = def?.label || shift.label || code,
