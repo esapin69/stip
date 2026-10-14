@@ -1,0 +1,53 @@
+/* Mobile dialog contract: centered, bounded cards and a blurred backdrop.
+ * Existing full-screen applications and panels are not restyled here. */
+dialog[data-stip-popup-viewport="1"]:modal {
+  box-sizing: border-box !important;
+  max-width: calc(100vw - 24px) !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: auto !important;
+  overscroll-behavior: contain;
+}
+dialog[data-stip-popup-viewport="1"]:modal::backdrop {
+  background: rgba(10, 34, 46, .48);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* A body overflow lock can reset root scroll on mobile when the lock is removed.
+ * Fixed popup backdrops already intercept interactions with the background. */
+body.hc-shift-detail-open,
+body.stip-favorites-open { overflow: visible !important; }
+.hc-shift-detail-overlay,
+.hc-confirm-backdrop,
+.stip-favorites-panel { overscroll-behavior: contain; }
+.hc-shift-detail-backdrop { touch-action: none; }
+@media (max-width: 600px) {
+  .hc-shift-detail-overlay { padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)); }
+  .hc-shift-detail-sheet {
+    width: 100%;
+    max-width: 470px;
+    max-height: calc(100dvh - 32px);
+    padding: 26px 17px 19px;
+    overscroll-behavior: contain;
+  }
+  .hc-confirm-backdrop { padding: max(12px, env(safe-area-inset-top)) 12px max(12px, env(safe-area-inset-bottom)) !important; }
+  .hc-confirm-pop {
+    box-sizing: border-box !important;
+    width: min(100%, 520px) !important;
+    min-height: 0 !important;
+    max-height: calc(100dvh - 32px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    padding: 22px 16px !important;
+  }
+  .hc-confirm-actions { gap: 10px !important; margin-top: 16px !important; }
+  .hc-confirm-actions button { min-height: 104px !important; padding: 12px 8px !important; }
+  .hc-confirm-actions button > span { width: 52px !important; height: 52px !important; font-size: 2rem !important; }
+  .hc-bell-dialog, .hc-admin-shortcuts-dialog, .hc-header-date-dialog,
+  .ghe-live-agent-dialog, .access-request-dialog {
+    box-sizing: border-box !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    margin: auto !important;
+  }
+  .hc-admin-shortcuts-card, .hc-bell-shell { max-height: calc(100dvh - 32px) !important; }
+}
