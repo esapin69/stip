@@ -32,12 +32,16 @@
   }
   function rememberTrigger() {
     if (snapshot || popups().length) return;
+    // A fresh gesture takes priority over any delayed scroll correction.
+    ++restoreGeneration;
     lastTrigger = { y: scrollY(), key: locationKey(), at: performance.now() };
   }
   document.addEventListener('pointerdown', rememberTrigger, true);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') rememberTrigger();
   }, true);
+
+  window.addEventListener("wheel", () => { if (!snapshot) ++restoreGeneration; }, { passive: true });
 
   function decorate(nodes) {
     for (const node of nodes) {
@@ -58,8 +62,10 @@
       if (Math.abs(scrollY() - saved.y) > 2) window.scrollTo({ top: saved.y, left: 0, behavior: 'auto' });
       window.STIPRouter?.saveScroll?.();
     };
+    // MutationObserver runs before paint: restore now, not after two frames.
+    // Late checks only correct native focus changes when there was no fresh gesture.
+    restore();
     requestAnimationFrame(() => requestAnimationFrame(restore));
-    // Native dialog close/focus restoration may happen after the first layout.
     setTimeout(restore, 70);
   }
 
@@ -81,12 +87,21 @@
     }
   }
 
-  const observer = new MutationObserver(reconcile);
+  const observer = new MutationObserver((changes) => {
+    // Visibility can change by toggling a popup CSS class, not just "hidden".
+    // Ignore unrelated class/style mutations to avoid expensive full-page scans.
+    if (!changes?.length || changes.some((change) =>
+      change.type !== "attributes" ||
+      !["class", "style"].includes(change.attributeName) ||
+      change.target?.matches?.(POPUPS) ||
+      change.target?.querySelector?.(POPUPS)
+    )) reconcile();
+  });
   observer.observe(document.documentElement, {
     subtree: true,
     childList: true,
     attributes: true,
-    attributeFilter: ['open', 'hidden', 'aria-hidden'],
+    attributeFilter: ['open', 'hidden', 'aria-hidden', 'class', 'style'],
   });
   window.addEventListener('pagehide', () => { snapshot = null; ++restoreGeneration; });
   window.addEventListener('hashchange', () => { ++restoreGeneration; });
