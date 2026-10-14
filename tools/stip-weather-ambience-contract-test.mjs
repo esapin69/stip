@@ -13,9 +13,30 @@ const worker = read("stip-sw.js");
 assert.match(home, /function seasonForDay\(day\)/);
 assert.match(home, /class="thf-weather-stage thf-weather-sky"/);
 assert.doesNotMatch(home, /IntersectionObserver|watchWeather|periodForShift/);
+// Artistic layers are static SVG shapes, not character emoji or moving DOM clouds.
 assert.doesNotMatch(home, /thf-lightning|thf-cloud cloud-one/);
+assert.match(home, /function staticWeatherArt\(identity\)/);
+const artFunction = home.match(/function staticWeatherArt\(identity\) \{([\s\S]*?)\n  \}/)?.[1];
+assert(artFunction, "One reusable vector artwork generator is required");
+const art = new Function("identity", artFunction);
+const cardArt = art("card-20261014"), popupArt = art("popup-20261014");
+assert(cardArt.includes('<svg ') && cardArt.includes('<defs>'));
+for (const layer of ["thf-art-sun", "thf-art-cloud-back", "thf-art-cloud-main",
+  "thf-art-rain", "thf-art-snow", "thf-art-fog", "thf-art-lightning"])
+  assert(cardArt.includes('class="' + layer + '"'), "Missing atmospheric layer: " + layer);
+assert(cardArt.includes('aria-hidden="true"') && cardArt.includes('focusable="false"'));
+assert(cardArt.includes('thf-wx-card-20261014-cloud'));
+assert(popupArt.includes('thf-wx-popup-20261014-cloud'));
+assert(!/src=|<image|<animate|<foreignObject/i.test(cardArt),
+  "Weather art must remain fully local, static, and lightweight");
+assert(!/🌤|🌦|🌧|☁️|☀️|🌫/.test(cardArt), "No replacement emoji");
 assert.doesNotMatch(css, /@keyframes thf-|thf-weather-cloud-drift|thf-weather-fall\b|thf-flash|animation:\s*thf-/);
-assert.doesNotMatch(css, /#19305cb8|data-period="night"/);
+assert.doesNotMatch(css, /#19305cb8|data-period="night"|content:"☁️"|content:"🌦️"/);
+assert.match(css, /\.thf-weather-stage::after/);
+assert.match(css, /\.thf-weather-stage\[data-sky="fog"\]::after/);
+assert.match(css, /\.thf-popup \.thf-popup-hero \.thf-weather-art/);
+assert.match(css, /\.thf-art-cloud-main\{display:block\}/);
+assert.doesNotMatch(css, /@import|image-set\(|url\(["']?https?:/i);
 for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
   "rain", "heavy-rain", "storm", "snow", "mixed"]) {
   assert(css.includes('data-sky="' + sky + '"'), "Static visual missing: " + sky);
@@ -27,13 +48,17 @@ const chief = home.indexOf("thf-day-chief", colleagues);
 assert(start >= 0 && shift > start && colleagues > shift && chief > colleagues);
 assert(home.slice(colleagues, chief).includes("'</div></div><div"), "Weather must end before chiefs");
 
-const build = index.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
-assert(build);
-assert.equal(loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1], build);
-assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], build);
-for (const asset of ["team-home-fusion.css", "team-home-fusion.js",
-  "stip-loader.js", "stip-sw.js", "shift-weather-mini.js"])
-  assert(index.includes(asset + "?v=" + build), "Cache version: " + asset);
+// Global shell updates independently. Only the two illustrated assets need a
+// new URL to bypass the existing service worker's cache-first policy.
+const globalBuild = index.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
+assert(globalBuild);
+assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
+const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
+assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
+for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
+  assert(index.includes(asset + "?v=20261014-weather-art-static2"),
+    "Illustrated asset URL not refreshed: " + asset);
+assert(index.includes("shift-weather-mini.js?v=20261014-shift-weather-static1"));
 assert.match(weather, /const CACHE_TTL = 20 \* 60 \* 1000/);
 assert.match(weather, /const API = "https:\/\/api\.open-meteo\.com\/v1\/forecast"/);
 
@@ -116,4 +141,4 @@ const impossible=host();
 await mount(impossible,{date:day,start:"10h10",end:"10h10",isWorking:true,compact:true});
 assert.equal(impossible.hidden,true);
 
-console.log("Shift weather: hourly endpoints, dominant sky, overnight, static visuals, cache and mobile assets OK");
+console.log("Shift weather: hourly endpoints, dominant sky, overnight, premium static SVG scenery, cache and mobile assets OK");
