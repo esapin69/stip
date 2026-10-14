@@ -97,19 +97,26 @@
         <p class="outlook-legend">Le pourcentage « scénarios proches » indique la part des simulations prévoyant une température maximale à ±2 °C de la médiane. Ce n’est <strong>pas</strong> le pourcentage de chances que la prévision soit exacte.</p>
       </section>
 
-      <section id="detail-section" class="details" aria-labelledby="details-title" hidden>
-        <div class="section-heading detail-title-row">
+      <dialog id="detail-section" class="details weather-dialog" aria-labelledby="details-title" aria-describedby="details-summary">
+        <div class="weather-sheet-handle" aria-hidden="true"><span></span></div>
+        <div class="weather-sheet-header">
           <div>
-            <p class="eyebrow">Détails de la journée</p>
-            <h2 id="details-title">Prévisions horaires</h2>
+            <p class="eyebrow">Prévisions heure par heure</p>
+            <h2 id="details-title">Détails de la journée</h2>
           </div>
-          <button id="close-detail" class="btn btn-light" type="button">Fermer</button>
+          <button id="close-detail" class="weather-sheet-close" type="button" aria-label="Fermer les détails météo">✕</button>
         </div>
         <p id="details-summary" class="details-summary"></p>
+        <div class="weather-sheet-switcher" aria-label="Changer de journée">
+          <button id="detail-prev" type="button" class="weather-day-nav" aria-label="Jour précédent">← Précédent</button>
+          <span class="weather-sheet-swipe-hint">24 heures · faites défiler →</span>
+          <button id="detail-next" type="button" class="weather-day-nav" aria-label="Jour suivant">Suivant →</button>
+        </div>
         <div id="hourly-scroll" class="hourly-scroll" tabindex="0" aria-label="Prévisions heure par heure">
           <div id="hourly-list" class="hourly-list"></div>
         </div>
-      </section>
+        <p class="weather-sheet-hint">Touchez à l'extérieur, utilisez ✕ ou appuyez sur Retour pour fermer.</p>
+      </dialog>
 
       <footer class="footer">
         <div class="footnote">
