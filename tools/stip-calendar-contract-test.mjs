@@ -171,7 +171,9 @@ assert(homeJs.includes("STIPWeekEngine?.currentState") &&
        homeJs.includes("visibleWeek[0]?.iso"),
   "home no longer guarantees a reliable return to the current week/day");
 assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal compact layout");
-assert(homeJs.includes("stip-week-work-marker"), "home worked shift does not use the smaller canonical marker");
+assert(homeJs.includes("weekWorkSymbol(x.row?.code || x.code)") &&
+       homeJs.includes("weekTimeHtml(x.time)"),
+  "home must use the monthly shift badge with precise hours, not the old duplicate marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");
 assert(agentJs.includes('class="stip-month-event"'), "agent month secondary events are still raw <small> text");
 for (const [name, source] of [
