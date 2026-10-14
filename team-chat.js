@@ -4028,7 +4028,7 @@
   });
   window.addEventListener("stip:session-ended", stopAll);
   const apiSurface = {
-    build: "20260930-wheelchair-three-actions2",
+    build: "20261014-wheelchair-free-location1",
     mount,
     mountPreview,
     unmountFull,
