@@ -121,7 +121,11 @@ La Cloche peut agréger les événements, mais elle ne doit pas effacer leur ori
 - Le bouton Retour utilise `STIPRouter` et l’historique STIP.
 - Le raccourci Fauteuils ouvre `Communication > Fauteuils`.
 - Tout futur raccourci Chat ou DM doit ouvrir le même shell sur son onglet.
-- Les inscriptions Sorties & loisirs alimentent automatiquement un groupe canonique par date via `stip_leisure_chats`. Une désinscription retire la personne du groupe concerné. Les raccourcis ouvrent DM & groupes sur la conversation ; le backend messages et les permissions existants restent communs.
+- Les activités et rendez-vous Ensemble utilisent une **discussion canonique par événement**, rattachée à `stip_leisure_series_chat` ; les anciens salons par date (`stip_leisure_chats`) sont conservés uniquement pour leur historique éventuel.
+- Tous les collègues **invités** à l'événement restent membres de sa discussion canonique : en attente, acceptés **ou ayant refusé**. Chacun peut lire et écrire tant qu'il reste invité. Un véritable retrait d'invitation supprime l'accès.
+- `stip_conversation_members.muted` est le seul état de silence pour cette discussion : **en attente / refusé → notifications de messages désactivées, non-lus exclus des alertes ; accepté → notifications suivant les préférences générales**. La notification initiale d'invitation reste autorisée selon les préférences `leisure_invite`. Le refus n'est jamais une suppression du groupe.
+- La boîte DM & groupes doit distinguer **Activités & rendez-vous / Groupes libres / Messages privés**, afficher contexte, date, avatars et noms des personnes pouvant lire/écrire, et ouvrir la liste complète avec états d'invitation. Éviter le texte sans valeur « Conversation prête ». Les anciens salons vides dont le groupe événementiel existe sont masqués, mais jamais détruits.
+- Les raccourcis ouvrent DM & groupes sur la conversation ; le backend messages et les permissions existants restent communs.
 - Changer d’onglet ne recharge pas la session et ne passe pas par une page HTML autonome.
 
 ## 8. Stabilité mobile
