@@ -10,7 +10,7 @@ const validClock=v=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||""));
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
-const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false};
+const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
@@ -46,6 +46,11 @@ function card(e){
 }
 function chosenCards(){
  const events=state.events.filter(e=>concerned(e)&&activeDates(e).length&&e.status==="active");
+ if(state.agendaFilter==="invitations"){
+  const invited=events.filter(e=>!!e.invitation_status||(e.is_organizer&&(e.invited_colleagues||[]).length>0));
+  return '<div class="ev3-section-title"><h2>Invitations</h2><small>'+invited.length+' activité'+(invited.length>1?"s":"")+'</small></div>'+
+   (invited.length?'<div class="ev3-stack">'+invited.map(card).join("")+"</div>":'<div class="ev3-empty"><strong>Aucune invitation en cours.</strong><p>Les invitations reçues et envoyées apparaîtront ici.</p></div>');
+ }
  const pending=events.filter(e=>e.needs_response&&!e.is_organizer);
  const other=events.filter(e=>!pending.includes(e));
  const header='<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>';
@@ -138,7 +143,7 @@ function render(){
  bind();
 }
 function bind(){
- document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;state.status="";render()});
+ document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;state.agendaFilter="all";state.status="";render()});
  byId("ensembleV3")?.querySelector("[data-ev3-refresh]")?.addEventListener("click",refresh);
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
@@ -291,7 +296,9 @@ async function refresh(){
   const id=new URLSearchParams(location.search).get("event");if(id&&!deepLinked&&state.events.some(e=>e.id===id)){deepLinked=true;openEvent(id)}
  }catch(err){state.loaded=true;state.error=err.message;state.status=err.message;render()}
 }
-window.STIPEnsembleV3={refresh,openEvent};
+function setView(view){state.agendaFilter=view==="invitations"?"invitations":"all";state.tab=view==="trips"?"trips":"agenda";state.status="";render()}
+function openCreator(){state.formKind="activity";state.agendaFilter="all";state.tab="create";render()}
+window.STIPEnsembleV3={refresh,openEvent,setView,openCreator};
 document.addEventListener("DOMContentLoaded",refresh,{once:true});
 window.addEventListener("pageshow",e=>{if(e.persisted)refresh()});
 })();
