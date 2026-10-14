@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261014-shift-weather2" />
+    <meta name="stip-ui-build" content="20261014-rsvp3" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -165,7 +165,7 @@
     <script defer src="/stip-month-table.js?v=20260928-month-badges1"></script>    <link rel="stylesheet" href="stip-home-header.css?v=20261002-header-identity-fix1" />
     <link rel="stylesheet" href="team-home-fusion.css?v=20261014-shift-weather2" />
     <link rel="stylesheet" href="meeting-runtime.css?v=20261001-meeting-board2" />
-    <link rel="stylesheet" href="ensemble-home.css?v=20261014-unified2" />
+    <link rel="stylesheet" href="ensemble-home.css?v=20261014-rsvp3" />
 </head>
   <body>
     <main class="app-shell">
@@ -466,9 +466,9 @@
     <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
     <script src="shift-weather-mini.js?v=20261014-shiftweather2"></script>
     <script src="team-home-fusion.js?v=20261014-shift-weather2"></script>
-    <script src="home-shell.js?v=20261014-shift-groups1"></script>
+    <script src="home-shell.js?v=20261014-rsvp3"></script>
     <script src="meeting-runtime.js?v=20261001-meeting-board2"></script>
-    <script src="ensemble-home.js?v=20261014-unified2"></script>
+    <script src="ensemble-home.js?v=20261014-rsvp3"></script>
     <script src="stip-home-scroll.js?v=20260930-compact-header1"></script>
     <script src="stip-field-intelligence.js?v=20261014-shift-hcl1"></script>
     <script src="tomorrow-core.js?v=20260921-field3"></script>
@@ -482,7 +482,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261014-shift-weather2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261014-rsvp3", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
