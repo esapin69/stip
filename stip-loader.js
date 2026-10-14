@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261014-wheelchair-free-location1";
+    V = "20261014-weather-seasons-light1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
