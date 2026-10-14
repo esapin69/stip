@@ -452,8 +452,10 @@
       // La modale de jour serait dans la top layer, devant le choix d'appel.
       const dayPopup=document.getElementById("thfPopup");
       if(dayPopup?.open)dayPopup.close();
-      if(!window.STIPDutyChiefs?.openCallChoice)
-        await window.STIPLoad?.script?.("home-duty-chief.js").catch?.(()=>{});
+      if(!window.STIPDutyChiefs?.openCallChoice){
+        try{await window.STIPLoad?.script?.("home-duty-chief.js");}
+        catch(_){/* Le pop n'est disponible qu'une fois le module chargé. */}
+      }
       if(window.STIPDutyChiefs?.openCallChoice)
         window.STIPDutyChiefs.openCallChoice(phone,label);
       else showDialog('<h2>Appel indisponible</h2><p>Réessaie après actualisation de la page.</p>');
