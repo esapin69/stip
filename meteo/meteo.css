@@ -122,3 +122,79 @@ h2{font-size:clamp(22px,3vw,27px);letter-spacing:-.04em;line-height:1.14;margin-
 @media(max-width:650px){.outlook{padding:20px 14px;border-radius:20px;margin-top:25px}.outlook-grid{grid-auto-columns:155px}.forecast-grid>.details{padding:17px 13px;margin:0}.day-card .card-confidence{flex-wrap:wrap}.day-card .card-confidence strong{text-align:left}}
 
 .accuracy-explainer{font-size:11px;color:#65798e;line-height:1.5;margin:14px 0 0;max-width:870px}
+
+
+/* Native <dialog> : bottom sheet on phones, centered modal on wider screens. */
+.weather-dialog:not([open]){display:none}
+.weather-dialog[open]{
+  display:block;
+  position:fixed;
+  inset:auto 0 0;
+  box-sizing:border-box;
+  width:min(100%,760px);
+  max-width:100%;
+  max-height:min(84dvh,740px);
+  margin:0 auto;
+  padding:0 20px 22px;
+  overflow:auto;
+  overscroll-behavior-y:contain;
+  background:#fff;
+  color:#182b43;
+  border:1px solid #d7e7f2;
+  border-radius:26px 26px 0 0;
+  box-shadow:0 0 60px #071e3b35;
+  animation:weather-sheet-rise .22s ease-out both;
+}
+.weather-dialog::backdrop{background:rgba(11,30,52,.52);backdrop-filter:blur(2px)}
+.weather-sheet-handle{display:flex;align-items:center;justify-content:center;height:24px}
+.weather-sheet-handle span{width:43px;height:5px;background:#d4e1ea;border-radius:10px}
+.weather-sheet-header{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:1;
+  padding:5px 0 13px;
+  background:#fff;
+}
+.weather-sheet-header .eyebrow{margin-bottom:6px}
+.weather-sheet-header h2{font-size:clamp(21px,3.2vw,27px);line-height:1.2}
+.weather-sheet-close{
+  width:42px;
+  height:42px;
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  border-radius:13px;
+  background:#f1f7fb;
+  color:#426b88;
+  font-size:18px;
+  font-weight:700;
+  border:1px solid #dbe8f1;
+}
+.weather-sheet-close:hover,.weather-day-nav:hover:not(:disabled){background:#e5f2fc}
+.weather-dialog .details-summary{margin:0 0 17px;font-size:13px;line-height:1.5}
+.weather-sheet-switcher{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 12px}
+.weather-day-nav{border:1px solid #dae7f0;border-radius:12px;padding:10px 13px;min-height:41px;background:#f6faff;color:#255d88;font-weight:760;font-size:12px}
+.weather-day-nav:disabled{color:#a1aebb;background:#f8fafd;cursor:default}
+.weather-sheet-swipe-hint{font-size:11px;color:#66849d;text-align:center;line-height:1.3}
+.weather-dialog .hourly-scroll{padding:4px 1px 12px;scroll-snap-type:x proximity}
+.weather-dialog .hour-card{scroll-snap-align:start;min-width:114px;border-radius:17px;padding:16px 10px;gap:10px}
+.weather-sheet-hint{margin:12px 0 0;font-size:11px;color:#7a8999;text-align:center}
+@keyframes weather-sheet-rise{from{transform:translateY(32px);opacity:.7}to{transform:translateY(0);opacity:1}}
+@media(min-width:741px){
+  .weather-dialog[open]{inset:0;margin:auto;max-width:min(90vw,780px);max-height:min(80dvh,650px);border-radius:25px;padding:17px 26px 25px;animation:weather-modal-in .2s ease-out both}
+  .weather-sheet-handle{display:none}
+  @keyframes weather-modal-in{from{transform:translateY(12px);opacity:.8}to{transform:translateY(0);opacity:1}}
+}
+@media(max-width:650px){
+  .weather-dialog[open]{padding:0 15px max(19px,env(safe-area-inset-bottom));max-height:86dvh;border-radius:23px 23px 0 0}
+  .weather-sheet-header{padding-top:2px}
+  .weather-dialog .hour-card{min-width:109px}
+  .weather-sheet-switcher{gap:6px}
+  .weather-day-nav{padding:9px 10px}
+  .weather-sheet-swipe-hint{font-size:10px;max-width:100px}
+}
+@media(prefers-reduced-motion:reduce){.weather-dialog[open]{animation:none}}
