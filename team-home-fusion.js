@@ -238,11 +238,19 @@
       '<div class="thf-my '+(working?shiftClass(myCode):"shift-absence")+'"><div><small>MON POSTE</small><strong>'+esc(ownLabel)+'</strong>'+
       (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div>'+
       (perm.planning_team?'<div><small>MÊME POSTE</small><strong>'+esc(count)+'</strong><span>collègues</span></div>':"")+'</div>'+
+      (working&&myTime?'<div class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></div>':"")+
       '<div class="thf-actions">'+
       (perm.planning_team?'<button type="button" data-thf-open="people"><span aria-hidden="true">👥</span><span><strong>Collègues</strong><small>'+esc(more)+'</small></span><b>›</b></button>':"")+
       (perm.planning_team?'<button type="button" data-thf-open="staff"><span class="thf-hcl-symbol status-'+esc(ownLevel)+'" aria-hidden="true">'+symbol+'</span><span><strong>Effectifs · HCL</strong><small>'+esc(working?ownLabel+" : "+ownHCL:ownHCL)+'</small></span><b>›</b></button>':"")+
       (uniqueInfos.length?'<button type="button" data-thf-open="notes"><span aria-hidden="true">📌</span><span><strong>À retenir</strong><small>'+uniqueInfos.length+' information'+(uniqueInfos.length>1?"s":"")+'</small></span><b>›</b></button>':"")+
       '</div>';
+    const weather=host.querySelector?.("[data-thf-weather]");
+    if(weather&&window.STIPShiftWeather?.mount){
+      const hours=String(myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
+      if(hours.length>=2)window.STIPShiftWeather.mount(weather,{
+        date:day,start:hours[0],end:hours[1],isWorking:working
+      }).catch?.(()=>{});
+    }
   }
   function peoplePanel(host,kind){
     const rows=host?._thfSets?.[kind]||[],panel=document.getElementById("thfPopupResults");
