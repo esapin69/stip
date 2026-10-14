@@ -11,7 +11,7 @@ const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
 const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
-const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Accès aux sorties désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
+const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Collègue indisponible</small>':p.access_ready===false?'<small class="ev3-person-access">Invitation possible · compte GHE à activer</small>':"")+'</span>';
 const entryTab=new URLSearchParams(location.search).get("tab");
 const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
@@ -126,12 +126,10 @@ function calendarHTML(){
 }
 function peopleHTML(){
  const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
- const restricted=state.people.filter(p=>p.can_invite===false).length;
  return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+(state.peopleLoaded?peopleOptions(""):'<p class="ev3-inline-status">Chargement de la liste des collègues…</p>')+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
- (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès aux sorties.</p>':"")+
- (restricted?'<p class="ev3-directory-hint">« Accès aux sorties désactivé » : ce collègue est dans l’annuaire, mais un administrateur doit réactiver son accès avant une nouvelle invitation.</p>':"");
+ (unactivated?'<p class="ev3-directory-hint">Tu peux inviter ces collègues même si leur compte GHE n’est pas encore activé. Leur invitation est conservée et sera disponible après connexion.</p>':"");
 }
 function peopleOptions(query){
  const q=normalizedName(query);
@@ -347,7 +345,7 @@ function openInvite(e,notice=""){
  '<div class="ev3-invited-person"><span><b>'+escapeHTML(person.name)+'</b><small>'+escapeHTML(statusName(person.status))+'</small></span>'+
  '<button type="button" data-ev3-uninvite="'+escapeHTML(person.id)+'" data-name="'+escapeHTML(person.name)+'" aria-label="Retirer '+escapeHTML(person.name)+'">Retirer</button></div>').join("")+'</div>':
  '<p>Personne n’a encore été invité.</p>')+'</section>'+
- '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div><p class="ev3-directory-hint">Les collègues dont l’accès aux sorties est désactivé restent visibles mais ne peuvent pas recevoir de nouvelle invitation.</p></section>'+
+ '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div><p class="ev3-directory-hint">Tous les collègues éligibles peuvent être invités, sans activation préalable de l’application Sorties &amp; trajets.</p></section>'+
  '<button type="button" class="ev3-primary" id="ev3SendInvites">Envoyer les invitations</button>'+
  '<p class="ev3-modal-error" role="status">'+escapeHTML(notice)+'</p></div>';
  const error=d.querySelector(".ev3-modal-error");
