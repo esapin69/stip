@@ -2544,6 +2544,8 @@
   // roster is available together in an independent dialog (never a partial list).
   function liveBackMarkup() {
     const roster=liveRoster(),actions=pending(),now=Date.now();
+    const countLabel=!roster.permitted&&!has("planning_personal")?"—":
+      roster.permitted&&!roster.loaded?"…":String(roster.rows.length);
     const recent=notifications().filter(n=>{
       const d=new Date(noteTimeValue(n)).getTime();
       return Number.isFinite(d)&&d<=now&&now-d<86400000;
@@ -2569,7 +2571,7 @@
         '<strong>EN DIRECT</strong><small>Le service en un regard</small></div>'+
         '<button type="button" class="ghe-luxe-return" data-live-flip-close aria-label="Retourner la carte vers le profil">↶ <span>Profil</span></button></div>'+
       '<div class="ghe-luxe-live-summary">'+
-        '<div class="ghe-luxe-live-count"><strong>'+roster.rows.length+'</strong><span>collègues<br>en poste</span></div>'+
+        '<div class="ghe-luxe-live-count"><strong>'+esc(countLabel)+'</strong><span>collègues<br>en poste</span></div>'+
         '<div class="ghe-luxe-shift-summary">'+
           '<small>Répartition des shifts</small>'+
           '<div class="ghe-luxe-shifts">'+(markers||'<span class="ghe-luxe-muted">'+esc(message)+'</span>')+'</div>'+
@@ -2686,10 +2688,10 @@
     const email=String(agent.email_pro||agent.email||agent.mail_pro||agent.mail||"").trim();
     const items=[];
     if(digits.length>=6) items.push(
-      '<a href="tel:'+esc(digits)+'" class="ghe-luxe-contact" aria-label="Appeler '+esc(phone)+'">'+
+      '<a href="tel:'+esc(digits)+'" class="ghe-luxe-contact ghe-luxe-contact-phone" aria-label="Appeler '+esc(phone)+'">'+
       '<span aria-hidden="true">☎</span><strong>'+esc(phone)+'</strong></a>');
     if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) items.push(
-      '<a href="mailto:'+esc(email)+'" class="ghe-luxe-contact" aria-label="Écrire à '+esc(email)+'">'+
+      '<a href="mailto:'+esc(email)+'" class="ghe-luxe-contact ghe-luxe-contact-mail" aria-label="Écrire à '+esc(email)+'">'+
       '<span aria-hidden="true">✉</span><strong>'+esc(email)+'</strong></a>');
     if(!items.length) return "";
     return '<div class="ghe-luxe-contacts">'+items.join("")+'</div>';
@@ -4190,6 +4192,7 @@
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", () => document.getElementById("hcBellDialog")?.close?.());
+  window.addEventListener("stip:session-ended",()=>{state.liveFlipped=false;});
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));

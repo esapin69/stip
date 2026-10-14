@@ -267,3 +267,10 @@
 @media(prefers-reduced-motion:reduce){
  .hc-home-top-nav[data-header-compact] .ghe-luxe-flip-track{transition:none!important;}
 }
+
+/* The canonical profile card already renders some contacts. Avoid visual duplicates
+   only when the corresponding dedicated contact pill is available. */
+.hc-home-top-nav[data-header-compact] .ghe-luxe-front:has(.ghe-luxe-contact-phone) .stip-person-card-phone,
+.hc-home-top-nav[data-header-compact] .ghe-luxe-front:has(.ghe-luxe-contact-mail) .stip-person-card-email {
+  display:none!important;
+}
