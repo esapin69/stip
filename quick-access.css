@@ -181,6 +181,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 .stip-app-propose>b{margin-left:auto;font-size:1.4rem;color:#188b85}
 .stip-app-propose:active{background:#e3f5f0!important}
 .stip-app-grid-empty{grid-column:1/-1;margin:12px 0;padding:18px 10px;color:#657e87;text-align:center;font-size:.85rem}
+.stip-app-grid-empty .stip-store-browse{display:block;margin:12px auto 0}
 .stip-app-result-note{font-size:.66rem;color:#5b8188}
 .stip-app-store .stip-app-search{margin-bottom:16px}
 .stip-store-icon-responsable{background:transparent!important;box-shadow:none!important}
