@@ -6313,3 +6313,52 @@
 .tb-fallback-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:9px;background:#f4f8f7;position:sticky;top:0;z-index:45;border-bottom:1px solid #d4e6e6}
 .tb-fallback-tabs a{font:inherit;font-weight:750;font-size:.78rem;min-height:46px;display:grid;place-items:center;text-align:center;border-radius:13px;border:1px solid #d0e3e4;color:#285867;background:#fff;text-decoration:none;padding:6px 4px}
 .tb-fallback-tabs a[aria-current=page]{background:#e6f7f8;border-color:#68c4c9;color:#096976}
+
+/* 20261014-wheelchair-free-location — un champ, un bouton, sans choix imposé. */
+.tb-spot-location-step{
+  max-width:390px;
+}
+.tb-spot-location-form{
+  width:100%;
+  min-width:0;
+  display:grid;
+  gap:12px;
+  margin-top:20px;
+}
+.tb-spot-location-input{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:60px;
+  padding:14px 16px;
+  border:1.5px solid #b4d6d8;
+  border-radius:16px;
+  background:#fff;
+  color:#183e49;
+  font-family:inherit;
+  font-size:16px!important;
+  font-weight:650;
+  line-height:1.35;
+  text-align:left;
+  outline:none;
+}
+.tb-spot-location-input::placeholder{
+  color:#81969b;
+  opacity:1;
+  font-weight:500;
+}
+.tb-spot-location-input:focus{
+  border-color:#148a98;
+  box-shadow:0 0 0 3px rgba(20,138,152,.13);
+}
+.tb-spot-location-step .tb-review-send.tb-place-continue{
+  min-height:58px!important;
+  margin-top:0!important;
+}
+.tb-spot-location-error{
+  color:#b33b47!important;
+  font-size:.78rem!important;
+  text-align:left;
+}
+.tb-spot-location-error[hidden]{display:none}
