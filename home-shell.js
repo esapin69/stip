@@ -2977,6 +2977,28 @@
       legend = fixedShiftLegend();
     return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}${homeModeNav("identity")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-tomorrow-fusion" aria-label="Mon planning et mon équipe demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
+  // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
+  // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
+  let feedbackPriorityObserver = null;
+  function keepHomeFeedbackPriority(root) {
+    feedbackPriorityObserver?.disconnect();
+    feedbackPriorityObserver = null;
+    const timeline = root.querySelector(".hc-home-timeline");
+    const anchor = timeline?.querySelector("#hcTopPriorityAnchor");
+    if (!timeline || !anchor) return;
+    const align = () => {
+      const followUps = document.getElementById("hcEventFeedbackHost");
+      if (!followUps || !followUps.isConnected) return;
+      if (followUps.parentElement !== anchor.parentElement ||
+          anchor.nextElementSibling !== followUps) {
+        anchor.insertAdjacentElement("afterend", followUps);
+      }
+    };
+    feedbackPriorityObserver = new MutationObserver(align);
+    feedbackPriorityObserver.observe(timeline, { childList: true, subtree: true });
+    align();
+  }
+
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
@@ -3004,6 +3026,7 @@
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
     state.renderSig = markup;
     root.innerHTML = markup;
+    keepHomeFeedbackPriority(root);
     const sharedTeamOptions = {
       personal: state.boot?.personal || [],
       permissions: perms(),
