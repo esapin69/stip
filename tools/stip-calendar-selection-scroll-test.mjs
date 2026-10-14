@@ -144,4 +144,62 @@ assert.doesNotMatch(
   /\brender\(\)/,
   "Weekly day selection must not remount the home page",
 );
-console.log("GHE calendar selection and popup scroll contract: OK");
+
+
+// A week swipe/navigation is rendered inside the week only. It must never
+// replace the full home DOM or issue a corrective window.scrollBy().
+const weekMoveSource = sourceBetween(
+  "  function moveWeek(step) {",
+  "  function dayCard(",
+);
+assert.doesNotMatch(weekMoveSource, /\brender\(\)|window\.scrollBy|requestAnimationFrame/);
+assert.match(weekMoveSource, /renderWeekContext\(\)/);
+assert.match(source, /function weekContextMarkup\(\)/);
+assert.match(source, /bindWeekContext\(root\.querySelector/);
+const weekContext = { innerHTML: "initial", addEventListener(name, cb) { this[name] = cb; } };
+const monthContext = { innerHTML: "untouched" };
+const newWeekMarkup = "<section>Next week</section>";
+const redrawWeek = liveFunction(
+  sourceBetween("  function renderWeekContext() {", "  function bindWeekContext(week) {"),
+  "renderWeekContext",
+  {
+    document: { querySelector: (q) => q.includes(".hc-week-context-master") ? weekContext : monthContext },
+    weekContextMarkup: () => newWeekMarkup,
+  },
+);
+redrawWeek();
+assert.equal(weekContext.innerHTML, newWeekMarkup);
+assert.equal(monthContext.innerHTML, "untouched", "Week rendering must not affect month DOM");
+
+let weekSteps = 0, weekDaySelections = 0, weekDetailOpens = 0;
+const bindWeek = liveFunction(
+  sourceBetween("  function bindWeekContext(week) {", "  // Month navigation"),
+  "bindWeekContext",
+  {
+    planningLoading: () => false,
+    moveWeek: (step) => { weekSteps += Number(step); },
+    resetWeekToCurrent: () => {},
+    window: { STIPLeaveCart: { isSelecting: () => false } },
+    planningRowForDate: (iso) => ({ date: iso }),
+    selectWeekDay: () => { weekDaySelections += 1; },
+    openShiftDetail: () => { weekDetailOpens += 1; },
+    openWidget: () => {},
+  },
+);
+bindWeek(weekContext);
+function weeklyClick(selector, data, cls = "") {
+  const selected = day(data, cls);
+  weekContext.click({
+    target: {
+      closest(query) { return query === selector ? selected : null; },
+    },
+  });
+}
+weeklyClick("[data-week-step]", { weekStep: "1" });
+assert.equal(weekSteps, 1);
+weeklyClick("[data-home-day]", { homeDay: "2026-10-15" }, "stip-week-day");
+assert.equal(weekDaySelections, 1);
+assert.equal(weekDetailOpens, 1);
+assert.equal(monthContext.innerHTML, "untouched");
+
+console.log("GHE calendar selection, weekly navigation and popup scroll contract: OK");
