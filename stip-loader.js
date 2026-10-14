@@ -321,7 +321,7 @@
       .then(() =>
         seq([
           "event-feedback.js?v=20261014-home-order2",
-          "home-duty-chief.js?v=20260928-home-current-chief1",
+          "home-duty-chief.js?v=20261014-chief-hours-leisure4",
           "admin-access-requests-home.js",
         ]),
       )
