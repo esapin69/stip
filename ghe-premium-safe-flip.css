@@ -273,6 +273,59 @@
 .hc-home-top-nav[data-header-compact] .ghe-premium-front-footer .ghe-premium-turn {
   flex:0 0 auto!important;max-width:100%!important;
 }
-.hc-home-top-nav[data-header-compact] .ghe-home-paint-name {
-  flex:1 1 auto!important;min-width:30px!important;
+
+/* Centered bell; the header has no Menu launcher and no agent name. */
+.hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+  box-sizing:border-box!important;display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  width:100%!important;max-width:100%!important;
+  justify-content:stretch!important;align-items:center!important;
+  column-gap:8px!important;min-height:68px!important;
+  margin:0 auto 8px!important;padding:3px 6px!important;
+  background:transparent!important;box-shadow:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
+  grid-column:2;grid-row:1;justify-self:center;
+  box-sizing:border-box!important;width:60px!important;height:60px!important;
+  min-width:60px!important;min-height:60px!important;
+  border:0!important;border-radius:50%!important;padding:0!important;
+  background:transparent!important;box-shadow:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell>span{
+  font-size:2.08rem!important;line-height:1!important;filter:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell>b{
+  top:1px!important;right:-2px!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-tools-right{
+  grid-column:3;grid-row:1;min-width:0!important;
+  justify-self:end;justify-content:flex-end!important;
+  display:flex!important;align-items:center!important;
+  gap:clamp(3px,1vw,9px)!important;
+}
+.hc-home-top-nav[data-header-compact].ghe-home-clean-header {
+  box-shadow:none!important;border:0!important;background:transparent!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-stage,
+.hc-home-top-nav[data-header-compact] .ghe-premium-track,
+.hc-home-top-nav[data-header-compact] .ghe-premium-face,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back {
+  box-shadow:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back{
+  border:1px solid #dce9ed!important;
+  background:#f9fcfd!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back{
+  background:#fffafb!important;
+}
+@media(max-width:365px){
+  .hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+    column-gap:3px!important;padding:3px 2px!important;
+  }
+  .hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
+    width:55px!important;height:55px!important;min-width:55px!important;min-height:55px!important;
+  }
 }

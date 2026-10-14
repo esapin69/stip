@@ -2453,16 +2453,14 @@
   // The header uses one canonical navigation action; the agent photo remains
   // exclusively inside the profile card, avoiding two competing avatars.
   function homeModeNav(part = "all") {
-    const agent=state.session?.agent||state.boot?.agent||{};
-    const first=cap(String(agent.prenom||"").trim())||"GHE";
     const count=notifications().length;
     const tools='<div class="hc-home-top-tools ghe-home-topbar">'+
-      '<span class="ghe-home-paint-name" title="'+esc(first)+'">'+esc(first)+'</span>'+
+      '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
+        (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
+        (count?'<b>'+count+'</b>':'')+'</button>'+
       '<span class="ghe-home-tools-right">'+tDoorShortcut()+
         '<span class="hc-home-wheelchair-slot">'+wheelchairShortcut()+'</span>'+
-        '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
-          (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
-          (count?'<b>'+count+'</b>':'')+'</button></span></div>';
+      '</span></div>';
     const face=state.premiumFlipped?'back':'front';
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
