@@ -171,7 +171,7 @@ assert(homeJs.includes("STIPWeekEngine?.currentState") &&
        homeJs.includes("visibleWeek[0]?.iso"),
   "home no longer guarantees a reliable return to the current week/day");
 assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal compact layout");
-assert(homeJs.includes("weekWorkSymbol(x.row?.code || x.code)") &&
+assert(homeJs.includes("weekWorkSymbol(x.row?.code || x.row?.source_value || x.code)") &&
        homeJs.includes("weekTimeHtml(x.time)"),
   "home must use the monthly shift badge with precise hours, not the old duplicate marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");
@@ -189,7 +189,7 @@ for (const [name, source] of [
 // One canonical badge shared by month, week, and legends.
 assert(homeJs.includes("function weekWorkSymbol(raw)") &&
        homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(raw)") &&
-       homeJs.includes("weekWorkSymbol(x.row?.code || x.code)") &&
+       homeJs.includes("weekWorkSymbol(x.row?.code || x.row?.source_value || x.code)") &&
        homeJs.includes("weekTimeHtml(x.time)"),
   "personal week does not reuse monthly badge with effective shift hours");
 assert(homeJs.includes("shiftTime(raw, planningRowForDate(iso) || {})") &&
