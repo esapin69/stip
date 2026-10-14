@@ -30,12 +30,6 @@
     const start=number(matches[0]);let end=number(matches[1]); if(end<=start) end+=1440;
     return [start,end];
   }
-  function overlap(a,b) {
-    if(!a||!b)return false;
-    return Math.max(0,Math.min(a[1],b[1])-Math.max(a[0],b[0]))>=60 ||
-      Math.max(0,Math.min(a[1]+1440,b[1])-Math.max(a[0]+1440,b[0]))>=60 ||
-      Math.max(0,Math.min(a[1],b[1]+1440)-Math.max(a[0],b[0]+1440))>=60;
-  }
   async function post(fn,body) {
     const token=localStorage.getItem(SESSION)||"";
     if(!token)throw Error("Session expirée");
@@ -238,10 +232,16 @@
     const visible=agents.filter(x=>!isChef(x)&&
       (!opts.sourceKey||String(x.agents?.source_key||"")!==String(opts.sourceKey))&&
       (!opts.ghe||String(x.agents?.ghe||"").replace(/^GHE\s*/i,"")!==String(opts.ghe).replace(/^GHE\s*/i,"")));
-    const exact=working?visible.filter(x=>base(x.code)===myBase):[];
-    const adjacent=working?visible.filter(x=>base(x.code)!==myBase&&
-      myInterval&&overlap(myInterval,range(shiftTime(x.code,x)))):[];
-    const elsewhere=visible.filter(x=>!exact.includes(x)&&!adjacent.includes(x));
+    // Tous les shifts travaillés sont visibles, y compris la famille de l'utilisateur.
+    const onDuty=visible.filter(x=>Boolean(definition(x.code)?.is_working));
+    // "Même horaire" compare les heures effectives, pas seulement M/J/J4/S/N.
+    const exact=working?onDuty.filter(x=>{
+      const hours=range(shiftTime(x.code,x));
+      return myInterval&&hours?
+        hours[0]===myInterval[0]&&hours[1]===myInterval[1]:
+        base(x.code)===myBase;
+    }):[];
+    const elsewhere=visible.filter(x=>!onDuty.includes(x));
     const chiefs=chiefForDay(day,myTime,working,team);
     const groups=new Map();
     for(const x of agents){const code=base(x.code);if(!definition(code)?.is_working)continue;
@@ -257,7 +257,7 @@
       if(!seen.has(key)){seen.add(key);uniqueInfos.push(item);}}
     host._thfAgents=[...agents,...chiefs.filter(x=>!agents.some(y=>y.agents?.source_key===x.agents?.source_key))];
     host._thfChiefs=chiefs;host._thfNotes=uniqueInfos;
-    host._thfSets={exact:exact.sort(sortPeople),adjacent:adjacent.sort(sortPeople),
+    host._thfSets={exact:exact.sort(sortPeople),onDuty:onDuty.sort(sortPeople),
       elsewhere:elsewhere.sort(sortPeople)};
     host._thfShifts=shifts;
     const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
@@ -337,7 +337,7 @@
     const weather=host.querySelector?.("[data-thf-weather]");
     const weatherText=weather&&!weather.hidden?String(weather.textContent||"").replace(/\s+/g," ").trim():"Prévision indisponible pour les horaires du service";
     const same=(host._thfSets?.exact||[]).length;
-    const others=(host._thfSets?.adjacent||[]).length;
+    const onDuty=(host._thfSets?.onDuty||[]).length;
     const info=(host._thfNotes||[]).length;
     showDialog('<small>MA JOURNÉE · ÉQUIPE</small><h2>'+esc(s.label)+' · '+esc(s.longDate)+'</h2>'+
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
@@ -349,7 +349,7 @@
           '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
         '</section>':"")+
       '<div class="thf-day-popup-actions">'+
-      '<button type="button" data-thf-open="people">👥 Collègues · '+same+' même poste, '+others+' chevauchent ›</button>'+
+      '<button type="button" data-thf-open="people">👥 Collègues · '+same+' même horaire, '+onDuty+' en service ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
       (info?'<button type="button" data-thf-open="notes">📌 À retenir · '+info+' ›</button>':"")+
       '</div>');
@@ -358,8 +358,11 @@
     const rows=host?._thfSets?.[kind]||[],panel=document.getElementById("thfPopupResults");
     if(!panel)return;
     const groups=peopleGroups(rows);
+    const empty={exact:"Aucun collègue avec les mêmes horaires.",
+      onDuty:"Aucun collègue en service ce jour.",
+      elsewhere:"Aucun autre agent à afficher."};
     panel.innerHTML=groups.length?groups.map(peopleGroupHtml).join(""):
-      '<p class="thf-empty">Aucun collègue sur ce type de créneau.</p>';
+      '<p class="thf-empty">'+esc(empty[kind]||"Aucun collègue à afficher.")+'</p>';
     document.querySelectorAll("#thfPopup [data-thf-people-tab]").forEach(button=>
       button.setAttribute("aria-pressed",String(button.dataset.thfPeopleTab===kind)));
     panel.scrollTop=0;
@@ -367,13 +370,13 @@
   function openPeople(host) {
     activeHost=host;
     const sets=host._thfSets||{},numbers={
-      exact:(sets.exact||[]).length,adjacent:(sets.adjacent||[]).length,
+      exact:(sets.exact||[]).length,onDuty:(sets.onDuty||[]).length,
       elsewhere:(sets.elsewhere||[]).length
     };
     showDialog('<small>PLANNING ÉQUIPE</small><h2>Collègues du jour</h2>'+
       '<div class="thf-people-tabs" role="group" aria-label="Filtrer les collègues">'+
-      '<button type="button" data-thf-people-tab="exact" aria-pressed="true">Même poste <b>'+numbers.exact+'</b></button>'+
-      '<button type="button" data-thf-people-tab="adjacent" aria-pressed="false">Chevauchent <b>'+numbers.adjacent+'</b></button>'+
+      '<button type="button" data-thf-people-tab="exact" aria-pressed="true">Même horaire <b>'+numbers.exact+'</b></button>'+
+      '<button type="button" data-thf-people-tab="onDuty" aria-pressed="false">En service <b>'+numbers.onDuty+'</b></button>'+
       '<button type="button" data-thf-people-tab="elsewhere" aria-pressed="false">Autres <b>'+numbers.elsewhere+'</b></button>'+
       '</div><div class="thf-popup-scroll" id="thfPopupResults"></div>');
     peoplePanel(host,"exact");
