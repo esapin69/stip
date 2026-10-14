@@ -2408,11 +2408,10 @@
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
       ];
-    // Esprit d’équipe rejoint l’accueil : le raccourci illustré ouvre Communication.
-    // Sans droit Messages, garder l’ancien accès Équipe pour ne pas bloquer l’utilisateur.
+    // Quatre accès conservés : Applications, Mon espace, Communication et Esprit d’équipe.
     if (has("messages"))
       items.push({ key: "communication", label: "Communication", art: ICON.homeChat, mode: "home" });
-    else if (has("planning_team") || has("activity") || has("assistant_enabled"))
+    if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     const tDoor = tDoorShortcut();
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}" data-header-compact>
@@ -2902,7 +2901,13 @@
 
   function planningCalendarPocket() {
     if (!has("calendar_subscribe")) return "";
-    return `<details class="stip-option-pocket" data-stip-option="calendar-personal"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body"><button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button></div></details>`;
+    const personal = has("planning_personal");
+    const team = has("planning_team");
+    if (!personal && !team) return "";
+    return '<details class="stip-option-pocket" data-stip-option="calendar-unified"><summary class="stip-option-summary"><span aria-hidden="true">⋯</span> Options du planning</summary><div class="stip-option-pocket-body">' +
+      (personal ? '<button class="stip-option-action" type="button" data-home-calendar-subscribe><span aria-hidden="true">📅</span><strong>S’abonner à mon planning</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button>' : '') +
+      (team ? '<button class="stip-option-action" type="button" data-thf-team-subscribe><span aria-hidden="true">👥</span><strong>S’abonner au calendrier équipe</strong><small>Synchronisation avec le calendrier du téléphone</small><b aria-hidden="true">›</b></button>' : '') +
+      '</div></details>';
   }
 
   function planningCompareShortcut() {
@@ -2938,7 +2943,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `${mobileAppShortcut()}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}</main>${homeAIEntry()}`;
+    return `${mobileAppShortcut()}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${window.STIPMeeting?.pendingHTML?.() || ""}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe au jour sélectionné" aria-live="polite"></section>' : ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -2967,6 +2972,13 @@
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
     state.renderSig = markup;
     root.innerHTML = markup;
+    window.STIPTeamFusion?.mount?.({
+      day: state.dayFocus || parisIso(),
+      personal: state.boot?.personal || [],
+      permissions: perms(),
+      sourceKey: String(state.session?.agent?.source_key || state.boot?.agent?.source_key || window.STIPSession?.agent?.source_key || ""),
+      boot: state.boot,
+    });
     window.STIPDutyChiefs?.render?.();
     window.STIPDutyChiefs?.ensure?.();
     root
