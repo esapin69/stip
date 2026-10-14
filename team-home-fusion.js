@@ -6,6 +6,7 @@
   const TTL = 120000;
   const weeks = new Map(), days = new Map(), assistants = new Map(), activities = new Map();
   let owner = "";
+  let activeHost = null;
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const dateObj = (v) => new Date(String(v).slice(0,10) + "T12:00:00");
   const iso = (d) => [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
@@ -174,6 +175,7 @@
     host._thfShifts=shifts;
     const nDate=dateObj(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
     const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
+    const nextDay=addDay(today,1);
     const ownStaff=working?staffFor(staff,myBase):null;
     const ownTarget=ownStaff?.target_count,ownPlanned=ownStaff?.planned_count,ownGap=gap(ownStaff);
     const ownLevel=ownGap==null?"unknown":ownGap<0?"warning":ownGap>0?"opportunity":"ok";
@@ -183,7 +185,7 @@
     const count=loaded?String(exact.length):"…";
     const more=loaded?(adjacent.length?adjacent.length+" collègue"+(adjacent.length>1?"s":"")+" en chevauchement":"Liste des collègues"):"Équipe du jour";
     host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+
-      (day===today?"Aujourd’hui":"Jour sélectionné")+'</h2><p>'+esc(nDate)+'</p></div>'+
+      (day===today?"Aujourd’hui":day===nextDay?"Demain":"Jour sélectionné")+'</h2><p>'+esc(nDate)+'</p></div>'+
       '<button type="button" data-thf-refresh aria-label="Actualiser">↻</button></div>'+
       '<div class="thf-my"><div><small>MON POSTE</small><strong>'+esc(ownLabel)+'</strong>'+
       (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div>'+
@@ -207,6 +209,7 @@
     panel.scrollTop=0;
   }
   function openPeople(host) {
+    activeHost=host;
     const sets=host._thfSets||{},numbers={
       exact:(sets.exact||[]).length,adjacent:(sets.adjacent||[]).length,
       elsewhere:(sets.elsewhere||[]).length
@@ -220,12 +223,14 @@
     peoplePanel(host,"exact");
   }
   function openStaff(host) {
+    activeHost=host;
     showDialog('<small>EFFECTIFS · HCL</small><h2>Effectifs par horaire</h2>'+
       '<p class="thf-popup-intro">Appuie sur un horaire pour voir les agents et l’écart HCL.</p>'+
       '<div class="thf-popup-scroll">'+
       (host._thfShifts||'<p class="thf-empty">Aucune information disponible.</p>')+'</div>');
   }
   function openNotes(host) {
+    activeHost=host;
     showDialog('<small>INFORMATIONS DU JOUR</small><h2>À retenir</h2>'+
       '<div class="thf-popup-scroll">'+noteButtons(host._thfNotes||[])+'</div>');
   }
@@ -243,7 +248,7 @@
     node.addEventListener("click",(e)=>{if(e.target===node)node.close?.();});
   }
   function mount(opts){
-    const host=document.getElementById("hcTeamFusion");
+    const host=document.getElementById(opts.hostId||"hcTeamFusion");
     if(!host)return;
     const day=String(opts.day||"").slice(0,10);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return;
@@ -261,7 +266,7 @@
   document.addEventListener("click",async(event)=>{
     const el=event.target.closest?.("[data-thf-agent],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el)return;
-    const host=el.closest("#hcTeamFusion")||document.getElementById("hcTeamFusion");
+    const host=el.closest("#hcTeamFusion,#hcTomorrowFusion")||activeHost||document.getElementById("hcTeamFusion");
     if(el.hasAttribute("data-thf-team-subscribe")){
       if(!window.STIPCalendars?.quick)await window.STIPLoad?.script?.("calendar-subscriptions.js").catch(()=>{});
       window.STIPCalendars?.quick?.("team");return;
