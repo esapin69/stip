@@ -253,8 +253,8 @@
       loaded?"Aucun chef en poste renseigné":"Chargement du planning chef…";
     const chiefDisplay=chiefs.length?chiefs.slice(0,2).map(x=>{
       const hours=shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}});
-      return '<span class="thf-chief-line"><strong>'+esc(name(x.agents))+'</strong>'+
-        '<em>'+esc(hours||"Horaires non renseignés")+'</em></span>';
+      return '<span class="thf-chief-line '+shiftClass(x.code)+'"><strong>'+esc(name(x.agents))+'</strong>'+
+        '<em>'+esc([shiftLabel(x.code),hours||"Horaires non renseignés"].join(" · "))+'</em></span>';
     }).join("")+(chiefs.length>2?'<small>+'+(chiefs.length-2)+' autre(s) ›</small>':""):
       '<span class="thf-chief-missing">'+esc(chiefLabel)+'</span>';
     const leisureEvents=window.STIPLeisure?.dayItems?.(day)||[];
