@@ -478,7 +478,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261014-native-inputs1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261014-meteo-fresh2", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
