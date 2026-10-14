@@ -16,13 +16,24 @@ const entryTab=new URLSearchParams(location.search).get("tab");
 const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
+let pendingVisualRefresh=false;
 function renderWhenIdle(){
- if(byId("ev3Dialog")?.open)return;
+ if(byId("ev3Dialog")?.open){pendingVisualRefresh=true;return}
  const active=document.activeElement;
- // Never replace an input or textarea while the mobile keyboard is in use.
- if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName))return;
+ // Keep the original mobile input and keyboard in place while data arrive.
+ if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
+  pendingVisualRefresh=true;
+  const submit=byId("ev3Compose")?.querySelector('[type="submit"]');
+  if(submit)submit.disabled=!state.calendarLoaded||!state.peopleLoaded;
+  return;
+ }
+ pendingVisualRefresh=false;
  render();
 }
+document.addEventListener("focusout",()=>{
+ if(!pendingVisualRefresh)return;
+ setTimeout(()=>{if(pendingVisualRefresh)renderWhenIdle()},280);
+});
 
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
@@ -170,7 +181,7 @@ function render(){
  bind();
 }
 function bind(){
- document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;state.agendaFilter="all";state.status="";render()});
+ document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;if(state.tab==="create")state.formKind="activity";state.agendaFilter="all";state.status="";render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-refresh]").forEach(b=>b.addEventListener("click",refresh));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
