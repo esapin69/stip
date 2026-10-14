@@ -2661,25 +2661,21 @@
     else dialog.setAttribute("open", "");
   }
 
-  function homeAvatar() {
-    const a = state.session?.agent || state.boot?.agent || {};
-    const initials = String((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "G";
-    const image = String(window.STIPAgentSelector?.photoUrl?.(a) ||
-      a.profile_photo_url || a.avatar_url ||
-      state.boot?.media?.avatars?.[a.source_key] || "");
-    return '<button type="button" class="ghe-home-mini-avatar" data-shortcuts-open ' +
-      'aria-label="Ouvrir les raccourcis du profil">' +
-      (image && /^https:\/\//i.test(image)
-        ? '<img src="' + esc(image) + '" alt="" loading="lazy">'
-        : '<span aria-hidden="true">' + esc(initials) + '</span>') +
-      '</button>';
+  // The header uses one canonical navigation action; the agent photo remains
+  // exclusively inside the profile card, avoiding two competing avatars.
+  function homeMenuLauncher() {
+    return '<button type="button" class="ghe-shop-menu-launcher" data-shortcuts-open '+
+      'aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir le menu">'+
+      '<span class="ghe-shop-menu-bars" aria-hidden="true"><i></i><i></i><i></i></span>'+
+      '<strong>Menu</strong></button>';
   }
+
   function homeModeNav(part = "all") {
     const agent=state.session?.agent||state.boot?.agent||{};
     const first=cap(String(agent.prenom||"").trim())||"GHE";
     const count=notifications().length;
     const tools='<div class="hc-home-top-tools ghe-home-topbar">'+
-      homeAvatar()+
+      homeMenuLauncher()+
       '<span class="ghe-home-paint-name" title="'+esc(first)+'">'+esc(first)+'</span>'+
       '<span class="ghe-home-tools-right">'+tDoorShortcut()+
         '<span class="hc-home-wheelchair-slot">'+wheelchairShortcut()+'</span>'+
@@ -2695,7 +2691,7 @@
             (state.premiumFlipped?' inert':'')+'>'+
             '<div class="ghe-premium-front-kicker"><span>✦ GHE · MON ESPACE</span><small>Profil</small></div>'+
             '<div class="hc-home-identity">'+profile()+'</div>'+
-            '<footer class="ghe-premium-front-footer">'+shortcutsLauncher()+
+            '<footer class="ghe-premium-front-footer">'+
               '<button type="button" class="ghe-premium-turn" data-premium-turn-open'+
                 ' aria-label="Retourner la carte pour afficher En direct" aria-expanded="'+state.premiumFlipped+'">'+
                 '<span class="ghe-premium-button-dot" aria-hidden="true"></span>'+
@@ -2716,26 +2712,6 @@
       (part==="identity"?"":tools)+(part==="tools"?"":identity)+'</section>';
   }
 
-  function shortcutsLauncher() {
-    const role = pilotageRoleKey(),
-      content = pilotageBlock(),
-      label =
-        {
-          admin: "Raccourcis",
-          cadre: "Cadre",
-          responsable: "Responsable",
-          agent: "Agent",
-          stagiaire: "Stagiaire",
-          metiers: "Autres métiers",
-        }[role] || "Raccourcis";
-    if (!content) return "";
-    return `<div class="hc-admin-shortcuts-launcher-wrap hc-header-shortcuts-wrap">
-      <button type="button" class="hc-admin-shortcuts-launcher hc-header-shortcuts" data-shortcuts-open aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis ${esc(label)}">
-        <small>${role === "admin" ? "ACCÈS" : "PROFIL"}</small><strong>Raccourcis</strong><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
-      </button>
-    </div>`;
-  }
-
   function shortcutsPopup() {
     const role = pilotageRoleKey(),
       content = pilotageBlock(),
@@ -2749,11 +2725,11 @@
           metiers: "AUTRES MÉTIERS",
         }[role] || "STIP";
     if (!content) return "";
-    return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcShortcutsTitle">
+    return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog ghe-shop-menu-dialog" aria-labelledby="hcShortcutsTitle">
       <section class="hc-admin-shortcuts-card">
         <header class="hc-admin-shortcuts-head">
-          <div><small>${esc(roleLabel)}</small><h2 id="hcShortcutsTitle">Raccourcis</h2></div>
-          <button type="button" class="hc-admin-shortcuts-close" data-shortcuts-close aria-label="Fermer">×</button>
+          <div><small>${esc(roleLabel)}</small><h2 id="hcShortcutsTitle">Menu</h2></div>
+          <button type="button" class="hc-admin-shortcuts-close" data-shortcuts-close aria-label="Fermer le menu">×</button>
         </header>
         <div class="hc-admin-shortcuts-body">${content}</div>
       </section>
@@ -3416,6 +3392,9 @@
       ?.addEventListener("click", closeShortcuts);
     shortcutsDialog?.addEventListener("click", (event) => {
       if (event.target === shortcutsDialog) closeShortcuts();
+    });
+    shortcutsDialog?.addEventListener("close", () => {
+      root.querySelector(".ghe-shop-menu-launcher")?.focus({preventScroll:true});
     });
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
