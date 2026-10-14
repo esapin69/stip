@@ -207,7 +207,7 @@
     }
     if(e.target.closest('[data-action="activity"]')){
       select('activities',{forceOpen:true});
-      const run=()=>{try{window.STIPLeisure?.openCreator?.()}catch{}};
+      const run=()=>{try{window.STIPEnsembleV3?.openCreator?.()}catch{}};
       if(pageSlots.get('communication:activities')?.dataset.nativeReady==='leisure')run();
       else window.addEventListener('t-est:leisure-ready',run,{once:true});
       return;
