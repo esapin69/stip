@@ -11,7 +11,7 @@ const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short"
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
 const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
-const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Ensemble désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
+const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.can_invite===false?'<small class="ev3-person-restricted">Accès aux sorties désactivé · invitation impossible</small>':p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
 const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
@@ -106,8 +106,8 @@ function peopleHTML(){
  return '<label class="ev3-search-label">Inviter des collègues <small>'+state.people.filter(p=>p.can_invite!==false).length+' collègues invitables</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+peopleOptions("")+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
- (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès à Ensemble.</p>':"")+
- (restricted?'<p class="ev3-directory-hint">« Ensemble désactivé » : ce collègue est dans l’annuaire, mais un administrateur doit réactiver son accès avant une nouvelle invitation.</p>':"");
+ (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès aux sorties.</p>':"")+
+ (restricted?'<p class="ev3-directory-hint">« Accès aux sorties désactivé » : ce collègue est dans l’annuaire, mais un administrateur doit réactiver son accès avant une nouvelle invitation.</p>':"");
 }
 function peopleOptions(query){
  const q=normalizedName(query);
@@ -143,8 +143,8 @@ function formHTML(){
 }
 function render(){
  const app=byId("ensembleV3");if(!app)return;
- app.innerHTML='<header class="ev3-header"><a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a><div><small>ENTRE COLLÈGUES</small><h1>Ensemble<span>.</span></h1></div><button type="button" data-ev3-refresh title="Actualiser" aria-label="Actualiser">↻</button></header>'+
- '<nav class="ev3-tabs" aria-label="Ensemble"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda">📅 Mes rendez-vous</button><button type="button" class="'+(state.tab==="create"?"is-current":"")+'" data-ev3-tab="create">＋ Proposer</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips">🚗 Trajets</button></nav>'+
+ app.innerHTML='<header class="ev3-header"><a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a><div><small>ENTRE COLLÈGUES</small><h1>Sorties <span>&amp;</span> trajets</h1></div><button type="button" data-ev3-refresh title="Actualiser" aria-label="Actualiser">↻</button></header>'+
+ '<nav class="ev3-tabs" aria-label="Sorties et trajets"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda">📅 Mes rendez-vous</button><button type="button" class="'+(state.tab==="create"?"is-current":"")+'" data-ev3-tab="create">＋ Proposer</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips">🚗 Trajets</button></nav>'+
  '<p id="ev3Feedback" class="ev3-feedback '+(state.error?"is-error":"")+'" role="status">'+escapeHTML(state.status)+'</p>'+
  (!state.loaded?'<div class="ev3-empty">Chargement des propositions…</div>':
  state.tab==="agenda"?chosenCards():state.tab==="trips"?tripsHTML():formHTML())+
@@ -259,7 +259,7 @@ function openInvite(e,notice=""){
  '<div class="ev3-invited-person"><span><b>'+escapeHTML(person.name)+'</b><small>'+escapeHTML(statusName(person.status))+'</small></span>'+
  '<button type="button" data-ev3-uninvite="'+escapeHTML(person.id)+'" data-name="'+escapeHTML(person.name)+'" aria-label="Retirer '+escapeHTML(person.name)+'">Retirer</button></div>').join("")+'</div>':
  '<p>Personne n’a encore été invité.</p>')+'</section>'+
- '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div><p class="ev3-directory-hint">Les collègues dont Ensemble est désactivé restent visibles mais ne peuvent pas recevoir de nouvelle invitation.</p></section>'+
+ '<section class="ev3-modal-section"><strong>Ajouter des collègues</strong><input id="ev3InviteSearch" type="search" placeholder="Rechercher un collègue" autocomplete="off"><div id="ev3InviteList" class="ev3-person-list"></div><p class="ev3-directory-hint">Les collègues dont l’accès aux sorties est désactivé restent visibles mais ne peuvent pas recevoir de nouvelle invitation.</p></section>'+
  '<button type="button" class="ev3-primary" id="ev3SendInvites">Envoyer les invitations</button>'+
  '<p class="ev3-modal-error" role="status">'+escapeHTML(notice)+'</p></div>';
  const error=d.querySelector(".ev3-modal-error");
