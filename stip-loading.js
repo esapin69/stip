@@ -28,7 +28,24 @@ function readCache(key,ttl){
 function writeCache(key,data){
   const record=JSON.stringify({at:Date.now(),data});
   try{sessionStorage.setItem(key,record)}catch{}
-  try{localStorage.setItem(key,record)}catch{}
+  try{localStorage.setItem(key,record);return}catch{}
+  // Phones impose small storage quotas. Evict only older STIP read snapshots;
+  // never discard the authentication token, permissions or unrelated site data.
+  try{
+    const entries=[];
+    for(let i=0;i<localStorage.length;i++){
+      const storedKey=localStorage.key(i)||'';
+      if(!storedKey.startsWith(CACHE_PREFIX)||storedKey===key)continue;
+      let age=0;
+      try{age=Number(JSON.parse(localStorage.getItem(storedKey)||'{}').at)||0}catch{}
+      entries.push({key:storedKey,age});
+    }
+    entries.sort((a,b)=>a.age-b.age);
+    for(const item of entries){
+      localStorage.removeItem(item.key);
+      try{localStorage.setItem(key,record);return}catch{}
+    }
+  }catch{}
 }
 function responseFrom(data){return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json','X-STIP-Cache':'hit'}})}
 async function readJsonResponse(r){try{return await r.clone().json()}catch{return null}}
@@ -67,8 +84,8 @@ if(!isData)return (await run).response;
 const dataPromise=run.then(x=>x.data!==null?x.data:readJsonResponse(x.response)).finally(()=>inflight.delete(key));inflight.set(key,dataPromise);
 const out=await run;return out.response};
 
-// A short-lived, session-scoped handoff of two approved agent readings between documents.
-// API responses remain private to the current tab, never in service-worker/HTTP caches.
+// Session-scoped, read-only agent snapshots may survive closed tabs.
+// They are never put in HTTP/service-worker caches and are purged on logout.
 const AGENT_WARM_PREFIX=CACHE_PREFIX+'agent-warm:',AGENT_WARM_TTL=90000,agentWarmInflight=new Map();
 const AGENT_WARM={
   directory:{permission:'agent_directory',url:'https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly',action:'directory'},
