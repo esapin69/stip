@@ -200,3 +200,8 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 .stip-fav-open .stip-store-icon{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:11px!important}
 .stip-fav-open .stip-store-icon>img{width:100%;height:100%;object-fit:contain}
 @media(max-width:370px){.stip-fav-open .stip-store-icon{width:36px!important;height:36px!important;flex-basis:36px!important}}
+
+/* The same app illustration is used for spacious legacy home tiles. Compact dock and form controls retain simple icons. */
+#homeView .hc-app.is-illustrated>span{background:transparent!important;border:0!important;box-shadow:none!important;color:inherit!important;overflow:hidden;border-radius:20px}
+#homeView .hc-app.is-illustrated>span>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit}
+#homeView .hc-app.is-illustrated:active>span{transform:scale(.96)!important}
