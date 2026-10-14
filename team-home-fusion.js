@@ -181,7 +181,7 @@
     const ownHCL=ownPlanned!=null&&ownTarget!=null?String(ownPlanned)+" / HCL "+ownTarget:"Voir les effectifs";
     const ownLabel=working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Aucun poste enregistré";
     const count=loaded?String(exact.length):"…";
-    const more=loaded?(adjacent.length?adjacent.length+" créneaux chevauchants":"Autres horaires"):"Équipe du jour";
+    const more=loaded?(adjacent.length?adjacent.length+" collègue"+(adjacent.length>1?"s":"")+" en chevauchement":"Liste des collègues"):"Équipe du jour";
     host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+
       (day===today?"Aujourd’hui":"Jour sélectionné")+'</h2><p>'+esc(nDate)+'</p></div>'+
       '<button type="button" data-thf-refresh aria-label="Actualiser">↻</button></div>'+
