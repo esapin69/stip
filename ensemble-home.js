@@ -19,7 +19,7 @@ function confirmedDates(x){
 function status(x){
  if(x.status==="cancelled")return ["closed","Annulé"];
  if(x.response?.declined)return ["declined","Décliné"];
- if(x.is_organizer)return ["mine","Organisé"];
+ if(x.is_organizer)return ["mine","Proposé"];
  if(hasResponse(x))return ["confirmed","Confirmé"];
  return ["pending","À répondre"];
 }
