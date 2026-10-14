@@ -1734,7 +1734,7 @@
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
       month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
+    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" data-paris-day="${esc(parisIso())}" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -2513,38 +2513,6 @@
     return ["m","j","j4","s","n"].includes(base) ? "shift-" + base : "shift-other";
   }
 
-  // LIVE is a modal over the home page. Staff availability is derived only
-  // from the existing authorized team shift planning, never from an absence report.
-  function liveRoster() {
-    const team=document.getElementById("hcTeamFusion");
-    const allowed=has("planning_team");
-    const loaded=allowed && Array.isArray(team?._thfAgents);
-    const now=liveParisClock();
-    const entries=loaded?[...team._thfAgents]:[];
-    if (has("planning_personal")) {
-      const agent=state.boot?.agent || state.session?.agent || {};
-      const shift=(state.boot?.personal || []).find(x=>String(x.date||"").slice(0,10)===now.day);
-      if (shift) entries.push({...shift,code:shift.code||shift.source_value,agents:agent});
-    }
-    const seen=new Set(), active=[];
-    for(const item of entries) {
-      if(!liveCurrentlyWorking(item,now))continue;
-      const a=item.agents||{};
-      const identity=String(a.source_key||a.id||"").trim()||agentName(a).toLowerCase();
-      if(!identity||seen.has(identity))continue;
-      seen.add(identity);
-      active.push(item);
-    }
-    const chiefs=new Set((team?._thfChiefs||[]).map(x=>String(x.agents?.source_key||"")));
-    active.sort((a,b)=>{
-      const ca=Number(chiefs.has(String(a.agents?.source_key||"")));
-      const cb=Number(chiefs.has(String(b.agents?.source_key||"")));
-      return cb-ca ||
-        (liveWorkInterval(a)?.start??1440)-(liveWorkInterval(b)?.start??1440) ||
-        agentName(a.agents).localeCompare(agentName(b.agents),"fr");
-    });
-    return {rows:active,allowed,loaded};
-  }
   // Source canonique : planning d'équipe autorisé, horaires calculés à Paris.
   // Aucun marqueur de présence réelle ni déclaration d'absence.
   function liveRoster() {
@@ -2575,47 +2543,138 @@
 
   // Fast 3D flip: both faces live in one intrinsic CSS grid; neither side
   // has a nested scroll area. The full authorized roster is shown in a dialog.
+  function premiumPendingActions() {
+    return pending().slice().sort((a, b) =>
+      new Date(noteTimeValue(b) || 0).getTime() - new Date(noteTimeValue(a) || 0).getTime());
+  }
+  function premiumRecentActivity() {
+    const now = Date.now();
+    return notifications().filter(note => {
+      const time = new Date(noteTimeValue(note)).getTime();
+      return Number.isFinite(time) && time <= now && now - time < 86400000;
+    }).sort((a, b) =>
+      new Date(noteTimeValue(b)).getTime() - new Date(noteTimeValue(a)).getTime());
+  }
+  function premiumPreview(kind, item, count) {
+    const isPending = kind === "pending";
+    const label = isPending ? "À traiter" : "Activité récente";
+    const title = item
+      ? String(item.title || item.subject || item.label || (isPending ? "Demande en attente" : noteSubject(item))).trim()
+      : (isPending ? "Aucune demande en attente" : "Aucune activité sur les dernières 24 h");
+    const details = item ? String(friendlyNoteBody(item) || "").trim() : "";
+    const stamp = item && noteTimeValue(item) ? formatNotificationTime(noteTimeValue(item)) : "";
+    const tag = item ? "button" : "div";
+    return '<' + tag + (item ? ' type="button" data-premium-preview="' + kind + '"' : '') +
+      ' class="ghe-premium-preview' + (item ? '' : ' is-empty') + '">' +
+      '<span class="ghe-premium-preview-head"><strong>' + esc(label) + '</strong>' +
+        (count ? '<b class="ghe-premium-preview-count">' + count + '</b>' : '') + '</span>' +
+      '<span class="ghe-premium-preview-title">' + esc(title) + '</span>' +
+      (details ? '<span class="ghe-premium-preview-detail">' + esc(details) + '</span>' : '') +
+      (stamp ? '<span class="ghe-premium-preview-time">' + esc(stamp) + '</span>' : '') +
+      (item ? '<span class="ghe-premium-preview-arrow" aria-hidden="true">›</span>' : '') +
+      '</' + tag + '>';
+  }
   function premiumBackMarkup() {
-    const roster=liveRoster(),actions=pending(),now=Date.now();
-    const activity=notifications().filter(note=>{
-      const stamp=new Date(noteTimeValue(note)).getTime();
-      return Number.isFinite(stamp)&&stamp<=now&&now-stamp<86400000;
-    });
-    const counts=new Map();
-    for(const item of roster.rows){
-      const code=canonicalShift(item.code);
-      counts.set(code,(counts.get(code)||0)+1);
+    const roster = liveRoster(), actions = premiumPendingActions();
+    const activity = premiumRecentActivity();
+    const counts = new Map();
+    for (const item of roster.rows) {
+      const code = canonicalShift(item.code);
+      counts.set(code, (counts.get(code) || 0) + 1);
     }
-    const rank=(code)=>({M:0,J:1,J4:2,S:3,N:4})[code]??9;
-    const pills=[...counts.entries()].sort((a,b)=>rank(a[0])-rank(b[0])).map(([code,count])=>
-      '<span class="ghe-premium-shift '+liveShiftClass(code)+'"><b>'+esc(code)+
-      '</b><span>'+count+'</span></span>').join("");
-    const countLabel=roster.permitted&&!roster.loaded?'…':
-      !roster.permitted&&!has("planning_personal")?'—':String(roster.rows.length);
-    const empty=roster.permitted&&!roster.loaded?'Planning en cours de chargement…':
-      !roster.permitted&&!has("planning_personal")?'Planning d’équipe non autorisé.':
-      'Aucun agent en poste selon les horaires disponibles.';
-    return '<div class="ghe-premium-live">'+
-      '<div class="ghe-premium-live-title"><span class="ghe-premium-live-led" aria-hidden="true"></span>'+
-        '<strong>EN DIRECT</strong><small>La vie du service</small></div>'+
-      '<div class="ghe-premium-live-hero">'+
-        '<div class="ghe-premium-total"><b>'+esc(countLabel)+'</b><span>collègues<br>en poste</span></div>'+
-        '<div class="ghe-premium-distribution"><small>Shifts actuels</small>'+
-          '<div class="ghe-premium-shifts">'+(pills||'<span class="ghe-premium-empty">'+esc(empty)+'</span>')+'</div></div>'+
-      '</div>'+
-      '<button type="button" data-premium-roster class="ghe-premium-all">'+
-        '<span>Voir '+(roster.rows.length?'les '+roster.rows.length+' collègues':'les collègues')+'</span>'+
-        '<b aria-hidden="true">›</b></button>'+
-      '<div class="ghe-premium-activity">'+
-        '<button type="button" data-premium-actions><span>À traiter</span><b>'+actions.length+'</b></button>'+
-        '<button type="button" data-premium-activity><span>Activité récente</span><b>'+activity.length+'</b></button>'+
-      '</div>'+
-      '<p class="ghe-premium-disclaimer">Selon le planning, pas une présence physique vérifiée.</p>'+
+    const rank = code => ({ M: 0, J: 1, J4: 2, S: 3, N: 4 })[code] ?? 9;
+    const shifts = [...counts.entries()].sort((a,b) => rank(a[0])-rank(b[0]))
+      .map(([code,count]) => '<span class="ghe-premium-shift ' +
+        liveShiftClass(code) + '"><b>' + esc(code) + '</b><span>' + count + '</span></span>').join("");
+    const countLabel = roster.permitted && !roster.loaded ? "…" :
+      !roster.permitted && !has("planning_personal") ? "—" : String(roster.rows.length);
+    const empty = roster.permitted && !roster.loaded ? "Chargement du planning…" :
+      !roster.permitted && !has("planning_personal") ? "Planning d’équipe non autorisé." :
+      "Aucun collègue prévu sur cet horaire.";
+    return '<div class="ghe-premium-live">' +
+      '<div class="ghe-premium-live-title"><span class="ghe-premium-live-led" aria-hidden="true"></span>' +
+        '<strong>EN DIRECT</strong><small>Selon les horaires du service</small></div>' +
+      '<div class="ghe-premium-live-hero">' +
+        '<div class="ghe-premium-total"><b>' + esc(countLabel) + '</b><span>collègues prévus<br>en poste</span></div>' +
+        '<div class="ghe-premium-distribution"><small>Shifts en cours</small>' +
+          '<div class="ghe-premium-shifts">' +
+          (shifts || '<span class="ghe-premium-empty">' + esc(empty) + '</span>') +
+          '</div></div>' +
+      '</div>' +
+      '<button type="button" data-premium-roster class="ghe-premium-all">' +
+        '<span>Consulter les collègues</span><span aria-hidden="true">↗</span></button>' +
+      '<div class="ghe-premium-activity">' +
+        premiumPreview("pending", actions[0], actions.length) +
+        premiumPreview("activity", activity[0], activity.length) +
+      '</div>' +
+      '<p class="ghe-premium-disclaimer">Présence estimée d’après le planning, non vérifiée sur place.</p>' +
     '</div>';
+  }
+  function syncPremiumStageHeight(stage = document.querySelector("#homeView [data-premium-flip]")) {
+    if (!stage?.isConnected) return;
+    const track = stage.querySelector(".ghe-premium-track");
+    const face = stage.querySelector(stage.dataset.side === "back" ? ".ghe-premium-back" : ".ghe-premium-front");
+    if (!track || !face) return;
+    const height = Math.ceil(Math.max(190, face.scrollHeight + 2));
+    if (track.dataset.measuredHeight !== String(height)) {
+      track.dataset.measuredHeight = String(height);
+      track.style.height = height + "px";
+    }
+  }
+  function preparePremiumLayout(root) {
+    state.premiumResizeObserver?.disconnect();
+    state.dateResizeObserver?.disconnect();
+    const stage = root.querySelector("[data-premium-flip]");
+    if (stage) {
+      syncPremiumStageHeight(stage);
+      if (typeof ResizeObserver === "function") {
+        const observer = new ResizeObserver(() => syncPremiumStageHeight(stage));
+        stage.querySelectorAll(".ghe-premium-face").forEach(face => observer.observe(face));
+        state.premiumResizeObserver = observer;
+      }
+    }
+    const separator = root.querySelector(".hc-home-today-separator");
+    const label = separator?.querySelector(".hc-home-today-label");
+    if (!separator || !label) return;
+    let lastWidth = -1;
+    const fitDate = (force = false) => {
+      if (!separator.isConnected) return;
+      const width = Math.floor(separator.getBoundingClientRect().width);
+      if (!width || (!force && width === lastWidth)) return;
+      lastWidth = width;
+      const available = Math.max(0, width - 14);
+      for (let font = 39; font >= 13; font--) {
+        label.style.setProperty("--ghe-date-font-size", font + "px");
+        if (label.getBoundingClientRect().width <= available) break;
+      }
+    };
+    fitDate(true);
+    if (typeof ResizeObserver === "function") {
+      state.dateResizeObserver = new ResizeObserver(() => fitDate());
+      state.dateResizeObserver.observe(separator);
+    }
+    document.fonts?.ready?.then(() => fitDate(true));
+  }
+  function openPremiumPreview(kind) {
+    let note = null;
+    if (kind === "pending") {
+      const action = premiumPendingActions()[0];
+      if (!action) return;
+      note = notifications().find(n => String(n.action_id || "") === String(action.id || "")) ||
+        { ...action, id: undefined, action_id: action.id, source: "stip" };
+    } else if (kind === "activity") {
+      note = premiumRecentActivity()[0];
+    }
+    if (!note) return;
+    openNotifications();
+    openBellItem(note);
   }
   function updateLiveCard() {
     const target=document.querySelector("#homeView .ghe-premium-back-body");
-    if(target?.isConnected&&state.ready) target.innerHTML=premiumBackMarkup();
+    if (target?.isConnected && state.ready) {
+      target.innerHTML = premiumBackMarkup();
+      syncPremiumStageHeight(target.closest("[data-premium-flip]"));
+    }
   }
   function openPremiumRoster() {
     const roster=liveRoster();
@@ -2717,7 +2776,7 @@
               '<button type="button" class="ghe-premium-turn" data-premium-turn-open'+
                 ' aria-label="Retourner la carte pour afficher En direct" aria-expanded="'+state.premiumFlipped+'">'+
                 '<span class="ghe-premium-button-dot" aria-hidden="true"></span>'+
-                '<strong>EN DIRECT</strong><b aria-hidden="true">↻</b></button></footer>'+
+                '<strong>Voir en direct</strong><b aria-hidden="true">↻</b></button></footer>'+
           '</section>'+
           '<section class="ghe-premium-face ghe-premium-back" aria-label="En direct du service"'+
             (!state.premiumFlipped?' inert':'')+'>'+
@@ -3332,6 +3391,7 @@
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
     state.renderSig = markup;
     root.innerHTML = markup;
+    preparePremiumLayout(root);
     keepHomeFeedbackPriority(root);
     const sharedTeamOptions = {
       personal: state.boot?.personal || [],
@@ -3381,12 +3441,14 @@
         premium.querySelector(".ghe-premium-front")?.toggleAttribute("inert",state.premiumFlipped);
         premium.querySelector(".ghe-premium-back")?.toggleAttribute("inert",!state.premiumFlipped);
         premium.querySelector("[data-premium-turn-open]")?.setAttribute("aria-expanded",String(state.premiumFlipped));
+        syncPremiumStageHeight(premium);
         const target=premium.querySelector(state.premiumFlipped?"[data-premium-turn-close]":"[data-premium-turn-open]");
         target?.focus({preventScroll:true});
         return;
       }
       if(event.target.closest("[data-premium-roster]")){openPremiumRoster();return;}
-      if(event.target.closest("[data-premium-actions],[data-premium-activity]"))openNotifications();
+      const preview = event.target.closest("[data-premium-preview]");
+      if (preview) openPremiumPreview(preview.dataset.premiumPreview);
     });
 
     root.querySelectorAll("details[data-pilotage-role]").forEach(details =>
@@ -4207,7 +4269,13 @@
     if (event.detail?.hostId === "hcTeamFusion") updateLiveCard();
   });
   setInterval(() => {
-    if (state.ready && !document.hidden) updateLiveCard();
+    if (state.ready && !document.hidden) {
+      const separator = document.querySelector("#homeView .hc-home-today-separator");
+      if (separator?.dataset.parisDay && separator.dataset.parisDay !== parisIso()) {
+        state.renderSig = "";
+        render();
+      } else updateLiveCard();
+    }
   }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
