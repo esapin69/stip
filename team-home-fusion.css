@@ -1291,7 +1291,7 @@
 }
 /* Une seule illustration SVG dessinée, reposant derrière les informations. */
 .thf-weather-sky .thf-weather-art{
-  position:absolute;right:-12px;top:13px;z-index:1;
+  position:absolute;right:-12px;top:-4px;z-index:1;
   width:clamp(101px,79%,162px);height:auto;
   opacity:.97;pointer-events:none;user-select:none;
 }
@@ -1319,7 +1319,7 @@
 .thf-weather-sky[data-sky="fog"] .thf-art-fog{display:block}
 .thf-weather-sky[data-sky="snow"] .thf-art-snow{display:block}
 .thf-weather-sky[data-sky="storm"] .thf-art-lightning{display:block}
-.thf-weather-sky[data-sky="sunny"] .thf-weather-art{right:-15px;top:3px}
+.thf-weather-sky[data-sky="sunny"] .thf-weather-art{right:-15px;top:-10px}
 .thf-popup .thf-popup-hero .thf-weather-art{
   right:8px;top:0;width:145px;opacity:.90;
 }
@@ -1362,7 +1362,7 @@
 }
 @media(max-width:380px){
   .hc-days-grid .thf-weather-stage .thf-weather-body{padding:8px 6px 1px}
-  .thf-weather-sky .thf-weather-art{right:-8px;top:12px;width:clamp(94px,78%,144px)}
+  .thf-weather-sky .thf-weather-art{right:-8px;top:-6px;width:clamp(94px,78%,144px)}
   .thf-popup .thf-popup-hero .thf-weather-art{right:4px;top:1px;width:118px}
   .thf-inline-weather .thf-weather-endpoints{gap:1px}
 }
