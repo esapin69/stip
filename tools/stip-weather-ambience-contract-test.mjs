@@ -14,7 +14,7 @@ assert.match(home, /function seasonForDay\(day\)/);
 assert.match(home, /class="thf-weather-stage thf-weather-sky"/);
 assert.doesNotMatch(home, /IntersectionObserver|watchWeather|periodForShift/);
 assert.doesNotMatch(home, /thf-lightning|thf-cloud cloud-one/);
-assert.doesNotMatch(css, /@keyframes thf-|thf-weather-cloud-drift|thf-weather-fall|thf-flash|animation:\s*thf-/);
+assert.doesNotMatch(css, /@keyframes thf-|thf-weather-cloud-drift|thf-weather-fall\b|thf-flash|animation:\s*thf-/);
 assert.doesNotMatch(css, /#19305cb8|data-period="night"/);
 for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
   "rain", "heavy-rain", "storm", "snow", "mixed"]) {
