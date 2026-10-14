@@ -3068,13 +3068,21 @@
     page.querySelector("[data-detail-close]").onclick = close;
     page.querySelector("[data-detail-manage]")?.addEventListener("click", () => {
       close();
-      if (n?.source && n.source !== "stip")
+      if (n?.source && n.source !== "stip") {
+        // Une fenêtre externe à la cloche doit rester visible (top layer libérée).
+        if (options.bellHost) document.getElementById("hcBellDialog")?.close();
         window.dispatchEvent(
           new CustomEvent("stip:action-center-open", { detail: n }),
         );
-      else if (n?.action_id) {
-        panel(true, "À traiter");
-        openAction(n.action_id);
+      } else if (n?.action_id) {
+        if (options.bellHost) {
+          const dialog = document.getElementById("hcBellDialog");
+          if (dialog) dialog.querySelector("#hcBellTitle").textContent = "Demande";
+          openAction(n.action_id, options.bellHost);
+        } else {
+          panel(true, "À traiter");
+          openAction(n.action_id);
+        }
       }
     });
     page.querySelector("[data-detail-done]")?.addEventListener("click", () => {
@@ -3725,7 +3733,7 @@
       bellHost:content,
       onClose:()=>renderBellEntries(bellFilter)
     });
-    if(page)page.querySelector("[data-detail-close]")?.focus({preventScroll:true});
+    if(page)dialog.querySelector("[data-bell-back]")?.focus({preventScroll:true});
   }
   function openNotifications(filter = "") {
     const dialog=ensureBellDialog();
@@ -3740,8 +3748,9 @@
     body.innerHTML = actionCenterMarkup(filter, false);
     bindActionCenter(body, filter, false);
   }
-  async function openAction(id) {
-    const body = $("#hsPanelBody");
+  async function openAction(id, destination = null) {
+    const body = destination || $("#hsPanelBody");
+    if (!body) return;
     try {
       const r = await call(ACTION_API, "get", { action_id: id }),
         a = r.action,
