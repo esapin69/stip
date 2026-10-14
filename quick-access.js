@@ -400,33 +400,92 @@
     const meta = APP_STORE_COPY[k] || [META[k].label, "Application STIP", "STIP"];
     return `<article class="stip-store-card ${added ? "is-selected" : ""}"><button type="button" class="stip-store-main" data-store-open="${k}">${appStoreIcon(k)}<span><small>${meta[2]}</small><strong>${meta[0]}</strong><em>${meta[1]}</em></span></button><button type="button" class="stip-store-add ${added ? "is-added" : ""}" data-store-toggle="${k}" aria-label="${added ? "Retirer " : "Ajouter "}${meta[0]}"><span aria-hidden="true">${added ? "−" : "+"}</span><strong>${added ? "Retirer" : "Ajouter"}</strong></button></article>`;
   }
+  // The app catalogue is the only source for both the library and its search.
+  function matchesAppSearch(key, query) {
+    const normalize = (value) => String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("fr").trim();
+    const term = normalize(query);
+    if (!term) return true;
+    const related = key === "leisure"
+      ? "proposer activité activite sortie sorties loisirs sport muscu rendez-vous collègues collegues invitation covoiturage trajet trajets voiture"
+      : "";
+    return normalize([META[key]?.label, ...(APP_STORE_COPY[key] || []), related].join(" ")).includes(term);
+  }
+  function appSearchMarkup() {
+    return '<label class="stip-app-search"><span class="stip-app-search-glass" aria-hidden="true"></span>' +
+      '<input type="search" data-app-search aria-label="Rechercher une application" placeholder="Rechercher une application…" autocomplete="off" enterkeyhint="search"></label>';
+  }
   function renderStore(host) {
     const chosen = readFav().filter(allowed), all = Object.keys(META).filter(allowed);
-    host.innerHTML = `<section class="stip-app-store"><header><button type="button" class="stip-store-back" data-store-back>‹</button><div><small>STIP</small><h2>Applications</h2><p>Choisissez les outils à afficher sur votre écran.</p></div></header><div class="stip-store-feature"><small>À DÉCOUVRIR</small><strong>Construisez votre STIP</strong><p>Ajoutez uniquement les applications utiles à votre quotidien.</p></div><div class="stip-store-list">${all.map(k => storeCard(k, chosen.includes(k))).join("") || '<p class="stip-app-empty">Aucune application disponible avec vos accès.</p>'}</div></section>`;
-    host.querySelector("[data-store-back]")?.addEventListener("click", () => renderApps(host));
-    host.addEventListener("click", storeClick, { once: true });
-  }
-  function storeClick(e) {
-    const host=e.currentTarget, open=e.target.closest("[data-store-open]"), toggle=e.target.closest("[data-store-toggle]");
-    if (open) { openKey(open.dataset.storeOpen); return; }
-    if (toggle) {
-      const k=toggle.dataset.storeToggle, a=readFav(), adding=!a.includes(k);
-      writeFav(adding ? [...a,k] : a.filter(x=>x!==k));
-      renderStore(host);
-      return;
+    host.innerHTML = '<section class="stip-app-store"><header><button type="button" class="stip-store-back" data-store-back aria-label="Retour à mes applications">‹</button>' +
+      '<div><small>STIP</small><h2>Applications</h2><p>Choisissez les outils à afficher sur votre écran.</p></div></header>' +
+      appSearchMarkup() +
+      '<div class="stip-store-feature"><small>À DÉCOUVRIR</small><strong>Construisez votre STIP</strong><p>Ajoutez uniquement les applications utiles à votre quotidien.</p></div>' +
+      '<div class="stip-store-list" data-store-list></div></section>';
+    const input = host.querySelector("[data-app-search]");
+    const list = host.querySelector("[data-store-list]");
+    function paintStore() {
+      const found = all.filter((key) => matchesAppSearch(key, input.value));
+      list.innerHTML = found.length
+        ? found.map((key) => storeCard(key, chosen.includes(key))).join("")
+        : '<p class="stip-app-grid-empty">Aucune application trouvée.</p>';
     }
-    host.addEventListener("click", storeClick, { once: true });
+    paintStore();
+    input.addEventListener("input", paintStore);
+    host.querySelector("[data-store-back]")?.addEventListener("click", () => renderApps(host));
+    list.addEventListener("click", (event) => {
+      const open = event.target.closest("[data-store-open]");
+      const toggle = event.target.closest("[data-store-toggle]");
+      if (open) { openKey(open.dataset.storeOpen); return; }
+      if (!toggle) return;
+      const key = toggle.dataset.storeToggle, favorites = readFav(), adding = !favorites.includes(key);
+      writeFav(adding ? [...favorites, key] : favorites.filter((x) => x !== key));
+      const query = input.value;
+      renderStore(host);
+      const nextInput = host.querySelector("[data-app-search]");
+      nextInput.value = query;
+      nextInput.dispatchEvent(new Event("input"));
+    });
   }
   function renderApps(host) {
     if (!host) return;
     ensureWeatherApp();
     ensureResponsibleApps();
-    const chosen=readFav().filter(allowed);
-    host.innerHTML = chosen.length
-      ? `<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div><button type="button" class="stip-store-browse stip-store-browse-add" data-store-browse aria-label="Ajouter une application"><span class="stip-store-browse-plus" aria-hidden="true"></span><strong>Ajouter</strong></button></header><div class="stip-my-app-grid">${chosen.map(k=>`<button type="button" class="stip-my-app" data-my-app="${k}">${appStoreIcon(k)}<strong>${META[k].label}</strong></button>`).join("")}</div></section>`
-      : `<section class="stip-app-empty-state"><div class="stip-empty-orb">＋</div><h2>Vos applications</h2><p>Votre écran est vide. Choisissez les applications STIP que vous souhaitez retrouver ici.</p><button type="button" class="stip-store-browse" data-store-browse>Parcourir les applications</button></section>`;
-    host.querySelector("[data-store-browse]")?.addEventListener("click",()=>renderStore(host));
-    host.querySelectorAll("[data-my-app]").forEach(b=>b.addEventListener("click",()=>openKey(b.dataset.myApp)));
+    const chosen = readFav().filter(allowed);
+    const all = Object.keys(META).filter(allowed);
+    const createAction = allowed("leisure")
+      ? '<button type="button" class="stip-app-propose" data-app-create-leisure>' +
+          appStoreIcon("leisure") + '<span><strong>Proposer une sortie</strong><small>Inviter des collègues à une activité</small></span><b aria-hidden="true">›</b></button>'
+      : "";
+    host.innerHTML = '<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div>' +
+      '<button type="button" class="stip-store-browse stip-store-browse-add" data-store-browse aria-label="Ajouter une application">' +
+      '<span class="stip-store-browse-plus" aria-hidden="true"></span><strong>Ajouter</strong></button></header>' +
+      appSearchMarkup() + createAction +
+      '<div class="stip-my-app-grid" data-my-app-grid></div></section>';
+    const input = host.querySelector("[data-app-search]");
+    const grid = host.querySelector("[data-my-app-grid]");
+    function paintApps() {
+      const term = input.value.trim();
+      const found = term ? all.filter((key) => matchesAppSearch(key, term)) : chosen;
+      grid.innerHTML = found.length
+        ? found.map((key) => '<button type="button" class="stip-my-app" data-my-app="' + key + '">' +
+            appStoreIcon(key) + '<strong>' + META[key].label + '</strong>' +
+            (term && !chosen.includes(key) ? '<small class="stip-app-result-note">Disponible</small>' : '') + '</button>').join("")
+        : term
+          ? '<p class="stip-app-grid-empty">Aucune application trouvée.</p>'
+          : '<div class="stip-app-grid-empty">Aucune application ajoutée.<button type="button" class="stip-store-browse" data-store-browse-empty>Parcourir les applications</button></div>';
+    }
+    paintApps();
+    input.addEventListener("input", paintApps);
+    grid.addEventListener("click", (event) => {
+      if (event.target.closest("[data-store-browse-empty]")) { renderStore(host); return; }
+      const button = event.target.closest("[data-my-app]");
+      if (button) openKey(button.dataset.myApp);
+    });
+    host.querySelector("[data-store-browse]")?.addEventListener("click", () => renderStore(host));
+    host.querySelector("[data-app-create-leisure]")?.addEventListener("click", () => {
+      touch("leisure");
+      openDocument("sorties-loisirs.html?tab=create");
+    });
   }
   function toggleFavorites() {
     const existing=document.getElementById("stipFavoritesPanel");

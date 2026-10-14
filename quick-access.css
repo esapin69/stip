@@ -129,69 +129,68 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 @keyframes stipCodeCaretBlink{0%,48%{opacity:1}49%,100%{opacity:0}}
 
 
-/* APPLICATIONS — ADD CONTROL + RESPONSABLE ART — FINAL 2026-09-22 */
-.stip-my-apps>header{align-items:flex-end!important;}
+/* Applications: compact add control, native catalogue search and visible proposal. */
+.stip-my-apps>header{align-items:center!important;margin-bottom:12px!important}
 .stip-store-browse-add{
-  min-width:0!important;
-  min-height:52px!important;
-  padding:6px 12px 6px 7px!important;
-  border:1px solid #128ca3!important;
-  border-radius:18px!important;
-  background:linear-gradient(180deg,#16a5bd 0%,#078ca8 100%)!important;
-  color:#fff!important;
-  display:inline-flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:9px!important;
-  box-shadow:0 8px 18px rgba(7,129,153,.16),inset 0 1px 0 rgba(255,255,255,.25)!important;
+  min-width:0!important;min-height:44px!important;
+  padding:8px 13px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  gap:8px!important;border:1px solid #c9dce0!important;
+  border-radius:13px!important;background:#fff!important;color:#164b5b!important;
+  box-shadow:0 2px 6px rgba(18,65,80,.06)!important;
   -webkit-tap-highlight-color:transparent!important;
 }
-.stip-store-browse-add:active{
-  transform:translateY(1px)!important;
-  box-shadow:0 4px 11px rgba(7,129,153,.14),inset 0 1px 0 rgba(255,255,255,.2)!important;
-}
+.stip-store-browse-add:active{background:#eaf6f8!important;transform:scale(.98)!important}
 .stip-store-browse-plus{
-  position:relative!important;
-  width:38px!important;
-  height:38px!important;
-  flex:0 0 38px!important;
-  border-radius:13px!important;
-  background:rgba(255,255,255,.16)!important;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.30)!important;
+  position:relative!important;width:21px!important;height:21px!important;
+  flex:0 0 21px!important;border-radius:7px!important;
+  background:#e4f5f8!important;box-shadow:none!important;
 }
-.stip-store-browse-plus::before,
-.stip-store-browse-plus::after{
-  content:""!important;
-  position:absolute!important;
-  left:50%!important;
-  top:50%!important;
-  border-radius:999px!important;
-  background:#fff!important;
-  transform:translate(-50%,-50%)!important;
+.stip-store-browse-plus::before,.stip-store-browse-plus::after{
+  content:""!important;position:absolute!important;left:50%!important;top:50%!important;
+  transform:translate(-50%,-50%)!important;border-radius:999px!important;background:#087c97!important;
 }
-.stip-store-browse-plus::before{width:17px!important;height:3px!important;}
-.stip-store-browse-plus::after{width:3px!important;height:17px!important;}
-.stip-store-browse-add>strong{
-  margin:0!important;
-  font-size:.88rem!important;
-  line-height:1!important;
-  font-weight:950!important;
+.stip-store-browse-plus::before{width:11px!important;height:2px!important}
+.stip-store-browse-plus::after{width:2px!important;height:11px!important}
+.stip-store-browse-add>strong{margin:0!important;font-size:.83rem!important;line-height:1!important;font-weight:800!important}
+.stip-app-search{
+  display:flex;align-items:center;position:relative;gap:12px;
+  min-height:49px;margin:0 0 12px;padding:0 15px;
+  border:1px solid #c8dce1;border-radius:15px;background:#fff;
+  box-shadow:0 3px 11px rgba(18,66,83,.05);
 }
-.stip-store-icon-responsable{
-  background:transparent!important;
-  box-shadow:none!important;
+.stip-app-search:focus-within{border-color:#0b8da8;box-shadow:0 0 0 3px rgba(11,141,168,.12)}
+.stip-app-search-glass{position:relative;display:block;flex:0 0 15px;width:15px;height:15px;border:2px solid #54818f;border-radius:50%}
+.stip-app-search-glass::after{content:"";position:absolute;width:7px;height:2px;right:-6px;bottom:-3px;border-radius:2px;background:#54818f;transform:rotate(45deg)}
+.stip-app-search input[type="search"]{
+  min-width:0;width:100%;height:47px;min-height:47px;padding:0;
+  background:transparent;border:0!important;outline:0!important;box-shadow:none!important;
+  font:inherit;font-size:.91rem;color:#123f50;-webkit-appearance:none;appearance:none;
 }
-.stip-store-icon-responsable>img{
-  width:100%!important;
-  height:100%!important;
-  object-fit:contain!important;
+.stip-app-search input::placeholder{color:#718b95;opacity:1}
+.stip-app-propose{
+  width:100%;min-height:66px;display:flex!important;align-items:center!important;gap:11px!important;
+  margin:0 0 16px;padding:10px 13px!important;text-align:left!important;
+  border:1px solid #cde8e5!important;border-radius:16px!important;
+  background:#f1faf8!important;color:#104a48!important;box-shadow:none!important;
 }
+.stip-app-propose .stip-store-icon{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:12px!important}
+.stip-app-propose>span:not(.stip-store-icon){min-width:0;display:flex;flex-direction:column;gap:3px}
+.stip-app-propose strong{font-size:.9rem!important;line-height:1.2!important;font-weight:850!important}
+.stip-app-propose small{font-size:.72rem!important;line-height:1.2!important;color:#507977!important}
+.stip-app-propose>b{margin-left:auto;font-size:1.4rem;color:#188b85}
+.stip-app-propose:active{background:#e3f5f0!important}
+.stip-app-grid-empty{grid-column:1/-1;margin:12px 0;padding:18px 10px;color:#657e87;text-align:center;font-size:.85rem}
+.stip-app-grid-empty .stip-store-browse{display:block;margin:12px auto 0}
+.stip-app-result-note{font-size:.66rem;color:#5b8188}
+.stip-app-store .stip-app-search{margin-bottom:16px}
+.stip-store-icon-responsable{background:transparent!important;box-shadow:none!important}
+.stip-store-icon-responsable>img{width:100%!important;height:100%!important;object-fit:contain!important}
 @media(max-width:370px){
-  .stip-store-browse-add{min-height:48px!important;padding-right:9px!important;gap:7px!important;}
-  .stip-store-browse-plus{width:34px!important;height:34px!important;flex-basis:34px!important;border-radius:11px!important;}
-  .stip-store-browse-add>strong{font-size:.82rem!important;}
+  .stip-store-browse-add{min-height:42px!important;padding:7px 10px!important;gap:6px!important}
+  .stip-store-browse-add>strong{font-size:.79rem!important}
+  .stip-app-propose{padding:8px 10px!important}
 }
-
 /* Illustrated GHE application tiles: rich artwork only where space allows. */
 .stip-store-icon.is-illustrated{background:transparent!important;box-shadow:none!important;color:inherit!important;letter-spacing:normal!important}
 .stip-store-icon.is-illustrated>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit}
