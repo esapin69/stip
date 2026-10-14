@@ -1947,12 +1947,32 @@
     schedulePageLegend();
   }
 
+  // The old week stays visible; the shared cache replaces it after network refresh.
+  window.addEventListener("stip:read-cache-updated", (event) => {
+    const detail=event.detail || {};
+    if(detail.action!=="spirit_week" || !allowed("planning_team") || !token())return;
+    const start=String(detail.params?.start_date || "");
+    const bundle=state.weeks.get(start);
+    if(!bundle || !Array.isArray(detail.data?.planning))return;
+    bundle.team=detail.data;
+    bundle.fetchedAt=Date.now();
+    bundle.coreLoaded=true;
+    bundle.coreError=null;
+    if(detail.data.shift_definitions)
+      window.STIPShiftRegistry?.set?.(detail.data.shift_definitions);
+    if(start===state.weekStart && state.rendered &&
+       !document.hidden && !document.querySelector("input:focus, textarea:focus")){
+      renderContent(bundle);
+      clearBusy();
+    }
+  });
+
   async function boot() {
     observePageLegendSources();
     if (!token()) return location.replace("index.html");
     try {
       const inherited = inheritedAccess();
-      const cached = inherited ? null : window.STIPContinuity?.readFresh?.() || null;
+      const cached = inherited ? null : window.STIPContinuity?.read?.() || null;
       state.access =
         inherited ||
         cached ||
@@ -1961,7 +1981,7 @@
           : await post("stip-access", { action: "me" }));
       if (cached)
         window.STIPContinuity
-          ?.validate?.()
+          ?.validate?.({ force: true })
           .then((fresh) => {
             if (fresh) state.access = fresh;
           })
