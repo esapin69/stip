@@ -95,8 +95,8 @@
     }
     if(!leisurePromise){
       leisurePromise=(async()=>{
-        includeStyle('ensemble-v3.css?v=20261014-context2');
-        if(!window.STIPEnsembleV3?.setView)await includeScript('ensemble-v3.js?v=20261014-context2');
+        includeStyle('ensemble-v3.css?v=20261014-context3');
+        if(!window.STIPEnsembleV3?.setView)await includeScript('ensemble-v3.js?v=20261014-context3');
         if(!window.STIPEnsembleV3?.setView)throw Error('Le moteur Ensemble est indisponible.');
         // A dynamic script added after DOMContentLoaded must be initialized explicitly.
         await window.STIPEnsembleV3.refresh();
