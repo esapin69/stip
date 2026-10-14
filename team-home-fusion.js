@@ -299,16 +299,6 @@
       (working&&myTime?'':'<span class="thf-weather-no-shift">Pas de météo de poste</span>')+'</span>'+
       '<span class="thf-trigger-chevron" aria-hidden="true">›</span></button>'+
       '<div class="thf-day-body">'+
-      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><span class="thf-shift-content"><strong>'+
-      esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
-      '</strong>'+shiftTimeColumns+'</span>'+
-      (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
-        'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
-        '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
-      '</div>'+
-      '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
-      '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
-      '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
       (leisureEvents.length?'<section class="thf-day-events" aria-label="Activités du jour">'+
         '<div class="thf-section-label">📅 APRÈS LE SERVICE</div>'+
         leisureEvents.slice(0,2).map(item=>
@@ -322,6 +312,16 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
+      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack"><span class="thf-shift-content"><strong>'+
+      esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
+      '</strong>'+shiftTimeColumns+'</span>'+
+      (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
+        'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
+        '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
+      '</div></div>'+
+      '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
+      '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
+      '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
       (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
         uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir ›</button>':"")+
       '</div>'+
