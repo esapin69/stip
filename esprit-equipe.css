@@ -1830,6 +1830,30 @@ body.team-page {
 .team-shift-analysis-trigger.status-warning{color:#d9a20a}
 .team-shift-analysis-trigger.status-critical{color:#ef3d39}
 .team-shift-analysis-trigger.status-opportunity{color:#159b62}
+/* A plus sign is visually much thinner than the neighbouring checkmarks.
+   Draw two robust bars inside the existing 40/44px analysis button. */
+.team-shift-analysis-trigger.status-opportunity>span{
+  position:relative;
+  font-size:0;
+}
+.team-shift-analysis-trigger.status-opportunity>span::before,
+.team-shift-analysis-trigger.status-opportunity>span::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:50%;
+  background:currentColor;
+  border-radius:3px;
+  transform:translate(-50%,-50%);
+}
+.team-shift-analysis-trigger.status-opportunity>span::before{
+  width:29px;
+  height:6px;
+}
+.team-shift-analysis-trigger.status-opportunity>span::after{
+  width:6px;
+  height:29px;
+}
 .team-shift-analysis-trigger.status-unknown{color:#9aa8af}
 .team-shift-analysis-trigger:active{transform:scale(.9)}
 .team-shift-analysis-trigger:focus-visible{
