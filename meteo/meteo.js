@@ -311,9 +311,6 @@
     const day = state.payload && state.payload.daily;
     if (!day) return;
     const grid = $("forecast-grid");
-    const panel = $("detail-section");
-    // Move the details outside the grid before replacing card markup.
-    if (panel.parentElement === grid) grid.after(panel);
     grid.innerHTML = day.time.slice(0, 16).map((dateIso, i) => {
       const condition = forecastStatus(day.weather_code[i]);
       const selected = state.selected === i;
@@ -340,40 +337,16 @@
         esc(rainfall(day.rain_sum[i])) + '</strong></span></span>' +
         '<span class="card-confidence"><span>Fiabilité relative*</span><strong class="' +
         relativeConfidence(i)[1] + '">' + relativeConfidence(i)[0] + '</strong></span>' +
-        '<span class="card-cta">' + (selected ? "Masquer le détail ↑" : "Voir heure par heure ↓") + '</span></button>';
+        '<span class="card-cta">Voir les 24 heures ↗</span></button>';
     }).join("");
     grid.setAttribute("aria-busy", "false");
-    positionDetails();
-  }
-
-  function detailColumns() {
-    // These match the three CSS grid breakpoints.
-    if (window.matchMedia("(max-width: 650px)").matches) return 2;
-    if (window.matchMedia("(max-width: 1020px)").matches) return 4;
-    return 7;
-  }
-
-  function positionDetails() {
-    const panel = $("detail-section");
-    const grid = $("forecast-grid");
-    if (state.selected === null) {
-      panel.hidden = true;
-      return;
-    }
-    const columns = detailColumns();
-    const lastIndex = Math.min(
-      Math.floor(state.selected / columns) * columns + columns - 1,
-      15
-    );
-    const lastCard = grid.querySelector('button[data-index="' + lastIndex + '"]');
-    if (lastCard) lastCard.after(panel);
   }
 
   function renderDetails() {
     const payload = state.payload;
     const section = $("detail-section");
     if (!payload || state.selected === null) {
-      section.hidden = true;
+      if (section.open) section.close();
       return;
     }
     const day = payload.daily;
@@ -401,8 +374,9 @@
     }
     $("hourly-list").innerHTML = cards || '<p>Données horaires indisponibles pour ce jour.</p>';
     $("hourly-scroll").scrollLeft = 0;
-    positionDetails();
-    section.hidden = false;
+    $("detail-prev").disabled = idx === 0;
+    $("detail-next").disabled = idx >= Math.min(15, day.time.length - 1);
+    if (!section.open) section.showModal();
   }
 
   function renderAll() {
@@ -443,12 +417,7 @@
     state.loading = true;
     $("refresh-btn").disabled = true;
     renderLocation();
-    // Details can be inside the forecast grid; preserve the live node before any
-    // loading/error state replaces grid.innerHTML.
-    const grid = $("forecast-grid");
     const details = $("detail-section");
-    if (details.parentElement === grid) grid.after(details);
-
     const cached = loadCache();
     if (cached) {
       state.payload = cached.data;
@@ -467,10 +436,9 @@
       state.payload = null;
       state.updated = 0;
       state.selected = null;
-      details.hidden = true;
+      if (details.open) details.close();
       $("forecast-grid").innerHTML = '<p class="empty-state">Chargement des seize jours…</p>';
       $("forecast-grid").setAttribute("aria-busy", "true");
-      $("detail-section").hidden = true;
       setNotice("Récupération des prévisions météorologiques…");
     }
 
@@ -520,6 +488,7 @@
     if (state.cityAbort) state.cityAbort.abort();
     state.location = loc;
     state.selected = null;
+    if ($("detail-section").open) $("detail-section").close();
     persistLocation();
     $("city-input").value = "";
     $("city-results").replaceChildren();
@@ -582,31 +551,43 @@
     if (!card || !state.payload) return;
     const index = Number(card.dataset.index);
     if (!Number.isInteger(index) || index < 0 || index > 15) return;
-    state.selected = state.selected === index ? null : index;
+    state.selected = index;
     renderDays();
     renderDetails();
-    if (state.selected !== null) {
-      // The panel is now directly under the selected row, never at the page bottom.
-      $("detail-section").scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant" : "smooth",
-        block: "nearest"
-      });
-    }
-    $("forecast-grid").querySelector('button[data-index="' + index + '"]')?.focus({
-      preventScroll: true
-    });
+    // The native dialog stays in the viewport, with no scrolling or layout shift.
   });
 
-  $("close-detail").addEventListener("click", () => {
-    const previous = state.selected;
-    state.selected = null;
+  const sheet = $("detail-section");
+  $("close-detail").addEventListener("click", () => sheet.close());
+  $("detail-prev").addEventListener("click", () => moveSheetDay(-1));
+  $("detail-next").addEventListener("click", () => moveSheetDay(1));
+
+  function moveSheetDay(delta) {
+    if (state.selected === null || !state.payload) return;
+    const next = Math.min(15, Math.max(0, state.selected + delta));
+    if (next === state.selected) return;
+    state.selected = next;
     renderDays();
     renderDetails();
-    if (previous !== null) {
-      $("forecast-grid").querySelector('[data-index="' + previous + '"]')?.focus({
-        preventScroll: true
-      });
+  }
+
+  sheet.addEventListener("close", () => {
+    const previouslySelected = state.selected;
+    state.selected = null;
+    if (state.payload) renderDays();
+    if (previouslySelected !== null) {
+      $("forecast-grid").querySelector('button[data-index="' + previouslySelected + '"]')
+        ?.focus({ preventScroll: true });
+    }
+  });
+
+  sheet.addEventListener("click", (event) => {
+    // Close on backdrop clicks, never when clicking the dialog's content/padding.
+    if (event.target !== sheet) return;
+    const bounds = sheet.getBoundingClientRect();
+    if (event.clientX < bounds.left || event.clientX > bounds.right ||
+        event.clientY < bounds.top || event.clientY > bounds.bottom) {
+      sheet.close();
     }
   });
 
@@ -664,13 +645,7 @@
     );
   });
 
-  let resizeTimer;
-  window.addEventListener("resize", () => {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => {
-      if (state.selected !== null) positionDetails();
-    }, 130);
-  });
+  // Native dialogs position themselves independently of the forecast-card grid.
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && !state.loading &&
