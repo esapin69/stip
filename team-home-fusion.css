@@ -1208,3 +1208,72 @@
     min-width:36px!important;min-height:38px!important;padding:4px!important;
   }
 }
+
+/* 2026-10-14 · ajustement ciblé : événements au-dessus, shift carré inchangé,
+   collègues en bandeau fin, centré et de la même largeur que le carré. */
+.hc-days-grid .thf-day-card .thf-day-post{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  gap:7px!important;
+  width:100%!important;
+  min-width:0!important;
+  padding:0!important;
+  margin:9px 0 13px!important;
+  background:none!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-content{
+  width:min(100%,126px)!important;
+  max-width:126px!important;
+  aspect-ratio:1 / 1!important;
+  flex:0 0 auto!important;
+  align-self:center!important;
+  margin:0!important;
+}
+/* L'icône et son chiffre restent interactifs, mais ne forment plus un carré. */
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-colleagues{
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  width:min(100%,126px)!important;
+  max-width:126px!important;
+  min-width:0!important;
+  min-height:34px!important;
+  height:34px!important;
+  padding:3px 10px!important;
+  margin:0 auto!important;
+  box-sizing:border-box!important;
+  border-radius:10px!important;
+  align-self:center!important;
+  justify-self:center!important;
+}
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-colleagues > span{
+  font-size:1rem!important;
+  line-height:1!important;
+}
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-colleagues > b{
+  font-size:1.02rem!important;
+  line-height:1!important;
+}
+.hc-days-grid .thf-day-card .thf-day-events{
+  padding:6px 0 8px!important;
+  margin:0!important;
+  border-bottom:1px solid #e2ecee;
+}
+@media(max-width:390px){
+  .hc-days-grid .thf-day-card .thf-day-post{
+    gap:6px!important;
+    margin:8px 0 11px!important;
+  }
+  .hc-days-grid .thf-day-card .thf-day-post .thf-shift-colleagues{
+    width:min(100%,126px)!important;
+    height:34px!important;
+    min-height:34px!important;
+    padding:3px 8px!important;
+  }
+}
