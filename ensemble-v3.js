@@ -103,7 +103,7 @@ function formHTML(){
  if(state.formKind==="carpool"){
   const p=state.pref||{};
   return '<section class="ev3-panel"><h2>🚗 Proposer un trajet</h2><p>Un trajet, une date, un horaire.</p>'+
-  '<form id="ev3CarForm"><div class="ev3-two"><label>Je souhaite<select name="kind"><option value="offer" '+(!p.has_car?"disabled":"")+' >Proposer des places</option><option value="request" '+(!p.has_car?"selected":"")+' >Chercher une place</option></select></label><label>Trajet<select name="direction"><option value="from_work">Retour du travail</option><option value="to_work">Aller au travail</option></select></label></div>'+
+  '<button type="button" class="ev3-return-activity" data-ev3-mode="activity">← Proposer une activité à la place</button><form id="ev3CarForm"><div class="ev3-two"><label>Je souhaite<select name="kind"><option value="offer" '+(!p.has_car?"disabled":"")+' >Proposer des places</option><option value="request" '+(!p.has_car?"selected":"")+' >Chercher une place</option></select></label><label>Trajet<select name="direction"><option value="from_work">Retour du travail</option><option value="to_work">Aller au travail</option></select></label></div>'+
   '<div class="ev3-two"><label>Date<input name="date" type="date" required min="'+today+'"></label><label>Heure<input name="time" type="time" required></label></div><label>Places<select name="seats">'+[1,2,3,4,5,6].map(n=>'<option value="'+n+'">'+n+'</option>').join("")+'</select></label>'+
   '<label>Point de rendez-vous<input name="meeting_point" maxlength="200"></label><label>Précisions<textarea name="note" rows="2" maxlength="400"></textarea></label><button type="submit" class="ev3-primary">Proposer le trajet</button></form></section>';
  }
