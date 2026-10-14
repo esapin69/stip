@@ -5,10 +5,6 @@
   const API='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-messages';
   const TOKEN_KEY='stip_session_v1';
   const loadingScripts=new Map(),loadedStyles=new Set();
-  const STYLES=['leisure-runtime.css','afterwork-site.css','recurring-training.css',
-    'carpool-runtime.css','ensemble-shell.css','ensemble-create.css'];
-  const SCRIPTS=['recurring-training.js','afterwork-site.js','carpool-runtime.js',
-    'ensemble-create.js','leisure-runtime.js'];
   const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const uuid=/^[a-f0-9-]{36}$/i;
   // Les modules existants lisent encore STIPSession : synchroniser la session
@@ -84,55 +80,32 @@
     window.STIPTableau.mount(content,{mode:'wheelchair'});
     host.dataset.nativeReady='wheelchairs';
   }
-  function leisureMarkup(){
-    return '<section class="ensemble-page stip-page t-native-leisure">'+
-      '<nav class="t-native-leisure-tabs" role="tablist" aria-label="Navigation interne Ensemble" hidden>'+
-      ['activities','trips','invitations'].map(k=>
-        '<button type="button" data-ensemble-tab="'+k+'" aria-selected="'+(k==='activities'?'true':'false')+'">'+k+'</button>').join('')+
-      '</nav>'+
-      '<p id="leisureStatus" class="ensemble-status" role="status"></p>'+
-      '<section id="ensembleCreator" class="ensemble-creator" hidden>'+
-        '<div class="ensemble-creator-top"><h2>Proposer une activité</h2><button type="button" data-ensemble-close aria-label="Fermer">×</button></div>'+
-        '<div class="ensemble-ways" role="group">'+
-          '<button type="button" data-ensemble-option="matched"><strong>Avec des collègues</strong></button>'+
-          '<button type="button" data-ensemble-option="afterwork"><strong>Après le travail</strong></button>'+
-          '<button type="button" data-ensemble-option="date"><strong>Une sortie</strong></button>'+
-        '</div>'+
-        '<section id="ensembleAfterworkEvents" hidden></section>'+
-        '<section id="trainingRecurringApp" hidden></section>'+
-        '<section id="ensembleCreatePanel" hidden></section>'+
-        '<section id="ensembleAfterworkCreate" hidden></section>'+
-      '</section>'+
-      '<section id="leisureApp" aria-live="polite" role="tabpanel"></section>'+
-      '<section id="carpoolApp" role="tabpanel" hidden></section>'+
-      '</section>';
-  }
-  let leisureHost=null,leisurePromise=null;
+  // One Ensemble engine in the T DOM. Activities, invitations and trips are views,
+  // not separate modules or duplicated group conversations.
+  let leisureHost=null,leisurePromise=null,leisureView=0;
   async function mountLeisure(host,tab){
+    const view=++leisureView;
     if(!leisureHost){
       leisureHost=host;
-      host.innerHTML=leisureMarkup();
+      host.innerHTML='<section id="ensembleV3" class="ev3-page t-native-leisure" aria-label="Ensemble entre collègues"><p role="status">Chargement des activités…</p></section>';
     }else if(leisureHost!==host){
-      // Déplacer le même DOM conserve l'état des formulaires en cours.
       host.replaceChildren();
       while(leisureHost.firstChild)host.append(leisureHost.firstChild);
       leisureHost=host;
     }
     if(!leisurePromise){
       leisurePromise=(async()=>{
-        for(const css of STYLES)includeStyle(css);
-        for(const script of SCRIPTS)await includeScript(script);
-        if(!window.STIPLeisure?.setTab)throw Error('Le moteur Ensemble ne répond pas.');
-        await window.STIPLeisure.refresh?.();
+        includeStyle('ensemble-v3.css?v=20261014-context2');
+        if(!window.STIPEnsembleV3?.setView)await includeScript('ensemble-v3.js?v=20261014-context2');
+        if(!window.STIPEnsembleV3?.setView)throw Error('Le moteur Ensemble est indisponible.');
+        // A dynamic script added after DOMContentLoaded must be initialized explicitly.
+        await window.STIPEnsembleV3.refresh();
       })().catch(error=>{leisurePromise=null;throw error});
     }
     await leisurePromise;
-    // Le bouton interne invisible applique le rendu métier complet (pas juste l'onglet).
-    const nativeTab=host.querySelector('[data-ensemble-tab="'+tab+'"]');
-    if(nativeTab)nativeTab.click();
-    else window.STIPLeisure.setTab(tab);
-    if(tab==='trips')await window.STIPCarpool?.refresh?.();
-    host.dataset.nativeReady='leisure';
+    if(view!==leisureView||!leisureHost?.isConnected)return;
+    window.STIPEnsembleV3.setView(tab);
+    leisureHost.dataset.nativeReady='leisure';
     window.dispatchEvent(new CustomEvent('t-est:leisure-ready'));
   }
   const me=()=>String(window.STIPContinuity?.read?.()?.agent?.id||
