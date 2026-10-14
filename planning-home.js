@@ -208,11 +208,21 @@
             .toUpperCase();
       if (!canonical) continue;
       if (def?.is_working) {
-        const color = registry?.color?.(raw, def?.color_hex || "#277b86") || "#277b86",
-          time = registry?.time?.(raw) || "";
+        // Same visual and effective hours as the month cells, not an unrelated dot.
+        const workSymbol = window.STIPMonthTable?.shiftBadgeHtml?.(raw) ||
+          shiftVisual(raw),
+          context = {
+            role:item?.agents?.role || item?.role_metier || item?.role || "",
+            team:item?.agents?.type_planning || item?.equipe || item?.team || ""
+          },
+          direct = String(item?.horaire || item?.horaires || item?.shift_time || "").trim(),
+          from = String(item?.start_time || "").slice(0,5),
+          to = String(item?.end_time || "").slice(0,5),
+          time = direct || (from && to ? from.replace(":", "h") + "–" + to.replace(":", "h") :
+            registry?.time?.(raw,context) || "");
         add(
-          "shift:" + canonical,
-          `<i class="ph-legend-shift-dot" style="--shift:${esc(color)}"></i>`,
+          "shift:" + raw + "|" + time,
+          workSymbol,
           def?.label || canonical,
           time,
         );
