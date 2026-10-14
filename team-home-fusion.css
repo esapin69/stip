@@ -1288,3 +1288,141 @@
 .hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-colleagues{
   width:100%!important;max-width:126px!important;box-sizing:border-box!important
 }
+
+
+/* Météo légère et saisonnière : un seul fond de la date jusqu'après les collègues.
+ * Réutilise les prévisions horaires Open-Meteo : aucun GIF, vidéo ou appel réseau. */
+.hc-days-grid .thf-day-card .thf-weather-stage{
+  position:relative;isolation:isolate;overflow:hidden;
+  flex:0 0 auto;width:100%;min-width:0;
+  --thf-season-overlay:linear-gradient(transparent,transparent);
+  background:var(--thf-season-overlay),
+    var(--thf-sky-bg,linear-gradient(140deg,#d8eef8,#faf7e8 88%))!important;
+  border-bottom:1px solid #dce8ed;
+}
+.hc-days-grid .thf-weather-stage[data-season="spring"]{
+  --thf-season-overlay:linear-gradient(130deg,#ebffe61c,#c5f0d812 75%);
+}
+.hc-days-grid .thf-weather-stage[data-season="summer"]{
+  --thf-season-overlay:linear-gradient(145deg,#fff2bc21,transparent 72%);
+}
+.hc-days-grid .thf-weather-stage[data-season="autumn"]{
+  --thf-season-overlay:linear-gradient(135deg,#efb86625,transparent 78%);
+}
+.hc-days-grid .thf-weather-stage[data-season="winter"]{
+  --thf-season-overlay:linear-gradient(140deg,#d5f4ff30,#e7f6ff15);
+}
+.hc-days-grid .thf-weather-stage[data-period="evening"]{
+  --thf-season-overlay:linear-gradient(155deg,#38577938,#e9b69c1e);
+}
+.hc-days-grid .thf-weather-stage[data-period="night"]{
+  --thf-season-overlay:linear-gradient(155deg,#19305cb8,#2b3c608c);
+  --sky-text:#f2f8ff;
+}
+.hc-days-grid .thf-weather-stage>.thf-day-trigger{
+  position:relative;z-index:2;isolation:auto;overflow:visible;
+  background:transparent!important;border-bottom:0!important;
+}
+.hc-days-grid .thf-weather-stage .thf-weather-body{
+  position:relative;z-index:2;
+  padding:9px 10px 1px;
+  box-sizing:border-box;
+}
+.hc-days-grid .thf-weather-stage .thf-weather-art{
+  z-index:1;opacity:.76;inset:0;overflow:hidden;
+}
+.hc-days-grid .thf-weather-stage .thf-sun{
+  right:10%;top:10%;
+}
+.hc-days-grid .thf-weather-stage[data-period="night"] .thf-sun{
+  display:none;
+}
+.hc-days-grid .thf-weather-stage .cloud-one{right:4%;top:15%;--thf-cloud-scale:1}
+.hc-days-grid .thf-weather-stage .cloud-two{right:-17%;top:47%;--thf-cloud-scale:.72}
+.hc-days-grid .thf-weather-stage .thf-rain,
+.hc-days-grid .thf-weather-stage .thf-snow{
+  top:-10%;left:0;right:auto;width:100%;height:120%;
+  pointer-events:none;
+}
+.hc-days-grid .thf-weather-stage .thf-rain{opacity:.2}
+.hc-days-grid .thf-weather-stage[data-sky="drizzle"] .thf-rain{opacity:.12}
+.hc-days-grid .thf-weather-stage:is([data-sky="heavy-rain"],[data-sky="storm"]) .thf-rain{opacity:.26}
+.hc-days-grid .thf-weather-stage .thf-snow{opacity:.62}
+.hc-days-grid .thf-weather-stage[data-sky="storm"] .thf-lightning{
+  right:14%;top:26%;opacity:.65;
+}
+/* Brume et étoiles sont de simples dégradés CSS : zéro téléchargement. */
+.hc-days-grid .thf-weather-stage[data-sky="fog"] .thf-weather-art::before{
+  content:"";position:absolute;left:-25%;top:17%;width:150%;height:72%;
+  background:linear-gradient(180deg,transparent,#ffffff55 45%,#ffffff28 70%,transparent);
+}
+.hc-days-grid .thf-weather-stage[data-period="night"]:is([data-sky="sunny"],[data-sky="partly"]) .thf-weather-art::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle,#ffffffb0 1px,transparent 2px) 11px 18px/76px 89px,
+    radial-gradient(circle,#ffffff78 1px,transparent 2px) 49px 44px/109px 112px;
+}
+.hc-days-grid .thf-weather-stage .thf-season-detail{
+  display:none;position:absolute;left:19%;top:14%;width:12px;height:16px;
+  border-radius:90% 0 85% 0;transform:rotate(32deg);
+  box-shadow:28px 38px 0 -2px currentColor,-24px 115px 0 -2px currentColor;
+  pointer-events:none;opacity:.65;
+}
+.hc-days-grid .thf-weather-stage[data-season="spring"]:is([data-sky="sunny"],[data-sky="partly"]) .thf-season-detail{
+  display:block;color:#f8b9d1;background:#f9bdd4;
+}
+.hc-days-grid .thf-weather-stage[data-season="autumn"]:is([data-sky="sunny"],[data-sky="partly"],[data-sky="cloudy"]) .thf-season-detail{
+  display:block;color:#cc8e3a;background:#e7a24b;
+}
+.hc-days-grid .thf-weather-stage .thf-day-heading,
+.hc-days-grid .thf-weather-stage .thf-trigger-chevron{
+  color:var(--sky-text,#183e51);
+}
+/* Surfaces interactives opaques : texte, J4 et collaborateurs restent lisibles. */
+.hc-days-grid .thf-weather-stage .thf-day-event{
+  background:#f0f8faef!important;
+}
+.hc-days-grid .thf-weather-stage .thf-shift-colleagues{
+  background:#f0f9fbf2!important;
+}
+@keyframes thf-weather-cloud-drift{
+  from{transform:translate3d(-9px,0,0) scale(var(--thf-cloud-scale,1))}
+  to{transform:translate3d(14px,0,0) scale(var(--thf-cloud-scale,1))}
+}
+@keyframes thf-weather-fall{
+  from{transform:translate3d(0,-9px,0)}
+  to{transform:translate3d(0,14px,0)}
+}
+@keyframes thf-weather-haze{
+  from{transform:translate3d(-7px,0,0)}
+  to{transform:translate3d(7px,0,0)}
+}
+@keyframes thf-weather-leaves{
+  from{transform:translate3d(-10px,-8px,0) rotate(9deg)}
+  to{transform:translate3d(24px,45px,0) rotate(110deg)}
+}
+@media(prefers-reduced-motion:no-preference){
+  .hc-days-grid .thf-weather-stage.is-weather-visible .cloud-one{
+    animation:thf-weather-cloud-drift 29s ease-in-out infinite alternate;
+  }
+  .hc-days-grid .thf-weather-stage.is-weather-visible .cloud-two{
+    animation:thf-weather-cloud-drift 39s ease-in-out infinite alternate-reverse;
+  }
+  .hc-days-grid .thf-weather-stage.is-weather-visible .thf-rain,
+  .hc-days-grid .thf-weather-stage.is-weather-visible .thf-snow{
+    animation:thf-weather-fall 4s linear infinite;
+  }
+  .hc-days-grid .thf-weather-stage.is-weather-visible[data-sky="fog"] .thf-weather-art::before{
+    animation:thf-weather-haze 13s ease-in-out infinite alternate;
+  }
+  .hc-days-grid .thf-weather-stage.is-weather-visible .thf-season-detail{
+    animation:thf-weather-leaves 18s ease-in-out infinite alternate;
+  }
+}
+@media(prefers-reduced-motion:reduce),(prefers-reduced-data:reduce){
+  .thf-weather-stage .thf-weather-art *,
+  .thf-weather-stage .thf-weather-art::before{animation:none!important}
+}
+html.thf-weather-page-hidden .thf-weather-stage .thf-weather-art *,
+html.thf-weather-page-hidden .thf-weather-stage .thf-weather-art::before{
+  animation-play-state:paused!important;
+}
