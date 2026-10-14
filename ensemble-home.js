@@ -24,7 +24,7 @@ function cards(from,to){
  if(!items.length)return "";
  return '<section class="ev3-home-section" aria-label="Activités personnelles entre collègues"><div class="ev3-home-head"><strong>ENTRE COLLÈGUES · '+items.length+'</strong><a href="sorties-loisirs.html?tab=agenda">Tous mes rendez-vous ›</a></div><div class="ev3-home-items">'+items.slice(0,4).map(x=>{
   const [tone,indicator]=status(x),days=visibleDates(x).filter(d=>d>=from&&d<=to);
-  return '<a href="sorties-loisirs.html?tab=agenda&event='+encodeURIComponent(x.id)+'" class="ev3-home-card ev3-'+tone+'"><span class="ev3-home-icon" aria-hidden="true">'+e(x.icon||"📌")+'</span><span class="ev3-home-copy"><strong>'+e(x.title)+'</strong><small>'+e(days.length?dateLabel(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"")+" · "+e(x.schedule_mode==="afterwork"?"Fin du service":x.time_label||"Heure à fixer")+'</small></span><span class="ev3-home-state">'+e(indicator)+'</span><span aria-hidden="true">›</span></a>';
+  return '<a href="sorties-loisirs.html?tab=agenda&event='+encodeURIComponent(x.id)+'" class="ev3-home-card ev3-'+tone+'"><span class="ev3-home-icon" aria-hidden="true">'+e(x.icon||"📌")+'</span><span class="ev3-home-copy"><strong>'+e(x.title)+'</strong><small>'+e(days.length?dateLabel(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"")+" · "+e(x.schedule_mode==="afterwork"?(x.visible_end_times?.[days[0]]||"Fin du service"):x.time_label||"Heure à fixer")+'</small></span><span class="ev3-home-state">'+e(indicator)+'</span><span aria-hidden="true">›</span></a>';
  }).join("")+'</div>'+(items.length>4?'<a class="ev3-home-more" href="sorties-loisirs.html?tab=agenda">Voir les '+(items.length-4)+' autres ›</a>':"")+'</section>';
 }
 async function refresh(force=false){
