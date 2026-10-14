@@ -245,6 +245,7 @@ function showActivityDialog(d){
   d.show();
   requestAnimationFrame(()=>d.scrollIntoView({block:"nearest",behavior:"smooth"}));
  }else d.showModal();
+ d.addEventListener("close",()=>{if(pendingVisualRefresh)renderWhenIdle()},{once:true});
 }
 function closeModal(){const d=byId("ev3Dialog");if(d?.open)d.close()}
 function rosterDateHTML(event,day){
