@@ -115,3 +115,48 @@
 @media(max-width:380px){.hc-team-fusion .thf-actions strong{font-size:.72rem}
   .hc-team-fusion .thf-actions small{font-size:.61rem}
   .thf-people-tabs>button{font-size:.64rem}}
+
+/* Ordre definitif de l'accueil : à clôturer, aujourd'hui, identité, demain, semaine. */
+.hc-home-timeline{display:flex!important;flex-direction:column!important;gap:12px!important}
+.hc-home-timeline>#hcTopPriorityAnchor{display:none!important}
+.hc-home-timeline>.hc-feedback-pending{
+  order:initial!important;margin:0 0 4px!important;
+  padding:6px 11px 8px;flex:0 0 auto;
+}
+.hc-home-timeline>.hc-team-fusion{margin:0!important}
+.hc-home-timeline>.hc-home-top-nav[data-header-compact]{
+  margin:2px auto 2px!important;width:min(100%,700px)!important;
+  flex:0 0 auto;
+}
+.hc-home-timeline>.hc-day-appointments{
+  padding:0 9px 8px!important;margin:0!important;
+  background:transparent!important;min-width:0;
+}
+.hc-day-appointments .hc-planning-period-separator{
+  margin:0 0 8px!important;
+  display:flex!important;align-items:center;justify-content:center;gap:10px;
+}
+.hc-day-appointments .hc-planning-period-separator strong{
+  min-width:23px;height:23px;padding:0 7px;display:inline-grid;place-items:center;
+  font-size:.73rem;line-height:1;font-weight:900;color:#267386;
+  background:#e7f5f8;border-radius:99px;
+}
+.hc-day-appointments .hc-week-event-key-list{display:grid;gap:7px}
+.hc-day-appointments .hc-week-event-day-row{
+  width:100%;border:1px solid #dce9ee!important;border-radius:13px!important;
+  background:#fff!important;
+}
+.hc-day-appointments-more{
+  width:100%;min-height:40px;padding:8px 10px;border:1px solid #d6e9ed;
+  background:#eef8fa;border-radius:11px;font:inherit;font-size:.8rem;
+  font-weight:800;color:#17647b;cursor:pointer;
+}
+.hc-home-timeline>.hc-tomorrow-fusion{border-color:#cbdfe7;background:linear-gradient(180deg,#fff,#f8fcff)}
+.hc-tomorrow-fusion .thf-my>div:first-child{background:#edf5ff}
+.hc-tomorrow-fusion .thf-my>div:last-child{background:#eff8f9}
+.hc-home-timeline>.hc-planning-group{margin-top:5px!important}
+.hc-home-timeline>.hc-pilotage-shell{margin-top:2px}
+@media(max-width:400px){
+  .hc-home-timeline{gap:10px!important}
+  .hc-home-timeline>.hc-day-appointments{padding:0 4px 5px!important}
+}
