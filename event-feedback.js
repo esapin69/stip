@@ -8,8 +8,6 @@
   const state = {
     boot: window.STIPBootCache || null,
     done: new Set(),
-    hidden: new Set(),
-    hiddenOwner: "",
     doneLoaded: false,
     loadedAt: 0,
     loading: false,
@@ -30,39 +28,6 @@
 
   function token() {
     return localStorage.getItem(STORE) || "";
-  }
-
-  function hiddenOwner() {
-    const a = state.boot?.agent || window.STIPBootCache?.agent || {};
-    return String(a.id || a.source_key || "session");
-  }
-
-  function hiddenStoreKey() {
-    return `stip_event_feedback_hidden_v1:${hiddenOwner()}`;
-  }
-
-  function loadHidden() {
-    const owner = hiddenOwner();
-    if (state.hiddenOwner === owner) return;
-    state.hiddenOwner = owner;
-    try {
-      const raw = JSON.parse(localStorage.getItem(hiddenStoreKey()) || "[]");
-      state.hidden = new Set(Array.isArray(raw) ? raw.map(String) : []);
-    } catch {
-      state.hidden = new Set();
-    }
-  }
-
-  function saveHidden() {
-    try {
-      localStorage.setItem(hiddenStoreKey(), JSON.stringify([...state.hidden]));
-    } catch {}
-  }
-
-  function hideFeedbackCard(eventKey) {
-    loadHidden();
-    state.hidden.add(String(eventKey || ""));
-    saveHidden();
   }
 
   function parisStamp(d = new Date()) {
@@ -487,7 +452,7 @@
       x.icon,
     )}</span><span class="hc-week-event-copy"><strong>${esc(
       x.title,
-    )}</strong><span class="hc-week-event-when"><b class="hc-feedback-to-do">Retour à faire</b>${meta
+    )}</strong><span class="hc-week-event-when"> ${meta
       .map((v) => `<span>${esc(v)}</span>`)
       .join("")}</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>`;
   }
@@ -499,13 +464,11 @@
     if (!planning) return;
 
     if (!state.doneLoaded) return;
-    loadHidden();
-
     const passed = passedEvents();
     suppressMovedCards(passed);
 
     const pending = passed.filter(
-      (x) => !state.done.has(x.eventKey) && !state.hidden.has(x.eventKey),
+      (x) => !state.done.has(x.eventKey),
     );
     let host = document.getElementById("hcEventFeedbackHost");
     if (!pending.length) {
@@ -517,15 +480,17 @@
       host = document.createElement("section");
       host.id = "hcEventFeedbackHost";
       host.className = "hc-feedback-pending";
-      // Keep the dated weekly overview immediately below the common header.
-      // insertBefore requires a direct child, not a nested week/detail node.
-      const week = planning.querySelector(":scope > .hc-week-context-master");
-      if (week) week.insertAdjacentElement("afterend", host);
-      else planning.prepend(host);
+      host.setAttribute("aria-label", "Retours professionnels à clôturer");
     }
+    // Ce bloc prioritaire précède impérativement le titre et la ligne de la semaine.
+    // Le repositionner même lorsqu'il existe déjà évite les inversions au rafraîchissement.
+    const week = planning.querySelector(":scope > .hc-week-context-master");
+    if (week) week.insertAdjacentElement("beforebegin", host);
+    else planning.prepend(host);
 
     host.innerHTML =
-      '<div class="hc-planning-period-separator stip-section-separator hc-feedback-separator"><span>À CLÔTURER</span></div><div class="hc-feedback-list">' +
+      '<div class="hc-planning-period-separator stip-section-separator hc-feedback-separator"><span>À CLÔTURER</span><strong class="hc-feedback-count" aria-label="' +
+      pending.length + ' retour(s) en attente">' + pending.length + '</strong></div><div class="hc-feedback-list">' +
       pending.map(cardMarkup).join("") +
       "</div>";
 
@@ -606,13 +571,11 @@
         </section>
         ${custom}
         ${noteBlock}
-        <section class="hc-feedback-question" data-follow-section hidden>
-          <span>SUITE</span>
-          <strong>Une action est-elle nécessaire ?</strong>
-          <div class="hc-feedback-pair">
-            <button type="button" data-follow="yes">Oui</button>
-            <button type="button" data-follow="no">Non</button>
-          </div>
+        <section class="hc-feedback-question hc-feedback-follow-toggle" data-follow-section hidden>
+          <button type="button" data-follow="yes" aria-pressed="false">
+            <span class="hc-feedback-follow-check" aria-hidden="true">✓</span>
+            <span><strong>Demander un suivi</strong><small>Uniquement si un responsable doit intervenir · mail facultatif</small></span>
+          </button>
         </section>
         <section class="hc-feedback-mail-actions" hidden>
           <button type="button" class="hc-feedback-mail-one" data-mail-flow="prepare">
@@ -649,16 +612,16 @@
           </div>
         </section>
         <p class="hc-feedback-error" aria-live="polite"></p>
-        <button type="button" class="hc-feedback-submit" disabled>Valider mon retour</button>
+        <p class="hc-feedback-record-note">Retour professionnel daté et enregistré, consultable par les responsables. Aucune saisie libre n’est obligatoire.</p>
+        <button type="button" class="hc-feedback-submit" disabled>Enregistrer le retour</button>
       </div>
-      <button type="button" class="hc-feedback-dismiss" data-feedback-dismiss>Masquer cette carte</button>
     </div>`;
 
     document.body.appendChild(modal);
 
     let attendance = "",
       reasonCode = "",
-      followUp = null,
+      followUp = false,
       customAnswer = "",
       mailContext = null,
       mailContextKey = "",
@@ -875,24 +838,23 @@
       following.hidden = !attendance;
       renderReasons();
 
-      if (noteBox) noteBox.hidden = !attendance;
+      if (noteBox) noteBox.hidden = !attendance || attendance === "ok";
 
       if (customBox)
         customBox.hidden =
           !attendance || attendance === "absent" || !event.question;
 
       const validCore = coreValid();
-      if (followSection) followSection.hidden = !validCore;
+      if (followSection) followSection.hidden = !validCore || attendance === "ok";
 
-      const valid = validCore && followUp !== null;
+      const valid = validCore;
       mailActions.hidden = !(valid && followUp === true) || !mailCompose.hidden;
       if ((!validCore || followUp !== true) && !mailCompose.hidden)
         resetMailFlow();
 
-      submit.hidden = followUp === null || (followUp === true && !nativeOpened);
-      submit.textContent =
-        followUp === true ? "Clôturer mon retour" : "Valider mon retour";
-      submit.disabled = !valid || (followUp === true && !nativeOpened);
+      submit.hidden = false;
+      submit.textContent = "Enregistrer le retour";
+      submit.disabled = !valid;
 
       modal.querySelectorAll("[data-mail-flow]").forEach((b) => {
         b.disabled = !validCore;
@@ -901,14 +863,6 @@
     };
 
     modal.querySelector(".hc-feedback-close").onclick = close;
-    modal.querySelector("[data-feedback-dismiss]")?.addEventListener("click", () => {
-      if (!confirm("Masquer cette carte sans envoyer de retour ?")) return;
-      hideFeedbackCard(event.eventKey);
-      close();
-      render();
-      toast("Carte masquée");
-    });
-
     modal.querySelectorAll("[data-attendance]").forEach((button) => {
       button.onclick = () => {
         const next = button.dataset.attendance || "";
@@ -917,7 +871,7 @@
           attendance = next;
           reasonCode = "";
           customAnswer = "";
-          followUp = null;
+          followUp = false;
           modal
             .querySelectorAll("[data-custom],[data-follow]")
             .forEach((b) => b.classList.remove("selected", "current"));
@@ -943,10 +897,9 @@
 
     modal.querySelectorAll("[data-follow]").forEach((button) => {
       button.onclick = () => {
-        followUp = button.dataset.follow === "yes";
-        modal
-          .querySelectorAll("[data-follow]")
-          .forEach((b) => b.classList.toggle("selected", b === button));
+        followUp = !followUp;
+        button.classList.toggle("selected", followUp);
+        button.setAttribute("aria-pressed", String(followUp));
         if (!followUp) resetMailFlow();
         sync();
       };
@@ -1031,13 +984,12 @@
         await post("event_feedback_submit", feedbackBody());
         finish(
           followUp === true
-            ? "Retour clôturé"
-            : "Retour enregistré",
+            ? "Retour enregistré · suivi signalé"
+            : "Retour enregistré dans le suivi GHE",
         );
       } catch (e) {
         submit.disabled = false;
-        submit.textContent =
-          followUp === true ? "Clôturer mon retour" : "Valider mon retour";
+        submit.textContent = "Enregistrer le retour";
         error.textContent =
           e?.message === "RETOUR_TROP_TOT"
             ? "Ce retour sera disponible une heure après la fin prévue."
@@ -1069,8 +1021,6 @@
   });
   window.addEventListener("stip:session-ended", () => {
     state.done.clear();
-    state.hidden.clear();
-    state.hiddenOwner = "";
     state.doneLoaded = false;
     state.boot = null;
     state.loadedAt = 0;
