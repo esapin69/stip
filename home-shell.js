@@ -1008,6 +1008,9 @@
         timeParts.length >= 2
           ? `<span>${esc(timeParts[0].replace(":", "h"))}</span><i aria-hidden="true">→</i><span>${esc(timeParts[1].replace(":", "h"))}</span>`
           : esc(time),
+      weatherEligible =
+        timeParts.length >= 2 &&
+        Boolean(def?.is_working || window.STIPShiftRegistry?.isWorking?.(code)),
       detailRows = [
         adapted
           ? `<div class="hc-shift-detail-row"><span>Type</span><strong>Horaire adapté</strong></div>`
@@ -1026,8 +1029,16 @@
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
     wrap.innerHTML =
-      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong></section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong>${weatherEligible ? '<aside class="hc-shift-weather-mini" id="hcShiftWeather" aria-label="Météo pendant le poste" aria-live="polite" hidden></aside>' : ""}</section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
     document.body.appendChild(wrap);
+    if (weatherEligible) {
+      window.STIPShiftWeather?.mount?.(wrap.querySelector("#hcShiftWeather"), {
+        date: iso,
+        start: timeParts[0].replace("h", ":"),
+        end: timeParts[1].replace("h", ":"),
+        isWorking: true
+      });
+    }
     wrap.querySelector("[data-shift-leave-action]")?.addEventListener("click",()=>{
       window.STIPLeaveCart?.toggle?.(iso,code);
       closeShiftDetail();
