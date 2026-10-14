@@ -3274,7 +3274,7 @@
   }
   async function refresh(force = false) {
     if (!token() || !state.ready) return;
-    if (state.refreshing && !force) return state.refreshing;
+    if (state.refreshing) return state.refreshing;
     if (!force && state.lastRefreshAt && Date.now() - state.lastRefreshAt < 45000)
       return;
     const hasUsableBoot = state.bootStatus === "ready" && !!state.boot;
@@ -3288,44 +3288,51 @@
       state.bootStatus = "ready";
       stopPlanningLoading();
     }
-    state.refreshing = (async () => {
-      let changed = false;
-      try {
-        const traineeSession = String(state.session?.role_key || "") === "stagiaire";
-        const bootRequest =
-          window.STIPBootPromise || call(DATA_API, "bootstrap");
-        window.STIPBootPromise = bootRequest;
-        const [boot, home] = await Promise.allSettled([
-          bootRequest,
-          traineeSession ? Promise.resolve({ actions: [], notifications: [] }) : call(ACTION_API, "home"),
-        ]);
-        if (boot.status === "fulfilled") {
-          state.bootStatus = "ready";
-          state.bootError = "";
-          stopPlanningLoading();
-          publishBoot(boot.value);
-          prefetchContacts();
-          changed = true;
-        } else if (!hasUsableBoot) {
-          state.bootStatus = "error";
-          stopPlanningLoading();
-          state.bootError = boot.reason?.message || "Planning indisponible.";
-        }
-        if (home.status === "fulfilled") {
-          state.home = home.value;
-          changed = true;
-        }
-        if (changed) {
-          state.lastRefreshAt = Date.now();
-          writeHomeCache();
-          render();
-        }
-      } finally {
-        if (window.STIPBootPromise) window.STIPBootPromise = null;
-        state.refreshing = null;
+    const traineeSession = String(state.session?.role_key || "") === "stagiaire";
+    const bootRequest = window.STIPBootPromise || call(DATA_API, "bootstrap");
+    window.STIPBootPromise = bootRequest;
+    // The shift grid must NEVER wait for actions, notifications or messages.
+    // Publish the planning as soon as its own request settles.
+    const bootJob = Promise.resolve(bootRequest).then((boot) => {
+      if (!state.ready || !token()) return;
+      state.bootStatus = "ready";
+      state.bootError = "";
+      stopPlanningLoading();
+      publishBoot(boot);
+      saveShiftSnapshot(boot);
+      prefetchContacts();
+      state.lastRefreshAt = Date.now();
+      writeHomeCache();
+      state.renderSig = "";
+      render();
+    }).catch((error) => {
+      if (!state.ready || !token()) return;
+      if (!hasUsableBoot && !(state.boot?.personal || []).length) {
+        state.bootStatus = "error";
+        stopPlanningLoading();
+        state.bootError = error?.message || "Planning indisponible.";
+        state.renderSig = "";
+        render();
       }
-    })();
-    return state.refreshing;
+    });
+    const homeJob = (
+      traineeSession
+        ? Promise.resolve({ actions: [], notifications: [] })
+        : call(ACTION_API, "home")
+    ).then((home) => {
+      if (!state.ready || !token()) return;
+      state.home = home;
+      state.lastRefreshAt = Date.now();
+      writeHomeCache();
+      state.renderSig = "";
+      render();
+    }).catch(() => {});
+    const done = Promise.allSettled([bootJob, homeJob]).finally(() => {
+      if (window.STIPBootPromise === bootRequest) window.STIPBootPromise = null;
+      if (state.refreshing === done) state.refreshing = null;
+    });
+    state.refreshing = done;
+    return done;
   }
   function ready(e) {
     const firstReady = !state.ready;
