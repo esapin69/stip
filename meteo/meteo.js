@@ -2,6 +2,7 @@
   "use strict";
 
   const API = "https://api.open-meteo.com/v1/forecast";
+  const ENSEMBLE_API = "https://ensemble-api.open-meteo.com/v1/ensemble";
   const GEOCODING = "https://geocoding-api.open-meteo.com/v1/search";
   const LOCATION_KEY = "ghe_meteo_location_v1";
   const CACHE_PREFIX = "ghe_meteo_forecast_v1_";
@@ -17,6 +18,7 @@
     selected: null,
     loading: false,
     request: null,
+    ensembleRequest: null,
     cityAbort: null,
     cityTimer: null,
     searchResults: []
@@ -188,6 +190,123 @@
     $("current-rain").textContent = rainfall(now.precipitation);
   }
 
+  function relativeConfidence(index) {
+    // Qualitative lead-time notice, NOT a quantified forecast-success probability.
+    if (index <= 2) return ["Plus élevée", "confidence-strong"];
+    if (index <= 5) return ["Modérée", "confidence-medium"];
+    if (index <= 9) return ["Limitée", "confidence-low"];
+    return ["Faible", "confidence-low"];
+  }
+
+  function median(values) {
+    const sorted = values.filter(numeric).sort((a, b) => a - b);
+    if (!sorted.length) return null;
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  }
+
+  function ensembleMembers(daily, name) {
+    const matching = Object.keys(daily || {}).filter((key) =>
+      (key === name || key.startsWith(name + "_member")) &&
+      Array.isArray(daily[key]));
+    const memberKeys = matching.filter((key) => key !== name);
+    // Ignore the deterministic/control column whenever member columns exist.
+    return (memberKeys.length ? memberKeys : matching).map((key) => daily[key]);
+  }
+
+  function renderOutlook(data) {
+    const daily = data && data.daily;
+    if (!daily || !Array.isArray(daily.time)) throw Error("Long-term dates unavailable");
+    const highs = ensembleMembers(daily, "temperature_2m_max");
+    const lows = ensembleMembers(daily, "temperature_2m_min");
+    const rain = ensembleMembers(daily, "rain_sum");
+    if (!highs.length || !lows.length || !rain.length) throw Error("Missing ensemble data");
+    const cards = [];
+    for (let i = 16; i < Math.min(35, daily.time.length); i++) {
+      const high = highs.map((series) => series[i]).filter(numeric);
+      const low = lows.map((series) => series[i]).filter(numeric);
+      const wet = rain.map((series) => series[i]).filter(numeric);
+      if (!high.length || !low.length || !wet.length) continue;
+      const center = median(high);
+      const minCenter = median(low);
+      const nearby = high.length >= 5 ? Math.round(100 *
+        high.filter((value) => Math.abs(value - center) <= 2).length / high.length) : null;
+      const wetShare = wet.length >= 5 ? Math.round(100 *
+        wet.filter((value) => value >= 1).length / wet.length) : null;
+      const wetAverage = wet.reduce((a, b) => a + b, 0) / wet.length;
+      const dayName = labelForDate(daily.time[i], i);
+      cards.push('<article class="outlook-card">' +
+        '<strong class="outlook-day">' + esc(dayName) + '</strong>' +
+        '<span class="outlook-date">J+' + i + ' · ' + esc(shortDate(daily.time[i])) + '</span>' +
+        '<span class="outlook-temp">' + esc(temperature(center)) +
+        '<span class="outlook-range"> / ' + esc(temperature(minCenter)) + '</span></span>' +
+        '<span class="outlook-rain">💧 Moy. ' + esc(rainfall(wetAverage)) + '</span>' +
+        '<span class="outlook-rain">☂ Scénarios pluie ≥ 1 mm : ' + esc(percent(wetShare)) + '</span>' +
+        '<span class="outlook-agreement">Scénarios proches (±2 °C) : <strong>' +
+        esc(percent(nearby)) + '</strong></span>' +
+        '</article>');
+    }
+    if (!cards.length) throw Error("No future ensemble forecasts");
+    $("outlook-grid").innerHTML = cards.join("");
+    $("outlook-status").textContent = "";
+  }
+
+  async function updateOutlook(force = false) {
+    if (state.ensembleRequest) state.ensembleRequest.abort();
+    const controller = new AbortController();
+    state.ensembleRequest = controller;
+    const cacheLocation = "ghe_meteo_ensemble_v1_" + state.location.lat.toFixed(3) +
+      "_" + state.location.lon.toFixed(3);
+    let cached = null;
+    try {
+      cached = JSON.parse(localStorage.getItem(cacheLocation));
+      if (!(cached && numeric(cached.at) &&
+          Date.now() - cached.at < STALE_MS && matchesForecastDay(cached.data))) {
+        cached = null;
+      }
+    } catch (_) { cached = null; }
+    $("outlook-status").textContent = "Chargement des tendances à 35 jours…";
+    $("outlook-grid").innerHTML = "";
+    if (cached) {
+      try { renderOutlook(cached.data); } catch (_) { cached = null; }
+      if (cached && !force && Date.now() - cached.at < CACHE_MS) {
+        state.ensembleRequest = null;
+        return;
+      }
+    }
+    try {
+      const params = new URLSearchParams({
+        latitude: String(state.location.lat),
+        longitude: String(state.location.lon),
+        timezone: "auto",
+        forecast_days: "35",
+        models: "gfs05",
+        daily: "temperature_2m_max,temperature_2m_min,rain_sum"
+      });
+      const response = await fetch(ENSEMBLE_API + "?" + params.toString(), {
+        signal: controller.signal, headers: { "Accept": "application/json" }
+      });
+      if (!response.ok) throw new Error("Service ensemble unavailable");
+      const data = await response.json();
+      if (state.ensembleRequest !== controller) return;
+      renderOutlook(data);
+      try {
+        localStorage.setItem(cacheLocation, JSON.stringify({ at: Date.now(), data }));
+      } catch (_) {}
+    } catch (error) {
+      if (error && error.name === "AbortError") return;
+      if (state.ensembleRequest !== controller) return;
+      if (cached) {
+        $("outlook-status").textContent = "Dernières tendances conservées en mémoire.";
+      } else {
+        $("outlook-status").textContent =
+          "Tendances à plus de 16 jours momentanément indisponibles. Les prévisions détaillées restent accessibles.";
+      }
+    } finally {
+      if (state.ensembleRequest === controller) state.ensembleRequest = null;
+    }
+  }
+
   function renderDays() {
     const day = state.payload && state.payload.daily;
     if (!day) return;
@@ -219,6 +338,8 @@
         esc(percent(day.precipitation_probability_max[i])) + '</strong></span>' +
         '<span class="card-metric"><span class="metric-label">💧 Pluie prévue</span><strong class="rain-mm">' +
         esc(rainfall(day.rain_sum[i])) + '</strong></span></span>' +
+        '<span class="card-confidence"><span>Fiabilité relative*</span><strong class="' +
+        relativeConfidence(i)[1] + '">' + relativeConfidence(i)[0] + '</strong></span>' +
         '<span class="card-cta">' + (selected ? "Masquer le détail ↑" : "Voir heure par heure ↓") + '</span></button>';
     }).join("");
     grid.setAttribute("aria-busy", "false");
@@ -316,6 +437,7 @@
 
   async function updateForecast(force = false) {
     if (state.request) state.request.abort();
+    updateOutlook(force);
     const request = new AbortController();
     state.request = request;
     state.loading = true;
@@ -339,7 +461,7 @@
     } else {
       state.payload = null;
       state.updated = 0;
-      $("forecast-grid").innerHTML = '<p class="empty-state">Chargement des sept jours…</p>';
+      $("forecast-grid").innerHTML = '<p class="empty-state">Chargement des seize jours…</p>';
       $("forecast-grid").setAttribute("aria-busy", "true");
       $("detail-section").hidden = true;
       setNotice("Récupération des prévisions météorologiques…");
