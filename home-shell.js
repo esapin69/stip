@@ -34,7 +34,6 @@
     weekPast: false,
     dayFocus: parisIso(),
     homeMode: "planning",
-    homeFlipped: false,
     dateJumpMonth: "",
     tableauFocus: false,
     communicationTab: "chat",
@@ -2447,94 +2446,185 @@
     const base = canonicalShift(code).toLowerCase();
     return ["m","j","j4","s","n"].includes(base) ? "shift-" + base : "shift-other";
   }
-  function liveStaffEntry(item, featured = false) {
-    const a = item.agents || {}, code = canonicalShift(item.code);
-    const name = agentName(a), key = String(a.source_key || "");
-    const time = liveWorkInterval(item), label = String(shiftMeta(code)[1] || code);
-    const phone = String(a.telephone || "").replace(/\D/g, "");
-    const callable = phone.length >= 6;
-    return '<div class="ghe-live-staff-row ' + liveShiftClass(item.code) +
-      (featured ? ' is-featured' : '') + '">' +
-      '<span class="ghe-live-staff-art" aria-hidden="true">' + (featured ? '🎨' : '👤') + '</span>' +
-      '<button type="button" class="ghe-live-staff-info" data-thf-agent="' + esc(key) +
-      '" ' + (key ? '' : 'disabled') + '><small>' + (featured ? 'PRÉSENT MAINTENANT' : esc(code + ' · ' + label)) +
-      '</small><strong>' + esc(name) + '</strong><span>' + esc(code + ' · ' + (time?.label || 'Horaire non communiqué')) +
-      '</span></button>' +
-      '<button type="button" class="ghe-live-staff-call" ' +
-      (callable ? 'data-thf-chief-call="' + esc(phone) + '" data-thf-chief-name="' + esc(name) + '"' :
-        'disabled title="Numéro indisponible"') +
-      ' aria-label="' + esc(callable ? 'Appeler ' + name : 'Numéro indisponible pour ' + name) +
-      '">☎</button></div>';
-  }
-  function liveBackMarkup() {
-    const team = document.getElementById("hcTeamFusion");
-    const allowed = has("planning_team");
-    const now = liveParisClock();
-    const roster = allowed && Array.isArray(team?._thfAgents) ? team._thfAgents : [];
-    const seen = new Set();
-    const working = roster.filter((row) => {
-      if (!liveCurrentlyWorking(row, now)) return false;
-      const key = String(row.agents?.source_key || "").trim() || agentName(row.agents);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    // Personal scheduling is visible only to the same signed-in agent.
-    const self = state.boot?.agent || state.session?.agent || {};
-    const selfShift = (state.boot?.personal || []).find((x) =>
-      String(x.date || "").slice(0,10) === now.day);
-    if (selfShift && has("planning_personal")) {
-      const row = { ...selfShift, agents: self, code: selfShift.code || selfShift.source_value };
-      const key = String(self.source_key || "").trim() || agentName(self);
-      if (!seen.has(key) && liveCurrentlyWorking(row,now)) working.unshift(row);
+
+  // LIVE is a modal over the home page. Staff availability is derived only
+  // from the existing authorized team shift planning, never from an absence report.
+  function liveRoster() {
+    const team=document.getElementById("hcTeamFusion");
+    const allowed=has("planning_team");
+    const loaded=allowed && Array.isArray(team?._thfAgents);
+    const now=liveParisClock();
+    const entries=loaded?[...team._thfAgents]:[];
+    if (has("planning_personal")) {
+      const agent=state.boot?.agent || state.session?.agent || {};
+      const shift=(state.boot?.personal || []).find(x=>String(x.date||"").slice(0,10)===now.day);
+      if (shift) entries.push({...shift,code:shift.code||shift.source_value,agents:agent});
     }
-    const chiefs = new Set((team?._thfChiefs || []).map((x)=>String(x.agents?.source_key || "")));
-    const leadIdx = working.findIndex((x)=>chiefs.has(String(x.agents?.source_key || "")));
-    const lead = leadIdx >= 0 ? working.splice(leadIdx,1)[0] : null;
-    const count = working.length + Number(Boolean(lead));
-    const visible = working.slice(0,3);
-    const pendingActions = pending().slice(0,2);
-    const recent = notifications()
-      .filter((n) => {
-        const t = new Date(noteTimeValue(n)).getTime();
-        return Number.isFinite(t) && t <= Date.now() && Date.now()-t < 86400000;
-      })
-      .sort((a,b) => new Date(noteTimeValue(b)).getTime() - new Date(noteTimeValue(a)).getTime())
-      .slice(0,2);
-    const actionRows = pendingActions.length
-      ? pendingActions.map((a) => '<button type="button" class="ghe-live-item" data-live-show-actions><span class="ghe-live-item-icon">!</span><span><strong>'+
-        esc(a.title || "Action en attente")+'</strong><small>'+esc(a.body || "À traiter")+
-        '</small></span><b aria-hidden="true">›</b></button>').join("")
-      : '<p class="ghe-live-empty">Aucune action en attente.</p>';
-    const staffRows = (lead ? liveStaffEntry(lead,true) : '') + visible.map(x=>liveStaffEntry(x)).join("");
-    const staffEmpty = !allowed && !has("planning_personal")
-      ? "Vous n’avez pas accès au planning de l’équipe."
-      : !allowed ? "Vos horaires sont affichés. Le planning d’équipe n’est pas accessible."
-      : !Array.isArray(team?._thfAgents) ? "Chargement du planning d’équipe…"
-      : "Aucun autre agent en poste avec les horaires actuellement disponibles.";
-    const historyRows = recent.length
-      ? recent.map((n)=>'<button type="button" class="ghe-live-item" data-live-notification="'+
-        esc(actionNoteKey(n))+'"><span class="ghe-live-item-icon">•</span><span><strong>'+
-        esc(n.title || "Information récente")+'</strong><small>'+esc(sinceNotification(n))+
-        '</small></span><b aria-hidden="true">›</b></button>').join("")
-      : '<p class="ghe-live-empty">Aucune activité récente visible.</p>';
-    return '<div class="ghe-live-stream" aria-label="Informations en direct">' +
-      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>En cours</h3><b>'+
-      pendingActions.length + '</b></div>' + actionRows + '</section>' +
-      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Collègues en poste</h3><b>'+
-      (allowed && !Array.isArray(team?._thfAgents) ? "…" : count) + '</b></div>' +
-      (staffRows || '<p class="ghe-live-empty">'+esc(staffEmpty)+'</p>') +
-      ((allowed && (count > visible.length + Number(Boolean(lead)))) ?
-        '<button type="button" class="ghe-live-more" data-thf-open="people">Voir les autres collègues ›</button>' : '') +
-      '</section>' +
-      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Activité récente</h3><b>'+
-      recent.length+'</b></div>'+historyRows+'</section>'+
-      '<p class="ghe-live-source-note">Présence selon les horaires planifiés, pas selon la connexion au site.</p></div>';
+    const seen=new Set(), active=[];
+    for(const item of entries) {
+      if(!liveCurrentlyWorking(item,now))continue;
+      const a=item.agents||{};
+      const identity=String(a.source_key||a.id||"").trim()||agentName(a).toLowerCase();
+      if(!identity||seen.has(identity))continue;
+      seen.add(identity);
+      active.push(item);
+    }
+    const chiefs=new Set((team?._thfChiefs||[]).map(x=>String(x.agents?.source_key||"")));
+    active.sort((a,b)=>{
+      const ca=Number(chiefs.has(String(a.agents?.source_key||"")));
+      const cb=Number(chiefs.has(String(b.agents?.source_key||"")));
+      return cb-ca ||
+        (liveWorkInterval(a)?.start??1440)-(liveWorkInterval(b)?.start??1440) ||
+        agentName(a.agents).localeCompare(agentName(b.agents),"fr");
+    });
+    return {rows:active,allowed,loaded};
   }
-  function renderLiveBack() {
-    if (!state.homeFlipped) return;
-    const host = document.querySelector("#homeView .ghe-live-back-center");
-    if (host) host.innerHTML = liveBackMarkup();
+  function liveStaffEntry(item) {
+    const a=item.agents||{},code=canonicalShift(item.code);
+    const key=String(a.source_key||a.id||"").trim();
+    const hours=liveWorkInterval(item)?.label || "Horaire non communiqué";
+    const icon=String(shiftDefinition(code)?.icon||"●");
+    return '<button type="button" class="ghe-live-staff-row '+liveShiftClass(item.code)+
+      '" data-live-agent="'+esc(key)+'" '+(key?'':'disabled')+
+      ' aria-label="Voir les actions professionnelles de '+esc(agentName(a))+'">'+
+      '<span class="ghe-live-staff-art" aria-hidden="true">'+esc(icon)+'</span>'+
+      '<span class="ghe-live-staff-info"><strong>'+esc(agentName(a))+'</strong>'+
+      '<small>'+esc(code+' · '+hours)+'</small></span>'+
+      '<span class="ghe-live-staff-chevron" aria-hidden="true">›</span></button>';
+  }
+  let liveModalMode="main",liveModalAgent="";
+  function liveCloseDialog() {
+    const modal=document.getElementById("gheLiveDialog");
+    if (!modal)return;
+    if (modal.open && typeof modal.close==="function") modal.close();
+    modal.remove();
+    liveModalMode="main";liveModalAgent="";
+  }
+  function liveModalMain() {
+    const staff=liveRoster(), people=staff.rows;
+    const actions=pending(),notes=notifications().filter(n=>{
+      const at=new Date(noteTimeValue(n)).getTime();
+      return Number.isFinite(at)&&at<=Date.now()&&Date.now()-at<86400000;
+    }).sort((a,b)=>new Date(noteTimeValue(b)).getTime()-new Date(noteTimeValue(a)).getTime()).slice(0,2);
+    const actionRows=actions.length?
+      actions.slice(0,1).map(a=>'<button type="button" class="ghe-live-item" data-live-actions>'+
+        '<span class="ghe-live-item-icon">!</span><span><strong>'+
+        esc(a.title||"Action en attente")+'</strong><small>'+esc(a.body||"Voir le détail")+
+        '</small></span><b aria-hidden="true">›</b></button>').join("")+
+        (actions.length>1?'<button class="ghe-live-view-more" type="button" data-live-actions>Voir les autres actions ›</button>':"")
+      :'<p class="ghe-live-empty">Aucune action en attente.</p>';
+    const empty=!staff.allowed && !has("planning_personal")?"Planning d’équipe non autorisé.":
+      staff.allowed && !staff.loaded?"Chargement du planning…":
+      "Aucun collègue actuellement en service selon les horaires disponibles.";
+    const recent=notes.length?notes.map(n=>'<button type="button" class="ghe-live-item" data-live-notification="'+
+      esc(actionNoteKey(n))+'"><span class="ghe-live-item-icon">•</span><span><strong>'+
+      esc(n.title||"Information récente")+'</strong><small>'+esc(sinceNotification(n))+
+      '</small></span><b aria-hidden="true">›</b></button>').join(""):
+      '<p class="ghe-live-empty">Aucune activité récente visible.</p>';
+    return '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>À traiter</h3><b>'+
+        actions.length+'</b></div>'+actionRows+'</section>'+
+      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Collègues en poste</h3><b>'+
+      (staff.allowed&&!staff.loaded?"…":people.length)+'</b></div>'+
+      (people.length?people.slice(0,2).map(liveStaffEntry).join(""):'<p class="ghe-live-empty">'+esc(empty)+'</p>')+
+      (people.length>2?'<button class="ghe-live-view-more" type="button" data-live-all-agents>Voir les '+people.length+' collègues ›</button>':"")+
+      '</section>'+
+      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Activité récente</h3><b>'+
+      notes.length+'</b></div>'+recent+'</section>'+
+      '<p class="ghe-live-source-note">En poste = selon les horaires prévus, pas une présence physique vérifiée.</p>';
+  }
+  function liveModalContent() {
+    let title="EN DIRECT",back="";
+    let body=liveModalMain();
+    if(liveModalMode==="agents"){
+      const staff=liveRoster(),rows=staff.rows;
+      title="Collègues en poste";
+      back='<button type="button" class="ghe-live-back-link" data-live-back aria-label="Retour au direct">‹</button>';
+      body='<p class="ghe-live-intro">Horaires du planning · '+rows.length+' en poste</p>'+
+        (rows.length?rows.map(liveStaffEntry).join(""):
+          '<p class="ghe-live-empty">Aucun collègue en poste.</p>');
+    } else if(liveModalMode==="agent"){
+      const item=liveRoster().rows.find(x=>String(x.agents?.source_key||x.agents?.id||"")===liveModalAgent);
+      if(!item){liveModalMode="agents";return liveModalContent();}
+      const agent=item.agents||{},code=canonicalShift(item.code);
+      const hours=liveWorkInterval(item)?.label||"Horaire non communiqué";
+      const phone=String(agent.telephone||"").replace(/\D/g,"");
+      const canCall=has("contacts")&&phone.length>=6;
+      title=agentName(agent);
+      back='<button type="button" class="ghe-live-back-link" data-live-back aria-label="Retour aux collègues">‹</button>';
+      body='<div class="ghe-live-person-detail '+liveShiftClass(item.code)+'">'+
+        '<span>Poste prévu</span><strong>'+esc(code+' · '+hours)+'</strong></div>'+
+        '<div class="ghe-live-person-actions">'+
+        (canCall?'<button type="button" data-live-call>☎ Appeler ce collègue</button>':
+         '<p class="ghe-live-empty">Aucun numéro professionnel disponible avec vos accès.</p>')+
+        '</div><p class="ghe-live-source-note">Aucune action pour déclarer un collègue absent ou modifier sa présence.</p>';
+    }
+    return '<div class="ghe-live-dialog-shell"><header class="ghe-live-dialog-head">'+back+
+      '<div class="ghe-live-dialog-title"><span class="ghe-live-dot" aria-hidden="true"></span><strong>'+
+      esc(title)+'</strong></div><button type="button" class="ghe-live-close" data-live-close aria-label="Fermer">×</button></header>'+
+      '<main class="ghe-live-dialog-body">'+body+'</main></div>';
+  }
+  function liveRefreshDialog(restoreFocus=false) {
+    const modal=document.getElementById("gheLiveDialog");
+    if(!modal||!modal.open)return;
+    const scroll=modal.scrollTop;
+    modal.innerHTML=liveModalContent();
+    if(restoreFocus) modal.querySelector("[data-live-back],[data-live-close]")?.focus({preventScroll:true});
+    else modal.scrollTop=scroll;
+  }
+  function liveOpenDialog() {
+    liveCloseDialog();
+    liveModalMode="main";liveModalAgent="";
+    const modal=document.createElement("dialog");
+    modal.id="gheLiveDialog";
+    modal.className="ghe-live-dialog";
+    modal.setAttribute("aria-label","Informations EN DIRECT");
+    modal.innerHTML=liveModalContent();
+    document.body.appendChild(modal);
+    modal.addEventListener("click",async event=>{
+      if(event.target===modal||event.target.closest("[data-live-close]")) {
+        liveCloseDialog();return;
+      }
+      const agentBtn=event.target.closest("[data-live-agent]");
+      if(agentBtn){
+        liveModalAgent=String(agentBtn.dataset.liveAgent||"");
+        if(!liveModalAgent)return;
+        liveModalMode="agent";liveRefreshDialog(true);return;
+      }
+      if(event.target.closest("[data-live-all-agents]")){
+        liveModalMode="agents";liveRefreshDialog(true);return;
+      }
+      if(event.target.closest("[data-live-back]")){
+        liveModalMode=liveModalMode==="agent"?"agents":"main";
+        liveRefreshDialog(true);return;
+      }
+      if(event.target.closest("[data-live-actions]")){
+        liveCloseDialog();openNotifications();return;
+      }
+      const notice=event.target.closest("[data-live-notification]");
+      if(notice){
+        const n=notifications().find(x=>actionNoteKey(x)===notice.dataset.liveNotification);
+        if(n){liveCloseDialog();openNotificationDetail(n);}
+        return;
+      }
+      if(event.target.closest("[data-live-call]")){
+        const item=liveRoster().rows.find(x=>String(x.agents?.source_key||x.agents?.id||"")===liveModalAgent);
+        const phone=String(item?.agents?.telephone||"").replace(/\D/g,"");
+        if(!has("contacts")||phone.length<6)return;
+        const name=agentName(item.agents);
+        liveCloseDialog();
+        if(!window.STIPDutyChiefs?.openCallChoice){
+          try{await window.STIPLoad?.script?.("home-duty-chief.js");}catch{return;}
+        }
+        window.STIPDutyChiefs?.openCallChoice?.(phone,name);
+      }
+    });
+    modal.addEventListener("close",()=>{
+      modal.remove();liveModalMode="main";liveModalAgent="";
+      document.querySelector("[data-live-open]")?.focus({preventScroll:true});
+    },{once:true});
+    if(typeof modal.showModal==="function")modal.showModal();
+    else modal.setAttribute("open","");
+    modal.querySelector("[data-live-close]")?.focus({preventScroll:true});
   }
 
   function homeModeNav(part = "all") {
@@ -2556,23 +2646,23 @@
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
       </div>`;
-    const identity = `<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">${todayFullDateSeparator()}</div>
-      <div class="ghe-home-flip" data-home-flip data-flipped="${state.homeFlipped ? "true" : "false"}">
-        <div class="ghe-home-flip-inner">
-          <div class="ghe-home-header-stack ghe-home-flip-front ghe-home-flip-face"${state.homeFlipped ? " inert" : ""}>
-            <div class="hc-home-identity">${profile()}</div>
-            <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items.map((item) => `<button type="button" data-home-mode="${item.key}" aria-label="${esc(item.label)}" aria-pressed="${active === item.key}" class="${active === item.key ? "active" : ""}"><span class="hc-home-filter-art">${item.art}</span><strong>${esc(item.label)}</strong></button>`).join("")}</nav>
-            <footer class="ghe-home-flip-footer">
-              <button type="button" class="ghe-live-button" data-home-flip-open aria-controls="gheLiveBack" aria-expanded="${state.homeFlipped ? "true" : "false"}" aria-label="Afficher le verso En direct"><span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span><span class="ghe-live-flip-icon" aria-hidden="true">↻</span></button>
-            </footer>
-          </div>
-          <section id="gheLiveBack" class="ghe-home-header-stack ghe-home-flip-back ghe-home-flip-face" aria-label="Verso En direct"${state.homeFlipped ? "" : " inert"}>
-            <header class="ghe-live-back-top"><span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span><button type="button" class="ghe-live-back-button" data-home-flip-close aria-label="Revenir au recto de la carte">↩ Retour</button></header>
-            <div class="ghe-live-back-center">${liveBackMarkup()}</div>
-            ${shortcutsLauncher()}
-          </section>
-        </div>
-      </div>`;
+    const identity = '<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
+      todayFullDateSeparator()+'</div>'+
+      '<div class="ghe-home-header-stack ghe-home-identity-panel">'+
+        '<div class="hc-home-identity">'+profile()+'</div>'+
+        '<nav class="hc-home-filters" data-count="'+items.length+'" aria-label="Accueil STIP">'+
+          items.map(item=>'<button type="button" data-home-mode="'+esc(item.key)+
+            '" aria-label="'+esc(item.label)+'" aria-pressed="'+(active===item.key)+
+            '" class="'+(active===item.key?"active":"")+'"><span class="hc-home-filter-art">'+
+            item.art+'</span><strong>'+esc(item.label)+'</strong></button>').join("")+
+        '</nav>'+
+        '<footer class="ghe-home-live-footer">'+shortcutsLauncher()+
+          '<button type="button" class="ghe-live-button" data-live-open aria-haspopup="dialog" aria-controls="gheLiveDialog" aria-label="Ouvrir En direct">'+
+            '<span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span>'+
+            '<span class="ghe-live-button-arrow" aria-hidden="true">↗</span>'+
+          '</button>'+
+        '</footer>'+
+      '</div>';
     const wrapper = (part === "tools" ? " hc-home-tools-only" : part === "identity" ? " hc-home-identity-only" : "");
     return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}${wrapper}" data-header-compact>${part === "identity" ? "" : tools}${part === "tools" ? "" : identity}</section>`;
   }
@@ -3209,32 +3299,7 @@
     root
       .querySelector("[data-header-date-search]")
       ?.addEventListener("click", openHeaderDateSearch);
-    const flip = root.querySelector("[data-home-flip]");
-    const flipTo = (back) => {
-      if (!flip) return;
-      state.homeFlipped = Boolean(back);
-      flip.dataset.flipped = String(state.homeFlipped);
-      flip.querySelector(".ghe-home-flip-front")?.toggleAttribute("inert", state.homeFlipped);
-      flip.querySelector(".ghe-home-flip-back")?.toggleAttribute("inert", !state.homeFlipped);
-      flip.querySelector("[data-home-flip-open]")?.setAttribute("aria-expanded", String(state.homeFlipped));
-      const target = flip.querySelector(state.homeFlipped ? "[data-home-flip-close]" : "[data-home-flip-open]");
-      if (target) requestAnimationFrame(() => target.focus({ preventScroll: true }));
-      if (state.homeFlipped) renderLiveBack();
-    };
-    flip?.querySelector("[data-home-flip-open]")?.addEventListener("click", () => flipTo(true));
-    flip?.querySelector("[data-home-flip-close]")?.addEventListener("click", () => flipTo(false));
-    flip?.addEventListener("click", (event) => {
-      if (event.target.closest("[data-live-show-actions]")) {
-        event.preventDefault();
-        openNotifications();
-      }
-      const button = event.target.closest("[data-live-notification]");
-      if (button) {
-        const note = notifications().find((x)=>actionNoteKey(x)===button.dataset.liveNotification);
-        if (note) openNotificationDetail(note);
-      }
-    });
-
+    root.querySelector("[data-live-open]")?.addEventListener("click", liveOpenDialog);
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
@@ -3278,7 +3343,6 @@
       (b) =>
         (b.onclick = () => {
           const next = b.dataset.homeMode || "planning";
-          state.homeFlipped = false;
           if (next === "team") {
             location.href = "esprit-equipe.html?entry=home-header";
             return;
@@ -3946,10 +4010,12 @@
       refresh().catch(() => {});
   }, 300000);
   document.addEventListener("stip:team-fusion-updated", (event) => {
-    if (event.detail?.hostId === "hcTeamFusion") renderLiveBack();
+    if (event.detail?.hostId === "hcTeamFusion" && liveModalMode !== "agent") liveRefreshDialog();
   });
+  window.addEventListener("stip:session-ended", liveCloseDialog);
+  window.addEventListener("stip:permissions-live", liveCloseDialog);
   setInterval(() => {
-    if (state.ready && state.homeFlipped && !document.hidden) renderLiveBack();
+    if (state.ready && !document.hidden && liveModalMode !== "agent") liveRefreshDialog();
   }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
