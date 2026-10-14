@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="t">
+<title id="t">Le Nouveau, télévision cartoon souriante</title>
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#E6FCF8"/><stop offset="1" stop-color="#A5DDE3"/></linearGradient></defs>
+<rect width="128" height="128" rx="26" fill="url(#bg)"/>
+<ellipse cx="64" cy="115" rx="40" ry="7" fill="#75B4BF" opacity=".36"/>
+<path d="M61 31 48 15M69 31l15-18" stroke="#35454E" stroke-width="4.3" stroke-linecap="round"/>
+<circle cx="47" cy="14" r="4.4" fill="#F08F84" stroke="#35454E" stroke-width="2.6"/>
+<circle cx="85" cy="13" r="4.4" fill="#F08F84" stroke="#35454E" stroke-width="2.6"/>
+<rect x="22" y="32" width="85" height="77" rx="15" fill="#F0AA80" stroke="#3A393D" stroke-width="5"/>
+<rect x="30" y="40" width="63" height="60" rx="11" fill="#F7D6A4" stroke="#574447" stroke-width="3"/>
+<rect x="35" y="45" width="52" height="49" rx="15" fill="#A8E5D9" stroke="#41565B" stroke-width="3.5"/>
+<path d="M46 71c3-5 7-5 10 0M67 71c3-5 7-5 10 0" fill="none" stroke="#37424B" stroke-width="3.8" stroke-linecap="round"/>
+<path d="M46 79c4 13 26 14 31 0Z" fill="#4F4050" stroke="#37424B" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M58 87c4-3 9-3 13 0" fill="none" stroke="#F58A91" stroke-width="4" stroke-linecap="round"/>
+<circle cx="101" cy="61" r="4.5" fill="#F8E1BD" stroke="#624B50" stroke-width="2.7"/>
+<circle cx="101" cy="79" r="4.5" fill="#F8E1BD" stroke="#624B50" stroke-width="2.7"/>
+<path d="M43 109v8M84 109v8" stroke="#37424B" stroke-width="5" stroke-linecap="round"/>
+<path d="M32 38c14-7 37-8 53-4" stroke="#FFE4C3" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+</svg>
