@@ -244,7 +244,63 @@
 
   const inboxState={root:null,selected:new Set(),status:"",loading:false,conversation:"",selector:null};
 
-  function inboxConversationLabel(c){return conversationTitle(c)}
+  // A conversation is identified by its event, audience and date — never title alone.
+  function inboxConversationLabel(c){return c.event?.title||conversationTitle(c)}
+  function inboxParticipants(c){
+    const list=Array.isArray(c.participants)&&c.participants.length?c.participants:
+      [...(c.others||[]),...(home?.me?[home.me]:[])];
+    return [...new Map(list.filter(p=>p&&p.id).map(p=>[String(p.id),p])).values()];
+  }
+  function inboxInviteState(person){
+    if(person.invite_status==="organizer")return "Organisateur";
+    if(person.invite_status==="declined")return "Invitation refusée · notifications du groupe coupées";
+    if(person.invite_status==="pending")return "Invitation en attente · notifications du groupe coupées";
+    if(person.invite_status==="accepted")return "Invitation acceptée · notifications selon ses préférences";
+    return person.muted?"Notifications du groupe coupées":"Accès à la conversation";
+  }
+  function inboxConversationRow(c){
+    const people=inboxParticipants(c),total=people.length,other=c.others||[],
+      names=other.slice(0,3).map(name).join(", "),
+      more=Math.max(0,other.length-3),
+      day=c.event?.dates?.length?c.event.dates.slice().sort()[0]:"",
+      date=day?new Date(day+"T12:00:00").toLocaleDateString("fr-FR",{day:"numeric",month:"short"}):"",
+      dateCount=Math.max(0,(c.event?.dates?.length||0)-1),
+      context=c.event?[date+(dateCount?" · +"+dateCount+" dates":""),c.event.time_label,c.event.location].filter(Boolean).join(" · "):c.kind==="direct"?"Message privé":"Groupe",
+      inactive=people.filter(p=>p.invite_status==="declined").length,
+      pending=people.filter(p=>p.invite_status==="pending").length,
+      info=[total+" accès lecture / écriture",inactive?inactive+" refus":null,pending?pending+" en attente":null].filter(Boolean).join(" · "),
+      avatars=people.slice(0,4).map(p=>avatar(p,"ch-mini-avatar")).join(""),
+      preview=c.last_message?.body?.trim()||"Aucun message pour le moment";
+    return '<article class="ch-inbox-entry">'+
+      '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'">'+
+      '<span class="ch-inbox-conversation-main"><strong>'+(c.event?.icon?'<span aria-hidden="true">'+esc(c.event.icon)+'</span> ':'')+esc(inboxConversationLabel(c))+'</strong>'+
+      '<small class="ch-inbox-context">'+esc(context)+'</small>'+
+      '<small class="ch-inbox-preview">'+esc(preview)+'</small></span>'+
+      (Number(c.unread||0)?'<b aria-label="'+Number(c.unread||0)+' messages non lus">'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+
+      '</button>'+
+      '<button type="button" class="ch-inbox-audience" data-inbox-members="'+esc(c.id)+'" aria-label="Voir qui peut lire et écrire dans '+esc(inboxConversationLabel(c))+'">'+
+      '<span class="ch-inbox-avatar-stack" aria-hidden="true">'+avatars+'</span>'+
+      '<span><strong>'+esc(names||"Participants")+(more?" +"+more:"")+'</strong><small>'+esc(info)+'</small></span>'+
+      '<span aria-hidden="true">›</span></button></article>';
+  }
+  function inboxParticipantsSheet(c){
+    if(!c)return;
+    const members=inboxParticipants(c),wrap=document.createElement("div");
+    wrap.className="ch-sheet-wrap ch-inbox-people-sheet";
+    const people=members.map(p=>'<div class="ch-inbox-person">'+
+      avatar(p,"ch-thread-avatar")+'<span><strong>'+esc(name(p))+
+      (p.ghe?' · GHE '+esc(p.ghe):'')+'</strong><small>'+esc(inboxInviteState(p))+'</small></span></div>').join("");
+    wrap.innerHTML='<section class="ch-sheet" role="dialog" aria-modal="true" aria-label="Accès à la discussion">'+
+      '<header><div><small>LECTURE ET ÉCRITURE</small><h3>'+esc(inboxConversationLabel(c))+'</h3></div>'+
+      '<button type="button" data-close aria-label="Fermer">×</button></header>'+
+      '<p class="ch-inbox-access-note">Ces '+members.length+' personnes peuvent lire et écrire ici. Un refus conserve l’accès mais désactive les notifications du groupe. Une invitation en attente n’active que les alertes d’invitation.</p>'+
+      '<div class="ch-inbox-people-list">'+people+'</div></section>';
+    const close=()=>wrap.remove();
+    wrap.querySelector("[data-close]").onclick=close;
+    wrap.addEventListener("click",e=>{if(e.target===wrap)close()});
+    document.body.appendChild(wrap);
+    window.STIPOverlayNav?.trackElement?.(wrap,{close});
+  }
 
   function syncInboxSelectionUi(){
     const root=inboxState.root;if(!root?.isConnected)return;
@@ -264,8 +320,14 @@
     const root=inboxState.root;if(!root?.isConnected)return;
     inboxState.selector?.destroy?.();inboxState.selector=null;
     const conversations=(home?.conversations||[]).filter(c=>c.kind==="direct"||c.kind==="group"),
-      discussions=conversations.length?conversations.map(c=>
-        '<button type="button" class="ch-inbox-conversation" data-inbox-conversation="'+esc(c.id)+'"><span><strong>'+esc(inboxConversationLabel(c))+'</strong><small>'+esc(c.last_message?.body||"Conversation prête")+'</small></span>'+(Number(c.unread||0)?'<b>'+Math.min(99,Number(c.unread||0))+'</b>':'<b aria-hidden="true">›</b>')+'</button>'
+      categories=[
+        ["Activités & rendez-vous",conversations.filter(c=>!!c.event)],
+        ["Groupes libres",conversations.filter(c=>c.kind==="group"&&!c.event)],
+        ["Messages privés",conversations.filter(c=>c.kind==="direct")]
+      ],
+      discussions=conversations.length?categories.filter(([,list])=>list.length).map(([heading,list])=>
+        '<div class="ch-inbox-category"><h3>'+esc(heading)+' <span>'+list.length+'</span></h3>'+
+        list.map(inboxConversationRow).join("")+'</div>'
       ).join(""):'<p class="ch-empty">Aucune discussion pour le moment.</p>',
       selectedCount=inboxState.selected.size;
     const pushInfo=pushState==='on'
@@ -295,6 +357,7 @@
     root.querySelector("[data-inbox-all]")?.addEventListener("click",()=>{inboxState.selected=new Set((home?.agents||[]).map(a=>String(a.id||"")).filter(Boolean));syncInboxSelectionUi()});
     root.querySelector("[data-inbox-continue]")?.addEventListener("click",continueInbox);
     root.querySelectorAll("[data-inbox-conversation]").forEach(b=>b.addEventListener("click",()=>openThread(String(b.dataset.inboxConversation||""))));
+    root.querySelectorAll("[data-inbox-members]").forEach(b=>b.addEventListener("click",()=>inboxParticipantsSheet(conversations.find(c=>String(c.id)===String(b.dataset.inboxMembers)))));
     const selectorHost=root.querySelector("[data-inbox-agent-selector]");
     if(selectorHost&&window.STIPAgentSelector?.mountPicker){
       const duty=new Map((home?.on_duty||[]).map(a=>[String(a.id||""),a])),
