@@ -295,6 +295,27 @@
       seen.add(k);
     }
   }
+  const APP_ARTWORK = {
+    personal: "images/icone_app/ghe-personal-v2.svg?v=20261014-art3",
+    tomorrow: "images/icone_app/ghe-tomorrow-v2.svg?v=20261014-art3",
+    team: "images/icone_app/ghe-team-v2.svg?v=20261014-art3",
+    communication: "images/icone_app/ghe-communication-v2.svg?v=20261014-art3",
+    agents: "images/icone_app/ghe-agents-v2.svg?v=20261014-art3",
+    compare: "images/icone_app/ghe-compare-v2.svg?v=20261014-art3",
+    change: "images/icone_app/ghe-change-v2.svg?v=20261014-art3",
+    calendar: "images/icone_app/ghe-calendar-v2.svg?v=20261014-art3",
+    dates: "images/icone_app/ghe-dates-v2.svg?v=20261014-art3",
+    contacts: "images/icone_app/ghe-contacts-v2.svg?v=20261014-art3",
+    responsable: "images/icone_app/ghe-responsable-v2.svg?v=20261014-art3",
+    notes: "images/icone_app/ghe-notes-v2.svg?v=20261014-art3",
+    newagent: "images/icone_app/ghe-newagent-v2.svg?v=20261014-art3",
+    upload: "images/icone_app/ghe-upload-v2.svg?v=20261014-art3",
+    admin: "images/icone_app/ghe-admin-v2.svg?v=20261014-art3",
+    access: "images/icone_app/ghe-access-v2.svg?v=20261014-art3",
+    activity: "images/icone_app/ghe-activity-v2.svg?v=20261014-art3",
+    assistant: "images/icone_app/ghe-assistant-v2.svg?v=20261014-art3",
+    places: "images/icone_app/illustration-lieux.svg?v=20261014-art3",
+  };
   function ensureCard(box, key, title, cls) {
     let b = box.querySelector(`[data-app="${key}"]`);
     if (!canApp(key)) {
@@ -307,6 +328,15 @@
       b.className = `hc-app ${cls}`;
       b.dataset.app = key;
       b.innerHTML = `<span>${ICON[key] || ""}</span><strong>${title}</strong>`;
+    }
+    const artwork = APP_ARTWORK[key];
+    if (artwork) {
+      b.classList.add("is-illustrated");
+      const image = b.querySelector(":scope > span > img");
+      if (image?.getAttribute("src") !== artwork) {
+        const holder = b.querySelector(":scope > span");
+        if (holder) holder.innerHTML = `<img src="${artwork}" alt="" aria-hidden="true" loading="lazy" decoding="async">`;
+      }
     }
     b.style.display = "";
     b.onclick = (e) => openApp(key, e);
