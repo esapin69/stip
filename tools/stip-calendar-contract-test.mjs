@@ -44,8 +44,8 @@ assert(core.includes(".stip-month-calendar{touch-action:pan-y!important}"),
   "month swipe surface must preserve native vertical panning");
 assert(/\.stip-week-day\{[\s\S]*?min-height:0!important/.test(core),
   "default week cards still carry the profile fixed height");
-assert(core.includes(".stip-week-day.stip-week-personal-layout{min-height:112px!important}"),
-  "profile-only fixed week height is missing");
+assert(core.includes(".stip-week-day.stip-week-personal-layout{min-height:100px!important}"),
+  "profile week compact height is missing");
 assert(core.includes("align-content:start!important"),
   "default week body still vertically reserves empty profile space");
 assert(core.includes(".stip-week-personal-line .stip-week-next-bridge"),
@@ -70,9 +70,9 @@ assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("
 
 assert(calendarRules.includes("stip-month-table.css") && calendarRules.includes("stip-month-table.js"),
   "human-readable calendar contract does not protect the shared monthly table");
-assert(mainIndex.includes("stip-month-table.css?v=20260928-month-badges1") && mainIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
+assert(mainIndex.includes("stip-month-table.css?v=20261015-week-shift-symbols1") && mainIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
   "main app does not load the shared monthly table");
-assert(metiersIndex.includes("stip-month-table.css?v=20260928-month-badges1") && metiersIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
+assert(metiersIndex.includes("stip-month-table.css?v=20261015-week-shift-symbols1") && metiersIndex.includes("stip-month-table.js?v=20260928-month-badges1"),
   "métiers does not load the shared monthly table");
 assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
   "shared monthly table no longer accepts all active date sources");
@@ -170,7 +170,7 @@ assert(homeJs.includes("STIPWeekEngine?.currentState") &&
        homeJs.includes("state.weekOffset !== 0 || state.weekPast") &&
        homeJs.includes("visibleWeek[0]?.iso"),
   "home no longer guarantees a reliable return to the current week/day");
-assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal reserved-row layout");
+assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal compact layout");
 assert(homeJs.includes("stip-week-work-marker"), "home worked shift does not use the smaller canonical marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");
 assert(agentJs.includes('class="stip-month-event"'), "agent month secondary events are still raw <small> text");
@@ -184,6 +184,73 @@ for (const [name, source] of [
 ]) {
   assert(!source.includes("stip-week-divider"), `${name} still renders the personal-only week divider`);
 }
+// One canonical badge shared by month, week, and legends.
+assert(homeJs.includes("function weekWorkSymbol(raw)") &&
+       homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(raw)") &&
+       homeJs.includes("weekWorkSymbol(x.row?.code || x.code)") &&
+       homeJs.includes("weekTimeHtml(x.time)"),
+  "personal week does not reuse monthly badge with effective shift hours");
+assert(homeJs.includes("shiftTime(raw, planningRowForDate(iso) || {})") &&
+       homeJs.includes('"shift:" + raw + "|" + time'),
+  "home legend does not follow the displayed shifts/hours");
+assert(planning.includes("workSymbol") &&
+       planning.includes("STIPMonthTable?.shiftBadgeHtml?.(raw)") &&
+       planning.includes('"shift:" + raw + "|" + time'),
+  "planning legend must use the monthly symbol / actual hours");
+assert(monthTableCss.includes(".stip-week-day,.stip-legend-item") &&
+       core.includes(".stip-week-work-hours") &&
+       visual.includes(".stip-week-work-hours"),
+  "month badge styling must work in weekly cards and legends");
+assert(core.includes(".stip-week-events.is-empty") &&
+       core.includes("display:none!important"),
+  "empty weekly event rows still take space");
+assert(calendarRules.includes("Représentation hebdomadaire des shifts"),
+  "weekly shift reference not documented");
+
+const beginDay = homeJs.indexOf("  function dayCard(x, cls = ");
+const endDay = homeJs.indexOf("  function weekEventsForDay(x)", beginDay);
+assert(beginDay >= 0 && endDay > beginDay, "home personal renderer missing");
+if (beginDay >= 0 && endDay > beginDay) {
+  const source = homeJs.slice(beginDay, endDay);
+  const escape = value => String(value).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const defs = {
+    J4:{is_working:true,icon:"🟠",label:"J4"},
+    RH:{is_working:false,icon:"🛋️",label:"Repos hebdomadaire"}
+  };
+  const symbol = value => '<span class="stip-month-shift-badge code-j4">' + escape(value) + '</span>';
+  const timeBegin = homeJs.indexOf("  function weekTimeHtml(v)");
+  const timeEnd = homeJs.indexOf("  function weekWorkSymbol(raw)", timeBegin);
+  const formatHours = new Function("esc", homeJs.slice(timeBegin,timeEnd) + "return weekTimeHtml;")(escape);
+  const renderCard = new Function("canonicalShift","shiftDefinition","shiftStatusIcon",
+    "shiftMeta","workShiftIcon","shiftIconHtml","esc","weekTimeHtml","weekWorkSymbol",
+    "weekEventsForDay","weekEventBadges","state",
+    source + "return dayCard;")(
+    x=>x,x=>defs[x],x=>defs[x]?.is_working?"" : defs[x]?.icon,
+    x=>["other",defs[x]?.label||x],x=>defs[x]?.is_working?defs[x]?.icon:"",
+    x=>escape(defs[x]?.icon||""),escape,formatHours,symbol,
+    x=>x.events||[],x=>x.events?.length?'<span class="stip-week-events">📌</span>':
+      '<span class="stip-week-events is-empty"></span>',
+    {dayFocus:"2026-10-14"}
+  );
+  const sample=(code,date,time,events=[])=>({
+    code,d:new Date(date+"T12:00:00"),iso:date,dow:3,today:true,
+    row:{code},time,events
+  });
+  const worked=renderCard(sample("J4","2026-10-14","10h10–18h00"),"stip-week-day");
+  const off=renderCard(sample("RH","2026-10-15",""),"stip-week-day");
+  assert(worked.includes('stip-month-shift-badge') &&
+         worked.includes("10h10") && worked.includes("18h00") &&
+         !worked.includes('class="hc-shift-code'),
+    "worked day duplicates the code or loses work hours");
+  assert(off.includes("🛋️") && !off.includes('class="hc-shift-code') &&
+         !off.includes('class="hc-status-code') &&
+         !off.includes("stip-week-work-hours"),
+    "nonworking day should show only its status pictogram");
+  assert(worked.includes('data-home-day="2026-10-14"') &&
+         worked.includes('aria-pressed="true"'),
+    "weekly navigation/selection must stay intact");
+}
+
 assert(!homeCss.includes(".hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip"),
   "legacy home week marker sizing layer still exists");
 
