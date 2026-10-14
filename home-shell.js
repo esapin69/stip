@@ -8,9 +8,9 @@
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly",
     STORE = "stip_session_v1",
     HOME_CACHE_KEY = "stip_home_runtime_cache_v2",
-    HOME_CACHE_VERSION = 2,
+    HOME_CACHE_VERSION = 3,
     HOME_CACHE_FRESH_MS = 45 * 1000,
-    HOME_CACHE_MAX_MS = 10 * 60 * 1000,
+    HOME_CACHE_MAX_MS = Number.POSITIVE_INFINITY,
     $ = (s) => document.querySelector(s);
   const state = {
     boot: null,
@@ -596,16 +596,23 @@
       .map((value) => String(value || "").trim())
       .join("::");
   }
+  function homeSnapshotKey() {
+    const active = token();
+    // Never reuse one agent's data after a different code/session logs in.
+    return active ? HOME_CACHE_KEY + ":" + active.slice(-16) : "";
+  }
   function readHomeCache() {
+    const key = homeSnapshotKey();
+    if (!key || window.STIPPreview?.active) return null;
     try {
-      const cached = JSON.parse(sessionStorage.getItem(HOME_CACHE_KEY) || "null");
-      if (
-        !cached ||
-        cached.version !== HOME_CACHE_VERSION ||
-        cached.owner !== cacheOwner() ||
-        !cached.boot ||
-        Date.now() - Number(cached.at || 0) > HOME_CACHE_MAX_MS
-      )
+      const cached = JSON.parse(
+        sessionStorage.getItem(key) || localStorage.getItem(key) || "null"
+      );
+      if (!cached || cached.version !== HOME_CACHE_VERSION ||
+          cached.owner !== cacheOwner() || cached.session !== key ||
+          !cached.boot || !Number.isFinite(Number(cached.at)) ||
+          Number(cached.at) > Date.now() + 60000 ||
+          Date.now() - Number(cached.at) > HOME_CACHE_MAX_MS)
         return null;
       return cached;
     } catch {
@@ -613,23 +620,28 @@
     }
   }
   function writeHomeCache() {
-    if (!state.boot || !state.ready) return;
-    try {
-      sessionStorage.setItem(
-        HOME_CACHE_KEY,
-        JSON.stringify({
-          version: HOME_CACHE_VERSION,
-          owner: cacheOwner(),
-          at: state.lastRefreshAt || Date.now(),
-          boot: state.boot,
-          home: state.home || { actions: [], notifications: [] },
-        }),
-      );
-    } catch {}
+    const key = homeSnapshotKey();
+    if (!key || !state.boot || !state.ready || window.STIPPreview?.active) return;
+    const snapshot = JSON.stringify({
+      version: HOME_CACHE_VERSION,
+      session: key,
+      owner: cacheOwner(),
+      at: state.lastRefreshAt || Date.now(),
+      boot: state.boot,
+      home: state.home || { actions: [], notifications: [] },
+    });
+    try { sessionStorage.setItem(key, snapshot); } catch {}
+    try { localStorage.setItem(key, snapshot); } catch {}
   }
   function clearHomeCache() {
     try {
-      sessionStorage.removeItem(HOME_CACHE_KEY);
+      for (const store of [sessionStorage, localStorage]) {
+        for (let i = store.length - 1; i >= 0; i--) {
+          const key = store.key(i) || "";
+          if (key === HOME_CACHE_KEY || key.startsWith(HOME_CACHE_KEY + ":"))
+            store.removeItem(key);
+        }
+      }
     } catch {}
   }
   function hydrateHomeCache() {
@@ -3551,6 +3563,20 @@
     state.homeMode = "planning";
     resetWeekToCurrent();
     state.tableauFocus = false;
+    state.renderSig = "";
+    render();
+  });
+  // A background network refresh replaces the visible snapshot without a loader.
+  window.addEventListener("stip:read-cache-updated", (event) => {
+    if (!state.ready || window.STIPPreview?.active ||
+        event.detail?.action !== "bootstrap" || !token()) return;
+    const fresh = event.detail.data;
+    if (!fresh || typeof fresh !== "object") return;
+    state.bootStatus = "ready";
+    state.bootError = "";
+    state.lastRefreshAt = Date.now();
+    publishBoot(fresh);
+    writeHomeCache();
     state.renderSig = "";
     render();
   });
