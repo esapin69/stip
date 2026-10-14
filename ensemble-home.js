@@ -219,6 +219,7 @@ window.STIPLeisure={
  refresh,
  pendingHTML,
  notificationItems,
+ knownEventIds:()=>ready?events.map(x=>String(x.id)):[],
  dayItems,
  weekHTML:(start,end)=>cards(start,end),
  monthHTML:key=>{const [a,b]=firstLastOfMonth(key);return cards(a,b)},
