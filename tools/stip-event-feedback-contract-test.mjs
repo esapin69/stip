@@ -5,6 +5,8 @@ const ui = read("event-feedback.js");
 const home = read("home-shell.js");
 const api = read("supabase/functions/stip-actions/index.ts");
 const loader = read("stip-loader.js");
+const manager = read("responsable-event-feedback.js");
+const managerPage = read("responsable.html");
 
 const must = (ok, msg) => {
   if (!ok) {
@@ -35,6 +37,29 @@ must(api.includes("bucket:'cc'"), "CC candidates must be classified explicitly")
 must(api.includes("Lié au domaine de cet événement"), "domain recipient routing missing");
 must(!api.includes("un point nécessite un suivi"), "generic off-topic mail draft must not return");
 must(api.includes("Précision :"), "mail draft must be able to include the user's useful precision");
+
+must(
+  ui.includes('week.insertAdjacentElement("beforebegin", host)'),
+  "feedback must be placed before the week separator"
+);
+must(
+  ui.includes("submit.hidden = false;") && ui.includes("followUp = false"),
+  "ordinary feedback should not require an extra follow-up answer"
+);
+must(
+  !ui.includes("data-feedback-dismiss"),
+  "pending cards must only disappear after a saved response"
+);
+must(
+  ui.includes("reasonCode === code ?"),
+  "selected professional reason must stay visible"
+);
+must(
+  managerPage.includes('id="respEventFeedbackLog"') &&
+    manager.includes('action:"manager_event_feedback"') &&
+    manager.includes("function exportCsv()"),
+  "manager must be able to consult and export official internal feedback"
+);
 
 const build = loader.match(/V = "(\d{8})-[^"]+"/);
 must(build && build[1] >= "20261001", "feedback cache build predates the outcome runtime");
