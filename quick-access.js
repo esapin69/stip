@@ -358,7 +358,8 @@
     });
   }
   const APP_ICON = {
-    meteo: '<span aria-hidden="true">🌦️</span>',
+    meteo: '<img src="images/icone_app/illustration-meteo.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
+    nouveau: '<img src="images/icone_app/illustration-nouveau.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
     personal:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M7.5 14h3M13.5 14h3M7.5 18h3"/></svg>',
     tomorrow:
@@ -383,7 +384,7 @@
     contacts:
       '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
     places:
-      '<img src="images/icone_app/visiter-les-lieux.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
+      '<img src="images/icone_app/illustration-lieux.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
     responsable:
       '<img src="images/icone_app/responsable.webp?v=20260922-responsable2" alt="" aria-hidden="true">',
     resp_tracking:
