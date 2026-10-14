@@ -1994,8 +1994,7 @@
       const levels = WHEELCHAIR_LOCATIONS[building.key] || [];
       let quantity = 0;
       let level = "";
-      let persistenceOverride = "";
-      const selectedPlaces = new Set();
+      let locationDraft = "";
 
       const wrap = document.createElement("div");
       wrap.className = "tb-modal-wrap";
@@ -2023,28 +2022,6 @@
         );
       };
 
-      const searchHere = async () => {
-        const result = await chooseLocationShortcut({
-          buildingKey: building.key,
-          ...(level ? { level } : {}),
-        });
-        if (!result || !wrap.isConnected) return;
-        level = result.level || level;
-        renderStructuredReview(
-          wrap,
-          {
-            type: "spot",
-            buildingKey: building.key,
-            quantity,
-            level,
-            location: result.location || "",
-            persistence: persistenceOverride || "normal",
-            persistenceOverride,
-          },
-          { back: level ? renderPlaces : renderLevels, close },
-        );
-      };
-
       const renderLevels = () => {
         wrap.innerHTML =
           '<section class="tb-confirm tb-spot-wizard">' +
@@ -2066,7 +2043,6 @@
           button.addEventListener("click", () => {
             level = String(button.dataset.level || "");
             quantity = 0;
-            selectedPlaces.clear();
             renderQuantity();
           });
         });
@@ -2105,163 +2081,77 @@
         bindQuantity();
       };
 
+      // La précision est une saisie native unique, quelle que soit la zone choisie.
+      // Le bouton reste toujours visible ; seules les saisies vides sont refusées.
       const renderPlaces = () => {
-        const quickPlaces = wheelchairFieldSpots(building.key, level);
-        const primaryPlaces = quickPlaces.filter((place) => /ascenseur|local.*fauteuil/.test(norm(place.value)) || place.featured);
-        const secondaryPlaces = primaryPlaces.length ? quickPlaces.filter((place) => !primaryPlaces.includes(place)) : [];
-        const visiblePlaces = primaryPlaces.length ? primaryPlaces : quickPlaces;
-        const placeMarkup = (place) => {
-          const selected = selectedPlaces.has(place.value);
-          return '<button type="button" class="tb-place-toggle' + (place.featured ? " is-featured" : "") + (selected ? " is-selected" : "") + '" data-place="' + esc(place.value) + '" aria-pressed="' + selected + '">' +
-            '<span class="tb-place-icon" aria-hidden="true">' + esc(place.icon || "📍") + '</span>' +
-            '<span class="tb-place-copy"><strong>' + esc(place.label) + '</strong>' +
-            (place.nearby?.length ? '<small>' + esc(place.nearby.join(' · ')) + '</small>' : '') + '</span></button>';
-        };
-        const selectedValues = [...selectedPlaces];
-        const vagueSelections = selectedValues.filter((value) =>
-          isVagueWheelchairSpotLocation(value),
-        );
-        const activeVague = vagueSelections[0] || "";
-        const contextOptions = activeVague
-          ? wheelchairLevelContextOptions(building.key, level, selectedValues)
-          : [];
-        const couldUsePrecision = vagueSelections.length > 0;
-        const elevatorFollowup = !!activeVague && norm(activeVague).includes("ascenseur");
-
         wrap.innerHTML =
-          '<section class="tb-confirm tb-spot-wizard">' +
+          '<section class="tb-confirm tb-spot-wizard tb-spot-location-step">' +
             '<div class="tb-wizard-head"><button type="button" class="tb-wizard-back" data-back-quantity aria-label="Retour au nombre de fauteuils">‹</button><div class="tb-confirm-icon">📍</div></div>' +
-            wizardProgress(3) +
-            "<h3>Où exactement ?</h3>" +
-            "<p>" + esc(building.label) + " · " + esc(wheelchairLevelDisplay(level)) + " · 🦽 ×" + esc(quantity) + "</p>" +
-            '<div class="tb-place-choices tb-field-spot-choices">' +
-              visiblePlaces.map(placeMarkup).join("") +
-              '<button type="button" class="other" data-place-other><strong>Autre endroit…</strong></button>' +
-            "</div>" +
-            (secondaryPlaces.length ? '<details class="tb-secondary-places"><summary>Services et autres endroits · ' + secondaryPlaces.length + '</summary><div class="tb-place-choices tb-field-spot-choices">' + secondaryPlaces.map(placeMarkup).join("") + '</div></details>' : '') +
-            (activeVague
-              ? '<section class="tb-place-followup' + (elevatorFollowup ? " is-elevator-panel" : "") + '" aria-label="Préciser le repère choisi">' +
-                  '<div class="tb-place-followup-copy"><strong>' + esc(activeVague) + '</strong><small>' +
-                    (elevatorFollowup
-                      ? "Tu peux préciser la sortie ou le côté de l’ascenseur · facultatif."
-                      : "Tu peux ajouter un repère du " + esc(wheelchairLevelDisplay(level)) + " · facultatif.") +
-                  '</small></div>' +
-                  (contextOptions.length
-                    ? '<div class="tb-place-followup-options' + (elevatorFollowup ? " is-elevator-options" : "") + '">' +
-                        contextOptions.map((label) =>
-                          '<button type="button" data-place-followup="' + esc(label) + '">' +
-                            '<span aria-hidden="true">' + (elevatorFollowup ? "🛗" : "＋") + '</span>' +
-                            '<strong>' + esc(label) + '</strong>' +
-                          '</button>'
-                        ).join("") +
-                      '</div>'
-                    : '') +
-                  '<button type="button" class="tb-place-followup-other" data-place-followup-other>Autre précision…</button>' +
-                '</section>'
-              : '') +
-            '<div class="tb-place-temperature" aria-label="Information supplémentaire sur la stabilité">' +
-              '<div class="tb-place-temperature-copy"><strong>Info en plus</strong><small>facultatif · ce n’est pas un lieu</small></div>' +
-              '<div class="tb-place-temperature-actions">' +
-                '<button type="button" class="' + (persistenceOverride === "fast" ? "is-selected" : "") + '" data-place-temperature="fast" aria-pressed="' + (persistenceOverride === "fast" ? "true" : "false") + '"><span>🧊</span><strong>Peut partir vite</strong></button>' +
-                '<button type="button" class="' + (persistenceOverride === "sheltered" ? "is-selected" : "") + '" data-place-temperature="sheltered" aria-pressed="' + (persistenceOverride === "sheltered" ? "true" : "false") + '"><span>🔥</span><strong>Plutôt stable</strong></button>' +
-              "</div>" +
-            "</div>" +
-            '<button type="button" class="tb-review-send tb-place-continue" data-place-continue' + (!selectedPlaces.size ? " disabled" : "") + '>' +
-              '<span>' + (selectedPlaces.size ? "Envoyer" + (selectedValues.length > 1 ? " · " + selectedValues.length + " repères" : "") : "Choisis au moins un endroit") + '</span><b>›</b>' +
-            "</button>" +
-            '<button type="button" class="tb-take-cancel" data-no>Annuler</button>' +
-          "</section>";
+            '<h3>Où exactement ?</h3>' +
+            '<p>' + esc(building.label) + ' · ' + esc(wheelchairLevelDisplay(level)) + ' · 🦽 ×' + esc(quantity) + '</p>' +
+            '<form class="tb-spot-location-form" data-spot-location-form>' +
+              '<input type="text" class="tb-spot-location-input" name="location" maxlength="160" required autocomplete="off" enterkeyhint="done" aria-label="Endroit exact" placeholder="Écris l’endroit précis…">' +
+              '<p class="tb-spot-location-error" data-spot-error role="alert" hidden></p>' +
+              '<button type="submit" class="tb-review-send tb-place-continue" data-place-continue><span>Valider</span><b>›</b></button>' +
+            '</form>' +
+          '</section>';
 
         wrap.querySelector("[data-back-quantity]")?.addEventListener("click", renderQuantity);
-
-        wrap.querySelectorAll("[data-place]").forEach((button) => {
-          button.addEventListener("click", () => {
-            const value = String(button.dataset.place || "");
-            if (selectedPlaces.has(value)) selectedPlaces.delete(value);
-            else selectedPlaces.add(value);
-            if (isVagueWheelchairSpotLocation(value) || activeVague) renderPlaces();
-            else {
-              button.classList.toggle("is-selected", selectedPlaces.has(value));
-              button.setAttribute("aria-pressed", String(selectedPlaces.has(value)));
-              const next = wrap.querySelector("[data-place-continue]");
-              next.disabled = !selectedPlaces.size;
-              next.querySelector("span").textContent = selectedPlaces.size ? "Envoyer" + (selectedPlaces.size > 1 ? " · " + selectedPlaces.size + " repères" : "") : "Choisis au moins un endroit";
-            }
-          });
+        const form = wrap.querySelector("[data-spot-location-form]");
+        const input = form?.querySelector('input[name="location"]');
+        const submit = form?.querySelector("[data-place-continue]");
+        const error = form?.querySelector("[data-spot-error]");
+        if (input) input.value = locationDraft;
+        input?.addEventListener("input", () => {
+          locationDraft = input.value;
+          input.setCustomValidity("");
+          if (error) error.hidden = true;
         });
-
-        wrap.querySelectorAll("[data-place-followup]").forEach((button) => {
-          button.addEventListener("click", () => {
-            if (!activeVague) return;
-            const context = String(button.dataset.placeFollowup || "").trim();
-            if (!context) return;
-            selectedPlaces.delete(activeVague);
-            selectedPlaces.add(activeVague + " · " + context);
-            renderPlaces();
-          });
-        });
-
-        wrap.querySelector("[data-place-followup-other]")?.addEventListener("click", async () => {
-          if (!activeVague) return;
-          const result = await chooseLocationShortcut({
-            buildingKey: building.key,
-            level,
-          });
-          if (!result || !wrap.isConnected) return;
-          const precise = String(result.location || "").trim();
-          if (!precise) return;
-          selectedPlaces.delete(activeVague);
-          selectedPlaces.add(activeVague + " · " + precise);
-          renderPlaces();
-        });
-
-        wrap.querySelectorAll("[data-place-temperature]").forEach((button) => {
-          button.addEventListener("click", () => {
-            const value = String(button.dataset.placeTemperature || "");
-            persistenceOverride = persistenceOverride === value ? "" : value;
-            wrap.querySelectorAll("[data-place-temperature]").forEach((item) => {
-              const selected = item.dataset.placeTemperature === persistenceOverride;
-              item.classList.toggle("is-selected", selected);
-              item.setAttribute("aria-pressed", String(selected));
-            });
-          });
-        });
-
-        wrap.querySelector("[data-place-continue]")?.addEventListener("click", async () => {
-          if (!selectedPlaces.size) return;
-          const locations = [...selectedPlaces];
-          const payload = {
-            type:"spot", buildingKey:building.key, quantity, level,
-            location:locations.join(" | "),
-            persistence:persistenceOverride || "normal", persistenceOverride,
-          };
-          if (locations.some(isVagueWheelchairSpotLocation)) {
-            renderStructuredReview(wrap, payload, {back:renderPlaces, close});
+        let sending = false;
+        form?.addEventListener("submit", async (event) => {
+          event.preventDefault();
+          if (sending) return;
+          const location = String(input?.value || "").replace(/\\s+/g, " ").trim();
+          if (!location) {
+            input?.setCustomValidity("Écris un endroit avant de valider.");
+            input?.reportValidity();
             return;
           }
-          const submit = wrap.querySelector("[data-place-continue]");
-          if (submit.disabled) return;
+          locationDraft = location;
+          sending = true;
           submit.disabled = true;
           submit.querySelector("span").textContent = "Envoi…";
+          if (error) error.hidden = true;
           try {
-            if (await publishStructuredWheelchair(payload)) close(true);
-            else { submit.disabled = false; submit.querySelector("span").textContent = "Envoyer"; }
-          } catch (error) {
-            submit.disabled = false;
-            submit.querySelector("span").textContent = "Réessayer";
-            let message = wrap.querySelector("[data-send-error]");
-            if (!message) {
-              message = document.createElement("p");
-              message.dataset.sendError = "1";
-              message.setAttribute("role","alert");
-              submit.before(message);
+            const sent = await publishStructuredWheelchair({
+              type: "spot",
+              buildingKey: building.key,
+              quantity,
+              level,
+              location,
+              persistence: inferWheelchairPersistence({ quantity, location }),
+            });
+            if (sent) {
+              close(true);
+              return;
             }
-            message.textContent = error.message || "Envoi impossible.";
+            if (error) {
+              error.textContent = "Envoi non confirmé. Réessaie.";
+              error.hidden = false;
+            }
+          } catch (failure) {
+            if (error) {
+              error.textContent = failure.message || "Envoi impossible. Réessaie.";
+              error.hidden = false;
+            }
+          } finally {
+            sending = false;
+            if (submit.isConnected) {
+              submit.disabled = false;
+              submit.querySelector("span").textContent = "Valider";
+            }
           }
         });
-
-        wrap.querySelector("[data-place-other]")?.addEventListener("click", searchHere);
-        wrap.querySelector("[data-no]")?.addEventListener("click", () => close(false));
       };
 
       const bindQuantity = () => {
@@ -2269,8 +2159,7 @@
           button.addEventListener("click", () => {
             quantity = Number(button.dataset.spotQty) || 0;
             if (quantity) {
-              selectedPlaces.clear();
-              renderPlaces();
+                renderPlaces();
             }
           });
         });
@@ -2289,7 +2178,6 @@
             return;
           }
           quantity = value;
-          selectedPlaces.clear();
           renderPlaces();
         });
         input?.addEventListener("keydown", (event) => {
