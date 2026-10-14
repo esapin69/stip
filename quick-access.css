@@ -191,3 +191,12 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
   .stip-store-browse-plus{width:34px!important;height:34px!important;flex-basis:34px!important;border-radius:11px!important;}
   .stip-store-browse-add>strong{font-size:.82rem!important;}
 }
+
+/* Illustrated GHE application tiles: rich artwork only where space allows. */
+.stip-store-icon.is-illustrated{background:transparent!important;box-shadow:none!important;color:inherit!important;letter-spacing:normal!important}
+.stip-store-icon.is-illustrated>img{display:block;width:100%;height:100%;object-fit:contain;border-radius:inherit}
+.stip-fav-info{display:flex;align-items:center;gap:10px;min-width:0;text-align:left}
+.stip-fav-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stip-fav-open .stip-store-icon{width:40px!important;height:40px!important;flex:0 0 40px!important;border-radius:11px!important}
+.stip-fav-open .stip-store-icon>img{width:100%;height:100%;object-fit:contain}
+@media(max-width:370px){.stip-fav-open .stip-store-icon{width:36px!important;height:36px!important;flex-basis:36px!important}}
