@@ -827,7 +827,7 @@
         reasonOptions.innerHTML = options
           .map(
             ([code, label]) =>
-              `<button type="button" data-reason="${esc(code)}">${esc(label)}</button>`,
+              `<button type="button" data-reason="${esc(code)}" class="${reasonCode === code ? "selected" : ""}">${esc(label)}</button>`,
           )
           .join("");
       if (reasonBox)
@@ -984,7 +984,7 @@
         await post("event_feedback_submit", feedbackBody());
         finish(
           followUp === true
-            ? "Retour enregistré · suivi signalé"
+            ? "Retour enregistré · suivi demandé"
             : "Retour enregistré dans le suivi GHE",
         );
       } catch (e) {
