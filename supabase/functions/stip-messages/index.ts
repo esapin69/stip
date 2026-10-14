@@ -155,9 +155,9 @@ async function notificationSet(ctx:any,body:any){
 async function dmStatus(ctx:any){
   if(ctx?.is_trainee)return{unread:0};
   const{data:member,error}=await db.from("stip_conversation_members")
-    .select("conversation_id,last_read_at").eq("agent_id",ctx.agent.id);
+    .select("conversation_id,last_read_at,muted").eq("agent_id",ctx.agent.id);
   if(error)throw error;
-  const ids=(member||[]).map((x:any)=>String(x.conversation_id));
+  const ids=(member||[]).filter((x:any)=>!x.muted).map((x:any)=>String(x.conversation_id));
   if(!ids.length)return{unread:0};
   const read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
   const{data:convs,error:ce}=await db.from("stip_conversations")
@@ -399,7 +399,7 @@ async function traineeSend(ctx:any,body:any){
 }
 async function home(ctx:any){
   if(ctx?.is_trainee){const messages=await traineeInbox(ctx,false);return{me:ctx.agent,conversations:[],suggestions:[],trainee_messages:messages,unread:messages.filter((x:any)=>!x.read_at).length}}
-  const{data:member,error}=await db.from("stip_conversation_members").select("conversation_id,last_read_at").eq("agent_id",ctx.agent.id);if(error)throw error;
+  const{data:member,error}=await db.from("stip_conversation_members").select("conversation_id,last_read_at,muted").eq("agent_id",ctx.agent.id);if(error)throw error;
   const ids=(member||[]).map((x:any)=>x.conversation_id),read=new Map((member||[]).map((x:any)=>[String(x.conversation_id),x.last_read_at]));
   let conversations:any[]=[];
   if(ids.length){
@@ -450,7 +450,7 @@ async function home(ctx:any){
         participants:people,
         others:people.filter((x:any)=>String(x.id)!==String(ctx.agent.id)),
         last_message:last||null,
-        unread:count||0
+        unread:(member||[]).some((m:any)=>String(m.conversation_id)===String(c.id)&&m.muted)?0:(count||0)
       })
     }
   }
