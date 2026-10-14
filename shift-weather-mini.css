@@ -26,7 +26,8 @@
   display:flex;
   align-items:center;
   justify-content:end;
-  gap:10px;
+  gap:4px 10px;
+  flex-wrap:wrap;
 }
 .hc-shift-detail-time .hc-shift-weather-values strong{
   display:inline-block;
@@ -56,3 +57,6 @@
     padding:8px 10px;
   }
 }
+
+.hc-shift-detail-time .hc-shift-weather-label{max-width:100%;line-height:1.35;text-wrap:balance}
+.hc-shift-detail-time .hc-shift-weather-mini{overflow-wrap:normal}
