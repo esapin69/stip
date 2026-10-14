@@ -935,7 +935,14 @@
     const start = String(row?.start_time || "").slice(0, 5),
       end = String(row?.end_time || "").slice(0, 5);
     if (start || end) return [start, end].filter(Boolean).join("–");
-    return window.STIPShiftRegistry?.time?.(code) || "";
+    // When no personalised hours are recorded, resolve the shift with the
+    // agent's role/team context, including chef-specific schedules.
+    const context = {
+      role: row?.role_metier || row?.role ||
+        state.session?.role_key || window.STIPSession?.role_key || "",
+      team: row?.equipe || row?.team || row?.type_planning || ""
+    };
+    return window.STIPShiftRegistry?.time?.(code, context) || "";
   }
   function weekTimeHtml(v) {
     const parts = String(v || "").match(/\d{1,2}(?::|h)\d{2}/g) || [];
@@ -1010,6 +1017,8 @@
           : esc(time),
       weatherEligible =
         timeParts.length >= 2 &&
+        mode !== "flexible" &&
+        row?.is_working !== false &&
         Boolean(def?.is_working || window.STIPShiftRegistry?.isWorking?.(code)),
       detailRows = [
         adapted
@@ -1029,7 +1038,7 @@
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
     wrap.innerHTML =
-      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong>${weatherEligible ? '<aside class="hc-shift-weather-mini" id="hcShiftWeather" aria-label="Météo pendant le poste" aria-live="polite" hidden></aside>' : ""}</section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
+      `<button class="hc-shift-detail-backdrop" type="button" data-shift-detail-close aria-label="Fermer"></button><section class="hc-shift-detail-sheet code-${esc(codeKey)}" role="dialog" aria-modal="true" aria-labelledby="hcShiftDetailTitle"><button type="button" class="hc-shift-detail-close" data-shift-detail-close aria-label="Fermer">×</button><header><small>PLANNING</small><h2 id="hcShiftDetailTitle">${esc(dateLabel)}</h2><div class="hc-shift-detail-identity"><b>${esc(displayCode)}</b>${identityLabel ? `<span>${esc(identityLabel)}</span>` : ""}</div></header><div class="hc-shift-detail-body">${time ? `<section class="hc-shift-detail-time" aria-label="Horaires"><small>HORAIRES</small><strong>${timeDisplay}</strong>${weatherEligible ? '<aside class="hc-shift-weather-mini" id="hcShiftWeather" aria-label="Prévisions météorologiques limitées aux horaires de ce service" aria-live="polite" hidden></aside>' : ""}</section>` : ""}${detailRows || (!time ? '<p class="hc-shift-detail-empty">Aucune autre information pour ce jour.</p>' : "")}<div class="hc-shift-detail-actions"><button type="button" class="hc-shift-leave-action" data-shift-leave-action>${window.STIPLeaveCart?.has?.(iso)?"Retirer des congés":"🏝️ Demander un congé"}</button></div></div></section>`;
     document.body.appendChild(wrap);
     if (weatherEligible) {
       window.STIPShiftWeather?.mount?.(wrap.querySelector("#hcShiftWeather"), {
