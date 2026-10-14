@@ -265,7 +265,7 @@
         date:day,start:hours[0],end:hours[1],isWorking:working
       }).catch?.(()=>{});
     }
-    host._thfSummary={label,longDate,chefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?shiftLabel(myCode):shiftLabel(myCode)};
+    host._thfSummary={label,longDate,chefLabel:chiefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?shiftLabel(myCode):shiftLabel(myCode)};
   }
   function openDay(host){
     activeHost=host;
