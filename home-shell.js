@@ -904,9 +904,15 @@
         }),
       external = [...state.externalActions.values()].flat(),
       leisure = window.STIPLeisure?.notificationItems?.() || [];
-    return [...native, ...external, ...leisure].filter(
-      (n) => !state.dismissedNotifications[actionNoteKey(n)],
-    );
+    const knownLeisure=new Set(window.STIPLeisure?.knownEventIds?.()||[]);
+    return [...native, ...external, ...leisure].filter((n)=>{
+      // L'invitation système est remplacée par l'état courant de la proposition.
+      // Pas de doublon ni de vieille invitation après confirmation ou refus.
+      const isOldInvite=String(n.type||"").toLowerCase()==="leisure_invite"&&
+        String(n.source_type||"")==="stip_leisure_events"&&
+        knownLeisure.has(String(n.source_ref||n.metadata?.event_id||""));
+      return !isOldInvite&&!state.dismissedNotifications[actionNoteKey(n)];
+    });
   }
   function agentName(a = {}) {
     return (
