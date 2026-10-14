@@ -14,6 +14,30 @@
       month >= 6 && month <= 8 ? "summer" :
       month >= 9 && month <= 11 ? "autumn" : "winter";
   }
+  // One reusable, static vector illustration for the day card and details popup.
+  // Its weather layers are selected by data-sky; no scripts, images or animations.
+  function staticWeatherArt(identity) {
+    return ("<span class=\"thf-weather-art\" aria-hidden=\"true\"><svg viewBox=\"0 0 176 154\" xmlns=\"http://www.w3.org/2000/svg\" focusable=\"false\" preserveAspectRatio=\"xMidYMid meet\">" +
+      "<defs><radialGradient id=\"thf-wx-sun\" cx=\"35%\" cy=\"27%\" r=\"75%\"><stop stop-color=\"#fff6b9\"/><stop offset=\".53\" stop-color=\"#ffdc70\"/><stop offset=\"1\" stop-color=\"#ffb74e\"/></radialGradient>" +
+      "<linearGradient id=\"thf-wx-cloud\" x1=\"0\" y1=\"0\" x2=\".32\" y2=\"1\"><stop stop-color=\"#fff\"/><stop offset=\".48\" stop-color=\"#f1f8fc\"/><stop offset=\"1\" stop-color=\"#b9d1df\"/></linearGradient>" +
+      "<linearGradient id=\"thf-wx-cloud-back\" x1=\"0\" y1=\"0\" x2=\".2\" y2=\"1\"><stop stop-color=\"#f7fcff\"/><stop offset=\".55\" stop-color=\"#dbe9f2\"/><stop offset=\"1\" stop-color=\"#a0bacb\"/></linearGradient>" +
+      "<linearGradient id=\"thf-wx-rain\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop stop-color=\"#7ab5d2\"/><stop offset=\"1\" stop-color=\"#2b84b8\" stop-opacity=\".38\"/></linearGradient></defs>" +
+      "<g class=\"thf-art-sun\"><circle cx=\"118\" cy=\"56\" r=\"43\" fill=\"#ffe5a3\" opacity=\".21\"/><circle cx=\"118\" cy=\"56\" r=\"34\" fill=\"#ffe29c\" opacity=\".29\"/>" +
+      "<path d=\"M118 12v11M118 89v11M74 56h11M151 56h11M87 25l8 8M142 81l8 8M87 87l8-8M142 32l8-8\" fill=\"none\" stroke=\"#ffd277\" stroke-width=\"5\" stroke-linecap=\"round\"/>" +
+      "<circle cx=\"118\" cy=\"56\" r=\"25\" fill=\"url(#thf-wx-sun)\"/><circle cx=\"110\" cy=\"47\" r=\"13\" fill=\"#fff8cf\" opacity=\".38\"/></g>" +
+      "<g class=\"thf-art-cloud-back\"><path d=\"M15 91C3 89 3 74 11 68c7-6 15-6 23-4 7-16 19-22 33-17 13 4 18 11 21 20 13-4 25 3 27 14 2 12-6 19-21 20H26C21 101 17 97 15 91Z\" fill=\"#7196ac\" opacity=\".18\" transform=\"translate(1 6)\"/>" +
+      "<path d=\"M15 91C3 89 3 74 11 68c7-6 15-6 23-4 7-16 19-22 33-17 13 4 18 11 21 20 13-4 25 3 27 14 2 12-6 19-21 20H26C21 101 17 97 15 91Z\" fill=\"url(#thf-wx-cloud-back)\"/>" +
+      "<path d=\"M29 68c10-4 14-15 25-16 12-3 22 3 27 13\" fill=\"none\" stroke=\"#fff\" opacity=\".49\" stroke-width=\"4\" stroke-linecap=\"round\"/></g>" +
+      "<g class=\"thf-art-cloud-main\"><path d=\"M45 116C30 114 25 104 31 91c5-10 13-13 25-12 4-15 18-24 34-23 16 1 28 11 32 24 13-6 29 1 31 14 3 14-5 23-22 24H50Z\" fill=\"#7b9db4\" opacity=\".18\" transform=\"translate(1 6)\"/>" +
+      "<path d=\"M45 116C30 114 25 104 31 91c5-10 13-13 25-12 4-15 18-24 34-23 16 1 28 11 32 24 13-6 29 1 31 14 3 14-5 23-22 24H50Z\" fill=\"url(#thf-wx-cloud)\"/>" +
+      "<path d=\"M51 83c11-3 16-17 29-19 16-5 29 1 35 14\" fill=\"none\" stroke=\"#fff\" opacity=\".77\" stroke-width=\"4\" stroke-linecap=\"round\"/>" +
+      "<path d=\"M55 111c23 5 58 6 84-2\" fill=\"none\" stroke=\"#9ab8c9\" opacity=\".25\" stroke-width=\"3\" stroke-linecap=\"round\"/></g>" +
+      "<g class=\"thf-art-rain\" fill=\"none\" stroke=\"url(#thf-wx-rain)\" stroke-width=\"4.1\" stroke-linecap=\"round\"><path d=\"M60 123l-9 17M84 121l-9 17M108 123l-9 17M132 120l-9 17\"/></g>" +
+      "<g class=\"thf-art-snow\" fill=\"#fff\" stroke=\"#8cb9d0\" stroke-width=\"1.5\"><circle cx=\"56\" cy=\"132\" r=\"4\"/><circle cx=\"84\" cy=\"140\" r=\"4.5\"/><circle cx=\"116\" cy=\"132\" r=\"4\"/><path d=\"M139 136v12m-6-6h12m-10-5 8 10m0-10-8 10\" fill=\"none\" stroke-linecap=\"round\"/></g>" +
+      "<g class=\"thf-art-fog\" fill=\"none\" stroke=\"#fff\" opacity=\".88\" stroke-linecap=\"round\"><path d=\"M24 118c21-7 35 7 59 1s42-5 63-2\" stroke-width=\"7\"/><path d=\"M9 135c21-6 44 3 68 2s42-6 69-2\" stroke-width=\"5\"/><path d=\"M40 148c24-4 49 2 82-2\" stroke-width=\"3.5\"/></g>" +
+      "<g class=\"thf-art-lightning\"><path d=\"M104 118L85 139h16l-7 15 29-28h-17l8-8Z\" fill=\"#f5c754\" stroke=\"#fff2ba\" stroke-width=\"1.4\" stroke-linejoin=\"round\"/></g>" +
+      "</svg></span>").replaceAll("thf-wx-", "thf-wx-" + identity + "-");
+  }
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const dateObj = (v) => new Date(String(v).slice(0,10) + "T12:00:00");
   const iso = (d) => [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
@@ -297,7 +321,7 @@
     host.innerHTML=
       '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence")+'">'+
       '<div class="thf-weather-stage thf-weather-sky" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
-      '<span class="thf-weather-art" aria-hidden="true"></span>'+
+      staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,''))+
       '<button type="button" class="thf-day-trigger" data-thf-open="day" '+
       'aria-label="Détails du '+esc(longDate)+'">'+
       '<span class="thf-day-heading" aria-label="'+esc(longDate)+'"><span>'+esc(dateWeek)+'</span>'+
@@ -361,7 +385,7 @@
     const info=(host._thfNotes||[]).length;
     const sky=host.querySelector?.(".thf-weather-sky")?.dataset?.sky||"unknown";
     showDialog('<header class="thf-popup-hero thf-weather-sky" data-sky="'+esc(sky)+'">'+
-      '<span class="thf-weather-art" aria-hidden="true"></span>'+
+      staticWeatherArt('popup-'+String(s.day).replace(/[^0-9]/g,''))+
       '<h2>'+esc(s.longDate)+'</h2>'+
       '<div class="thf-popup-weather-summary">'+
       (s.working?'<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>':
