@@ -33,7 +33,7 @@
     weekFull: false,
     weekPast: false,
     dayFocus: parisIso(),
-    monthDayFocus: parisIso(),
+    monthDayFocus: "",
     homeMode: "planning",
     dateJumpMonth: parisIso().slice(0, 7),
     tableauFocus: false,
@@ -288,6 +288,17 @@
     state.renderSig = "";
     render();
   }
+  function selectVisibleWeekDay(iso) {
+    // Keep the normal week navigation for a day outside the displayed range
+    // (notably the next-Monday bridge). Only ordinary selection is local.
+    if (!selectedWeek().some((day) => day.iso === iso)) return jumpToDate(iso);
+    state.dayFocus = iso;
+    document.querySelectorAll("#homeView .hc-week-context-master [data-home-day]").forEach((day) => {
+      const active = day.dataset.homeDay === iso;
+      day.classList.toggle("selected", active);
+      day.setAttribute("aria-pressed", String(active));
+    });
+  }
   function dateIsoLocal(d) {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   }
@@ -414,8 +425,12 @@
     if (!/^\d{4}-\d{2}-\d{2}$/.test(selected)) return;
     state.monthDayFocus = selected;
     state.dateJumpMonth = selected.slice(0, 7);
-    state.renderSig = "";
-    render();
+    // Only the month selection changes. Never rebuild the home page for a tap.
+    document.querySelectorAll("#homeView .hc-month-context-master [data-cal-day]").forEach((day) => {
+      const active = day.dataset.calDay === selected;
+      day.classList.toggle("is-selected", active);
+      day.setAttribute("aria-pressed", String(active));
+    });
   }
 
   function weekRangeLabel(w = []) {
@@ -3503,7 +3518,7 @@
           const openDetail =
             b.classList.contains("stip-week-day") &&
             Boolean(planningRowForDate(iso));
-          jumpToDate(iso);
+          selectVisibleWeekDay(iso);
           if (openDetail)
             requestAnimationFrame(() => openShiftDetail(iso));
         }),
@@ -3927,7 +3942,7 @@
     state.weekFull = false;
     state.weekPast = false;
     state.dayFocus = parisIso();
-    state.monthDayFocus = parisIso();
+    state.monthDayFocus = "";
     state.dateJumpMonth = parisIso().slice(0, 7);
     state.renderSig = "";
     state.lastRefreshAt = 0;
