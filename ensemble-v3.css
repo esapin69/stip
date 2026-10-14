@@ -9,7 +9,7 @@ button{cursor:pointer}
 .ev3-header{display:flex;align-items:center;gap:12px;margin:0 0 20px}
 .ev3-header>div{flex:1}
 .ev3-header small{font-size:.66rem;font-weight:800;letter-spacing:.16em;color:#32877f}
-.ev3-header h1{font-size:clamp(2.2rem,7vw,3.1rem);margin:0;letter-spacing:-.075em;font-weight:930;line-height:1.1}
+.ev3-header h1{font-size:clamp(1.55rem,5.7vw,2.65rem);margin:0;letter-spacing:-.075em;font-weight:930;line-height:1.1}
 .ev3-header h1 span{color:#10a68f}
 .ev3-back,.ev3-header>button{color:#194b59;text-decoration:none;border:1px solid #d2e4e7;border-radius:14px;background:#fff;padding:10px 13px;min-height:44px;font-weight:800}
 .ev3-header>button{font-size:1.3rem;line-height:1}
@@ -116,7 +116,7 @@ button:disabled{cursor:not-allowed;opacity:.6}
 @media(max-width:460px){
  .ev3-page{padding:12px 13px 64px}
  .ev3-header{margin-bottom:16px}
- .ev3-header h1{font-size:2.45rem}
+ .ev3-header h1{font-size:clamp(1.55rem,5.7vw,2rem)}
  .ev3-tabs button{font-size:.76rem}
  .ev3-card{gap:8px;padding:12px}
  .ev3-card-icon{flex-basis:43px;height:43px;font-size:1.4rem}
