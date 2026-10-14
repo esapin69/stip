@@ -140,94 +140,130 @@
     };
   }
 
+  // Forecasts are hourly. Interpolate the value at the service's exact minute
+  // instead of reporting min/max during the entire day or shift.
+  function temperatureAt(hourly, iso) {
+    const hour = iso.slice(0, 13) + ":00";
+    const index = hourly.time.indexOf(hour);
+    if (index < 0 || !Number.isFinite(hourly.temperature_2m[index])) return null;
+    const minutes = Number(iso.slice(14, 16));
+    const start = hourly.temperature_2m[index];
+    if (minutes === 0) return Math.round(start);
+    const next = hourly.time[index + 1];
+    const expected = new Date(Date.parse(hour + ":00Z") + 3600000)
+      .toISOString().slice(0, 16);
+    if (next !== expected || !Number.isFinite(hourly.temperature_2m[index + 1])) return null;
+    return Math.round(start + (hourly.temperature_2m[index + 1] - start) * minutes / 60);
+  }
+
+  function weatherKind(code, cloud) {
+    if (!Number.isFinite(code)) return "unknown";
+    if (code >= 95) return "storm";
+    if (code >= 71 && code <= 77 || code >= 85 && code <= 86) return "snow";
+    if ([65, 67, 82].includes(code)) return "heavy-rain";
+    if (code >= 61 && code <= 67 || code >= 80 && code <= 82) return "rain";
+    if (code >= 51 && code <= 57) return "drizzle";
+    if (code >= 45 && code <= 48) return "fog";
+    if (code === 3 || Number.isFinite(cloud) && cloud > 78) return "cloudy";
+    if (code === 1 || code === 2 || Number.isFinite(cloud) && cloud > 28) return "partly";
+    if (code === 0) return "sunny";
+    return "unknown";
+  }
+
+  const LABELS = Object.freeze({
+    sunny: "Ensoleillé", partly: "Éclaircies", cloudy: "Nuageux",
+    fog: "Brouillard", drizzle: "Pluie faible", rain: "Pluie",
+    "heavy-rain": "Pluie forte", storm: "Orage", snow: "Neige",
+    mixed: "Temps variable", unknown: "Prévisions indisponibles"
+  });
+
   function calculate(data, shift) {
-    const h=data.hourly;
-    const numbers=[],chances=[],rainfall=[],codes=[],clouds=[];
-    for(let i=0;i<h.time.length;i++){
-      const ts=h.time[i];
-      if(typeof ts!=="string"||ts<shift.first)continue;
-      if(ts>shift.last||(ts===shift.last&&!shift.lastHasPartialHour))continue;
-      const t=h.temperature_2m[i],risk=h.precipitation_probability[i];
-      if(Number.isFinite(t))numbers.push(t);
-      if(Number.isFinite(risk))chances.push(risk);
-      if(Number.isFinite(h.precipitation?.[i]))rainfall.push(h.precipitation[i]);
-      if(Number.isFinite(h.weather_code?.[i]))codes.push(h.weather_code[i]);
-      if(Number.isFinite(h.cloud_cover?.[i]))clouds.push(h.cloud_cover[i]);
+    const h = data.hourly;
+    const startIso = shift.first.slice(0, 11) + shift.startText.replace("h", ":");
+    const endIso = shift.last.slice(0, 11) + shift.endText.replace("h", ":");
+    const startTemp = temperatureAt(h, startIso);
+    const endTemp = temperatureAt(h, endIso);
+    if (startTemp === null || endTemp === null) return null;
+    const start = Date.parse(startIso + ":00Z");
+    const end = Date.parse(endIso + ":00Z");
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+
+    // Weight each hourly forecast by its actual overlap with the shift.
+    // A single misty hour can no longer label eight hours as "fog".
+    const weights = new Map();
+    let maxRisk = null, total = 0;
+    for (let i = 0; i < h.time.length; i++) {
+      const ts = h.time[i];
+      if (typeof ts !== "string") continue;
+      const bucket = Date.parse(ts + ":00Z");
+      if (!Number.isFinite(bucket) || bucket >= end || bucket + 3600000 <= start) continue;
+      const minutes = Math.max(0, Math.min(end, bucket + 3600000) -
+        Math.max(start, bucket)) / 60000;
+      if (!minutes) continue;
+      const risk = h.precipitation_probability[i];
+      if (Number.isFinite(risk)) maxRisk = Math.max(maxRisk ?? 0, risk);
+      const sky = weatherKind(h.weather_code?.[i], h.cloud_cover?.[i]);
+      if (sky !== "unknown") {
+        weights.set(sky, (weights.get(sky) || 0) + minutes);
+        total += minutes;
+      }
     }
-    if(!numbers.length||!chances.length)return null;
-    const min=Math.round(Math.min(...numbers)),max=Math.round(Math.max(...numbers));
-    const risk=Math.round(Math.max(...chances));
-    const maxRain=rainfall.length?Math.max(...rainfall):null;
-    const mm=maxRain==null?null:Math.round(maxRain*10)/10;
-    const isStorm=codes.some(c=>c>=95);
-    const isSnow=codes.some(c=>c>=71&&c<=77||c>=85&&c<=86);
-    const isRain=codes.some(c=>c>=51&&c<=67||c>=80&&c<=82);
-    const isFog=codes.some(c=>c>=45&&c<=48);
-    const heavy=mm!=null&&mm>=3||codes.some(c=>[65,67,82].includes(c));
-    const cloudy=codes.some(c=>c===3)||(clouds.length&&clouds.reduce((a,b)=>a+b,0)/clouds.length>78);
-    const partial=codes.some(c=>c===2||c===1)||(clouds.length&&clouds.reduce((a,b)=>a+b,0)/clouds.length>28);
-    const wet=maxRain!=null&&maxRain>0;
-    let sky="unknown",description="Conditions non disponibles";
-    if(codes.length){
-      if(isStorm){sky="storm";description="Orage";}
-      else if(isSnow){sky="snow";description="Neige";}
-      else if((isRain||wet)&&heavy){sky="heavy-rain";description="Pluie forte";}
-      else if((isRain||wet)&&(mm!=null&&mm>=0.5||codes.some(c=>c>=61))){sky="rain";description="Pluie";}
-      else if(isRain||wet){sky="drizzle";description="Pluie faible";}
-      else if(isFog){sky="fog";description="Brouillard";}
-      else if(cloudy){sky="cloudy";description="Nuageux";}
-      else if(partial){sky="partly";description="Éclaircies";}
-      else {sky="sunny";description="Ensoleillé";}
+    const ranked = [...weights.entries()].sort((a, b) => b[1] - a[1]);
+    let sky = "unknown";
+    if (ranked.length) {
+      sky = ranked[0][0];
+      if (ranked.length > 1 && ranked[0][1] / total < 0.55) {
+        const fairSkies = ranked.every(([kind]) => ["sunny", "partly", "cloudy"].includes(kind));
+        sky = fairSkies ? "partly" : "mixed";
+      }
     }
-    const thermal=max>=28?"hot":min<=5?"cold":"mild";
-    return {min,max,risk,sky,description,thermal,maxRain:mm};
+    const description = LABELS[sky];
+    const thermal = Math.max(startTemp, endTemp) >= 28 ? "hot" :
+      Math.min(startTemp, endTemp) <= 5 ? "cold" : "mild";
+    return {startTemp, endTemp, risk:maxRisk == null ? null : Math.round(maxRisk),
+      sky, description, thermal};
   }
 
   function show(host, values, shift, options = {}) {
     if (!host?.isConnected) return;
-    const scene=host.closest?.(".thf-weather-sky");
-    if(scene){
-      scene.dataset.sky=values.sky;
-      scene.dataset.thermal=values.thermal;
-      scene.setAttribute("aria-label",values.description+" pendant le service : "+values.min+" à "+values.max+
-        " degrés, risque maximal de précipitations "+values.risk+" %");
+    const scene = host.closest?.(".thf-weather-sky");
+    if (scene) {
+      scene.dataset.sky = values.sky;
+      scene.dataset.thermal = values.thermal;
+      scene.setAttribute("aria-label",
+        shift.startText + " : " + values.startTemp + " degrés, " +
+        shift.endText + " : " + values.endTemp + " degrés. " +
+        values.description + " pendant le service");
     }
     host.replaceChildren();
-    // Carte comparative : garder les mêmes valeurs horaires, uniquement raccourcir les libellés.
-    if (options.compact === true) {
-      const temps = document.createElement("strong");
-      temps.className = "hc-shift-weather-compact-temp";
-      temps.textContent = "🌡 " + values.min + "–" + values.max + " °C";
-      temps.title = "Températures min. et max. pendant le poste";
-      const rain = document.createElement("strong");
-      rain.className = "hc-shift-weather-compact-rain";
-      rain.textContent = "☂ " + values.risk + " %";
-      rain.title = "Risque maximal de précipitations pendant le poste";
-      const state = document.createElement("span");
-      state.className = "hc-shift-weather-state";
-      state.textContent = values.description+
-        (values.maxRain!=null&&values.maxRain>0?" · "+values.maxRain+" mm/h":"");
-      host.append(temps, rain, state);
-      host.hidden = false;
-      return;
+    const endpoints = document.createElement("span");
+    endpoints.className = "thf-weather-endpoints";
+    const point = (time, temp) => {
+      const outer = document.createElement("span");
+      outer.className = "thf-weather-point";
+      const label = document.createElement("small");
+      label.textContent = time;
+      const number = document.createElement("strong");
+      number.textContent = temp + "°";
+      outer.append(label, number);
+      return outer;
+    };
+    const arrow = document.createElement("span");
+    arrow.className = "thf-weather-arrow";
+    arrow.textContent = "→";
+    arrow.setAttribute("aria-hidden", "true");
+    endpoints.append(point(shift.startText, values.startTemp), arrow,
+      point(shift.endText, values.endTemp));
+    const state = document.createElement("span");
+    state.className = "hc-shift-weather-state";
+    state.textContent = values.description;
+    host.append(endpoints, state);
+    if (!options.compact && values.risk !== null) {
+      const rain = document.createElement("span");
+      rain.className = "hc-shift-weather-rain";
+      rain.textContent = "Risque de pluie max. " + values.risk + " %";
+      host.append(rain);
     }
-    const tag = document.createElement("span");
-    tag.className = "hc-shift-weather-label";
-    tag.textContent = "🌦️ PRÉVISIONS PENDANT VOS HORAIRES";
-    const numbers = document.createElement("span");
-    numbers.className = "hc-shift-weather-values";
-    const temps = document.createElement("strong");
-    temps.textContent = "Min. " + values.min + "° · Max. " + values.max + "°";
-    temps.title = "Températures minimale et maximale estimées pendant les heures du service";
-    const rain = document.createElement("strong");
-    rain.className = "hc-shift-weather-rain";
-    rain.textContent = "☂ Risque max. " + values.risk + " %";
-    rain.title = "Risque maximal horaire de précipitations pendant les heures du service";
-    numbers.append(temps, rain);
-    const source = document.createElement("span");
-    source.className = "hc-shift-weather-source";
-    source.textContent = shift.startText + " → " + shift.endText + (shift.overnight ? " (+1 jour)" : "") + " · Lyon · prévisions horaires";
-    host.append(tag, numbers, source);
     host.hidden = false;
   }
 
