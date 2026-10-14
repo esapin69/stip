@@ -27,7 +27,7 @@
     openDocument("responsable.html" + (query ? "?" + query : ""));
   }
   const META = {
-    meteo: { label: "Météo", open: () => openDocument("meteo/") },
+    meteo: { label: "Météo", open: () => openDocument("meteo/?__stip_probe=20261014-meteo-fresh2") },
     nouveau: { label: "Le Nouveau", open: () => openDocument("le-nouveau.html?v=20261006-3") },
     personal: {
       label: "Planning perso",
