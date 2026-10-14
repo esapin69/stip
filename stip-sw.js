@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261015-flat-no-menu1";
+const STIP_SW_BUILD="20261015-hamburger-shortcuts1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 

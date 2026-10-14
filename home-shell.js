@@ -2157,6 +2157,246 @@
     </section>`;
   }
 
+  function pilotageRoleKey() {
+    const raw = String(
+      state.session?.role_key ||
+        window.STIPSession?.role_key ||
+        state.boot?.role_key ||
+        "",
+    )
+      .trim()
+      .toLowerCase();
+    if (raw === "chef_equipe") return "responsable";
+    if (raw === "brancardier") return "agent";
+    if (raw === "stagiaire") return "stagiaire";
+    if (["admin", "cadre", "responsable", "agent", "stagiaire", "metiers", "visiteur"].includes(raw))
+      return raw;
+    if (has("admin")) return "admin";
+    if (has("cadre_dashboard")) return "cadre";
+    if (has("responsable")) return "responsable";
+    if (has("planning_personal")) return "agent";
+    return "visiteur";
+  }
+  function pilotageLink(item = {}) {
+    if (item.when && !item.when()) return "";
+    const active = item.action && item.action === state.homeMode,
+      inner = `<span class="hc-pilotage-link-icon" aria-hidden="true">${esc(item.icon || "•")}</span><strong>${esc(item.label || "")}</strong><b aria-hidden="true">›</b>`;
+    if (item.href)
+      return `<a class="hc-pilotage-link" href="${esc(item.href)}" aria-label="${esc(item.aria || item.label || "")}">${inner}</a>`;
+    return `<button type="button" class="hc-pilotage-link${active ? " is-current" : ""}" data-app="${esc(item.action || "")}" aria-current="${active ? "page" : "false"}" aria-label="${esc(item.aria || item.label || "")}">${inner}</button>`;
+  }
+  const PILOTAGE_OPEN_STORE = "stip_pilotage_open_v3";
+  function readPilotageOpen() {
+    try {
+      const value = JSON.parse(sessionStorage.getItem(PILOTAGE_OPEN_STORE) || "[]");
+      return new Set(Array.isArray(value) ? value.map(String) : []);
+    } catch {
+      return new Set();
+    }
+  }
+  function writePilotageOpen(openRoles) {
+    try {
+      sessionStorage.setItem(
+        PILOTAGE_OPEN_STORE,
+        JSON.stringify([...openRoles].filter(Boolean)),
+      );
+    } catch {}
+  }
+  function pilotageRoleGroup(
+    key,
+    label,
+    items = [],
+    collapsible = false,
+    openRoles = new Set(),
+  ) {
+    const links = items.map(pilotageLink).filter(Boolean).join("");
+    if (!links) return "";
+    const separator = `<span>${esc(label)}</span>`;
+    if (collapsible)
+      return `<details class="hc-pilotage-group hc-pilotage-group-${esc(key)}" data-pilotage-role="${esc(key)}"${openRoles.has(key) ? " open" : ""}><summary class="stip-section-separator hc-pilotage-separator">${separator}</summary><div class="hc-pilotage-links">${links}</div></details>`;
+    if (key === "responsable")
+      return `<section class="hc-pilotage-group hc-pilotage-group-responsable is-open is-context-entry" data-pilotage-role="responsable" aria-label="Espace Responsable"><div class="hc-pilotage-links">${links}</div></section>`;
+    return `<section class="hc-pilotage-group hc-pilotage-group-${esc(key)} is-open" data-pilotage-role="${esc(key)}"><div class="stip-section-separator hc-pilotage-separator" aria-hidden="true">${separator}</div><div class="hc-pilotage-links">${links}</div></section>`;
+  }
+  function pilotageBlock() {
+    const role = pilotageRoleKey(),
+      groups = [
+        {
+          key: "stagiaire",
+          label: "RACCOURCIS · Stagiaire",
+          items: [
+            {
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
+              icon: "🎬",
+            },
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
+          ],
+        },
+        {
+          key: "agent",
+          label: "RACCOURCIS · Agent",
+          items: [
+            {
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
+              icon: "🎬",
+            },
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "responsable",
+          label: "RACCOURCIS · Responsable",
+          items: [
+            {
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
+              icon: "🎬",
+            },
+            {
+              action: "responsable",
+              label: "Responsable",
+              icon: "🧭",
+              when: () => has("responsable") || has("admin"),
+            },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places"),
+            },
+          ],
+        },
+        {
+          key: "cadre",
+          label: "RACCOURCIS · Cadre",
+          items: [
+            {
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
+              icon: "🎬",
+            },
+            {
+              href: "cadre-activite.html",
+              label: "Activité",
+              icon: "📈",
+              when: () => has("activity") || has("admin"),
+            },
+            {
+              href: "places-app.html?mode=pro",
+              label: "Connaître les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+            {
+              href: "cadre-documents.html",
+              label: "Documents",
+              icon: "▤",
+              when: () => has("cadre_dashboard") || has("admin"),
+            },
+          ],
+        },
+        {
+          key: "metiers",
+          label: "RACCOURCIS · Autres métiers",
+          items: [
+            {
+              href: "le-nouveau.html?v=20261006-dudy2",
+              label: "Dudy au GHE",
+              icon: "🎬",
+            },
+            {
+              href: "places-app.html",
+              label: "Visiter les lieux",
+              icon: "📍",
+              when: () => has("places") || has("admin"),
+            },
+            {
+              href: "metiers/",
+              label: "Accueil métiers",
+              icon: "▦",
+              when: () => has("admin"),
+            },
+          ],
+        },
+        {
+          key: "external",
+          label: "RACCOURCIS · Comptes externes",
+          items: [
+            {
+              href: "external-access.html",
+              label: "Gérer les comptes externes",
+              icon: "🔑",
+              when: () => has("admin"),
+            },
+          ],
+        },
+        {
+          key: "admin",
+          label: "RACCOURCIS · Admin",
+          items: [
+            {
+              href: "dudy-admin.html",
+              label: "Dudy · Préparer dimanche",
+              icon: "🎬",
+              when: () => has("admin"),
+            },
+            {
+              action: "admin",
+              label: "Administration",
+              icon: "⚙️",
+              when: () => has("admin"),
+            },
+          ],
+        },
+      ];
+    // The app catalogue is an admin tool; communication and planning are core workspaces.
+    const navigation = [
+      ...(role === "admin" && has("admin")
+        ? [{ action: "apps", label: "Applications", icon: "▦" }]
+        : []),
+      { action: "planning", label: "Mon espace", icon: "▤" },
+      { action: "communication", label: "Communication", icon: "◉", when: () => has("messages") },
+    ];
+    const common = pilotageRoleGroup("navigation", role === "admin" ? "OUTILS & APPLICATIONS" : "NAVIGATION", navigation);
+    if (role === "visiteur") return common;
+    if (role === "admin") {
+      const openRoles = readPilotageOpen();
+      return `<section class="hc-pilotage-shell is-admin" aria-label="Raccourcis par profil">${groups
+        .map((group) =>
+          pilotageRoleGroup(
+            group.key,
+            group.label,
+            group.items,
+            group.key !== "admin",
+            openRoles,
+          ),
+        )
+        .join("")}${common}</section>`;
+    }
+    const group = groups.find((item) => item.key === role);
+    if (!group) return common;
+    const content = pilotageRoleGroup(
+      group.key,
+      group.label,
+      group.items,
+      false,
+    );
+    return content
+      ? `<section class="hc-pilotage-shell" aria-label="Raccourcis">${common}${content}</section>`
+      : "";
+  }
   function app(kind, title, cls, action) {
     return `<button class="hc-app ${cls}" data-app="${action}"><span>${ICON[kind]}</span><strong>${esc(title)}</strong></button>`;
   }
@@ -2455,6 +2695,9 @@
   function homeModeNav(part = "all") {
     const count=notifications().length;
     const tools='<div class="hc-home-top-tools ghe-home-topbar">'+
+      '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
+        'aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis">'+
+        '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
         (count?'<b>'+count+'</b>':'')+'</button>'+
@@ -2489,6 +2732,30 @@
     const wrapper=part==="tools"?" hc-home-tools-only":part==="identity"?" hc-home-identity-only":"";
     return '<section class="hc-home-top-nav ghe-home-clean-header'+wrapper+'" data-header-compact>'+
       (part==="identity"?"":tools)+(part==="tools"?"":identity)+'</section>';
+  }
+
+  function shortcutsPopup() {
+    const role = pilotageRoleKey(),
+      content = pilotageBlock(),
+      roleLabel =
+        {
+          admin: "ADMIN",
+          cadre: "CADRE",
+          responsable: "RESPONSABLE",
+          agent: "AGENT",
+          stagiaire: "STAGIAIRE",
+          metiers: "AUTRES MÉTIERS",
+        }[role] || "STIP";
+    if (!content) return "";
+    return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog ghe-shortcuts-popup" aria-labelledby="hcShortcutsTitle">
+      <section class="hc-admin-shortcuts-card">
+        <header class="hc-admin-shortcuts-head">
+          <div><small>${esc(roleLabel)}</small><h2 id="hcShortcutsTitle">Raccourcis</h2></div>
+          <button type="button" class="hc-admin-shortcuts-close" data-shortcuts-close aria-label="Fermer les raccourcis">×</button>
+        </header>
+        <div class="hc-admin-shortcuts-body">${content}</div>
+      </section>
+    </dialog>`;
   }
 
   function homeAIEntry() {
@@ -3054,7 +3321,7 @@
     if (state.homeMode === "apps" && !has("admin")) state.homeMode = "planning";
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning";
-    let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
           ${homeModeBody()}
@@ -3122,6 +3389,37 @@
       if(event.target.closest("[data-premium-actions],[data-premium-activity]"))openNotifications();
     });
 
+    root.querySelectorAll("details[data-pilotage-role]").forEach(details =>
+      details.addEventListener("toggle", () => {
+        const key=String(details.dataset.pilotageRole||"").trim();
+        if(!key)return;
+        const openRoles=readPilotageOpen();
+        if(details.open)openRoles.add(key);
+        else openRoles.delete(key);
+        writePilotageOpen(openRoles);
+      })
+    );
+    const shortcutsDialog=root.querySelector("#hcShortcutsDialog");
+    const closeShortcuts=()=>{
+      if(!shortcutsDialog)return;
+      if(typeof shortcutsDialog.close==="function"&&shortcutsDialog.open)
+        shortcutsDialog.close();
+      else shortcutsDialog.removeAttribute("open");
+    };
+    root.querySelectorAll("[data-shortcuts-open]").forEach(button=>
+      button.addEventListener("click",()=>{
+        if(!shortcutsDialog)return;
+        if(typeof shortcutsDialog.showModal==="function")shortcutsDialog.showModal();
+        else shortcutsDialog.setAttribute("open","");
+      })
+    );
+    shortcutsDialog?.querySelector("[data-shortcuts-close]")?.addEventListener("click",closeShortcuts);
+    shortcutsDialog?.addEventListener("click",event=>{
+      if(event.target===shortcutsDialog)closeShortcuts();
+    });
+    shortcutsDialog?.addEventListener("close",()=>{
+      root.querySelector("[data-shortcuts-open]")?.focus({preventScroll:true});
+    });
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
     );

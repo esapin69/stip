@@ -329,3 +329,35 @@
     width:55px!important;height:55px!important;min-width:55px!important;min-height:55px!important;
   }
 }
+
+/* Three-line shortcut access, no Shopify Menu title or drawer. */
+.hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar .ghe-shortcuts-hamburger{
+  box-sizing:border-box!important;grid-column:1;grid-row:1;
+  justify-self:start;align-self:center;display:inline-flex!important;
+  align-items:center;justify-content:center;flex:0 0 48px;
+  width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;
+  margin:0!important;padding:9px!important;border:0!important;border-radius:9px!important;
+  background:transparent!important;color:#1f5265!important;
+  box-shadow:none!important;filter:none!important;
+  cursor:pointer;touch-action:manipulation;
+}
+.hc-home-top-nav[data-header-compact] .ghe-shortcuts-lines{
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:5px;width:26px;height:26px;
+}
+.hc-home-top-nav[data-header-compact] .ghe-shortcuts-lines i{
+  box-sizing:border-box;display:block;width:26px;height:3px;
+  border-radius:3px;background:currentColor;transform:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-shortcuts-hamburger:focus-visible{
+  outline:3px solid #2393a8!important;outline-offset:2px!important;
+}
+.hc-admin-shortcuts-dialog.ghe-shortcuts-popup,
+.hc-admin-shortcuts-dialog.ghe-shortcuts-popup .hc-admin-shortcuts-card{
+  box-shadow:none!important;
+}
+@media(max-width:365px){
+ .hc-home-top-nav[data-header-compact] .ghe-shortcuts-hamburger{
+   width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
+ }
+}
