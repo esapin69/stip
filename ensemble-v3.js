@@ -191,15 +191,27 @@ async function submitTrip(ev){
  state.trips=j.trips||[];state.tab="trips";message("Trajet proposé.");render()}
  catch(err){message(err.message,true);submit.disabled=false}
 }
-function dialog(){
- let el=byId("ev3Dialog");if(!el){el=document.createElement("dialog");el.id="ev3Dialog";el.className="ev3-dialog";document.body.appendChild(el)}
+function dialog(anchorId){
+ let el=byId("ev3Dialog");
+ if(!el){el=document.createElement("dialog");el.id="ev3Dialog";el.className="ev3-dialog";document.body.appendChild(el)}
+ if(document.documentElement.hasAttribute("data-t-est")&&anchorId){
+  const anchor=[...document.querySelectorAll("[data-ev3-open]")].find(x=>x.dataset.ev3Open===anchorId);
+  if(anchor)anchor.insertAdjacentElement("afterend",el);
+ }
  return el;
+}
+function showActivityDialog(d){
+ if(d.open)return;
+ if(document.documentElement.hasAttribute("data-t-est")){
+  d.show();
+  requestAnimationFrame(()=>d.scrollIntoView({block:"nearest",behavior:"smooth"}));
+ }else d.showModal();
 }
 function closeModal(){const d=byId("ev3Dialog");if(d?.open)d.close()}
 function openEvent(id){
  const e=state.events.find(x=>x.id===id);if(!e)return;
  const ds=activeDates(e),choice=e.response?.selected_dates||[], [tone,status]=kindStatus(e);
- const d=dialog();
+ const d=dialog(id);
  d.innerHTML='<header class="ev3-modal-head"><span class="ev3-bigicon">'+escapeHTML(e.icon||"📌")+'</span><div><strong>'+escapeHTML(e.title)+'</strong><small class="ev3-status-text ev3-'+tone+'">'+escapeHTML(status)+'</small></div><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
  '<div class="ev3-modal-body">'+
  (e.description?'<p>'+escapeHTML(e.description)+'</p>':"")+
@@ -223,7 +235,7 @@ function openEvent(id){
  d.querySelector("[data-ev3-invite]")?.addEventListener("click",()=>openInvite(e));
  d.querySelector("[data-ev3-edit]")?.addEventListener("click",()=>openEditor(e));
  d.querySelector("[data-ev3-cancel]")?.addEventListener("click",async()=>{if(!confirm("Annuler cette proposition pour tous les collègues ?"))return;try{const j=await call("save",{id:e.id,revision:e.revision,title:e.title,description:e.description,location:e.location,time_label:e.time_label,dates:e.dates,status:"cancelled",icon:e.icon});state.events=j.events||[];closeModal();message("Proposition annulée.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message}});
- if(!d.open)d.showModal();
+ showActivityDialog(d);
 }
 function openInvite(e,notice=""){
  const event=state.events.find(x=>x.id===e.id)||e;
@@ -269,7 +281,7 @@ function openInvite(e,notice=""){
     j.added?"Invitations envoyées.":"Ces collègues étaient déjà invités.");
   }catch(err){error.textContent=err.message;send.disabled=false}
  };
- if(!d.open)d.showModal();
+ showActivityDialog(d);
 }
 function openEditor(e){
  const d=dialog();
@@ -280,7 +292,7 @@ function openEditor(e){
  d.querySelector("[data-ev3-close]").onclick=closeModal;
  d.querySelector("form").onsubmit=async ev=>{ev.preventDefault();const f=ev.currentTarget;
  try{const j=await call("save",{id:e.id,revision:e.revision,title:f.elements.title.value,icon:f.elements.icon.value,description:f.elements.description.value,location:f.elements.location.value,time_label:f.elements.time.value,dates:e.dates,status:e.status});state.events=j.events||[];closeModal();message("Proposition modifiée.");render()}catch(err){d.querySelector(".ev3-modal-error").textContent=err.message}};
- if(!d.open)d.showModal();
+ showActivityDialog(d);
 }
 async function refresh(){
  try{
