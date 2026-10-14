@@ -342,7 +342,7 @@
     document.body.classList.remove("stip-favorites-open");
   }
   function favRow(k, pinned) {
-    return `<div class="stip-fav-row"><button type="button" class="stip-fav-open" data-fav-open="${k}"><span>${META[k].label}</span><b>›</b></button><button type="button" class="stip-fav-pin ${pinned ? "is-pinned" : ""}" data-fav-pin="${k}" aria-label="${pinned ? "Retirer des favoris" : "Ajouter aux favoris"}">${pinned ? "★" : "☆"}</button></div>`;
+    return `<div class="stip-fav-row"><button type="button" class="stip-fav-open" data-fav-open="${k}"><span class="stip-fav-info">${appStoreIcon(k)}<span class="stip-fav-name">${META[k].label}</span></span><b>›</b></button><button type="button" class="stip-fav-pin ${pinned ? "is-pinned" : ""}" data-fav-pin="${k}" aria-label="${pinned ? "Retirer des favoris" : "Ajouter aux favoris"}">${pinned ? "★" : "☆"}</button></div>`;
   }
   function favoriteFeedback(text) {
     requestAnimationFrame(() => {
@@ -360,61 +360,39 @@
   const APP_ICON = {
     meteo: '<img src="images/icone_app/illustration-meteo.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
     nouveau: '<img src="images/icone_app/illustration-nouveau.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
-    personal:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/><path d="M7.5 14h3M13.5 14h3M7.5 18h3"/></svg>',
-    tomorrow:
-      '<img src="images/icone_app/quick-rocket.svg?v=20260920-appicons2" alt="" aria-hidden="true">',
-    meeting_notes:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
-    team:
-      '<img src="images/icone_app/esprit-equipe.webp?v=20260921-team1" alt="" aria-hidden="true">',
-    leisure: '<span aria-hidden="true">🎉</span>',
-    communication:
-      '<img src="images/icone_app/team-chat.svg?v=20260921-teamchat2" alt="" aria-hidden="true">',
-    agents:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7"/><circle cx="17.5" cy="14.5" r="3"/><path d="m20 17 2 2"/></svg>',
-    compare:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="7" height="14" rx="2"/><rect x="13.5" y="5" width="7" height="14" rx="2"/><path d="M7 9h0M17 9h0M7 13h0M17 13h0"/></svg>',
-    change:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>',
-    calendar:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg>',
-    dates:
-      '<img src="images/icone_app/date-des-agents.svg?v=20260920-appicons1" alt="" aria-hidden="true">',
-    contacts:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-4 2.4-7 6-7s6 3 6 7M16 6.5a2.5 2.5 0 0 1 0 5M17 14c2.5.6 4 2.7 4 5"/></svg>',
-    places:
-      '<img src="images/icone_app/illustration-lieux.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
-    responsable:
-      '<img src="images/icone_app/responsable.webp?v=20260922-responsable2" alt="" aria-hidden="true">',
-    resp_tracking:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h4l2-5 4 10 2-5h4"/><path d="M5 4h14v16H5z"/></svg>',
-    resp_evaluation:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5z"/><path d="M8 9l2 2 5-5M8 15h8"/></svg>',
-    resp_official:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM15 3v5h5M9 13h6M9 17h6M9 9h2"/></svg>',
-    resp_requests:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H8l-4 4z"/><path d="M8 9h8M8 13h5"/></svg>',
-    resp_directory:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
-    resp_agenda:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg>',
-    assistant:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"/><path d="M8 11h.01M12 11h.01M16 11h.01"/></svg>',
-    activity:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>',
-    access:
-      '<img src="images/icone_app/access-lock.webp?v=20260920-accesslock1" alt="" aria-hidden="true">',
-    newagent:
-      '<img src="images/icone_app/nouvel-arrivant-pro.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
-    upload:
-      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5"/><path d="M5 14v5h14v-5"/></svg>',
-    admin:
-      '<img src="images/icone_app/admin.webp?v=20260920-appicons1" alt="" aria-hidden="true">',
+    places: '<img src="images/icone_app/illustration-lieux.svg?v=20261014-illustrated1" alt="" aria-hidden="true">',
+    personal: '<img src="images/icone_app/ghe-personal-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    tomorrow: '<img src="images/icone_app/ghe-tomorrow-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    dialog: '<img src="images/icone_app/ghe-dialog-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    communication: '<img src="images/icone_app/ghe-communication-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    team: '<img src="images/icone_app/ghe-team-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    agents: '<img src="images/icone_app/ghe-agents-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    compare: '<img src="images/icone_app/ghe-compare-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    change: '<img src="images/icone_app/ghe-change-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    calendar: '<img src="images/icone_app/ghe-calendar-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    dates: '<img src="images/icone_app/ghe-dates-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    contacts: '<img src="images/icone_app/ghe-contacts-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    leisure: '<img src="images/icone_app/ghe-leisure-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    meeting_notes: '<img src="images/icone_app/ghe-meeting_notes-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    notes: '<img src="images/icone_app/ghe-notes-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    responsable: '<img src="images/icone_app/ghe-responsable-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_tracking: '<img src="images/icone_app/ghe-resp_tracking-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_evaluation: '<img src="images/icone_app/ghe-resp_evaluation-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_official: '<img src="images/icone_app/ghe-resp_official-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_requests: '<img src="images/icone_app/ghe-resp_requests-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_directory: '<img src="images/icone_app/ghe-resp_directory-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    resp_agenda: '<img src="images/icone_app/ghe-resp_agenda-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    assistant: '<img src="images/icone_app/ghe-assistant-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    activity: '<img src="images/icone_app/ghe-activity-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    newagent: '<img src="images/icone_app/ghe-newagent-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    profile_photo: '<img src="images/icone_app/ghe-profile_photo-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    upload: '<img src="images/icone_app/ghe-upload-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    admin: '<img src="images/icone_app/ghe-admin-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
+    access: '<img src="images/icone_app/ghe-access-v2.svg?v=20261014-illustrated2" alt="" aria-hidden="true">',
   };
   function appStoreIcon(k) {
     const art = APP_ICON[k];
-    if (art) return `<span class="stip-store-icon stip-store-icon-${k}">${art}</span>`;
+    if (art) return `<span class="stip-store-icon stip-store-icon-${k} is-illustrated">${art}</span>`;
     const fallback = (META[k]?.label || k).trim().charAt(0).toUpperCase();
     return `<span class="stip-store-icon stip-store-icon-${k}">${fallback}</span>`;
   }
