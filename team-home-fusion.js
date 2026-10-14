@@ -80,6 +80,41 @@
     return '<button class="thf-agent" type="button" data-thf-agent="'+esc(key)+'" '+(key?"":"disabled")+'><span class="thf-agent-ghe">GHE '+esc(ghe||"—")+'</span><span><strong>'+esc(name(a))+'</strong><small>'+esc(role)+' '+esc(badges)+'</small></span><span aria-hidden="true">›</span></button>';
   }
   function sortPeople(x,y){const nr=z=>Number(String(z.agents?.ghe||"").match(/\d+/)?.[0]||99999);return nr(x)-nr(y)||name(x.agents).localeCompare(name(y.agents),"fr");}
+
+  // Same data definitions and colors as the Esprit d'équipe engine.
+  function shiftClass(code){const k=base(code).toLowerCase();return /^(m|j|j4|s|n)$/.test(k)?"shift-"+k:"shift-other";}
+  function peopleGroups(rows){
+    const groups=new Map();
+    for(const item of rows){
+      const code=String(item.code||""),working=Boolean(window.STIPShiftRegistry?.isWorking?.(code));
+      let label=String(window.STIPShiftRegistry?.displayName?.(code)||shiftLabel(code)||"Non renseigné").trim();
+      const normalized=label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      if(/malad/.test(normalized))label="Maladie";
+      else if(/\brtt\b/.test(normalized))label="RTT";
+      else if(/conge pay/.test(normalized))label="Congé payé";
+      else if(/^rh$|^repos$/.test(normalized))label="Repos";
+      const key=working?"work:"+base(code):"status:"+label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      if(!groups.has(key))groups.set(key,{label,code,working,items:[]});
+      groups.get(key).items.push(item);
+    }
+    return [...groups.values()].sort((a,b)=>Number(b.working)-Number(a.working)||
+      (a.working?Number(definition(a.code)?.sort_order||999)-Number(definition(b.code)?.sort_order||999):0)||
+      a.label.localeCompare(b.label,"fr"));
+  }
+  function peopleGroupHtml(group){
+    const label=group.label,working=group.working;
+    const lowered=label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    const icon=working?"":/malad/.test(lowered)?"🩺":/rtt/.test(lowered)?"🕒":
+      /conge/.test(lowered)?"🏖️":/repos/.test(lowered)?"🛋️":/formation/.test(lowered)?"🎓":
+      /csn/.test(lowered)?"📋":window.STIPShiftRegistry?.icon?.(group.code)||"📅";
+    const time=working?shiftTime(group.code):"";
+    return '<section class="thf-person-group '+(working?shiftClass(group.code):"shift-absence")+'">'+
+      '<div class="stip-section-separator thf-person-group-heading" role="heading" aria-level="3"><span>'+
+      (icon?'<i aria-hidden="true">'+esc(icon)+'</i>':"")+esc(label)+
+      (time?'<small>'+esc(time)+'</small>':"")+
+      '<b>'+group.items.length+'</b></span></div>'+
+      '<div class="thf-person-group-body">'+group.items.slice().sort(sortPeople).map(agentHtml).join("")+'</div></section>';
+  }
   function shiftHtml(code, rows, staff) {
     const s=staffFor(staff,code),target=s?.target_count,planned=s?.planned_count,delta=gap(s),signal=window.STIPFieldIntel?.shiftStatus?.(staff,code)||null;
     const level=signal?.level||(delta==null?"unknown":delta<0?"warning":delta>0?"opportunity":"ok");
@@ -196,14 +231,12 @@
       (uniqueInfos.length?'<button type="button" data-thf-open="notes"><span aria-hidden="true">📌</span><span><strong>À retenir</strong><small>'+uniqueInfos.length+' information'+(uniqueInfos.length>1?"s":"")+'</small></span><b>›</b></button>':"")+
       '</div>';
   }
-  function peoplePanel(host,kind) {
-    const sets=host?._thfSets||{},rows=sets[kind]||[];
-    const panel=document.getElementById("thfPopupResults");
+  function peoplePanel(host,kind){
+    const rows=host?._thfSets?.[kind]||[],panel=document.getElementById("thfPopupResults");
     if(!panel)return;
-    panel.innerHTML=rows.length?rows.map(x=>
-      (kind==="exact"?"":'<div class="thf-other-time"><small>'+esc(shiftLabel(x.code))+
-        (shiftTime(x.code,x)?" · "+esc(shiftTime(x.code,x)):"")+'</small></div>')+
-      agentHtml(x)).join(""):'<p class="thf-empty">Aucun collègue sur ce type de créneau.</p>';
+    const groups=peopleGroups(rows);
+    panel.innerHTML=groups.length?groups.map(peopleGroupHtml).join(""):
+      '<p class="thf-empty">Aucun collègue sur ce type de créneau.</p>';
     document.querySelectorAll("#thfPopup [data-thf-people-tab]").forEach(button=>
       button.setAttribute("aria-pressed",String(button.dataset.thfPeopleTab===kind)));
     panel.scrollTop=0;
