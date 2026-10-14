@@ -2332,11 +2332,15 @@
           ],
         },
       ];
-    const common = pilotageRoleGroup("navigation", "ACCÈS AUX APPLICATIONS", [
-      { action: "apps", label: "Applications", icon: "▦" },
+    // The app catalogue is an admin tool; communication and planning are core workspaces.
+    const navigation = [
+      ...(role === "admin" && has("admin")
+        ? [{ action: "apps", label: "Applications", icon: "▦" }]
+        : []),
       { action: "planning", label: "Mon espace", icon: "▤" },
       { action: "communication", label: "Communication", icon: "◉", when: () => has("messages") },
-    ]);
+    ];
+    const common = pilotageRoleGroup("navigation", role === "admin" ? "OUTILS & APPLICATIONS" : "NAVIGATION", navigation);
     if (role === "visiteur") return common;
     if (role === "admin") {
       const openRoles = readPilotageOpen();
@@ -3315,6 +3319,8 @@
       return;
     }
 
+    // A direct or cached /apps route must not expose the catalogue to non-admin accounts.
+    if (state.homeMode === "apps" && !has("admin")) state.homeMode = "planning";
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning";
     let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
@@ -3620,7 +3626,7 @@
   }
   function openApp(k) {
     if (k === "apps" || k === "planning") {
-      window.STIPRouter?.set?.(k === "apps" ? "apps" : "home");
+      window.STIPRouter?.set?.(k === "apps" && !has("admin") ? "home" : k === "apps" ? "apps" : "home");
       return;
     }
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
