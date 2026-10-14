@@ -157,3 +157,37 @@ html[data-t-est="1"] .t-native-leisure .ev3-dialog[open]{
 .ev3-person.is-restricted{background:#f5f6f6;cursor:default;border-style:dashed}
 .ev3-person.is-restricted input:disabled{opacity:.4}
 .ev3-person-restricted{font-size:.69rem;color:#986252;font-weight:650;line-height:1.25}
+
+
+/* L'invitation propose la compatibilité propre à chaque agent.
+   Chaque date expose tous les états de présence via le même moteur. */
+.ev3-dates-help{margin:8px 0 10px;color:#587786;font-size:.78rem;line-height:1.35}
+.ev3-respond-dates.ev3-respond-dates-advanced{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.ev3-date-choice-card{border:1px solid #d5e8e9;border-left:5px solid #159a80;
+ border-radius:13px;padding:8px;background:#fbfefd;min-width:0}
+.ev3-date-choice-card.is-incompatible{border-left-color:#aab9c0;background:#f6f8f9}
+.ev3-date-choice-card .ev3-date-choice{border:0;padding:5px 4px;display:flex;gap:9px;min-height:40px}
+.ev3-date-choice-card .ev3-date-choice input{width:21px;height:21px;flex:0 0 21px;accent-color:#118f7b}
+.ev3-date-choice-card .ev3-date-choice>span{display:grid;gap:3px;min-width:0}
+.ev3-date-choice-card .ev3-date-choice strong{font-size:.85rem}
+.ev3-date-choice-card .ev3-date-choice small{font-size:.72rem;color:#577887}
+.ev3-date-choice-card .ev3-date-roster{border-top:1px solid #e0ebed;margin-top:4px}
+.ev3-date-roster>summary{list-style:none;display:flex;align-items:center;gap:5px;
+ padding:9px 3px 4px;cursor:pointer;flex-wrap:wrap}
+.ev3-date-roster>summary::-webkit-details-marker{display:none}
+.ev3-roster-qty{padding:5px 7px;border-radius:8px;background:#e5f6ec;color:#177950;
+ font-size:.72rem;font-weight:900}
+.ev3-roster-qty.is-waiting{background:#fff1d8;color:#926e20}
+.ev3-roster-qty.is-refused{background:#fae8ea;color:#a34e55}
+.ev3-date-roster>summary>b{margin-left:auto;color:#246f83;font-weight:850;font-size:.72rem}
+.ev3-roster-groups{padding:6px 2px 4px}
+.ev3-roster-group{padding:4px 0 7px}
+.ev3-roster-heading{display:grid;grid-template-columns:minmax(12px,1fr) auto minmax(12px,1fr);
+ align-items:center;gap:8px;margin:2px 0 8px;color:#5b7a83}
+.ev3-roster-heading::before,.ev3-roster-heading::after{content:"";height:1px;background:#d4e3e7}
+.ev3-roster-heading>span{font-size:.73rem;font-weight:900;text-align:center;white-space:nowrap}
+.ev3-roster-names{display:flex;gap:5px;flex-wrap:wrap}
+.ev3-roster-names>span{padding:6px 8px;border-radius:9px;background:#ebf5f7;
+ font-size:.72rem;font-weight:750;color:#315968}
+.ev3-roster-accepted .ev3-roster-names>span,.ev3-roster-organizer .ev3-roster-names>span{background:#e3f6e9;color:#217248}
+.ev3-roster-declined .ev3-roster-names>span{background:#f8e7e9;color:#91444f}
