@@ -825,3 +825,14 @@
   .hc-days-grid .thf-day-card .thf-day-numbers>button{padding:6px 1px}
   .hc-days-grid .thf-section-label{font-size:.56rem;letter-spacing:0}
 }
+
+/* Une couleur de shift par chef réellement en service. */
+.hc-days-grid .thf-day-card .thf-chief-line.shift-m,
+.hc-days-grid .thf-day-card .thf-chief-line.shift-j,
+.hc-days-grid .thf-day-card .thf-chief-line.shift-j4,
+.hc-days-grid .thf-day-card .thf-chief-line.shift-s,
+.hc-days-grid .thf-day-card .thf-chief-line.shift-n{
+  border-left:3px solid var(--thf-color,#3194a0)!important;
+  padding:3px 0 3px 7px!important;
+  border-radius:2px;
+}
