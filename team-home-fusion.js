@@ -332,6 +332,9 @@
       }).catch?.(()=>{});
     }
     host._thfSummary={day,label,longDate,chefLabel:chiefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?base(myCode).toUpperCase():shiftLabel(myCode)};
+    document.dispatchEvent(new CustomEvent("stip:team-fusion-updated",{
+      detail:{hostId:host.id,day}
+    }));
   }
   function openDay(host){
     activeHost=host;

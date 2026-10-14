@@ -2401,6 +2401,142 @@
       }[value] || ""
     );
   }
+
+  // Live face: only authorized planning and notifications already available in STIP.
+  // "En poste" means the planned shift covers the current Paris clock, never online status.
+  function liveParisClock() {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date());
+    const v = (key) => Number(parts.find((p) => p.type === key)?.value || 0);
+    return { day: parisIso(), minutes: v("hour") * 60 + v("minute") };
+  }
+  function liveWorkInterval(item) {
+    const code = String(item?.code || "").trim();
+    const def = shiftDefinition(code);
+    if (!def?.is_working) return null;
+    const agent = item.agents || {};
+    const value = shiftTime(code, {
+      ...item, role: agent.role || item.role, type_planning: agent.type_planning || item.equipe,
+    });
+    const matches = String(value).match(/\d{1,2}(?::|h)\d{2}/g) || [];
+    if (matches.length < 2) return null;
+    const toMin = (s) => {
+      const [h,m] = s.replace("h",":").split(":").map(Number);
+      return h * 60 + m;
+    };
+    const from = toMin(matches[0]), end = toMin(matches[1]);
+    if (![from,end].every(Number.isFinite)) return null;
+    return { start: from, end, label: String(value) };
+  }
+  function liveCurrentlyWorking(item, now = liveParisClock()) {
+    const time = liveWorkInterval(item);
+    if (!time) return false;
+    const day = String(item?.date || "").slice(0,10);
+    if (day === now.day) {
+      return time.end > time.start
+        ? now.minutes >= time.start && now.minutes < time.end
+        : now.minutes >= time.start;
+    }
+    if (time.end > time.start) return false;
+    const yesterday = dateObj(now.day);
+    yesterday.setDate(yesterday.getDate() - 1);
+    return day === dateIsoLocal(yesterday) && now.minutes < time.end;
+  }
+  function liveShiftClass(code) {
+    const base = canonicalShift(code).toLowerCase();
+    return ["m","j","j4","s","n"].includes(base) ? "shift-" + base : "shift-other";
+  }
+  function liveStaffEntry(item, featured = false) {
+    const a = item.agents || {}, code = canonicalShift(item.code);
+    const name = agentName(a), key = String(a.source_key || "");
+    const time = liveWorkInterval(item), label = String(shiftMeta(code)[1] || code);
+    const phone = String(a.telephone || "").replace(/\D/g, "");
+    const callable = phone.length >= 6;
+    return '<div class="ghe-live-staff-row ' + liveShiftClass(item.code) +
+      (featured ? ' is-featured' : '') + '">' +
+      '<span class="ghe-live-staff-art" aria-hidden="true">' + (featured ? '🎨' : '👤') + '</span>' +
+      '<button type="button" class="ghe-live-staff-info" data-thf-agent="' + esc(key) +
+      '" ' + (key ? '' : 'disabled') + '><small>' + (featured ? 'PRÉSENT MAINTENANT' : esc(code + ' · ' + label)) +
+      '</small><strong>' + esc(name) + '</strong><span>' + esc(code + ' · ' + (time?.label || 'Horaire non communiqué')) +
+      '</span></button>' +
+      '<button type="button" class="ghe-live-staff-call" ' +
+      (callable ? 'data-thf-chief-call="' + esc(phone) + '" data-thf-chief-name="' + esc(name) + '"' :
+        'disabled title="Numéro indisponible"') +
+      ' aria-label="' + esc(callable ? 'Appeler ' + name : 'Numéro indisponible pour ' + name) +
+      '">☎</button></div>';
+  }
+  function liveBackMarkup() {
+    const team = document.getElementById("hcTeamFusion");
+    const allowed = has("planning_team");
+    const now = liveParisClock();
+    const roster = allowed && Array.isArray(team?._thfAgents) ? team._thfAgents : [];
+    const seen = new Set();
+    const working = roster.filter((row) => {
+      if (!liveCurrentlyWorking(row, now)) return false;
+      const key = String(row.agents?.source_key || "").trim() || agentName(row.agents);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    // Personal scheduling is visible only to the same signed-in agent.
+    const self = state.boot?.agent || state.session?.agent || {};
+    const selfShift = (state.boot?.personal || []).find((x) =>
+      String(x.date || "").slice(0,10) === now.day);
+    if (selfShift && has("planning_personal")) {
+      const row = { ...selfShift, agents: self, code: selfShift.code || selfShift.source_value };
+      const key = String(self.source_key || "").trim() || agentName(self);
+      if (!seen.has(key) && liveCurrentlyWorking(row,now)) working.unshift(row);
+    }
+    const chiefs = new Set((team?._thfChiefs || []).map((x)=>String(x.agents?.source_key || "")));
+    const leadIdx = working.findIndex((x)=>chiefs.has(String(x.agents?.source_key || "")));
+    const lead = leadIdx >= 0 ? working.splice(leadIdx,1)[0] : null;
+    const count = working.length + Number(Boolean(lead));
+    const visible = working.slice(0,3);
+    const pendingActions = pending().slice(0,2);
+    const recent = notifications()
+      .filter((n) => {
+        const t = new Date(noteTimeValue(n)).getTime();
+        return Number.isFinite(t) && t <= Date.now() && Date.now()-t < 86400000;
+      })
+      .sort((a,b) => new Date(noteTimeValue(b)).getTime() - new Date(noteTimeValue(a)).getTime())
+      .slice(0,2);
+    const actionRows = pendingActions.length
+      ? pendingActions.map((a) => '<button type="button" class="ghe-live-item" data-live-show-actions><span class="ghe-live-item-icon">!</span><span><strong>'+
+        esc(a.title || "Action en attente")+'</strong><small>'+esc(a.body || "À traiter")+
+        '</small></span><b aria-hidden="true">›</b></button>').join("")
+      : '<p class="ghe-live-empty">Aucune action en attente.</p>';
+    const staffRows = (lead ? liveStaffEntry(lead,true) : '') + visible.map(x=>liveStaffEntry(x)).join("");
+    const staffEmpty = !allowed && !has("planning_personal")
+      ? "Vous n’avez pas accès au planning de l’équipe."
+      : !allowed ? "Vos horaires sont affichés. Le planning d’équipe n’est pas accessible."
+      : !Array.isArray(team?._thfAgents) ? "Chargement du planning d’équipe…"
+      : "Aucun autre agent en poste avec les horaires actuellement disponibles.";
+    const historyRows = recent.length
+      ? recent.map((n)=>'<button type="button" class="ghe-live-item" data-live-notification="'+
+        esc(actionNoteKey(n))+'"><span class="ghe-live-item-icon">•</span><span><strong>'+
+        esc(n.title || "Information récente")+'</strong><small>'+esc(sinceNotification(n))+
+        '</small></span><b aria-hidden="true">›</b></button>').join("")
+      : '<p class="ghe-live-empty">Aucune activité récente visible.</p>';
+    return '<div class="ghe-live-stream" aria-label="Informations en direct">' +
+      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>En cours</h3><b>'+
+      pendingActions.length + '</b></div>' + actionRows + '</section>' +
+      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Collègues en poste</h3><b>'+
+      (allowed && !Array.isArray(team?._thfAgents) ? "…" : count) + '</b></div>' +
+      (staffRows || '<p class="ghe-live-empty">'+esc(staffEmpty)+'</p>') +
+      ((allowed && (count > visible.length + Number(Boolean(lead)))) ?
+        '<button type="button" class="ghe-live-more" data-thf-open="people">Voir les autres collègues ›</button>' : '') +
+      '</section>' +
+      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Activité récente</h3><b>'+
+      recent.length+'</b></div>'+historyRows+'</section>'+
+      '<p class="ghe-live-source-note">Présence selon les horaires planifiés, pas selon la connexion au site.</p></div>';
+  }
+  function renderLiveBack() {
+    if (!state.homeFlipped) return;
+    const host = document.querySelector("#homeView .ghe-live-back-center");
+    if (host) host.innerHTML = liveBackMarkup();
+  }
+
   function homeModeNav(part = "all") {
     const active =
         state.homeMode === "responsable" ? "" : state.homeMode || "planning",
@@ -2432,7 +2568,7 @@
           </div>
           <section id="gheLiveBack" class="ghe-home-header-stack ghe-home-flip-back ghe-home-flip-face" aria-label="Verso En direct"${state.homeFlipped ? "" : " inert"}>
             <header class="ghe-live-back-top"><span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span><button type="button" class="ghe-live-back-button" data-home-flip-close aria-label="Revenir au recto de la carte">↩ Retour</button></header>
-            <div class="ghe-live-back-center"><div class="ghe-live-back-visual" aria-hidden="true"><span></span></div><h2>Votre espace en direct</h2><p>Cette nouvelle face est prête à accueillir les fonctionnalités que nous allons construire.</p></div>
+            <div class="ghe-live-back-center">${liveBackMarkup()}</div>
             ${shortcutsLauncher()}
           </section>
         </div>
@@ -3083,9 +3219,22 @@
       flip.querySelector("[data-home-flip-open]")?.setAttribute("aria-expanded", String(state.homeFlipped));
       const target = flip.querySelector(state.homeFlipped ? "[data-home-flip-close]" : "[data-home-flip-open]");
       if (target) requestAnimationFrame(() => target.focus({ preventScroll: true }));
+      if (state.homeFlipped) renderLiveBack();
     };
     flip?.querySelector("[data-home-flip-open]")?.addEventListener("click", () => flipTo(true));
     flip?.querySelector("[data-home-flip-close]")?.addEventListener("click", () => flipTo(false));
+    flip?.addEventListener("click", (event) => {
+      if (event.target.closest("[data-live-show-actions]")) {
+        event.preventDefault();
+        openNotifications();
+      }
+      const button = event.target.closest("[data-live-notification]");
+      if (button) {
+        const note = notifications().find((x)=>actionNoteKey(x)===button.dataset.liveNotification);
+        if (note) openNotificationDetail(note);
+      }
+    });
+
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
@@ -3796,5 +3945,11 @@
     if (state.ready && !document.hidden && refreshablePlanningRoute())
       refresh().catch(() => {});
   }, 300000);
+  document.addEventListener("stip:team-fusion-updated", (event) => {
+    if (event.detail?.hostId === "hcTeamFusion") renderLiveBack();
+  });
+  setInterval(() => {
+    if (state.ready && state.homeFlipped && !document.hidden) renderLiveBack();
+  }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
