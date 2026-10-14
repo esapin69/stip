@@ -143,14 +143,19 @@
     const groups=new Map();
     for(const x of agents){const code=base(x.code);if(!definition(code)?.is_working)continue;
       if(!groups.has(code))groups.set(code,[]);groups.get(code).push(x);}
+    // Include HCL shifts with zero people; otherwise missing capacity vanishes.
+    for(const entry of staffRows(staff)){const code=base(entry.shift_code||entry.shift||entry.code);
+      if(definition(code)?.is_working&&!groups.has(code))groups.set(code,[]);
+    }
     const ord=(x)=>Number(definition(x)?.sort_order||999);
     const shifts=[...groups].sort((a,b)=>ord(a[0])-ord(b[0])).map(([code,list])=>shiftHtml(code,list,staff)).join("");
     const appts=appointments(opts.boot,day), allNotes=notes(assistant,activity,staff,day), displayed=[...appts,...allNotes];
     host._thfNotes=displayed;host._thfAgents=agents;
     const nDate=dateObj(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
     const openOther=host.querySelector("details.thf-others")?.open||false;
     const openShifts=[...host.querySelectorAll("details.thf-shift[open]")].map(x=>x.querySelector("summary strong")?.textContent||"");
-    host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>Aujourd’hui</h2><p>'+esc(nDate)+'</p></div><button type="button" data-thf-refresh title="Actualiser les effectifs" aria-label="Actualiser les effectifs">↻</button></div>'+
+    host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+(day===today?'Aujourd’hui':'Jour sélectionné')+'</h2><p>'+esc(nDate)+'</p></div><button type="button" data-thf-refresh title="Actualiser les effectifs" aria-label="Actualiser les effectifs">↻</button></div>'+
       '<div class="thf-my"><div><small>MON POSTE</small><strong>'+esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Aucun poste enregistré")+'</strong>'+
       (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div><div><small>MÊME CRÉNEAU</small><strong>'+ (loaded?esc(same.length):"…") +'</strong><span>collègues</span></div></div>'+
       (perm.planning_team?'<section class="thf-colleagues"><h3>Collègues sur mes horaires</h3>'+
