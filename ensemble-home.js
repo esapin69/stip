@@ -10,11 +10,20 @@ let events=[],owner="",busy=null,ready=false,lastFetch=0;
 function visibleDates(x){return (x.visible_dates||x.dates||[]).filter(d=>d>=today())}
 function concerned(x){return x.is_organizer||!!x.invitation_status||!!x.response}
 function hasResponse(x){return !!x.response&&!x.response.declined&&Array.isArray(x.response.selected_dates)&&x.response.selected_dates.length>0}
+// Une proposition seule n'est pas un rendez-vous. Il faut un organisateur présent
+// ET au moins un collègue qui ait accepté cette date, à la révision courante.
 function confirmedDates(x){
-  const visible=visibleDates(x);
-  if(x.is_organizer)return visible;
-  if(!hasResponse(x)||x.response.revision!==x.revision)return [];
-  return visible.filter(day=>x.response.selected_dates.includes(day));
+ const days=visibleDates(x);
+ if(x.status!=="active"||!concerned(x))return [];
+ return days.filter(day=>{
+  const roster=x.date_roster?.[day];
+  if(!Array.isArray(roster))return false; // Pas de preuve de réponse : ne rien annoncer.
+  const organizer=roster.some(p=>p.state==="organizer"&&p.compatible!==false);
+  if(!organizer)return false;
+  if(x.is_organizer)return roster.some(p=>p.state==="accepted");
+  return hasResponse(x)&&x.response.revision===x.revision&&
+   x.response.selected_dates.includes(day);
+ });
 }
 function status(x){
  if(x.status==="cancelled")return ["closed","Annulé"];
@@ -26,23 +35,17 @@ function status(x){
 function iconFor(x){return String(x.icon||"📌")}
 /* Une seule source de rendez-vous, réutilisée par semaine, jour et fenêtre. */
 function dayItems(day){
- if(!ready||!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))return [];
- return events.filter(x=>x.status==="active"&&concerned(x)&&confirmedDates(x).includes(day))
-  .map(x=>{
-   // L'organisateur a proposé plusieurs dates : cela ne signifie PAS qu'un collègue a accepté.
-   const roster=Array.isArray(x.date_roster?.[day])?x.date_roster[day]:[];
-   const attending=roster.filter(person=>person.state==="accepted").length;
-   const proposed=Boolean(x.is_organizer)&&attending===0;
-   const inviteeConfirmed=!x.is_organizer&&hasResponse(x)&&x.response.revision===x.revision;
-   const confirmed=!proposed&&(attending>0||inviteeConfirmed);
-   return {
-    id:String(x.id),icon:iconFor(x),title:String(x.title||"Activité"),
-    time:String(x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer")),
-    confirmed,
-    stateLabel:proposed?"Proposé · réponses attendues":attending>0?attending+" participant"+(attending>1?"s":"")+" confirmé"+(attending>1?"s":""):"Participation confirmée",
-    status:status(x)[1]
-   };
-  });
+ if(!ready||!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(day)))return [];
+ return events.filter(x=>confirmedDates(x).includes(day)).map(x=>{
+  const roster=x.date_roster[day],other=roster.filter(p=>p.state==="accepted").length;
+  return {
+   id:String(x.id),icon:iconFor(x),title:String(x.title||"Activité"),
+   time:String(x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer")),
+   confirmed:true,
+   stateLabel:other?other+" collègue"+(other>1?"s":"")+" confirmé"+(other>1?"s":""):"Rendez-vous confirmé",
+   status:"Confirmé"
+  };
+ });
 }
 
 function cards(from,to){
@@ -52,7 +55,7 @@ function cards(from,to){
  if(!items.length)return "";
  return '<section class="ev3-home-section" aria-label="Mes rendez-vous entre collègues"><div class="ev3-home-head"><strong>ENTRE COLLÈGUES · '+items.length+
  '</strong><a href="sorties-loisirs.html?tab=agenda">Tous mes rendez-vous ›</a></div><div class="ev3-home-items">'+items.slice(0,4).map(x=>{
-  const [tone,indicator]=status(x),days=confirmedDates(x).filter(d=>d>=from&&d<=to);
+  const [tone,indicator]=["confirmed","Confirmé"],days=confirmedDates(x).filter(d=>d>=from&&d<=to);
   return '<button type="button" data-ev3-preview="'+e(x.id)+'" class="ev3-home-card ev3-'+tone+
   '"><span class="ev3-home-icon" aria-hidden="true">'+e(iconFor(x))+'</span><span class="ev3-home-copy"><strong>'+e(x.title)+
   '</strong><small>'+e(days.length?dateLabel(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"")+" · "+
@@ -70,6 +73,31 @@ function pendingHTML(){
  '</span><span><strong>'+e(x.title)+'</strong><small>'+((x.visible_dates||[]).some(d=>d>=today())?'Choisir mes dates':'Aucun horaire commun · répondre ou refuser')+
  '</small></span><b>›</b></button>').join("")+'</div></section>';
 }
+/* Propositions / invitations : à traiter dans la cloche, jamais dans Aujourd'hui,
+   Demain ni les rendez-vous de la semaine tant qu'aucune date n'est validée. */
+function notificationItems(){
+ if(!ready)return [];
+ const next=[];
+ for(const x of events){
+  if(x.status!=="active"||!concerned(x))continue;
+  const upcoming=(x.dates||[]).filter(day=>day>=today());
+  if(!upcoming.length)continue;
+  const guestNeedsAnswer=!x.is_organizer&&!!x.needs_response&&!x.response?.declined;
+  const awaiting=x.is_organizer?upcoming.filter(day=>!confirmedDates(x).includes(day)):[];
+  if(!guestNeedsAnswer&&!awaiting.length)continue;
+  const chosen=guestNeedsAnswer?upcoming:awaiting;
+  next.push({
+    id:"leisure:"+String(x.id)+":"+String(x.revision||0)+":"+(guestNeedsAnswer?"invite":"proposition"),
+    event_id:String(x.id),source:"leisure",category:"agenda",status:"pending",
+    title:iconFor(x)+" "+String(x.title||"Activité")+" · "+(guestNeedsAnswer?"invitation à répondre":"proposition en attente"),
+    body:(guestNeedsAnswer?"Choisir ou refuser les dates : ":"En attente de confirmation : ")+
+      chosen.slice(0,4).map(dateLabel).join(", ")+(chosen.length>4?"…":""),
+    created_at:x.created_at||"",metadata:{event_id:String(x.id),leisure:true}
+  });
+ }
+ return next;
+}
+
 async function refresh(force=false){
  const token=localStorage.getItem(STORE)||"";
  if(!token){events=[];owner="";ready=false;return}
@@ -190,6 +218,7 @@ const go=(id="",tab="agenda")=>{location.href="sorties-loisirs.html?tab="+encode
 window.STIPLeisure={
  refresh,
  pendingHTML,
+ notificationItems,
  dayItems,
  weekHTML:(start,end)=>cards(start,end),
  monthHTML:key=>{const [a,b]=firstLastOfMonth(key);return cards(a,b)},
