@@ -2934,6 +2934,38 @@
     return `<a class="hc-nouveau-tv" href="le-nouveau.html?v=20261006-dudy1" aria-label="Ouvrir Divertissement et Dudy"><span class="hc-nouveau-tv-screen" aria-hidden="true"><span class="hc-nouveau-tv-live">● DIMANCHE</span><span class="hc-nouveau-tv-person">D</span><span class="hc-nouveau-tv-play">▶</span></span><span class="hc-nouveau-tv-copy"><small>DIVERTISSEMENT</small><strong>Dudy au GHE</strong><span>Épisode · Dis-le à Dudy · décisions de la communauté</span></span><b aria-hidden="true">›</b></a>`;
   }
 
+
+  // Un rendez-vous est visible sous sa date, puis dans le récapitulatif de la semaine.
+  // Source unique : futureItems(), déjà dédupliqué et partagé par l'agenda.
+  function homeDayAppointments(day, heading) {
+    const items = futureItems().filter((x) => {
+      const from = String(x.date || "").slice(0, 10);
+      const until = String(x.endDate || x.end_date || x.date || "").slice(0, 10);
+      return Boolean(from && until && from <= day && until >= day);
+    });
+    if (!items.length) return "";
+    const top = items.slice(0, 3).map((x) => {
+      const time = String(x.time || "").trim(),
+        place = String(x.place || "").trim(),
+        kind = futureTypeKey(x);
+      return '<button type="button" class="hc-week-event-key-item hc-week-event-day-row type-' + esc(kind) +
+        '" data-widget-open="future" data-future-id="' + esc(x.id) +
+        '"><span class="hc-week-event-key-icon" aria-hidden="true">' + eventIconHtml(x, "hc-event-svg") +
+        '</span><span class="hc-week-event-copy"><strong>' + esc(x.title) +
+        '</strong><span class="hc-week-event-when">' +
+        (time ? '<b class="hc-week-event-time">' + esc(time) + '</b>' : '') +
+        (place ? '<span class="hc-week-event-place">' + esc(place) + '</span>' : '') +
+        '</span></span><span class="hc-week-event-chevron" aria-hidden="true">›</span></button>';
+    }).join("");
+    const extra = items.length > 3 ?
+      '<button type="button" class="hc-day-appointments-more" data-widget-open="future">Voir les ' +
+      (items.length - 3) + ' autres rendez-vous ›</button>' : "";
+    return '<section class="hc-day-appointments hc-widget-future" aria-label="Rendez-vous ' + esc(heading) +
+      '"><div class="hc-planning-period-separator stip-section-separator is-compact"><span>RENDEZ-VOUS · ' +
+      esc(heading.toUpperCase()) + '</span><strong>' + items.length + '</strong></div>' +
+      '<div class="hc-week-event-key-list">' + top + extra + '</div></section>';
+  }
+
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -2943,7 +2975,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `${mobileAppShortcut()}<main class="hc-widget-zone hc-home-pane hc-home-pane-planning">${window.STIPMeeting?.pendingHTML?.() || ""}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe au jour sélectionné" aria-live="polite"></section>' : ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>JOUR SÉLECTIONNÉ</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline"><span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}${homeModeNav()}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-tomorrow-fusion" aria-label="Mon planning et mon équipe demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
@@ -2961,7 +2993,7 @@
 
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning";
-    let markup = `${homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
           ${homeModeBody()}
@@ -2972,14 +3004,17 @@
       y = onHome ? Math.max(0, window.scrollY || 0) : 0;
     state.renderSig = markup;
     root.innerHTML = markup;
-    window.STIPTeamFusion?.mount?.({
-      day: state.dayFocus || parisIso(),
+    const sharedTeamOptions = {
       personal: state.boot?.personal || [],
       permissions: perms(),
       sourceKey: String(state.session?.agent?.source_key || state.boot?.agent?.source_key || window.STIPSession?.agent?.source_key || ""),
       ghe: String(state.session?.agent?.ghe || state.boot?.agent?.ghe || window.STIPSession?.agent?.ghe || ""),
       boot: state.boot,
-    });
+    };
+    window.STIPTeamFusion?.mount?.({ ...sharedTeamOptions, hostId: "hcTeamFusion", day: parisIso() });
+    const tomorrowDate = dateObj(parisIso());
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    window.STIPTeamFusion?.mount?.({ ...sharedTeamOptions, hostId: "hcTomorrowFusion", day: dateIsoLocal(tomorrowDate) });
     window.STIPDutyChiefs?.render?.();
     window.STIPDutyChiefs?.ensure?.();
     root
