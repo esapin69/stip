@@ -61,7 +61,8 @@ let key='';if(isData){
     return responseFrom(data);
   }
 }
-const t=start(action);const run=(async()=>{try{const r=await baseFetch(input,init);done(t,r.ok);if(isData&&r.ok){const data=await readJsonResponse(r);if(data!==null){writeCache(key,data);return{response:r,data}}}return{response:r,data:null}}catch(e){done(t,false);throw e}})();
+const requestToken=localStorage.getItem('stip_session_v1')||'';
+const t=start(action);const run=(async()=>{try{const r=await baseFetch(input,init);done(t,r.ok);if(isData&&r.ok){const data=await readJsonResponse(r);if(data!==null&&localStorage.getItem('stip_session_v1')===requestToken){writeCache(key,data);return{response:r,data}}}return{response:r,data:null}}catch(e){done(t,false);throw e}})();
 if(!isData)return (await run).response;
 const dataPromise=run.then(x=>x.data!==null?x.data:readJsonResponse(x.response)).finally(()=>inflight.delete(key));inflight.set(key,dataPromise);
 const out=await run;return out.response};
@@ -78,9 +79,9 @@ function agentWarmSession(){
   if(!token)return null;
   if(window.STIPSession)return window.STIPSession;
   try{
-    const saved=JSON.parse(sessionStorage.getItem('stip_session_snapshot_v1')||'null');
+    const saved=JSON.parse(sessionStorage.getItem('stip_session_snapshot_v1')||localStorage.getItem('stip_session_snapshot_persistent_v1')||'null');
     if(saved?.version===1&&saved.token===token.slice(-16)&&
-       Date.now()-Number(saved.at||0)<120000)return saved.session||null;
+       Number.isFinite(Number(saved.at)))return saved.session||null;
   }catch{}
   return null;
 }
@@ -91,9 +92,11 @@ function agentWarmOwner(session=agentWarmSession()){
 }
 function agentWarmKey(kind){const owner=agentWarmOwner();return owner?AGENT_WARM_PREFIX+sessionKey()+':'+encodeURIComponent(owner)+':'+kind:''}
 function clearAgentWarm(kind=''){
-  try{for(let i=sessionStorage.length-1;i>=0;i--){const key=sessionStorage.key(i)||'';
-    if(key.startsWith(AGENT_WARM_PREFIX)&&(!kind||key.endsWith(':'+kind)))sessionStorage.removeItem(key);
-  }}catch{}
+  for(const store of [sessionStorage,localStorage]){
+    try{for(let i=store.length-1;i>=0;i--){const key=store.key(i)||'';
+      if(key.startsWith(AGENT_WARM_PREFIX)&&(!kind||key.endsWith(':'+kind)))store.removeItem(key);
+    }}catch{}
+  }
   if(!kind)agentWarmInflight.clear();
 }
 function readAgentWarm(kind){
@@ -101,7 +104,10 @@ function readAgentWarm(kind){
   if(!config||!token||window.STIPPreview?.active)return null;
   const session=agentWarmSession();
   if(!session||session.permissions?.[config.permission]!==true||!agentWarmOwner(session))return null;
-  const data=readCache(agentWarmKey(kind),AGENT_WARM_TTL);
+  const key=agentWarmKey(kind);
+  const fresh=readCache(key,AGENT_WARM_TTL);
+  const data=fresh||readCache(key,Number.POSITIVE_INFINITY);
+  if(data&&!fresh)void warmAgentData(kind,session);
   return Array.isArray(data?.items)?data:null;
 }
 function writeAgentWarm(kind,data,expectedToken=localStorage.getItem('stip_session_v1')||''){
@@ -114,7 +120,7 @@ function warmAgentData(kind,session=window.STIPSession){
   const conn=navigator.connection||{};
   if(!config||!token||!session?.agent||session?.permissions?.[config.permission]!==true||
      window.STIPPreview?.active||document.hidden||conn.saveData||/(?:^|-)2g$/.test(conn.effectiveType||''))return Promise.resolve(false);
-  if(readAgentWarm(kind))return Promise.resolve(true);
+  if(readCache(agentWarmKey(kind),AGENT_WARM_TTL))return Promise.resolve(true);
   const key=agentWarmKey(kind);
   if(!key)return Promise.resolve(false);
   if(agentWarmInflight.has(key))return agentWarmInflight.get(key);
