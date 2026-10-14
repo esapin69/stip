@@ -14,13 +14,50 @@ function urlText(input){return typeof input==='string'?input:String(input?.url||
 function route(){return location.hash.replace(/^#\/?/,'')||'home'}
 function sessionKey(){const t=localStorage.getItem('stip_session_v1')||'';let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))>>>0;return h.toString(36)}
 function cacheKey(action,b){const extra={...b};delete extra.action;return CACHE_PREFIX+sessionKey()+':'+action+':'+JSON.stringify(extra)}
-function readCache(key,ttl){try{const x=JSON.parse(sessionStorage.getItem(key)||'null');if(!x||Date.now()-Number(x.at||0)>ttl){sessionStorage.removeItem(key);return null}return x.data}catch{return null}}
-function writeCache(key,data){try{sessionStorage.setItem(key,JSON.stringify({at:Date.now(),data}))}catch{}}
+function readCache(key,ttl){
+  for(const store of [sessionStorage,localStorage]){
+    try{
+      const x=JSON.parse(store.getItem(key)||'null');
+      if(!x||!Number.isFinite(Number(x.at))||Date.now()-Number(x.at)>ttl)continue;
+      return x.data;
+    }catch{}
+  }
+  return null;
+}
+function writeCache(key,data){
+  const record=JSON.stringify({at:Date.now(),data});
+  try{sessionStorage.setItem(key,record)}catch{}
+  try{localStorage.setItem(key,record)}catch{}
+}
 function responseFrom(data){return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json','X-STIP-Cache':'hit'}})}
 async function readJsonResponse(r){try{return await r.clone().json()}catch{return null}}
 window.fetch=async function(input,init){const b=body(init),action=String(b?.action||''),u=urlText(input),ttl=CACHE_TTL[action]||0,isData=ttl>0&&u.includes(DATA_HOST);
 if(isData&&action==='contacts'&&!route().startsWith('contacts')&&Date.now()>contactsRequestedUntil){return Promise.reject(new DOMException('Chargement différé jusqu’à l’ouverture des contacts.','AbortError'))}
-let key='';if(isData){key=cacheKey(action,b);const cached=readCache(key,ttl);if(cached!==null)return responseFrom(cached);if(inflight.has(key)){const data=await inflight.get(key);return responseFrom(data)}}
+let key='';if(isData){
+  key=cacheKey(action,b);
+  // Never discard an earlier reading simply because it is old.
+  const cached=readCache(key,Number.POSITIVE_INFINITY);
+  if(cached!==null){
+    if(readCache(key,ttl)===null&&!inflight.has(key)){
+      const expectedToken=localStorage.getItem('stip_session_v1')||'';
+      const refresh=baseFetch(input,init).then(async response=>{
+        if(!response.ok||localStorage.getItem('stip_session_v1')!==expectedToken)return;
+        const data=await readJsonResponse(response);
+        if(data===null||data?.error||window.STIPPreview?.active)return;
+        writeCache(key,data);
+        if(JSON.stringify(cached)!==JSON.stringify(data)){
+          window.dispatchEvent(new CustomEvent('stip:read-cache-updated',{detail:{action,data,at:Date.now()}}));
+        }
+      }).catch(()=>{}).finally(()=>inflight.delete(key));
+      inflight.set(key,refresh);
+    }
+    return responseFrom(cached);
+  }
+  if(inflight.has(key)){
+    const data=await inflight.get(key);
+    return responseFrom(data);
+  }
+}
 const t=start(action);const run=(async()=>{try{const r=await baseFetch(input,init);done(t,r.ok);if(isData&&r.ok){const data=await readJsonResponse(r);if(data!==null){writeCache(key,data);return{response:r,data}}}return{response:r,data:null}}catch(e){done(t,false);throw e}})();
 if(!isData)return (await run).response;
 const dataPromise=run.then(x=>x.data!==null?x.data:readJsonResponse(x.response)).finally(()=>inflight.delete(key));inflight.set(key,dataPromise);
@@ -98,7 +135,15 @@ function warmAgentData(kind,session=window.STIPSession){
   agentWarmInflight.set(key,request);
   return request;
 }
-window.addEventListener('stip:session-ended',()=>clearAgentWarm());
+function clearReadCache(action=''){
+  for(const store of [sessionStorage,localStorage]){
+    try{for(let i=store.length-1;i>=0;i--){const key=store.key(i)||'';
+      if(key.startsWith(CACHE_PREFIX)&&(!action||key.includes(':'+action+':')))store.removeItem(key);
+    }}catch{}
+  }
+  if(!action)inflight.clear();
+}
+window.addEventListener('stip:session-ended',()=>{clearAgentWarm();clearReadCache()});
 window.addEventListener('stip:session-refreshed',e=>{
   const permissions=e.detail?.permissions||{};
   for(const [kind,config] of Object.entries(AGENT_WARM)){
@@ -106,6 +151,6 @@ window.addEventListener('stip:session-refreshed',e=>{
   }
 });
 
-window.STIPReadCache={clear(action=''){try{const prefix=CACHE_PREFIX+sessionKey()+':'+action;for(let i=sessionStorage.length-1;i>=0;i--){const k=sessionStorage.key(i)||'';if(k.startsWith(prefix))sessionStorage.removeItem(k)}}catch{}},requestContacts(){contactsRequestedUntil=Date.now()+5000},agentWarm:{read:readAgentWarm,write:writeAgentWarm,warm:warmAgentData,clear:clearAgentWarm}};
+window.STIPReadCache={clear:clearReadCache,requestContacts(){contactsRequestedUntil=Date.now()+5000},agentWarm:{read:readAgentWarm,write:writeAgentWarm,warm:warmAgentData,clear:clearAgentWarm}};
 window.STIPLoading={start:(label='Chargement',kind='generic')=>{const id=++seq,t={id,action:'manual',kind,label,started:performance.now(),progress:18,phase:'Lecture des données…',shown:true,timer:null,showTimer:null};active.set(id,t);paint(t);return()=>done(t,true)},active:()=>active.size};
 })();
