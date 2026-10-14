@@ -84,7 +84,7 @@
     const code=String(item.code||""),time=shiftTime(code,{
       ...item,agents:{...a,role:"chef",type_planning:"chefs"}
     });
-    const hours=[shiftLabel(code),time||"Horaires non renseignés"].join(" · ");
+    const hours=[base(code).toUpperCase(),time||"Horaires non renseignés"].join(" · ");
     return '<div class="thf-chief-contact '+shiftClass(code)+'">'+
       '<button type="button" class="thf-chief-identity" data-thf-agent="'+esc(key)+'" '+
       (key?'':'disabled ')+'aria-label="Voir la fiche de '+esc(label)+'">'+
@@ -262,7 +262,9 @@
     host._thfShifts=shifts;
     const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
     const label=day===today?"Aujourd’hui":day===addDay(today,1)?"Demain":"Jour sélectionné";
-    const dayLabel=dateObj(day).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+    const dateParts=new Intl.DateTimeFormat("fr-FR",{weekday:"short",day:"numeric",month:"short"}).formatToParts(dateObj(day));
+    const getDatePart=type=>dateParts.find(p=>p.type===type)?.value||"";
+    const dateWeek=getDatePart("weekday"),dateNum=getDatePart("day"),dateMonth=getDatePart("month");
     const longDate=dateObj(day).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
     const rec=working?staffFor(staff,myBase):null;
     const planned=rec?.planned_count,target=rec?.target_count,delta=gap(rec);
@@ -279,12 +281,18 @@
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
       '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence")+'">'+
-      '<button type="button" class="thf-day-trigger" data-thf-open="day" aria-label="Détails '+esc(label)+'">'+
-      '<span class="thf-day-heading"><strong>'+esc(label)+'</strong><small>'+esc(dayLabel)+'</small></span>'+
+      '<button type="button" class="thf-day-trigger thf-weather-sky" data-sky="unknown" data-thf-open="day" '+
+      'aria-label="Détails du '+esc(longDate)+'">'+
+      '<span class="thf-weather-art" aria-hidden="true"><i class="thf-sun"></i><i class="thf-cloud cloud-one"></i>'+
+      '<i class="thf-cloud cloud-two"></i><i class="thf-rain"></i><i class="thf-snow"></i><i class="thf-lightning"></i></span>'+
+      '<span class="thf-day-heading" aria-label="'+esc(longDate)+'"><span>'+esc(dateWeek)+'</span>'+
+      '<strong>'+esc(dateNum)+'</strong><span>'+esc(dateMonth)+'</span></span>'+
+      '<span class="thf-weather-caption"><span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>'+
+      (working&&myTime?'':'<span class="thf-weather-no-shift">Pas de météo de poste</span>')+'</span>'+
       '<span class="thf-trigger-chevron" aria-hidden="true">›</span></button>'+
       '<div class="thf-day-body">'+
-      '<div class="thf-day-post"><span class="thf-shift-content"><strong>'+
-      esc(working?shiftLabel(myCode):myCode?shiftLabel(myCode):"Sans poste")+
+      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><span class="thf-shift-content"><strong>'+
+      esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
       '</strong><small>'+esc(myTime||"Pas de service")+'</small></span>'+
       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
         'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
@@ -293,11 +301,6 @@
       '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
       '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
       '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
-      (working&&myTime?
-        '<div class="thf-day-weather"><div class="thf-section-label">🌤 MÉTÉO PENDANT MON POSTE</div>'+
-        '<div class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></div>'+
-        '<small class="thf-weather-fallback">Prévisions indisponibles</small></div>':
-        '')+
       '<div class="thf-day-numbers">'+
       (perm.planning_team?'<button type="button" data-thf-open="staff" class="status-'+esc(status)+
         '" aria-label="Voir les effectifs HCL '+esc(label)+'"><i>'+badge+'</i> <b>'+esc(hcl)+
@@ -328,7 +331,7 @@
         date:day,start:hours[0],end:hours[1],isWorking:working,compact:true
       }).catch?.(()=>{});
     }
-    host._thfSummary={label,longDate,chefLabel:chiefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?shiftLabel(myCode):shiftLabel(myCode)};
+    host._thfSummary={day,label,longDate,chefLabel:chiefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?base(myCode).toUpperCase():shiftLabel(myCode)};
   }
   function openDay(host){
     activeHost=host;
@@ -342,12 +345,19 @@
     const same=(host._thfSets?.exact||[]).length;
     const onDuty=(host._thfSets?.onDuty||[]).length;
     const info=(host._thfNotes||[]).length;
-    showDialog('<small>MA JOURNÉE · ÉQUIPE</small><h2>'+esc(s.label)+' · '+esc(s.longDate)+'</h2>'+
+    const sky=host.querySelector?.(".thf-weather-sky")?.dataset?.sky||"unknown";
+    showDialog('<header class="thf-popup-hero thf-weather-sky" data-sky="'+esc(sky)+'">'+
+      '<div class="thf-weather-art" aria-hidden="true"><i class="thf-sun"></i><i class="thf-cloud cloud-one"></i>'+
+      '<i class="thf-cloud cloud-two"></i><i class="thf-rain"></i><i class="thf-snow"></i><i class="thf-lightning"></i></div>'+
+      '<h2>'+esc(s.longDate)+'</h2>'+
+      '<div class="thf-popup-weather-summary">'+
+      (s.working?'<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>':
+      '<small>Aucun service prévu</small>')+
+      '</div></header>'+
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
-      '<section class="thf-day-popup-group"><h3>🎨 Chefs en service ce jour</h3>'+chiefHTML+'</section>'+
-      (s.working?'<section class="thf-day-popup-group"><h3>🌤 Météo pendant le poste</h3><p>'+esc(weatherText)+'</p></section>':"")+
-      ((host._thfLeisureEvents||[]).length?'<section class="thf-day-popup-group"><h3>📅 Rendez-vous entre collègues</h3>'+
+      '<section class="thf-day-popup-group"><h3>🎨 Chefs en poste</h3>'+chiefHTML+'</section>'+
+      ((host._thfLeisureEvents||[]).length?'<section class="thf-day-popup-group"><h3>📅 Après le service</h3>'+
         host._thfLeisureEvents.map(item=>'<button type="button" class="thf-day-popup-event" data-ev3-preview="'+esc(item.id)+'">'+
           '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
         '</section>':"")+
@@ -356,6 +366,13 @@
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
       (info?'<button type="button" data-thf-open="notes">📌 À retenir · '+info+' ›</button>':"")+
       '</div>');
+    const popupWeather=document.querySelector("#thfPopup [data-thf-weather]");
+    if(popupWeather&&s.working&&window.STIPShiftWeather?.mount){
+      const hours=String(s.myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
+      if(hours.length>=2)window.STIPShiftWeather.mount(popupWeather,{
+        date:s.day,start:hours[0],end:hours[1],isWorking:true,compact:true
+      }).catch?.(()=>{});
+    }
   }
   function peoplePanel(host,kind){
     const rows=host?._thfSets?.[kind]||[],panel=document.getElementById("thfPopupResults");
