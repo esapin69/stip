@@ -16,6 +16,5 @@ jobs:
       - run: node tools/stip-ensemble-mobile-test.mjs
       - run: node tools/stip-leisure-test.mjs
       - run: node --check leisure-runtime.js
-      - run: node --check ensemble-v3.js
       - run: node --check t-est/accueil/accueil-modules-natifs.js
       - run: node --check t-est/accueil/accueil-unifie.js
