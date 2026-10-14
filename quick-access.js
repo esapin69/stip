@@ -452,14 +452,10 @@
     ensureResponsibleApps();
     const chosen = readFav().filter(allowed);
     const all = Object.keys(META).filter(allowed);
-    const createAction = allowed("leisure")
-      ? '<button type="button" class="stip-app-propose" data-app-create-leisure>' +
-          appStoreIcon("leisure") + '<span><strong>Proposer une sortie</strong><small>Inviter des collègues à une activité</small></span><b aria-hidden="true">›</b></button>'
-      : "";
     host.innerHTML = '<section class="stip-my-apps"><header><div><small>MES APPLICATIONS</small><h2>Applications</h2></div>' +
       '<button type="button" class="stip-store-browse stip-store-browse-add" data-store-browse aria-label="Ajouter une application">' +
       '<span class="stip-store-browse-plus" aria-hidden="true"></span><strong>Ajouter</strong></button></header>' +
-      appSearchMarkup() + createAction +
+      appSearchMarkup() +
       '<div class="stip-my-app-grid" data-my-app-grid></div></section>';
     const input = host.querySelector("[data-app-search]");
     const grid = host.querySelector("[data-my-app-grid]");
@@ -482,10 +478,7 @@
       if (button) openKey(button.dataset.myApp);
     });
     host.querySelector("[data-store-browse]")?.addEventListener("click", () => renderStore(host));
-    host.querySelector("[data-app-create-leisure]")?.addEventListener("click", () => {
-      touch("leisure");
-      openDocument("sorties-loisirs.html?tab=create");
-    });
+
   }
   function toggleFavorites() {
     const existing=document.getElementById("stipFavoritesPanel");
