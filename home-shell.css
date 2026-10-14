@@ -5235,3 +5235,59 @@ body.hc-shift-detail-open{overflow:hidden}
 
 /* Un seul bandeau Retour / Fermer dans la fenêtre de la cloche. */
 .hc-bell-dialog .hc-notification-detail>header{display:none!important}
+
+/* 2026-10-15 — streamlined admin shortcuts: one existing modal, no extra application page. */
+#hcShortcutsDialog .hc-pilotage-shell.is-admin{
+  display:grid!important;
+  gap:0!important;
+  padding:3px 10px 8px!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-group{
+  width:100%!important;
+  margin:0!important;
+  padding:2px 0!important;
+  border-bottom:1px solid color-mix(in srgb,var(--stip-line) 70%,transparent)!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-separator{
+  min-height:37px!important;
+  margin:0!important;
+  padding:6px 12px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+  line-height:1.3!important;
+  font-size:.7rem!important;
+  font-weight:900!important;
+  letter-spacing:.1em!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-separator:before,
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-separator:after{
+  opacity:.55!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin details[open]>.hc-pilotage-separator{
+  color:var(--stip-accent)!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-links{
+  gap:2px!important;
+  padding:2px 6px 7px!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-link{
+  min-height:42px!important;
+  padding:6px 11px!important;
+  border-radius:12px!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-group-navigation{
+  margin-top:7px!important;
+  padding:5px 0 7px!important;
+  border:1px solid color-mix(in srgb,var(--stip-line) 82%,transparent)!important;
+  border-radius:16px!important;
+  background:color-mix(in srgb,var(--stip-surface-soft) 45%,#fff)!important;
+}
+#hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-group-navigation .hc-pilotage-links{
+  padding-inline:10px!important;
+}
+@media(max-width:430px){
+  #hcShortcutsDialog .hc-pilotage-shell.is-admin{padding-inline:8px!important}
+  #hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-separator{font-size:.68rem!important;padding-inline:7px!important}
+}
