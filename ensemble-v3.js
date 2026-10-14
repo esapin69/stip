@@ -6,10 +6,11 @@ const escapeHTML=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const choices=[["⚽","Football"],["🥊","Boxe"],["🏋️","Musculation"],["🍽️","Restaurant"],["🎳","Bowling"],["🎬","Cinéma"],["🚶","Promenade"],["🎉","Sortie"]];
 const dateISO=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 const today=dateISO(new Date());
+const validClock=v=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||""));
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
-const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false};
+const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false};
 let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
@@ -26,6 +27,7 @@ function kindStatus(e){
  if(e.response?.declined)return ["declined","Décliné"];
  if(e.is_organizer)return ["mine","Organisé"];
  if(e.response?.selected_dates?.length)return ["confirmed","Confirmé"];
+ if(e.visibility==="team"&&!e.invitation_status)return ["available","Disponible"];
  return ["pending","À répondre"];
 }
 function meetingLink(e){
@@ -46,7 +48,8 @@ function chosenCards(){
  const header='<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>';
  return header+(pending.length?'<h3 class="ev3-small-title">Réponse attendue</h3><div class="ev3-stack">'+pending.map(card).join("")+'</div>':"")+
  (other.length?'<h3 class="ev3-small-title">À venir</h3><div class="ev3-stack">'+other.map(card).join("")+'</div>':"")+
- (!events.length?'<div class="ev3-empty"><span>📅</span><strong>Rien de prévu pour le moment.</strong><p>Les propositions envoyées ou reçues apparaîtront ici.</p></div>':"");
+ (!events.length?'<div class="ev3-empty"><span>📅</span><strong>Aucun rendez-vous personnel à venir.</strong><p>Les propositions envoyées et reçues apparaîtront ici.</p></div>':"")+
+ (state.events.some(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active")?'<h3 class="ev3-small-title">Ouvert à l’équipe</h3><div class="ev3-stack">'+state.events.filter(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active").map(card).join("")+"</div>":"");
 }
 function tripStatus(t){
  const m={pending:"En attente",accepted:"Confirmé",declined:"Refusé",withdrawn:"Retiré"};
@@ -79,7 +82,9 @@ function calendarHTML(){
  for(let n=0;n<firstWeekday;n++)body+='<span></span>';
  for(let i=1;i<=daysIn;i++){
   const d=dateISO(new Date(year,month,i)),meta=palette.get(d),past=d<today,selected=state.dates.has(d);
-  body+='<button type="button" '+(past?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
+  const ineligible=state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false);
+  const disabled=past||ineligible;
+  body+='<button type="button" '+(disabled?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'" title="'+escapeHTML(ineligible?"Pas de fin de service vérifiée pour ce jour":meta?.label||"Date libre")+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
  }
  return '<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
  '<div class="ev3-month-quick"><button type="button" data-ev3-all="1">✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
