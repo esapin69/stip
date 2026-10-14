@@ -10,7 +10,9 @@ const validClock=v=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||""));
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
 const monthName=d=>d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
 const byId=id=>document.getElementById(id);
-const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const normalizedName=v=>String(v||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
+const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.access_ready===false?'<small class="ev3-person-access">Accès à activer</small>':"")+'</span>';
+const state={tab:new URLSearchParams(location.search).get("tab")==="trajets"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:"afterwork",visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 const session=()=>{const s=localStorage.getItem("stip_session_v1");if(!s)throw Error("Connexion GHE requise.");return s;};
 async function call(action,data={}){
@@ -99,13 +101,18 @@ function calendarHTML(){
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
- return '<label class="ev3-search-label">Inviter des collègues <input id="ev3PeopleSearch" type="search" placeholder="Rechercher un collègue…" autocomplete="off"></label>'+
- '<div class="ev3-person-list" id="ev3PeopleList">'+peopleOptions("")+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>';
+ const unactivated=state.people.filter(p=>p.access_ready===false).length;
+ return '<label class="ev3-search-label">Inviter des collègues <small>'+state.people.length+' collègues disponibles</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off"></label>'+
+ (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
+ '<div class="ev3-person-list" id="ev3PeopleList">'+peopleOptions("")+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
+ (unactivated?'<p class="ev3-directory-hint">« Accès à activer » : tu peux inviter ce collègue. Il retrouvera l’invitation lorsqu’il aura accès à Ensemble.</p>':"");
 }
 function peopleOptions(query){
- const q=query.trim().toLocaleLowerCase("fr");
- return state.people.filter(p=>p.name.toLocaleLowerCase("fr").includes(q)).map(p=>
- '<label class="ev3-person"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+'><span>'+escapeHTML(p.name)+'</span></label>').join("")||'<p>Aucun collègue trouvé.</p>';
+ const q=normalizedName(query);
+ const matches=state.people.filter(p=>normalizedName(p.name).includes(q));
+ return matches.map(p=>
+  '<label class="ev3-person"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+'>'+personMarkup(p)+'</label>').join("")||
+ (state.peopleError?'<p>Annuaire indisponible : actualise la page.</p>':'<p>Aucun collègue correspondant à cette recherche.</p>');
 }
 function formHTML(){
  if(state.formKind==="carpool"){
@@ -254,9 +261,9 @@ function openInvite(e,notice=""){
  '<p class="ev3-modal-error" role="status">'+escapeHTML(notice)+'</p></div>';
  const error=d.querySelector(".ev3-modal-error");
  const draw=()=>{
-  const q=(byId("ev3InviteSearch")?.value||"").trim().toLocaleLowerCase("fr");
-  byId("ev3InviteList").innerHTML=state.people.filter(p=>!invitedIds.has(p.id)&&p.name.toLocaleLowerCase("fr").includes(q)).map(p=>
-   '<label class="ev3-person"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+'><span>'+escapeHTML(p.name)+'</span></label>').join("")||"<p>Aucun autre collègue.</p>";
+  const q=normalizedName(byId("ev3InviteSearch")?.value||"");
+  byId("ev3InviteList").innerHTML=state.people.filter(p=>!invitedIds.has(p.id)&&normalizedName(p.name).includes(q)).map(p=>
+   '<label class="ev3-person"><input type="checkbox" data-person="'+escapeHTML(p.id)+'" '+(selected.has(p.id)?"checked":"")+'>'+personMarkup(p)+'</label>').join("")||"<p>Aucun autre collègue.</p>";
   byId("ev3InviteList").querySelectorAll("[data-person]").forEach(input=>input.onchange=()=>{
    if(input.checked)selected.add(input.dataset.person);else selected.delete(input.dataset.person);
   });
@@ -302,7 +309,12 @@ async function refresh(){
   if(calendar.status==="fulfilled")state.calendar=calendar.value.days||[];
   state.calendarPreviewReady=preview.status==="fulfilled";
   if(state.calendarPreviewReady){const ends=new Map((preview.value.shifts||[]).map(x=>[x.date,x.end]));state.calendar=state.calendar.map(x=>({...x,end:ends.get(x.date)||null}));}
-  if(peers.status==="fulfilled")state.people=peers.value.colleagues||[];
+  if(peers.status==="fulfilled"){
+   state.people=peers.value.colleagues||[];
+   state.peopleError="";
+  }else{
+   state.peopleError="Impossible de charger l’annuaire. Appuie sur ↻ pour réessayer.";
+  }
   if(trips.status==="fulfilled"){state.trips=trips.value.trips||[];state.pref=trips.value.preference||null}
   state.loaded=true;state.error="";state.status="";render();
   const id=new URLSearchParams(location.search).get("event");if(id&&!deepLinked&&state.events.some(e=>e.id===id)){deepLinked=true;openEvent(id)}
