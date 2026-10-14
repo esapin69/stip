@@ -372,7 +372,7 @@
     if (!r) return;
     if (r.startsWith("contacts")) {
       window.STIPReadCache?.requestContacts?.();
-      await seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js"]);
+      await seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js?v=20261014-ghe-export-live-v3"]);
       window.STIPHubs?.contactsRoute?.(r);
       return;
     }
@@ -482,7 +482,7 @@
       if (k === "communication") communication().catch(() => {});
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
-        seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js"]).catch(() => {});
+        seq(["agent-agenda-view.js?v=20260928-icon-registry1", "section-hubs.js?v=20261014-ghe-export-live-v3"]).catch(() => {});
       }
       if (k === "personal") seq(personalCore).catch(() => {});
       if (k === "team") seq(teamCore).catch(() => {});
