@@ -1080,6 +1080,7 @@
       ) || null
     );
   }
+  let shiftDetailReadingPosition = null;
   function closeShiftDetail(fromHistory = false) {
     const wrap = document.getElementById("hcShiftDetail");
     if (
@@ -1090,6 +1091,20 @@
       return;
     wrap?.remove();
     document.body.classList.remove("hc-shift-detail-open");
+    const saved = shiftDetailReadingPosition;
+    shiftDetailReadingPosition = null;
+    if (!wrap || !saved) return;
+    // Restoring an overlay from browser history must not navigate the document.
+    // Keep the reader at the original scroll position on both X and Android Back.
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      if (document.getElementById("hcShiftDetail")) return;
+      if (location.pathname !== saved.path ||
+          (window.STIPRouter?.get?.() || "home") !== saved.route) return;
+      const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const target = Math.min(saved.y, maxScroll);
+      if (Math.abs(window.scrollY - target) > 2)
+        window.scrollTo({ top: target, behavior: "auto" });
+    }));
   }
   function openShiftDetail(iso, fromHistory = false) {
     const row = planningRowForDate(iso);
@@ -1154,6 +1169,11 @@
         .filter(Boolean)
         .join("");
     closeShiftDetail();
+    shiftDetailReadingPosition = {
+      y: Math.max(0, Math.round(window.scrollY || 0)),
+      path: location.pathname,
+      route: window.STIPRouter?.get?.() || "home",
+    };
     const wrap = document.createElement("div");
     wrap.id = "hcShiftDetail";
     wrap.className = "hc-shift-detail-overlay";
@@ -3286,10 +3306,10 @@
   }
   function bindMonthContext(month) {
     month?.addEventListener("click", (event) => {
-      if (planningLoading()) return;
       const step = event.target.closest("[data-cal-step]");
-      if (step) return moveCalendarMonth(step.dataset.calStep);
       const day = event.target.closest("[data-cal-day]");
+      if ((step || day) && planningLoading()) return;
+      if (step) return moveCalendarMonth(step.dataset.calStep);
       if (day) {
         const iso = String(day.dataset.calDay || "").slice(0, 10);
         if (!iso) return;
