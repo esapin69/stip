@@ -173,14 +173,62 @@
 .stip-week-events.is-empty{visibility:hidden!important}
 .stip-week-main-icon:empty{display:none!important}
 .stip-week-work-marker{width:19px!important;height:19px!important;min-width:19px!important;min-height:19px!important}
-.stip-week-day.stip-week-personal-layout{min-height:112px!important}
-.stip-week-day.stip-week-personal-layout .stip-week-day-body{grid-template-rows:auto auto 1px auto!important;grid-auto-rows:auto!important;align-content:center!important}
-.stip-week-day.stip-week-personal-layout .stip-week-code{min-height:18px!important}
-.stip-week-day.stip-week-personal-layout .stip-week-main{min-height:26px!important}
-.stip-week-day.stip-week-personal-layout .stip-week-divider{display:block!important}
-.stip-week-day.stip-week-personal-layout .stip-week-events{min-height:26px!important}
+/* Une carte personnelle = un symbole de shift complet, horaires en dessous.
+   Le code/icone n'occupent plus deux lignes. Les jours non travaillés n'affichent
+   qu'un pictogramme ; la rangée d'événements n'existe que si elle contient quelque chose. */
+.stip-week-day.stip-week-personal-layout{min-height:100px!important}
+.stip-week-day.stip-week-personal-layout .stip-week-day-body{
+  grid-template-rows:auto auto auto!important;
+  grid-auto-rows:max-content!important;
+  align-content:start!important;
+  justify-items:center!important;
+  gap:4px!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-core{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:0!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:37px!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-main{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:3px!important;
+  min-height:28px!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-symbol{
+  display:grid!important;place-items:center!important;
+  min-width:0!important;width:100%!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-hours{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:1px!important;min-width:0!important;
+  width:100%!important;white-space:nowrap!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-hours>span{
+  min-width:0!important;white-space:nowrap!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-work-hours>i{
+  font-style:normal!important;flex:0 0 auto!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-divider{
+  display:block!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-divider.is-empty,
+.stip-week-day.stip-week-personal-layout .stip-week-events.is-empty{
+  display:none!important;
+}
+.stip-week-day.stip-week-personal-layout .stip-week-events:not(.is-empty){
+  min-height:22px!important;
+}
 .stip-week-personal-line .stip-week-next-bridge,
-.stip-week-personal-line .hc-next-monday-bridge{min-height:112px!important}
+.stip-week-personal-line .hc-next-monday-bridge{min-height:100px!important}
 .stip-week-event{
   box-sizing:border-box!important;
   width:26px!important;
