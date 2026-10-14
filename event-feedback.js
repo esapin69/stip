@@ -482,11 +482,16 @@
       host.className = "hc-feedback-pending";
       host.setAttribute("aria-label", "Retours professionnels à clôturer");
     }
-    // Ce bloc prioritaire précède impérativement le titre et la ligne de la semaine.
-    // Le repositionner même lorsqu'il existe déjà évite les inversions au rafraîchissement.
-    const week = planning.querySelector(":scope > .hc-week-context-master");
-    if (week) week.insertAdjacentElement("beforebegin", host);
-    else planning.prepend(host);
+    // Les éléments à clôturer précèdent tout le tableau de bord, même l'entête.
+    // Un ancrage fixe empêche les mises à jour asynchrones de casser l'ordre.
+    const priorityAnchor = document.getElementById("hcTopPriorityAnchor");
+    if (priorityAnchor?.closest(".hc-home-pane-planning")) {
+      priorityAnchor.insertAdjacentElement("afterend", host);
+    } else {
+      const week = planning.querySelector(":scope > .hc-week-context-master");
+      if (week) week.insertAdjacentElement("beforebegin", host);
+      else planning.prepend(host);
+    }
 
     host.innerHTML =
       '<div class="hc-planning-period-separator stip-section-separator hc-feedback-separator"><span>À CLÔTURER</span><strong class="hc-feedback-count" aria-label="' +
