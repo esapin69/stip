@@ -2090,7 +2090,7 @@
             '<h3>Où exactement ?</h3>' +
             '<p>' + esc(building.label) + ' · ' + esc(wheelchairLevelDisplay(level)) + ' · 🦽 ×' + esc(quantity) + '</p>' +
             '<form class="tb-spot-location-form" data-spot-location-form>' +
-              '<input type="text" class="tb-spot-location-input" name="location" maxlength="160" required autocomplete="off" enterkeyhint="done" aria-label="Endroit exact" placeholder="Écris l’endroit précis…">' +
+              '<input type="text" class="tb-spot-location-input" name="location" maxlength="120" required autocomplete="off" enterkeyhint="done" aria-label="Endroit exact" placeholder="Écris l’endroit précis…">' +
               '<p class="tb-spot-location-error" data-spot-error role="alert" hidden></p>' +
               '<button type="submit" class="tb-review-send tb-place-continue" data-place-continue><span>Valider</span><b>›</b></button>' +
             '</form>' +
