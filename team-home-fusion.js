@@ -222,6 +222,14 @@
     const myCode=String(row?.code||row?.source_value||"").trim();
     const working=Boolean(definition(myCode)?.is_working);
     const myTime=working?shiftTime(myCode,row):"";
+    // Horaires sous le code du shift : début / à / fin, sans heure inventée.
+    const shiftHours=String(myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
+    const formatShiftHour=value=>String(value||"").replace(":", "h");
+    const shiftTimeColumns=shiftHours.length>=2?
+      '<span class="thf-shift-hours"><span>'+esc(formatShiftHour(shiftHours[0]))+
+      '</span><span class="thf-shift-to">à</span><span>'+esc(formatShiftHour(shiftHours[1]))+
+      '</span></span>':
+      '<span class="thf-shift-hours thf-shift-hours-missing">'+esc(myTime||"Pas de service")+'</span>';
     const myBase=base(myCode),myInterval=range(myTime),perm=opts.permissions||{};
     const team=perm.planning_team?cached(weeks,start):null;
     const staff=perm.planning_team?cached(days,day):null;
@@ -293,7 +301,7 @@
       '<div class="thf-day-body">'+
       '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><span class="thf-shift-content"><strong>'+
       esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
-      '</strong><small>'+esc(myTime||"Pas de service")+'</small></span>'+
+      '</strong>'+shiftTimeColumns+'</span>'+
       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
         'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
         '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
@@ -301,11 +309,6 @@
       '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
       '<div class="thf-section-label"><span aria-hidden="true">🎨</span> CHEFS EN POSTE</div>'+
       '<div class="thf-day-chief-person">'+chiefDisplay+'</div></section>'+
-      '<div class="thf-day-numbers">'+
-      (perm.planning_team?'<button type="button" data-thf-open="staff" class="status-'+esc(status)+
-        '" aria-label="Voir les effectifs HCL '+esc(label)+'"><i>'+badge+'</i> <b>'+esc(hcl)+
-        '</b><small>HCL</small></button>':"")+
-      '</div>'+
       (leisureEvents.length?'<section class="thf-day-events" aria-label="Activités du jour">'+
         '<div class="thf-section-label">📅 APRÈS LE SERVICE</div>'+
         leisureEvents.slice(0,2).map(item=>
@@ -401,7 +404,11 @@
       '<button type="button" data-thf-people-tab="exact" aria-pressed="true">Même horaire <b>'+numbers.exact+'</b></button>'+
       '<button type="button" data-thf-people-tab="onDuty" aria-pressed="false">En service <b>'+numbers.onDuty+'</b></button>'+
       '<button type="button" data-thf-people-tab="elsewhere" aria-pressed="false">Autres <b>'+numbers.elsewhere+'</b></button>'+
-      '</div><div class="thf-popup-scroll" id="thfPopupResults"></div>');
+      '</div>'+
+      '<button type="button" class="thf-people-hcl-link" data-thf-open="staff" '+
+      'aria-label="Afficher les effectifs HCL par horaire">'+
+      '✓ Effectifs HCL · '+esc(host._thfSummary?.hcl||"—")+' <span aria-hidden="true">›</span></button>'+
+      '<div class="thf-popup-scroll" id="thfPopupResults"></div>');
     peoplePanel(host,"exact");
   }
   function openStaff(host) {
