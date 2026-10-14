@@ -2977,6 +2977,7 @@
       personal: state.boot?.personal || [],
       permissions: perms(),
       sourceKey: String(state.session?.agent?.source_key || state.boot?.agent?.source_key || window.STIPSession?.agent?.source_key || ""),
+      ghe: String(state.session?.agent?.ghe || state.boot?.agent?.ghe || window.STIPSession?.agent?.ghe || ""),
       boot: state.boot,
     });
     window.STIPDutyChiefs?.render?.();
