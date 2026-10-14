@@ -5232,3 +5232,6 @@ body.hc-shift-detail-open{overflow:hidden}
   .hc-bell-head{padding:9px 11px}
   .hc-bell-dialog .hc-detail-facts{grid-template-columns:1fr 1fr!important}
 }
+
+/* Un seul bandeau Retour / Fermer dans la fenêtre de la cloche. */
+.hc-bell-dialog .hc-notification-detail>header{display:none!important}
