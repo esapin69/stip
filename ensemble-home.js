@@ -35,7 +35,7 @@ function status(x){
 function iconFor(x){return String(x.icon||"📌")}
 /* Une seule source de rendez-vous, réutilisée par semaine, jour et fenêtre. */
 function dayItems(day){
- if(!ready||!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(day)))return [];
+ if(!ready||!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))return [];
  return events.filter(x=>confirmedDates(x).includes(day)).map(x=>{
   const roster=x.date_roster[day],other=roster.filter(p=>p.state==="accepted").length;
   return {
