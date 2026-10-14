@@ -3279,8 +3279,8 @@
         </section>`;
     }
     if (state.renderSig === markup && root.childElementCount) return;
-    const onHome = (window.STIPRouter?.get?.() || "home") === "home",
-      y = onHome ? Math.max(0, window.scrollY || 0) : 0;
+    // Keep the browser's native scroll anchoring when refreshing the home DOM.
+    // Route restoration is owned exclusively by STIPRouter.
     state.renderSig = markup;
     root.innerHTML = markup;
     keepHomeFeedbackPriority(root);
@@ -3530,16 +3530,6 @@
         refresh(true).catch(() => {});
       });
     window.dispatchEvent(new CustomEvent("stip:home-rendered"));
-    if (onHome && y > 0)
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          if (
-            (window.STIPRouter?.get?.() || "home") === "home" &&
-            Math.abs((window.scrollY || 0) - y) > 2
-          )
-            window.scrollTo({ top: y, behavior: "auto" });
-        }),
-      );
   }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.getElementById("hcShiftDetail"))
