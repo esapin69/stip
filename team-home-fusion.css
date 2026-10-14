@@ -899,3 +899,40 @@
  }
  .hc-days-grid .thf-day-card .thf-chief-phone{width:33px;height:38px}
 }
+
+/* Le raccourci collègues appartient au poste, immédiatement à côté du code et des heures.
+   Une seule entrée par jour : le clic ouvre toujours le pop-up existant. */
+.hc-days-grid .thf-day-card .thf-day-post{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:5px!important;align-items:center!important;
+  min-width:0;
+}
+.hc-days-grid .thf-day-post .thf-shift-content{
+  display:flex;flex-direction:column;gap:3px;min-width:0;
+}
+.hc-days-grid .thf-day-post .thf-shift-colleagues{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  min-width:43px;min-height:38px;padding:5px 7px;
+  border:1px solid #c6e2e9;border-radius:11px;background:#eff8fa;
+  color:#167e9e;font:inherit;font-weight:900;cursor:pointer;
+}
+.hc-days-grid .thf-shift-colleagues>span{font-size:.92rem;line-height:1}
+.hc-days-grid .thf-shift-colleagues>b{font-size:1rem;line-height:1}
+.hc-days-grid .thf-shift-colleagues:active{background:#d7eef4}
+.hc-days-grid .thf-shift-colleagues:focus-visible{
+  outline:3px solid #168ca9;outline-offset:2px
+}
+.hc-days-grid .thf-day-card .thf-day-numbers{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:0!important;padding:8px 0!important
+}
+.hc-days-grid .thf-day-card .thf-day-numbers>button{
+  flex-direction:row!important;gap:5px!important;
+  min-height:37px!important;width:100%;
+}
+.hc-days-grid .thf-day-card .thf-day-numbers>button small{font-size:.72rem!important}
+@media(max-width:390px){
+  .hc-days-grid .thf-day-post .thf-shift-colleagues{min-width:39px;padding:5px 4px}
+  .hc-days-grid .thf-day-post .thf-shift-colleagues>b{font-size:.89rem}
+}
