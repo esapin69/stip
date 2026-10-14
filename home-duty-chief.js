@@ -375,6 +375,8 @@
       return fetchDuty(false);
     },
     render,
+    // Partage le pop d'appel (normal / masqué) avec les chefs des cartes J et J+1.
+    openCallChoice,
   };
 
   const style = document.createElement("style");
