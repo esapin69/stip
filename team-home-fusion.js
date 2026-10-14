@@ -115,14 +115,27 @@
       '<b>'+group.items.length+'</b></span></div>'+
       '<div class="thf-person-group-body">'+group.items.slice().sort(sortPeople).map(agentHtml).join("")+'</div></section>';
   }
-  function shiftHtml(code, rows, staff) {
-    const s=staffFor(staff,code),target=s?.target_count,planned=s?.planned_count,delta=gap(s),signal=window.STIPFieldIntel?.shiftStatus?.(staff,code)||null;
+  function shiftHtml(code,rows,staff){
+    const rec=staffFor(staff,code),target=rec?.target_count,planned=rec?.planned_count,delta=gap(rec);
+    const signal=window.STIPFieldIntel?.shiftStatus?.(staff,code)||null;
     const level=signal?.level||(delta==null?"unknown":delta<0?"warning":delta>0?"opportunity":"ok");
     const symbol=level==="critical"?"🛑":level==="warning"?"⚠️":level==="opportunity"?"+":level==="ok"?"✓":"○";
-    const nonChief=rows.filter(x=>!isChef(x)).sort(sortPeople);
-    return '<details class="thf-shift status-'+esc(level)+'"><summary><span class="thf-signal">'+symbol+'</span><strong>'+esc(shiftLabel(code))+'</strong><small>'+esc(shiftTime(code))+'</small><b>'+esc(planned==null?"—":planned)+(target==null?"":" / HCL "+esc(target))+'</b><span aria-hidden="true">⌄</span></summary><div class="thf-shift-detail">'+
-      (delta==null?'<p>Effectif HCL non renseigné.</p>':'<p>Écart à la cible HCL : <strong>'+(delta>0?"+":"")+esc(delta)+'</strong></p>')+
-      (nonChief.length?nonChief.map(agentHtml).join(""):'<p>Aucun agent à afficher.</p>')+'</div></details>';
+    const coworkers=rows.filter(x=>!isChef(x)).sort(sortPeople);
+    return '<div class="thf-staff-row '+shiftClass(code)+'">'+
+      '<div class="thf-staff-reference">'+
+      (target==null?'<span class="thf-hcl-reference is-empty">HCL —</span>':
+      '<span class="thf-hcl-reference"><small>HCL</small><b>'+esc(target)+'</b></span>')+
+      '<span class="thf-staff-indicator status-'+esc(level)+'" aria-label="État de l’effectif">'+symbol+'</span></div>'+
+      '<details class="thf-shift '+shiftClass(code)+' status-'+esc(level)+'"><summary>'+
+      '<span class="thf-shift-copy"><strong>'+esc(shiftLabel(code))+'</strong>'+
+      '<small>'+esc(shiftTime(code))+'</small></span>'+
+      '<span class="thf-shift-count">'+esc(planned==null?"—":planned)+'</span>'+
+      '<span class="thf-shift-arrow" aria-hidden="true">⌄</span></summary>'+
+      '<div class="thf-shift-detail">'+
+      (delta==null?'<p>Effectif HCL non renseigné.</p>':
+      '<p>Écart à la cible HCL : <strong>'+(delta>0?"+":"")+esc(delta)+'</strong></p>')+
+      (coworkers.length?coworkers.map(agentHtml).join(""):
+      '<p>Aucun agent à afficher.</p>')+'</div></details></div>';
   }
   function appointments(data,day) {
     const items=[];
@@ -222,7 +235,7 @@
     host.innerHTML='<div class="thf-header"><div><small>MA JOURNÉE · ÉQUIPE</small><h2>'+
       (day===today?"Aujourd’hui":day===nextDay?"Demain":"Jour sélectionné")+'</h2><p>'+esc(nDate)+'</p></div>'+
       '<button type="button" data-thf-refresh aria-label="Actualiser">↻</button></div>'+
-      '<div class="thf-my"><div><small>MON POSTE</small><strong>'+esc(ownLabel)+'</strong>'+
+      '<div class="thf-my '+(working?shiftClass(myCode):"shift-absence")+'"><div><small>MON POSTE</small><strong>'+esc(ownLabel)+'</strong>'+
       (myTime?'<span>'+esc(myTime)+'</span>':"")+'</div>'+
       (perm.planning_team?'<div><small>MÊME POSTE</small><strong>'+esc(count)+'</strong><span>collègues</span></div>':"")+'</div>'+
       '<div class="thf-actions">'+
