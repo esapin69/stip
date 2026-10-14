@@ -253,14 +253,18 @@
     const myCode=String(row?.code||row?.source_value||"").trim();
     const working=Boolean(definition(myCode)?.is_working);
     const myTime=working?shiftTime(myCode,row):"";
-    // Horaires sous le code du shift : début / à / fin, sans heure inventée.
+    // One source of truth: monthly badge + effective hours, no redundant square.
     const shiftHours=String(myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
     const formatShiftHour=value=>String(value||"").replace(":", "h");
-    const shiftTimeColumns=shiftHours.length>=2?
+    const shiftTimeColumns=working&&shiftHours.length>=2?
       '<span class="thf-shift-hours"><span>'+esc(formatShiftHour(shiftHours[0]))+
-      '</span><span class="thf-shift-to">à</span><span>'+esc(formatShiftHour(shiftHours[1]))+
-      '</span></span>':
-      '<span class="thf-shift-hours thf-shift-hours-missing">'+esc(myTime||"Pas de service")+'</span>';
+      '</span><span class="thf-shift-to" aria-hidden="true">–</span><span>'+esc(formatShiftHour(shiftHours[1]))+
+      '</span></span>':'';
+    const shiftSymbol=working?
+      (window.STIPMonthTable?.shiftBadgeHtml?.(myCode) ||
+        '<span class="thf-shift-symbol-fallback">'+esc(base(myCode))+'</span>'):
+      '<span class="thf-shift-status-icon" aria-label="'+esc(shiftLabel(myCode||"—"))+'">'+
+        esc(definition(myCode)?.icon||"—")+'</span>';
     const myBase=base(myCode),myInterval=range(myTime),perm=opts.permissions||{};
     const team=perm.planning_team?cached(weeks,start):null;
     const staff=perm.planning_team?cached(days,day):null;
@@ -343,9 +347,8 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
-      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack"><span class="thf-shift-content"><strong>'+
-      esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
-      '</strong>'+shiftTimeColumns+'</span>'+
+      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack"><span class="thf-shift-content"><span class="thf-shift-symbol">'+
+      shiftSymbol+'</span>'+shiftTimeColumns+'</span>'+
       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
         'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
         '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
