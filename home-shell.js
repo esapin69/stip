@@ -2400,7 +2400,7 @@
       }[value] || ""
     );
   }
-  function homeModeNav() {
+  function homeModeNav(part = "all") {
     const active =
         state.homeMode === "responsable" ? "" : state.homeMode || "planning",
       count = notifications().length + Number(window.STIPMessagesUnread || 0),
@@ -2408,19 +2408,18 @@
         { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
         { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
       ];
-    // Quatre accès conservés : Applications, Mon espace, Communication et Esprit d’équipe.
+    // Le quatrième raccourci validé demeure présent : aucun onglet supprimé.
     if (has("messages"))
       items.push({ key: "communication", label: "Communication", art: ICON.homeChat, mode: "home" });
     if (has("planning_team") || has("activity") || has("assistant_enabled"))
       items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
     const tDoor = tDoorShortcut();
-    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}" data-header-compact>
-      <div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
+    const tools = `<div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
         <button type="button" class="hc-profile-bell${state.homeMode === "notifications" ? " active" : ""}" data-home-mode="notifications" aria-pressed="${state.homeMode === "notifications"}" aria-label="Notifications${count ? ` : ${count} à traiter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
         ${tDoor}
         <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
-      </div>
-      <div class="ghe-home-header-stack">
+      </div>`;
+    const identity = `<div class="ghe-home-header-stack">
         <div class="hc-home-meta-date hc-calendar-driven-planning">${todayFullDateSeparator()}</div>
         <div class="hc-home-identity">${profile()}</div>
         <nav class="hc-home-filters" data-count="${items.length}" aria-label="Accueil STIP">${items
@@ -2430,8 +2429,9 @@
         )
         .join("")}</nav>
         ${shortcutsLauncher()}
-      </div>
-    </section>`;
+      </div>`;
+    const wrapper = (part === "tools" ? " hc-home-tools-only" : part === "identity" ? " hc-home-identity-only" : "");
+    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}${wrapper}" data-header-compact>${part === "identity" ? "" : tools}${part === "tools" ? "" : identity}</section>`;
   }
 
   function shortcutsLauncher() {
@@ -2975,7 +2975,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline"><span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}${homeModeNav()}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-tomorrow-fusion" aria-label="Mon planning et mon équipe demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion" aria-label="Ma journée et équipe aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}${homeModeNav("identity")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-tomorrow-fusion" aria-label="Mon planning et mon équipe demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   function render() {
     const root = $("#homeView .hs-home");
