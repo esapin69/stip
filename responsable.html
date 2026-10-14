@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="responsable-agenda.css?v=20260924-agent-picker-wall1" />
     <link rel="stylesheet" href="responsable-home.css?v=20260928-agenda-alert1" />
+    <link rel="stylesheet" href="responsable-event-feedback.css?v=20261014-registre1" />
     <link rel="stylesheet" href="responsable-agenda-home.css?v=20260925-calendar-common1" />
     <link
       rel="stylesheet"
@@ -133,6 +134,24 @@
           </div>
         </section>
         <div class="resp-dots" id="respDots"></div>
+
+        <details class="resp-feedback-log" id="respEventFeedbackLog" data-resp-official hidden>
+          <summary>
+            <span><b>Retours professionnels <span data-feedback-total>0</span></b>
+              <small>Déclarations des agents · suivis demandés : <span data-feedback-follow>0</span></small></span>
+            <span aria-hidden="true">⌄</span>
+          </summary>
+          <div class="resp-feedback-inner">
+            <div class="resp-feedback-actions">
+              <button type="button" data-feedback-filter="all" aria-pressed="true" class="selected">Tous</button>
+              <button type="button" data-feedback-filter="follow" aria-pressed="false">Suivi demandé</button>
+              <button type="button" data-feedback-refresh>Actualiser</button>
+              <button type="button" data-feedback-export>Exporter CSV</button>
+            </div>
+            <div class="resp-feedback-records" data-feedback-records aria-live="polite"></div>
+            <p class="resp-feedback-status" data-feedback-status>Ouvrez le registre pour consulter les retours enregistrés.</p>
+          </div>
+        </details>
 
         <details class="resp-request-compose" id="respRequestCompose" data-stip-persistent-open open>
           <summary>
@@ -335,6 +354,7 @@
     <script src="responsable-official-documents.js?v=20260922-tabs1"></script>
     <script src="responsable-staffing.js?v=20260930-staffing-null1"></script>
     <script src="responsable-tabs.js?v=20260927-request-visible1"></script>
+    <script src="responsable-event-feedback.js?v=20261014-registre1"></script>
     <script src="quick-access-universal.js?v=20260926-no-iframe-pages1"></script>
   </body>
 </html>
