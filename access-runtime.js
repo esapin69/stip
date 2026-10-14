@@ -18,6 +18,8 @@
     return Object.prototype.hasOwnProperty.call(x, k) ? !!x[k] : false;
   }
   const APP_POLICY = {
+    meteo: () => explicit("meteo"),
+    nouveau: () => explicit("nouveau"),
     personal: () => explicit("planning_personal"),
     tomorrow: () => explicit("tomorrow"),
     dialog: () => explicit("dialog"),
