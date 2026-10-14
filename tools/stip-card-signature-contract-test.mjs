@@ -54,7 +54,7 @@ const uiBuild = index.match(/<meta name="stip-ui-build" content="([^"]+)"/)?.[1]
 const swBuild = sw.match(/STIP_SW_BUILD="([^"]+)"/)?.[1] || "";
 assert(uiBuild && uiBuild === swBuild,
   "service worker cache version is not synchronized with the UI build");
-assert(index.includes('stip-theme.css?v=20260928-card-signature1'),
+assert(index.includes('stip-theme.css?v=20261015-week-shift-symbols1'),
   "main app does not request the premium card master theme version");
 assert(rules.includes("MAÎTRE VALIDÉ — Signature de carte premium") &&
        rules.includes("liseré supérieur lumineux"),
