@@ -1277,3 +1277,14 @@
     padding:3px 8px!important;
   }
 }
+
+/* La pile introduite par le HTML garde exactement la largeur du carré J4. */
+.hc-days-grid .thf-day-card .thf-shift-stack{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  gap:7px!important;width:min(100%,126px)!important;max-width:126px!important;
+  min-width:0!important;margin:0 auto!important
+}
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-content,
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-colleagues{
+  width:100%!important;max-width:126px!important;box-sizing:border-box!important
+}
