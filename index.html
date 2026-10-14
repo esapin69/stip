@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261014-leisure-confirmed-bell2" />
+    <meta name="stip-ui-build" content="20261014-bell-dialog-flow1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -148,7 +148,7 @@
     <meta name="msapplication-TileImage" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
     <link rel="stylesheet" href="styles.css?v=20260829-public5" />
     <link rel="stylesheet" href="public-home-priority.css?v=20261006-le-nouveau1" />
-    <link rel="stylesheet" href="home-shell.css?v=20261006-dudy1" />
+    <link rel="stylesheet" href="home-shell.css?v=20261014-bell-dialog-flow1" />
     <link rel="stylesheet" href="shift-weather-mini.css?v=20261014-shiftweather3" />
     <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
     <link rel="stylesheet" href="stip-person-actions.css?v=20261002-header-identity-fix1" />
@@ -468,7 +468,7 @@
     <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
     <script src="shift-weather-mini.js?v=20261014-wheelchair-free-location1"></script>
     <script src="team-home-fusion.js?v=20261014-events-before-shift-colleagues-below2"></script>
-    <script src="home-shell.js?v=20261014-leisure-confirmed-bell2"></script>
+    <script src="home-shell.js?v=20261014-bell-dialog-flow1"></script>
     <script src="meeting-runtime.js?v=20261001-meeting-board2"></script>
     <script src="ensemble-home.js?v=20261014-leisure-confirmed-bell2"></script>
     <script src="stip-home-scroll.js?v=20260930-compact-header1"></script>
@@ -484,7 +484,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261014-leisure-confirmed-bell2", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261014-bell-dialog-flow1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
