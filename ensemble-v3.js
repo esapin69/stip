@@ -142,9 +142,9 @@ function bind(){
  byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{persistTitle();state.icon=b.dataset.ev3Icon;state.customOpen=false;render()});
  byId("ensembleV3")?.querySelector("[data-ev3-custom]")?.addEventListener("click",()=>{persistTitle();state.customOpen=!state.customOpen;render();byId("ev3OtherIcon")?.focus()});
  const other=byId("ev3OtherIcon");if(other)other.oninput=()=>{state.icon=other.value.trim().slice(0,16)};
- byId("ensembleV3")?.querySelectorAll("[data-ev3-schedule]").forEach(b=>b.onclick=()=>{persistTitle();state.mode=b.dataset.ev3Schedule;render()});
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-schedule]").forEach(b=>b.onclick=()=>{persistTitle();state.mode=b.dataset.ev3Schedule;if(state.mode==="afterwork"){const days=new Map(state.calendar.map(x=>[x.date,x]));for(const date of state.dates){const meta=days.get(date);if(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false)state.dates.delete(date)}}render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-month]").forEach(b=>b.onclick=()=>{persistTitle();state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.ev3Month),1);render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-all]").forEach(b=>b.onclick=()=>{persistTitle();const select=b.dataset.ev3All==="1";const y=state.month.getFullYear(),m=state.month.getMonth();for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const d=dateISO(new Date(y,m,i));if(d<today)continue;if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d)}render()});
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-all]").forEach(b=>b.onclick=()=>{persistTitle();const select=b.dataset.ev3All==="1";const y=state.month.getFullYear(),m=state.month.getMonth();for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const d=dateISO(new Date(y,m,i));if(d<today)continue;const meta=state.calendar.find(x=>x.date===d);if(select&&state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false))continue;if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d)}render()});
  byId("ensembleV3")?.querySelectorAll("[data-ev3-day]").forEach(b=>b.onclick=()=>{persistTitle();const d=b.dataset.ev3Day;if(state.dates.has(d))state.dates.delete(d);else if(state.dates.size<62)state.dates.add(d);else return message("62 dates maximum.",true);render()});
  const search=byId("ev3PeopleSearch");if(search)search.oninput=()=>{byId("ev3PeopleList").innerHTML=peopleOptions(search.value);bindPeople()};
  bindPeople();
@@ -245,10 +245,12 @@ function openEditor(e){
 }
 async function refresh(){
  try{
-  const [events,calendar,peers,trips]=await Promise.allSettled([call("list"),call("calendar"),call("colleagues"),call("carpool_home")]);
+  const [events,calendar,peers,trips,preview]=await Promise.allSettled([call("list"),call("calendar"),call("colleagues"),call("carpool_home"),call("calendar_preview",{start:today,days:123})]);
   if(events.status==="rejected")throw events.reason;
   state.events=events.value.events||[];
   if(calendar.status==="fulfilled")state.calendar=calendar.value.days||[];
+  state.calendarPreviewReady=preview.status==="fulfilled";
+  if(state.calendarPreviewReady){const ends=new Map((preview.value.shifts||[]).map(x=>[x.date,x.end]));state.calendar=state.calendar.map(x=>({...x,end:ends.get(x.date)||null}));}
   if(peers.status==="fulfilled")state.people=peers.value.colleagues||[];
   if(trips.status==="fulfilled"){state.trips=trips.value.trips||[];state.pref=trips.value.preference||null}
   state.loaded=true;state.error="";state.status="";render();
