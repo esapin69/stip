@@ -443,6 +443,11 @@
     state.loading = true;
     $("refresh-btn").disabled = true;
     renderLocation();
+    // Details can be inside the forecast grid; preserve the live node before any
+    // loading/error state replaces grid.innerHTML.
+    const grid = $("forecast-grid");
+    const details = $("detail-section");
+    if (details.parentElement === grid) grid.after(details);
 
     const cached = loadCache();
     if (cached) {
@@ -461,6 +466,8 @@
     } else {
       state.payload = null;
       state.updated = 0;
+      state.selected = null;
+      details.hidden = true;
       $("forecast-grid").innerHTML = '<p class="empty-state">Chargement des seize jours…</p>';
       $("forecast-grid").setAttribute("aria-busy", "true");
       $("detail-section").hidden = true;
