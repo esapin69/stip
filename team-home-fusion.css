@@ -160,3 +160,23 @@
   .hc-home-timeline{gap:10px!important}
   .hc-home-timeline>.hc-day-appointments{padding:0 4px 5px!important}
 }
+
+/* La ligne cloche / porte T / Fauteuils est indépendante du profil. */
+.hc-home-timeline>.hc-home-top-nav.hc-home-tools-only[data-header-compact]{
+  width:min(100%,700px)!important;
+  margin:0 auto 0!important;
+  padding:0!important;
+}
+.hc-home-timeline>.hc-home-tools-only .hc-home-top-tools{
+  margin:0!important;
+}
+.hc-home-timeline>.hc-home-top-nav.hc-home-identity-only[data-header-compact]{
+  width:min(100%,700px)!important;
+  margin:0 auto 0!important;
+}
+.hc-home-timeline>.hc-home-identity-only .ghe-home-header-stack{
+  margin:0 auto!important;
+}
+.hc-home-timeline>.hc-feedback-pending{
+  margin:0 0 0!important;
+}
