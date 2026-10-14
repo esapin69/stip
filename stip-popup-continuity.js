@@ -23,7 +23,7 @@
   const visible = (node) => {
     if (!node.isConnected || node.closest(PAGE_SURFACES) || node.matches(PAGE_SURFACES)) return false;
     if (node.matches('dialog') && !node.open) return false;
-    if (node.hidden) return false;
+    if (node.hidden || node.getClientRects?.().length === 0) return false;
     const style = getComputedStyle(node);
     return style.display !== 'none' && style.visibility !== 'hidden';
   };
