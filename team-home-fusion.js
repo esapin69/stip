@@ -82,6 +82,26 @@
   }
   function sortPeople(x,y){const nr=z=>Number(String(z.agents?.ghe||"").match(/\d+/)?.[0]||99999);return nr(x)-nr(y)||name(x.agents).localeCompare(name(y.agents),"fr");}
 
+  // Le même contrôle contact que la carte Chef présent, coloré selon le shift.
+  // La zone nom ouvre la fiche agent ; le combiné ouvre le choix d'appel existant.
+  function chiefContactHtml(item){
+    const a=item.agents||{},key=String(a.source_key||""),label=name(a);
+    const phone=String(a.telephone||"").replace(/\D/g,"");
+    const code=String(item.code||""),time=shiftTime(code,{
+      ...item,agents:{...a,role:"chef",type_planning:"chefs"}
+    });
+    const hours=[shiftLabel(code),time||"Horaires non renseignés"].join(" · ");
+    return '<div class="thf-chief-contact '+shiftClass(code)+'">'+
+      '<button type="button" class="thf-chief-identity" data-thf-agent="'+esc(key)+'" '+
+      (key?'':'disabled ')+'aria-label="Voir la fiche de '+esc(label)+'">'+
+      '<strong>'+esc(label)+'</strong><small>'+esc(hours)+'</small></button>'+
+      '<button type="button" class="thf-chief-phone" '+(phone?
+         'data-thf-chief-call="'+esc(phone)+'" data-thf-chief-name="'+esc(label)+'"':
+         'disabled title="Numéro de téléphone indisponible"')+
+      ' aria-label="'+esc(phone?'Appeler '+label:'Numéro indisponible pour '+label)+'">'+
+      '<span aria-hidden="true">☎</span></button>'+
+      '</div>';
+  }
   // Same data definitions and colors as the Esprit d'équipe engine.
   function shiftClass(code){const k=base(code).toLowerCase();return /^(m|j|j4|s|n)$/.test(k)?"shift-"+k:"shift-other";}
   function peopleGroups(rows){
@@ -251,11 +271,7 @@
     const badge=delta==null?"○":delta<0?"⚠":delta>0?"+":"✓";
     const chiefLabel=chiefs.length?chiefs.map(x=>name(x.agents)).join(", "):
       loaded?"Aucun chef en poste renseigné":"Chargement du planning chef…";
-    const chiefDisplay=chiefs.length?chiefs.slice(0,2).map(x=>{
-      const hours=shiftTime(x.code,{...x,agents:{...x.agents,role:"chef",type_planning:"chefs"}});
-      return '<span class="thf-chief-line '+shiftClass(x.code)+'"><strong>'+esc(name(x.agents))+'</strong>'+
-        '<em>'+esc([shiftLabel(x.code),hours||"Horaires non renseignés"].join(" · "))+'</em></span>';
-    }).join("")+(chiefs.length>2?'<small>+'+(chiefs.length-2)+' autre(s) ›</small>':""):
+    const chiefDisplay=chiefs.length?chiefs.map(chiefContactHtml).join(""):
       '<span class="thf-chief-missing">'+esc(chiefLabel)+'</span>';
     const leisureEvents=window.STIPLeisure?.dayItems?.(day)||[];
     host._thfLeisureEvents=leisureEvents;
@@ -317,7 +333,7 @@
     if(!s)return;
     const chiefs=host._thfChiefs||[];
     const chiefHTML=chiefs.length?
-      chiefs.map(x=>agentHtml(x)).join(""):'<p class="thf-empty">Aucune affectation de chef disponible dans le planning pour ce jour. Les données ne sont pas encore transmises.</p>';
+      chiefs.map(chiefContactHtml).join(""):'<p class="thf-empty">Aucune affectation de chef disponible dans le planning pour ce jour. Les données ne sont pas encore transmises.</p>';
     const weather=host.querySelector?.("[data-thf-weather]");
     const weatherText=weather&&!weather.hidden?String(weather.textContent||"").replace(/\s+/g," ").trim():"Prévision indisponible pour les horaires du service";
     const same=(host._thfSets?.exact||[]).length;
@@ -416,7 +432,7 @@
       document.getElementById("thfPopup")?.close?.();
   },true);
   document.addEventListener("click",async(event)=>{
-    const el=event.target.closest?.("[data-thf-agent],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
+    const el=event.target.closest?.("[data-thf-agent],[data-thf-chief-call],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el)return;
     const host=el.closest("#hcTeamFusion,#hcTomorrowFusion")||activeHost||document.getElementById("hcTeamFusion");
     if(el.hasAttribute("data-thf-team-subscribe")){
@@ -424,6 +440,22 @@
       window.STIPCalendars?.quick?.("team");return;
     }
     if(!host)return;
+    if(el.hasAttribute("data-thf-chief-call")){
+      event.preventDefault();
+      event.stopPropagation();
+      const phone=String(el.dataset.thfChiefCall||"");
+      const label=String(el.dataset.thfChiefName||"Chef d’équipe");
+      if(!phone)return;
+      // La modale de jour serait dans la top layer, devant le choix d'appel.
+      const dayPopup=document.getElementById("thfPopup");
+      if(dayPopup?.open)dayPopup.close();
+      if(!window.STIPDutyChiefs?.openCallChoice)
+        await window.STIPLoad?.script?.("home-duty-chief.js").catch?.(()=>{});
+      if(window.STIPDutyChiefs?.openCallChoice)
+        window.STIPDutyChiefs.openCallChoice(phone,label);
+      else showDialog('<h2>Appel indisponible</h2><p>Réessaie après actualisation de la page.</p>');
+      return;
+    }
     if(el.hasAttribute("data-thf-people-tab")){peoplePanel(host,el.dataset.thfPeopleTab);return;}
     if(el.hasAttribute("data-thf-open")){
       const kind=el.dataset.thfOpen;
