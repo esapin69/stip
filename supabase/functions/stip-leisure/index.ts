@@ -261,9 +261,14 @@ async function list(c:any){
  const visibleEvents=events.filter((e:any)=>e.visibility!=='invite'||e.organizer_agent_id===c.agent_id||invited.has(e.id));
  events.splice(0,events.length,...visibleEvents);
  const ids=events.map((e:any)=>e.id)
+ const allInvitations=ids.length?await checked(db.from('stip_leisure_invites')
+  .select('event_id,agent_id,status,agent:agents!stip_leisure_invites_agent_id_fkey(id,prenom,nom)').in('event_id',ids)):[] 
  const afterEvents=events.filter((e:any)=>e.schedule_mode==='afterwork'&&e.status==='active');
+ const afterIds=new Set(afterEvents.map((e:any)=>e.id));
+ // Dates compatibles calculées pour CHAQUE invité, pas seulement l'organisateur.
  const ends=afterEvents.length&&c.agent_id?await endSchedules(
-  [c.agent_id,...afterEvents.map((e:any)=>e.organizer_agent_id)],
+  [c.agent_id,...afterEvents.map((e:any)=>e.organizer_agent_id),
+   ...(allInvitations||[]).filter((x:any)=>afterIds.has(x.event_id)).map((x:any)=>x.agent_id)],
   today(),plusDays(today(),123)):new Map<string,Map<string,string>>();
  const recurring=ids.length?await checked(db.from('stip_leisure_recurring').select('event_id,active,excluded_dates,closing_time').in('event_id',ids)):[];
  const recurringById=new Map((recurring||[]).map((x:any)=>[x.event_id,x]));
@@ -273,12 +278,14 @@ async function list(c:any){
   await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id)
    .in('conversation_id',seriesConversations.map((x:any)=>x.conversation_id))):[];
  const seriesMemberIds=new Set((seriesMemberships||[]).map((x:any)=>x.conversation_id));
- const allInvitations=ids.length?await checked(db.from('stip_leisure_invites').select('event_id,agent_id,status,agent:agents!stip_leisure_invites_agent_id_fkey(id,prenom,nom)').in('event_id',ids)):[]
  const chats=ids.length&&c.permissions?.messages?await checked(db.from('stip_leisure_chats').select('event_id,event_date,conversation_id').in('event_id',ids)):[]
  const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
  const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
  const responses=ids.length?await checked(db.from('stip_leisure_responses').select('event_id,agent_id,selected_dates,declined,revision,updated_at,agent:agents!stip_leisure_responses_agent_id_fkey(id,prenom,nom,profile_photo_url,avatar_url)').in('event_id',ids)):[]
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
+ const organizerIds=[...new Set(events.map((x:any)=>x.organizer_agent_id).filter(Boolean))];
+ const organizerRows=organizerIds.length?await checked(db.from('agents').select('id,prenom,nom').in('id',organizerIds)):[];
+ const organizerNames=new Map((organizerRows||[]).map((x:any)=>[x.id,[x.prenom,x.nom].filter(Boolean).join(' ')||'Organisateur']));
  const [viewerPlan,shiftPalette]=c.agent_id&&ids.length?await Promise.all([
   checked(db.from('planning').select('date,code').eq('agent_id',c.agent_id).gte('date',today()).lte('date',plusDays(today(),123))),
   checked(db.from('stip_shift_registry').select('code,label,icon,color_hex,soft_color_hex').eq('active',true))
@@ -291,10 +298,46 @@ async function list(c:any){
  }));
  return {can_create:!!c.agent_id,events:events.map((e:any)=>{
   const visibleDates=compatibleDates(e,c.agent_id,ends);
-  if(e.schedule_mode==='afterwork'&&e.organizer_agent_id!==c.agent_id&&!visibleDates.some((d:string)=>d>=today()))return null;
+  // Une personne invitée sans horaire commun doit pouvoir REFUSER, pas perdre l'invitation.
+  if(e.schedule_mode==='afterwork'&&e.organizer_agent_id!==c.agent_id&&!visibleDates.some((d:string)=>d>=today())&&!invited.has(e.id))return null;
   const rs=(responses||[]).filter((r:any)=>r.event_id===e.id),mine=rs.find((r:any)=>r.agent_id===c.agent_id)||null
   const active=e.status==='active'&&(e.dates.some((d:string)=>d>=today())||!!recurringById.get(e.id)?.active)
-  return {...e,visible_dates:visibleDates,visible_end_times:e.schedule_mode==='afterwork'?Object.fromEntries(visibleDates.map((day:string)=>[day,ends.get(c.agent_id)?.get(day)]).filter((row:any)=>!!row[1])):{},my_schedule:visibleDates.map((d:string)=>viewerDays.get(d)).filter(Boolean),recurring_closing:!!recurringById.get(e.id)?.active,
+  const rosterInvites=(allInvitations||[]).filter((x:any)=>x.event_id===e.id);
+  const allById=new Map<string,any>();
+  for(const invite of rosterInvites)allById.set(invite.agent_id,{
+    agent_id:invite.agent_id,
+    name:[invite.agent?.prenom,invite.agent?.nom].filter(Boolean).join(' ')||'Collègue',
+    invite_status:invite.status
+  });
+  for(const response of rs)if(!allById.has(response.agent_id))allById.set(response.agent_id,{
+    agent_id:response.agent_id,
+    name:[response.agent?.prenom,response.agent?.nom].filter(Boolean).join(' ')||'Collègue',
+    invite_status:'accepted'
+  });
+  // Ne pas divulguer les horaires individuels : exposer uniquement la compatibilité des dates.
+  const endOfOrganizer=ends.get(e.organizer_agent_id)||new Map<string,string>();
+  const dateRoster=Object.fromEntries((e.dates||[]).filter((day:string)=>day>=today()).map((day:string)=>{
+    const roster:any[]=[];
+    if(e.organizer_agent_id)roster.push({agent_id:e.organizer_agent_id,
+      name:organizerNames.get(e.organizer_agent_id)||'Organisateur',
+      state:(recurringById.get(e.id)?.excluded_dates||[]).includes(day)?'unavailable':'organizer',
+      compatible:!(recurringById.get(e.id)?.excluded_dates||[]).includes(day)});
+    for(const person of allById.values()){
+      if(person.agent_id===e.organizer_agent_id)continue;
+      const response=rs.find((r:any)=>r.agent_id===person.agent_id);
+      const compatible=e.schedule_mode!=='afterwork'||Boolean(
+        endOfOrganizer.get(day)&&endOfOrganizer.get(day)===ends.get(person.agent_id)?.get(day));
+      const confirmed=!!response&&response.revision===e.revision;
+      const status=confirmed&&response.declined?'declined':
+        confirmed&&response.selected_dates?.includes(day)?'accepted':
+        confirmed?'not_selected':
+        person.invite_status==='declined'?'declined':
+        compatible?'pending':'incompatible';
+      roster.push({agent_id:person.agent_id,name:person.name,state:status,compatible});
+    }
+    return [day,roster];
+  }));
+  return {...e,date_roster:dateRoster,organizer_name:organizerNames.get(e.organizer_agent_id)||'Organisateur',visible_dates:visibleDates,visible_end_times:e.schedule_mode==='afterwork'?Object.fromEntries(visibleDates.map((day:string)=>[day,ends.get(c.agent_id)?.get(day)]).filter((row:any)=>!!row[1])):{},my_schedule:visibleDates.map((d:string)=>viewerDays.get(d)).filter(Boolean),recurring_closing:!!recurringById.get(e.id)?.active,
    organizer_unavailable_dates:recurringById.get(e.id)?.excluded_dates||[],
    closing_time:recurringById.get(e.id)?.closing_time||null,
    series_conversation_id:seriesConversations.find((x:any)=>x.event_id===e.id&&seriesMemberIds.has(x.conversation_id))?.conversation_id||null,
@@ -304,7 +347,7 @@ async function list(c:any){
    can_invite:e.organizer_agent_id===c.agent_id,
    invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
-   needs_response:active&&visibleDates.some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&(!mine||mine.revision!==e.revision),
+   needs_response:active&&(e.dates||[]).some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&(!mine||mine.revision!==e.revision),
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
    response_count:rs.length,declined_count:rs.filter((r:any)=>r.declined).length}
  }).filter(Boolean)}
