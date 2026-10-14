@@ -177,7 +177,6 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 @media(max-width:370px){
   .stip-store-browse-add{min-height:42px!important;padding:7px 10px!important;gap:6px!important}
   .stip-store-browse-add>strong{font-size:.79rem!important}
-  .stip-app-propose{padding:8px 10px!important}
 }
 /* Illustrated GHE application tiles: rich artwork only where space allows. */
 .stip-store-icon.is-illustrated{background:transparent!important;box-shadow:none!important;color:inherit!important;letter-spacing:normal!important}
