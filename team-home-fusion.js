@@ -129,17 +129,49 @@
   }
   // Same data definitions and colors as the Esprit d'équipe engine.
   function shiftClass(code){const k=base(code).toLowerCase();return /^(m|j|j4|s|n)$/.test(k)?"shift-"+k:"shift-other";}
+  // Repos sociaux réels : une absence médicale ou une formation n'est pas une disponibilité.
+  function restInfo(raw){
+    const code=String(raw||"").trim();
+    if(!code)return null;
+    const def=definition(code);
+    if(def?.is_working===true)return null;
+    const shift=base(code).toUpperCase();
+    const label=String(window.STIPShiftRegistry?.displayName?.(code)||def?.label||shift).trim();
+    const clean=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    const readable=clean(label+" "+shift);
+    if(/malad|arret|sick|accident|formation|stage|absence|matern|patern|parental|sans solde|indispon|hospital|invalid|conval|suspension/.test(readable))return null;
+    const icon=String(window.STIPShiftRegistry?.icon?.(code)||"");
+    if(shift==="CP"||/conge[s]? pay/.test(readable))
+      return {key:"rest:cp",label:"Congé payé",icon:icon||"🏝️"};
+    if(shift==="RH"||shift==="R"||shift==="REPOS"||/repos (hebdomadaire|hebdo)|^repos$/.test(clean(label)))
+      return {key:"rest:rh",label:"Repos hebdomadaire",icon:icon||"🛋️"};
+    if(shift==="RTT"||/\brtt\b/.test(readable))
+      return {key:"rest:rtt",label:"RTT",icon:icon||"🌿"};
+    if(!/repos|conge|recup|ferie|vacance|compensat/.test(readable))return null;
+    return {key:"rest:"+clean(label),label,icon:icon||"🗓️"};
+  }
+  function restPeersForDay(rows){
+    const seen=new Set();
+    return rows.filter(item=>{
+      if(!restInfo(item.code))return false;
+      const identity=String(item.agents?.source_key||item.agents?.ghe||name(item.agents)).trim().toLowerCase();
+      if(seen.has(identity))return false;
+      seen.add(identity);
+      return true;
+    }).sort(sortPeople);
+  }
   function peopleGroups(rows){
     const groups=new Map();
     for(const item of rows){
       const code=String(item.code||""),working=Boolean(window.STIPShiftRegistry?.isWorking?.(code));
-      let label=String(window.STIPShiftRegistry?.displayName?.(code)||shiftLabel(code)||"Non renseigné").trim();
+      const rest=!working?restInfo(code):null;
+      let label=String(rest?.label||window.STIPShiftRegistry?.displayName?.(code)||shiftLabel(code)||"Non renseigné").trim();
       const normalized=label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
       if(/malad/.test(normalized))label="Maladie";
       else if(/\brtt\b/.test(normalized))label="RTT";
       else if(/conge pay/.test(normalized))label="Congé payé";
       else if(/^rh$|^repos$/.test(normalized))label="Repos";
-      const key=working?"work:"+base(code):"status:"+label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+      const key=working?"work:"+base(code):rest?.key||"status:"+label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
       if(!groups.has(key))groups.set(key,{label,code,working,items:[]});
       groups.get(key).items.push(item);
     }
@@ -150,9 +182,9 @@
   function peopleGroupHtml(group){
     const label=group.label,working=group.working;
     const lowered=label.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-    const icon=working?"":/malad/.test(lowered)?"🩺":/rtt/.test(lowered)?"🕒":
+    const icon=restInfo(group.code)?.icon||(working?"":/malad/.test(lowered)?"🩺":/rtt/.test(lowered)?"🕒":
       /conge/.test(lowered)?"🏖️":/repos/.test(lowered)?"🛋️":/formation/.test(lowered)?"🎓":
-      /csn/.test(lowered)?"📋":window.STIPShiftRegistry?.icon?.(group.code)||"📅";
+      /csn/.test(lowered)?"📋":window.STIPShiftRegistry?.icon?.(group.code)||"📅");
     const time=working?shiftTime(group.code):"";
     return '<section class="thf-person-group '+(working?shiftClass(group.code):"shift-absence")+'">'+
       '<div class="stip-section-separator thf-person-group-heading" role="heading" aria-level="3"><span>'+
@@ -281,6 +313,8 @@
         base(x.code)===myBase;
     }):[];
     const elsewhere=visible.filter(x=>!onDuty.includes(x));
+    const restMode=!working&&Boolean(restInfo(myCode));
+    const restPeers=restMode?restPeersForDay(visible):[];
     const chiefs=chiefForDay(day,myTime,working,team);
     const groups=new Map();
     for(const x of agents){const code=base(x.code);if(!definition(code)?.is_working)continue;
@@ -297,7 +331,7 @@
     host._thfAgents=[...agents,...chiefs.filter(x=>!agents.some(y=>y.agents?.source_key===x.agents?.source_key))];
     host._thfChiefs=chiefs;host._thfNotes=uniqueInfos;
     host._thfSets={exact:exact.sort(sortPeople),onDuty:onDuty.sort(sortPeople),
-      elsewhere:elsewhere.sort(sortPeople)};
+      elsewhere:elsewhere.sort(sortPeople),rest:restPeers};
     host._thfShifts=shifts;
     const today=new Intl.DateTimeFormat("en-CA",{year:"numeric",month:"2-digit",day:"2-digit",timeZone:"Europe/Paris"}).format(new Date());
     const label=day===today?"Aujourd’hui":day===addDay(today,1)?"Demain":"Jour sélectionné";
@@ -347,8 +381,8 @@
       esc(working?base(myCode).toUpperCase():myCode?shiftLabel(myCode):"Sans poste")+
       '</strong>'+shiftTimeColumns+'</span>'+
       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
-        'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'">'+
-        '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
+        'aria-label="Voir les '+(loaded?(restMode?restPeers.length:exact.length):"…")+' collègues '+(restMode?'en repos':'sur mon horaire')+' '+esc(label)+'">'+
+        '<span aria-hidden="true">👥</span><b>'+(loaded?(restMode?restPeers.length:exact.length):"…")+'</b></button>':"")+
       '</div></div>'+
       '</div></div><div class="thf-day-body">'+
       '<section class="thf-day-chief" aria-label="Chefs effectivement en service">'+
@@ -366,7 +400,7 @@
         date:day,start:hours[0],end:hours[1],isWorking:working,compact:true
       }).catch?.(()=>{});
     }
-    host._thfSummary={day,label,longDate,chefLabel:chiefLabel,myCode,myTime,working,hcl,status,badge,ownPost:working?base(myCode).toUpperCase():shiftLabel(myCode)};
+    host._thfSummary={day,label,longDate,chefLabel:chiefLabel,myCode,myTime,working,restMode,loaded,hcl,status,badge,ownPost:working?base(myCode).toUpperCase():shiftLabel(myCode)};
     document.dispatchEvent(new CustomEvent("stip:team-fusion-updated",{
       detail:{hostId:host.id,day}
     }));
@@ -399,7 +433,7 @@
           '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
         '</section>':"")+
       '<div class="thf-day-popup-actions">'+
-      '<button type="button" data-thf-open="people">👥 Collègues · '+same+' même horaire, '+onDuty+' en service ›</button>'+
+      '<button type="button" data-thf-open="people">👥 '+(s.restMode?'Collègues en repos · '+(host._thfSets?.rest||[]).length:'Collègues · '+same+' même horaire, '+onDuty+' en service')+' ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
       (info?'<button type="button" data-thf-open="notes">📌 À retenir · '+info+' ›</button>':"")+
       '</div>');
@@ -426,6 +460,18 @@
   }
   function openPeople(host) {
     activeHost=host;
+    if(host._thfSummary?.restMode){
+      const rest=host._thfSets?.rest||[],current=restInfo(host._thfSummary?.myCode)?.key;
+      const groups=peopleGroups(rest).sort((a,b)=>Number(b.key===current)-Number(a.key===current));
+      showDialog('<small>PLANNING ÉQUIPE · REPOS</small><h2>Collègues en repos · '+rest.length+'</h2>'+
+        '<p class="thf-popup-intro">Regroupés par type de repos. Les maladies et formations ne sont pas comptées.</p>'+
+        '<div class="thf-popup-scroll thf-rest-groups">'+
+        (groups.length?groups.map(peopleGroupHtml).join(""):
+          '<p class="thf-empty">'+(host._thfSummary.loaded?
+            'Aucun autre collègue en repos ce jour.':'Chargement du planning équipe…')+'</p>')+
+        '</div>');
+      return;
+    }
     const sets=host._thfSets||{},numbers={
       exact:(sets.exact||[]).length,onDuty:(sets.onDuty||[]).length,
       elsewhere:(sets.elsewhere||[]).length
