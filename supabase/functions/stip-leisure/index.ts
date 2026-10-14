@@ -61,20 +61,42 @@ function shiftCode(raw:string){
 const minutes=(s:string)=>{const [h,m]=s.split(':').map(Number);return h*60+m};
 const plusDays=(date:string,count:number)=>{const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+count);return d.toISOString().slice(0,10)};
 async function colleagues(c:any){
- if(!c.agent_id) return [];
- const profiles=await checked(db.from('stip_access_profiles').select('agent_id,active,permissions,agent:agents(id,prenom,nom)').eq('active',true).not('agent_id','is',null))||[];
- const seen=new Set<string>();
- return profiles.filter((p:any)=>{
-  const family=p.permissions?.communication_family==='hors_brancardage'?'hors_brancardage':'brancardage';
-  const ok=family===c.family && p.agent_id!==c.agent_id && p.permissions?.leisure!==false && !seen.has(p.agent_id);
-  if(ok)seen.add(p.agent_id);return ok;
- }).map((p:any)=>({id:p.agent_id,name:[p.agent?.prenom,p.agent?.nom].filter(Boolean).join(' ').trim()||'Collègue'}))
- .sort((a:any,b:any)=>a.name.localeCompare(b.name,'fr'));
+ if(!c.agent_id)return [];
+ // GHE roster is the source of truth for an employee's presence.
+ // A site access profile only determines whether the employee can receive the invitation now.
+ const [roster,profiles]=await Promise.all([
+  checked(db.from('agents').select('id,prenom,nom').eq('actif',true).eq('afficher_dans_liste',true).order('prenom',{ascending:true})),
+  checked(db.from('stip_access_profiles').select('agent_id,active,permissions').not('agent_id','is',null))
+ ]);
+ const activeProfiles=new Map<string,any[]>();
+ for(const p of profiles||[]){
+  if(!p.active||!p.agent_id)continue;
+  if(!activeProfiles.has(p.agent_id))activeProfiles.set(p.agent_id,[]);
+  activeProfiles.get(p.agent_id)!.push(p);
+ }
+ const list:any[]=[];
+ for(const a of roster||[]){
+  if(a.id===c.agent_id)continue;
+  const access=activeProfiles.get(a.id)||[];
+  const inFamily=access.filter((p:any)=>
+   (p.permissions?.communication_family==='hors_brancardage'?'hors_brancardage':'brancardage')===c.family);
+  // Do not expose members of an explicitly different communication family.
+  if(access.length&&!inFamily.length)continue;
+  if(!access.length&&c.family!=='brancardage')continue;
+  const restricted=inFamily.length>0&&inFamily.every((p:any)=>p.permissions?.leisure===false);
+  const hasEligibleAccess=inFamily.some((p:any)=>p.permissions?.leisure!==false);
+  const name=[a.prenom,a.nom].filter(Boolean).join(' ').trim();
+  if(!name)continue;
+  // Always show the person in the directory, but keep invitation permission separate.
+  list.push({id:a.id,name,access_ready:hasEligibleAccess,can_invite:!restricted,
+    restriction:restricted?'leisure_disabled':null});
+ }
+ return list.sort((a:any,b:any)=>a.name.localeCompare(b.name,'fr',{sensitivity:'base'}));
 }
 async function matches(c:any,target:string){
  if(!c.agent_id||!uuid(target)||target===c.agent_id)throw Error('COLLEGUE_INVALIDE');
  const colleaguesList=await colleagues(c);
- const peer=colleaguesList.find((p:any)=>p.id===target);
+ const peer=colleaguesList.find((p:any)=>p.id===target&&p.can_invite!==false);
  if(!peer)throw Error('COLLEGUE_INDISPONIBLE');
  const from=today(),to=plusDays(from,31);
  const [myRows,otherRows,shiftDefs]=await Promise.all([
@@ -123,7 +145,7 @@ async function createActivity(c:any,b:any){
  if(!title||selected.length<1||selected.length>24||selected.some((d:string)=>d<today()))throw Error('DATES_INVALIDES');
  const guests=Array.isArray(b.agent_ids)?[...new Set(b.agent_ids)]:[];
  if(guests.length>120||guests.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
- const accessible=new Set((await colleagues(c)).map((a:any)=>a.id));
+ const accessible=new Set((await colleagues(c)).filter((p:any)=>p.can_invite!==false).map((a:any)=>a.id));
  if(guests.some((id:any)=>!accessible.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
  const visibility=b.visibility==='team'?'team':'invite';
  if(visibility==='invite'&&!guests.length)throw Error('CHOISIR_INVITES_OU_OUVRIR');
@@ -165,7 +187,7 @@ async function recurringCreate(c:any,b:any){
  if(!c.agent_id||!Array.isArray(b.agent_ids))throw Error('INVITATION_INVALIDE');
  const invited=[...new Set(b.agent_ids)];
  if(!invited.length||invited.length>100||invited.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
- const known=new Set((await colleagues(c)).map((x:any)=>x.id));
+ const known=new Set((await colleagues(c)).filter((p:any)=>p.can_invite!==false).map((x:any)=>x.id));
  if(invited.some((id:any)=>!known.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
  const name=text(b.title,120)||'Muscu après la fermeture',location=text(b.location,240);
  const timeLabel=text(b.time_label,240)||'Après la fermeture · 21 h 20';
@@ -568,7 +590,7 @@ Deno.serve(async req=>{
    if(requested.length>100||requested.some((id:any)=>!uuid(id)||id===c.agent_id))throw Error('COLLEGUES_INVALIDES');
    const visibility=b.visibility==='team'?'team':'invite';
    if(visibility==='invite'&&!requested.length)throw Error('CHOISIS_UN_COLLEGUE');
-   const allowed=new Set((await colleagues(c)).map((x:any)=>x.id));
+   const allowed=new Set((await colleagues(c)).filter((p:any)=>p.can_invite!==false).map((x:any)=>x.id));
    if(requested.some((id:any)=>!allowed.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
    let ds=dates(b.dates);
    let alertTargets=requested;
@@ -648,7 +670,7 @@ Deno.serve(async req=>{
    if(!requested.length||requested.length>100||requested.some((id:unknown)=>!uuid(id)||id===c.agent_id))throw Error('INVITATION_INVALIDE');
    const event=await checked(db.from('stip_leisure_events').select('id,title,status,family,organizer_agent_id,visibility,schedule_mode,dates').eq('id',b.event_id).eq('family',c.family).maybeSingle());
    if(!event||event.status!=='active'||event.organizer_agent_id!==c.agent_id)throw Error('ACCES_ORGANISATEUR_REQUIS');
-   const allowed=new Set((await colleagues(c)).map((a:any)=>a.id));
+   const allowed=new Set((await colleagues(c)).filter((p:any)=>p.can_invite!==false).map((a:any)=>a.id));
    if(requested.some((id:unknown)=>!allowed.has(id)))throw Error('COLLEGUE_INDISPONIBLE');
    const inserted=await checked(db.from('stip_leisure_invites').upsert(
     requested.map((agent_id:any)=>({event_id:event.id,agent_id,invited_by:c.agent_id,status:'pending'})),
