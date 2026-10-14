@@ -1426,3 +1426,13 @@ html.thf-weather-page-hidden .thf-weather-stage .thf-weather-art *,
 html.thf-weather-page-hidden .thf-weather-stage .thf-weather-art::before{
   animation-play-state:paused!important;
 }
+
+/* L'éclair déjà présent doit lui aussi s'arrêter hors écran. */
+@media(prefers-reduced-motion:no-preference){
+  .hc-days-grid .thf-weather-stage[data-sky="storm"] .thf-lightning{
+    animation:none;
+  }
+  .hc-days-grid .thf-weather-stage.is-weather-visible[data-sky="storm"] .thf-lightning{
+    animation:thf-flash 5s steps(1) infinite;
+  }
+}
