@@ -127,7 +127,7 @@ function formHTML(){
  '<form id="ev3Compose">'+
  '<label class="ev3-form-title">1. Quelle activité ? <small>Icône obligatoire</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
  (state.customOpen?'<label>Autre icône <input id="ev3OtherIcon" type="text" maxlength="16" autocomplete="off" placeholder="Choisir un emoji" value="'+escapeHTML(state.icon)+'"></label>':"")+
- '<label>Nom ou précision <small>(facultatif)</small><input name="title" maxlength="120" placeholder="Ex. Foot à 5, resto…" value="'+escapeHTML(state.title)+'"></label>'+
+ '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label>'+
  '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
  '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
  '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
@@ -181,7 +181,8 @@ async function submitActivity(ev){
  if(!state.dates.size)return message("Sélectionne au moins une date.",true);
  if(!state.guests.size&&state.visibility!=="team")return message("Sélectionne au moins un collègue.",true);
  const iconInfo=choices.find(v=>v[0]===state.icon);
- const title=(String(f.elements.title.value||"").trim()||iconInfo?.[1]||"Activité");
+ const title=String(f.elements.title.value||"").trim();
+ if(!title){f.elements.title.focus();return message("Donne un titre à cette activité pour identifier clairement sa discussion.",true)}
  const submit=f.querySelector('[type="submit"]');submit.disabled=true;
  try{
   const result=await call("create_ensemble",{icon:state.icon,title,dates:[...state.dates].sort(),schedule_mode:state.mode,
