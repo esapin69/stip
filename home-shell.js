@@ -2316,7 +2316,12 @@
           ],
         },
       ];
-    if (role === "visiteur") return "";
+    const common = pilotageRoleGroup("navigation", "ACCÈS AUX APPLICATIONS", [
+      { action: "apps", label: "Applications", icon: "▦" },
+      { action: "planning", label: "Mon espace", icon: "▤" },
+      { action: "communication", label: "Communication", icon: "◉", when: () => has("messages") },
+    ]);
+    if (role === "visiteur") return common;
     if (role === "admin") {
       const openRoles = readPilotageOpen();
       return `<section class="hc-pilotage-shell is-admin" aria-label="Raccourcis par profil">${groups
@@ -2329,10 +2334,10 @@
             openRoles,
           ),
         )
-        .join("")}</section>`;
+        .join("")}${common}</section>`;
     }
     const group = groups.find((item) => item.key === role);
-    if (!group) return "";
+    if (!group) return common;
     const content = pilotageRoleGroup(
       group.key,
       group.label,
@@ -2340,7 +2345,7 @@
       false,
     );
     return content
-      ? `<section class="hc-pilotage-shell" aria-label="Raccourcis">${content}</section>`
+      ? `<section class="hc-pilotage-shell" aria-label="Raccourcis">${common}${content}</section>`
       : "";
   }
   function app(kind, title, cls, action) {
@@ -2491,192 +2496,160 @@
     });
     return {rows:active,allowed,loaded};
   }
-  function liveStaffEntry(item) {
-    const a=item.agents||{},code=canonicalShift(item.code);
-    const key=String(a.source_key||a.id||"").trim();
-    const hours=liveWorkInterval(item)?.label || "Horaire non communiqué";
-    const icon=String(shiftDefinition(code)?.icon||"●");
-    return '<button type="button" class="ghe-live-staff-row '+liveShiftClass(item.code)+
-      '" data-live-agent="'+esc(key)+'" '+(key?'':'disabled')+
-      ' aria-label="Voir les actions professionnelles de '+esc(agentName(a))+'">'+
-      '<span class="ghe-live-staff-art" aria-hidden="true">'+esc(icon)+'</span>'+
-      '<span class="ghe-live-staff-info"><strong>'+esc(agentName(a))+'</strong>'+
-      '<small>'+esc(code+' · '+hours)+'</small></span>'+
-      '<span class="ghe-live-staff-chevron" aria-hidden="true">›</span></button>';
-  }
-  let liveModalMode="main",liveModalAgent="";
-  function liveCloseDialog() {
-    const modal=document.getElementById("gheLiveDialog");
-    if (!modal)return;
-    if (modal.open && typeof modal.close==="function") modal.close();
-    modal.remove();
-    liveModalMode="main";liveModalAgent="";
-  }
-  function liveModalMain() {
-    const staff=liveRoster(), people=staff.rows;
-    const actions=pending(),notes=notifications().filter(n=>{
-      const at=new Date(noteTimeValue(n)).getTime();
-      return Number.isFinite(at)&&at<=Date.now()&&Date.now()-at<86400000;
-    }).sort((a,b)=>new Date(noteTimeValue(b)).getTime()-new Date(noteTimeValue(a)).getTime()).slice(0,2);
-    const actionRows=actions.length?
-      actions.slice(0,1).map(a=>'<button type="button" class="ghe-live-item" data-live-actions>'+
-        '<span class="ghe-live-item-icon">!</span><span><strong>'+
-        esc(a.title||"Action en attente")+'</strong><small>'+esc(a.body||"Voir le détail")+
-        '</small></span><b aria-hidden="true">›</b></button>').join("")+
-        (actions.length>1?'<button class="ghe-live-view-more" type="button" data-live-actions>Voir les autres actions ›</button>':"")
-      :'<p class="ghe-live-empty">Aucune action en attente.</p>';
-    const empty=!staff.allowed && !has("planning_personal")?"Planning d’équipe non autorisé.":
-      staff.allowed && !staff.loaded?"Chargement du planning…":
-      "Aucun collègue actuellement en service selon les horaires disponibles.";
-    const recent=notes.length?notes.map(n=>'<button type="button" class="ghe-live-item" data-live-notification="'+
-      esc(actionNoteKey(n))+'"><span class="ghe-live-item-icon">•</span><span><strong>'+
-      esc(n.title||"Information récente")+'</strong><small>'+esc(sinceNotification(n))+
-      '</small></span><b aria-hidden="true">›</b></button>').join(""):
-      '<p class="ghe-live-empty">Aucune activité récente visible.</p>';
-    return '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>À traiter</h3><b>'+
-        actions.length+'</b></div>'+actionRows+'</section>'+
-      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Collègues en poste</h3><b>'+
-      (staff.allowed&&!staff.loaded?"…":people.length)+'</b></div>'+
-      (people.length?people.slice(0,2).map(liveStaffEntry).join(""):'<p class="ghe-live-empty">'+esc(empty)+'</p>')+
-      (people.length>2?'<button class="ghe-live-view-more" type="button" data-live-all-agents>Voir les '+people.length+' collègues ›</button>':"")+
-      '</section>'+
-      '<section class="ghe-live-section"><div class="ghe-live-section-head"><h3>Activité récente</h3><b>'+
-      notes.length+'</b></div>'+recent+'</section>'+
-      '<p class="ghe-live-source-note">En poste = selon les horaires prévus, pas une présence physique vérifiée.</p>';
-  }
-  function liveModalContent() {
-    let title="EN DIRECT",back="";
-    let body=liveModalMain();
-    if(liveModalMode==="agents"){
-      const staff=liveRoster(),rows=staff.rows;
-      title="Collègues en poste";
-      back='<button type="button" class="ghe-live-back-link" data-live-back aria-label="Retour au direct">‹</button>';
-      body='<p class="ghe-live-intro">Horaires du planning · '+rows.length+' en poste</p>'+
-        (rows.length?rows.map(liveStaffEntry).join(""):
-          '<p class="ghe-live-empty">Aucun collègue en poste.</p>');
-    } else if(liveModalMode==="agent"){
-      const item=liveRoster().rows.find(x=>String(x.agents?.source_key||x.agents?.id||"")===liveModalAgent);
-      if(!item){liveModalMode="agents";return liveModalContent();}
-      const agent=item.agents||{},code=canonicalShift(item.code);
-      const hours=liveWorkInterval(item)?.label||"Horaire non communiqué";
-      const phone=String(agent.telephone||"").replace(/\D/g,"");
-      const canCall=has("contacts")&&phone.length>=6;
-      title=agentName(agent);
-      back='<button type="button" class="ghe-live-back-link" data-live-back aria-label="Retour aux collègues">‹</button>';
-      body='<div class="ghe-live-person-detail '+liveShiftClass(item.code)+'">'+
-        '<span>Poste prévu</span><strong>'+esc(code+' · '+hours)+'</strong></div>'+
-        '<div class="ghe-live-person-actions">'+
-        (canCall?'<button type="button" data-live-call>☎ Appeler ce collègue</button>':
-         '<p class="ghe-live-empty">Aucun numéro professionnel disponible avec vos accès.</p>')+
-        '</div><p class="ghe-live-source-note">Aucune action pour déclarer un collègue absent ou modifier sa présence.</p>';
+  // Source canonique : planning d'équipe autorisé, horaires calculés à Paris.
+  // Aucun marqueur de présence réelle ni déclaration d'absence.
+  function liveRoster() {
+    const host = document.getElementById("hcTeamFusion");
+    const permitted = has("planning_team");
+    const loaded = permitted && Array.isArray(host?._thfAgents);
+    const now = liveParisClock();
+    const entries = loaded ? host._thfAgents.slice() : [];
+    if (has("planning_personal")) {
+      const a = state.session?.agent || state.boot?.agent || {};
+      const day = (state.boot?.personal || []).find(x => String(x.date || "").slice(0, 10) === now.day);
+      if (day) entries.push({ ...day, code: day.code || day.source_value, agents: a });
     }
-    return '<div class="ghe-live-dialog-shell"><header class="ghe-live-dialog-head">'+back+
-      '<div class="ghe-live-dialog-title"><span class="ghe-live-dot" aria-hidden="true"></span><strong>'+
-      esc(title)+'</strong></div><button type="button" class="ghe-live-close" data-live-close aria-label="Fermer">×</button></header>'+
-      '<main class="ghe-live-dialog-body">'+body+'</main></div>';
+    const seen = new Set(), current = [];
+    for (const item of entries) {
+      if (!liveCurrentlyWorking(item, now)) continue;
+      const agent = item.agents || {};
+      const key = String(agent.source_key || agent.id || "").trim() || agentName(agent).toLowerCase();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      current.push(item);
+    }
+    current.sort((a, b) => (liveWorkInterval(a)?.start ?? 1440) -
+      (liveWorkInterval(b)?.start ?? 1440) ||
+      agentName(a.agents).localeCompare(agentName(b.agents), "fr"));
+    return { rows: current, permitted, loaded };
   }
-  function liveRefreshDialog(restoreFocus=false) {
-    const modal=document.getElementById("gheLiveDialog");
-    if(!modal||!modal.open)return;
-    const scroll=modal.scrollTop;
-    modal.innerHTML=liveModalContent();
-    if(restoreFocus) modal.querySelector("[data-live-back],[data-live-close]")?.focus({preventScroll:true});
-    else modal.scrollTop=scroll;
-  }
-  function liveOpenDialog() {
-    liveCloseDialog();
-    liveModalMode="main";liveModalAgent="";
-    const modal=document.createElement("dialog");
-    modal.id="gheLiveDialog";
-    modal.className="ghe-live-dialog";
-    modal.setAttribute("aria-label","Informations EN DIRECT");
-    modal.innerHTML=liveModalContent();
-    document.body.appendChild(modal);
-    modal.addEventListener("click",async event=>{
-      if(event.target===modal||event.target.closest("[data-live-close]")) {
-        liveCloseDialog();return;
-      }
-      const agentBtn=event.target.closest("[data-live-agent]");
-      if(agentBtn){
-        liveModalAgent=String(agentBtn.dataset.liveAgent||"");
-        if(!liveModalAgent)return;
-        liveModalMode="agent";liveRefreshDialog(true);return;
-      }
-      if(event.target.closest("[data-live-all-agents]")){
-        liveModalMode="agents";liveRefreshDialog(true);return;
-      }
-      if(event.target.closest("[data-live-back]")){
-        liveModalMode=liveModalMode==="agent"?"agents":"main";
-        liveRefreshDialog(true);return;
-      }
-      if(event.target.closest("[data-live-actions]")){
-        liveCloseDialog();openNotifications();return;
-      }
-      const notice=event.target.closest("[data-live-notification]");
-      if(notice){
-        const n=notifications().find(x=>actionNoteKey(x)===notice.dataset.liveNotification);
-        if(n){liveCloseDialog();openNotificationDetail(n);}
-        return;
-      }
-      if(event.target.closest("[data-live-call]")){
-        const item=liveRoster().rows.find(x=>String(x.agents?.source_key||x.agents?.id||"")===liveModalAgent);
-        const phone=String(item?.agents?.telephone||"").replace(/\D/g,"");
-        if(!has("contacts")||phone.length<6)return;
-        const name=agentName(item.agents);
-        liveCloseDialog();
-        if(!window.STIPDutyChiefs?.openCallChoice){
-          try{await window.STIPLoad?.script?.("home-duty-chief.js");}catch{return;}
-        }
-        window.STIPDutyChiefs?.openCallChoice?.(phone,name);
-      }
+  function liveCardMarkup() {
+    const roster = liveRoster();
+    const groups = new Map();
+    for (const row of roster.rows) {
+      const shift = canonicalShift(row.code);
+      if (!groups.has(shift)) groups.set(shift, []);
+      groups.get(shift).push(row);
+    }
+    const workGroups = [...groups].map(([code, rows]) => {
+      const names = rows.map(row => {
+        const agent = row.agents || {};
+        const key = String(agent.source_key || agent.id || "").trim();
+        const label = agentName(agent);
+        return key
+          ? '<button class="ghe-live-name" type="button" data-live-agent="' + esc(key) +
+            '" aria-label="Informations professionnelles de ' + esc(label) + '">' + esc(label) + '</button>'
+          : '<span class="ghe-live-name">' + esc(label) + '</span>';
+      }).join('<span class="ghe-live-name-sep" aria-hidden="true">·</span>');
+      return '<div class="ghe-live-shift-row ' + liveShiftClass(code) + '">' +
+        '<span class="ghe-live-shift-code" title="' + esc(shiftMeta(code)[1]) + '">' + esc(code) + '</span>' +
+        '<span class="ghe-live-shift-names">' + names + '</span></div>';
+    }).join("");
+    const total = roster.rows.length;
+    const messages = notifications();
+    const actions = pending();
+    const recent = messages.filter(n => {
+      const time = new Date(noteTimeValue(n)).getTime();
+      return Number.isFinite(time) && time <= Date.now() && Date.now() - time < 86400000;
     });
-    modal.addEventListener("close",()=>{
-      modal.remove();liveModalMode="main";liveModalAgent="";
-      document.querySelector("[data-live-open]")?.focus({preventScroll:true});
-    },{once:true});
-    if(typeof modal.showModal==="function")modal.showModal();
-    else modal.setAttribute("open","");
-    modal.querySelector("[data-live-close]")?.focus({preventScroll:true});
+    const unavailable = roster.permitted && !roster.loaded
+      ? 'Chargement du planning…'
+      : !roster.permitted && !has("planning_personal")
+        ? 'Planning collectif non autorisé.'
+        : 'Aucun agent en poste selon les horaires disponibles.';
+    return '<section class="ghe-live-strip" id="gheLiveStrip" aria-label="En direct, horaires et activité du service">' +
+      '<div class="ghe-live-strip-head">' +
+        '<strong class="ghe-live-strip-title"><span class="ghe-live-dot" aria-hidden="true"></span>EN DIRECT</strong>' +
+        '<div class="ghe-live-strip-stats">' +
+          '<button type="button" data-live-actions class="ghe-live-stat" aria-label="' + actions.length +
+            ' actions à traiter"><span>À traiter</span><b>' + actions.length + '</b></button>' +
+          '<button type="button" data-bell-open class="ghe-live-stat" aria-label="' + recent.length +
+            ' notifications récentes"><span>Activité</span><b>' + recent.length + '</b></button>' +
+        '</div></div>' +
+      '<div class="ghe-live-strip-workers"><div class="ghe-live-workers-heading">' +
+        '<strong>En poste</strong><b>' + (roster.permitted && !roster.loaded ? '…' : total) + '</b>' +
+        '</div><div class="ghe-live-shifts">' +
+        (workGroups || '<span class="ghe-live-unavailable">' + esc(unavailable) + '</span>') +
+        '</div></div>' +
+      '<small class="ghe-live-strip-note">Selon le planning, pas une présence physique vérifiée.</small>' +
+    '</section>';
+  }
+  function updateLiveCard() {
+    const root = document.getElementById("gheLiveStrip");
+    if (!root || !root.isConnected || !state.ready) return;
+    // Met à jour le bloc uniquement, sans réinitialiser la semaine ni les formulaires.
+    root.outerHTML = liveCardMarkup();
+  }
+  function openLiveAgent(key) {
+    if (!key) return;
+    const row = liveRoster().rows.find(item =>
+      String(item.agents?.source_key || item.agents?.id || "") === key);
+    if (!row) return;
+    const agent = row.agents || {}, code = canonicalShift(row.code);
+    const time = liveWorkInterval(row)?.label || "Horaire non renseigné";
+    const tel = String(agent.telephone || "").replace(/\D/g, "");
+    const canCall = has("contacts") && tel.length >= 6;
+    document.getElementById("gheLiveAgentDialog")?.remove();
+    const dialog = document.createElement("dialog");
+    dialog.id = "gheLiveAgentDialog";
+    dialog.className = "ghe-live-agent-dialog";
+    dialog.setAttribute("aria-label", "Fiche professionnelle simplifiée");
+    dialog.innerHTML = '<div class="ghe-live-agent-sheet"><header><strong>' +
+      esc(agentName(agent)) + '</strong><button type="button" data-live-agent-close aria-label="Fermer">×</button></header>' +
+      '<div class="ghe-live-agent-shift ' + liveShiftClass(code) + '"><b>' + esc(code) +
+      '</b><span>' + esc(time) + '</span></div>' +
+      (canCall ? '<button type="button" data-live-agent-call class="ghe-live-agent-call">☎ Appeler ce collègue</button>' : '') +
+      '</div>';
+    document.body.appendChild(dialog);
+    dialog.addEventListener("click", e => {
+      if (e.target === dialog || e.target.closest("[data-live-agent-close]")) dialog.close();
+    });
+    dialog.querySelector("[data-live-agent-call]")?.addEventListener("click", async () => {
+      dialog.close();
+      if (!window.STIPDutyChiefs?.openCallChoice) {
+        try { await window.STIPLoad?.script?.("home-duty-chief.js"); }
+        catch { return; }
+      }
+      window.STIPDutyChiefs?.openCallChoice?.(tel, agentName(agent));
+    });
+    dialog.addEventListener("close", () => dialog.remove(), { once: true });
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
   }
 
+  function homeAvatar() {
+    const a = state.session?.agent || state.boot?.agent || {};
+    const initials = String((a.prenom?.[0] || "") + (a.nom?.[0] || "")).toUpperCase() || "G";
+    const image = String(window.STIPAgentSelector?.photoUrl?.(a) ||
+      a.profile_photo_url || a.avatar_url ||
+      state.boot?.media?.avatars?.[a.source_key] || "");
+    return '<button type="button" class="ghe-home-mini-avatar" data-shortcuts-open ' +
+      'aria-label="Ouvrir les raccourcis du profil">' +
+      (image && /^https:\/\//i.test(image)
+        ? '<img src="' + esc(image) + '" alt="" loading="lazy">'
+        : '<span aria-hidden="true">' + esc(initials) + '</span>') +
+      '</button>';
+  }
   function homeModeNav(part = "all") {
-    const active =
-        state.homeMode === "responsable" ? "" : state.homeMode || "planning",
-      count = notifications().length,
-      items = [
-        { key: "apps", label: "Applications", art: ICON.homeApps, mode: "home" },
-        { key: "planning", label: "Mon espace", art: ICON.homeHome, mode: "home" },
-      ];
-    // Le quatrième raccourci validé demeure présent : aucun onglet supprimé.
-    if (has("messages"))
-      items.push({ key: "communication", label: "Communication", art: ICON.homeChat, mode: "home" });
-    if (has("planning_team") || has("activity") || has("assistant_enabled"))
-      items.push({ key: "team", label: "Esprit d’équipe", art: ICON.team, mode: "home" });
-    const tDoor = tDoorShortcut();
-    const tools = `<div class="hc-home-top-tools${tDoor ? " has-t-door" : ""}">
-        <button type="button" class="hc-profile-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications${count ? ` : ${count} à consulter` : ""}"><span aria-hidden="true">🔔</span>${count ? `<b>${count}</b>` : ""}</button>
-        ${tDoor}
-        <div class="hc-home-wheelchair-slot">${wheelchairShortcut()}</div>
-      </div>`;
-    const identity = '<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
-      todayFullDateSeparator()+'</div>'+
-      '<div class="ghe-home-header-stack ghe-home-identity-panel">'+
-        '<div class="hc-home-identity">'+profile()+'</div>'+
-        '<nav class="hc-home-filters" data-count="'+items.length+'" aria-label="Accueil STIP">'+
-          items.map(item=>'<button type="button" data-home-mode="'+esc(item.key)+
-            '" aria-label="'+esc(item.label)+'" aria-pressed="'+(active===item.key)+
-            '" class="'+(active===item.key?"active":"")+'"><span class="hc-home-filter-art">'+
-            item.art+'</span><strong>'+esc(item.label)+'</strong></button>').join("")+
-        '</nav>'+
-        '<footer class="ghe-home-live-footer">'+shortcutsLauncher()+
-          '<button type="button" class="ghe-live-button" data-live-open aria-haspopup="dialog" aria-controls="gheLiveDialog" aria-label="Ouvrir En direct">'+
-            '<span class="ghe-live-badge"><span class="ghe-live-dot" aria-hidden="true"></span><strong>EN DIRECT</strong></span>'+
-            '<span class="ghe-live-button-arrow" aria-hidden="true">↗</span>'+
-          '</button>'+
-        '</footer>'+
-      '</div>';
-    const wrapper = (part === "tools" ? " hc-home-tools-only" : part === "identity" ? " hc-home-identity-only" : "");
-    return `<section class="hc-home-top-nav hc-home-top-nav-${items.length}${wrapper}" data-header-compact>${part === "identity" ? "" : tools}${part === "tools" ? "" : identity}</section>`;
+    const agent = state.session?.agent || state.boot?.agent || {};
+    const first = cap(String(agent.prenom || "").trim()) || "GHE";
+    const count = notifications().length;
+    const tools = '<div class="hc-home-top-tools ghe-home-topbar">' +
+      homeAvatar() +
+      '<span class="ghe-home-paint-name" title="' + esc(first) + '">' + esc(first) + '</span>' +
+      '<span class="ghe-home-tools-right">' +
+        tDoorShortcut() +
+        '<span class="hc-home-wheelchair-slot">' + wheelchairShortcut() + '</span>' +
+        '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications' +
+          (count ? ' : ' + count + ' à consulter' : '') + '"><span aria-hidden="true">🔔</span>' +
+          (count ? '<b>' + count + '</b>' : '') + '</button>' +
+      '</span></div>';
+    const identity = '<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">' +
+      todayFullDateSeparator() + '</div>' +
+      '<div class="ghe-home-shortcuts-row">' + shortcutsLauncher() + '</div>';
+    const wrapper = part === "tools" ? " hc-home-tools-only" : part === "identity" ? " hc-home-identity-only" : "";
+    return '<section class="hc-home-top-nav ghe-home-clean-header' + wrapper + '" data-header-compact>' +
+      (part === "identity" ? "" : tools) + (part === "tools" ? "" : identity) + '</section>';
   }
 
   function shortcutsLauncher() {
@@ -2691,10 +2664,10 @@
           stagiaire: "Stagiaire",
           metiers: "Autres métiers",
         }[role] || "Raccourcis";
-    if (role === "visiteur" || !content) return "";
+    if (!content) return "";
     return `<div class="hc-admin-shortcuts-launcher-wrap hc-header-shortcuts-wrap">
       <button type="button" class="hc-admin-shortcuts-launcher hc-header-shortcuts" data-shortcuts-open aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis ${esc(label)}">
-        <small>${role === "admin" ? "ACCÈS" : "PROFIL"}</small><strong>${esc(label)}</strong><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
+        <small>${role === "admin" ? "ACCÈS" : "PROFIL"}</small><strong>Raccourcis</strong><span class="hc-admin-shortcuts-launcher-arrow" aria-hidden="true">›</span>
       </button>
     </div>`;
   }
@@ -2711,7 +2684,7 @@
           stagiaire: "STAGIAIRE",
           metiers: "AUTRES MÉTIERS",
         }[role] || "STIP";
-    if (role === "visiteur" || !content) return "";
+    if (!content) return "";
     return `<dialog id="hcShortcutsDialog" class="hc-admin-shortcuts-dialog" aria-labelledby="hcShortcutsTitle">
       <section class="hc-admin-shortcuts-card">
         <header class="hc-admin-shortcuts-head">
@@ -3244,7 +3217,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="ghe-live-wide-host">${liveCardMarkup()}</div><div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3330,7 +3303,12 @@
     root
       .querySelector("[data-header-date-search]")
       ?.addEventListener("click", openHeaderDateSearch);
-    root.querySelector("[data-live-open]")?.addEventListener("click", liveOpenDialog);
+    root.querySelector(".ghe-live-wide-host")?.addEventListener("click", event => {
+      const person = event.target.closest("[data-live-agent]");
+      if (person) { openLiveAgent(person.dataset.liveAgent); return; }
+      if (event.target.closest("[data-live-actions],[data-bell-open]")) openNotifications();
+    });
+
     root
       .querySelectorAll("details[data-pilotage-role]")
       .forEach((details) =>
@@ -3350,11 +3328,11 @@
         shortcutsDialog.close();
       else shortcutsDialog.removeAttribute("open");
     };
-    root.querySelector("[data-shortcuts-open]")?.addEventListener("click", () => {
+    root.querySelectorAll("[data-shortcuts-open]").forEach(button => button.addEventListener("click", () => {
       if (!shortcutsDialog) return;
       if (typeof shortcutsDialog.showModal === "function") shortcutsDialog.showModal();
       else shortcutsDialog.setAttribute("open", "");
-    });
+    }));
     shortcutsDialog
       ?.querySelector("[data-shortcuts-close]")
       ?.addEventListener("click", closeShortcuts);
@@ -3370,7 +3348,7 @@
       if (level >= 1) return;
       location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
     });
-    root.querySelectorAll("[data-bell-open]").forEach(b=>b.onclick=openNotifications);
+    root.querySelectorAll(".ghe-home-topbar [data-bell-open]").forEach(b=>b.onclick=openNotifications);
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -3569,6 +3547,10 @@
     t._t = setTimeout(() => t.classList.remove("show"), 1300);
   }
   function openApp(k) {
+    if (k === "apps" || k === "planning") {
+      window.STIPRouter?.set?.(k === "apps" ? "apps" : "home");
+      return;
+    }
     if (k === "personal") return window.STIPHubs?.planning?.("personal");
     if (k === "tomorrow") return window.STIPTomorrowUI?.open?.();
     if (k === "meeting_notes") return (location.href = "meeting-notes.html");
@@ -4139,13 +4121,11 @@
     if (state.ready && !document.hidden && refreshablePlanningRoute())
       refresh().catch(() => {});
   }, 300000);
-  document.addEventListener("stip:team-fusion-updated", (event) => {
-    if (event.detail?.hostId === "hcTeamFusion" && liveModalMode !== "agent") liveRefreshDialog();
+  document.addEventListener("stip:team-fusion-updated", event => {
+    if (event.detail?.hostId === "hcTeamFusion") updateLiveCard();
   });
-  window.addEventListener("stip:session-ended", liveCloseDialog);
-  window.addEventListener("stip:permissions-live", liveCloseDialog);
   setInterval(() => {
-    if (state.ready && !document.hidden && liveModalMode !== "agent") liveRefreshDialog();
+    if (state.ready && !document.hidden) updateLiveCard();
   }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
