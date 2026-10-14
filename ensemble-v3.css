@@ -136,3 +136,13 @@ button:disabled{cursor:not-allowed;opacity:.6}
 .ev3-invited-person small{font-size:.72rem;color:#627b80}
 .ev3-invited-person button{flex-shrink:0;min-height:35px;padding:7px 10px;border:1px solid #d8e4e5;border-radius:10px;background:#fff;color:#6c4851;font-size:.77rem;font-weight:780}
 .ev3-modal-section>strong{color:#245465}
+
+/* Native T workspace: details unfold below the selected card, never over it. */
+html[data-t-est="1"] .t-native-leisure{width:100%;max-width:none;padding:4px 0 12px}
+html[data-t-est="1"] .t-native-leisure .ev3-header,
+html[data-t-est="1"] .t-native-leisure .ev3-tabs{display:none!important}
+html[data-t-est="1"] .t-native-leisure .ev3-dialog[open]{
+ position:relative;inset:auto;display:block;margin:8px 0 14px;width:100%;
+ max-width:100%;max-height:none;overflow:visible;border:1px solid #c6dedf;
+ border-radius:16px;box-shadow:0 4px 15px #193e4712;
+}
