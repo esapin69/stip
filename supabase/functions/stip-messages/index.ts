@@ -408,7 +408,13 @@ async function home(ctx:any){
     const {data:eventLinks,error:linksError}=await db.from("stip_leisure_series_chat")
       .select("conversation_id,event_id").in("conversation_id",ids);
     if(linksError)throw linksError;
-    const linkedEventIds=[...new Set((eventLinks||[]).map((x:any)=>x.event_id))];
+    const {data:datedLinks,error:datedError}=await db.from("stip_leisure_chats")
+      .select("conversation_id,event_id,event_date").in("conversation_id",ids);
+    if(datedError)throw datedError;
+    const linkedEventIds=[...new Set([
+      ...(eventLinks||[]).map((x:any)=>x.event_id),
+      ...(datedLinks||[]).map((x:any)=>x.event_id)
+    ])];
     const {data:linkedEvents,error:eventsError}=linkedEventIds.length
       ?await db.from("stip_leisure_events")
         .select("id,title,icon,dates,location,time_label,status,organizer_agent_id")
@@ -421,7 +427,11 @@ async function home(ctx:any){
       :{data:[] as any[],error:null};
     if(invitesError)throw invitesError;
     const eventById=new Map((linkedEvents||[]).map((x:any)=>[String(x.id),x]));
-    const eventIdByConversation=new Map((eventLinks||[]).map((x:any)=>[String(x.conversation_id),String(x.event_id)]));
+    const eventIdByConversation=new Map(
+      [...(datedLinks||[]),...(eventLinks||[])]
+        .map((x:any)=>[String(x.conversation_id),String(x.event_id)]));
+    const datedByConversation=new Map((datedLinks||[]).map((x:any)=>[String(x.conversation_id),x]));
+    const seriesEventIds=new Set((eventLinks||[]).map((x:any)=>String(x.event_id)));
     const inviteStatusByKey=new Map((linkedInvites||[]).map((x:any)=>[String(x.event_id)+"|"+String(x.agent_id),x.status]));
     for(const c of convs||[]){
       const{data:members}=await db.from("stip_conversation_members").select("agent_id,muted,agents(id,source_key,prenom,nom,ghe,profile_photo_url,avatar_url)").eq("conversation_id",c.id);
@@ -432,6 +442,9 @@ async function home(ctx:any){
       const{data:last}=await db.from("stip_messages").select("id,body,payload,created_at,sender_agent_id").eq("conversation_id",c.id).is("deleted_at",null).order("created_at",{ascending:false}).limit(1).maybeSingle();
       const lastRead=read.get(String(c.id));
       const{count}=await db.from("stip_messages").select("id",{count:"exact",head:true}).eq("conversation_id",c.id).is("deleted_at",null).neq("sender_agent_id",ctx.agent.id).gt("created_at",lastRead||"1970-01-01T00:00:00Z");
+      const dated=datedByConversation.get(String(c.id))||null;
+      // Obsolete empty per-date chat: prefer its real event conversation; keep any legacy thread with messages.
+      if(dated&&!last&&seriesEventIds.has(String(dated.event_id)))continue;
       const eventId=eventIdByConversation.get(String(c.id))||"";
       const event=eventById.get(eventId)||null;
       const people=(members||[]).map((m:any)=>({
@@ -446,7 +459,8 @@ async function home(ctx:any){
       conversations.push({
         ...c,
         event:event?{id:event.id,title:event.title,icon:event.icon||"",dates:event.dates||[],
-          location:event.location||"",time_label:event.time_label||"",status:event.status}:null,
+          location:event.location||"",time_label:event.time_label||"",status:event.status,
+          session_date:dated?.event_date||null,legacy:!!dated}:null,
         participants:people,
         others:people.filter((x:any)=>String(x.id)!==String(ctx.agent.id)),
         last_message:last||null,
