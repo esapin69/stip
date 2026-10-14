@@ -82,3 +82,7 @@ jobs:
       - name: Check STIP planning mail decision contract
         if: always()
         run: node tools/stip-planning-mail-contract-test.mjs
+
+      - name: Check GHE colleagues in rest
+        if: always()
+        run: node tools/stip-rest-colleagues-contract-test.mjs
