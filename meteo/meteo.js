@@ -280,7 +280,7 @@
         longitude: String(state.location.lon),
         timezone: "auto",
         forecast_days: "35",
-        models: "gfs05",
+        models: "ncep_gefs05",
         daily: "temperature_2m_max,temperature_2m_min,rain_sum"
       });
       const response = await fetch(ENSEMBLE_API + "?" + params.toString(), {
