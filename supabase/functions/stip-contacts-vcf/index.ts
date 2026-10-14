@@ -35,7 +35,7 @@ function makeCard(p: Record<string, unknown>) {
   const name = code ? `GHE ${code} - ${fullName}` : fullName;
   return [
     "BEGIN:VCARD", "VERSION:3.0",
-    `N:${vcardEsc(last)};${vcardEsc(first)};;;`,
+    `N:${vcardEsc(code ? `GHE ${code} - ${last}` : last)};${vcardEsc(first)};;;`,
     `FN:${vcardEsc(name)}`,
     code ? `NICKNAME:${vcardEsc(`GHE ${code},${code}`)}` : "",
     p.role_metier ? `TITLE:${vcardEsc(p.role_metier)}` : "",
