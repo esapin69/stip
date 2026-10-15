@@ -45,6 +45,22 @@ assert(css.includes("#87c9f0") && css.includes("#9bcfeb") &&
   "Sky palettes must visibly distinguish sunny, mixed, rain and storm");
 assert(home.includes('<span aria-hidden="true">🎨</span><b>'),
   "Chiefs use the approved palette icon, not a crown");
+const dayCard=home.slice(home.indexOf('host.innerHTML='),home.indexOf('const weather=host.querySelector'));
+const dayPopup=home.slice(home.indexOf('function openDay(host)'),home.indexOf('function openChiefs(host)'));
+assert(!dayCard.includes('thf-day-brief') && !dayCard.includes('à retenir'),
+  "A day card must no longer show a generic notice counter");
+assert(dayPopup.includes('thf-day-popup-notices') &&
+  dayPopup.includes('noteButtons(host._thfNotes||[])'),
+  "The day detail dialog must expose individual notices immediately");
+assert(dayPopup.indexOf('thf-day-popup-notices') < dayPopup.indexOf('thf-day-popup-actions'),
+  "Notice titles and icons must be visible before ancillary actions");
+assert(home.includes('thf-note-icon') && home.includes('thf-note-copy') &&
+  home.includes('esc(x.title)') && home.includes('esc(x.detail)'),
+  "Each notice must display its own icon, real title and description");
+assert(!dayPopup.includes('data-thf-open="notes"'),
+  "The day dialog must not open a redundant generic notes dialog");
+assert(css.includes('.thf-popup.thf-day-popup{overflow-y:auto'),
+  "Day details must remain vertically accessible on mobile");
 assert.doesNotMatch(css, /@import|image-set\(|url\(["']?https?:/i);
 for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
   "rain", "heavy-rain", "storm", "snow", "mixed"]) {
@@ -82,7 +98,7 @@ assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
 for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
-  assert(index.includes(asset + "?v=20261015-weather-contrast2"),
+  assert(index.includes(asset + "?v=20261015-weather-contrast-notices3"),
     "New card asset URL not refreshed: " + asset);
 assert(index.includes("shift-weather-mini.js?v=20261015-chefs-rest-rain1"),
   "The unchanged canonical weather engine must stay available");
