@@ -45,6 +45,25 @@ Le pont est une **vraie colonne visuelle indépendante**. Le lundi suivant est u
 
 Cette prévisualisation existe uniquement le vendredi, le samedi et le dimanche de la semaine courante en mode normal. Elle ne doit pas apparaître sur une semaine passée, une semaine future ou la partie déjà écoulée de la semaine courante.
 
+### 3.1 Accueil : les sept jours après Aujourd'hui et Demain (15/10/2026)
+
+Exception de présentation **limitée à l'accueil**, sans modifier la semaine progressive
+des autres consommateurs. `STIPWeekEngine.upcomingSevenDates` est l'unique calcul maître
+pour ces sept dates. Les deux grandes cartes « Aujourd'hui » et « Demain » restent séparées.
+
+- Du lundi au samedi : la ligne commence après Demain (J+2) et contient sept dates consécutives.
+- Le dimanche : le lundi montré dans « Demain » est **répété** au début des sept cartes ;
+  les six jours suivants terminent la semaine du lundi au dimanche.
+- Chaque lundi de la ligne porte un petit chapeau rouge « LUNDI » avec une flèche
+  vers sa propre carte, **sans colonne supplémentaire** ni décalage des événements.
+- La ligne de l'accueil n'affiche pas les grosses flèches précédent/suivant :
+  la navigation chronologique demeure disponible dans « Au mois » et les autres vues.
+- Les rendez-vous et activités rattachés à cette ligne utilisent les mêmes sept dates ISO.
+- Changement de jour Europe/Paris : reconstituer le bloc lorsque l'accueil est visible,
+  et également lorsque l'utilisateur revient sur l'onglet.
+- Ne pas modifier `visibleDates`, `display`, `move` ni leur pont du lundi pour les
+  autres écrans ; les codes shift, événements, sélections et détails restent inchangés.
+
 ## 4. Navigation
 
 - Depuis la période courante, « précédent » affiche d’abord les jours déjà écoulés de la même semaine lorsqu’ils existent.
