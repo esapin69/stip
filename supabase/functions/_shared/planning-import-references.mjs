@@ -114,9 +114,10 @@ export function parseStaffingReferences(rows, sourceSheet, dateCols) {
       const total = groupTotals[group];
       if (total) add(d, "total", null, total.count, total.row, total.label, "attendu", {
         displayed_count: displayedTotal(d), reference_group: group,
-        ...(group === "semaine" && weekAlternative !== null
-          ? { ambiguous_alternative: weekAlternative, ambiguous_column: weekCol + 2 }
-          : {})
+        ...(uncertainWeek ? { weekly_ambiguity: {
+          labeled: groupTotals.semaine?.count, unlabeled: weekAlternative,
+          variant_shifts: unlabeledWeekValues
+        } } : {})
       });
     }
     return refs;
