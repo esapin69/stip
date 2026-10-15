@@ -47,3 +47,60 @@
   .hc-calendar-driven-planning .hc-rolling-seven{gap:3px!important}
   .hc-calendar-driven-planning .hc-rolling-monday-flag{font-size:.56rem!important;padding-inline:1px!important}
 }
+
+/* Intérieur : code du shift, seul pictogramme de repos, puis repères verticaux.
+   Les chefs ne sont jamais des repères sur la carte. */
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-day-body{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:flex-start!important;
+  align-content:center!important;
+  gap:9px!important;
+  padding:12px 2px 13px!important;
+}
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-code{
+  align-self:center!important;
+  text-align:center!important;
+  width:100%!important;
+  margin:0 auto!important;
+}
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-main{
+  display:grid!important;
+  place-items:center!important;
+  align-self:center!important;
+  width:100%!important;
+  margin:0 auto!important;
+}
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-divider{display:none!important}
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-events{
+  display:flex!important;
+  flex-direction:column!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:center!important;
+  align-self:center!important;
+  gap:7px!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  margin:0 auto!important;
+}
+.hc-calendar-driven-planning .hc-rolling-seven .stip-week-event{
+  display:grid!important;
+  place-items:center!important;
+  align-self:center!important;
+  flex:0 0 26px!important;
+  margin:0 auto!important;
+}
+.hc-calendar-driven-planning .hc-rolling-event-overflow{
+  align-self:center!important;
+  border-radius:8px!important;
+  padding:3px!important;
+  background:rgba(12,84,110,.09)!important;
+  color:#22576a!important;
+  font-size:.67rem!important;
+  font-weight:900!important;
+  line-height:1!important;
+  white-space:nowrap!important;
+}
