@@ -570,7 +570,7 @@
   let pendingWeekPopup=0;
   async function openDate(opts={}) {
     const day=String(opts.day||"").slice(0,10);
-    if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(day))return false;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
     const ticket=++pendingWeekPopup;
     let host=document.getElementById("hcWeekFusionPopupHost");
     if(!host){
