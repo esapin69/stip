@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261015-two-weeks-flip2";
+const STIP_SW_BUILD="20261015-ghe-staff-actions-merge1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
