@@ -471,34 +471,44 @@
       (x) => !state.done.has(x.eventKey),
     );
     let host = document.getElementById("hcEventFeedbackHost");
+    let wrap = document.getElementById("hcEventFeedbackWrap");
     if (!pending.length) {
+      wrap?.remove();
       host?.remove();
       return;
     }
 
+    // Le séparateur appartient à la page, jamais à la carte jaune.
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.id = "hcEventFeedbackWrap";
+      wrap.className = "hc-feedback-wrap";
+      wrap.innerHTML = '<div class="stip-section-separator ghe-home-global-separator hc-feedback-outer-separator" role="separator" aria-label="À clôturer"><span>À CLÔTURER</span><strong class="hc-feedback-count"></strong></div>';
+    }
     if (!host) {
       host = document.createElement("section");
       host.id = "hcEventFeedbackHost";
       host.className = "hc-feedback-pending";
-      host.setAttribute("aria-label", "Retours professionnels à clôturer");
+      host.setAttribute("aria-label", "Rendez-vous passés en attente de retour");
     }
-    // Les éléments à clôturer précèdent tout le tableau de bord, même l'entête.
-    // Un ancrage fixe empêche les mises à jour asynchrones de casser l'ordre.
+    if (host.parentElement !== wrap) wrap.appendChild(host);
     const priorityAnchor = document.getElementById("hcTopPriorityAnchor");
     if (priorityAnchor?.closest(".hc-home-pane-planning")) {
-      priorityAnchor.insertAdjacentElement("afterend", host);
+      priorityAnchor.insertAdjacentElement("afterend", wrap);
     } else {
       const week = planning.querySelector(":scope > .hc-week-context-master");
-      if (week) week.insertAdjacentElement("beforebegin", host);
-      else planning.prepend(host);
+      if (week) week.insertAdjacentElement("beforebegin", wrap);
+      else planning.prepend(wrap);
     }
-
+    const count = wrap.querySelector(".hc-feedback-count");
+    if (count) {
+      count.textContent = String(pending.length);
+      count.setAttribute("aria-label", pending.length + " retour(s) en attente");
+    }
     host.innerHTML =
-      '<div class="hc-planning-period-separator stip-section-separator hc-feedback-separator"><span>À CLÔTURER</span><strong class="hc-feedback-count" aria-label="' +
-      pending.length + ' retour(s) en attente">' + pending.length + '</strong></div><div class="hc-feedback-list">' +
+      '<header class="hc-feedback-intro"><strong>Rendez-vous passés</strong><span>Votre retour attendu</span></header><div class="hc-feedback-list">' +
       pending.map(cardMarkup).join("") +
       "</div>";
-
     host.querySelectorAll("[data-event-feedback]").forEach((button) => {
       button.onclick = () => {
         const event = pending.find(

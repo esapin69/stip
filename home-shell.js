@@ -1610,7 +1610,7 @@
     const weekdays=current.slice(0,5), weekend=current.slice(5);
     const range = (rows) => esc(weekRangeLabel(rows));
     return `<header class="ghe-weekflip-back-header">
-      <strong>CETTE SEMAINE</strong><small>${range(current)}</small></header>
+      <small>${range(current)}</small></header>
       <div class="ghe-weekflip-workdays" aria-label="Du lundi au vendredi">${weekdays.map(day => weekFlipDay(day)).join("")}</div>
       <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>
       ${weekFlipNextMonday()}`;
@@ -1619,10 +1619,11 @@
     const flipped=state.weekFlipped;
     const today=parisIso(), tomorrow=dateIsoLocal(new Date(dateObj(today).getTime()+86400000));
     const front=`<div class="hc-days-grid" aria-label="Aujourd’hui et demain">
-      <section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI","today")}${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}</section>
-      <section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN","tomorrow")}${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}</section>
+      <section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}</section>
+      <section class="hc-day-column" aria-label="Demain">${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}</section>
     </div>`;
-    return `<section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
+    const heading=flipped?"CETTE SEMAINE":"AUJOURD’HUI & DEMAIN";
+    return `<div class="stip-section-separator ghe-home-global-separator ghe-home-flip-separator" data-week-separator role="separator" aria-label="${esc(heading)}"><span data-week-separator-label>${esc(heading)}</span></div><section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
       <div class="ghe-weekflip-track">
         <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
           ${front}
@@ -1858,7 +1859,7 @@
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
       month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-home-date-kicker stip-section-separator" aria-hidden="true"><span>DATE</span></div><div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
+    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -2167,7 +2168,7 @@
       add("planning:pending", "🚫", "Planning non renseigné");
 
     if (!items.length) return "";
-    return `<section class="hc-fixed-shift-legend stip-legend" aria-label="Légende des repères de la page"><div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><div class="stip-legend-surface"><div class="stip-legend-list">${items.join("")}</div></div></section>`;
+    return `<section class="hc-fixed-shift-legend stip-legend" aria-label="Légende des repères de la page"><div class="stip-legend-surface"><div class="stip-legend-list">${items.join("")}</div></div></section>`;
   }
 
   function nativeExchanges() {
@@ -2692,8 +2693,7 @@
       ' aria-label="Voir les '+items.length+' collègues en '+esc(premiumShiftName(code))+'">'+
       '<b>'+esc(code)+'</b><span>'+items.length+'</span></button>').join("");
     return '<div class="ghe-premium-live">'+
-      '<div class="ghe-premium-live-title"><span class="ghe-premium-live-led" aria-hidden="true"></span>'+
-        '<strong>EN DIRECT</strong>'+
+      '<div class="ghe-premium-live-title">'+
         '<button type="button" class="ghe-premium-back-turn" data-premium-turn-close '+
           'aria-label="Retourner la carte vers le profil" title="Retour au profil">'+
           '<span aria-hidden="true">↶</span></button></div>'+
@@ -2826,6 +2826,7 @@
     const face=state.premiumFlipped?'back':'front';
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
+      '<div class="stip-section-separator ghe-home-global-separator ghe-home-flip-separator ghe-home-premium-separator" data-premium-separator data-side="'+face+'" role="separator" aria-label="'+(face==='back'?'EN DIRECT':'MON PROFIL')+'"><span data-premium-separator-label>'+(face==='back'?'EN DIRECT':'MON PROFIL')+'</span></div>'+ 
       '<div class="ghe-premium-stage" data-premium-flip data-side="'+face+'">'+
         '<div class="ghe-premium-track">'+
           '<section class="ghe-premium-face ghe-premium-front ghe-home-header-stack" aria-label="Carte professionnelle"'+
@@ -3517,11 +3518,6 @@ function personalDrawerRow(icon,label,action,meta="") {
       '<div class="hc-week-event-key-list">' + top + extra + '</div></section>';
   }
 
-  // Separateurs natifs du site, sans ajouter de cartes ou dupliquer le contenu.
-  function homeTimelineSeparator(label,kind) {
-    return `<div class="stip-section-separator hc-home-timeline-separator hc-home-separator-${esc(kind)}" role="separator" aria-label="${esc(label)}"><span>${esc(label)}</span></div>`;
-  }
-
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -3541,7 +3537,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     const anchor = timeline?.querySelector("#hcTopPriorityAnchor");
     if (!timeline || !anchor) return;
     const align = () => {
-      const followUps = document.getElementById("hcEventFeedbackHost");
+      const followUps = document.getElementById("hcEventFeedbackWrap");
       if (!followUps || !followUps.isConnected) return;
       if (followUps.parentElement !== anchor.parentElement ||
           anchor.nextElementSibling !== followUps) {
@@ -3631,6 +3627,13 @@ function personalDrawerRow(icon,label,action,meta="") {
       if (!turnOpen && !turnClose) return;
       state.weekFlipped=Boolean(turnOpen);
       weekFlip.dataset.side=state.weekFlipped?"back":"front";
+      const weekHeading=state.weekFlipped?"CETTE SEMAINE":"AUJOURD’HUI & DEMAIN";
+      const weekSeparator=root.querySelector("[data-week-separator]");
+      if(weekSeparator){
+        weekSeparator.setAttribute("aria-label",weekHeading);
+        const text=weekSeparator.querySelector("[data-week-separator-label]");
+        if(text)text.textContent=weekHeading;
+      }
       const front=weekFlip.querySelector(".ghe-weekflip-front"),back=weekFlip.querySelector(".ghe-weekflip-back");
       front?.toggleAttribute("inert",state.weekFlipped);
       front?.setAttribute("aria-hidden",String(state.weekFlipped));
@@ -3647,6 +3650,14 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(open||close){
         state.premiumFlipped=Boolean(open);
         premium.dataset.side=state.premiumFlipped?"back":"front";
+        const premiumHeading=state.premiumFlipped?"EN DIRECT":"MON PROFIL";
+        const premiumSeparator=root.querySelector("[data-premium-separator]");
+        if(premiumSeparator){
+          premiumSeparator.dataset.side=state.premiumFlipped?"back":"front";
+          premiumSeparator.setAttribute("aria-label",premiumHeading);
+          const text=premiumSeparator.querySelector("[data-premium-separator-label]");
+          if(text)text.textContent=premiumHeading;
+        }
         premium.querySelector(".ghe-premium-front")?.toggleAttribute("inert",state.premiumFlipped);
         premium.querySelector(".ghe-premium-back")?.toggleAttribute("inert",!state.premiumFlipped);
         premium.querySelector("[data-premium-turn-open]")?.setAttribute("aria-expanded",String(state.premiumFlipped));

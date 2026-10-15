@@ -5345,3 +5345,37 @@ body.hc-shift-detail-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){#hcPersonalDrawer[open]{animation:none}}
 /* Only the menu + bell remain on the home top line. */
 #homeView .ghe-home-topbar .ghe-home-tools-right:empty{min-width:44px!important;display:block!important}
+
+
+/* 20261016 — Hiérarchie des séparateurs de l’accueil : un titre hors carte. */
+.hc-home-pane-planning .ghe-home-global-separator,
+.hc-home-top-nav .ghe-home-global-separator{
+  box-sizing:border-box!important;width:calc(100% - 8px)!important;
+  margin:4px 4px -3px!important;padding:0 1px!important;
+  gap:11px!important;background:transparent!important;
+}
+.hc-home-pane-planning .ghe-home-global-separator>span,
+.hc-home-top-nav .ghe-home-global-separator>span{
+  color:#647f89!important;font:950 .73rem/1.12 system-ui,sans-serif!important;
+  letter-spacing:.13em!important;text-align:center!important;
+}
+.hc-home-top-nav .ghe-home-premium-separator{margin-top:14px!important;margin-bottom:0!important;}
+.hc-home-pane-planning .ghe-home-flip-separator{margin-top:2px!important;margin-bottom:-12px!important;}
+.hc-home-top-nav .ghe-home-premium-separator[data-side="back"]>span{
+  color:#b62d53!important;display:inline-flex!important;align-items:center!important;gap:7px!important;
+}
+.hc-home-top-nav .ghe-home-premium-separator[data-side="back"]>span::before{
+  content:"";width:7px;height:7px;border-radius:50%;background:#ef1548;
+  box-shadow:0 0 0 3px #ffdbe4;
+}
+.hc-home-top-nav .ghe-premium-live-title{justify-content:flex-end!important;}
+.hc-home-pane-planning .ghe-weekflip-back-header{justify-content:flex-end!important;}
+.hc-home-pane-planning .hc-planning-month-separator,
+.hc-home-pane-planning .hc-planning-legend-separator{
+  box-sizing:border-box!important;width:calc(100% - 8px)!important;
+  margin:7px 4px 8px!important;
+}
+.hc-home-pane-planning .hc-planning-month-separator>span,
+.hc-home-pane-planning .hc-planning-legend-separator>span{
+  color:#647f89!important;font-weight:950!important;letter-spacing:.13em!important;
+}
