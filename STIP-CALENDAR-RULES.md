@@ -62,6 +62,12 @@ pour ces sept dates. Les deux grandes cartes « Aujourd'hui » et « Demain » r
 - La ligne de l'accueil n'affiche pas les grosses flèches précédent/suivant :
   la navigation chronologique demeure disponible dans « Au mois » et les autres vues.
 - Les rendez-vous et activités rattachés à cette ligne utilisent les mêmes sept dates ISO.
+- La grille visuelle du seul Accueil a trois zones stables : en-tête date,
+  code du shift en haut du corps, pictogramme de repos si nécessaire, puis repères
+  verticaux. `.hc-shift-core.stip-week-core` devient un groupe réel (pas
+  `display:contents`) afin que toutes les lettres restent alignées en haut.
+  Le pied LUNDI occupe une seconde ligne de grille de 40 px hors de la carte,
+  sans position absolue ni chevauchement du titre RENDEZ-VOUS.
 - Les sept cartes affichent le code du shift même en repos. Les shifts travaillés
   n'ont **aucune pastille**. Seuls repos/congés/absences affichent leur icône.
 - Les repères de rendez-vous et loisirs sont centrés **verticalement**,
