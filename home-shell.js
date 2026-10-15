@@ -943,6 +943,7 @@
   function refreshActionCenterUi() {
     state.renderSig = "";
     render();
+    syncBellList();
     if (
       $("#hsPanel")?.classList.contains("open") &&
       $("#hsPanelTitle")?.textContent === "À traiter"
@@ -4013,114 +4014,86 @@ function personalDrawerRow(icon,label,action,meta="") {
       return;
     }
   }
-  // La cloche a un seul dialogue et plusieurs niveaux internes :
-  // choix de catégorie → liste → détail. Aucun empilement de fenêtres.
-  let bellFilter = "all";
-  function ensureBellDialog() {
-    let dialog = document.getElementById("hcBellDialog");
-    if (dialog) return dialog;
-    dialog = document.createElement("dialog");
-    dialog.id = "hcBellDialog";
-    dialog.className = "hc-bell-dialog";
-    dialog.setAttribute("aria-label", "Notifications");
-    dialog.innerHTML =
-      '<section class="hc-bell-shell"><header class="hc-bell-head">'+
-        '<button type="button" data-bell-back aria-label="Retour">‹</button>'+
-        '<h2 id="hcBellTitle">Notifications</h2>'+
-        '<button type="button" data-bell-close aria-label="Fermer">×</button>'+
+  // Cloche : un seul dialogue, liste filtrable puis détail, sans sous-fenêtre.
+  let bellFilter="all";
+  function ensureBellDialog(){
+    let dialog=document.getElementById("hcBellDialog");
+    if(dialog)return dialog;
+    dialog=document.createElement("dialog");
+    dialog.id="hcBellDialog";
+    dialog.className="hc-bell-dialog";
+    dialog.setAttribute("aria-label","Notifications");
+    dialog.innerHTML='<section class="hc-bell-shell"><header class="hc-bell-head">'+
+      '<button type="button" data-bell-back aria-label="Retour aux notifications" hidden>‹</button>'+
+      '<h2 id="hcBellTitle">Notifications</h2>'+
+      '<button type="button" data-bell-close aria-label="Fermer">×</button>'+
       '</header><div class="hc-bell-content" id="hcBellContent"></div></section>';
     document.body.appendChild(dialog);
-    dialog.querySelector("[data-bell-close]").onclick = () => dialog.close();
-    dialog.querySelector("[data-bell-back]").onclick = () => {
-      const view = dialog.dataset.view;
-      if (view === "detail") renderBellEntries(bellFilter);
-      else if (view === "list") renderBellChoices();
+    dialog.querySelector("[data-bell-close]").onclick=()=>dialog.close();
+    dialog.querySelector("[data-bell-back]").onclick=()=>{
+      if(dialog.dataset.view==="detail"||dialog.dataset.view==="action")renderBellEntries(bellFilter);
       else dialog.close();
     };
-    dialog.addEventListener("click", event => {
-      if (event.target === dialog) dialog.close();
-    });
-    dialog.addEventListener("close", () => {
+    dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+    dialog.addEventListener("close",()=>{
       dialog.querySelector("#hcNotificationDetail")?.remove();
-      dialog.dataset.view = "";
+      dialog.dataset.view="";
+      document.querySelector("#homeView [data-bell-open]")?.focus({preventScroll:true});
     });
     return dialog;
   }
-  function bellView(view, title, html) {
-    const dialog = ensureBellDialog(),content = dialog.querySelector("#hcBellContent");
-    dialog.dataset.view = view;
-    dialog.querySelector("#hcBellTitle").textContent = title;
-    dialog.querySelector("[data-bell-back]").hidden = view === "choices";
-    content.innerHTML = html;
-    content.scrollTop = 0;
+  function bellView(view,title,html,{keepScroll=false}={}){
+    const dialog=ensureBellDialog(),content=dialog.querySelector("#hcBellContent");
+    const previous=keepScroll?content.scrollTop:0;
+    dialog.dataset.view=view;
+    dialog.querySelector("#hcBellTitle").textContent=title;
+    dialog.querySelector("[data-bell-back]").hidden=view==="list";
+    content.innerHTML=html;
+    content.scrollTop=previous;
     return content;
   }
-  function renderBellChoices() {
-    const { ns, cats, counts } = actionCenterData("all");
-    const available = cats.filter(([key]) => key !== "all" && counts[key] > 0);
-    const types = {
-      agenda:["📅","Invitations et rendez-vous"],
-      access:["🔐","Demandes d’accès"],
-      signatures:["✍️","Signatures"],
-      reminders:["⏰","Rappels"],
-      other:["📌","Autres notifications"]
-    };
-    const html = ns.length
-      ? '<p class="hc-bell-intro">Choisis ce que tu veux consulter.</p>'+
-        '<div class="hc-bell-categories">'+
-        available.map(([key,label]) =>
-          '<button type="button" data-bell-category="'+esc(key)+'">'+
-            '<span aria-hidden="true">'+(types[key]?.[0] || "🔔")+'</span>'+
-            '<strong>'+esc(types[key]?.[1] || label)+'</strong>'+
-            '<b>'+counts[key]+'</b><i aria-hidden="true">›</i></button>'
-        ).join("")+
-        (available.length>1?
-          '<button type="button" data-bell-category="all"><span aria-hidden="true">🔔</span>'+
-          '<strong>Toutes les notifications</strong><b>'+ns.length+'</b><i aria-hidden="true">›</i></button>':"")+
-        '</div>'
-      : '<div class="hc-bell-empty">✓ Aucune notification à traiter.</div>';
-    const content=bellView("choices","🔔 Notifications",html);
-    content.querySelectorAll("[data-bell-category]").forEach(b=>
-      b.onclick=()=>renderBellEntries(b.dataset.bellCategory));
-  }
-  function renderBellEntries(filter = "all") {
-    bellFilter = filter;
-    const { cats } = actionCenterData(filter);
-    const category = cats.find(([key]) => key === filter)?.[1] || "Notifications";
-    const content=bellView("list",category,actionCenterMarkup(filter,false) ||
-      '<p class="hc-bell-empty">Aucune notification.</p>');
-    content.querySelectorAll("[data-action-filter]").forEach(b=>
-      b.onclick=()=>renderBellEntries(b.dataset.actionFilter));
-    const { shown }=actionCenterData(filter);
+  function renderBellEntries(filter="all",{keepScroll=false}={}){
+    const {selected}=actionCenterData(filter);
+    bellFilter=selected;
+    const content=bellView("list","Notifications",actionCenterMarkup(selected,false),{keepScroll});
+    content.querySelectorAll("[data-action-filter]").forEach(button=>{
+      button.onclick=()=>renderBellEntries(button.dataset.actionFilter);
+    });
+    const {shown}=actionCenterData(selected);
     content.querySelectorAll(".hc-note-card[data-note-index]").forEach(card=>{
       const note=shown[Number(card.dataset.noteIndex)];
-      if(note) bindNoteCard(card,note);
+      if(note)bindNoteCard(card,note);
     });
   }
-  function openBellItem(note) {
+  function syncBellList(){
+    const dialog=document.getElementById("hcBellDialog");
+    if(dialog?.open&&dialog.dataset.view==="list")
+      renderBellEntries(bellFilter,{keepScroll:true});
+  }
+  function openBellItem(note){
     const dialog=ensureBellDialog();
-    if(note?.source==="leisure" && note.event_id){
-      // Le pop d'activité existant remplace temporairement celui de la cloche.
+    if(note?.source==="leisure"&&note.event_id){
+      markNoteRead(note);
       dialog.close();
       const shown=window.STIPLeisure?.openPreview?.(String(note.event_id));
       const preview=document.getElementById("ev3HomePreview");
       if(preview?.open){
         preview.addEventListener("close",()=>openNotifications(bellFilter),{once:true});
-      } else if(shown===false) openNotifications(bellFilter);
+      }else if(shown===false)openNotifications(bellFilter);
       return;
     }
-    const content=bellView("detail","Détail de la notification","");
+    const content=bellView("detail","Détail","");
     const page=openNotificationDetail(note,{
       bellHost:content,
-      onClose:()=>renderBellEntries(bellFilter)
+      onClose:()=>{if(dialog.open)renderBellEntries(bellFilter);}
     });
     if(page)dialog.querySelector("[data-bell-back]")?.focus({preventScroll:true});
   }
-  function openNotifications(filter = "") {
+  function openNotifications(filter="all"){
     const dialog=ensureBellDialog();
     if(!dialog.open)dialog.showModal();
-    if(filter)renderBellEntries(filter);
-    else renderBellChoices();
+    renderBellEntries(typeof filter==="string"?filter:"all");
+    dialog.querySelector("[data-bell-close]")?.focus({preventScroll:true});
   }
   function renderActionCenter(filter = state.actionFilter) {
     const body = $("#hsPanelBody");
@@ -4217,6 +4190,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     ).then((home) => {
       if (!state.ready || !token()) return;
       state.home = home;
+      syncBellList();
       state.lastRefreshAt = Date.now();
       writeHomeCache();
       state.renderSig = "";
@@ -4381,6 +4355,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   window.STIPActionCenter = {
     publish: (source, items = []) => {
       state.externalActions.set(String(source), items);
+      syncBellList();
       state.renderSig = "";
       render();
       if (
@@ -4391,6 +4366,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     },
     remove: (source) => {
       state.externalActions.delete(String(source));
+      syncBellList();
       state.renderSig = "";
       render();
     },
