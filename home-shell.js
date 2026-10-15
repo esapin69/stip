@@ -1547,14 +1547,14 @@
       .join("")}</nav>`;
   }
   // Double face accueil : meme dates du moteur maitre, pas sept jours glissants.
-  // Semaine courante lundi-vendredi, weekend sur une seconde ligne, puis semaine suivante complete.
-  function weekFlipDates(offset) {
+  // Semaine calendaire courante seulement : lundi-vendredi puis samedi/dimanche.
+  function weekFlipDates() {
     const today = parisIso();
-    const dates = window.STIPWeekEngine?.fullDates?.({ weekOffset: offset }, { today });
+    const dates = window.STIPWeekEngine?.fullDates?.({ weekOffset: 0 }, { today });
     return Array.isArray(dates) && dates.length === 7
       ? dates.map((iso) => agendaRange(dateObj(iso), 1)[0]) : [];
   }
-  function weekFlipDay(x, compact = false) {
+  function weekFlipDay(x) {
     const canonical = canonicalShift(x.code),
       def = shiftDefinition(canonical),
       waiting = x.code === "…",
@@ -1567,31 +1567,27 @@
           `<span class="stip-month-shift-badge code-${esc(codeKey)}">${esc(canonical)}</span>`) : "",
       codeContent = workBadge ||
         `<strong class="ghe-weekflip-rest-code">${esc(waiting ? "…" : empty ? "—" : canonical)}</strong>`,
-      restIcon = !working && !waiting && !empty ? shiftStatusIcon(canonical) : "",
       dayName = x.d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase(),
       selected = state.dayFocus === x.iso,
       title = x.d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
-    return `<button type="button" class="ghe-weekflip-day stip-week-day ${compact ? "is-compact" : ""} ${x.today ? "today" : ""} ${selected ? "selected" : ""} ${working ? "work" : "rest"} code-${esc(codeKey)}" data-home-day="${esc(x.iso)}" aria-pressed="${selected}" aria-label="${esc(title + " · " + label)}"${waiting ? ' disabled aria-disabled="true"' : ""}>
+    return `<button type="button" class="ghe-weekflip-day stip-week-day ${x.today ? "today" : ""} ${selected ? "selected" : ""} ${working ? "work" : "rest"} code-${esc(codeKey)}" data-home-day="${esc(x.iso)}" aria-pressed="${selected}" aria-label="${esc(title + " · " + label)}"${waiting ? ' disabled aria-disabled="true"' : ""}>
       <span class="ghe-weekflip-day-head"><small>${esc(dayName)}</small><b>${x.d.getDate()}</b></span>
       <span class="ghe-weekflip-day-body">
         <span class="ghe-weekflip-shift">${codeContent}</span>
-        <span class="ghe-weekflip-rest-icon" aria-hidden="true">${restIcon ? esc(restIcon) : ""}</span>
         ${weekEventBadges(x)}
       </span>
     </button>`;
   }
   function weekFlipBack() {
-    const current = weekFlipDates(0), next = weekFlipDates(1);
-    if (current.length !== 7 || next.length !== 7)
+    const current = weekFlipDates();
+    if (current.length !== 7)
       return '<p class="ghe-weekflip-unavailable">Planning hebdomadaire temporairement indisponible.</p>';
     const weekdays=current.slice(0,5), weekend=current.slice(5);
     const range = (rows) => esc(weekRangeLabel(rows));
     return `<header class="ghe-weekflip-back-header">
       <strong>CETTE SEMAINE</strong><small>${range(current)}</small></header>
       <div class="ghe-weekflip-workdays" aria-label="Du lundi au vendredi">${weekdays.map(day => weekFlipDay(day)).join("")}</div>
-      <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>
-      <div class="ghe-weekflip-next-separator"><span>SEMAINE PROCHAINE</span><small>${range(next)}</small></div>
-      <div class="ghe-weekflip-next" aria-label="Les sept jours de la semaine prochaine">${next.map(day => weekFlipDay(day,true)).join("")}</div>`;
+      <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>`;
   }
   function weekFlipCard() {
     const flipped=state.weekFlipped;
@@ -1600,11 +1596,11 @@
       <section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI","today")}${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}${homeDayAppointments(today,"Aujourd’hui")}</section>
       <section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN","tomorrow")}${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}${homeDayAppointments(tomorrow,"Demain")}</section>
     </div>`;
-    return `<section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé et semaines">
+    return `<section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
       <div class="ghe-weekflip-track">
         <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
           ${front}
-          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Retourner le bloc pour voir cette semaine et la semaine prochaine">Voir les deux semaines <span aria-hidden="true">↻</span></button>
+          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Retourner le bloc pour voir la semaine en cours">Voir cette semaine <span aria-hidden="true">↻</span></button>
         </div>
         <div class="ghe-weekflip-face ghe-weekflip-back hc-week-context-master" data-stip-context-master="week" ${flipped?'aria-hidden="false"':'inert aria-hidden="true"'}>
           ${weekFlipBack()}

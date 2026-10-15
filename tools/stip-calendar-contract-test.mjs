@@ -116,12 +116,15 @@ const flipCard=homeJs.split("function weekFlipCard()")[1]?.split("function syncW
 const flipCss=read("home-week-flip.css");
 assert(weekEngine.includes("function fullDates") && weekEngine.includes("function upcomingSevenDates"),
   "le moteur de calendrier canonique doit conserver tous ses consommateurs");
-assert(homeJs.includes("function weekFlipDates(offset)") &&
-       homeJs.includes("STIPWeekEngine?.fullDates?.({ weekOffset: offset }, { today })"),
-  "les deux semaines du verso doivent provenir exclusivement du moteur maitre");
+assert(homeJs.includes("function weekFlipDates()") &&
+       homeJs.includes("STIPWeekEngine?.fullDates?.({ weekOffset: 0 }, { today })"),
+  "la semaine en cours doit provenir exclusivement du moteur maitre");
 assert(flipBack.includes("current.slice(0,5)") && flipBack.includes("current.slice(5)") &&
-       flipBack.includes("weekFlipDates(1)") && flipBack.includes("SEMAINE PROCHAINE"),
-  "verso : 5 jours, weekend de 2 jours, puis 7 jours de la semaine suivante");
+       flipBack.includes("weekFlipDates()") &&
+       !flipBack.includes("weekFlipDates(1)") &&
+       !flipBack.includes("SEMAINE PROCHAINE") &&
+       !flipBack.includes("ghe-weekflip-next"),
+  "verso : 5 jours puis weekend de 2 jours, sans semaine suivante");
 assert(flipCard.includes('class="hc-days-grid"') &&
        flipCard.includes('id="hcTeamFusion"') &&
        flipCard.includes('id="hcTomorrowFusion"'),
@@ -145,8 +148,22 @@ assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(x.code)") &&
   "shifts badges du mois, evenements centres, pas de repere LUNDI");
 assert(flipCss.includes("grid-template-columns:repeat(5,minmax(0,1fr))") &&
        flipCss.includes("grid-template-columns:repeat(2,minmax(0,1fr))") &&
-       flipCss.includes("grid-template-columns:repeat(7,minmax(0,1fr))"),
-  "le verso doit utiliser 5+2 colonnes, puis 7 colonnes compactes");
+       !flipCss.includes("ghe-weekflip-next"),
+  "le verso doit utiliser deux rangs : 5 jours puis 2 jours");
+assert(flipCss.includes("background:#f1f5f6!important") &&
+       flipCss.includes("background:#fff!important") &&
+       flipCss.includes("border-bottom:3px solid") &&
+       !flipCss.includes("80%,#fff"),
+  "le verso doit utiliser des surfaces neutres sans imposer le bleu par defaut");
+const flipDay=homeJs.split("function weekFlipDay(")[1]?.split("function weekFlipBack()")[0] || "";
+assert(!flipDay.includes("ghe-weekflip-rest-icon") &&
+       !flipDay.includes("shiftStatusIcon(canonical)") &&
+       flipDay.includes("ghe-weekflip-rest-code") &&
+       flipDay.includes("weekEventBadges(x)"),
+  "les repos restent des codes seuls sur le verso et les rendez-vous sont conserves");
+assert(flipCard.includes("Voir cette semaine") &&
+       !flipCard.includes("Voir les deux semaines"),
+  "le bouton de retournement annonce la semaine en cours");
 const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
 assert(eventBadges.includes("events.slice(0, 2)") &&
        eventBadges.includes("hc-rolling-event-overflow"), "au-delà de deux repères, afficher un compteur");

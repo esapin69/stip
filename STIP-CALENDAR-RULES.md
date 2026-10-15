@@ -51,16 +51,19 @@ Le bloc des deux colonnes est **un seul ensemble retournable**, sur le modèle 3
 de la carte de profil, sans modifier les deux moteurs de données des cartes du jour.
 
 - **Recto** : Aujourd'hui à gauche, Demain à droite, mêmes détails, actions et popups.
-- **Verso** : semaine calendaire complète en cours (lundi à dimanche) :
+- **Verso** : **uniquement la semaine calendaire en cours** (lundi à dimanche) :
   lundi–vendredi sur la première ligne, samedi/dimanche sur la seconde.
-  Séparateur **SEMAINE PROCHAINE**, puis ses sept jours lundi–dimanche sur
-  une troisième ligne légèrement plus compacte.
-- Les deux semaines viennent de `STIPWeekEngine.fullDates({weekOffset:0/1})`
-  avec la date de référence Europe/Paris. Ne pas calculer localement les
-  frontières de semaine ni modifier l'état de navigation des autres calendriers.
+  La semaine suivante n'y figure plus : le tableau mensuel situé dessous couvre
+  déjà cette période. Aucune troisième rangée ni séparateur « SEMAINE PROCHAINE ».
+- Les sept dates proviennent de `STIPWeekEngine.fullDates({weekOffset:0})`,
+  avec la date de référence Europe/Paris. Ne pas recalculer les frontières
+  de semaine localement ni modifier l'état de navigation des autres calendriers.
 - Chaque jour conserve le code de shift ; les shifts travaillés utilisent
   le même badge texte que le mois via `STIPMonthTable.shiftBadgeHtml`.
-  Repos/congés/absences : code et icône propres ; pas d'icône de shift travaillé.
+  Repos/congés/absences : **code seul, sans icône de repos sur ce verso**.
+  Les pictogrammes de repos restent inchangés partout ailleurs.
+- Les en-têtes des jours sont **neutres**, sans bande bleu uniforme ; seules
+  les petites lignes de rappel et les badges des shifts conservent leur couleur.
 - Les événements personnels (rendez-vous, loisirs) sont en dessous, centrés
   verticalement, au maximum deux icônes puis `+N`. Aucune icône de chef
   dans les cartes.
