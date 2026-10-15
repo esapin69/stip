@@ -110,51 +110,54 @@ assert(planning.includes("ph-month-weekdays stip-month-weekdays"),
   "Planning personal still mixes weekday labels into the month grid");
 
 const homeJs = read("home-shell.js");
-const rollingWidget = homeJs.split("function weekWidget()")[1]?.split("function nativeFuture()")[0] || "";
-assert(weekEngine.includes("function upcomingSevenDates") && weekEngine.includes("dow===7?1:2"),
-  "la règle du lundi répété doit appartenir au moteur central");
-assert(rollingWidget.includes("upcomingHomeWeek()") && rollingWidget.includes("weekDaysLandscape(w, true)") &&
-       !rollingWidget.includes("data-week-step"),
-  "l'accueil doit afficher sept cartes sans grandes flèches");
-assert(homeJs.includes("hc-rolling-monday-flag") && homeJs.includes("day.dow === 1") &&
-       homeJs.includes("selectVisibleWeekDay(iso)"),
-  "le repère lundi et la sélection des jours doivent rester accessibles");
-const rollingCss = read("home-rolling-week.css");
-const dayCard = homeJs.split("function dayCard(")[1]?.split("function weekEventsForDay(")[0] || "";
-assert(dayCard.includes('shiftDefinition(canonical)?.is_working === true') &&
-       dayCard.includes('? "" // Une journée travaillée') &&
-       dayCard.includes("stip-week-code"), "un shift travaillé affiche son code, sans pastille");
+const homeRender=homeJs.split("function homeModeBody()")[1]?.split("function render()")[0] || "";
+const flipBack=homeJs.split("function weekFlipBack()")[1]?.split("function weekFlipCard()")[0] || "";
+const flipCard=homeJs.split("function weekFlipCard()")[1]?.split("function syncWeekFlipHeight(")[0] || "";
+const flipCss=read("home-week-flip.css");
+assert(weekEngine.includes("function fullDates") && weekEngine.includes("function upcomingSevenDates"),
+  "le moteur de calendrier canonique doit conserver tous ses consommateurs");
+assert(homeJs.includes("function weekFlipDates(offset)") &&
+       homeJs.includes("STIPWeekEngine?.fullDates?.({ weekOffset: offset }, { today })"),
+  "les deux semaines du verso doivent provenir exclusivement du moteur maitre");
+assert(flipBack.includes("current.slice(0,5)") && flipBack.includes("current.slice(5)") &&
+       flipBack.includes("weekFlipDates(1)") && flipBack.includes("SEMAINE PROCHAINE"),
+  "verso : 5 jours, weekend de 2 jours, puis 7 jours de la semaine suivante");
+assert(flipCard.includes('class="hc-days-grid"') &&
+       flipCard.includes('id="hcTeamFusion"') &&
+       flipCard.includes('id="hcTomorrowFusion"'),
+  "recto : Aujourd'hui et Demain restent ensemble avec les memes composants");
+assert(homeRender.includes("${weekFlipCard()}") &&
+       !homeRender.includes("${weekWidget()}") &&
+       !homeRender.includes("${planningWeekSeparator()}"),
+  "l'ancien bloc glissant est remplace par un unique composant recto-verso");
+assert(flipCard.includes('data-week-turn-open') && flipCard.includes('data-week-turn-close') &&
+       flipCard.includes('inert aria-hidden="true"') &&
+       homeJs.includes('const weekFlip=root.querySelector("[data-week-flip]")'),
+  "le bloc doit pouvoir tourner et la face inactive etre inaccessible");
+assert(homeJs.includes("prepareWeekFlip(root)") &&
+       homeJs.includes("syncWeekFlipHeight(weekFlip)") &&
+       flipCss.includes("backface-visibility:hidden") &&
+       flipCss.includes("rotateY(180deg)"),
+  "le retournement 3D doit utiliser une hauteur adaptee et les faces masquees");
+assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(x.code)") &&
+       homeJs.includes("weekEventBadges(x)") &&
+       !flipBack.includes("hc-rolling-monday-flag"),
+  "shifts badges du mois, evenements centres, pas de repere LUNDI");
+assert(flipCss.includes("grid-template-columns:repeat(5,minmax(0,1fr))") &&
+       flipCss.includes("grid-template-columns:repeat(2,minmax(0,1fr))") &&
+       flipCss.includes("grid-template-columns:repeat(7,minmax(0,1fr))"),
+  "le verso doit utiliser 5+2 colonnes, puis 7 colonnes compactes");
 const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
 assert(eventBadges.includes("events.slice(0, 2)") &&
        eventBadges.includes("hc-rolling-event-overflow"), "au-delà de deux repères, afficher un compteur");
 const eventSources = homeJs.split("function weekEventsForDay(")[1]?.split("function weekEventBadges(")[0] || "";
 assert(eventSources.includes("STIPLeisure?.dayItems") &&
-       !eventSources.includes("STIPDutyChiefs"), "loisirs présents, chefs absents des cartes");
-assert(rollingCss.includes("flex-flow:column nowrap!important") &&
-       rollingCss.includes(".hc-rolling-seven .stip-week-event"), "repères centrés verticalement");
+       !eventSources.includes("STIPDutyChiefs"), "loisirs presents, chefs absents des cartes");
 const teamFusion=read("team-home-fusion.js");
 assert(teamFusion.includes("async function openDate(") &&
        teamFusion.includes("window.STIPTeamFusion={mount,openDate}") &&
        homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
-       "popup commun Aujourd'hui/Demain réutilisé pour la semaine");
-assert(rollingCss.includes("grid-template-rows:auto 40px") &&
-       rollingCss.includes("grid-row:2!important") &&
-       rollingCss.includes("position:static!important") &&
-       rollingCss.includes("min-height:178px") &&
-       !rollingCss.includes("top:calc(100% + 6px)"),
-  "le repere LUNDI doit occuper une ligne distincte, en flux, sans chevaucher RENDEZ-VOUS");
-assert(rollingCss.includes(".hc-shift-core.stip-week-core") &&
-       rollingCss.includes("flex:0 0 28px!important") &&
-       rollingCss.includes("flex-flow:column nowrap!important") &&
-       rollingCss.includes("display:flex!important"),
-  "la lettre du shift doit rester en haut dans un groupe reel et les evenements au-dessous");
-assert(rollingCss.includes(".hc-rolling-seven .stip-week-events") &&
-       rollingCss.includes("flex-flow:column nowrap!important"),
-  "les rendez-vous doivent rester empiles verticalement");
-const mondaySlot = homeJs.split("function weekDaysLandscape")[1]?.split("function planningStatus")[0] || "";
-assert(mondaySlot.includes('hc-rolling-monday-arrow">↑') &&
-       mondaySlot.includes('${dayCard(day, "stip-week-day", true)}${monday}'),
-  "le repère lundi et sa flèche doivent être placés après la carte du lundi");
+       "le popup du jour doit rester partage");
 assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)") &&
        !homeJs.includes("hc-date-jump-dot stip-month-dot shift-"),
   "Accueil monthly planning is not using the validated text badges for worked shifts");
