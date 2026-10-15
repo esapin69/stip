@@ -59,7 +59,7 @@
 .hc-home-top-nav[data-header-compact] .stip-person-card-avatar img,
 .hc-home-top-nav[data-header-compact] .hc-id-card .hc-avatar img{
   display:block!important;width:100%!important;height:100%!important;
-  object-fit:cover!important;object-position:center!important;transform:none!important
+  object-fit:contain!important;object-position:center bottom!important;transform:none!important
 }
 .hc-home-top-nav[data-header-compact] .stip-person-card-copy{
   box-sizing:border-box!important;display:grid!important;grid-column:2!important;grid-row:1!important;

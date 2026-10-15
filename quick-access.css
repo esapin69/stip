@@ -8,7 +8,7 @@ body.stip-quick-connected{--stip-quick-clearance:calc(72px + env(safe-area-inset
 .stip-quick-switch button,.stip-quick-switch a{overflow:visible!important;border:0!important;background:transparent!important;box-shadow:none!important}
 .stip-quick-switch [data-qs="favorites"],.stip-quick-switch [data-u="favorites"]{width:54px!important;height:54px!important;min-width:54px!important;min-height:54px!important}
 .stip-quick-switch .qs-icon{overflow:hidden!important;border-radius:50%!important;filter:drop-shadow(0 7px 14px rgba(18,55,70,.14))}
-.stip-quick-switch .qs-icon img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important}
+.stip-quick-switch .qs-icon img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;border-radius:inherit!important}
 .stip-quick-switch .qs-icon svg{display:none!important}
 .stip-quick-switch button.is-current,.stip-quick-switch a.is-current{background:transparent!important;color:inherit!important;box-shadow:none!important}
 .stip-quick-switch button.is-current .qs-icon,.stip-quick-switch a.is-current .qs-icon{filter:drop-shadow(0 8px 16px rgba(11,65,105,.28));transform:translateY(-1px)}

@@ -197,7 +197,7 @@
     .stip-person-card{position:relative;display:grid;grid-template-columns:64px minmax(0,1fr) 24px;gap:11px;align-items:center;min-height:76px;padding:9px 10px;border:1px solid #dbe8eb;border-radius:19px;background:#fff;box-shadow:0 7px 19px rgba(21,67,82,.055);color:#153a4a}
     .stip-person-card.is-compact{margin-top:10px}
     .stip-person-card-avatar{width:64px;height:64px;border-radius:16px;overflow:hidden;display:grid;place-items:center;background:#eef5f7}
-    .stip-person-card-avatar img{width:100%;height:100%;object-fit:cover;object-position:center}
+    .stip-person-card-avatar img{display:block;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;object-position:center bottom}
     .stip-person-card-avatar>span{font-weight:950;font-size:1rem}
     .stip-person-card-copy{min-width:0;display:grid;gap:2px}
     .stip-person-card-copy small{color:#168297;font-size:.58rem;font-weight:950;letter-spacing:.09em}
