@@ -1,0 +1,232 @@
+/* Accueil GHE : une carte 3D pour Aujourd'hui/Demain et deux semaines completes.
+   Mecanisme d'orientation calque sur la carte profil ; seules les deux faces
+   et leurs cartes sont concernees, sans changer le moteur commun du calendrier. */
+.ghe-weekflip-stage{
+  position:relative;
+  box-sizing:border-box;
+  width:100%;min-width:0;
+  margin:0 auto 12px;
+  perspective:1400px;
+  isolation:isolate;
+}
+.ghe-weekflip-track{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  width:100%;min-width:0;
+  transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.22,.74,.2,1),height .28s ease;
+}
+.ghe-weekflip-stage[data-side="back"] .ghe-weekflip-track{transform:rotateY(180deg)}
+.ghe-weekflip-face{
+  grid-row:1;grid-column:1;
+  box-sizing:border-box!important;
+  width:100%;min-width:0;
+  min-height:170px;
+  margin:0!important;padding:10px 9px 12px!important;
+  backface-visibility:hidden!important;
+  -webkit-backface-visibility:hidden!important;
+  transform-style:preserve-3d;
+  display:flex!important;flex-direction:column!important;gap:10px!important;
+  align-items:stretch!important;
+  border:1px solid rgba(47,119,145,.18)!important;
+  border-radius:22px!important;
+  background:linear-gradient(150deg,#fff,#f6fbfd)!important;
+  box-shadow:0 12px 30px rgba(20,69,89,.1),inset 0 1px 0 #fff!important;
+  overflow:hidden!important;
+}
+.ghe-weekflip-front{transform:rotateY(0)}
+.ghe-weekflip-back{transform:rotateY(180deg);padding:14px 10px 12px!important}
+.ghe-weekflip-front>.hc-days-grid{width:100%;min-width:0;margin:0!important}
+.ghe-weekflip-turn{
+  box-sizing:border-box!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  gap:10px!important;
+  align-self:center!important;
+  min-height:36px!important;
+  padding:7px 16px!important;margin:2px auto 0!important;
+  border:1px solid #bcd9e2!important;
+  border-radius:999px!important;
+  background:linear-gradient(180deg,#fff,#edf8fa)!important;
+  color:#20647c!important;
+  font:900 .76rem/1.12 system-ui,sans-serif!important;
+  box-shadow:0 3px 8px rgba(16,77,96,.08)!important;
+  cursor:pointer;touch-action:manipulation;
+}
+.ghe-weekflip-turn>span{font-size:1.2rem}
+.ghe-weekflip-turn:focus-visible,
+.ghe-weekflip-day:focus-visible{outline:3px solid #168da8!important;outline-offset:2px!important}
+.ghe-weekflip-back-header{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  gap:4px 8px;padding:0 2px!important;
+}
+.ghe-weekflip-back-header strong{font:950 .86rem/1.15 system-ui,sans-serif;color:#194c63;letter-spacing:.035em}
+.ghe-weekflip-back-header small{font:800 .69rem/1.15 system-ui,sans-serif;color:#547684}
+.ghe-weekflip-workdays,.ghe-weekflip-next{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  gap:5px!important;
+  width:100%;min-width:0;
+  margin:0!important;padding:0!important;
+}
+.ghe-weekflip-weekend{
+  box-sizing:border-box!important;
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;align-items:stretch!important;
+  width:100%;min-width:0;
+  margin:0!important;padding:0!important;
+}
+.ghe-weekflip-next{
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  gap:3px!important;
+}
+.ghe-weekflip-next-separator{
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  gap:3px!important;min-height:36px!important;
+  margin:1px 0 0!important;padding:5px 0 2px!important;
+  border-top:1px solid rgba(49,101,122,.18)!important;
+  text-align:center!important;
+}
+.ghe-weekflip-next-separator span{
+  color:#1a576d;font:950 .79rem/1.1 system-ui,sans-serif!important;
+  letter-spacing:.035em;
+}
+.ghe-weekflip-next-separator small{
+  color:#68858f;font:750 .66rem/1.1 system-ui,sans-serif!important;
+}
+.ghe-weekflip-day.stip-week-day{
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;
+  width:100%!important;min-width:0!important;min-height:131px!important;
+  height:100%!important;
+  padding:0!important;margin:0!important;
+  overflow:hidden!important;
+  border:1px solid color-mix(in srgb,var(--stip-accent,#6c8791) 45%,#c5d5dc)!important;
+  border-radius:12px!important;
+  background:#f8fbfc!important;
+  box-shadow:0 3px 7px rgba(27,71,88,.07)!important;
+  text-align:center!important;
+  cursor:pointer!important;transform:none!important;
+}
+.ghe-weekflip-day.selected{outline:2px solid #146e89!important;outline-offset:1px!important}
+.ghe-weekflip-day.today{box-shadow:0 0 0 2px #1e849c26,0 3px 8px #1458701a!important}
+.ghe-weekflip-day-head{
+  box-sizing:border-box!important;
+  display:flex!important;flex-flow:column nowrap!important;
+  align-items:center!important;justify-content:center!important;
+  flex:0 0 49px!important;
+  min-height:49px!important;
+  gap:2px!important;width:100%!important;
+  margin:0!important;padding:5px 0!important;
+  background:color-mix(in srgb,var(--stip-accent,#6d8b99) 80%,#fff)!important;
+  color:#fff!important;
+}
+.ghe-weekflip-day.code-s .ghe-weekflip-day-head{color:#302a00!important}
+.ghe-weekflip-day-head small{
+  font:900 .63rem/1 system-ui,sans-serif!important;letter-spacing:.02em!important;
+}
+.ghe-weekflip-day-head b{font:950 1.08rem/1 system-ui,sans-serif!important}
+.ghe-weekflip-day-body{
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:flex-start!important;
+  gap:0!important;width:100%!important;min-width:0!important;
+  flex:1 0 auto!important;
+  padding:8px 1px 6px!important;
+  background:color-mix(in srgb,var(--stip-accent,#6d8b99) 8%,white)!important;
+}
+.ghe-weekflip-shift{
+  box-sizing:border-box!important;
+  display:grid!important;place-items:center!important;
+  flex:0 0 28px!important;
+  width:100%!important;min-width:0!important;min-height:28px!important;
+  margin:0!important;padding:0!important;
+}
+/* Le badge de travail reprend la geometrie exacte du mois, mais est
+   explicitement cible ici car la feuille du mois est scopee au calendrier. */
+.ghe-weekflip-shift .stip-month-shift-badge{
+  --stip-month-shift-bg:var(--stip-accent,#628293);
+  --stip-month-shift-ink:#fff;
+  box-sizing:border-box!important;
+  min-width:28px!important;height:27px!important;
+  display:inline-grid!important;place-items:center!important;
+  padding:0 5px!important;
+  border:1px solid color-mix(in srgb,var(--stip-month-shift-bg) 68%,#fff)!important;
+  border-radius:10px!important;
+  background:var(--stip-month-shift-bg)!important;
+  color:var(--stip-month-shift-ink)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.28),0 3px 7px color-mix(in srgb,var(--stip-month-shift-bg) 17%,transparent)!important;
+  font:950 .69rem/1 system-ui,sans-serif!important;
+  white-space:nowrap!important;
+}
+.ghe-weekflip-shift .code-m{--stip-month-shift-bg:var(--stip-shift-m,#1784ec)}
+.ghe-weekflip-shift .code-j{--stip-month-shift-bg:var(--stip-shift-j,#00ab68)}
+.ghe-weekflip-shift .code-j4{--stip-month-shift-bg:var(--stip-shift-j4,#ff9600)}
+.ghe-weekflip-shift .code-s{--stip-month-shift-bg:var(--stip-shift-s,#f4cb00);--stip-month-shift-ink:#332b00}
+.ghe-weekflip-shift .code-n{--stip-month-shift-bg:var(--stip-shift-n,#202830)}
+.ghe-weekflip-rest-code{display:block!important;font:950 .81rem/1 system-ui,sans-serif!important;color:#3e5f6b}
+.ghe-weekflip-rest-icon{
+  display:grid!important;place-items:center!important;
+  flex:0 0 26px!important;min-height:26px!important;
+  width:100%!important;min-width:0!important;
+  margin:2px 0 0!important;padding:0!important;
+  font-size:1.25rem!important;line-height:1!important;
+}
+.ghe-weekflip-day .stip-week-events{
+  box-sizing:border-box!important;
+  display:flex!important;flex-flow:column nowrap!important;
+  align-items:center!important;justify-content:flex-start!important;
+  align-self:center!important;
+  gap:4px!important;flex:0 0 auto!important;
+  width:100%!important;height:auto!important;min-height:0!important;
+  margin:5px auto 0!important;padding:0!important;
+  overflow:visible!important;
+}
+.ghe-weekflip-day .stip-week-events.is-empty{visibility:hidden!important}
+.ghe-weekflip-day .stip-week-event{
+  display:grid!important;place-items:center!important;align-self:center!important;
+  flex:0 0 23px!important;min-width:23px!important;min-height:23px!important;
+  width:23px!important;height:23px!important;
+  margin:0 auto!important;padding:0!important;
+  font-size:1.2rem!important;line-height:1!important;
+}
+.ghe-weekflip-day .hc-rolling-event-overflow{margin:0!important;font-size:.62rem!important}
+.ghe-weekflip-day.is-compact{min-height:108px!important;border-radius:9px!important}
+.ghe-weekflip-day.is-compact .ghe-weekflip-day-head{
+  flex-basis:38px!important;min-height:38px!important;padding:3px 0!important;
+}
+.ghe-weekflip-day.is-compact .ghe-weekflip-day-head small{font-size:.53rem!important}
+.ghe-weekflip-day.is-compact .ghe-weekflip-day-head b{font-size:.91rem!important}
+.ghe-weekflip-day.is-compact .ghe-weekflip-day-body{padding:5px 0 4px!important}
+.ghe-weekflip-day.is-compact .ghe-weekflip-shift{flex-basis:24px!important;min-height:24px!important}
+.ghe-weekflip-day.is-compact .stip-month-shift-badge{
+  min-width:24px!important;height:23px!important;
+  font-size:.58rem!important;padding:0 2px!important;border-radius:7px!important;
+}
+.ghe-weekflip-day.is-compact .ghe-weekflip-rest-code{font-size:.72rem!important}
+.ghe-weekflip-day.is-compact .ghe-weekflip-rest-icon{
+  flex-basis:23px!important;min-height:23px!important;font-size:1.13rem!important;
+}
+.ghe-weekflip-day.is-compact .stip-week-events{margin-top:4px!important;gap:3px!important}
+.ghe-weekflip-day.is-compact .stip-week-event{
+  width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;
+  flex-basis:20px!important;font-size:1.05rem!important;
+}
+.ghe-weekflip-return{margin-top:3px!important}
+.ghe-weekflip-unavailable{
+  color:#4e7381;font:800 .8rem/1.4 system-ui,sans-serif;text-align:center;
+}
+@media(max-width:390px){
+ .ghe-weekflip-back{padding-inline:7px!important}
+ .ghe-weekflip-workdays{gap:3px!important}
+ .ghe-weekflip-weekend{gap:5px!important}
+ .ghe-weekflip-next{gap:2px!important}
+ .ghe-weekflip-day-head small{font-size:.58rem!important}
+ .ghe-weekflip-day-head b{font-size:1rem!important}
+ .ghe-weekflip-day.is-compact .ghe-weekflip-day-head small{font-size:.51rem!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .ghe-weekflip-track{transition:none!important}
+}
