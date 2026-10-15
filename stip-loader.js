@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261015-weather-contrast-notices3";
+    V = "20261015-ghe-360-github-pages1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -321,7 +321,7 @@
       .then(() =>
         seq([
           "event-feedback.js?v=20261014-home-order2",
-          "home-duty-chief.js?v=20261014-chief-phone-shifts1",
+          "home-duty-chief.js?v=20261015-ghe-360-github-pages1",
           "admin-access-requests-home.js",
         ]),
       )
