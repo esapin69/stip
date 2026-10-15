@@ -2690,40 +2690,19 @@
   }
 
   function openLiveAgent(key) {
-    if (!key) return;
-    const row = liveRoster().rows.find(item =>
-      String(item.agents?.source_key || item.agents?.id || "") === key);
-    if (!row) return;
-    const agent = row.agents || {}, code = canonicalShift(row.code);
-    const time = liveWorkInterval(row)?.label || "Horaire non renseigné";
-    const tel = String(agent.telephone || "").replace(/\D/g, "");
-    const canCall = has("contacts") && tel.length >= 6;
-    document.getElementById("gheLiveAgentDialog")?.remove();
-    const dialog = document.createElement("dialog");
-    dialog.id = "gheLiveAgentDialog";
-    dialog.className = "ghe-live-agent-dialog";
-    dialog.setAttribute("aria-label", "Fiche professionnelle simplifiée");
-    dialog.innerHTML = '<div class="ghe-live-agent-sheet"><header><strong>' +
-      esc(agentName(agent)) + '</strong><button type="button" data-live-agent-close aria-label="Fermer">×</button></header>' +
-      '<div class="ghe-live-agent-shift ' + liveShiftClass(code) + '"><b>' + esc(code) +
-      '</b><span>' + esc(time) + '</span></div>' +
-      (canCall ? '<button type="button" data-live-agent-call class="ghe-live-agent-call">☎ Appeler ce collègue</button>' : '') +
-      '</div>';
-    document.body.appendChild(dialog);
-    dialog.addEventListener("click", e => {
-      if (e.target === dialog || e.target.closest("[data-live-agent-close]")) dialog.close();
-    });
-    dialog.querySelector("[data-live-agent-call]")?.addEventListener("click", async () => {
-      dialog.close();
-      if (!window.STIPDutyChiefs?.openCallChoice) {
-        try { await window.STIPLoad?.script?.("home-duty-chief.js"); }
-        catch { return; }
-      }
-      window.STIPDutyChiefs?.openCallChoice?.(tel, agentName(agent));
-    });
-    dialog.addEventListener("close", () => dialog.remove(), { once: true });
-    if (typeof dialog.showModal === "function") dialog.showModal();
-    else dialog.setAttribute("open", "");
+    if(!key)return;
+    const row=liveRoster().rows.find(item=>
+      String(item.agents?.source_key||item.agents?.id||"")===key);
+    if(!row)return;
+    const agent=row.agents||{};
+    if(window.STIPPersonActions?.openForAgent) {
+      window.STIPPersonActions.openForAgent(agent,{
+        sourceKey:key,contextLabel:"EN DIRECT",
+        subtitle:canonicalShift(row.code)+" · "+(liveWorkInterval(row)?.label||"Horaires indisponibles")
+      });
+      return;
+    }
+    window.STIPAgentAgenda?.open?.(key,agent);
   }
 
   // The header uses one canonical navigation action; the agent photo remains
