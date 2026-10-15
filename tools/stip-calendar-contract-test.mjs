@@ -185,10 +185,11 @@ for (const [name, source] of calendarConsumers) {
     `${name} duplicates the late-week business rule instead of consuming the master engine`);
 }
 assert(homeJs.includes("hc-next-monday-bridge"), "home no longer renders the canonical next-Monday bridge");
-assert(/const openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
-  "weekly day button no longer declares its detail-state locally");
-assert(!/\n\s*openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
-  "weekly day button can throw by assigning an undeclared openDetail");
+assert(/const weekDay\s*=\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs) &&
+       homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
+  "weekly day button must declare its local state and open the shared detail popup");
+assert(!/\n\s*weekDay\s*=\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
+  "weekly day button must not assign an undeclared variable");
 assert(teamJs.includes("stip-week-next-bridge"), "team no longer renders the canonical next-Monday bridge");
 assert(agentJs.includes("stip-week-next-bridge"), "agent agenda no longer renders the canonical next-Monday bridge");
 assert(rrHomeJs.includes("stip-week-next-bridge"), "Responsable no longer renders the canonical next-Monday bridge");
@@ -207,7 +208,9 @@ assert(homeJs.includes("STIPWeekEngine?.currentState") &&
        homeJs.includes("visibleWeek[0]?.iso"),
   "home no longer guarantees a reliable return to the current week/day");
 assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal reserved-row layout");
-assert(homeJs.includes("stip-week-work-marker"), "home worked shift does not use the smaller canonical marker");
+assert(homeJs.includes('shiftDefinition(canonical)?.is_working === true') &&
+       homeJs.includes('? "" // Une journée travaillée'),
+  "home worked shifts must show their code, with no work icon or marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");
 assert(agentJs.includes('class="stip-month-event"'), "agent month secondary events are still raw <small> text");
 for (const [name, source] of [
