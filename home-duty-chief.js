@@ -252,7 +252,8 @@
     return `<div class="team-chief-state"><strong>Aucun chef présent maintenant</strong><span>${esc(nextText)}</span></div>`;
   }
 
-  // The existing duty engine supplies the live card and retains its call/agenda actions.
+  // Live chiefs: no oversized action when nobody is scheduled.
+  // Present chiefs reuse the existing agent-agenda and call workflows.
   function premiumChiefRow(item,status){
     const agent=item?.agents||{},key=String(agent.source_key||""),
       label=personName(agent);
@@ -267,20 +268,19 @@
       callMarkup(item)+'</div>';
   }
   function homeNowMarkup() {
-    const title='<strong>🎨 CHEFS D’ÉQUIPE</strong>';
-    if(!data)return '<section class="ghe-premium-chief-panel">'+
-      '<div class="ghe-premium-chief-heading">'+title+'</div><p>'+
-      (loadError?'Informations momentanément indisponibles.':'Chargement du planning…')+
-      '</p></section>';
+    if(!data)return '<div class="ghe-premium-chief-empty" role="status">'+
+      '<span aria-hidden="true">🎨</span><span>'+
+      (loadError?'Chefs indisponibles':'Chargement des chefs…')+
+      '</span></div>';
     const {current,next,now}=dutyState();
     const following=next&&String(next.date||"").slice(0,10)===now.date?[next]:[];
     const rows=[...current.map(item=>premiumChiefRow(item,"now")),
       ...following.map(item=>premiumChiefRow(item,"next"))].join("");
-    return '<section class="ghe-premium-chief-panel" aria-label="Chefs présents et relève">'+
-      '<div class="ghe-premium-chief-heading">'+title+
-        '<span>Selon le planning</span></div>'+
-      (rows||'<p>Aucun chef en poste ou en relève aujourd’hui selon le planning.</p>')+
-      '</section>';
+    return rows ? '<section class="ghe-premium-chief-list" aria-label="Chefs présents et relève">'+
+      rows+'</section>' :
+      '<div class="ghe-premium-chief-empty" role="status">'+
+        '<span aria-hidden="true">🎨</span><span>Aucun chef en poste ou en relève</span>'+
+      '</div>';
   }
 
   function todayMarkup() {
