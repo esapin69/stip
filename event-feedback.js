@@ -1039,6 +1039,7 @@
     state.doneLoaded = false;
     state.boot = null;
     state.loadedAt = 0;
+    document.getElementById("hcEventFeedbackWrap")?.remove();
     document.getElementById("hcEventFeedbackHost")?.remove();
     document.getElementById("hcEventFeedbackModal")?.remove();
     document.body.classList.remove("hc-feedback-modal-open");
