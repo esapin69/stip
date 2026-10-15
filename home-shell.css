@@ -5416,3 +5416,225 @@ body.hc-shift-detail-open{overflow:hidden}
   .hc-home-pane-planning .ghe-home-week-column-heading{gap:5px!important;}
   .hc-home-pane-planning .ghe-home-week-column-heading>span{font-size:.60rem!important;letter-spacing:.07em!important;}
 }
+
+
+/* 20261016 : Cloche GHE — modal centrée, lisible, contrôlable au clavier et mobile. */
+dialog#hcBellDialog:modal,
+dialog#hcBellDialog[open] {
+  box-sizing:border-box!important;
+  position:fixed!important;
+  inset:auto!important;
+  top:50%!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  width:min(calc(100vw - 28px),560px)!important;
+  max-width:560px!important;
+  max-height:calc(100dvh - 32px)!important;
+  border-radius:23px!important;
+}
+#hcBellDialog .hc-bell-shell {
+  max-height:calc(100dvh - 34px)!important;
+  overflow:hidden!important;
+}
+#hcBellDialog .hc-bell-head {
+  padding:12px 14px!important;
+  grid-template-columns:44px minmax(0,1fr) 44px!important;
+}
+#hcBellDialog .hc-bell-head h2 {
+  font-size:clamp(1.15rem,4.5vw,1.4rem)!important;
+}
+#hcBellDialog .hc-bell-content {
+  padding:13px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+#hcBellDialog .hc-bell-summary {
+  display:flex!important;
+  align-items:baseline!important;
+  justify-content:space-between!important;
+  flex-wrap:wrap!important;
+  gap:5px 12px!important;
+  margin:0 0 14px!important;
+  padding:2px 3px!important;
+}
+#hcBellDialog .hc-bell-summary strong {
+  color:#194b5e!important;
+  font-size:.95rem!important;
+  font-weight:950!important;
+}
+#hcBellDialog .hc-bell-summary>span {
+  color:#687f89!important;
+  font-size:.75rem!important;
+  font-weight:760!important;
+}
+#hcBellDialog .hc-action-filters {
+  display:flex!important;
+  width:100%!important;
+  align-items:center!important;
+  gap:8px!important;
+  padding:0 1px 12px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+}
+#hcBellDialog .hc-action-filters::-webkit-scrollbar{display:none!important;}
+#hcBellDialog .hc-action-filters>button {
+  flex:0 0 auto!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  min-height:40px!important;
+  margin:0!important;
+  padding:8px 12px!important;
+  border-radius:999px!important;
+  border:1px solid #d7e6e9!important;
+  background:#fff!important;
+  box-shadow:0 3px 9px #15435a0d!important;
+  color:#476d7a!important;
+  font-size:.79rem!important;
+  font-weight:850!important;
+}
+#hcBellDialog .hc-action-filters>button[aria-selected="true"] {
+  border-color:#71b7c5!important;
+  background:#e9f6f9!important;
+  color:#08758c!important;
+  box-shadow:0 0 0 2px #bfe7ee66!important;
+}
+#hcBellDialog .hc-action-filters>button>span {
+  padding:2px 6px!important;
+  border-radius:999px!important;
+  background:#e8f3f5!important;
+  color:inherit!important;
+  font-size:.68rem!important;
+}
+#hcBellDialog .hc-bell-results {
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:9px!important;
+}
+#hcBellDialog .hc-bell-notice {
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:43px minmax(0,1fr) 15px!important;
+  align-items:start!important;
+  gap:11px!important;
+  width:100%!important;
+  min-height:95px!important;
+  padding:13px 11px!important;
+  margin:0!important;
+  border:1px solid #d8e7eb!important;
+  border-radius:17px!important;
+  background:#fff!important;
+  color:#183f4e!important;
+  text-align:left!important;
+  box-shadow:0 5px 12px #1440520a!important;
+}
+#hcBellDialog .hc-bell-notice.is-unread {
+  border-left:4px solid #1497b1!important;
+  padding-left:8px!important;
+}
+#hcBellDialog .hc-bell-notice.is-priority {
+  background:linear-gradient(110deg,#fff9e8,#fff)!important;
+  border-color:#e6cd81!important;
+}
+#hcBellDialog .hc-bell-notice-icon {
+  display:grid!important;
+  place-items:center!important;
+  width:43px!important;
+  height:43px!important;
+  border-radius:13px!important;
+  background:#eaf4f7!important;
+  font-size:1.38rem!important;
+}
+#hcBellDialog .hc-bell-notice-main {
+  display:grid!important;
+  gap:5px!important;
+  min-width:0!important;
+}
+#hcBellDialog .hc-bell-notice-top {
+  display:flex!important;
+  align-items:center!important;
+  gap:8px!important;
+}
+#hcBellDialog .hc-bell-notice-top small {
+  color:#277f95!important;
+  font-size:.68rem!important;
+  font-weight:950!important;
+  letter-spacing:.055em!important;
+  text-transform:uppercase!important;
+}
+#hcBellDialog .hc-bell-notice-unread {
+  display:block!important;
+  flex:0 0 8px!important;
+  width:8px!important;
+  height:8px!important;
+  border-radius:50%!important;
+  background:#0c98b2!important;
+}
+#hcBellDialog .hc-bell-notice-main>strong {
+  display:block!important;
+  font-size:.97rem!important;
+  line-height:1.28!important;
+  font-weight:950!important;
+  overflow-wrap:anywhere!important;
+}
+#hcBellDialog .hc-bell-notice-copy {
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+  color:#597480!important;
+  font-size:.8rem!important;
+  line-height:1.36!important;
+  overflow-wrap:anywhere!important;
+}
+#hcBellDialog .hc-bell-notice-bottom {
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:4px 10px!important;
+  color:#67828b!important;
+  font-size:.69rem!important;
+  font-weight:720!important;
+}
+#hcBellDialog .hc-bell-notice-bottom>span {
+  color:#386a7d!important;
+  font-weight:850!important;
+}
+#hcBellDialog .hc-bell-notice-chevron {
+  align-self:center!important;
+  color:#8dabb4!important;
+  font-size:1.25rem!important;
+}
+#hcBellDialog .hc-bell-empty {
+  margin:4px 0 2px!important;
+  padding:28px 16px!important;
+  border:1px dashed #ccdee3!important;
+  border-radius:16px!important;
+  background:#f3f9fa!important;
+  font-size:.87rem!important;
+}
+#hcBellDialog .hc-detail-actions {
+  margin-top:20px!important;
+}
+#hcBellDialog .hc-detail-actions button {
+  min-height:48px!important;
+}
+@media(max-width:420px) {
+  dialog#hcBellDialog:modal,dialog#hcBellDialog[open] {
+    width:calc(100vw - 24px)!important;
+    max-height:calc(100dvh - 24px)!important;
+  }
+  #hcBellDialog .hc-bell-shell {
+    max-height:calc(100dvh - 26px)!important;
+  }
+  #hcBellDialog .hc-bell-head {
+    padding:10px 12px!important;
+  }
+  #hcBellDialog .hc-bell-content {
+    padding:11px!important;
+  }
+}
