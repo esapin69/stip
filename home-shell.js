@@ -1374,6 +1374,7 @@
       shiftLabel = shiftMeta(canonical)[1] || canonical,
       workIcon = workShiftIcon(canonical),
       statusVisual = statusIcon ? shiftIconHtml(canonical, "hc-status-svg") : "",
+      workVisual = workIcon ? shiftIconHtml(canonical, "hc-work-svg") : "",
       workLabel = landscape && workIcon ? canonical : weekend && workIcon ? canonical : shiftLabel,
       normalVisual = loading
         ? '<strong class="hc-shift-loading">…</strong>'
