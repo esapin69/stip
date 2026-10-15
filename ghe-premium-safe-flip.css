@@ -274,10 +274,10 @@
   flex:0 0 auto!important;max-width:100%!important;
 }
 
-/* Centered bell; the header has no Menu launcher and no agent name. */
+/* Home toolbar: drawer launcher left, notifications right. */
 .hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
   box-sizing:border-box!important;display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
   width:100%!important;max-width:100%!important;
   justify-content:stretch!important;align-items:center!important;
   column-gap:8px!important;min-height:68px!important;
@@ -285,7 +285,7 @@
   background:transparent!important;box-shadow:none!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
-  grid-column:2;grid-row:1;justify-self:center;
+  grid-column:2;grid-row:1;justify-self:end!important;
   box-sizing:border-box!important;width:60px!important;height:60px!important;
   min-width:60px!important;min-height:60px!important;
   border:0!important;border-radius:50%!important;padding:0!important;
@@ -298,10 +298,7 @@
   top:1px!important;right:-2px!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-tools-right{
-  grid-column:3;grid-row:1;min-width:0!important;
-  justify-self:end;justify-content:flex-end!important;
-  display:flex!important;align-items:center!important;
-  gap:clamp(3px,1vw,9px)!important;
+  display:none!important; /* Empty former utility slot: drawer now owns these shortcuts. */
 }
 .hc-home-top-nav[data-header-compact].ghe-home-clean-header {
   box-shadow:none!important;border:0!important;background:transparent!important;
