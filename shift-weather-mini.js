@@ -233,7 +233,8 @@
       scene.setAttribute("aria-label",
         shift.startText + " : " + values.startTemp + " degrés, " +
         shift.endText + " : " + values.endTemp + " degrés. " +
-        values.description + " pendant le service");
+        values.description + " pendant le service" +
+        (values.risk === null ? "" : ". Risque maximal de pluie : " + values.risk + " %"));
     }
     host.replaceChildren();
     const endpoints = document.createElement("span");
@@ -258,10 +259,12 @@
     state.className = "hc-shift-weather-state";
     state.textContent = values.description;
     host.append(endpoints, state);
-    if (!options.compact && values.risk !== null) {
+    // Always expose the actual highest hourly precipitation probability on compact cards too.
+    if (values.risk !== null) {
       const rain = document.createElement("span");
       rain.className = "hc-shift-weather-rain";
-      rain.textContent = "Risque de pluie max. " + values.risk + " %";
+      rain.textContent = "Pluie : " + values.risk + " % max";
+      rain.setAttribute("aria-label", "Risque maximal de pluie pendant le service : " + values.risk + " %");
       host.append(rain);
     }
     host.hidden = false;
