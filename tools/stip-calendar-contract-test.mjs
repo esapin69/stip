@@ -164,6 +164,31 @@ assert(!flipDay.includes("ghe-weekflip-rest-icon") &&
 assert(flipCard.includes("Voir cette semaine") &&
        !flipCard.includes("Voir les deux semaines"),
   "le bouton de retournement annonce la semaine en cours");
+assert(homeJs.includes("function weekFlipNextMonday()") &&
+       homeJs.includes("STIPWeekEngine?.fullDates?.({ weekOffset: 1 }, { today: parisIso() })?.[0]") &&
+       homeJs.includes("working && day.time") &&
+       flipBack.includes("${weekFlipNextMonday()}") &&
+       !flipBack.includes("weekFlipDates(1)"),
+  "l'aperçu doit afficher uniquement le lundi suivant et son horaire de planning");
+const preview=homeJs.split("function weekFlipNextMonday()")[1]?.split("function weekFlipBack()")[0] || "";
+assert(preview.includes("STIPMonthTable?.shiftBadgeHtml?.(day.code)") &&
+       preview.includes("ghe-weekflip-monday-preview") &&
+       preview.includes("Horaire non communiqué") &&
+       !preview.includes("weekEventBadges("),
+  "lundi prochain : code, horaire connu ou indisponible, pas de semaine supplementaire");
+assert(flipCss.includes("height:auto!important") &&
+       flipCss.includes("grid-template-rows:auto!important") &&
+       homeJs.includes('track.style.removeProperty("height")') &&
+       !homeJs.includes('track.style.height=height+"px"'),
+  "recto et verso doivent occuper la meme hauteur naturelle, meme avec les images");
+assert(flipCss.includes(".ghe-weekflip-day.work .ghe-weekflip-day-head") &&
+       flipCss.includes("var(--weekflip-marker) 17%,white") &&
+       flipCss.includes(".ghe-weekflip-monday-preview.stip-week-day"),
+  "le style doit reprendre les nuances des shifts sans imposer un fond bleu");
+assert(!flipBack.includes("data-week-step") &&
+       !flipBack.includes("SEMAINE PROCHAINE"),
+  "le verso ne doit pas avoir de fleches de navigation ou de seconde semaine");
+
 const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
 assert(eventBadges.includes("events.slice(0, 2)") &&
        eventBadges.includes("hc-rolling-event-overflow"), "au-delà de deux repères, afficher un compteur");
