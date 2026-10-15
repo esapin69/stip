@@ -292,7 +292,8 @@
   function selectVisibleWeekDay(iso) {
     // Keep the normal week navigation for a day outside the displayed range
     // (notably the next-Monday bridge). Only ordinary selection is local.
-    if (!selectedWeek().some((day) => day.iso === iso)) return jumpToDate(iso);
+    if (!upcomingHomeWeek().some((day) => day.iso === iso) &&
+        !selectedWeek().some((day) => day.iso === iso)) return jumpToDate(iso);
     state.dayFocus = iso;
     document.querySelectorAll("#homeView .hc-week-context-master [data-home-day]").forEach((day) => {
       const active = day.dataset.homeDay === iso;
@@ -1451,7 +1452,23 @@
       slotCount: Math.max(1, w.length),
     };
   }
-  function weekDaysLandscape(w) {
+  function upcomingHomeWeek() {
+    const dates = window.STIPWeekEngine?.upcomingSevenDates?.({ today: parisIso() });
+    // Ne jamais reconstituer la règle métier localement.
+    return Array.isArray(dates) && dates.length === 7
+      ? dates.map((iso) => agendaRange(dateObj(iso), 1)[0])
+      : [];
+  }
+  function weekDaysLandscape(w, rolling = false) {
+    if (rolling) {
+      const slots = w.map((day) => {
+        const monday = day.dow === 1
+          ? '<span class="hc-rolling-monday-flag" aria-hidden="true">LUNDI<span class="hc-rolling-monday-arrow">↓</span></span>'
+          : "";
+        return `<div class="hc-rolling-day-slot">${monday}${dayCard(day, "stip-week-day", true)}</div>`;
+      }).join("");
+      return `<div class="stip-week-line stip-week-personal-line hc-rolling-seven" style="--stip-week-columns:7;--week-card-h:var(--stip-week-card-h)">${slots}</div>`;
+    }
     const model = weekDisplayModel(w),
       { nextMonday, slotCount } = model,
       bridge = nextMonday
@@ -1513,23 +1530,8 @@
       .join("")}</nav>`;
   }
   function planningWeekSeparator() {
-    const w = navigationWeek(),
-      label =
-        window.STIPWeekEngine?.separatorLabel?.(sharedWeekState(), {
-          today: parisIso(),
-        }) ||
-        (state.weekOffset === 0
-          ? state.weekPast
-            ? "DÉBUT DE SEMAINE"
-            : "CETTE SEMAINE"
-          : state.weekOffset === 1
-            ? "SEMAINE PROCHAINE"
-            : state.weekOffset === -1
-              ? "SEMAINE PRÉCÉDENTE"
-              : `SEMAINE ${weekNo(w[0].d)}`);
-    return `<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>${esc(label)}</span></div>`;
+    return '<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>LES 7 PROCHAINS JOURS</span></div>';
   }
-
   function planningMonthTitle() {
     const w = navigationWeek(),
       mi = weekMonthInfo(w),
@@ -1545,10 +1547,10 @@
     return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent stip-month-calendar" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
   }
   function weekWidget() {
-    const w = selectedWeek(),
+    const w = upcomingHomeWeek(),
       loading = planningLoading(),
       range = weekRangeLabel(w);
-    return `<section class="hc-widget hc-widget-planning${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-date-jump-head hc-week-jump-head stip-week-master-nav" role="group" aria-label="Navigation par semaine"><button type="button" data-week-step="-1" aria-label="Semaine précédente">‹</button><strong>${esc(range)}</strong><button type="button" data-week-step="1" aria-label="Semaine suivante">›</button></div>${weekDaysLandscape(w)}</section>`;
+    return `<section class="hc-widget hc-widget-planning hc-rolling-week-widget${loading ? " is-loading" : ""}" data-widget="planning" aria-busy="${loading ? "true" : "false"}">${planningStatus()}<div class="hc-rolling-week-range" aria-label="Dates des sept prochains jours"><strong>${esc(range)}</strong></div>${w.length === 7 ? weekDaysLandscape(w, true) : '<p class="hc-rolling-week-unavailable" role="status">Calendrier temporairement indisponible.</p>'}</section>`;
   }
   function nativeFuture() {
     const b = state.boot || {},
@@ -1804,7 +1806,7 @@
       );
   }
   function futureWidget() {
-    const w = selectedWeek(),
+    const w = upcomingHomeWeek(),
       weekStart = w[0]?.iso || "",
       weekEnd = w[w.length - 1]?.iso || "",
       items = futureItems().filter((x) => {
@@ -1943,7 +1945,7 @@
         parisIso().slice(0, 7),
       [year, month] = key.split("-").map(Number),
       last = new Date(year, month, 0, 12).getDate(),
-      weekModel = weekDisplayModel(selectedWeek()),
+      weekModel = { visualDays: upcomingHomeWeek() },
       visibleDates = new Set(),
       items = [],
       seen = new Set(),
@@ -3267,7 +3269,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI", "today")}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN", "tomorrow")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI", "today")}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN", "tomorrow")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · 7 JOURS</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(upcomingHomeWeek()[0]?.iso, upcomingHomeWeek().at(-1)?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -4179,6 +4181,16 @@
     const route = window.STIPRouter?.get?.() || "home";
     return route === "home" || route === "planning" || route === "planning/personal";
   };
+  let homeRollingReferenceDay = parisIso();
+  function updateHomeRollingDay() {
+    const now = parisIso();
+    if (now === homeRollingReferenceDay || !state.ready ||
+        document.hidden || state.homeMode !== "planning") return;
+    homeRollingReferenceDay = now;
+    resetWeekToCurrent({ render: true });
+  }
+  document.addEventListener("visibilitychange", updateHomeRollingDay);
+  setInterval(updateHomeRollingDay, 60000);
   document.addEventListener("visibilitychange", () => {
     if (
       state.ready &&

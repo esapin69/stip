@@ -95,4 +95,28 @@ const futureState = JSON.parse(JSON.stringify(engine.stateForDate("2026-09-28", 
 assert(futureState.weekOffset === 1 && futureState.weekFull === true && futureState.dayFocus === "2026-09-28",
   "sélectionner le lundi suivant doit ouvrir sa vraie semaine future");
 
+// Le nouvel accueil affiche TOUJOURS sept cartes, indépendamment des semaines civiles.
+assert(typeof engine.upcomingSevenDates === "function", "moteur central des sept jours à venir manquant");
+const upcoming = (today) => JSON.parse(JSON.stringify(engine.upcomingSevenDates({ today })));
+same(upcoming("2026-10-15"), ["2026-10-17","2026-10-18","2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23"],
+  "jeudi + vendredi en haut : la ligne commence samedi");
+same(upcoming("2026-10-17"), ["2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-24","2026-10-25"],
+  "samedi + dimanche en haut : sept cartes de lundi à dimanche");
+same(upcoming("2026-10-18"), ["2026-10-19","2026-10-20","2026-10-21","2026-10-22","2026-10-23","2026-10-24","2026-10-25"],
+  "dimanche + lundi en haut : lundi répété en première carte");
+same(upcoming("2026-10-19"), ["2026-10-21","2026-10-22","2026-10-23","2026-10-24","2026-10-25","2026-10-26","2026-10-27"],
+  "lundi + mardi en haut : mercredi à mardi avec lundi repéré");
+same(upcoming("2026-10-30"), ["2026-11-01","2026-11-02","2026-11-03","2026-11-04","2026-11-05","2026-11-06","2026-11-07"],
+  "passage de mois fiable");
+same(upcoming("2026-12-30"), ["2027-01-01","2027-01-02","2027-01-03","2027-01-04","2027-01-05","2027-01-06","2027-01-07"],
+  "passage d'année fiable");
+same(upcoming("2028-02-27"), ["2028-02-28","2028-02-29","2028-03-01","2028-03-02","2028-03-03","2028-03-04","2028-03-05"],
+  "année bissextile et dimanche/lundi");
+for (let d = 12; d <= 25; d++) {
+  const rows = upcoming("2026-10-" + String(d).padStart(2, "0"));
+  assert(rows.length === 7 && new Set(rows).size === 7, "exactement sept dates consécutives uniques : " + d);
+  for (let i = 1; i < rows.length; i++)
+    assert(engine.addDays(rows[i-1],1) === rows[i], "ordre chronologique : " + d);
+}
+
 if (!process.exitCode) console.log("STIP calendar behavior OK");

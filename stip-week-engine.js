@@ -37,6 +37,15 @@
       dayFocus:s.dayFocus,
     };
   }
+  // Accueil uniquement : Aujourd'hui et Demain sont deux cartes séparées.
+  // Sept cartes suivantes à partir d'après-demain ; le dimanche, réafficher
+  // le lundi déjà présent dans Demain pour marquer le début de semaine.
+  function upcomingSevenDates(options={}){
+    const today=valid(options.today)?options.today:todayIso(),
+      dow=dateObj(today).getDay()||7,
+      first=addDays(today,dow===7?1:2);
+    return range(first,7);
+  }
   function rangeLabel(dates=[]){const rows=dates.filter(valid);if(!rows.length)return"";const first=dateObj(rows[0]),last=dateObj(rows[rows.length-1]),sameMonth=first.getMonth()===last.getMonth()&&first.getFullYear()===last.getFullYear(),month=(d,short=false)=>d.toLocaleDateString("fr-FR",{month:short?"short":"long"}).replace(/\./g,"");if(sameMonth)return`${first.getDate()} → ${last.getDate()} ${month(last)}`;return`${first.getDate()} ${month(first,true)} → ${last.getDate()} ${month(last,true)}`}
   function weekNumber(value){const d=dateObj(value);d.setDate(d.getDate()+3-((d.getDay()+6)%7));const w1=new Date(d.getFullYear(),0,4,12);return 1+Math.round(((d-w1)/DAY-3+((w1.getDay()+6)%7))/7)}
   function separatorLabel(model={},options={}){const s=normalize(model,options);if(s.weekOffset===0)return s.weekPast?"DÉBUT DE SEMAINE":"CETTE SEMAINE";if(s.weekOffset===1)return"SEMAINE PROCHAINE";if(s.weekOffset===-1)return"SEMAINE PRÉCÉDENTE";const first=fullDates(s,{today:s.today})[0];return first?`SEMAINE ${weekNumber(first)}`:"SEMAINE"}
@@ -64,5 +73,5 @@
     new MutationObserver(scheduleMarkerGrouping).observe(document.documentElement,{childList:true,subtree:true});
   }
 
-  window.STIPWeekEngine=Object.freeze({todayIso,addDays,mondayIso,weekOffsetFor,stateForDate,currentState,move,fullDates,visibleDates,display,rangeLabel,separatorLabel,weekNumber,groupEventMarkers});
+  window.STIPWeekEngine=Object.freeze({todayIso,addDays,mondayIso,weekOffsetFor,stateForDate,currentState,move,fullDates,visibleDates,display,upcomingSevenDates,rangeLabel,separatorLabel,weekNumber,groupEventMarkers});
 })();

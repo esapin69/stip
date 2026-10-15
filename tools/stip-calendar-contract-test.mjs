@@ -110,6 +110,15 @@ assert(planning.includes("ph-month-weekdays stip-month-weekdays"),
   "Planning personal still mixes weekday labels into the month grid");
 
 const homeJs = read("home-shell.js");
+const rollingWidget = homeJs.split("function weekWidget()")[1]?.split("function nativeFuture()")[0] || "";
+assert(weekEngine.includes("function upcomingSevenDates") && weekEngine.includes("dow===7?1:2"),
+  "la règle du lundi répété doit appartenir au moteur central");
+assert(rollingWidget.includes("upcomingHomeWeek()") && rollingWidget.includes("weekDaysLandscape(w, true)") &&
+       !rollingWidget.includes("data-week-step"),
+  "l'accueil doit afficher sept cartes sans grandes flèches");
+assert(homeJs.includes("hc-rolling-monday-flag") && homeJs.includes("day.dow === 1") &&
+       homeJs.includes("selectVisibleWeekDay(iso)"),
+  "le repère lundi et la sélection des jours doivent rester accessibles");
 assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)") &&
        !homeJs.includes("hc-date-jump-dot stip-month-dot shift-"),
   "Accueil monthly planning is not using the validated text badges for worked shifts");
