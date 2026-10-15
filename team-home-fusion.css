@@ -1399,20 +1399,20 @@
   width:100%;min-height:44px;min-width:0
 }
 .hc-days-grid .thf-shift-symbol .stip-month-shift-badge{
-  --stip-month-shift-bg:var(--stip-shift-j4);--stip-month-shift-ink:#fff;
+  --thf-shift-badge-bg:var(--stip-shift-j4);--thf-shift-badge-ink:#fff;
   display:inline-flex!important;align-items:center;justify-content:center;
   min-width:56px!important;height:43px!important;padding:0 9px!important;
   font-size:1.17rem!important;font-weight:950!important;
   border-radius:13px!important;line-height:1!important;
-  background:var(--stip-month-shift-bg)!important;color:var(--stip-month-shift-ink)!important
+  background:var(--thf-shift-badge-bg)!important;color:var(--thf-shift-badge-ink)!important
 }
-.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-m{--stip-month-shift-bg:var(--stip-shift-m)}
-.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-j{--stip-month-shift-bg:var(--stip-shift-j)}
-.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-j4{--stip-month-shift-bg:var(--stip-shift-j4)}
+.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-m{--thf-shift-badge-bg:var(--stip-shift-m)}
+.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-j{--thf-shift-badge-bg:var(--stip-shift-j)}
+.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-j4{--thf-shift-badge-bg:var(--stip-shift-j4)}
 .hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-s{
-  --stip-month-shift-bg:var(--stip-shift-s);--stip-month-shift-ink:var(--stip-shift-s-ink)
+  --thf-shift-badge-bg:var(--stip-shift-s);--thf-shift-badge-ink:var(--stip-shift-s-ink)
 }
-.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-n{--stip-month-shift-bg:var(--stip-shift-n)}
+.hc-days-grid .thf-shift-symbol .stip-month-shift-badge.code-n{--thf-shift-badge-bg:var(--stip-shift-n)}
 .hc-days-grid .thf-shift-symbol-fallback{
   display:grid;place-items:center;min-width:56px;height:43px;
   border-radius:13px;background:var(--thf-color,#ff9600);
