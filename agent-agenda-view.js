@@ -415,5 +415,12 @@
   }
   document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(document.getElementById("aavCallOverlay"))return closeCallChoice();if(overlay)close()});
   css();
-  window.STIPAgentAgenda={open,close,reload:()=>reload()};
+  function openWithActions(sourceKey,fallback={}){
+    const key=String(sourceKey||fallback?.source_key||"").trim();
+    if(!key)return;
+    return window.STIPPersonActions?.openForAgent
+      ? window.STIPPersonActions.openForAgent(fallback,{sourceKey:key,openPlanning:()=>open(key,fallback)})
+      : open(key,fallback);
+  }
+  window.STIPAgentAgenda={open:openWithActions,openPlanning:open,close,reload:()=>reload()};
 })();

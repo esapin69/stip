@@ -67,35 +67,17 @@
   }
 
   function openAgentActions(agent) {
-    if (!window.STIPPersonActions?.open) {
+    if (!window.STIPPersonActions?.openForAgent) {
       openAgent(agent);
       return;
     }
-    const actions = [
-      {
-        key: "planning",
-        icon: "📅",
-        label: "Voir le planning",
-        detail: "Planning et événements de l’agent",
-        primary: true,
-        onSelect: () => openAgent(agent),
-      },
-      { key: "afterwork", icon: "🏃", label: "Proposer après le travail", detail: "Voir vos prochaines fins de service compatibles", href: "sorties-loisirs.html?with=" + encodeURIComponent(agent.id || "") },
-      agent?.telephone
-        ? {
-            key: "call",
-            icon: "☎",
-            label: "Appeler",
-            detail: String(agent.telephone),
-            onSelect: () => window.STIPAgentSelector?.openCallSheet?.(agent),
-          }
-        : null,
-    ].filter(Boolean);
-
-    window.STIPPersonActions.open({
-      agent,
-      contextLabel: "ÉQUIPE",
-      actions,
+    window.STIPPersonActions.openForAgent(agent,{
+      contextLabel:"ÉQUIPE",
+      additionalActions:[{
+        key:"afterwork",icon:"🏃",label:"Proposer après le travail",
+        detail:"Voir vos prochaines fins de service compatibles",
+        href:"sorties-loisirs.html?with="+encodeURIComponent(agent.id||"")
+      }]
     });
   }
 

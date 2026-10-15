@@ -2649,24 +2649,32 @@
     return { rows: current, permitted, loaded };
   }
 
-  // Fast 3D flip: both faces live in one intrinsic CSS grid; neither side
-  // has a nested scroll area. The full authorized roster is shown in a dialog.
-  function premiumBackMarkup() {
-    const roster=liveRoster();
-    const counts=new Map();
-    for(const item of roster.rows){
+  // Staff present means a shift currently covers the Paris clock, not physical attendance.
+  const premiumShiftRank = code => ({M:0,J:1,J4:2,S:3,N:4})[code] ?? 9;
+  const premiumShiftName = code =>
+    window.STIPShiftRegistry?.displayName?.(code) || code;
+  function premiumShiftGroups(rows) {
+    const groups=new Map();
+    for(const item of rows){
       const code=canonicalShift(item.code);
-      counts.set(code,(counts.get(code)||0)+1);
+      if(!groups.has(code))groups.set(code,[]);
+      groups.get(code).push(item);
     }
-    const rank=(code)=>({M:0,J:1,J4:2,S:3,N:4})[code]??9;
-    const pills=[...counts.entries()].sort((a,b)=>rank(a[0])-rank(b[0])).map(([code,count])=>
-      '<span class="ghe-premium-shift '+liveShiftClass(code)+'"><b>'+esc(code)+
-      '</b><span>'+count+'</span></span>').join("");
-    const countLabel=roster.permitted&&!roster.loaded?'…':
-      !roster.permitted&&!has("planning_personal")?'—':String(roster.rows.length);
-    const empty=roster.permitted&&!roster.loaded?'Planning en cours de chargement…':
-      !roster.permitted&&!has("planning_personal")?'Planning d’équipe non autorisé.':
-      'Aucun agent en poste selon les horaires disponibles.';
+    return [...groups.entries()].sort((a,b)=>
+      premiumShiftRank(a[0])-premiumShiftRank(b[0]) || a[0].localeCompare(b[0],"fr"));
+  }
+  function premiumBackMarkup() {
+    const roster=liveRoster(),groups=premiumShiftGroups(roster.rows);
+    const countLabel=roster.permitted&&!roster.loaded?"…":
+      !roster.permitted&&!has("planning_personal")?"—":String(roster.rows.length);
+    const empty=roster.permitted&&!roster.loaded?"Planning en cours de chargement…":
+      !roster.permitted&&!has("planning_personal")?"Planning d’équipe non autorisé.":
+      "Aucun collègue en poste selon les horaires disponibles.";
+    const pills=groups.map(([code,items])=>
+      '<button type="button" class="ghe-premium-shift '+liveShiftClass(code)+
+      '" data-premium-roster-shift="'+esc(code)+'" aria-haspopup="dialog"'+
+      ' aria-label="Voir les '+items.length+' collègues en '+esc(premiumShiftName(code))+'">'+
+      '<b>'+esc(code)+'</b><span>'+items.length+'</span></button>').join("");
     return '<div class="ghe-premium-live">'+
       '<div class="ghe-premium-live-title"><span class="ghe-premium-live-led" aria-hidden="true"></span>'+
         '<strong>EN DIRECT</strong>'+
@@ -2674,14 +2682,17 @@
           'aria-label="Retourner la carte vers le profil" title="Retour au profil">'+
           '<span aria-hidden="true">↶</span></button></div>'+
       '<div class="ghe-premium-live-hero">'+
-        '<div class="ghe-premium-total"><b>'+esc(countLabel)+'</b><span>collègues<br>en poste</span></div>'+
+        (roster.rows.length ?
+          '<button type="button" data-premium-roster class="ghe-premium-total ghe-premium-total-action"'+
+            ' aria-haspopup="dialog" aria-label="Voir tous les '+roster.rows.length+' collègues en poste, regroupés par shift">'+
+            '<b>'+esc(countLabel)+'</b><span>collègues<br>en poste</span>'+
+            '<span class="ghe-premium-open-hint" aria-hidden="true">›</span></button>' :
+          '<div class="ghe-premium-total"><b>'+esc(countLabel)+'</b><span>collègues<br>en poste</span></div>')+
         '<div class="ghe-premium-distribution"><small>Shifts actuels</small>'+
-          '<div class="ghe-premium-shifts">'+(pills||'<span class="ghe-premium-empty">'+esc(empty)+'</span>')+'</div></div>'+
+          '<div class="ghe-premium-shifts">'+(pills||'<span class="ghe-premium-empty">'+esc(empty)+'</span>')+
+          '</div></div>'+
       '</div>'+
       (has("planning_team")?'<div id="homeDutyChiefNowHost" class="ghe-premium-chief-host" aria-label="Chefs d’équipe présents et relève"></div>':'')+
-      '<button type="button" data-premium-roster class="ghe-premium-all">'+
-        '<span>Voir '+(roster.rows.length?'les '+roster.rows.length+' collègues':'les collègues')+'</span>'+
-        '<b aria-hidden="true">›</b></button>'+
       '<p class="ghe-premium-disclaimer">Selon le planning, pas une présence physique vérifiée.</p>'+
     '</div>';
   }
@@ -2716,29 +2727,45 @@
       syncPremiumStageHeight(target.closest("[data-premium-flip]"));
     }
   }
-  function openPremiumRoster() {
-    const roster=liveRoster();
+  function openPremiumRoster(shiftFilter="") {
+    const roster=liveRoster(),filter=String(shiftFilter||"").trim();
+    const groups=premiumShiftGroups(roster.rows)
+      .filter(([code])=>!filter||code===filter);
     document.getElementById("ghePremiumRosterDialog")?.remove();
     const dialog=document.createElement("dialog");
     dialog.id="ghePremiumRosterDialog";
     dialog.className="ghe-premium-roster-dialog";
-    dialog.setAttribute("aria-label","Tous les collègues en poste");
-    const rows=roster.rows.map(item=>{
-      const person=item.agents||{},code=canonicalShift(item.code);
-      const key=String(person.source_key||person.id||"").trim();
-      return '<button type="button" class="ghe-premium-person '+liveShiftClass(code)+'"'+
-        (key?' data-premium-agent="'+esc(key)+'"':' disabled')+'>'+
-        '<span class="ghe-premium-person-code">'+esc(code)+'</span>'+
-        '<span class="ghe-premium-person-label"><strong>'+esc(agentName(person))+'</strong>'+
-          '<small>'+esc(liveWorkInterval(item)?.label||"Horaires non disponibles")+'</small></span>'+
-        '<b aria-hidden="true">›</b></button>';
+    dialog.setAttribute("aria-label",filter?
+      "Collègues du shift "+premiumShiftName(filter):
+      "Collègues en poste regroupés par shift");
+    const sections=groups.map(([code,items])=>{
+      const label=premiumShiftName(code);
+      const rows=items.map(item=>{
+        const person=item.agents||{};
+        const key=String(person.source_key||person.id||"").trim();
+        return '<button type="button" class="ghe-premium-person '+liveShiftClass(code)+'"'+
+          (key?' data-premium-agent="'+esc(key)+'"':' disabled')+'>'+
+          '<span class="ghe-premium-person-code">'+esc(code)+'</span>'+
+          '<span class="ghe-premium-person-label"><strong>'+esc(agentName(person))+'</strong>'+
+            '<small>'+esc(liveWorkInterval(item)?.label||"Horaires non disponibles")+'</small></span>'+
+          '<b aria-hidden="true">›</b></button>';
+      }).join("");
+      return '<section class="ghe-premium-roster-group '+liveShiftClass(code)+'" aria-label="'+
+        esc(label)+' · '+items.length+' collègues">'+
+        '<div class="ghe-premium-roster-group-head">'+
+          '<span class="ghe-premium-roster-group-code">'+esc(code)+'</span>'+
+          '<strong>'+esc(label)+'</strong>'+
+          '<span class="ghe-premium-roster-group-count">'+items.length+'</span>'+
+        '</div><div class="ghe-premium-roster-group-people">'+rows+'</div></section>';
     }).join("");
+    const heading=filter ? premiumShiftName(filter)+" · "+(groups[0]?.[1].length||0):
+      "Collègues en poste · "+roster.rows.length;
     dialog.innerHTML='<section class="ghe-premium-roster-shell"><header>'+
-      '<div><small>EN DIRECT</small><strong>Collègues en poste · '+roster.rows.length+'</strong></div>'+
+      '<div><small>EN DIRECT · SELON LE PLANNING</small><strong>'+esc(heading)+'</strong></div>'+
       '<button type="button" data-premium-roster-close aria-label="Fermer">×</button></header>'+
       '<div class="ghe-premium-roster-body">'+
-        (rows||'<p>Aucun collègue en poste selon les données disponibles.</p>')+'</div>'+
-      '<p class="ghe-premium-roster-note">Horaires prévus ; aucune déclaration d’absence.</p></section>';
+        (sections||'<p>Aucun collègue en poste selon les données disponibles.</p>')+'</div>'+
+      '<p class="ghe-premium-roster-note">Horaires prévus, présence non vérifiée sur place.</p></section>';
     document.body.appendChild(dialog);
     dialog.addEventListener("click",event=>{
       if(event.target===dialog||event.target.closest("[data-premium-roster-close]")){
@@ -2753,40 +2780,19 @@
   }
 
   function openLiveAgent(key) {
-    if (!key) return;
-    const row = liveRoster().rows.find(item =>
-      String(item.agents?.source_key || item.agents?.id || "") === key);
-    if (!row) return;
-    const agent = row.agents || {}, code = canonicalShift(row.code);
-    const time = liveWorkInterval(row)?.label || "Horaire non renseigné";
-    const tel = String(agent.telephone || "").replace(/\D/g, "");
-    const canCall = has("contacts") && tel.length >= 6;
-    document.getElementById("gheLiveAgentDialog")?.remove();
-    const dialog = document.createElement("dialog");
-    dialog.id = "gheLiveAgentDialog";
-    dialog.className = "ghe-live-agent-dialog";
-    dialog.setAttribute("aria-label", "Fiche professionnelle simplifiée");
-    dialog.innerHTML = '<div class="ghe-live-agent-sheet"><header><strong>' +
-      esc(agentName(agent)) + '</strong><button type="button" data-live-agent-close aria-label="Fermer">×</button></header>' +
-      '<div class="ghe-live-agent-shift ' + liveShiftClass(code) + '"><b>' + esc(code) +
-      '</b><span>' + esc(time) + '</span></div>' +
-      (canCall ? '<button type="button" data-live-agent-call class="ghe-live-agent-call">☎ Appeler ce collègue</button>' : '') +
-      '</div>';
-    document.body.appendChild(dialog);
-    dialog.addEventListener("click", e => {
-      if (e.target === dialog || e.target.closest("[data-live-agent-close]")) dialog.close();
-    });
-    dialog.querySelector("[data-live-agent-call]")?.addEventListener("click", async () => {
-      dialog.close();
-      if (!window.STIPDutyChiefs?.openCallChoice) {
-        try { await window.STIPLoad?.script?.("home-duty-chief.js"); }
-        catch { return; }
-      }
-      window.STIPDutyChiefs?.openCallChoice?.(tel, agentName(agent));
-    });
-    dialog.addEventListener("close", () => dialog.remove(), { once: true });
-    if (typeof dialog.showModal === "function") dialog.showModal();
-    else dialog.setAttribute("open", "");
+    if(!key)return;
+    const row=liveRoster().rows.find(item=>
+      String(item.agents?.source_key||item.agents?.id||"")===key);
+    if(!row)return;
+    const agent=row.agents||{};
+    if(window.STIPPersonActions?.openForAgent) {
+      window.STIPPersonActions.openForAgent(agent,{
+        sourceKey:key,contextLabel:"EN DIRECT",
+        subtitle:canonicalShift(row.code)+" · "+(liveWorkInterval(row)?.label||"Horaires indisponibles")
+      });
+      return;
+    }
+    window.STIPAgentAgenda?.open?.(key,agent);
   }
 
   // The header uses one canonical navigation action; the agent photo remains
@@ -3498,6 +3504,8 @@
         target?.focus({preventScroll:true});
         return;
       }
+      const shiftButton=event.target.closest("[data-premium-roster-shift]");
+      if(shiftButton){openPremiumRoster(shiftButton.dataset.premiumRosterShift);return;}
       if(event.target.closest("[data-premium-roster]")){openPremiumRoster();return;}
     });
 
