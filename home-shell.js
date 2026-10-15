@@ -3304,7 +3304,11 @@ function personalDrawerRow(icon,label,action,meta="") {
           body=friendlyNoteBody(n),priority=notePriority(n)>1,
           needsAction=noteCanManage(n),unreadNote=!noteIsRead(n),
           stamp=noteTimeValue(n),dateText=stamp?formatNotificationTime(stamp):"",
-          status=needsAction?"À traiter":priority?"Important":"À consulter";
+          status=n.source==="leisure" && n.event_id
+            ? (/invitation à répondre/i.test(String(n.title||""))?"Réponse attendue":"En attente de réponses")
+            : needsAction?"À traiter":priority?"Important":"À consulter",
+          actionLabel=n.source==="leisure" && n.event_id
+            ? "Ouvrir l’activité" : needsAction?"Ouvrir la demande":"Consulter";
         return '<button type="button" class="hs-note hc-note-card hc-bell-notice'+
           (unreadNote?' is-unread':'')+(priority?' is-priority':'')+
           '" data-note-index="'+i+'" data-note-open>'+
@@ -3316,7 +3320,8 @@ function personalDrawerRow(icon,label,action,meta="") {
             (body?'<span class="hc-bell-notice-copy">'+esc(body)+'</span>':"")+
             '<span class="hc-bell-notice-bottom"><span>'+esc(status)+'</span>'+
               (dateText?'<time>'+esc(dateText)+'</time>':"")+
-            '</span></span><span class="hc-bell-notice-chevron" aria-hidden="true">›</span></button>';
+            '</span><span class="hc-bell-notice-action">'+esc(actionLabel)+' <span aria-hidden="true">›</span></span>'+
+            '</span><span class="hc-bell-notice-chevron" aria-hidden="true">›</span></button>';
       }).join("")+'</div>':
       '<div class="hc-bell-empty" role="status">'+
       (ns.length?"Aucune notification dans cette catégorie.":"Vous n’avez rien à consulter pour le moment.")+
@@ -4034,7 +4039,17 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(dialog.dataset.view==="detail"||dialog.dataset.view==="action")renderBellEntries(bellFilter);
       else dialog.close();
     };
-    dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+    dialog.addEventListener("click",event=>{
+      if(event.target===dialog){dialog.close();return;}
+      const card=event.target.closest?.("[data-note-index]");
+      if(!card || !dialog.contains(card) || dialog.dataset.view!=="list")return;
+      const index=Number(card.dataset.noteIndex);
+      if(!Number.isSafeInteger(index)||index<0)return;
+      const note=actionCenterData(bellFilter).shown[index];
+      if(!note)return;
+      event.preventDefault();
+      openBellItem(note);
+    });
     dialog.addEventListener("close",()=>{
       dialog.querySelector("#hcNotificationDetail")?.remove();
       dialog.dataset.view="";
@@ -4059,11 +4074,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     content.querySelectorAll("[data-action-filter]").forEach(button=>{
       button.onclick=()=>renderBellEntries(button.dataset.actionFilter);
     });
-    const {shown}=actionCenterData(selected);
-    content.querySelectorAll(".hc-note-card[data-note-index]").forEach(card=>{
-      const note=shown[Number(card.dataset.noteIndex)];
-      if(note)bindNoteCard(card,note);
-    });
+    // Les clics sont délégués au dialogue : pas de listener fragile par carte.
   }
   function syncBellList(){
     const dialog=document.getElementById("hcBellDialog");
@@ -4072,14 +4083,32 @@ function personalDrawerRow(icon,label,action,meta="") {
   }
   function openBellItem(note){
     const dialog=ensureBellDialog();
-    if(note?.source==="leisure"&&note.event_id){
+    if(note?.source==="leisure" && note.event_id){
+      const eventId=String(note.event_id);
+      const openPage=()=>{
+        const url=new URL("sorties-loisirs.html",document.baseURI);
+        url.searchParams.set("tab","agenda");
+        url.searchParams.set("event",eventId);
+        window.location.assign(url.href);
+      };
       markNoteRead(note);
       dialog.close();
-      const shown=window.STIPLeisure?.openPreview?.(String(note.event_id));
-      const preview=document.getElementById("ev3HomePreview");
-      if(preview?.open){
-        preview.addEventListener("close",()=>openNotifications(bellFilter),{once:true});
-      }else if(shown===false)openNotifications(bellFilter);
+      if(typeof window.STIPLeisure?.openPreview!=="function"){
+        openPage();
+        return;
+      }
+      try{
+        window.STIPLeisure.openPreview(eventId);
+        const preview=document.getElementById("ev3HomePreview");
+        if(preview?.open){
+          preview.addEventListener("close",()=>openNotifications(bellFilter),{once:true});
+          return;
+        }
+        openPage();
+      }catch(error){
+        console.warn("STIP : aperçu loisirs indisponible, ouverture de la page",error);
+        openPage();
+      }
       return;
     }
     const content=bellView("detail","Détail","");
