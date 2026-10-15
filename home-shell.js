@@ -29,6 +29,7 @@
     externalActions: new Map(),
     actionFilter: "all",
     dismissedNotifications: {},
+    readNotifications: {},
     weekOffset: 0,
     weekFull: false,
     weekPast: false,
@@ -897,6 +898,41 @@
       );
     } catch {}
   }
+  function notificationReadKey() {
+    return "stip_notification_read_v1:" + actionOwnerKey();
+  }
+  function loadReadNotifications() {
+    try {
+      const raw=JSON.parse(localStorage.getItem(notificationReadKey())||"{}");
+      if(!raw || typeof raw!=="object" || Array.isArray(raw))throw Error("Invalid read state");
+      const cutoff=Date.now()-90*86400000;
+      state.readNotifications=Object.fromEntries(Object.entries(raw)
+        .filter(([,at])=>Number(at)>cutoff)
+        .sort((a,b)=>Number(b[1])-Number(a[1])).slice(0,500));
+    }catch{state.readNotifications={};}
+  }
+  function saveReadNotifications(){
+    try{localStorage.setItem(notificationReadKey(),JSON.stringify(state.readNotifications));}catch{}
+  }
+  function noteIsRead(n={}){
+    return !!(n.read_at||n.seen_at||state.readNotifications[actionNoteKey(n)]);
+  }
+  function markNoteRead(n={}){
+    if(noteIsRead(n))return false;
+    state.readNotifications[actionNoteKey(n)]=Date.now();
+    saveReadNotifications();
+    return true;
+  }
+  function notePriority(n={}){
+    const raw=String(n.priority||n.importance||n.metadata?.priority||n.metadata?.importance||"").toLowerCase();
+    if(["urgent","critical","critique","high","haute"].includes(raw))return 3;
+    if(["important","elevated","élevée","elevée"].includes(raw))return 2;
+    return 0;
+  }
+  function noteSortTime(n={}){
+    const t=Date.parse(noteTimeValue(n));
+    return Number.isFinite(t)?t:0;
+  }
   function actionNoteKey(n = {}) {
     return String(
       n.id ||
@@ -921,14 +957,18 @@
     resetWeekToCurrent();
     refreshActionCenterUi();
   }
-  function noteCategory(n = {}) {
-    if (n.category) return n.category;
-    if (n.type === "agenda_alert" || n.source_type === "agenda_alert") return "agenda";
-    const s = `${n.title || ""} ${n.body || ""}`.toLowerCase();
-    if (/accès|acces|profil|session/.test(s)) return "access";
-    if (/signature|signer/.test(s)) return "signatures";
-    if (/rappel|échéance|echeance/.test(s)) return "reminders";
-    if (/planning|date|agenda|échange|echange/.test(s)) return "agenda";
+  function noteCategory(n={}) {
+    const key=String(n.category||"").toLowerCase().trim();
+    if(["access","signatures","reminders","agenda","messages","other"].includes(key))return key;
+    if(n.type==="agenda_alert"||n.source_type==="agenda_alert"||n.source==="leisure")return "agenda";
+    const type=String(n.type||n.source_type||"").toLowerCase();
+    if(/chat|message|wheelchair|fauteuil|conversation|direct_message|(^|_)dm($|_)/.test(type))return "messages";
+    const text=(String(n.title||"")+" "+String(n.body||"")).toLowerCase();
+    if(/accès|acces|profil|session/.test(text))return "access";
+    if(/signature|signer/.test(text))return "signatures";
+    if(/rappel|échéance|echeance/.test(text))return "reminders";
+    if(/planning|date|agenda|échange|echange|invitation|rendez-vous|rdv/.test(text))return "agenda";
+    if(/message|discussion|conversation/.test(text))return "messages";
     return "other";
   }
   function notifications() {
@@ -961,14 +1001,20 @@
       external = [...state.externalActions.values()].flat(),
       leisure = window.STIPLeisure?.notificationItems?.() || [];
     const knownLeisure=new Set(window.STIPLeisure?.knownEventIds?.()||[]);
-    return [...native, ...external, ...leisure].filter((n)=>{
-      // L'invitation système est remplacée par l'état courant de la proposition.
-      // Pas de doublon ni de vieille invitation après confirmation ou refus.
-      const isOldInvite=String(n.type||"").toLowerCase()==="leisure_invite"&&
+    const seen=new Set();
+    return [...native,...external,...leisure].filter(n=>{
+      const oldInvite=String(n.type||"").toLowerCase()==="leisure_invite"&&
         String(n.source_type||"")==="stip_leisure_events"&&
         knownLeisure.has(String(n.source_ref||n.metadata?.event_id||""));
-      return !isOldInvite&&!state.dismissedNotifications[actionNoteKey(n)];
-    });
+      if(oldInvite||state.dismissedNotifications[actionNoteKey(n)])return false;
+      const key=String(n.source||"stip")+":"+actionNoteKey(n);
+      if(seen.has(key))return false;
+      seen.add(key);
+      return true;
+    }).sort((a,b)=>notePriority(b)-notePriority(a)||
+      Number(noteCanManage(b))-Number(noteCanManage(a))||
+      Number(!noteIsRead(b))-Number(!noteIsRead(a))||
+      noteSortTime(b)-noteSortTime(a));
   }
   function agentName(a = {}) {
     return (
@@ -3027,24 +3073,20 @@ function personalDrawerRow(icon,label,action,meta="") {
     return `<button type="button" class="hc-home-ai-footer" data-dialog-home aria-label="Ouvrir STIP IA"><span class="hc-home-ai-footer-art">${ICON.homeAI}</span><strong>STIP IA</strong></button>`;
   }
 
-  function actionCenterData(filter = state.actionFilter) {
-    const ns = notifications(),
-      cats = [
-        ["all", "Tout"],
-        ["access", "Accès"],
-        ["signatures", "Signatures"],
-        ["reminders", "Rappels"],
-        ["agenda", "Agenda"],
-        ["other", "Autres"],
-      ],
-      counts = Object.fromEntries(
-        cats.map(([k]) => [
-          k,
-          k === "all" ? ns.length : ns.filter((n) => noteCategory(n) === k).length,
-        ]),
-      ),
-      shown = filter === "all" ? ns : ns.filter((n) => noteCategory(n) === filter);
-    return { ns, cats, counts, shown };
+  function actionCenterData(filter=state.actionFilter){
+    const ns=notifications();
+    const cats=[["all","Tout"],["unread","Non lues"],["access","Accès"],
+      ["agenda","Agenda"],["messages","Messages"],["reminders","Rappels"],
+      ["signatures","Signatures"],["other","Autres"]];
+    const requested=typeof filter==="string"?filter:"all";
+    const selected=cats.some(([k])=>k===requested)?requested:"all";
+    const counts=Object.fromEntries(cats.map(([k])=>[
+      k,k==="all"?ns.length:k==="unread"?ns.filter(n=>!noteIsRead(n)).length:
+        ns.filter(n=>noteCategory(n)===k).length
+    ]));
+    const shown=selected==="all"?ns:selected==="unread"?ns.filter(n=>!noteIsRead(n)):
+      ns.filter(n=>noteCategory(n)===selected);
+    return {ns,cats,counts,shown,selected};
   }
   function noteIsNetworkError(n = {}) {
     const s = `${n.title || ""} ${n.body || ""} ${n.technical_error || ""}`.toLowerCase();
@@ -3109,6 +3151,8 @@ function personalDrawerRow(icon,label,action,meta="") {
   function noteStatus(n = {}) {
     if (noteIsNetworkError(n)) return "Indisponible";
     const raw = String(n.status || n.statut || "").toLowerCase();
+    if ((!raw || /pending|waiting|open|todo|à traiter|a traiter/.test(raw)) && !noteCanManage(n))
+      return "À consulter";
     if (!raw || /pending|waiting|open|todo|à traiter|a traiter/.test(raw))
       return "À traiter";
     if (/done|resolved|complete|trait|valid/.test(raw)) return "Résolu";
@@ -3711,7 +3755,7 @@ function personalDrawerRow(icon,label,action,meta="") {
       if (level >= 1) return;
       location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
     });
-    root.querySelectorAll(".ghe-home-topbar [data-bell-open]").forEach(b=>b.onclick=openNotifications);
+    root.querySelectorAll(".ghe-home-topbar [data-bell-open]").forEach(b=>b.onclick=()=>openNotifications());
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {
@@ -4196,6 +4240,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.session = e?.detail || window.STIPSession || state.session;
     if (firstReady) resetWeekToCurrent();
     loadDismissedNotifications();
+    loadReadNotifications();
     const routedRoute = window.STIPRouter?.get?.() || "home";
     if (
       routedRoute === "team" &&
@@ -4291,6 +4336,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.home = { actions: [], notifications: [] };
     state.externalActions.clear();
     state.dismissedNotifications = {};
+    state.readNotifications = {};
     state.actionFilter = "all";
     state.weekOffset = 0;
     state.weekFull = false;
