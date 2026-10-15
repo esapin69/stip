@@ -1086,3 +1086,98 @@
  .hc-feedback-wrap>.hc-feedback-pending{padding-inline:9px!important;}
  .hc-feedback-intro{padding-inline:6px;}
 }
+
+/* Bilan stagiaire — observations factuelles dans la clôture existante. */
+.hc-feedback-stage[hidden]{display:none!important}
+.hc-feedback-stage{
+  display:grid;
+  gap:11px;
+  padding:12px;
+  border:1px solid #d5e7e9;
+  border-radius:17px;
+  background:#f5fbfc;
+}
+.hc-feedback-stage-head{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:4px 10px;
+}
+.hc-feedback-stage-head>span{
+  color:#0a8196;
+  font-size:.67rem;
+  font-weight:950;
+  letter-spacing:.08em;
+}
+.hc-feedback-stage-head>strong{
+  border-radius:999px;
+  background:#d9f0f3;
+  color:#066e83;
+  font-size:.74rem;
+  padding:4px 8px;
+}
+.hc-feedback-stage-head>p{
+  grid-column:1/-1;
+  margin:0;
+  color:#64818a;
+  font-size:.72rem;
+  line-height:1.35;
+}
+.hc-feedback-stage-group{
+  padding:12px;
+  border:1px solid #dce9ec;
+  border-radius:13px;
+  background:#fff;
+}
+.hc-feedback-stage-group>strong{
+  display:block;
+  color:#244c5a;
+  font-size:.85rem;
+  line-height:1.28;
+}
+.hc-feedback-stage-group>small{
+  display:block;
+  margin-top:2px;
+  color:#718b93;
+  font-size:.69rem;
+}
+.hc-feedback-stage-options{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+  margin-top:10px;
+}
+.hc-feedback-stage-options>button{
+  min-height:43px;
+  flex:1 1 125px;
+  padding:9px 11px;
+  border:1px solid #d5e3e7;
+  border-radius:11px;
+  background:#f9fcfd;
+  color:#315563;
+  font:800 .77rem/1.25 inherit;
+  text-align:center;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.hc-feedback-stage-options>button.selected{
+  border-color:#148da4;
+  background:#e5f7f9;
+  color:#076c80;
+  box-shadow:inset 0 0 0 1px #148da4;
+}
+.hc-feedback-stage-options>button:focus-visible{
+  outline:3px solid #0b839b;
+  outline-offset:2px;
+}
+.hc-feedback-stage-privacy{
+  margin:0;
+  color:#718991;
+  font-size:.68rem;
+  line-height:1.4;
+}
+@media(max-width:400px){
+  .hc-feedback-stage{padding:9px;gap:9px}
+  .hc-feedback-stage-group{padding:10px}
+  .hc-feedback-stage-options>button{flex-basis:100%}
+}
