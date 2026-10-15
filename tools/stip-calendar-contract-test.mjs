@@ -120,6 +120,23 @@ assert(homeJs.includes("hc-rolling-monday-flag") && homeJs.includes("day.dow ===
        homeJs.includes("selectVisibleWeekDay(iso)"),
   "le repère lundi et la sélection des jours doivent rester accessibles");
 const rollingCss = read("home-rolling-week.css");
+const dayCard = homeJs.split("function dayCard(")[1]?.split("function weekEventsForDay(")[0] || "";
+assert(dayCard.includes('shiftDefinition(canonical)?.is_working === true') &&
+       dayCard.includes('? "" // Une journée travaillée') &&
+       dayCard.includes("stip-week-code"), "un shift travaillé affiche son code, sans pastille");
+const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
+assert(eventBadges.includes("events.slice(0, 2)") &&
+       eventBadges.includes("hc-rolling-event-overflow"), "au-delà de deux repères, afficher un compteur");
+const eventSources = homeJs.split("function weekEventsForDay(")[1]?.split("function weekEventBadges(")[0] || "";
+assert(eventSources.includes("STIPLeisure?.dayItems") &&
+       !eventSources.includes("STIPDutyChiefs"), "loisirs présents, chefs absents des cartes");
+assert(rollingCss.includes("flex-direction:column!important") &&
+       rollingCss.includes(".hc-rolling-seven .stip-week-event"), "repères centrés verticalement");
+const teamFusion=read("team-home-fusion.js");
+assert(teamFusion.includes("async function openDate(") &&
+       teamFusion.includes("window.STIPTeamFusion={mount,openDate}") &&
+       homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
+       "popup commun Aujourd'hui/Demain réutilisé pour la semaine");
 assert(rollingCss.includes("top:calc(100% + 6px)") &&
        rollingCss.includes("padding-bottom:40px") &&
        rollingCss.includes("min-height:136px") &&
