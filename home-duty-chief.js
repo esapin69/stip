@@ -252,14 +252,35 @@
     return `<div class="team-chief-state"><strong>Aucun chef présent maintenant</strong><span>${esc(nextText)}</span></div>`;
   }
 
+  // The existing duty engine supplies the live card and retains its call/agenda actions.
+  function premiumChiefRow(item,status){
+    const agent=item?.agents||{},key=String(agent.source_key||""),
+      label=personName(agent);
+    return '<div class="ghe-premium-chief-row status-'+esc(status)+'">'+
+      '<button type="button" class="ghe-premium-chief-person" data-duty-chief-agent="'+esc(key)+'" '+
+        (key?'':'disabled ')+'aria-label="Voir le planning de '+esc(label)+'">'+
+        '<span class="ghe-premium-chief-icon" aria-hidden="true">🎨</span>'+
+        '<span class="ghe-premium-chief-text">'+
+          '<small>'+esc(status==="now"?"PRÉSENT MAINTENANT":"RELÈVE À VENIR")+'</small>'+
+          '<strong>'+esc(label)+'</strong><em>'+esc(shiftText(item))+'</em></span>'+
+        '<span class="ghe-premium-chief-chevron" aria-hidden="true">›</span></button>'+
+      callMarkup(item)+'</div>';
+  }
   function homeNowMarkup() {
-    if (!data) return "";
-    const { current, next, now } = dutyState();
-    // Présent maintenant + relève du jour : qui est là, et à quelle heure.
+    const title='<strong>🎨 CHEFS D’ÉQUIPE</strong>';
+    if(!data)return '<section class="ghe-premium-chief-panel">'+
+      '<div class="ghe-premium-chief-heading">'+title+'</div><p>'+
+      (loadError?'Informations momentanément indisponibles.':'Chargement du planning…')+
+      '</p></section>';
+    const {current,next,now}=dutyState();
     const following=next&&String(next.date||"").slice(0,10)===now.date?[next]:[];
-    const list=[...current.map(item=>flatCard(item,"now")),
-      ...following.map(item=>flatCard(item,"next"))];
-    return list.length?'<div class="team-chief-flat-list">'+list.join("")+'</div>':"";
+    const rows=[...current.map(item=>premiumChiefRow(item,"now")),
+      ...following.map(item=>premiumChiefRow(item,"next"))].join("");
+    return '<section class="ghe-premium-chief-panel" aria-label="Chefs présents et relève">'+
+      '<div class="ghe-premium-chief-heading">'+title+
+        '<span>Selon le planning</span></div>'+
+      (rows||'<p>Aucun chef en poste ou en relève aujourd’hui selon le planning.</p>')+
+      '</section>';
   }
 
   function todayMarkup() {
