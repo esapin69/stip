@@ -5295,7 +5295,7 @@ body.hc-shift-detail-open{overflow:hidden}
 /* GHE — personal left drawer. Independent of the existing admin shortcuts popup. */
 #hcPersonalDrawer.ghe-personal-drawer {
   position:fixed!important;inset:0 auto 0 0!important;margin:0!important;
-  box-sizing:border-box!important;width:min(88vw,400px)!important;max-width:400px!important;
+  box-sizing:border-box!important;width:min(84vw,380px)!important;max-width:380px!important;
   height:100dvh!important;max-height:100dvh!important;padding:0!important;
   border:0!important;border-radius:0 23px 23px 0!important;
   background:#fff!important;color:#183c4b!important;overflow:hidden!important;
@@ -5341,7 +5341,7 @@ body.hc-shift-detail-open{overflow:hidden}
 #hcPersonalDrawer .ghe-drawer-search input::-webkit-search-cancel-button{display:none}
 #hcPersonalDrawer .ghe-drawer-search-clear button{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#708792;font-size:1.25rem}
 #hcPersonalDrawer :is(button,input):focus-visible{outline:3px solid #6caabc;outline-offset:2px}
-@media(max-width:420px){#hcPersonalDrawer.ghe-personal-drawer{width:min(88vw,370px)!important}#hcPersonalDrawer .ghe-drawer-head{padding-inline:17px}#hcPersonalDrawer .ghe-drawer-scroll{padding-inline:9px}}
+@media(max-width:420px){#hcPersonalDrawer.ghe-personal-drawer{width:min(84vw,350px)!important}#hcPersonalDrawer .ghe-drawer-head{padding-inline:17px}#hcPersonalDrawer .ghe-drawer-scroll{padding-inline:9px}}
 @media(prefers-reduced-motion:reduce){#hcPersonalDrawer[open]{animation:none}}
 /* Only the menu + bell remain on the home top line. */
 #homeView .ghe-home-topbar .ghe-home-tools-right:empty{min-width:44px!important;display:block!important}
