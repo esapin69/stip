@@ -37,9 +37,9 @@
       dayFocus:s.dayFocus,
     };
   }
-  // Accueil uniquement : Aujourd'hui et Demain sont deux cartes séparées.
-  // Sept cartes suivantes à partir d'après-demain ; le dimanche, réafficher
-  // le lundi déjà présent dans Demain pour marquer le début de semaine.
+  // Compatibilite : calcul des sept jours glissants pour les modules annexes.
+  // Le recto-verso de l'accueil utilise maintenant fullDates({weekOffset:0/1})
+  // pour presenter deux semaines calendaires completes sans doubler le lundi.
   function upcomingSevenDates(options={}){
     const today=valid(options.today)?options.today:todayIso(),
       dow=dateObj(today).getDay()||7,

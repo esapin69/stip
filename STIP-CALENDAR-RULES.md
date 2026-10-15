@@ -45,42 +45,38 @@ Le pont est une **vraie colonne visuelle indépendante**. Le lundi suivant est u
 
 Cette prévisualisation existe uniquement le vendredi, le samedi et le dimanche de la semaine courante en mode normal. Elle ne doit pas apparaître sur une semaine passée, une semaine future ou la partie déjà écoulée de la semaine courante.
 
-### 3.1 Accueil : les sept jours après Aujourd'hui et Demain (15/10/2026)
+### 3.1 Accueil : carte recto-verso Aujourd'hui / Demain (15/10/2026)
 
-Exception de présentation **limitée à l'accueil**, sans modifier la semaine progressive
-des autres consommateurs. `STIPWeekEngine.upcomingSevenDates` est l'unique calcul maître
-pour ces sept dates. Les deux grandes cartes « Aujourd'hui » et « Demain » restent séparées.
+Le bloc des deux colonnes est **un seul ensemble retournable**, sur le modèle 3D
+de la carte de profil, sans modifier les deux moteurs de données des cartes du jour.
 
-- Du lundi au samedi : la ligne commence après Demain (J+2) et contient sept dates consécutives.
-- Le dimanche : le lundi montré dans « Demain » est **répété** au début des sept cartes ;
-  les six jours suivants terminent la semaine du lundi au dimanche.
-- Chaque lundi de la ligne porte un repère rouge « LUNDI » **sous sa carte**,
-  avec une petite flèche **vers le haut**, dirigée vers la carte. Le repère
-  possède un espace vertical réservé hors de la carte, ne masque jamais la
-  plage de dates, le shift, la pastille ou les événements, et n'ajoute aucune
-  colonne ni ne décale les événements.
-- La ligne de l'accueil n'affiche pas les grosses flèches précédent/suivant :
-  la navigation chronologique demeure disponible dans « Au mois » et les autres vues.
-- Les rendez-vous et activités rattachés à cette ligne utilisent les mêmes sept dates ISO.
-- La grille visuelle du seul Accueil a trois zones stables : en-tête date,
-  code du shift en haut du corps, pictogramme de repos si nécessaire, puis repères
-  verticaux. `.hc-shift-core.stip-week-core` devient un groupe réel (pas
-  `display:contents`) afin que toutes les lettres restent alignées en haut.
-  Le pied LUNDI occupe une seconde ligne de grille de 40 px hors de la carte,
-  sans position absolue ni chevauchement du titre RENDEZ-VOUS.
-- Les sept cartes affichent le code du shift même en repos. Les shifts travaillés
-  n'ont **aucune pastille**. Seuls repos/congés/absences affichent leur icône.
-- Les repères de rendez-vous et loisirs sont centrés **verticalement**,
-  jamais côte à côte. Deux icônes au maximum, puis compteur `+N`.
-  Le repère chefs d'équipe est **interdit dans les cartes**.
-- Appuyer sur une carte ouvre le même popup de jour que Aujourd'hui/Demain
-  via `STIPTeamFusion.openDate` et les mêmes sources/permissions, avec accès aux chefs
-  uniquement à l'intérieur de cette fenêtre.
-
-- Changement de jour Europe/Paris : reconstituer le bloc lorsque l'accueil est visible,
-  et également lorsque l'utilisateur revient sur l'onglet.
-- Ne pas modifier `visibleDates`, `display`, `move` ni leur pont du lundi pour les
-  autres écrans ; les codes shift, événements, sélections et détails restent inchangés.
+- **Recto** : Aujourd'hui à gauche, Demain à droite, mêmes détails, actions et popups.
+- **Verso** : semaine calendaire complète en cours (lundi à dimanche) :
+  lundi–vendredi sur la première ligne, samedi/dimanche sur la seconde.
+  Séparateur **SEMAINE PROCHAINE**, puis ses sept jours lundi–dimanche sur
+  une troisième ligne légèrement plus compacte.
+- Les deux semaines viennent de `STIPWeekEngine.fullDates({weekOffset:0/1})`
+  avec la date de référence Europe/Paris. Ne pas calculer localement les
+  frontières de semaine ni modifier l'état de navigation des autres calendriers.
+- Chaque jour conserve le code de shift ; les shifts travaillés utilisent
+  le même badge texte que le mois via `STIPMonthTable.shiftBadgeHtml`.
+  Repos/congés/absences : code et icône propres ; pas d'icône de shift travaillé.
+- Les événements personnels (rendez-vous, loisirs) sont en dessous, centrés
+  verticalement, au maximum deux icônes puis `+N`. Aucune icône de chef
+  dans les cartes.
+- Un jour du verso ouvre la fenêtre partagée
+  `STIPTeamFusion.openDate`, avec les permissions habituelles ; les chefs
+  restent dans cette fenêtre, jamais dans la vignette.
+- La face inactive est `inert` et masquée aux lecteurs d'écran. Une commande
+  discrète sur chacune des faces retourne l'ensemble avec animation, comme
+  la carte de profil. La hauteur s'adapte à la face active sans scroll imbriqué.
+- L'ancienne ligne glissante de sept cartes n'est **plus montée à l'accueil**.
+  Aucun badge flottant `LUNDI`, aucune répétition artificielle du lundi.
+  Les rendez-vous et le bloc mensuel conservent leurs propres sections.
+- Au changement de jour Europe/Paris et au retour sur l'accueil, régénérer
+  les jours du recto et les semaines du verso, sans toucher aux données métier.
+- Ne pas modifier `visibleDates`, `display`, `move` ni les usages
+  historiques de `upcomingSevenDates` dans les autres zones du site.
 
 ## 4. Navigation
 
