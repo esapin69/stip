@@ -384,15 +384,15 @@
 }
 .hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card,
 .hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card.is-self.hc-id-card{
-  display:grid!important;grid-template-columns:clamp(72px,20vw,96px) minmax(0,1fr) clamp(57px,16vw,83px)!important;
+  display:grid!important;grid-template-columns:clamp(96px,29vw,112px) minmax(0,1fr) clamp(57px,16vw,83px)!important;
   align-items:center!important;gap:clamp(5px,1.5vw,12px)!important;
-  min-height:112px!important;padding:5px 0!important;overflow:visible!important;
+  min-height:136px!important;padding:5px 0!important;overflow:visible!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-avatar,
 .hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-avatar.hc-avatar,
 .hc-home-top-nav[data-header-compact] .ghe-premium-front .hc-id-card .hc-avatar{
   grid-column:1!important;grid-row:1!important;position:static!important;
-  width:100%!important;height:clamp(79px,23vw,102px)!important;
+  width:100%!important;height:clamp(118px,36vw,136px)!important;
   min-width:0!important;min-height:0!important;max-width:100%!important;
   max-height:none!important;border-radius:15px!important;
 }
