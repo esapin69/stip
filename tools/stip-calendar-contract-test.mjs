@@ -130,18 +130,27 @@ assert(eventBadges.includes("events.slice(0, 2)") &&
 const eventSources = homeJs.split("function weekEventsForDay(")[1]?.split("function weekEventBadges(")[0] || "";
 assert(eventSources.includes("STIPLeisure?.dayItems") &&
        !eventSources.includes("STIPDutyChiefs"), "loisirs présents, chefs absents des cartes");
-assert(rollingCss.includes("flex-direction:column!important") &&
+assert(rollingCss.includes("flex-flow:column nowrap!important") &&
        rollingCss.includes(".hc-rolling-seven .stip-week-event"), "repères centrés verticalement");
 const teamFusion=read("team-home-fusion.js");
 assert(teamFusion.includes("async function openDate(") &&
        teamFusion.includes("window.STIPTeamFusion={mount,openDate}") &&
        homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
        "popup commun Aujourd'hui/Demain réutilisé pour la semaine");
-assert(rollingCss.includes("top:calc(100% + 6px)") &&
-       rollingCss.includes("padding-bottom:40px") &&
-       rollingCss.includes("min-height:136px") &&
-       !rollingCss.includes("top:-30px"),
-  "le lundi doit se placer sous la carte, sans collision avec la date, dans un emplacement réservé");
+assert(rollingCss.includes("grid-template-rows:auto 40px") &&
+       rollingCss.includes("grid-row:2!important") &&
+       rollingCss.includes("position:static!important") &&
+       rollingCss.includes("min-height:178px") &&
+       !rollingCss.includes("top:calc(100% + 6px)"),
+  "le repere LUNDI doit occuper une ligne distincte, en flux, sans chevaucher RENDEZ-VOUS");
+assert(rollingCss.includes(".hc-shift-core.stip-week-core") &&
+       rollingCss.includes("flex:0 0 28px!important") &&
+       rollingCss.includes("flex-flow:column nowrap!important") &&
+       rollingCss.includes("display:flex!important"),
+  "la lettre du shift doit rester en haut dans un groupe reel et les evenements au-dessous");
+assert(rollingCss.includes(".hc-rolling-seven .stip-week-events") &&
+       rollingCss.includes("flex-flow:column nowrap!important"),
+  "les rendez-vous doivent rester empiles verticalement");
 const mondaySlot = homeJs.split("function weekDaysLandscape")[1]?.split("function planningStatus")[0] || "";
 assert(mondaySlot.includes('hc-rolling-monday-arrow">↑') &&
        mondaySlot.includes('${dayCard(day, "stip-week-day", true)}${monday}'),
