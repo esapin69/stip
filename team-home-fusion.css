@@ -1438,11 +1438,11 @@
   color:#435e70
 }
 /* Repos : ambiance dessinée statique et claire à la place d'une fausse scène météo. */
-.hc-days-grid .thf-rest-stage,.thf-popup .thf-rest-stage{
+.hc-days-grid .thf-weather-stage[data-rest="true"],.thf-popup .thf-weather-stage[data-rest="true"]{
   --thf-sky-bg:linear-gradient(150deg,#e7f4fc,#f4f8fb 63%,#fbf3e9);
   --thf-sky-aura:#fff1cb;--thf-sky-mist:#e6f3fa;
 }
-.hc-days-grid .thf-rest-stage .thf-rest-illustration,
+.hc-days-grid .thf-weather-stage[data-rest="true"] .thf-rest-illustration,
 .thf-popup .thf-rest-illustration{
   position:absolute;right:8%;top:41px;z-index:0;
   width:clamp(82px,63%,137px);aspect-ratio:1;
@@ -1450,12 +1450,12 @@
   background:radial-gradient(circle at 34% 30%,#fff 0%,#f5eedd 42%,#c7e5efb3 73%,transparent 75%);
   filter:drop-shadow(0 7px 12px #37587520);pointer-events:none
 }
-.hc-days-grid .thf-rest-stage .thf-rest-illustration span,
+.hc-days-grid .thf-weather-stage[data-rest="true"] .thf-rest-illustration span,
 .thf-popup .thf-rest-illustration span{
   font-size:clamp(3.2rem,13vw,5rem);line-height:1;
   transform:rotate(-5deg);filter:drop-shadow(0 4px 3px #30465016)
 }
-.hc-days-grid .thf-rest-stage .thf-day-trigger .thf-rest-caption{
+.hc-days-grid .thf-weather-stage[data-rest="true"] .thf-day-trigger .thf-rest-caption{
   z-index:2;position:relative;display:inline-flex;
   max-width:100%;padding:5px 8px;
   border-radius:10px;background:#ffffffd9;border:1px solid #e2ebef;
@@ -1490,7 +1490,7 @@
 .thf-popup .thf-chief-live.status-done{background:#e8edf0;color:#617782}
 @media(max-width:390px){
   .hc-days-grid .thf-day-chief-launch{padding:8px 6px;gap:3px}
-  .hc-days-grid .thf-rest-stage .thf-rest-illustration{right:2%;width:86px}
+  .hc-days-grid .thf-weather-stage[data-rest="true"] .thf-rest-illustration{right:2%;width:86px}
   .hc-days-grid .thf-day-trigger .thf-inline-weather .hc-shift-weather-rain{
     font-size:.72rem!important;padding:5px 3px!important
   }
