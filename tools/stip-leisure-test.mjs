@@ -25,7 +25,7 @@ assert.match(shortcuts,/#\/communication\/dm/);assert.doesNotMatch(shortcuts,/le
 assert.match(shortcuts,/Ma réponse/);
 response.events[0].chats=[];await window.STIPLeisure.refresh();assert.equal(window.STIPLeisure.pendingHTML(),'');
 listeners.get('stip:session-ended')();assert.equal(window.STIPLeisure.pendingHTML(),'');
-const home=readFileSync('home-shell.js','utf8');assert.match(home,/STIPLeisure\?\.weekHTML/);assert.match(home,/STIPLeisure\?\.monthHTML/);
+const home=readFileSync('home-shell.js','utf8');assert.match(home,/data-ghe-drawer-action/);assert.match(home,/title:"Sorties et trajets"/);assert.match(home,/sorties-loisirs\.html/);
 const app=readFileSync('sorties-loisirs.html','utf8');assert(app.includes('ensemble-v3.js'));assert(!app.includes('leisure-runtime.js'));
 console.log('Leisure: pending invitation, accepted/declined visibility, revision, cancellation, logout, home placement and common runtime passed.');
 console.log('Date chats: home shortcuts use canonical Communication DM route; no invitation returns after registration.');
