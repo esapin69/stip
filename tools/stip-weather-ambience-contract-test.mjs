@@ -43,10 +43,27 @@ for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
 }
 const start = home.indexOf("thf-weather-stage thf-weather-sky");
 const shift = home.indexOf("thf-day-post", start);
-const colleagues = home.indexOf("thf-shift-colleagues", shift);
-const chief = home.indexOf("thf-day-chief", colleagues);
-assert(start >= 0 && shift > start && colleagues > shift && chief > colleagues);
-assert(home.slice(colleagues, chief).includes("'</div></div><div"), "Weather must end before chiefs");
+const actions = home.indexOf('class="thf-shift-actions"', shift);
+const colleagues = home.indexOf("thf-shift-colleagues", actions);
+const chief = home.indexOf("thf-shift-chiefs", colleagues);
+const body = home.indexOf('class="thf-day-body"', chief);
+assert(start >= 0 && shift > start && actions > shift &&
+  colleagues > actions && chief > colleagues && body > chief,
+  "Colleagues and chiefs must share the shift action row");
+assert(home.slice(actions, chief).includes('data-thf-open="people"'));
+assert(home.slice(chief, body).includes('data-thf-open="chiefs"'));
+assert(!home.slice(body, home.indexOf("'</article>'", body)).includes("thf-day-chief-launch"),
+  "The day card must not show a second chiefs button");
+assert(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"),
+  "Two responsive shift buttons are required");
+assert(css.includes("bottom:7%;z-index:0"),
+  "Weather scenery must sit discreetly behind the lower card");
+const rainStyle=css.slice(css.indexOf("/* Risque pluie réel"),css.indexOf("/* Fin du carré J4/CP"));
+assert(rainStyle.includes("background:transparent!important") &&
+  rainStyle.includes("border:0!important"),
+  "Rain percentage must remain legible without a separate box");
+assert(worker.includes("event.respondWith(networkFirst(request,STATIC_CACHE))"),
+  "Site code assets must be fetched network-first and cached for offline use");
 
 // Global shell updates independently. Only the two illustrated assets need a
 // new URL to bypass the existing service worker's cache-first policy.
@@ -55,9 +72,17 @@ assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
-for (const asset of ["team-home-fusion.js", "team-home-fusion.css", "shift-weather-mini.js"])
-  assert(index.includes(asset + "?v=20261015-chefs-rest-rain1"),
-    "Mobile asset URL not refreshed: " + asset);
+for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
+  assert(index.includes(asset + "?v=20261015-weather-chief-gate1"),
+    "New card asset URL not refreshed: " + asset);
+assert(index.includes("shift-weather-mini.js?v=20261015-chefs-rest-rain1"),
+  "The unchanged canonical weather engine must stay available");
+assert(index.includes('stip-loader.js?v=' + globalBuild) &&
+  index.includes('stip-sw.js?v=' + globalBuild),
+  "Loader and service worker must match the HTML build");
+assert(index.includes("stip-ui-version-check") &&
+  index.indexOf("scheduleHeal(0)") < index.indexOf("<title>"),
+  "The startup version gate must protect the first paint");
 assert.match(home, /data-rest=/, "Rest cards must have a dedicated decorative state");
 assert.match(home, /data-thf-open="chiefs"/, "Chef entries must open a dedicated popup");
 assert.match(weather, /if \(values\.risk !== null\)/, "Compact forecast must display precipitation risk");

@@ -399,15 +399,18 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
-      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack"><span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
-      (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
-        'aria-label="Voir les '+(loaded?(restMode?restPeers.length:exact.length):"…")+' collègues '+(restMode?'en repos':'sur mon horaire')+' '+esc(label)+'">'+
-        '<span aria-hidden="true">👥</span><b>'+(loaded?(restMode?restPeers.length:exact.length):"…")+'</b></button>':"")+
-      '</div></div>'+
-      '</div></div><div class="thf-day-body">'+
-      '<button type="button" class="thf-day-chief-launch" data-thf-open="chiefs" aria-label="Voir les chefs d’équipe '+esc(label)+'">'+
-      '<span>🎨 CHEFS D’ÉQUIPE</span><small>'+esc(chiefSummary)+'</small><b aria-hidden="true">›</b></button>'+
-      (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
+      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
+       '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
+       '<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
+       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
+         'aria-label="Voir les '+(loaded?(restMode?restPeers.length:exact.length):"…")+' collègues '+(restMode?'en repos':'sur mon horaire')+' '+esc(label)+'" title="Collègues">'+
+         '<span aria-hidden="true">👥</span><b>'+(loaded?(restMode?restPeers.length:exact.length):"…")+'</b></button>':"")+
+       '<button type="button" class="thf-shift-chiefs" data-thf-open="chiefs" '+
+         'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
+         '<span aria-hidden="true">👑</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
+       '</div></div></div>'+
+       '</div></div><div class="thf-day-body">'+
+       (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
         uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir ›</button>':"")+
       '</div>'+
       '<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>'+
