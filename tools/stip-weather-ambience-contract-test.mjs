@@ -71,7 +71,7 @@ const shift = home.indexOf("thf-day-post", start);
 const actions = home.indexOf('class="thf-shift-actions"', shift);
 const colleagues = home.indexOf("thf-shift-colleagues", actions);
 const chief = home.indexOf("thf-shift-chiefs", colleagues);
-const body = home.indexOf('class="thf-day-body"', chief);
+const body = home.indexOf('class="thf-day-more"', chief);
 assert(start >= 0 && shift > start && actions > shift &&
   colleagues > actions && chief > colleagues && body > chief,
   "Colleagues and chiefs must share the shift action row");
