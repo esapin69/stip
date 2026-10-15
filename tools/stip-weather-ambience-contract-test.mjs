@@ -55,10 +55,12 @@ assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
-for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
-  assert(index.includes(asset + "?v=20261014-weather-art-static2"),
-    "Illustrated asset URL not refreshed: " + asset);
-assert(index.includes("shift-weather-mini.js?v=20261014-shift-weather-static1"));
+for (const asset of ["team-home-fusion.js", "team-home-fusion.css", "shift-weather-mini.js"])
+  assert(index.includes(asset + "?v=20261015-chefs-rest-rain1"),
+    "Mobile asset URL not refreshed: " + asset);
+assert.match(home, /data-rest=/, "Rest cards must have a dedicated decorative state");
+assert.match(home, /data-thf-open="chiefs"/, "Chef entries must open a dedicated popup");
+assert.match(weather, /if \(values\.risk !== null\)/, "Compact forecast must display precipitation risk");
 assert.match(weather, /const CACHE_TTL = 20 \* 60 \* 1000/);
 assert.match(weather, /const API = "https:\/\/api\.open-meteo\.com\/v1\/forecast"/);
 
@@ -125,6 +127,8 @@ assert.equal(two.scene.dataset.sky,"cloudy");
 assert.equal(JSON.stringify(one.children),JSON.stringify(two.children),
   "Same day and shift must produce identical temperatures and sky");
 assert.equal(one.hidden,false);
+assert(one.children.some(child => child.className === "hc-shift-weather-rain" &&
+  child.textContent.includes("10 %")), "Risk of precipitation must be visible on compact cards");
 await mount(one,args);
 assert.equal(calls,1,"Cached forecasts must not be downloaded again");
 
