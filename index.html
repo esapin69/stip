@@ -9,22 +9,29 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261015-ghe-networkfresh3" />
+    <meta name="stip-ui-build" content="20261015-weather-chief-gate1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
-          document.documentElement.classList.add("stip-session-resume");
+          document.documentElement.classList.add("stip-session-resume", "stip-ui-version-check");
         }
       } catch {}
     </script>
     <style id="stip-session-resume-style">
       html.stip-session-resume #loginView { visibility: hidden !important; }
+      html.stip-ui-version-check #homeView .hs-home { visibility: hidden !important; }
+      html.stip-ui-version-check #homeView::after {
+        content: "Actualisation de GHE…";position:fixed;left:50%;top:48%;
+        transform:translate(-50%,-50%);z-index:1000;
+        padding:12px 16px;border-radius:14px;background:#f1f8fb;
+        color:#20566d;font-size:.85rem;font-weight:800;
+      }
     </style>
     <script id="stip-session-resume-watchdog">
       (() => {
         // Never leave the site on a permanent white screen if session restoration
         // or a cached runtime fails before it can clear stip-session-resume.
-        const release = () => document.documentElement.classList.remove("stip-session-resume");
+        const release = () => document.documentElement.classList.remove("stip-session-resume", "stip-ui-version-check");
         addEventListener("DOMContentLoaded", () => setTimeout(release, 3500), { once: true });
         addEventListener("pageshow", (event) => {
           if (event.persisted) setTimeout(release, 500);
@@ -39,11 +46,12 @@
           return !!(
             el &&
             (el.matches?.("input, textarea, [contenteditable='true']") ||
-              document.body.classList.contains("hc-feedback-modal-open") ||
+              document.body?.classList.contains("hc-feedback-modal-open") ||
               window.STIPAuthPending === true)
           );
         };
         const heal = async () => {
+          let navigating = false;
           try {
             const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
               cache: "no-store",
@@ -67,14 +75,18 @@
             sessionStorage.setItem(key, "1");
             const url = new URL(location.href);
             url.searchParams.set("__stip_build", latest);
+            navigating = true;
             location.replace(url.pathname + url.search + url.hash);
-          } catch {}
+          } catch {} finally {
+            if (!navigating) document.documentElement.classList.remove("stip-ui-version-check");
+          }
         };
         const scheduleHeal = (delay = 120) => {
           clearTimeout(probeTimer);
           probeTimer = setTimeout(heal, delay);
         };
-        addEventListener("load", () => scheduleHeal(1200), { once: true });
+        scheduleHeal(0);
+        addEventListener("pageshow", event => { if (event.persisted) scheduleHeal(0); });
         setInterval(() => {
           if (!document.hidden) heal();
         }, 300000);
@@ -163,7 +175,7 @@
     <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
     <link rel="stylesheet" href="/stip-month-table.css?v=20260928-month-badges1" />
     <script defer src="/stip-month-table.js?v=20260928-month-badges1"></script>    <link rel="stylesheet" href="stip-home-header.css?v=20261002-header-identity-fix1" />
-    <link rel="stylesheet" href="team-home-fusion.css?v=20261015-chefs-rest-rain1" />
+    <link rel="stylesheet" href="team-home-fusion.css?v=20261015-weather-chief-gate1" />
     <link rel="stylesheet" href="meeting-runtime.css?v=20261001-meeting-board2" />
     <link rel="stylesheet" href="ensemble-home.css?v=20261014-rsvp3" />
     <link rel="stylesheet" href="ghe-live-strip.css?v=20261014-live-strip2" />
@@ -470,7 +482,7 @@
     <script src="person-card-template.js?v=20261002-header-identity-fix1"></script>
     <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
     <script src="shift-weather-mini.js?v=20261015-chefs-rest-rain1"></script>
-    <script src="team-home-fusion.js?v=20261015-chefs-rest-rain1"></script>
+    <script src="team-home-fusion.js?v=20261015-weather-chief-gate1"></script>
     <script src="home-shell.js?v=20261015-ghe-networkfresh3"></script>
     <script src="meeting-runtime.js?v=20261001-meeting-board2"></script>
     <script src="ensemble-home.js?v=20261014-leisure-confirmed-bell2"></script>
@@ -487,7 +499,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261015-ghe-networkfresh3", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261015-weather-chief-gate1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
