@@ -54,8 +54,11 @@ pour ces sept dates. Les deux grandes cartes « Aujourd'hui » et « Demain » r
 - Du lundi au samedi : la ligne commence après Demain (J+2) et contient sept dates consécutives.
 - Le dimanche : le lundi montré dans « Demain » est **répété** au début des sept cartes ;
   les six jours suivants terminent la semaine du lundi au dimanche.
-- Chaque lundi de la ligne porte un petit chapeau rouge « LUNDI » avec une flèche
-  vers sa propre carte, **sans colonne supplémentaire** ni décalage des événements.
+- Chaque lundi de la ligne porte un repère rouge « LUNDI » **sous sa carte**,
+  avec une petite flèche **vers le haut**, dirigée vers la carte. Le repère
+  possède un espace vertical réservé hors de la carte, ne masque jamais la
+  plage de dates, le shift, la pastille ou les événements, et n'ajoute aucune
+  colonne ni ne décale les événements.
 - La ligne de l'accueil n'affiche pas les grosses flèches précédent/suivant :
   la navigation chronologique demeure disponible dans « Au mois » et les autres vues.
 - Les rendez-vous et activités rattachés à cette ligne utilisent les mêmes sept dates ISO.
