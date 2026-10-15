@@ -1391,8 +1391,8 @@
           ? '<span class="hc-shift-main stip-week-main"><span class="hc-pending-icon stip-week-main-icon" aria-hidden="true">🚫</span></span>'
           : statusIcon
             ? `<span class="hc-shift-main stip-week-main hc-shift-main-special"><span class="hc-status-icon stip-week-main-icon" role="img" aria-label="${esc(shiftLabel)}">${statusVisual}</span></span>`
-            : workIcon
-              ? `<span class="hc-shift-main stip-week-main hc-shift-main-work" title="${esc(shiftLabel)}"><span class="hc-work-icon stip-week-main-icon stip-week-work-marker" aria-hidden="true">${workVisual}</span></span>`
+            : shiftDefinition(canonical)?.is_working === true
+              ? "" // Une journée travaillée conserve son code M/J/J4/S/N, sans pastille de shift.
               : `<span class="hc-shift-main stip-week-main"><span class="hc-shift-fallback stip-week-main-icon">${esc(shiftLabel || "—")}</span></span>`,
       landscapeCode = loading ? "" : pending ? "—" : canonical || "—",
       hasSupplements = landscape && weekEventsForDay(x).length > 0,
@@ -1411,23 +1411,38 @@
   function weekEventsForDay(x) {
     const iso = String(x?.iso || "");
     if (!iso) return [];
-    return futureItems().filter((event) => {
+    const agenda = futureItems().filter((event) => {
       const start = String(event.date || "").slice(0, 10),
         end = String(event.endDate || event.end_date || event.date || "").slice(0, 10);
       return start <= iso && end >= iso;
     });
+    // Repères de loisirs de la même date, sans jamais insérer les chefs dans les cartes.
+    const leisure = (window.STIPLeisure?.dayItems?.(iso) || []).map((item) => ({
+      ...item, type: "loisir", icon: item.icon || "📅", title: item.title || "Loisir",
+      id: "leisure:" + String(item.id || item.title || ""),
+      date: iso
+    }));
+    const seen = new Set();
+    return [...agenda, ...leisure].filter((event) => {
+      const key = String(event.id || "") || [event.date, event.title].join("|");
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
   function weekEventBadges(x) {
-    const events = weekEventsForDay(x).slice(0, 2);
+    const events = weekEventsForDay(x),
+      shown = events.slice(0, 2),
+      extra = events.length - shown.length;
     if (!events.length)
       return '<span class="hc-week-events-slot stip-week-events is-empty" aria-hidden="true"></span>';
-    return `<span class="hc-week-events-slot stip-week-events has-events" aria-label="${events.length} événement${events.length > 1 ? "s" : ""}">${events
+    return `<span class="hc-week-events-slot stip-week-events has-events" aria-label="${events.length} repère${events.length > 1 ? "s" : ""}">${shown
       .map((event) => {
         const kind = futureTypeKey(event),
           title = event.title || event.type || "Événement";
         return `<i class="hc-week-event-chip stip-week-event type-${esc(kind)}" title="${esc(title)}" aria-label="${esc(title)}">${eventIconHtml(event,"hc-event-svg")}</i>`;
       })
-      .join("")}</span>`;
+      .join("")}${extra ? `<small class="hc-rolling-event-overflow" aria-label="${extra} autre${extra > 1 ? "s" : ""} repère${extra > 1 ? "s" : ""}">+${extra}</small>` : ""}</span>`;
   }
   function weekDisplayModel(w = selectedWeek()) {
     const shared = window.STIPWeekEngine?.display?.(sharedWeekState(), {
@@ -1463,9 +1478,10 @@
     if (rolling) {
       const slots = w.map((day) => {
         const monday = day.dow === 1
-          ? '<span class="hc-rolling-monday-flag" aria-hidden="true">LUNDI<span class="hc-rolling-monday-arrow">↓</span></span>'
+          ? '<span class="hc-rolling-monday-flag" aria-hidden="true"><span class="hc-rolling-monday-arrow">↑</span>LUNDI</span>'
           : "";
-        return `<div class="hc-rolling-day-slot">${monday}${dayCard(day, "stip-week-day", true)}</div>`;
+        // Le repère du lundi suit la carte et reste hors de sa zone d'informations.
+        return `<div class="hc-rolling-day-slot">${dayCard(day, "stip-week-day", true)}${monday}</div>`;
       }).join("");
       return `<div class="stip-week-line stip-week-personal-line hc-rolling-seven" style="--stip-week-columns:7;--week-card-h:var(--stip-week-card-h)">${slots}</div>`;
     }
@@ -3572,11 +3588,17 @@
             window.STIPLeaveCart.toggle(iso,planningRowForDate(iso)?.code||"");
             return;
           }
-          const openDetail =
-            b.classList.contains("stip-week-day") &&
-            Boolean(planningRowForDate(iso));
+          const weekDay = b.classList.contains("stip-week-day");
           selectVisibleWeekDay(iso);
-          if (openDetail)
+          if (!weekDay) return;
+          // Ouvrir le même popup que Aujourd'hui et Demain : chefs seulement DANS le popup.
+          if (typeof window.STIPTeamFusion?.openDate === "function") {
+            window.STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })
+              .catch((error) => {
+                console.error("Détail du jour", error);
+                if (planningRowForDate(iso)) openShiftDetail(iso);
+              });
+          } else if (planningRowForDate(iso))
             requestAnimationFrame(() => openShiftDetail(iso));
         }),
       );

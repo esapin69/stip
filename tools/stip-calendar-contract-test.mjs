@@ -119,6 +119,33 @@ assert(rollingWidget.includes("upcomingHomeWeek()") && rollingWidget.includes("w
 assert(homeJs.includes("hc-rolling-monday-flag") && homeJs.includes("day.dow === 1") &&
        homeJs.includes("selectVisibleWeekDay(iso)"),
   "le repère lundi et la sélection des jours doivent rester accessibles");
+const rollingCss = read("home-rolling-week.css");
+const dayCard = homeJs.split("function dayCard(")[1]?.split("function weekEventsForDay(")[0] || "";
+assert(dayCard.includes('shiftDefinition(canonical)?.is_working === true') &&
+       dayCard.includes('? "" // Une journée travaillée') &&
+       dayCard.includes("stip-week-code"), "un shift travaillé affiche son code, sans pastille");
+const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
+assert(eventBadges.includes("events.slice(0, 2)") &&
+       eventBadges.includes("hc-rolling-event-overflow"), "au-delà de deux repères, afficher un compteur");
+const eventSources = homeJs.split("function weekEventsForDay(")[1]?.split("function weekEventBadges(")[0] || "";
+assert(eventSources.includes("STIPLeisure?.dayItems") &&
+       !eventSources.includes("STIPDutyChiefs"), "loisirs présents, chefs absents des cartes");
+assert(rollingCss.includes("flex-direction:column!important") &&
+       rollingCss.includes(".hc-rolling-seven .stip-week-event"), "repères centrés verticalement");
+const teamFusion=read("team-home-fusion.js");
+assert(teamFusion.includes("async function openDate(") &&
+       teamFusion.includes("window.STIPTeamFusion={mount,openDate}") &&
+       homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
+       "popup commun Aujourd'hui/Demain réutilisé pour la semaine");
+assert(rollingCss.includes("top:calc(100% + 6px)") &&
+       rollingCss.includes("padding-bottom:40px") &&
+       rollingCss.includes("min-height:136px") &&
+       !rollingCss.includes("top:-30px"),
+  "le lundi doit se placer sous la carte, sans collision avec la date, dans un emplacement réservé");
+const mondaySlot = homeJs.split("function weekDaysLandscape")[1]?.split("function planningStatus")[0] || "";
+assert(mondaySlot.includes('hc-rolling-monday-arrow">↑') &&
+       mondaySlot.includes('${dayCard(day, "stip-week-day", true)}${monday}'),
+  "le repère lundi et sa flèche doivent être placés après la carte du lundi");
 assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)") &&
        !homeJs.includes("hc-date-jump-dot stip-month-dot shift-"),
   "Accueil monthly planning is not using the validated text badges for worked shifts");
@@ -158,10 +185,11 @@ for (const [name, source] of calendarConsumers) {
     `${name} duplicates the late-week business rule instead of consuming the master engine`);
 }
 assert(homeJs.includes("hc-next-monday-bridge"), "home no longer renders the canonical next-Monday bridge");
-assert(/const openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
-  "weekly day button no longer declares its detail-state locally");
-assert(!/\n\s*openDetail\s*=\s*\n?\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
-  "weekly day button can throw by assigning an undeclared openDetail");
+assert(/const weekDay\s*=\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs) &&
+       homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
+  "weekly day button must declare its local state and open the shared detail popup");
+assert(!/\n\s*weekDay\s*=\s*b\.classList\.contains\("stip-week-day"\)/.test(homeJs),
+  "weekly day button must not assign an undeclared variable");
 assert(teamJs.includes("stip-week-next-bridge"), "team no longer renders the canonical next-Monday bridge");
 assert(agentJs.includes("stip-week-next-bridge"), "agent agenda no longer renders the canonical next-Monday bridge");
 assert(rrHomeJs.includes("stip-week-next-bridge"), "Responsable no longer renders the canonical next-Monday bridge");
@@ -180,7 +208,9 @@ assert(homeJs.includes("STIPWeekEngine?.currentState") &&
        homeJs.includes("visibleWeek[0]?.iso"),
   "home no longer guarantees a reliable return to the current week/day");
 assert(homeJs.includes("stip-week-personal-layout"), "home week does not opt into its personal reserved-row layout");
-assert(homeJs.includes("stip-week-work-marker"), "home worked shift does not use the smaller canonical marker");
+assert(homeJs.includes('shiftDefinition(canonical)?.is_working === true') &&
+       homeJs.includes('? "" // Une journée travaillée'),
+  "home worked shifts must show their code, with no work icon or marker");
 assert(homeJs.includes('class="stip-month-event"'), "home month secondary events are still raw <small> text");
 assert(agentJs.includes('class="stip-month-event"'), "agent month secondary events are still raw <small> text");
 for (const [name, source] of [

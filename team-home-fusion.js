@@ -562,9 +562,29 @@
     }
     if(perm.assistant_enabled)requests.push(getAssistant(start));
     if(perm.activity)requests.push(getActivity(day));
-    for(const req of requests)Promise.resolve(req).then(()=>{
+    const updates=requests.map(req=>Promise.resolve(req).then(()=>{
       if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);
-    }).catch(()=>{if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);});
+    }).catch(()=>{if(host.isConnected&&host.dataset.thfDay===day)paint(host,opts);}));
+    return Promise.allSettled(updates);
+  }
+  let pendingWeekPopup=0;
+  async function openDate(opts={}) {
+    const day=String(opts.day||"").slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
+    const ticket=++pendingWeekPopup;
+    let host=document.getElementById("hcWeekFusionPopupHost");
+    if(!host){
+      host=document.createElement("div");
+      host.id="hcWeekFusionPopupHost";
+      host.hidden=true;
+      host.setAttribute("aria-hidden","true");
+      document.body.appendChild(host);
+    }
+    // Réutilisation du moteur de la carte du jour, de ses permissions et de son cache.
+    await mount({...opts,hostId:host.id,day});
+    if(ticket!==pendingWeekPopup||!host.isConnected||host.dataset.thfDay!==day)return false;
+    openDay(host);
+    return true;
   }
   // Une fenêtre d'événement remplace la fenêtre du jour, sans deux modales empilées.
   document.addEventListener("click",event=>{
@@ -625,5 +645,5 @@
       else showDialog('<h2>'+esc(name(row.agents))+'</h2><p>GHE '+esc(row.agents?.ghe||"")+'</p>');
     }
   });
-  window.STIPTeamFusion={mount};
+  window.STIPTeamFusion={mount,openDate};
 })();
