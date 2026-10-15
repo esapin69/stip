@@ -263,9 +263,13 @@
     return out;
   }
   function noteButtons(items) {
-    return items.map((x,i)=>'<button class="thf-note status-'+esc(x.level||"info")+'" type="button" data-thf-note="'+i+'"><span>'+esc(x.icon||"ℹ")+'</span><strong>'+esc(x.title)+'</strong><span aria-hidden="true">›</span></button>').join("");
+    return items.map((x,i)=>'<button class="thf-note status-'+esc(x.level||"info")+'" type="button" data-thf-note="'+i+'">'+
+      '<span class="thf-note-icon" aria-hidden="true">'+esc(x.icon||"ℹ")+'</span>'+
+      '<span class="thf-note-copy"><strong>'+esc(x.title)+'</strong>'+
+      (x.detail?'<small>'+esc(x.detail)+'</small>':"")+'</span>'+
+      '<span class="thf-note-chevron" aria-hidden="true">›</span></button>').join("");
   }
-  // L'accueil ne déroule jamais le personnel : uniquement une synthèse compacte.
+    // L'accueil ne déroule jamais le personnel : uniquement une synthèse compacte.
   // Les listes et les effectifs détaillés sont montés sur demande, dans un dialogue.
 
   // Une carte par jour : informations prioritaires au premier coup d'oeil.
@@ -409,11 +413,8 @@
          'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
          '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
        '</div></div></div>'+
-       '</div></div><div class="thf-day-body">'+
-       (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
-        uniqueInfos.length+' info'+(uniqueInfos.length>1?"s":"")+' à retenir ›</button>':"")+
-      '</div>'+
-      '<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>'+
+       '</div></div>'+
+            '<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>'+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
@@ -450,6 +451,9 @@
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
       '<button type="button" class="thf-day-chief-launch is-dialog" data-thf-open="chiefs">🎨 Voir les chefs d’équipe <b>›</b></button>'+
+      (info?'<section class="thf-day-popup-group thf-day-popup-notices" aria-label="Repères du jour">'+
+        '<h3>Repères du jour</h3>'+
+        '<div class="thf-day-notices-list">'+noteButtons(host._thfNotes||[])+'</div></section>':"")+
       ((host._thfLeisureEvents||[]).length?'<section class="thf-day-popup-group"><h3>📅 Après le service</h3>'+
         host._thfLeisureEvents.map(item=>'<button type="button" class="thf-day-popup-event" data-ev3-preview="'+esc(item.id)+'">'+
           '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
@@ -457,8 +461,8 @@
       '<div class="thf-day-popup-actions">'+
       '<button type="button" data-thf-open="people">👥 '+(s.restMode?'Collègues en repos · '+(host._thfSets?.rest||[]).length:'Collègues · '+same+' même horaire, '+onDuty+' en service')+' ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
-      (info?'<button type="button" data-thf-open="notes">📌 À retenir · '+info+' ›</button>':"")+
       '</div>');
+    document.getElementById("thfPopup")?.classList.add("thf-day-popup");
     const popupWeather=document.querySelector("#thfPopup [data-thf-weather]");
     if(popupWeather&&s.working&&window.STIPShiftWeather?.mount){
       const hours=String(s.myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
@@ -525,14 +529,10 @@
       '<div class="thf-popup-scroll">'+
       (host._thfShifts||'<p class="thf-empty">Aucune information disponible.</p>')+'</div>');
   }
-  function openNotes(host) {
-    activeHost=host;
-    showDialog('<small>INFORMATIONS DU JOUR</small><h2>À retenir</h2>'+
-      '<div class="thf-popup-scroll">'+noteButtons(host._thfNotes||[])+'</div>');
-  }
   function openNote(host,index) {
     const note=host?._thfNotes?.[index];if(!note)return;
-    showDialog('<small>INFORMATION DU JOUR</small><h2>'+esc(note.title)+'</h2><p>'+esc(note.detail||"Aucune précision supplémentaire.")+'</p>');
+    showDialog('<small>REPÈRE DU JOUR</small><h2><span aria-hidden="true">'+esc(note.icon||"ℹ")+'</span> '+esc(note.title)+'</h2>'+
+      '<p>'+esc(note.detail||"Aucune précision supplémentaire.")+'</p>');
   }
   function showDialog(content){
     document.getElementById("thfPopup")?.remove();
@@ -605,7 +605,6 @@
       if(kind==="chiefs")openChiefs(host);
       if(kind==="people")openPeople(host);
       if(kind==="staff")openStaff(host);
-      if(kind==="notes")openNotes(host);
       return;
     }
     if(el.hasAttribute("data-thf-refresh")){
