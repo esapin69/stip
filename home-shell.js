@@ -2643,13 +2643,18 @@
   function liveRoster() {
     const host = document.getElementById("hcTeamFusion");
     const permitted = has("planning_team");
-    const loaded = permitted && Array.isArray(host?._thfAgents);
+    const loaded = permitted && host?._thfLiveLoaded === true;
     const now = liveParisClock();
-    const entries = loaded ? host._thfAgents.slice() : [];
+    const entries = loaded ? host._thfLiveAgents.slice() : [];
     if (has("planning_personal")) {
       const a = state.session?.agent || state.boot?.agent || {};
-      const day = (state.boot?.personal || []).find(x => String(x.date || "").slice(0, 10) === now.day);
-      if (day) entries.push({ ...day, code: day.code || day.source_value, agents: a });
+      const yesterday = dateObj(now.day);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const dates = new Set([now.day, dateIsoLocal(yesterday)]);
+      for (const day of state.boot?.personal || []) {
+        if (!dates.has(String(day.date || "").slice(0, 10))) continue;
+        entries.push({ ...day, code: day.code || day.source_value, agents: a });
+      }
     }
     const seen = new Set(), current = [];
     for (const item of entries) {
