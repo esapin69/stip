@@ -259,13 +259,12 @@
       label=personName(agent);
     return '<div class="ghe-premium-chief-row status-'+esc(status)+'">'+
       '<button type="button" class="ghe-premium-chief-person" data-duty-chief-agent="'+esc(key)+'" '+
-        (key?'':'disabled ')+'aria-label="Voir le planning de '+esc(label)+'">'+
+        (key?'':'disabled ')+'aria-label="Actions pour '+esc(label)+'">'+
         '<span class="ghe-premium-chief-icon" aria-hidden="true">🎨</span>'+
         '<span class="ghe-premium-chief-text">'+
           '<small>'+esc(status==="now"?"PRÉSENT MAINTENANT":"RELÈVE À VENIR")+'</small>'+
           '<strong>'+esc(label)+'</strong><em>'+esc(shiftText(item))+'</em></span>'+
-        '<span class="ghe-premium-chief-chevron" aria-hidden="true">›</span></button>'+
-      callMarkup(item)+'</div>';
+        '<span class="ghe-premium-chief-chevron" aria-hidden="true">›</span></button></div>';
   }
   function homeNowMarkup() {
     if(!data)return '<div class="ghe-premium-chief-empty" role="status">'+
@@ -337,7 +336,10 @@
         const item = (data?.items || []).find(
           (row) => String(row?.agents?.source_key || "") === key,
         );
-        window.STIPAgentAgenda?.open?.(key, item?.agents || {});
+        const agent=item?.agents||{};
+        if(window.STIPPersonActions?.openForAgent)
+          window.STIPPersonActions.openForAgent(agent,{sourceKey:key,contextLabel:"CHEF D’ÉQUIPE"});
+        else window.STIPAgentAgenda?.open?.(key,agent);
       });
     });
     root.querySelectorAll("[data-duty-chief-call]").forEach((button) => {
