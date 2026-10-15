@@ -649,6 +649,25 @@
   font-size:.81rem;font-weight:800;text-align:left;color:#1d586c;cursor:pointer
 }
 
+
+/* Informations du jour dans la fenêtre détail, avec leurs titres et pictogrammes. */
+.thf-popup.thf-day-popup{overflow-y:auto;overscroll-behavior:contain}
+.thf-popup .thf-day-popup-notices{border-top:1px solid #e0eaf0;padding:11px 0 8px}
+.thf-popup .thf-day-popup-notices h3{margin:0 0 8px;font-size:.84rem;color:#285b73}
+.thf-popup .thf-day-notices-list{display:grid;gap:7px;min-width:0}
+.thf-popup .thf-day-notices-list .thf-note{
+  grid-template-columns:30px minmax(0,1fr) 12px;gap:8px;align-items:start;
+  width:100%;min-height:51px;margin:0;padding:10px 9px;background:#f5fafc
+}
+.thf-popup .thf-day-notices-list .thf-note-icon{font-size:1.16rem;line-height:1.3}
+.thf-popup .thf-day-notices-list .thf-note-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+.thf-popup .thf-day-notices-list .thf-note-copy strong{font-size:.81rem;line-height:1.22;overflow-wrap:anywhere}
+.thf-popup .thf-day-notices-list .thf-note-copy small{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:anywhere;font-size:.71rem;line-height:1.3;color:#587888
+}
+.thf-popup .thf-day-notices-list .thf-note-chevron{font-size:1.1rem;align-self:center}
+.thf-popup .thf-day-notices-list .thf-note:focus-visible{outline:3px solid #168ca9;outline-offset:2px}
 /* Résumés chef + activité : visibles au premier coup d'œil, même à 2 colonnes. */
 .hc-days-grid .thf-day-chief-person{display:flex;flex-direction:column;gap:5px;min-width:0}
 .hc-days-grid .thf-chief-line{display:flex;flex-direction:column;min-width:0;gap:2px;padding-bottom:3px}
@@ -981,7 +1000,7 @@
   min-height:0!important;width:100%;margin:0!important;padding:3px 4px!important;
   border:0!important;border-radius:0!important;box-shadow:none!important;
   background:transparent!important;color:var(--sky-text,#21475b)!important;
-  text-align:left;text-shadow:0 1px 1px #ffffffa8;
+  text-align:left;text-shadow:0 1px 2px #ffffffda;
 }
 .hc-days-grid .thf-weather-caption .thf-inline-weather[hidden],
 .thf-popup .thf-popup-weather-summary .thf-inline-weather[hidden]{display:none!important}
@@ -1236,60 +1255,60 @@
 /* Scène météo fixe : illustrations vectorielles intégrées, sans animation ni média distant.
  * Conserve la météo du créneau et laisse date, températures, J4, collègues accessibles. */
 .thf-weather-sky{
-  --thf-sky-bg:linear-gradient(161deg,#e3f0f8 0%,#eaf4f9 44%,#f1f7fa 100%);
+  --thf-sky-bg:linear-gradient(161deg,#c4e0f0 0%,#ddeef7 44%,#f1f6f7 100%);
   --thf-sky-aura:#daeefbbb;
   --thf-sky-mist:#d5e7f288;
   --sky-text:#21475b;
 }
 .thf-weather-sky[data-sky="sunny"]{
-  --thf-sky-bg:linear-gradient(153deg,#b8dffa 0%,#e1f3fc 46%,#fff3d7 100%);
+  --thf-sky-bg:linear-gradient(153deg,#87c9f0 0%,#bfe5f7 47%,#f4d9a1 100%);
   --thf-sky-aura:#ffdf91cc;--thf-sky-mist:#ffecc788;
 }
 .thf-weather-sky[data-sky="partly"],
 .thf-weather-sky[data-sky="mixed"]{
-  --thf-sky-bg:linear-gradient(158deg,#c8e4f7 0%,#e5f2fa 45%,#fff2dc 100%);
+  --thf-sky-bg:linear-gradient(158deg,#9bcfeb 0%,#cbe6f5 48%,#f6dca5 100%);
   --thf-sky-aura:#ffe3a0ad;--thf-sky-mist:#e3edf48a;
 }
 .thf-weather-sky[data-sky="cloudy"]{
-  --thf-sky-bg:linear-gradient(163deg,#c7dbe7 0%,#dce9f0 50%,#edf4f7 100%);
+  --thf-sky-bg:linear-gradient(163deg,#a9c4d6 0%,#c7dce8 51%,#e5eff3 100%);
   --thf-sky-aura:#f7fdff92;--thf-sky-mist:#c3d6e99c;
 }
 .thf-weather-sky[data-sky="fog"]{
-  --thf-sky-bg:linear-gradient(160deg,#cfdce3 0%,#e4edef 54%,#f0f5f5 100%);
+  --thf-sky-bg:linear-gradient(160deg,#abc0cc 0%,#d0dfe5 54%,#ebf2f3 100%);
   --thf-sky-aura:#f9ffff99;--thf-sky-mist:#f4fcfbd6;
 }
 .thf-weather-sky[data-sky="drizzle"],
 .thf-weather-sky[data-sky="rain"]{
-  --thf-sky-bg:linear-gradient(161deg,#b7d5e7 0%,#d4e6f1 50%,#e9f2f6 100%);
+  --thf-sky-bg:linear-gradient(161deg,#88b8d4 0%,#bdd7e7 50%,#e3eef5 100%);
   --thf-sky-aura:#e9f7ffc0;--thf-sky-mist:#b5d2e6a1;
 }
 .thf-weather-sky[data-sky="heavy-rain"],
 .thf-weather-sky[data-sky="storm"]{
-  --thf-sky-bg:linear-gradient(164deg,#a9c3d4 0%,#d1e1ec 54%,#e5eff5 100%);
+  --thf-sky-bg:linear-gradient(164deg,#7fa5bb 0%,#b4d0df 54%,#dceaf1 100%);
   --thf-sky-aura:#d8edf8b8;--thf-sky-mist:#b0c9dcad;
 }
 .thf-weather-sky[data-sky="snow"]{
-  --thf-sky-bg:linear-gradient(155deg,#c7e7f5 0%,#e2f4fb 49%,#fafcfd 100%);
+  --thf-sky-bg:linear-gradient(155deg,#abdced 0%,#d4eef8 49%,#f5fbfd 100%);
   --thf-sky-aura:#ffffffd6;--thf-sky-mist:#effaffbb;
 }
 .hc-days-grid .thf-day-card .thf-weather-stage{
   position:relative;isolation:isolate;overflow:hidden;
   width:100%;min-width:0;flex:0 0 auto;
   background:
-    radial-gradient(ellipse 128px 162px at 100% 5%,var(--thf-sky-aura),transparent 88%),
-    radial-gradient(ellipse 145px 125px at -26% 89%,var(--thf-sky-mist),transparent 85%),
+    radial-gradient(ellipse 155px 193px at 100% 72%,var(--thf-sky-aura),transparent 91%),
+    radial-gradient(ellipse 150px 160px at -19% 83%,var(--thf-sky-mist),transparent 91%),
     var(--thf-season-wash,linear-gradient(transparent,transparent)),
     var(--thf-sky-bg)!important;
   border-bottom:1px solid #dce8ed;
 }
 .hc-days-grid .thf-weather-stage::before{
   content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
-  background:linear-gradient(176deg,transparent 0%,#ffffff1d 37%,#ffffff38 64%,transparent 93%);
+  background:linear-gradient(176deg,transparent 0%,#ffffff0b 37%,#ffffff10 64%,transparent 93%);
 }
 .hc-days-grid .thf-weather-stage::after{
   content:"";position:absolute;bottom:-15px;right:-39px;
   width:91%;height:42%;z-index:0;pointer-events:none;
-  opacity:.58;
+  opacity:.26;
   background:
     radial-gradient(ellipse 78px 42px at 78% 77%,#fff9 0%,#fff4 68%,transparent 95%),
     radial-gradient(ellipse 80px 52px at 107% 42%,#fff7 0%,#fff2 74%,transparent 100%),
@@ -1307,8 +1326,8 @@
 .hc-days-grid .thf-weather-stage[data-season="winter"]{
   --thf-season-wash:linear-gradient(149deg,#ebf8ff3d,transparent 75%);
 }
-.hc-days-grid .thf-weather-stage[data-sky="fog"]::after{opacity:.97}
-.hc-days-grid .thf-weather-stage[data-sky="sunny"]::after{opacity:.34}
+.hc-days-grid .thf-weather-stage[data-sky="fog"]::after{opacity:.50}
+.hc-days-grid .thf-weather-stage[data-sky="sunny"]::after{opacity:.13}
 .hc-days-grid .thf-weather-stage>.thf-day-trigger{
   position:relative;z-index:2;isolation:auto;overflow:visible;
   background:transparent!important;border-bottom:0!important;
@@ -1321,8 +1340,8 @@
 .hc-days-grid .thf-weather-sky .thf-weather-art{
   position:absolute;right:-27px;top:auto;bottom:7%;z-index:0;
   width:clamp(190px,122%,300px);height:auto;
-  opacity:.21;pointer-events:none;user-select:none;
-  filter:saturate(.84);
+  opacity:.70;pointer-events:none;user-select:none;
+  filter:saturate(1.22) contrast(1.08) drop-shadow(0 6px 12px rgba(43,97,126,.11));
 }
 .thf-weather-sky .thf-weather-art svg{
   display:block;width:100%;height:auto;max-width:none;
