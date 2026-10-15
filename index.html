@@ -499,7 +499,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261015-weather-chief-gate1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261015-weather-contrast2", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });
