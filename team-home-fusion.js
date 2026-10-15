@@ -375,7 +375,7 @@
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
       '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence")+'">'+
-      '<div class="thf-weather-stage thf-weather-sky '+(working?"":"thf-rest-stage")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
+      '<div class="thf-weather-stage thf-weather-sky" data-rest="'+(working?"false":"true")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
       (working?staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,'')):
         '<div class="thf-rest-illustration" aria-hidden="true"><span>'+esc(absenceIcon)+'</span></div>')+
       '<button type="button" class="thf-day-trigger" data-thf-open="day" '+
