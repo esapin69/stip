@@ -5638,3 +5638,33 @@ dialog#hcBellDialog[open] {
     padding:11px!important;
   }
 }
+
+/* bell-leisure-click-v2 : l'intégralité de chaque notification est une action. */
+#hcBellDialog button.hc-bell-notice{
+  cursor:pointer!important;
+  touch-action:manipulation!important;
+  -webkit-tap-highlight-color:rgba(20,132,155,.16)!important;
+}
+#hcBellDialog .hc-bell-notice:focus-visible{
+  outline:3px solid #16869e!important;
+  outline-offset:2px!important;
+}
+#hcBellDialog .hc-bell-notice:active{
+  transform:scale(.994)!important;
+  border-color:#3e9eaf!important;
+  background:#f5fbfc!important;
+}
+#hcBellDialog .hc-bell-notice-action{
+  display:inline-flex!important;
+  width:fit-content!important;
+  align-items:center!important;
+  gap:5px!important;
+  margin-top:3px!important;
+  font-size:.76rem!important;
+  line-height:1.25!important;
+  color:#0b728b!important;
+  font-weight:950!important;
+}
+#hcBellDialog .hc-bell-notice-action>span{
+  font-size:1.12em!important;
+}
