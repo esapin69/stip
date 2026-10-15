@@ -1125,7 +1125,6 @@
 
   function agentRow(item) {
     const agent = item.agents || {};
-    const phone = phoneDigits(agent.telephone);
     const ghe = String(agent.ghe || "").replace(/^GHE\s*/i, "");
     const key = String(agent.source_key || "");
     const isChef = isChefItem(item);
@@ -1137,7 +1136,6 @@
         <span><strong>${esc(displayName(agent))}${isChef ? '<em class="team-chef-mark">🎨 Chef</em>' : ""}${adaptedShift(item.code) ? '<em class="team-adapted-mark" title="Horaire adapté">⏱</em>' : ""}${partTime ? `<em class="team-part-mark" title="Temps partiel">◐ ${quotite}%</em>` : ""}</strong><small>${esc(isChef ? "Chef d’équipe" : agent.role || "Brancardier")}</small></span>
         <i aria-hidden="true">›</i>
       </button>
-      ${phone ? `<button class="team-agent-call" type="button" data-team-call="${esc(phone)}" data-team-call-name="${esc(displayName(agent))}" aria-label="Choisir comment appeler ${esc(displayName(agent))}">☎</button>` : ""}
     </div>`;
   }
 
@@ -1914,11 +1912,6 @@
         if (Math.abs(delta) > 1) window.scrollTo(0, window.scrollY + delta);
         shift.blur?.();
       });
-      return;
-    }
-    const call = event.target.closest("[data-team-call]");
-    if (call) {
-      openCallSheet(call.dataset.teamCall, call.dataset.teamCallName);
       return;
     }
     const agent = event.target.closest("[data-team-agent]");

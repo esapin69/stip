@@ -99,7 +99,7 @@
       items: directory?.items || [],
       date: directory?.date,
       privacy: "team",
-      showPhone: true,
+      showPhone: false,
       kicker: "ÉQUIPE DU JOUR",
       title: "Présents et absents",
       description:
