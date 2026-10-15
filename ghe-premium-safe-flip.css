@@ -361,3 +361,149 @@
    width:44px!important;height:44px!important;min-width:44px!important;min-height:44px!important;
  }
 }
+
+/* GHE 360° — scoped layout refinement; no effect on Aujourd'hui/Demain. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-track{
+  display:block!important;position:relative;height:220px;
+  transition:transform .6s cubic-bezier(.22,.74,.2,1),height .3s ease;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-face{
+  position:absolute!important;top:0;left:0;grid-row:auto;grid-column:auto;
+  height:auto!important;min-height:190px!important;
+  padding:15px!important;gap:13px!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front{
+  background:linear-gradient(145deg,#fff,#f3fafc)!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back{
+  background:linear-gradient(155deg,#fff,#f5fbfd)!important;
+  border-color:#d4e6ec!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back::before{
+  height:2px;background:linear-gradient(90deg,#d3eaf0,#75b9d0,#d3eaf0);
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card.is-self.hc-id-card{
+  display:grid!important;grid-template-columns:clamp(72px,20vw,96px) minmax(0,1fr) clamp(57px,16vw,83px)!important;
+  align-items:center!important;gap:clamp(5px,1.5vw,12px)!important;
+  min-height:112px!important;padding:5px 0!important;overflow:visible!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-avatar,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-avatar.hc-avatar,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .hc-id-card .hc-avatar{
+  grid-column:1!important;grid-row:1!important;position:static!important;
+  width:100%!important;height:clamp(79px,23vw,102px)!important;
+  min-width:0!important;min-height:0!important;max-width:100%!important;
+  max-height:none!important;border-radius:15px!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-copy{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  justify-content:center!important;grid-column:2!important;grid-row:1!important;
+  min-width:0!important;gap:4px!important;text-align:left!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-name{
+  display:flex!important;flex-direction:column!important;align-items:flex-start!important;
+  justify-content:center!important;width:100%!important;max-width:100%!important;
+  gap:0!important;white-space:normal!important;text-align:left!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-first,
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-last{
+  display:block!important;width:100%!important;max-width:100%!important;overflow:hidden!important;
+  white-space:nowrap!important;text-overflow:ellipsis!important;
+  font-size:clamp(1.03rem,4.1vw,1.7rem)!important;line-height:1.08!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-email{
+  font-size:clamp(.62rem,2.2vw,.81rem)!important;max-width:100%!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-phone{
+  font-size:clamp(.77rem,2.7vw,1.06rem)!important;max-width:100%!important;
+  overflow:hidden!important;white-space:nowrap!important;text-overflow:ellipsis!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-ghe{
+  grid-column:3!important;grid-row:1!important;position:static!important;
+  width:100%!important;min-width:0!important;min-height:76px!important;
+  padding:4px!important;display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  background:#eaf7fa!important;border-radius:12px!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front .stip-person-card-ghe strong{
+  font-size:clamp(1.6rem,5.5vw,2.25rem)!important;line-height:1.05!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer{
+  margin-top:3px!important;padding-top:10px!important;justify-content:flex-end!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-turn,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-head button{
+  min-height:34px!important;padding:7px 12px!important;min-width:0!important;
+  border:1px solid #cde3e9!important;border-radius:99px!important;
+  background:#ebf6f9!important;color:#28677c!important;
+  font:850 .75rem/1.1 system-ui,sans-serif!important;box-shadow:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-button-dot{
+  background:#e82550;box-shadow:0 0 0 3px #fce0e7;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-head,
+.hc-home-top-nav[data-header-compact] .ghe-premium-live-title{color:#245b70!important}
+.hc-home-top-nav[data-header-compact] .ghe-premium-live-title small,
+.hc-home-top-nav[data-header-compact] .ghe-premium-disclaimer{color:#708994!important}
+.hc-home-top-nav[data-header-compact] .ghe-premium-total{
+  border-color:#d5e7ed!important;background:#fff!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-total b{color:#16708b!important}
+.hc-home-top-nav[data-header-compact] .ghe-premium-total span{color:#4e7180!important}
+.hc-home-top-nav[data-header-compact] .ghe-premium-all{
+  border-color:#cfe4eb!important;background:#fff!important;color:#206e89!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-panel{
+  display:grid;gap:8px;padding:10px;border:1px solid #daeaf0;
+  border-radius:13px;background:#fff;min-width:0;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-heading{
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
+  gap:5px;color:#2a6781;font:850 .7rem/1.2 system-ui,sans-serif;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-heading span{
+  color:#788b96;font:650 .6rem/1.2 system-ui,sans-serif;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-panel p{
+  margin:0;color:#617d89;font:.7rem/1.4 system-ui,sans-serif;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-row{
+  display:grid;grid-template-columns:minmax(0,1fr) 38px;align-items:center;gap:7px;
+  padding-top:8px;border-top:1px solid #e2edf1;min-width:0;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-person{
+  display:grid;grid-template-columns:30px minmax(0,1fr) 12px;gap:7px;
+  align-items:center;border:0;background:transparent;color:#245569;
+  font:inherit;text-align:left;min-width:0;padding:0;cursor:pointer;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-icon{
+  display:grid;place-items:center;width:30px;height:30px;border-radius:9px;
+  background:#edf7fa;font-size:1.1rem;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-text{
+  display:flex;flex-direction:column;min-width:0;gap:3px;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-text small{
+  font:850 .6rem/1.2 system-ui,sans-serif;color:#2c859d;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-text strong{
+  font:850 .82rem/1.2 system-ui,sans-serif;color:#244a5c;overflow-wrap:anywhere;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-text em{
+  font:650 .66rem/1.2 system-ui,sans-serif;font-style:normal;color:#728a95;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-chevron{color:#8ba2ac}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-row .hc-duty-chief-summary-call{
+  box-sizing:border-box;position:static!important;transform:none!important;
+  width:38px;height:38px;border:1px solid #d2e7ee;border-radius:10px;
+  background:#eaf7fa;color:#246c87;box-shadow:none!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-row .hc-duty-chief-summary-call.is-disabled{
+  background:#f1f5f7;color:#9aaab4;
+}
+@media(max-width:365px){
+  .hc-home-top-nav[data-header-compact] .ghe-premium-face{padding:10px!important}
+  .hc-home-top-nav[data-header-compact] .ghe-premium-chief-person{gap:4px}
+}
