@@ -1,0 +1,33 @@
+name: STIP planning import contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/admin-ghe-import/**'
+      - 'supabase/functions/_shared/planning-import-references.mjs'
+      - 'tools/stip-planning-import-semantics-test.mjs'
+      - 'docs/PLANNING_IMPORT_CONTRACT.md'
+      - '.github/workflows/stip-planning-import-contract.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/admin-ghe-import/**'
+      - 'supabase/functions/_shared/planning-import-references.mjs'
+      - 'tools/stip-planning-import-semantics-test.mjs'
+      - 'docs/PLANNING_IMPORT_CONTRACT.md'
+      - '.github/workflows/stip-planning-import-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  planning-import-semantics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify semantic planning import and staffing references
+        run: node --test tools/stip-planning-import-semantics-test.mjs
