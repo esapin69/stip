@@ -1,3 +1,7 @@
+## Contrat permanent d'import planning
+
+Toute modification de l'import Excel, des codes shifts, des effectifs, des données agents ou de l'interface Responsable doit consulter et respecter **`docs/PLANNING_IMPORT_CONTRACT.md`**, et exécuter `node --test tools/stip-planning-import-semantics-test.mjs`. Les colonnes ATTENDU sans titre ne sont jamais interprétées par supposition. Aucun import effectif n'est autorisé du seul fait d'un changement de contrat.
+
 ## 0. Architecture-first obligatoire
 Avant toute modification visuelle, lire aussi `VISUAL_MASTERS.md`. Une référence en cours de finalisation ne se propage que si `VISUAL_MASTERS.md` mentionne explicitement que sa propagation a été autorisée. La semaine maîtresse de Mon profil / Accueil personnel est dans ce cas : ses consommateurs compatibles sont volontairement branchés au composant partagé, et les prochains réglages doivent être faits à la base commune. Ce registre distingue les références explicitement validées par Eddy, les composants déjà canoniques et les candidats encore à confirmer. Ne jamais promouvoir un candidat en maître visuel sans validation explicite.
 
