@@ -545,8 +545,40 @@
     modal.setAttribute("aria-labelledby", "hcFeedbackTitle");
 
     const noteBlock = profile.allowNote
-      ? '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Ajoute seulement l’information utile"></textarea></section>'
+      ? event.kind === "intern"
+        ? '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Un fait utile à retenir <small>facultatif</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Un exemple concret, sans donnée concernant un patient"></textarea></section>'
+        : '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Ajoute seulement l’information utile"></textarea></section>'
       : "";
+    const stageBlock = event.kind === "intern" ? `
+      <section class="hc-feedback-stage" data-feedback-stage hidden>
+        <header class="hc-feedback-stage-head"><span>BILAN DE L’ACCOMPAGNEMENT</span><strong data-stage-progress>0 / 3</strong><p>Trois observations sur cette journée, pas une évaluation définitive.</p></header>
+        <div class="hc-feedback-stage-group"><strong>Qu’a fait le stagiaire aujourd’hui ?</strong>
+          <div class="hc-feedback-stage-options" role="group" aria-label="Participation observée">
+            <button type="button" data-stage-participation="observed" aria-pressed="false">Il a observé</button>
+            <button type="button" data-stage-participation="assisted" aria-pressed="false">Il a participé avec aide</button>
+            <button type="button" data-stage-participation="supervised" aria-pressed="false">Il a pratiqué sous supervision</button>
+          </div>
+        </div>
+        <div class="hc-feedback-stage-group"><strong>Quels points ont été abordés ?</strong><small>Plusieurs choix possibles</small>
+          <div class="hc-feedback-stage-options hc-feedback-stage-topics" role="group" aria-label="Points abordés">
+            <button type="button" data-stage-topic="organization" aria-pressed="false">Organisation du travail</button>
+            <button type="button" data-stage-topic="safety" aria-pressed="false">Sécurité et bonnes pratiques</button>
+            <button type="button" data-stage-topic="transport" aria-pressed="false">Déplacements / brancardage</button>
+            <button type="button" data-stage-topic="communication" aria-pressed="false">Communication</button>
+            <button type="button" data-stage-topic="tools" aria-pressed="false">Matériel et outils</button>
+            <button type="button" data-stage-topic="other" aria-pressed="false">Autre point</button>
+          </div>
+        </div>
+        <div class="hc-feedback-stage-group"><strong>Quelle suite semble utile ?</strong>
+          <div class="hc-feedback-stage-options" role="group" aria-label="Suite recommandée">
+            <button type="button" data-stage-next="discover" aria-pressed="false">Poursuivre la découverte</button>
+            <button type="button" data-stage-next="repeat" aria-pressed="false">Refaire ensemble un point</button>
+            <button type="button" data-stage-next="supervised" aria-pressed="false">Nouvelle pratique encadrée</button>
+            <button type="button" data-stage-next="referent" aria-pressed="false">À voir avec le référent</button>
+          </div>
+        </div>
+        <p class="hc-feedback-stage-privacy">Décris uniquement ce que tu as constaté. Aucune donnée patient ni jugement personnel.</p>
+      </section>` : "";
     const custom = event.question
       ? `<section class="hc-feedback-question hc-feedback-custom" hidden><span>QUESTION LIÉE À CET ÉVÉNEMENT</span><strong>${esc(
           event.question,
@@ -585,6 +617,7 @@
           <div class="hc-feedback-reason-options"></div>
         </section>
         ${custom}
+        ${stageBlock}
         ${noteBlock}
         <section class="hc-feedback-question hc-feedback-follow-toggle" data-follow-section hidden>
           <button type="button" data-follow="yes" aria-pressed="false">
@@ -627,7 +660,7 @@
           </div>
         </section>
         <p class="hc-feedback-error" aria-live="polite"></p>
-        <p class="hc-feedback-record-note">Retour professionnel daté et enregistré, consultable par les responsables. Aucune saisie libre n’est obligatoire.</p>
+        <p class="hc-feedback-record-note">${event.kind === "intern" ? "Bilan daté, accessible aux responsables. Les faits de cette journée ne constituent pas une validation de compétence." : "Retour professionnel daté et enregistré, consultable par les responsables. Aucune saisie libre n’est obligatoire."}</p>
         <button type="button" class="hc-feedback-submit" disabled>Enregistrer le retour</button>
       </div>
     </div>`;
@@ -641,7 +674,10 @@
       mailContext = null,
       mailContextKey = "",
       nativeOpened = false,
-      mailLoading = false;
+      mailLoading = false,
+      stageParticipation = "",
+      stageNext = "";
+    const stageTopics = new Set();
     const mailTo = new Set(),
       mailCc = new Set();
 
@@ -651,6 +687,8 @@
       followSection = modal.querySelector("[data-follow-section]"),
       customBox = modal.querySelector(".hc-feedback-custom"),
       noteBox = modal.querySelector("[data-feedback-note]"),
+      stageBox = modal.querySelector("[data-feedback-stage]"),
+      stageProgress = modal.querySelector("[data-stage-progress]"),
       submit = modal.querySelector(".hc-feedback-submit"),
       error = modal.querySelector(".hc-feedback-error"),
       note = modal.querySelector("#hcFeedbackNote"),
@@ -677,6 +715,8 @@
       if (!attendance) return false;
       if (attendance !== "ok" && !reasonCode) return false;
       if (event.question && attendance !== "absent" && !customAnswer) return false;
+      if (event.kind === "intern" && attendance !== "absent" &&
+          (!stageParticipation || !stageTopics.size || !stageNext)) return false;
       return true;
     };
 
@@ -685,6 +725,9 @@
       attendance,
       outcome: outcomeName(attendance),
       rating: null,
+      stage_review: event.kind === "intern" && attendance !== "absent"
+        ? { participation: stageParticipation, topics: [...stageTopics], next_step: stageNext }
+        : null,
       reason_code: attendance === "ok" ? null : reasonCode || null,
       follow_up: followUp,
       custom_answer:
@@ -725,6 +768,7 @@
         reasonCode,
         customAnswer,
         note: note ? String(note.value || "").trim() : "",
+        stageParticipation, stageTopics: [...stageTopics], stageNext,
       });
 
     const syncMailSelections = () => {
@@ -853,7 +897,27 @@
       following.hidden = !attendance;
       renderReasons();
 
-      if (noteBox) noteBox.hidden = !attendance || attendance === "ok";
+      if (noteBox) noteBox.hidden = !attendance || (attendance === "ok" && event.kind !== "intern");
+      if (stageBox) {
+        stageBox.hidden = !attendance || attendance === "absent";
+        stageBox.querySelectorAll("[data-stage-participation]").forEach(b => {
+          const selected = b.dataset.stageParticipation === stageParticipation;
+          b.classList.toggle("selected", selected);
+          b.setAttribute("aria-pressed", String(selected));
+        });
+        stageBox.querySelectorAll("[data-stage-topic]").forEach(b => {
+          const selected = stageTopics.has(b.dataset.stageTopic);
+          b.classList.toggle("selected", selected);
+          b.setAttribute("aria-pressed", String(selected));
+        });
+        stageBox.querySelectorAll("[data-stage-next]").forEach(b => {
+          const selected = b.dataset.stageNext === stageNext;
+          b.classList.toggle("selected", selected);
+          b.setAttribute("aria-pressed", String(selected));
+        });
+        if (stageProgress) stageProgress.textContent =
+          [Boolean(stageParticipation), stageTopics.size > 0, Boolean(stageNext)].filter(Boolean).length + " / 3";
+      }
 
       if (customBox)
         customBox.hidden =
@@ -886,6 +950,9 @@
           attendance = next;
           reasonCode = "";
           customAnswer = "";
+          stageParticipation = "";
+          stageTopics.clear();
+          stageNext = "";
           followUp = false;
           modal
             .querySelectorAll("[data-custom],[data-follow]")
@@ -930,6 +997,19 @@
           .forEach((b) => b.classList.toggle("selected", b === button));
         sync();
       };
+    });
+
+    stageBox?.addEventListener("click", (clickEvent) => {
+      const b = clickEvent.target.closest("button");
+      if (!b) return;
+      if (b.dataset.stageParticipation) stageParticipation = b.dataset.stageParticipation;
+      else if (b.dataset.stageTopic) {
+        if (stageTopics.has(b.dataset.stageTopic)) stageTopics.delete(b.dataset.stageTopic);
+        else stageTopics.add(b.dataset.stageTopic);
+      } else if (b.dataset.stageNext) stageNext = b.dataset.stageNext;
+      else return;
+      if (mailContext) resetMailFlow();
+      sync();
     });
 
     note?.addEventListener("input", () => {
