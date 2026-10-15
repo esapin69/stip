@@ -2513,38 +2513,6 @@
     return ["m","j","j4","s","n"].includes(base) ? "shift-" + base : "shift-other";
   }
 
-  // LIVE is a modal over the home page. Staff availability is derived only
-  // from the existing authorized team shift planning, never from an absence report.
-  function liveRoster() {
-    const team=document.getElementById("hcTeamFusion");
-    const allowed=has("planning_team");
-    const loaded=allowed && Array.isArray(team?._thfAgents);
-    const now=liveParisClock();
-    const entries=loaded?[...team._thfAgents]:[];
-    if (has("planning_personal")) {
-      const agent=state.boot?.agent || state.session?.agent || {};
-      const shift=(state.boot?.personal || []).find(x=>String(x.date||"").slice(0,10)===now.day);
-      if (shift) entries.push({...shift,code:shift.code||shift.source_value,agents:agent});
-    }
-    const seen=new Set(), active=[];
-    for(const item of entries) {
-      if(!liveCurrentlyWorking(item,now))continue;
-      const a=item.agents||{};
-      const identity=String(a.source_key||a.id||"").trim()||agentName(a).toLowerCase();
-      if(!identity||seen.has(identity))continue;
-      seen.add(identity);
-      active.push(item);
-    }
-    const chiefs=new Set((team?._thfChiefs||[]).map(x=>String(x.agents?.source_key||"")));
-    active.sort((a,b)=>{
-      const ca=Number(chiefs.has(String(a.agents?.source_key||"")));
-      const cb=Number(chiefs.has(String(b.agents?.source_key||"")));
-      return cb-ca ||
-        (liveWorkInterval(a)?.start??1440)-(liveWorkInterval(b)?.start??1440) ||
-        agentName(a.agents).localeCompare(agentName(b.agents),"fr");
-    });
-    return {rows:active,allowed,loaded};
-  }
   // Source canonique : planning d'équipe autorisé, horaires calculés à Paris.
   // Aucun marqueur de présence réelle ni déclaration d'absence.
   function liveRoster() {
@@ -2576,11 +2544,7 @@
   // Fast 3D flip: both faces live in one intrinsic CSS grid; neither side
   // has a nested scroll area. The full authorized roster is shown in a dialog.
   function premiumBackMarkup() {
-    const roster=liveRoster(),actions=pending(),now=Date.now();
-    const activity=notifications().filter(note=>{
-      const stamp=new Date(noteTimeValue(note)).getTime();
-      return Number.isFinite(stamp)&&stamp<=now&&now-stamp<86400000;
-    });
+    const roster=liveRoster();
     const counts=new Map();
     for(const item of roster.rows){
       const code=canonicalShift(item.code);
@@ -2603,19 +2567,19 @@
         '<div class="ghe-premium-distribution"><small>Shifts actuels</small>'+
           '<div class="ghe-premium-shifts">'+(pills||'<span class="ghe-premium-empty">'+esc(empty)+'</span>')+'</div></div>'+
       '</div>'+
+      (has("planning_team")?'<div id="homeDutyChiefNowHost" class="ghe-premium-chief-host" aria-label="Chefs d’équipe présents et relève"></div>':'')+
       '<button type="button" data-premium-roster class="ghe-premium-all">'+
         '<span>Voir '+(roster.rows.length?'les '+roster.rows.length+' collègues':'les collègues')+'</span>'+
         '<b aria-hidden="true">›</b></button>'+
-      '<div class="ghe-premium-activity">'+
-        '<button type="button" data-premium-actions><span>À traiter</span><b>'+actions.length+'</b></button>'+
-        '<button type="button" data-premium-activity><span>Activité récente</span><b>'+activity.length+'</b></button>'+
-      '</div>'+
       '<p class="ghe-premium-disclaimer">Selon le planning, pas une présence physique vérifiée.</p>'+
     '</div>';
   }
   function updateLiveCard() {
     const target=document.querySelector("#homeView .ghe-premium-back-body");
-    if(target?.isConnected&&state.ready) target.innerHTML=premiumBackMarkup();
+    if(target?.isConnected&&state.ready) {
+      target.innerHTML=premiumBackMarkup();
+      window.STIPDutyChiefs?.render?.();
+    }
   }
   function openPremiumRoster() {
     const roster=liveRoster();
@@ -3279,7 +3243,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI", "today")}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN", "tomorrow")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section id="homeDutyChiefNowHost" class="home-duty-chief-host hc-home-duty-chief-lower" aria-label="Chef d’équipe présent"></section><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI", "today")}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN", "tomorrow")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · SEMAINE</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(navigationWeek()[0]?.iso, navigationWeek()[navigationWeek().length - 1]?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3386,7 +3350,6 @@
         return;
       }
       if(event.target.closest("[data-premium-roster]")){openPremiumRoster();return;}
-      if(event.target.closest("[data-premium-actions],[data-premium-activity]"))openNotifications();
     });
 
     root.querySelectorAll("details[data-pilotage-role]").forEach(details =>
