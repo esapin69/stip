@@ -53,8 +53,11 @@ de la carte de profil, sans modifier les deux moteurs de données des cartes du 
 - **Recto** : Aujourd'hui à gauche, Demain à droite, mêmes détails, actions et popups.
 - **Verso** : **uniquement la semaine calendaire en cours** (lundi à dimanche) :
   lundi–vendredi sur la première ligne, samedi/dimanche sur la seconde.
-  La semaine suivante n'y figure plus : le tableau mensuel situé dessous couvre
-  déjà cette période. Aucune troisième rangée ni séparateur « SEMAINE PROCHAINE ».
+  Une seule carte **« Lundi prochain »** occupe la zone restante du verso :
+  code du shift et horaires **réellement disponibles** via le planning
+  (ou mention explicite si l'horaire est indisponible). Aucune deuxième semaine
+  complète, troisième rangée de 7 jours, ni flèches de navigation :
+  le tableau mensuel situé dessous assure cette navigation.
 - Les sept dates proviennent de `STIPWeekEngine.fullDates({weekOffset:0})`,
   avec la date de référence Europe/Paris. Ne pas recalculer les frontières
   de semaine localement ni modifier l'état de navigation des autres calendriers.
@@ -62,8 +65,13 @@ de la carte de profil, sans modifier les deux moteurs de données des cartes du 
   le même badge texte que le mois via `STIPMonthTable.shiftBadgeHtml`.
   Repos/congés/absences : **code seul, sans icône de repos sur ce verso**.
   Les pictogrammes de repos restent inchangés partout ailleurs.
-- Les en-têtes des jours sont **neutres**, sans bande bleu uniforme ; seules
-  les petites lignes de rappel et les badges des shifts conservent leur couleur.
+- Les jours travaillés reçoivent une **teinte légère de leur véritable shift**
+  (en-tête, filet de contour), tandis que les badges gardent la couleur pleine
+  du calendrier mensuel. Les repos restent neutres, sans icône.
+- Le recto et le verso ont **exactement la même hauteur** : les faces occupent
+  la même cellule CSS Grid et sa hauteur vient de la plus grande face, y compris
+  après chargement des cartes météo. Ne jamais réintroduire une mesure et une
+  hauteur figée de la seule face active.
 - Les événements personnels (rendez-vous, loisirs) sont en dessous, centrés
   verticalement, au maximum deux icônes puis `+N`. Aucune icône de chef
   dans les cartes.
@@ -72,7 +80,7 @@ de la carte de profil, sans modifier les deux moteurs de données des cartes du 
   restent dans cette fenêtre, jamais dans la vignette.
 - La face inactive est `inert` et masquée aux lecteurs d'écran. Une commande
   discrète sur chacune des faces retourne l'ensemble avec animation, comme
-  la carte de profil. La hauteur s'adapte à la face active sans scroll imbriqué.
+  la carte de profil. Une hauteur partagée évite les sauts sans scroll imbriqué.
 - L'ancienne ligne glissante de sept cartes n'est **plus montée à l'accueil**.
   Aucun badge flottant `LUNDI`, aucune répétition artificielle du lundi.
   Les rendez-vous et le bloc mensuel conservent leurs propres sections.
