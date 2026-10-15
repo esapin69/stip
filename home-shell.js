@@ -36,6 +36,7 @@
     monthDayFocus: "",
     homeMode: "planning",
     premiumFlipped: false,
+    weekFlipped: false,
     dateJumpMonth: parisIso().slice(0, 7),
     tableauFocus: false,
     communicationTab: "chat",
@@ -1545,6 +1546,95 @@
       })
       .join("")}</nav>`;
   }
+  // Double face accueil : meme dates du moteur maitre, pas sept jours glissants.
+  // Semaine courante lundi-vendredi, weekend sur une seconde ligne, puis semaine suivante complete.
+  function weekFlipDates(offset) {
+    const today = parisIso();
+    const dates = window.STIPWeekEngine?.fullDates?.({ weekOffset: offset }, { today });
+    return Array.isArray(dates) && dates.length === 7
+      ? dates.map((iso) => agendaRange(dateObj(iso), 1)[0]) : [];
+  }
+  function weekFlipDay(x, compact = false) {
+    const canonical = canonicalShift(x.code),
+      def = shiftDefinition(canonical),
+      waiting = x.code === "…",
+      empty = canonical === "—",
+      working = def?.is_working === true,
+      codeKey = canonical.replace(/[^A-Z0-9]/g, "").toLowerCase() || "none",
+      label = shiftMeta(canonical)[1] || canonical,
+      workBadge = working
+        ? (window.STIPMonthTable?.shiftBadgeHtml?.(x.code) ||
+          `<span class="stip-month-shift-badge code-${esc(codeKey)}">${esc(canonical)}</span>`) : "",
+      codeContent = workBadge ||
+        `<strong class="ghe-weekflip-rest-code">${esc(waiting ? "…" : empty ? "—" : canonical)}</strong>`,
+      restIcon = !working && !waiting && !empty ? shiftStatusIcon(canonical) : "",
+      dayName = x.d.toLocaleDateString("fr-FR", { weekday: "short" }).replace(".", "").toUpperCase(),
+      selected = state.dayFocus === x.iso,
+      title = x.d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    return `<button type="button" class="ghe-weekflip-day stip-week-day ${compact ? "is-compact" : ""} ${x.today ? "today" : ""} ${selected ? "selected" : ""} ${working ? "work" : "rest"} code-${esc(codeKey)}" data-home-day="${esc(x.iso)}" aria-pressed="${selected}" aria-label="${esc(title + " · " + label)}"${waiting ? ' disabled aria-disabled="true"' : ""}>
+      <span class="ghe-weekflip-day-head"><small>${esc(dayName)}</small><b>${x.d.getDate()}</b></span>
+      <span class="ghe-weekflip-day-body">
+        <span class="ghe-weekflip-shift">${codeContent}</span>
+        <span class="ghe-weekflip-rest-icon" aria-hidden="true">${restIcon ? esc(restIcon) : ""}</span>
+        ${weekEventBadges(x)}
+      </span>
+    </button>`;
+  }
+  function weekFlipBack() {
+    const current = weekFlipDates(0), next = weekFlipDates(1);
+    if (current.length !== 7 || next.length !== 7)
+      return '<p class="ghe-weekflip-unavailable">Planning hebdomadaire temporairement indisponible.</p>';
+    const weekdays=current.slice(0,5), weekend=current.slice(5);
+    const range = (rows) => esc(weekRangeLabel(rows));
+    return `<header class="ghe-weekflip-back-header">
+      <strong>CETTE SEMAINE</strong><small>${range(current)}</small></header>
+      <div class="ghe-weekflip-workdays" aria-label="Du lundi au vendredi">${weekdays.map(day => weekFlipDay(day)).join("")}</div>
+      <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>
+      <div class="ghe-weekflip-next-separator"><span>SEMAINE PROCHAINE</span><small>${range(next)}</small></div>
+      <div class="ghe-weekflip-next" aria-label="Les sept jours de la semaine prochaine">${next.map(day => weekFlipDay(day,true)).join("")}</div>`;
+  }
+  function weekFlipCard() {
+    const flipped=state.weekFlipped;
+    const today=parisIso(), tomorrow=dateIsoLocal(new Date(dateObj(today).getTime()+86400000));
+    const front=`<div class="hc-days-grid" aria-label="Aujourd’hui et demain">
+      <section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI","today")}${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}${homeDayAppointments(today,"Aujourd’hui")}</section>
+      <section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN","tomorrow")}${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}${homeDayAppointments(tomorrow,"Demain")}</section>
+    </div>`;
+    return `<section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé et semaines">
+      <div class="ghe-weekflip-track">
+        <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
+          ${front}
+          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Retourner le bloc pour voir cette semaine et la semaine prochaine">Voir les deux semaines <span aria-hidden="true">↻</span></button>
+        </div>
+        <div class="ghe-weekflip-face ghe-weekflip-back hc-week-context-master" data-stip-context-master="week" ${flipped?'aria-hidden="false"':'inert aria-hidden="true"'}>
+          ${weekFlipBack()}
+          <button type="button" class="ghe-weekflip-turn ghe-weekflip-return" data-week-turn-close aria-label="Revenir à Aujourd’hui et Demain">Aujourd’hui &amp; demain <span aria-hidden="true">↶</span></button>
+        </div>
+      </div></section>`;
+  }
+  function syncWeekFlipHeight(stage=document.querySelector("#homeView [data-week-flip]")) {
+    if (!stage?.isConnected) return;
+    const track=stage.querySelector(".ghe-weekflip-track");
+    const active=stage.querySelector(stage.dataset.side==="back" ? ".ghe-weekflip-back" : ".ghe-weekflip-front");
+    if (!track || !active) return;
+    const height=Math.ceil(Math.max(180,active.scrollHeight+2));
+    if (track.dataset.measuredHeight !== String(height)) {
+      track.dataset.measuredHeight=String(height);
+      track.style.height=height+"px";
+    }
+  }
+  function prepareWeekFlip(root) {
+    state.weekFlipObserver?.disconnect();
+    const stage=root.querySelector("[data-week-flip]");
+    if (!stage) return;
+    syncWeekFlipHeight(stage);
+    if (typeof ResizeObserver==="function") {
+      const observer=new ResizeObserver(()=>syncWeekFlipHeight(stage));
+      stage.querySelectorAll(".ghe-weekflip-face").forEach(face=>observer.observe(face));
+      state.weekFlipObserver=observer;
+    }
+  }
+
   function planningWeekSeparator() {
     return '<div class="hc-planning-period-separator hc-planning-week-separator stip-section-separator" aria-hidden="true"><span>LES 7 PROCHAINS JOURS</span></div>';
   }
@@ -3283,7 +3373,7 @@
     const weeklyDetails = futureWidget(),
       monthDetails = monthEventsWidget(),
       legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}<div class="hc-days-grid" aria-label="Aujourd’hui et demain"><section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI", "today")}${has("planning_personal") || has("planning_team") ? '<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>' : ""}${homeDayAppointments(parisIso(), "Aujourd’hui")}</section><section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN", "tomorrow")}${has("planning_personal") || has("planning_team") ? '<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>' : ""}${homeDayAppointments(dateIsoLocal(new Date(dateObj(parisIso()).getTime() + 86400000)), "Demain")}</section></div>${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${planningWeekSeparator()}<section class="hc-planning-subblock hc-planning-week-subblock">${weekWidget()}</section>${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · 7 JOURS</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(upcomingHomeWeek()[0]?.iso, upcomingHomeWeek().at(-1)?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · 7 JOURS</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(upcomingHomeWeek()[0]?.iso, upcomingHomeWeek().at(-1)?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3337,6 +3427,7 @@
     state.renderSig = markup;
     root.innerHTML = markup;
     preparePremiumLayout(root);
+    prepareWeekFlip(root);
     keepHomeFeedbackPriority(root);
     const sharedTeamOptions = {
       personal: state.boot?.personal || [],
@@ -3376,6 +3467,22 @@
     root
       .querySelector("[data-header-date-search]")
       ?.addEventListener("click", openHeaderDateSearch);
+    const weekFlip=root.querySelector("[data-week-flip]");
+    weekFlip?.addEventListener("click", event => {
+      const turnOpen=event.target.closest("[data-week-turn-open]");
+      const turnClose=event.target.closest("[data-week-turn-close]");
+      if (!turnOpen && !turnClose) return;
+      state.weekFlipped=Boolean(turnOpen);
+      weekFlip.dataset.side=state.weekFlipped?"back":"front";
+      const front=weekFlip.querySelector(".ghe-weekflip-front"),back=weekFlip.querySelector(".ghe-weekflip-back");
+      front?.toggleAttribute("inert",state.weekFlipped);
+      front?.setAttribute("aria-hidden",String(state.weekFlipped));
+      back?.toggleAttribute("inert",!state.weekFlipped);
+      back?.setAttribute("aria-hidden",String(!state.weekFlipped));
+      weekFlip.querySelector("[data-week-turn-open]")?.setAttribute("aria-expanded",String(state.weekFlipped));
+      syncWeekFlipHeight(weekFlip);
+      weekFlip.querySelector(state.weekFlipped?"[data-week-turn-close]":"[data-week-turn-open]")?.focus({preventScroll:true});
+    });
     const premium=root.querySelector("[data-premium-flip]");
     premium?.addEventListener("click",event=>{
       const open=event.target.closest("[data-premium-turn-open]");
@@ -4193,7 +4300,7 @@
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", () => document.getElementById("hcBellDialog")?.close?.());
-  window.addEventListener("stip:session-ended",()=>{state.premiumFlipped=false;});
+  window.addEventListener("stip:session-ended",()=>{state.premiumFlipped=false;state.weekFlipped=false;});
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
