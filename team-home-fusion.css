@@ -1206,7 +1206,7 @@
   display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
   gap:6px;width:100%;min-width:0;align-items:stretch
 }
-.hc-days-grid .thf-day-card .thf-shift-actions>button{
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions>button{
   display:inline-flex!important;flex-direction:row!important;align-items:center!important;
   justify-content:center!important;gap:4px!important;min-width:0!important;
   width:100%!important;height:40px!important;min-height:40px!important;
@@ -1216,21 +1216,21 @@
   font:inherit;font-size:.83rem!important;font-weight:950!important;
   box-shadow:0 2px 5px #123b4710!important;cursor:pointer;
 }
-.hc-days-grid .thf-day-card .thf-shift-actions .thf-shift-chiefs{
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions .thf-shift-chiefs{
   border-color:#ebdbba!important;background:#fff9ecf0!important;color:#946219!important
 }
-.hc-days-grid .thf-day-card .thf-shift-actions>button>span{
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions>button>span{
   font-size:1rem!important;line-height:1!important
 }
-.hc-days-grid .thf-day-card .thf-shift-actions>button>b{
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions>button>b{
   font-size:1.02rem!important;line-height:1!important
 }
-.hc-days-grid .thf-day-card .thf-shift-actions>button:focus-visible{
+.hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions>button:focus-visible{
   outline:3px solid #168ca9!important;outline-offset:2px
 }
 @media(max-width:380px){
   .hc-days-grid .thf-day-card .thf-shift-actions{gap:4px}
-  .hc-days-grid .thf-day-card .thf-shift-actions>button{gap:2px!important}
+  .hc-days-grid .thf-day-card .thf-day-post .thf-shift-stack .thf-shift-actions>button{gap:2px!important}
 }
 
 /* Scène météo fixe : illustrations vectorielles intégrées, sans animation ni média distant.
@@ -1516,6 +1516,6 @@
 @media(max-width:390px){
   .hc-days-grid .thf-weather-stage[data-rest="true"] .thf-rest-illustration{right:2%;width:86px}
   .hc-days-grid .thf-day-trigger .thf-inline-weather .hc-shift-weather-rain{
-    font-size:.72rem!important;padding:5px 3px!important
+    font-size:.72rem!important;padding:0!important
   }
 }
