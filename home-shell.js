@@ -4094,6 +4094,10 @@ function personalDrawerRow(icon,label,action,meta="") {
     if(!dialog.open)dialog.showModal();
     renderBellEntries(typeof filter==="string"?filter:"all");
     dialog.querySelector("[data-bell-close]")?.focus({preventScroll:true});
+    // La liste est immédiatement utilisable, puis les données sont
+    // rafraîchies si elles ont plus d'une minute (sans vider l'écran).
+    if(state.ready && token() && Date.now()-Number(state.lastRefreshAt||0)>60000)
+      refresh().catch(()=>{});
   }
   function renderActionCenter(filter = state.actionFilter) {
     const body = $("#hsPanelBody");
