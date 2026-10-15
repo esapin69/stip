@@ -36,6 +36,15 @@ assert.match(css, /\.thf-weather-stage::after/);
 assert.match(css, /\.thf-weather-stage\[data-sky="fog"\]::after/);
 assert.match(css, /\.thf-popup \.thf-popup-hero \.thf-weather-art/);
 assert.match(css, /\.thf-art-cloud-main\{display:block\}/);
+assert.match(css, /opacity:\.70;pointer-events:none;user-select:none;/,
+  "Sun and cloud illustration must be visible, not faded to 21% opacity");
+assert.match(css, /filter:saturate\(1\.22\) contrast\(1\.08\)/,
+  "Weather art must retain a readable colored silhouette");
+assert(css.includes("#87c9f0") && css.includes("#9bcfeb") &&
+  css.includes("#88b8d4") && css.includes("#7fa5bb"),
+  "Sky palettes must visibly distinguish sunny, mixed, rain and storm");
+assert(home.includes('<span aria-hidden="true">🎨</span><b>'),
+  "Chiefs use the approved palette icon, not a crown");
 assert.doesNotMatch(css, /@import|image-set\(|url\(["']?https?:/i);
 for (const sky of ["sunny", "partly", "cloudy", "fog", "drizzle",
   "rain", "heavy-rain", "storm", "snow", "mixed"]) {
@@ -73,7 +82,7 @@ assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
 for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
-  assert(index.includes(asset + "?v=20261015-weather-chief-gate1"),
+  assert(index.includes(asset + "?v=20261015-weather-contrast2"),
     "New card asset URL not refreshed: " + asset);
 assert(index.includes("shift-weather-mini.js?v=20261015-chefs-rest-rain1"),
   "The unchanged canonical weather engine must stay available");
