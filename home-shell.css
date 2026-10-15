@@ -5359,8 +5359,8 @@ body.hc-shift-detail-open{overflow:hidden}
   color:#647f89!important;font:950 .73rem/1.12 system-ui,sans-serif!important;
   letter-spacing:.13em!important;text-align:center!important;
 }
-.hc-home-top-nav .ghe-home-premium-separator{margin-top:14px!important;margin-bottom:0!important;}
-.hc-home-pane-planning .ghe-home-flip-separator{margin-top:2px!important;margin-bottom:-12px!important;}
+.hc-home-top-nav .ghe-home-premium-separator{margin-top:30px!important;margin-bottom:6px!important;}
+.hc-home-pane-planning .ghe-home-flip-separator{margin-top:8px!important;margin-bottom:8px!important;}
 .hc-home-top-nav .ghe-home-premium-separator[data-side="back"]>span{
   color:#b62d53!important;display:inline-flex!important;align-items:center!important;gap:7px!important;
 }
@@ -5378,4 +5378,41 @@ body.hc-shift-detail-open{overflow:hidden}
 .hc-home-pane-planning .hc-planning-month-separator>span,
 .hc-home-pane-planning .hc-planning-legend-separator>span{
   color:#647f89!important;font-weight:950!important;letter-spacing:.13em!important;
+}
+
+/* 20261016 — Une étiquette extérieure par colonne sur le recto 360°,
+   une seule au verso ; hauteur des cartes et retournement préservés. */
+.hc-home-pane-planning .ghe-home-week-headings{
+  box-sizing:border-box!important;display:block!important;width:100%!important;
+  min-width:0!important;margin:6px auto -8px!important;
+}
+.hc-home-pane-planning .ghe-home-week-headings-front{
+  box-sizing:border-box!important;display:grid!important;
+  width:100%!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  column-gap:10px!important;padding:0 10px!important;
+}
+.hc-home-pane-planning .ghe-home-week-column-heading,
+.hc-home-pane-planning .ghe-home-week-heading-back{
+  width:100%!important;min-width:0!important;box-sizing:border-box!important;
+  margin:0!important;padding:0!important;gap:7px!important;
+}
+.hc-home-pane-planning .ghe-home-week-column-heading{
+  grid-template-columns:minmax(10px,1fr) auto minmax(10px,1fr)!important;
+}
+.hc-home-pane-planning .ghe-home-week-column-heading>span{
+  font-size:clamp(.62rem,2.55vw,.75rem)!important;
+  letter-spacing:.10em!important;white-space:nowrap!important;
+}
+.hc-home-pane-planning .ghe-home-week-heading-back{
+  width:calc(100% - 20px)!important;margin-inline:10px!important;
+}
+.hc-home-pane-planning .ghe-home-week-heading-back>span{
+  font-size:.73rem!important;letter-spacing:.13em!important;
+}
+.hc-home-pane-planning .ghe-home-week-headings [hidden]{display:none!important;}
+.hc-home-pane-planning>.hc-home-identity-only{margin-bottom:18px!important;}
+@media(max-width:360px){
+  .hc-home-pane-planning .ghe-home-week-headings-front{column-gap:6px!important;padding-inline:7px!important;}
+  .hc-home-pane-planning .ghe-home-week-column-heading{gap:5px!important;}
+  .hc-home-pane-planning .ghe-home-week-column-heading>span{font-size:.60rem!important;letter-spacing:.07em!important;}
 }

@@ -1622,8 +1622,14 @@
       <section class="hc-day-column" aria-label="Aujourd’hui">${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}</section>
       <section class="hc-day-column" aria-label="Demain">${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}</section>
     </div>`;
-    const heading=flipped?"CETTE SEMAINE":"AUJOURD’HUI & DEMAIN";
-    return `<div class="stip-section-separator ghe-home-global-separator ghe-home-flip-separator" data-week-separator role="separator" aria-label="${esc(heading)}"><span data-week-separator-label>${esc(heading)}</span></div><section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
+    const heading=flipped?"CETTE SEMAINE":"Aujourd’hui et demain";
+    return `<div class="ghe-home-week-headings" data-week-separator data-side="${flipped?"back":"front"}" role="group" aria-label="${esc(heading)}">
+      <div class="ghe-home-week-headings-front" data-week-headings-front ${flipped?'hidden aria-hidden="true"':'aria-hidden="false"'}>
+        <div class="stip-section-separator ghe-home-global-separator ghe-home-week-column-heading" role="separator" aria-label="Aujourd’hui"><span>AUJOURD’HUI</span></div>
+        <div class="stip-section-separator ghe-home-global-separator ghe-home-week-column-heading" role="separator" aria-label="Demain"><span>DEMAIN</span></div>
+      </div>
+      <div class="stip-section-separator ghe-home-global-separator ghe-home-week-heading-back" data-week-headings-back role="separator" aria-label="Cette semaine" ${flipped?'aria-hidden="false"':'hidden aria-hidden="true"'}><span>CETTE SEMAINE</span></div>
+    </div><section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
       <div class="ghe-weekflip-track">
         <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
           ${front}
@@ -3632,12 +3638,17 @@ function personalDrawerRow(icon,label,action,meta="") {
       if (!turnOpen && !turnClose) return;
       state.weekFlipped=Boolean(turnOpen);
       weekFlip.dataset.side=state.weekFlipped?"back":"front";
-      const weekHeading=state.weekFlipped?"CETTE SEMAINE":"AUJOURD’HUI & DEMAIN";
+      const weekHeading=state.weekFlipped?"CETTE SEMAINE":"Aujourd’hui et demain";
       const weekSeparator=root.querySelector("[data-week-separator]");
       if(weekSeparator){
+        weekSeparator.dataset.side=state.weekFlipped?"back":"front";
         weekSeparator.setAttribute("aria-label",weekHeading);
-        const text=weekSeparator.querySelector("[data-week-separator-label]");
-        if(text)text.textContent=weekHeading;
+        const frontHeadings=weekSeparator.querySelector("[data-week-headings-front]");
+        const backHeading=weekSeparator.querySelector("[data-week-headings-back]");
+        frontHeadings?.toggleAttribute("hidden",state.weekFlipped);
+        frontHeadings?.setAttribute("aria-hidden",String(state.weekFlipped));
+        backHeading?.toggleAttribute("hidden",!state.weekFlipped);
+        backHeading?.setAttribute("aria-hidden",String(!state.weekFlipped));
       }
       const front=weekFlip.querySelector(".ghe-weekflip-front"),back=weekFlip.querySelector(".ghe-weekflip-back");
       front?.toggleAttribute("inert",state.weekFlipped);
