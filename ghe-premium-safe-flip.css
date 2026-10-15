@@ -634,3 +634,11 @@
 .hc-home-top-nav[data-header-compact] .ghe-premium-chief-person{
   width:100%!important;min-width:0!important;
 }
+
+/* Entire visible chief card opens the shared person-actions sheet. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-row{
+  grid-template-columns:minmax(0,1fr)!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-chief-person{
+  width:100%!important;min-height:56px!important;
+}
