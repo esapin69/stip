@@ -184,3 +184,98 @@
   .ghe-weekflip-day-head b{font-size:1rem!important}
 }
 @media(prefers-reduced-motion:reduce){.ghe-weekflip-track{transition:none!important}}
+
+/* Complément : teintes liées au code de shift, sans aplats bleus uniformes.
+   Les deux faces se partagent une seule rangée CSS Grid, hauteur intrinsèque
+   égale au maximum de leurs contenus (même pendant le retournement). */
+.ghe-weekflip-track{
+  height:auto!important;
+  grid-template-rows:auto!important;
+  align-items:stretch!important;
+}
+.ghe-weekflip-face{align-self:stretch!important;}
+.ghe-weekflip-day.stip-week-day.work{
+  border-color:color-mix(in srgb,var(--weekflip-marker) 67%,#d4e1e4)!important;
+  box-shadow:0 3px 9px color-mix(in srgb,var(--weekflip-marker) 13%,transparent)!important;
+}
+.ghe-weekflip-day.work .ghe-weekflip-day-head{
+  background:color-mix(in srgb,var(--weekflip-marker) 17%,white)!important;
+  border-bottom-color:color-mix(in srgb,var(--weekflip-marker) 80%,#cbdde2)!important;
+  color:#253d49!important;
+}
+.ghe-weekflip-day.work .ghe-weekflip-day-body{
+  background:color-mix(in srgb,var(--weekflip-marker) 5%,white)!important;
+}
+.ghe-weekflip-day.today.work .ghe-weekflip-day-head{
+  background:color-mix(in srgb,var(--weekflip-marker) 23%,white)!important;
+}
+/* Un seul aperçu, pas une seconde semaine ni des flèches concurrentes. */
+.ghe-weekflip-monday-preview.stip-week-day{
+  --weekflip-marker:#a6b9c2;
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(100px,auto)!important;
+  align-items:center!important;
+  column-gap:12px!important;row-gap:8px!important;
+  flex:1 1 auto!important;
+  min-height:108px!important;
+  width:100%!important;
+  padding:16px 18px!important;
+  margin:6px 0 0!important;
+  border:1px solid color-mix(in srgb,var(--weekflip-marker) 46%,#d3e2e7)!important;
+  border-left:4px solid var(--weekflip-marker)!important;
+  border-radius:17px!important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--weekflip-marker) 11%,white),#fff 85%)!important;
+  box-shadow:0 5px 12px rgba(22,70,85,.07)!important;
+  color:#254958!important;
+  cursor:pointer!important;
+  text-align:left!important;
+  transform:none!important;
+}
+.ghe-weekflip-monday-preview.code-m{--weekflip-marker:var(--stip-shift-m,#1784ec)}
+.ghe-weekflip-monday-preview.code-j{--weekflip-marker:var(--stip-shift-j,#00ab68)}
+.ghe-weekflip-monday-preview.code-j4{--weekflip-marker:var(--stip-shift-j4,#ff9600)}
+.ghe-weekflip-monday-preview.code-s{--weekflip-marker:var(--stip-shift-s,#f4cb00)}
+.ghe-weekflip-monday-preview.code-n{--weekflip-marker:var(--stip-shift-n,#202830)}
+.ghe-weekflip-monday-preview-copy{
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;
+  align-items:flex-start!important;justify-content:center!important;
+  gap:7px!important;min-width:0!important;
+}
+.ghe-weekflip-monday-preview-copy small{
+  color:color-mix(in srgb,var(--weekflip-marker) 70%,#365565)!important;
+  font:900 .66rem/1.1 system-ui,sans-serif!important;
+  letter-spacing:.06em!important;
+}
+.ghe-weekflip-monday-preview-copy strong{
+  color:#244b5a!important;
+  font:950 clamp(.94rem,3.6vw,1.13rem)/1.17 system-ui,sans-serif!important;
+  text-transform:capitalize!important;
+}
+.ghe-weekflip-monday-preview-schedule{
+  display:flex!important;flex-direction:column!important;
+  align-items:center!important;justify-content:center!important;
+  gap:6px!important;
+  min-width:0!important;
+}
+.ghe-weekflip-monday-preview-schedule .ghe-weekflip-shift{
+  width:auto!important;min-height:27px!important;flex:0 0 auto!important;
+}
+.ghe-weekflip-preview-time{
+  font:900 .8rem/1.15 system-ui,sans-serif!important;
+  color:#234f65!important;white-space:nowrap!important;
+}
+.ghe-weekflip-preview-time-note{
+  font:800 .71rem/1.2 system-ui,sans-serif!important;
+  color:#647b85!important;
+  text-align:center!important;
+}
+@media(max-width:390px){
+  .ghe-weekflip-monday-preview.stip-week-day{
+    grid-template-columns:minmax(0,1fr) minmax(80px,auto)!important;
+    padding:12px 10px!important;gap:7px!important;
+  }
+  .ghe-weekflip-monday-preview-copy strong{font-size:.93rem!important}
+  .ghe-weekflip-preview-time{font-size:.7rem!important}
+}
