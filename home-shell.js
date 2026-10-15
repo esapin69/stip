@@ -1595,12 +1595,12 @@
           `<span class="stip-month-shift-badge code-${esc(kind)}">${esc(canonical)}</span>`)
         : `<strong class="ghe-weekflip-rest-code">${esc(canonical)}</strong>`,
       timing=working && day.time
-        ? `<strong class="ghe-weekflip-monday-time">${esc(day.time)}</strong>`
-        : `<small class="ghe-weekflip-monday-time-note">${esc(waiting?"Planning en cours de chargement":working?"Horaire non communiqué":def?.label||canonical)}</small>`,
+        ? `<strong class="ghe-weekflip-preview-time">${esc(day.time)}</strong>`
+        : `<small class="ghe-weekflip-preview-time-note">${esc(waiting?"Planning en cours de chargement":working?"Horaire non communiqué":def?.label||canonical)}</small>`,
       title=day.d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-    return `<button type="button" class="ghe-weekflip-next-monday stip-week-day code-${esc(kind)}" data-home-day="${esc(day.iso)}" aria-label="${esc("Consulter le "+title+" · "+(def?.label||canonical)+(working&&day.time?" · "+day.time:""))}"${waiting?' disabled aria-disabled="true"':""}>
-      <span class="ghe-weekflip-next-monday-copy"><small>UN ŒIL SUR LUNDI PROCHAIN</small><strong>${esc(title)}</strong></span>
-      <span class="ghe-weekflip-next-monday-schedule"><span class="ghe-weekflip-shift">${shift}</span>${timing}</span>
+    return `<button type="button" class="ghe-weekflip-monday-preview stip-week-day code-${esc(kind)}" data-home-day="${esc(day.iso)}" aria-label="${esc("Consulter le "+title+" · "+(def?.label||canonical)+(working&&day.time?" · "+day.time:""))}"${waiting?' disabled aria-disabled="true"':""}>
+      <span class="ghe-weekflip-monday-preview-copy"><small>UN ŒIL SUR LUNDI PROCHAIN</small><strong>${esc(title)}</strong></span>
+      <span class="ghe-weekflip-monday-preview-schedule"><span class="ghe-weekflip-shift">${shift}</span>${timing}</span>
     </button>`;
   }
   function weekFlipBack() {
