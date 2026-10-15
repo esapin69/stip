@@ -62,6 +62,15 @@ pour ces sept dates. Les deux grandes cartes « Aujourd'hui » et « Demain » r
 - La ligne de l'accueil n'affiche pas les grosses flèches précédent/suivant :
   la navigation chronologique demeure disponible dans « Au mois » et les autres vues.
 - Les rendez-vous et activités rattachés à cette ligne utilisent les mêmes sept dates ISO.
+- Les sept cartes affichent le code du shift même en repos. Les shifts travaillés
+  n'ont **aucune pastille**. Seuls repos/congés/absences affichent leur icône.
+- Les repères de rendez-vous et loisirs sont centrés **verticalement**,
+  jamais côte à côte. Deux icônes au maximum, puis compteur `+N`.
+  Le repère chefs d'équipe est **interdit dans les cartes**.
+- Appuyer sur une carte ouvre le même popup de jour que Aujourd'hui/Demain
+  via `STIPTeamFusion.openDate` et les mêmes sources/permissions, avec accès aux chefs
+  uniquement à l'intérieur de cette fenêtre.
+
 - Changement de jour Europe/Paris : reconstituer le bloc lorsque l'accueil est visible,
   et également lorsque l'utilisateur revient sur l'onglet.
 - Ne pas modifier `visibleDates`, `display`, `move` ni leur pont du lundi pour les
