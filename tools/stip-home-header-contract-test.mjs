@@ -47,5 +47,5 @@ for(const file of ["index.html","esprit-equipe.html","responsable.html"]) {
  assert(page.includes("stip-home-scroll.js?v="),file+" n'importe pas la continuité du scroll");
 }
 assert(read("stip-home-scroll.js").includes("window.scrollY > 500"),"Contrat scroll commun absent");
-assert(read("event-feedback.js").includes('week.insertAdjacentElement("afterend", host)'),"Retours actifs non associés à la semaine");
+assert(home.includes('anchor.insertAdjacentElement("afterend", followUps)') && home.includes('id="hcTopPriorityAnchor"'),"Retours actifs non associés au haut de l’accueil");
 console.log("GHE simplified home + drawer contract OK");
