@@ -1578,6 +1578,31 @@
       </span>
     </button>`;
   }
+  // Un seul jour d'anticipation : le lundi de la semaine suivante.
+  // La date et ses horaires viennent des sources ordinaires du planning.
+  function weekFlipNextMonday() {
+    const monday=window.STIPWeekEngine?.fullDates?.({ weekOffset: 1 }, { today: parisIso() })?.[0];
+    if(!monday) return "";
+    const day=agendaRange(dateObj(monday),1)[0];
+    if(!day) return "";
+    const canonical=canonicalShift(day.code),
+      waiting=day.code==="…",
+      def=shiftDefinition(canonical),
+      working=def?.is_working===true,
+      kind=canonical.replace(/[^A-Z0-9]/g,"").toLowerCase() || "none",
+      shift=working
+        ? (window.STIPMonthTable?.shiftBadgeHtml?.(day.code) ||
+          `<span class="stip-month-shift-badge code-${esc(kind)}">${esc(canonical)}</span>`)
+        : `<strong class="ghe-weekflip-rest-code">${esc(canonical)}</strong>`,
+      timing=working && day.time
+        ? `<strong class="ghe-weekflip-preview-time">${esc(day.time)}</strong>`
+        : `<small class="ghe-weekflip-preview-time-note">${esc(waiting?"Planning en cours de chargement":working?"Horaire non communiqué":def?.label||canonical)}</small>`,
+      title=day.d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+    return `<button type="button" class="ghe-weekflip-monday-preview stip-week-day code-${esc(kind)}" data-home-day="${esc(day.iso)}" aria-label="${esc("Consulter le "+title+" · "+(def?.label||canonical)+(working&&day.time?" · "+day.time:""))}"${waiting?' disabled aria-disabled="true"':""}>
+      <span class="ghe-weekflip-monday-preview-copy"><small>UN ŒIL SUR LUNDI PROCHAIN</small><strong>${esc(title)}</strong></span>
+      <span class="ghe-weekflip-monday-preview-schedule"><span class="ghe-weekflip-shift">${shift}</span>${timing}</span>
+    </button>`;
+  }
   function weekFlipBack() {
     const current = weekFlipDates();
     if (current.length !== 7)
@@ -1587,7 +1612,8 @@
     return `<header class="ghe-weekflip-back-header">
       <strong>CETTE SEMAINE</strong><small>${range(current)}</small></header>
       <div class="ghe-weekflip-workdays" aria-label="Du lundi au vendredi">${weekdays.map(day => weekFlipDay(day)).join("")}</div>
-      <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>`;
+      <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>
+      ${weekFlipNextMonday()}`;
   }
   function weekFlipCard() {
     const flipped=state.weekFlipped;
@@ -1608,27 +1634,21 @@
         </div>
       </div></section>`;
   }
+  // La grille CSS superpose les deux faces dans la meme cellule ;
+  // sa hauteur intrinsèque est le MAXIMUM des deux, meme après chargement des images.
+  // Ne jamais figer le track sur la hauteur de la face active : c'etait
+  // la source de la grande zone vide et du reflow au retournement.
   function syncWeekFlipHeight(stage=document.querySelector("#homeView [data-week-flip]")) {
     if (!stage?.isConnected) return;
     const track=stage.querySelector(".ghe-weekflip-track");
-    const active=stage.querySelector(stage.dataset.side==="back" ? ".ghe-weekflip-back" : ".ghe-weekflip-front");
-    if (!track || !active) return;
-    const height=Math.ceil(Math.max(180,active.scrollHeight+2));
-    if (track.dataset.measuredHeight !== String(height)) {
-      track.dataset.measuredHeight=String(height);
-      track.style.height=height+"px";
-    }
+    if (!track) return;
+    track.style.removeProperty("height");
+    delete track.dataset.measuredHeight;
   }
   function prepareWeekFlip(root) {
     state.weekFlipObserver?.disconnect();
-    const stage=root.querySelector("[data-week-flip]");
-    if (!stage) return;
-    syncWeekFlipHeight(stage);
-    if (typeof ResizeObserver==="function") {
-      const observer=new ResizeObserver(()=>syncWeekFlipHeight(stage));
-      stage.querySelectorAll(".ghe-weekflip-face").forEach(face=>observer.observe(face));
-      state.weekFlipObserver=observer;
-    }
+    state.weekFlipObserver=null;
+    syncWeekFlipHeight(root.querySelector("[data-week-flip]"));
   }
 
   function planningWeekSeparator() {
