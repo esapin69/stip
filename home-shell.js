@@ -1593,8 +1593,8 @@
     const flipped=state.weekFlipped;
     const today=parisIso(), tomorrow=dateIsoLocal(new Date(dateObj(today).getTime()+86400000));
     const front=`<div class="hc-days-grid" aria-label="Aujourd’hui et demain">
-      <section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI","today")}${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}${homeDayAppointments(today,"Aujourd’hui")}</section>
-      <section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN","tomorrow")}${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}${homeDayAppointments(tomorrow,"Demain")}</section>
+      <section class="hc-day-column" aria-label="Aujourd’hui">${homeTimelineSeparator("AUJOURD’HUI","today")}${has("planning_personal")||has("planning_team")?'<section id="hcTeamFusion" class="hc-team-fusion hc-team-compact" aria-label="Résumé aujourd’hui"></section>':""}</section>
+      <section class="hc-day-column" aria-label="Demain">${homeTimelineSeparator("DEMAIN","tomorrow")}${has("planning_personal")||has("planning_team")?'<section id="hcTomorrowFusion" class="hc-team-fusion hc-team-compact hc-tomorrow-fusion" aria-label="Résumé demain"></section>':""}</section>
     </div>`;
     return `<section class="ghe-weekflip-stage" data-week-flip data-side="${flipped?"back":"front"}" aria-label="Résumé des jours et semaine actuelle">
       <div class="ghe-weekflip-track">
@@ -2797,14 +2797,12 @@
     const count=notifications().length;
     const tools='<div class="hc-home-top-tools ghe-home-topbar">'+
       '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
-        'aria-haspopup="dialog" aria-controls="hcShortcutsDialog" aria-label="Ouvrir les raccourcis">'+
+        'aria-haspopup="dialog" aria-controls="hcPersonalDrawer" aria-label="Ouvrir mon espace">'+
         '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
         (count?'<b>'+count+'</b>':'')+'</button>'+
-      '<span class="ghe-home-tools-right">'+tDoorShortcut()+
-        '<span class="hc-home-wheelchair-slot">'+wheelchairShortcut()+'</span>'+
-      '</span></div>';
+      '<span class="ghe-home-tools-right" aria-hidden="true"></span></div>';
     const face=state.premiumFlipped?'back':'front';
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
@@ -2831,6 +2829,7 @@
   }
 
   function shortcutsPopup() {
+    if (!has("admin")) return "";
     const role = pilotageRoleKey(),
       content = pilotageBlock(),
       roleLabel =
@@ -2853,6 +2852,143 @@
       </section>
     </dialog>`;
   }
+
+function personalDrawerRow(icon,label,action,meta="") {
+  return `<button type="button" class="ghe-drawer-row" data-ghe-drawer-action="${esc(action)}"><span class="ghe-drawer-row-icon" aria-hidden="true">${icon}</span><span class="ghe-drawer-row-text"><strong>${esc(label)}</strong>${meta ? `<small>${esc(meta)}</small>` : ""}</span><span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>`;
+}
+  function personalDrawerEntries() {
+  return [
+    { title:"Accueil", subtitle:"Planning du jour et calendrier", icon:"⌂", action:"home" },
+    { title:"Mes rendez-vous", subtitle:"Dates et événements à venir", icon:"▦", action:"future" },
+    { title:"Applications et outils", subtitle:"Mes applications, favoris et catalogue", icon:"▦", action:"apps" },
+    { title:"Activité récente", subtitle:"Dernières notifications et événements", icon:"◷", action:"recent" },
+    ...(has("places") || has("admin") ? [{title:"Visite des lieux",subtitle:"Bâtiments, étages et services",icon:"⌖",action:"places"}] : []),
+    ...(has("agent_directory") || has("admin") ? [{title:"Collègues",subtitle:"Rechercher une personne",icon:"♙",action:"agents"}] : []),
+    ...(has("messages") ? [{title:"Communication",subtitle:"Chat équipe, messages et fauteuils",icon:"♧",action:"communication"},{title:"Fauteuils",subtitle:"Signalements et échanges",icon:"♿",action:"wheelchairs"}] : []),
+    ...(has("planning_personal") ? [{title:"Mon planning",subtitle:"Mes horaires",icon:"▤",action:"planning"}] : []),
+    {title:"Sorties et trajets",subtitle:"Activités, invitations et déplacements",icon:"↗",action:"leisure"},
+    {title:"Dudy au GHE",subtitle:"Divertissement et épisodes",icon:"▣",action:"dudy"},
+    {title:"Application GHE",subtitle:"Installer ou ouvrir l'application",icon:"▥",action:"mobile"},
+    ...(has("dialog") || has("assistant_enabled") ? [{title:"STIP IA",subtitle:"Assistant du service",icon:"✧",action:"assistant"}] : []),
+    ...(has("admin") ? [{title:"Administration",subtitle:"Raccourcis et outils administrateur",icon:"⚙",action:"admin"},{title:"Porte T",subtitle:"Accès administrateur",icon:"T",action:"t-door"}] : [])
+  ];
+}
+  function personalDrawer() {
+  const future=futureItems().slice(0,3);
+  const upcoming=future.map(x=>`<button type="button" class="ghe-drawer-appointment" data-ghe-drawer-future="${esc(x.id)}"><span class="ghe-drawer-appointment-icon" aria-hidden="true">${eventIconHtml(x,"hc-event-svg")}</span><span class="ghe-drawer-appointment-copy"><strong>${esc(x.title)}</strong><small>${esc([fmtDateRange(x),x.time,x.place].filter(Boolean).join(" · "))}</small></span><span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>`).join("");
+  const entries=personalDrawerEntries();
+  const main=entries.filter(x=>["apps","recent","places","agents","communication","wheelchairs","planning"].includes(x.action));
+  const extras=entries.filter(x=>["leisure","dudy","mobile","assistant"].includes(x.action));
+  const admin=entries.filter(x=>["admin","t-door"].includes(x.action));
+  return `<dialog id="hcPersonalDrawer" class="ghe-personal-drawer" aria-labelledby="gheDrawerTitle" aria-modal="true">
+    <section class="ghe-drawer-frame">
+      <header class="ghe-drawer-head"><div><small>GHE</small><h2 id="gheDrawerTitle">Mon espace</h2></div><button type="button" class="ghe-drawer-close" data-ghe-drawer-dismiss aria-label="Fermer le menu">×</button></header>
+      <div class="ghe-drawer-scroll">
+        <div class="ghe-drawer-standard" data-ghe-drawer-standard>
+          <section class="ghe-drawer-section" aria-label="Mes prochains rendez-vous"><div class="ghe-drawer-section-head"><h3>Mes prochains rendez-vous</h3><span>${futureItems().length}</span></div>
+            <div class="ghe-drawer-appointments">${upcoming || '<p class="ghe-drawer-empty">Aucun rendez-vous à venir.</p>'}</div>
+            <button type="button" class="ghe-drawer-see-all" data-ghe-drawer-action="future">Voir tous les rendez-vous <span aria-hidden="true">›</span></button>
+          </section>
+          <section class="ghe-drawer-section" aria-label="Mes espaces"><h3>Mes espaces</h3>${main.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>
+          <section class="ghe-drawer-section" aria-label="À découvrir"><h3>À découvrir</h3>${extras.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>
+          ${admin.length ? `<section class="ghe-drawer-section ghe-drawer-admin" aria-label="Administration"><h3>Administration</h3>${admin.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>` : ""}
+        </div>
+        <section class="ghe-drawer-results" data-ghe-drawer-results hidden aria-live="polite"></section>
+      </div>
+      <footer class="ghe-drawer-footer"><label class="ghe-drawer-search"><span aria-hidden="true">⌕</span><input type="search" data-ghe-drawer-search placeholder="Rechercher dans GHE…" aria-label="Rechercher une personne, un rendez-vous ou une page" autocomplete="off" enterkeyhint="search"><span class="ghe-drawer-search-clear"><button type="button" data-ghe-drawer-clear aria-label="Effacer la recherche">×</button></span></label></footer>
+    </section>
+  </dialog>`;
+}
+  function bindPersonalDrawer(root) {
+  const drawer=root.querySelector("#hcPersonalDrawer");
+  const trigger=root.querySelector("[data-shortcuts-open]");
+  if (!drawer || !trigger) return;
+  const search=drawer.querySelector("[data-ghe-drawer-search]");
+  const standard=drawer.querySelector("[data-ghe-drawer-standard]");
+  const results=drawer.querySelector("[data-ghe-drawer-results]");
+  let candidates=new Map(), requestNumber=0, previousResults=[];
+  const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
+  const resetSearch=()=>{
+    search.value="";
+    results.hidden=true;
+    standard.hidden=false;
+    results.replaceChildren();
+    candidates.clear();
+    requestNumber++;
+  };
+  const close=()=>{ if(drawer.open)drawer.close(); };
+  const doAction=action=>{
+    close();
+    if(action==="home") return window.STIPRouter?.set?.("home");
+    if(action==="future") return openWidget("future");
+    if(action==="apps") return window.STIPFavorites?.open?.();
+    if(action==="recent" || action==="notifications") return openNotifications();
+    if(action==="agents") return openHeaderDirectorySearch("first");
+    if(action==="places") return openApp("places");
+    if(action==="communication") return openApp("communication");
+    if(action==="wheelchairs") return window.STIPRouter?.set?.("communication/fauteuils");
+    if(action==="planning") return openApp("personal");
+    if(action==="leisure") return window.STIPLoad?.navigateDocument?.("sorties-loisirs.html") || (location.href="sorties-loisirs.html");
+    if(action==="dudy") return window.STIPLoad?.navigateDocument?.("le-nouveau.html") || (location.href="le-nouveau.html");
+    if(action==="mobile") return window.STIPLoad?.navigateDocument?.("application-mobile.html") || (location.href="application-mobile.html");
+    if(action==="assistant" && (has("dialog")||has("assistant_enabled"))) return window.STIPCommunication?.openDialog?.();
+    if(action==="admin" && has("admin")) {
+      const modal=root.querySelector("#hcShortcutsDialog");
+      if(modal && !modal.open)modal.showModal();
+      return;
+    }
+    if(action==="t-door" && has("admin")) return window.STIPLoad?.navigateDocument?.("t-est/porte-entree/index.html") || (location.href="t-est/porte-entree/index.html");
+  };
+  trigger.addEventListener("click",()=>{
+    resetSearch();
+    if(!drawer.open) drawer.showModal();
+  });
+  drawer.querySelector("[data-ghe-drawer-dismiss]")?.addEventListener("click",close);
+  drawer.addEventListener("click",event=>{
+    if(event.target===drawer){close();return;}
+    const future=event.target.closest("[data-ghe-drawer-future]");
+    if(future){close();openWidget("future",future.dataset.gheDrawerFuture);return;}
+    const agent=event.target.closest("[data-ghe-drawer-agent]");
+    if(agent){const item=candidates.get(agent.dataset.gheDrawerAgent);if(item){close();openHeaderDirectoryAgent(item);}return;}
+    const action=event.target.closest("[data-ghe-drawer-action]");
+    if(action) doAction(action.dataset.gheDrawerAction);
+  });
+  drawer.addEventListener("close",()=>{
+    resetSearch();
+    if(trigger.isConnected)trigger.focus({preventScroll:true});
+    if(!state.renderSig && state.ready)render();
+  });
+  drawer.querySelector("[data-ghe-drawer-clear]")?.addEventListener("click",()=>{search.value="";search.dispatchEvent(new Event("input"));search.focus();});
+  search.addEventListener("input",async()=>{
+    const value=norm(search.value),currentRequest=++requestNumber;
+    if(!value){results.hidden=true;standard.hidden=false;results.replaceChildren();return;}
+    standard.hidden=true;results.hidden=false;
+    const renderResults=(agents=[],loading=false)=>{
+      if(currentRequest!==requestNumber||!drawer.isConnected) return;
+      candidates=new Map();
+      const entries=personalDrawerEntries().filter(x=>norm(x.title+" "+x.subtitle).includes(value)).slice(0,7);
+      const appointments=futureItems().filter(x=>norm([x.title,x.type,x.date,x.time,x.place].join(" ")).includes(value)).slice(0,5);
+      const colleagueResults=agents.filter(a=>norm([a.prenom,a.nom,a.ghe,a.source_key].join(" ")).includes(value)).slice(0,6);
+      const item=(icon,title,subtitle,attrs)=>`<button type="button" class="ghe-drawer-result" ${attrs}><span class="ghe-drawer-row-icon" aria-hidden="true">${icon}</span><span class="ghe-drawer-row-text"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></span><span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>`;
+      const pages=entries.map(x=>item(x.icon,x.title,x.subtitle,`data-ghe-drawer-action="${esc(x.action)}"`)).join("");
+      const meetings=appointments.map(x=>item("▦",x.title,[fmtDateRange(x),x.time].filter(Boolean).join(" · "),`data-ghe-drawer-future="${esc(x.id)}"`)).join("");
+      const people=colleagueResults.map((a,i)=>{const key=String(i);candidates.set(key,a);return item("♙",[a.prenom,a.nom].filter(Boolean).join(" ")||"Collègue",a.ghe?"GHE "+a.ghe:"Collègue",`data-ghe-drawer-agent="${key}"`);}).join("");
+      const group=(title,content)=>content?`<div class="ghe-drawer-result-group"><h3>${title}</h3>${content}</div>`:"";
+      results.innerHTML=group("Pages et outils",pages)+group("Rendez-vous",meetings)+group("Collègues",people)+
+        (loading?'<p class="ghe-drawer-empty">Recherche de collègues…</p>':(!pages&&!meetings&&!people?'<p class="ghe-drawer-empty">Aucun résultat. Essayez un autre mot.</p>':""));
+    };
+    if(value.length<2 || !(has("agent_directory")||has("admin"))) {renderResults();return;}
+    renderResults(previousResults,!headerDirectoryCache);
+    try{
+      const directory=await headerDirectory();
+      if(currentRequest!==requestNumber) return;
+      previousResults=Array.isArray(directory?.items)?directory.items:[];
+      renderResults(previousResults);
+    }catch{
+      if(currentRequest===requestNumber)renderResults([]);
+    }
+  });
+}
 
   function homeAIEntry() {
     if (!(has("dialog") || has("assistant_enabled"))) return "";
@@ -3372,10 +3508,8 @@
       return `<section class="hc-home-pane hc-home-pane-apps"><section id="hcMyAppsHost"></section></section>`;
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
-    const weeklyDetails = futureWidget(),
-      monthDetails = monthEventsWidget(),
-      legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}${window.STIPMeeting?.pendingHTML?.() || ""}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-week-context-master" data-stip-context-master="week">${weeklyDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-selected-day-separator" aria-hidden="true"><span>RENDEZ-VOUS · 7 JOURS</span></div><section class="stip-context-attached hc-planning-details-subblock">${weeklyDetails}</section>` : ""}${window.STIPLeisure?.weekHTML?.(upcomingHomeWeek()[0]?.iso, upcomingHomeWeek().at(-1)?.iso) || ""}</section>${agendaAlertBanner()}<section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}${planningCompareShortcut()}</section>${monthDetails ? `<div class="stip-context-attached-separator stip-section-separator hc-planning-month-events-separator" aria-hidden="true"><span>À RETENIR CE MOIS</span></div><section class="stip-context-attached hc-planning-details-subblock hc-planning-month-events-subblock">${monthDetails}</section>` : ""}${window.STIPLeisure?.monthHTML?.(state.dateJumpMonth || navigationWeek()[0]?.iso?.slice(0,7) || parisIso().slice(0,7)) || ""}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}${planningCalendarPocket()}</section>${exchangeWidget()}${genericWidgets()}${leNouveauHomeCard()}${mobileAppShortcut()}</main>${homeAIEntry()}`;
+    const legend = fixedShiftLegend();
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3402,6 +3536,7 @@
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
+    if (root.querySelector("#hcPersonalDrawer")?.open) return;
 
     // Communication owns live composers. Background refreshes must not
     // replace its DOM while the user is typing or switching tabs.
@@ -3417,7 +3552,7 @@
     if (state.homeMode === "apps" && !has("admin")) state.homeMode = "planning";
     const isCommunication = state.homeMode === "communication" && has("messages"),
       showProfile = state.homeMode === "planning";
-    let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}${shortcutsPopup()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
+    let markup = `${state.homeMode === "planning" ? "" : homeModeNav()}${shortcutsPopup()}${personalDrawer()}<section class="hc-home-mode-content" data-home-mode-current="${esc(state.homeMode)}">${homeModeBody()}</section>`;
     if (isCommunication) {
       markup = `<section class="hc-communication-standalone" aria-label="Communication STIP">
           ${homeModeBody()}
@@ -3516,26 +3651,10 @@
       })
     );
     const shortcutsDialog=root.querySelector("#hcShortcutsDialog");
-    const closeShortcuts=()=>{
-      if(!shortcutsDialog)return;
-      if(typeof shortcutsDialog.close==="function"&&shortcutsDialog.open)
-        shortcutsDialog.close();
-      else shortcutsDialog.removeAttribute("open");
-    };
-    root.querySelectorAll("[data-shortcuts-open]").forEach(button=>
-      button.addEventListener("click",()=>{
-        if(!shortcutsDialog)return;
-        if(typeof shortcutsDialog.showModal==="function")shortcutsDialog.showModal();
-        else shortcutsDialog.setAttribute("open","");
-      })
-    );
+    const closeShortcuts=()=>{if(shortcutsDialog?.open)shortcutsDialog.close();};
     shortcutsDialog?.querySelector("[data-shortcuts-close]")?.addEventListener("click",closeShortcuts);
-    shortcutsDialog?.addEventListener("click",event=>{
-      if(event.target===shortcutsDialog)closeShortcuts();
-    });
-    shortcutsDialog?.addEventListener("close",()=>{
-      root.querySelector("[data-shortcuts-open]")?.focus({preventScroll:true});
-    });
+    shortcutsDialog?.addEventListener("click",event=>{if(event.target===shortcutsDialog)closeShortcuts();});
+    bindPersonalDrawer(root);
     $("#hcLogout")?.addEventListener("click", () =>
       document.getElementById("logoutBtn")?.click(),
     );
@@ -4141,6 +4260,7 @@
     state.communicationFocus = false;
     state.communicationConversation = "";
     state.communicationMessage = "";
+    document.getElementById("hcPersonalDrawer")?.close?.();
     clearHomeCache();
     clearShiftSnapshot();
     window.STIPBootCache = null;

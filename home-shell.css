@@ -5291,3 +5291,57 @@ body.hc-shift-detail-open{overflow:hidden}
   #hcShortcutsDialog .hc-pilotage-shell.is-admin{padding-inline:8px!important}
   #hcShortcutsDialog .hc-pilotage-shell.is-admin .hc-pilotage-separator{font-size:.68rem!important;padding-inline:7px!important}
 }
+
+/* GHE — personal left drawer. Independent of the existing admin shortcuts popup. */
+#hcPersonalDrawer.ghe-personal-drawer {
+  position:fixed!important;inset:0 auto 0 0!important;margin:0!important;
+  box-sizing:border-box!important;width:min(88vw,400px)!important;max-width:400px!important;
+  height:100dvh!important;max-height:100dvh!important;padding:0!important;
+  border:0!important;border-radius:0 23px 23px 0!important;
+  background:#fff!important;color:#183c4b!important;overflow:hidden!important;
+  box-shadow:15px 0 55px rgba(12,32,44,.22)!important;
+}
+#hcPersonalDrawer::backdrop{background:rgba(17,34,45,.50)!important;backdrop-filter:blur(2px)}
+#hcPersonalDrawer[open]{animation:gheDrawerSlide .24s cubic-bezier(.22,.75,.26,1) both}
+@keyframes gheDrawerSlide{from{transform:translateX(-105%)}to{transform:translateX(0)}}
+#hcPersonalDrawer .ghe-drawer-frame{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important}
+#hcPersonalDrawer .ghe-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;padding:calc(20px + env(safe-area-inset-top,0px)) 20px 16px;background:#fff;border-bottom:1px solid #edf0f2}
+#hcPersonalDrawer .ghe-drawer-head small{display:block;font-size:.7rem;font-weight:850;letter-spacing:.15em;color:#2888a1}
+#hcPersonalDrawer .ghe-drawer-head h2{margin:4px 0 0!important;font-size:1.65rem;line-height:1.1;letter-spacing:-.035em;font-weight:880;color:#173d50}
+#hcPersonalDrawer .ghe-drawer-close{width:41px;height:41px;border:1px solid #e2ecf0;border-radius:50%;background:#f9fbfc;color:#234657;font:800 1.55rem/1 system-ui;cursor:pointer}
+#hcPersonalDrawer .ghe-drawer-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:11px 13px 22px}
+#hcPersonalDrawer .ghe-drawer-standard[hidden],#hcPersonalDrawer .ghe-drawer-results[hidden]{display:none!important}
+#hcPersonalDrawer .ghe-drawer-section{padding:12px 2px 14px;border-bottom:1px solid #edf0f2}
+#hcPersonalDrawer .ghe-drawer-section:last-child{border-bottom:0}
+#hcPersonalDrawer .ghe-drawer-section h3,#hcPersonalDrawer .ghe-drawer-result-group h3{margin:0 0 10px!important;padding:0 11px;color:#607881;font-size:.72rem;font-weight:900;letter-spacing:.075em;text-transform:uppercase}
+#hcPersonalDrawer .ghe-drawer-section-head{display:flex;align-items:center;justify-content:space-between;padding:0 10px}
+#hcPersonalDrawer .ghe-drawer-section-head h3{padding:0}
+#hcPersonalDrawer .ghe-drawer-section-head>span{font-size:.72rem;border-radius:999px;background:#eff7f9;padding:3px 9px;color:#287789;font-weight:850}
+#hcPersonalDrawer button{font-family:inherit;touch-action:manipulation}
+#hcPersonalDrawer .ghe-drawer-row,#hcPersonalDrawer .ghe-drawer-result,#hcPersonalDrawer .ghe-drawer-appointment{box-sizing:border-box;width:100%;border:0;display:grid;grid-template-columns:33px minmax(0,1fr) 16px;align-items:center;gap:9px;text-align:left;background:transparent;color:#173d50;padding:11px 11px;border-radius:13px;min-height:49px;cursor:pointer}
+#hcPersonalDrawer .ghe-drawer-row:hover,#hcPersonalDrawer .ghe-drawer-result:hover,#hcPersonalDrawer .ghe-drawer-appointment:hover{background:#f2f8fa}
+#hcPersonalDrawer .ghe-drawer-row:active,#hcPersonalDrawer .ghe-drawer-result:active,#hcPersonalDrawer .ghe-drawer-appointment:active{background:#e8f3f7}
+#hcPersonalDrawer .ghe-drawer-row-icon{font:750 1.4rem/1 system-ui;color:#286175;text-align:center;display:grid;place-items:center;min-width:30px}
+#hcPersonalDrawer .ghe-drawer-row-text,#hcPersonalDrawer .ghe-drawer-appointment-copy{min-width:0;display:grid;gap:3px}
+#hcPersonalDrawer .ghe-drawer-row-text strong,#hcPersonalDrawer .ghe-drawer-appointment-copy strong{font-weight:780;font-size:.98rem;line-height:1.26;overflow-wrap:anywhere}
+#hcPersonalDrawer .ghe-drawer-row-text small,#hcPersonalDrawer .ghe-drawer-appointment-copy small{font-size:.77rem;line-height:1.3;color:#71848c;overflow-wrap:anywhere}
+#hcPersonalDrawer .ghe-drawer-chevron{font-size:1.28rem;color:#9aabb1;font-weight:450;text-align:right}
+#hcPersonalDrawer .ghe-drawer-appointment{align-items:start;min-height:64px;background:#fbfcfc;margin:3px 0}
+#hcPersonalDrawer .ghe-drawer-appointment-icon{display:grid;place-items:center;border-radius:12px;background:#fff7de;min-height:33px;font-size:1.2rem;color:#39768b}
+#hcPersonalDrawer .ghe-drawer-appointment-icon svg{width:24px;height:24px}
+#hcPersonalDrawer .ghe-drawer-see-all{display:block;border:0;border-radius:12px;background:#edf6f8;color:#226176;font-size:.84rem;font-weight:800;width:100%;min-height:39px;margin-top:8px;cursor:pointer}
+#hcPersonalDrawer .ghe-drawer-empty{margin:12px 11px;padding:12px;background:#f7fafb;border-radius:12px;color:#71858b;font-size:.86rem}
+#hcPersonalDrawer .ghe-drawer-admin{background:#f7fbfc;border-radius:17px;margin-top:10px}
+#hcPersonalDrawer .ghe-drawer-result-group{padding:12px 0;border-bottom:1px solid #edf0f2}
+#hcPersonalDrawer .ghe-drawer-footer{flex:0 0 auto;padding:12px 14px calc(13px + env(safe-area-inset-bottom,0px));border-top:1px solid #ebf0f2;background:#fff;box-shadow:0 -8px 28px rgba(20,45,55,.04)}
+#hcPersonalDrawer .ghe-drawer-search{display:flex;align-items:center;gap:8px;min-height:52px;padding:0 12px;border:1px solid #e2eaee;border-radius:21px;background:#f5f8fa;box-sizing:border-box}
+#hcPersonalDrawer .ghe-drawer-search:focus-within{border-color:#8bbeca;box-shadow:0 0 0 3px rgba(30,130,154,.12)}
+#hcPersonalDrawer .ghe-drawer-search>span:first-child{font-size:1.9rem;color:#42788b;line-height:1}
+#hcPersonalDrawer .ghe-drawer-search input{flex:1 1 auto;min-width:0;width:100%;font:500 16px/1.4 system-ui;background:transparent;border:0!important;outline:0!important;box-shadow:none!important;padding:9px 0!important;color:#173d50}
+#hcPersonalDrawer .ghe-drawer-search input::-webkit-search-cancel-button{display:none}
+#hcPersonalDrawer .ghe-drawer-search-clear button{width:32px;height:32px;border:0;border-radius:50%;background:transparent;color:#708792;font-size:1.25rem}
+#hcPersonalDrawer :is(button,input):focus-visible{outline:3px solid #6caabc;outline-offset:2px}
+@media(max-width:420px){#hcPersonalDrawer.ghe-personal-drawer{width:min(88vw,370px)!important}#hcPersonalDrawer .ghe-drawer-head{padding-inline:17px}#hcPersonalDrawer .ghe-drawer-scroll{padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){#hcPersonalDrawer[open]{animation:none}}
+/* Only the menu + bell remain on the home top line. */
+#homeView .ghe-home-topbar .ghe-home-tools-right:empty{min-width:44px!important;display:block!important}
