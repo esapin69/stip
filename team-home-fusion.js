@@ -353,6 +353,16 @@
     const uniqueInfos=[],seen=new Set();
     for(const item of infos){const key=(item.title+"|"+(item.detail||"")).toLowerCase();
       if(!seen.has(key)){seen.add(key);uniqueInfos.push(item);}}
+    // Include yesterday's scheduled work in the live view (overnight shifts).
+    // Day cards keep their own date-scoped data unchanged.
+    const previousDay=addDay(day,-1);
+    const previousBundle=cached(weeks,monday(previousDay));
+    const previousRows=Array.isArray(previousBundle?.planning)?
+      previousBundle.planning.filter(x=>String(x.date||"").slice(0,10)===previousDay):[];
+    host._thfLiveAgents=[...agents,...previousRows,
+      ...chiefs.filter(x=>!agents.some(y=>y.agents?.source_key===x.agents?.source_key))];
+    host._thfLiveLoaded=loaded&&
+      (monday(previousDay)===start||Array.isArray(previousBundle?.planning));
     host._thfAgents=[...agents,...chiefs.filter(x=>!agents.some(y=>y.agents?.source_key===x.agents?.source_key))];
     host._thfChiefs=chiefs;host._thfNotes=uniqueInfos;
     host._thfSets={exact:exact.sort(sortPeople),onDuty:onDuty.sort(sortPeople),
@@ -554,6 +564,11 @@
     const requests=[];
     if(perm.planning_team){
       requests.push(getStaff(day));
+      // On Monday the Sunday night team is in the preceding week's bundle.
+      if((opts.hostId||"hcTeamFusion")==="hcTeamFusion"){
+        const previousStart=monday(addDay(day,-1));
+        if(previousStart!==start)requests.push(getWeek(previousStart));
+      }
       requests.push(getWeek(start).then(bundle=>{
         const hasDayChief=(bundle?.planning||[]).some(x=>String(x.date||"").slice(0,10)===day&&isChef(x));
         if(!hasDayChief)return getChiefs();
