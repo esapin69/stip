@@ -507,3 +507,23 @@
   .hc-home-top-nav[data-header-compact] .ghe-premium-face{padding:10px!important}
   .hc-home-top-nav[data-header-compact] .ghe-premium-chief-person{gap:4px}
 }
+
+/* GHE 360° only: EN DIRECT is the only reverse-side heading. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-live-title{
+  display:flex!important;align-items:center!important;flex-wrap:nowrap!important;
+  gap:10px!important;min-width:0!important;width:100%!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-live-title>strong{
+  min-width:0!important;white-space:nowrap!important;color:#245b70!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-turn{
+  box-sizing:border-box!important;margin-left:auto!important;flex:0 0 38px!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+  padding:0!important;border:1px solid #cfe3ea!important;border-radius:12px!important;
+  background:#f0f8fa!important;color:#286b80!important;cursor:pointer!important;
+  font:850 1.2rem/1 system-ui,sans-serif!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-turn:focus-visible{
+  outline:3px solid #178da9!important;outline-offset:2px!important;
+}

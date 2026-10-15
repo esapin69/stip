@@ -2579,7 +2579,10 @@
       'Aucun agent en poste selon les horaires disponibles.';
     return '<div class="ghe-premium-live">'+
       '<div class="ghe-premium-live-title"><span class="ghe-premium-live-led" aria-hidden="true"></span>'+
-        '<strong>EN DIRECT</strong><small>La vie du service</small></div>'+
+        '<strong>EN DIRECT</strong>'+
+        '<button type="button" class="ghe-premium-back-turn" data-premium-turn-close '+
+          'aria-label="Retourner la carte vers le profil" title="Retour au profil">'+
+          '<span aria-hidden="true">↶</span></button></div>'+
       '<div class="ghe-premium-live-hero">'+
         '<div class="ghe-premium-total"><b>'+esc(countLabel)+'</b><span>collègues<br>en poste</span></div>'+
         '<div class="ghe-premium-distribution"><small>Shifts actuels</small>'+
@@ -2717,7 +2720,6 @@
         '<div class="ghe-premium-track">'+
           '<section class="ghe-premium-face ghe-premium-front ghe-home-header-stack" aria-label="Carte professionnelle"'+
             (state.premiumFlipped?' inert':'')+'>'+
-            '<div class="ghe-premium-front-kicker"><span>✦ GHE · MON ESPACE</span><small>Profil</small></div>'+
             '<div class="hc-home-identity">'+profile()+'</div>'+
             '<footer class="ghe-premium-front-footer">'+
               '<button type="button" class="ghe-premium-turn" data-premium-turn-open'+
@@ -2727,10 +2729,6 @@
           '</section>'+
           '<section class="ghe-premium-face ghe-premium-back" aria-label="En direct du service"'+
             (!state.premiumFlipped?' inert':'')+'>'+
-            '<div class="ghe-premium-back-head">'+
-              '<strong>GHE · MAINTENANT</strong>'+
-              '<button type="button" data-premium-turn-close aria-label="Retourner la carte vers le profil">↶ Profil</button>'+
-            '</div>'+
             '<div class="ghe-premium-back-body">'+premiumBackMarkup()+'</div>'+
           '</section>'+
         '</div>'+
