@@ -130,14 +130,14 @@ assert(eventBadges.includes("events.slice(0, 2)") &&
 const eventSources = homeJs.split("function weekEventsForDay(")[1]?.split("function weekEventBadges(")[0] || "";
 assert(eventSources.includes("STIPLeisure?.dayItems") &&
        !eventSources.includes("STIPDutyChiefs"), "loisirs présents, chefs absents des cartes");
-assert(rollingCss.includes("flex-direction:column!important") &&
+assert(rollingCss.includes("flex-flow:column nowrap!important") &&
        rollingCss.includes(".hc-rolling-seven .stip-week-event"), "repères centrés verticalement");
 const teamFusion=read("team-home-fusion.js");
 assert(teamFusion.includes("async function openDate(") &&
        teamFusion.includes("window.STIPTeamFusion={mount,openDate}") &&
        homeJs.includes("STIPTeamFusion.openDate({ ...sharedTeamOptions, day: iso })"),
        "popup commun Aujourd'hui/Demain réutilisé pour la semaine");
-assert(rollingCss.includes("grid-template-rows:minmax(0,1fr) 40px") &&
+assert(rollingCss.includes("grid-template-rows:auto 40px") &&
        rollingCss.includes("grid-row:2!important") &&
        rollingCss.includes("position:static!important") &&
        rollingCss.includes("min-height:178px") &&
