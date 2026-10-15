@@ -162,5 +162,58 @@
     return { close, element: overlay };
   }
 
-  window.STIPPersonActions = { open, close };
+
+  // Shared menu for all agent cards that previously opened an agenda.
+  // "Voir le planning" calls the original planner directly, without recursion.
+  function verifiedEmail(a={}) {
+    const email=String(a.email||a.mail||a.email_pro||
+      a.mail_pro||a.email_professionnel||"").trim();
+    return email.length<=254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?email:"";
+  }
+  function verifiedPhone(a={}) {
+    const phone=String(a.telephone||a.phone||a.mobile||a.portable||"").trim();
+    const digits=phone.replace(/\D/g,"");
+    return digits.length>=6&&digits.length<=16?phone:"";
+  }
+  async function openPlanningFor(agent,sourceKey) {
+    const key=String(sourceKey||agent.source_key||"").trim();
+    if(!key)return;
+    if(!window.STIPAgentAgenda?.openPlanning){
+      try { await window.STIPLoad?.script?.("agent-agenda-view.js"); }
+      catch(error){console.error("Agent agenda unavailable",error);return;}
+    }
+    return (window.STIPAgentAgenda?.openPlanning||window.STIPAgentAgenda?.open)?.(key,agent);
+  }
+  function openForAgent(agent={},options={}) {
+    const key=String(options.sourceKey||agent.source_key||"").trim();
+    const email=verifiedEmail(agent), phone=verifiedPhone(agent);
+    return open({
+      agent,contextLabel:options.contextLabel||"COLLÈGUE",
+      subtitle:options.subtitle||gheLabel(agent),
+      actions:[
+        {key:"planning",icon:"📅",label:"Voir le planning",
+          detail:"Accéder au planning existant",primary:true,
+          disabled:!key&&!options.openPlanning,
+          onSelect:()=>options.openPlanning?
+            options.openPlanning():openPlanningFor(agent,key)},
+        {key:"email",icon:"✉️",label:"Envoyer un mail",
+          detail:email||"Adresse e-mail indisponible",
+          disabled:!email,
+          href:email?"mailto:"+encodeURIComponent(email):""},
+        {key:"call",icon:"☎",label:"Appeler",
+          detail:phone||"Numéro indisponible",disabled:!phone,
+          onSelect:()=>{
+            const target={...agent,telephone:phone};
+            if(window.STIPAgentSelector?.openCallSheet)
+              return window.STIPAgentSelector.openCallSheet(target);
+            if(window.STIPDutyChiefs?.openCallChoice)
+              return window.STIPDutyChiefs.openCallChoice(phone,name(agent));
+            window.location.href="tel:"+phone.replace(/[^\d+]/g,"");
+          }},
+        ...(Array.isArray(options.additionalActions)?options.additionalActions:[])
+      ]
+    });
+  }
+
+  window.STIPPersonActions = { open, close, openForAgent };
 })();
