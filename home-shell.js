@@ -1463,9 +1463,10 @@
     if (rolling) {
       const slots = w.map((day) => {
         const monday = day.dow === 1
-          ? '<span class="hc-rolling-monday-flag" aria-hidden="true">LUNDI<span class="hc-rolling-monday-arrow">↓</span></span>'
+          ? '<span class="hc-rolling-monday-flag" aria-hidden="true"><span class="hc-rolling-monday-arrow">↑</span>LUNDI</span>'
           : "";
-        return `<div class="hc-rolling-day-slot">${monday}${dayCard(day, "stip-week-day", true)}</div>`;
+        // Le repère du lundi suit la carte et reste hors de sa zone d'informations.
+        return `<div class="hc-rolling-day-slot">${dayCard(day, "stip-week-day", true)}${monday}</div>`;
       }).join("");
       return `<div class="stip-week-line stip-week-personal-line hc-rolling-seven" style="--stip-week-columns:7;--week-card-h:var(--stip-week-card-h)">${slots}</div>`;
     }
