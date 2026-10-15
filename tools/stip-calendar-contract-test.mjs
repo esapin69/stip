@@ -119,6 +119,16 @@ assert(rollingWidget.includes("upcomingHomeWeek()") && rollingWidget.includes("w
 assert(homeJs.includes("hc-rolling-monday-flag") && homeJs.includes("day.dow === 1") &&
        homeJs.includes("selectVisibleWeekDay(iso)"),
   "le repère lundi et la sélection des jours doivent rester accessibles");
+const rollingCss = read("home-rolling-week.css");
+assert(rollingCss.includes("top:calc(100% + 6px)") &&
+       rollingCss.includes("padding-bottom:40px") &&
+       rollingCss.includes("min-height:136px") &&
+       !rollingCss.includes("top:-30px"),
+  "le lundi doit se placer sous la carte, sans collision avec la date, dans un emplacement réservé");
+const mondaySlot = homeJs.split("function weekDaysLandscape")[1]?.split("function planningStatus")[0] || "";
+assert(mondaySlot.includes('hc-rolling-monday-arrow">↑') &&
+       mondaySlot.includes('${dayCard(day, "stip-week-day", true)}${monday}'),
+  "le repère lundi et sa flèche doivent être placés après la carte du lundi");
 assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(shift.raw || shift.code)") &&
        !homeJs.includes("hc-date-jump-dot stip-month-dot shift-"),
   "Accueil monthly planning is not using the validated text badges for worked shifts");
