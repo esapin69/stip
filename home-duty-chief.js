@@ -220,7 +220,7 @@
       key = String(a.source_key || ""),
       label = personName(a);
     return `<div class="hc-duty-chief-summary-shell team-chief-flat-card status-${esc(status)}">
-      <button type="button" class="hc-duty-chief-card ${status === "now" ? "is-present" : "is-next"}" data-duty-chief-agent="${esc(key)}" ${key ? "" : "disabled"} aria-label="Voir le planning de ${esc(label)}">
+      <button type="button" class="hc-duty-chief-card ${status === "now" ? "is-present" : "is-next"}" data-duty-chief-agent="${esc(key)}" ${key ? "" : "disabled"} aria-label="Actions pour ${esc(label)}">
         <span class="hc-duty-chief-icon" aria-hidden="true">🎨</span>
         <span class="hc-duty-chief-summary">
           <small>${esc(statusLabel(status))}</small>
@@ -229,7 +229,6 @@
         </span>
         <span class="hc-duty-chief-chevron" aria-hidden="true">›</span>
       </button>
-      ${callMarkup(item)}
     </div>`;
   }
 
@@ -423,7 +422,7 @@
       border:1px solid rgba(112,64,159,.13);border-radius:15px;background:#efe4fb;
       font-size:1.45rem;box-shadow:inset 0 0 0 1px rgba(255,255,255,.64)
     }
-    .hc-duty-chief-summary{min-width:0;display:grid;align-content:center;text-align:left;padding-right:48px}
+    .hc-duty-chief-summary{min-width:0;display:grid;align-content:center;text-align:left;padding-right:0}
     .hc-duty-chief-summary small,.hc-duty-chief-summary strong,.hc-duty-chief-summary em{display:block}
     .hc-duty-chief-summary small{
       color:#70409f;font-size:.61rem;font-weight:950;line-height:1.05;letter-spacing:.08em
@@ -531,7 +530,7 @@
     @media(max-width:390px){
       .hc-duty-chief-card{min-height:78px;grid-template-columns:44px minmax(0,1fr) 16px;gap:9px;padding:10px}
       .hc-duty-chief-icon{width:44px;height:44px;border-radius:14px;font-size:1.35rem}
-      .hc-duty-chief-summary{padding-right:44px}
+      .hc-duty-chief-summary{padding-right:0}
       .hc-duty-chief-summary strong{font-size:.92rem}
       .hc-duty-chief-summary-call{right:34px;width:39px;height:39px;border-radius:13px}
       .hc-duty-chief-bubble{margin-top:8px}
