@@ -649,6 +649,25 @@
   font-size:.81rem;font-weight:800;text-align:left;color:#1d586c;cursor:pointer
 }
 
+
+/* Informations du jour dans la fenêtre détail, avec leurs titres et pictogrammes. */
+.thf-popup.thf-day-popup{overflow-y:auto;overscroll-behavior:contain}
+.thf-popup .thf-day-popup-notices{border-top:1px solid #e0eaf0;padding:11px 0 8px}
+.thf-popup .thf-day-popup-notices h3{margin:0 0 8px;font-size:.84rem;color:#285b73}
+.thf-popup .thf-day-notices-list{display:grid;gap:7px;min-width:0}
+.thf-popup .thf-day-notices-list .thf-note{
+  grid-template-columns:30px minmax(0,1fr) 12px;gap:8px;align-items:start;
+  width:100%;min-height:51px;margin:0;padding:10px 9px;background:#f5fafc
+}
+.thf-popup .thf-day-notices-list .thf-note-icon{font-size:1.16rem;line-height:1.3}
+.thf-popup .thf-day-notices-list .thf-note-copy{min-width:0;display:flex;flex-direction:column;gap:3px}
+.thf-popup .thf-day-notices-list .thf-note-copy strong{font-size:.81rem;line-height:1.22;overflow-wrap:anywhere}
+.thf-popup .thf-day-notices-list .thf-note-copy small{
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;overflow-wrap:anywhere;font-size:.71rem;line-height:1.3;color:#587888
+}
+.thf-popup .thf-day-notices-list .thf-note-chevron{font-size:1.1rem;align-self:center}
+.thf-popup .thf-day-notices-list .thf-note:focus-visible{outline:3px solid #168ca9;outline-offset:2px}
 /* Résumés chef + activité : visibles au premier coup d'œil, même à 2 colonnes. */
 .hc-days-grid .thf-day-chief-person{display:flex;flex-direction:column;gap:5px;min-width:0}
 .hc-days-grid .thf-chief-line{display:flex;flex-direction:column;min-width:0;gap:2px;padding-bottom:3px}
