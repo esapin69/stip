@@ -407,7 +407,7 @@
          '<span aria-hidden="true">👥</span><b>'+(loaded?(restMode?restPeers.length:exact.length):"…")+'</b></button>':"")+
        '<button type="button" class="thf-shift-chiefs" data-thf-open="chiefs" '+
          'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
-         '<span aria-hidden="true">👑</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
+         '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
        '</div></div></div>'+
        '</div></div><div class="thf-day-body">'+
        (uniqueInfos.length?'<button type="button" class="thf-day-brief" data-thf-open="notes">📌 '+
