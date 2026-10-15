@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261016-bell-right1";
+    V = "20261016-shared-agent-actions1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -321,7 +321,7 @@
       .then(() =>
         seq([
           "event-feedback.js?v=20261014-home-order2",
-          "home-duty-chief.js?v=20261015-ghe-staff-actions-merge1",
+          "home-duty-chief.js?v=20261016-shared-agent-actions1",
           "admin-access-requests-home.js",
         ]),
       )
