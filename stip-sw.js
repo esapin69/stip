@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261015-personal-drawer1";
+const STIP_SW_BUILD="20261016-week-monday-equal-faces2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
