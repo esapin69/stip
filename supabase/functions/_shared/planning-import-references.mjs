@@ -75,6 +75,7 @@ export function parseStaffingReferences(rows, sourceSheet, dateCols) {
     const groupTargets = { samedi: new Map(), dimanche: new Map(), semaine: new Map() };
     const groupTotals = { samedi: null, dimanche: null, semaine: null };
     let weekAlternative = null;
+    const unlabeledWeekValues = [];
     const weekCol = headers.cols.get("semaine");
     const altHeader = compact((rows[headers.row] || [])[weekCol + 1]);
     const unlabeledAlt = !altHeader;
@@ -85,6 +86,10 @@ export function parseStaffingReferences(rows, sourceSheet, dateCols) {
       if (/^cumul\b|^attendu\b/i.test(first)) break;
       const values = Object.fromEntries([...headers.cols].map(([group, col]) => [group, numeric(row[col])]));
       if (code) {
+        if (unlabeledAlt) {
+          const variantCount = numeric(row[weekCol + 1]);
+          if (variantCount !== null) unlabeledWeekValues.push({ code, count: variantCount });
+        }
         for (const [group, count] of Object.entries(values)) {
           if (count !== null) groupTargets[group].set(code, { count, row: r, label: norm(row.find(x => expectedCode(x)) || code) });
         }
@@ -95,12 +100,16 @@ export function parseStaffingReferences(rows, sourceSheet, dateCols) {
         if (unlabeledAlt) weekAlternative = numeric(row[weekCol + 1]);
       }
     }
+    const uncertainWeek = unlabeledAlt && (unlabeledWeekValues.length > 0 || weekAlternative !== null);
     for (const d of dateCols) {
       const day = weekDay(d.date);
       const group = day === 6 ? "samedi" : day === 0 ? "dimanche" : "semaine";
+      // Deux références en semaine sans règle de sélection : aucune n'est activée.
+      if (group === "semaine" && uncertainWeek) continue;
       for (const [code, target] of groupTargets[group]) {
         add(d, "shift", code, target.count, target.row, target.label, "attendu",
-          { displayed_count: displayed(d, code), reference_group: group });
+          { displayed_count: displayed(d, code), reference_group: group,
+            ...(uncertainWeek ? { weekly_ambiguity: { labeled: groupTotals.semaine?.count, unlabeled: weekAlternative, variant_shifts: unlabeledWeekValues } } : {}) });
       }
       const total = groupTotals[group];
       if (total) add(d, "total", null, total.count, total.row, total.label, "attendu", {
