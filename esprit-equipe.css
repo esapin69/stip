@@ -2987,3 +2987,7 @@ body.team-page {
 .team-shift.shift-s.open .team-shift-head>em{
   color:var(--stip-shift-s-ink,#2b2b20)!important;
 }
+
+/* Card actions are consolidated in the shared Planning / Mail / Appeler sheet. */
+.team-agent{grid-template-columns:minmax(0,1fr)!important}
+.team-agent-main{width:100%}
