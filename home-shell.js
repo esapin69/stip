@@ -3279,53 +3279,48 @@ function personalDrawerRow(icon,label,action,meta="") {
       .filter((x) => x && x.text)
       .slice(0, 12);
   }
-  function actionCenterMarkup(filter = state.actionFilter, inline = false) {
-    const { ns, cats, counts, shown } = actionCenterData(filter),
-      visibleCats = cats.filter(([k]) => k === "all" || counts[k] > 0),
-      filterBar = ns.length
-        ? '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Catégories à traiter">' +
-          visibleCats
-            .map(
-              ([k, l]) =>
-                '<button type="button" role="tab" aria-selected="' +
-                (filter === k) +
-                '" data-action-filter="' +
-                esc(k) +
-                '">' +
-                esc(l) +
-                (counts[k] ? ' <span>' + counts[k] + "</span>" : "") +
-                "</button>",
-            )
-            .join("") +
-          "</div>"
-        : "",
-      head = inline
-        ? `<header class="hc-profile-actions-head"><div><span class="stip-kicker">À TRAITER</span><h2>${ns.length ? "Notifications" : "Rien à traiter"}</h2><p>${ns.length ? `${ns.length} élément${ns.length > 1 ? "s" : ""} demande${ns.length > 1 ? "nt" : ""} votre attention.` : "Aucune notification en attente."}</p></div></header>`
-        : "";
-    if (!ns.length) return head;
-    const cards = shown.length
-      ? '<div class="hc-panel-list">' +
-        shown
-          .map((n, i) => {
-            const cat = noteCategory(n),
-              catLabel = cats.find((x) => x[0] === cat)?.[1] || "Autres",
-              body = friendlyNoteBody(n);
-            return (
-              '<button type="button" class="hs-note hc-note-card" data-note-index="' +
-              i +
-              '" data-note-open><small>' +
-              esc(catLabel) +
-              "</small><strong>" +
-              esc(n.title || "Notification") +
-              "</strong>" +
-              (body ? "<p>" + esc(body) + "</p>" : "") +
-              "</button>"
-            );
-          })
-          .join("") +
-        "</div>"
-      : '<div class="hc-empty">Rien à traiter dans cette catégorie.</div>';
-    return head + filterBar + cards;
+  function actionCenterMarkup(filter=state.actionFilter,inline=false){
+    const {ns,cats,counts,shown,selected}=actionCenterData(filter),unread=counts.unread;
+    const visibleCats=cats.filter(([k])=>k==="all"||counts[k]>0);
+    const filterBar=ns.length?
+      '<div class="hc-action-filters stip-action-filters" role="tablist" aria-label="Filtrer les notifications">'+
+      visibleCats.map(([key,label])=>'<button type="button" role="tab" aria-selected="'+
+        String(selected===key)+'" data-action-filter="'+esc(key)+'">'+esc(label)+
+        (counts[key]?' <span>'+counts[key]+'</span>':"")+'</button>').join("")+
+      '</div>':"";
+    const intro='<div class="hc-bell-summary"><strong>'+
+      (ns.length?ns.length+" notification"+(ns.length>1?"s":"")+" à suivre":"Tout est à jour")+
+      '</strong><span>'+(ns.length?
+        (unread?unread+" non lue"+(unread>1?"s":""):"Toutes consultées"):
+        "Aucune notification en attente")+'</span></div>';
+    const head=inline?'<header class="hc-profile-actions-head"><div><span class="stip-kicker">NOTIFICATIONS</span><h2>'+
+      (ns.length?"À suivre":"Rien à traiter")+'</h2></div></header>':"";
+    const icons={access:"🔐",agenda:"📅",messages:"💬",reminders:"⏰",signatures:"✍️",other:"🔔"};
+    const cards=shown.length?
+      '<div class="hc-panel-list hc-bell-results">'+shown.map((n,i)=>{
+        const category=noteCategory(n),
+          categoryLabel=cats.find(([key])=>key===category)?.[1]||"Information",
+          body=friendlyNoteBody(n),priority=notePriority(n)>1,
+          needsAction=noteCanManage(n),unreadNote=!noteIsRead(n),
+          stamp=noteTimeValue(n),dateText=stamp?formatNotificationTime(stamp):"",
+          status=needsAction?"À traiter":priority?"Important":"À consulter";
+        return '<button type="button" class="hs-note hc-note-card hc-bell-notice'+
+          (unreadNote?' is-unread':'')+(priority?' is-priority':'')+
+          '" data-note-index="'+i+'" data-note-open>'+
+          '<span class="hc-bell-notice-icon" aria-hidden="true">'+(icons[category]||"🔔")+'</span>'+
+          '<span class="hc-bell-notice-main">'+
+            '<span class="hc-bell-notice-top"><small>'+esc(categoryLabel)+'</small>'+
+              (unreadNote?'<i class="hc-bell-notice-unread" aria-label="Non lue"></i>':"")+
+            '</span><strong>'+esc(n.title||"Notification")+'</strong>'+
+            (body?'<span class="hc-bell-notice-copy">'+esc(body)+'</span>':"")+
+            '<span class="hc-bell-notice-bottom"><span>'+esc(status)+'</span>'+
+              (dateText?'<time>'+esc(dateText)+'</time>':"")+
+            '</span></span><span class="hc-bell-notice-chevron" aria-hidden="true">›</span></button>';
+      }).join("")+'</div>':
+      '<div class="hc-bell-empty" role="status">'+
+      (ns.length?"Aucune notification dans cette catégorie.":"Vous n’avez rien à consulter pour le moment.")+
+      '</div>';
+    return head+intro+filterBar+cards;
   }
   function bigConfirm({ title, body = "", confirmLabel = "Confirmer" } = {}) {
     return new Promise((resolve) => {
@@ -3353,9 +3348,12 @@ function personalDrawerRow(icon,label,action,meta="") {
   }
   function openNotificationDetail(n, options = {}) {
     document.getElementById("hcNotificationDetail")?.remove();
-    if (n?.source === "stip" && n?.id && !n?.read_at) {
-      n.read_at = new Date().toISOString();
-      call(ACTION_API, "read_notification", { notification_id: n.id }).catch(() => {});
+    if(!noteIsRead(n)){
+      markNoteRead(n);
+      if(n?.source==="stip" && n?.id && !n?.read_at){
+        n.read_at=new Date().toISOString();
+        call(ACTION_API,"read_notification",{notification_id:n.id}).catch(()=>{});
+      }
     }
     const cat = noteCategory(n),
       { cats } = actionCenterData(),
@@ -3406,9 +3404,9 @@ function personalDrawerRow(icon,label,action,meta="") {
         ${
           manageable
             ? `<button type="button" class="primary" data-detail-manage>${esc(notePrimaryLabel(n))}</button>`
-            : '<button type="button" class="primary" data-detail-done>Marquer comme traité</button>'
+            : '<button type="button" class="primary" data-detail-keep>Revenir aux notifications</button>'
         }
-        <button type="button" class="danger" data-detail-delete>Supprimer</button>
+        <button type="button" class="danger" data-detail-delete>Ne plus afficher</button>
       </div>
     </main>`;
     (options.bellHost || document.body).appendChild(page);
@@ -3433,14 +3431,11 @@ function personalDrawerRow(icon,label,action,meta="") {
         }
       }
     });
-    page.querySelector("[data-detail-done]")?.addEventListener("click", () => {
-      dismissActionNote(n);
-      close();
-    });
+    page.querySelector("[data-detail-keep]")?.addEventListener("click", close);
     page.querySelector("[data-detail-delete]").onclick = async () => {
       const ok = await bigConfirm({
-        title: "Supprimer cette notification ?",
-        body: "Elle disparaîtra de votre Cloche STIP.",
+        title: "Ne plus afficher cette notification ?",
+        body: "Elle disparaîtra de votre cloche sans terminer une action encore en cours.",
         confirmLabel: "Confirmer",
       });
       if (!ok) return;
