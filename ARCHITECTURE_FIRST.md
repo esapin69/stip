@@ -78,6 +78,13 @@ Une adaptation locale ne doit jamais masquer une incohérence globale.
 - `stip-agent-selector.js/.css` : sélection/recherche partagée.
 - Les pages doivent consommer les données agent fiables existantes au lieu de recréer une seconde liste.
 
+### Import sémantique des plannings Excel
+
+- `docs/PLANNING_IMPORT_CONTRACT.md` est le contrat métier canonique de lecture des plannings (dates, identité, shifts, effectifs CUMUL/ATTENDU, ambiguïtés, historique et contrôle humain).
+- `supabase/functions/admin-ghe-import/index.ts` consomme `supabase/functions/_shared/planning-import-references.mjs` pour les références d'effectifs ; ne pas dupliquer son interprétation dans les vues.
+- `Cumul par Horaire` = prévu ; `ATTENDU` = référence. Une colonne sans intitulé n'autorise aucun seuil ni alerte calculée.
+- Chaque évolution doit préserver les tests dans `tools/stip-planning-import-semantics-test.mjs`.
+
 ### Planning / shifts
 - `shift-registry.js` : registre canonique des shifts.
 - Toute page qui interprète des codes de shift doit utiliser ce registre.
