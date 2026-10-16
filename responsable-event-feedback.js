@@ -33,6 +33,22 @@
     not_found:"Personne non trouvée",participants:"Participants",process:"Déroulement"
   };
   const reason = x => reasonLabels[x?.reason_code] || x?.reason_code || "—";
+  const stageLabels = {
+    participation:{observed:"Observation",assisted:"Participation avec aide",supervised:"Pratique sous supervision"},
+    topics:{organization:"Organisation",safety:"Sécurité",transport:"Déplacements",communication:"Communication",tools:"Matériel",other:"Autre"},
+    next:{discover:"Poursuivre la découverte",repeat:"Refaire ensemble",supervised:"Pratique encadrée",referent:"À voir avec le référent"}
+  };
+  const stageSummary = stage => {
+    if (!stage || !stageLabels.participation[stage.participation]) return "";
+    const topics = (Array.isArray(stage.topics) ? stage.topics : []).map(t => stageLabels.topics[t]).filter(Boolean).join(", ");
+    return "Participation : " + stageLabels.participation[stage.participation] +
+      " · Points abordés : " + topics + " · Suite : " + (stageLabels.next[stage.next_step] || "Non précisée");
+  };
+  const stageNote = (x, stage) => {
+    const note = String(x.note || "");
+    if (!stage || !note.startsWith("Bilan de stage —")) return note;
+    return note.includes("; Fait précis : ") ? note.split("; Fait précis : ").slice(1).join("; Fait précis : ") : "";
+  };
   const subset = () => filter === "follow" ? items.filter(x => x.follow_up === true) : items;
 
   function render() {
@@ -46,6 +62,8 @@
     const shown = subset();
     records.innerHTML = shown.length ? shown.slice(0, 100).map(x => {
       const snap = x.event_snapshot || {}, medical = snap.feedback_kind === "medical";
+      const stage = snap.feedback_kind === "intern" ? snap.stage_review : null;
+      const extraNote = stageNote(x, stage);
       const date = dateText(snap.end_date || snap.date);
       const details = [date, medical ? "Suivi administratif" : (snap.time || ""), reason(x) !== "—" ? reason(x) : ""].filter(Boolean).join(" · ");
       return `<article class="resp-feedback-item${x.follow_up ? " is-follow" : ""}">
@@ -53,7 +71,8 @@
           <span class="resp-feedback-outcome">${esc(outcome(x))}</span></div>
         <span class="resp-feedback-meta">${esc(name(x))} · ${esc(details)}</span>
         ${x.follow_up ? '<b class="resp-feedback-need">Suivi demandé</b>' : ""}
-        ${!medical && x.note ? `<p class="resp-feedback-note">${esc(x.note)}</p>` : ""}
+        ${stageSummary(stage) ? `<p class="resp-feedback-note"><strong>Bilan de stage</strong> · ${esc(stageSummary(stage))}</p>` : ""}
+        ${!medical && extraNote ? `<p class="resp-feedback-note">${esc(extraNote)}</p>` : ""}
         <small>Déclaré le ${esc(dateText(x.submitted_at,true))} · Réf. ${esc(x.id || x.event_key || "")}</small>
       </article>`;
     }).join("") : '<p class="resp-feedback-empty">Aucun retour correspondant.</p>';
@@ -88,12 +107,16 @@
     return '"' + value.replace(/"/g,'""').replace(/\r?\n/g," ") + '"';
   }
   function exportCsv() {
-    const headers = ["Référence","Agent","Événement","Date prévue","Type","Résultat","Motif","Suivi demandé","Question événement","Précision","Déclaré le"];
+    const headers = ["Référence","Agent","Événement","Date prévue","Type","Résultat","Motif","Suivi demandé","Question événement","Participation stagiaire","Points travaillés","Suite conseillée","Précision","Déclaré le"];
     const rows = subset().map(x => {
       const snap = x.event_snapshot || {};
       return [x.id || x.event_key,name(x),snap.title || "",snap.end_date || snap.date || "",
         snap.feedback_kind || x.event_type || "",outcome(x),reason(x),x.follow_up ? "Oui" : "Non",
-        x.custom_answer || "",snap.feedback_kind === "medical" ? "" : (x.note || ""),x.submitted_at || ""];
+        x.custom_answer || "",
+        stageLabels.participation[snap.stage_review?.participation] || "",
+        (snap.stage_review?.topics || []).map(t => stageLabels.topics[t] || t).join(", "),
+        stageLabels.next[snap.stage_review?.next_step] || "",
+        snap.feedback_kind === "medical" ? "" : stageNote(x, snap.stage_review),x.submitted_at || ""];
     });
     const csv = "\ufeff" + [headers, ...rows].map(row => row.map(csvField).join(";")).join("\r\n");
     const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
