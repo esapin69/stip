@@ -77,7 +77,7 @@ assert(flipCss.includes("--ghe-flip-start:#222329") &&
        flipCss.includes("--ghe-flip-mid:#111216") &&
        flipCss.includes("--ghe-flip-end:#050608"),
        "Le bouton de retour doit être noir avec texte blanc");
-const currentBuild = index.match(/<meta\\s+name="stip-ui-build"\\s+content="([^"]+)"/)?.[1];
+const currentBuild = index.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/)?.[1];
 assert(Boolean(currentBuild) &&
        index.includes("ghe-flip-actions.css?v=" + currentBuild) &&
        index.includes("stip-loader.js?v=" + currentBuild) &&
