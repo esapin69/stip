@@ -1637,13 +1637,6 @@
   width:auto;height:auto;right:0;bottom:-150px;pointer-events:none;
   background:repeating-linear-gradient(109deg,transparent 0 13px,#f4fcff8b 14px 15px,transparent 16px 34px);
   background-size:70px 110px;opacity:.32;
-  animation:thf-rest-rain 1.7s linear infinite;
-}
-@keyframes thf-rest-rain{
-  from{background-position:0 -110px}to{background-position:-70px 110px}
-}
-@media(prefers-reduced-motion:reduce){
-  .hc-days-grid .thf-day-card.is-rest-visual .thf-weather-stage[data-raining="true"]::after{animation:none}
 }
 @media(max-width:390px){
   .hc-days-grid .thf-day-card.is-rest-visual .thf-weather-stage[data-rest="true"],
