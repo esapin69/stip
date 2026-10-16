@@ -338,7 +338,8 @@
         daysFromToday(iso) < 0 || daysFromToday(iso) >= MAX_DAYS) return;
     try {
       const data = await getForecast();
-      if (!host.isConnected || host.closest("[data-thf-day]")?.dataset.thfDay !== iso) return;
+      const dayCardHost = host.closest("[data-thf-day]");
+      if (!host.isConnected || (dayCardHost && dayCardHost.dataset.thfDay !== iso)) return;
       const values = dayValues(data, iso);
       if (!values) return;
       const scene = host.closest(".thf-weather-sky");
