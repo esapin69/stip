@@ -151,7 +151,8 @@
   async function fetchDuty(force = false) {
     if (
       !document.querySelector("#teamDutyChiefTodayHost") &&
-      !document.querySelector("#homeDutyChiefNowHost")
+      !document.querySelector("#homeDutyChiefNowHost") &&
+      !document.querySelector("#homeView [data-premium-flip]")
     )
       return null;
     if (!localStorage.getItem(STORE)) return null;
@@ -185,6 +186,7 @@
       .finally(() => {
         loading = null;
         render();
+        document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
       });
 
     render();
@@ -388,7 +390,11 @@
       loadError = "";
       lastFetch = Date.now();
       render();
+      document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
       return true;
+    },
+    liveSnapshot() {
+      return { loaded: Boolean(data), current: data ? dutyState().current : [], error: loadError };
     },
     refresh() {
       return fetchDuty(true);
@@ -553,6 +559,7 @@
     loadError = "";
     lastFetch = 0;
     render();
+    document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) fetchDuty();
