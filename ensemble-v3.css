@@ -230,3 +230,57 @@ html[data-t-est="1"] .t-native-leisure .ev3-dialog[open]{
 .ev3-tabs button:focus-visible,.ev3-trip-toolbar button:focus-visible,.ev3-emoji:focus-visible{outline:2px solid #129b9a;outline-offset:2px}
 /* The existing workspace return tab remains usable without covering the middle of a form. */
 body:has(.ev3-page) .stip-workspace-launcher{bottom:max(12px,env(safe-area-inset-bottom));transform:scale(.86);transform-origin:bottom right}
+
+
+/* On se retrouve — a single collaborative view of the existing leisure backend. */
+.ev3-community-tabs{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+.ev3-community-tabs button{font-size:.78rem;padding:8px 3px;position:relative}
+.ev3-tab-count{display:inline-grid;place-items:center;background:#a44b39;color:#fff;border-radius:99px;min-width:17px;height:17px;font-size:.64rem;margin-left:3px;padding:0 3px}
+.ev3-header-actions{display:flex;justify-content:stretch;margin:0 0 11px}
+.ev3-header-actions button{width:100%;min-height:48px;border-radius:14px;font-weight:850}
+.ev3-header-actions button:not(.ev3-primary){border:1px solid #c7dfe0;background:#f3faf9;color:#1e6170}
+.ev3-community-summary{display:grid;gap:12px;padding:17px;background:linear-gradient(125deg,#123c4a,#1d5962 66%,#217866);color:#fff;border-radius:20px;margin-bottom:18px;box-shadow:0 8px 20px #183d4a18}
+.ev3-community-summary>div{display:grid;gap:6px}
+.ev3-community-summary small{color:#b5e6d8;font-weight:850;font-size:.68rem;letter-spacing:.1em}
+.ev3-community-summary strong{font-size:1.13rem;line-height:1.2;letter-spacing:-.02em}
+.ev3-community-summary span{font-size:.8rem;line-height:1.45;color:#e5f7f5}
+.ev3-community-summary button{display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:44px;padding:11px 13px;border:1px solid #a9d2d6;background:#f6ffff;color:#124a57;border-radius:12px;font:inherit;font-size:.82rem;font-weight:850;cursor:pointer}
+.ev3-community-summary button span{color:#124a57;font-size:1.05rem}
+.ev3-availability{display:grid;gap:13px}
+.ev3-availability .ev3-section-title{margin:2px 0 0}
+.ev3-availability-note,.ev3-availability-privacy{margin:0;font-size:.82rem;color:#527681;line-height:1.5}
+.ev3-availability-note strong{color:#245565}
+.ev3-availability-picker{padding:15px;background:#fff;border:1px solid #d5e6e8;border-radius:17px;display:grid;gap:10px}
+.ev3-availability-picker>label{font-weight:800;color:#224f5c;font-size:.85rem}
+.ev3-availability-picker>input{width:100%;border:1px solid #cedfe3;border-radius:12px;padding:11px 13px;min-height:46px;font:inherit;background:#f9fcfc;color:#1e4856}
+.ev3-availability-people{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:7px;max-height:232px;overflow-y:auto;overscroll-behavior:contain}
+.ev3-availability-person{display:flex;align-items:center;gap:9px;min-width:0;min-height:44px;border:1px solid #dce9e9;border-radius:11px;padding:7px 9px;background:#f8fbfb;font-size:.8rem;font-weight:700;color:#275566;cursor:pointer}
+.ev3-availability-person:has(input:checked){background:#e4f5ef;border-color:#5cae9e}
+.ev3-availability-person:has(input:disabled){opacity:.55}
+.ev3-availability-person input{width:18px;height:18px;accent-color:#118d79;flex-shrink:0}
+.ev3-availability-person>span{min-width:0;overflow-wrap:anywhere;flex:1}
+.ev3-availability-person>b{color:#188e73}
+.ev3-availability-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.ev3-availability-controls small{color:#577580;font-size:.78rem}
+.ev3-availability-controls .ev3-primary{flex:1;min-width:190px}
+.ev3-availability-controls button:disabled{opacity:.55}
+.ev3-availability-results{display:grid;gap:8px}
+.ev3-availability-results .ev3-section-title{margin-top:4px}
+.ev3-slot-result{display:flex;align-items:center;gap:10px;border:1px solid #d5e6e5;border-left:4px solid #209b85;border-radius:14px;background:#fff;padding:12px 13px}
+.ev3-slot-result-main{display:grid;gap:3px;flex:1;min-width:0}
+.ev3-slot-result-main strong{color:#214e5d;font-size:.96rem;text-transform:capitalize}
+.ev3-slot-result-main small{color:#447782;font-size:.73rem}
+.ev3-slot-result-main span{color:#5b7480;font-size:.76rem;overflow-wrap:anywhere}
+.ev3-slot-result button{flex-shrink:0;padding:9px 11px;min-height:41px;border:1px solid #b3dcd6;background:#edf9f5;color:#176c60;border-radius:11px;font-size:.78rem;font-weight:850;cursor:pointer}
+.ev3-availability-privacy{font-size:.74rem;border-top:1px solid #deebea;padding-top:11px}
+@media(max-width:460px){
+ .ev3-community-tabs button{font-size:.69rem;letter-spacing:-.01em}
+ .ev3-tab-count{font-size:.6rem;min-width:15px;height:15px;margin-left:2px}
+ .ev3-community-summary{padding:14px}
+ .ev3-availability-picker{padding:12px}
+ .ev3-availability-people{grid-template-columns:repeat(2,minmax(0,1fr));max-height:200px}
+ .ev3-slot-result{gap:7px;padding:9px}
+ .ev3-slot-result button{padding:8px}
+}
+/* The main T workspace uses its own contextual action bar. */
+html[data-t-est="1"] .t-native-leisure .ev3-header-actions{display:none}
