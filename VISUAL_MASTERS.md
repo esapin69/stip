@@ -257,7 +257,7 @@ Le core est placé dans une couche CSS prioritaire pour les propriétés structu
 - La date est un titre central, sans chevron. La désignation du jour non travaillé est située sous l'illustration.
 - La carte entière ouvre les détails. Les nombres de collègues et chefs ne figurent plus sur ces cartes : leurs accès restent dans le pop-up.
 - La météo provient du moteur commun STIPShiftWeather (Open-Meteo, localisation Lyon), sans aucune image météo à générer pour chaque date. Pour les repos : température minimale et maximale de la journée, probabilité de pluie et ambiance météo ; pour les shifts travaillés : météo spécifique aux heures du poste, inchangée.
-- Pluie en cours : rideau de pluie sur toute la carte. Pluie annoncée mais pas encore en cours : décor potentiellement humide sans affirmer qu'il a effectivement plu. Séparer toujours observation/estimation actuelle et prévision.
+- Pluie en cours : fine représentation de pluie sur toute la carte, sans animation ni asset supplémentaire. Pluie annoncée mais pas encore en cours : décor potentiellement humide sans affirmer qu'il a effectivement plu. Séparer toujours observation/estimation actuelle et prévision.
 - Action principale : **Voir toute la semaine**. Grand bouton premium coloré et contrasté, ouvrant le verso semaine existant, sans ajout d'un second calendrier.
 - Respecter la réduction des animations, la lisibilité sur mobile et les sources de planning existantes.
 - Les maquettes conversationnelles approuvées sont une référence d'ambiance, pas des fichiers de décor séparés exploitables dans le dépôt. Le code peut utiliser les pictogrammes existants ; la reproduction pixel à pixel des décors détaillés nécessite des assets autonomes, distincts des captures d'écran.
