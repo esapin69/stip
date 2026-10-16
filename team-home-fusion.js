@@ -616,7 +616,8 @@
     const el=event.target.closest?.("[data-thf-agent],[data-thf-chief-call],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el){
       const card=event.target.closest?.("#hcTeamFusion .thf-day-card.is-rest-visual,#hcTomorrowFusion .thf-day-card.is-rest-visual");
-      if(card){
+      // Ne pas détourner le clic sur une activité, un lien ou une action du jour.
+      if(card && !event.target.closest?.("button, a, [role=button], [data-ev3-preview]")){
         const restHost=card.closest("#hcTeamFusion,#hcTomorrowFusion");
         if(restHost?._thfSummary)openDay(restHost);
       }
