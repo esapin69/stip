@@ -5668,3 +5668,32 @@ dialog#hcBellDialog[open] {
 #hcBellDialog .hc-bell-notice-action>span{
   font-size:1.12em!important;
 }
+
+/* 20261016 : Rendez-vous du tiroir, deux états distincts sans limite à 3. */
+#hcPersonalDrawer .ghe-drawer-group-head {
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:13px 9px 6px;min-width:0;
+}
+#hcPersonalDrawer .ghe-drawer-group-head strong {
+  font-size:.76rem;font-weight:900;letter-spacing:.025em;color:#416f7d;
+}
+#hcPersonalDrawer .ghe-drawer-group-head span {
+  font-size:.72rem;font-weight:900;color:#37788b;background:#edf6f8;
+  border-radius:999px;padding:2px 8px;
+}
+#hcPersonalDrawer .ghe-drawer-followups {
+  margin-top:15px;padding-top:10px;border-top:1px solid #e7e9e9;
+}
+#hcPersonalDrawer .ghe-drawer-followups .ghe-drawer-group-head strong {
+  color:#9b7022;
+}
+#hcPersonalDrawer .ghe-drawer-followups .ghe-drawer-group-head span {
+  color:#946516;background:#fff5dc;
+}
+#hcPersonalDrawer .ghe-drawer-feedback-item .ghe-drawer-appointment-icon {
+  background:#fff5d8;
+}
+#hcPersonalDrawer .ghe-drawer-appointment-copy em {
+  display:block;margin-top:2px;color:#936b22;
+  font-size:.69rem;font-style:normal;font-weight:850;
+}
