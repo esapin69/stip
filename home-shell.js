@@ -2952,9 +2952,39 @@ function personalDrawerRow(icon,label,action,meta="") {
     ...(has("admin") ? [{title:"Administration",subtitle:"Raccourcis et outils administrateur",icon:"⚙",action:"admin"},{title:"Porte T",subtitle:"Accès administrateur",icon:"T",action:"t-door"}] : [])
   ];
 }
+  function drawerAppointmentsState(){
+    const pending=window.STIPEventFeedback?.pending?.()||[];
+    const feedbackIds=new Set(pending.map(x=>String(x.eventKey||"")));
+    const future=futureItems().filter(x=>!feedbackIds.has(String(x.id||"")));
+    return {future,pending};
+  }
+  function drawerAppointmentsMarkup(){
+    const {future,pending}=drawerAppointmentsState();
+    const futureRows=future.map(x=>
+      '<button type="button" class="ghe-drawer-appointment" data-ghe-drawer-future="'+esc(x.id)+'">'+
+      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+eventIconHtml(x,"hc-event-svg")+'</span>'+
+      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
+      '<small>'+esc([fmtDateRange(x),x.time,x.place].filter(Boolean).join(" · "))+'</small></span>'+
+      '<span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
+    ).join("");
+    const pendingRows=pending.map(x=>
+      '<button type="button" class="ghe-drawer-appointment ghe-drawer-feedback-item" data-ghe-drawer-feedback="'+esc(x.eventKey)+'">'+
+      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+esc(x.icon||"📅")+'</span>'+
+      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
+      '<small>'+esc([fmtDateRange(x),x.time,x.location].filter(Boolean).join(" · "))+'</small>'+
+      '<em>Retour attendu</em></span><span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
+    ).join("");
+    return '<section class="ghe-drawer-section ghe-drawer-appointments-section" aria-label="Mes rendez-vous">'+
+      '<div class="ghe-drawer-section-head"><h3>Mes rendez-vous</h3><span>'+(future.length+pending.length)+'</span></div>'+
+      '<div class="ghe-drawer-group-head"><strong>À venir</strong><span>'+future.length+'</span></div>'+
+      '<div class="ghe-drawer-appointments">'+(futureRows||'<p class="ghe-drawer-empty">Aucun rendez-vous à venir.</p>')+'</div>'+
+      '<button type="button" class="ghe-drawer-see-all" data-ghe-drawer-action="future">Voir tout l’agenda à venir <span aria-hidden="true">›</span></button>'+
+      (pending.length?
+        '<div class="ghe-drawer-followups"><div class="ghe-drawer-group-head"><strong>À clôturer</strong><span>'+pending.length+'</span></div>'+
+        '<div class="ghe-drawer-appointments">'+pendingRows+'</div></div>':"")+
+      '</section>';
+  }
   function personalDrawer() {
-  const future=futureItems().slice(0,3);
-  const upcoming=future.map(x=>`<button type="button" class="ghe-drawer-appointment" data-ghe-drawer-future="${esc(x.id)}"><span class="ghe-drawer-appointment-icon" aria-hidden="true">${eventIconHtml(x,"hc-event-svg")}</span><span class="ghe-drawer-appointment-copy"><strong>${esc(x.title)}</strong><small>${esc([fmtDateRange(x),x.time,x.place].filter(Boolean).join(" · "))}</small></span><span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>`).join("");
   const entries=personalDrawerEntries();
   const main=entries.filter(x=>["apps","recent","places","agents","communication","wheelchairs","planning"].includes(x.action));
   const extras=entries.filter(x=>["leisure","dudy","mobile","assistant"].includes(x.action));
@@ -2964,10 +2994,7 @@ function personalDrawerRow(icon,label,action,meta="") {
       <header class="ghe-drawer-head"><div><small>GHE</small><h2 id="gheDrawerTitle">Mon espace</h2></div><button type="button" class="ghe-drawer-close" data-ghe-drawer-dismiss aria-label="Fermer le menu">×</button></header>
       <div class="ghe-drawer-scroll">
         <div class="ghe-drawer-standard" data-ghe-drawer-standard>
-          <section class="ghe-drawer-section" aria-label="Mes prochains rendez-vous"><div class="ghe-drawer-section-head"><h3>Mes prochains rendez-vous</h3><span>${futureItems().length}</span></div>
-            <div class="ghe-drawer-appointments">${upcoming || '<p class="ghe-drawer-empty">Aucun rendez-vous à venir.</p>'}</div>
-            <button type="button" class="ghe-drawer-see-all" data-ghe-drawer-action="future">Voir tous les rendez-vous <span aria-hidden="true">›</span></button>
-          </section>
+          <div data-ghe-drawer-appointments>${drawerAppointmentsMarkup()}</div>
           <section class="ghe-drawer-section" aria-label="Mes espaces"><h3>Mes espaces</h3>${main.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>
           <section class="ghe-drawer-section" aria-label="À découvrir"><h3>À découvrir</h3>${extras.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>
           ${admin.length ? `<section class="ghe-drawer-section ghe-drawer-admin" aria-label="Administration"><h3>Administration</h3>${admin.map(x=>personalDrawerRow(x.icon,x.title,x.action)).join("")}</section>` : ""}
@@ -3020,6 +3047,8 @@ function personalDrawerRow(icon,label,action,meta="") {
   };
   trigger.addEventListener("click",()=>{
     resetSearch();
+    const appts=drawer.querySelector("[data-ghe-drawer-appointments]");
+    if(appts)appts.innerHTML=drawerAppointmentsMarkup();
     if(!drawer.open) drawer.showModal();
   });
   drawer.querySelector("[data-ghe-drawer-dismiss]")?.addEventListener("click",close);
@@ -3027,6 +3056,14 @@ function personalDrawerRow(icon,label,action,meta="") {
     if(event.target===drawer){close();return;}
     const future=event.target.closest("[data-ghe-drawer-future]");
     if(future){close();openWidget("future",future.dataset.gheDrawerFuture);return;}
+    const past=event.target.closest("[data-ghe-drawer-feedback]");
+    if(past){
+      const key=past.dataset.gheDrawerFeedback;
+      close();
+      if(!window.STIPEventFeedback?.open?.(key))
+        document.getElementById("hcEventFeedbackWrap")?.scrollIntoView({block:"start",behavior:"smooth"});
+      return;
+    }
     const agent=event.target.closest("[data-ghe-drawer-agent]");
     if(agent){const item=candidates.get(agent.dataset.gheDrawerAgent);if(item){close();openHeaderDirectoryAgent(item);}return;}
     const action=event.target.closest("[data-ghe-drawer-action]");
@@ -3046,11 +3083,14 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(currentRequest!==requestNumber||!drawer.isConnected) return;
       candidates=new Map();
       const entries=personalDrawerEntries().filter(x=>norm(x.title+" "+x.subtitle).includes(value)).slice(0,7);
-      const appointments=futureItems().filter(x=>norm([x.title,x.type,x.date,x.time,x.place].join(" ")).includes(value)).slice(0,5);
+      const data=drawerAppointmentsState();
+      const appointments=data.future.filter(x=>norm([x.title,x.type,x.date,x.time,x.place].join(" ")).includes(value)).slice(0,8);
+      const pendingAppointments=data.pending.filter(x=>norm([x.title,x.date,x.time,x.location].join(" ")).includes(value)).slice(0,8);
       const colleagueResults=agents.filter(a=>norm([a.prenom,a.nom,a.ghe,a.source_key].join(" ")).includes(value)).slice(0,6);
       const item=(icon,title,subtitle,attrs)=>`<button type="button" class="ghe-drawer-result" ${attrs}><span class="ghe-drawer-row-icon" aria-hidden="true">${icon}</span><span class="ghe-drawer-row-text"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></span><span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>`;
       const pages=entries.map(x=>item(x.icon,x.title,x.subtitle,`data-ghe-drawer-action="${esc(x.action)}"`)).join("");
-      const meetings=appointments.map(x=>item("▦",x.title,[fmtDateRange(x),x.time].filter(Boolean).join(" · "),`data-ghe-drawer-future="${esc(x.id)}"`)).join("");
+      const meetings=appointments.map(x=>item("▦",x.title,[fmtDateRange(x),x.time].filter(Boolean).join(" · "),`data-ghe-drawer-future="${esc(x.id)}"`)).join("")+
+        pendingAppointments.map(x=>item("◷",x.title,[fmtDateRange(x),x.time,"À clôturer"].filter(Boolean).join(" · "),`data-ghe-drawer-feedback="${esc(x.eventKey)}"`)).join("");
       const people=colleagueResults.map((a,i)=>{const key=String(i);candidates.set(key,a);return item("♙",[a.prenom,a.nom].filter(Boolean).join(" ")||"Collègue",a.ghe?"GHE "+a.ghe:"Collègue",`data-ghe-drawer-agent="${key}"`);}).join("");
       const group=(title,content)=>content?`<div class="ghe-drawer-result-group"><h3>${title}</h3>${content}</div>`:"";
       results.innerHTML=group("Pages et outils",pages)+group("Rendez-vous",meetings)+group("Collègues",people)+
@@ -4508,6 +4548,10 @@ function personalDrawerRow(icon,label,action,meta="") {
   });
   window.addEventListener("stip:leisure-updated", () => { state.renderSig = ""; render(); });
   window.addEventListener("stip:meeting-home-updated", () => { state.renderSig = ""; render(); });
+  window.addEventListener("stip:event-feedback-synced",()=>{
+    const host=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");
+    if(host)host.innerHTML=drawerAppointmentsMarkup();
+  });
   window.addEventListener("stip:event-feedback-completed", () => {
     if (!state.ready || state.homeMode !== "planning") return;
     resetWeekToCurrent();
