@@ -3041,7 +3041,7 @@
       '</span>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
-        (count?'<b>'+count+'</b>':'')+'</button></div>
+        (count?'<b>'+count+'</b>':'')+'</button></div>';
     const face=state.premiumFlipped?'back':'front';
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
