@@ -249,6 +249,7 @@ window.STIPLeisure={
  pendingHTML,
  notificationItems,
  drawerDates,
+ isReady:()=>ready,
  knownEventIds:()=>ready?events.map(x=>String(x.id)):[],
  dayItems,
  weekHTML:(start,end)=>cards(start,end),
