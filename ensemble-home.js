@@ -34,6 +34,35 @@ function status(x){
 }
 function iconFor(x){return String(x.icon||"📌")}
 /* Une seule source de rendez-vous, réutilisée par semaine, jour et fenêtre. */
+/* Toutes les dates futures d'activités, confirmées ou simplement proposées.
+   Ne jamais assimiler une proposition à un rendez-vous confirmé. */
+function drawerDates(){
+ if(!ready)return [];
+ const now=today(),rows=[],seen=new Set();
+ for(const x of events){
+  if(x.status!=="active"||!concerned(x)||x.response?.declined)continue;
+  const dates=[...new Set([...(Array.isArray(x.dates)?x.dates:[]),...(Array.isArray(x.visible_dates)?x.visible_dates:[])])]
+   .map(String).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&d>=now).sort();
+  const confirmed=new Set(confirmedDates(x));
+  for(const day of dates){
+   const id=String(x.id||"");
+   if(!id||seen.has(id+"|"+day))continue;
+   seen.add(id+"|"+day);
+   const isConfirmed=confirmed.has(day);
+   const responding=!x.is_organizer&&!!x.needs_response&&!hasResponse(x);
+   const chosen=hasResponse(x)&&x.response.selected_dates.includes(day);
+   const label=isConfirmed?"Confirmé":responding?"Réponse attendue":chosen?"En attente de confirmation":x.is_organizer?"Proposé":"À confirmer";
+   const time=x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer");
+   rows.push({
+    id,title:String(x.title||"Activité"),date:day,icon:iconFor(x),
+    time:String(time),place:String(x.location||""),state:label,
+    confirmed:isConfirmed,needsResponse:responding,source:"leisure"
+   });
+  }
+ }
+ return rows.sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,"fr"));
+}
+
 function dayItems(day){
  if(!ready||!/^\d{4}-\d{2}-\d{2}$/.test(String(day)))return [];
  return events.filter(x=>confirmedDates(x).includes(day)).map(x=>{
@@ -219,6 +248,7 @@ window.STIPLeisure={
  refresh,
  pendingHTML,
  notificationItems,
+ drawerDates,
  knownEventIds:()=>ready?events.map(x=>String(x.id)):[],
  dayItems,
  weekHTML:(start,end)=>cards(start,end),
