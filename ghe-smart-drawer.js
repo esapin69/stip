@@ -64,7 +64,9 @@ function groupedEntries(){
     title:item.title,date:item.date,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:route("home"),id:item.id});
   }
   for(const item of (source.groups.find(g=>g.key==="feedback")?.items||[])){
-   needs.push({date:item.date||now,id:item.id,title:item.title,professional:true});
+   rows.push({kind:"professional-action",icon:"📋",title:item.title||"Action professionnelle",
+    date:item.date||now,sub:"Retour professionnel attendu · ouvrir les notifications GHE",
+    href:route("notifications"),id:item.id});
   }
  }
  const unique=new Map();for(const r of rows)unique.set(r.kind+":"+(r.event?.id||r.id||r.title)+":"+r.date,r);
