@@ -1,0 +1,37 @@
+name: GHE unified day popup
+on:
+  pull_request:
+    paths:
+      - home-shell.js
+      - team-home-fusion.js
+      - home-week-flip.css
+      - index.html
+      - stip-loader.js
+      - stip-sw.js
+      - tools/stip-unified-day-popup-test.mjs
+      - .github/workflows/ghe-unified-day-popup.yml
+  push:
+    branches: [main]
+    paths:
+      - home-shell.js
+      - team-home-fusion.js
+      - home-week-flip.css
+      - index.html
+      - stip-loader.js
+      - stip-sw.js
+      - tools/stip-unified-day-popup-test.mjs
+      - .github/workflows/ghe-unified-day-popup.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax
+        run: |
+          node --check home-shell.js
+          node --check team-home-fusion.js
+          node --check stip-loader.js
+          node --check stip-sw.js
+      - name: Month, week and popup contract
+        run: node --test tools/stip-unified-day-popup-test.mjs tools/stip-popup-continuity-test.mjs tools/stip-popup-no-jump-test.mjs

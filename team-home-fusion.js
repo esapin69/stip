@@ -441,7 +441,7 @@
       detail:{hostId:host.id,day}
     }));
   }
-  function openDay(host){
+  function openDay(host,{refresh=false}={}){
     activeHost=host;
     const s=host._thfSummary;
     if(!s)return;
@@ -474,8 +474,16 @@
       '<div class="thf-day-popup-actions">'+
       '<button type="button" data-thf-open="people">👥 '+(s.restMode?'Collègues en repos · '+(host._thfSets?.rest||[]).length:'Collègues · '+same+' même horaire, '+onDuty+' en service')+' ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
-      '</div>');
-    document.getElementById("thfPopup")?.classList.add("thf-day-popup");
+      '</div>',refresh);
+    const dayPopup=document.getElementById("thfPopup");
+    dayPopup?.classList.add("thf-day-popup");
+    if(dayPopup){
+      dayPopup.dataset.thfDay=s.day;
+      if(!refresh){
+        dayPopup.dataset.thfUserInteracted="0";
+        dayPopup.addEventListener("pointerdown",()=>{dayPopup.dataset.thfUserInteracted="1";},{once:true});
+      }
+    }
     const popupWeather=document.querySelector("#thfPopup [data-thf-weather]");
     if(popupWeather&&s.working&&window.STIPShiftWeather?.mount){
       const hours=String(s.myTime||"").match(/\d{1,2}(?:h|:)\d{2}/g)||[];
@@ -550,14 +558,21 @@
     showDialog('<small>REPÈRE DU JOUR</small><h2><span aria-hidden="true">'+esc(note.icon||"ℹ")+'</span> '+esc(note.title)+'</h2>'+
       '<p>'+esc(note.detail||"Aucune précision supplémentaire.")+'</p>');
   }
-  function showDialog(content){
-    document.getElementById("thfPopup")?.remove();
-    const node=document.createElement("dialog");node.id="thfPopup";node.className="thf-popup";
+  function showDialog(content,reuseDay=false){
+    const existing=document.getElementById("thfPopup");
+    const reuse=Boolean(reuseDay&&existing?.open&&existing.classList.contains("thf-day-popup"));
+    if(!reuse)existing?.remove();
+    const node=reuse?existing:document.createElement("dialog");
+    if(!reuse){node.id="thfPopup";node.className="thf-popup";}
+    const previousScroll=reuse?node.scrollTop:0;
     node.innerHTML='<button type="button" data-thf-close aria-label="Fermer" class="thf-popup-close">×</button>'+content;
-    document.body.appendChild(node);node.showModal?.();if(!node.open)node.setAttribute("open","");
+    if(!reuse){
+      document.body.appendChild(node);
+      node.showModal?.();if(!node.open)node.setAttribute("open","");
+      node.addEventListener("close",()=>node.remove());
+      node.addEventListener("click",(e)=>{if(e.target===node)node.close?.();});
+    }else node.scrollTop=previousScroll;
     node.querySelector("[data-thf-close]")?.addEventListener("click",()=>node.close?.());
-    node.addEventListener("close",()=>node.remove());
-    node.addEventListener("click",(e)=>{if(e.target===node)node.close?.();});
   }
   function mount(opts){
     const host=document.getElementById(opts.hostId||"hcTeamFusion");
@@ -591,7 +606,7 @@
   let pendingWeekPopup=0;
   async function openDate(opts={}) {
     const day=String(opts.day||"").slice(0,10);
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return false;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return Promise.resolve(false);
     const ticket=++pendingWeekPopup;
     let host=document.getElementById("hcWeekFusionPopupHost");
     if(!host){
@@ -601,11 +616,21 @@
       host.setAttribute("aria-hidden","true");
       document.body.appendChild(host);
     }
-    // Réutilisation du moteur de la carte du jour, de ses permissions et de son cache.
-    await mount({...opts,hostId:host.id,day});
-    if(ticket!==pendingWeekPopup||!host.isConnected||host.dataset.thfDay!==day)return false;
+    // Afficher sans attendre le réseau, depuis les données du planning déjà en mémoire.
+    const updates=mount({...opts,hostId:host.id,day});
+    if(!host._thfSummary||host.dataset.thfDay!==day)return Promise.resolve(false);
     openDay(host);
-    return true;
+    // Les données d'équipe peuvent ensuite se rafraîchir dans la même modale
+    // sans détruire sa top-layer ni interrompre une interaction en cours.
+    Promise.resolve(updates).then(()=>{
+      const popup=document.getElementById("thfPopup");
+      if(ticket!==pendingWeekPopup||!host.isConnected||host.dataset.thfDay!==day||
+         !popup?.open||popup.dataset.thfDay!==day||
+         !popup.classList.contains("thf-day-popup")||
+         popup.dataset.thfUserInteracted==="1")return;
+      openDay(host,{refresh:true});
+    }).catch(error=>console.warn("Rafraîchissement détail du jour",error));
+    return Promise.resolve(true);
   }
   // Une fenêtre d'événement remplace la fenêtre du jour, sans deux modales empilées.
   document.addEventListener("click",event=>{

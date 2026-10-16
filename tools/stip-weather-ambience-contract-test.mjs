@@ -46,7 +46,7 @@ assert(css.includes("#87c9f0") && css.includes("#9bcfeb") &&
 assert(home.includes('<span aria-hidden="true">🎨</span><b>'),
   "Chiefs use the approved palette icon, not a crown");
 const dayCard=home.slice(home.indexOf('host.innerHTML='),home.indexOf('const weather=host.querySelector'));
-const dayPopup=home.slice(home.indexOf('function openDay(host)'),home.indexOf('function openChiefs(host)'));
+const dayPopup=home.slice(home.indexOf('function openDay(host'),home.indexOf('function openChiefs(host)'));
 assert(!dayCard.includes('thf-day-brief') && !dayCard.includes('à retenir'),
   "A day card must no longer show a generic notice counter");
 assert(dayPopup.includes('thf-day-popup-notices') &&
@@ -97,7 +97,7 @@ assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
-assert(index.includes("team-home-fusion.js?v=20261016-rest-premium1"),
+assert(index.includes("team-home-fusion.js?v=" + globalBuild),
   "Current day-card script version must be loaded");
 assert(index.includes("team-home-fusion.css?v=20261016-rest-weather-premium1"),
   "Current day-card style version must be loaded");

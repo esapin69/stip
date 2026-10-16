@@ -77,14 +77,20 @@ assert(flipCss.includes("--ghe-flip-start:#222329") &&
        flipCss.includes("--ghe-flip-mid:#111216") &&
        flipCss.includes("--ghe-flip-end:#050608"),
        "Le bouton de retour doit être noir avec texte blanc");
-assert(index.includes('name="stip-ui-build" content="20261016-live-roster-black3"') &&
-       index.includes('ghe-flip-actions.css?v=20261016-flip-return-black1') &&
-       index.includes('stip-loader.js?v=20261016-live-roster-black3') &&
-       index.includes('stip-sw.js?v=20261016-live-roster-black3'),
+const currentBuild = index.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/)?.[1];
+assert(Boolean(currentBuild) &&
+       index.includes("ghe-flip-actions.css?v=" + currentBuild) &&
+       index.includes("stip-loader.js?v=" + currentBuild) &&
+       index.includes("stip-sw.js?v=" + currentBuild),
        "La version de style/cache doit être synchronisée");
-assert(read("stip-loader.js").includes('V = "20261016-live-roster-black3"') &&
-       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-live-roster-black3"'),
+assert(read("stip-loader.js").includes('V = "' + currentBuild + '"') &&
+       read("stip-sw.js").includes('STIP_SW_BUILD="' + currentBuild + '"'),
        "Loader/service worker doivent suivre la version UI");
+assert(flipCss.includes(".ghe-premium-front-footer>.ghe-flip-cta") &&
+       flipCss.includes(".ghe-premium-back-footer>.ghe-flip-cta") &&
+       flipCss.includes("width:clamp(220px,62%,350px)!important") &&
+       flipCss.includes("min-height:44px!important"),
+       "Les boutons En direct et retour doivent partager leur gabarit compact");
 const nowCss = read("ghe-premium-safe-flip.css");
 assert(liveBack.includes('ghe-premium-now-summary') &&
        liveBack.includes('ghe-premium-now-identity') &&
@@ -99,5 +105,5 @@ assert(home.includes('const person=event.target.closest("[data-premium-now-perso
        nowCss.includes('.ghe-premium-now-identity strong'),
        "Les agents doivent être lisibles et ouvrables");
 assert(index.includes('ghe-premium-safe-flip.css?v=20261016-live-roster-black3') &&
-       index.includes('home-shell.js?v=20261016-live-roster-black3'),"Cache bust incohérent");
+       index.includes("home-shell.js?v=" + currentBuild),"Cache bust incohérent");
 console.log("GHE header + 360° black returns + current roster contract OK");

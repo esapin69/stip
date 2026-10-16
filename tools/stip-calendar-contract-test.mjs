@@ -114,6 +114,7 @@ const homeRender=homeJs.split("function homeModeBody()")[1]?.split("function ren
 const flipBack=homeJs.split("function weekFlipBack()")[1]?.split("function weekFlipCard()")[0] || "";
 const flipCard=homeJs.split("function weekFlipCard()")[1]?.split("function syncWeekFlipHeight(")[0] || "";
 const flipCss=read("home-week-flip.css");
+// La semaine courante reste en 5 + 2 ; seul le lundi suivant peut être affiché à part.
 assert(weekEngine.includes("function fullDates") && weekEngine.includes("function upcomingSevenDates"),
   "le moteur de calendrier canonique doit conserver tous ses consommateurs");
 assert(homeJs.includes("function weekFlipDates()") &&
@@ -122,8 +123,8 @@ assert(homeJs.includes("function weekFlipDates()") &&
 assert(flipBack.includes("current.slice(0,5)") && flipBack.includes("current.slice(5)") &&
        flipBack.includes("weekFlipDates()") &&
        !flipBack.includes("weekFlipDates(1)") &&
-       !flipBack.includes("SEMAINE PROCHAINE") &&
-       !flipBack.includes("ghe-weekflip-next"),
+       flipBack.includes("ghe-weekflip-next-divider") &&
+       flipBack.includes("${weekFlipNextMonday()}"),
   "verso : 5 jours puis weekend de 2 jours, sans semaine suivante");
 assert(flipCard.includes('class="hc-days-grid"') &&
        flipCard.includes('id="hcTeamFusion"') &&
@@ -148,7 +149,8 @@ assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(x.code)") &&
   "shifts badges du mois, evenements centres, pas de repere LUNDI");
 assert(flipCss.includes("grid-template-columns:repeat(5,minmax(0,1fr))") &&
        flipCss.includes("grid-template-columns:repeat(2,minmax(0,1fr))") &&
-       !flipCss.includes("ghe-weekflip-next"),
+       flipCss.includes(".ghe-weekflip-next-divider") &&
+       flipCss.includes(".ghe-weekflip-next-action"),
   "le verso doit utiliser deux rangs : 5 jours puis 2 jours");
 assert(flipCss.includes("background:#f1f5f6!important") &&
        flipCss.includes("background:#fff!important") &&
@@ -186,7 +188,8 @@ assert(flipCss.includes(".ghe-weekflip-day.work .ghe-weekflip-day-head") &&
        flipCss.includes(".ghe-weekflip-monday-preview.stip-week-day"),
   "le style doit reprendre les nuances des shifts sans imposer un fond bleu");
 assert(!flipBack.includes("data-week-step") &&
-       !flipBack.includes("SEMAINE PROCHAINE"),
+       !flipBack.includes("weekFlipDates(1)") &&
+       flipBack.includes("ghe-weekflip-next-divider"),
   "le verso ne doit pas avoir de fleches de navigation ou de seconde semaine");
 
 const eventBadges = homeJs.split("function weekEventBadges(")[1]?.split("function weekDisplayModel(")[0] || "";
