@@ -2,6 +2,8 @@ name: GHE cross-surface audit
 on:
   pull_request:
     paths:
+      - 'index.html'
+      - 'tools/ghe-startup-guard-test.mjs'
       - 'esprit-equipe.js'
       - 'stip-agent-selector.js'
       - 'access-manage.js'
@@ -15,6 +17,8 @@ on:
   push:
     branches: [main]
     paths:
+      - 'index.html'
+      - 'tools/ghe-startup-guard-test.mjs'
       - 'esprit-equipe.js'
       - 'stip-agent-selector.js'
       - 'access-manage.js'
@@ -36,6 +40,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - run: node tools/ghe-startup-guard-test.mjs
       - run: node tools/ghe-full-audit-test.mjs
       - run: node --test tools/stip-planning-import-semantics-test.mjs
       - run: node tools/stip-wheelchair-behavior-test.mjs
