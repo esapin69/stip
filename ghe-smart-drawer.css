@@ -38,3 +38,84 @@ body.ghe-smart-active .ghe-home-topbar [data-shortcuts-open] {display:none!impor
 @media(prefers-reduced-motion:reduce){.ghe-smart-rail,body.ghe-smart-active{transition:none}}
 
 .ghe-smart-rail:not([data-mode="expanded"]) .ghe-smart-head [data-ctrl="close"]{display:none!important} .ghe-smart-foot{display:flex;gap:3px;flex-wrap:wrap} .ghe-smart-foot .ghe-smart-search{flex-basis:100%}
+
+/* One dated action inbox, shared by all pending event and professional flows. */
+#gheSmartRail .ghe-smart-pending-trigger{
+ background:linear-gradient(120deg,#fff7e8,#f3f9fc);border:1px solid #e8d6ac;color:#764918;
+}
+#gheSmartRail .ghe-smart-pending-trigger .ghe-smart-icon img{width:38px;height:38px;}
+#gheSmartRail .ghe-smart-pending-trigger .ghe-smart-badge{
+ background:#b63c36;top:-2px;right:-3px;min-width:19px;height:19px;
+}
+dialog#gheSmartPendingDialog:modal,dialog#gheSmartPendingDialog[open]{
+ box-sizing:border-box;position:fixed;inset:0;margin:auto;
+ width:min(560px,calc(100vw - 24px));max-height:min(88dvh,790px);
+ padding:0;border:1px solid #d9e5e9;border-radius:22px;
+ background:#fff;color:#173a4a;box-shadow:0 22px 65px #1737454d;
+ overflow:hidden;
+}
+#gheSmartPendingDialog::backdrop{background:#142c3e88;backdrop-filter:blur(2px);}
+#gheSmartPendingDialog .ghe-smart-pending-frame{
+ display:flex;flex-direction:column;min-height:0;max-height:min(88dvh,790px);
+}
+#gheSmartPendingDialog .ghe-smart-pending-head{
+ flex:none;display:flex;align-items:start;justify-content:space-between;
+ padding:19px 17px 15px;gap:12px;border-bottom:1px solid #e5ecef;
+ background:#f9fcfe;
+}
+#gheSmartPendingDialog .ghe-smart-pending-head small{
+ display:block;font-size:10px;letter-spacing:.12em;font-weight:850;color:#66808d;
+}
+#gheSmartPendingDialog .ghe-smart-pending-head h2{
+ font-size:22px;margin:5px 0;color:#173a4a;
+}
+#gheSmartPendingDialog .ghe-smart-pending-head h2 span{
+ display:inline-block;vertical-align:middle;font-size:12px;
+ border-radius:999px;background:#fae9d4;color:#905a21;padding:4px 9px;
+}
+#gheSmartPendingDialog .ghe-smart-pending-head p{
+ margin:5px 0 0;font-size:12px;color:#617987;
+}
+#gheSmartPendingDialog [data-smart-pending-close]{
+ flex:none;appearance:none;width:42px;height:42px;
+ border:1px solid #d8e4e9;border-radius:12px;
+ background:#fff;color:#375d6c;font-size:26px;cursor:pointer;
+}
+#gheSmartPendingDialog .ghe-smart-pending-items{
+ min-height:0;overflow:auto;overscroll-behavior:contain;
+ padding:12px;scrollbar-width:thin;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item{
+ box-sizing:border-box;display:flex;align-items:center;gap:11px;
+ min-height:75px;padding:11px 12px;margin-bottom:8px;
+ text-decoration:none;color:#173a4a;
+ border:1px solid #dfe9ed;border-radius:15px;background:#fff;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item:hover,
+#gheSmartPendingDialog .ghe-smart-pending-item:focus-visible{
+ outline:2px solid #91b9c6;background:#f2f9fb;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item-icon{
+ flex:none;width:42px;height:42px;display:grid;place-items:center;
+ border-radius:12px;background:#edf6f8;font-size:25px;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item-copy{
+ display:block;flex:1;min-width:0;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item-copy strong{
+ display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item-copy small{
+ display:block;margin-top:3px;font-size:12px;line-height:1.35;color:#6b838f;
+}
+#gheSmartPendingDialog .ghe-smart-pending-item-copy em{
+ display:block;margin-top:4px;font-style:normal;color:#a0641e;
+ font-size:11px;font-weight:800;
+}
+#gheSmartPendingDialog .ghe-smart-pending-chevron{
+ flex:none;font-size:22px;color:#8ea5af;
+}
+@media(max-width:380px){
+ #gheSmartPendingDialog .ghe-smart-pending-items{padding:8px}
+ #gheSmartPendingDialog .ghe-smart-pending-item{padding:9px}
+}
