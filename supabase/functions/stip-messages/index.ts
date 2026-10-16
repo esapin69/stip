@@ -1039,6 +1039,7 @@ async function teamSend(ctx:any,body:any){
             agent_id:agentId,
             payload:{
               event_key:eventKey,
+              work_only:wheelchair?rule.wheelchair_work_only===true:rule.team_chat_work_only===true,
               title:preview?senderName:"STIP",
               body:preview?notificationBody:fallbackBody,
               avatar_url:preview?senderAvatar:"",
