@@ -86,6 +86,7 @@ assert.match(rail,/ghe-smart-admin-tools/,"nonessential shortcuts are behind Adm
 assert.match(rail,/const destination=event.target.closest/,"destination collapses to icons");
 const style=read("ghe-smart-drawer.css");
 assert.match(style,/\.ghe-smart-expand-tab/,"one exterior arrow style");
+assert.match(style,/not\(\[data-mode="expanded"\]\) \.ghe-smart-head\{[\s\S]*?display:flex!important/,"compact rail retains its close cross");
 assert.match(style,/\.ghe-smart-rail[^\n]*background:#fff/,"solid white drawer surface");
 assert.match(style,/data-smart-drawer="closed"\] #homeView \[data-shortcuts-open\]/,"hamburger visible only when closed");
 assert.match(read("ensemble-v3.js"),/deepLinked=true;openEvent\(id,\{inline:true\}\)/,"direct activity links render a single inline detail page");
