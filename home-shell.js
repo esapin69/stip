@@ -3133,6 +3133,7 @@ function personalDrawerRow(icon,label,action,meta="") {
 }
   // Une seule vue sur l'agenda : événements classiques, dates de loisirs
   // confirmées/proposées et suivis anciens, sans limite artificielle de mois.
+  window.STIPDrawerAppointments = () => drawerAppointmentsState();
   function drawerAppointmentsState(){
     const pending=window.STIPEventFeedback?.pending?.()||[];
     const feedbackIds=new Set(pending.map(x=>String(x.eventKey||"")));

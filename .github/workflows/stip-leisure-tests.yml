@@ -1,7 +1,7 @@
 name: GHE leisure behavior
 on:
   push:
-    paths: ['ensemble-home.js', 'ensemble-v3.*', 'quick-access.js', 'quick-access.css', 'index.html', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 'tools/stip-ensemble-mobile-test.mjs', 'tools/stip-on-se-retrouve-interaction-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
+    paths: ['ghe-smart-drawer.*', 'ghe-invitations.*', 'ghe-agenda.html', 'supabase/functions/stip-leisure/index.ts', 'ensemble-home.js', 'ensemble-v3.*', 'quick-access.js', 'quick-access.css', 'index.html', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 'tools/stip-ensemble-mobile-test.mjs', 'tools/stip-on-se-retrouve-interaction-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
   pull_request:
     paths: ['ensemble-home.js', 'ensemble-v3.*', 'quick-access.js', 'quick-access.css', 'index.html', 'sorties-loisirs.html', 'home-shell.js', 'tools/stip-leisure-test.mjs', 'tools/stip-ensemble-mobile-test.mjs', 'tools/stip-on-se-retrouve-interaction-test.mjs', 't-est/accueil/accueil-modules-natifs.js', 't-est/accueil/accueil-unifie.js', 't-est/accueil/index.html', '.github/workflows/stip-leisure-tests.yml']
 jobs:
@@ -12,6 +12,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - run: node --check ghe-smart-drawer.js
+      - run: node --check ghe-invitations.js
+      - run: node tools/ghe-smart-drawer-test.mjs
       - run: node --check ensemble-v3.js
       - run: node tools/stip-ensemble-mobile-test.mjs
       - run: node tools/stip-on-se-retrouve-interaction-test.mjs
