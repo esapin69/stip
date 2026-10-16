@@ -77,13 +77,13 @@ assert(flipCss.includes("--ghe-flip-start:#222329") &&
        flipCss.includes("--ghe-flip-mid:#111216") &&
        flipCss.includes("--ghe-flip-end:#050608"),
        "Le bouton de retour doit être noir avec texte blanc");
-assert(index.includes('name="stip-ui-build" content="20261016-live-roster-black2"') &&
+assert(index.includes('name="stip-ui-build" content="20261016-live-roster-black3"') &&
        index.includes('ghe-flip-actions.css?v=20261016-flip-return-black1') &&
-       index.includes('stip-loader.js?v=20261016-live-roster-black2') &&
-       index.includes('stip-sw.js?v=20261016-live-roster-black2'),
+       index.includes('stip-loader.js?v=20261016-live-roster-black3') &&
+       index.includes('stip-sw.js?v=20261016-live-roster-black3'),
        "La version de style/cache doit être synchronisée");
-assert(read("stip-loader.js").includes('V = "20261016-live-roster-black2"') &&
-       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-live-roster-black2"'),
+assert(read("stip-loader.js").includes('V = "20261016-live-roster-black3"') &&
+       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-live-roster-black3"'),
        "Loader/service worker doivent suivre la version UI");
 const nowCss = read("ghe-premium-safe-flip.css");
 assert(liveBack.includes('ghe-premium-now-summary') &&
@@ -98,6 +98,6 @@ assert(!liveBack.includes('homeDutyChiefNowHost') &&
 assert(home.includes('const person=event.target.closest("[data-premium-now-person][data-premium-agent]")') &&
        nowCss.includes('.ghe-premium-now-identity strong'),
        "Les agents doivent être lisibles et ouvrables");
-assert(index.includes('ghe-premium-safe-flip.css?v=20261016-live-roster-black2') &&
-       index.includes('home-shell.js?v=20261016-live-roster-black2'),"Cache bust incohérent");
-console.log("GHE simplified home + drawer + three 360° CTA + live roster + black returns contract OK");
+assert(index.includes('ghe-premium-safe-flip.css?v=20261016-live-roster-black3') &&
+       index.includes('home-shell.js?v=20261016-live-roster-black3'),"Cache bust incohérent");
+console.log("GHE header + 360° black returns + current roster contract OK");
