@@ -36,3 +36,5 @@ body.ghe-smart-active .ghe-home-topbar [data-shortcuts-open] {display:none!impor
 .ghe-smart-hint {padding:12px;color:#587281;font-size:12px;text-align:center}
 .ghe-smart-rail:not([data-mode="expanded"]) .ghe-smart-hint {font-size:9px;padding:6px 0;}
 @media(prefers-reduced-motion:reduce){.ghe-smart-rail,body.ghe-smart-active{transition:none}}
+
+.ghe-smart-rail:not([data-mode="expanded"]) .ghe-smart-head [data-ctrl="close"]{display:none!important} .ghe-smart-foot{display:flex;gap:3px;flex-wrap:wrap} .ghe-smart-foot .ghe-smart-search{flex-basis:100%}
