@@ -1155,7 +1155,10 @@
   border-radius:11px;
   background:#f9fcfd;
   color:#315563;
-  font:800 .77rem/1.25 inherit;
+  font-weight:800;
+  font-size:.77rem;
+  line-height:1.25;
+  font-family:inherit;
   text-align:center;
   cursor:pointer;
   touch-action:manipulation;
