@@ -12,6 +12,18 @@
   --ghe-flip-start:#e51d49;--ghe-flip-mid:#d51040;--ghe-flip-end:#a70e37;
   --ghe-flip-border:#fa6684;--ghe-flip-shadow:#bd1d4c35;--ghe-flip-focus:#ad1747;
 }
+/* Uniquement le retour vers la face par défaut : noir premium pour les
+   trois cartes. Les couleurs bleu / turquoise / rouge des rectos restent intactes. */
+.ghe-weekflip-back>.ghe-flip-cta,
+.ghe-monthflip-back>.ghe-flip-cta,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back .ghe-flip-cta{
+  --ghe-flip-start:#222329;
+  --ghe-flip-mid:#111216;
+  --ghe-flip-end:#050608;
+  --ghe-flip-border:#393d44;
+  --ghe-flip-shadow:#05060838;
+  --ghe-flip-focus:#8e9cae;
+}
 .ghe-weekflip-face>.ghe-flip-cta,
 .ghe-monthflip-face>.ghe-flip-cta,
 .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{

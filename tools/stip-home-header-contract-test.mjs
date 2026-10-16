@@ -67,4 +67,22 @@ assert(flipCss.includes("--ghe-flip-start:#e51d49") &&
 assert(index.includes('ghe-flip-actions.css?v=') &&
        index.indexOf('home-month-flip.css?v=') < index.indexOf('ghe-flip-actions.css?v='),
        "Le style partagé doit être chargé après les autres styles des flips");
+// Back-side CTAs alone are black; keep the three opening brand colors untouched.
+for (const back of [
+  ".ghe-weekflip-back>.ghe-flip-cta",
+  ".ghe-monthflip-back>.ghe-flip-cta",
+  ".hc-home-top-nav[data-header-compact] .ghe-premium-back .ghe-flip-cta"
+]) assert(flipCss.includes(back), "Bouton retour noir manquant : " + back);
+assert(flipCss.includes("--ghe-flip-start:#222329") &&
+       flipCss.includes("--ghe-flip-mid:#111216") &&
+       flipCss.includes("--ghe-flip-end:#050608"),
+       "Le bouton de retour doit être noir avec texte blanc");
+assert(index.includes('name="stip-ui-build" content="20261016-flip-return-black1"') &&
+       index.includes('ghe-flip-actions.css?v=20261016-flip-return-black1') &&
+       index.includes('stip-loader.js?v=20261016-flip-return-black1') &&
+       index.includes('stip-sw.js?v=20261016-flip-return-black1'),
+       "La version de style/cache doit être synchronisée");
+assert(read("stip-loader.js").includes('V = "20261016-flip-return-black1"') &&
+       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-flip-return-black1"'),
+       "Loader/service worker doivent suivre la version UI");
 console.log("GHE simplified home + drawer + three 360° CTA contract OK");
