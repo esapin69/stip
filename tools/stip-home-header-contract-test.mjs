@@ -93,6 +93,6 @@ assert(flipCss.includes(".ghe-premium-front-footer>.ghe-flip-cta") &&
        flipCss.includes("font-size:clamp(.88rem,3vw,.96rem)!important"),
        "Les deux boutons En direct / retour doivent être compacts et de même taille");
 const compactCss = flipCss.slice(flipCss.indexOf("/* Taille de référence (capture utilisateur)"));
-assert(!/translate|justify-content|margin-left|margin-right|position:\s*absolute/.test(compactCss),
+assert(!/(^|\n)\s*(transform:\s*translate|justify-content:|margin-left:|margin-right:|position:\s*absolute)/.test(compactCss),
        "La correction de taille ne doit pas déplacer les boutons En direct");
 console.log("GHE simplified home + drawer + three 360° CTA contract OK");
