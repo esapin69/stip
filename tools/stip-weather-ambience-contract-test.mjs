@@ -46,7 +46,7 @@ assert(css.includes("#87c9f0") && css.includes("#9bcfeb") &&
 assert(home.includes('<span aria-hidden="true">🎨</span><b>'),
   "Chiefs use the approved palette icon, not a crown");
 const dayCard=home.slice(home.indexOf('host.innerHTML='),home.indexOf('const weather=host.querySelector'));
-const dayPopup=home.slice(home.indexOf('function openDay(host)'),home.indexOf('function openChiefs(host)'));
+const dayPopup=home.slice(home.indexOf('function openDay(host'),home.indexOf('function openChiefs(host)'));
 assert(!dayCard.includes('thf-day-brief') && !dayCard.includes('à retenir'),
   "A day card must no longer show a generic notice counter");
 assert(dayPopup.includes('thf-day-popup-notices') &&
