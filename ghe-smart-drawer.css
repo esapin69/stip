@@ -166,7 +166,7 @@ body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen{displa
  padding:0 2px 0 0;border:1px solid var(--stip-line,#d2e3ea);
  border-left:0;border-radius:0 14px 14px 0;background:#fff;
  color:var(--stip-ink,#245a70);box-shadow:4px 2px 12px #092f4318;
- font:600 29px/1 inherit;cursor:pointer;touch-action:manipulation;
+ font-family:inherit;font-size:29px;font-weight:600;line-height:1;cursor:pointer;touch-action:manipulation;
 }
 body:not(.ghe-smart-active) .ghe-smart-expand-tab,
 body[data-smart-drawer="closed"] .ghe-smart-expand-tab{display:none;}
