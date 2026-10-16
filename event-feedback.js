@@ -418,6 +418,7 @@
     } finally {
       state.loading = false;
       render();
+      window.dispatchEvent(new Event("stip:event-feedback-synced"));
     }
   }
 
@@ -1024,6 +1025,22 @@
     loadDone().catch(() => {});
   }
 
+  // Source officielle des rendez-vous passés en attente de retour.
+  // Le tiroir réutilise exactement les mêmes clés et états que « À clôturer ».
+  window.STIPEventFeedback = {
+    pending: () => state.doneLoaded ? pendingEvents().map((x) => ({
+      eventKey:x.eventKey,title:x.title,date:x.date,endDate:x.endDate,
+      time:x.time,location:x.location,icon:x.icon,kind:x.kind
+    })) : [],
+    open: (eventKey) => {
+      if (!state.doneLoaded) return false;
+      const event=pendingEvents().find((x)=>x.eventKey===String(eventKey||""));
+      if(!event)return false;
+      openModal(event);
+      return true;
+    },
+    ready: () => state.doneLoaded
+  };
   window.addEventListener("stip:boot-updated", refreshFromBoot);
   window.addEventListener("stip:home-rendered", () => {
     state.boot = window.STIPBootCache || state.boot;
@@ -1043,6 +1060,7 @@
     document.getElementById("hcEventFeedbackHost")?.remove();
     document.getElementById("hcEventFeedbackModal")?.remove();
     document.body.classList.remove("hc-feedback-modal-open");
+    window.dispatchEvent(new Event("stip:event-feedback-synced"));
   });
 
   setInterval(() => {
