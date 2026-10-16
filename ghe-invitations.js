@@ -4,7 +4,7 @@ const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-leisure";
 const STORE="stip_session_v1",root=document.getElementById("gheInvitationPage");
 if(!root)return;
 const host=document.getElementById("gheInvitationList"),status=document.getElementById("gheInvitationStatus");
-const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;":"&quot;","'":"&#39;"}[c]));
+const esc = v => String(v ?? "").replace(/[&<>\x22\x27]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\x22":"&quot;", "\x27":"&#39;" }[c]));
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
 let events=[],busy=new Set(),epoch=0,loading=false,authToken="";
