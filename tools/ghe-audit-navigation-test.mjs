@@ -66,3 +66,15 @@ assert.equal(strategies([row('2026-10-14',-1),row('2026-10-16',1)],'2026-10-16')
 assert.equal(strategies([row('2026-10-16',-1),row('2026-10-19',1)],'2026-10-16').length,1,'future compatible dates retain proposals');
 assert.equal(strategies([row('2026-10-16',-1),row('2026-10-24',1)],'2026-10-16').length,0,'keep the seven-day window');
 console.log('PASS — GHE audit: invitations, search, refresh, deep links, live roster and actionable balance dates.');
+// A pending item's destination must wait for the overlay's history transition.
+const destinationBranch=rail.slice(rail.indexOf(' if(destination){'),rail.indexOf('\n const trigger='));
+const navigatePending=vm.runInNewContext('(event,destination,window,requestAnimationFrame,setMode,location)=>{'+destinationBranch+'}',{});
+const sequence=[],href='/index.html?feedback_key=return-1#/home';
+let afterClose;
+const dialog={open:true,close:()=>sequence.push('unsafe-native-close')};
+const destination={dataset:{smartEntryKind:'feedback',smartEntryId:'return-1'},href,closest:()=>dialog};
+const event={preventDefault:()=>sequence.push('prevent-default')};
+const windowMock={STIPOverlayNav:{close:(_dialog,callback)=>{sequence.push('close-history');afterClose=callback;return true}},STIPNav:{go:url=>sequence.push(url)}};
+navigatePending(event,destination,windowMock,callback=>callback(),()=>{},{});
+assert.deepEqual(sequence,['prevent-default','close-history'],'do not race native close against document navigation');
+afterClose();assert.equal(sequence.at(-1),href,'resume the exact destination after closing its history level');
