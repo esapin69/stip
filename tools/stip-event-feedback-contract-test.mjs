@@ -18,6 +18,15 @@ const must = (ok, msg) => {
 must(!ui.includes("Je n’étais pas présent"), "legacy presence wording must not return");
 must(ui.includes("Accompagnement réalisé"), "intern positive outcome label missing");
 must(ui.includes("Accompagnement non réalisé"), "intern non-realized outcome label missing");
+must(ui.includes('data-feedback-stage'), "intern outcome needs an observation intake");
+must(ui.includes('data-stage-participation'), "observed participation choice missing");
+must(ui.includes('data-stage-topic'), "topics learned choice missing");
+must(ui.includes('data-stage-next'), "next stage action missing");
+must(ui.includes('stageTopics.size > 0'), "stage observation must be complete before save");
+must(ui.includes("Bilan de stage —"), "stage observations must survive the legacy backend through note fallback");
+must(api.includes('stageReviewValue(input:any)'), "stage review must be validated on the server");
+must(api.includes('stage_review:stageReview'), "stage review must be retained as structured snapshot");
+must(manager.includes('stageSummary'), "manager must display stage-specific information");
 must(ui.includes("Préparer un mail"), "compact mail action missing");
 must(ui.includes("Destinataire conseillé"), "mail recipient hierarchy missing");
 must(ui.includes("Copies facultatives"), "optional CC hierarchy missing");
