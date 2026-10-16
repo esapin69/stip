@@ -97,11 +97,12 @@ assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
-for (const asset of ["team-home-fusion.js", "team-home-fusion.css"])
-  assert(index.includes(asset + "?v=20261015-weather-contrast-notices3"),
-    "New card asset URL not refreshed: " + asset);
-assert(index.includes("shift-weather-mini.js?v=20261015-chefs-rest-rain1"),
-  "The unchanged canonical weather engine must stay available");
+assert(index.includes("team-home-fusion.js?v=20261016-rest-premium1"),
+  "Current day-card script version must be loaded");
+assert(index.includes("team-home-fusion.css?v=20261016-rest-weather-premium1"),
+  "Current day-card style version must be loaded");
+assert(index.includes("shift-weather-mini.js?v=20261016-rest-day-forecast1"),
+  "Canonical weather engine must be refreshed for the daily forecast");
 assert(index.includes('stip-loader.js?v=' + globalBuild) &&
   index.includes('stip-sw.js?v=' + globalBuild),
   "Loader and service worker must match the HTML build");
@@ -109,6 +110,12 @@ assert(index.includes("stip-ui-version-check") &&
   index.indexOf("scheduleHeal(0)") < index.indexOf("<title>"),
   "The startup version gate must protect the first paint");
 assert.match(home, /data-rest=/, "Rest cards must have a dedicated decorative state");
+assert(home.includes("is-rest-visual") && home.includes("data-thf-day-weather"),
+  "Non-working rest cards must share the daily weather engine");
+assert(weather.includes("mountDay") && weather.includes("dayValues"),
+  "Rest and paid leave must reuse the existing Open-Meteo engine");
+assert(css.includes('data-raining="true"') && css.includes('data-wet="true"'),
+  "Rain and wet-ground visuals must be independently driven by the forecast");
 assert.match(home, /data-thf-open="chiefs"/, "Chef entries must open a dedicated popup");
 assert.match(weather, /if \(values\.risk !== null\)/, "Compact forecast must display precipitation risk");
 assert.match(weather, /const CACHE_TTL = 20 \* 60 \* 1000/);
