@@ -604,7 +604,7 @@
     return Promise.allSettled(updates);
   }
   let pendingWeekPopup=0;
-  function openDate(opts={}) {
+  async function openDate(opts={}) {
     const day=String(opts.day||"").slice(0,10);
     if(!/^\d{4}-\d{2}-\d{2}$/.test(day))return Promise.resolve(false);
     const ticket=++pendingWeekPopup;
