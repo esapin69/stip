@@ -2,6 +2,11 @@ name: GHE home seven-point regression
 on:
   pull_request:
     paths:
+      - ghe-smart-drawer.js
+      - ghe-smart-drawer.css
+      - ghe-invitations.js
+      - supabase/functions/stip-assistant/index.ts
+      - tools/ghe-audit-navigation-test.mjs
       - home-shell.js
       - ghe-premium-safe-flip.css
       - team-home-fusion.js
@@ -17,6 +22,11 @@ on:
   push:
     branches: [main]
     paths:
+      - ghe-smart-drawer.js
+      - ghe-smart-drawer.css
+      - ghe-invitations.js
+      - supabase/functions/stip-assistant/index.ts
+      - tools/ghe-audit-navigation-test.mjs
       - home-shell.js
       - ghe-premium-safe-flip.css
       - team-home-fusion.js
@@ -35,6 +45,9 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
       - run: |
           node --check home-shell.js
           node --check team-home-fusion.js
@@ -42,5 +55,6 @@ jobs:
           node --check ghe-notification-controls.js
           node --check stip-loader.js
           node --check stip-sw.js
+      - run: node tools/ghe-audit-navigation-test.mjs
       - run: node tools/ghe-home-seven-points-test.mjs
       - run: node --test tools/stip-unified-day-popup-test.mjs tools/stip-popup-no-jump-test.mjs

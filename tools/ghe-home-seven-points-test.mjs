@@ -50,7 +50,8 @@ function markupFor(rows,chiefs=[],options={}){
   });
 }
 const withChief=markupFor(onlyActive,[mockRow("J","C1")]);
-assert.equal((withChief.match(/data-premium-roster="/g)||[]).length,3,"Two active shifts plus one chief");
+assert.equal((withChief.match(/data-premium-roster="/g)||[]).length,4,"Total action plus two active shifts and one chief");
+assert.match(withChief,/data-premium-roster="all"/,"Total headcount opens all agents");
 assert.match(withChief,/data-premium-roster="J"/);
 assert.match(withChief,/data-premium-roster="S"/);
 assert.match(withChief,/data-premium-roster="chiefs"/);
@@ -59,7 +60,7 @@ assert.doesNotMatch(withChief,/data-premium-roster="M"/,"Finished mornings not s
 assert.match(withChief,/strong>3<\/strong>/,"Only non-chief agents in total");
 const noChief=markupFor(onlyActive);
 assert.doesNotMatch(noChief,/data-premium-roster="chiefs"/,"Chief line hidden if none active");
-assert.equal((noChief.match(/data-premium-roster="/g)||[]).length,2);
+assert.equal((noChief.match(/data-premium-roster="/g)||[]).length,3);
 assert.doesNotMatch(noChief,/<details/,"No expanding content within the fixed card");
 assert.match(home,/ghe-top-aux-actions/);
 assert.match(iconCss,/\.ghe-home-bell\{[\s\S]*?margin-left:clamp/);

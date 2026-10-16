@@ -755,6 +755,15 @@
       at: state.lastRefreshAt || Date.now(),
       boot: state.boot,
       home: state.home || { actions: [], notifications: [] },
+      // A view of the same runtime snapshot lets standalone pages keep the
+      // professional drawer without fetching or rebuilding another agenda.
+      drawer: {
+        groups: drawerAppointmentsState().groups.map(group=>({key:group.key,items:group.items
+          .filter(item=>item.kind!=="leisure")
+          .map(({kind,id,title,date,time,place,icon,subtitle,stateLabel})=>({kind,id,title,date,time,place,icon,subtitle,stateLabel}))})),
+        actions: window.STIPDrawerActionItems?.() || [],
+        entries: personalDrawerEntries()
+      },
     });
     try { sessionStorage.setItem(key, snapshot); } catch {}
     try { localStorage.setItem(key, snapshot); } catch {}
@@ -2498,6 +2507,17 @@
     </section>`;
   }
   function focusRequestedAlert() {
+    const actionParams=new URLSearchParams(location.search),drawerAction=actionParams.get("drawer_action");
+    if(drawerAction&&window.STIPDrawerOpenAction){
+      actionParams.delete("drawer_action");
+      history.replaceState(history.state,"",location.pathname+(actionParams.size?"?"+actionParams.toString():"")+location.hash);
+      window.STIPDrawerOpenAction(drawerAction);
+    }
+    const feedbackParams=new URLSearchParams(location.search),feedbackKey=feedbackParams.get("feedback_key");
+    if(feedbackKey&&window.STIPDrawerOpenEntry?.("feedback",feedbackKey)){
+      feedbackParams.delete("feedback_key");
+      history.replaceState(history.state,"",location.pathname+(feedbackParams.size?"?"+feedbackParams.toString():"")+location.hash);
+    }
     const params = new URLSearchParams(location.search),
       key = String(params.get("alert_key") || "").trim();
     if (!key || state.focusedAlertKey === key) return;
@@ -2974,10 +2994,10 @@
       !authorized?"Planning d’équipe non accessible avec cet accès.":
       "Aucun agent en poste dans les données de planning disponibles.";
     return '<div class="ghe-premium-now">'+
-      '<div class="ghe-premium-now-summary"><span class="ghe-premium-now-kicker">'+
+      '<button type="button" class="ghe-premium-now-summary" data-premium-roster="all" aria-haspopup="dialog" aria-label="Voir tous les agents en poste actuellement"'+(waiting||!authorized?' disabled':'')+'><span class="ghe-premium-now-kicker">'+
         '<i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
         '<span class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong>'+
-          '<span>agents</span></span></div>'+
+          '<span>agents ›</span></span></button>'+
       (sections||chiefSection?
         '<div class="ghe-premium-now-groups" aria-label="Postes actifs maintenant">'+sections+chiefSection+'</div>':
         '<p class="ghe-premium-now-empty" role="status">'+esc(empty)+'</p>')+
@@ -2991,7 +3011,9 @@
       "Horaire non communiqué";
     const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
       .map(word=>word[0]).join("").toUpperCase()||"·";
-    const content='<span class="ghe-premium-now-avatar" aria-hidden="true">'+esc(initials)+'</span>'+
+    const avatar=person.profile_photo_url || state.boot?.media?.avatars?.[person.source_key] || person.avatar_signed_url || person.avatar_url || "";
+    const content='<span class="ghe-premium-now-avatar hc-avatar" data-avatar-fallback="'+esc(initials)+'" aria-hidden="true">'+
+      (avatar?'<img src="'+esc(avatar)+'" alt="" loading="lazy">':esc(initials))+'</span>'+
       '<span class="ghe-premium-now-identity"><strong>'+esc(name)+'</strong>'+
       '<small>'+esc(time)+'</small></span>'+
       (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':"");
@@ -3002,8 +3024,8 @@
   function openPremiumRoster(code){
     const roster=liveRoster();
     const chief=code==="chiefs";
-    const rows=chief?roster.chiefs:roster.rows.filter(item=>canonicalShift(item.code)===code);
-    const title=chief?"Chefs d’équipe":premiumShiftName(code);
+    const rows=chief?roster.chiefs:code==="all"?roster.rows:roster.rows.filter(item=>canonicalShift(item.code)===code);
+    const title=chief?"Chefs d’équipe":code==="all"?"Agents en poste":premiumShiftName(code);
     document.getElementById("hcPremiumNowDialog")?.close?.();
     document.getElementById("hcPremiumNowDialog")?.remove();
     const dialog=document.createElement("dialog");
@@ -3197,6 +3219,16 @@ function personalDrawerRow(icon,label,action,meta="") {
       type:String(a.type||a.source_type||""),
       event_date:a.event_date||a.due_date||a.date||""
     }));
+  window.STIPDrawerEntries = () => personalDrawerEntries();
+  window.STIPDrawerOpenEntry = (kind,id) => {
+    if (!state.ready || !token()) return false;
+    const entry=drawerAppointmentsState().groups.flatMap(group=>group.items)
+      .find(item=>item.kind===kind&&item.id===String(id));
+    if (!entry) return false;
+    if (kind==="future") {openWidget("future",entry.id);return true;}
+    if (kind==="feedback") return Boolean(window.STIPEventFeedback?.open?.(entry.id));
+    return false;
+  };
   window.STIPDrawerAppointments = () => drawerAppointmentsState();
   function drawerAppointmentsState(){
     const pending=window.STIPEventFeedback?.pending?.()||[];
@@ -3401,6 +3433,12 @@ function personalDrawerRow(icon,label,action,meta="") {
     }
     if(action==="t-door" && has("admin")) return window.STIPLoad?.navigateDocument?.("t-est/porte-entree/index.html") || (location.href="t-est/porte-entree/index.html");
     });
+  };
+  window.STIPDrawerOpenAction = action => {
+    if(!state.ready||!personalDrawerEntries().some(entry=>entry.action===action))return false;
+    if(action==="admin"&&!document.getElementById("hcShortcutsDialog"))return false;
+    doAction(action);
+    return true;
   };
   trigger.addEventListener("click",()=>{
     resetSearch();
@@ -4368,6 +4406,7 @@ function personalDrawerRow(icon,label,action,meta="") {
         refresh(true).catch(() => {});
       });
     window.dispatchEvent(new CustomEvent("stip:home-rendered"));
+    requestAnimationFrame(focusRequestedAlert);
     if (onHome && y > 0)
       requestAnimationFrame(() =>
         requestAnimationFrame(() => {
@@ -4955,10 +4994,13 @@ function personalDrawerRow(icon,label,action,meta="") {
   });
   window.addEventListener("stip:meeting-home-updated", () => { state.renderSig = ""; render(); });
   window.addEventListener("stip:event-feedback-synced",()=>{
+    writeHomeCache();
+    focusRequestedAlert();
     const host=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");
     if(host)host.innerHTML=drawerAppointmentsMarkup();
   });
   window.addEventListener("stip:event-feedback-completed", () => {
+    writeHomeCache();
     if (!state.ready || state.homeMode !== "planning") return;
     resetWeekToCurrent();
     state.renderSig = "";

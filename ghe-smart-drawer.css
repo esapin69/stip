@@ -15,6 +15,7 @@ body.ghe-smart-active #hcPersonalDrawer { display:none !important; }
 .ghe-smart-rail:not([data-mode="expanded"]) .ghe-smart-head {flex-direction:column;gap:0;}
 .ghe-smart-scroll {flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:8px 5px 12px;scrollbar-width:thin;}
 .ghe-smart-link {width:100%;display:flex;align-items:center;min-height:51px;gap:10px;text-align:left;padding:6px 7px;border-radius:12px;text-decoration:none;position:relative;margin:2px 0;}
+.ghe-smart-link[hidden]{display:none!important;}
 .ghe-smart-link:focus-visible,.ghe-smart-toggle:focus-visible,.ghe-smart-reopen:focus-visible {outline:3px solid #287da4;outline-offset:1px;}
 .ghe-smart-link:hover,.ghe-smart-link[aria-current="page"] {background:#eaf4f9;}
 .ghe-smart-icon {display:grid;place-items:center;flex:0 0 36px;height:40px;font-size:22px;line-height:1;position:relative;}

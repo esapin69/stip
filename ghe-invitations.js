@@ -93,18 +93,28 @@ async function load(){
 async function decide(id,day,decision){
  const e=events.find(x=>x.id===id);if(!e)return;
  const key=id+"|"+day;if(busy.has(key)||selected(e,day)===decision)return;
+ const blocked=(e.visible_dates||e.dates||[]).includes(day)===false||e.organizer_unavailable_dates?.includes(day);
+ if(blocked&&decision==="yes")return;
+ const requestToken=authToken;
  busy.add(key);
- const card=host.querySelector('[data-error="'+CSS.escape(key)+'"]');
- if(card)card.textContent="Enregistrement en cours…";
+ const errorNode=host.querySelector('[data-error="'+CSS.escape(key)+'"]');
+ if(errorNode)errorNode.textContent="Enregistrement en cours…";
  host.querySelectorAll('[data-event="'+CSS.escape(id)+'"][data-day="'+CSS.escape(day)+'"]').forEach(el=>el.disabled=true);
+ let failure="";
  try{
-  const next=await call("respond_day",{event_id:id,revision:e.revision,day,decision});
-  if(localStorage.getItem(STORE)!==authToken)return;
-  events=next.events||[];render();window.dispatchEvent(new Event("ghe:agenda-change"));
- }catch(err){
-  if(card)card.textContent=err.message||"Réponse non enregistrée.";
-  host.querySelectorAll('[data-event="'+CSS.escape(id)+'"][data-day="'+CSS.escape(day)+'"]').forEach(el=>el.disabled=false);
- }finally{busy.delete(key)}
+  const next=await call("respond_day",{event_id:id,revision:e.revision,day,decision},requestToken);
+  if(localStorage.getItem(STORE)!==requestToken||authToken!==requestToken)return;
+  events=next.events||[];
+ }catch(err){failure=err.message||"Réponse non enregistrée.";}
+ finally{
+  busy.delete(key);
+  if(localStorage.getItem(STORE)===requestToken&&authToken===requestToken){
+   render();
+   const message=host.querySelector('[data-error="'+CSS.escape(key)+'"]');
+   if(message&&failure)message.textContent=failure;
+   if(!failure)window.dispatchEvent(new Event("ghe:agenda-change"));
+  }
+ }
 }
 function showRoster(id,day){
  const e=events.find(x=>x.id===id);if(!e)return;
