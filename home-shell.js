@@ -1801,7 +1801,7 @@
       '</div>';
   }
 
-  function monthFlipCard() {
+  function monthFlipCard(calendarMarkup) {
     const flipped = state.monthFlipped,
       key = String(state.dateJumpMonth || parisIso().slice(0, 7)),
       display = cap(dateObj(key + "-01").toLocaleDateString("fr-FR", {month: "long", year: "numeric"}));
@@ -1809,7 +1809,7 @@
       '" aria-label="Calendrier et statistiques du mois"><div class="ghe-monthflip-track">' +
       '<section class="ghe-monthflip-face ghe-monthflip-front" aria-label="Calendrier mensuel"' +
       (flipped ? ' inert aria-hidden="true"' : ' aria-hidden="false"') + '>' +
-      planningCalendarOverview() +
+      calendarMarkup +
       '<button type="button" class="ghe-monthflip-turn ghe-monthflip-open" data-month-turn-open aria-expanded="' +
       flipped + '" aria-label="Voir les statistiques du mois affiché">' +
       '<span aria-hidden="true">▥</span> Voir les statistiques du mois <b aria-hidden="true">↻</b></button></section>' +
@@ -3840,7 +3840,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
