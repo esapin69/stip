@@ -99,9 +99,9 @@ const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
 assert(index.includes("team-home-fusion.js?v=" + globalBuild),
   "Current day-card script version must be loaded");
-assert(index.includes("team-home-fusion.css?v=20261016-rest-weather-premium1"),
+assert(index.includes("team-home-fusion.css?v=" + globalBuild),
   "Current day-card style version must be loaded");
-assert(index.includes("shift-weather-mini.js?v=20261016-rest-day-forecast1"),
+assert(index.includes("shift-weather-mini.js?v=" + globalBuild),
   "Canonical weather engine must be refreshed for the daily forecast");
 assert(index.includes('stip-loader.js?v=' + globalBuild) &&
   index.includes('stip-sw.js?v=' + globalBuild),

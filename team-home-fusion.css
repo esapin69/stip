@@ -1656,3 +1656,23 @@
 }
 .hc-days-grid .thf-day-card.is-rest-visual .thf-day-heading>span:first-child{grid-column:1/-1}
 .hc-days-grid .thf-day-card.is-rest-visual .thf-day-heading>span:last-child{align-self:end;padding-bottom:1px}
+
+/* Whole-card weather atmosphere; shift/actions belong below the scene, not over the forecast. */
+.hc-days-grid .thf-day-card.thf-weather-sky:not(.is-rest-visual){
+  background:radial-gradient(ellipse 130% 85% at 65% 13%,var(--thf-sky-aura),transparent 80%),
+             var(--thf-sky-bg)!important;
+}
+.hc-days-grid .thf-day-card:not(.is-rest-visual) .thf-weather-stage{
+  flex:1 1 auto;background:transparent!important;border-bottom:0!important;
+}
+.hc-days-grid .thf-day-card:not(.is-rest-visual) .thf-day-trigger{
+  background:transparent!important;border-bottom:0!important;
+}
+.hc-days-grid .thf-day-card:not(.is-rest-visual) .thf-day-post{
+  position:relative;z-index:2;flex:0 0 auto;
+  margin:9px 9px 5px!important;padding:10px 8px!important;
+  background:#ffffffeb!important;border:1px solid #d6e7ec!important;
+  border-radius:14px!important;box-shadow:0 3px 12px #24495c12!important;
+}
+.hc-days-grid .thf-day-card:not(.is-rest-visual) .thf-weather-body{padding-bottom:4px!important}
+.hc-days-grid .thf-day-card:not(.is-rest-visual) .thf-day-more{position:relative;z-index:2}

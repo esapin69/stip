@@ -72,3 +72,18 @@
   .ghe-top-dialog-body{padding:11px 12px 17px}
 }
 @media(prefers-reduced-motion:reduce){.ghe-top-dialog *{transition:none!important}}
+
+/* Bell stays separate, flush right; auxiliary actions remain grouped without pulling it left. */
+#homeView .ghe-home-topbar{justify-content:flex-end!important}
+#homeView .ghe-home-topbar .ghe-top-aux-actions{display:flex;align-items:center;gap:9px;min-width:0}
+#homeView .ghe-home-topbar .ghe-home-bell{
+  margin-left:clamp(18px,5.2vw,34px)!important;margin-right:0!important;flex:0 0 48px!important;
+}
+#homeView .ghe-home-topbar .ghe-shortcuts-hamburger{margin-right:auto!important}
+@media(max-width:390px){
+  #homeView .ghe-home-topbar .ghe-top-aux-actions{gap:5px}
+  #homeView .ghe-home-topbar .ghe-home-bell{margin-left:17px!important}
+}
+
+.ghe-top-dialog:has(.ghe-wheelchair-chat-host) .ghe-top-dialog-body{flex-direction:column;gap:0}
+.ghe-wheelchair-open-full{align-self:stretch;flex:0 0 auto;min-height:45px;cursor:pointer;border:0;border-top:1px solid #cbdde5;background:#eaf5f8;color:#155a76;font:850 .86rem/1.3 system-ui}

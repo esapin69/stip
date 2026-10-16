@@ -104,6 +104,6 @@ assert(!liveBack.includes('homeDutyChiefNowHost') &&
 assert(home.includes('const person=event.target.closest("[data-premium-now-person][data-premium-agent]")') &&
        nowCss.includes('.ghe-premium-now-identity strong'),
        "Les agents doivent être lisibles et ouvrables");
-assert(index.includes('ghe-premium-safe-flip.css?v=20261016-live-roster-black3') &&
+assert(index.includes("ghe-premium-safe-flip.css?v=" + currentBuild) &&
        index.includes("home-shell.js?v=" + currentBuild),"Cache bust incohérent");
 console.log("GHE header + 360° black returns + current roster contract OK");

@@ -388,7 +388,7 @@
     // Une colonne est une fiche lisible ; chaque action est un bouton distinct,
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
-      '<article class="thf-day-card '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'">'+
+      '<article class="thf-day-card thf-weather-sky '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'" data-sky="unknown">'+
       '<div class="thf-weather-stage thf-weather-sky" data-rest="'+(working?"false":"true")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
       (working?staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,'')):
         '<div class="thf-rest-illustration" aria-hidden="true"><span>'+esc(absenceIcon)+'</span></div>')+
@@ -413,6 +413,7 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
+      '</div></div>'+
       (!restMode?'<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
        '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
        '<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
@@ -423,7 +424,6 @@
          'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
          '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
        '</div></div></div>':'')+
-       '</div></div>'+
        (!restMode?'<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>':'')+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
