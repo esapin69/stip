@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f7fbfc" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261016-leisure-quick1" />
+    <meta name="stip-ui-build" content="20261016-popup-stable1" />
     <script id="stip-session-resume-flag">
       try {
         if (localStorage.getItem("stip_session_v1")) {
@@ -158,7 +158,7 @@
       href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
     />
     <meta name="msapplication-TileImage" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <link rel="stylesheet" href="styles.css?v=20260829-public5" />
+    <link rel="stylesheet" href="styles.css?v=20261016-popup-stable1" />
     <link rel="stylesheet" href="public-home-priority.css?v=20261016-image-frames1" />
     <link rel="stylesheet" href="home-shell.css?v=20261016-drawer-agenda-multi2" />
     <link rel="stylesheet" href="shift-weather-mini.css?v=20261014-shift-weather-static1" />
@@ -180,7 +180,7 @@
     <link rel="stylesheet" href="ensemble-home.css?v=20261014-rsvp3" />
     <link rel="stylesheet" href="ghe-live-strip.css?v=20261014-live-strip2" />
     <link rel="stylesheet" href="ghe-premium-safe-flip.css?v=20261016-live-roster-black3" />
-    <link rel="stylesheet" href="stip-popup-continuity.css?v=20261014-popup-scroll1" />
+    <link rel="stylesheet" href="stip-popup-continuity.css?v=20261016-popup-stable1" />
     <link rel="stylesheet" href="home-rolling-week.css?v=20261015-home-week-refresh5" />
     <link rel="stylesheet" href="home-week-flip.css?v=20261016-week-premium-cta1" />
     <link rel="stylesheet" href="home-month-flip.css?v=20261016-month-smart-rhythm-2" />
@@ -475,8 +475,8 @@
     <script src="stip-agent-selector.js?v=20261002-header-identity-fix1"></script>
     <script src="stip-person-actions.js?v=20261015-ghe-staff-actions-merge1"></script>
     <script src="stip-session-continuity.js?v=20261014-persistent-read1"></script>
-    <script src="app.js?v=20260927-communication5"></script>
-    <script src="stip-popup-continuity.js?v=20261015-popup-close-stable2"></script>
+    <script src="app.js?v=20261016-popup-stable1"></script>
+    <script src="stip-popup-continuity.js?v=20261016-popup-stable1"></script>
     <script src="section-hubs.js?v=20261014-ghe-export-live-v3"></script>
     <script src="quick-access.js?v=20261014-no-create-shortcut1"></script>
     <script src="public-access-request.js?v=20261014-native-inputs1"></script>
@@ -489,7 +489,7 @@
     <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
     <script src="shift-weather-mini.js?v=20261016-rest-day-forecast1"></script>
     <script src="team-home-fusion.js?v=20261016-rest-premium1"></script>
-    <script src="home-shell.js?v=20261016-live-roster-black3"></script>
+    <script src="home-shell.js?v=20261016-popup-stable1"></script>
     <script src="meeting-runtime.js?v=20261001-meeting-board2"></script>
     <script src="ensemble-home.js?v=20261016-drawer-agenda-multi2"></script>
     <script src="stip-home-scroll.js?v=20260930-compact-header1"></script>
@@ -507,7 +507,7 @@
       if ("serviceWorker" in navigator) {
         addEventListener("load", () => {
           navigator.serviceWorker
-            .register("/stip-sw.js?v=20261016-leisure-quick1", { updateViaCache: "none" })
+            .register("/stip-sw.js?v=20261016-popup-stable1", { updateViaCache: "none" })
             .then((registration) => registration.update())
             .catch(() => {});
         }, { once: true });

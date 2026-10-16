@@ -3919,7 +3919,11 @@ function personalDrawerRow(icon,label,action,meta="") {
   function render() {
     const root = $("#homeView .hs-home");
     if (!root || !state.boot) return;
-    if (root.querySelector("#hcPersonalDrawer")?.open) return;
+    // Keep live dialogs and the background DOM stable while remote data arrives.
+    if (root.querySelector("#hcPersonalDrawer")?.open || window.STIPPopupContinuity?.isOpen?.()) {
+      state.popupRenderDeferred = true;
+      return;
+    }
 
     // Communication owns live composers. Background refreshes must not
     // replace its DOM while the user is typing or switching tabs.
@@ -4268,17 +4272,21 @@ function personalDrawerRow(icon,label,action,meta="") {
         refresh(true).catch(() => {});
       });
     window.dispatchEvent(new CustomEvent("stip:home-rendered"));
-    if (onHome && y > 0)
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          if (
-            (window.STIPRouter?.get?.() || "home") === "home" &&
-            Math.abs((window.scrollY || 0) - y) > 2
-          )
-            window.scrollTo({ top: y, behavior: "auto" });
-        }),
-      );
+    // If replacing a large DOM tree displaced the viewport, correct it before
+    // paint. Never schedule a delayed scroll that can override a fresh gesture.
+    if (onHome && y > 0 && !window.STIPPopupContinuity?.isOpen?.()) {
+      const page = document.scrollingElement || document.documentElement;
+      const max = Math.max(0, Number(page.scrollHeight || 0) - window.innerHeight);
+      if (max + 3 >= y && Math.abs((window.scrollY || 0) - y) > 2)
+        window.scrollTo({ top: y, behavior: "auto" });
+    }
   }
+  // Flush one deferred background refresh only once all dialogs have closed.
+  window.addEventListener("stip:popup-closed", () => {
+    if (!state.popupRenderDeferred) return;
+    state.popupRenderDeferred = false;
+    render();
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.getElementById("hcShiftDetail"))
       closeShiftDetail();
