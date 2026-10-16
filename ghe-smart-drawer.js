@@ -279,19 +279,28 @@ document.addEventListener("click",event=>{
  // Tout changement de destination conserve uniquement la colonne d'icônes.
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
  if(destination){
-  if(destination.closest("#gheSmartPendingDialog"))document.getElementById("gheSmartPendingDialog")?.close();
   setMode("compact");
   const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId;
   const action=destination.dataset.smartAction;
-  if((kind&&window.STIPDrawerOpenEntry)||(action&&window.STIPDrawerOpenAction)){
+  const navigate=()=>{
+   const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
+   if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
+  };
+  const dialog=destination.closest("#gheSmartPendingDialog");
+  if(dialog?.open){
    event.preventDefault();
-   requestAnimationFrame(()=>{
-    const opened=kind?window.STIPDrawerOpenEntry(kind,id):window.STIPDrawerOpenAction(action);
-    if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
-   });
+   // Close the history level first. An immediate dialog.close() followed by
+   // an anchor navigation lets the delayed history.back() cancel that route.
+   if(window.STIPOverlayNav?.close?.(dialog,navigate))return;
+   dialog.close();
+   requestAnimationFrame(navigate);
+  }else if((kind&&window.STIPDrawerOpenEntry)||(action&&window.STIPDrawerOpenAction)){
+   event.preventDefault();
+   requestAnimationFrame(navigate);
   }
   return;
  }
+
  const trigger=event.target.closest?.("[data-shortcuts-open]");
  if(trigger&&permitted()){
   event.preventDefault();event.stopImmediatePropagation();setMode(mode==="expanded"?"compact":"expanded");return;
