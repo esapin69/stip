@@ -5,7 +5,7 @@
   // No GHE schedule, identity, access code or other private data is sent to the provider.
   const LOCATION = Object.freeze({ latitude: 45.764, longitude: 4.8357 });
   const API = "https://api.open-meteo.com/v1/forecast";
-  const CACHE_KEY = "stip_shift_weather_lyon_visual_v2";
+  const CACHE_KEY = "stip_shift_weather_lyon_visual_v3";
   const SHARED_CACHE_KEY = "ghe_meteo_forecast_v1_45.764_4.836";
   const CACHE_TTL = 20 * 60 * 1000;
   const MAX_DAYS = 16;
@@ -84,7 +84,8 @@
         longitude: String(LOCATION.longitude),
         timezone: "Europe/Paris",
         forecast_days: String(MAX_DAYS),
-        hourly: "temperature_2m,precipitation_probability,precipitation,weather_code,cloud_cover"
+        hourly: "temperature_2m,precipitation_probability,precipitation,weather_code,cloud_cover",
+        current: "precipitation,weather_code,cloud_cover"
       });
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 8000);
@@ -287,5 +288,88 @@
     }
   }
 
-  window.STIPShiftWeather = Object.freeze({ mount });
+
+  // Vue journalière réservée aux repos/absences. Réutilise la même prévision
+  // Open-Meteo que les shifts ; pas de seconde API, pas d'horaires inventés.
+  const RAIN_SKIES = new Set(["drizzle", "rain", "heavy-rain", "storm"]);
+  function dayValues(data, iso) {
+    if (!rich(data)) return null;
+    const h = data.hourly;
+    const indices = [];
+    for (let i = 0; i < h.time.length; i++) {
+      if (String(h.time[i]).slice(0, 10) === iso) indices.push(i);
+    }
+    if (!indices.length) return null;
+    const temps = indices.map(i => h.temperature_2m[i]).filter(Number.isFinite);
+    if (!temps.length) return null;
+    const risks = indices.map(i => h.precipitation_probability[i]).filter(Number.isFinite);
+    const amounts = indices.map(i => Number(h.precipitation?.[i] || 0));
+    const today = iso === todayInParis();
+    const current = today && data.current && String(data.current.time || "").slice(0,10) === iso ? data.current : null;
+    const currentSky = current ? weatherKind(current.weather_code, current.cloud_cover) : "unknown";
+    // Le ciel du jour est la condition actuelle quand elle est disponible,
+    // sinon la météo dominante de la journée.
+    const weights = new Map();
+    for (const i of indices) {
+      const kind = weatherKind(h.weather_code?.[i], h.cloud_cover?.[i]);
+      if (kind !== "unknown") weights.set(kind, (weights.get(kind) || 0) + 1);
+    }
+    const forecastSky = [...weights].sort((a,b) => b[1]-a[1])[0]?.[0] || "unknown";
+    const sky = currentSky !== "unknown" ? currentSky : forecastSky;
+    const currentRain = current ? Math.max(0, Number(current.precipitation || 0)) : 0;
+    const rainingNow = today && Boolean(current) &&
+      (currentRain > 0 || RAIN_SKIES.has(currentSky));
+    const forecastRain = amounts.some(x => x > 0) || risks.some(x => x >= 60);
+    // Un sol mouillé visualise une ambiance prévue, sans prétendre qu'il a plu.
+    const rainingScene = today ? rainingNow : (RAIN_SKIES.has(forecastSky) && forecastRain);
+    return {
+      min: Math.round(Math.min(...temps)), max: Math.round(Math.max(...temps)),
+      risk: risks.length ? Math.round(Math.max(...risks)) : null,
+      sky, rainingScene, wetScene: rainingNow || forecastRain,
+      description: LABELS[sky] || LABELS.unknown,
+      current: today && currentSky !== "unknown"
+    };
+  }
+  async function mountDay(host, args = {}) {
+    if (!host) return;
+    host.hidden = true;
+    const iso = String(args.date || "").slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) ||
+        daysFromToday(iso) < 0 || daysFromToday(iso) >= MAX_DAYS) return;
+    try {
+      const data = await getForecast();
+      const dayCardHost = host.closest("[data-thf-day]");
+      if (!host.isConnected || (dayCardHost && dayCardHost.dataset.thfDay !== iso)) return;
+      const values = dayValues(data, iso);
+      if (!values) return;
+      const scene = host.closest(".thf-weather-sky");
+      if (scene) {
+        scene.dataset.sky = values.sky;
+        scene.dataset.raining = values.rainingScene ? "true" : "false";
+        scene.dataset.wet = values.wetScene ? "true" : "false";
+      }
+      host.innerHTML = "";
+      const range = document.createElement("span");
+      range.className = "thf-rest-forecast-range";
+      const min = document.createElement("span");
+      min.innerHTML = "<strong>" + values.min + "°</strong><small>min</small>";
+      const max = document.createElement("span");
+      max.innerHTML = "<strong>" + values.max + "°</strong><small>max</small>";
+      range.append(min, max);
+      const risk = document.createElement("span");
+      risk.className = "thf-rest-forecast-risk";
+      risk.textContent = values.risk === null ? "Pluie : —" : "💧 " + values.risk + " % max";
+      const state = document.createElement("small");
+      state.className = "thf-rest-forecast-state";
+      state.textContent = (values.current ? "Maintenant (estimé) : " : "Prévision : ") + values.description;
+      host.append(range, risk, state);
+      host.setAttribute("aria-label", "Météo du " + iso + " : minimum " +
+        values.min + " degrés, maximum " + values.max + " degrés, " +
+        (values.risk == null ? "risque de pluie indisponible" : "risque de pluie maximal " + values.risk + " pour cent") +
+        ". " + state.textContent);
+      host.hidden = false;
+    } catch (_) { if (host.isConnected) host.hidden = true; }
+  }
+
+  window.STIPShiftWeather = Object.freeze({ mount, mountDay });
 })();

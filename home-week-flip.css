@@ -279,3 +279,41 @@
   .ghe-weekflip-monday-preview-copy strong{font-size:.93rem!important}
   .ghe-weekflip-preview-time{font-size:.7rem!important}
 }
+
+
+/* CTA principal validé : plus explicite, visible, relief maîtrisé.
+   Exclusivement sur la face Aujourd'hui / Demain. */
+.ghe-weekflip-front>.ghe-weekflip-turn{
+  position:relative;isolation:isolate;overflow:hidden;
+  width:calc(100% - 22px)!important;max-width:465px!important;
+  min-height:54px!important;margin:10px auto 2px!important;
+  padding:12px 15px!important;
+  display:flex!important;gap:10px!important;
+  border:1px solid #80adeb!important;border-radius:17px!important;
+  background:linear-gradient(115deg,#116fc9 0%,#226bd6 55%,#546bd0 100%)!important;
+  box-shadow:0 5px 14px #2059a62f,inset 0 1px 0 #ffffff86!important;
+  color:white!important;font:900 clamp(.98rem,3.65vw,1.18rem)/1.18 system-ui,sans-serif!important;
+  letter-spacing:-.018em;text-shadow:0 1px 2px #082b6342;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.ghe-weekflip-front>.ghe-weekflip-turn::before{
+  content:"";position:absolute;inset:0 0 57% 0;z-index:-1;
+  background:linear-gradient(180deg,#ffffff24,#ffffff00);pointer-events:none;
+}
+.ghe-weekflip-front>.ghe-weekflip-turn .ghe-weekflip-turn-icon{
+  font-size:1.2em;line-height:1;
+}
+.ghe-weekflip-front>.ghe-weekflip-turn .ghe-weekflip-turn-chevron{
+  font-size:1.6em;line-height:.6;margin-left:auto;opacity:.95;font-weight:500;
+}
+.ghe-weekflip-front>.ghe-weekflip-turn:active{
+  transform:translateY(1px) scale(.99);
+  box-shadow:0 3px 7px #215ed133,0 1px 0 #fff8 inset!important;
+}
+.ghe-weekflip-front>.ghe-weekflip-turn:focus-visible{
+  outline:3px solid #2054b2!important;outline-offset:5px!important;
+}
+@media(max-width:375px){
+  .ghe-weekflip-front>.ghe-weekflip-turn{padding:11px!important;font-size:.9rem!important;gap:7px!important}
+}
+@media(prefers-reduced-motion:reduce){.ghe-weekflip-front>.ghe-weekflip-turn{transition:none}}
