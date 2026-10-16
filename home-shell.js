@@ -3049,6 +3049,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     standard.hidden=false;
     results.replaceChildren();
     candidates.clear();
+    searchEntries=[];
     requestNumber++;
   };
   const close=()=>{ if(drawer.open)drawer.close(); };
@@ -3193,14 +3194,15 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(currentRequest!==requestNumber||!drawer.isConnected) return;
       candidates=new Map();
       const entries=personalDrawerEntries().filter(x=>norm(x.title+" "+x.subtitle).includes(value)).slice(0,7);
-      const data=drawerAppointmentsState();
-      const appointments=data.future.filter(x=>norm([x.title,x.type,x.date,x.time,x.place].join(" ")).includes(value)).slice(0,8);
-      const pendingAppointments=data.pending.filter(x=>norm([x.title,x.date,x.time,x.location].join(" ")).includes(value)).slice(0,8);
+      searchEntries=drawerAppointmentsState().groups.flatMap(g=>g.items)
+        .filter(x=>norm([x.title,x.date,x.time,x.place,x.subtitle,x.stateLabel].join(" ")).includes(value))
+        .slice(0,30);
       const colleagueResults=agents.filter(a=>norm([a.prenom,a.nom,a.ghe,a.source_key].join(" ")).includes(value)).slice(0,6);
       const item=(icon,title,subtitle,attrs)=>`<button type="button" class="ghe-drawer-result" ${attrs}><span class="ghe-drawer-row-icon" aria-hidden="true">${icon}</span><span class="ghe-drawer-row-text"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></span><span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>`;
       const pages=entries.map(x=>item(x.icon,x.title,x.subtitle,`data-ghe-drawer-action="${esc(x.action)}"`)).join("");
-      const meetings=appointments.map(x=>item("▦",x.title,[fmtDateRange(x),x.time].filter(Boolean).join(" · "),`data-ghe-drawer-future="${esc(x.id)}"`)).join("")+
-        pendingAppointments.map(x=>item("◷",x.title,[fmtDateRange(x),x.time,"À clôturer"].filter(Boolean).join(" · "),`data-ghe-drawer-feedback="${esc(x.eventKey)}"`)).join("");
+      const meetings=searchEntries.map((x,i)=>item(esc(x.icon||"▦"),x.title,
+        [x.subtitle,x.stateLabel].filter(Boolean).join(" · "),
+        `data-ghe-drawer-search-entry="${i}"`)).join("");
       const people=colleagueResults.map((a,i)=>{const key=String(i);candidates.set(key,a);return item("♙",[a.prenom,a.nom].filter(Boolean).join(" ")||"Collègue",a.ghe?"GHE "+a.ghe:"Collègue",`data-ghe-drawer-agent="${key}"`);}).join("");
       const group=(title,content)=>content?`<div class="ghe-drawer-result-group"><h3>${title}</h3>${content}</div>`:"";
       results.innerHTML=group("Pages et outils",pages)+group("Rendez-vous",meetings)+group("Collègues",people)+
@@ -4656,7 +4658,12 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.renderSig = "";
     render();
   });
-  window.addEventListener("stip:leisure-updated", () => { state.renderSig = ""; render(); });
+  window.addEventListener("stip:leisure-updated", () => {
+    const active=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");
+    if(active)active.innerHTML=drawerAppointmentsMarkup();
+    state.renderSig="";
+    render();
+  });
   window.addEventListener("stip:meeting-home-updated", () => { state.renderSig = ""; render(); });
   window.addEventListener("stip:event-feedback-synced",()=>{
     const host=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");
