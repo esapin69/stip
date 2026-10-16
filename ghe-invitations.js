@@ -21,7 +21,7 @@ function rows(){
  const minPast=cutoff.toISOString().slice(0,10);
  return events.filter(e=>e.invitation_status&&!e.is_organizer&&e.invitation_status!=="withdrawn")
  .flatMap(e=>{
-  const active=e.status==="active"?[...new Set(e.dates||[])].filter(date=>date>=now).map(date=>({event:e,date,cancelled:false})):[];
+  const active=e.status==="active"&&e.invitation_status!=="declined"?[...new Set(e.dates||[])].filter(date=>date>=now).map(date=>({event:e,date,cancelled:false})):[];
   const cancelled=(e.date_change_history||[]).flatMap(change=>{
    const days=change.kind==="cancelled"?change.old_dates||[]:(change.old_dates||[]).filter(date=>!(change.new_dates||[]).includes(date));
    return days.filter(date=>date>=minPast).map(date=>({event:e,date,cancelled:true,change}));
