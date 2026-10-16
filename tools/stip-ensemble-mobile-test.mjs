@@ -102,4 +102,16 @@ await flush();
 assert.match(invitations.host.innerHTML, /Mes invitations/, "Dedicated invitation lens is available");
 assert.match(invitations.host.innerHTML, /Boxe/, "Pending invitation appears in the single canonical list");
 
+const incompatibleInvite = createPage("?tab=invitations");
+finish(incompatibleInvite, "list", { events: [{
+ id:"incompatible-1", title:"Invitation sans horaire commun", icon:"🎉", dates:["2099-11-23"],
+ visible_dates:[], needs_response:true, invitation_status:"pending", is_organizer:false,
+ status:"active", schedule_mode:"afterwork", participants:[]
+}] });
+await flush();
+assert.match(incompatibleInvite.host.innerHTML,/Invitation sans horaire commun/,
+  "An invitation must remain visible even with no common shift, so it can be declined");
+assert.match(incompatibleInvite.host.innerHTML,/Aucune fin de service compatible/,
+  "Do not imply an invitation without common shifts is an actual free timeslot");
+
 console.log("PASS — GHE Sorties mobile: catalogue, instant shell, progressive requests, create and trips.");
