@@ -15,7 +15,7 @@ const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.ca
 const entryParams=new URLSearchParams(location.search);
 const entryTab=entryParams.get("tab");
 const entrySchedule=entryParams.get("schedule")==="fixed"?"fixed":"afterwork";
-const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":"agenda",events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
 let pendingVisualRefresh=false;
@@ -66,24 +66,29 @@ function card(e){
  const [tone,label]=kindStatus(e),days=activeDates(e),time=e.schedule_mode==="afterwork"?(e.visible_end_times?.[days[0]]||"Fin du service"):e.time_label||"Horaire à fixer";
  return '<button type="button" class="ev3-card ev3-'+tone+'" data-ev3-open="'+escapeHTML(e.id)+'">'+
  '<span class="ev3-card-icon" aria-hidden="true">'+escapeHTML(e.icon||"📌")+'</span>'+
- '<span class="ev3-card-body"><strong>'+escapeHTML(e.title)+'</strong><small>'+escapeHTML(days.length?fmt(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"Aucune date à venir")+' · '+escapeHTML(time)+'</small><small>'+escapeHTML(e.location||"Lieu à définir")+'</small></span>'+
+ '<span class="ev3-card-body"><strong>'+escapeHTML(e.title)+'</strong><small>'+escapeHTML(days.length?fmt(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"Aucune date à venir")+' · '+escapeHTML(time)+'</small><small>'+escapeHTML(e.location||"Lieu à définir")+(e.participants?.length?" · "+e.participants.length+" intéressé(s)":"")+'</small></span>'+
  '<span class="ev3-chip">'+escapeHTML(label)+'</span><span aria-hidden="true">›</span></button>';
 }
 function chosenCards(){
- const events=state.events.filter(e=>concerned(e)&&(e.dates||[]).some(d=>d>=today)&&e.status==="active");
- const open=state.events.filter(e=>e.visibility==="team"&&!concerned(e)&&activeDates(e).length&&e.status==="active");
- if(state.agendaFilter==="invitations"){
-  const invited=events.filter(e=>!!e.invitation_status||(e.is_organizer&&(e.invited_colleagues||[]).length>0));
-  return '<div class="ev3-section-title"><h2>Invitations</h2><small>'+invited.length+' activité'+(invited.length>1?"s":"")+'</small></div>'+
-    (invited.length?'<div class="ev3-stack">'+invited.map(card).join("")+'</div>':'<div class="ev3-quiet-empty">Aucune invitation à traiter actuellement.</div>');
+ const upcoming=state.events.filter(e=>e.status==="active"&&activeDates(e).length).sort((a,b)=>
+  activeDates(a)[0].localeCompare(activeDates(b)[0])||String(a.title).localeCompare(String(b.title),"fr"));
+ const awaiting=upcoming.filter(e=>e.needs_response&&!e.is_organizer);
+ const mine=upcoming.filter(e=>concerned(e)&&!awaiting.includes(e)&&!e.response?.declined);
+ const publicEvents=upcoming.filter(e=>e.visibility==="team"&&!concerned(e));
+ if(state.tab==="invitations"||state.agendaFilter==="invitations"){
+  const invited=upcoming.filter(e=>!!e.invitation_status||(e.is_organizer&&(e.invited_colleagues||[]).length>0));
+  return '<div class="ev3-section-title"><h2>Mes invitations</h2><small>'+invited.length+' proposition'+(invited.length>1?"s":"")+'</small></div>'+
+    (awaiting.length?'<h3 class="ev3-small-title">À répondre</h3><div class="ev3-stack">'+awaiting.map(card).join("")+'</div>':"")+
+    (invited.filter(e=>!awaiting.includes(e)).length?'<h3 class="ev3-small-title">En cours</h3><div class="ev3-stack">'+invited.filter(e=>!awaiting.includes(e)).map(card).join("")+'</div>':"")+
+    (!invited.length?'<div class="ev3-quiet-empty"><strong>Aucune invitation à traiter.</strong><span>Les nouvelles invitations apparaîtront ici.</span></div>':"");
  }
- const pending=events.filter(e=>e.needs_response&&!e.is_organizer);
- const other=events.filter(e=>!pending.includes(e)&&!e.response?.declined);
- return '<div class="ev3-section-title"><h2>Mes rendez-vous</h2><small>'+events.length+' proposition'+(events.length>1?"s":"")+'</small></div>'+
-  (pending.length?'<h3 class="ev3-small-title">Réponse attendue</h3><div class="ev3-stack">'+pending.map(card).join("")+'</div>':"")+
-  (other.length?'<h3 class="ev3-small-title">À venir</h3><div class="ev3-stack">'+other.map(card).join("")+'</div>':"")+
-  (!events.length&&!open.length?'<div class="ev3-quiet-empty"><strong>Aucun rendez-vous prévu.</strong><span>Organise une activité ou invite des collègues.</span><button type="button" data-ev3-tab="create">＋ Proposer une activité</button></div>':"")+
-  (open.length?'<h3 class="ev3-small-title">Ouvert à l’équipe</h3><div class="ev3-stack">'+open.map(card).join("")+'</div>':"");
+ return '<div class="ev3-community-summary"><div><small>LE COIN DES COLLÈGUES</small><strong>Des idées pour se retrouver</strong><span>Une proposition suffit. Chacun choisit ses dates, invite et discute dans la même fiche.</span></div>'+
+  '<button type="button" data-ev3-tab="availability">Qui finit avec moi ? <span aria-hidden="true">›</span></button></div>'+
+  (awaiting.length?'<h3 class="ev3-small-title">À répondre · '+awaiting.length+'</h3><div class="ev3-stack">'+awaiting.map(card).join("")+'</div>':"")+
+  '<div class="ev3-section-title"><h2>Les propositions</h2><small>'+upcoming.length+' à venir</small></div>'+
+  (mine.length?'<h3 class="ev3-small-title">Mes sorties & rendez-vous</h3><div class="ev3-stack">'+mine.map(card).join("")+'</div>':"")+
+  (publicEvents.length?'<h3 class="ev3-small-title">Ouvertes à l’équipe</h3><div class="ev3-stack">'+publicEvents.map(card).join("")+'</div>':"")+
+  (!mine.length&&!publicEvents.length&&!awaiting.length?'<div class="ev3-quiet-empty"><strong>Aucune proposition à venir.</strong><span>Lance une activité ou compare les créneaux de tes collègues.</span><button type="button" data-ev3-tab="create">＋ Proposer</button></div>':"");
 }
 function tripStatus(t){
  const m={pending:"En attente",accepted:"Confirmé",declined:"Refusé",withdrawn:"Retiré"};
@@ -100,6 +105,39 @@ function tripCard(t){
  (!t.is_mine&&["pending","accepted"].includes(t.my_status)?'<button type="button" data-ev3-trip-act="carpool_withdraw" data-trip="'+escapeHTML(t.id)+'">Me retirer</button>':"")+
  (t.is_mine&&t.status==="active"?'<button type="button" data-ev3-trip-act="carpool_cancel" data-trip="'+escapeHTML(t.id)+'">Annuler</button>':"")+'</div>'+
  (t.is_mine&&t.applicants?.some(a=>a.status==="pending")?'<div class="ev3-requests">'+t.applicants.filter(a=>a.status==="pending").map(a=>'<p>'+escapeHTML(a.name)+' <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="accepted">Accepter</button> <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="declined">Refuser</button></p>').join("")+'</div>':"")+'</article>';
+}
+function availabilityPeopleHTML(){
+ const query=normalizedName(state.availabilityQuery);
+ const entries=state.people.filter(p=>p.can_invite!==false&&normalizedName(p.name).includes(query));
+ return entries.slice(0,32).map(p=>'<label class="ev3-availability-person"><input type="checkbox" data-ev3-availability-person="'+escapeHTML(p.id)+'" '+(state.availabilitySelected.has(p.id)?"checked":"")+' '+(!state.availabilitySelected.has(p.id)&&state.availabilitySelected.size>=3?"disabled":"")+'>'+
+  '<span>'+escapeHTML(p.name)+'</span>'+(state.availabilitySelected.has(p.id)?'<b>✓</b>':'')+'</label>').join("")||
+  '<p class="ev3-inline-status">Aucun collègue pour cette recherche.</p>';
+}
+function availabilityHTML(){
+ const selected=[...state.availabilitySelected];
+ const people=new Map(state.people.map(p=>[p.id,p.name]));
+ const byDate=new Map();
+ if(state.availabilityResultsReady)for(const [id,days] of state.availabilityMatches){
+  for(const d of days){
+   const row=byDate.get(d.date)||[];
+   row.push({...d,agent_id:id,name:people.get(id)||"Collègue"});
+   byDate.set(d.date,row);
+  }
+ }
+ const dates=[...byDate].sort(([a,ap],[b,bp])=>bp.length-ap.length||a.localeCompare(b)).slice(0,18);
+ return '<section class="ev3-availability"><div class="ev3-section-title"><h2>Qui finit en même temps que moi ?</h2></div>'+
+  '<p class="ev3-availability-note">Compare les fins de service sur les 31 prochains jours. Ce sont des <strong>créneaux possibles</strong>, pas une confirmation de disponibilité pour sortir.</p>'+
+  (!state.peopleLoaded?loadingHTML("Chargement des collègues…"):state.peopleError?
+    '<div class="ev3-quiet-empty is-error">'+escapeHTML(state.peopleError)+'</div>':
+    '<div class="ev3-availability-picker"><label for="ev3AvailabilitySearch">Choisir jusqu’à 3 collègues</label><input id="ev3AvailabilitySearch" type="search" autocomplete="off" placeholder="Prénom ou nom…" value="'+escapeHTML(state.availabilityQuery)+'">'+
+    '<div id="ev3AvailabilityPeople" class="ev3-availability-people">'+availabilityPeopleHTML()+'</div>'+
+    '<div class="ev3-availability-controls"><small>'+selected.length+'/3 sélectionnés</small><button type="button" class="ev3-primary" data-ev3-compare '+(!selected.length||state.availabilityBusy?"disabled":"")+'>'+ (state.availabilityBusy?"Recherche…":"Voir les créneaux compatibles")+'</button></div></div>')+
+  (state.availabilityError?'<p class="ev3-inline-status is-error" role="status">'+escapeHTML(state.availabilityError)+'</p>':"")+
+  (state.availabilityResultsReady?'<div class="ev3-availability-results"><div class="ev3-section-title"><h2>Créneaux à proposer</h2><small>'+dates.length+' date'+(dates.length>1?"s":"")+'</small></div>'+
+    (dates.length?dates.map(([day,rows])=>'<article class="ev3-slot-result"><div class="ev3-slot-result-main"><strong>'+escapeHTML(fmt(day))+'</strong><small>'+rows.length+' collègue'+(rows.length>1?"s":"")+' avec une fin de service proche</small><span>'+rows.map(r=>escapeHTML(r.name)).join(" · ")+'</span></div>'+
+     '<button type="button" data-ev3-plan-day="'+escapeHTML(day)+'">Proposer <span aria-hidden="true">›</span></button></article>').join(""):'<div class="ev3-quiet-empty"><strong>Aucun créneau commun repéré.</strong><span>Tu peux toujours proposer une activité à une heure libre.</span><button type="button" data-ev3-tab="create">Proposer quand même</button></div>')+
+   '</div>':"")+
+  '<p class="ev3-availability-privacy">🔒 Les horaires individuels ne sont pas publiés sur cette page. Chaque personne confirme sa participation à une proposition.</p></section>';
 }
 function tripsHTML(){
  if(!state.tripLoaded)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+loadingHTML("Recherche des trajets…");
@@ -172,16 +210,19 @@ function loadingHTML(label="Chargement des rendez-vous…"){
 }
 function render(){
  const app=byId("ensembleV3");if(!app)return;
- app.innerHTML='<header class="ev3-header"><a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a><div><small>ENTRE COLLÈGUES</small><h1>Sorties <span>&amp;</span> trajets</h1></div><button type="button" data-ev3-refresh title="Actualiser" aria-label="Actualiser">↻</button></header>'+
- '<nav class="ev3-tabs" aria-label="Sorties et trajets"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda" aria-current="'+(state.tab==="agenda"?"page":"false")+'">📅 Mes rendez-vous</button><button type="button" class="'+(state.tab==="create"?"is-current":"")+'" data-ev3-tab="create" aria-current="'+(state.tab==="create"?"page":"false")+'">＋ Proposer</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips" aria-current="'+(state.tab==="trips"?"page":"false")+'">🚗 Trajets</button></nav>'+
+ const pending=state.events.filter(e=>e.needs_response&&e.status==="active").length;
+ app.innerHTML='<header class="ev3-header"><a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a><div><small>ENTRE COLLÈGUES · GHE</small><h1>On se retrouve</h1></div><button type="button" data-ev3-refresh title="Actualiser" aria-label="Actualiser">↻</button></header>'+
+ '<div class="ev3-header-actions">'+(state.tab!=="create"?'<button type="button" class="ev3-primary" data-ev3-tab="create"><span aria-hidden="true">＋</span> Proposer une activité</button>':'<button type="button" data-ev3-tab="agenda">← Voir les propositions</button>')+'</div>'+
+ '<nav class="ev3-tabs ev3-community-tabs" aria-label="On se retrouve"><button type="button" class="'+(state.tab==="agenda"?"is-current":"")+'" data-ev3-tab="agenda" aria-current="'+(state.tab==="agenda"?"page":"false")+'">🎉 Sorties</button><button type="button" class="'+(state.tab==="availability"?"is-current":"")+'" data-ev3-tab="availability" aria-current="'+(state.tab==="availability"?"page":"false")+'">📅 Dispos</button><button type="button" class="'+(state.tab==="invitations"?"is-current":"")+'" data-ev3-tab="invitations" aria-current="'+(state.tab==="invitations"?"page":"false")+'">✉️ Invitations'+(pending?'<span class="ev3-tab-count">'+pending+'</span>':'')+'</button><button type="button" class="'+(state.tab==="trips"?"is-current":"")+'" data-ev3-tab="trips" aria-current="'+(state.tab==="trips"?"page":"false")+'">🚗 Trajets</button></nav>'+
  '<p id="ev3Feedback" class="ev3-feedback '+(state.error?"is-error":"")+'" role="status">'+escapeHTML(state.status)+'</p>'+
- (state.tab==="create"?formHTML():state.tab==="trips"?tripsHTML():!state.loaded?loadingHTML():
+ (state.tab==="create"?formHTML():state.tab==="trips"?tripsHTML():state.tab==="availability"?availabilityHTML():!state.loaded?loadingHTML():
   state.eventsError?'<div class="ev3-quiet-empty is-error"><strong>Rendez-vous momentanément indisponibles.</strong><span>'+escapeHTML(state.eventsError)+'</span><button type="button" data-ev3-refresh>Réessayer</button></div>':chosenCards())+
  '<dialog id="ev3Dialog" class="ev3-dialog" aria-label="Détails de l’activité"></dialog>';
  bind();
 }
 function bind(){
  document.querySelectorAll("[data-ev3-tab]").forEach(b=>b.onclick=()=>{state.tab=b.dataset.ev3Tab;if(state.tab==="create")state.formKind="activity";state.agendaFilter="all";state.status="";render()});
+ bindAvailability();
  byId("ensembleV3")?.querySelectorAll("[data-ev3-refresh]").forEach(b=>b.addEventListener("click",refresh));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
@@ -198,6 +239,41 @@ function bind(){
  const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
  const cf=byId("ev3CarForm");if(cf)cf.onsubmit=submitTrip;
  byId("ensembleV3")?.querySelectorAll("[data-ev3-trip-act]").forEach(b=>b.onclick=async()=>{if(b.dataset.ev3TripAct==="carpool_cancel"&&!confirm("Annuler ce trajet ?"))return;b.disabled=true;try{const j=await call(b.dataset.ev3TripAct,{trip_id:b.dataset.trip,target_agent_id:b.dataset.peer,decision:b.dataset.decision});state.trips=j.trips||[];message("Trajet mis à jour.");render()}catch(err){message(err.message,true);b.disabled=false}});
+}
+function bindAvailabilityPeople(){
+ byId("ev3AvailabilityPeople")?.querySelectorAll("[data-ev3-availability-person]").forEach(input=>input.onchange=()=>{
+  if(input.checked&&state.availabilitySelected.size<3)state.availabilitySelected.add(input.dataset.ev3AvailabilityPerson);
+  else state.availabilitySelected.delete(input.dataset.ev3AvailabilityPerson);
+  state.availabilityMatches.clear();state.availabilityResultsReady=false;state.availabilityError="";
+  render();
+ });
+}
+function bindAvailability(){
+ const search=byId("ev3AvailabilitySearch");
+ if(search)search.oninput=()=>{state.availabilityQuery=search.value;const list=byId("ev3AvailabilityPeople");if(list){list.innerHTML=availabilityPeopleHTML();bindAvailabilityPeople()}};
+ bindAvailabilityPeople();
+ const compare=byId("ensembleV3")?.querySelector("[data-ev3-compare]");
+ if(compare)compare.onclick=async()=>{
+  if(state.availabilityBusy||!state.availabilitySelected.size)return;
+  const ids=[...state.availabilitySelected];
+  state.availabilityBusy=true;state.availabilityResultsReady=false;state.availabilityError="";render();
+  const replies=await Promise.allSettled(ids.map(id=>call("matches",{target_agent_id:id})));
+  state.availabilityBusy=false;state.availabilityMatches.clear();
+  let errors=0;
+  replies.forEach((reply,i)=>{if(reply.status==="fulfilled")state.availabilityMatches.set(ids[i],reply.value.days||[]);else errors++});
+  state.availabilityResultsReady=true;
+  if(errors)state.availabilityError=errors+" comparaison(s) indisponible(s). Actualise pour réessayer.";
+  render();
+ };
+ byId("ensembleV3")?.querySelectorAll("[data-ev3-plan-day]").forEach(button=>button.onclick=()=>{
+  const date=button.dataset.ev3PlanDay;
+  const names=[...state.availabilityMatches].flatMap(([id,days])=>days.filter(d=>d.date===date).map(day=>({...day,id})));
+  if(!names.length)return;
+  state.guests=new Set(names.map(d=>d.id));
+  state.dates=new Set([date]);
+  state.mode=names.every(d=>d.my_end===d.peer_end)?"afterwork":"fixed";
+  state.time="";state.formKind="activity";state.tab="create";state.agendaFilter="all";state.status="";render();
+ });
 }
 function persistTitle(){const f=byId("ev3Compose");if(!f)return;state.title=f.elements.title.value||"";state.time=f.elements.time?.value||"";state.place=f.elements.location?.value||"";state.details=f.elements.description?.value||""}
 function bindPeople(){
@@ -449,7 +525,7 @@ async function refresh(){
  ];
  await Promise.allSettled(jobs);
 }
-function setView(view){state.agendaFilter=view==="invitations"?"invitations":"all";state.tab=view==="trips"?"trips":"agenda";state.status="";render()}
+function setView(view){state.agendaFilter=view==="invitations"?"invitations":"all";state.tab=view==="trips"?"trips":view==="availability"?"availability":view==="invitations"?"invitations":"agenda";state.status="";render()}
 function openCreator(){state.formKind="activity";state.agendaFilter="all";state.tab="create";render()}
 window.STIPEnsembleV3={refresh,openEvent,setView,openCreator};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",()=>{render();void refresh()},{once:true});
