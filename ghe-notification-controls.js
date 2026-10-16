@@ -11,7 +11,7 @@
   ];
   const $=(s,root=document)=>root.querySelector(s);
   const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-  const DEFAULT_RULES={wheelchair_buildings:BUILDINGS.map(x=>x[0]),wheelchair_work_only:true,team_chat_work_only:true};
+  const DEFAULT_RULES={wheelchair_buildings:BUILDINGS.map(x=>x[0]),wheelchair_work_only:false,team_chat_work_only:false};
   let settings=null,loading=false;
   async function post(action,body={}){
     const session=localStorage.getItem("stip_session_v1")||"";
