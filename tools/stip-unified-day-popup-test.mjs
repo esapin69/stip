@@ -70,7 +70,7 @@ test("cache revision stays coherent across page, loader and service worker", () 
   assert.ok(version);
   assert.equal(version, loader.match(/V = "([^"]+)"/)?.[1]);
   assert.equal(version, serviceWorker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1]);
-  for (const asset of ["home-shell.js", "team-home-fusion.js", "home-week-flip.css", "/stip-sw.js"]) {
+  for (const asset of ["home-shell.js", "team-home-fusion.js", "home-week-flip.css", "ghe-flip-actions.css", "stip-loader.js", "/stip-sw.js"]) {
     assert.ok(index.includes(asset + "?v=" + version), "Outdated asset: " + asset);
   }
 });
