@@ -388,7 +388,7 @@
     // Une colonne est une fiche lisible ; chaque action est un bouton distinct,
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
-      '<article class="thf-day-card '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'">'+
+      '<article class="thf-day-card thf-weather-sky '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'" data-sky="unknown">'+
       '<div class="thf-weather-stage thf-weather-sky" data-rest="'+(working?"false":"true")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
       (working?staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,'')):
         '<div class="thf-rest-illustration" aria-hidden="true"><span>'+esc(absenceIcon)+'</span></div>')+
