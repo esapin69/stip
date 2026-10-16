@@ -2850,9 +2850,10 @@
   }
   function liveWorkInterval(item) {
     const code = String(item?.code || "").trim();
-    const def = shiftDefinition(code);
-    if (!def?.is_working) return null;
     const agent = item.agents || {};
+    const context = { team: item.equipe || agent.type_planning || "", role: agent.role || item.role || "" };
+    const def = window.STIPShiftRegistry?.resolveFor?.(code, context) || shiftDefinition(code);
+    if (!def?.is_working) return null;
     const value = shiftTime(code, {
       ...item, role: agent.role || item.role, type_planning: agent.type_planning || item.equipe,
     });
@@ -2885,44 +2886,54 @@
     return ["m","j","j4","s","n"].includes(base) ? "shift-" + base : "shift-other";
   }
 
-  // Source canonique : planning d'équipe autorisé, horaires calculés à Paris.
-  // Aucun marqueur de présence réelle ni déclaration d'absence.
+  // En direct = uniquement les horaires qui couvrent maintenant l'heure de Paris.
+  // Les chefs utilisent la source métier duty_chiefs et ne sont jamais comptés
+  // dans les effectifs brancardiers des shifts.
+  function isLiveChief(item) {
+    const a=item?.agents||{};
+    return String(item?.equipe||a.type_planning||"").trim().toLowerCase()==="chefs" ||
+      /chef d.?équipe|chef d.?equipe|^chef\b/i.test(String(a.role||item?.role||""));
+  }
   function liveRoster() {
-    const host = document.getElementById("hcTeamFusion");
-    const permitted = has("planning_team");
-    const loaded = permitted && host?._thfLiveLoaded === true;
-    const now = liveParisClock();
-    const entries = loaded ? host._thfLiveAgents.slice() : [];
-    if (has("planning_personal")) {
-      const a = state.session?.agent || state.boot?.agent || {};
-      const yesterday = dateObj(now.day);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const dates = new Set([now.day, dateIsoLocal(yesterday)]);
-      for (const day of state.boot?.personal || []) {
-        if (!dates.has(String(day.date || "").slice(0, 10))) continue;
-        entries.push({ ...day, code: day.code || day.source_value, agents: a });
+    const host=document.getElementById("hcTeamFusion");
+    const permitted=has("planning_team");
+    const loaded=permitted&&host?._thfLiveLoaded===true;
+    const now=liveParisClock();
+    const entries=loaded?host._thfLiveAgents.slice():[];
+    if(has("planning_personal")){
+      const a=state.session?.agent||state.boot?.agent||{};
+      const yesterday=dateObj(now.day);
+      yesterday.setDate(yesterday.getDate()-1);
+      const dates=new Set([now.day,dateIsoLocal(yesterday)]);
+      for(const day of state.boot?.personal||[]){
+        if(!dates.has(String(day.date||"").slice(0,10)))continue;
+        entries.push({...day,code:day.code||day.source_value,agents:a});
       }
     }
-    const seen = new Set(), current = [];
-    for (const item of entries) {
-      if (!liveCurrentlyWorking(item, now)) continue;
-      const agent = item.agents || {};
-      const key = String(agent.source_key || agent.id || "").trim() || agentName(agent).toLowerCase();
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      current.push(item);
+    const unique=new Set(),rows=[],fallbackChiefs=[];
+    for(const item of entries){
+      if(!liveCurrentlyWorking(item,now))continue;
+      const agent=item.agents||{};
+      const key=String(agent.source_key||agent.id||"").trim()||agentName(agent).toLowerCase();
+      if(!key||unique.has(key))continue;
+      unique.add(key);
+      (isLiveChief(item)?fallbackChiefs:rows).push(item);
     }
-    current.sort((a, b) => (liveWorkInterval(a)?.start ?? 1440) -
-      (liveWorkInterval(b)?.start ?? 1440) ||
-      agentName(a.agents).localeCompare(agentName(b.agents), "fr"));
-    return { rows: current, permitted, loaded };
+    const canonical=window.STIPDutyChiefs?.liveSnapshot?.();
+    const chiefs=[],seenChief=new Set();
+    for(const item of [...(canonical?.current||[]),...fallbackChiefs]){
+      const agent=item.agents||{};
+      const key=String(agent.source_key||agent.id||"").trim()||agentName(agent).toLowerCase();
+      if(!key||seenChief.has(key))continue;
+      seenChief.add(key);chiefs.push(item);
+    }
+    rows.sort((a,b)=>(liveWorkInterval(a)?.start??1440)-(liveWorkInterval(b)?.start??1440)||
+      agentName(a.agents).localeCompare(agentName(b.agents),"fr"));
+    return {rows,chiefs,permitted,loaded,chiefsLoaded:Boolean(canonical?.loaded)};
   }
-
-  // Staff present means a shift currently covers the Paris clock, not physical attendance.
-  const premiumShiftRank = code => ({M:0,J:1,J4:2,S:3,N:4})[code] ?? 9;
-  const premiumShiftName = code =>
-    window.STIPShiftRegistry?.displayName?.(code) || code;
-  function premiumShiftGroups(rows) {
+  const premiumShiftRank=code=>({M:0,J:1,J4:2,S:3,N:4})[code]??9;
+  const premiumShiftName=code=>window.STIPShiftRegistry?.displayName?.(code)||code;
+  function premiumShiftGroups(rows){
     const groups=new Map();
     for(const item of rows){
       const code=canonicalShift(item.code);
@@ -2930,108 +2941,150 @@
       groups.get(code).push(item);
     }
     return [...groups.entries()].sort((a,b)=>
-      premiumShiftRank(a[0])-premiumShiftRank(b[0]) || a[0].localeCompare(b[0],"fr"));
+      premiumShiftRank(a[0])-premiumShiftRank(b[0])||a[0].localeCompare(b[0],"fr"));
   }
-  // One compact shift rail per code; names remain available without growing the 360° card.
-  function premiumBackMarkup() {
+  function premiumBackMarkup(){
     const roster=liveRoster();
     const waiting=roster.permitted&&!roster.loaded;
     const authorized=roster.permitted||has("planning_personal");
-    const grouped=new Map(waiting?[]:premiumShiftGroups(roster.rows));
-    const codes=["M","J","J4","S","N",...Array.from(grouped.keys()).filter(code=>!["M","J","J4","S","N"].includes(code))];
+    const groups=waiting?[]:premiumShiftGroups(roster.rows);
     const count=waiting?"…":!authorized?"—":String(roster.rows.length);
-    const empty=waiting?"Chargement de l’équipe en cours…":
-      !authorized?"Planning d’équipe non accessible avec cet accès.":
-      "Aucune information de planning disponible.";
-    const personMarkup=item=>{
-      const person=item.agents||{},key=String(person.source_key||person.id||"").trim();
-      const name=agentName(person),time=liveWorkInterval(item)?.label||"Horaire non communiqué";
-      const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
-        .map(word=>word.slice(0,1)).join("").toUpperCase()||"·";
-      const begin=key?'<button type="button" class="ghe-premium-now-person" data-premium-agent="'+esc(key)+
-        '" aria-label="'+esc(name+" · "+time)+'">':
-        '<div class="ghe-premium-now-person ghe-premium-now-person-static">';
-      return begin+
-        '<span class="ghe-premium-now-avatar" aria-hidden="true">'+esc(initials)+'</span>'+
-        '<span class="ghe-premium-now-identity"><strong>'+esc(name)+'</strong>'+
-        '<small>'+esc(time)+'</small></span>'+
-        (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':'')+
-        (key?'</button>':'</div>');
-    };
-    const sections=!authorized||waiting?"":codes.map(code=>{
-      const items=grouped.get(code)||[];
-      const schedules=[...new Set(items.map(item=>liveWorkInterval(item)?.label).filter(Boolean))];
-      const time=schedules.length>1?"Horaires variables":
-        schedules[0]||shiftTime(code)||"Horaire non communiqué";
-      const label=premiumShiftName(code);
-      const contents=items.length?items.map(personMarkup).join(""):
-        '<p class="ghe-premium-now-no-agent">Aucun agent sur ce créneau.</p>';
-      return '<details class="ghe-premium-now-group '+liveShiftClass(code)+'" data-roster-shift="'+esc(code)+'">'+
-        '<summary class="ghe-premium-now-shift" aria-label="'+esc(label+', '+items.length+' agent'+(items.length>1?'s':'')+' en poste. Voir les collègues')+'">'+
-          '<b class="ghe-premium-now-code" aria-hidden="true">'+esc(code)+'</b>'+
-          '<span class="ghe-premium-now-shift-label"><strong>'+esc(label)+'</strong><small>'+esc(time)+'</small></span>'+
-          '<span class="ghe-premium-now-shift-count" aria-hidden="true">'+(items.length?items.length:"—")+'</span>'+
-          '<span class="ghe-premium-now-shift-arrow" aria-hidden="true">⌄</span>'+
-        '</summary><div class="ghe-premium-now-people">'+contents+'</div></details>';
+    const sections=groups.map(([code,items])=>{
+      if(!items.length)return "";
+      const times=[...new Set(items.map(item=>liveWorkInterval(item)?.label).filter(Boolean))];
+      const time=times.length>1?"Horaires différents":times[0]||"Horaires non renseignés";
+      return '<button type="button" class="ghe-premium-now-group '+liveShiftClass(code)+
+        '" data-premium-roster="'+esc(code)+'" aria-haspopup="dialog" aria-label="'+
+        esc("Voir "+items.length+" agents en poste · "+premiumShiftName(code))+'">'+
+        '<span class="ghe-premium-now-code" aria-hidden="true">'+esc(code)+'</span>'+
+        '<span class="ghe-premium-now-shift-label"><strong>'+esc(premiumShiftName(code))+
+          '</strong><small>'+esc(time)+'</small></span>'+
+        '<span class="ghe-premium-now-shift-count">'+items.length+'</span>'+
+        '<span class="ghe-premium-now-shift-arrow" aria-hidden="true">›</span>'+
+      '</button>';
     }).join("");
+    const chiefSection=roster.chiefs.length?
+      '<button type="button" class="ghe-premium-now-group shift-chief" data-premium-roster="chiefs" aria-haspopup="dialog" aria-label="'+
+      esc("Voir les "+roster.chiefs.length+" chefs en poste")+'">'+
+      '<span class="ghe-premium-now-code" aria-hidden="true">👔</span>'+
+      '<span class="ghe-premium-now-shift-label"><strong>Chef d’équipe</strong><small>En poste maintenant</small></span>'+
+      '<span class="ghe-premium-now-shift-count">'+roster.chiefs.length+'</span>'+
+      '<span class="ghe-premium-now-shift-arrow" aria-hidden="true">›</span></button>':"";
+    const empty=waiting?"Chargement des effectifs en cours…":
+      !authorized?"Planning d’équipe non accessible avec cet accès.":
+      "Aucun agent en poste dans les données de planning disponibles.";
     return '<div class="ghe-premium-now">'+
-      '<div class="ghe-premium-now-summary">'+
-        '<span class="ghe-premium-now-kicker"><i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
-        '<div class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong><span>agent'+(count==="1"?"":"s")+'</span></div>'+
-      '</div>'+
-      (sections?'<div class="ghe-premium-now-groups" aria-label="Shifts et collègues en poste">'+sections+'</div>':
+      '<div class="ghe-premium-now-summary"><span class="ghe-premium-now-kicker">'+
+        '<i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
+        '<span class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong>'+
+          '<span>agents</span></span></div>'+
+      (sections||chiefSection?
+        '<div class="ghe-premium-now-groups" aria-label="Postes actifs maintenant">'+sections+chiefSection+'</div>':
         '<p class="ghe-premium-now-empty" role="status">'+esc(empty)+'</p>')+
       '<p class="ghe-premium-now-source">Selon le planning · présence réelle non confirmée.</p>'+
     '</div>';
   }
-  // Each 3D face is measured independently; the inactive face never stretches its sibling.
-  function syncPremiumStageHeight(stage=document.querySelector("#homeView [data-premium-flip]")) {
+  function premiumPersonMarkup(item,isChief=false){
+    const person=item.agents||{},key=String(person.source_key||person.id||"").trim();
+    const name=agentName(person),time=liveWorkInterval(item)?.label||
+      (isChief?window.STIPShiftRegistry?.time?.(item.code,{team:"chefs",role:"chef"}):"")||
+      "Horaire non communiqué";
+    const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
+      .map(word=>word[0]).join("").toUpperCase()||"·";
+    const content='<span class="ghe-premium-now-avatar" aria-hidden="true">'+esc(initials)+'</span>'+
+      '<span class="ghe-premium-now-identity"><strong>'+esc(name)+'</strong>'+
+      '<small>'+esc(time)+'</small></span>'+
+      (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':"");
+    return key?'<button type="button" class="ghe-premium-now-person" data-premium-agent="'+esc(key)+
+      '" aria-label="Ouvrir la fiche de '+esc(name)+'">'+content+'</button>':
+      '<div class="ghe-premium-now-person ghe-premium-now-person-static">'+content+'</div>';
+  }
+  function openPremiumRoster(code){
+    const roster=liveRoster();
+    const chief=code==="chiefs";
+    const rows=chief?roster.chiefs:roster.rows.filter(item=>canonicalShift(item.code)===code);
+    const title=chief?"Chefs d’équipe":premiumShiftName(code);
+    document.getElementById("hcPremiumNowDialog")?.close?.();
+    document.getElementById("hcPremiumNowDialog")?.remove();
+    const dialog=document.createElement("dialog");
+    dialog.id="hcPremiumNowDialog";
+    dialog.className="ghe-premium-now-dialog";
+    dialog.setAttribute("aria-label",title+" · en poste actuellement");
+    dialog.innerHTML='<section class="ghe-premium-now-modal">'+
+      '<header class="ghe-premium-now-modal-head"><div><small>EN POSTE · MAINTENANT</small>'+
+        '<h2>'+esc(title)+'</h2><p>'+rows.length+' personne'+(rows.length>1?'s':'')+
+        ' prévue'+(rows.length>1?'s':'')+' sur ce créneau</p></div>'+
+        '<button type="button" data-premium-roster-close aria-label="Fermer">×</button></header>'+
+      '<div class="ghe-premium-now-modal-content">'+
+        (rows.length?rows.map(item=>premiumPersonMarkup(item,chief)).join(""):
+        '<p class="ghe-premium-now-empty">Plus aucun agent sur ce créneau à cette heure.</p>')+
+      '</div><p class="ghe-premium-now-modal-source">Horaires du planning · présence non pointée.</p></section>';
+    document.body.appendChild(dialog);
+    const close=()=>{if(dialog.open)dialog.close();else dialog.remove();};
+    dialog.addEventListener("close",()=>dialog.remove(),{once:true});
+    dialog.querySelector("[data-premium-roster-close]")?.addEventListener("click",close);
+    dialog.addEventListener("click",event=>{
+      if(event.target===dialog){close();return;}
+      const agent=event.target.closest("[data-premium-agent]");
+      if(!agent)return;
+      const key=agent.dataset.premiumAgent;
+      close();
+      requestAnimationFrame(()=>openLiveAgent(key));
+    });
+    if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");
+  }
+  // Le gabarit s'adapte aux shifts actifs ; les deux faces gardent la même hauteur.
+  // Aucune liste déroulante ni ascenseur à l'intérieur de la carte 360°.
+  function syncPremiumStageHeight(stage=document.querySelector("#homeView [data-premium-flip]")){
     if(!stage?.isConnected)return;
     const track=stage.querySelector(".ghe-premium-track");
     const front=stage.querySelector(".ghe-premium-front"),back=stage.querySelector(".ghe-premium-back");
     if(!track||!front||!back)return;
-    // Identical dimensions on both faces, including when a shift is expanded.
-    const pixels=Math.ceil(Math.max(370,front.scrollHeight,back.scrollHeight));
+    const numeric=value=>Number.parseFloat(value)||0;
+    const box=face=>{
+      const style=getComputedStyle(face),padding=numeric(style.paddingTop)+numeric(style.paddingBottom);
+      const gap=numeric(style.gap),footer=face.querySelector("footer")?.scrollHeight||0;
+      const now=face.querySelector(".ghe-premium-now");
+      const body=now?(()=>{
+        const children=[...now.children],space=numeric(getComputedStyle(now).gap);
+        return children.reduce((height,node)=>height+node.scrollHeight,0)+space*Math.max(0,children.length-1);
+      })():face.querySelector(".hc-home-identity")?.scrollHeight||0;
+      return padding+body+footer+gap+6;
+    };
+    const pixels=Math.ceil(Math.max(270,box(front),box(back)));
     if(track.dataset.measuredHeight!==String(pixels)){
       track.dataset.measuredHeight=String(pixels);
       track.style.height=pixels+"px";
     }
   }
-  function preparePremiumLayout(root) {
+  function preparePremiumLayout(root){
     state.premiumResizeObserver?.disconnect();
     const stage=root.querySelector("[data-premium-flip]");
     if(!stage)return;
     syncPremiumStageHeight(stage);
     if(typeof ResizeObserver==="function"){
       const observer=new ResizeObserver(()=>syncPremiumStageHeight(stage));
-      stage.querySelectorAll(".ghe-premium-face").forEach(face=>observer.observe(face));
+      stage.querySelectorAll(".ghe-premium-face .hc-home-identity,.ghe-premium-now").forEach(face=>observer.observe(face));
       state.premiumResizeObserver=observer;
     }
   }
-  function updateLiveCard() {
+  function updateLiveCard(){
     const target=document.querySelector("#homeView .ghe-premium-back-body");
     if(target?.isConnected&&state.ready){
-      const openShifts=[...target.querySelectorAll("details[data-roster-shift][open]")]
-        .map(details=>details.dataset.rosterShift);
-      const beforeScroll=target.querySelector(".ghe-premium-now-groups")?.scrollTop||0;
       target.innerHTML=premiumBackMarkup();
-      target.querySelectorAll("details[data-roster-shift]").forEach(details=>{
-        if(openShifts.includes(details.dataset.rosterShift))details.open=true;
-      });
-      const scroller=target.querySelector(".ghe-premium-now-groups");
-      if(scroller)scroller.scrollTop=beforeScroll;
       syncPremiumStageHeight(target.closest("[data-premium-flip]"));
     }
   }
-  function openLiveAgent(key) {
+  function openLiveAgent(key){
     if(!key)return;
-    const row=liveRoster().rows.find(item=>
+    const roster=liveRoster();
+    const row=[...roster.rows,...roster.chiefs].find(item=>
       String(item.agents?.source_key||item.agents?.id||"")===key);
     if(!row)return;
-    const agent=row.agents||{};
-    if(window.STIPPersonActions?.openForAgent) {
+    const agent=row.agents||{},chief=isLiveChief(row);
+    if(window.STIPPersonActions?.openForAgent){
       window.STIPPersonActions.openForAgent(agent,{
-        sourceKey:key,contextLabel:"EN DIRECT",
+        sourceKey:key,contextLabel:chief?"CHEF D’ÉQUIPE":"EN DIRECT",
         subtitle:canonicalShift(row.code)+" · "+(liveWorkInterval(row)?.label||"Horaires indisponibles")
       });
       return;
@@ -4106,8 +4159,8 @@ function personalDrawerRow(icon,label,action,meta="") {
         target?.focus({preventScroll:true});
         return;
       }
-      const person=event.target.closest("[data-premium-now-person][data-premium-agent]");
-      if(person){openLiveAgent(person.dataset.premiumAgent);return;}
+      const rosterButton=event.target.closest("[data-premium-roster]");
+      if(rosterButton){openPremiumRoster(rosterButton.dataset.premiumRoster);return;}
     });
 
     root.querySelectorAll("details[data-pilotage-role]").forEach(details =>
@@ -4941,6 +4994,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   document.addEventListener("stip:team-fusion-updated", event => {
     if (event.detail?.hostId === "hcTeamFusion") updateLiveCard();
   });
+  document.addEventListener("stip:duty-chiefs-updated", updateLiveCard);
   setInterval(() => {
     if (state.ready && !document.hidden) updateLiveCard();
   }, 60000);
