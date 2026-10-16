@@ -3115,10 +3115,13 @@ function personalDrawerRow(icon,label,action,meta="") {
     });
     modal.addEventListener("close",()=>{
       modal.remove();
-      if(returnToDrawer&&drawer.isConnected&&!drawer.open){
-        const host=drawer.querySelector("[data-ghe-drawer-appointments]");
-        if(host)host.innerHTML=drawerAppointmentsMarkup();
-        drawer.showModal();
+      if(returnToDrawer&&state.ready){
+        const current=drawer.isConnected?drawer:document.getElementById("hcPersonalDrawer");
+        if(current&&!current.open){
+          const host=current.querySelector("[data-ghe-drawer-appointments]");
+          if(host)host.innerHTML=drawerAppointmentsMarkup();
+          current.showModal();
+        }
       }
     },{once:true});
     modal.showModal();
@@ -4508,6 +4511,8 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.communicationConversation = "";
     state.communicationMessage = "";
     document.getElementById("hcPersonalDrawer")?.close?.();
+    document.getElementById("hcDrawerAgendaDialog")?.close?.();
+    document.getElementById("hcDrawerAgendaDialog")?.remove();
     clearHomeCache();
     clearShiftSnapshot();
     window.STIPBootCache = null;
