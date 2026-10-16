@@ -1725,6 +1725,73 @@
   }
   // Troisieme bloc 360 : les chiffres utilisent uniquement le planning personnel
   // autorise. Une date sans code n'est jamais assimilee a un jour de repos.
+  // Analyse du rythme mensuel sur les dates explicitement renseignees.
+  // Les series peuvent traverser une limite de mois si les deux cotes sont connus.
+  // Les dates absentes interrompent une serie : pas de repos inventes.
+  function monthStatsData(key, personal) {
+    const types = new Map(), monthRows = new Map(),
+      count = { work: 0, rest: 0, leave: 0, training: 0, absence: 0, unknown: 0 },
+      shifts = { M: 0, J: 0, J4: 0, S: 0, N: 0, other: 0 };
+    for (const row of personal || []) {
+      const iso = String(row?.date || "").slice(0, 10),
+        raw = String(row?.code || row?.source_value || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso) || !raw || types.has(iso)) continue;
+      const ms = Date.parse(iso + "T00:00:00Z");
+      if (!Number.isFinite(ms) || new Date(ms).toISOString().slice(0, 10) !== iso) continue;
+      const def = shiftDefinition(raw),
+        kind = String(def?.kind || "").toLowerCase(),
+        type = def?.is_working === true ? "work" :
+          kind === "rest" ? "rest" :
+          kind === "leave" ? "leave" :
+          kind === "training" ? "training" :
+          ["medical", "absence", "union"].includes(kind) ? "absence" : "unknown";
+      types.set(iso, { type, raw, ms });
+      if (iso.slice(0, 7) !== key) continue;
+      monthRows.set(iso, { type, raw, ms });
+      count[type]++;
+      if (type === "work") {
+        const base = canonicalShift(raw);
+        if (Object.prototype.hasOwnProperty.call(shifts, base)) shifts[base]++;
+        else shifts.other++;
+      }
+    }
+
+    const results = { work: [], rest: [] };
+    let active = null;
+    const keep = () => {
+      if (active && active.end.slice(0, 7) >= key &&
+          active.start.slice(0, 7) <= key) results[active.type].push(active);
+      active = null;
+    };
+    for (const [iso, row] of [...types.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      if (row.type !== "work" && row.type !== "rest") { keep(); continue; }
+      if (active && active.type === row.type && row.ms - active.ms === 86400000) {
+        active.end = iso;
+        active.ms = row.ms;
+        active.days++;
+      } else {
+        keep();
+        active = { type: row.type, start: iso, end: iso, ms: row.ms, days: 1 };
+      }
+    }
+    keep();
+    const longest = type => results[type].reduce((best, item) =>
+      !best || item.days > best.days ? item : best, null);
+    const isolatedRestDates = [], weekendWorkDates = [];
+    for (const [iso, row] of [...monthRows.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+      if (row.type === "rest") {
+        const before = new Date(row.ms - 86400000).toISOString().slice(0, 10),
+          after = new Date(row.ms + 86400000).toISOString().slice(0, 10);
+        if (types.get(before)?.type === "work" && types.get(after)?.type === "work")
+          isolatedRestDates.push(iso);
+      }
+      if (row.type === "work" && [0, 6].includes(new Date(row.ms).getUTCDay()))
+        weekendWorkDates.push(iso);
+    }
+    return { count, shifts, days: monthRows.size, longestWork: longest("work"),
+      longestRest: longest("rest"), isolatedRestDates, weekendWorkDates };
+  }
+
   function monthStatsMarkup() {
     const key = String(state.dateJumpMonth || parisIso().slice(0, 7)),
       date = dateObj(key + "-01"),
@@ -1737,66 +1804,87 @@
       return '<div class="ghe-monthflip-stats-empty" role="status">' + title +
         '<p>' + esc(state.bootStatus === "error" ? "Planning indisponible pour le moment." : "Chargement du planning…") + '</p></div>';
 
-    // Meme premiere ligne par date que le calendrier mensuel actuel.
-    const rows = new Map();
-    for (const row of state.boot?.personal || []) {
-      const iso = String(row?.date || "").slice(0, 10);
-      if (!iso.startsWith(key + "-") || !/^\d{4}-\d{2}-\d{2}$/.test(iso) || rows.has(iso)) continue;
-      const raw = String(row?.code || row?.source_value || "").trim();
-      if (raw) rows.set(iso, raw);
-    }
-    if (!rows.size)
+    const summary = monthStatsData(key, state.boot?.personal || []),
+      count = summary.count, shifts = summary.shifts;
+    if (!summary.days)
       return '<div class="ghe-monthflip-stats-empty" role="status">' + title +
         '<p>Aucune donnée de planning renseignée pour ce mois. Les jours non renseignés ne sont pas comptés comme des repos.</p></div>';
 
-    const count = { work: 0, rest: 0, leave: 0, training: 0, absence: 0, unknown: 0 },
-      shifts = { M: 0, J: 0, J4: 0, S: 0, N: 0, other: 0 };
-    for (const raw of rows.values()) {
-      const definition = shiftDefinition(raw),
-        kind = String(definition?.kind || "").toLowerCase(),
-        base = canonicalShift(raw);
-      if (definition?.is_working === true) {
-        count.work++;
-        if (Object.prototype.hasOwnProperty.call(shifts, base)) shifts[base]++;
-        else shifts.other++;
-      } else if (kind === "rest") count.rest++;
-      else if (kind === "leave") count.leave++;
-      else if (kind === "training") count.training++;
-      else if (["medical", "absence", "union"].includes(kind)) count.absence++;
-      else count.unknown++;
-    }
     const appointments = (state.boot?.agenda_items || []).filter(item =>
       String(item?.event_date || "").slice(0, 7) === key).length;
     const tile = (value, label, extra, cls = "") =>
-      '<div class="ghe-monthflip-metric ' + cls + '"><strong>' + value +
-      '</strong><span>' + esc(label) + '</span><small>' + esc(extra) + '</small></div>';
+      value > 0 ? '<div class="ghe-monthflip-metric ' + cls + '"><strong>' + value +
+      '</strong><span>' + esc(label) + '</span><small>' + esc(extra) + '</small></div>' : "";
+    const metrics = [
+      tile(count.work, "Jours de service", "Selon le planning", "is-work"),
+      tile(count.rest, "Repos", "Codes de repos", "is-rest"),
+      tile(count.leave, "Congés", "Codes de congé", "is-leave"),
+      tile(appointments, "Événements", "Agenda du mois", "is-events")
+    ].filter(Boolean).join("");
     const shiftLabels = [["M", "Matin"], ["J", "Journée"], ["J4", "J4"],
       ["S", "Soir"], ["N", "Nuit"], ["other", "Autres postes"]];
-    const breakdown = shiftLabels.filter(([keyName]) => keyName !== "other" || shifts.other).map(([keyName, name]) => {
-      const total = shifts[keyName],
+    const breakdown = shiftLabels.filter(([code]) => shifts[code] > 0).map(([code, name]) => {
+      const total = shifts[code],
         width = count.work ? Math.round(total / count.work * 100) : 0;
-      return '<div class="ghe-monthflip-shift-row code-' + esc(keyName.toLowerCase()) +
+      return '<div class="ghe-monthflip-shift-row code-' + esc(code.toLowerCase()) +
         '"><span>' + esc(name) + '</span><div class="ghe-monthflip-shift-rail" aria-hidden="true">' +
         '<i style="width:' + width + '%"></i></div><strong>' + total + '</strong></div>';
     }).join("");
+
+    const dateShort = iso => dateObj(iso).toLocaleDateString("fr-FR",
+      { day: "numeric", month: "short" }).replace(/\.$/, ""),
+      period = run => run.start === run.end
+        ? "Le " + dateShort(run.start)
+        : "Du " + dateShort(run.start) + " au " + dateShort(run.end),
+      insight = (symbol, label, detail, cls = "") =>
+        '<div class="ghe-monthflip-insight ' + cls + '"><span class="ghe-monthflip-insight-symbol" aria-hidden="true">' +
+        esc(symbol) + '</span><div><strong>' + esc(label) + '</strong><small>' +
+        esc(detail) + '</small></div></div>';
+    const insights = [], work = summary.longestWork, rest = summary.longestRest;
+    if (work?.days >= 2)
+      insights.push(insight("↗",
+        work.days + " jours de service consécutifs",
+        period(work) + (work.days >= 6 ? " · Série longue (6 j ou +)" : " · Plus longue série connue"),
+        work.days >= 6 ? "is-long-work" : "is-work"));
+    if (rest?.days >= 2)
+      insights.push(insight("◷",
+        rest.days + " jours de repos consécutifs",
+        period(rest) + (rest.days >= 3 ? " · Pause prolongée (3 j ou +)" : " · Plus longue série connue"),
+        rest.days >= 3 ? "is-long-rest" : "is-rest"));
+    if (summary.isolatedRestDates.length)
+      insights.push(insight("•",
+        summary.isolatedRestDates.length + " repos isolé" +
+          (summary.isolatedRestDates.length > 1 ? "s" : ""),
+        "Entre deux jours de service · " +
+          summary.isolatedRestDates.slice(0, 3).map(dateShort).join(", ") +
+          (summary.isolatedRestDates.length > 3 ? "…" : ""), "is-neutral"));
+    if (summary.weekendWorkDates.length)
+      insights.push(insight("▦",
+        summary.weekendWorkDates.length + " jour" +
+          (summary.weekendWorkDates.length > 1 ? "s" : "") + " de week-end en service",
+        "Samedi / dimanche · " +
+          summary.weekendWorkDates.slice(0, 3).map(dateShort).join(", ") +
+          (summary.weekendWorkDates.length > 3 ? "…" : ""), "is-neutral"));
+
     const notes = [
       count.training ? count.training + " formation" + (count.training > 1 ? "s" : "") : "",
       count.absence ? count.absence + " absence" + (count.absence > 1 ? "s" : "") + " / motif particulier" : "",
       count.unknown ? count.unknown + " code" + (count.unknown > 1 ? "s" : "") + " non classé" + (count.unknown > 1 ? "s" : "") : ""
     ].filter(Boolean);
+    const monthDays = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
     return '<div class="ghe-monthflip-stats">' + title +
-      '<div class="ghe-monthflip-metrics" aria-label="Chiffres du mois">' +
-      tile(count.work, "Jours travaillés", "Shifts reconnus", "is-work") +
-      tile(count.rest, "Repos", "Codes de repos", "is-rest") +
-      tile(count.leave, "Congés", "Codes de congé", "is-leave") +
-      tile(appointments, "Événements", "Agenda du mois", "is-events") +
-      '</div><section class="ghe-monthflip-breakdown" aria-label="Répartition des postes">' +
-      '<div class="ghe-monthflip-breakdown-head"><strong>Répartition des postes</strong><small>' +
-      count.work + ' journée' + (count.work > 1 ? 's' : '') + '</small></div>' +
-      (count.work ? breakdown : '<p class="ghe-monthflip-no-work">Aucun poste reconnu sur ce mois.</p>') +
-      '</section><p class="ghe-monthflip-source">' + rows.size +
-      ' jour' + (rows.size > 1 ? 's' : '') + ' renseigné' + (rows.size > 1 ? 's' : '') +
-      ' · Les cases vides ne sont pas des repos.</p>' +
+      (metrics ? '<div class="ghe-monthflip-metrics" aria-label="Chiffres du mois">' +
+        metrics + '</div>' : '') +
+      (breakdown ? '<section class="ghe-monthflip-breakdown" aria-label="Répartition des postes">' +
+        '<div class="ghe-monthflip-breakdown-head"><strong>Répartition des postes</strong><small>' +
+        count.work + ' journée' + (count.work > 1 ? 's' : '') + '</small></div>' +
+        breakdown + '</section>' : '') +
+      (insights.length ? '<section class="ghe-monthflip-insights" aria-label="Rythme de service">' +
+        '<div class="ghe-monthflip-insights-head"><strong>Rythme du mois</strong>' +
+        '<small>Séries confirmées</small></div>' + insights.join("") + '</section>' : '') +
+      '<p class="ghe-monthflip-source">' + summary.days + '/' + monthDays +
+      ' jours renseignés · Données du planning, pas des présences constatées. ' +
+      'Les dates sans code interrompent les séries : elles ne sont pas des repos.</p>' +
       (notes.length ? '<p class="ghe-monthflip-notes">' + esc(notes.join(' · ')) + '</p>' : '') +
       '</div>';
   }
