@@ -277,7 +277,7 @@
 }
 
 /* Three-line shortcut access, no Shopify Menu title or drawer. */
-.hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar .ghe-shortcuts-hamburger{
+body:not(.ghe-smart-active) .hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar .ghe-shortcuts-hamburger{
   box-sizing:border-box!important;grid-column:1;grid-row:1;
   justify-self:start;align-self:center;display:inline-flex!important;
   align-items:center;justify-content:center;flex:0 0 48px;
@@ -442,7 +442,8 @@
 }
 .hc-home-top-nav[data-header-compact] .ghe-premium-now-summary{
   display:flex;align-items:center;justify-content:space-between;
-  gap:8px;min-width:0;min-height:37px;
+  gap:8px;min-width:0;min-height:44px;
+  width:100%;font:inherit;text-align:left;cursor:pointer;
   padding:7px 11px;border:1px solid #f1c4cf;border-radius:12px;
   background:linear-gradient(110deg,#fff0f3,#fff);
 }
@@ -604,3 +605,5 @@ dialog.ghe-premium-now-dialog::backdrop{background:#0f263766;backdrop-filter:blu
 @media(prefers-reduced-motion:reduce){
   .hc-home-top-nav[data-header-compact] .ghe-premium-now-group{transition:none!important;}
 }
+
+.ghe-premium-now-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}

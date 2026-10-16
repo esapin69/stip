@@ -6,10 +6,10 @@ const STORE="stip_session_v1", STATE="ghe_smart_drawer_mode_v1";
 const escapeHtml=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const dlabel=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return "";return new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});};
-const dateMin=e=>(Array.isArray(e.dates)?e.dates:[]).filter(d=>d>=today()).sort()[0]||"9999-12-31";
-const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||getComputedStyle(document.getElementById("homeView")).display!=="none");
-const isAdmin=()=>Boolean(window.STIPBootCache?.permissions?.admin===true || window.STIPSession?.permissions?.admin===true || window.STIPBootCache?.agent?.is_admin===true);
-let events=[],running=null,updated=0,ready=false,mode="compact",rail=null,requestSeq=0,appointments=null;
+const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||(!document.getElementById("homeView").closest("[hidden],.hidden")&&getComputedStyle(document.getElementById("homeView")).display!=="none"));
+const permissions=()=>({...window.STIPContinuity?.read?.()?.permissions,...window.STIPBootCache?.permissions,...window.STIPSession?.permissions});
+const isAdmin=()=>permissions().admin===true;
+let events=[],running=null,updated=0,ready=false,mode="compact",rail=null,requestSeq=0,owner="";
 try{const saved=localStorage.getItem(STATE);if(saved==="closed")mode="closed";}catch{}
 const store=()=>localStorage.getItem(STORE)||"";
 const urlForEvent=e=>"sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(e.id);
@@ -34,6 +34,18 @@ function setMode(value){
  }
  const reopen=document.getElementById("gheSmartReopen");
  if(reopen)reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");
+}
+function homeDrawerSnapshot(){
+ // Consume the existing home cache; no second list of professional records.
+ const session=window.STIPSession||window.STIPContinuity?.read?.();
+ const current=store();if(!current||!session||window.STIPPreview?.active)return null;
+ const agent=session.agent||{},owner=[agent.id||agent.source_key||agent.matricule||[agent.prenom,agent.nom].filter(Boolean).join(" "),session.role_key||""].map(x=>String(x||"").trim()).join("::");
+ const key="stip_home_runtime_cache_v2:"+current.slice(-16);
+ try{
+  const cached=JSON.parse(sessionStorage.getItem(key)||localStorage.getItem(key)||"null");
+  if(cached?.version!==3||cached.session!==key||cached.owner!==owner||!Number.isFinite(Number(cached.at))||Number(cached.at)>Date.now()+60000)return null;
+  return cached.drawer||null;
+ }catch{return null;}
 }
 function groupedEntries(){
  const rows=[],now=today(),needs=[];
@@ -88,22 +100,22 @@ function groupedEntries(){
    });
   }
  }
- const source=window.STIPDrawerAppointments?.();
+ const source=window.STIPDrawerAppointments?.()||homeDrawerSnapshot();
  if(source?.groups){
   for(const item of (source.groups.find(g=>g.key==="upcoming")?.items||[])){
    if(item.kind!=="future"||!item.date||item.date<now)continue;
    rows.push({kind:"professional",icon:/formation/i.test(item.title)?"🎓":/visite|médecin|médical/i.test(item.title)?"🏥":"📅",
-    title:item.title,date:item.date,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:route("home"),id:item.id});
+    title:item.title,date:item.date,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:"agent-dates.html?focus="+encodeURIComponent(item.id),id:item.id,entryKind:"future"});
   }
   for(const item of (source.groups.find(g=>g.key==="feedback")?.items||[])){
    needs.push({kind:"professional-action",icon:"📋",id:item.id||item.title,
     title:item.title||"Retour professionnel attendu",date:item.date>=now?item.date:now,
-    sub:"Retour à clôturer · action professionnelle",href:route("notifications")});
+    sub:[dlabel(item.date),"Retour à clôturer · action professionnelle"].filter(Boolean).join(" · "),href:"index.html?feedback_key="+encodeURIComponent(item.id)+"#/home",entryKind:"feedback"});
   }
  }
  // Les demandes métier (congés, signatures, accès, échanges de service)
  // rejoignent le MÊME bouton que les invitations personnelles.
- for(const action of (window.STIPDrawerActionItems?.()||[])){
+ for(const action of (window.STIPDrawerActionItems?.()||homeDrawerSnapshot()?.actions||[])){
   const title=String(action.title||action.label||"Action professionnelle");
   const kind=String(action.type||action.category||"").toLowerCase();
   const icon=/cong|leave|absence|cp\b/.test(kind+" "+title.toLowerCase())?"🌴":
@@ -115,7 +127,7 @@ function groupedEntries(){
   needs.push({kind:"professional-action",icon,id:String(action.id||title),
    title,date:/^\d{4}-\d{2}-\d{2}$/.test(date)&&date>=now?date:now,
    sub:String(action.body||action.description||"Action professionnelle en attente").slice(0,120),
-   href:route("notifications")});
+   href:"index.html?quick=notifications&alert_key="+encodeURIComponent(action.id||"")+"#/home"});
 
  }
  const unique=new Map();for(const r of rows)unique.set(r.kind+":"+(r.event?.id||r.id||r.title)+":"+r.date,r);
@@ -142,7 +154,7 @@ function link(entry){
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  const tag=isPending?"button":"a";
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
-  'href="'+escapeHtml(entry.href)+'"';
+  'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'');
  const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
   (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon));
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
@@ -166,7 +178,7 @@ function openPendingDialog(){
   dialog.addEventListener("close",()=>{rail?.querySelector("[data-smart-pending-open]")?.focus({preventScroll:true});});
  }
  const rows=group.items.map(item=>
-  '<a class="ghe-smart-pending-item" href="'+escapeHtml(item.href)+'">'+
+  '<a class="ghe-smart-pending-item" href="'+escapeHtml(item.href)+'"'+(item.entryKind?' data-smart-entry-kind="'+escapeHtml(item.entryKind)+'" data-smart-entry-id="'+escapeHtml(item.id)+'"':'')+'>'+
    '<span class="ghe-smart-pending-item-icon" aria-hidden="true">'+escapeHtml(item.icon)+'</span>'+
    '<span class="ghe-smart-pending-item-copy"><strong>'+escapeHtml(item.title)+'</strong>'+
    '<small>'+escapeHtml(dlabel(item.date))+(item.sub?' · '+escapeHtml(item.sub):'')+'</small>'+
@@ -181,26 +193,63 @@ function openPendingDialog(){
  dialog.querySelector("[data-smart-pending-close]")?.addEventListener("click",()=>dialog.close());
  if(!dialog.open)dialog.showModal();
 }
-function staticLink(icon,title,sub,key,iconImage=false){
- const symbol=iconImage?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon);
- return link({kind:"shortcut",icon:symbol,title,sub,href:route(key)});
+function staticLink(icon,title,sub,key,action=""){
+ return link({kind:"shortcut",icon,title,sub,href:action?"index.html?drawer_action="+encodeURIComponent(action)+"#/home":route(key),action});
+}
+function applySearch(){
+ if(!rail)return;
+ const q=(rail.querySelector(".ghe-smart-search")?.value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+ let matches=0;
+ for(const el of rail.querySelectorAll(".ghe-smart-link")){
+  const hay=(el.getAttribute("aria-label")||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+  el.hidden=!!q&&!hay.includes(q);
+  if(!el.hidden)matches++;
+ }
+ const status=rail.querySelector("[data-smart-search-status]");
+ if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
 }
 function render(){
  if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();return;}
  document.body.classList.add("ghe-smart-active");
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
  let entries=groupedEntries(),start=entries.map(link).join("")||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
+ const p=permissions();
  const shortcuts=[["♿","Fauteuils","Chat des fauteuils","wheelchairs"],["💬","Communication","Messages et groupes","communication"],["🎉","On se retrouve","Créer une activité","leisure"],["🔔","Notifications","Messages importants","notifications"],["👥","Collègues","Annuaire des agents","colleagues"],["🧭","Visite des lieux","Services et étages","places"],["📱","Application GHE","Installation","app"]]
- .filter(x=>!(x[3]==="wheelchairs"&&window.STIPBootCache?.permissions?.messages===false));
+ .filter(x=>{
+  if(["communication","wheelchairs"].includes(x[3]))return p.messages===true;
+  if(x[3]==="colleagues")return p.agent_directory===true||isAdmin();
+  if(x[3]==="places")return p.places===true||isAdmin();
+  return true;
+ });
+ const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
+ for(const entry of extras.filter(x=>{
+  if(["admin","t-door"].includes(x.action))return isAdmin();
+  if(x.action==="planning")return p.planning_personal===true;
+  if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
+  return ["apps","dudy"].includes(x.action);
+ })){
+  shortcuts.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
+ }
  const admin=isAdmin()?[["🔐","Gérer les accès","Rôles et raccourcis","access"],["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]]:[];
- rail.innerHTML='<header class="ghe-smart-head">'+
+ const markup='<header class="ghe-smart-head">'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-arrow" data-ctrl="expand" aria-label="Ouvrir le tiroir entièrement">›</button>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button>'+
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span></header>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
  '<div class="ghe-smart-divider"><span>Raccourcis</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>'+
  (admin.length?'<div class="ghe-smart-divider"><span>Administration</span></div><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav>':"")+
- '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"></footer>';
+ '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
+ // Keep the search input in place while background data refreshes.
+ // Only the chronological lists change; focus and the native keyboard survive.
+ if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
+ else{
+  const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop;
+  const template=document.createElement("template");template.innerHTML=markup;
+  const next=template.content.querySelector(".ghe-smart-scroll").innerHTML;
+  if(scroll.innerHTML!==next)scroll.innerHTML=next;
+  scroll.scrollTop=previous;
+ }
+ applySearch();
  let reopen=document.getElementById("gheSmartReopen");
  if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.textContent="›";reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");document.body.appendChild(reopen);}
  setMode(mode);
@@ -208,6 +257,7 @@ function render(){
 async function refresh(force=false){
  if(!permitted())return;
  const current=store();if(!current)return;
+ if(owner!==current){owner=current;events=[];updated=0;ready=false;requestSeq++;running=null;render();}
  if(running)return running;
  if(!force&&Date.now()-updated<90000&&ready)return;
  const serial=++requestSeq;
@@ -219,7 +269,7 @@ async function refresh(force=false){
    events=Array.isArray(j.events)?j.events:[];updated=Date.now();ready=true;render();
    window.dispatchEvent(new CustomEvent("ghe:smart-agenda-updated",{detail:{events}}));
   }catch(error){if(!ready)render();console.warn("Tiroir : actualisation",error.message||error)}
-  finally{running=null}
+  finally{if(serial===requestSeq)running=null}
  })();
  return running;
 }
@@ -231,6 +281,15 @@ document.addEventListener("click",event=>{
  if(destination){
   if(destination.closest("#gheSmartPendingDialog"))document.getElementById("gheSmartPendingDialog")?.close();
   setMode("compact");
+  const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId;
+  const action=destination.dataset.smartAction;
+  if((kind&&window.STIPDrawerOpenEntry)||(action&&window.STIPDrawerOpenAction)){
+   event.preventDefault();
+   requestAnimationFrame(()=>{
+    const opened=kind?window.STIPDrawerOpenEntry(kind,id):window.STIPDrawerOpenAction(action);
+    if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
+   });
+  }
   return;
  }
  const trigger=event.target.closest?.("[data-shortcuts-open]");
@@ -249,21 +308,19 @@ document.addEventListener("click",event=>{
 },true);
 document.addEventListener("input",event=>{
  if(!event.target.matches?.("#gheSmartRail .ghe-smart-search"))return;
- const q=event.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
- for(const el of rail.querySelectorAll(".ghe-smart-link")){
-  const hay=(el.getAttribute("aria-label")||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  el.hidden=!!q&&!hay.includes(q);
- }
+ applySearch();
 });
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&mode==="expanded"){setMode("compact");event.stopPropagation();}});
-window.addEventListener("stip:leisure-updated",()=>{if(permitted())render()});
+for(const name of ["stip:leisure-updated","stip:home-rendered","stip:event-feedback-synced","stip:event-feedback-completed","stip:permissions-live","stip:session-snapshot"]){
+ window.addEventListener(name,()=>{if(permitted())render()});
+}
 window.addEventListener("stip:session-ready",()=>{render();refresh(true)});
-window.addEventListener("stip:session-ended",()=>{events=[];ready=false;render()});
+window.addEventListener("stip:session-ended",()=>{events=[];ready=false;owner="";updated=0;requestSeq++;running=null;document.getElementById("gheSmartPendingDialog")?.close();render()});
 window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
 window.addEventListener("storage",event=>{if(event.key===STORE){events=[];ready=false;render();refresh(true)}});
 window.addEventListener("ghe:agenda-change",()=>refresh(true));
 window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,mode:()=>mode,setMode};
-const start=()=>{render();refresh();setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
+const start=()=>{render();refresh();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();
