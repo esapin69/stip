@@ -48,4 +48,23 @@ for(const file of ["index.html","esprit-equipe.html","responsable.html"]) {
 }
 assert(read("stip-home-scroll.js").includes("window.scrollY > 500"),"Contrat scroll commun absent");
 assert(home.includes('anchor.insertAdjacentElement("afterend", followUps)') && home.includes('id="hcTopPriorityAnchor"'),"Retours actifs non associés au haut de l’accueil");
-console.log("GHE simplified home + drawer contract OK");
+const flipCss = read("ghe-flip-actions.css");
+const index = read("index.html");
+const weekCard = home.slice(home.indexOf("function weekFlipCard()"),home.indexOf("function syncWeekFlipHeight("));
+const liveBack = home.slice(home.indexOf("function premiumBackMarkup()"),home.indexOf("function syncPremiumStageHeight("));
+const monthCard = home.slice(home.indexOf("function monthFlipCard("),home.indexOf("function weekWidget()"));
+assert((weekCard.match(/ghe-weekflip-turn[^"]*ghe-flip-cta/g)||[]).length === 2,"La semaine doit avoir deux CTA premium");
+assert((nav.match(/ghe-premium-turn ghe-flip-cta/g)||[]).length === 2,"Le profil doit avoir deux CTA premium");
+assert((monthCard.match(/ghe-monthflip-turn[^"]*ghe-flip-cta/g)||[]).length === 2,"Le mois doit avoir deux CTA premium");
+assert(!liveBack.includes("data-premium-turn-close") &&
+       nav.includes('ghe-premium-back-footer') && nav.includes('data-premium-turn-close'),
+       "Le retour En direct doit rester en bas de la face");
+assert(flipCss.includes("--ghe-flip-start:#e51d49") &&
+       flipCss.includes(".ghe-flip-cta-dot") &&
+       flipCss.includes("--ghe-flip-start:#116fc9") &&
+       flipCss.includes("--ghe-flip-start:#0e6e81"),
+       "Style rouge/bleu/turquoise des trois blocs 360 manquant");
+assert(index.includes('ghe-flip-actions.css?v=') &&
+       index.indexOf('home-month-flip.css?v=') < index.indexOf('ghe-flip-actions.css?v='),
+       "Le style partagé doit être chargé après les autres styles des flips");
+console.log("GHE simplified home + drawer + three 360° CTA contract OK");
