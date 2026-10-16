@@ -98,12 +98,15 @@ assert(liveBack.includes('ghe-premium-now-summary') &&
        liveBack.includes('ghe-premium-now-shift'),
        "En direct doit afficher noms, horaires et shifts immédiatement");
 assert(!liveBack.includes('homeDutyChiefNowHost') &&
-       !liveBack.includes('RELÈVE') && !liveBack.includes('chef') &&
-       !home.includes('STIPDutyChiefs') && !home.includes('openPremiumRoster('),
-       "En direct ne doit pas charger de chef ou de relève future");
-assert(home.includes('const person=event.target.closest("[data-premium-now-person][data-premium-agent]")') &&
-       nowCss.includes('.ghe-premium-now-identity strong'),
-       "Les agents doivent être lisibles et ouvrables");
+       !liveBack.includes('RELÈVE') && !liveBack.includes('À VENIR') &&
+       home.includes('window.STIPDutyChiefs?.liveSnapshot?.()') &&
+       home.includes('isLiveChief(item)?fallbackChiefs:rows') &&
+       home.includes('openPremiumRoster('),
+       "En direct doit montrer les seuls chefs en poste, hors relève future");
+assert(home.includes('const rosterButton=event.target.closest("[data-premium-roster]")') &&
+       home.includes('document.createElement("dialog")') &&
+       nowCss.includes('.ghe-premium-now-modal-content .ghe-premium-now-identity strong'),
+       "Les agents doivent apparaître uniquement dans un popup séparé");
 assert(index.includes("ghe-premium-safe-flip.css?v=" + currentBuild) &&
        index.includes("home-shell.js?v=" + currentBuild),"Cache bust incohérent");
 console.log("GHE header + 360° black returns + current roster contract OK");
