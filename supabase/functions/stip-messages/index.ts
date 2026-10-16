@@ -155,7 +155,7 @@ async function notificationSet(ctx:any,body:any){
 // Préférences de notifications : la même source est lue par les réglages et l'envoi push.
 const WHEELCHAIR_NOTIFICATION_BUILDINGS=["neuro","cardio","hfme","a4","b14","ghe"];
 function defaultNotificationRules(){
-  return {wheelchair_buildings:[...WHEELCHAIR_NOTIFICATION_BUILDINGS],wheelchair_work_only:true,team_chat_work_only:true}
+  return {wheelchair_buildings:[...WHEELCHAIR_NOTIFICATION_BUILDINGS],wheelchair_work_only:false,team_chat_work_only:false}
 }
 async function notificationRules(ctx:any){
   const {data,error}=await db.from("stip_message_notification_rules")
