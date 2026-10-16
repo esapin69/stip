@@ -3186,6 +3186,17 @@ function personalDrawerRow(icon,label,action,meta="") {
 }
   // Une seule vue sur l'agenda : événements classiques, dates de loisirs
   // confirmées/proposées et suivis anciens, sans limite artificielle de mois.
+  // Source métier commune au tiroir : seules les actions réellement encore ouvertes.
+  // Aucune donnée métier n'est stockée dans le tiroir lui-même.
+  window.STIPDrawerActionItems = () => pending()
+    .filter(a => !/leisure|loisir/i.test(String(a.source_type||"")+" "+String(a.type||"")))
+    .map(a => ({
+      id:String(a.id||a.source_ref||""),
+      title:String(a.title||a.label||"Action professionnelle"),
+      description:String(a.body||a.description||a.summary||""),
+      type:String(a.type||a.source_type||""),
+      event_date:a.event_date||a.due_date||a.date||""
+    }));
   window.STIPDrawerAppointments = () => drawerAppointmentsState();
   function drawerAppointmentsState(){
     const pending=window.STIPEventFeedback?.pending?.()||[];
