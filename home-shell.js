@@ -3041,7 +3041,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   const search=drawer.querySelector("[data-ghe-drawer-search]");
   const standard=drawer.querySelector("[data-ghe-drawer-standard]");
   const results=drawer.querySelector("[data-ghe-drawer-results]");
-  let candidates=new Map(), requestNumber=0, previousResults=[];
+  let candidates=new Map(), requestNumber=0, previousResults=[], searchEntries=[];
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
   const resetSearch=()=>{
     search.value="";
@@ -3052,6 +3052,77 @@ function personalDrawerRow(icon,label,action,meta="") {
     requestNumber++;
   };
   const close=()=>{ if(drawer.open)drawer.close(); };
+  // Un groupe avec une seule entrée ouvre directement sa fiche.
+  // Avec plusieurs entrées, une fenêtre liste toutes les dates, par mois.
+  const openAgendaEntry=entry=>{
+    if(!entry)return;
+    if(entry.kind==="future"){openWidget("future",entry.id);return;}
+    if(entry.kind==="feedback"){
+      if(!window.STIPEventFeedback?.open?.(entry.id))
+        document.getElementById("hcEventFeedbackWrap")?.scrollIntoView({block:"start",behavior:"smooth"});
+      return;
+    }
+    if(entry.kind==="leisure"){
+      try{
+        window.STIPLeisure?.openPreview?.(entry.id);
+        if(document.getElementById("ev3HomePreview")?.open)return;
+      }catch(e){console.warn("GHE loisirs : fiche directe indisponible",e);}
+      if(typeof window.STIPLeisure?.openEvent==="function")window.STIPLeisure.openEvent(entry.id);
+      else location.href="sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(entry.id);
+    }
+  };
+  const openDrawerGroup=groupKey=>{
+    const group=drawerAppointmentsState().groups.find(x=>x.key===groupKey);
+    if(!group?.items.length)return;
+    close();
+    if(group.items.length===1){openAgendaEntry(group.items[0]);return;}
+    document.getElementById("hcDrawerAgendaDialog")?.remove();
+    const modal=document.createElement("dialog");
+    modal.id="hcDrawerAgendaDialog";
+    modal.className="ghe-drawer-agenda-modal";
+    modal.setAttribute("aria-labelledby","hcDrawerAgendaTitle");
+    const byMonth=[];
+    let currentMonth="";
+    group.items.forEach((entry,i)=>{
+      const month=String(entry.date||"").slice(0,7);
+      if(month!==currentMonth){
+        currentMonth=month;
+        byMonth.push('<h3 class="ghe-drawer-agenda-month">'+esc(monthTitle(entry.date))+'</h3>');
+      }
+      byMonth.push(drawerAgendaEntryMarkup(entry,i));
+    });
+    modal.innerHTML='<section class="ghe-drawer-agenda-modal-frame">'+
+      '<header class="ghe-drawer-agenda-modal-head">'+
+      '<button type="button" data-ghe-agenda-back aria-label="Retour à Mon espace">‹</button>'+
+      '<div><small>MON ESPACE</small><h2 id="hcDrawerAgendaTitle">'+esc(group.title)+
+      ' <span>'+group.items.length+'</span></h2></div>'+
+      '<button type="button" data-ghe-agenda-close aria-label="Fermer">×</button></header>'+
+      '<div class="ghe-drawer-agenda-modal-scroll">'+byMonth.join("")+'</div>'+
+      '</section>';
+    document.body.appendChild(modal);
+    let returnToDrawer=false;
+    const dismiss=back=>{returnToDrawer=back;if(modal.open)modal.close();else modal.remove();};
+    modal.querySelector("[data-ghe-agenda-back]").onclick=()=>dismiss(true);
+    modal.querySelector("[data-ghe-agenda-close]").onclick=()=>dismiss(false);
+    modal.addEventListener("click",event=>{
+      if(event.target===modal){dismiss(false);return;}
+      const target=event.target.closest("[data-ghe-agenda-entry]");
+      if(!target)return;
+      const entry=group.items[Number(target.dataset.gheAgendaEntry)];
+      dismiss(false);
+      openAgendaEntry(entry);
+    });
+    modal.addEventListener("close",()=>{
+      modal.remove();
+      if(returnToDrawer&&drawer.isConnected&&!drawer.open){
+        const host=drawer.querySelector("[data-ghe-drawer-appointments]");
+        if(host)host.innerHTML=drawerAppointmentsMarkup();
+        drawer.showModal();
+      }
+    },{once:true});
+    modal.showModal();
+  };
+
   const doAction=action=>{
     close();
     if(action==="home") return window.STIPRouter?.set?.("home");
@@ -3079,10 +3150,20 @@ function personalDrawerRow(icon,label,action,meta="") {
     const appts=drawer.querySelector("[data-ghe-drawer-appointments]");
     if(appts)appts.innerHTML=drawerAppointmentsMarkup();
     if(!drawer.open) drawer.showModal();
+    window.STIPLeisure?.refresh?.().catch?.(()=>{});
   });
   drawer.querySelector("[data-ghe-drawer-dismiss]")?.addEventListener("click",close);
   drawer.addEventListener("click",event=>{
     if(event.target===drawer){close();return;}
+    const group=event.target.closest("[data-ghe-drawer-group]");
+    if(group){openDrawerGroup(group.dataset.gheDrawerGroup);return;}
+    const searchEntry=event.target.closest("[data-ghe-drawer-search-entry]");
+    if(searchEntry){
+      const entry=searchEntries[Number(searchEntry.dataset.gheDrawerSearchEntry)];
+      close();
+      openAgendaEntry(entry);
+      return;
+    }
     const future=event.target.closest("[data-ghe-drawer-future]");
     if(future){close();openWidget("future",future.dataset.gheDrawerFuture);return;}
     const past=event.target.closest("[data-ghe-drawer-feedback]");
