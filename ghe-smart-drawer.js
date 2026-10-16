@@ -10,7 +10,7 @@ const dateMin=e=>(Array.isArray(e.dates)?e.dates:[]).filter(d=>d>=today()).sort(
 const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||getComputedStyle(document.getElementById("homeView")).display!=="none");
 const isAdmin=()=>Boolean(window.STIPBootCache?.permissions?.admin===true || window.STIPSession?.permissions?.admin===true || window.STIPBootCache?.agent?.is_admin===true);
 let events=[],running=null,updated=0,ready=false,mode="compact",rail=null,requestSeq=0,appointments=null;
-try{const saved=localStorage.getItem(STATE);if(["closed","compact","expanded"].includes(saved))mode=saved;}catch{}
+try{const saved=localStorage.getItem(STATE);if(saved==="closed")mode="closed";}catch{}
 const store=()=>localStorage.getItem(STORE)||"";
 const urlForEvent=e=>"sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(e.id);
 const route=(name)=>{
@@ -68,7 +68,7 @@ function link(entry){
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  return '<a class="ghe-smart-link" href="'+escapeHtml(entry.href)+'" title="'+escapeHtml(entry.title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(entry.title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
- escapeHtml(icon)+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(entry.title)+
+ (entry.title==='Fauteuils'?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon))+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(entry.title)+
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></a>';
 }
 function staticLink(icon,title,sub,key,iconImage=false){
@@ -89,7 +89,7 @@ function render(){
  '<div class="ghe-smart-divider"><span>Raccourcis</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>'+
  (admin.length?'<div class="ghe-smart-divider"><span>Administration</span></div><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav>':"")+
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…">'+
- '<button type="button" class="ghe-smart-toggle" data-ctrl="home" aria-label="Aller à l’accueil">⌂</button></footer>';
+ '<button type="button" class="ghe-smart-toggle" data-ctrl="close" aria-label="Fermer totalement le tiroir">×</button></footer>';
  let reopen=document.getElementById("gheSmartReopen");
  if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.textContent="☰";reopen.setAttribute("aria-label","Afficher les icônes du tiroir");document.body.appendChild(reopen);}
  setMode(mode);
