@@ -546,7 +546,7 @@
 
     const noteBlock = profile.allowNote
       ? event.kind === "intern"
-        ? '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Un fait utile à retenir <small>facultatif</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Un exemple concret, sans donnée concernant un patient"></textarea></section>'
+        ? '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Un fait utile à retenir <small>facultatif</small></label><textarea id="hcFeedbackNote" maxlength="200" rows="3" placeholder="Un exemple concret, sans donnée concernant un patient"></textarea></section>'
         : '<section class="hc-feedback-note" data-feedback-note hidden><label for="hcFeedbackNote">Précision <small>facultative</small></label><textarea id="hcFeedbackNote" maxlength="500" rows="3" placeholder="Ajoute seulement l’information utile"></textarea></section>'
       : "";
     const stageBlock = event.kind === "intern" ? `
@@ -720,6 +720,14 @@
       return true;
     };
 
+    const stageSummary = () => {
+      const participation = { observed:"Observation", assisted:"Participation avec aide", supervised:"Pratique sous supervision" };
+      const topics = { organization:"Organisation", safety:"Sécurité", transport:"Déplacements", communication:"Communication", tools:"Matériel", other:"Autre" };
+      const next = { discover:"Poursuivre la découverte", repeat:"Refaire ensemble", supervised:"Pratique encadrée", referent:"À revoir avec le référent" };
+      return "Bilan de stage — Participation : " + participation[stageParticipation] +
+        " ; Points abordés : " + [...stageTopics].map(x => topics[x]).join(", ") +
+        " ; Suite : " + next[stageNext];
+    };
     const feedbackBody = () => ({
       event_key: event.eventKey,
       attendance,
@@ -732,8 +740,9 @@
       follow_up: followUp,
       custom_answer:
         attendance === "absent" ? null : customAnswer || null,
-      note:
-        profile.allowNote && note
+      note: event.kind === "intern" && attendance !== "absent"
+        ? (stageSummary() + (String(note?.value || "").trim() ? " ; Fait précis : " + String(note.value).trim() : "")).slice(0, 500)
+        : profile.allowNote && note
           ? String(note.value || "").trim() || null
           : null,
     });
