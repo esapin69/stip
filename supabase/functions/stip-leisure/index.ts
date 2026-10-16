@@ -306,6 +306,7 @@ async function list(c:any){
  const memberships=chats.length&&c.agent_id?await checked(db.from('stip_conversation_members').select('conversation_id').eq('agent_id',c.agent_id).in('conversation_id',chats.map((x:any)=>x.conversation_id))):[]
  const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
  const responses=ids.length?await checked(db.from('stip_leisure_responses').select('event_id,agent_id,selected_dates,declined,revision,updated_at,agent:agents!stip_leisure_responses_agent_id_fkey(id,prenom,nom,profile_photo_url,avatar_url)').in('event_id',ids)):[]
+ const dayChoices=ids.length&&c.agent_id?await checked(db.from('stip_leisure_date_decisions').select('event_id,event_date,revision,decision').eq('agent_id',c.agent_id).in('event_id',ids)):[]
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
  const organizerIds=[...new Set(events.map((x:any)=>x.organizer_agent_id).filter(Boolean))];
  const organizerRows=organizerIds.length?await checked(db.from('agents').select('id,prenom,nom').in('id',organizerIds)):[];
@@ -366,13 +367,17 @@ async function list(c:any){
    organizer_unavailable_dates:recurringById.get(e.id)?.excluded_dates||[],
    closing_time:recurringById.get(e.id)?.closing_time||null,
    series_conversation_id:seriesConversations.find((x:any)=>x.event_id===e.id&&seriesMemberIds.has(x.conversation_id))?.conversation_id||null,
+   date_choices:(dayChoices||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({date:x.event_date,revision:x.revision,decision:x.decision})),
    is_organizer:e.organizer_agent_id===c.agent_id,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    invitation_status:invited.get(e.id)||null,
    can_invite:e.organizer_agent_id===c.agent_id,
    invited_colleagues:(e.organizer_agent_id===c.agent_id||c.isAdmin&&e.visibility==='team')?(allInvitations||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({id:x.agent_id,name:[x.agent?.prenom,x.agent?.nom].filter(Boolean).join(' ')||'Collègue',status:x.status})):[],
    response:mine?{selected_dates:mine.selected_dates,declined:mine.declined,revision:mine.revision}:null,
-   needs_response:active&&(e.dates||[]).some((d:string)=>d>=today())&&!!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&invited.get(e.id)!=='declined'&&!mine?.declined&&(!mine||mine.revision!==e.revision),
+   needs_response:active&&(e.dates||[]).some((d:string)=>d>=today()&&
+     !(dayChoices||[]).some((x:any)=>x.event_id===e.id&&x.event_date===d&&x.revision===e.revision)
+     &&!(mine?.revision===e.revision&&mine.selected_dates?.includes(d)))&&
+     !!c.agent_id&&c.agent_id!==e.organizer_agent_id&&invited.has(e.id)&&invited.get(e.id)!=='declined',
    participants:rs.filter((r:any)=>!r.declined).map((r:any)=>({agent_id:r.agent_id,name:text(r.agent?.prenom,80)||'Agent',photo:photos.get(r.agent_id)||'',selected_dates:r.selected_dates,confirmed:r.revision===e.revision})),
    response_count:rs.length,declined_count:rs.filter((r:any)=>r.declined).length}
  }).filter(Boolean)}
@@ -739,6 +744,30 @@ Deno.serve(async req=>{
    return J({ok:true,id,...await list(c)});
   }
   if(!c.agent_id&&b.action!=='save')throw Error('ACCES_AGENT_REQUIS')
+  if(b.action==='respond_day'){
+    if(!uuid(b.event_id)||typeof b.day!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.day)||
+      !Number.isInteger(b.revision)||!['yes','no','neutral'].includes(b.decision))throw Error('CHOIX_INVALIDE');
+    const ev=await checked(db.from('stip_leisure_events')
+      .select('id,title,organizer_agent_id,dates,revision,status,schedule_mode,family')
+      .eq('id',b.event_id).eq('family',c.family).maybeSingle());
+    if(!ev||ev.status!=='active'||ev.revision!==b.revision)throw Error('DATES_MODIFIEES');
+    if(b.decision==='yes'&&ev.schedule_mode==='afterwork'){
+      const ends=await endSchedules([c.agent_id,ev.organizer_agent_id],today(),plusDays(today(),123));
+      if(!compatibleDates(ev,c.agent_id,ends).includes(b.day))throw Error('HORAIRE_INCOMPATIBLE');
+    }
+    const current=await checked(db.rpc('stip_leisure_answer_day',{
+      p_event:b.event_id,p_agent:c.agent_id,p_family:c.family,p_revision:b.revision,
+      p_day:b.day,p_decision:b.decision
+    }));
+    if(ev.organizer_agent_id&&ev.organizer_agent_id!==c.agent_id&&b.decision!=='neutral'){
+      await checked(db.from('stip_notifications').insert({
+        agent_id:ev.organizer_agent_id,type:'leisure_response',
+        title:'Réponse à une date',body:text(ev.title,120)+' · '+b.day+' : '+(b.decision==='yes'?'présent':'ne participe pas'),
+        source_type:'stip_leisure_events',source_ref:ev.id
+      }));
+    }
+    return J({ok:true,status:current,...await list(c)});
+   }
   if(b.action==='respond'){
    if(!uuid(b.event_id)||typeof b.declined!=='boolean'||!Number.isInteger(b.revision))throw Error('CHOIX_INVALIDE')
 
@@ -781,9 +810,16 @@ Deno.serve(async req=>{
     if(recurring)throw Error('UTILISER_MODIFICATION_SERIE');
    }
    const title=text(b.title,120);if(!title)throw Error('TITRE_REQUIS')
+   const before=b.id?await checked(db.from('stip_leisure_events').select('dates,status').eq('id',b.id).eq('family',c.family).maybeSingle()):null;
    const id=await checked(db.rpc('stip_leisure_save',{p_id:b.id||null,p_actor:c.agent_id,p_admin:c.isAdmin,p_family:c.family,p_expected:Number(b.revision)||0,p_title:title,p_description:text(b.description,2000),p_location:text(b.location,240),p_time:text(b.time_label,240),p_dates:dates(b.dates),p_status:b.status==='cancelled'?'cancelled':'active'}))
    if(b.icon!==undefined)await checked(db.from('stip_leisure_events').update({icon:text(b.icon,16)||'📌'}).eq('id',id));
    await checked(db.rpc('stip_leisure_sync_series_chat',{p_event:id}));
+   if(before&&(JSON.stringify([...(before.dates||[])].sort())!==JSON.stringify([...dates(b.dates)].sort())||before.status!==(b.status==='cancelled'?'cancelled':'active'))){
+     const audience=await checked(db.from('stip_leisure_invites').select('agent_id').eq('event_id',id));
+     const changed=before.status!==(b.status==='cancelled'?'cancelled':'active')?'Événement annulé':'Date modifiée · Confirmation requise';
+     await Promise.allSettled((audience||[]).map((a:any)=>notifyPhone(a.agent_id,'leisure_invite',id,changed,
+       text(title,90)+' : toutes les participations doivent être reconfirmées.')));
+   }
    return J({ok:true,id,...await list(c)})
   }
   return J({error:'ACTION_INVALIDE'},400)
