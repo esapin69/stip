@@ -50,6 +50,7 @@ async function call(action,data={}){
 function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}}
 function activeDates(e){return (e.visible_dates||e.dates||[]).filter(d=>d>=today)}
 function concerned(e){return e.is_organizer||!!e.invitation_status||!!e.response}
+function displayDates(e){const compatible=activeDates(e);return compatible.length?compatible:(e.invitation_status?(e.dates||[]).filter(d=>d>=today):[])}
 function kindStatus(e){
  if(e.status==="cancelled")return ["closed","Annulé"];
  if(e.response?.declined)return ["declined","Décliné"];
@@ -63,15 +64,15 @@ function meetingLink(e){
  return id?"index.html?quick=communication&tab=dm&conversation="+encodeURIComponent(id)+"#/communication/dm":"";
 }
 function card(e){
- const [tone,label]=kindStatus(e),days=activeDates(e),time=e.schedule_mode==="afterwork"?(e.visible_end_times?.[days[0]]||"Fin du service"):e.time_label||"Horaire à fixer";
+ const [tone,label]=kindStatus(e),days=displayDates(e),time=e.schedule_mode==="afterwork"?(!activeDates(e).length&&e.invitation_status?"Aucune fin de service compatible":e.visible_end_times?.[days[0]]||"Fin du service"):e.time_label||"Horaire à fixer";
  return '<button type="button" class="ev3-card ev3-'+tone+'" data-ev3-open="'+escapeHTML(e.id)+'">'+
  '<span class="ev3-card-icon" aria-hidden="true">'+escapeHTML(e.icon||"📌")+'</span>'+
  '<span class="ev3-card-body"><strong>'+escapeHTML(e.title)+'</strong><small>'+escapeHTML(days.length?fmt(days[0])+(days.length>1?" · +"+(days.length-1)+" dates":""):"Aucune date à venir")+' · '+escapeHTML(time)+'</small><small>'+escapeHTML(e.location||"Lieu à définir")+(e.participants?.length?" · "+e.participants.length+" intéressé(s)":"")+'</small></span>'+
  '<span class="ev3-chip">'+escapeHTML(label)+'</span><span aria-hidden="true">›</span></button>';
 }
 function chosenCards(){
- const upcoming=state.events.filter(e=>e.status==="active"&&activeDates(e).length).sort((a,b)=>
-  activeDates(a)[0].localeCompare(activeDates(b)[0])||String(a.title).localeCompare(String(b.title),"fr"));
+ const upcoming=state.events.filter(e=>e.status==="active"&&displayDates(e).length).sort((a,b)=>
+  displayDates(a)[0].localeCompare(displayDates(b)[0])||String(a.title).localeCompare(String(b.title),"fr"));
  const awaiting=upcoming.filter(e=>e.needs_response&&!e.is_organizer);
  const mine=upcoming.filter(e=>concerned(e)&&!awaiting.includes(e)&&!e.response?.declined);
  const publicEvents=upcoming.filter(e=>e.visibility==="team"&&!concerned(e));
