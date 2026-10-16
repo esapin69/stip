@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  // Chargement direct sur l’accueil et éventuel chargeur historique : une seule instance.
+  if (window.STIPDutyChiefs) return;
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data",
     STORE = "stip_session_v1";
@@ -151,7 +153,8 @@
   async function fetchDuty(force = false) {
     if (
       !document.querySelector("#teamDutyChiefTodayHost") &&
-      !document.querySelector("#homeDutyChiefNowHost")
+      !document.querySelector("#homeDutyChiefNowHost") &&
+      !document.querySelector("#homeView [data-premium-flip]")
     )
       return null;
     if (!localStorage.getItem(STORE)) return null;
@@ -185,6 +188,7 @@
       .finally(() => {
         loading = null;
         render();
+        document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
       });
 
     render();
@@ -388,7 +392,11 @@
       loadError = "";
       lastFetch = Date.now();
       render();
+      document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
       return true;
+    },
+    liveSnapshot() {
+      return { loaded: Boolean(data), current: data ? dutyState().current : [], error: loadError };
     },
     refresh() {
       return fetchDuty(true);
@@ -546,13 +554,14 @@
     if (e.key === "Escape") closeCallChoice();
   });
 
-  window.addEventListener("stip:home-rendered", () => render());
+  window.addEventListener("stip:home-rendered", () => { render(); fetchDuty(); });
   window.addEventListener("stip:session-ready", () => fetchDuty(true));
   window.addEventListener("stip:session-ended", () => {
     data = null;
     loadError = "";
     lastFetch = 0;
     render();
+    document.dispatchEvent(new CustomEvent("stip:duty-chiefs-updated"));
   });
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) fetchDuty();
