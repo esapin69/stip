@@ -195,8 +195,8 @@ function render(){
  const admin=isAdmin()?[["🔐","Gérer les accès","Rôles et raccourcis","access"],["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]]:[];
  rail.innerHTML='<header class="ghe-smart-head">'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-arrow" data-ctrl="expand" aria-label="Ouvrir le tiroir entièrement">›</button>'+
- '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
- '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
+ '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button>'+
+ '<span class="ghe-smart-expanded-label">Mon espace GHE</span></header>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
  '<div class="ghe-smart-divider"><span>Raccourcis</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>'+
  (admin.length?'<div class="ghe-smart-divider"><span>Administration</span></div><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav>':"")+
