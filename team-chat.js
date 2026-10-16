@@ -740,6 +740,15 @@
     const composer = state.root.querySelector(".tb-input-dock");
     if (!composer) return;
 
+    // Le dock du shell Communication appartient à sa colonne de contenu.
+    // Le centrer dans toute la fenêtre place « J’ai vu » sous les onglets.
+    const content = state.root.closest(".ca-body");
+    if (content) {
+      const bounds = content.getBoundingClientRect();
+      state.root.style.setProperty("--tb-dock-left", bounds.left + "px");
+      state.root.style.setProperty("--tb-dock-width", bounds.width + "px");
+    }
+
     state.root.style.setProperty(
       "--tb-composer-height",
       Math.ceil(composer.getBoundingClientRect().height) + "px",

@@ -225,7 +225,7 @@ async function list(q = "", viewer: any = null) {
     db
       .from("stip_access_profiles")
       .select(
-        "id,agent_id,identity_id,role_key,active,permissions,permission_overrides,access_model_key,agents(id,source_key,nom,prenom,ghe,equipe,type_planning,telephone,avatar_url,profile_photo_url)",
+        "id,agent_id,identity_id,role_key,active,permissions,permission_overrides,access_model_key,agents(id,source_key,nom,prenom,ghe,equipe,type_planning,telephone,avatar_url,profile_photo_url),stip_access_identities(id,first_name,last_name,professional_role,identity_kind)",
       )
       .order("updated_at", { ascending: false })
       .limit(200),
@@ -262,7 +262,7 @@ async function list(q = "", viewer: any = null) {
       .filter(
         (p: any) =>
           !n ||
-          `${p.agents?.prenom || ""} ${p.agents?.nom || ""} ${p.agents?.ghe || ""}`
+          `${p.agents?.prenom || ""} ${p.agents?.nom || ""} ${p.agents?.ghe || ""} ${p.stip_access_identities?.first_name || ""} ${p.stip_access_identities?.last_name || ""}`
             .toLowerCase()
             .includes(n),
       )

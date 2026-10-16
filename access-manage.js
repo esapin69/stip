@@ -445,7 +445,13 @@
   }
   function agentOf(value = {}) {
     const nested = Array.isArray(value.agents) ? value.agents[0] : value.agents;
-    return nested || value;
+    if (nested) return nested;
+    const identity = Array.isArray(value.stip_access_identities)
+      ? value.stip_access_identities[0] : value.stip_access_identities;
+    return identity ? {
+      id: identity.id, prenom: identity.first_name, nom: identity.last_name,
+      role: identity.professional_role || identity.identity_kind || "",
+    } : value;
   }
   function wallFilter() {
     return sortMode === "prenom" ? "first" : sortMode === "ghe" ? "ghe" : "last";
@@ -791,7 +797,7 @@
   }
   function previewCurrent() {
     if (!current || creating) return;
-    const agent = current.agents || {};
+    const agent = agentOf(current);
     const preview = {
       version: 1,
       profile_id: current.id || "",
@@ -829,8 +835,9 @@
     creating = false;
     current = profile;
     selectedRole = profile.role_key || "";
+    const identity = agentOf(profile);
     $("who").textContent =
-      `${profile.agents?.prenom || ""} ${profile.agents?.nom || "Accès"}`.trim();
+      `${identity.prenom || ""} ${identity.nom || "Accès"}`.trim();
     $("currentCode").innerHTML = profile.current_code
       ? `Code actuel : <b>${esc(profile.current_code)}</b>${profile.weak_code ? ' <span class="access-help">⚠ trop simple · à remplacer</span>' : ''}`
       : 'Code actuel : <span class="access-help">non disponible</span>';

@@ -37,7 +37,9 @@
     const directFirst = String(agent?.prenom || "").trim();
     const directLast = String(agent?.nom || "").trim();
     const fallback = sourceKeyParts(agent);
-    const first = directFirst || fallback.first;
+    // Un nom complet importé reste fiable. Ne pas lui préfixer une seconde
+    // interprétation du prénom à partir d'une clé technique.
+    const first = directFirst || (directLast ? "" : fallback.first);
     const last = directLast || fallback.last;
     return (
       [first.toLocaleUpperCase("fr-FR"), last.toLocaleLowerCase("fr-FR")]
@@ -247,6 +249,7 @@
   function pickerFirst(agent) {
     const direct = String(agent?.prenom || "").trim();
     if (direct) return direct;
+    if (String(agent?.nom || "").trim()) return "";
     const fallback = sourceKeyParts(agent).first;
     if (fallback) return fallback;
     const formatted = name(agent).trim().split(/\s+/).filter(Boolean);
@@ -282,18 +285,19 @@
       const ghe = pickerGhe(agent);
       return [ghe.raw, ghe.number == null ? "" : ghe.number, ghe.label].join(" ");
     }
-    return pickerFirst(agent);
+    return pickerFirst(agent) || pickerLast(agent);
   }
 
   function pickerGroup(agent, filter) {
     if (filter === "ghe") return pickerGhe(agent).label;
+    if (filter === "first" && !pickerFirst(agent)) return "PRÉNOM À COMPLÉTER";
     const value = filter === "last" ? pickerLast(agent) : pickerFirst(agent);
     const first = normalize(value).charAt(0);
     return first ? first.toLocaleUpperCase("fr-FR") : "AUTRES";
   }
 
   function pickerGroupRank(label, filter) {
-    if (filter !== "ghe") return [0, label];
+    if (filter !== "ghe") return [label === "PRÉNOM À COMPLÉTER" || label === "AUTRES" ? 1 : 0, label];
     if (label === "SANS GHE") return [0, 0];
     const match = String(label).match(/\d+/);
     if (match) return [1, Number(match[0])];
@@ -332,7 +336,8 @@
     } else if (filter === "ghe") {
       copy = `<strong>${esc(last || first || "AGENT")}</strong>${first ? `<small>${esc(first)}</small>` : ""}`;
     } else {
-      copy = `<strong>${esc(first)}</strong><small>${esc(last)}</small>`;
+      copy = first ? `<strong>${esc(first)}</strong><small>${esc(last)}</small>`
+        : `<strong>${esc(last || "AGENT")}</strong><small>Prénom à compléter</small>`;
     }
     return `<button class="sas-wall-agent${selected ? " is-selected" : ""}${filter === "ghe" ? " is-ghe-mode" : ""}" type="button" data-sas-agent="${esc(agent.id)}" aria-label="Choisir ${esc(name(agent))}">
       <span class="sas-wall-card-top">

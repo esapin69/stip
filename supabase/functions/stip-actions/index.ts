@@ -3,7 +3,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 
 const URL=Deno.env.get('SUPABASE_URL')!, SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, RESEND_API_KEY=Deno.env.get('RESEND_API_KEY')||'', STIP_MAIL_FROM=Deno.env.get('STIP_MAIL_FROM')||''
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}})
-const ORIGINS=new Set(['https://stip.esapin.com','https://esapin69.github.io'])
+const ORIGINS=new Set(['https://ghe.esapin.com','https://stip.esapin.com','https://esapin69.github.io'])
 const BUCKET='stip-onboarding-documents'
 const text=(v:unknown,m=8000)=>String(v??'').trim().slice(0,m)
 async function sha(v:string){const a=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));return[...new Uint8Array(a)].map(x=>x.toString(16).padStart(2,'0')).join('')}

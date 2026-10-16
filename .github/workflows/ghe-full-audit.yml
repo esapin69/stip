@@ -1,0 +1,42 @@
+name: GHE cross-surface audit
+on:
+  pull_request:
+    paths:
+      - 'esprit-equipe.js'
+      - 'stip-agent-selector.js'
+      - 'access-manage.js'
+      - 'team-chat.js'
+      - 'team-chat.css'
+      - 'supabase/functions/stip-actions/**'
+      - 'supabase/functions/stip-evaluations/**'
+      - 'supabase/functions/stip-access-manage/**'
+      - 'tools/ghe-full-audit-test.mjs'
+      - '.github/workflows/ghe-full-audit.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'esprit-equipe.js'
+      - 'stip-agent-selector.js'
+      - 'access-manage.js'
+      - 'team-chat.js'
+      - 'team-chat.css'
+      - 'supabase/functions/stip-actions/**'
+      - 'supabase/functions/stip-evaluations/**'
+      - 'supabase/functions/stip-access-manage/**'
+      - 'tools/ghe-full-audit-test.mjs'
+      - '.github/workflows/ghe-full-audit.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node tools/ghe-full-audit-test.mjs
+      - run: node --test tools/stip-planning-import-semantics-test.mjs
+      - run: node tools/stip-wheelchair-behavior-test.mjs
+      - run: node tools/ghe-audit-navigation-test.mjs
