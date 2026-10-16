@@ -2952,37 +2952,66 @@ function personalDrawerRow(icon,label,action,meta="") {
     ...(has("admin") ? [{title:"Administration",subtitle:"Raccourcis et outils administrateur",icon:"⚙",action:"admin"},{title:"Porte T",subtitle:"Accès administrateur",icon:"T",action:"t-door"}] : [])
   ];
 }
+  // Une seule vue sur l'agenda : événements classiques, dates de loisirs
+  // confirmées/proposées et suivis anciens, sans limite artificielle de mois.
   function drawerAppointmentsState(){
     const pending=window.STIPEventFeedback?.pending?.()||[];
     const feedbackIds=new Set(pending.map(x=>String(x.eventKey||"")));
     const future=futureItems().filter(x=>!feedbackIds.has(String(x.id||"")));
-    return {future,pending};
+    const leisure=window.STIPLeisure?.drawerDates?.()||[];
+    const toEntry=(kind,x,date,subtitle,stateLabel)=>({
+      kind,id:String(x.id||x.eventKey||""),title:String(x.title||"Rendez-vous"),
+      date:String(date||""),time:String(x.time||""),place:String(x.place||x.location||""),
+      icon:String(x.icon||"📅"),subtitle:String(subtitle||""),stateLabel:String(stateLabel||""),
+      event:x
+    });
+    const toFuture=future.map(x=>toEntry("future",x,x.date,fmtDateRange(x),"Prévu"));
+    const toPast=pending.map(x=>toEntry("feedback",x,x.endDate||x.date,fmtDateRange(x),"Retour attendu"));
+    const toLeisure=leisure.map(x=>toEntry("leisure",x,x.date,fmtDateRange(x),x.state));
+    const dateSort=(a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,"fr");
+    const groups=[
+      {key:"upcoming",title:"À venir",items:[...toFuture,...toLeisure.filter(x=>x.event.confirmed)].sort(dateSort)},
+      {key:"proposals",title:"À confirmer",items:toLeisure.filter(x=>!x.event.confirmed).sort(dateSort)},
+      {key:"feedback",title:"À clôturer",items:toPast.sort((a,b)=>b.date.localeCompare(a.date))}
+    ];
+    return {groups,future,pending,leisure};
+  }
+  function drawerGroupLabel(group){
+    const count=group.items.length;
+    if(!count)return group.key==="upcoming"?"Aucune date prévue":group.key==="proposals"?"Aucune proposition":"Aucun retour en attente";
+    const next=group.items[0];
+    if(count===1)return next.title+" · "+next.subtitle;
+    return count+" "+(group.key==="feedback"?"retours attendus":"dates")+
+      (group.key==="proposals"?" proposées":"")+" · "+group.items[0].subtitle;
   }
   function drawerAppointmentsMarkup(){
-    const {future,pending}=drawerAppointmentsState();
-    const futureRows=future.map(x=>
-      '<button type="button" class="ghe-drawer-appointment" data-ghe-drawer-future="'+esc(x.id)+'">'+
-      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+eventIconHtml(x,"hc-event-svg")+'</span>'+
-      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
-      '<small>'+esc([fmtDateRange(x),x.time,x.place].filter(Boolean).join(" · "))+'</small></span>'+
-      '<span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
-    ).join("");
-    const pendingRows=pending.map(x=>
-      '<button type="button" class="ghe-drawer-appointment ghe-drawer-feedback-item" data-ghe-drawer-feedback="'+esc(x.eventKey)+'">'+
-      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+esc(x.icon||"📅")+'</span>'+
-      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
-      '<small>'+esc([fmtDateRange(x),x.time,x.location].filter(Boolean).join(" · "))+'</small>'+
-      '<em>Retour attendu</em></span><span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
-    ).join("");
-    return '<section class="ghe-drawer-section ghe-drawer-appointments-section" aria-label="Mes rendez-vous">'+
-      '<div class="ghe-drawer-section-head"><h3>Mes rendez-vous</h3><span>'+(future.length+pending.length)+'</span></div>'+
-      '<div class="ghe-drawer-group-head"><strong>À venir</strong><span>'+future.length+'</span></div>'+
-      '<div class="ghe-drawer-appointments">'+(futureRows||'<p class="ghe-drawer-empty">Aucun rendez-vous à venir.</p>')+'</div>'+
-      '<button type="button" class="ghe-drawer-see-all" data-ghe-drawer-action="future">Voir tout l’agenda à venir <span aria-hidden="true">›</span></button>'+
-      (pending.length?
-        '<div class="ghe-drawer-followups"><div class="ghe-drawer-group-head"><strong>À clôturer</strong><span>'+pending.length+'</span></div>'+
-        '<div class="ghe-drawer-appointments">'+pendingRows+'</div></div>':"")+
-      '</section>';
+    const {groups}=drawerAppointmentsState();
+    const total=groups.reduce((sum,x)=>sum+x.items.length,0);
+    const rows=groups.map(group=>{
+      const count=group.items.length,empty=count===0;
+      return '<button type="button" class="ghe-drawer-agenda-group is-'+esc(group.key)+
+        '" data-ghe-drawer-group="'+esc(group.key)+'"'+(empty?' disabled aria-disabled="true"':'')+
+        ' aria-label="'+esc(group.title+", "+count+" élément"+(count>1?"s":""))+'">'+
+        '<span class="ghe-drawer-agenda-group-main"><strong>'+esc(group.title)+
+        '</strong><small>'+esc(drawerGroupLabel(group))+'</small></span>'+
+        '<span class="ghe-drawer-agenda-group-count">'+count+'</span>'+
+        (empty?'':'<span class="ghe-drawer-chevron" aria-hidden="true">›</span>')+
+        '</button>';
+    }).join("");
+    const loading=window.STIPLeisure && !window.STIPLeisure?.isReady?.()?
+      '<p class="ghe-drawer-agenda-loading" role="status">Actualisation des activités en cours…</p>':"";
+    return '<section class="ghe-drawer-section ghe-drawer-appointments-section" aria-label="Tous mes rendez-vous">'+
+      '<div class="ghe-drawer-section-head"><h3>Mes rendez-vous et activités</h3><span>'+total+'</span></div>'+
+      '<div class="ghe-drawer-agenda-groups">'+rows+'</div>'+loading+'</section>';
+  }
+  function drawerAgendaEntryMarkup(entry,index){
+    const icon=entry.kind==="future"?eventIconHtml(entry.event,"hc-event-svg"):esc(entry.icon);
+    return '<button type="button" class="ghe-drawer-agenda-entry" data-ghe-agenda-entry="'+index+'">'+
+      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+icon+'</span>'+
+      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(entry.title)+'</strong>'+
+      '<small>'+esc([entry.subtitle,entry.time,entry.place].filter(Boolean).join(" · "))+'</small>'+
+      '<em class="ghe-drawer-state is-'+esc(entry.kind)+'">'+esc(entry.stateLabel)+'</em></span>'+
+      '<span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>';
   }
   function personalDrawer() {
   const entries=personalDrawerEntries();
@@ -3012,7 +3041,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   const search=drawer.querySelector("[data-ghe-drawer-search]");
   const standard=drawer.querySelector("[data-ghe-drawer-standard]");
   const results=drawer.querySelector("[data-ghe-drawer-results]");
-  let candidates=new Map(), requestNumber=0, previousResults=[];
+  let candidates=new Map(), requestNumber=0, previousResults=[], searchEntries=[];
   const norm=value=>String(value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("fr").trim();
   const resetSearch=()=>{
     search.value="";
@@ -3020,9 +3049,84 @@ function personalDrawerRow(icon,label,action,meta="") {
     standard.hidden=false;
     results.replaceChildren();
     candidates.clear();
+    searchEntries=[];
     requestNumber++;
   };
   const close=()=>{ if(drawer.open)drawer.close(); };
+  // Un groupe avec une seule entrée ouvre directement sa fiche.
+  // Avec plusieurs entrées, une fenêtre liste toutes les dates, par mois.
+  const openAgendaEntry=entry=>{
+    if(!entry)return;
+    if(entry.kind==="future"){openWidget("future",entry.id);return;}
+    if(entry.kind==="feedback"){
+      if(!window.STIPEventFeedback?.open?.(entry.id))
+        document.getElementById("hcEventFeedbackWrap")?.scrollIntoView({block:"start",behavior:"smooth"});
+      return;
+    }
+    if(entry.kind==="leisure"){
+      try{
+        window.STIPLeisure?.openPreview?.(entry.id);
+        if(document.getElementById("ev3HomePreview")?.open)return;
+      }catch(e){console.warn("GHE loisirs : fiche directe indisponible",e);}
+      if(typeof window.STIPLeisure?.openEvent==="function")window.STIPLeisure.openEvent(entry.id);
+      else location.href="sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(entry.id);
+    }
+  };
+  const openDrawerGroup=groupKey=>{
+    const group=drawerAppointmentsState().groups.find(x=>x.key===groupKey);
+    if(!group?.items.length)return;
+    close();
+    if(group.items.length===1){openAgendaEntry(group.items[0]);return;}
+    document.getElementById("hcDrawerAgendaDialog")?.remove();
+    const modal=document.createElement("dialog");
+    modal.id="hcDrawerAgendaDialog";
+    modal.className="ghe-drawer-agenda-modal";
+    modal.setAttribute("aria-labelledby","hcDrawerAgendaTitle");
+    const byMonth=[];
+    let currentMonth="";
+    group.items.forEach((entry,i)=>{
+      const month=String(entry.date||"").slice(0,7);
+      if(month!==currentMonth){
+        currentMonth=month;
+        byMonth.push('<h3 class="ghe-drawer-agenda-month">'+esc(monthTitle(entry.date))+'</h3>');
+      }
+      byMonth.push(drawerAgendaEntryMarkup(entry,i));
+    });
+    modal.innerHTML='<section class="ghe-drawer-agenda-modal-frame">'+
+      '<header class="ghe-drawer-agenda-modal-head">'+
+      '<button type="button" data-ghe-agenda-back aria-label="Retour à Mon espace">‹</button>'+
+      '<div><small>MON ESPACE</small><h2 id="hcDrawerAgendaTitle">'+esc(group.title)+
+      ' <span>'+group.items.length+'</span></h2></div>'+
+      '<button type="button" data-ghe-agenda-close aria-label="Fermer">×</button></header>'+
+      '<div class="ghe-drawer-agenda-modal-scroll">'+byMonth.join("")+'</div>'+
+      '</section>';
+    document.body.appendChild(modal);
+    let returnToDrawer=false;
+    const dismiss=back=>{returnToDrawer=back;if(modal.open)modal.close();else modal.remove();};
+    modal.querySelector("[data-ghe-agenda-back]").onclick=()=>dismiss(true);
+    modal.querySelector("[data-ghe-agenda-close]").onclick=()=>dismiss(false);
+    modal.addEventListener("click",event=>{
+      if(event.target===modal){dismiss(false);return;}
+      const target=event.target.closest("[data-ghe-agenda-entry]");
+      if(!target)return;
+      const entry=group.items[Number(target.dataset.gheAgendaEntry)];
+      dismiss(false);
+      openAgendaEntry(entry);
+    });
+    modal.addEventListener("close",()=>{
+      modal.remove();
+      if(returnToDrawer&&state.ready){
+        const current=drawer.isConnected?drawer:document.getElementById("hcPersonalDrawer");
+        if(current&&!current.open){
+          const host=current.querySelector("[data-ghe-drawer-appointments]");
+          if(host)host.innerHTML=drawerAppointmentsMarkup();
+          current.showModal();
+        }
+      }
+    },{once:true});
+    modal.showModal();
+  };
+
   const doAction=action=>{
     close();
     if(action==="home") return window.STIPRouter?.set?.("home");
@@ -3050,10 +3154,20 @@ function personalDrawerRow(icon,label,action,meta="") {
     const appts=drawer.querySelector("[data-ghe-drawer-appointments]");
     if(appts)appts.innerHTML=drawerAppointmentsMarkup();
     if(!drawer.open) drawer.showModal();
+    window.STIPLeisure?.refresh?.().catch?.(()=>{});
   });
   drawer.querySelector("[data-ghe-drawer-dismiss]")?.addEventListener("click",close);
   drawer.addEventListener("click",event=>{
     if(event.target===drawer){close();return;}
+    const group=event.target.closest("[data-ghe-drawer-group]");
+    if(group){openDrawerGroup(group.dataset.gheDrawerGroup);return;}
+    const searchEntry=event.target.closest("[data-ghe-drawer-search-entry]");
+    if(searchEntry){
+      const entry=searchEntries[Number(searchEntry.dataset.gheDrawerSearchEntry)];
+      close();
+      openAgendaEntry(entry);
+      return;
+    }
     const future=event.target.closest("[data-ghe-drawer-future]");
     if(future){close();openWidget("future",future.dataset.gheDrawerFuture);return;}
     const past=event.target.closest("[data-ghe-drawer-feedback]");
@@ -3083,14 +3197,15 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(currentRequest!==requestNumber||!drawer.isConnected) return;
       candidates=new Map();
       const entries=personalDrawerEntries().filter(x=>norm(x.title+" "+x.subtitle).includes(value)).slice(0,7);
-      const data=drawerAppointmentsState();
-      const appointments=data.future.filter(x=>norm([x.title,x.type,x.date,x.time,x.place].join(" ")).includes(value)).slice(0,8);
-      const pendingAppointments=data.pending.filter(x=>norm([x.title,x.date,x.time,x.location].join(" ")).includes(value)).slice(0,8);
+      searchEntries=drawerAppointmentsState().groups.flatMap(g=>g.items)
+        .filter(x=>norm([x.title,x.date,x.time,x.place,x.subtitle,x.stateLabel].join(" ")).includes(value))
+        .slice(0,30);
       const colleagueResults=agents.filter(a=>norm([a.prenom,a.nom,a.ghe,a.source_key].join(" ")).includes(value)).slice(0,6);
       const item=(icon,title,subtitle,attrs)=>`<button type="button" class="ghe-drawer-result" ${attrs}><span class="ghe-drawer-row-icon" aria-hidden="true">${icon}</span><span class="ghe-drawer-row-text"><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></span><span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>`;
       const pages=entries.map(x=>item(x.icon,x.title,x.subtitle,`data-ghe-drawer-action="${esc(x.action)}"`)).join("");
-      const meetings=appointments.map(x=>item("▦",x.title,[fmtDateRange(x),x.time].filter(Boolean).join(" · "),`data-ghe-drawer-future="${esc(x.id)}"`)).join("")+
-        pendingAppointments.map(x=>item("◷",x.title,[fmtDateRange(x),x.time,"À clôturer"].filter(Boolean).join(" · "),`data-ghe-drawer-feedback="${esc(x.eventKey)}"`)).join("");
+      const meetings=searchEntries.map((x,i)=>item(esc(x.icon||"▦"),x.title,
+        [x.subtitle,x.stateLabel].filter(Boolean).join(" · "),
+        `data-ghe-drawer-search-entry="${i}"`)).join("");
       const people=colleagueResults.map((a,i)=>{const key=String(i);candidates.set(key,a);return item("♙",[a.prenom,a.nom].filter(Boolean).join(" ")||"Collègue",a.ghe?"GHE "+a.ghe:"Collègue",`data-ghe-drawer-agent="${key}"`);}).join("");
       const group=(title,content)=>content?`<div class="ghe-drawer-result-group"><h3>${title}</h3>${content}</div>`:"";
       results.innerHTML=group("Pages et outils",pages)+group("Rendez-vous",meetings)+group("Collègues",people)+
@@ -4396,6 +4511,8 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.communicationConversation = "";
     state.communicationMessage = "";
     document.getElementById("hcPersonalDrawer")?.close?.();
+    document.getElementById("hcDrawerAgendaDialog")?.close?.();
+    document.getElementById("hcDrawerAgendaDialog")?.remove();
     clearHomeCache();
     clearShiftSnapshot();
     window.STIPBootCache = null;
@@ -4546,7 +4663,12 @@ function personalDrawerRow(icon,label,action,meta="") {
     state.renderSig = "";
     render();
   });
-  window.addEventListener("stip:leisure-updated", () => { state.renderSig = ""; render(); });
+  window.addEventListener("stip:leisure-updated", () => {
+    const active=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");
+    if(active)active.innerHTML=drawerAppointmentsMarkup();
+    state.renderSig="";
+    render();
+  });
   window.addEventListener("stip:meeting-home-updated", () => { state.renderSig = ""; render(); });
   window.addEventListener("stip:event-feedback-synced",()=>{
     const host=document.querySelector("#hcPersonalDrawer[open] [data-ghe-drawer-appointments]");

@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261016-drawer-all-rdv1";
+const STIP_SW_BUILD="20261016-drawer-agenda-multi2";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
