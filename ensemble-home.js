@@ -262,7 +262,7 @@ window.STIPLeisure={
  openInvite:id=>go(id),
  openCreator:()=>go("","create"),
  closeCreator:()=>{},
- setTab:tab=>go("",tab==="trips"?"trips":"agenda")
+ setTab:tab=>go("",tab==="trips"?"trips":tab==="invitations"?"invitations":tab==="availability"||tab==="dispos"?"dispos":"agenda")
 };
 window.addEventListener("stip:session-ready",()=>refresh(true));
 window.addEventListener("stip:boot-updated",()=>refresh());

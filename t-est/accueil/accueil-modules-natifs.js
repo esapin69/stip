@@ -87,7 +87,7 @@
     const view=++leisureView;
     if(!leisureHost){
       leisureHost=host;
-      host.innerHTML='<section id="ensembleV3" class="ev3-page t-native-leisure" aria-label="Ensemble entre collègues"><p role="status">Chargement des activités…</p></section>';
+      host.innerHTML='<section id="ensembleV3" class="ev3-page t-native-leisure" aria-label="On se retrouve entre collègues"><p role="status">Chargement des activités…</p></section>';
     }else if(leisureHost!==host){
       host.replaceChildren();
       while(leisureHost.firstChild)host.append(leisureHost.firstChild);
@@ -95,8 +95,8 @@
     }
     if(!leisurePromise){
       leisurePromise=(async()=>{
-        includeStyle('ensemble-v3.css?v=20261014-context3');
-        if(!window.STIPEnsembleV3?.setView)await includeScript('ensemble-v3.js?v=20261014-context3');
+        includeStyle('ensemble-v3.css?v=20261016-community1');
+        if(!window.STIPEnsembleV3?.setView)await includeScript('ensemble-v3.js?v=20261016-community1');
         if(!window.STIPEnsembleV3?.setView)throw Error('Le moteur Ensemble est indisponible.');
         // A dynamic script added after DOMContentLoaded must be initialized explicitly.
         await window.STIPEnsembleV3.refresh();
