@@ -5,23 +5,25 @@
  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
  <meta name="theme-color" content="#f7fbfc">
  <meta name="color-scheme" content="light only">
- <title>Sorties &amp; trajets · GHE</title>
- <meta name="description" content="Proposer une activité, gérer ses rendez-vous entre collègues et organiser un covoiturage.">
- <link rel="stylesheet" href="ensemble-v3.css?v=20261014-progressive-mobile1">
+ <title>On se retrouve · GHE</title>
+ <meta name="description" content="Retrouver les propositions des collègues, comparer vos fins de service, répondre aux invitations et organiser des sorties.">
+ <link rel="stylesheet" href="ensemble-v3.css?v=20261016-community1">
  <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1">
  <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
- <script defer src="ensemble-v3.js?v=20261016-leisure-quick1"></script>
+ <script defer src="ensemble-v3.js?v=20261016-community1"></script>
 </head>
 <body>
- <main id="ensembleV3" class="ev3-page" aria-label="Sorties et trajets — rendez-vous entre collègues">
+ <main id="ensembleV3" class="ev3-page" aria-label="On se retrouve — sorties et disponibilités entre collègues">
   <header class="ev3-header">
    <a href="index.html#/home" class="ev3-back" aria-label="Retour à GHE">‹ GHE</a>
-   <div><small>ENTRE COLLÈGUES</small><h1>Sorties <span>&amp;</span> trajets</h1></div>
+   <div><small>ENTRE COLLÈGUES · GHE</small><h1>On se retrouve</h1></div>
    <button type="button" disabled aria-label="Actualisation en cours">↻</button>
   </header>
-  <nav class="ev3-tabs" aria-label="Sorties et trajets">
-   <button type="button" disabled>📅 Mes rendez-vous</button>
-   <button type="button" disabled>＋ Proposer</button>
+  <div class="ev3-header-actions"><button type="button" class="ev3-primary" disabled>＋ Proposer une activité</button></div>
+  <nav class="ev3-tabs ev3-community-tabs" aria-label="On se retrouve">
+   <button type="button" disabled>🎉 Sorties</button>
+   <button type="button" disabled>📅 Dispos</button>
+   <button type="button" disabled>✉️ Invitations</button>
    <button type="button" disabled>🚗 Trajets</button>
   </nav>
   <section class="ev3-loading" role="status" aria-live="polite">
