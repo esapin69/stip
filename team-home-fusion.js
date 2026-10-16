@@ -388,7 +388,7 @@
     // Une colonne est une fiche lisible ; chaque action est un bouton distinct,
     // jamais un énorme bouton englobant les autres fonctionnalités.
     host.innerHTML=
-      '<article class="thf-day-card '+(working?shiftClass(myCode):"shift-absence is-rest-visual")+'">'+
+      '<article class="thf-day-card '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'">'+
       '<div class="thf-weather-stage thf-weather-sky" data-rest="'+(working?"false":"true")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
       (working?staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,'')):
         '<div class="thf-rest-illustration" aria-hidden="true"><span>'+esc(absenceIcon)+'</span></div>')+
@@ -397,8 +397,8 @@
       '<span class="thf-day-heading" aria-label="'+esc(longDate)+'"><span>'+esc(dateWeek)+'</span>'+
       '<strong>'+esc(dateNum)+'</strong><span>'+esc(dateMonth)+'</span></span>'+
       (working?'<span class="thf-weather-caption"><span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span></span>':
-       '<span class="thf-rest-caption">'+esc(absenceName||"Journée sans service")+'</span>'+'<span class="thf-rest-weather" data-thf-day-weather hidden></span>')+
-      (working?'<span class="thf-trigger-chevron" aria-hidden="true">›</span>':'')+'</button>'+
+       '<span class="thf-rest-caption">'+esc(absenceName||"Journée sans service")+'</span>'+(restMode?'<span class="thf-rest-weather" data-thf-day-weather hidden></span>':''))+
+      (!restMode?'<span class="thf-trigger-chevron" aria-hidden="true">›</span>':'')+'</button>'+
       '<div class="thf-weather-body">'+
       (leisureEvents.length?'<section class="thf-day-events" aria-label="Activités du jour">'+
         '<div class="thf-section-label">📅 APRÈS LE SERVICE</div>'+
@@ -413,7 +413,7 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
-      (working?'<div class="thf-day-post '+shiftClass(myCode)+'"><div class="thf-shift-stack">'+
+      (!restMode?'<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
        '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
        '<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
        (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
@@ -424,7 +424,7 @@
          '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
        '</div></div></div>':'')+
        '</div></div>'+
-       (working?'<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>':'')+
+       (!restMode?'<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>':'')+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
@@ -434,7 +434,7 @@
       }).catch?.(()=>{});
     }
     host._thfSummary={day,label,longDate,chefLabel:chiefLabel,myCode,myTime,working,restMode,loaded,hcl,status,badge,ownPost:working?base(myCode).toUpperCase():shiftLabel(myCode)};
-    if(!working)window.STIPShiftWeather?.mountDay?.(
+    if(restMode)window.STIPShiftWeather?.mountDay?.(
       host.querySelector("[data-thf-day-weather]"),{date:day}
     ).catch?.(()=>{});
     document.dispatchEvent(new CustomEvent("stip:team-fusion-updated",{
@@ -459,7 +459,7 @@
       '<h2>'+esc(s.longDate)+'</h2>'+
       '<div class="thf-popup-weather-summary">'+
       (s.working?'<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>':
-      '<span class="thf-rest-weather thf-rest-weather-popup" data-thf-day-weather hidden></span>')+
+      (s.restMode?'<span class="thf-rest-weather thf-rest-weather-popup" data-thf-day-weather hidden></span>':'<small>Aucun service prévu</small>'))+
       '</div></header>'+
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
@@ -483,7 +483,7 @@
         date:s.day,start:hours[0],end:hours[1],isWorking:true,compact:true
       }).catch?.(()=>{});
     }
-    if(!s.working)window.STIPShiftWeather?.mountDay?.(
+    if(s.restMode)window.STIPShiftWeather?.mountDay?.(
       document.querySelector("#thfPopup [data-thf-day-weather]"),{date:s.day}
     ).catch?.(()=>{});
   }
