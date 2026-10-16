@@ -77,12 +77,22 @@ assert(flipCss.includes("--ghe-flip-start:#222329") &&
        flipCss.includes("--ghe-flip-mid:#111216") &&
        flipCss.includes("--ghe-flip-end:#050608"),
        "Le bouton de retour doit être noir avec texte blanc");
-assert(index.includes('name="stip-ui-build" content="20261016-flip-return-black1"') &&
-       index.includes('ghe-flip-actions.css?v=20261016-flip-return-black1') &&
-       index.includes('stip-loader.js?v=20261016-flip-return-black1') &&
-       index.includes('stip-sw.js?v=20261016-flip-return-black1'),
+assert(index.includes('name="stip-ui-build" content="20261016-live-cta-compact1"') &&
+       index.includes('ghe-flip-actions.css?v=20261016-live-cta-compact1') &&
+       index.includes('stip-loader.js?v=20261016-live-cta-compact1') &&
+       index.includes('stip-sw.js?v=20261016-live-cta-compact1'),
        "La version de style/cache doit être synchronisée");
-assert(read("stip-loader.js").includes('V = "20261016-flip-return-black1"') &&
-       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-flip-return-black1"'),
+assert(read("stip-loader.js").includes('V = "20261016-live-cta-compact1"') &&
+       read("stip-sw.js").includes('STIP_SW_BUILD="20261016-live-cta-compact1"'),
        "Loader/service worker doivent suivre la version UI");
+// Compact live controls inherit the same sizing on both sides. The footer position stays unchanged.
+assert(flipCss.includes(".ghe-premium-front-footer>.ghe-flip-cta") &&
+       flipCss.includes(".ghe-premium-back-footer>.ghe-flip-cta") &&
+       flipCss.includes("width:clamp(220px,62%,350px)!important") &&
+       flipCss.includes("min-height:44px!important") &&
+       flipCss.includes("font-size:clamp(.88rem,3vw,.96rem)!important"),
+       "Les deux boutons En direct / retour doivent être compacts et de même taille");
+const compactCss = flipCss.slice(flipCss.indexOf("/* Taille de référence (capture utilisateur)"));
+assert(!/(^|\n)\s*(transform:\s*translate|justify-content:|margin-left:|margin-right:|position:\s*absolute)/.test(compactCss),
+       "La correction de taille ne doit pas déplacer les boutons En direct");
 console.log("GHE simplified home + drawer + three 360° CTA contract OK");
