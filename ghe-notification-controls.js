@@ -152,9 +152,14 @@
       saveType(node.dataset.type,node.checked,node);
     }));
     popup.querySelector("[data-enable-push]")?.addEventListener("click",async node=>{
-      const key="team_chat_received";
-      const result=await window.STIPCommunication?.setNotificationPreference?.(key,true,node.currentTarget);
-      if(result){settings={...settings,...await window.STIPCommunication.notificationSettings()};rerender();message("Notifications activées","ok")}
+      const button=node.currentTarget;
+      button.disabled=true;
+      try{
+        const result=await window.STIPCommunication?.enablePush?.(button);
+        settings={...settings,...await window.STIPCommunication.notificationSettings()};
+        rerender();
+        message(result?"Notifications activées":"Autorisation non accordée",result?"ok":"error");
+      }catch(e){rerender();message(e?.message||"Activation impossible","error")}
     });
   }
   async function openSettings(){
