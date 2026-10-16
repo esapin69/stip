@@ -16,6 +16,7 @@
   const PAGE_SURFACES = '#hsPanel, .hs-panel';
   let snapshot = null;
   let lastTrigger = null;
+  let restoreGeneration = 0;
 
   const locationKey = () => location.pathname + location.search + location.hash;
   const scrollY = () => Math.max(0, window.scrollY || document.scrollingElement?.scrollTop || 0);
@@ -32,16 +33,15 @@
   function rememberTrigger() {
     if (snapshot || popups().length) return;
     // A fresh gesture takes priority over any delayed scroll correction.
+    ++restoreGeneration;
     lastTrigger = { y: scrollY(), key: locationKey(), at: performance.now() };
   }
   document.addEventListener('pointerdown', rememberTrigger, true);
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') rememberTrigger();
   }, true);
-  // A wheel gesture between the click and a delayed popup must supersede
-  // a stale click position without ever interfering with native scrolling.
-  window.addEventListener('wheel', () => { if (!snapshot) lastTrigger = null; }, { passive: true });
-  document.addEventListener('touchmove', () => { if (!snapshot) lastTrigger = null; }, { passive: true, capture: true });
+
+  window.addEventListener("wheel", () => { if (!snapshot) ++restoreGeneration; }, { passive: true });
 
   function decorate(nodes) {
     for (const node of nodes) {
@@ -52,43 +52,38 @@
     }
   }
 
-  function lockBackground() {
-    document.documentElement.classList?.add('stip-popup-locked');
-  }
-
-  function unlockBackground() {
-    document.documentElement.classList?.remove('stip-popup-locked');
-  }
-
   function restorePosition(saved) {
-    // A popup dismissal cannot start an animated scroll or override the next gesture.
-    if (locationKey() !== saved.key) return;
-    const root = document.scrollingElement || document.documentElement;
-    const maximum = Math.max(0, Number(root.scrollHeight || 0) - Number(window.innerHeight || 0));
-    if (Number.isFinite(maximum) && maximum + 3 < saved.y) return;
-    if (Math.abs(scrollY() - saved.y) > 2) {
-      window.scrollTo({ top: saved.y, left: 0, behavior: 'auto' });
-    }
-    window.STIPRouter?.saveScroll?.();
+    const generation = ++restoreGeneration;
+    const restore = () => {
+      if (generation !== restoreGeneration || snapshot || locationKey() !== saved.key) return;
+      const root = document.scrollingElement || document.documentElement;
+      const maximum = Math.max(0, root.scrollHeight - window.innerHeight);
+      if (maximum + 3 < saved.y) return; // A route was replaced or content has not returned yet.
+      if (Math.abs(scrollY() - saved.y) > 2) window.scrollTo({ top: saved.y, left: 0, behavior: 'auto' });
+      window.STIPRouter?.saveScroll?.();
+    };
+    // MutationObserver runs before paint: restore now, not after two frames.
+    // Late checks only correct native focus changes when there was no fresh gesture.
+    restore();
+    requestAnimationFrame(() => requestAnimationFrame(restore));
+    setTimeout(restore, 70);
   }
 
   function reconcile() {
     const nodes = popups();
     if (nodes.length) {
+      ++restoreGeneration; // A nested or reopened popup cancels an older restoration.
       decorate(nodes);
       if (!snapshot) {
         const recent = lastTrigger && performance.now() - lastTrigger.at < 1600;
         snapshot = { key: recent ? lastTrigger.key : locationKey(), y: recent ? lastTrigger.y : scrollY() };
         window.STIPRouter?.cancelPendingScrollRestore?.();
       }
-      lockBackground();
     } else if (snapshot) {
       const saved = snapshot;
       snapshot = null;
       lastTrigger = null;
-      unlockBackground();
       restorePosition(saved);
-      window.dispatchEvent?.(new CustomEvent('stip:popup-closed'));
     }
   }
 
@@ -108,7 +103,8 @@
     attributes: true,
     attributeFilter: ['open', 'hidden', 'aria-hidden', 'class', 'style'],
   });
-  window.addEventListener('pagehide', () => { snapshot = null; unlockBackground(); });
-  window.STIPPopupContinuity = { reconcile, isOpen: () => popups().length > 0, backgroundScrollY: () => snapshot?.y ?? scrollY() };
+  window.addEventListener('pagehide', () => { snapshot = null; ++restoreGeneration; });
+  window.addEventListener('hashchange', () => { ++restoreGeneration; });
+  window.STIPPopupContinuity = { reconcile, isOpen: () => popups().length > 0 };
   reconcile();
 })();
