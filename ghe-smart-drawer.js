@@ -50,7 +50,12 @@ function groupedEntries(){
   const choices=event.date_choices||[];
   const choose=d=>choices.find(x=>x.date===d&&x.revision===event.revision)?.decision || (event.response?.revision===event.revision&&event.response?.selected_dates?.includes(d)?"yes":"neutral");
   const unanswered=!!event.invitation_status&&!event.is_organizer&&ds.some(d=>choose(d)==="neutral")&&event.invitation_status!=="declined";
-  if(unanswered)needs.push({date:ds.find(d=>choose(d)==="neutral")||ds[0],id:event.id,title:event.title});
+  if(unanswered)needs.push({
+   kind:"leisure",date:ds.find(d=>choose(d)==="neutral")||ds[0],id:event.id,
+   title:event.title||"Activité",icon:event.icon||"📅",
+   sub:[event.time_label||"Horaire à préciser",event.location||""].filter(Boolean).join(" · "),
+   href:"ghe-agenda.html?event="+encodeURIComponent(event.id)
+  });
   const selected=event.is_organizer?ds:ds.filter(d=>choose(d)==="yes");
   for(const d of selected)rows.push({kind:"event",icon:event.icon||"📌",title:event.title||"Activité",date:d,
    sub:[dlabel(d),event.time_label||"",event.location||""].filter(Boolean).join(" · "),
@@ -64,25 +69,90 @@ function groupedEntries(){
     title:item.title,date:item.date,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:route("home"),id:item.id});
   }
   for(const item of (source.groups.find(g=>g.key==="feedback")?.items||[])){
-   rows.push({kind:"professional-action",icon:"📋",title:item.title||"Action professionnelle",
-    date:item.date||now,sub:"Retour professionnel attendu · ouvrir les notifications GHE",
-    href:route("notifications"),id:item.id});
+   needs.push({kind:"professional-action",icon:"📋",id:item.id||item.title,
+    title:item.title||"Retour professionnel attendu",date:item.date>=now?item.date:now,
+    sub:"Retour à clôturer · action professionnelle",href:route("notifications")});
   }
+ }
+ // Les demandes métier (congés, signatures, accès, échanges de service)
+ // rejoignent le MÊME bouton que les invitations personnelles.
+ for(const action of (window.STIPDrawerActionItems?.()||[])){
+  const title=String(action.title||action.label||"Action professionnelle");
+  const kind=String(action.type||action.category||"").toLowerCase();
+  const icon=/cong|leave|absence|cp\b/.test(kind+" "+title.toLowerCase())?"🌴":
+   /shift|échange|echange|planning/.test(kind+" "+title.toLowerCase())?"🔁":
+   /sign/.test(kind+" "+title.toLowerCase())?"✍️":
+   /évalu|evalu/.test(kind+" "+title.toLowerCase())?"🧾":
+   /accès|acces|access/.test(kind+" "+title.toLowerCase())?"🔐":"📋";
+  const date=String(action.event_date||action.due_date||action.date||"").slice(0,10);
+  needs.push({kind:"professional-action",icon,id:String(action.id||title),
+   title,date:/^\d{4}-\d{2}-\d{2}$/.test(date)&&date>=now?date:now,
+   sub:String(action.body||action.description||"Action professionnelle en attente").slice(0,120),
+   href:route("notifications")});
+
  }
  const unique=new Map();for(const r of rows)unique.set(r.kind+":"+(r.event?.id||r.id||r.title)+":"+r.date,r);
  const entries=[...unique.values()];
- if(needs.length){needs.sort((a,b)=>a.date.localeCompare(b.date));entries.push({kind:"pending",icon:"📥",title:"À traiter",
-   date:needs[0].date,sub:needs.length+" action"+(needs.length>1?"s":"")+" en attente · "+dlabel(needs[0].date),
-   href:route("agenda"),count:needs.length});}
+ if(needs.length){
+  // Un seul groupe, à la date de la première action attendue.
+  // Les doublons provenant de plusieurs moteurs métier sont dédupliqués.
+  const uniqueNeeds=new Map();
+  for(const item of needs){
+   const key=item.kind+":"+item.id;
+   const previous=uniqueNeeds.get(key);
+   if(!previous||item.date<previous.date)uniqueNeeds.set(key,item);
+  }
+  const items=[...uniqueNeeds.values()].sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,"fr"));
+  entries.push({kind:"pending",icon:"📥",title:"À traiter",date:items[0].date,
+   sub:items.length+" action"+(items.length>1?"s":"")+" en attente · "+dlabel(items[0].date),
+   count:items.length,items});
+ }
  return entries.sort((a,b)=>a.date.localeCompare(b.date)||Number(b.kind==="pending")-Number(a.kind==="pending")||a.title.localeCompare(b.title,"fr"));
 }
 function link(entry){
- const icon=entry.kind==="pending"?"📥":entry.icon||"📅";
+ const isPending=entry.kind==="pending";
+ const icon=entry.icon||"📅";
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
- return '<a class="ghe-smart-link" href="'+escapeHtml(entry.href)+'" title="'+escapeHtml(entry.title+" — "+entry.sub)+
+ const tag=isPending?"button":"a";
+ const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
+  'href="'+escapeHtml(entry.href)+'"';
+ const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
+  (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon));
+ return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
+ ' title="'+escapeHtml(entry.title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(entry.title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
- (entry.title==='Fauteuils'?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon))+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(entry.title)+
- '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></a>';
+ symbol+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(entry.title)+
+ '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
+}
+
+function openPendingDialog(){
+ const group=groupedEntries().find(x=>x.kind==="pending");
+ if(!group?.items?.length)return;
+ let dialog=document.getElementById("gheSmartPendingDialog");
+ if(!dialog){
+  dialog=document.createElement("dialog");
+  dialog.id="gheSmartPendingDialog";
+  dialog.className="ghe-smart-pending-dialog";
+  dialog.setAttribute("aria-labelledby","gheSmartPendingTitle");
+  document.body.appendChild(dialog);
+  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+  dialog.addEventListener("close",()=>{rail?.querySelector("[data-smart-pending-open]")?.focus({preventScroll:true});});
+ }
+ const rows=group.items.map(item=>
+  '<a class="ghe-smart-pending-item" href="'+escapeHtml(item.href)+'">'+
+   '<span class="ghe-smart-pending-item-icon" aria-hidden="true">'+escapeHtml(item.icon)+'</span>'+
+   '<span class="ghe-smart-pending-item-copy"><strong>'+escapeHtml(item.title)+'</strong>'+
+   '<small>'+escapeHtml(dlabel(item.date))+(item.sub?' · '+escapeHtml(item.sub):'')+'</small>'+
+   '<em>'+escapeHtml(item.kind==="leisure"?"Réponse attendue":"Action à effectuer")+'</em></span>'+
+   '<span class="ghe-smart-pending-chevron" aria-hidden="true">›</span></a>'
+ ).join("");
+ dialog.innerHTML='<div class="ghe-smart-pending-frame"><header class="ghe-smart-pending-head">'+
+  '<div><small>GHE · ACTIONS EN ATTENTE</small><h2 id="gheSmartPendingTitle">À traiter <span>'+group.count+'</span></h2>'+
+  '<p>Classées par date · tu peux répondre quand tu veux.</p></div>'+
+  '<button type="button" data-smart-pending-close aria-label="Fermer la liste">×</button></header>'+
+  '<div class="ghe-smart-pending-items">'+rows+'</div></div>';
+ dialog.querySelector("[data-smart-pending-close]")?.addEventListener("click",()=>dialog.close());
+ if(!dialog.open)dialog.showModal();
 }
 function staticLink(icon,title,sub,key,iconImage=false){
  const symbol=iconImage?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon);
@@ -131,6 +201,9 @@ document.addEventListener("click",event=>{
  const trigger=event.target.closest?.("[data-shortcuts-open]");
  if(trigger&&permitted()){
   event.preventDefault();event.stopImmediatePropagation();setMode(mode==="expanded"?"compact":"expanded");return;
+ }
+ if(event.target.closest?.("#gheSmartRail [data-smart-pending-open]")){
+  event.preventDefault();openPendingDialog();return;
  }
  const button=event.target.closest?.("#gheSmartRail [data-ctrl]");
  if(!button)return;
