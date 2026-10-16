@@ -2,8 +2,8 @@
 create table if not exists public.stip_message_notification_rules (
   agent_id uuid primary key references public.agents(id) on delete cascade,
   wheelchair_buildings text[] not null default array['neuro','cardio','hfme','a4','b14','ghe']::text[],
-  wheelchair_work_only boolean not null default true,
-  team_chat_work_only boolean not null default true,
+  wheelchair_work_only boolean not null default false,
+  team_chat_work_only boolean not null default false,
   updated_at timestamptz not null default now(),
   constraint stip_message_notification_buildings_valid
     check (wheelchair_buildings <@ array['neuro','cardio','hfme','a4','b14','ghe']::text[])
