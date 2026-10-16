@@ -67,4 +67,19 @@ assert(flipCss.includes("--ghe-flip-start:#e51d49") &&
 assert(index.includes('ghe-flip-actions.css?v=') &&
        index.indexOf('home-month-flip.css?v=') < index.indexOf('ghe-flip-actions.css?v='),
        "Le style partagé doit être chargé après les autres styles des flips");
-console.log("GHE simplified home + drawer + three 360° CTA contract OK");
+const nowCss = read("ghe-premium-safe-flip.css");
+assert(liveBack.includes('ghe-premium-now-summary') &&
+       liveBack.includes('ghe-premium-now-identity') &&
+       liveBack.includes('ghe-premium-now-person') &&
+       liveBack.includes('ghe-premium-now-shift'),
+       "En direct doit afficher noms, horaires et shifts immédiatement");
+assert(!liveBack.includes('homeDutyChiefNowHost') &&
+       !liveBack.includes('RELÈVE') && !liveBack.includes('chef') &&
+       !home.includes('STIPDutyChiefs') && !home.includes('openPremiumRoster('),
+       "En direct ne doit pas charger de chef ou de relève future");
+assert(home.includes('const person=event.target.closest("[data-premium-now-person][data-premium-agent]")') &&
+       nowCss.includes('.ghe-premium-now-identity strong'),
+       "Les agents doivent être lisibles et ouvrables");
+assert(index.includes('ghe-premium-safe-flip.css?v=20261016-live-roster-premium1') &&
+       index.includes('home-shell.js?v=20261016-live-roster-premium1'),"Cache bust incohérent");
+console.log("GHE simplified home + drawer + three 360° CTA + live roster contract OK");
