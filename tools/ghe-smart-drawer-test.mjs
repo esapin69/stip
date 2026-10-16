@@ -42,4 +42,42 @@ const decline=read("supabase/migrations/20261016163000_ghe_leave_declined_event_
 assert.match(decline,/status <> 'declined'/,"declined participants leave the group");
 const communication=read("COMMUNICATION_RULES.md");
 assert.match(communication,/refus global.*retire/i,"shared communications contract excludes global refusals");
+// Regression: an organizer's ten proposals are not ten confirmed events.
+import vm from "node:vm";
+const groupedSource=rail.slice(rail.indexOf("function groupedEntries(){"),rail.indexOf("function link(entry){"));
+assert(groupedSource.startsWith("function groupedEntries(){"),"group source available");
+const event={
+ id:"muscu",title:"Muscu",icon:"🏋️",is_organizer:true,status:"active",
+ dates:["2026-10-16","2026-10-19","2026-10-20"],date_roster:{
+  "2026-10-16":[{state:"organizer",compatible:true}],
+  "2026-10-19":[{state:"organizer",compatible:true}],
+  "2026-10-20":[{state:"organizer",compatible:true}]
+ }
+};
+const actions=[{id:"leave-1",title:"Demande de congés",type:"leave",date:"2026-10-23"}];
+const context={
+ events:[event],today:()=>"2026-10-16",dlabel:s=>s,
+ window:{
+  STIPDrawerAppointments:()=>({groups:[{key:"upcoming",items:[]},{key:"feedback",items:[]}]}),
+  STIPDrawerActionItems:()=>actions
+ },
+ route:s=>"/"+s,urlForEvent:e=>"/leisure/"+e.id,encodeURIComponent
+};
+const entries=()=>vm.runInNewContext(groupedSource+";groupedEntries();",context);
+let result=entries(),groups=result.filter(x=>x.kind==="pending");
+assert.equal(result.filter(x=>x.kind==="event").length,0,"no date has accepted participants yet");
+assert.equal(groups.length,1,"exactly one universal pending icon");
+assert.equal(groups[0].count,4,"three Muscu dates and one professional action are grouped");
+assert.equal(groups[0].date,"2026-10-16","group appears at the nearest pending date");
+event.date_roster["2026-10-19"].push({state:"accepted",compatible:true});
+result=entries();groups=result.filter(x=>x.kind==="pending");
+assert.equal(result.filter(x=>x.kind==="event").length,1,"only the date with an actual confirmed participant appears");
+assert.equal(result.find(x=>x.kind==="event").date,"2026-10-19");
+assert.equal(groups.length,1,"other unconfirmed dates remain under one icon");
+assert.equal(groups[0].count,3,"remaining two dates and professional action grouped");
+assert.match(rail,/data-smart-pending-open/,"single action icon opens the shared popup");
+assert.match(rail,/ghe-smart-arrow/,"arrow replaces the hamburger");
+assert.match(rail,/ghe-smart-close/,"close button retained next to the arrow");
+assert.match(rail,/if\(reopen\)\{event.preventDefault\(\);setMode\("expanded"\)/,"closed rail opens fully");
+assert.match(rail,/const destination=event.target.closest/,"new page collapses rail to icons");
 console.log("GHE smart drawer contract passed.");
