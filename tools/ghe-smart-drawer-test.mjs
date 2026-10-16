@@ -23,7 +23,13 @@ assert.match(api,/stip_leisure_answer_day/,"server per-date RPC");
 assert.match(sql,/stip_leisure_date_decisions/);
 assert.match(sql,/stip_leisure_dates_changed_log/);
 assert.match(sql,/old_responses/,"change history preserved");
-assert.doesNotMatch(rail,/showModal\(/,"drawer itself must not become modal");
+assert.doesNotMatch(rail,/rail\.showModal\(/,"the rail itself must never become a dialog");
+assert.match(rail,/data-smart-pending-open/,"only one shared pending action entry");
+assert.match(rail,/function openPendingDialog\(/,"shared action opens a real popup");
+assert.match(rail,/group\.items\.map/,"each pending item retains its event icon");
+assert.match(rail,/STIPDrawerActionItems/,"professional actions share the same inbox");
+assert.match(rail,/ghe-action-inbox\.svg/,"unique visual identity for action group");
+assert.match(shell,/STIPDrawerActionItems/,"professional action source is wired");
 
 assert.match(read("ghe-smart-drawer.js"),/date_change_history/,"rail exposes cancelled historical dates");
 assert.match(read("ghe-invitations.js"),/is-cancelled/,"pending page shows cancelled original dates");
