@@ -56,8 +56,13 @@
       if(!popup.open)return;
       const chat=window.STIPTeamChat?.mount?window.STIPTeamChat:runtime;
       if(typeof chat?.mount!=="function")throw Error("Le chat fauteuils est indisponible.");
-      content.innerHTML='<div class="ghe-wheelchair-chat-host" data-chat></div>';
-      chat.mount($("[data-chat]",content),{mode:"wheelchair"});
+      content.innerHTML='<div class="ghe-wheelchair-chat-host" data-chat></div>'+
+        '<button type="button" class="ghe-wheelchair-open-full" data-open-full-chat>Ouvrir le chat complet ↗</button>';
+      content.querySelector("[data-open-full-chat]")?.addEventListener("click",()=>{
+        popup.close();
+        window.STIPRouter?.set?.("communication/fauteuils");
+      });
+      await Promise.resolve(chat.mount($("[data-chat]",content),{mode:"wheelchair"}));
     }catch(error){
       if(popup.open)content.innerHTML='<div class="ghe-top-dialog-problem" role="alert">'+
         '<strong>Impossible de charger les fauteuils</strong><p>'+esc(error?.message||"Réessayez dans un instant.")+'</p>'+
@@ -73,12 +78,11 @@
     const types=settings?.items||[],rules=settings?.rules||DEFAULT_RULES;
     const access=settings?.wheelchair_access!==false;
     const checked=(v)=>v?' checked':'';
-    const disabled=(v)=>v?' disabled':'';
     const type=(key)=>types.find(x=>x.event_key===key)||{enabled:false,push_enabled:false};
     const choice=(key,title,subtitle)=>{const p=type(key);
       return '<label class="ghe-notif-choice">'+
         '<span><strong>'+esc(title)+'</strong><small>'+esc(subtitle)+'</small></span>'+
-        '<input type="checkbox" data-type="'+esc(key)+'"'+checked(!!p.enabled)+disabled(p.push_enabled===false)+' aria-label="'+esc(title)+'">'+
+        '<input type="checkbox" data-type="'+esc(key)+'"'+checked(!!p.enabled)+(p.push_enabled===false?' disabled aria-disabled="true" title="Notifications indisponibles pour ce compte"':'')+' aria-label="'+esc(title)+'">'+
         '<i aria-hidden="true"></i></label>'};
     return '<div class="ghe-notif-hero"><div class="ghe-notif-hero-icon">⚙️</div><div>'+
         '<strong>Mes notifications, mes règles</strong><p>Les alertes sont personnelles et suivent votre planning GHE.</p>'+

@@ -413,6 +413,7 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
+      '</div></div>'+
       (!restMode?'<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
        '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
        '<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
@@ -423,7 +424,6 @@
          'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
          '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
        '</div></div></div>':'')+
-       '</div></div>'+
        (!restMode?'<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>':'')+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");

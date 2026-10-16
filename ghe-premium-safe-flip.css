@@ -515,3 +515,16 @@
   .hc-home-top-nav[data-header-compact] .ghe-premium-now-person{gap:7px;padding:8px}
   .hc-home-top-nav[data-header-compact] .ghe-premium-now-shift-count{font-size:.73rem}
 }
+
+/* Live personnel: 2 visible entries per shift; remaining roster in native accessible disclosure. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more{min-width:0;margin-top:5px;border-top:1px solid #e0eaed}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more>summary{
+  list-style:none;display:flex;align-items:center;justify-content:space-between;
+  min-height:45px;padding:9px 12px;border-radius:12px;background:#f0f7fa;
+  color:#186780;font:850 .87rem/1.3 system-ui,sans-serif;cursor:pointer;touch-action:manipulation;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more>summary::-webkit-details-marker{display:none}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more>summary span{transition:transform .14s}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more[open]>summary span{transform:rotate(180deg)}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-extra{padding-top:7px}
+.hc-home-top-nav[data-header-compact] .ghe-premium-now-more>summary:focus-visible{outline:3px solid #188bac;outline-offset:2px}

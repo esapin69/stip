@@ -2941,7 +2941,7 @@
       !roster.permitted&&!has("planning_personal")?"Planning d’équipe non accessible avec cet accès.":
       "Aucun shift en cours selon les horaires disponibles.";
     const sections=groups.map(([code,items])=>{
-      const people=items.map(item=>{
+      const personMarkup=item=>{
         const person=item.agents||{},key=String(person.source_key||person.id||"").trim();
         const name=agentName(person),time=liveWorkInterval(item)?.label||"Horaire non communiqué";
         const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
@@ -2955,7 +2955,11 @@
           '<small>'+esc(time)+'</small></span>'+
           (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':'')+
           (key?'</button>':'</div>');
-      }).join("");
+      };
+      const people=items.slice(0,2).map(personMarkup).join("");
+      const extras=items.length>2?'<details class="ghe-premium-now-more" data-roster-shift="'+esc(code)+'">'+
+        '<summary>Voir les '+(items.length-2)+' autres agents <span aria-hidden="true">⌄</span></summary>'+
+        '<div class="ghe-premium-now-people ghe-premium-now-extra">'+items.slice(2).map(personMarkup).join("")+'</div></details>':"";
       return '<section class="ghe-premium-now-group '+liveShiftClass(code)+
         '" aria-label="'+esc(premiumShiftName(code)+" · "+items.length+" personnes")+'">'+
         '<header class="ghe-premium-now-shift">'+
@@ -2963,7 +2967,7 @@
           '<strong>'+esc(premiumShiftName(code))+'</strong>'+
           '<span class="ghe-premium-now-shift-count">'+items.length+
             ' agent'+(items.length>1?'s':'')+'</span>'+
-        '</header><div class="ghe-premium-now-people">'+people+'</div></section>';
+        '</header><div class="ghe-premium-now-people">'+people+'</div>'+extras+'</section>';
     }).join("");
     return '<div class="ghe-premium-now">'+
       '<div class="ghe-premium-now-summary">'+
@@ -3030,13 +3034,14 @@
       '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
         'aria-haspopup="dialog" aria-controls="hcPersonalDrawer" aria-label="Ouvrir mon espace">'+
         '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
+      '<span class="ghe-top-aux-actions">'+
       (has("messages")?'<button type="button" class="ghe-top-wheelchair" data-wheelchair-popup aria-haspopup="dialog" aria-controls="gheTopWheelchairDialog" aria-label="Ouvrir le chat fauteuils">'+
         '<img src="images/icone_app/home-access-wheelchairs.webp" alt="" aria-hidden="true"></button>':"")+
       (has("messages")?'<button type="button" class="ghe-top-settings" data-notification-settings aria-haspopup="dialog" aria-controls="gheTopNotificationDialog" aria-label="Régler mes notifications">⚙</button>':"")+
+      '</span>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
-        (count?'<b>'+count+'</b>':'')+'</button>'+
-      '<span class="ghe-home-tools-right" aria-hidden="true"></span></div>';
+        (count?'<b>'+count+'</b>':'')+'</button></div>
     const face=state.premiumFlipped?'back':'front';
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
@@ -3290,14 +3295,22 @@ function personalDrawerRow(icon,label,action,meta="") {
 
   const doAction=action=>{
     close();
+    // Let the mobile dialog leave the top layer before opening its destination.
+    requestAnimationFrame(()=>{
     if(action==="home") return window.STIPRouter?.set?.("home");
     if(action==="future") return openWidget("future");
-    if(action==="apps") return window.STIPFavorites?.open?.();
+    if(action==="apps"){
+      if(window.STIPFavorites?.open) return window.STIPFavorites.open();
+      return window.STIPRouter?.set?.("apps");
+    }
     if(action==="recent" || action==="notifications") return openNotifications();
     if(action==="agents") return openHeaderDirectorySearch("first");
     if(action==="places") return openApp("places");
     if(action==="communication") return openApp("communication");
-    if(action==="wheelchairs") return window.STIPRouter?.set?.("communication/fauteuils");
+    if(action==="wheelchairs"){
+      if(window.STIPRouter?.set) return window.STIPRouter.set("communication/fauteuils");
+      return window.GHENotificationControls?.openWheelchairs?.();
+    }
     if(action==="planning") return openApp("personal");
     if(action==="leisure") return window.STIPLoad?.navigateDocument?.("sorties-loisirs.html") || (location.href="sorties-loisirs.html");
     if(action==="dudy") return window.STIPLoad?.navigateDocument?.("le-nouveau.html") || (location.href="le-nouveau.html");
@@ -3309,6 +3322,7 @@ function personalDrawerRow(icon,label,action,meta="") {
       return;
     }
     if(action==="t-door" && has("admin")) return window.STIPLoad?.navigateDocument?.("t-est/porte-entree/index.html") || (location.href="t-est/porte-entree/index.html");
+    });
   };
   trigger.addEventListener("click",()=>{
     resetSearch();
@@ -3347,7 +3361,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   drawer.addEventListener("close",()=>{
     resetSearch();
     if(trigger.isConnected)trigger.focus({preventScroll:true});
-    if(!state.renderSig && state.ready)render();
+    // The target route handles the next render; closing must not replace an active popup.
   });
   drawer.querySelector("[data-ghe-drawer-clear]")?.addEventListener("click",()=>{search.value="";search.dispatchEvent(new Event("input"));search.focus();});
   search.addEventListener("input",async()=>{

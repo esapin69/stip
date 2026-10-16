@@ -1,0 +1,46 @@
+name: GHE home seven-point regression
+on:
+  pull_request:
+    paths:
+      - home-shell.js
+      - ghe-premium-safe-flip.css
+      - team-home-fusion.js
+      - team-home-fusion.css
+      - shift-weather-mini.js
+      - ghe-notification-controls.js
+      - ghe-notification-controls.css
+      - index.html
+      - stip-loader.js
+      - stip-sw.js
+      - tools/ghe-home-seven-points-test.mjs
+      - .github/workflows/ghe-home-seven-points.yml
+  push:
+    branches: [main]
+    paths:
+      - home-shell.js
+      - ghe-premium-safe-flip.css
+      - team-home-fusion.js
+      - team-home-fusion.css
+      - shift-weather-mini.js
+      - ghe-notification-controls.js
+      - ghe-notification-controls.css
+      - index.html
+      - stip-loader.js
+      - stip-sw.js
+      - tools/ghe-home-seven-points-test.mjs
+      - .github/workflows/ghe-home-seven-points.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          node --check home-shell.js
+          node --check team-home-fusion.js
+          node --check shift-weather-mini.js
+          node --check ghe-notification-controls.js
+          node --check stip-loader.js
+          node --check stip-sw.js
+      - run: node tools/ghe-home-seven-points-test.mjs
+      - run: node --test tools/stip-unified-day-popup-test.mjs tools/stip-popup-no-jump-test.mjs

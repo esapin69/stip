@@ -230,6 +230,10 @@
     const scene = host.closest?.(".thf-weather-sky");
     if (scene) {
       scene.dataset.sky = values.sky;
+        if(scene.classList.contains("thf-weather-stage")){
+          const card=scene.closest(".thf-day-card");
+          if(card)card.dataset.sky=values.sky;
+        }
       scene.dataset.thermal = values.thermal;
       scene.setAttribute("aria-label",
         shift.startText + " : " + values.startTemp + " degrés, " +
@@ -345,6 +349,10 @@
       const scene = host.closest(".thf-weather-sky");
       if (scene) {
         scene.dataset.sky = values.sky;
+        if(scene.classList.contains("thf-weather-stage")){
+          const card=scene.closest(".thf-day-card");
+          if(card)card.dataset.sky=values.sky;
+        }
         scene.dataset.raining = values.rainingScene ? "true" : "false";
         scene.dataset.wet = values.wetScene ? "true" : "false";
       }
