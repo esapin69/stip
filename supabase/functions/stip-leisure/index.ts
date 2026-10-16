@@ -745,7 +745,7 @@ Deno.serve(async req=>{
   }
   if(!c.agent_id&&b.action!=='save')throw Error('ACCES_AGENT_REQUIS')
   if(b.action==='respond_day'){
-    if(!uuid(b.event_id)||typeof b.day!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(b.day)||
+    if(!uuid(b.event_id)||typeof b.day!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(b.day)||
       !Number.isInteger(b.revision)||!['yes','no','neutral'].includes(b.decision))throw Error('CHOIX_INVALIDE');
     const ev=await checked(db.from('stip_leisure_events')
       .select('id,title,organizer_agent_id,dates,revision,status,schedule_mode,family')
