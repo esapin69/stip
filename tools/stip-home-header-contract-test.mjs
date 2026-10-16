@@ -109,4 +109,6 @@ assert(home.includes('const rosterButton=event.target.closest("[data-premium-ros
        "Les agents doivent apparaître uniquement dans un popup séparé");
 assert(index.includes("ghe-premium-safe-flip.css?v=" + currentBuild) &&
        index.includes("home-shell.js?v=" + currentBuild),"Cache bust incohérent");
+assert(index.includes("home-duty-chief.js?v=" + currentBuild),
+       "Le moteur des chefs doit être chargé sur l'accueil, sans dépendance au chargeur inactif");
 console.log("GHE header + 360° black returns + current roster contract OK");
