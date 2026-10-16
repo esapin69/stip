@@ -544,6 +544,40 @@ async function createAccess(b: any, me: any) {
   return { ok: true, agent: a, permissions: perms };
 }
 
+async function listExternal() {
+  const { data, error } = await db.from("stip_access_profiles")
+    .select("id,identity_id,role_key,active,permissions,stip_access_identities(id,first_name,last_name,professional_role,identity_kind)")
+    .is("agent_id", null).not("identity_id","is",null).order("updated_at",{ascending:false});
+  if (error) throw error;
+  return { items: (data || []).map((p:any) => {
+    const i = Array.isArray(p.stip_access_identities) ? p.stip_access_identities[0] : p.stip_access_identities;
+    return {...p, first_name:i?.first_name||"", last_name:i?.last_name||"", professional_role:i?.professional_role||"", identity_kind:i?.identity_kind||"external"};
+  })};
+}
+async function createExternal(b:any, me:any) {
+  if (!(me?.role_key === "admin" || me?.permissions?.admin)) throw Error("Création réservée à l’administrateur");
+  const first = String(b.first_name||"").trim(), last=String(b.last_name||"").trim(), professional=String(b.professional_role||"Compte externe").trim();
+  const code=String(b.code||"").replace(/\D/g,""), role=String(b.role_key||"visiteur");
+  if (!first || !last) throw Error("Nom du compte externe requis");
+  if (!/^\d{6}$/.test(code)) throw Error("Le code doit contenir 6 chiffres");
+  assertStrongPin(code);
+  const [apps, rolePresets] = await Promise.all([catalog(), presets()]);
+  const preset=rolePresets.find((x:any)=>x.role_key===role);
+  if (!preset || role==="admin") throw Error("Profil externe invalide");
+  const {data:identity,error:ie}=await db.from("stip_access_identities").insert({first_name:first,last_name:last,professional_role:professional,identity_kind:"external"}).select("id").single();
+  if (ie) throw ie;
+  const perms=normalizePermissions(preset.permissions||{},preset.permissions?.__levels||{},apps,role);
+  perms.admin=false; perms.access_manage=false; perms.notes=false;
+  const rr=await db.rpc("stip_set_identity_access",{p_identity_id:identity.id,p_code:code,p_permissions:perms,p_active:true,p_updated_by:me.agent_id});
+  if (rr.error) { await db.from("stip_access_identities").delete().eq("id",identity.id); throw rr.error; }
+  const {data:p}=await db.from("stip_access_profiles").select("id").eq("identity_id",identity.id).maybeSingle();
+  if (p) {
+    await db.from("stip_access_profiles").update({role_key:role,access_model_key:null,permissions:perms,permission_overrides:perms,updated_at:new Date().toISOString()}).eq("id",p.id);
+    await db.from("stip_access_code_vault").upsert({profile_id:p.id,code,updated_by:me.agent_id,updated_at:new Date().toISOString()},{onConflict:"profile_id"});
+  }
+  return {ok:true,identity_id:identity.id,profile_id:p?.id||null};
+}
+
 Deno.serve(async (r) => {
   if (r.method === "OPTIONS") return new Response("ok", { headers: H });
   try {
@@ -551,6 +585,8 @@ Deno.serve(async (r) => {
       b = await r.json().catch(() => ({}));
     if (b.action === "list")
       return J(await list(String(b.q || ""), me));
+    if (b.action === "list_external") return J(await listExternal());
+    if (b.action === "create_external") return J(await createExternal(b, me));
     if (b.action === "save") return J(await save(b, me));
     if (b.action === "save_preset" || b.action === "save_model")
       return J(await savePreset(b));
