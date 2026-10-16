@@ -2952,37 +2952,66 @@ function personalDrawerRow(icon,label,action,meta="") {
     ...(has("admin") ? [{title:"Administration",subtitle:"Raccourcis et outils administrateur",icon:"⚙",action:"admin"},{title:"Porte T",subtitle:"Accès administrateur",icon:"T",action:"t-door"}] : [])
   ];
 }
+  // Une seule vue sur l'agenda : événements classiques, dates de loisirs
+  // confirmées/proposées et suivis anciens, sans limite artificielle de mois.
   function drawerAppointmentsState(){
     const pending=window.STIPEventFeedback?.pending?.()||[];
     const feedbackIds=new Set(pending.map(x=>String(x.eventKey||"")));
     const future=futureItems().filter(x=>!feedbackIds.has(String(x.id||"")));
-    return {future,pending};
+    const leisure=window.STIPLeisure?.drawerDates?.()||[];
+    const toEntry=(kind,x,date,subtitle,stateLabel)=>({
+      kind,id:String(x.id||x.eventKey||""),title:String(x.title||"Rendez-vous"),
+      date:String(date||""),time:String(x.time||""),place:String(x.place||x.location||""),
+      icon:String(x.icon||"📅"),subtitle:String(subtitle||""),stateLabel:String(stateLabel||""),
+      event:x
+    });
+    const toFuture=future.map(x=>toEntry("future",x,x.date,fmtDateRange(x),"Prévu"));
+    const toPast=pending.map(x=>toEntry("feedback",x,x.endDate||x.date,fmtDateRange(x),"Retour attendu"));
+    const toLeisure=leisure.map(x=>toEntry("leisure",x,x.date,fmtDateRange(x),x.state));
+    const dateSort=(a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,"fr");
+    const groups=[
+      {key:"upcoming",title:"À venir",items:[...toFuture,...toLeisure.filter(x=>x.event.confirmed)].sort(dateSort)},
+      {key:"proposals",title:"À confirmer",items:toLeisure.filter(x=>!x.event.confirmed).sort(dateSort)},
+      {key:"feedback",title:"À clôturer",items:toPast.sort((a,b)=>b.date.localeCompare(a.date))}
+    ];
+    return {groups,future,pending,leisure};
+  }
+  function drawerGroupLabel(group){
+    const count=group.items.length;
+    if(!count)return group.key==="upcoming"?"Aucune date prévue":group.key==="proposals"?"Aucune proposition":"Aucun retour en attente";
+    const next=group.items[0];
+    if(count===1)return next.title+" · "+next.subtitle;
+    return count+" "+(group.key==="feedback"?"retours attendus":"dates")+
+      (group.key==="proposals"?" proposées":"")+" · "+group.items[0].subtitle;
   }
   function drawerAppointmentsMarkup(){
-    const {future,pending}=drawerAppointmentsState();
-    const futureRows=future.map(x=>
-      '<button type="button" class="ghe-drawer-appointment" data-ghe-drawer-future="'+esc(x.id)+'">'+
-      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+eventIconHtml(x,"hc-event-svg")+'</span>'+
-      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
-      '<small>'+esc([fmtDateRange(x),x.time,x.place].filter(Boolean).join(" · "))+'</small></span>'+
-      '<span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
-    ).join("");
-    const pendingRows=pending.map(x=>
-      '<button type="button" class="ghe-drawer-appointment ghe-drawer-feedback-item" data-ghe-drawer-feedback="'+esc(x.eventKey)+'">'+
-      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+esc(x.icon||"📅")+'</span>'+
-      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(x.title)+'</strong>'+
-      '<small>'+esc([fmtDateRange(x),x.time,x.location].filter(Boolean).join(" · "))+'</small>'+
-      '<em>Retour attendu</em></span><span aria-hidden="true" class="ghe-drawer-chevron">›</span></button>'
-    ).join("");
-    return '<section class="ghe-drawer-section ghe-drawer-appointments-section" aria-label="Mes rendez-vous">'+
-      '<div class="ghe-drawer-section-head"><h3>Mes rendez-vous</h3><span>'+(future.length+pending.length)+'</span></div>'+
-      '<div class="ghe-drawer-group-head"><strong>À venir</strong><span>'+future.length+'</span></div>'+
-      '<div class="ghe-drawer-appointments">'+(futureRows||'<p class="ghe-drawer-empty">Aucun rendez-vous à venir.</p>')+'</div>'+
-      '<button type="button" class="ghe-drawer-see-all" data-ghe-drawer-action="future">Voir tout l’agenda à venir <span aria-hidden="true">›</span></button>'+
-      (pending.length?
-        '<div class="ghe-drawer-followups"><div class="ghe-drawer-group-head"><strong>À clôturer</strong><span>'+pending.length+'</span></div>'+
-        '<div class="ghe-drawer-appointments">'+pendingRows+'</div></div>':"")+
-      '</section>';
+    const {groups}=drawerAppointmentsState();
+    const total=groups.reduce((sum,x)=>sum+x.items.length,0);
+    const rows=groups.map(group=>{
+      const count=group.items.length,empty=count===0;
+      return '<button type="button" class="ghe-drawer-agenda-group is-'+esc(group.key)+
+        '" data-ghe-drawer-group="'+esc(group.key)+'"'+(empty?' disabled aria-disabled="true"':'')+
+        ' aria-label="'+esc(group.title+", "+count+" élément"+(count>1?"s":""))+'">'+
+        '<span class="ghe-drawer-agenda-group-main"><strong>'+esc(group.title)+
+        '</strong><small>'+esc(drawerGroupLabel(group))+'</small></span>'+
+        '<span class="ghe-drawer-agenda-group-count">'+count+'</span>'+
+        (empty?'':'<span class="ghe-drawer-chevron" aria-hidden="true">›</span>')+
+        '</button>';
+    }).join("");
+    const loading=window.STIPLeisure && !window.STIPLeisure?.isReady?.()?
+      '<p class="ghe-drawer-agenda-loading" role="status">Actualisation des activités en cours…</p>':"";
+    return '<section class="ghe-drawer-section ghe-drawer-appointments-section" aria-label="Tous mes rendez-vous">'+
+      '<div class="ghe-drawer-section-head"><h3>Mes rendez-vous et activités</h3><span>'+total+'</span></div>'+
+      '<div class="ghe-drawer-agenda-groups">'+rows+'</div>'+loading+'</section>';
+  }
+  function drawerAgendaEntryMarkup(entry,index){
+    const icon=entry.kind==="future"?eventIconHtml(entry.event,"hc-event-svg"):esc(entry.icon);
+    return '<button type="button" class="ghe-drawer-agenda-entry" data-ghe-agenda-entry="'+index+'">'+
+      '<span class="ghe-drawer-appointment-icon" aria-hidden="true">'+icon+'</span>'+
+      '<span class="ghe-drawer-appointment-copy"><strong>'+esc(entry.title)+'</strong>'+
+      '<small>'+esc([entry.subtitle,entry.time,entry.place].filter(Boolean).join(" · "))+'</small>'+
+      '<em class="ghe-drawer-state is-'+esc(entry.kind)+'">'+esc(entry.stateLabel)+'</em></span>'+
+      '<span class="ghe-drawer-chevron" aria-hidden="true">›</span></button>';
   }
   function personalDrawer() {
   const entries=personalDrawerEntries();
