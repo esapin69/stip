@@ -1,17 +1,29 @@
-# Sorties & loisirs
+# On se retrouve — sorties, événements de loisirs et disponibilités
 
-Application définitive validée par Eddy le 01/10/2026.
+## Décision produit (16 octobre 2026)
 
-Critères : application accessible depuis Applications et Esprit d’équipe ; carte compacte au-dessus de la semaine tant que l’agent n’a pas répondu ; fenêtre centrale proposant plusieurs dates ou un refus explicite ; fermer ne constitue pas une réponse ; validation serveur avant disparition ; réponse modifiable dans l’application ; participants et compteurs communs ; création, modification et annulation par l’organisateur ou un admin ; navigation retour et mobile conservées.
+Une seule page utilisateurs : `sorties-loisirs.html`, nom public **On se retrouve**. Son unique moteur interactif est `ensemble-v3.js` et son style `ensemble-v3.css`. Accès depuis Applications, tiroir d'accueil, raccourci de proposition et liens d'invitation ; les anciennes URL `sorties-loisirs.html?tab=agenda|create|trips|invitations|dispos` continuent de fonctionner.
 
-Source canonique : stip_leisure_events et stip_leisure_responses. Le planning professionnel et les retours de formation ne couvrent pas les propositions collectives à dates multiples, d’où une application dédiée. Réutilisations : session STIP, permissions d’équipe, STIPNav, STIPOverlayNav, FormUX standard, thème et signature de carte. leisure-runtime.js fournit la même fenêtre pour l’accueil et l’application. Aucun stockage local des réponses.
+Les quatre rubriques sont des vues **de la même page** : Sorties, Dispos, Invitations et Trajets. « Proposer une activité » ouvre le formulaire unique existant, jamais un nouveau système d'événements.
 
-Une modification des dates augmente la révision : les réponses précédentes restent consultables, mais l’accueil demande une nouvelle validation. Annuler conserve l’historique. Aucune inscription du tableau papier n’est attribuée automatiquement à un profil sur la seule base d’un prénom.
+L'accueil utilise seulement `ensemble-home.js` comme **adaptateur de lecture et de notifications** (fenêtres de journée, tiroir, cloche) : ce fichier ne recrée pas d'événement ni de stockage. Les sources métier du backend sont conservées.
 
-Premier événement : Foot indoor, 9/16/23/30 octobre 2026. La photo propose Parilly ou Groupama Stadium et plusieurs créneaux dépendant du nombre ; ces informations restent décrites comme à fixer, sans réservation inventée.
+## Sources et droits
 
-Chats par date (01/10/2026) : chaque inscription confirmée ajoute automatiquement l’agent au groupe de cette date. Deux dates = deux groupes. Le lien `stip_leisure_chats` associe sortie/date à une conversation canonique `stip_conversations` ; les membres sont dérivés des réponses, dans la même transaction via triggers SECURITY INVOKER. Un refus ou une date retirée enlève le membre ; réinscrire rejoint le même groupe et son historique. Une révision des dates attend la reconfirmation ; une annulation suspend les accès. Les préférences de lecture et de sourdine restent conservées lors des mises à jour sans changement de groupe.
+- Événements, invités, réponses : `stip_leisure_events`, `stip_leisure_invites`, `stip_leisure_responses`. API existante : `supabase/functions/stip-leisure/index.ts`, auth via `x-stip-session` et famille.
+- Calendrier, horaires et couleurs de travail : `planning` et `stip_shift_registry`. L'action `matches` compare les fins de service sur 31 jours, sans divulguer les horaires d'autres collègues. Un créneau compatible **n'est pas** un accord de participation. L'heure libre (fixed) reste possible.
+- Un événement sur invitation est privé ; un événement « ouvert à l'équipe » est visible dans la famille autorisée. Seul l'organisateur ou un acteur autorisé gère ses invités.
+- Les conversations liées sont des groupes canoniques de Communication (DM & groupes), via `stip_leisure_sync_series_chat`, `stip_conversations`, `stip_conversation_members`, et `stip-messages`. Aucun chat parallèle.
+- Chaque invitation conserve sa réponse au niveau du serveur. Une date modifiée incrémente la révision ; une réponse ancienne ne vaut plus confirmation. Une annulation ne devient jamais une sortie confirmée.
+- Les propositions ne sont pas des rendez-vous confirmés. `ensemble-home.js` exige la présence effective de l'organisateur et l'accord d'au moins un collègue pour alimenter les jours/semaine avec une sortie confirmée. Les invitations non répondues restent à traiter sans polluer les rendez-vous.
+- L'agenda des événements **professionnels** demeure distinct : il ne faut ni confondre ces données avec les sorties personnelles ni répliquer leurs enregistrements.
 
-Raccourcis « Chat du … » : accueil personnel après réponse, carte de l’application, détail de chaque date. Ils ouvrent Communication > DM & groupes sur la conversation. Les groupes restent accessibles dans la liste habituelle. `stip-messages` reste seul responsable des messages, contrôles de membres et notifications. L’accès Communication reste soumis à la permission messages existante ; aucun droit supplémentaire n’est accordé par l’inscription.
+## Mise au propre
 
-Vérifié en transaction annulée : dates distinctes, membres communs d’une même date, retrait/refus/réinscription, conservation lecture/sourdine, révision/annulation, titre/famille et exécution service_role. Aucun compte de test ou message automatique n’est créé en production.
+Les anciens moteurs non chargés (ancien `leisure-runtime.js`, ancien compositeur `ensemble-create.js`, anciennes variantes Afterwork et iframe d'essai) ont été retirés après vérification des points d'entrée. Les CSS orphelins associés ont été retirés. Aucun changement de schéma ni suppression de données Supabase.
+
+`tools/stip-leisure-test.mjs` teste désormais l'adaptateur actif ; `tools/stip-ensemble-mobile-test.mjs` et `tools/stip-on-se-retrouve-interaction-test.mjs` couvrent la page et les créneaux.
+
+## Règle de maintenance
+
+Toute prochaine évolution Loisirs se fait dans l'API canonique, `ensemble-v3.js` et l'adaptateur `ensemble-home.js`. Ne pas recréer un autre mini-site, composant de création ou stockage de réponses. Ne pas emprunter les noms de l'ancien écran pour les raccourcis. Publications : GitHub Pages uniquement, jamais Vercel.
