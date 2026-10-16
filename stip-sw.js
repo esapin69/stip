@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261016-shared-agent-actions1";
+const STIP_SW_BUILD="20261016-stagiaire-bilan1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
