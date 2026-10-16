@@ -321,13 +321,13 @@
       (currentRain > 0 || RAIN_SKIES.has(currentSky));
     const forecastRain = amounts.some(x => x > 0) || risks.some(x => x >= 60);
     // Un sol mouillé visualise une ambiance prévue, sans prétendre qu'il a plu.
-    const rainingScene = today ? rainingNow : forecastRain;
+    const rainingScene = today ? rainingNow : (RAIN_SKIES.has(forecastSky) && forecastRain);
     return {
       min: Math.round(Math.min(...temps)), max: Math.round(Math.max(...temps)),
       risk: risks.length ? Math.round(Math.max(...risks)) : null,
       sky, rainingScene, wetScene: rainingNow || forecastRain,
       description: LABELS[sky] || LABELS.unknown,
-      current: today && Boolean(current)
+      current: today && currentSky !== "unknown"
     };
   }
   async function mountDay(host, args = {}) {
@@ -358,10 +358,10 @@
       range.append(min, max);
       const risk = document.createElement("span");
       risk.className = "thf-rest-forecast-risk";
-      risk.textContent = values.risk === null ? "Pluie : —" : "💧 " + values.risk + " %";
+      risk.textContent = values.risk === null ? "Pluie : —" : "💧 " + values.risk + " % max";
       const state = document.createElement("small");
       state.className = "thf-rest-forecast-state";
-      state.textContent = (values.current ? "Actuellement : " : "Prévision : ") + values.description;
+      state.textContent = (values.current ? "Maintenant (estimé) : " : "Prévision : ") + values.description;
       host.append(range, risk, state);
       host.setAttribute("aria-label", "Météo du " + iso + " : minimum " +
         values.min + " degrés, maximum " + values.max + " degrés, " +
