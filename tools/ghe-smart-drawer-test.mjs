@@ -80,4 +80,35 @@ assert.match(rail,/ghe-smart-arrow/,"arrow replaces the hamburger");
 assert.match(rail,/ghe-smart-close/,"close button retained next to the arrow");
 assert.match(rail,/if\(reopen\)\{event.preventDefault\(\);setMode\("expanded"\)/,"closed rail opens fully");
 assert.match(rail,/const destination=event.target.closest/,"new page collapses rail to icons");
+
+// The same drawer occupies the mobile layout on every authenticated document.
+// Most pages reuse STIPNav; standalone exceptions include the identical CSS/JS.
+const sharedNav=read("stip-navigation.js");
+const drawerCss=read("ghe-smart-drawer.css");
+assert.match(sharedNav,/const ensureSmartDrawer = \(\) =>/,"shared navigation mounts the canonical drawer");
+assert.match(sharedNav,/localStorage\.getItem\("stip_session_v1"\)/,"guest pages do not mount a private drawer");
+assert.match(sharedNav,/window\.self !== window\.top/,"embedded pages do not acquire a second sidebar");
+assert.match(sharedNav,/script\[src\*="ghe-smart-drawer\.js"\]/,"pages with an existing drawer do not import twice");
+assert.match(drawerCss,/body\.ghe-smart-active :is\(main, \.app-shell, #appView, #homeView, \.view\)/,"page containers fit the remaining mobile width");
+for (const path of ["places.html","mon-compte.html"]) {
+  const standalone=read(path);
+  assert.match(standalone,/ghe-smart-drawer\.css/,`${path} includes shared styles`);
+  assert.match(standalone,/ghe-smart-drawer\.js/,`${path} includes canonical script`);
+}
+const authenticatedPages=[
+  "access-manage.html","agent-date-detail.html","agent-dates.html",
+  "agent-directory.html","agent-readonly.html","application-mobile.html",
+  "assistant.html","cadre-activite.html","cadre-documents.html",
+  "cadre.html","control.html","depot.html","dudy-admin.html",
+  "esprit-equipe.html","ghe-agenda.html","le-nouveau.html",
+  "meeting-notes.html","places-app.html","places-export.html",
+  "planning-compare-app.html","responsable-agenda.html","responsable-demandes.html",
+  "responsable-evaluations.html","responsable.html","signature-agent.html",
+  "sorties-loisirs.html"
+];
+for(const path of authenticatedPages){
+ const html=read(path);
+ assert.match(html,/stip-navigation\.js|ghe-smart-drawer\.js/,`${path} has a common drawer entrypoint`);
+}
+
 console.log("GHE smart drawer contract passed.");
