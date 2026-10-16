@@ -14,6 +14,8 @@ assert.match(home,/liveCurrentlyWorking\(item,now\)/);
 assert.match(home,/window\.STIPDutyChiefs\?\.liveSnapshot\?\.\(\)/);
 assert.match(chiefScript,/liveSnapshot\(\)/);
 assert.match(chiefScript,/stip:duty-chiefs-updated/);
+assert.match(chiefScript,/if \(window\.STIPDutyChiefs\) return;/);
+assert.match(chiefScript,/stip:home-rendered".*fetchDuty\(\)/);
 assert.match(home,/isLiveChief\(item\)\?fallbackChiefs:rows/);
 assert.match(home,/groups=waiting\?\[\]:premiumShiftGroups\(roster\.rows\)/);
 assert.match(home,/data-premium-roster="/);
@@ -81,6 +83,7 @@ assert(v);
 for(const p of ["home-shell.js","team-home-fusion.js","team-home-fusion.css","shift-weather-mini.js","ghe-notification-controls.js","ghe-notification-controls.css","ghe-premium-safe-flip.css","stip-loader.js","stip-sw.js"])
   assert(index.includes(p+"?v="+v),p+" cache not synchronized");
 assert(loader.includes('V = "'+v+'"') && worker.includes('STIP_SW_BUILD="'+v+'"'));
+assert(index.includes("home-duty-chief.js?v="+v),"Chef source must load on GHE home");
 
 const actionStart=home.indexOf("  const doAction=action=>{");
 const actionEnd=home.indexOf('  trigger.addEventListener("click"',actionStart);
