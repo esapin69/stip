@@ -114,6 +114,19 @@ async function feedbackEvent(c:any,eventKey:string){
   const q=await db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,observation,source_file,source_sheet').eq('id',id).maybeSingle();if(q.error)throw q.error;const x:any=q.data;if(!x||!referentMatches(x.referent,c.agent))throw Error('EVENEMENT_INTROUVABLE');const date=String(x.date_debut||'').slice(0,10),endDate=String(x.date_fin||x.date_debut||'').slice(0,10),clock=lastClock(x.horaires)||'18:00';
   return{key:eventKey,type:'stagiaire',title:[text(x.prenom,80),text(x.nom,120)].filter(Boolean).join(' ')||'Stagiaire',date,endDate,time:text(x.horaires,120),location:'',question:'',sensitive:false,feedbackKind:'intern',due:localPlus(endDate,clock,60),referent:text(x.referent,240),observation:text(x.observation,500),sourceFile:text(x.source_file,200),sourceSheet:text(x.source_sheet,120)}
 }
+function stageReviewValue(input:any){
+  if(input==null)return null; // Compatibilité des anciens clients.
+  if(!input||typeof input!=='object'||Array.isArray(input))throw Error('RETOUR_STAGE_INVALIDE');
+  const participation=text(input.participation,40),
+        nextStep=text(input.next_step,40),
+        allowedTopics=['organization','safety','transport','communication','tools','other'],
+        topics=Array.isArray(input.topics)?[...new Set(input.topics.map((x:any)=>text(x,40)))]:[];
+  if(!['observed','assisted','supervised'].includes(participation)||
+     !['discover','repeat','supervised','referent'].includes(nextStep)||
+     !topics.length||topics.length>allowedTopics.length||topics.some(x=>!allowedTopics.includes(x)))
+    throw Error('RETOUR_STAGE_INCOMPLET');
+  return{version:1,participation,topics,next_step:nextStep};
+}
 async function submitEventFeedback(c:any,b:any){
   const eventKey=text(b.event_key,180),attendance=text(b.attendance,20),follow=typeof b.follow_up==='boolean'?b.follow_up:null,rawRating=Number(b.rating),incomingReason=text(b.reason_code,48)||null,rawCustom=text(b.custom_answer,20)||null,rawNote=text(b.note,500)||null;
   if(!['absent','problem','ok'].includes(attendance))throw Error('RETOUR_PRESENCE_REQUISE');
@@ -134,7 +147,9 @@ async function submitEventFeedback(c:any,b:any){
   }
   if(ev.sensitive){rating=null;custom=null;note=null}
   const outcome=outcomeOfAttendance(attendance);
-  const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,reason_code:reasonCode,follow_up:follow,custom_answer:custom,note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type,feedback_kind:ev.feedbackKind,feedback_mode:'outcome',outcome},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,reason_code,follow_up,custom_answer,note,event_snapshot,submitted_at').single();if(q.error)throw q.error;return q.data
+  const stageReview=ev.feedbackKind==='intern'&&attendance!=='absent'&&!ev.sensitive
+    ? stageReviewValue(b.stage_review):null;
+  const payload={agent_id:c.agent.id,event_key:eventKey,event_type:ev.type,attendance,rating,reason_code:reasonCode,follow_up:follow,custom_answer:custom,note,event_snapshot:{title:ev.title,date:ev.date,end_date:ev.endDate,time:ev.time,location:ev.location,type:ev.type,feedback_kind:ev.feedbackKind,feedback_mode:'outcome',outcome,...(stageReview?{stage_review:stageReview}:{})},submitted_at:new Date().toISOString(),updated_at:new Date().toISOString()},q=await db.from('stip_event_feedback').upsert(payload,{onConflict:'agent_id,event_key'}).select('event_key,attendance,rating,reason_code,follow_up,custom_answer,note,event_snapshot,submitted_at').single();if(q.error)throw q.error;return q.data
 }
 
 function validEmail(v:any){const s=text(v,320).toLowerCase();return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)?s:''}
