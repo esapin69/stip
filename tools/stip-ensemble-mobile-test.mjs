@@ -12,7 +12,7 @@ const appsStyles = read("quick-access.css");
 assert.doesNotMatch(apps, /data-app-create-leisure|stip-app-propose/, "Do not inject a proposal shortcut into Applications");
 assert.doesNotMatch(appsStyles, /\.stip-app-propose/, "Remove obsolete proposal shortcut styling");
 assert.match(page, /<header class="ev3-header">/, "Static page must already contain a header");
-assert.match(page, /<nav class="ev3-tabs"/, "Static page must already contain navigation");
+assert.match(page, /<nav class="ev3-tabs(?: [^"]+)?"/, "Static page must already contain navigation");
 assert.match(page, /<section class="ev3-loading"/, "Static page must show a meaningful loading skeleton");
 assert.match(styles, /@media\(max-width:460px\)/, "Use a compact mobile layout");
 assert.match(styles, /\.ev3-quiet-empty/, "Use compact useful empty states");
