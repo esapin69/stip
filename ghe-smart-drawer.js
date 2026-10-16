@@ -28,7 +28,12 @@ function setMode(value){
  document.body.dataset.smartDrawer=mode;
  if(rail){rail.dataset.mode=mode;rail.setAttribute("aria-hidden",String(mode==="closed"));}
  const expand=rail?.querySelector('[data-ctrl="expand"]');
- if(expand)expand.setAttribute("aria-label",mode==="expanded"?"Réduire le tiroir aux icônes":"Déployer les titres et sous-titres");
+ if(expand){
+  expand.setAttribute("aria-label",mode==="expanded"?"Réduire le tiroir aux icônes":"Ouvrir le tiroir entièrement");
+  expand.textContent=mode==="expanded"?"‹":"›";
+ }
+ const reopen=document.getElementById("gheSmartReopen");
+ if(reopen)reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");
 }
 function groupedEntries(){
  const rows=[],now=today(),needs=[];
@@ -49,17 +54,39 @@ function groupedEntries(){
   if(!ds.length)continue;
   const choices=event.date_choices||[];
   const choose=d=>choices.find(x=>x.date===d&&x.revision===event.revision)?.decision || (event.response?.revision===event.revision&&event.response?.selected_dates?.includes(d)?"yes":"neutral");
-  const unanswered=!!event.invitation_status&&!event.is_organizer&&ds.some(d=>choose(d)==="neutral")&&event.invitation_status!=="declined";
-  if(unanswered)needs.push({
-   kind:"leisure",date:ds.find(d=>choose(d)==="neutral")||ds[0],id:event.id,
-   title:event.title||"Activité",icon:event.icon||"📅",
-   sub:[event.time_label||"Horaire à préciser",event.location||""].filter(Boolean).join(" · "),
-   href:"ghe-agenda.html?event="+encodeURIComponent(event.id)
+  // Une date d'activité n'est un rendez-vous que si l'organisateur
+  // ET au moins un invité sont réellement confirmés pour CETTE date.
+  // Les dates proposées par l'organisateur ne doivent jamais inonder le rail.
+  const confirmed=ds.filter(day=>{
+   const roster=event.date_roster?.[day];
+   if(!Array.isArray(roster))return false;
+   return roster.some(p=>p.state==="organizer"&&p.compatible!==false)
+    &&roster.some(p=>p.state==="accepted"&&p.compatible!==false);
   });
-  const selected=event.is_organizer?ds:ds.filter(d=>choose(d)==="yes");
-  for(const d of selected)rows.push({kind:"event",icon:event.icon||"📌",title:event.title||"Activité",date:d,
-   sub:[dlabel(d),event.time_label||"",event.location||""].filter(Boolean).join(" · "),
+  const selected=event.is_organizer?confirmed:confirmed.filter(day=>choose(day)==="yes");
+  for(const day of selected)rows.push({kind:"event",icon:event.icon||"📌",
+   title:event.title||"Activité",date:day,
+   sub:[dlabel(day),event.time_label||"",event.location||""].filter(Boolean).join(" · "),
    href:urlForEvent(event),event});
+
+  // Même moteur pour toutes les activités : les propositions non confirmées
+  // et les invitations sans réponse rejoignent la seule boîte « À traiter ».
+  const pendingDays=event.is_organizer?
+   ds.filter(day=>!confirmed.includes(day)&&!(event.organizer_unavailable_dates||[]).includes(day)):
+   event.invitation_status&&event.invitation_status!=="declined"&&event.invitation_status!=="withdrawn"?
+    ds.filter(day=>choose(day)==="neutral"):
+    [];
+  for(const day of pendingDays){
+   const isOrganizer=!!event.is_organizer;
+   needs.push({
+    kind:"leisure",id:String(event.id)+":"+day,date:day,
+    title:event.title||"Activité",icon:event.icon||"📅",
+    sub:[isOrganizer?"En attente de participants":"Invitation à confirmer",
+     event.time_label||"Horaire à préciser",event.location||""].filter(Boolean).join(" · "),
+    href:isOrganizer?urlForEvent(event):
+     "ghe-agenda.html?event="+encodeURIComponent(event.id)+"&date="+encodeURIComponent(day)
+   });
+  }
  }
  const source=window.STIPDrawerAppointments?.();
  if(source?.groups){
@@ -166,15 +193,16 @@ function render(){
  const shortcuts=[["♿","Fauteuils","Chat des fauteuils","wheelchairs"],["💬","Communication","Messages et groupes","communication"],["🎉","On se retrouve","Créer une activité","leisure"],["🔔","Notifications","Messages importants","notifications"],["👥","Collègues","Annuaire des agents","colleagues"],["🧭","Visite des lieux","Services et étages","places"],["📱","Application GHE","Installation","app"]]
  .filter(x=>!(x[3]==="wheelchairs"&&window.STIPBootCache?.permissions?.messages===false));
  const admin=isAdmin()?[["🔐","Gérer les accès","Rôles et raccourcis","access"],["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]]:[];
- rail.innerHTML='<header class="ghe-smart-head"><button type="button" class="ghe-smart-toggle" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button>'+
- '<span class="ghe-smart-expanded-label">Mon espace GHE</span><button type="button" class="ghe-smart-toggle" data-ctrl="expand" aria-label="Déployer les titres">☰</button></header>'+
+ rail.innerHTML='<header class="ghe-smart-head">'+
+ '<button type="button" class="ghe-smart-toggle ghe-smart-arrow" data-ctrl="expand" aria-label="Ouvrir le tiroir entièrement">›</button>'+
+ '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button>'+
+ '<span class="ghe-smart-expanded-label">Mon espace GHE</span></header>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
  '<div class="ghe-smart-divider"><span>Raccourcis</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>'+
  (admin.length?'<div class="ghe-smart-divider"><span>Administration</span></div><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav>':"")+
- '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…">'+
- '<button type="button" class="ghe-smart-toggle" data-ctrl="close" aria-label="Fermer totalement le tiroir">×</button></footer>';
+ '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"></footer>';
  let reopen=document.getElementById("gheSmartReopen");
- if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.textContent="☰";reopen.setAttribute("aria-label","Afficher les icônes du tiroir");document.body.appendChild(reopen);}
+ if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.textContent="›";reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");document.body.appendChild(reopen);}
  setMode(mode);
 }
 async function refresh(force=false){
@@ -197,7 +225,14 @@ async function refresh(force=false){
 }
 document.addEventListener("click",event=>{
  const reopen=event.target.closest?.("#gheSmartReopen");
- if(reopen){event.preventDefault();setMode("compact");return;}
+ if(reopen){event.preventDefault();setMode("expanded");return;}
+ // Tout changement de destination conserve uniquement la colonne d'icônes.
+ const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
+ if(destination){
+  if(destination.closest("#gheSmartPendingDialog"))document.getElementById("gheSmartPendingDialog")?.close();
+  setMode("compact");
+  return;
+ }
  const trigger=event.target.closest?.("[data-shortcuts-open]");
  if(trigger&&permitted()){
   event.preventDefault();event.stopImmediatePropagation();setMode(mode==="expanded"?"compact":"expanded");return;

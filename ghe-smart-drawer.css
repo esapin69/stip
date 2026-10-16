@@ -119,3 +119,48 @@ dialog#gheSmartPendingDialog:modal,dialog#gheSmartPendingDialog[open]{
  #gheSmartPendingDialog .ghe-smart-pending-items{padding:8px}
  #gheSmartPendingDialog .ghe-smart-pending-item{padding:9px}
 }
+
+/* GHE 2026-10-16 : une flèche et une croix, sans anciens menus ☰ concurrents. */
+body.ghe-smart-active [data-shortcuts-open],
+body.ghe-smart-active .ghe-shortcuts-hamburger{
+ display:none!important;
+}
+#gheSmartRail .ghe-smart-head{
+ display:flex;flex-direction:row;align-items:center;justify-content:space-between;
+ gap:3px;padding:6px;min-height:54px;box-sizing:border-box;
+}
+#gheSmartRail .ghe-smart-toggle{
+ flex:none;display:grid;place-items:center;border-radius:10px;
+ background:#eff6f8;border:1px solid #d9e8ee;color:#295d6f;
+ width:36px;height:40px;line-height:1;touch-action:manipulation;
+}
+#gheSmartRail .ghe-smart-arrow{font-size:29px;font-weight:500;}
+#gheSmartRail .ghe-smart-close{font-size:22px;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{
+ display:flex;flex-direction:row!important;gap:2px!important;
+ padding:4px 2px;min-height:52px;justify-content:center!important;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-toggle{
+ display:grid!important;width:24px;min-width:24px;height:38px;
+ padding:0;font-size:23px;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-close{
+ font-size:19px;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-expanded-label{
+ display:none!important;
+}
+#gheSmartRail[data-mode="expanded"] .ghe-smart-head .ghe-smart-expanded-label{
+ display:block;text-align:center;font-size:15px;font-weight:800;
+}
+#gheSmartRail .ghe-smart-foot{display:flex;padding:8px 5px 11px;}
+#gheSmartRail .ghe-smart-foot .ghe-smart-search{flex:1;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-foot{display:none!important;}
+body.ghe-smart-active .ghe-smart-reopen{
+ top:calc(88px + env(safe-area-inset-top, 0px));
+ bottom:auto;left:7px;width:43px;height:44px;padding:0;
+ display:grid;place-items:center;
+ font-size:30px;font-weight:650;color:#20596b;
+ background:#fff;border:1px solid #cde1e9;border-radius:13px;
+}
+body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen{display:none;}
