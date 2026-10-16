@@ -12,10 +12,16 @@ dialog[data-stip-popup-viewport="1"]:modal::backdrop {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
 }
-/* A body overflow lock can reset root scroll on mobile when the lock is removed.
- * Fixed popup backdrops already intercept interactions with the background. */
-body.hc-shift-detail-open,
-body.stip-favorites-open { overflow: visible !important; }
+/* Lock the actual document scroller while a modal is shown.
+ * Keep the existing scroll offset intact; the popup itself remains scrollable. */
+html.stip-popup-locked {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+html.stip-popup-locked body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
 .hc-shift-detail-overlay,
 .hc-confirm-backdrop,
 .stip-favorites-panel { overscroll-behavior: contain; }
