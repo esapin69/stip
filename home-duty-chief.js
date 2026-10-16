@@ -554,7 +554,7 @@
     if (e.key === "Escape") closeCallChoice();
   });
 
-  window.addEventListener("stip:home-rendered", () => render());
+  window.addEventListener("stip:home-rendered", () => { render(); fetchDuty(); });
   window.addEventListener("stip:session-ready", () => fetchDuty(true));
   window.addEventListener("stip:session-ended", () => {
     data = null;
