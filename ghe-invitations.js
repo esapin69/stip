@@ -7,7 +7,7 @@ const host=document.getElementById("gheInvitationList"),status=document.getEleme
 const esc = v => String(v ?? "").replace(/[&<>\x22\x27]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", "\x22":"&quot;", "\x27":"&#39;" }[c]));
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
 const fmt=d=>new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
-let events=[],busy=new Set(),epoch=0,loading=false,authToken="";
+let events=[],busy=new Set(),epoch=0,loading=false,authToken="",deepLinkFocused=false;
 function selected(event,day){
  const row=(event.date_choices||[]).find(x=>x.date===day&&x.revision===event.revision);
  if(row)return row.decision;
@@ -40,7 +40,7 @@ function card(e,day,cancelled=false,change=null){
  const chatId=e.series_conversation_id;
  const chat=chatId?'<a href="index.html?quick=communication&tab=dm&conversation='+encodeURIComponent(chatId)+'#/communication/dm">💬 Discussion</a>':"";
  const statusText=choice==="yes"?"Confirmé":choice==="no"?"Refusé":"Sans réponse";
- return '<article class="ghe-invite-card" aria-label="'+esc(e.title+" "+fmt(day))+'">'+
+ return '<article class="ghe-invite-card" data-invite-event="'+esc(e.id)+'" aria-label="'+esc(e.title+" "+fmt(day))+'">'+
  '<div class="ghe-invite-top"><span class="ghe-invite-emoji" aria-hidden="true">'+esc(e.icon||"📅")+'</span><div style="flex:1"><h2>'+esc(e.title)+'</h2><p>'+
  esc(fmt(day))+' · '+esc(e.time_label||"Horaire à préciser")+'<br>'+esc(e.location||"Lieu à confirmer")+
  '<br>Organisé par '+esc(e.organizer_name||"Organisateur")+'</p></div><span class="ghe-invite-status">'+esc(statusText)+'</span></div>'+
@@ -76,7 +76,15 @@ async function load(){
  const token=localStorage.getItem(STORE)||"";
  if(!token){status.textContent="Connexion GHE requise pour afficher tes invitations.";host.innerHTML='<p class="ghe-invite-empty"><a href="index.html">Se connecter à GHE</a></p>';return;}
  authToken=token;loading=true;
- try{const result=await call("list",{},token);if(localStorage.getItem(STORE)!==token)return;events=result.events||[];render();}
+ try{const result=await call("list",{},token);if(localStorage.getItem(STORE)!==token)return;events=result.events||[];render();
+  if(!deepLinkFocused){
+   const eventId=new URLSearchParams(location.search).get("event");
+   if(eventId){
+    const item=[...host.querySelectorAll("[data-invite-event]")].find(el=>el.dataset.inviteEvent===eventId);
+    if(item){deepLinkFocused=true;item.scrollIntoView({block:"center",behavior:"instant"});}
+   }
+  }
+ }
  catch(err){status.textContent="Impossible de récupérer les invitations : "+(err.message||"Service indisponible");host.innerHTML='<button type="button" data-retry>Réessayer</button>';}
  finally{loading=false}
 }
