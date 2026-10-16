@@ -23,7 +23,7 @@ function renderWhenIdle(){
  if(byId("ev3Dialog")?.open){pendingVisualRefresh=true;return}
  const active=document.activeElement;
  // Keep the original mobile input and keyboard in place while data arrive.
- if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
+ if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit, .ev3-availability-picker") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
   pendingVisualRefresh=true;
   const submit=byId("ev3Compose")?.querySelector('[type="submit"]');
   if(submit)submit.disabled=!state.calendarLoaded||!state.peopleLoaded;
@@ -271,6 +271,8 @@ function bindAvailability(){
   if(!names.length)return;
   state.guests=new Set(names.map(d=>d.id));
   state.dates=new Set([date]);
+  const [year,month]=date.split("-").map(Number);
+  state.month=new Date(year,month-1,1);
   state.mode=names.every(d=>d.my_end===d.peer_end)?"afterwork":"fixed";
   state.time="";state.formKind="activity";state.tab="create";state.agendaFilter="all";state.status="";render();
  });
