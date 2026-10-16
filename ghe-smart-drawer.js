@@ -9,8 +9,8 @@ const dlabel=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return "";return new Date
 const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||(!document.getElementById("homeView").closest("[hidden],.hidden")&&getComputedStyle(document.getElementById("homeView")).display!=="none"));
 const permissions=()=>({...window.STIPContinuity?.read?.()?.permissions,...window.STIPBootCache?.permissions,...window.STIPSession?.permissions});
 const isAdmin=()=>permissions().admin===true;
-let events=[],running=null,updated=0,ready=false,mode="compact",rail=null,requestSeq=0,owner="";
-try{const saved=localStorage.getItem(STATE);if(saved==="closed")mode="closed";}catch{}
+let events=[],running=null,updated=0,ready=false,mode="closed",rail=null,requestSeq=0,owner="";
+try{const saved=localStorage.getItem(STATE);if(saved==="compact")mode="compact";}catch{}
 const store=()=>localStorage.getItem(STORE)||"";
 const urlForEvent=e=>"sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(e.id);
 const route=(name)=>{
