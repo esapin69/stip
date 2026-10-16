@@ -38,6 +38,10 @@
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') rememberTrigger();
   }, true);
+  // A wheel gesture between the click and a delayed popup must supersede
+  // a stale click position without ever interfering with native scrolling.
+  window.addEventListener('wheel', () => { if (!snapshot) lastTrigger = null; }, { passive: true });
+  document.addEventListener('touchmove', () => { if (!snapshot) lastTrigger = null; }, { passive: true, capture: true });
 
   function decorate(nodes) {
     for (const node of nodes) {
