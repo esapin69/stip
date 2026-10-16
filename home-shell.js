@@ -38,6 +38,7 @@
     homeMode: "planning",
     premiumFlipped: false,
     weekFlipped: false,
+    monthFlipped: false,
     dateJumpMonth: parisIso().slice(0, 7),
     tableauFocus: false,
     communicationTab: "chat",
@@ -1722,6 +1723,109 @@
       calendarKey = state.dateJumpMonth || monthKeyOf(w[0]?.d || dateObj(parisIso()));
     return `<section class="hc-planning-calendar-block" aria-label="Aperçu mensuel du planning"><div id="hcDateJumpPanel" class="hc-date-jump-panel hc-date-jump-permanent stip-month-calendar" data-date-jump-panel data-calendar-month="${esc(calendarKey)}"></div></section>`;
   }
+  // Troisieme bloc 360 : les chiffres utilisent uniquement le planning personnel
+  // autorise. Une date sans code n'est jamais assimilee a un jour de repos.
+  function monthStatsMarkup() {
+    const key = String(state.dateJumpMonth || parisIso().slice(0, 7)),
+      date = dateObj(key + "-01"),
+      label = cap(date.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })),
+      title = '<span class="ghe-monthflip-kicker">BILAN PERSONNEL</span><h3>' + esc(label) + '</h3>';
+    if (!state.ready || !token() || !(has("planning_personal") || has("admin")))
+      return '<div class="ghe-monthflip-stats-empty">' + title +
+        '<p>Connectez-vous avec un accès autorisé pour consulter vos statistiques personnelles.</p></div>';
+    if (state.bootStatus !== "ready")
+      return '<div class="ghe-monthflip-stats-empty" role="status">' + title +
+        '<p>' + esc(state.bootStatus === "error" ? "Planning indisponible pour le moment." : "Chargement du planning…") + '</p></div>';
+
+    // Meme premiere ligne par date que le calendrier mensuel actuel.
+    const rows = new Map();
+    for (const row of state.boot?.personal || []) {
+      const iso = String(row?.date || "").slice(0, 10);
+      if (!iso.startsWith(key + "-") || !/^\d{4}-\d{2}-\d{2}$/.test(iso) || rows.has(iso)) continue;
+      const raw = String(row?.code || row?.source_value || "").trim();
+      if (raw) rows.set(iso, raw);
+    }
+    if (!rows.size)
+      return '<div class="ghe-monthflip-stats-empty" role="status">' + title +
+        '<p>Aucune donnée de planning renseignée pour ce mois. Les jours non renseignés ne sont pas comptés comme des repos.</p></div>';
+
+    const count = { work: 0, rest: 0, leave: 0, training: 0, absence: 0, unknown: 0 },
+      shifts = { M: 0, J: 0, J4: 0, S: 0, N: 0, other: 0 };
+    for (const raw of rows.values()) {
+      const definition = shiftDefinition(raw),
+        kind = String(definition?.kind || "").toLowerCase(),
+        base = canonicalShift(raw);
+      if (definition?.is_working === true) {
+        count.work++;
+        if (Object.prototype.hasOwnProperty.call(shifts, base)) shifts[base]++;
+        else shifts.other++;
+      } else if (kind === "rest") count.rest++;
+      else if (kind === "leave") count.leave++;
+      else if (kind === "training") count.training++;
+      else if (["medical", "absence", "union"].includes(kind)) count.absence++;
+      else count.unknown++;
+    }
+    const appointments = (state.boot?.agenda_items || []).filter(item =>
+      String(item?.event_date || "").slice(0, 7) === key).length;
+    const tile = (value, label, extra, cls = "") =>
+      '<div class="ghe-monthflip-metric ' + cls + '"><strong>' + value +
+      '</strong><span>' + esc(label) + '</span><small>' + esc(extra) + '</small></div>';
+    const shiftLabels = [["M", "Matin"], ["J", "Journée"], ["J4", "J4"],
+      ["S", "Soir"], ["N", "Nuit"], ["other", "Autres postes"]];
+    const breakdown = shiftLabels.filter(([keyName]) => keyName !== "other" || shifts.other).map(([keyName, name]) => {
+      const total = shifts[keyName],
+        width = count.work ? Math.round(total / count.work * 100) : 0;
+      return '<div class="ghe-monthflip-shift-row code-' + esc(keyName.toLowerCase()) +
+        '"><span>' + esc(name) + '</span><div class="ghe-monthflip-shift-rail" aria-hidden="true">' +
+        '<i style="width:' + width + '%"></i></div><strong>' + total + '</strong></div>';
+    }).join("");
+    const notes = [
+      count.training ? count.training + " formation" + (count.training > 1 ? "s" : "") : "",
+      count.absence ? count.absence + " absence" + (count.absence > 1 ? "s" : "") + " / motif particulier" : "",
+      count.unknown ? count.unknown + " code" + (count.unknown > 1 ? "s" : "") + " non classé" + (count.unknown > 1 ? "s" : "") : ""
+    ].filter(Boolean);
+    return '<div class="ghe-monthflip-stats">' + title +
+      '<div class="ghe-monthflip-metrics" aria-label="Chiffres du mois">' +
+      tile(count.work, "Jours travaillés", "Shifts reconnus", "is-work") +
+      tile(count.rest, "Repos", "Codes de repos", "is-rest") +
+      tile(count.leave, "Congés", "Codes de congé", "is-leave") +
+      tile(appointments, "Événements", "Agenda du mois", "is-events") +
+      '</div><section class="ghe-monthflip-breakdown" aria-label="Répartition des postes">' +
+      '<div class="ghe-monthflip-breakdown-head"><strong>Répartition des postes</strong><small>' +
+      count.work + ' journée' + (count.work > 1 ? 's' : '') + '</small></div>' +
+      (count.work ? breakdown : '<p class="ghe-monthflip-no-work">Aucun poste reconnu sur ce mois.</p>') +
+      '</section><p class="ghe-monthflip-source">' + rows.size +
+      ' jour' + (rows.size > 1 ? 's' : '') + ' renseigné' + (rows.size > 1 ? 's' : '') +
+      ' · Les cases vides ne sont pas des repos.</p>' +
+      (notes.length ? '<p class="ghe-monthflip-notes">' + esc(notes.join(' · ')) + '</p>' : '') +
+      '</div>';
+  }
+
+  function monthFlipCard() {
+    const flipped = state.monthFlipped,
+      key = String(state.dateJumpMonth || parisIso().slice(0, 7)),
+      display = cap(dateObj(key + "-01").toLocaleDateString("fr-FR", {month: "long", year: "numeric"}));
+    return '<div class="ghe-monthflip-stage" data-month-flip data-side="' + (flipped ? 'back' : 'front') +
+      '" aria-label="Calendrier et statistiques du mois"><div class="ghe-monthflip-track">' +
+      '<section class="ghe-monthflip-face ghe-monthflip-front" aria-label="Calendrier mensuel"' +
+      (flipped ? ' inert aria-hidden="true"' : ' aria-hidden="false"') + '>' +
+      planningCalendarOverview() +
+      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-open" data-month-turn-open aria-expanded="' +
+      flipped + '" aria-label="Voir les statistiques du mois affiché">' +
+      '<span aria-hidden="true">▥</span> Voir les statistiques du mois <b aria-hidden="true">↻</b></button></section>' +
+      '<section class="ghe-monthflip-face ghe-monthflip-back" aria-label="Statistiques du mois"' +
+      (!flipped ? ' inert aria-hidden="true"' : ' aria-hidden="false"') + '>' +
+      '<nav class="ghe-monthflip-nav" aria-label="Changer le mois des statistiques">' +
+      '<button type="button" data-month-stat-step="-1" aria-label="Mois précédent"' +
+      (planningLoading() ? ' disabled' : '') + '>‹</button><strong>' + esc(display) + '</strong>' +
+      '<button type="button" data-month-stat-step="1" aria-label="Mois suivant"' +
+      (planningLoading() ? ' disabled' : '') + '>›</button></nav>' +
+      monthStatsMarkup() +
+      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-return" data-month-turn-close ' +
+      'aria-label="Revenir au calendrier du mois">↶ Revenir au calendrier</button></section>' +
+      '</div></div>';
+  }
+
   function weekWidget() {
     const w = upcomingHomeWeek(),
       loading = planningLoading(),
@@ -3736,7 +3840,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" aria-hidden="true"><span>AU MOIS</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${planningCalendarOverview()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard()}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -3858,6 +3962,33 @@ function personalDrawerRow(icon,label,action,meta="") {
       weekFlip.querySelector("[data-week-turn-open]")?.setAttribute("aria-expanded",String(state.weekFlipped));
       syncWeekFlipHeight(weekFlip);
       weekFlip.querySelector(state.weekFlipped?"[data-week-turn-close]":"[data-week-turn-open]")?.focus({preventScroll:true});
+    });
+    const monthFlip = root.querySelector("[data-month-flip]");
+    monthFlip?.addEventListener("click", event => {
+      const step = event.target.closest("[data-month-stat-step]");
+      if (step) {
+        if (!planningLoading()) moveCalendarMonth(step.dataset.monthStatStep);
+        return;
+      }
+      const open = event.target.closest("[data-month-turn-open]");
+      const close = event.target.closest("[data-month-turn-close]");
+      if (!open && !close) return;
+      state.monthFlipped = Boolean(open);
+      monthFlip.dataset.side = state.monthFlipped ? "back" : "front";
+      const heading = state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS";
+      const separator = root.querySelector("[data-month-separator]");
+      if (separator) {
+        separator.setAttribute("aria-label", heading);
+        separator.querySelector("[data-month-separator-label]").textContent = heading;
+      }
+      const front = monthFlip.querySelector(".ghe-monthflip-front");
+      const back = monthFlip.querySelector(".ghe-monthflip-back");
+      front?.toggleAttribute("inert", state.monthFlipped);
+      front?.setAttribute("aria-hidden", String(state.monthFlipped));
+      back?.toggleAttribute("inert", !state.monthFlipped);
+      back?.setAttribute("aria-hidden", String(!state.monthFlipped));
+      monthFlip.querySelector("[data-month-turn-open]")?.setAttribute("aria-expanded", String(state.monthFlipped));
+      monthFlip.querySelector(state.monthFlipped ? "[data-month-turn-close]" : "[data-month-turn-open]")?.focus({preventScroll:true});
     });
     const premium=root.querySelector("[data-premium-flip]");
     premium?.addEventListener("click",event=>{
@@ -4687,7 +4818,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", () => document.getElementById("hcBellDialog")?.close?.());
-  window.addEventListener("stip:session-ended",()=>{state.premiumFlipped=false;state.weekFlipped=false;});
+  window.addEventListener("stip:session-ended",()=>{state.premiumFlipped=false;state.weekFlipped=false;state.monthFlipped=false;});
   window.addEventListener("stip:session-ended", ended);
   window.addEventListener("stip:messages-unread", () => { state.renderSig = ""; render(); });
   $("#hsPanelBack")?.addEventListener("click", () => panel(false));
