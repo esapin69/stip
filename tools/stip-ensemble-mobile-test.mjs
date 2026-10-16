@@ -77,4 +77,29 @@ await flush();
 assert.match(create.host.innerHTML, /Collègue Test/, "Directory must be available after its own response");
 assert.doesNotMatch(create.host.innerHTML, /Chargement des disponibilités et des collègues/, "Submission should unlock when its required data are ready");
 
+const available = createPage("?tab=dispos");
+assert.match(available.host.innerHTML, /On se retrouve/, "New shared entry uses the community name");
+assert.match(available.host.innerHTML, /Qui finit en même temps que moi/, "Availability tab must open directly");
+assert.match(available.host.innerHTML, /créneaux possibles/, "Availability must never claim confirmed attendance");
+finish(available, "colleagues", { colleagues: [
+  { id: "peer-1", name: "Collègue Exemple", can_invite: true },
+  { id: "peer-2", name: "Autre collègue", can_invite: true }
+] });
+await flush();
+assert.match(available.host.innerHTML, /Collègue Exemple/, "Use canonical colleague directory");
+assert.match(source, /call\("matches",\{target_agent_id:id\}\)/, "Reuse canonical authenticated schedule comparison");
+assert.match(source, /state\.mode=names\.every\(d=>d\.my_end===d\.peer_end\)\?"afterwork":"fixed"/,
+  "Respect exact same-shift requirement for afterwork invitations");
+assert.match(source, /state\.guests=new Set\(names\.map\(d=>d\.id\)\)/,
+  "A proposed compatible slot must preselect actual matched colleagues");
+assert.doesNotMatch(available.host.innerHTML, /Camille|Samir|Noa/, "Never insert fictitious colleagues");
+
+const invitations = createPage("?tab=invitations");
+finish(invitations, "list", { events: [
+  { id:"invite-1", title:"Boxe", icon:"🥊", dates:["2099-10-22"], needs_response:true, invitation_status:"pending", status:"active", schedule_mode:"fixed", time_label:"19:00", participants:[] }
+] });
+await flush();
+assert.match(invitations.host.innerHTML, /Mes invitations/, "Dedicated invitation lens is available");
+assert.match(invitations.host.innerHTML, /Boxe/, "Pending invitation appears in the single canonical list");
+
 console.log("PASS — GHE Sorties mobile: catalogue, instant shell, progressive requests, create and trips.");
