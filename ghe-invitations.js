@@ -40,7 +40,7 @@ function card(e,day,cancelled=false,change=null){
  const chatId=e.series_conversation_id;
  const chat=chatId?'<a href="index.html?quick=communication&tab=dm&conversation='+encodeURIComponent(chatId)+'#/communication/dm">💬 Discussion</a>':"";
  const statusText=choice==="yes"?"Confirmé":choice==="no"?"Refusé":"Sans réponse";
- return '<article class="ghe-invite-card" data-invite-event="'+esc(e.id)+'" aria-label="'+esc(e.title+" "+fmt(day))+'">'+
+ return '<article class="ghe-invite-card" data-invite-event="'+esc(e.id)+'" data-invite-day="'+esc(day)+'" aria-label="'+esc(e.title+" "+fmt(day))+'">'+
  '<div class="ghe-invite-top"><span class="ghe-invite-emoji" aria-hidden="true">'+esc(e.icon||"📅")+'</span><div style="flex:1"><h2>'+esc(e.title)+'</h2><p>'+
  esc(fmt(day))+' · '+esc(e.time_label||"Horaire à préciser")+'<br>'+esc(e.location||"Lieu à confirmer")+
  '<br>Organisé par '+esc(e.organizer_name||"Organisateur")+'</p></div><span class="ghe-invite-status">'+esc(statusText)+'</span></div>'+
@@ -78,9 +78,11 @@ async function load(){
  authToken=token;loading=true;
  try{const result=await call("list",{},token);if(localStorage.getItem(STORE)!==token)return;events=result.events||[];render();
   if(!deepLinkFocused){
-   const eventId=new URLSearchParams(location.search).get("event");
+   const params=new URLSearchParams(location.search);
+   const eventId=params.get("event"),focusDay=params.get("date");
    if(eventId){
-    const item=[...host.querySelectorAll("[data-invite-event]")].find(el=>el.dataset.inviteEvent===eventId);
+    const item=[...host.querySelectorAll("[data-invite-event]")].find(el=>
+     el.dataset.inviteEvent===eventId&&(!focusDay||el.dataset.inviteDay===focusDay));
     if(item){deepLinkFocused=true;item.scrollIntoView({block:"center",behavior:"instant"});}
    }
   }
