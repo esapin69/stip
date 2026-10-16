@@ -152,6 +152,96 @@ async function notificationSet(ctx:any,body:any){
   if(error)throw error;
   return{ok:true,event_key:eventKey,enabled,push_enabled:type.push_enabled!==false}
 }
+// Préférences de notifications : la même source est lue par les réglages et l'envoi push.
+const WHEELCHAIR_NOTIFICATION_BUILDINGS=["neuro","cardio","hfme","a4","b14","ghe"];
+function defaultNotificationRules(){
+  return {wheelchair_buildings:[...WHEELCHAIR_NOTIFICATION_BUILDINGS],wheelchair_work_only:true,team_chat_work_only:true}
+}
+async function notificationRules(ctx:any){
+  const {data,error}=await db.from("stip_message_notification_rules")
+    .select("wheelchair_buildings,wheelchair_work_only,team_chat_work_only")
+    .eq("agent_id",ctx.agent.id).maybeSingle();
+  if(error)throw error;
+  const defaults=defaultNotificationRules();
+  return {...defaults,...(data||{}),
+    wheelchair_buildings:Array.isArray(data?.wheelchair_buildings)
+      ?data.wheelchair_buildings.filter((key:string)=>WHEELCHAIR_NOTIFICATION_BUILDINGS.includes(key)):defaults.wheelchair_buildings}
+}
+async function notificationRulesSet(ctx:any,body:any){
+  if(ctx?.is_trainee)throw Error("Accès non autorisé.");
+  const patch=body.rules&&typeof body.rules==="object"?body.rules:body;
+  const current=await notificationRules(ctx);
+  const has=(key:string)=>Object.prototype.hasOwnProperty.call(patch,key);
+  if(!canUseWheelchairs(ctx)&&(has("wheelchair_buildings")||has("wheelchair_work_only")))
+    throw Error("Réglages Fauteuils non autorisés.");
+  let buildings=current.wheelchair_buildings;
+  if(has("wheelchair_buildings")){
+    if(!Array.isArray(patch.wheelchair_buildings)||patch.wheelchair_buildings.length>WHEELCHAIR_NOTIFICATION_BUILDINGS.length)
+      throw Error("Sélection de bâtiments invalide.");
+    const raw=patch.wheelchair_buildings.map((s:any)=>String(s));
+    if(raw.some((s:string)=>!WHEELCHAIR_NOTIFICATION_BUILDINGS.includes(s)))throw Error("Bâtiment inconnu.");
+    buildings=[...new Set(raw)];
+  }
+  for(const name of ["wheelchair_work_only","team_chat_work_only"])
+    if(has(name)&&typeof patch[name]!=="boolean")throw Error("Réglage horaire invalide.");
+  const value={
+    agent_id:ctx.agent.id,wheelchair_buildings:buildings,
+    wheelchair_work_only:has("wheelchair_work_only")?patch.wheelchair_work_only:current.wheelchair_work_only,
+    team_chat_work_only:has("team_chat_work_only")?patch.team_chat_work_only:current.team_chat_work_only,
+    updated_at:new Date().toISOString()
+  };
+  const {error}=await db.from("stip_message_notification_rules").upsert(value,{onConflict:"agent_id"});
+  if(error)throw error;
+  return {ok:true,rules:{wheelchair_buildings:value.wheelchair_buildings,
+    wheelchair_work_only:value.wheelchair_work_only,team_chat_work_only:value.team_chat_work_only}}
+}
+async function recipientNotificationRules(ids:string[]){
+  if(!ids.length)return new Map<string,any>();
+  const {data,error}=await db.from("stip_message_notification_rules")
+    .select("agent_id,wheelchair_buildings,wheelchair_work_only,team_chat_work_only").in("agent_id",ids);
+  if(error)throw error;
+  return new Map((data||[]).map((row:any)=>[String(row.agent_id),row]));
+}
+// Les horaires sont calculés côté serveur en heure locale Europe/Paris à partir du planning réel.
+// Les shifts libres sans heure exacte restent silencieux : une plage possible n'est pas une présence certaine.
+async function recipientsActuallyWorking(ids:string[]){
+  const out=new Set<string>();
+  if(!ids.length)return out;
+  const parts=new Intl.DateTimeFormat("en-CA",{
+    timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit",
+    hour:"2-digit",minute:"2-digit",hourCycle:"h23"
+  }).formatToParts(new Date());
+  const part=(name:string)=>parts.find(x=>x.type===name)?.value||"";
+  const today=part("year")+"-"+part("month")+"-"+part("day");
+  const minute=Number(part("hour"))*60+Number(part("minute"));
+  const previous=new Date(today+"T12:00:00Z");previous.setUTCDate(previous.getUTCDate()-1);
+  const yesterday=previous.toISOString().slice(0,10);
+  const [scheduled,definitions]=await Promise.all([
+    db.from("planning").select("agent_id,date,code").in("agent_id",ids).in("date",[today,yesterday]),
+    db.from("stip_shift_registry").select("code,base_code,start_time,end_time,is_working,schedule_mode,window_start,window_end")
+  ]);
+  if(scheduled.error)throw scheduled.error;
+  if(definitions.error)throw definitions.error;
+  const byCode=new Map((definitions.data||[]).map((s:any)=>[String(s.code||"").toUpperCase(),s]));
+  const minutes=(value:any)=>{const m=String(value||"").match(/^(\\d{1,2}):(\\d{2})/);
+    return m?Number(m[1])*60+Number(m[2]):NaN};
+  for(const plan of scheduled.data||[]){
+    const code=String(plan.code||"").toUpperCase().replace(/\\*/g,"").trim();
+    const spec:any=byCode.get(code);
+    // Pas d'approximation pour les codes non reconnus ou les horaires libres.
+    if(!spec||spec.is_working!==true||spec.schedule_mode==="flexible")continue;
+    const start=minutes(spec.schedule_mode==="fixed"&&spec.window_start?spec.window_start:spec.start_time),
+      end=minutes(spec.schedule_mode==="fixed"&&spec.window_end?spec.window_end:spec.end_time);
+    if(!Number.isFinite(start)||!Number.isFinite(end))continue;
+    const night=end<start;
+    const working=plan.date===today
+      ?(minute>=start&&(night||minute<=end))
+      :(plan.date===yesterday&&night&&minute<=end);
+    if(working)out.add(String(plan.agent_id));
+  }
+  return out
+}
+
 async function dmStatus(ctx:any){
   if(ctx?.is_trainee)return{unread:0};
   const{data:member,error}=await db.from("stip_conversation_members")
@@ -925,7 +1015,18 @@ async function teamSend(ctx:any,body:any){
         fallbackBody=wheelchair?"Nouveau signalement fauteuil":"Nouveau message d’équipe",
         notificationBody=(text||fallbackBody).slice(0,140),
         tab=wheelchair?"fauteuils":"chat";
+      const recipientRules=await recipientNotificationRules(targets);
+      const workIds=targets.filter((id:string)=>{
+        const rule=recipientRules.get(String(id))||defaultNotificationRules();
+        return wheelchair?rule.wheelchair_work_only!==false:rule.team_chat_work_only!==false;
+      });
+      const workingNow=await recipientsActuallyWorking(workIds);
+      const requestedBuilding=String(wheelchair?.building||"ghe").toLowerCase();
+      const alertBuilding=WHEELCHAIR_NOTIFICATION_BUILDINGS.includes(requestedBuilding)?requestedBuilding:"ghe";
       await Promise.allSettled(targets.map(async(agentId:string)=>{
+        const rule=recipientRules.get(String(agentId))||defaultNotificationRules();
+        if(wheelchair&&!(Array.isArray(rule.wheelchair_buildings)?rule.wheelchair_buildings:WHEELCHAIR_NOTIFICATION_BUILDINGS).includes(alertBuilding))return;
+        if((wheelchair?rule.wheelchair_work_only!==false:rule.team_chat_work_only!==false)&&!workingNow.has(String(agentId)))return;
         const targetState=await notificationPreference(agentId,eventKey);
         if(!targetState.enabled||!targetState.push_enabled)return;
         const targetProfile=await messageProfile(agentId),
@@ -1376,6 +1477,8 @@ Deno.serve(async req=>{
     if(a==="dm_status"){if(c.is_trainee)return J({unread:0});return J(await dmStatus(c))}
     if(a==="notification_preferences"){if(c.is_trainee)return J({items:[]});return J(await notificationPreferences(c))}
     if(a==="notification_set"){if(c.is_trainee)throw Error("Accès non autorisé.");return J(await notificationSet(c,b))}
+    if(a==="notification_rules_get"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({rules:await notificationRules(c),wheelchair_access:canUseWheelchairs(c)})}
+    if(a==="notification_rules_set"){return J(await notificationRulesSet(c,b))}
     if(a==="trainees"){if(c.is_trainee)throw Error("Accès non autorisé.");return J({items:await traineeDirectory()})}
     if(a==="trainee_send")return J(await traineeSend(c,b));
     if(a==="trainee_read"){if(!c.is_trainee)throw Error("Accès Stagiaire requis.");return J({ok:true,items:await traineeInbox(c,true)})}
