@@ -72,4 +72,33 @@ vm.runInNewContext(extract(chat,'  function syncComposerDock()', '\n  function s
 assert.equal(properties.get('--tb-dock-left'),'600px');
 assert.equal(properties.get('--tb-dock-width'),'460px');
 assert.match(read('team-chat.css'),/left:var\(--tb-dock-left\)!important/);
+
+// A loaded invitation/follow-up from the existing meeting runtime must have a consumer.
+const home = read('home-shell.js');
+const homeContext = {
+  state:{homeMode:'planning'},has:key=>key==='meeting_notes',fixedShiftLegend:()=>'',
+  homeModeNav:part=>'['+part+']',weekFlipCard:()=> '[week]',
+  monthFlipCard:()=>'',planningCalendarOverview:()=>'',esc:String,
+  window:{STIPMeeting:{pendingHTML:()=>'<section>Pending meeting</section>'}},
+};
+const body = vm.runInNewContext(extract(home,'  function homeModeBody()', '\n  // Le moteur des retours') + ';homeModeBody;',homeContext);
+const markup = body();
+assert(markup.indexOf('Pending meeting')>markup.indexOf('[identity]'));
+assert(markup.indexOf('Pending meeting')<markup.indexOf('[week]'));
+homeContext.has=()=>false;
+assert(!body().includes('Pending meeting'));
+
+// Administrative permissions alone never grant access to another person's meeting.
+const meeting = read('supabase/functions/stip-meeting-notes/index.ts');
+let invitation = null;
+const accessMeeting = vm.runInNewContext(extract(meeting,'async function access(', '\nasync function organizer(')
+  .replace('(c:any,m:any)','(c,m)')+';access;', {
+    checked:async()=>invitation,
+    db:{from:()=>{const query={select:()=>query,eq:()=>query,maybeSingle:()=>query};return query;}},
+  });
+await assert.rejects(accessMeeting({agent_id:'admin',isAdmin:true},{id:'meeting',owner_agent_id:'owner'}),/ACCES_REUNION_REFUSE/);
+invitation={status:'pending',member_role:'invitee'};
+await assert.rejects(accessMeeting({agent_id:'admin',isAdmin:true},{id:'meeting',owner_agent_id:'owner'}),/ACCES_REUNION_REFUSE/);
+invitation={status:'accepted',member_role:'invitee'};
+assert.equal((await accessMeeting({agent_id:'member'},{id:'meeting',owner_agent_id:'owner'})).role,'invitee');
 console.log('PASS — GHE full audit: real CORS, dated populations, missing Cumul, names, external identities and desktop dock.');
