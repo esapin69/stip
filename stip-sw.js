@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261016-action-inbox2";
+const STIP_SW_BUILD="20261016-arrow-confirmed1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
