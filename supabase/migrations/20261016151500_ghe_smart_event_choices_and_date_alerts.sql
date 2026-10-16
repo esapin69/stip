@@ -40,7 +40,7 @@ begin
  if p_agent=e.organizer_agent_id then raise exception 'ORGANISATEUR_NON_INVITE'; end if;
  if not exists(select 1 from public.stip_leisure_invites where event_id=p_event and agent_id=p_agent)
  then raise exception 'ACCES_INVITATION_REQUIS'; end if;
- if p_day is null or p_day<>all(e.dates) and not p_day=any(e.dates) then raise exception 'DATE_INVALIDE'; end if;
+ if p_day is null or not p_day=any(e.dates) then raise exception 'DATE_INVALIDE'; end if;
  if p_day<(now() at time zone 'Europe/Paris')::date then raise exception 'DATE_PASSEE'; end if;
  if p_decision not in ('yes','no','neutral') then raise exception 'CHOIX_INVALIDE'; end if;
  -- Preserve pre-existing selected dates when a colleague first uses per-date answers.
@@ -89,6 +89,8 @@ returns trigger language plpgsql set search_path='public' as $body$
 declare previous jsonb;
 begin
  if old.dates is not distinct from new.dates and old.status is not distinct from new.status then return new; end if;
+ -- Recurring dates are reconciled automatically; do not send mass re-invitations for rolling additions.
+ if new.status='active' and exists(select 1 from public.stip_leisure_recurring where event_id=new.id and active) then return new; end if;
  select coalesce(jsonb_agg(jsonb_build_object('agent_id',agent_id,'selected_dates',selected_dates,'declined',declined,'revision',revision)),'[]'::jsonb)
  into previous from public.stip_leisure_responses where event_id=new.id;
  insert into public.stip_leisure_event_changes(event_id,change_kind,old_dates,new_dates,old_responses)
