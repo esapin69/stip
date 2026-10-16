@@ -114,6 +114,7 @@ begin
 end;
 $function$
 
+;
 
 create or replace function public.stip_purge_expired_leisure()
 returns jsonb language plpgsql security definer set search_path='public' as $clean$
