@@ -462,6 +462,95 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   }})
 }
 
+
+/**
+ * Vue synthétique : classement par bâtiment et étage. Il ne s'agit pas d'un plan
+ * géométrique. La source est exclusivement le snapshot filtré par les droits
+ * de la session. Ce moteur n'ouvre jamais le référentiel complet aux visiteurs.
+ */
+async function visualPdfResponse(snapshot:any,scopeLabel='GHE complet'){
+  const pdf=await PDFDocument.create()
+  const regular=await pdf.embedFont(StandardFonts.Helvetica)
+  const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
+  const W=595.28,H=841.89,M=36,GAP=14,COL=(W-M*2-GAP)/2
+  const navy=rgb(.06,.24,.31),teal=rgb(.04,.54,.61),light=rgb(.93,.97,.98)
+  const muted=rgb(.32,.46,.50),border=rgb(.79,.87,.89),white=rgb(1,1,1)
+  const kinds=new Set(['service','unit','exam','block'])
+  const groups=new Map<string,Map<string,any[]>>()
+  for(const place of snapshot.places||[]){
+    if(!kinds.has(String(place.place_type||'')))continue
+    const building=String(place.building_code||'').trim().toUpperCase()||'?'
+    const floor=String(place.level||'').trim().toUpperCase()||'?'
+    if(!groups.has(building))groups.set(building,new Map())
+    const levels=groups.get(building)!
+    if(!levels.has(floor))levels.set(floor,[])
+    levels.get(floor)!.push(place)
+  }
+  if(!groups.size)throw new Error('Aucune destination à présenter.')
+  const titles:Record<string,string>={HFME:'Hôpital Femme Mère Enfant',HLP:'Cardio - Louis Pradel',PW:'Neuro - Pierre Wertheimer'}
+  const priority=(code:string)=>code==='HFME'?0:code==='HLP'?1:code==='PW'?2:3
+  const order=(f:string)=>f==='RDJ'?-10:f==='-1'?-5:f==='RDC'?0:f==='TM'?.5:f==='?'?999:Number(f)||100
+  const floorLabel=(f:string)=>f==='RDJ'?'REZ-DE-JARDIN':f==='RDC'?'REZ-DE-CHAUSSEE':f==='TM'?'PLATEAU TECHNIQUE':f==='?'?'ETAGE A PRECISER':f==='1'?'1ER ETAGE':/^\d+$/.test(f)?f+'E ETAGE':'NIVEAU '+f
+  const printable=(v:any)=>pdfSafe(v)||'Sans nom'
+  let page:any=null,top=[0,0],pageCount=0,buildingCurrent=''
+  const newPage=(building:string,continued=false)=>{
+    buildingCurrent=building
+    page=pdf.addPage([W,H]);pageCount++
+    page.drawRectangle({x:0,y:H-8,width:W,height:8,color:navy})
+    page.drawText('GHE  /  VISITER LES LIEUX',{x:M,y:H-33,size:9,font:bold,color:teal})
+    const label=printable(titles[building]||('Bâtiment '+(building==='?'?'à préciser':building)))
+    page.drawText(label+(continued?' - suite':''),{x:M,y:H-85,size:21,font:bold,color:navy,maxWidth:W-M*2})
+    page.drawText('SERVICES / UNITES / EXAMENS - '+printable(scopeLabel),{x:M,y:H-105,size:9,font:regular,color:muted,maxWidth:W-M*2})
+    page.drawLine({start:{x:M,y:42},end:{x:W-M,y:42},thickness:.8,color:border})
+    page.drawText('GHE - référentiel filtré selon la session professionnelle',{x:M,y:26,size:7,font:regular,color:muted})
+    page.drawText('Page '+pageCount,{x:W-M-38,y:26,size:7,font:regular,color:muted})
+    top=[H-127,H-127]
+  }
+  const itemLines=(p:any)=>wrapPdf(regular,printable(p.display_name||p.official_name||p.id),8.7,COL-40)
+  const itemHeight=(p:any)=>Math.max(16,itemLines(p).length*11+4)
+  const cardHeight=(items:any[])=>52+items.reduce((n,p)=>n+itemHeight(p),0)
+  const drawCard=(column:number,floor:string,items:any[],part:string)=>{
+    const height=cardHeight(items),x=M+column*(COL+GAP),y=top[column]-height
+    page.drawRectangle({x,y,width:COL,height,borderWidth:.8,borderColor:border,color:white})
+    page.drawRectangle({x,y:y+height-39,width:COL,height:39,color:teal})
+    const heading=floorLabel(floor)+(part?' - '+part:'')
+    page.drawText(printable(heading),{x:x+11,y:y+height-24,size:9,font:bold,color:white,maxWidth:COL-42})
+    page.drawText(String(items.length),{x:x+COL-20,y:y+height-24,size:9,font:bold,color:white})
+    let yy=y+height-53
+    for(const p of items){
+      const lines=itemLines(p)
+      const itemColor=p.place_type==='exam'?rgb(.81,.52,.18):p.place_type==='block'?rgb(.58,.39,.69):teal
+      page.drawCircle({x:x+13,y:yy+3,size:2.5,color:itemColor})
+      for(const l of lines){page.drawText(l,{x:x+23,y:yy,size:8.7,font:regular,color:navy});yy-=11}
+      yy-=Math.max(5,itemHeight(p)-11*lines.length)
+    }
+    top[column]=y-13
+  }
+  const buildings=[...groups.keys()].sort((a,b)=>priority(a)-priority(b)||a.localeCompare(b,'fr'))
+  for(const building of buildings){
+    newPage(building)
+    const floors=groups.get(building)!
+    for(const floor of [...floors.keys()].sort((a,b)=>order(a)-order(b)||a.localeCompare(b,'fr'))){
+      const items=floors.get(floor)!.sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||printable(a.display_name).localeCompare(printable(b.display_name),'fr'))
+      const size=9,parts=Math.ceil(items.length/size)
+      for(let i=0;i<items.length;i+=size){
+        const chunk=items.slice(i,i+size),needed=cardHeight(chunk)
+        const available=[0,1].filter(col=>top[col]-needed>57)
+        if(!available.length){newPage(building,true);available.push(0,1)}
+        const column=available.sort((a,b)=>top[b]-top[a])[0]
+        drawCard(column,floor,chunk,parts>1?String(i/size+1)+'/'+parts:'')
+      }
+    }
+  }
+  const bytes=await pdf.save()
+  return new Response(bytes,{status:200,headers:{
+    ...CORS,
+    'Content-Type':'application/pdf',
+    'Content-Disposition':'attachment; filename="Visite-des-lieux-Visuel-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
+    'Cache-Control':'no-store'
+  }})
+}
+
 Deno.serve(async req=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:CORS})
   if(req.method!=='POST')return json({error:'Méthode non autorisée.'},405)
@@ -473,6 +562,12 @@ Deno.serve(async req=>{
     if(!session)return json({error:'Session STIP expirée.'},401)
     if(!session.app_allowed)return json({error:'Accès Visiter les lieux non autorisé.'},403)
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
+    if(action==='export_visual_pdf'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
+      const scoped=scopedSnapshot(fullSnapshot,body.scope)
+      return await visualPdfResponse(scoped.snapshot,scoped.label)
+    }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
