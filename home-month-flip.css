@@ -227,3 +227,71 @@
 @media(prefers-reduced-motion:reduce){
   .ghe-monthflip-track,.ghe-monthflip-turn{transition:none!important}
 }
+
+
+/* Lecture du rythme : seulement les observations ayant des donnees fiables. */
+.ghe-monthflip-insights{
+  display:flex!important;flex-direction:column!important;gap:8px!important;
+  min-width:0;padding:13px!important;
+  border:1px solid #dce9ed!important;
+  border-radius:18px!important;
+  background:linear-gradient(145deg,#f9fcfd,#fff)!important;
+}
+.ghe-monthflip-insights-head{
+  display:flex!important;justify-content:space-between!important;
+  gap:8px;align-items:center;padding:0 2px 2px;
+}
+.ghe-monthflip-insights-head>strong{
+  color:#1d4a5a;font:900 .88rem/1.2 system-ui,sans-serif;
+}
+.ghe-monthflip-insights-head>small{
+  color:#6b8490;font:750 .66rem/1.2 system-ui,sans-serif;
+  white-space:nowrap;
+}
+.ghe-monthflip-insight{
+  box-sizing:border-box!important;
+  display:grid!important;
+  grid-template-columns:38px minmax(0,1fr)!important;
+  align-items:center!important;gap:10px!important;
+  padding:9px 11px!important;
+  border-radius:13px!important;border:1px solid #e2edf0!important;
+  border-left:3px solid var(--rhythm-ink,#7c9aaa)!important;
+  background:linear-gradient(110deg,var(--rhythm-soft,#f3f8fa),#fff)!important;
+}
+.ghe-monthflip-insight.is-long-work{
+  --rhythm-ink:#cd8241;--rhythm-soft:#fff7ed;
+}
+.ghe-monthflip-insight.is-long-rest{
+  --rhythm-ink:#258968;--rhythm-soft:#effbf6;
+}
+.ghe-monthflip-insight.is-work{
+  --rhythm-ink:#3e8a9d;--rhythm-soft:#f1f9fa;
+}
+.ghe-monthflip-insight.is-rest{
+  --rhythm-ink:#6480b2;--rhythm-soft:#f3f6fc;
+}
+.ghe-monthflip-insight>div{
+  display:flex!important;flex-direction:column!important;
+  gap:4px!important;min-width:0;
+}
+.ghe-monthflip-insight strong{
+  color:#22495a;font:900 .79rem/1.25 system-ui,sans-serif;
+}
+.ghe-monthflip-insight small{
+  color:#687e88;font:700 .7rem/1.3 system-ui,sans-serif;
+}
+.ghe-monthflip-insight-symbol{
+  box-sizing:border-box;display:grid!important;place-items:center!important;
+  width:38px;height:38px;border-radius:12px;
+  color:var(--rhythm-ink,#557c8c);
+  background:color-mix(in srgb,var(--rhythm-ink,#557c8c) 10%,white);
+  font:900 1.35rem/1 system-ui,sans-serif;
+}
+@media(max-width:390px){
+  .ghe-monthflip-insights{padding:9px!important}
+  .ghe-monthflip-insight{padding:9px 7px!important;gap:8px!important}
+  .ghe-monthflip-insights-head>strong{font-size:.81rem}
+  .ghe-monthflip-insights-head>small{font-size:.61rem}
+  .ghe-monthflip-insight strong{font-size:.73rem}
+  .ghe-monthflip-insight small{font-size:.66rem}
+}
