@@ -1680,7 +1680,7 @@
       <div class="ghe-weekflip-track">
         <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
           ${front}
-          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Retourner le bloc pour voir la semaine en cours">Voir cette semaine <span aria-hidden="true">↻</span></button>
+          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Voir toute la semaine de planning"><span class="ghe-weekflip-turn-icon" aria-hidden="true">▦</span>Voir toute la semaine <span class="ghe-weekflip-turn-chevron" aria-hidden="true">›</span></button>
         </div>
         <div class="ghe-weekflip-face ghe-weekflip-back hc-week-context-master" data-stip-context-master="week" ${flipped?'aria-hidden="false"':'inert aria-hidden="true"'}>
           ${weekFlipBack()}
