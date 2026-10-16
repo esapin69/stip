@@ -93,3 +93,35 @@
   .ghe-weekflip-face>.ghe-flip-cta,.ghe-monthflip-face>.ghe-flip-cta,
   .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{transition:none!important}
 }
+
+/* Taille de référence (capture utilisateur) : En direct et son retour uniquement.
+   La position est portée par les footers existants ; pas de translate ni déplacement.
+   Même gabarit compact pour les deux faces, autres boutons 360° inchangés. */
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer>.ghe-flip-cta,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-footer>.ghe-flip-cta{
+  width:clamp(220px,62%,350px)!important;
+  max-width:calc(100% - 16px)!important;
+  min-width:0!important;
+  min-height:44px!important;
+  padding:8px 14px!important;
+  gap:9px!important;
+  border-radius:15px!important;
+  font-size:clamp(.88rem,3vw,.96rem)!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer>.ghe-flip-cta .ghe-flip-cta-icon,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-footer>.ghe-flip-cta .ghe-flip-cta-icon{
+  flex-basis:19px!important;
+  width:19px!important;
+  height:19px!important;
+  font-size:1.08rem!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer>.ghe-flip-cta .ghe-flip-cta-dot{
+  flex-basis:16px!important;
+  width:16px!important;
+  height:16px!important;
+  border-width:3px!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer>.ghe-flip-cta .ghe-flip-cta-arrow,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-footer>.ghe-flip-cta .ghe-flip-cta-arrow{
+  font-size:1.18rem!important;
+}
