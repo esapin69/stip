@@ -1,0 +1,229 @@
+/* Accueil GHE — troisième carte 360°, calendrier au recto et bilan au verso.
+   Les deux faces partagent la même case CSS Grid : pas de saut de hauteur. */
+.ghe-monthflip-stage{
+  box-sizing:border-box;
+  position:relative;
+  width:100%;min-width:0;
+  perspective:1500px;isolation:isolate;
+}
+.ghe-monthflip-track{
+  box-sizing:border-box;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:auto!important;
+  align-items:stretch!important;
+  width:100%;min-width:0;height:auto!important;
+  transform-style:preserve-3d;
+  transition:transform .6s cubic-bezier(.22,.74,.2,1);
+}
+.ghe-monthflip-stage[data-side="back"] .ghe-monthflip-track{transform:rotateY(180deg)}
+.ghe-monthflip-face{
+  box-sizing:border-box!important;
+  grid-area:1/1!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:12px!important;
+  width:100%!important;min-width:0!important;
+  align-self:stretch!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  backface-visibility:hidden!important;
+  -webkit-backface-visibility:hidden!important;
+  transform-style:preserve-3d;
+}
+.ghe-monthflip-front{transform:rotateY(0deg)}
+.ghe-monthflip-back{
+  transform:rotateY(180deg);
+  padding:4px 3px 0!important;
+}
+.ghe-monthflip-face > .hc-planning-calendar-block{flex:1 1 auto;min-height:0}
+.ghe-monthflip-turn{
+  box-sizing:border-box!important;
+  cursor:pointer!important;
+  touch-action:manipulation;
+  min-height:49px!important;
+  width:100%!important;
+  border-radius:16px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:9px!important;
+  padding:12px 15px!important;
+  font:900 .91rem/1.2 system-ui,sans-serif!important;
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.ghe-monthflip-open{
+  position:relative;overflow:hidden;
+  margin:10px auto 0!important;
+  border:1px solid #7eabb8!important;
+  color:#fff!important;
+  background:linear-gradient(110deg,#0e6e81,#168798 65%,#2895a5)!important;
+  box-shadow:0 7px 17px rgba(22,101,123,.17),inset 0 1px 0 rgba(255,255,255,.36)!important;
+  text-shadow:0 1px 2px rgba(7,49,65,.23);
+}
+.ghe-monthflip-open::before{
+  content:"";position:absolute;inset:0 0 58%;
+  background:linear-gradient(#ffffff24,transparent);pointer-events:none;
+}
+.ghe-monthflip-open>b{
+  font-size:1.35rem;font-weight:600;line-height:1;margin-left:auto;
+}
+.ghe-monthflip-open>span{font-size:1.25rem;line-height:1}
+.ghe-monthflip-return{
+  margin:auto auto 0!important;
+  color:#205b6d!important;
+  border:1px solid #bdd8dc!important;
+  background:linear-gradient(180deg,#fff,#edf6f8)!important;
+  box-shadow:0 3px 8px rgba(15,81,102,.07)!important;
+}
+.ghe-monthflip-turn:active{transform:translateY(1px);box-shadow:0 2px 5px rgba(15,81,102,.12)!important}
+.ghe-monthflip-turn:focus-visible,.ghe-monthflip-nav button:focus-visible{
+  outline:3px solid #118ba4!important;outline-offset:3px!important;
+}
+.ghe-monthflip-nav{
+  display:grid!important;
+  grid-template-columns:46px minmax(0,1fr) 46px!important;
+  align-items:center;gap:8px!important;
+}
+.ghe-monthflip-nav strong{
+  text-align:center;
+  text-transform:capitalize;
+  color:#173f50;
+  font:950 1.13rem/1.2 system-ui,sans-serif;
+}
+.ghe-monthflip-nav button{
+  box-sizing:border-box;
+  border:1px solid #dcebee;border-radius:13px;
+  background:#f3f8f9;color:#176276;
+  height:45px;width:45px;padding:0;
+  font:600 1.65rem/1 system-ui,sans-serif;
+  cursor:pointer;
+}
+.ghe-monthflip-nav button:disabled{opacity:.45;cursor:wait}
+.ghe-monthflip-stats,.ghe-monthflip-stats-empty{
+  display:flex;flex:1 1 auto;flex-direction:column;
+  gap:12px;
+  min-width:0;
+}
+.ghe-monthflip-stats>h3,.ghe-monthflip-stats-empty>h3{
+  margin:-8px 0 1px!important;
+  color:#163f50;font:950 clamp(1.1rem,4.8vw,1.4rem)/1.15 system-ui,sans-serif!important;
+  text-transform:capitalize;
+}
+.ghe-monthflip-kicker{
+  font:900 .64rem/1.2 system-ui,sans-serif;
+  letter-spacing:.13em;color:#60808a;
+}
+.ghe-monthflip-stats-empty{
+  justify-content:center;text-align:center;padding:24px 12px!important;
+  background:linear-gradient(140deg,#f5fafb,#fff);
+  border-radius:16px;border:1px dashed #c7dce1;
+}
+.ghe-monthflip-stats-empty p{
+  margin:0!important;color:#617985;
+  font:750 .84rem/1.5 system-ui,sans-serif;
+}
+.ghe-monthflip-metrics{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px!important;
+}
+.ghe-monthflip-metric{
+  box-sizing:border-box!important;
+  display:flex!important;flex-direction:column!important;gap:3px!important;
+  min-width:0!important;min-height:103px;
+  padding:13px 13px 11px!important;
+  border:1px solid #dbe9ec!important;
+  border-left:4px solid var(--metric-color,#8ba4ad)!important;
+  border-radius:16px!important;
+  background:linear-gradient(145deg,#fff,#f7fbfb)!important;
+  box-shadow:0 4px 10px rgba(22,79,94,.055)!important;
+}
+.ghe-monthflip-metric.is-work{--metric-color:#16946e}
+.ghe-monthflip-metric.is-rest{--metric-color:#5579a9}
+.ghe-monthflip-metric.is-leave{--metric-color:#c4a234}
+.ghe-monthflip-metric.is-events{--metric-color:#8b6cc0}
+.ghe-monthflip-metric>strong{
+  font:950 clamp(1.75rem,7vw,2.2rem)/1 system-ui,sans-serif!important;
+  letter-spacing:-.045em;color:#1a4352!important;
+}
+.ghe-monthflip-metric>span{
+  font:900 .82rem/1.2 system-ui,sans-serif!important;color:#274a59!important;
+}
+.ghe-monthflip-metric>small{
+  font:750 .65rem/1.25 system-ui,sans-serif!important;color:#78909a!important;
+}
+.ghe-monthflip-breakdown{
+  display:flex!important;flex-direction:column!important;gap:8px!important;
+  padding:13px 13px 14px!important;
+  border:1px solid #dce9ed!important;
+  border-radius:18px!important;
+  background:linear-gradient(155deg,#f8fcfd,#fff)!important;
+}
+.ghe-monthflip-breakdown-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:3px;
+}
+.ghe-monthflip-breakdown-head strong{
+  font:900 .88rem/1.2 system-ui,sans-serif;color:#1c4d5d;
+}
+.ghe-monthflip-breakdown-head small{
+  font:800 .64rem/1.2 system-ui,sans-serif;color:#71858b;
+  white-space:nowrap;
+}
+.ghe-monthflip-shift-row{
+  --month-shift-color:#8fa6af;
+  display:grid!important;grid-template-columns:77px minmax(0,1fr) 25px!important;
+  gap:8px!important;align-items:center!important;
+  min-height:22px;
+}
+.ghe-monthflip-shift-row.code-m{--month-shift-color:var(--stip-shift-m,#1784ec)}
+.ghe-monthflip-shift-row.code-j{--month-shift-color:var(--stip-shift-j,#00ab68)}
+.ghe-monthflip-shift-row.code-j4{--month-shift-color:var(--stip-shift-j4,#ff9600)}
+.ghe-monthflip-shift-row.code-s{--month-shift-color:var(--stip-shift-s,#f4cb00)}
+.ghe-monthflip-shift-row.code-n{--month-shift-color:var(--stip-shift-n,#202830)}
+.ghe-monthflip-shift-row>span{
+  color:#395663;
+  font:800 .72rem/1.2 system-ui,sans-serif;
+}
+.ghe-monthflip-shift-row>strong{
+  font:900 .78rem/1.1 system-ui,sans-serif;
+  color:#284956;text-align:right;font-variant-numeric:tabular-nums;
+}
+.ghe-monthflip-shift-rail{
+  box-sizing:border-box;
+  width:100%;height:9px;border-radius:99px;overflow:hidden;
+  background:#e7eef0;
+}
+.ghe-monthflip-shift-rail>i{
+  display:block;height:100%;border-radius:99px;
+  background:var(--month-shift-color);
+  min-width:0;
+}
+.ghe-monthflip-source,.ghe-monthflip-notes{
+  margin:0!important;
+  color:#637b86;
+  font:750 .72rem/1.4 system-ui,sans-serif!important;
+}
+.ghe-monthflip-notes{
+  padding:8px 10px!important;
+  border-radius:10px;
+  background:#f3f8f9;
+  color:#3f6371;
+}
+.ghe-monthflip-no-work{margin:4px 0!important;color:#71838b;font-size:.75rem}
+@media(max-width:390px){
+  .ghe-monthflip-turn{font-size:.83rem!important;padding:11px 9px!important;gap:6px!important}
+  .ghe-monthflip-nav{grid-template-columns:40px minmax(0,1fr) 40px!important;gap:5px!important}
+  .ghe-monthflip-nav button{width:40px;height:40px}
+  .ghe-monthflip-nav strong{font-size:1rem}
+  .ghe-monthflip-metrics{gap:6px!important}
+  .ghe-monthflip-metric{padding:11px 10px!important;min-height:95px}
+  .ghe-monthflip-shift-row{grid-template-columns:65px minmax(0,1fr) 20px!important;gap:5px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .ghe-monthflip-track,.ghe-monthflip-turn{transition:none!important}
+}
