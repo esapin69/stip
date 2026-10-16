@@ -3124,7 +3124,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     ...(has("agent_directory") || has("admin") ? [{title:"Collègues",subtitle:"Rechercher une personne",icon:"♙",action:"agents"}] : []),
     ...(has("messages") ? [{title:"Communication",subtitle:"Chat équipe, messages et fauteuils",icon:"♧",action:"communication"},{title:"Fauteuils",subtitle:"Signalements et échanges",icon:"♿",action:"wheelchairs"}] : []),
     ...(has("planning_personal") ? [{title:"Mon planning",subtitle:"Mes horaires",icon:"▤",action:"planning"}] : []),
-    {title:"Sorties et trajets",subtitle:"Activités, invitations et déplacements",icon:"↗",action:"leisure"},
+    {title:"On se retrouve",subtitle:"Sorties, disponibilités, invitations et trajets",icon:"↗",action:"leisure"},
     {title:"Dudy au GHE",subtitle:"Divertissement et épisodes",icon:"▣",action:"dudy"},
     {title:"Application GHE",subtitle:"Installer ou ouvrir l'application",icon:"▥",action:"mobile"},
     ...(has("dialog") || has("assistant_enabled") ? [{title:"STIP IA",subtitle:"Assistant du service",icon:"✧",action:"assistant"}] : []),
