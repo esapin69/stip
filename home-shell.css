@@ -5697,3 +5697,127 @@ dialog#hcBellDialog[open] {
   display:block;margin-top:2px;color:#936b22;
   font-size:.69rem;font-style:normal;font-weight:850;
 }
+
+
+/* 20261016 - Mon espace : des groupes compacts, une fiche directe si unique. */
+#hcPersonalDrawer .ghe-drawer-agenda-groups { display:grid; gap:8px; margin:11px 0 4px; }
+#hcPersonalDrawer .ghe-drawer-agenda-group {
+  box-sizing:border-box; width:100%; min-width:0; display:grid;
+  grid-template-columns:minmax(0,1fr) auto 12px; align-items:center;
+  gap:9px; padding:13px 11px; border-radius:15px;
+  background:#f5f9fa; border:1px solid #e0ebee; cursor:pointer;
+  text-align:left; color:#174557; min-height:65px;
+}
+#hcPersonalDrawer .ghe-drawer-agenda-group-main{display:grid;gap:4px;min-width:0;}
+#hcPersonalDrawer .ghe-drawer-agenda-group-main>strong {font-size:.96rem;font-weight:900;}
+#hcPersonalDrawer .ghe-drawer-agenda-group-main>small {
+  font-size:.75rem; line-height:1.35; color:#6e858e;
+  overflow-wrap:anywhere; display:-webkit-box; -webkit-line-clamp:2;
+  -webkit-box-orient:vertical; overflow:hidden;
+}
+#hcPersonalDrawer .ghe-drawer-agenda-group-count{
+  padding:3px 9px; border-radius:999px; background:#e4f1f5;
+  font-weight:900; color:#24778a; font-size:.81rem;
+}
+#hcPersonalDrawer .ghe-drawer-agenda-group.is-feedback {background:#fffbef;border-color:#eee0b9;}
+#hcPersonalDrawer .ghe-drawer-agenda-group.is-feedback .ghe-drawer-agenda-group-count{
+  background:#fff0c6;color:#96701e;
+}
+#hcPersonalDrawer .ghe-drawer-agenda-group.is-proposals {background:#f5f3ff;border-color:#e4ddef;}
+#hcPersonalDrawer .ghe-drawer-agenda-group.is-proposals .ghe-drawer-agenda-group-count{
+  background:#e9e0f9;color:#8055a4;
+}
+#hcPersonalDrawer .ghe-drawer-agenda-group:disabled{opacity:.59;cursor:default;}
+#hcPersonalDrawer .ghe-drawer-agenda-group:not(:disabled):active{
+  background:#e8f3f7; transform:scale(.992);
+}
+#hcPersonalDrawer .ghe-drawer-agenda-loading{
+  color:#687e86;font-size:.75rem;margin:10px 8px 0;
+}
+
+/* Modal de sélection uniquement lorsqu'il existe plusieurs éléments. */
+dialog#hcDrawerAgendaDialog:modal,dialog#hcDrawerAgendaDialog[open]{
+  box-sizing:border-box!important;position:fixed!important;inset:auto!important;
+  top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
+  transform:translate(-50%,-50%)!important;margin:0!important;
+  width:min(calc(100vw - 28px),560px)!important;max-width:560px!important;
+  max-height:calc(100dvh - 38px)!important;padding:0!important;
+  border:1px solid #dce8eb!important;border-radius:23px!important;
+  background:#fff!important;color:#173f50!important;
+  box-shadow:0 22px 60px rgba(14,35,48,.24)!important;overflow:hidden!important;
+}
+#hcDrawerAgendaDialog::backdrop{
+  background:rgba(17,34,45,.51)!important;
+  backdrop-filter:blur(3px)!important;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-frame{
+  display:flex;flex-direction:column;
+  min-height:0;max-height:calc(100dvh - 40px);
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-head{
+  display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;
+  gap:10px;padding:14px 15px;border-bottom:1px solid #e7eff1;flex:0 0 auto;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-head button{
+  width:43px;height:43px;border:1px solid #dce8ed;border-radius:15px;
+  background:#f4f9fa;color:#285d6d;font-size:1.5rem;cursor:pointer;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-head small{
+  display:block;color:#66818a;font-weight:880;font-size:.69rem;letter-spacing:.11em;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-head h2{
+  margin:2px 0 0;font-size:1.25rem;line-height:1.2;
+  font-weight:950;color:#173f50;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-head h2 span{
+  color:#43889c;background:#ecf5f8;padding:1px 8px;border-radius:99px;
+  font-size:.77rem;vertical-align:middle;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-modal-scroll{
+  padding:14px 13px 22px;overflow-y:auto;overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;min-height:0;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-month{
+  margin:12px 8px 7px;font-size:.76rem;color:#687e87;
+  letter-spacing:.075em;text-transform:uppercase;font-weight:950;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-entry{
+  display:grid;grid-template-columns:42px minmax(0,1fr) 14px;
+  gap:11px;align-items:center;width:100%;min-height:69px;
+  margin-bottom:8px;padding:13px 10px;
+  border:1px solid #e0e9ed;border-radius:15px;
+  background:#fbfdfd;color:#173d50;text-align:left;cursor:pointer;
+}
+#hcDrawerAgendaDialog .ghe-drawer-agenda-entry:active{
+  background:#eaf5f8;transform:scale(.996);
+}
+#hcDrawerAgendaDialog .ghe-drawer-appointment-icon{
+  display:grid;place-items:center;min-height:39px;font-size:1.45rem;
+  background:#eaf3f6;border-radius:12px;
+}
+#hcDrawerAgendaDialog .ghe-drawer-appointment-icon svg{width:26px;height:26px;}
+#hcDrawerAgendaDialog .ghe-drawer-appointment-copy{
+  display:grid;gap:4px;min-width:0;
+}
+#hcDrawerAgendaDialog .ghe-drawer-appointment-copy strong{
+  font-size:.94rem;line-height:1.28;font-weight:880;overflow-wrap:anywhere;
+}
+#hcDrawerAgendaDialog .ghe-drawer-appointment-copy small{
+  font-size:.77rem;line-height:1.32;color:#6e858e;overflow-wrap:anywhere;
+}
+#hcDrawerAgendaDialog .ghe-drawer-state{
+  display:inline-block;width:fit-content;font-style:normal;font-weight:830;
+  font-size:.7rem;line-height:1.3;color:#6c568a;
+}
+#hcDrawerAgendaDialog .ghe-drawer-state.is-future{color:#20806a;}
+#hcDrawerAgendaDialog .ghe-drawer-state.is-feedback{color:#97721e;}
+#hcDrawerAgendaDialog .ghe-drawer-chevron{font-size:1.22rem;color:#8aa3ad;}
+@media(max-width:390px){
+  dialog#hcDrawerAgendaDialog:modal,dialog#hcDrawerAgendaDialog[open]{
+    width:calc(100vw - 20px)!important;
+  }
+  #hcDrawerAgendaDialog .ghe-drawer-agenda-modal-scroll{padding-inline:9px;}
+}
+@media(prefers-reduced-motion:reduce){
+  #hcDrawerAgendaDialog .ghe-drawer-agenda-entry:active{transform:none;}
+}
