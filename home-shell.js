@@ -2932,61 +2932,66 @@
     return [...groups.entries()].sort((a,b)=>
       premiumShiftRank(a[0])-premiumShiftRank(b[0]) || a[0].localeCompare(b[0],"fr"));
   }
+  // One compact shift rail per code; names remain available without growing the 360° card.
   function premiumBackMarkup() {
     const roster=liveRoster();
     const waiting=roster.permitted&&!roster.loaded;
-    const groups=waiting?[]:premiumShiftGroups(roster.rows);
-    const count=waiting?"…":!roster.permitted&&!has("planning_personal")?"—":String(roster.rows.length);
+    const authorized=roster.permitted||has("planning_personal");
+    const grouped=new Map(waiting?[]:premiumShiftGroups(roster.rows));
+    const codes=["M","J","J4","S","N",...Array.from(grouped.keys()).filter(code=>!["M","J","J4","S","N"].includes(code))];
+    const count=waiting?"…":!authorized?"—":String(roster.rows.length);
     const empty=waiting?"Chargement de l’équipe en cours…":
-      !roster.permitted&&!has("planning_personal")?"Planning d’équipe non accessible avec cet accès.":
-      "Aucun shift en cours selon les horaires disponibles.";
-    const sections=groups.map(([code,items])=>{
-      const personMarkup=item=>{
-        const person=item.agents||{},key=String(person.source_key||person.id||"").trim();
-        const name=agentName(person),time=liveWorkInterval(item)?.label||"Horaire non communiqué";
-        const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
-          .map(word=>word.slice(0,1)).join("").toUpperCase()||"·";
-        const begin=key?'<button type="button" class="ghe-premium-now-person" data-premium-agent="'+esc(key)+
-          '" aria-label="'+esc(name+" · "+time)+'">':
-          '<div class="ghe-premium-now-person ghe-premium-now-person-static">';
-        return begin+
-          '<span class="ghe-premium-now-avatar" aria-hidden="true">'+esc(initials)+'</span>'+
-          '<span class="ghe-premium-now-identity"><strong>'+esc(name)+'</strong>'+
-          '<small>'+esc(time)+'</small></span>'+
-          (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':'')+
-          (key?'</button>':'</div>');
-      };
-      const people=items.slice(0,2).map(personMarkup).join("");
-      const extras=items.length>2?'<details class="ghe-premium-now-more" data-roster-shift="'+esc(code)+'">'+
-        '<summary>Voir les '+(items.length-2)+' autres agents <span aria-hidden="true">⌄</span></summary>'+
-        '<div class="ghe-premium-now-people ghe-premium-now-extra">'+items.slice(2).map(personMarkup).join("")+'</div></details>':"";
-      return '<section class="ghe-premium-now-group '+liveShiftClass(code)+
-        '" aria-label="'+esc(premiumShiftName(code)+" · "+items.length+" personnes")+'">'+
-        '<header class="ghe-premium-now-shift">'+
-          '<b class="ghe-premium-now-code">'+esc(code)+'</b>'+
-          '<strong>'+esc(premiumShiftName(code))+'</strong>'+
-          '<span class="ghe-premium-now-shift-count">'+items.length+
-            ' agent'+(items.length>1?'s':'')+'</span>'+
-        '</header><div class="ghe-premium-now-people">'+people+'</div>'+extras+'</section>';
+      !authorized?"Planning d’équipe non accessible avec cet accès.":
+      "Aucune information de planning disponible.";
+    const personMarkup=item=>{
+      const person=item.agents||{},key=String(person.source_key||person.id||"").trim();
+      const name=agentName(person),time=liveWorkInterval(item)?.label||"Horaire non communiqué";
+      const initials=name.trim().split(/\s+/).filter(Boolean).slice(0,2)
+        .map(word=>word.slice(0,1)).join("").toUpperCase()||"·";
+      const begin=key?'<button type="button" class="ghe-premium-now-person" data-premium-agent="'+esc(key)+
+        '" aria-label="'+esc(name+" · "+time)+'">':
+        '<div class="ghe-premium-now-person ghe-premium-now-person-static">';
+      return begin+
+        '<span class="ghe-premium-now-avatar" aria-hidden="true">'+esc(initials)+'</span>'+
+        '<span class="ghe-premium-now-identity"><strong>'+esc(name)+'</strong>'+
+        '<small>'+esc(time)+'</small></span>'+
+        (key?'<span class="ghe-premium-now-chevron" aria-hidden="true">›</span>':'')+
+        (key?'</button>':'</div>');
+    };
+    const sections=!authorized||waiting?"":codes.map(code=>{
+      const items=grouped.get(code)||[];
+      const schedules=[...new Set(items.map(item=>liveWorkInterval(item)?.label).filter(Boolean))];
+      const time=schedules.length>1?"Horaires variables":
+        schedules[0]||shiftTime(code)||"Horaire non communiqué";
+      const label=premiumShiftName(code);
+      const contents=items.length?items.map(personMarkup).join(""):
+        '<p class="ghe-premium-now-no-agent">Aucun agent sur ce créneau.</p>';
+      return '<details class="ghe-premium-now-group '+liveShiftClass(code)+'" data-roster-shift="'+esc(code)+'">'+
+        '<summary class="ghe-premium-now-shift" aria-label="'+esc(label+', '+items.length+' agent'+(items.length>1?'s':'')+' en poste. Voir les collègues')+'">'+
+          '<b class="ghe-premium-now-code" aria-hidden="true">'+esc(code)+'</b>'+
+          '<span class="ghe-premium-now-shift-label"><strong>'+esc(label)+'</strong><small>'+esc(time)+'</small></span>'+
+          '<span class="ghe-premium-now-shift-count" aria-hidden="true">'+(items.length?items.length:"—")+'</span>'+
+          '<span class="ghe-premium-now-shift-arrow" aria-hidden="true">⌄</span>'+
+        '</summary><div class="ghe-premium-now-people">'+contents+'</div></details>';
     }).join("");
     return '<div class="ghe-premium-now">'+
       '<div class="ghe-premium-now-summary">'+
         '<span class="ghe-premium-now-kicker"><i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
-        '<div class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong>'+
-          '<span>personne'+(count==="1"?"":"s")+' sur le créneau</span></div>'+
+        '<div class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong><span>agent'+(count==="1"?"":"s")+'</span></div>'+
       '</div>'+
-      (sections?'<div class="ghe-premium-now-groups">'+sections+'</div>':
+      (sections?'<div class="ghe-premium-now-groups" aria-label="Shifts et collègues en poste">'+sections+'</div>':
         '<p class="ghe-premium-now-empty" role="status">'+esc(empty)+'</p>')+
-      '<p class="ghe-premium-now-source">Horaires du planning · présence sur place non vérifiée.</p>'+
+      '<p class="ghe-premium-now-source">Selon le planning · présence réelle non confirmée.</p>'+
     '</div>';
   }
   // Each 3D face is measured independently; the inactive face never stretches its sibling.
   function syncPremiumStageHeight(stage=document.querySelector("#homeView [data-premium-flip]")) {
     if(!stage?.isConnected)return;
     const track=stage.querySelector(".ghe-premium-track");
-    const active=stage.querySelector(stage.dataset.side==="back"?".ghe-premium-back":".ghe-premium-front");
-    if(!track||!active)return;
-    const pixels=Math.ceil(Math.max(190,active.scrollHeight+2));
+    const front=stage.querySelector(".ghe-premium-front"),back=stage.querySelector(".ghe-premium-back");
+    if(!track||!front||!back)return;
+    // Identical dimensions on both faces, including when a shift is expanded.
+    const pixels=Math.ceil(Math.max(370,front.scrollHeight,back.scrollHeight));
     if(track.dataset.measuredHeight!==String(pixels)){
       track.dataset.measuredHeight=String(pixels);
       track.style.height=pixels+"px";
@@ -3006,7 +3011,15 @@
   function updateLiveCard() {
     const target=document.querySelector("#homeView .ghe-premium-back-body");
     if(target?.isConnected&&state.ready){
+      const openShifts=[...target.querySelectorAll("details[data-roster-shift][open]")]
+        .map(details=>details.dataset.rosterShift);
+      const beforeScroll=target.querySelector(".ghe-premium-now-groups")?.scrollTop||0;
       target.innerHTML=premiumBackMarkup();
+      target.querySelectorAll("details[data-roster-shift]").forEach(details=>{
+        if(openShifts.includes(details.dataset.rosterShift))details.open=true;
+      });
+      const scroller=target.querySelector(".ghe-premium-now-groups");
+      if(scroller)scroller.scrollTop=beforeScroll;
       syncPremiumStageHeight(target.closest("[data-premium-flip]"));
     }
   }
