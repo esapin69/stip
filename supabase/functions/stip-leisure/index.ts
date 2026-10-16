@@ -307,6 +307,7 @@ async function list(c:any){
  const memberIds=new Set((memberships||[]).map((x:any)=>x.conversation_id))
  const responses=ids.length?await checked(db.from('stip_leisure_responses').select('event_id,agent_id,selected_dates,declined,revision,updated_at,agent:agents!stip_leisure_responses_agent_id_fkey(id,prenom,nom,profile_photo_url,avatar_url)').in('event_id',ids)):[]
  const dayChoices=ids.length&&c.agent_id?await checked(db.from('stip_leisure_date_decisions').select('event_id,event_date,revision,decision').eq('agent_id',c.agent_id).in('event_id',ids)):[]
+ const dateChangeHistory=ids.length?await checked(db.from('stip_leisure_event_changes').select('event_id,change_kind,old_dates,new_dates,changed_at').in('event_id',ids).order('changed_at',{ascending:false}).limit(300)):[];
  const photos=new Map<string,string>();await Promise.all((responses||[]).map(async(r:any)=>{if(!photos.has(r.agent_id))photos.set(r.agent_id,await photo(r.agent?.profile_photo_url||r.agent?.avatar_url))}))
  const organizerIds=[...new Set(events.map((x:any)=>x.organizer_agent_id).filter(Boolean))];
  const organizerRows=organizerIds.length?await checked(db.from('agents').select('id,prenom,nom').in('id',organizerIds)):[];
@@ -368,6 +369,7 @@ async function list(c:any){
    closing_time:recurringById.get(e.id)?.closing_time||null,
    series_conversation_id:seriesConversations.find((x:any)=>x.event_id===e.id&&seriesMemberIds.has(x.conversation_id))?.conversation_id||null,
    date_choices:(dayChoices||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({date:x.event_date,revision:x.revision,decision:x.decision})),
+   date_change_history:(dateChangeHistory||[]).filter((x:any)=>x.event_id===e.id).map((x:any)=>({kind:x.change_kind,old_dates:x.old_dates,new_dates:x.new_dates,changed_at:x.changed_at})),
    is_organizer:e.organizer_agent_id===c.agent_id,can_manage:c.isAdmin||!!c.agent_id&&c.agent_id===e.organizer_agent_id,
    chats:chats.filter((x:any)=>x.event_id===e.id&&memberIds.has(x.conversation_id)).map((x:any)=>({date:x.event_date,conversation_id:x.conversation_id})),
    invitation_status:invited.get(e.id)||null,

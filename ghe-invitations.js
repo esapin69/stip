@@ -16,11 +16,22 @@ function selected(event,day){
  return "neutral";
 }
 function rows(){
- return events.filter(e=>e.status==="active"&&e.invitation_status&&!e.is_organizer&&e.invitation_status!=="withdrawn")
- .flatMap(e=>[...new Set(e.dates||[])].filter(date=>date>=today()).map(date=>({event:e,date})))
- .sort((a,b)=>a.date.localeCompare(b.date)||a.event.title.localeCompare(b.event.title,"fr"));
+ const now=today(),cutoff=new Date(now+"T12:00:00");
+ cutoff.setDate(cutoff.getDate()-7);
+ const minPast=cutoff.toISOString().slice(0,10);
+ return events.filter(e=>e.invitation_status&&!e.is_organizer&&e.invitation_status!=="withdrawn")
+ .flatMap(e=>{
+  const active=e.status==="active"&&e.invitation_status!=="declined"?[...new Set(e.dates||[])].filter(date=>date>=now).map(date=>({event:e,date,cancelled:false})):[];
+  const cancelled=(e.date_change_history||[]).flatMap(change=>{
+   const days=change.kind==="cancelled"?change.old_dates||[]:(change.old_dates||[]).filter(date=>!(change.new_dates||[]).includes(date));
+   return days.filter(date=>date>=minPast).map(date=>({event:e,date,cancelled:true,change}));
+  });
+  return [...active,...cancelled];
+ })
+ .sort((a,b)=>a.date.localeCompare(b.date)||Number(b.cancelled)-Number(a.cancelled)||a.event.title.localeCompare(b.event.title,"fr"));
 }
-function card(e,day){
+function card(e,day,cancelled=false,change=null){
+ if(cancelled)return '<article class="ghe-invite-card is-cancelled"><div class="ghe-invite-top"><span class="ghe-invite-emoji">🚫</span><div><h2>'+esc(e.title)+'</h2><p>'+esc(fmt(day))+'</p><strong>ANNULÉ · ANCIENNE DATE</strong><p>'+esc(change?.kind==="date"?"La date a changé. Ton ancienne confirmation n’est plus valable.":"L’événement est annulé.")+'</p></div></div><nav class="ghe-invite-links"><a href="sorties-loisirs.html?tab=agenda&event='+encodeURIComponent(e.id)+'">Voir les nouvelles informations</a></nav></article>';
  const choice=selected(e,day),roster=e.date_roster?.[day]||[],yes=roster.filter(p=>["organizer","accepted"].includes(p.state)).length;
  const waiting=roster.filter(p=>p.state==="pending").length,refused=roster.filter(p=>p.state==="declined").length;
  const disabled=busy.has(e.id+"|"+day),blocked=(e.visible_dates||e.dates||[]).includes(day)===false||e.organizer_unavailable_dates?.includes(day);
@@ -44,14 +55,14 @@ function card(e,day){
  chat+'<a href="sorties-loisirs.html?tab=agenda&event='+encodeURIComponent(e.id)+'">ℹ Détails et organisation</a></nav></article>';
 }
 function render(){
- const list=rows(),countPending=list.filter(r=>selected(r.event,r.date)==="neutral").length;
+ const list=rows(),countPending=list.filter(r=>!r.cancelled&&selected(r.event,r.date)==="neutral").length;
  status.textContent=countPending?countPending+" date"+(countPending>1?"s":"")+" en attente de réponse. Les autres choix restent enregistrés.":"Aucune réponse en attente.";
  if(!list.length){host.innerHTML='<p class="ghe-invite-empty">Aucune invitation à traiter pour le moment.<br>Les futures propositions apparaîtront ici automatiquement.</p>';return;}
  let month="";
- host.innerHTML=list.map(({event,date})=>{
+ host.innerHTML=list.map(({event,date,cancelled,change})=>{
   const key=date.slice(0,7);
   const heading=key!==month?(month=key,'<h2 class="ghe-invite-month">'+new Date(date+"T12:00:00").toLocaleDateString("fr-FR",{month:"long",year:"numeric"})+'</h2>'):"";
-  return heading+card(event,date);
+  return heading+card(event,date,cancelled,change);
  }).join("");
 }
 async function call(action,payload={},token=authToken){

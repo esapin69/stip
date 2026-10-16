@@ -24,4 +24,16 @@ assert.match(sql,/stip_leisure_date_decisions/);
 assert.match(sql,/stip_leisure_dates_changed_log/);
 assert.match(sql,/old_responses/,"change history preserved");
 assert.doesNotMatch(rail,/showModal\(/,"drawer itself must not become modal");
+
+assert.match(read("ghe-smart-drawer.js"),/date_change_history/,"rail exposes cancelled historical dates");
+assert.match(read("ghe-invitations.js"),/is-cancelled/,"pending page shows cancelled original dates");
+assert.match(api,/date_change_history/,"backend supplies changes and old dates");
+const retention=read("supabase/migrations/20261016162000_ghe_ephemeral_chat_retention.sql");
+assert.match(retention,/stip_purge_expired_leisure/,"event + seven-day retention task");
+assert.match(retention,/stip_leisure_series_chat/,"preserve active canonical event chats");
+assert.match(retention,/leisure_response_chat_sync/,"disable legacy per-day chat creation");
+const decline=read("supabase/migrations/20261016163000_ghe_leave_declined_event_chat.sql");
+assert.match(decline,/status <> 'declined'/,"declined participants leave the group");
+const communication=read("COMMUNICATION_RULES.md");
+assert.match(communication,/refus global.*retire/i,"shared communications contract excludes global refusals");
 console.log("GHE smart drawer contract passed.");

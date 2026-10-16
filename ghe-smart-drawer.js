@@ -32,7 +32,18 @@ function setMode(value){
 }
 function groupedEntries(){
  const rows=[],now=today(),needs=[];
+ const dateCutoff=new Date(now+"T12:00:00");
+ dateCutoff.setDate(dateCutoff.getDate()-7);
+ const minHistorical=dateCutoff.toISOString().slice(0,10);
  for(const event of events){
+  for(const change of (event.date_change_history||[])){
+   const affected=change.kind==="cancelled"?change.old_dates||[]:(change.old_dates||[]).filter(day=>!(change.new_dates||[]).includes(day));
+   for(const day of affected.filter(day=>day>=minHistorical)){
+    rows.push({kind:"cancelled",icon:"🚫",title:event.title||"Événement annulé",date:day,
+     sub:dlabel(day)+" · ANNULÉ · "+(change.kind==="date"?"Ancienne date, participation invalide":"Événement annulé"),
+     href:"ghe-agenda.html",event});
+   }
+  }
   if(event.status!=="active")continue;
   const ds=[...new Set(event.dates||[])].filter(d=>d>=now).sort();
   if(!ds.length)continue;
