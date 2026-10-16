@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  // Chargement direct sur l’accueil et éventuel chargeur historique : une seule instance.
+  if (window.STIPDutyChiefs) return;
   const API =
       "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data",
     STORE = "stip_session_v1";
