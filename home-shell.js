@@ -3062,6 +3062,9 @@
       '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
         'aria-haspopup="dialog" aria-controls="hcPersonalDrawer" aria-label="Ouvrir mon espace">'+
         '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
+      (has("messages")?'<button type="button" class="ghe-top-wheelchair" data-wheelchair-popup aria-haspopup="dialog" aria-controls="gheTopWheelchairDialog" aria-label="Ouvrir le chat fauteuils">'+
+        '<img src="images/icone_app/home-access-wheelchairs.webp" alt="" aria-hidden="true"></button>':"")+
+      (has("messages")?'<button type="button" class="ghe-top-settings" data-notification-settings aria-haspopup="dialog" aria-controls="gheTopNotificationDialog" aria-label="Régler mes notifications">⚙</button>':"")+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
         (count?'<b>'+count+'</b>':'')+'</button>'+
@@ -4129,6 +4132,10 @@ function personalDrawerRow(icon,label,action,meta="") {
       location.href = new URL("t-est/porte-entree/index.html", document.baseURI).href;
     });
     root.querySelectorAll(".ghe-home-topbar [data-bell-open]").forEach(b=>b.onclick=()=>openNotifications());
+    root.querySelectorAll(".ghe-home-topbar [data-wheelchair-popup]").forEach(b=>
+      b.onclick=()=>window.GHENotificationControls?.openWheelchairs?.());
+    root.querySelectorAll(".ghe-home-topbar [data-notification-settings]").forEach(b=>
+      b.onclick=()=>window.GHENotificationControls?.openSettings?.());
     root.querySelectorAll("[data-home-mode]").forEach(
       (b) =>
         (b.onclick = () => {

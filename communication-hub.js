@@ -414,5 +414,5 @@
     inboxState.root=null;inboxState.selected.clear();inboxState.status="";inboxState.loading=false;inboxState.conversation=""
   }
 
-  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),notificationSettings,setNotificationPreference,setNotificationPreview,setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}),mountInbox,unmountInbox};
+  window.STIPCommunication={version:CLIENT_VERSION,openDialog,openDirect,openThread,openExchanges:exchangeSheet,refresh:()=>loadHome(true),enablePush,notificationSettings,setNotificationPreference,setNotificationPreview,setDmPush,dmPushState:()=>({preference:dmPreference(),pushState,permission:"Notification" in window?Notification.permission:"unsupported"}),mountInbox,unmountInbox};
 })();
