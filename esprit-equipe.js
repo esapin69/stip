@@ -1401,8 +1401,8 @@
       plannedValue = Number(staffRow?.planned_count),
       planned = staffRow?.planned_count != null && Number.isFinite(plannedValue) ? plannedValue : null,
       sortedItems = items.slice().sort(compareAgentGhe);
-    // Les chefs sont déjà présentés dans MAINTENANT / AUJOURD'HUI.
-    // On les conserve dans les données et le total du shift, mais on ne les répète pas dans la liste dépliée.
+    // Les chefs ont leur bloc distinct. Le compteur et la liste décrivent
+    // les mêmes agents ; le Cumul reste une référence de comparaison.
     const team = sortedItems.filter((item) => !isChefItem(item));
     const key = `${day}|${code}`;
     const open = state.openShifts.get(day) === key;
@@ -1422,7 +1422,7 @@
         <button class="team-shift-head" type="button" data-team-shift="${esc(key)}" aria-expanded="${open}">
           <b>${esc(code)}</b>
           <span><strong>${esc(meta.label)}</strong><small>${esc(meta.time)}</small></span>
-          <em title="${planned == null ? "Effectif prévu indisponible" : "Effectif prévu — tableau Cumul par Horaire"}">${planned == null ? "—" : esc(planned)}</em>
+          <em title="${esc(team.length + ' agents au planning individuel' + (planned == null ? ' · Cumul par Horaire non renseigné' : ' · Cumul par Horaire : ' + planned))}">${team.length}</em>
           <i aria-hidden="true">⌄</i>
         </button>
         <div class="team-shift-agents" ${open ? "" : "hidden"}>${group(team, "ÉQUIPE", "is-team")}</div>
@@ -1627,10 +1627,19 @@
     </section>`;
   }
 
+  function teamWorkingRows(rows, day) {
+    const seen = new Set();
+    return rows.filter((item, index) => {
+      if (item.date !== day || !baseShift(item.code) || isChefItem(item)) return false;
+      const key = item.agent_id || item.agents?.id || item.agents?.source_key || index;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
   function teamDay(bundle, day) {
-    const items = (bundle?.team?.planning || []).filter(
-      (item) => item.date === day,
-    );
+    const items = teamWorkingRows(bundle?.team?.planning || [], day);
     const groups = new Map();
     items.forEach((item) => {
       const original = String(item.code || "").toUpperCase(),
@@ -1655,7 +1664,7 @@
       daySeparator = `<div class="team-selected-day-separator stip-section-separator" aria-hidden="true"><span>${selectedDayLabel}</span></div>`,
       dayCard = dayContainer(
         day,
-        `${items.length} présent${items.length > 1 ? "s" : ""}`,
+        `${items.length} agent${items.length > 1 ? "s" : ""} planifié${items.length > 1 ? "s" : ""} en service`,
         weekControlsMarkup(),
         "team",
       ),

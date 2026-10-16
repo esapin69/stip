@@ -5,7 +5,7 @@ import { CRITERIA,LEVELS,NOT_OBSERVED,OBS_KEYS,MODEL_VERSION,makeOfficialPdf,sha
 const URL=Deno.env.get('SUPABASE_URL')!,SERVICE=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 const db=createClient(URL,SERVICE,{auth:{persistSession:false}})
 const SIGNATURE_BUCKET='stip-pdf-assets'
-const ORIGINS=new Set(['https://stip.esapin.com','https://esapin69.github.io'])
+const ORIGINS=new Set(['https://ghe.esapin.com','https://stip.esapin.com','https://esapin69.github.io'])
 const text=(v:any,m=10000)=>String(v??'').trim().slice(0,m)
 const uuid=(v:any)=>{const s=text(v,80);return/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)?s:''}
 const date=(v:any)=>{const s=text(v,10);return/^\d{4}-\d{2}-\d{2}$/.test(s)?s:null}

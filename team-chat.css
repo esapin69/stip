@@ -5715,6 +5715,15 @@
   .ca-body .tb-page.is-chat-mode{
     min-height:calc(100dvh - 71px)!important;
   }
+  .ca-body .tb-input-dock,
+  .ca-body .tb-page.is-selecting .tb-selection-bar{
+    left:var(--tb-dock-left)!important;
+    right:auto!important;
+    width:var(--tb-dock-width)!important;
+    max-width:none!important;
+    box-sizing:border-box;
+    transform:none!important;
+  }
 }
 
 
