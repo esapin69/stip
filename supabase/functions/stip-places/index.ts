@@ -6,7 +6,7 @@ import { PDFDocument, StandardFonts, rgb } from 'npm:pdf-lib@1.17.1'
 const CORS={
   'Access-Control-Allow-Origin':'*',
   'Access-Control-Allow-Headers':'authorization, content-type, x-stip-session, apikey',
-  'Access-Control-Allow-Methods':'POST, OPTIONS'
+  'Access-Control-Allow-Methods':'POST, OPTIONS, GET'
 }
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...CORS,'Content-Type':'application/json','Cache-Control':'no-store'}})
 const URL=Deno.env.get('SUPABASE_URL')!
@@ -139,10 +139,20 @@ async function loadFixedTemplatePdf(){
   const bytes=await data.arrayBuffer()
   const source=await PDFDocument.load(bytes)
   const count=source.getPageCount()
-  if(count!==FIXED_TEMPLATE_EXPECTED_PAGE_COUNT){
-    throw new Error('Template PDF fixe incompatible : '+count+' pages au lieu de '+FIXED_TEMPLATE_EXPECTED_PAGE_COUNT+'.')
-  }
+  if(count!==FIXED_TEMPLATE_EXPECTED_PAGE_COUNT)throw new Error('Template PDF fixe incompatible : '+count+' pages au lieu de '+FIXED_TEMPLATE_EXPECTED_PAGE_COUNT+'.')
   return source
+}
+async function pdfTemplateConfig(){
+  const {data,error}=await db.from('stip_operational_rules').select('config').eq('rule_key','places_pdf_export_template').eq('active',true).maybeSingle()
+  if(error)throw error
+  const c:any=data?.config||{}
+  return {
+    fixed_pages:{overview:0,HLP:1,PW:4,HFME:9,annexes:13,...(c.fixed_pages||{})},
+    layout:{use_generic_divider:false,room_showcase:true,...(c.layout||{})},
+    covers:{HFME:'rebuild_with_overview_photo',...(c.covers||{})},
+    publication:{exclude_evidence_status:['to_confirm'],...(c.publication||{})},
+    version:String(c.version||'legacy-16')
+  }
 }
 function exportDate(){return new Date().toISOString().slice(0,10)}
 function exportCell(v:any){if(v===null||v===undefined)return'';if(typeof v==='object')return JSON.stringify(v);return v}
@@ -279,6 +289,7 @@ function exportFactValue(v:any){
   if(!value)return''
   const n=value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim()
   if(/^(a completer|a confirmer|a preciser|non renseigne|information non renseignee|information en cours de preparation)[.!…]*$/.test(n))return''
+  if(/(a completer|a confirmer|a preciser|a valider|revalider|reconfirmer|provisoire|non valide|non confirme|sans preuve)/.test(n))return''
   return value
 }
 function pdfSafe(v:any){
@@ -336,13 +347,68 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
   const W=595.28,H=841.89,M=42,CONTENT=W-M*2
   const navy=rgb(0.035,0.30,0.42),ink=rgb(0.08,0.20,0.24),muted=rgb(0.38,0.49,0.52),soft=rgb(0.91,0.97,0.98),line=rgb(0.76,0.87,0.89)
+  const cfg=await pdfTemplateConfig()
+  const fixedPages:any=cfg.fixed_pages
+  const excluded=new Set<string>((cfg.publication.exclude_evidence_status||['to_confirm']).map((x:any)=>String(x)))
   const fixedTemplate=await loadFixedTemplatePdf()
   let page:any=null,y=0
   const appendFixedPage=async(index:number)=>{
     const [fixed]=await pdf.copyPages(fixedTemplate,[index])
-    pdf.addPage(fixed)
-    page=null
-    y=0
+    pdf.addPage(fixed);page=null;y=0
+  }
+  const appendHfmeCover=async()=>{
+    const s=fixedTemplate.getPage(Number(fixedPages.HFME||9)),o=fixedTemplate.getPage(Number(fixedPages.overview||0))
+    const z=s.getSize(),p=pdf.addPage([z.width,z.height])
+    const head=await pdf.embedPage(s,{left:0,bottom:z.height-108,right:z.width,top:z.height})
+    const body=await pdf.embedPage(s,{left:0,bottom:112,right:z.width,top:733})
+    const foot=await pdf.embedPage(s,{left:0,bottom:0,right:z.width,top:54})
+    const photo=await pdf.embedPage(o,{left:21,bottom:173,right:573,top:278})
+    p.drawPage(head,{x:0,y:z.height-108,width:z.width,height:108})
+    p.drawPage(body,{x:0,y:106,width:z.width,height:547})
+    p.drawPage(foot,{x:0,y:0,width:z.width,height:54})
+    p.drawPage(photo,{x:34,y:653,width:526,height:83})
+    p.drawRectangle({x:34,y:653,width:526,height:83,borderColor:navy,borderWidth:.8})
+    p.drawRectangle({x:386,y:661,width:174,height:49,color:rgb(.985,.985,.985)})
+    p.drawRectangle({x:398,y:686,width:58,height:18,color:navy})
+    p.drawText('HFME',{x:408,y:691,size:8,font:bold,color:rgb(1,1,1)})
+    p.drawText(pdfSafe('Hôpital Femme Mère Enfant'),{x:398,y:669,size:8,font:bold,color:ink,maxWidth:155})
+    page=null;y=0
+  }
+  const roomShowcase=()=>{
+    const RH=708.93,p=pdf.addPage([W,RH]),accent=rgb(.075,.60,.68)
+    const places=(snapshot.places||[]).filter((x:any)=>!excluded.has(String(x.evidence_status||'')))
+    const ids=new Set(places.map((x:any)=>String(x.id)))
+    const aliases=(snapshot.aliases||[]).filter((x:any)=>ids.has(String(x.place_id))).length
+    const ranges=new Set((snapshot.room_ranges||[]).map((r:any)=>[r.building_code,r.level,r.room_from,r.room_to].join('|'))).size
+    const stops=(snapshot.elevator_stops||[]).filter((x:any)=>ids.has(String(x.elevator_id||''))).length
+    p.drawText('VISITER LES LIEUX',{x:30,y:RH-48,size:25,font:bold,color:navy})
+    p.drawText('CARDIO - CHAMBRES & RECHERCHE FINE',{x:30,y:RH-68,size:12.5,font:bold,color:navy})
+    p.drawText(pdfSafe("Recherche par numéro - bâtiment/étage - secteur/unité - règles anti-erreur"),{x:30,y:RH-84,size:8,font:regular,color:navy})
+    p.drawRectangle({x:30,y:RH-122,width:W-60,height:26,color:soft})
+    p.drawText(pdfSafe("UN RÉFÉRENTIEL QUI VA PLUS LOIN QU'UN SIMPLE ANNUAIRE DE SERVICES"),{x:42,y:RH-106,size:8,font:bold,color:ink})
+    p.drawText(pdfSafe("Le moteur retrouve une chambre sans inventer un service lorsque l'affectation fine n'est pas établie."),{x:42,y:RH-116,size:6.8,font:regular,color:ink})
+    const cards=[[places.length,'repères'],[aliases,'alias'],[ranges,'plages chambres'],[stops,'arrêts ascenseurs']]
+    const gap=7,cw=(W-60-gap*3)/4
+    cards.forEach((m:any[],i:number)=>{const x=30+i*(cw+gap);p.drawRectangle({x,y:RH-182,width:cw,height:48,borderColor:line,borderWidth:.8});p.drawText(String(m[0]),{x:x+10,y:RH-157,size:17,font:bold,color:accent});p.drawText(pdfSafe(m[1]),{x:x+10,y:RH-170,size:6.5,font:regular,color:muted})})
+    p.drawText(pdfSafe('EXEMPLES DE RECHERCHE'),{x:30,y:RH-215,size:11,font:bold,color:navy})
+    const examples=[['204','Cardio - 2e - USIC U20'],['210','Cardio - 2e - USIC U20'],['24','numéro court -> proposition 224'],['532','HFME - 5e - service non inventé']]
+    examples.forEach((e:any[],i:number)=>{const col=i%2,row=Math.floor(i/2),x=30+col*268,y0=RH-268-row*48;p.drawRectangle({x,y:y0,width:261,height:40,color:soft});p.drawRectangle({x:x+8,y:y0+9,width:40,height:22,color:accent});p.drawText(e[0],{x:x+18,y:y0+15,size:10,font:bold,color:rgb(1,1,1)});p.drawText(pdfSafe(e[1]),{x:x+56,y:y0+16,size:7,font:bold,color:ink,maxWidth:195})})
+    p.drawText(pdfSafe('CARDIO - REPÉRAGE DES PLAGES'),{x:30,y:RH-370,size:11,font:bold,color:navy})
+    const rr=(snapshot.room_ranges||[]).filter((r:any)=>String(r.building_code||'').toUpperCase()==='HLP')
+    let yy=RH-395
+    for(let lvl=1;lvl<=9;lvl++){
+      const a=rr.filter((r:any)=>String(r.level)===String(lvl)).sort((x:any,z:any)=>Number(x.room_from)-Number(z.room_from))
+      const uniq:any[]=[];for(const r of a)if(!uniq.some(q=>q.room_from===r.room_from&&q.room_to===r.room_to))uniq.push(r)
+      const txt=uniq.slice(0,2).map(r=>Number(r.room_to)-Number(r.room_from)>30?String(r.room_from)+'+':String(r.room_from)+'-'+String(r.room_to)).join('   /   ')
+      p.drawRectangle({x:30,y:yy-3,width:W-60,height:18,color:lvl%2?rgb(.97,.985,.99):rgb(1,1,1)})
+      p.drawText(lvl===1?'1er':String(lvl)+'e',{x:38,y:yy+3,size:7,font:bold,color:ink})
+      p.drawText(pdfSafe(txt||'repérage étage'),{x:78,y:yy+3,size:7,font:bold,color:accent})
+      yy-=20
+    }
+    p.drawRectangle({x:30,y:yy-42,width:W-60,height:38,color:soft,borderColor:line,borderWidth:.7})
+    p.drawText('PRINCIPE STIP',{x:42,y:yy-19,size:8.5,font:bold,color:accent})
+    p.drawText(pdfSafe("Trouver plus vite, mais ne jamais transformer une numérotation d'étage en affectation de service inventée."),{x:42,y:yy-31,size:6.5,font:regular,color:ink})
+    page=null;y=0
   }
 
   const footer=(p:any,label='')=>{
@@ -397,7 +463,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
 
   if(scope?.mode==='all'){
-    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.overview)
+    await appendFixedPage(Number(fixedPages.overview||0))
   }else{
     freshPage('VISITER LES LIEUX - '+scopeLabel,'Document fabriqué par STIP · pages fixes validées + dictionnaire Supabase · '+exportDate())
     heading('PÉRIMÈTRE')
@@ -405,11 +471,12 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   }
 
   const renderBuilding=async(code:string,label:string,subtitle:string)=>{
-    const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type))
+    const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
     if(!rows.length)return
-    divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
-    const fixedIndex=code==='HLP'?FIXED_TEMPLATE_PAGE_INDEX.HLP:code==='PW'?FIXED_TEMPLATE_PAGE_INDEX.PW:FIXED_TEMPLATE_PAGE_INDEX.HFME
-    await appendFixedPage(fixedIndex)
+    if(cfg.layout.use_generic_divider)divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
+    const fixedIndex=Number(fixedPages[code])
+    if(code==='HFME'&&cfg.covers.HFME==='rebuild_with_overview_photo')await appendHfmeCover();else await appendFixedPage(fixedIndex)
+    if(code==='HLP'&&cfg.layout.room_showcase!==false)roomShowcase()
     freshPage(label+' · '+subtitle+' · DICTIONNAIRE','Données issues du référentiel Supabase au '+exportDate())
     const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
     for(const lvl of levels){
@@ -431,13 +498,13 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
 
   for(const b of MAIN_BUILDINGS)await renderBuilding(b.code,b.label,b.subtitle)
 
-  const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type))
+  const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
   if(hasAnnex){
-    await appendFixedPage(FIXED_TEMPLATE_PAGE_INDEX.annexes)
+    await appendFixedPage(Number(fixedPages.annexes||13))
     freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
   }
   for(const code of ANNEX_CODES){
-    const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type))
+    const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
     if(!items.length)continue
     heading(code)
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
@@ -462,8 +529,92 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet'){
   }})
 }
 
+async function visualPdfResponse(snapshot:any,scopeLabel='GHE complet'){
+  const pdf=await PDFDocument.create()
+  const regular=await pdf.embedFont(StandardFonts.Helvetica)
+  const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
+  const W=595.28,H=841.89,M=36,GAP=14,COL=(W-M*2-GAP)/2
+  const navy=rgb(.06,.24,.31),teal=rgb(.04,.54,.61),light=rgb(.93,.97,.98)
+  const muted=rgb(.32,.46,.50),border=rgb(.79,.87,.89),white=rgb(1,1,1)
+  const kinds=new Set(['service','unit','exam','block'])
+  const groups=new Map<string,Map<string,any[]>>()
+  for(const place of snapshot.places||[]){
+    if(!kinds.has(String(place.place_type||'')))continue
+    const building=String(place.building_code||'').trim().toUpperCase()||'?'
+    const floor=String(place.level||'').trim().toUpperCase()||'?'
+    if(!groups.has(building))groups.set(building,new Map())
+    const levels=groups.get(building)!
+    if(!levels.has(floor))levels.set(floor,[])
+    levels.get(floor)!.push(place)
+  }
+  if(!groups.size)throw new Error('Aucune destination à présenter.')
+  const titles:Record<string,string>={HFME:'Hôpital Femme Mère Enfant',HLP:'Cardio - Louis Pradel',PW:'Neuro - Pierre Wertheimer'}
+  const priority=(code:string)=>code==='HFME'?0:code==='HLP'?1:code==='PW'?2:3
+  const order=(f:string)=>f==='RDJ'?-10:f==='-1'?-5:f==='RDC'?0:f==='TM'?.5:f==='?'?999:Number(f)||100
+  const floorLabel=(f:string)=>f==='RDJ'?'REZ-DE-JARDIN':f==='RDC'?'REZ-DE-CHAUSSEE':f==='TM'?'PLATEAU TECHNIQUE':f==='?'?'ETAGE A PRECISER':f==='1'?'1ER ETAGE':/^\d+$/.test(f)?f+'E ETAGE':'NIVEAU '+f
+  const printable=(v:any)=>pdfSafe(v)||'Sans nom'
+  let page:any=null,top=[0,0],pageCount=0,buildingCurrent=''
+  const newPage=(building:string,continued=false)=>{
+    buildingCurrent=building
+    page=pdf.addPage([W,H]);pageCount++
+    page.drawRectangle({x:0,y:H-8,width:W,height:8,color:navy})
+    page.drawText('GHE  /  VISITER LES LIEUX',{x:M,y:H-33,size:9,font:bold,color:teal})
+    const label=printable(titles[building]||('Bâtiment '+(building==='?'?'à préciser':building)))
+    page.drawText(label+(continued?' - suite':''),{x:M,y:H-85,size:21,font:bold,color:navy,maxWidth:W-M*2})
+    page.drawText('SERVICES / UNITES / EXAMENS - '+printable(scopeLabel),{x:M,y:H-105,size:9,font:regular,color:muted,maxWidth:W-M*2})
+    page.drawLine({start:{x:M,y:42},end:{x:W-M,y:42},thickness:.8,color:border})
+    page.drawText('GHE - référentiel filtré selon la session professionnelle',{x:M,y:26,size:7,font:regular,color:muted})
+    page.drawText('Page '+pageCount,{x:W-M-38,y:26,size:7,font:regular,color:muted})
+    top=[H-127,H-127]
+  }
+  const itemLines=(p:any)=>wrapPdf(regular,printable(p.display_name||p.official_name||p.id),8.7,COL-40)
+  const itemHeight=(p:any)=>Math.max(16,itemLines(p).length*11+4)
+  const cardHeight=(items:any[])=>52+items.reduce((n,p)=>n+itemHeight(p),0)
+  const drawCard=(column:number,floor:string,items:any[],part:string)=>{
+    const height=cardHeight(items),x=M+column*(COL+GAP),y=top[column]-height
+    page.drawRectangle({x,y,width:COL,height,borderWidth:.8,borderColor:border,color:white})
+    page.drawRectangle({x,y:y+height-39,width:COL,height:39,color:teal})
+    const heading=floorLabel(floor)+(part?' - '+part:'')
+    page.drawText(printable(heading),{x:x+11,y:y+height-24,size:9,font:bold,color:white,maxWidth:COL-42})
+    page.drawText(String(items.length),{x:x+COL-20,y:y+height-24,size:9,font:bold,color:white})
+    let yy=y+height-53
+    for(const p of items){
+      const lines=itemLines(p)
+      const itemColor=p.place_type==='exam'?rgb(.81,.52,.18):p.place_type==='block'?rgb(.58,.39,.69):teal
+      page.drawCircle({x:x+13,y:yy+3,size:2.5,color:itemColor})
+      for(const l of lines){page.drawText(l,{x:x+23,y:yy,size:8.7,font:regular,color:navy});yy-=11}
+      yy-=Math.max(5,itemHeight(p)-11*lines.length)
+    }
+    top[column]=y-13
+  }
+  const buildings=[...groups.keys()].sort((a,b)=>priority(a)-priority(b)||a.localeCompare(b,'fr'))
+  for(const building of buildings){
+    newPage(building)
+    const floors=groups.get(building)!
+    for(const floor of [...floors.keys()].sort((a,b)=>order(a)-order(b)||a.localeCompare(b,'fr'))){
+      const items=floors.get(floor)!.sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||printable(a.display_name).localeCompare(printable(b.display_name),'fr'))
+      const size=9,parts=Math.ceil(items.length/size)
+      for(let i=0;i<items.length;i+=size){
+        const chunk=items.slice(i,i+size),needed=cardHeight(chunk)
+        const available=[0,1].filter(col=>top[col]-needed>57)
+        if(!available.length){newPage(building,true);available.push(0,1)}
+        const column=available.sort((a,b)=>top[b]-top[a])[0]
+        drawCard(column,floor,chunk,parts>1?String(i/size+1)+'/'+parts:'')
+      }
+    }
+  }
+  const bytes=await pdf.save()
+  return new Response(bytes,{status:200,headers:{
+    ...CORS,
+    'Content-Type':'application/pdf',
+    'Content-Disposition':'attachment; filename="Visite-des-lieux-Visuel-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
+    'Cache-Control':'no-store'
+  }})
+}
+
 Deno.serve(async req=>{
   if(req.method==='OPTIONS')return new Response('ok',{headers:CORS})
+  if(req.method==='GET'){try{const c=await pdfTemplateConfig(),t=await loadFixedTemplatePdf();return json({ok:true,template_version:c.version,page_count:t.getPageCount(),fixed_pages:c.fixed_pages,layout:c.layout,covers:c.covers})}catch(e){return json({ok:false,error:e instanceof Error?e.message:String(e)},500)}}
   if(req.method!=='POST')return json({error:'Méthode non autorisée.'},405)
   try{
     const body=await req.json().catch(()=>({}))
@@ -473,6 +624,12 @@ Deno.serve(async req=>{
     if(!session)return json({error:'Session STIP expirée.'},401)
     if(!session.app_allowed)return json({error:'Accès Visiter les lieux non autorisé.'},403)
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
+    if(action==='export_visual_pdf'){
+      if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
+      const scoped=scopedSnapshot(fullSnapshot,body.scope)
+      return await visualPdfResponse(scoped.snapshot,scoped.label)
+    }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)

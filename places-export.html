@@ -79,6 +79,7 @@
     .selected-chip{border:0;border-radius:999px;background:var(--stip-accent-soft,#e8f2f7);color:var(--stip-ink,#173f5d);padding:6px 8px;font-size:.67rem;font-weight:850}
 
     .format-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    #visualPdfFormat{grid-column:1/-1;min-height:78px;flex-direction:row!important;align-items:center;padding-right:42px}
     .format-btn{position:relative;min-height:104px;padding:12px 34px 11px 11px;display:flex!important;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;border:1px solid var(--stip-line,#c9d9de)!important;border-radius:13px!important;background:var(--stip-surface,#fff)!important;color:var(--stip-ink,#173f5d)!important;box-shadow:none!important}
     .format-btn:after{content:"";position:absolute;right:11px;top:11px;width:20px;height:20px;border:2px solid #a8c0c7;border-radius:999px;background:#fff}
     .format-btn.is-active{outline:none!important;border-color:var(--stip-accent,#176b93)!important;background:var(--stip-accent-soft,#e8f2f7)!important;box-shadow:0 0 0 2px rgba(23,107,147,.08)!important}
@@ -192,6 +193,7 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
+          <button class="stip-btn format-btn" id="visualPdfFormat" type="button" data-format="visual_pdf"><span class="ico">▤</span><span><strong>PDF visuel · bâtiments et étages</strong><small>Vue synthétique pour partager la répartition des services.</small></span></button>
           <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF généré</strong><small>Pages fixes + dictionnaire à jour.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur</strong><small>Excel / Google Sheets.</small></span></button>
         </div>
@@ -398,6 +400,11 @@
     if(btn.disabled)return;
     state.format=btn.dataset.format;
     document.querySelectorAll("[data-format]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",active?"true":"false")});
+    formatNote.innerHTML=state.format==="visual_pdf"
+      ?"<strong>PDF visuel</strong> · schéma de classement par bâtiment et par étage, construit avec les données autorisées de ta session. Ce n’est pas un plan des couloirs."
+      :state.format==="pdf"
+        ?"<strong>PDF généré</strong> · pages fixes validées et dictionnaire du référentiel STIP."
+        :"<strong>Tableur</strong> · données du référentiel STIP pour la sélection.";
     renderActions();
     actionStep.hidden=false;
     setStatus("");
@@ -405,10 +412,8 @@
     actionStep.scrollIntoView({behavior:"smooth",block:"nearest"});
   }));
   function renderActions(){
-    const pdf=state.format==="pdf";
-    actionHint.textContent=pdf
-      ?"PDF généré · "+describeScope(state.scope)
-      :"Tableur · "+describeScope(state.scope);
+    const pdf=state.format!=="xlsx";
+    actionHint.textContent=(state.format==="visual_pdf"?"PDF visuel":pdf?"PDF généré":"Tableur")+" · "+describeScope(state.scope);
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["download","⇩","Télécharger"],
@@ -434,7 +439,7 @@
     const r=await fetch(API,{
       method:"POST",cache:"no-store",
       headers:{"content-type":"application/json","x-stip-session":token},
-      body:JSON.stringify({action:"export_pdf",scope:state.scope})
+      body:JSON.stringify({action:state.format==="visual_pdf"?"export_visual_pdf":"export_pdf",scope:state.scope})
     });
     if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"PDF généré indisponible.")}
     return {blob:await r.blob(),name:filenameFrom(r,"pdf")};
@@ -443,7 +448,7 @@
     const token=localStorage.getItem(STORE)||"";
     if(!token){setStatus("Session STIP requise pour exporter.","error");return}
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
-    const pdf=state.format==="pdf";
+    const pdf=state.format!=="xlsx";
     let popup=null;
     if(pdf&&action==="view")popup=window.open("about:blank","_blank");
 
