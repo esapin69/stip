@@ -97,7 +97,7 @@ assert(globalBuild);
 assert.equal(worker.match(/STIP_SW_BUILD="([^"]+)"/)?.[1], globalBuild);
 const loadedVersion = loader.match(/\bV\s*=\s*"([^"]+)"/)?.[1];
 assert(loadedVersion && index.includes("stip-loader.js?v=" + loadedVersion));
-assert(index.includes("team-home-fusion.js?v=20261016-rest-premium1"),
+assert(index.includes("team-home-fusion.js?v=" + globalBuild),
   "Current day-card script version must be loaded");
 assert(index.includes("team-home-fusion.css?v=20261016-rest-weather-premium1"),
   "Current day-card style version must be loaded");
