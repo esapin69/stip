@@ -148,7 +148,12 @@ body.ghe-smart-active.ghe-smart-has-native-menu .ghe-smart-reopen{display:none!i
  background:var(--stip-surface-soft,#f1f7f8);color:var(--stip-ink,#295d6f);
  font-size:25px;line-height:1;touch-action:manipulation;
 }
-#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{display:none!important;}
+/* La croix ferme aussi le rail compact, sans obliger à le déployer. */
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{
+ display:flex!important;align-items:center;justify-content:flex-end!important;
+ min-height:55px;padding:6px 6px 5px;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-expanded-label{display:none!important;}
 #gheSmartRail:not([data-mode="expanded"]) .ghe-smart-foot{display:none!important;}
 #gheSmartRail .ghe-smart-foot{display:flex;padding:8px 8px 11px;}
 #gheSmartRail .ghe-smart-foot .ghe-smart-search{flex:1;}
