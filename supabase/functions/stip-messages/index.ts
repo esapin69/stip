@@ -223,10 +223,10 @@ async function recipientsActuallyWorking(ids:string[]){
   if(scheduled.error)throw scheduled.error;
   if(definitions.error)throw definitions.error;
   const byCode=new Map((definitions.data||[]).map((s:any)=>[String(s.code||"").toUpperCase(),s]));
-  const minutes=(value:any)=>{const m=String(value||"").match(/^(\\d{1,2}):(\\d{2})/);
+  const minutes=(value:any)=>{const m=String(value||"").match(/^(\d{1,2}):(\d{2})/);
     return m?Number(m[1])*60+Number(m[2]):NaN};
   for(const plan of scheduled.data||[]){
-    const code=String(plan.code||"").toUpperCase().replace(/\\*/g,"").trim();
+    const code=String(plan.code||"").toUpperCase().replace(/\*/g,"").trim();
     const spec:any=byCode.get(code);
     // Pas d'approximation pour les codes non reconnus ou les horaires libres.
     if(!spec||spec.is_working!==true||spec.schedule_mode==="flexible")continue;
