@@ -3,7 +3,7 @@
 body.ghe-smart-active { --ghe-smart-width: 56px; padding-left: var(--ghe-smart-width) !important; box-sizing: border-box; transition: padding-left .18s ease; }
 body.ghe-smart-active[data-smart-drawer="closed"] { --ghe-smart-width: 0px; }
 body.ghe-smart-active #hcPersonalDrawer { display:none !important; }
-.ghe-smart-rail {position:fixed;inset:0 auto 0 0;z-index:7100;width:56px;max-width:min(350px,calc(100vw - 28px));display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #dce5ea;background:#f8fbfd;color:#1b3546;box-shadow:2px 0 14px #0c344011;transition:width .18s ease,transform .18s ease;font-family:inherit;isolation:isolate}
+.ghe-smart-rail {position:fixed;inset:0 auto 0 0;z-index:7100;width:56px;max-width:min(350px,calc(100vw - 28px));display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #dce5ea;background:#fff;color:#1b3546;box-shadow:2px 0 14px #0c344011;transition:width .18s ease,transform .18s ease;font-family:inherit;isolation:isolate}
 .ghe-smart-rail[data-mode="closed"] {transform:translateX(-100%);}
 .ghe-smart-rail[data-mode="expanded"] {width:min(340px,calc(100vw - 28px));box-shadow:6px 0 26px #122f4250;background:#fff;}
 .ghe-smart-head {display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:6px;gap:6px;border-bottom:1px solid #e3ebef;}
@@ -33,7 +33,7 @@ body.ghe-smart-active #hcPersonalDrawer { display:none !important; }
 body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen {display:none;}
 body.ghe-smart-active[data-smart-drawer="expanded"]::before {content:"";position:fixed;inset:0;z-index:7098;background:#172f422b;}
 body.ghe-smart-active .app-shell,body.ghe-smart-active #homeView,body.ghe-smart-active .ev3-page {max-width:100%;min-width:0;box-sizing:border-box;}
-body.ghe-smart-active .ghe-home-topbar [data-shortcuts-open] {display:none!important;}
+/* Le ☰ de l'en-tête est l'unique accès lorsque le tiroir est fermé. */
 .ghe-smart-hint {padding:12px;color:#587281;font-size:12px;text-align:center}
 .ghe-smart-rail:not([data-mode="expanded"]) .ghe-smart-hint {font-size:9px;padding:6px 0;}
 @media(prefers-reduced-motion:reduce){.ghe-smart-rail,body.ghe-smart-active{transition:none}}
@@ -121,47 +121,66 @@ dialog#gheSmartPendingDialog:modal,dialog#gheSmartPendingDialog[open]{
  #gheSmartPendingDialog .ghe-smart-pending-item{padding:9px}
 }
 
-/* GHE 2026-10-16 : une flèche et une croix, sans anciens menus ☰ concurrents. */
-body.ghe-smart-active [data-shortcuts-open],
-body.ghe-smart-active .ghe-shortcuts-hamburger{
- display:none!important;
+/* GHE : un seul mécanisme pour les trois états (fermé, icônes, développé). */
+body.ghe-smart-active[data-smart-drawer="closed"] #homeView [data-shortcuts-open]{
+ display:inline-flex!important;align-items:center;justify-content:center;min-width:44px;min-height:44px;
+ border:1px solid var(--stip-line,#d9e8ee);border-radius:12px;background:#fff;color:var(--stip-ink,#24576b);
 }
+body.ghe-smart-active:not([data-smart-drawer="closed"]) #homeView [data-shortcuts-open]{display:none!important;}
+body.ghe-smart-active.ghe-smart-has-native-menu .ghe-smart-reopen{display:none!important;}
+#homeView .ghe-shortcuts-lines,.ghe-smart-reopen .ghe-shortcuts-lines{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;gap:4px;width:25px;height:25px;
+}
+#homeView .ghe-shortcuts-lines i,.ghe-smart-reopen .ghe-shortcuts-lines i{
+ display:block;width:22px;height:2.5px;border-radius:3px;background:currentColor;
+}
+#gheSmartRail{background:#fff;isolation:isolate;}
 #gheSmartRail .ghe-smart-head{
- display:flex;flex-direction:row;align-items:center;justify-content:space-between;
- gap:3px;padding:6px;min-height:54px;box-sizing:border-box;
+ display:flex;align-items:center;justify-content:space-between;min-height:58px;
+ padding:7px 12px;border-bottom:1px solid var(--stip-line,#e3ebef);gap:8px;
 }
-#gheSmartRail .ghe-smart-toggle{
- flex:none;display:grid;place-items:center;border-radius:10px;
- background:#eff6f8;border:1px solid #d9e8ee;color:#295d6f;
- width:36px;height:40px;line-height:1;touch-action:manipulation;
+#gheSmartRail .ghe-smart-expanded-label{
+ display:block;text-align:left;font-size:16px;font-weight:800;
 }
-#gheSmartRail .ghe-smart-arrow{font-size:29px;font-weight:500;}
-#gheSmartRail .ghe-smart-close{font-size:22px;}
-#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{
- display:flex;flex-direction:row!important;gap:2px!important;
- padding:4px 2px;min-height:52px;justify-content:center!important;
+#gheSmartRail .ghe-smart-close{
+ display:grid;place-items:center;flex:none;width:40px;height:40px;
+ border-radius:11px;border:1px solid var(--stip-line,#d9e8ee);
+ background:var(--stip-surface-soft,#f1f7f8);color:var(--stip-ink,#295d6f);
+ font-size:25px;line-height:1;touch-action:manipulation;
 }
-#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-toggle{
- display:grid!important;width:24px;min-width:24px;height:38px;
- padding:0;font-size:23px;
-}
-#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-close{
- font-size:19px;
-}
-#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head .ghe-smart-expanded-label{
- display:none!important;
-}
-#gheSmartRail[data-mode="expanded"] .ghe-smart-head .ghe-smart-expanded-label{
- display:block;text-align:center;font-size:15px;font-weight:800;
-}
-#gheSmartRail .ghe-smart-foot{display:flex;padding:8px 5px 11px;}
-#gheSmartRail .ghe-smart-foot .ghe-smart-search{flex:1;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{display:none!important;}
 #gheSmartRail:not([data-mode="expanded"]) .ghe-smart-foot{display:none!important;}
-body.ghe-smart-active .ghe-smart-reopen{
- top:calc(88px + env(safe-area-inset-top, 0px));
- bottom:auto;left:7px;width:43px;height:44px;padding:0;
- display:grid;place-items:center;
- font-size:30px;font-weight:650;color:#20596b;
- background:#fff;border:1px solid #cde1e9;border-radius:13px;
+#gheSmartRail .ghe-smart-foot{display:flex;padding:8px 8px 11px;}
+#gheSmartRail .ghe-smart-foot .ghe-smart-search{flex:1;}
+#gheSmartRail .ghe-smart-divider span{background:#fff;}
+.ghe-smart-reopen{
+ top:calc(88px + env(safe-area-inset-top,0px));bottom:auto;left:7px;
+ width:44px;height:44px;padding:0;display:grid;place-items:center;
+ color:var(--stip-ink,#20596b);background:#fff;
+ border:1px solid var(--stip-line,#cde1e9);border-radius:13px;z-index:7102;
 }
 body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen{display:none;}
+.ghe-smart-expand-tab{
+ position:fixed;z-index:7103;top:50%;left:56px;transform:translateY(-50%);
+ width:32px;height:76px;display:grid;place-items:center;
+ padding:0 2px 0 0;border:1px solid var(--stip-line,#d2e3ea);
+ border-left:0;border-radius:0 14px 14px 0;background:#fff;
+ color:var(--stip-ink,#245a70);box-shadow:4px 2px 12px #092f4318;
+ font:600 29px/1 inherit;cursor:pointer;touch-action:manipulation;
+}
+body:not(.ghe-smart-active) .ghe-smart-expand-tab,
+body[data-smart-drawer="closed"] .ghe-smart-expand-tab{display:none;}
+body[data-smart-drawer="expanded"] .ghe-smart-expand-tab{left:min(340px,calc(100vw - 28px));}
+.ghe-smart-expand-tab:focus-visible,#gheSmartRail .ghe-smart-close:focus-visible{
+ outline:3px solid var(--stip-accent,#287da4);outline-offset:2px;
+}
+/* Les outils non essentiels sont rangés, jamais dédoublés dans la colonne d'icônes. */
+#gheSmartRail .ghe-smart-admin-tools{
+ margin:16px 5px 10px;border-top:1px solid var(--stip-line,#dbe7ed);
+}
+#gheSmartRail .ghe-smart-admin-tools summary{
+ list-style-position:inside;cursor:pointer;padding:15px 6px 10px;
+ color:var(--stip-ink-2,#436577);font-weight:750;font-size:13px;
+}
+#gheSmartRail .ghe-smart-admin-tools[open] summary{color:var(--stip-ink,#173a4a);}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-admin-tools{display:none!important;}
