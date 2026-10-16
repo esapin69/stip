@@ -222,7 +222,12 @@ function render(){
   return true;
  });
  const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
- for(const entry of extras.filter(x=>["apps","planning","dudy","assistant","admin","t-door"].includes(x.action))){
+ for(const entry of extras.filter(x=>{
+  if(["admin","t-door"].includes(x.action))return isAdmin();
+  if(x.action==="planning")return p.planning_personal===true;
+  if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
+  return ["apps","dudy"].includes(x.action);
+ })){
   shortcuts.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
  }
  const admin=isAdmin()?[["🔐","Gérer les accès","Rôles et raccourcis","access"],["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]]:[];
