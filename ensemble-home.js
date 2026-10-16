@@ -51,7 +51,10 @@ function drawerDates(){
    const isConfirmed=confirmed.has(day);
    const responding=!x.is_organizer&&!!x.needs_response&&!hasResponse(x);
    const chosen=hasResponse(x)&&x.response.selected_dates.includes(day);
-   const label=isConfirmed?"Confirmé":responding?"Réponse attendue":chosen?"En attente de confirmation":x.is_organizer?"Proposé":"À confirmer";
+   const blocked=(x.organizer_unavailable_dates||[]).includes(day);
+   const compatible=(x.visible_dates||x.dates||[]).includes(day)&&!blocked;
+   const label=isConfirmed?"Confirmé":blocked?"Indisponible":!compatible?"Non compatible":
+    responding?"Réponse attendue":chosen?"En attente de confirmation":x.is_organizer?"Proposé":"À confirmer";
    const time=x.schedule_mode==="afterwork"?(x.visible_end_times?.[day]||x.time_label||"Après le service"):(x.time_label||"Horaire à fixer");
    rows.push({
     id,title:String(x.title||"Activité"),date:day,icon:iconFor(x),
