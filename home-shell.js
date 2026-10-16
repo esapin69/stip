@@ -1681,11 +1681,11 @@
       <div class="ghe-weekflip-track">
         <div class="ghe-weekflip-face ghe-weekflip-front" ${flipped?'inert aria-hidden="true"':'aria-hidden="false"'}>
           ${front}
-          <button type="button" class="ghe-weekflip-turn" data-week-turn-open aria-expanded="${flipped}" aria-label="Voir toute la semaine de planning"><span class="ghe-weekflip-turn-icon" aria-hidden="true">▦</span>Voir toute la semaine <span class="ghe-weekflip-turn-chevron" aria-hidden="true">›</span></button>
+          <button type="button" class="ghe-weekflip-turn ghe-flip-cta" data-week-turn-open aria-expanded="${flipped}" aria-label="Voir toute la semaine de planning"><span class="ghe-flip-cta-icon" aria-hidden="true">▦</span><span class="ghe-flip-cta-label">Voir toute la semaine</span><span class="ghe-flip-cta-arrow" aria-hidden="true">›</span></button>
         </div>
         <div class="ghe-weekflip-face ghe-weekflip-back hc-week-context-master" data-stip-context-master="week" ${flipped?'aria-hidden="false"':'inert aria-hidden="true"'}>
           ${weekFlipBack()}
-          <button type="button" class="ghe-weekflip-turn ghe-weekflip-return" data-week-turn-close aria-label="Revenir à Aujourd’hui et Demain">Aujourd’hui &amp; demain <span aria-hidden="true">↶</span></button>
+          <button type="button" class="ghe-weekflip-turn ghe-weekflip-return ghe-flip-cta" data-week-turn-close aria-label="Revenir à Aujourd’hui et Demain"><span class="ghe-flip-cta-icon" aria-hidden="true">↶</span><span class="ghe-flip-cta-label">Aujourd’hui &amp; demain</span><span class="ghe-flip-cta-arrow" aria-hidden="true">‹</span></button>
         </div>
       </div></section>`;
   }
@@ -1810,9 +1810,9 @@
       '<section class="ghe-monthflip-face ghe-monthflip-front" aria-label="Calendrier mensuel"' +
       (flipped ? ' inert aria-hidden="true"' : ' aria-hidden="false"') + '>' +
       calendarMarkup +
-      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-open" data-month-turn-open aria-expanded="' +
+      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-open ghe-flip-cta" data-month-turn-open aria-expanded="' +
       flipped + '" aria-label="Voir les statistiques du mois affiché">' +
-      '<span aria-hidden="true">▥</span> Voir les statistiques du mois <b aria-hidden="true">↻</b></button></section>' +
+      '<span class="ghe-flip-cta-icon" aria-hidden="true">▥</span><span class="ghe-flip-cta-label">Voir les statistiques du mois</span><b class="ghe-flip-cta-arrow" aria-hidden="true">↻</b></button></section>' +
       '<section class="ghe-monthflip-face ghe-monthflip-back" aria-label="Statistiques du mois"' +
       (!flipped ? ' inert aria-hidden="true"' : ' aria-hidden="false"') + '>' +
       '<nav class="ghe-monthflip-nav" aria-label="Changer le mois des statistiques">' +
@@ -1821,8 +1821,8 @@
       '<button type="button" data-month-stat-step="1" aria-label="Mois suivant"' +
       (planningLoading() ? ' disabled' : '') + '>›</button></nav>' +
       monthStatsMarkup() +
-      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-return" data-month-turn-close ' +
-      'aria-label="Revenir au calendrier du mois">↶ Revenir au calendrier</button></section>' +
+      '<button type="button" class="ghe-monthflip-turn ghe-monthflip-return ghe-flip-cta" data-month-turn-close ' +
+      'aria-label="Revenir au calendrier du mois"><span class="ghe-flip-cta-icon" aria-hidden="true">↶</span><span class="ghe-flip-cta-label">Revenir au calendrier</span><b class="ghe-flip-cta-arrow" aria-hidden="true">‹</b></button></section>' +
       '</div></div>';
   }
 
@@ -2855,10 +2855,6 @@
       ' aria-label="Voir les '+items.length+' collègues en '+esc(premiumShiftName(code))+'">'+
       '<b>'+esc(code)+'</b><span>'+items.length+'</span></button>').join("");
     return '<div class="ghe-premium-live">'+
-      '<div class="ghe-premium-live-title">'+
-        '<button type="button" class="ghe-premium-back-turn" data-premium-turn-close '+
-          'aria-label="Retourner la carte vers le profil" title="Retour au profil">'+
-          '<span aria-hidden="true">↶</span></button></div>'+
       '<div class="ghe-premium-live-hero">'+
         (roster.rows.length ?
           '<button type="button" data-premium-roster class="ghe-premium-total ghe-premium-total-action"'+
@@ -2995,14 +2991,19 @@
             (state.premiumFlipped?' inert':'')+'>'+
             '<div class="hc-home-identity">'+profile()+'</div>'+
             '<footer class="ghe-premium-front-footer">'+
-              '<button type="button" class="ghe-premium-turn" data-premium-turn-open'+
+              '<button type="button" class="ghe-premium-turn ghe-flip-cta" data-premium-turn-open'+
                 ' aria-label="Retourner la carte pour afficher En direct" aria-expanded="'+state.premiumFlipped+'">'+
-                '<span class="ghe-premium-button-dot" aria-hidden="true"></span>'+
-                '<strong>Voir en direct</strong><b aria-hidden="true">↻</b></button></footer>'+
+                '<span class="ghe-flip-cta-icon ghe-flip-cta-dot" aria-hidden="true"></span>'+
+                '<strong class="ghe-flip-cta-label">Voir en direct</strong><b class="ghe-flip-cta-arrow" aria-hidden="true">↻</b></button></footer>'+
           '</section>'+
           '<section class="ghe-premium-face ghe-premium-back" aria-label="En direct du service"'+
             (!state.premiumFlipped?' inert':'')+'>'+
             '<div class="ghe-premium-back-body">'+premiumBackMarkup()+'</div>'+
+            '<footer class="ghe-premium-back-footer">'+
+              '<button type="button" class="ghe-premium-turn ghe-flip-cta" data-premium-turn-close aria-label="Revenir à mon profil">'+
+                '<span class="ghe-flip-cta-icon" aria-hidden="true">↶</span>'+
+                '<strong class="ghe-flip-cta-label">Retour à mon profil</strong>'+
+                '<b class="ghe-flip-cta-arrow" aria-hidden="true">‹</b></button></footer>'+
           '</section>'+
         '</div>'+
       '</div>';

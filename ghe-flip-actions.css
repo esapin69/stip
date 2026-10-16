@@ -1,0 +1,83 @@
+/* Accueil GHE : commande premium unique des TROIS blocs 360°, sur chaque face.
+   Les styles sont volontairement limités aux cartes concernées. */
+.ghe-weekflip-stage{
+  --ghe-flip-start:#116fc9;--ghe-flip-mid:#226bd6;--ghe-flip-end:#546bd0;
+  --ghe-flip-border:#80adeb;--ghe-flip-shadow:#2059a62f;--ghe-flip-focus:#2054b2;
+}
+.ghe-monthflip-stage{
+  --ghe-flip-start:#0e6e81;--ghe-flip-mid:#168798;--ghe-flip-end:#2895a5;
+  --ghe-flip-border:#7eabb8;--ghe-flip-shadow:#16657b2b;--ghe-flip-focus:#118ba4;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-stage{
+  --ghe-flip-start:#e51d49;--ghe-flip-mid:#d51040;--ghe-flip-end:#a70e37;
+  --ghe-flip-border:#fa6684;--ghe-flip-shadow:#bd1d4c35;--ghe-flip-focus:#ad1747;
+}
+.ghe-weekflip-face>.ghe-flip-cta,
+.ghe-monthflip-face>.ghe-flip-cta,
+.hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{
+  box-sizing:border-box!important;position:relative!important;isolation:isolate;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  flex:0 0 auto!important;align-self:center!important;gap:12px!important;
+  width:calc(100% - 22px)!important;max-width:465px!important;min-width:0!important;
+  min-height:54px!important;height:auto!important;
+  margin:10px auto 2px!important;padding:12px 16px!important;
+  overflow:hidden!important;white-space:normal!important;text-align:left!important;
+  border:1px solid var(--ghe-flip-border)!important;border-radius:17px!important;
+  background:linear-gradient(115deg,var(--ghe-flip-start),var(--ghe-flip-mid) 55%,var(--ghe-flip-end))!important;
+  box-shadow:0 5px 14px var(--ghe-flip-shadow),inset 0 1px 0 #ffffff86!important;
+  color:#fff!important;font:900 clamp(.98rem,3.65vw,1.18rem)/1.18 system-ui,sans-serif!important;
+  letter-spacing:-.018em!important;text-shadow:0 1px 2px #082b6342!important;
+  cursor:pointer!important;touch-action:manipulation!important;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.ghe-weekflip-face>.ghe-flip-cta::before,
+.ghe-monthflip-face>.ghe-flip-cta::before,
+.hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta::before{
+  content:"";position:absolute;inset:0 0 57% 0;z-index:-1;
+  background:linear-gradient(180deg,#ffffff28,transparent);pointer-events:none;
+}
+.ghe-flip-cta .ghe-flip-cta-icon{
+  display:inline-grid;place-items:center;flex:0 0 23px;
+  width:23px;height:23px;font-size:1.25rem;line-height:1;
+}
+.ghe-flip-cta .ghe-flip-cta-label{
+  flex:1 1 auto;min-width:0;font:inherit!important;text-align:left!important;
+}
+.ghe-flip-cta .ghe-flip-cta-arrow{
+  flex:0 0 auto;margin-left:auto;font-size:1.55rem;line-height:1;font-weight:800;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta-dot{
+  box-sizing:border-box!important;width:19px;height:19px;flex-basis:19px;
+  border:3px solid #fff;border-radius:50%;background:#f11749;
+  box-shadow:0 0 0 2px #ffb5c5;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-front-footer,
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-footer{
+  box-sizing:border-box!important;display:flex!important;align-items:stretch!important;
+  width:100%!important;max-width:100%!important;
+  margin-top:auto!important;padding-top:10px!important;justify-content:center!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-premium-back-footer{
+  border-top:1px solid #eedde3!important;
+}
+.ghe-weekflip-face>.ghe-flip-cta:active,
+.ghe-monthflip-face>.ghe-flip-cta:active,
+.hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta:active{
+  transform:translateY(1px) scale(.99);
+  box-shadow:0 3px 7px var(--ghe-flip-shadow),inset 0 1px 0 #ffffff86!important;
+}
+.ghe-weekflip-face>.ghe-flip-cta:focus-visible,
+.ghe-monthflip-face>.ghe-flip-cta:focus-visible,
+.hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta:focus-visible{
+  outline:3px solid var(--ghe-flip-focus)!important;outline-offset:4px!important;
+}
+@media(max-width:375px){
+  .ghe-weekflip-face>.ghe-flip-cta,.ghe-monthflip-face>.ghe-flip-cta,
+  .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{
+    padding:11px!important;gap:8px!important;font-size:.94rem!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .ghe-weekflip-face>.ghe-flip-cta,.ghe-monthflip-face>.ghe-flip-cta,
+  .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{transition:none!important}
+}
