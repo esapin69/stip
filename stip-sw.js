@@ -1,4 +1,4 @@
-const STIP_SW_BUILD="20261016-live-roster-black3";
+const STIP_SW_BUILD="20261016-leisure-quick1";
 const STATIC_CACHE="stip-static-"+STIP_SW_BUILD;
 const PAGE_CACHE="stip-pages-"+STIP_SW_BUILD;
 
