@@ -224,6 +224,8 @@
     document.querySelector(".stip-kicker").textContent="VISITER LES LIEUX · VERSION VISITEUR";
     document.querySelector(".stip-subtitle").textContent="Ce PDF contient uniquement des informations publiques.";
     document.querySelector('[data-format="xlsx"]').hidden=true;
+    document.querySelector("#pdfFormat strong").textContent="PDF visiteur · informations publiques";
+    document.querySelector("#pdfFormat small").textContent="Dictionnaire public, sans pages fixes professionnelles.";
   }
   const formatStep=document.getElementById("formatStep");
   const actionStep=document.getElementById("actionStep");
@@ -286,7 +288,9 @@
     document.querySelectorAll("[data-format]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")});
     pdfFormat.disabled=false;
     formatScopeCopy.textContent="Choisis PDF ou tableur.";
-    formatNote.innerHTML="<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
+    formatNote.innerHTML=audience==="visitor"
+      ?"<strong>PDF visiteur</strong> · uniquement les informations publiques du référentiel GHE."
+      :"<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
     setStatus("");
     setProgress(1);
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -411,7 +415,7 @@
     formatNote.innerHTML=state.format==="visual_pdf"
       ?"<strong>PDF visuel</strong> · schéma de classement par bâtiment et par étage, construit avec les données autorisées de ta session. Ce n’est pas un plan des couloirs."
       :state.format==="pdf"
-        ?"<strong>PDF généré</strong> · pages fixes validées et dictionnaire du référentiel STIP."
+        ?(audience==="visitor"?"<strong>PDF visiteur</strong> · dictionnaire public sans informations professionnelles.":"<strong>PDF généré</strong> · pages fixes validées et dictionnaire du référentiel STIP.")
         :"<strong>Tableur</strong> · données du référentiel STIP pour la sélection.";
     renderActions();
     actionStep.hidden=false;
