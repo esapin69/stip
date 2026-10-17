@@ -161,6 +161,8 @@ function link(entry){
  const icon=entry.icon||"📅";
  const title=/^muscu$/i.test(entry.title||"")?"Séance de musculation":entry.title;
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
+ const dateBadge=entry.showDateMarker&&/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?
+  '<span class="ghe-smart-event-date" aria-hidden="true">'+Number(entry.date.slice(-2))+'</span>':"";
  const tag=isPending?"button":"a";
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
@@ -170,7 +172,7 @@ function link(entry){
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
  ' title="'+escapeHtml(title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
- symbol+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
+ symbol+dateBadge+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
 }
 
@@ -256,12 +258,17 @@ function render(){
  // Actions séparées des rendez-vous, sans modifier les destinations.
  const entries=groupedEntries();
  const pending=entries.filter(entry=>entry.kind==="pending").map(link).join("");
- const appointments=entries.filter(entry=>entry.kind!=="pending").map(link).join("");
+ const datedEntries=entries.filter(entry=>entry.kind!=="pending");
+ const iconCounts=new Map();
+ for(const entry of datedEntries.filter(item=>item.kind==="event")){
+  iconCounts.set(entry.icon,(iconCounts.get(entry.icon)||0)+1);
+ }
+ const appointments=datedEntries.map(entry=>link({...entry,showDateMarker:entry.kind==="event"&&(iconCounts.get(entry.icon)||0)>1})).join("");
  const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
  const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  // Accueil épinglé au-dessus de la liste et visible en mode compact.
  const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" aria-label="Accueil — page principale">'+
-  '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>'+
+  '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
  // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
