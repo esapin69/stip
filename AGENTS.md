@@ -210,6 +210,14 @@ Non-negotiable invariants:
 ## 15. Visiter les lieux — PDF généré, templates STIP et dictionnaires
 
 Le PDF opérationnel suit une architecture hybride : **pages fixes de repérage + dictionnaires dynamiques**.
+ 
+**Une seule organisation documentaire, deux niveaux d'accès :**
+- Pour **visiteur et professionnel**, même progression : page générale GHE → page de présentation de chaque bâtiment (Cardio, Neuro, HFME) avec photo et repères par étage → dictionnaire complet des services du bâtiment → annexes.
+- **Visiteur :** lieux, services, étages, signalétique et informations de repérage qui pourraient être affichées sur les murs de l'hôpital ; exclure téléphones, contacts, e-mails, consignes privées et autres données internes, même si des notes libres sont mal classées comme publiques.
+- **Professionnel :** même organisation, avec les coordonnées, consignes et informations détaillées autorisées par le profil. Ne pas tronquer les alias ni les informations utiles du dictionnaire.
+- Le modèle fixe professionnel du stockage privé est conservé ; l'export visiteur fabrique une présentation de même structure à partir des seuls éléments publics, sans copier de pages fixes non auditées.
+- Dans le formulaire, privilégier le **PDF complet** ; la synthèse visuelle par étage reste un format secondaire, pas un substitut au dictionnaire.
+
 
 Règles validées :
 - Le site **fabrique chaque PDF à la demande**. Aucun fichier Drive n’est nécessaire au fonctionnement de l’outil.
