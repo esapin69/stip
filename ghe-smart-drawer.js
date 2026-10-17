@@ -113,7 +113,7 @@ function groupedEntries(){
   for(const item of (source.groups.find(g=>g.key==="upcoming")?.items||[])){
    if(item.kind!=="future"||!item.date||item.date<now)continue;
    rows.push({kind:"professional",icon:/formation/i.test(item.title)?"🎓":/visite|médecin|médical/i.test(item.title)?"🏥":"📅",
-    title:item.title,date:item.date,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:"agent-dates.html?focus="+encodeURIComponent(item.id),id:item.id,entryKind:"future"});
+    title:item.title,date:item.date,time:item.time,place:item.place,sub:[dlabel(item.date),item.time,item.place].filter(Boolean).join(" · "),href:"agent-dates.html?focus="+encodeURIComponent(item.id),id:item.id,entryKind:"future"});
   }
   for(const item of (source.groups.find(g=>g.key==="feedback")?.items||[])){
    needs.push({kind:"professional-action",icon:"📋",id:item.id||item.title,
@@ -173,8 +173,8 @@ function link(entry){
   ((icon==="📅"||icon==="📆")?'<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+escapeHtml(realDay||"··")+'</b></span>':escapeHtml(icon)));
  const facts=' data-choice-kind="'+escapeHtml(entry.kind)+'"'+
   (entry.date?' data-choice-date="'+escapeHtml(entry.date)+'"':'')+
-  (entry.event?.time_label?' data-choice-time="'+escapeHtml(entry.event.time_label)+'"':'')+
-  (entry.event?.location?' data-choice-place="'+escapeHtml(entry.event.location)+'"':'');
+  (entry.time||entry.event?.time_label?' data-choice-time="'+escapeHtml(entry.time||entry.event.time_label)+'"':'')+
+  (entry.place||entry.event?.location?' data-choice-place="'+escapeHtml(entry.place||entry.event.location)+'"':'');
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
  facts+' title="'+escapeHtml(title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
@@ -227,7 +227,7 @@ function openPendingDialog(){
   dialog.addEventListener("close",()=>{rail?.querySelector("[data-smart-pending-open]")?.focus({preventScroll:true});});
  }
  const rows=group.items.map(item=>
-  '<a class="ghe-smart-pending-item" href="'+escapeHtml(item.href)+'"'+(item.entryKind?' data-smart-entry-kind="'+escapeHtml(item.entryKind)+'" data-smart-entry-id="'+escapeHtml(item.id)+'"':'')+'>'+
+  '<a class="ghe-smart-pending-item" href="'+escapeHtml(item.href)+'" data-choice-kind="pending" data-choice-date="'+escapeHtml(item.date)+'"'+(item.entryKind?' data-smart-entry-kind="'+escapeHtml(item.entryKind)+'" data-smart-entry-id="'+escapeHtml(item.id)+'"':'')+'>'+
    '<span class="ghe-smart-pending-item-icon" aria-hidden="true">'+escapeHtml(item.icon)+'</span>'+
    '<span class="ghe-smart-pending-item-copy"><strong>'+escapeHtml(item.title)+'</strong>'+
    '<small>'+escapeHtml(dlabel(item.date))+(item.sub?' · '+escapeHtml(item.sub):'')+'</small>'+
@@ -273,7 +273,7 @@ function render(){
  const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
  const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  // Accueil épinglé au-dessus de la liste et visible en mode compact.
- const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" aria-label="Accueil — page principale">'+
+ const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-choice-kind="shortcut" aria-label="Accueil — page principale">'+
   '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
