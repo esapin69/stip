@@ -218,7 +218,10 @@ Règles validées :
 - Les données métier et les champs attendus du dictionnaire sont dans Supabase ; le PDF n’est jamais la source de vérité.
 - Le catalogue `stip_place_dictionary_field_defs` contient actuellement les familles attendues : identification, localisation, accès/transport, contacts/horaires, informations opérationnelles, source/confirmation.
 - Une fiche peut donc être très incomplète dans STIP tout en montrant clairement ce qui reste à renseigner. Lors de l’export, **seuls les champs réellement renseignés sont composés**.
-- Les actions d’export sont **Afficher / Télécharger / Partager**. Le bouton autonome **Imprimer** ne doit pas revenir ; l’impression éventuelle se fait depuis le lecteur du PDF affiché.
+- Les actions PDF sont **Afficher / Imprimer / Télécharger / Partager**. Le bouton autonome **Imprimer** ne doit pas revenir en dehors de ce parcours : « Imprimer » ouvre le PDF dans le lecteur natif pour utiliser sa fonction d'impression ; il n'existe aucun second moteur d'impression.
+- Le bouton **PDF** en haut à droite de Visiter les lieux est également visible avant connexion : **Visiteur** ouvre uniquement les données publiques, **Professionnel** exige une session GHE valide de niveau professionnel ou le code habituel à six chiffres.
+- L'export public est calculé côté serveur avec `bootstrap(['public'],'public_share','visitor')`, même si un token professionnel existe. Aucun fichier fixe professionnel, dictionnaire interne ni détail restreint n'entre dans ce PDF visiteur.
+- Les PDF professionnels continuent d'utiliser leur propre moteur et leurs pages fixes, après contrôle serveur des droits ; ne jamais considérer un token local non vérifié comme preuve d'accès.
 - Les PDF par périmètre sont autorisés pour **GHE complet, bâtiment, domaine et sélection libre**. La sélection de données passe toujours par `scopedSnapshot`.
 - Le nombre final de pages n’est pas figé : les dictionnaires paginent selon le périmètre et la richesse réelle des données.
 - Les trois bâtiments principaux suivent l’ordre cible : **intercalaire fixe/généré → page visuelle fixe → dictionnaire dynamique**.
