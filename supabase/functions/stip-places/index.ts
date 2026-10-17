@@ -300,6 +300,19 @@ function exportFactValue(v:any){
   if(/(a completer|a confirmer|a preciser|a valider|revalider|reconfirmer|provisoire|non valide|non confirme|sans preuve)/.test(n))return''
   return value
 }
+// Public PDFs must exclude contact details even when a source row is marked public.
+// Keep nearby description, floor and signage data instead of dropping entire rows.
+function publicPdfFactValue(v:any){
+  const value=exportFactValue(v)
+  if(!value)return''
+  const contact=/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(?:\+33|0[1-9])(?:[ .-]?\d{2}){4}\b|\b(?:\d{2}[ .-]){2,4}\d{2}\b|\b(?:poste|contact|tel(?:ephone)?|fax|courriel|e-mail)\s*[:#-]?\s*\d{3,}\b/i
+  return value
+    .split(/(?<=\.)\s+(?=[A-ZÀ-Ö])|\s*[·;]\s*/g)
+    .map((part:string)=>part.trim())
+    .filter((part:string)=>part&&!contact.test(part))
+    .join(' · ')
+}
+
 function pdfSafe(v:any){
   return String(v??'')
     .replace(/Œ/g,'OE').replace(/œ/g,'oe')
@@ -421,12 +434,18 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     page=null;y=0
   }
 
+  // Compact two-column dictionaries, matching the approved MASTER architecture.
+  // Both audiences use exactly the same pagination and typography.
+  let twoCols=false,column=0,currentDictionaryTitle='',currentDictionarySubtitle=''
+  const currentWidth=()=>twoCols?(CONTENT-20)/2:CONTENT
+  const currentX=()=>M+(twoCols&&column===1?currentWidth()+20:0)
   const footer=(p:any,label='')=>{
     p.drawLine({start:{x:M,y:28},end:{x:W-M,y:28},thickness:.6,color:line})
     p.drawText(pdfSafe('STIP · GHE · Visiter les lieux'+(label?' · '+label:'')),{x:M,y:15,size:7,font:regular,color:muted})
   }
   const freshPage=(title:string,subtitle='')=>{
-    page=pdf.addPage([W,H]);y=H-50
+    if(twoCols){currentDictionaryTitle=title||currentDictionaryTitle;currentDictionarySubtitle=subtitle||currentDictionarySubtitle}
+    page=pdf.addPage([W,H]);column=0;y=H-50
     page.drawText(pdfSafe(title),{x:M,y,size:20,font:bold,color:navy,maxWidth:CONTENT});y-=26
     if(subtitle){for(const l of wrapPdf(regular,subtitle,9,CONTENT)){page.drawText(l,{x:M,y,size:9,font:regular,color:muted});y-=12}}
     page.drawLine({start:{x:M,y:y-2},end:{x:W-M,y:y-2},thickness:1,color:line});y-=19
@@ -434,19 +453,26 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     return page
   }
   const ensure=(need:number,title='Suite')=>{
-    if(!page||y<45+need){freshPage(title)}
+    if(!page){freshPage(twoCols?currentDictionaryTitle:title,twoCols?currentDictionarySubtitle:'');return}
+    if(y>=45+need)return
+    if(twoCols&&column===0){column=1;y=H-117;return}
+    freshPage(twoCols?currentDictionaryTitle:title,twoCols?currentDictionarySubtitle:'')
   }
   const textBlock=(text:string,size=8.5,font=regular,color=ink,indent=0,gap=2)=>{
-    const lines=wrapPdf(font,text,size,CONTENT-indent)
-    const need=lines.length*(size+3)+gap
-    ensure(need+8)
-    for(const l of lines){page.drawText(l,{x:M+indent,y,size,font,color});y-=size+3}
+    const lines=wrapPdf(font,text,size,currentWidth()-indent)
+    if(twoCols){
+      for(const l of lines){ensure(size+3);page.drawText(l,{x:currentX()+indent,y,size,font,color});y-=size+3}
+    }else{
+      const need=lines.length*(size+3)+gap
+      ensure(need+8)
+      for(const l of lines){page.drawText(l,{x:M+indent,y,size,font,color});y-=size+3}
+    }
     y-=gap
   }
   const heading=(text:string)=>{
     ensure(30)
-    page.drawRectangle({x:M,y:y-15,width:CONTENT,height:20,color:soft})
-    page.drawText(pdfSafe(text),{x:M+8,y:y-9,size:10,font:bold,color:navy,maxWidth:CONTENT-16})
+    page.drawRectangle({x:currentX(),y:y-15,width:currentWidth(),height:20,color:soft})
+    page.drawText(pdfSafe(text),{x:currentX()+8,y:y-9,size:10,font:bold,color:navy,maxWidth:currentWidth()-16})
     y-=29
   }
   const divider=(title:string,subtitle:string,detail:string)=>{
@@ -469,6 +495,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
 
   const aliasesBy=new Map<string,string[]>()
   for(const a of snapshot.aliases||[]){const arr=aliasesBy.get(String(a.place_id))||[];arr.push(String(a.alias||''));aliasesBy.set(String(a.place_id),arr)}
+  const visibleFact=(v:any)=>publicOnly?publicPdfFactValue(v):exportFactValue(v)
   const tagsBy=new Map<string,string[]>()
   for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
 
@@ -489,23 +516,26 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
       if(code==='HFME'&&cfg.covers.HFME==='rebuild_with_overview_photo')await appendHfmeCover();else await appendFixedPage(fixedIndex)
       if(code==='HLP'&&cfg.layout.room_showcase!==false)roomShowcase()
     }
+    twoCols=true
     freshPage(label+' · '+subtitle+' · DICTIONNAIRE',(publicOnly?'Version visiteur · informations publiques au ':'Données issues du référentiel Supabase au ')+exportDate())
-    const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
-    for(const lvl of levels){
-      heading(levelLabel(lvl))
-      const items=rows.filter((p:any)=>String(p.level||'')===lvl).sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))
-      for(const p of items){
-        ensure(52,label+' · '+subtitle)
-        textBlock((p.display_name||p.official_name||p.id)+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),9,bold,ink,0,1)
-        const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-        const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,8)
-        if(als.length)facts.push('Alias : '+als.join(' · '))
-        const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
-        if(usefulTags.length)facts.push(...usefulTags)
-        for(const fact of facts)textBlock(fact,7.6,regular,muted,10,1)
-        y-=4
-      }
+    const items=[...rows].sort((a:any,b:any)=>String(a.display_name||a.official_name||a.id).localeCompare(String(b.display_name||b.official_name||b.id),'fr'))
+    let currentLetter=''
+    for(const p of items){
+      const name=String(p.display_name||p.official_name||p.id)
+      const letter=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,1).toUpperCase()||'#'
+      if(letter!==currentLetter){heading(letter);currentLetter=letter}
+      ensure(48)
+      textBlock(name+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),8.5,bold,ink,0,1)
+      if(p.level)textBlock(levelLabel(p.level),7.3,bold,navy,3,1)
+      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,8)
+      if(als.length)facts.push('Alias : '+als.join(' · '))
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
+      if(usefulTags.length)facts.push(...usefulTags)
+      for(const fact of facts)textBlock(fact,7.2,regular,muted,8,1)
+      y-=5
     }
+    twoCols=false;page=null;y=0
   }
 
   for(const b of MAIN_BUILDINGS)await renderBuilding(b.code,b.label,b.subtitle)
@@ -513,6 +543,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
   if(hasAnnex){
     await appendFixedPage(Number(fixedPages.annexes||13))
+    twoCols=true
     freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
   }
   for(const code of ANNEX_CODES){
@@ -522,10 +553,10 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
       const prefix=p.level?levelLabel(p.level)+' · ':''
       textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
-      const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,6)
+      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,6)
       if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
       if(usefulTags.length)facts.push(...usefulTags)
       for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
       y-=3
