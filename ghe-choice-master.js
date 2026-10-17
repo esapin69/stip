@@ -11,7 +11,7 @@
  function eligible(el){
   if(!el||el.disabled||el.closest("[inert],[aria-disabled='true'],#gheChoiceMasterDialog"))return false;
   if(el.closest("dialog:not(#gheSmartPendingDialog),[role='dialog'][aria-modal='true']"))return false;
-  if(el.matches("#homeView button[data-app]"))return true;
+  if(el.matches("#homeView button[data-app],#homeView button[data-home-mode]"))return true;
   if(!el.matches("a[href]")||el.hasAttribute("download")||el.target==="_blank")return false;
   const href=el.getAttribute("href")||"";
   if(!href||(href.startsWith("#")&&!href.startsWith("#/"))||/^(mailto:|tel:|sms:|javascript:|data:|blob:)/i.test(href))return false;
@@ -35,10 +35,10 @@
    target.querySelector("strong")?.textContent?.trim()||
    target.getAttribute("aria-label")?.trim()||target.textContent?.trim()||"Accéder").slice(0,130);
   const summary=target.querySelector(".ghe-smart-sub")?.textContent?.trim()||target.getAttribute("title")?.trim()||"";
-  const kind=target.dataset.choiceKind||target.dataset.smartEntryType||(target.dataset.app?"application":"navigation");
-  const status=kind==="cancelled"?"Annulé":kind==="event"?"Événement confirmé":kind==="professional"?"Rendez-vous prévu":kind==="pending"?"Réponse attendue":kind==="application"?"Application":kind==="shortcut"?"Raccourci":"À consulter";
+  const kind=target.dataset.choiceKind||target.dataset.smartEntryType||(target.dataset.app?"application":target.dataset.homeMode?"rubrique":"navigation");
+  const status=kind==="cancelled"?"Annulé":kind==="event"?"Événement confirmé":kind==="professional"?"Rendez-vous prévu":kind==="pending"?"Réponse attendue":kind==="application"?"Application":kind==="rubrique"?"Rubrique GHE":kind==="shortcut"?"Raccourci":"À consulter";
   const facts=fact("Date",niceDate(target.dataset.choiceDate))+fact("Horaire",target.dataset.choiceTime)+fact("Lieu",target.dataset.choicePlace);
-  const proceed=kind==="event"?"Voir l’événement":kind==="professional"?"Voir le rendez-vous":kind==="cancelled"?"Ouvrir l’agenda":kind==="application"?"Ouvrir l’application":"Accéder";
+  const proceed=kind==="event"?"Voir l’événement":kind==="professional"?"Voir le rendez-vous":kind==="cancelled"?"Ouvrir l’agenda":kind==="application"?"Ouvrir l’application":kind==="rubrique"?"Afficher la rubrique":"Accéder";
   d.innerHTML='<section class="ghe-choice-frame"><header class="ghe-choice-header"><span class="ghe-choice-kicker">GHE · INFORMATION ET CHOIX</span>'+
    '<button type="button" data-choice-close class="ghe-choice-close" aria-label="Fermer">×</button></header>'+
    '<div class="ghe-choice-main"><h2 id="gheChoiceTitle">'+esc(title)+'</h2>'+
@@ -51,7 +51,16 @@
  }
  function continueClick(){
   const el=source;if(!el)return;
-  modal?.close();replay=true;
+  modal?.close();
+  // Drawer entries already have their own preliminary modal; do not show two.
+  if(el.closest("#gheSmartRail")&&el.matches("a[data-smart-open-details]")){
+   window.GHESmartDrawer?.setMode?.("compact");
+   const kind=el.dataset.smartEntryKind,id=el.dataset.smartEntryId,action=el.dataset.smartAction;
+   const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
+   if(!opened){if(window.STIPNav?.go)window.STIPNav.go(el.href);else location.assign(el.href);}
+   return;
+  }
+  replay=true;
   try{el.click();}finally{replay=false;}
  }
  document.addEventListener("click",event=>{
@@ -59,7 +68,7 @@
   if(event.target.closest?.("#gheChoiceMasterDialog [data-choice-go]")){event.preventDefault();continueClick();return;}
   if(replay||event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey)return;
   if(!document.body.classList.contains("ghe-smart-active"))return;
-  const entry=event.target.closest?.("a[href],#homeView button[data-app]");
+  const entry=event.target.closest?.("a[href],#homeView button[data-app],#homeView button[data-home-mode]");
   if(!eligible(entry))return;
   event.preventDefault();event.stopImmediatePropagation();open(entry);
  },true);
