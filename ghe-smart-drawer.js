@@ -159,6 +159,7 @@ function groupedEntries(){
 function link(entry){
  const isPending=entry.kind==="pending";
  const icon=entry.icon||"📅";
+ const title=/^muscu$/i.test(entry.title||"")?"Séance de musculation":entry.title;
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  const tag=isPending?"button":"a";
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
@@ -166,9 +167,9 @@ function link(entry){
  const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
   (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon));
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
- ' title="'+escapeHtml(entry.title+" — "+entry.sub)+
- '" aria-label="'+escapeHtml(entry.title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
- symbol+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(entry.title)+
+ ' title="'+escapeHtml(title+" — "+entry.sub)+
+ '" aria-label="'+escapeHtml(title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
+ symbol+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
 }
 
@@ -223,7 +224,7 @@ function render(){
  let entries=groupedEntries(),start=entries.map(link).join("")||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  const p=permissions();
  // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
- const shortcuts=[["🎉","On se retrouve","Sorties et invitations","leisure"]];
+ const shortcuts=[["🎉","Sorties et activités","Proposer une activité · voir les invitations","leisure"]];
  // Outils de gestion repliés par défaut et exclusivement réservés à l'admin.
  const admin=isAdmin()?[
   ["👥","Collègues","Annuaire des agents","colleagues"],
@@ -245,7 +246,7 @@ function render(){
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
- (shortcuts.length?'<div class="ghe-smart-divider"><span>À découvrir</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
+ (shortcuts.length?'<div class="ghe-smart-divider"><span>Loisirs entre collègues</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
  (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
  // Keep the search input in place while background data refreshes.
