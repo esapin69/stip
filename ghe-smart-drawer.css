@@ -232,3 +232,33 @@ body[data-smart-drawer="expanded"] .ghe-smart-expand-tab{left:min(340px,calc(100
 #gheSmartRail .ghe-smart-link[data-smart-entry-type="event"] .ghe-smart-icon{font-size:27px;}
 #gheSmartRail .ghe-smart-event-date{position:absolute;right:-5px;bottom:-3px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 2px;border-radius:7px;border:1px solid #c4dbe6;background:#fff;color:#24546b;font:800 10px/1 system-ui,sans-serif;box-shadow:0 1px 2px #1236;}
 #gheSmartRail[data-mode="expanded"] .ghe-smart-event-date{display:none;}
+
+/* Calendar glyph uses the actual record day; no fake platform calendar date. */
+#gheSmartRail .ghe-smart-calendar-glyph{box-sizing:border-box;display:flex;flex-direction:column;width:31px;height:32px;overflow:hidden;border:2px solid #6b8c9a;border-radius:6px;background:#fff;color:#164760;font:850 15px/1 system-ui,sans-serif;}
+#gheSmartRail .ghe-smart-calendar-cap{flex:none;height:8px;background:#db6b5d;border-bottom:1px solid #ae5148;}
+#gheSmartRail .ghe-smart-calendar-glyph b{display:grid;flex:1;place-items:center;font:inherit;font-size:15px;}
+/* The drawer expands from a 44 px control INSIDE its own border. */
+#gheSmartRail .ghe-smart-expand-slot{display:flex;flex:none;align-items:center;justify-content:center;min-height:44px;border-top:1px solid #d8e8ee;border-bottom:1px solid #d8e8ee;background:#f5fafd;}
+#gheSmartRail .ghe-smart-expand-slot .ghe-smart-expand-tab{position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;box-sizing:border-box;width:100%!important;height:44px!important;min-height:44px!important;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;color:#285a72;font-size:25px;display:grid;place-items:center;}
+#gheSmartRail[data-mode="expanded"] .ghe-smart-expand-slot .ghe-smart-expand-tab{background:#edf7fa;}
+#gheSmartRail .ghe-smart-expand-slot .ghe-smart-expand-tab:focus-visible{outline:3px solid #287da4;outline-offset:-3px;}
+/* Shared choice popup, with critical information before navigation choices. */
+dialog#gheChoiceMasterDialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(510px,calc(100vw - 28px));max-height:calc(100dvh - 38px);padding:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;border:1px solid #d1e4eb;border-radius:21px;background:#fff;color:#163b50;font-family:inherit;box-shadow:0 20px 60px #102c4060;}
+dialog#gheChoiceMasterDialog::backdrop{background:rgba(15,36,49,.48);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#gheChoiceMasterDialog .ghe-choice-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;background:#f3f9fc;border-bottom:1px solid #d9e7ed;}
+#gheChoiceMasterDialog .ghe-choice-kicker{font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:850;color:#557483;}
+#gheChoiceMasterDialog .ghe-choice-close{flex:none;width:42px;height:42px;border:1px solid #d2e3ea;border-radius:12px;background:white;color:#24495b;font:700 25px/1 system-ui;cursor:pointer;}
+#gheChoiceMasterDialog .ghe-choice-main{padding:20px 20px 14px;}
+#gheChoiceMasterDialog .ghe-choice-main h2{font-size:21px;line-height:1.25;letter-spacing:-.02em;margin:0 0 14px;overflow-wrap:anywhere;}
+#gheChoiceMasterDialog .ghe-choice-status{display:inline-flex;align-items:center;margin-bottom:13px;padding:6px 11px;border-radius:99px;background:#e6f3f8;color:#145575;font-size:12px;font-weight:850;}
+#gheChoiceMasterDialog .ghe-choice-status[data-kind="cancelled"]{background:#fcebed;color:#9c3342;}
+#gheChoiceMasterDialog .ghe-choice-status[data-kind="pending"]{background:#fff4dc;color:#805921;}
+#gheChoiceMasterDialog .ghe-choice-facts{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:0 0 10px;}
+#gheChoiceMasterDialog .ghe-choice-fact{display:flex;align-items:flex-start;gap:8px;padding:11px 12px;background:#f7fbfd;border:1px solid #e1ebf0;border-radius:11px;}
+#gheChoiceMasterDialog .ghe-choice-fact dt{flex:0 0 70px;font-size:12px;color:#66808c;font-weight:750;}
+#gheChoiceMasterDialog .ghe-choice-fact dd{margin:0;font-size:14px;font-weight:750;line-height:1.4;overflow-wrap:anywhere;min-width:0;}
+#gheChoiceMasterDialog .ghe-choice-summary{margin:6px 0 4px;font-size:14px;line-height:1.45;color:#4d6b7a;overflow-wrap:anywhere;}
+#gheChoiceMasterDialog .ghe-choice-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end;padding:15px 18px;background:#f8fbfd;border-top:1px solid #dfe9ed;}
+#gheChoiceMasterDialog .ghe-choice-actions button{min-height:44px;padding:10px 15px;border-radius:11px;border:1px solid #c9dce5;background:white;color:#20506a;font:750 14px/1.25 system-ui;cursor:pointer;}
+#gheChoiceMasterDialog .ghe-choice-actions .ghe-choice-primary{background:#146f94;border-color:#146f94;color:#fff;}
+#gheChoiceMasterDialog button:focus-visible{outline:3px solid #2687b0;outline-offset:2px;}

@@ -120,3 +120,22 @@ for(const [key,expected] of [
 }
 
 console.log("GHE 7 accueil behavior / cache invariants OK");
+
+/* Choice-first navigation: keep the current UI build and existing handlers intact. */
+const master=file("ghe-choice-master.js"),smartDrawer=file("ghe-smart-drawer.js"),smartCss=file("ghe-smart-drawer.css");
+new vm.Script(master,{filename:"ghe-choice-master.js"});
+new vm.Script(smartDrawer,{filename:"ghe-smart-drawer.js"});
+assert.match(master,/data-choice-go/);
+assert.match(master,/replay=true/);
+assert.match(master,/event\.stopImmediatePropagation\(\)/);
+assert.match(master,/ghe-smart-active/);
+assert.match(master,/new URL\(href,location\.href\)\.origin===location\.origin/);
+assert.match(master,/#homeView button\[data-app\]/);
+assert.match(smartDrawer,/ghe-smart-calendar-glyph/);
+assert.match(smartDrawer,/entry\.date\.slice\(-2\)/);
+assert.match(smartDrawer,/ghe-smart-expand-slot/);
+assert.match(smartCss,/\.ghe-smart-calendar-cap/);
+assert.match(smartCss,/#gheSmartRail \.ghe-smart-expand-slot/);
+assert.match(smartCss,/dialog#gheChoiceMasterDialog::backdrop/);
+assert.match(index,/ghe-choice-master\.js\?v=20261018-choice-master1/);
+assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.js?v="));
