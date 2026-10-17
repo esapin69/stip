@@ -76,10 +76,21 @@ assert.equal(result.find(x=>x.kind==="event").date,"2026-10-19");
 assert.equal(groups.length,1,"other unconfirmed dates remain under one icon");
 assert.equal(groups[0].count,3,"remaining two dates and professional action grouped");
 assert.match(rail,/data-smart-pending-open/,"single action icon opens the shared popup");
-assert.match(rail,/ghe-smart-arrow/,"arrow replaces the hamburger");
-assert.match(rail,/ghe-smart-close/,"close button retained next to the arrow");
-assert.match(rail,/if\(reopen\)\{event.preventDefault\(\);setMode\("expanded"\)/,"closed rail opens fully");
-assert.match(rail,/const destination=event.target.closest/,"new page collapses rail to icons");
+assert.match(rail,/gheSmartExpand/,"one exterior bookmark-like chevron");
+assert.doesNotMatch(rail,/data-ctrl="expand"/,"no second arrow inside the header");
+assert.match(rail,/ghe-smart-close/,"expanded mode has one top-right close cross");
+assert.match(rail,/setMode\(mode==="closed"\?"compact":"closed"\)/,"original hamburger opens the compact drawer");
+assert.match(rail,/if\(reopen\)\{event.preventDefault\(\);setMode\("compact"\)/,"three bars reopen to icons");
+assert.match(rail,/mode==="expanded"&&!document.getElementById/,"outside tap collapses to icons");
+assert.match(rail,/ghe-smart-admin-tools/,"nonessential shortcuts are behind Admin");
+assert.match(rail,/const destination=event.target.closest/,"destination collapses to icons");
+const style=read("ghe-smart-drawer.css");
+assert.match(style,/\.ghe-smart-expand-tab/,"one exterior arrow style");
+assert.match(style,/not\(\[data-mode="expanded"\]\) \.ghe-smart-head\{[\s\S]*?display:flex!important/,"compact rail retains its close cross");
+assert.match(style,/\.ghe-smart-rail[^\n]*background:#fff/,"solid white drawer surface");
+assert.match(style,/data-smart-drawer="closed"\] #homeView \[data-shortcuts-open\]/,"hamburger visible only when closed");
+assert.match(read("ensemble-v3.js"),/deepLinked=true;openEvent\(id,\{inline:true\}\)/,"direct activity links render a single inline detail page");
+assert.match(read("ensemble-v3.css"),/\.ev3-inline-detail/,"inline detail receives page layout");
 
 // The same drawer occupies the mobile layout on every authenticated document.
 // Most pages reuse STIPNav; standalone exceptions include the identical CSS/JS.

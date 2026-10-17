@@ -9,8 +9,8 @@ const dlabel=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return "";return new Date
 const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||(!document.getElementById("homeView").closest("[hidden],.hidden")&&getComputedStyle(document.getElementById("homeView")).display!=="none"));
 const permissions=()=>({...window.STIPContinuity?.read?.()?.permissions,...window.STIPBootCache?.permissions,...window.STIPSession?.permissions});
 const isAdmin=()=>permissions().admin===true;
-let events=[],running=null,updated=0,ready=false,mode="compact",rail=null,requestSeq=0,owner="";
-try{const saved=localStorage.getItem(STATE);if(saved==="closed")mode="closed";}catch{}
+let events=[],running=null,updated=0,ready=false,mode="closed",rail=null,requestSeq=0,owner="";
+try{const saved=localStorage.getItem(STATE);if(saved==="compact")mode="compact";}catch{}
 const store=()=>localStorage.getItem(STORE)||"";
 const urlForEvent=e=>"sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(e.id);
 const route=(name)=>{
@@ -27,13 +27,21 @@ function setMode(value){
  try{localStorage.setItem(STATE,mode)}catch{}
  document.body.dataset.smartDrawer=mode;
  if(rail){rail.dataset.mode=mode;rail.setAttribute("aria-hidden",String(mode==="closed"));}
- const expand=rail?.querySelector('[data-ctrl="expand"]');
+ const expand=document.getElementById("gheSmartExpand");
  if(expand){
-  expand.setAttribute("aria-label",mode==="expanded"?"Réduire le tiroir aux icônes":"Ouvrir le tiroir entièrement");
+  expand.setAttribute("aria-label",mode==="expanded"?"Replier tout le tiroir aux icônes":"Déployer tout le tiroir");
+  expand.setAttribute("aria-expanded",String(mode==="expanded"));
   expand.textContent=mode==="expanded"?"‹":"›";
  }
+ rail?.toggleAttribute("inert",mode==="closed");
+ document.querySelectorAll("[data-shortcuts-open]").forEach(button=>{
+  button.setAttribute("aria-controls","gheSmartRail");
+  button.setAttribute("aria-haspopup","false");
+  button.setAttribute("aria-expanded",String(mode!=="closed"));
+  button.setAttribute("aria-label",mode==="closed"?"Ouvrir le tiroir en icônes":"Fermer le tiroir");
+ });
  const reopen=document.getElementById("gheSmartReopen");
- if(reopen)reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");
+ if(reopen)reopen.setAttribute("aria-label","Ouvrir le tiroir en icônes");
 }
 function homeDrawerSnapshot(){
  // Consume the existing home cache; no second list of professional records.
@@ -209,49 +217,56 @@ function applySearch(){
  if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
 }
 function render(){
- if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();return;}
+ if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();return;}
  document.body.classList.add("ghe-smart-active");
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
  let entries=groupedEntries(),start=entries.map(link).join("")||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  const p=permissions();
- const shortcuts=[["♿","Fauteuils","Chat des fauteuils","wheelchairs"],["💬","Communication","Messages et groupes","communication"],["🎉","On se retrouve","Créer une activité","leisure"],["🔔","Notifications","Messages importants","notifications"],["👥","Collègues","Annuaire des agents","colleagues"],["🧭","Visite des lieux","Services et étages","places"],["📱","Application GHE","Installation","app"]]
- .filter(x=>{
-  if(["communication","wheelchairs"].includes(x[3]))return p.messages===true;
-  if(x[3]==="colleagues")return p.agent_directory===true||isAdmin();
-  if(x[3]==="places")return p.places===true||isAdmin();
-  return true;
- });
- const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
- for(const entry of extras.filter(x=>{
-  if(["admin","t-door"].includes(x.action))return isAdmin();
-  if(x.action==="planning")return p.planning_personal===true;
-  if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
-  return ["apps","dudy"].includes(x.action);
- })){
-  shortcuts.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
+ // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
+ const shortcuts=[["🎉","On se retrouve","Sorties et invitations","leisure"]];
+ // Outils de gestion repliés par défaut et exclusivement réservés à l'admin.
+ const admin=isAdmin()?[
+  ["👥","Collègues","Annuaire des agents","colleagues"],
+  ["🧭","Visite des lieux","Services et étages","places"],
+  ["📱","Application GHE","Installation","app"],
+  ["🔐","Gérer les accès","Rôles et raccourcis","access"],
+  ["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]
+ ]:[];
+ if(isAdmin()){
+  const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
+  for(const entry of extras.filter(x=>{
+   if(["admin","t-door"].includes(x.action))return true;
+   if(x.action==="planning")return p.planning_personal===true;
+   if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
+   return ["apps","dudy"].includes(x.action);
+  }))admin.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
  }
- const admin=isAdmin()?[["🔐","Gérer les accès","Rôles et raccourcis","access"],["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]]:[];
  const markup='<header class="ghe-smart-head">'+
- '<button type="button" class="ghe-smart-toggle ghe-smart-arrow" data-ctrl="expand" aria-label="Ouvrir le tiroir entièrement">›</button>'+
- '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button>'+
- '<span class="ghe-smart-expanded-label">Mon espace GHE</span></header>'+
+ '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
+ '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
- '<div class="ghe-smart-divider"><span>Raccourcis</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>'+
- (admin.length?'<div class="ghe-smart-divider"><span>Administration</span></div><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav>':"")+
+ (shortcuts.length?'<div class="ghe-smart-divider"><span>À découvrir</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
+ (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
  if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
  else{
-  const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop;
+  const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
   const next=template.content.querySelector(".ghe-smart-scroll").innerHTML;
-  if(scroll.innerHTML!==next)scroll.innerHTML=next;
+  if(scroll.innerHTML!==next){
+   scroll.innerHTML=next;
+   if(adminOpen)scroll.querySelector(".ghe-smart-admin-tools")?.setAttribute("open","");
+  }
   scroll.scrollTop=previous;
  }
  applySearch();
  let reopen=document.getElementById("gheSmartReopen");
- if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.textContent="›";reopen.setAttribute("aria-label","Ouvrir le tiroir entièrement");document.body.appendChild(reopen);}
+ if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.innerHTML='<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span>';document.body.appendChild(reopen);}
+ document.body.classList.toggle("ghe-smart-has-native-menu",!!document.querySelector("#homeView [data-shortcuts-open]"));
+ let expand=document.getElementById("gheSmartExpand");
+ if(!expand){expand=document.createElement("button");expand.id="gheSmartExpand";expand.type="button";expand.className="ghe-smart-expand-tab";document.body.appendChild(expand);}
  setMode(mode);
 }
 async function refresh(force=false){
@@ -275,7 +290,9 @@ async function refresh(force=false){
 }
 document.addEventListener("click",event=>{
  const reopen=event.target.closest?.("#gheSmartReopen");
- if(reopen){event.preventDefault();setMode("expanded");return;}
+ if(reopen){event.preventDefault();setMode("compact");return;}
+ const expand=event.target.closest?.("#gheSmartExpand");
+ if(expand){event.preventDefault();setMode(mode==="expanded"?"compact":"expanded");return;}
  // Tout changement de destination conserve uniquement la colonne d'icônes.
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
  if(destination){
@@ -303,16 +320,20 @@ document.addEventListener("click",event=>{
 
  const trigger=event.target.closest?.("[data-shortcuts-open]");
  if(trigger&&permitted()){
-  event.preventDefault();event.stopImmediatePropagation();setMode(mode==="expanded"?"compact":"expanded");return;
+  event.preventDefault();event.stopImmediatePropagation();setMode(mode==="closed"?"compact":"closed");return;
  }
  if(event.target.closest?.("#gheSmartRail [data-smart-pending-open]")){
   event.preventDefault();openPendingDialog();return;
  }
  const button=event.target.closest?.("#gheSmartRail [data-ctrl]");
- if(!button)return;
+ if(!button){
+  if(mode==="expanded"&&!document.getElementById("gheSmartPendingDialog")?.open&&!event.target.closest?.("#gheSmartRail, #gheSmartExpand")){
+   setMode("compact");event.preventDefault();event.stopImmediatePropagation();
+  }
+  return;
+ }
  const ctrl=button.dataset.ctrl;
  if(ctrl==="close")setMode("closed");
- if(ctrl==="expand")setMode(mode==="expanded"?"compact":"expanded");
  if(ctrl==="home")location.href=route("home");
 },true);
 document.addEventListener("input",event=>{

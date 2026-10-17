@@ -404,13 +404,13 @@
     if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "/ghe-smart-drawer.css?v=20261017-drawer-multipage1";
+      style.href = "/ghe-smart-drawer.css?v=20261017-drawer-multipage2";
       document.head.appendChild(style);
     }
     if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "/ghe-smart-drawer.js?v=20261017-drawer-multipage1";
+    script.src = "/ghe-smart-drawer.js?v=20261017-drawer-multipage2";
     script.async = true;
     document.head.appendChild(script);
   };

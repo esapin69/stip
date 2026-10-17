@@ -326,7 +326,16 @@ function showActivityDialog(d){
  }else d.showModal();
  d.addEventListener("close",()=>{if(pendingVisualRefresh)renderWhenIdle()},{once:true});
 }
-function closeModal(){const d=byId("ev3Dialog");if(d?.open)d.close()}
+function closeModal(){
+ const inline=byId("ev3InlineEvent");
+ if(inline){
+  inline.remove();
+  const url=new URL(location.href);
+  url.searchParams.delete("event");
+  history.replaceState(history.state,"",url.pathname+url.search+url.hash);
+ }
+ const d=byId("ev3Dialog");if(d?.open)d.close();
+}
 function rosterDateHTML(event,day){
  const roster=Array.isArray(event.date_roster?.[day])?event.date_roster[day]:[];
  const num=st=>roster.filter(p=>p.state===st).length;
@@ -348,11 +357,18 @@ function rosterDateHTML(event,day){
     '<div class="ev3-roster-names">'+people.map(p=>'<span>'+escapeHTML(p.name)+'</span>').join("")+'</div></section>':"";
   }).join("")+'</div></details>';
 }
-function openEvent(id){
+function openEvent(id,{inline=false}={}){
  const event=state.events.find(x=>x.id===id);if(!event)return;
+ if(!inline)byId("ev3InlineEvent")?.remove();
  const ds=activeDates(event),allDays=(event.dates||[]).filter(day=>day>=today),choice=event.response?.selected_dates||[];
  const [tone,status]=kindStatus(event),isOrganizer=!!event.is_organizer;
- const dialogEl=dialog(id);
+ const dialogEl=inline?document.createElement("section"):dialog(id);
+ if(inline){
+  byId("ev3InlineEvent")?.remove();
+  dialogEl.id="ev3InlineEvent";
+  dialogEl.className="ev3-dialog ev3-inline-detail";
+  byId("ensembleV3")?.insertAdjacentElement("beforebegin",dialogEl);
+ }
  dialogEl.innerHTML='<header class="ev3-modal-head"><span class="ev3-bigicon">'+escapeHTML(event.icon||"📌")+
  '</span><div><strong>'+escapeHTML(event.title)+'</strong><small class="ev3-status-text ev3-'+tone+'">'+escapeHTML(status)+
  '</small></div><button type="button" data-ev3-close aria-label="Fermer">×</button></header>'+
@@ -412,7 +428,8 @@ function openEvent(id){
    state.events=updated.events||[];closeModal();message("Proposition annulée.");render();
   }catch(err){dialogEl.querySelector(".ev3-modal-error").textContent=err.message}
  });
- showActivityDialog(dialogEl);
+ if(inline)requestAnimationFrame(()=>dialogEl.scrollIntoView({block:"start",behavior:"instant"}));
+ else showActivityDialog(dialogEl);
 }
 function openInvite(e,notice=""){
  const event=state.events.find(x=>x.id===e.id)||e;
@@ -483,7 +500,7 @@ async function refresh(){
    renderCurrent();
    const id=new URLSearchParams(location.search).get("event");
    if(id&&!deepLinked&&state.events.some(e=>e.id===id)){
-    deepLinked=true;openEvent(id);
+    deepLinked=true;openEvent(id,{inline:true});
    }
   }).catch(err=>{
    if(!current())return;

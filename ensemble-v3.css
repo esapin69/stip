@@ -284,3 +284,16 @@ body:has(.ev3-page) .stip-workspace-launcher{bottom:max(12px,env(safe-area-inset
 }
 /* The main T workspace uses its own contextual action bar. */
 html[data-t-est="1"] .t-native-leisure .ev3-header-actions{display:none}
+
+/* Un lien direct vers une activité affiche son détail comme section de page, non comme popup. */
+.ev3-inline-detail{
+ display:block;position:relative;
+ width:min(760px,calc(100% - 24px));max-height:none;
+ margin:14px auto 18px;overflow:visible;
+ border:1px solid var(--stip-line,#dbe6e9);
+ border-radius:20px;background:#fff;color:var(--stip-ink,#1a4550);
+ box-shadow:var(--stip-shadow-soft,0 8px 28px #082c3e18);
+ scroll-margin-top:16px;
+}
+.ev3-inline-detail .ev3-modal-head{background:var(--stip-surface-soft,#f8fbfa);border-radius:20px 20px 0 0;}
+@media(max-width:480px){.ev3-inline-detail{width:calc(100% - 20px);margin:10px auto 14px;}}
