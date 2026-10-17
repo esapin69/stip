@@ -361,6 +361,8 @@ const PUBLIC_PDF_INDEX_TYPES=new Set(['service','unit','exam','block'])
 function publicPdfFact(raw:any){
   const value=exportFactValue(raw)
   if(!value)return ''
+  // Avoid ASCII word-boundary assumptions after accented words (e.g. « réservé »).
+  if(/(?:acc[eè]s (?:r[eé]serv[eé]|pro)|(?:interne|priv[eé]|confidentiel|personnel uniquement|code d.acc[eè]s)|(?:t[eé]l[eé]phone|secr[eé]tariat|r[eé]f[eé]rent|phone))/i.test(value))return ''
   if(/(?:\b(?:contact|contacts|courriel|e[- ]?mail|t[eé]l[eé]phone|t[eé]l\.?|fax|poste t[eé]l[eé]phonique|portable|secr[eé]tariat|r[eé]f[eé]rent|num[eé]ro de t[eé]l[eé]phone)\b|@|https?:\/\/|www\.|\b(?:interne|priv[eé]|confidentiel|acc[eè]s r[eé]serv[eé]|personnel uniquement|code d.acc[eè]s)\b)/i.test(value))return ''
   if(/(?:\+\d{1,3}[ .-]?(?:\(?\d{1,3}\)?[ .-]?){3,}|\b(?:0[1-9])[ .-]?(?:\d{2}[ .-]?){4}\b)/.test(value))return ''
   return value
