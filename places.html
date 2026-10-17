@@ -77,7 +77,9 @@
   .places-pdf-choice small{display:block;margin-top:4px;color:var(--muted);font-size:.72rem;line-height:1.4}
   .places-pdf-code{display:grid;gap:11px}
   .places-pdf-code label{font-size:.84rem;font-weight:850}
-  .places-pdf-code input{width:100%;min-height:50px;padding:0 13px;border:1px solid #aac5ce;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:1.2rem;letter-spacing:.13em}
+  .places-pdf-input{display:flex;align-items:center;gap:8px}
+  .places-pdf-code input{flex:1;min-width:0;min-height:50px;padding:0 13px;border:1px solid #aac5ce;border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:1.2rem;letter-spacing:.13em}
+  .places-pdf-input button{flex:none;min-height:50px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:#f4f8f9;color:var(--ink);font-weight:800;cursor:pointer}
   .places-pdf-code-actions{display:flex;gap:10px}
   .places-pdf-code-actions button{flex:1;min-height:46px;border:1px solid var(--line);border-radius:12px;background:#f4f8f9;color:var(--ink);font-weight:800;cursor:pointer}
   .places-pdf-code-actions button[type=submit]{background:var(--primary);border-color:var(--primary);color:#fff}
@@ -103,7 +105,7 @@
       </div>
       <form id="placesPdfCodeForm" class="places-pdf-code" hidden>
         <label for="placesPdfCode">Ton code d’accès GHE à 6 chiffres</label>
-        <input id="placesPdfCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" data-stip-pin-field="1" required aria-label="Code personnel à 6 chiffres">
+        <div class="places-pdf-input"><input id="placesPdfCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" data-stip-pin-field="1" required aria-label="Code personnel à 6 chiffres"><button id="placesPdfReveal" type="button" aria-label="Voir ou masquer le code" aria-pressed="false">Voir</button></div>
         <div class="places-pdf-code-actions"><button id="placesPdfBack" type="button">Retour</button><button type="submit">Accéder au PDF</button></div>
       </form>
       <p id="placesPdfStatus" class="places-pdf-status" role="status" aria-live="polite"></p>
@@ -161,7 +163,14 @@ const exportLink=document.getElementById('placesExport');
 const pdfDialog=document.getElementById('placesPdfDialog'),pdfAudience=document.getElementById('placesPdfAudience'),pdfCodeForm=document.getElementById('placesPdfCodeForm'),pdfCode=document.getElementById('placesPdfCode'),pdfHelp=document.getElementById('placesPdfHelp'),pdfStatus=document.getElementById('placesPdfStatus');
 let pdfBusy=false;
 function pdfMessage(message='',error=false){pdfStatus.textContent=message;pdfStatus.dataset.error=error?'1':'0'}
-function pdfStep(enterCode){pdfAudience.hidden=!!enterCode;pdfCodeForm.hidden=!enterCode;pdfHelp.textContent=enterCode?'Utilise ton code habituel pour accéder à GHE.':'Quelle version veux-tu imprimer ?';pdfMessage();if(enterCode){pdfCode.value='';pdfCode.focus({preventScroll:true})}}
+function pdfStep(enterCode){
+  pdfAudience.hidden=!!enterCode;pdfCodeForm.hidden=!enterCode;
+  pdfHelp.textContent=enterCode?'Utilise ton code habituel pour accéder à GHE.':'Quelle version veux-tu imprimer ?';
+  pdfMessage();pdfCode.value='';pdfCode.type='password';
+  const reveal=document.getElementById('placesPdfReveal');
+  reveal.textContent='Voir';reveal.setAttribute('aria-pressed','false');
+  if(enterCode)pdfCode.focus({preventScroll:true});
+}
 function goPdf(audience){const u=new URL('places-export.html',location.href);u.searchParams.set('audience',audience);u.searchParams.set('v','20261017-pdf1');if(window.top&&window.top!==window)window.top.location.assign(u.href);else location.assign(u.href)}
 async function proSessionValid(token){
   if(!token)return false;
@@ -172,6 +181,13 @@ exportLink.addEventListener('click',()=>{pdfStep(false);pdfDialog.showModal()});
 document.getElementById('placesPdfClose').addEventListener('click',()=>{if(!pdfBusy)pdfDialog.close()});
 document.getElementById('placesPdfVisitor').addEventListener('click',()=>goPdf('visitor'));
 document.getElementById('placesPdfBack').addEventListener('click',()=>pdfStep(false));
+document.getElementById('placesPdfReveal').addEventListener('click',()=>{
+  const button=document.getElementById('placesPdfReveal');
+  const visible=pdfCode.type==='password';
+  pdfCode.type=visible?'text':'password';
+  button.textContent=visible?'Masquer':'Voir';
+  button.setAttribute('aria-pressed',String(visible));
+});
 document.getElementById('placesPdfPro').addEventListener('click',async()=>{
   if(pdfBusy)return;
   pdfBusy=true;pdfMessage('Vérification de ta session…');
