@@ -353,6 +353,30 @@ const PUBLIC_PDF_IMAGES:Record<string,string>={
   HFME:'https://ghe.esapin.com/images/hospitals/hfme.jpg'
 }
 const PUBLIC_PDF_INDEX_TYPES=new Set(['service','unit','exam','block'])
+/**
+ * A place can be public while its free-text fields contain internal notes.
+ * Public PDFs expose signage/orientation facts only. Professional PDFs retain
+ * all established fields as permitted by the authenticated session.
+ */
+function publicPdfFact(raw:any){
+  const value=exportFactValue(raw)
+  if(!value)return ''
+  if(/(?:\b(?:contact|contacts|courriel|e[- ]?mail|t[eé]l[eé]phone|t[eé]l\.?|fax|poste t[eé]l[eé]phonique|portable|secr[eé]tariat|r[eé]f[eé]rent|num[eé]ro de t[eé]l[eé]phone)\b|@|https?:\/\/|www\.|\b(?:interne|priv[eé]|confidentiel|acc[eè]s r[eé]serv[eé]|personnel uniquement|code d.acc[eè]s)\b)/i.test(value))return ''
+  if(/(?:\+\d{1,3}[ .-]?(?:\(?\d{1,3}\)?[ .-]?){3,}|\b(?:0[1-9])[ .-]?(?:\d{2}[ .-]?){4}\b)/.test(value))return ''
+  return value
+}
+function publicPdfFacts(p:any,aliasesBy:Map<string,string[]>,tagsBy:Map<string,string[]>){
+  const id=String(p.id),summary=publicPdfFact(p.summary),details=publicPdfFact(p.details)
+  const facts=[summary,details].filter(Boolean)
+  const aliases=(aliasesBy.get(id)||[]).map(publicPdfFact).filter(Boolean)
+  if(aliases.length)facts.push('Signalétique / autres noms : '+[...new Set(aliases)].join(' · '))
+  const allowedTags=(tagsBy.get(id)||[])
+    .filter((x:string)=>/^(?:purpose|activity|signage|public|orientation|direction|level|floor|rep[eè]re|color|colour):/i.test(x))
+    .map((x:string)=>publicPdfFact(x.replace(/^[^:]+:/,'')))
+    .filter(Boolean)
+  facts.push(...allowedTags)
+  return [...new Set(facts)]
+}
 function publicPdfShort(text:string,font:any,size:number,maxWidth:number){
   let v=pdfSafe(text).replace(/\s+/g,' ').trim()
   if(font.widthOfTextAtSize(v,size)<=maxWidth)return v
@@ -630,14 +654,15 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
       for(const p of items){
         ensure(52,label+' · '+subtitle)
         textBlock((p.display_name||p.official_name||p.id)+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),9,bold,ink,0,1)
-        const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-        const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,8)
-        if(als.length)facts.push('Alias : '+als.join(' · '))
-        const usefulTags=(tagsBy.get(String(p.id))||[])
-          .filter((x:string)=>!publicOnly||!/^(elevator:visitor_reference|[a-z_]+:[a-z_]+_id)$/i.test(x))
-          .map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim()))
-          .filter(Boolean).slice(0,10)
-        if(usefulTags.length)facts.push(...usefulTags)
+        const facts=publicOnly
+          ?publicPdfFacts(p,aliasesBy,tagsBy)
+          :[...new Set([
+              ...[p.summary,p.details].map(exportFactValue).filter(Boolean),
+              ...(aliasesBy.get(String(p.id))?.length
+                  ?['Alias : '+(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).join(' · ')]
+                  :[]),
+              ...(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.trim())).filter(Boolean)
+            ])]
         for(const fact of facts)textBlock(fact,7.6,regular,muted,10,1)
         y-=4
       }
@@ -658,11 +683,15 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
       const prefix=p.level?levelLabel(p.level)+' · ':''
       textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
-      const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,6)
-      if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
-      if(usefulTags.length)facts.push(...usefulTags)
+      const facts=publicOnly
+        ?publicPdfFacts(p,aliasesBy,tagsBy)
+        :[...new Set([
+            ...[p.summary,p.details].map(exportFactValue).filter(Boolean),
+            ...(aliasesBy.get(String(p.id))?.length
+                ?['Alias : '+(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).join(' · ')]
+                :[]),
+            ...(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.trim())).filter(Boolean)
+          ])]
       for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
       y-=3
     }
