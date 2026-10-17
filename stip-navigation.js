@@ -391,6 +391,33 @@
     script.dataset.stipQuickUniversal = "1";
     document.head.appendChild(script);
   };
+  // Un seul tiroir partagé pour les pages autonomes, sans iframe ni écran public.
+  // Les pages qui le chargent déjà déclarativement ne doivent pas le charger deux fois.
+  const ensureSmartDrawer = () => {
+    if (new URLSearchParams(location.search).has("embed") || window.self !== window.top)
+      return;
+    try {
+      if (!localStorage.getItem("stip_session_v1")) return;
+    } catch {
+      return;
+    }
+    if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
+      const style = document.createElement("link");
+      style.rel = "stylesheet";
+      style.href = "/ghe-smart-drawer.css?v=20261017-drawer-multipage2";
+      document.head.appendChild(style);
+    }
+    if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
+      return;
+    const script = document.createElement("script");
+    script.src = "/ghe-smart-drawer.js?v=20261017-drawer-multipage2";
+    script.async = true;
+    document.head.appendChild(script);
+  };
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", ensureSmartDrawer, { once: true });
+  else ensureSmartDrawer();
+
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", ensureQuickAccess, {
       once: true,
