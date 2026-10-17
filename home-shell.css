@@ -5821,3 +5821,10 @@ dialog#hcDrawerAgendaDialog:modal,dialog#hcDrawerAgendaDialog[open]{
 @media(prefers-reduced-motion:reduce){
   #hcDrawerAgendaDialog .ghe-drawer-agenda-entry:active{transform:none;}
 }
+
+
+/* Entrée vers le sélecteur commun : informations du jour. */
+.ghe-premium-agent-search{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 14px;border:1px solid #c9dce3;border-radius:14px;background:#f5fafc;color:#24495e;text-align:left;font:inherit;cursor:pointer}
+.ghe-premium-agent-search>span:nth-child(2){flex:1;font-weight:750}
+.ghe-premium-agent-search small{display:block;font-size:.75rem;font-weight:500;margin-top:2px}
+.ghe-premium-agent-search:focus-visible{outline:3px solid #168ca9;outline-offset:2px}
