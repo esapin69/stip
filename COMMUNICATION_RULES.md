@@ -68,6 +68,9 @@ Invariants :
 **Fauteuils**
 - conserve le moteur opérationnel Fauteuils et son workflow guidé ;
 - n’affiche que les signalements/recherches structurés Fauteuils ;
+- chaque signalement/recherche expire **48 heures après sa création**, même si le statut reste « actif » ou si une confirmation « Toujours là » intervient entre-temps ;
+- l’API refuse les actions sur les signalements expirés et ne les renvoie plus, le client les retire automatiquement au passage des 48 heures, et Supabase supprime réellement la ligne et les éventuelles réponses rattachées par nettoyage périodique ;
+- cette limite ne change pas les DM/groupes, le Chat équipe, les événements ni la conservation administrative ;
 - les règles métier canoniques de `AGENTS.md` restent applicables.
 
 ## 4. Recherche et sélection d’agents
