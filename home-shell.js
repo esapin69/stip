@@ -481,7 +481,7 @@
     }
   }
   async function headerDirectory(force = false) {
-    if (!force && headerDirectoryCache) return headerDirectoryCache;
+    if (!force && headerDirectoryCache?.date === parisIso()) return headerDirectoryCache;
     if (headerDirectoryPromise) return headerDirectoryPromise;
     headerDirectoryPromise = call(AGENT_READ_API, "directory")
       .then((data) => {
@@ -2949,7 +2949,9 @@
     }
     rows.sort((a,b)=>(liveWorkInterval(a)?.start??1440)-(liveWorkInterval(b)?.start??1440)||
       agentName(a.agents).localeCompare(agentName(b.agents),"fr"));
-    return {rows,chiefs,permitted,loaded,chiefsLoaded:Boolean(canonical?.loaded)};
+    // A chief can also appear in the team feed: keep one person, in the chief category.
+    const staff=rows.filter(item=>!seenChief.has(String(item.agents?.source_key||item.agents?.id||"").trim()||agentName(item.agents).toLowerCase()));
+    return {rows:staff,chiefs,people:[...staff,...chiefs],permitted,loaded,chiefsLoaded:Boolean(canonical?.loaded)};
   }
   const premiumShiftRank=code=>({M:0,J:1,J4:2,S:3,N:4})[code]??9;
   const premiumShiftName=code=>window.STIPShiftRegistry?.displayName?.(code)||code;
@@ -2968,7 +2970,7 @@
     const waiting=roster.permitted&&!roster.loaded;
     const authorized=roster.permitted||has("planning_personal");
     const groups=waiting?[]:premiumShiftGroups(roster.rows);
-    const count=waiting?"…":!authorized?"—":String(roster.rows.length);
+    const count=waiting?"…":!authorized?"—":String(roster.people.length);
     const sections=groups.map(([code,items])=>{
       if(!items.length)return "";
       const times=[...new Set(items.map(item=>liveWorkInterval(item)?.label).filter(Boolean))];
@@ -2997,7 +2999,9 @@
       '<button type="button" class="ghe-premium-now-summary" data-premium-roster="all" aria-haspopup="dialog" aria-label="Voir tous les agents en poste actuellement"'+(waiting||!authorized?' disabled':'')+'><span class="ghe-premium-now-kicker">'+
         '<i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
         '<span class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong>'+
-          '<span>agents ›</span></span></button>'+
+          '<span>personnes ›</span></span></button>'+
+      (roster.permitted?'<button type="button" class="ghe-premium-agent-search" data-premium-agent-search aria-haspopup="dialog">'+
+        '<span aria-hidden="true">⌕</span><span>Rechercher un agent<small>Ses informations aujourd’hui</small></span><span aria-hidden="true">›</span></button>':"")+
       (sections||chiefSection?
         '<div class="ghe-premium-now-groups" aria-label="Postes actifs maintenant">'+sections+chiefSection+'</div>':
         '<p class="ghe-premium-now-empty" role="status">'+esc(empty)+'</p>')+
@@ -3024,8 +3028,8 @@
   function openPremiumRoster(code){
     const roster=liveRoster();
     const chief=code==="chiefs";
-    const rows=chief?roster.chiefs:code==="all"?roster.rows:roster.rows.filter(item=>canonicalShift(item.code)===code);
-    const title=chief?"Chefs d’équipe":code==="all"?"Agents en poste":premiumShiftName(code);
+    const rows=chief?roster.chiefs:code==="all"?roster.people:roster.rows.filter(item=>canonicalShift(item.code)===code);
+    const title=chief?"Chefs d’équipe":code==="all"?"Personnes en poste":premiumShiftName(code);
     document.getElementById("hcPremiumNowDialog")?.close?.();
     document.getElementById("hcPremiumNowDialog")?.remove();
     const dialog=document.createElement("dialog");
@@ -3038,7 +3042,7 @@
         ' prévue'+(rows.length>1?'s':'')+' sur ce créneau</p></div>'+
         '<button type="button" data-premium-roster-close aria-label="Fermer">×</button></header>'+
       '<div class="ghe-premium-now-modal-content">'+
-        (rows.length?rows.map(item=>premiumPersonMarkup(item,chief)).join(""):
+        (rows.length?rows.map(item=>premiumPersonMarkup(item,chief||roster.chiefs.includes(item))).join(""):
         '<p class="ghe-premium-now-empty">Plus aucun agent sur ce créneau à cette heure.</p>')+
       '</div><p class="ghe-premium-now-modal-source">Horaires du planning · présence non pointée.</p></section>';
     document.body.appendChild(dialog);
@@ -4208,6 +4212,7 @@ function personalDrawerRow(icon,label,action,meta="") {
         target?.focus({preventScroll:true});
         return;
       }
+      if(event.target.closest("[data-premium-agent-search]")){openHeaderDirectorySearch("first");return;}
       const rosterButton=event.target.closest("[data-premium-roster]");
       if(rosterButton){openPremiumRoster(rosterButton.dataset.premiumRoster);return;}
     });
@@ -4809,6 +4814,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   function ended() {
     state.ready = false;
     state.session = null;
+    headerDirectoryCache = null;
     state.boot = null;
     state.bootStatus = "idle";
     state.bootError = "";
@@ -5053,3 +5059,4 @@ function personalDrawerRow(icon,label,action,meta="") {
   }, 60000);
   if (window.STIPSession) ready({ detail: window.STIPSession });
 })();
+
