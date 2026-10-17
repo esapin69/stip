@@ -163,7 +163,8 @@ function link(entry){
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  const tag=isPending?"button":"a";
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
-  'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'');
+  'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
+  (["event","professional","cancelled"].includes(entry.kind)?' data-smart-open-details="true" data-smart-entry-type="'+escapeHtml(entry.kind)+'" aria-haspopup="dialog"':'');
  const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
   (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon));
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
@@ -173,6 +174,37 @@ function link(entry){
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
 }
 
+// Fenêtre maître locale : indépendante des pop-ups des pages métier.
+function navigateDrawerDestination(destination){
+ if(!destination)return;
+ const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId,action=destination.dataset.smartAction;
+ const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
+ if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
+}
+function openEntryDialog(destination){
+ let dialog=document.getElementById("gheSmartEntryDialog");
+ if(!dialog){
+  dialog=document.createElement("dialog");dialog.id="gheSmartEntryDialog";dialog.className="ghe-smart-detail-dialog";
+  document.body.appendChild(dialog);
+  dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+  dialog.addEventListener("close",()=>{if(dialog._source?.isConnected)dialog._source.focus({preventScroll:true});});
+ }
+ if(dialog.open)dialog.close();
+ const title=destination.querySelector(".ghe-smart-name")?.textContent?.trim()||"Rendez-vous";
+ const summary=destination.querySelector(".ghe-smart-sub")?.textContent?.trim()||"";
+ const kind=destination.dataset.smartEntryType;
+ const category=kind==="professional"?"Rendez-vous professionnel":kind==="cancelled"?"Événement annulé":"Événement";
+ const actionLabel=kind==="professional"?"Voir le rendez-vous":kind==="cancelled"?"Ouvrir l’agenda":"Voir l’événement";
+ dialog._source=destination;
+ dialog.innerHTML='<div class="ghe-smart-detail-panel"><header class="ghe-smart-detail-head">'+
+  '<span>'+escapeHtml(category)+'</span><button type="button" class="ghe-smart-detail-close" data-smart-details-close aria-label="Fermer la fenêtre">×</button></header>'+
+  '<div class="ghe-smart-detail-copy"><h2 id="gheSmartEntryTitle">'+escapeHtml(title)+'</h2>'+
+  (summary?'<p>'+escapeHtml(summary)+'</p>':'')+'</div>'+
+  '<footer class="ghe-smart-detail-actions"><button type="button" data-smart-details-close>Fermer</button>'+
+  '<button type="button" class="ghe-smart-detail-go" data-smart-details-go>'+escapeHtml(actionLabel)+' <span aria-hidden="true">→</span></button></footer></div>';
+ dialog.setAttribute("aria-labelledby","gheSmartEntryTitle");
+ dialog.showModal();
+}
 function openPendingDialog(){
  const group=groupedEntries().find(x=>x.kind==="pending");
  if(!group?.items?.length)return;
@@ -209,7 +241,7 @@ function applySearch(){
  if(!rail)return;
  const q=(rail.querySelector(".ghe-smart-search")?.value||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
  let matches=0;
- for(const el of rail.querySelectorAll(".ghe-smart-link")){
+ for(const el of rail.querySelectorAll(".ghe-smart-scroll .ghe-smart-link")){
   const hay=(el.getAttribute("aria-label")||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
   el.hidden=!!q&&!hay.includes(q);
   if(!el.hidden)matches++;
@@ -221,7 +253,16 @@ function render(){
  if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();return;}
  document.body.classList.add("ghe-smart-active");
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
- let entries=groupedEntries(),start=entries.map(link).join("")||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
+ // Actions séparées des rendez-vous, sans modifier les destinations.
+ const entries=groupedEntries();
+ const pending=entries.filter(entry=>entry.kind==="pending").map(link).join("");
+ const appointments=entries.filter(entry=>entry.kind!=="pending").map(link).join("");
+ const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
+ const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
+ // Accueil épinglé au-dessus de la liste et visible en mode compact.
+ const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" aria-label="Accueil — page principale">'+
+  '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span>'+
+  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
  // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
  const shortcuts=[["🎉","Sorties et activités","Proposer une activité · voir les invitations","leisure"]];
@@ -245,13 +286,14 @@ function render(){
  const markup='<header class="ghe-smart-head">'+
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
- '<div class="ghe-smart-scroll"><nav aria-label="Rendez-vous chronologiques">'+start+'</nav>'+
+ homeLink+
+ '<div class="ghe-smart-scroll"><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
  (shortcuts.length?'<div class="ghe-smart-divider"><span>Loisirs entre collègues</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
  (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
- if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
+ if(!rail.querySelector(".ghe-smart-search")||!rail.querySelector(".ghe-smart-home-dock"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
@@ -294,16 +336,22 @@ document.addEventListener("click",event=>{
  if(reopen){event.preventDefault();setMode("compact");return;}
  const expand=event.target.closest?.("#gheSmartExpand");
  if(expand){event.preventDefault();setMode(mode==="expanded"?"compact":"expanded");return;}
+ const detailDialog=document.getElementById("gheSmartEntryDialog");
+ if(event.target.closest?.("#gheSmartEntryDialog [data-smart-details-close]")){
+  event.preventDefault();detailDialog?.close();return;
+ }
+ if(event.target.closest?.("#gheSmartEntryDialog [data-smart-details-go]")){
+  event.preventDefault();const dest=detailDialog?._source;detailDialog?.close();
+  setMode("compact");requestAnimationFrame(()=>navigateDrawerDestination(dest));return;
+ }
+ const detailLink=event.target.closest?.("#gheSmartRail a[data-smart-open-details]");
+ if(detailLink){event.preventDefault();openEntryDialog(detailLink);return;}
  // Tout changement de destination conserve uniquement la colonne d'icônes.
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
  if(destination){
   setMode("compact");
-  const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId;
-  const action=destination.dataset.smartAction;
-  const navigate=()=>{
-   const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
-   if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
-  };
+  const kind=destination.dataset.smartEntryKind,action=destination.dataset.smartAction;
+  const navigate=()=>navigateDrawerDestination(destination);
   const dialog=destination.closest("#gheSmartPendingDialog");
   if(dialog?.open){
    event.preventDefault();
@@ -328,6 +376,7 @@ document.addEventListener("click",event=>{
  }
  const button=event.target.closest?.("#gheSmartRail [data-ctrl]");
  if(!button){
+  if(detailDialog?.open)return;
   if(mode==="expanded"&&!document.getElementById("gheSmartPendingDialog")?.open&&!event.target.closest?.("#gheSmartRail, #gheSmartExpand")){
    setMode("compact");event.preventDefault();event.stopImmediatePropagation();
   }
@@ -341,7 +390,7 @@ document.addEventListener("input",event=>{
  if(!event.target.matches?.("#gheSmartRail .ghe-smart-search"))return;
  applySearch();
 });
-document.addEventListener("keydown",event=>{if(event.key==="Escape"&&mode==="expanded"){setMode("compact");event.stopPropagation();}});
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&mode==="expanded"&&!document.getElementById("gheSmartEntryDialog")?.open){setMode("compact");event.stopPropagation();}});
 for(const name of ["stip:leisure-updated","stip:home-rendered","stip:event-feedback-synced","stip:event-feedback-completed","stip:permissions-live","stip:session-snapshot"]){
  window.addEventListener(name,()=>{if(permitted())render()});
 }
