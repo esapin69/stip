@@ -56,7 +56,7 @@ saved.owner='other-agent::admin';assert.equal(snapshot(),null,'another account c
 saved.owner='agent-a::admin';saved.session='other-session';assert.equal(snapshot(),null,'another session cannot reuse a drawer snapshot');
 const home=read('home-shell.js');
 assert.match(home,/data-premium-roster="all"/,'live total is actionable');
-assert.match(home,/code==="all"\?roster\.rows/,'all-agents action uses the exact counted population');
+assert.match(home,/code==="all"\?roster\.people/,'all-agents action uses the exact counted population');
 const assistant=read('supabase/functions/stip-assistant/index.ts');
 const balance=stripTypeScriptTypes(assistant.slice(assistant.indexOf('function dayDiff('),assistant.indexOf('function summary(')));
 const strategies=vm.runInNewContext(balance+';balanceStrategies;',{Intl,Date});
