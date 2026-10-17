@@ -347,7 +347,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
   const W=595.28,H=841.89,M=42,CONTENT=W-M*2
   const navy=rgb(0.035,0.30,0.42),ink=rgb(0.08,0.20,0.24),muted=rgb(0.38,0.49,0.52),soft=rgb(0.91,0.97,0.98),line=rgb(0.76,0.87,0.89)
-  const cfg=publicOnly?{fixed_pages:{},publication:{exclude_evidence_status:['to_confirm']},layout:{},covers:{}}:await pdfTemplateConfig()
+  const cfg:any=publicOnly?{fixed_pages:{},publication:{exclude_evidence_status:['to_confirm']},layout:{},covers:{}}:await pdfTemplateConfig()
   const fixedPages:any=cfg.fixed_pages
   const excluded=new Set<string>((cfg.publication.exclude_evidence_status||['to_confirm']).map((x:any)=>String(x)))
   const fixedTemplate=publicOnly?null:await loadFixedTemplatePdf()
