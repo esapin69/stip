@@ -167,10 +167,16 @@ function link(entry){
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
   (["event","professional","cancelled"].includes(entry.kind)?' data-smart-open-details="true" data-smart-entry-type="'+escapeHtml(entry.kind)+'" aria-haspopup="dialog"':'');
+ const realDay=/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?String(Number(entry.date.slice(-2))):"";
  const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
-  (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':escapeHtml(icon));
+  (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':
+  ((icon==="📅"||icon==="📆")?'<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+escapeHtml(realDay||"··")+'</b></span>':escapeHtml(icon)));
+ const facts=' data-choice-kind="'+escapeHtml(entry.kind)+'"'+
+  (entry.date?' data-choice-date="'+escapeHtml(entry.date)+'"':'')+
+  (entry.event?.time_label?' data-choice-time="'+escapeHtml(entry.event.time_label)+'"':'')+
+  (entry.event?.location?' data-choice-place="'+escapeHtml(entry.event.location)+'"':'');
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
- ' title="'+escapeHtml(title+" — "+entry.sub)+
+ facts+' title="'+escapeHtml(title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
  symbol+dateBadge+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
@@ -294,6 +300,7 @@ function render(){
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  homeLink+
+ '<div class="ghe-smart-expand-slot"><button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button></div>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
  (shortcuts.length?'<div class="ghe-smart-divider"><span>Loisirs entre collègues</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
  (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
@@ -301,7 +308,7 @@ function render(){
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
  if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
- else if(!rail.querySelector(".ghe-smart-home-dock"))rail.innerHTML=markup;
+ else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-expand-slot"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
@@ -316,8 +323,8 @@ function render(){
  let reopen=document.getElementById("gheSmartReopen");
  if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.innerHTML='<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span>';document.body.appendChild(reopen);}
  document.body.classList.toggle("ghe-smart-has-native-menu",!!document.querySelector("#homeView [data-shortcuts-open]"));
- let expand=document.getElementById("gheSmartExpand");
- if(!expand){expand=document.createElement("button");expand.id="gheSmartExpand";expand.type="button";expand.className="ghe-smart-expand-tab";document.body.appendChild(expand);}
+ // Expand control is inside the rail: no handle overlaps the page.
+ document.querySelectorAll("body > #gheSmartExpand").forEach(b=>b.remove());
  setMode(mode);
 }
 async function refresh(force=false){
