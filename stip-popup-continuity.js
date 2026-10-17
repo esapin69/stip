@@ -34,6 +34,8 @@
     lastTrigger = { y: scrollY(), key: locationKey(), at: performance.now() };
   }
   document.addEventListener('pointerdown', rememberTrigger, true);
+  // Invalidate old pointer snapshots after manual wheel movement.
+  window.addEventListener('wheel', () => { lastTrigger = null; }, { passive: true });
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') rememberTrigger();
   }, true);
@@ -73,13 +75,14 @@
       snapshot = null;
       lastTrigger = null;
       restorePosition(saved);
+      window.STIPRouter?.saveScroll?.();
     }
   }
 
   const observer = new MutationObserver(changes => {
     // Some custom overlays close by toggling a CSS class rather than "open".
     // Ignore ordinary class changes on the rest of the page.
-    if (changes.some(change =>
+    if (!Array.isArray(changes) || changes.some(change =>
       change.type !== 'attributes' ||
       !['class', 'style'].includes(change.attributeName) ||
       change.target === document.body ||
