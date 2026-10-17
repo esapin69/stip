@@ -293,7 +293,8 @@ function render(){
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
- if(!rail.querySelector(".ghe-smart-search")||!rail.querySelector(".ghe-smart-home-dock"))rail.innerHTML=markup;
+ if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
+ else if(!rail.querySelector(".ghe-smart-home-dock"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
@@ -350,8 +351,12 @@ document.addEventListener("click",event=>{
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
  if(destination){
   setMode("compact");
-  const kind=destination.dataset.smartEntryKind,action=destination.dataset.smartAction;
-  const navigate=()=>navigateDrawerDestination(destination);
+  const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId;
+  const action=destination.dataset.smartAction;
+  const navigate=()=>{
+   const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
+   if(!opened){if(window.STIPNav?.go)window.STIPNav.go(destination.href);else location.assign(destination.href);}
+  };
   const dialog=destination.closest("#gheSmartPendingDialog");
   if(dialog?.open){
    event.preventDefault();
