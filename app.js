@@ -57,6 +57,8 @@ function applyPendingScrollRestore(){
   const pending=pendingScrollRestore;
   if(!pending)return true;
   if(Date.now()>pending.expires||clean(route())!==pending.route){pendingScrollRestore=null;return true}
+  // Modal visibility belongs to the popup layer, not to route history.
+  if(window.STIPPopupContinuity?.isOpen?.()){pendingScrollRestore=null;return true}
   const root=document.scrollingElement||document.documentElement;
   const max=Math.max(0,Number(root?.scrollHeight||0)-Number(window.innerHeight||0));
   if(pending.y>max+2)return false;
@@ -67,8 +69,9 @@ function applyPendingScrollRestore(){
 function restoreScroll(r=route()){
   const target=clean(r),y=Number(readScrolls()[target]||0);
   pendingScrollRestore={route:target,y,expires:Date.now()+5000};
-  const attempt=()=>{if(applyPendingScrollRestore())return;if(pendingScrollRestore)setTimeout(attempt,140)};
-  requestAnimationFrame(()=>requestAnimationFrame(attempt));
+  // Restore only on an actual route transition / completion event; never poll
+  // for five seconds and pull the page back while someone is scrolling.
+  requestAnimationFrame(()=>requestAnimationFrame(applyPendingScrollRestore));
 }
 function setRoute(next,opt={}){const target=clean(next);if(route()===target){restore();return}saveScroll();if(!opt.keepScroll){setScroll(target,0);window.scrollTo({top:0,left:0,behavior:'auto'})}const state={...(history.state||{}),stip:true,route:target,panel:false};if(opt.replace)history.replaceState(state,'',urlFor(target));else history.pushState(state,'',urlFor(target));restore()}
 function back(fallback='home'){saveScroll();if(history.state?.panel){history.back();return}if(route()!=='home'&&history.length>1&&history.state?.stip){history.back();return}setRoute(fallback,{replace:true,keepScroll:true})}
@@ -189,7 +192,11 @@ window.addEventListener('stip:intent-revealed',e=>{if(e.detail?.target?.id==='ac
 resetAccessCode();
 logoutBtn?.addEventListener('click',async()=>{authEpoch++;loginInFlight=false;lastAutoCode='';window.STIPAuthPending=false;try{await access('logout')}catch{}window.STIPContinuity?.clear?.({clearToken:true});localStorage.removeItem(STORAGE);session=null;try{sessionStorage.removeItem(SCROLL_STORE)}catch{}history.replaceState({stip:true,route:'home',panel:false},'',urlFor('home'));showLogin()});
 $('#homeBtn')?.addEventListener('click',()=>{setRoute('home');window.dispatchEvent(new CustomEvent('stip:home-root'))});document.addEventListener('click',e=>{const b=e.target.closest?.('#stipContextDock [data-root-action]');if(b)runDockAction(b.dataset.rootAction)});
-window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});window.addEventListener('beforeunload',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});window.addEventListener('stip:home-rendered',()=>{if(!pendingScrollRestore)return;requestAnimationFrame(()=>requestAnimationFrame(applyPendingScrollRestore))});document.addEventListener('pointerdown',()=>{if(pendingScrollRestore)pendingScrollRestore=null},{capture:true});
+window.addEventListener('popstate',e=>{panelGuard=true;restore();if(e.state?.panel)setTimeout(()=>{$('#hsPanel')?.classList.add('open');$('#hsPanel')?.setAttribute('aria-hidden','false')},0)});window.addEventListener('hashchange',restore);window.addEventListener('pagehide',()=>saveScroll(),{capture:true});window.addEventListener('beforeunload',()=>saveScroll(),{capture:true});document.addEventListener('visibilitychange',()=>{if(document.hidden)saveScroll()});window.addEventListener('stip:home-rendered',()=>{if(!pendingScrollRestore)return;requestAnimationFrame(()=>requestAnimationFrame(applyPendingScrollRestore))});const cancelPendingScrollForInput=()=>{pendingScrollRestore=null};
+document.addEventListener('pointerdown',cancelPendingScrollForInput,{capture:true,passive:true});
+document.addEventListener('touchstart',cancelPendingScrollForInput,{capture:true,passive:true});
+window.addEventListener('wheel',cancelPendingScrollForInput,{passive:true});
+document.addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))cancelPendingScrollForInput()},{capture:true});
 const panel=$('#hsPanel');if(panel)new MutationObserver(syncPanelHistory).observe(panel,{attributes:true,attributeFilter:['class']});
 $('#hsPanelBack')?.addEventListener('click',e=>{if(history.state?.panel){e.preventDefault();e.stopImmediatePropagation();back()}},true);
 window.STIPRouter={set:setRoute,back,restore,show:showOnly,get:route,saveScroll,restoreScroll,cancelPendingScrollRestore:()=>{pendingScrollRestore=null}};
