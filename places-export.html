@@ -194,8 +194,8 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" id="visualPdfFormat" type="button" data-format="visual_pdf"><span class="ico">▤</span><span><strong>PDF visuel · bâtiments et étages</strong><small>Vue synthétique pour partager la répartition des services.</small></span></button>
-          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF généré</strong><small>Pages fixes + dictionnaire à jour.</small></span></button>
+          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF complet · bâtiments + dictionnaire</strong><small>Couverture GHE, présentation des bâtiments, tous les services et leurs informations autorisées.</small></span></button>
+          <button class="stip-btn format-btn" id="visualPdfFormat" type="button" data-format="visual_pdf"><span class="ico">▤</span><span><strong>Synthèse rapide · étages</strong><small>Option secondaire : vue courte par bâtiment et étage, sans fiches détaillées.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur</strong><small>Excel / Google Sheets.</small></span></button>
         </div>
         <div class="format-note" id="formatNote"></div>
@@ -224,8 +224,8 @@
     document.querySelector(".stip-kicker").textContent="VISITER LES LIEUX · VERSION VISITEUR";
     document.querySelector(".stip-subtitle").textContent="Ce PDF contient uniquement des informations publiques.";
     document.querySelector('[data-format="xlsx"]').hidden=true;
-    document.querySelector("#pdfFormat strong").textContent="PDF visiteur · informations publiques";
-    document.querySelector("#pdfFormat small").textContent="Dictionnaire public, sans pages fixes professionnelles.";
+    document.querySelector("#pdfFormat strong").textContent="PDF complet · bâtiments + dictionnaire";
+    document.querySelector("#pdfFormat small").textContent="Mêmes pages et services que la version professionnelle, sans coordonnées ni informations internes.";
   }
   const formatStep=document.getElementById("formatStep");
   const actionStep=document.getElementById("actionStep");
@@ -287,10 +287,10 @@
     state.format=null;
     document.querySelectorAll("[data-format]").forEach(b=>{b.classList.remove("is-active");b.setAttribute("aria-pressed","false")});
     pdfFormat.disabled=false;
-    formatScopeCopy.textContent="Choisis PDF ou tableur.";
+    formatScopeCopy.textContent="Le PDF complet est recommandé pour la visite des lieux.";
     formatNote.innerHTML=audience==="visitor"
-      ?"<strong>PDF visiteur</strong> · uniquement les informations publiques du référentiel GHE."
-      :"<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
+      ?"<strong>Même document, version visiteur</strong> · bâtiments, services, étages et signalétique, sans contacts ni coordonnées."
+      :"<strong>Même document, version professionnelle</strong> · pages validées et dictionnaire enrichi avec les informations autorisées.";
     setStatus("");
     setProgress(1);
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -413,9 +413,9 @@
     state.format=btn.dataset.format;
     document.querySelectorAll("[data-format]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",active?"true":"false")});
     formatNote.innerHTML=state.format==="visual_pdf"
-      ?"<strong>PDF visuel</strong> · schéma de classement par bâtiment et par étage, construit avec les données autorisées de ta session. Ce n’est pas un plan des couloirs."
+      ?"<strong>Synthèse rapide</strong> · option raccourcie par bâtiment et étage, sans dictionnaire détaillé."
       :state.format==="pdf"
-        ?(audience==="visitor"?"<strong>PDF visiteur</strong> · dictionnaire public sans informations professionnelles.":"<strong>PDF généré</strong> · pages fixes validées et dictionnaire du référentiel STIP.")
+        ?(audience==="visitor"?"<strong>PDF complet visiteur</strong> · présentation des bâtiments et dictionnaire public, sans contacts ni informations professionnelles.":"<strong>PDF complet professionnel</strong> · pages fixes enregistrées et dictionnaire détaillé enrichi.")
         :"<strong>Tableur</strong> · données du référentiel STIP pour la sélection.";
     renderActions();
     actionStep.hidden=false;
@@ -425,7 +425,7 @@
   }));
   function renderActions(){
     const pdf=state.format!=="xlsx";
-    actionHint.textContent=(state.format==="visual_pdf"?"PDF visuel":pdf?"PDF généré":"Tableur")+" · "+describeScope(state.scope);
+    actionHint.textContent=(state.format==="visual_pdf"?"Synthèse rapide":pdf?"PDF complet":"Tableur")+" · "+describeScope(state.scope);
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["print","▤","Imprimer"],
