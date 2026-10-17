@@ -136,7 +136,7 @@ begin
           and (select max(event_day) from unnest(ev.dates) event_day) >=
               (now() at time zone 'Europe/Paris')::date - 7
       )
-      -- Active wheelchair reports are now bounded by the 48-hour cleanup.;
+      ; -- Wheelchair reports follow the separate 48-hour cutoff.
     get diagnostics n_messages = row_count;
   end if;
 
