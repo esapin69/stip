@@ -174,7 +174,7 @@ body.ghe-smart-active.ghe-smart-has-native-menu .ghe-smart-reopen{display:none!i
 }
 body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen{display:none;}
 .ghe-smart-expand-tab{
- position:fixed;z-index:7103;top:calc(8px + env(safe-area-inset-top,0px));left:56px;transform:none;
+ position:fixed;z-index:7103;top:calc(164px + env(safe-area-inset-top,0px));left:56px;transform:none;
  width:28px;height:48px;display:grid;place-items:center;
  padding:0 2px 0 0;border:1px solid var(--stip-line,#d2e3ea);
  border-left:0;border-radius:0 14px 14px 0;background:#fff;
@@ -197,3 +197,31 @@ body[data-smart-drawer="expanded"] .ghe-smart-expand-tab{left:min(340px,calc(100
 }
 #gheSmartRail .ghe-smart-admin-tools[open] summary{color:var(--stip-ink,#173a4a);}
 #gheSmartRail:not([data-mode="expanded"]) .ghe-smart-admin-tools{display:none!important;}
+
+/* Priorité Accueil, épinglée en haut du tiroir, même avec une liste longue. */
+#gheSmartRail .ghe-smart-home-dock{flex:none;padding:10px 9px 12px;border-bottom:2px solid #cfe2eb;background:linear-gradient(180deg,#f1f8fc,#fff);}
+#gheSmartRail .ghe-smart-home{box-sizing:border-box;width:100%;min-height:67px;margin:0;padding:9px 10px;display:flex;align-items:center;gap:12px;border:1px solid #c0dcea;border-radius:14px;background:#e5f2f9;color:#124b66;text-decoration:none;box-shadow:0 2px 8px #16496312;}
+#gheSmartRail .ghe-smart-home:focus-visible,#gheSmartRail .ghe-smart-home:hover{background:#dceefa;border-color:#80b8d0;}
+#gheSmartRail .ghe-smart-home-icon{flex:0 0 44px;height:46px;display:grid;place-items:center;background:#fff;border-radius:12px;}
+#gheSmartRail .ghe-smart-home-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+#gheSmartRail .ghe-smart-home .ghe-smart-name{font-size:17px;font-weight:850;}
+#gheSmartRail .ghe-smart-home .ghe-smart-sub{font-size:11px;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-home-dock{padding:7px 3px 11px;border-bottom-width:2px;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-home{min-height:59px;justify-content:center;padding:5px 0;gap:0;border-radius:12px;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-home-icon{flex:0 0 43px;height:44px;background:transparent;}
+#gheSmartRail .ghe-smart-section-divider{margin:17px 6px 12px;border-top:1px solid #c8dce6;min-height:15px;}
+#gheSmartRail .ghe-smart-section-divider span{top:-9px;font-size:11px;padding:0 6px;}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-section-divider{margin:13px 7px 9px;min-height:6px;}
+/* Fenêtre de détail indépendante : centre fixe, arrière-plan flou, sans swipe. */
+#gheSmartEntryDialog{box-sizing:border-box;inset:0;margin:auto;padding:0;width:min(430px,calc(100vw - 30px));max-width:calc(100vw - 30px);max-height:calc(100dvh - 36px);border:1px solid #cfe2eb;border-radius:20px;background:#fff;color:#173a4a;box-shadow:0 18px 52px #081f3850;font-family:inherit;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;}
+#gheSmartEntryDialog::backdrop{background:rgba(13,32,46,.43);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);}
+#gheSmartEntryDialog .ghe-smart-detail-panel{display:flex;flex-direction:column;min-width:0;}
+#gheSmartEntryDialog .ghe-smart-detail-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-bottom:1px solid #d9e7ee;color:#587789;font-weight:750;font-size:12px;letter-spacing:.04em;}
+#gheSmartEntryDialog .ghe-smart-detail-close{width:40px;height:40px;flex-shrink:0;display:grid;place-items:center;font-size:26px;line-height:1;border-radius:12px;border:1px solid #d3e2e8;background:#f2f7fa;color:#17455c;cursor:pointer;}
+#gheSmartEntryDialog .ghe-smart-detail-copy{padding:21px 20px 23px;}
+#gheSmartEntryDialog .ghe-smart-detail-copy h2{margin:0 0 12px;font-size:21px;line-height:1.24;overflow-wrap:anywhere;}
+#gheSmartEntryDialog .ghe-smart-detail-copy p{margin:0;color:#536c7a;font-size:15px;line-height:1.5;overflow-wrap:anywhere;}
+#gheSmartEntryDialog .ghe-smart-detail-actions{display:flex;flex-wrap:wrap;gap:10px;padding:15px 18px;justify-content:flex-end;border-top:1px solid #dfebf0;background:#f8fbfd;}
+#gheSmartEntryDialog .ghe-smart-detail-actions button{min-height:44px;padding:9px 15px;border-radius:12px;font:inherit;font-weight:750;color:#245167;border:1px solid #d0e1ea;background:#fff;cursor:pointer;}
+#gheSmartEntryDialog .ghe-smart-detail-actions .ghe-smart-detail-go{background:#176b8b;border-color:#176b8b;color:#fff;}
+#gheSmartEntryDialog button:focus-visible{outline:3px solid #2c90b5;outline-offset:2px;}
