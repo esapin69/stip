@@ -4081,8 +4081,7 @@ function personalDrawerRow(icon,label,action,meta="") {
         </section>`;
     }
     if (state.renderSig === markup && root.childElementCount) return;
-    const onHome = (window.STIPRouter?.get?.() || "home") === "home",
-      y = onHome ? Math.max(0, window.scrollY || 0) : 0;
+    // Native scroll anchoring: the router owns route scroll restoration.
     state.renderSig = markup;
     root.innerHTML = markup;
     preparePremiumLayout(root);
@@ -4412,16 +4411,7 @@ function personalDrawerRow(icon,label,action,meta="") {
       });
     window.dispatchEvent(new CustomEvent("stip:home-rendered"));
     requestAnimationFrame(focusRequestedAlert);
-    if (onHome && y > 0)
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => {
-          if (
-            (window.STIPRouter?.get?.() || "home") === "home" &&
-            Math.abs((window.scrollY || 0) - y) > 2
-          )
-            window.scrollTo({ top: y, behavior: "auto" });
-        }),
-      );
+
   }
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && document.getElementById("hcShiftDetail"))
