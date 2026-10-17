@@ -215,9 +215,15 @@
   requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:"auto"}));
   const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-places";
   const STORE="stip_session_v1";
+  const audience=new URLSearchParams(location.search).get("audience")==="visitor"?"visitor":"pro";
   const ANNEXES=["A1","A3","A4","B1","B13","B14","B16","CERMEP","IDÉE","MORTUAIRE","MPM","RADIO","GHE"];
   const state={scope:null,format:null,snapshot:null,selectedIds:new Set(),buildingCodes:new Set(),pendingDomain:null,pendingPreset:null};
   const status=document.getElementById("exportStatus");
+  if(audience==="visitor"){
+    document.querySelector(".stip-kicker").textContent="VISITER LES LIEUX · VERSION VISITEUR";
+    document.querySelector(".stip-subtitle").textContent="Ce PDF contient uniquement des informations publiques.";
+    document.querySelector('[data-format="xlsx"]').hidden=true;
+  }
   const formatStep=document.getElementById("formatStep");
   const actionStep=document.getElementById("actionStep");
   const actionGrid=document.getElementById("actionGrid");
@@ -346,8 +352,9 @@
   async function loadSnapshot(){
     if(state.snapshot)return state.snapshot;
     const token=localStorage.getItem(STORE)||"";
-    if(!token)throw new Error("Session STIP requise pour exporter.");
-    const r=await fetch(API,{method:"POST",cache:"no-store",headers:{"content-type":"application/json","x-stip-session":token},body:JSON.stringify({action:"bootstrap"})});
+    if(audience==="pro"&&!token)throw new Error("Code GHE requis pour exporter le PDF professionnel.");
+    const headers={"content-type":"application/json"};if(audience==="pro")headers["x-stip-session"]=token;
+    const r=await fetch(API,{method:"POST",cache:"no-store",headers,body:JSON.stringify({action:audience==="visitor"?"bootstrap_public":"bootstrap"})});
     const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(d.error||"Référentiel indisponible.");
     state.snapshot=d;return d;
@@ -416,6 +423,7 @@
     actionHint.textContent=(state.format==="visual_pdf"?"PDF visuel":pdf?"PDF généré":"Tableur")+" · "+describeScope(state.scope);
     const actions=pdf?[
       ["view","◉","Afficher"],
+      ["print","▤","Imprimer"],
       ["download","⇩","Télécharger"],
       ["share","↗","Partager"]
     ]:[
@@ -436,21 +444,19 @@
     setTimeout(()=>URL.revokeObjectURL(url),30000);
   }
   async function fetchGeneratedPdf(token){
-    const r=await fetch(API,{
-      method:"POST",cache:"no-store",
-      headers:{"content-type":"application/json","x-stip-session":token},
-      body:JSON.stringify({action:state.format==="visual_pdf"?"export_visual_pdf":"export_pdf",scope:state.scope})
-    });
+    const headers={"content-type":"application/json"};if(audience==="pro")headers["x-stip-session"]=token;
+    const action=audience==="visitor"?(state.format==="visual_pdf"?"export_public_visual_pdf":"export_public_pdf"):(state.format==="visual_pdf"?"export_visual_pdf":"export_pdf");
+    const r=await fetch(API,{method:"POST",cache:"no-store",headers,body:JSON.stringify({action,scope:state.scope})});
     if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"PDF généré indisponible.")}
     return {blob:await r.blob(),name:filenameFrom(r,"pdf")};
   }
   async function runExport(action){
     const token=localStorage.getItem(STORE)||"";
-    if(!token){setStatus("Session STIP requise pour exporter.","error");return}
+    if(audience==="pro"&&!token){setStatus("Code GHE requis pour le PDF professionnel.","error");return}
     if(!state.scope||!state.format){setStatus("Choisis d’abord le contenu puis le format.","error");return}
     const pdf=state.format!=="xlsx";
     let popup=null;
-    if(pdf&&action==="view")popup=window.open("about:blank","_blank");
+    if(pdf&&(action==="view"||action==="print"))popup=window.open("about:blank","_blank");
 
     document.body.classList.add("busy");
     setStatus(pdf?"Fabrication du PDF…":"Préparation du tableur…");
@@ -458,12 +464,12 @@
       if(pdf){
         const {blob,name}=await fetchGeneratedPdf(token);
 
-        if(action==="view"){
+        if(action==="view"||action==="print"){
           const url=URL.createObjectURL(blob);
           if(popup&&!popup.closed)popup.location.href=url;
           else location.href=url;
           setTimeout(()=>URL.revokeObjectURL(url),120000);
-          setStatus("PDF généré ouvert.","ok");
+          setStatus(action==="print"?"PDF ouvert : utilise Imprimer dans le lecteur PDF.":"PDF généré ouvert.","ok");
           return;
         }
 
