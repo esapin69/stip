@@ -353,10 +353,12 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const fixedTemplate=publicOnly?null:await loadFixedTemplatePdf()
   let page:any=null,y=0
   const appendFixedPage=async(index:number)=>{
+    if(!fixedTemplate)throw new Error('Pages fixes réservées à l’export professionnel.')
     const [fixed]=await pdf.copyPages(fixedTemplate,[index])
     pdf.addPage(fixed);page=null;y=0
   }
   const appendHfmeCover=async()=>{
+    if(!fixedTemplate)throw new Error('Couverture fixe réservée à l’export professionnel.')
     const s=fixedTemplate.getPage(Number(fixedPages.HFME||9)),o=fixedTemplate.getPage(Number(fixedPages.overview||0))
     const z=s.getSize(),p=pdf.addPage([z.width,z.height])
     const head=await pdf.embedPage(s,{left:0,bottom:z.height-108,right:z.width,top:z.height})
