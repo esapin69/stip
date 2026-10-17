@@ -734,6 +734,31 @@ check(
   placesEdgeCanonical.includes('const fixedTemplate=publicOnly?null:await loadFixedTemplatePdf()'),
   'Les PDF publics doivent rester filtrés côté serveur et sans modèle interne, les exports pros conservant la session GHE.'
 );
+
+check(
+  placesEdgeCanonical.includes('async function publicPdfOverview') &&
+  placesEdgeCanonical.includes('async function publicPdfBuildingCover') &&
+  placesEdgeCanonical.includes('await publicPdfOverview(pdf,snapshot,scopeLabel,excluded)') &&
+  placesEdgeCanonical.includes('await publicPdfBuildingCover(pdf,snapshot,code,label,subtitle,excluded)') &&
+  placesEdgeCanonical.includes("await appendFixedPage(Number(fixedPages.overview||0))") &&
+  placesEdgeCanonical.includes('loadFixedTemplatePdf()'),
+  'Les versions visiteur et professionnelle doivent garder la couverture GHE, les présentations des bâtiments et les dictionnaires.'
+);
+check(
+  placesEdgeCanonical.includes('function publicPdfFact(raw:any)') &&
+  placesEdgeCanonical.includes('function publicPdfFacts(p:any') &&
+  placesEdgeCanonical.includes('publicOnly\n          ?publicPdfFacts(p,aliasesBy,tagsBy)') &&
+  placesEdgeCanonical.includes('publicOnly\n        ?publicPdfFacts(p,aliasesBy,tagsBy)') &&
+  placesEdgeCanonical.includes("const publicSnapshot=await bootstrap(['public'],'public_share','visitor')"),
+  'Le PDF visiteur doit exclure contacts, téléphones et e-mails et dériver uniquement des données publiques.'
+);
+check(
+  placesExportHtml.indexOf('id="pdfFormat"') < placesExportHtml.indexOf('id="visualPdfFormat"') &&
+  placesExportHtml.includes('PDF complet · bâtiments + dictionnaire') &&
+  placesExportHtml.includes('Synthèse rapide · étages'),
+  'Le PDF principal illustré et détaillé doit passer avant la synthèse rapide.'
+);
+
 check(
   agentsContract.includes('## 14. Visiter les lieux — canonical data and export contract') &&
   agentsContract.includes('Do not operate Vercel directly'),
