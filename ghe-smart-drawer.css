@@ -174,12 +174,12 @@ body.ghe-smart-active.ghe-smart-has-native-menu .ghe-smart-reopen{display:none!i
 }
 body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen{display:none;}
 .ghe-smart-expand-tab{
- position:fixed;z-index:7103;top:calc(164px + env(safe-area-inset-top,0px));left:56px;transform:none;
- width:28px;height:48px;display:grid;place-items:center;
+ position:fixed;z-index:7103;top:calc(86px + env(safe-area-inset-top,0px));left:56px;transform:none;
+ width:24px;height:44px;display:grid;place-items:center;
  padding:0 2px 0 0;border:1px solid var(--stip-line,#d2e3ea);
  border-left:0;border-radius:0 14px 14px 0;background:#fff;
  color:var(--stip-ink,#245a70);box-shadow:4px 2px 12px #092f4318;
- font-family:inherit;font-size:29px;font-weight:600;line-height:1;cursor:pointer;touch-action:manipulation;
+ font-family:inherit;font-size:27px;font-weight:650;line-height:1;cursor:pointer;touch-action:manipulation;
 }
 body:not(.ghe-smart-active) .ghe-smart-expand-tab,
 body[data-smart-drawer="closed"] .ghe-smart-expand-tab{display:none;}
@@ -203,7 +203,7 @@ body[data-smart-drawer="expanded"] .ghe-smart-expand-tab{left:min(340px,calc(100
 #gheSmartRail .ghe-smart-home{box-sizing:border-box;width:100%;min-height:67px;margin:0;padding:9px 10px;display:flex;align-items:center;gap:12px;border:1px solid #c0dcea;border-radius:14px;background:#e5f2f9;color:#124b66;text-decoration:none;box-shadow:0 2px 8px #16496312;}
 #gheSmartRail .ghe-smart-home:focus-visible,#gheSmartRail .ghe-smart-home:hover{background:#dceefa;border-color:#80b8d0;}
 #gheSmartRail .ghe-smart-home-icon{flex:0 0 44px;height:46px;display:grid;place-items:center;background:#fff;border-radius:12px;}
-#gheSmartRail .ghe-smart-home-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;}
+#gheSmartRail .ghe-smart-home-icon{font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;font-size:35px;line-height:1;}
 #gheSmartRail .ghe-smart-home .ghe-smart-name{font-size:17px;font-weight:850;}
 #gheSmartRail .ghe-smart-home .ghe-smart-sub{font-size:11px;}
 #gheSmartRail:not([data-mode="expanded"]) .ghe-smart-home-dock{padding:7px 3px 11px;border-bottom-width:2px;}
@@ -225,3 +225,10 @@ body[data-smart-drawer="expanded"] .ghe-smart-expand-tab{left:min(340px,calc(100
 #gheSmartEntryDialog .ghe-smart-detail-actions button{min-height:44px;padding:9px 15px;border-radius:12px;font:inherit;font-weight:750;color:#245167;border:1px solid #d0e1ea;background:#fff;cursor:pointer;}
 #gheSmartEntryDialog .ghe-smart-detail-actions .ghe-smart-detail-go{background:#176b8b;border-color:#176b8b;color:#fff;}
 #gheSmartEntryDialog button:focus-visible{outline:3px solid #2c90b5;outline-offset:2px;}
+
+/* Maison 🏠 : symbole explicite, lisible au-dessus des autres raccourcis. */
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-home-icon{font-size:34px;}
+/* Jours des activités avec un même pictogramme : deux haltères ne sont plus identiques. */
+#gheSmartRail .ghe-smart-link[data-smart-entry-type="event"] .ghe-smart-icon{font-size:27px;}
+#gheSmartRail .ghe-smart-event-date{position:absolute;right:-5px;bottom:-3px;display:grid;place-items:center;min-width:17px;height:17px;padding:0 2px;border-radius:7px;border:1px solid #c4dbe6;background:#fff;color:#24546b;font:800 10px/1 system-ui,sans-serif;box-shadow:0 1px 2px #1236;}
+#gheSmartRail[data-mode="expanded"] .ghe-smart-event-date{display:none;}
