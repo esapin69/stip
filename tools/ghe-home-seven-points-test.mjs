@@ -36,7 +36,7 @@ function markupFor(rows,chiefs=[],options={}){
   const live=home.slice(home.indexOf("  function premiumBackMarkup(){"),home.indexOf("  function premiumPersonMarkup("));
   assert(live.startsWith("  function premiumBackMarkup(){"),"Markup function not isolated");
   return vm.runInNewContext(live+"\npremiumBackMarkup();",{
-    liveRoster:()=>({rows,chiefs,permitted:true,loaded:true,...options}),
+    liveRoster:()=>({rows,chiefs,people:[...rows,...chiefs],permitted:true,loaded:true,...options}),
     has:()=>true,
     premiumShiftGroups:items=>{
       const grouped=new Map();
@@ -57,7 +57,7 @@ assert.match(withChief,/data-premium-roster="S"/);
 assert.match(withChief,/data-premium-roster="chiefs"/);
 assert.doesNotMatch(withChief,/data-premium-roster="N"/,"Night not shown before its real start");
 assert.doesNotMatch(withChief,/data-premium-roster="M"/,"Finished mornings not shown");
-assert.match(withChief,/strong>3<\/strong>/,"Only non-chief agents in total");
+assert.match(withChief,/strong>4<\/strong>/,"The total includes the three agents and one chief");
 const noChief=markupFor(onlyActive);
 assert.doesNotMatch(noChief,/data-premium-roster="chiefs"/,"Chief line hidden if none active");
 assert.equal((noChief.match(/data-premium-roster="/g)||[]).length,3);
