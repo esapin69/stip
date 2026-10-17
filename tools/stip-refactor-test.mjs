@@ -580,13 +580,13 @@ const placesHtmlDictionaryGuard=read('places.html');
 const placesAgentsMasterGuard=read('AGENTS.md');
 
 check(
-  placesExportMasterGuard.includes('action:"export_pdf"') &&
+  placesExportMasterGuard.includes('export_public_pdf') &&
+  placesExportMasterGuard.includes('export_public_visual_pdf') &&
   placesExportMasterGuard.includes('action:"export_xlsx"') &&
   !placesExportMasterGuard.includes('master_pdf_file') &&
   !placesExportMasterGuard.includes('master_pdf_link') &&
-  !placesExportMasterGuard.includes('"print"') &&
-  !placesExportMasterGuard.includes('Imprimer'),
-  'Export doit générer PDF/XLSX à la demande sans dépendance Drive ni bouton Imprimer.'
+  placesExportMasterGuard.includes('["print","▤","Imprimer"]'),
+  'L’export doit générer PDF visiteur/pro et XLSX professionnel via Supabase, avec l’impression dans le parcours PDF.'
 );
 check(
   placesExportMasterGuard.includes('id="progressScope"') &&
@@ -714,16 +714,25 @@ check(
   'Les exports PDF et tableur doivent rester produits par le moteur canonique stip-places.'
 );
 check(
-  placesCanonicalHtml.includes('href="places-export.html?v=') &&
-  placesCanonicalHtml.includes("exportLink.hidden=d?.access_level!=='pro'"),
-  'Visiter les lieux ne protège plus l’entrée Export par le niveau professionnel confirmé par le serveur.'
+  placesCanonicalHtml.includes('id="placesExport" type="button"') &&
+  placesCanonicalHtml.includes('id="placesPdfDialog"') &&
+  placesCanonicalHtml.includes("goPdf('visitor')") &&
+  placesCanonicalHtml.includes('proSessionValid') &&
+  placesCanonicalHtml.includes("action:'login'") &&
+  placesEdgeCanonical.includes("action==='export_public_pdf'") &&
+  placesEdgeCanonical.includes("bootstrap(['public'],'public_share','visitor')") &&
+  placesEdgeCanonical.includes("if(session.app_level!=='pro')"),
+  'Le PDF doit rester accessible aux visiteurs mais imposer le code GHE et les droits serveur aux professionnels.'
 );
 check(
-  placesExportHtml.includes('action:"export_pdf"') &&
+  placesExportHtml.includes('export_public_pdf') &&
+  placesExportHtml.includes('export_public_visual_pdf') &&
   placesExportHtml.includes('action:"export_xlsx"') &&
+  placesExportHtml.includes('bootstrap_public') &&
   !placesExportHtml.includes('MASTER_PREVIEW_URL') &&
-  placesExportHtml.includes('x-stip-session'),
-  'La page Export doit déléguer PDF et tableur au moteur serveur canonique sans dépendance Drive côté client.'
+  placesExportHtml.includes('x-stip-session') &&
+  placesEdgeCanonical.includes('const fixedTemplate=publicOnly?null:await loadFixedTemplatePdf()'),
+  'Les PDF publics doivent rester filtrés côté serveur et sans modèle interne, les exports pros conservant la session GHE.'
 );
 check(
   agentsContract.includes('## 14. Visiter les lieux — canonical data and export contract') &&
