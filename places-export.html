@@ -79,7 +79,6 @@
     .selected-chip{border:0;border-radius:999px;background:var(--stip-accent-soft,#e8f2f7);color:var(--stip-ink,#173f5d);padding:6px 8px;font-size:.67rem;font-weight:850}
 
     .format-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-    #visualPdfFormat{grid-column:1/-1;min-height:78px;flex-direction:row!important;align-items:center;padding-right:42px}
     .format-btn{position:relative;min-height:104px;padding:12px 34px 11px 11px;display:flex!important;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;border:1px solid var(--stip-line,#c9d9de)!important;border-radius:13px!important;background:var(--stip-surface,#fff)!important;color:var(--stip-ink,#173f5d)!important;box-shadow:none!important}
     .format-btn:after{content:"";position:absolute;right:11px;top:11px;width:20px;height:20px;border:2px solid #a8c0c7;border-radius:999px;background:#fff}
     .format-btn.is-active{outline:none!important;border-color:var(--stip-accent,#176b93)!important;background:var(--stip-accent-soft,#e8f2f7)!important;box-shadow:0 0 0 2px rgba(23,107,147,.08)!important}
@@ -194,8 +193,7 @@
       <section class="stip-surface step" id="formatStep" hidden>
         <div class="step-head"><span class="step-n">2</span><div class="step-copy"><strong>Choisir le format</strong><small id="formatScopeCopy">Choisis la sortie adaptée à ta sélection.</small></div></div>
         <div class="format-grid">
-          <button class="stip-btn format-btn" id="visualPdfFormat" type="button" data-format="visual_pdf"><span class="ico">▤</span><span><strong>PDF visuel · bâtiments et étages</strong><small>Vue synthétique pour partager la répartition des services.</small></span></button>
-          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF généré</strong><small>Pages fixes + dictionnaire à jour.</small></span></button>
+          <button class="stip-btn format-btn" id="pdfFormat" type="button" data-format="pdf"><span class="ico">▤</span><span><strong>PDF complet · professionnel</strong><small>Pages de présentation validées et dictionnaire enrichi.</small></span></button>
           <button class="stip-btn format-btn" type="button" data-format="xlsx"><span class="ico">▦</span><span><strong>Tableur</strong><small>Excel / Google Sheets.</small></span></button>
         </div>
         <div class="format-note" id="formatNote"></div>
@@ -225,7 +223,7 @@
     document.querySelector(".stip-subtitle").textContent="Ce PDF contient uniquement des informations publiques.";
     document.querySelector('[data-format="xlsx"]').hidden=true;
     document.querySelector("#pdfFormat strong").textContent="PDF visiteur · informations publiques";
-    document.querySelector("#pdfFormat small").textContent="Dictionnaire public, sans pages fixes professionnelles.";
+    document.querySelector("#pdfFormat small").textContent="Mêmes bâtiments et dictionnaires, sans contacts internes.";
   }
   const formatStep=document.getElementById("formatStep");
   const actionStep=document.getElementById("actionStep");
@@ -289,8 +287,8 @@
     pdfFormat.disabled=false;
     formatScopeCopy.textContent="Choisis PDF ou tableur.";
     formatNote.innerHTML=audience==="visitor"
-      ?"<strong>PDF visiteur</strong> · uniquement les informations publiques du référentiel GHE."
-      :"<strong>PDF généré</strong> · pages fixes validées + dictionnaire fabriqué depuis le référentiel STIP pour cette sélection.";
+      ?"<strong>PDF visiteur</strong> · mêmes pages de présentation, uniquement informations publiques."
+      :"<strong>PDF professionnel</strong> · pages de présentation validées et dictionnaire enrichi depuis STIP.";
     setStatus("");
     setProgress(1);
     formatStep.scrollIntoView({behavior:"smooth",block:"nearest"});
@@ -412,11 +410,9 @@
     if(btn.disabled)return;
     state.format=btn.dataset.format;
     document.querySelectorAll("[data-format]").forEach(b=>{const active=b===btn;b.classList.toggle("is-active",active);b.setAttribute("aria-pressed",active?"true":"false")});
-    formatNote.innerHTML=state.format==="visual_pdf"
-      ?"<strong>PDF visuel</strong> · schéma de classement par bâtiment et par étage, construit avec les données autorisées de ta session. Ce n’est pas un plan des couloirs."
-      :state.format==="pdf"
-        ?(audience==="visitor"?"<strong>PDF visiteur</strong> · dictionnaire public sans informations professionnelles.":"<strong>PDF généré</strong> · pages fixes validées et dictionnaire du référentiel STIP.")
-        :"<strong>Tableur</strong> · données du référentiel STIP pour la sélection.";
+    formatNote.innerHTML=state.format==="pdf"
+      ?(audience==="visitor"?"<strong>PDF visiteur</strong> · mêmes pages de présentation, informations publiques.":"<strong>PDF professionnel</strong> · mêmes pages de présentation, données internes autorisées.")
+      :"<strong>Tableur</strong> · données du référentiel STIP pour la sélection.";
     renderActions();
     actionStep.hidden=false;
     setStatus("");
@@ -425,7 +421,7 @@
   }));
   function renderActions(){
     const pdf=state.format!=="xlsx";
-    actionHint.textContent=(state.format==="visual_pdf"?"PDF visuel":pdf?"PDF généré":"Tableur")+" · "+describeScope(state.scope);
+    actionHint.textContent=(pdf?(audience==="visitor"?"PDF visiteur":"PDF professionnel"):"Tableur")+" · "+describeScope(state.scope);
     const actions=pdf?[
       ["view","◉","Afficher"],
       ["print","▤","Imprimer"],
@@ -450,7 +446,7 @@
   }
   async function fetchGeneratedPdf(token){
     const headers={"content-type":"application/json"};if(audience==="pro")headers["x-stip-session"]=token;
-    const action=audience==="visitor"?(state.format==="visual_pdf"?"export_public_visual_pdf":"export_public_pdf"):(state.format==="visual_pdf"?"export_visual_pdf":"export_pdf");
+    const action=audience==="visitor"?"export_public_pdf":"export_pdf";
     const r=await fetch(API,{method:"POST",cache:"no-store",headers,body:JSON.stringify({action,scope:state.scope})});
     if(!r.ok){const d=await r.json().catch(()=>({}));throw new Error(d.error||"PDF généré indisponible.")}
     return {blob:await r.blob(),name:filenameFrom(r,"pdf")};
