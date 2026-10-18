@@ -77,7 +77,7 @@ assert.match(read('team-chat.css'),/left:var\(--tb-dock-left\)!important/);
 const home = read('home-shell.js');
 const homeContext = {
   state:{homeMode:'planning'},has:key=>key==='meeting_notes',fixedShiftLegend:()=>'',
-  homeModeNav:part=>'['+part+']',weekFlipCard:()=> '[week]',
+  homeModeNav:part=>'['+part+']',agenda360Markup:()=> '[agenda360]',weekFlipCard:()=> '[week]',
   monthFlipCard:()=>'',planningCalendarOverview:()=>'',esc:String,
   window:{STIPMeeting:{pendingHTML:()=>'<section>Pending meeting</section>'}},
 };
