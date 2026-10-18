@@ -35,13 +35,17 @@
    target.querySelector("strong")?.textContent?.trim()||
    target.getAttribute("aria-label")?.trim()||target.textContent?.trim()||"Accéder").slice(0,130);
   const summary=target.querySelector(".ghe-smart-sub")?.textContent?.trim()||target.getAttribute("title")?.trim()||"";
+  // Preserve the specific event icon in the master detail, not only its date.
+  const iconHtml=target.querySelector(".ghe-smart-icon")?.innerHTML||"";
   const kind=target.dataset.choiceKind||target.dataset.smartEntryType||(target.dataset.app?"application":target.dataset.homeMode?"rubrique":"navigation");
   const status=kind==="cancelled"?"Annulé":kind==="event"?"Événement confirmé":kind==="professional"?"Rendez-vous prévu":kind==="pending"?"Réponse attendue":kind==="application"?"Application":kind==="rubrique"?"Rubrique GHE":kind==="shortcut"?"Raccourci":"À consulter";
   const facts=fact("Date",niceDate(target.dataset.choiceDate))+fact("Horaire",target.dataset.choiceTime)+fact("Lieu",target.dataset.choicePlace);
   const proceed=kind==="event"?"Voir l’événement":kind==="professional"?"Voir le rendez-vous":kind==="cancelled"?"Ouvrir l’agenda":kind==="application"?"Ouvrir l’application":kind==="rubrique"?"Afficher la rubrique":"Accéder";
   d.innerHTML='<section class="ghe-choice-frame"><header class="ghe-choice-header"><span class="ghe-choice-kicker">GHE · INFORMATION ET CHOIX</span>'+
    '<button type="button" data-choice-close class="ghe-choice-close" aria-label="Fermer">×</button></header>'+
-   '<div class="ghe-choice-main"><h2 id="gheChoiceTitle">'+esc(title)+'</h2>'+
+   '<div class="ghe-choice-main"><div class="ghe-choice-identity">'+
+   (iconHtml?'<span class="ghe-choice-icon" aria-hidden="true">'+iconHtml+'</span>':"")+
+   '<h2 id="gheChoiceTitle">'+esc(title)+'</h2></div>'+
    '<span class="ghe-choice-status" data-kind="'+esc(kind)+'">'+esc(status)+'</span>'+
    (facts?'<dl class="ghe-choice-facts">'+facts+'</dl>':"")+
    (summary?'<p class="ghe-choice-summary">'+esc(summary)+'</p>':"")+'</div>'+
