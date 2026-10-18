@@ -72,13 +72,14 @@ assert.equal(strategies([row('2026-10-16',-1),row('2026-10-24',1)],'2026-10-16')
 console.log('PASS — GHE audit: invitations, search, refresh, deep links, live roster and actionable balance dates.');
 // A pending item's destination must wait for the overlay's history transition.
 const destinationBranch=rail.slice(rail.indexOf(' if(destination){'),rail.indexOf('\n const trigger='));
-const navigatePending=vm.runInNewContext('(event,destination,window,requestAnimationFrame,setMode,location,selectIcon)=>{'+destinationBranch+'}',{});
 const sequence=[],href='/index.html?feedback_key=return-1#/home';
 let afterClose;
 const dialog={open:true,close:()=>sequence.push('unsafe-native-close')};
 const destination={dataset:{smartEntryKind:'feedback',smartEntryId:'return-1'},href,closest:()=>dialog};
-const event={preventDefault:()=>sequence.push('prevent-default')};
+const event={preventDefault:()=>sequence.push('prevent-default'),stopImmediatePropagation:()=>sequence.push('stop-duplicate-handlers')};
 const windowMock={STIPOverlayNav:{close:(_dialog,callback)=>{sequence.push('close-history');afterClose=callback;return true}},STIPNav:{go:url=>sequence.push(url)}};
+const showChoice=target=>sequence.push('show-choice:'+target.href);
+const navigatePending=vm.runInNewContext('(event,destination,window,requestAnimationFrame,setMode,location,selectIcon)=>{'+destinationBranch+'}',{showDrawerChoice:showChoice});
 navigatePending(event,destination,windowMock,callback=>callback(),()=>{}, {},key=>sequence.push('select-icon:'+key));
-assert.deepEqual(sequence,['select-icon:','prevent-default','close-history'],'do not race native close against document navigation');
-afterClose();assert.equal(sequence.at(-1),href,'resume the exact destination after closing its history level');
+assert.deepEqual(sequence,['prevent-default','stop-duplicate-handlers','select-icon:','close-history'],'pending click waits for overlay history and blocks double processing');
+afterClose();assert.equal(sequence.at(-1),'show-choice:'+href,'after closing history show one actionable choice before following destination');
