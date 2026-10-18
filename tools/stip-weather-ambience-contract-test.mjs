@@ -116,7 +116,7 @@ assert(home.includes("is-rest-visual") && home.includes("data-thf-day-weather"),
   "Non-working rest cards must share the daily weather engine");
 assert(weather.includes("mountDay") && weather.includes("dayValues"),
   "Rest and paid leave must reuse the existing Open-Meteo engine");
-assert(dayCard.includes("nonWorkCodeBadgeHtml") && dayCard.includes("shiftSymbol"),
+assert(home.includes("nonWorkCodeBadgeHtml") && dayCard.includes("shiftSymbol"),
   "Rest displays the authentic planning status as a square badge");
 assert(!dayCard.includes("thf-rest-illustration") &&
   dayCard.includes("staticWeatherArt('card-'"),
