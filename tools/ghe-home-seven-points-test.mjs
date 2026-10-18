@@ -7,6 +7,8 @@ const card=file("team-home-fusion.js"),weatherCss=file("team-home-fusion.css");
 const icon=file("ghe-notification-controls.js"),iconCss=file("ghe-notification-controls.css");
 const wx=file("shift-weather-mini.js"),index=file("index.html");
 const loader=file("stip-loader.js"),worker=file("stip-sw.js");
+assert(css.includes("transform:translateX(-clamp(52px,17vw,88px))!important;"),"En direct launcher must move further left");
+assert(index.includes("ghe-premium-safe-flip.css?v=20261018-rest-pictograms1&rev=live-modal1-left-launch3"),"Refresh the left-shifted live button CSS cache");
 // En direct : seuls les shifts occupés à l'instant sont rendus.
 // Une ligne Chef n'existe que pour un chef effectivement planifié maintenant.
 const chiefScript=file("home-duty-chief.js");
