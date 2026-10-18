@@ -160,3 +160,15 @@ assert.match(rail,/function openDeferredSettings\(\)/,"réglages accessibles dep
 assert.doesNotMatch(shell.slice(shell.indexOf("function homeModeNav(part"),shell.indexOf("function shortcutsPopup()")),/ghe-top-aux-actions/,"les icônes redondantes du haut disparaissent");
 assert.match(read("ghe-leisure-quick.js"),/window\.GHELeisureQuick=\{show\}/,"création rapide préservée via ➕");
 assert.match(read("ghe-smart-choices.js"),/leisureQuick/,"la création rapide est accessible depuis le menu Ajouter");
+
+/* Accueil 360 : propositions côté rendez-vous, pas sur la face À clôturer. */
+const agendaMarkup=shell.slice(shell.indexOf("function agenda360Markup()"),shell.indexOf("function bindAgenda360("));
+const frontFace=agendaMarkup.slice(agendaMarkup.indexOf('data-agenda360-face="front"'),agendaMarkup.indexOf('data-agenda360-face="back"'));
+const backFace=agendaMarkup.slice(agendaMarkup.indexOf('data-agenda360-face="back"'));
+assert.doesNotMatch(frontFace,/data-agenda360-proposals/,"colleague proposals must not appear among feedback to close");
+assert.match(backFace,/data-agenda360-proposals/,"colleague proposals belong with upcoming appointments");
+assert.match(agendaMarkup,/const hasOpen=feedback\.length>0;/,"proposals alone must not force a blank À clôturer face");
+assert.match(shell.slice(shell.indexOf("function bindAgenda360("),shell.indexOf("function homeModeBody()")),/const available=feedback;/,"live face sync only counts feedback");
+assert.match(shell,/GHESmartChoices\?\.show\?\.\("proposals"\)/,"proposal button must still open its existing popup");
+const topBarCss=read("ghe-premium-safe-flip.css");
+assert.match(topBarCss,/transform:translateX\(-clamp\(14px,6vw,45px\)\)!important;/,"En direct should be moved left responsively");
