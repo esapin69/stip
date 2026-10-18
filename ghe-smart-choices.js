@@ -114,5 +114,5 @@ document.addEventListener("click",event=>{
  event.preventDefault();event.stopImmediatePropagation();
  show(button.hasAttribute("data-smart-hub-open")?"hub":button.hasAttribute("data-smart-create-open")?"create":"chat");
 },true);
-window.GHESmartChoices={show};
+window.GHESmartChoices={show,entriesFor,choose};
 })();

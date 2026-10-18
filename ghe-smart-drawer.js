@@ -290,7 +290,7 @@ function link(entry){
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  const tag=isPending?"button":"a";
  const activeId=entry.kind+"|"+String(entry.id||entry.event?.id||entry.title)+"|"+String(entry.date||"");
- const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
+ const attrs=isPending?'type="button" data-smart-active-key="pending" data-smart-pending-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"':
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
   (["event","professional","cancelled"].includes(entry.kind)?' data-smart-open-details="true" data-smart-entry-type="'+escapeHtml(entry.kind)+'" aria-haspopup="dialog"':'');
  const realDay=/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?String(Number(entry.date.slice(-2))):"";
@@ -544,18 +544,18 @@ function render(){
   homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
   '<div class="ghe-smart-scroll ghe-smart-navigation">'+
   pending+divider+'<nav aria-label="Créer et rendez-vous">'+
-  navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
+  navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-active-key="create" data-smart-create-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"')+
   (appointments||navLink('📆','Calendrier','Mes rendez-vous','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"'))+
   '</nav>'+divider+
   '<nav aria-label="Messages et applications">'+
-  navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
+  navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-active-key="chat" data-smart-chat-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"')+
   apps+'</nav>'+divider+
   '<div class="ghe-smart-reserved-slot" role="presentation" aria-hidden="true"></div>'+divider+
   (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(item=>link({kind:"shortcut",...item})).join("")+'</nav></details>':"")+
   '</div><div class="ghe-smart-search-dock">'+
   navLink('🔍','Rechercher','Pages, personnes et rendez-vous','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
   '</div><footer class="ghe-smart-settings-dock">'+
-  navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"')+
   '</footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
@@ -605,9 +605,11 @@ document.addEventListener("click",event=>{
  const home=event.target.closest?.("#gheSmartRail [data-smart-home]");
  if(home){event.preventDefault();event.stopImmediatePropagation();goHomeDirect();return;}
  const nav=event.target.closest?.("#gheSmartRail [data-smart-search-open],#gheSmartRail [data-smart-apps-open],#gheSmartRail [data-smart-settings-open]");
- if(nav){event.preventDefault();if(nav.hasAttribute("data-smart-search-open")){window.GHEGlobalSearch?.toggle();return;}selectIcon("settings");openNavDialog("settings");return;}
+ if(nav){event.preventDefault();event.stopImmediatePropagation();if(nav.hasAttribute("data-smart-search-open")){selectIcon("search");window.GHEGlobalSearch?.toggle();return;}window.GHEDrawerPanels?.open(nav.hasAttribute("data-smart-settings-open")?"settings":"apps",nav);return;}
+ const createChat=event.target.closest?.("#gheSmartRail [data-smart-create-open],#gheSmartRail [data-smart-chat-open]");
+ if(createChat){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open(createChat.hasAttribute("data-smart-create-open")?"create":"chat",createChat);return;}
  const rdv=event.target.closest?.("[data-smart-rdv-open]");
- if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();openRdvDialog();return;}
+ if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open("rdv",rdv);return;}
  const rdvPending=event.target.closest?.("#gheSmartRdvDialog [data-smart-pending-open]");
  if(rdvPending){event.preventDefault();document.getElementById("gheSmartRdvDialog")?.close();requestAnimationFrame(openPendingDialog);return;}
  const rdvEntry=event.target.closest?.("#gheSmartRdvDialog a[data-smart-open-details]");
@@ -618,7 +620,7 @@ document.addEventListener("click",event=>{
   requestAnimationFrame(()=>showDrawerChoice(rdvEntry));return;
  }
  const dateButton=event.target.closest?.("#gheSmartRail [data-smart-date-open]");
- if(dateButton){event.preventDefault();selectIcon("date:"+dateButton.dataset.smartDateOpen);openAppointmentDay(dateButton.dataset.smartDateOpen);return;}
+ if(dateButton){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open("date",dateButton,{date:dateButton.dataset.smartDateOpen});return;}
  const reopen=event.target.closest?.("#gheSmartReopen");
  if(reopen){event.preventDefault();setMode("compact");return;}
  const expand=event.target.closest?.("#gheSmartExpand");
@@ -635,7 +637,7 @@ document.addEventListener("click",event=>{
  if(detailLink){
   event.preventDefault();event.stopImmediatePropagation();
   selectIcon(detailLink.dataset.smartActiveKey||"");
-  showDrawerChoice(detailLink);return;
+  window.GHEDrawerPanels?.open("detail",detailLink,{source:detailLink});return;
  }
  // Tout changement de destination conserve uniquement la colonne d'icônes.
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
@@ -649,7 +651,7 @@ document.addEventListener("click",event=>{
    pendingDialog.close();
    requestAnimationFrame(open);
   }else{
-   showDrawerChoice(destination);
+   window.GHEDrawerPanels?.open("detail",destination,{source:destination});
   }
   return;
  }
@@ -659,7 +661,7 @@ document.addEventListener("click",event=>{
   event.preventDefault();event.stopImmediatePropagation();setMode(mode==="closed"?"compact":"closed");return;
  }
  if(event.target.closest?.("#gheSmartRail [data-smart-pending-open]")){
-  event.preventDefault();selectIcon(event.target.closest("[data-smart-pending-open]").dataset.smartActiveKey||"");openPendingDialog();return;
+  event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open("pending",event.target.closest("[data-smart-pending-open]"));return;
  }
  const button=event.target.closest?.("#gheSmartRail [data-ctrl]");
  if(!button){
@@ -688,7 +690,7 @@ window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
 window.addEventListener("storage",event=>{if(event.key===STORE){events=[];ready=false;render();refresh(true)}});
 window.addEventListener("ghe:agenda-change",()=>refresh(true));
-window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,applications:appEntries,mode:()=>mode,setMode,openDestination:navigateDrawerDestination};
+window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,applications:appEntries,mode:()=>mode,setMode,selectIcon,openDestination:navigateDrawerDestination};
 const start=()=>{render();refresh();openDeferredSettings();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();

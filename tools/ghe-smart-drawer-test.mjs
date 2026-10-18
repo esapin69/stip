@@ -142,7 +142,7 @@ assert.match(read("ghe-smart-choices.js"),/data-ghe-choice-item/,"unified hub of
 
 // The global choice popup must not intercept the house before the rail click handler.
 const choice=read("ghe-choice-master.js");
-assert.match(choice,/el\.matches\("#gheSmartRail \[data-smart-home\]"\)/,"global choice popup exclusion for direct home");
+assert.match(choice,/el\.closest\("#gheSmartRail,#gheSmartDrawerPanel,#gheSmartGlobalSearch"\)/,"global modal must not intercept rail clicks");
 assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details continue to the requested destination");
 
 
@@ -189,3 +189,24 @@ assert.match(read("ghe-smart-choices.js"),/feedback_key=/,"feedback popup has a 
 assert.match(style,/#gheSmartRail \.ghe-smart-search-dock\{/,"loupe isolated in its dedicated bottom dock");
 assert.match(rail,/ghe-smart-search-dock/, "global search stays in a fixed dock above settings");
 assert.doesNotMatch(compact.slice(compact.indexOf("'ghe-smart-scroll ghe-smart-navigation"),compact.indexOf("ghe-smart-search-dock")),/data-smart-search-open/,"search is no longer mixed into the appointment navigation");
+
+// Panneaux du tiroir : même position et comportement que la recherche, sans modale.
+const lateral=read("ghe-drawer-inline-panels.js");
+assert.match(read("index.html"),/ghe-drawer-inline-panels\.js/,"the unified side panel is loaded");
+assert.match(read("stip-navigation.js"),/ghe-drawer-inline-panels\.js/,"standalone authenticated pages load the same panel");
+assert.match(lateral,/className="ghe-global-search-panel ghe-smart-side-panel"/,"reuses search's panel master");
+assert.match(lateral,/function sync\(focus=false\)/,"panels follow drawer mode and anchor");
+assert.match(lateral,/function preserve\(\)/,"panels survive rail re-render");
+assert.match(lateral,/function close\(\)/,"panel closes without navigation");
+assert.match(lateral,/role","region"/,"drawer panels are nonmodal regions");
+assert.doesNotMatch(lateral,/showModal\(/,"drawer panels never invoke a native modal");
+assert.match(rail,/GHEDrawerPanels\?\.open\("pending"/,"pending click opens side panel");
+assert.match(rail,/GHEDrawerPanels\?\.open\("date"/,"date click opens side panel");
+assert.match(rail,/GHEDrawerPanels\?\.open\("detail"/,"event and shortcut details open side panel");
+assert.match(rail,/GHEDrawerPanels\?\.open\(createChat/,"create and chat open side panel");
+assert.match(rail,/GHEDrawerPanels\?\.open\(nav/,"settings and apps open side panel");
+assert.match(read("ghe-smart-choices.js"),/GHESmartChoices=\{show,entriesFor,choose\}/,"choice actions are reusable without modal");
+assert.match(style,/\.ghe-smart-side-panel/,"shared nonmodal panel has a styled mobile layout");
+console.log("GHE side panel contract passed.");
+
+for(const page of ["places.html","mon-compte.html"])assert.match(read(page),/ghe-drawer-inline-panels\.js/,"standalone page uses same panels");

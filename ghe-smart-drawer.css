@@ -648,3 +648,25 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 #gheSmartRail .ghe-smart-search-dock .ghe-global-search-panel.is-expanded{
  max-height:min(32dvh,240px);margin:3px 0;padding:9px;
 }
+
+
+/* Panneaux de navigation non modaux — même ancrage que la recherche GHE. */
+.ghe-smart-side-panel{padding:0;overflow:hidden;max-height:min(70dvh,610px)}
+.ghe-smart-side-panel.is-expanded{padding:0;max-height:320px}
+.ghe-smart-side-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 14px 12px;border-bottom:1px solid #e3edf1;background:#fafcfd}
+.ghe-smart-side-head small{display:block;color:#698491;font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.095em}
+.ghe-smart-side-head h2{font-size:17px;line-height:1.25;margin:4px 0 0;color:#1b4659}
+.ghe-smart-side-head [data-side-close]{flex:none;width:36px;height:36px;border:0;border-radius:10px;background:#eef7fa;color:#265670;font-size:23px;cursor:pointer}
+.ghe-smart-side-content{overflow-y:auto;overscroll-behavior:contain;max-height:min(55dvh,490px);padding:4px 11px 11px}
+.ghe-smart-side-panel.is-expanded .ghe-smart-side-content{max-height:225px}
+.ghe-smart-side-row{display:flex;align-items:center;gap:10px;box-sizing:border-box;width:100%;min-height:57px;padding:9px 2px;border:0;border-bottom:1px solid #e7eff3;background:#fff;color:#1b4659;text-align:left;font:inherit;cursor:pointer}
+.ghe-smart-side-row:hover,.ghe-smart-side-row:focus-visible{background:#f2f9fc}
+.ghe-smart-side-icon{flex:0 0 37px;width:37px;height:40px;display:grid;place-items:center;font-size:24px}
+.ghe-smart-side-icon img{max-width:35px;max-height:37px;object-fit:contain}
+.ghe-smart-side-copy{flex:1;min-width:0;overflow-wrap:anywhere}
+.ghe-smart-side-copy strong{display:block;font-size:13px;line-height:1.25}
+.ghe-smart-side-copy small{display:block;margin-top:4px;color:#617e8c;font-size:11px;line-height:1.3}
+.ghe-smart-side-chevron{font-size:23px;color:#7797a5}
+.ghe-smart-side-date{padding:11px 4px 5px;color:#64808e;font-size:11px;text-transform:capitalize;font-weight:800;border-bottom:1px solid #dce9ee}
+.ghe-smart-side-back{border:0;border-top:1px solid #e2edf1;background:#f7fbfd;color:#1b526a;width:100%;padding:12px;text-align:left;font:750 12px system-ui,sans-serif;cursor:pointer}
+@media(max-width:380px){.ghe-smart-side-panel{width:calc(100vw - 62px);left:56px}}
