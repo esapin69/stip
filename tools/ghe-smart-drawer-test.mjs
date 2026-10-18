@@ -210,3 +210,6 @@ assert.match(style,/\.ghe-smart-side-panel/,"shared nonmodal panel has a styled 
 console.log("GHE side panel contract passed.");
 
 for(const page of ["places.html","mon-compte.html"])assert.match(read(page),/ghe-drawer-inline-panels\.js/,"standalone page uses same panels");
+
+assert.match(rail,/if\(rdv\.closest\("#gheSmartRail"\)\)window\.GHEDrawerPanels/,"RDV drawer uses side panel");
+assert.match(rail,/else openRdvDialog\(\)/,"RDV actions outside the drawer retain their existing popup");
