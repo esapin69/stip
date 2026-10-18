@@ -137,5 +137,28 @@ assert.match(smartDrawer,/ghe-smart-expand-slot/);
 assert.match(smartCss,/\.ghe-smart-calendar-cap/);
 assert.match(smartCss,/#gheSmartRail \.ghe-smart-expand-slot/);
 assert.match(smartCss,/dialog#gheChoiceMasterDialog::backdrop/);
-assert.match(index,/ghe-choice-master\.js\?v=20261018-choice-master1/);
+assert.match(index,/ghe-choice-master\.js\?v=20261018-day-calendar1/);
 assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.js?v="));
+
+
+/* Compact dates are grouped; expanded view retains one original icon per event. */
+const smartDates=file("ghe-smart-drawer.js"),smartDatesCss=file("ghe-smart-drawer.css"),choiceDates=file("ghe-choice-master.js");
+const dateStart=smartDates.indexOf("function appointmentDays(entries){");
+const dateEnd=smartDates.indexOf("function calendarIcon(date){",dateStart);
+assert(dateStart>=0&&dateEnd>dateStart,"Date grouping function must exist");
+const dateInputs=[
+ {kind:"event",date:"2026-10-24",title:"Musculation"},
+ {kind:"professional",date:"2026-10-19",title:"Échange"},
+ {kind:"event",date:"2026-10-24",title:"Autre événement"},
+ {kind:"pending",date:"2026-10-24",title:"À traiter"},
+ {kind:"event",date:"2026-10-25",title:"Musculation"},
+ {kind:"cancelled",date:"2026-10-19",title:"Ancienne date annulée"}
+];
+const grouped=vm.runInNewContext(smartDates.slice(dateStart,dateEnd)+"\nappointmentDays("+JSON.stringify(dateInputs)+");",{});
+assert.deepEqual(JSON.parse(JSON.stringify(grouped.map(d=>[d.date,d.items.length]))),[
+ ["2026-10-19",2],["2026-10-24",2],["2026-10-25",1]
+]);
+for(const phrase of ["appointmentDays(entries).map(calendarDayGroup)","group.items.map(link).join","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick"])assert(smartDates.includes(phrase),phrase);
+for(const phrase of [".ghe-smart-date-details{display:none!important",".ghe-smart-date-button{display:none!important","dialog#gheSmartDayDialog::backdrop"])assert(smartDatesCss.includes(phrase),phrase);
+assert(choiceDates.includes('class="ghe-choice-icon"'),"Preserve event icon in detail popup");
+for(const name of ["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-choice-master.js"])assert(index.includes(name+"?v=20261018-day-calendar1"),"Refresh "+name);
