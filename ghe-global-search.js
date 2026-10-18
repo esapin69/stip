@@ -24,33 +24,32 @@ function sources(){
  ];
  return items.filter(item=>{if(!item.href)return false;const key=item.href+"|"+item.title;if(found.has(key))return false;found.add(key);return true});
 }
-function livePage(){
- const root=document.querySelector("#homeView:not(.hidden) .hs-home")||document.querySelector("main");
- if(!root)return [];
- const body=String(root.innerText||root.textContent||"").replace(/\s+/g," ").trim().slice(0,32000);
- return body?[{title:"Contenu de cette page",sub:"Informations actuellement affichées",body,href:location.pathname+location.search+location.hash}]:[];
-}
+// Les faux résultats « Contenu de cette page » ne mènent à aucune fiche précise.
+const words=s=>norm(s).split(/[^a-z0-9]+/).filter(Boolean);
+const matchesTerms=(s,terms)=>{const available=words(s);return terms.every(term=>available.some(word=>word===term||(term.length>=4&&word.startsWith(term))));};
 function display(){
  if(!panel||panel.hidden)return;
  const q=norm(panel.querySelector("input")?.value.trim()),out=panel.querySelector("[data-global-results]");
  if(!out)return;
  if(q.length<2){out.innerHTML='<p class="ghe-global-help">Chercher parmi les pages, rendez-vous, personnes, services et outils accessibles du site.</p>';return;}
- const matches=[],seen=new Set();
- for(const item of [...sources(),...livePage(),...documents]){
-  const hay=norm([item.title,item.sub,item.body].join(" "));
-  const position=hay.indexOf(q);
-  if(position<0)continue;
-  const key=item.href+"|"+item.title;
+ const terms=words(q),ranked=[],seen=new Set();
+ // Trier d'abord les intitulés exacts, puis les descriptions et enfin les pages.
+ for(const item of [...sources(),...documents]){
+  const title=String(item.title||""),sub=item.document?"":String(item.sub||""),body=String(item.body||"");
+  const inTitle=matchesTerms(title,terms),inSub=matchesTerms(sub,terms);
+  const inBody=q.length>=4&&matchesTerms(body,terms);
+  if(!inTitle&&!inSub&&!inBody)continue;
+  const key=item.href+"|"+title;
   if(seen.has(key))continue;seen.add(key);
-  const content=String(item.body||"");
-  const offset=norm(content).indexOf(q);
-  const snippet=offset<0?item.sub:content.slice(Math.max(0,offset-55),offset+120).replace(/\s+/g," ");
-  matches.push('<a class="ghe-global-result" href="'+esc(item.href)+'">'+
-   '<strong>'+esc(item.title)+'</strong><small>'+esc(String(snippet||item.sub||"").slice(0,190))+'</small><b aria-hidden="true">›</b></a>');
-  if(matches.length>=35)break;
+  const offset=inBody?norm(body).indexOf(terms[0]):-1;
+  const snippet=offset<0?item.sub:body.slice(Math.max(0,offset-42),offset+100).replace(/\s+/g," ");
+  ranked.push({item,snippet,score:inTitle?0:inSub?1:2});
  }
- out.innerHTML=(matches.length?matches.join(""):'<p class="ghe-global-help">Aucun résultat parmi les données indexées.</p>')+
- (loading?'<p class="ghe-global-help">Recherche dans les autres pages…</p>':"");
+ ranked.sort((a,b)=>a.score-b.score||String(a.item.title).localeCompare(String(b.item.title),"fr"));
+ const links=ranked.slice(0,14).map(({item,snippet})=>'<a class="ghe-global-result" href="'+esc(item.href)+'">'+
+  '<strong>'+esc(item.title)+'</strong><small>'+esc(String(snippet||item.sub||"").slice(0,160))+'</small><b aria-hidden="true">›</b></a>');
+ out.innerHTML=(links.length?links.join(""):'<p class="ghe-global-help">Aucun résultat précis trouvé.</p>')+
+ (loading?'<p class="ghe-global-help">Recherche dans les pages accessibles…</p>':"");
 }
 async function indexPages(){
  if(loaded||loading)return loading;
@@ -67,7 +66,7 @@ async function indexPages(){
      doc.querySelectorAll("script,style,noscript,template,form,svg").forEach(node=>node.remove());
      const main=doc.querySelector("main")||doc.body;
      const body=String(main?.textContent||"").replace(/\s+/g," ").trim().slice(0,35000);
-     documents.push({title:doc.title||href,sub:"Page du site GHE",body,href});
+     documents.push({title:String(main?.querySelector("h1,h2")?.textContent||doc.title||href).trim().slice(0,100),sub:"Rubrique du site",body,href,document:true});
      display();
     }catch{/* Ne pas dévoiler ni indexer les pages non disponibles. */}
    }
@@ -91,8 +90,7 @@ function ensure(){
   if(norm(panel.querySelector("input").value).trim().length>=2)void indexPages();
  });
  panel.querySelector("[data-global-close]").addEventListener("click",()=>{
-  if(mode()==="expanded"){panel.querySelector("input").value="";display();panel.querySelector("input").blur();return;}
-  opened=false;sync();
+  opened=false;panel.querySelector("input").blur();sync();
  });
  panel.addEventListener("click",event=>{
   if(!event.target.closest(".ghe-global-result"))return;
@@ -109,6 +107,7 @@ function preserveBeforeRender(){
 function sync(focus=false){
  const rail=drawer(),state=mode(),trigger=rail?.querySelector("[data-smart-search-open]");
  if(!rail||!trigger||state==="closed"){
+  if(state==="closed")opened=false;
   if(panel)panel.hidden=true;return;
  }
  const box=ensure(),expanded=state==="expanded";
@@ -116,7 +115,7 @@ function sync(focus=false){
   if(box.previousElementSibling!==trigger)trigger.after(box);
  }else if(box.parentElement!==document.body)document.body.appendChild(box);
  box.classList.toggle("is-expanded",expanded);
- box.hidden=!expanded&&!opened;
+ box.hidden=!opened;
  trigger.setAttribute("aria-expanded",String(!box.hidden));
  if(!expanded&&opened){
   const rect=trigger.getBoundingClientRect();
@@ -125,7 +124,6 @@ function sync(focus=false){
  if(!box.hidden){display();if(focus)box.querySelector("input")?.focus({preventScroll:true});}
 }
 function toggle(){
- if(mode()==="expanded"){opened=true;sync(true);return;}
  opened=!opened;sync(opened);
 }
 document.addEventListener("click",event=>{
