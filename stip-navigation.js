@@ -404,7 +404,7 @@
     if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "/ghe-smart-drawer.css?v=20261018-rdv-home-focus1";
+      style.href = "/ghe-smart-drawer.css?v=20261018-agenda360-hub1";
       document.head.appendChild(style);
     }
     if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
