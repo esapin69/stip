@@ -137,7 +137,7 @@ assert.match(smartDrawer,/ghe-smart-expand-slot/);
 assert.match(smartCss,/\.ghe-smart-calendar-cap/);
 assert.match(smartCss,/#gheSmartRail \.ghe-smart-expand-slot/);
 assert.match(smartCss,/dialog#gheChoiceMasterDialog::backdrop/);
-assert.match(index,/ghe-choice-master\.js\?v=20261018-day-calendar1/);
+assert.match(index,/ghe-choice-master\.js\?v=\d{8}-[a-z0-9-]+/);
 assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.js?v="));
 
 
@@ -161,4 +161,8 @@ assert.deepEqual(JSON.parse(JSON.stringify(grouped.map(d=>[d.date,d.items.length
 for(const phrase of ["appointmentDays(entries).map(calendarDayGroup)","group.items.map(link).join","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick"])assert(smartDates.includes(phrase),phrase);
 for(const phrase of [".ghe-smart-date-details{display:none!important",".ghe-smart-date-button{display:none!important","dialog#gheSmartDayDialog::backdrop"])assert(smartDatesCss.includes(phrase),phrase);
 assert(choiceDates.includes('class="ghe-choice-icon"'),"Preserve event icon in detail popup");
-for(const name of ["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-choice-master.js"])assert(index.includes(name+"?v=20261018-day-calendar1"),"Refresh "+name);
+const drawerAssetVersions=["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-choice-master.js"].map(name=>{
+ const match=index.match(new RegExp(name.replace(".","\\.")+"\\?v=([0-9]{8}-[a-z0-9-]+)"));
+ assert(match,"Cache version missing for "+name);return match[1];
+});
+assert.equal(new Set(drawerAssetVersions).size,1,"Choice popup and drawer must share one cache version");
