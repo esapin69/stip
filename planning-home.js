@@ -110,10 +110,8 @@
       color = registry?.color?.(code, "#277b86") || "#277b86",
       icon = registry?.icon?.(code) || "",
       url = asset(code),
-      workBadge = window.STIPMonthTable?.shiftBadgeHtml?.(rawDisplay) || "",
-      restBadge = window.STIPMonthTable?.nonWorkCodeBadgeHtml?.(rawDisplay) || "";
+      workBadge = window.STIPMonthTable?.shiftBadgeHtml?.(rawDisplay) || "";
     if (workBadge) return workBadge;
-    if (restBadge) return restBadge;
     if (icon)
       return `<span class="ph-shift-registry-icon" style="--shift:${esc(color)}" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     if (url)
