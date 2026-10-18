@@ -58,12 +58,13 @@
  function continueClick(){
   const el=source;if(!el)return;
   modal?.close();
-  // Drawer entries already have their own preliminary modal; do not show two.
-  if(el.closest("#gheSmartRail,#gheSmartRdvDialog")&&el.matches("a[data-smart-open-details]")){
+  // The master button continues through the same handler for every drawer source.
+  // Never replay the original click: it could open another popup or navigate twice.
+  if(el.closest("#gheSmartRail,#gheSmartRdvDialog,#gheSmartPendingDialog")&&el.matches("a[href]")){
    window.GHESmartDrawer?.setMode?.("compact");
-   const kind=el.dataset.smartEntryKind,id=el.dataset.smartEntryId,action=el.dataset.smartAction;
-   const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
-   if(!opened){if(window.STIPNav?.go)window.STIPNav.go(el.href);else location.assign(el.href);}
+   if(window.GHESmartDrawer?.openDestination?.(el))return;
+   if(window.STIPNav?.go)window.STIPNav.go(el.href);
+   else location.assign(el.href);
    return;
   }
   replay=true;
