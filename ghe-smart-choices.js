@@ -24,6 +24,7 @@ function choose(item){
   navigate("sorties-loisirs.html?tab=invitations");return;
  }
  if(item.key==="business-action"){navigate(item.href);return;}
+ if(item.key==="leisureQuick"){if(window.GHELeisureQuick?.show)window.GHELeisureQuick.show();else navigate("sorties-loisirs.html?tab=create");return;}
  const routes={
   createPerson:"agent-directory.html",activity:"sorties-loisirs.html?tab=create",
   driver:"sorties-loisirs.html?tab=trips&choice=driver",
@@ -45,6 +46,7 @@ function entriesFor(key){
   row("🎉","Sorties et activités","Activités confirmées et conversations liées","activities",activities.length)
  ];
  if(key==="create")return [
+  row("🕔","Organiser une sortie après le travail","Conserver les horaires liés à mon planning","leisureQuick"),
   row("👤","Créer un événement pour quelqu’un","Choisir la personne puis son agenda","createPerson"),
   row("🎉","Proposer une activité","Créer une proposition et inviter les collègues","activity"),
   row("🚗","Proposer un covoiturage","Préciser si tu disposes d’une voiture","carpool")
