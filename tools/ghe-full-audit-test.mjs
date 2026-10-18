@@ -83,6 +83,8 @@ const homeContext = {
 };
 const body = vm.runInNewContext(extract(home,'  function homeModeBody()', '\n  // Le moteur des retours') + ';homeModeBody;',homeContext);
 const markup = body();
+assert(markup.indexOf('[tools]') < markup.indexOf('[identity]'), 'La date et le profil suivent la cloche');
+assert(markup.indexOf('[identity]') < markup.indexOf('[agenda360]'), 'La date et le profil précèdent À clôturer / RDV');
 assert(markup.indexOf('Pending meeting')>markup.indexOf('[identity]'));
 assert(markup.indexOf('Pending meeting')<markup.indexOf('[week]'));
 homeContext.has=()=>false;
