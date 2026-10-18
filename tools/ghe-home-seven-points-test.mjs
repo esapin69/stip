@@ -190,11 +190,11 @@ const feedbackOrderRows=[
   {eventKey:"middle",date:"2026-10-12",endDate:"2026-10-12",due:"2026-10-12T18:00",title:"Intermediaire"}
 ];
 const feedbackOrdered=vm.runInNewContext(
-  feedbackOrderSource.slice(feedbackOrderStart,feedbackOrderEnd)+"\\npassedEvents();",
+  feedbackOrderSource.slice(feedbackOrderStart,feedbackOrderEnd)+"\npassedEvents();",
   {normalizeEvents:()=>feedbackOrderRows,parisStamp:()=>"2026-10-30T12:00"}
 );
 assert.deepEqual(Array.from(feedbackOrdered,item=>item.eventKey),
   ["recent-late","recent-early","middle","old"],
   "À clôturer must begin with newest visible date, regardless of internal due timestamp");
-assert.match(feedbackOrderSource,/const datedCards=pending\\.map\\(/,
+assert.match(feedbackOrderSource,/const datedCards=pending\.map\(/,
   "date separators must inherit the same most-recent-first pending order");
