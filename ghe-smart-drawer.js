@@ -489,7 +489,7 @@ function openNavDialog(kind){
 }
 function openDeferredSettings(){
  const url=new URL(location.href);
- if(url.searchParams.get("drawer_action")!=="notification-settings"||!window.GHENotificationControls?.openSettings)return;
+ if(url.searchParams.get("drawer_action")!=="notification-settings"||!permitted()||!window.GHENotificationControls?.openSettings)return;
  url.searchParams.delete("drawer_action");
  history.replaceState(history.state,"",url.pathname+url.search+url.hash);
  window.GHENotificationControls.openSettings();
@@ -515,7 +515,7 @@ function render(){
   '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
   homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
   '<div class="ghe-smart-scroll ghe-smart-navigation">'+
-  navLink('🔍','Rechercher','Applications, dates et actions','data-smart-search-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  navLink('🔍','Rechercher','Applications, dates et actions','data-smart-active-key="search" data-smart-search-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
   divider+
   '<nav aria-label="Créer et organiser">'+
   navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
@@ -523,12 +523,12 @@ function render(){
   '</nav>'+divider+
   '<nav aria-label="Communications et applications">'+
   navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
-  navLink('<img src="images/icone_app/home-apps.webp" alt="">','Applications','Outils et applications GHE','data-smart-apps-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  navLink('<img src="images/icone_app/home-apps.webp" alt="">','Applications','Outils et applications GHE','data-smart-active-key="apps" data-smart-apps-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
   '</nav>'+divider+
   '<div class="ghe-smart-reserved-slot" role="presentation" aria-hidden="true"></div>'+divider+
   (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(x=>link({kind:"shortcut",...x})).join("")+'</nav></details>':"")+
   '</div><footer class="ghe-smart-settings-dock">'+
-  navLink('⚙️','Réglages','Notifications et compte','data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
   '</footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
@@ -658,6 +658,7 @@ for(const name of ["stip:leisure-updated","stip:home-rendered","stip:event-feedb
  window.addEventListener(name,()=>{if(permitted())render()});
 }
 window.addEventListener("stip:session-ready",()=>{render();refresh(true);openDeferredSettings()});
+window.addEventListener("stip:home-rendered",openDeferredSettings);
 window.addEventListener("stip:session-ended",()=>{events=[];ready=false;owner="";updated=0;requestSeq++;running=null;document.getElementById("gheSmartPendingDialog")?.close();render()});
 window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
