@@ -547,20 +547,20 @@ function render(){
   navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
   (appointments||navLink('📆','Calendrier','Mes rendez-vous','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"'))+
   '</nav>'+divider+
-  navLink('🔍','Rechercher','Tout le site GHE','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
-  divider+
   '<nav aria-label="Messages et applications">'+
   navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
   apps+'</nav>'+divider+
   '<div class="ghe-smart-reserved-slot" role="presentation" aria-hidden="true"></div>'+divider+
   (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(item=>link({kind:"shortcut",...item})).join("")+'</nav></details>':"")+
+  '</div><div class="ghe-smart-search-dock">'+
+  navLink('🔍','Rechercher','Pages, personnes et rendez-vous','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
   '</div><footer class="ghe-smart-settings-dock">'+
   navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
   '</footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
  if(!rail.querySelector(".ghe-smart-navigation"))rail.innerHTML=markup;
- else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-top-divider")||!rail.querySelector(".ghe-smart-settings-dock"))rail.innerHTML=markup;
+ else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-top-divider")||!rail.querySelector(".ghe-smart-search-dock")||!rail.querySelector(".ghe-smart-settings-dock"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
