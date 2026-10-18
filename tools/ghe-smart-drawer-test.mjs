@@ -149,10 +149,11 @@ assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details contin
 // Contrat d'interface : maison, recherche, créer+calendrier, chat+apps, réserve, réglages.
 const compact=rail.slice(rail.indexOf('const markup=\'<header class="ghe-smart-head"'),rail.indexOf(' // Keep the search input'));
 assert(compact.length>0,"markup du rail présent");
-const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","data-smart-rdv-open","data-smart-chat-open","data-smart-apps-open","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
+const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","(appointments||navLink","data-smart-pending-open","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
 let previous=-1;
 for(const token of order){const index=compact.indexOf(token);assert(index>previous,"ordre du tiroir : "+token);previous=index;}
-assert.doesNotMatch(compact,/calendarDayGroup\(|apps\.join\(/,"les listes sont regroupées dans les fenêtres");
+assert.match(rail,/appointmentDays\(entries\)\.map\(calendarDayGroup\)/,"les dates doivent rester visibles directement");
+assert.match(compact,/apps\+/, "les applications restent visibles après les messages");
 assert.match(rail,/function openNavDialog\(kind\)/,"recherche, applications et réglages disponibles");
 assert.match(rail,/function appEntries\(\)/,"applications et permissions conservées");
 assert.match(rail,/function openDeferredSettings\(\)/,"réglages accessibles depuis les pages annexes");
