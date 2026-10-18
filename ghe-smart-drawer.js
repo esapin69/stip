@@ -156,6 +156,69 @@ function groupedEntries(){
  }
  return entries.sort((a,b)=>a.date.localeCompare(b.date)||Number(b.kind==="pending")-Number(a.kind==="pending")||a.title.localeCompare(b.title,"fr"));
 }
+// Compact rail: one real calendar date per day, not one pictogram per event.
+function appointmentDays(entries){
+ const dates=new Map();
+ for(const entry of entries){
+  if(entry.kind==="pending"||!/^\d{4}-\d{2}-\d{2}$/.test(entry.date||""))continue;
+  if(!dates.has(entry.date))dates.set(entry.date,[]);
+  dates.get(entry.date).push(entry);
+ }
+ return [...dates].sort(([a],[b])=>a.localeCompare(b)).map(([date,items])=>({date,items}));
+}
+function calendarIcon(date){
+ return '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+Number(date.slice(-2))+'</b></span>';
+}
+function calendarDayGroup(group){
+ const count=group.items.length,label=dlabel(group.date);
+ return '<section class="ghe-smart-date-group" data-smart-date-group="'+escapeHtml(group.date)+'">'+
+  '<button type="button" class="ghe-smart-date-button" data-smart-date-open="'+escapeHtml(group.date)+'" aria-haspopup="dialog" aria-label="'+escapeHtml(label+" : "+count+" rendez-vous")+'">'+
+  '<span class="ghe-smart-icon ghe-smart-date-icon">'+calendarIcon(group.date)+
+  (count>1?'<span class="ghe-smart-date-count">×'+count+'</span>':"")+'</span>'+
+  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(label)+'</strong><small class="ghe-smart-sub">'+count+' rendez-vous</small></span></button>'+
+  '<div class="ghe-smart-date-details"><div class="ghe-smart-date-heading">'+calendarIcon(group.date)+
+  '<span>'+escapeHtml(label)+'</span>'+(count>1?'<small>×'+count+'</small>':"")+'</div>'+
+  group.items.map(link).join("")+'</div></section>';
+}
+function openAppointmentDay(date){
+ const group=rail?.querySelector('.ghe-smart-date-group[data-smart-date-group="'+date+'"]');
+ const links=[...(group?.querySelectorAll(".ghe-smart-date-details a.ghe-smart-link")||[])];
+ if(!links.length)return;
+ if(links.length===1){
+  if(window.GHEChoiceMaster?.open)window.GHEChoiceMaster.open(links[0]);
+  else openEntryDialog(links[0]);
+  return;
+ }
+ let dialog=document.getElementById("gheSmartDayDialog");
+ if(!dialog){
+  dialog=document.createElement("dialog");dialog.id="gheSmartDayDialog";document.body.appendChild(dialog);
+  dialog.addEventListener("click",event=>{
+   if(event.target===dialog||event.target.closest?.("[data-smart-day-close]")){dialog.close();return;}
+   const pick=event.target.closest?.("[data-smart-day-pick]");
+   if(!pick)return;
+   const target=dialog._links?.[Number(pick.dataset.smartDayPick)];
+   if(!target)return;
+   dialog.close();
+   requestAnimationFrame(()=>window.GHEChoiceMaster?.open?window.GHEChoiceMaster.open(target):openEntryDialog(target));
+  });
+  dialog.addEventListener("close",()=>rail?.querySelector('.ghe-smart-date-button[data-smart-date-open="'+dialog._date+'"]')?.focus({preventScroll:true}));
+ }
+ if(dialog.open)dialog.close();
+ dialog._date=date;dialog._links=links;
+ const rows=links.map((link,index)=>{
+  const name=link.querySelector(".ghe-smart-name")?.textContent?.trim()||"Rendez-vous";
+  const detail=link.querySelector(".ghe-smart-sub")?.textContent?.trim()||"";
+  const icon=link.querySelector(".ghe-smart-icon")?.innerHTML||"";
+  return '<button type="button" class="ghe-smart-day-pick" data-smart-day-pick="'+index+'">'+
+   '<span class="ghe-smart-day-item-icon">'+icon+'</span><span class="ghe-smart-day-item-text"><strong>'+escapeHtml(name)+'</strong>'+
+   (detail?'<small>'+escapeHtml(detail)+'</small>':"")+'</span><span aria-hidden="true">›</span></button>';
+ }).join("");
+ dialog.innerHTML='<section class="ghe-smart-day-panel"><header class="ghe-smart-day-head">'+
+  '<div><small>RENDEZ-VOUS DU JOUR</small><h2 id="gheSmartDayTitle">'+escapeHtml(dlabel(date))+' <span>×'+links.length+'</span></h2></div>'+
+  '<button type="button" data-smart-day-close aria-label="Fermer">×</button></header>'+
+  '<div class="ghe-smart-day-list">'+rows+'</div></section>';
+ dialog.setAttribute("aria-labelledby","gheSmartDayTitle");dialog.showModal();
+}
 function link(entry){
  const isPending=entry.kind==="pending";
  const icon=entry.icon||"📅";
