@@ -627,3 +627,25 @@ dialog.ghe-home-live-modal::backdrop{background:#152c4180;backdrop-filter:blur(7
 .ghe-home-live-modal .ghe-home-live-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 18px}
 .ghe-home-live-modal .ghe-premium-now{box-sizing:border-box;width:100%;max-width:100%;gap:12px}
 .ghe-home-live-modal .ghe-premium-now-groups{overflow:visible!important;max-height:none!important}
+
+/* Trois emplacements explicites : ☰ à gauche, En direct au centre, cloche à droite. */
+.hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+ grid-template-columns:minmax(0,48px) minmax(0,1fr) minmax(0,60px)!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-shortcuts-hamburger{
+ grid-column:1!important;grid-row:1!important;justify-self:start!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{
+ grid-column:2!important;grid-row:1!important;justify-self:center!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
+ grid-column:3!important;grid-row:1!important;justify-self:end!important;
+}
+@media(max-width:370px){
+ .hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+  grid-template-columns:minmax(0,44px) minmax(0,1fr) minmax(0,53px)!important;
+ }
+ .hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{
+  min-height:41px!important;padding:9px 10px!important;font-size:12px!important;
+ }
+}
