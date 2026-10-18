@@ -41,28 +41,6 @@
     return `<span class="stip-month-shift-badge code-${esc(classKey)}" data-shift-base="${esc(base)}" title="${esc(label)}" aria-label="${esc(label)}">${esc(display)}</span>`;
   }
 
-  // Monthly calendar only: render genuine rest and leave as their source code.
-  function nonWorkCodeBadgeHtml(raw) {
-    const source = String(raw || "").trim().toUpperCase().replace(/\s+/g, "");
-    if (!source) return "";
-    const registry = window.STIPShiftRegistry;
-    const def = registry?.resolve?.(source) || null;
-    if (def?.is_working === true) return "";
-    const base = String(registry?.baseCode?.(source) ||
-      def?.base_code || def?.code ||
-      source.replace(/[*★☆✱✳✶✷✸✹✺✻✼✽✾✿︎️]+$/u, "")
-    ).trim().toUpperCase();
-    const kind = String(def?.kind || "").trim().toLowerCase();
-    const family = String(def?.family || "").trim().toLowerCase();
-    const legacyCodes = ["R", "RH", "RC", "RF", "RTA", "RTTA", "RTT", "CP", "CA", "OFF", "REPOS"];
-    if (!["rest", "leave"].includes(kind) &&
-        !["rh", "off"].includes(family) &&
-        !legacyCodes.includes(base)) return "";
-    const isLeave = kind === "leave" || family === "rh" || ["CP", "CA"].includes(base);
-    const label = String(def?.label || base);
-    return `<span class="stip-month-nonwork-badge kind-${isLeave ? "leave" : "rest"} ${base.length > 3 ? "is-long" : ""}" title="${esc(label)}" aria-label="${esc(label)}">${esc(base)}</span>`;
-  }
-
   function isoDateOf(day) {
     return String(
       day?.dataset?.calDay ||
@@ -186,7 +164,7 @@
     window.addEventListener("stip:boot-updated", () => schedule(document));
   }
 
-  window.STIPMonthTable = { enhance, enhanceCalendar, schedule, shiftBadgeHtml, nonWorkCodeBadgeHtml };
+  window.STIPMonthTable = { enhance, enhanceCalendar, schedule, shiftBadgeHtml };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", start, { once: true });
