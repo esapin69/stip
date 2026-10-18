@@ -11,7 +11,7 @@
  function eligible(el){
   if(!el||el.disabled||el.closest("[inert],[aria-disabled='true'],#gheChoiceMasterDialog"))return false;
   // La maison est une exception explicite : aucun popup avant retour à l’accueil.
-  if(el.matches("#gheSmartRail [data-smart-home]"))return false;
+  if(el.closest("#gheSmartRail,#gheSmartDrawerPanel,#gheSmartGlobalSearch"))return false;
   if(el.closest("dialog:not(#gheSmartPendingDialog),[role='dialog'][aria-modal='true']"))return false;
   if(el.matches("#homeView button[data-app],#homeView button[data-home-mode]"))return true;
   if(!el.matches("a[href]")||el.hasAttribute("download")||el.target==="_blank")return false;
