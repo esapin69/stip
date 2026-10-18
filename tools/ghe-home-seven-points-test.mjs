@@ -133,9 +133,9 @@ assert.match(master,/new URL\(href,location\.href\)\.origin===location\.origin/)
 assert.match(master,/#homeView button\[data-app\]/);
 assert.match(smartDrawer,/ghe-smart-calendar-glyph/);
 assert.match(smartDrawer,/entry\.date\.slice\(-2\)/);
-assert.match(smartDrawer,/ghe-smart-expand-slot/);
+assert.match(smartDrawer,/ghe-smart-top-divider/);
 assert.match(smartCss,/\.ghe-smart-calendar-cap/);
-assert.match(smartCss,/#gheSmartRail \.ghe-smart-expand-slot/);
+assert.match(smartCss,/#gheSmartRail \.ghe-smart-head #gheSmartExpand/);
 assert.match(smartCss,/dialog#gheChoiceMasterDialog::backdrop/);
 assert.match(index,/ghe-choice-master\.js\?v=\d{8}-[a-z0-9-]+/);
 assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.js?v="));
