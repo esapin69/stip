@@ -17,7 +17,7 @@ Ce document est la référence fonctionnelle lisible du calendrier STIP. Toute m
 - Les pages gardent leur moteur de données et leur navigation métier ; elles exposent seulement les dates ISO au composant commun.
 - Le composant commun gère les séparateurs `Sxx`, la ligne LU→DI répétée par semaine, l’alignement du premier jour, les cases jour, les états aujourd’hui/sélectionné et la suppression des espaces réservés inutiles.
 - Dans le tableau mensuel, un shift travaillé est toujours rendu comme **badge texte** avec son code visible (`M`, `J`, `J4`, `S`, `N`), jamais comme simple rond de couleur. Une variante étoilée (`J4*`, etc.) conserve l’astérisque affiché mais hérite de la couleur de son shift de base.
-- Les repos, congés et événements restent des pictogrammes/repères séparés ; ils ne remplacent pas le badge du shift travaillé.
+- Dans les tableaux mensuels, repos et congés affichent leurs codes lettres réels (R, RH, CP, CA, RTT, etc., selon le planning) dans un badge neutre. Autres absences et événements gardent leurs pictogrammes propres ; les dates sans code restent vides.
 - `home-shell.js`, `planning-home.js`, `metiers/metiers.js` et le laboratoire T consomment cette même source.
 - Une page ne doit pas recréer localement la géométrie ou la finition de `.stip-month-calendar`. Les variations locales restent limitées au contenu métier placé dans `.stip-month-primary` / `.stip-month-events`.
 - Chaque calendrier consommateur expose une date ISO par jour (`data-cal-day`, `data-ph-date` ou `data-stip-date`) et appelle le moteur `STIPMonthTable.enhance` après un remplacement de son DOM. Le moteur partagé, et non la page, insère les séparateurs de semaines, les en-têtes des jours et aligne le premier jour ; une page ne génère pas de cases vides artificielles.
@@ -64,7 +64,7 @@ de la carte de profil, sans modifier les deux moteurs de données des cartes du 
 - Chaque jour conserve le code de shift ; les shifts travaillés utilisent
   le même badge texte que le mois via `STIPMonthTable.shiftBadgeHtml`.
   Repos/congés/absences : **code seul, sans icône de repos sur ce verso**.
-  Les pictogrammes de repos restent inchangés partout ailleurs.
+  Hors calendriers mensuels, les pictogrammes de repos restent inchangés partout ailleurs.
 - Les jours travaillés reçoivent une **teinte légère de leur véritable shift**
   (en-tête, filet de contour), tandis que les badges gardent la couleur pleine
   du calendrier mensuel. Les repos restent neutres, sans icône.
