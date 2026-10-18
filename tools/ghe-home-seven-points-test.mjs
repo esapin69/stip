@@ -182,7 +182,7 @@ const drawerAssetVersions=["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-cho
 assert.equal(new Set(drawerAssetVersions).size,1,"Choice popup and drawer must share one cache version");
 
 
-/* Home "À clôturer": newest visible event day first, same day newest time first. */
+/* Home "À clôturer": oldest visible event day first, same day earliest time first. */
 const feedbackOrderSource=file("event-feedback.js");
 const feedbackOrderStart=feedbackOrderSource.indexOf("  function passedEvents() {");
 const feedbackOrderEnd=feedbackOrderSource.indexOf("  function pendingEvents() {", feedbackOrderStart);
@@ -199,10 +199,10 @@ const feedbackOrdered=vm.runInNewContext(
   {normalizeEvents:()=>feedbackOrderRows,parisStamp:()=>"2026-10-30T12:00"}
 );
 assert.deepEqual(Array.from(feedbackOrdered,item=>item.eventKey),
-  ["recent-late","recent-early","middle","old"],
-  "À clôturer must begin with newest visible date, regardless of internal due timestamp");
+  ["old","middle","recent-early","recent-late"],
+  "À clôturer must begin with oldest visible date, regardless of internal due timestamp");
 assert.match(feedbackOrderSource,/const datedCards=pending\.map\(/,
-  "date separators must inherit the same most-recent-first pending order");
+  "date separators must inherit the same oldest-first pending order");
 
 /* Propositions des collègues are appointment-side; only feedback activates À clôturer. */
 const agenda360=home.slice(home.indexOf("function agenda360Markup()"),home.indexOf("function bindAgenda360("));

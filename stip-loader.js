@@ -320,7 +320,7 @@
     ])
       .then(() =>
         seq([
-          "event-feedback.js?v=20261018-agenda360-hub1&rev=recent-first1-date-master1",
+          "event-feedback.js?v=20261018-agenda360-hub1&rev=oldest-first1-date-master1",
           "home-duty-chief.js?v=20261016-shared-agent-actions1",
           "admin-access-requests-home.js",
         ]),
