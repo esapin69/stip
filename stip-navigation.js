@@ -417,7 +417,7 @@
     if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "/ghe-smart-drawer.js?v=20261018-rail-organized1&rev=flat-search-live1";
+    script.src = "/ghe-smart-drawer.js?v=20261018-rail-organized1&rev=flat-search-live1-swap1";
     script.async = true;
     document.head.appendChild(script);
     if(!window.GHEGlobalSearch&&!document.querySelector('script[src*="ghe-global-search.js"]')){
