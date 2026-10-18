@@ -116,11 +116,12 @@ assert(home.includes("is-rest-visual") && home.includes("data-thf-day-weather"),
   "Non-working rest cards must share the daily weather engine");
 assert(weather.includes("mountDay") && weather.includes("dayValues"),
   "Rest and paid leave must reuse the existing Open-Meteo engine");
-assert(home.includes("nonWorkCodeBadgeHtml") && dayCard.includes("shiftSymbol"),
-  "Rest displays the authentic planning status as a square badge");
-assert(!dayCard.includes("thf-rest-illustration") &&
-  dayCard.includes("staticWeatherArt('card-'"),
-  "Rest and work cards must share the same weather illustration, never a sofa");
+assert(dayCard.includes("thf-rest-illustration") && dayCard.includes("thf-rest-caption"),
+  "The approved illustrated sofa and rest caption must return");
+assert(dayCard.includes("staticWeatherArt('card-'") && dayCard.includes("shiftSymbol"),
+  "Work card uses the colored shift badge in the central illustrated area");
+assert(dayCard.includes("(!restMode?'<div class="),
+  "Do not add a work-shift panel to a rest day");
 assert(dayCard.includes("thf-rest-weather") && dayCard.includes("thf-inline-weather"),
   "Both day types retain real weather readings");
 assert(home.includes("#hcTomorrowFusion .thf-day-card") &&
@@ -129,6 +130,15 @@ assert(home.includes("#hcTomorrowFusion .thf-day-card") &&
 assert(css.includes('.thf-day-card.thf-weather-sky[data-wet="true"]::before') &&
   css.includes('.thf-day-card.thf-weather-sky[data-wet="true"]::after'),
   "Rain and wet-ground scenery must cover the full work/rest card");
+const approvedCardCss=css.slice(css.indexOf("/* GHE — reprise du dessin repos approuvé"));
+assert(approvedCardCss.includes(".thf-day-card.is-rest-visual .thf-rest-illustration"),
+  "The original central illustration must retain its large size");
+assert(approvedCardCss.includes(".thf-day-card .thf-weather-stage>.thf-day-post"),
+  "The work shift and its two actions replace the central illustration");
+assert(approvedCardCss.includes(".thf-weather-caption .thf-rest-weather"),
+  "The weather footer stays anchored at the bottom");
+assert(!approvedCardCss.includes("repeating-linear-gradient("),
+  "Rain must use irregular subtle drops, never long repeated diagonal streaks");
 assert(weather.includes("card.dataset.wet=scene.dataset.wet") &&
   weather.includes("card.dataset.raining=scene.dataset.raining"),
   "Both daily weather engines must forward weather state to the whole card");
