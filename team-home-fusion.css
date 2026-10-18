@@ -1930,3 +1930,57 @@
   .hc-days-grid .thf-day-card.is-rest-visual .thf-rest-caption{margin-top:160px!important}
   .hc-days-grid .thf-day-card .thf-weather-stage>.thf-day-post{top:74px!important}
 }
+
+/* 2026-10-18 — Same two headcount shortcuts as the day card, in the shared day popup. */
+.thf-popup.thf-day-popup .thf-day-team-access{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  margin:9px 0 11px;min-width:0
+}
+.thf-popup .thf-day-team-button{
+  display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;
+  justify-content:center;align-content:center;align-items:center;
+  column-gap:10px;row-gap:2px;min-width:0;min-height:92px;
+  padding:12px 8px 10px;border:1px solid #c3e4ed;border-radius:21px;
+  background:linear-gradient(150deg,#edfaff,#e2f3f8);color:#0874a2;
+  box-shadow:0 3px 11px rgba(13,82,109,.06);cursor:pointer;
+  font:inherit;text-align:center
+}
+.thf-popup .thf-day-team-button.is-chiefs{
+  border-color:#f0d8ad;background:linear-gradient(150deg,#fffaf0,#fff3e3);
+  color:#a86204
+}
+.thf-popup .thf-day-team-button .thf-day-team-icon{font-size:2.05rem;line-height:1}
+.thf-popup .thf-day-team-button>strong{
+  font-size:2.05rem;font-weight:950;line-height:1.03;
+  letter-spacing:-.035em;font-variant-numeric:tabular-nums
+}
+.thf-popup .thf-day-team-button>small{
+  grid-column:1/-1;font-size:.69rem;font-weight:850;
+  line-height:1.1;letter-spacing:.01em;color:inherit;opacity:.84
+}
+.thf-popup .thf-day-team-button:active{transform:scale(.98)}
+.thf-popup .thf-day-team-button:focus-visible,
+.thf-popup .thf-popup-day-back:focus-visible{
+  outline:3px solid #157faa;outline-offset:3px
+}
+.thf-popup .thf-day-team-button:disabled{opacity:.58;cursor:not-allowed;transform:none}
+.thf-popup.thf-day-popup .thf-day-popup-actions{margin-top:7px}
+.thf-popup.thf-day-popup .thf-day-popup-actions>button{
+  min-height:38px;padding:8px 12px;border-radius:10px;
+  font-size:.77rem;background:#f6f9fb;border-color:#e1e9ec;color:#497183
+}
+.thf-popup .thf-popup-day-back{
+  display:inline-flex;align-items:center;gap:6px;max-width:calc(100% - 40px);
+  margin:1px 0 11px;padding:6px 9px 6px 7px;
+  background:#eff6f9;border:1px solid #dfebef;border-radius:10px;
+  color:#24647b;font:800 .75rem/1.2 system-ui;cursor:pointer;
+}
+.thf-popup .thf-popup-day-back span{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+@media(max-width:350px){
+  .thf-popup.thf-day-popup .thf-day-team-access{gap:7px}
+  .thf-popup .thf-day-team-button{column-gap:6px;padding:10px 5px;min-height:83px;border-radius:16px}
+  .thf-popup .thf-day-team-button .thf-day-team-icon,
+  .thf-popup .thf-day-team-button>strong{font-size:1.7rem}
+}
