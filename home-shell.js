@@ -3001,8 +3001,6 @@
         '<i aria-hidden="true"></i> EN POSTE ACTUELLEMENT</span>'+
         '<span class="ghe-premium-now-headcount"><strong>'+esc(count)+'</strong>'+
           '<span>personnes ›</span></span></button>'+
-      (roster.permitted?'<button type="button" class="ghe-premium-agent-search" data-premium-agent-search aria-haspopup="dialog">'+
-        '<span aria-hidden="true">⌕</span><span>Rechercher un agent<small>Ses informations aujourd’hui</small></span><span aria-hidden="true">›</span></button>':"")+
       (sections||chiefSection?
         '<div class="ghe-premium-now-groups" aria-label="Postes actifs maintenant">'+sections+chiefSection+'</div>':
         '<p class="ghe-premium-now-empty" role="status">'+esc(empty)+'</p>')+
@@ -3112,9 +3110,6 @@
       document.body.appendChild(dialog);
       dialog.addEventListener("click",event=>{
         if(event.target===dialog||event.target.closest("[data-home-live-close]")){dialog.close();return;}
-        if(event.target.closest("[data-premium-agent-search]")){
-          dialog.close();openHeaderDirectorySearch("first");return;
-        }
         const rosterButton=event.target.closest("[data-premium-roster]");
         if(rosterButton){openPremiumRoster(rosterButton.dataset.premiumRoster);return;}
       });
