@@ -319,11 +319,13 @@
   function renderInbox(){
     const root=inboxState.root;if(!root?.isConnected)return;
     inboxState.selector?.destroy?.();inboxState.selector=null;
-    const conversations=(home?.conversations||[]).filter(c=>c.kind==="direct"||c.kind==="group"),
+    const scope=new URLSearchParams(location.search).get("filter");
+    const conversations=(home?.conversations||[]).filter(c=>(c.kind==="direct"||c.kind==="group")&&
+      (scope==="events"?!!c.event:scope==="colleagues"?!c.event:true)),
       categories=[
         ["Activités & rendez-vous",conversations.filter(c=>!!c.event)],
         ["Groupes libres",conversations.filter(c=>c.kind==="group"&&!c.event)],
-        ["Messages privés",conversations.filter(c=>c.kind==="direct")]
+        ["Messages privés",conversations.filter(c=>c.kind==="direct"&&!c.event)]
       ],
       discussions=conversations.length?categories.filter(([,list])=>list.length).map(([heading,list])=>
         '<div class="ch-inbox-category"><h3>'+esc(heading)+' <span>'+list.length+'</span></h3>'+
@@ -334,12 +336,13 @@
       ?'<section class="ch-push-check"><span>🔔 Notifications de cet appareil : autorisées</span><button type="button" data-inbox-test-push>Tester</button></section>'
       :'<section class="ch-push-check ch-push-warning"><span>'+ (pushState==='denied'?'🔕 Notifications bloquées dans les réglages du navigateur.':'🔔 Notifications du téléphone non activées sur cet appareil.') +'</span><button type="button" data-inbox-test-push '+(pushState==='denied'||pushState==='unsupported'?'disabled':'')+'>'+(pushState==='unsupported'?'Non compatible':'Activer et tester')+'</button></section>';
     root.innerHTML='<section class="ch-inline-inbox">'+pushInfo+
-      '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>Discussions</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
+      '<section class="ch-inbox-section"><div class="ch-inbox-title"><strong>'+(scope==="events"?"Discussions des événements":scope==="colleagues"?"Discussions collègues":"Discussions")+'</strong><span>'+conversations.length+'</span></div>'+discussions+'</section>'+
+      (scope==="events"?'<section class="ch-inbox-section"><a href="sorties-loisirs.html?tab=agenda">Voir les activités et leurs discussions →</a></section>':
       '<section class="ch-inbox-section ch-inbox-new"><div class="ch-inbox-title"><strong>Nouveau message</strong><span data-inbox-selected-count>'+selectedCount+' sélectionné'+(selectedCount>1?"s":"")+'</span></div>'+
       '<div class="ch-inbox-picks"><button type="button" data-inbox-duty><span>●</span><strong>En poste</strong><small>'+((home?.on_duty||[]).length)+'</small></button><button type="button" data-inbox-all><span>◎</span><strong>Tout le monde</strong><small>'+((home?.agents||[]).length)+'</small></button></div>'+
       '<div class="ch-inbox-agent-selector" data-inbox-agent-selector></div></section>'+
       (inboxState.status?'<p class="ch-inbox-status" role="status">'+esc(inboxState.status)+'</p>':'')+
-      '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer></section>';
+      '<footer class="ch-inbox-footer"><button type="button" data-inbox-continue '+(!selectedCount?"disabled":"")+'>'+(selectedCount>1?"Continuer · "+selectedCount:"Ouvrir le DM"+(selectedCount?" · 1":""))+'</button></footer>')+'</section>';
     root.querySelector("[data-inbox-test-push]")?.addEventListener("click",async(event)=>{
       const button=event.currentTarget;button.disabled=true;button.textContent="Vérification…";
       try{
