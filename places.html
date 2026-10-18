@@ -98,7 +98,7 @@
 
   <dialog id="placesPdfDialog" class="places-pdf-dialog" aria-labelledby="placesPdfTitle">
     <div class="places-pdf-sheet">
-      <div class="places-pdf-top"><div><h2 id="placesPdfTitle">PDF · Visiter les lieux</h2><p id="placesPdfHelp">Quelle version veux-tu imprimer ?</p></div><button class="places-pdf-close" type="button" id="placesPdfClose" aria-label="Fermer">×</button></div>
+      <div class="places-pdf-top"><div><h2 id="placesPdfTitle">PDF · Visiter les lieux</h2><p id="placesPdfHelp">Choisis ton PDF : il s’ouvre directement, sans autre étape.</p></div><button class="places-pdf-close" type="button" id="placesPdfClose" aria-label="Fermer">×</button></div>
       <div id="placesPdfAudience" class="places-pdf-audiences">
         <button id="placesPdfVisitor" class="places-pdf-choice" type="button"><span aria-hidden="true">◇</span><span><strong>Visiteur</strong><small>Informations publiques uniquement · sans code.</small></span><span aria-hidden="true">›</span></button>
         <button id="placesPdfPro" class="places-pdf-choice" type="button"><span aria-hidden="true">▣</span><span><strong>Professionnel</strong><small>Informations selon tes droits · code uniquement si nécessaire.</small></span><span aria-hidden="true">›</span></button>
@@ -106,7 +106,7 @@
       <form id="placesPdfCodeForm" class="places-pdf-code" hidden>
         <label for="placesPdfCode">Ton code d’accès GHE à 6 chiffres</label>
         <div class="places-pdf-input"><input id="placesPdfCode" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" minlength="6" autocomplete="off" data-stip-pin-field="1" required aria-label="Code personnel à 6 chiffres"><button id="placesPdfReveal" type="button" aria-label="Voir ou masquer le code" aria-pressed="false">Voir</button></div>
-        <div class="places-pdf-code-actions"><button id="placesPdfBack" type="button">Retour</button><button type="submit">Accéder au PDF</button></div>
+        <div class="places-pdf-code-actions"><button id="placesPdfBack" type="button">Retour</button><button type="submit">Ouvrir le PDF professionnel</button></div>
       </form>
       <p id="placesPdfStatus" class="places-pdf-status" role="status" aria-live="polite"></p>
     </div>
@@ -171,7 +171,53 @@ function pdfStep(enterCode){
   reveal.textContent='Voir';reveal.setAttribute('aria-pressed','false');
   if(enterCode)pdfCode.focus({preventScroll:true});
 }
-function goPdf(audience){const u=new URL('places-export.html',location.href);u.searchParams.set('audience',audience);u.searchParams.set('v','20261017-pdf1');if(window.top&&window.top!==window)window.top.location.assign(u.href);else location.assign(u.href)}
+// The visitor/pro choice is FINAL: one full GHE PDF, never a second export wizard.
+function beginPdfViewer(){
+  let viewer=null;
+  try{
+    viewer=window.open('about:blank','_blank');
+    if(viewer){
+      viewer.document.title='Visiter les lieux · Préparation du PDF';
+      viewer.document.body.innerHTML='<p style="font:600 16px system-ui;padding:24px;color:#23546a">Préparation du PDF complet du GHE…</p>';
+    }
+  }catch{viewer=null}
+  return viewer;
+}
+async function generateChosenPdf(audience,viewer,token=''){
+  pdfMessage('Création du PDF complet du GHE…');
+  const headers={'content-type':'application/json'};
+  if(audience==='pro'){
+    if(!token)throw new Error('Code GHE requis pour le PDF professionnel.');
+    headers['x-stip-session']=token;
+  }
+  const response=await fetch(API,{
+    method:'POST',cache:'no-store',headers,
+    body:JSON.stringify({action:audience==='visitor'?'export_public_pdf':'export_pdf',scope:{mode:'all'}})
+  });
+  if(!response.ok){
+    const result=await response.json().catch(()=>({}));
+    throw new Error(result.error||'Impossible de générer le PDF.');
+  }
+  if(!/application\/pdf/i.test(response.headers.get('content-type')||'')){
+    throw new Error('La réponse ne contient pas un PDF valide.');
+  }
+  const blob=await response.blob();
+  if(blob.size<5||await blob.slice(0,5).text()!=='%PDF-')throw new Error('PDF invalide : téléchargement interrompu.');
+  const url=URL.createObjectURL(blob);
+  pdfDialog.close();
+  if(viewer&&!viewer.closed)viewer.location.replace(url);
+  else location.assign(url);
+  // The browser PDF reader provides Print, Download and Share; no extra buttons here.
+  setTimeout(()=>URL.revokeObjectURL(url),300000);
+}
+async function chooseVisitorPdf(){
+  if(pdfBusy)return;
+  const viewer=beginPdfViewer();pdfBusy=true;
+  try{await generateChosenPdf('visitor',viewer)}
+  catch(error){if(viewer&&!viewer.closed)viewer.close();pdfMessage(error.message||'PDF indisponible.',true)}
+  finally{pdfBusy=false}
+}
+
 async function proSessionValid(token){
   if(!token)return false;
   try{const r=await fetch(API,{method:'POST',cache:'no-store',headers:{'content-type':'application/json','x-stip-session':token},body:JSON.stringify({action:'bootstrap'})});if(!r.ok)return false;const d=await r.json().catch(()=>({}));return d.access_level==='pro'}catch{return false}
@@ -179,7 +225,7 @@ async function proSessionValid(token){
 function placesClientId(){const key='stip_client_id_v1';let id=localStorage.getItem(key)||'';if(!id){id=crypto.randomUUID?.()||'stip-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);localStorage.setItem(key,id)}return id}
 exportLink.addEventListener('click',()=>{pdfStep(false);pdfDialog.showModal()});
 document.getElementById('placesPdfClose').addEventListener('click',()=>{if(!pdfBusy)pdfDialog.close()});
-document.getElementById('placesPdfVisitor').addEventListener('click',()=>goPdf('visitor'));
+document.getElementById('placesPdfVisitor').addEventListener('click',chooseVisitorPdf);
 document.getElementById('placesPdfBack').addEventListener('click',()=>pdfStep(false));
 document.getElementById('placesPdfReveal').addEventListener('click',()=>{
   const button=document.getElementById('placesPdfReveal');
@@ -190,26 +236,54 @@ document.getElementById('placesPdfReveal').addEventListener('click',()=>{
 });
 document.getElementById('placesPdfPro').addEventListener('click',async()=>{
   if(pdfBusy)return;
+  const viewer=beginPdfViewer();
   pdfBusy=true;pdfMessage('Vérification de ta session…');
   const button=document.getElementById('placesPdfPro');button.disabled=true;
-  try{if(await proSessionValid(localStorage.getItem(STORE)||'')){goPdf('pro');return}pdfStep(true)}
-  finally{pdfBusy=false;button.disabled=false}
+  try{
+    const token=localStorage.getItem(STORE)||'';
+    if(await proSessionValid(token)){await generateChosenPdf('pro',viewer,token);return;}
+    if(viewer&&!viewer.closed)viewer.close();
+    pdfStep(true);
+  }catch(error){
+    if(viewer&&!viewer.closed)viewer.close();
+    pdfMessage(error.message||'PDF professionnel indisponible.',true);
+  }finally{pdfBusy=false;button.disabled=false}
 });
 pdfCode.addEventListener('input',()=>{pdfCode.value=pdfCode.value.replace(/\D/g,'').slice(0,6)});
 pdfCodeForm.addEventListener('submit',async ev=>{
   ev.preventDefault();if(pdfBusy)return;
   const code=pdfCode.value.replace(/\D/g,'').slice(0,6);
   if(!/^\d{6}$/.test(code)){pdfMessage('Entre exactement 6 chiffres.',true);return}
-  pdfBusy=true;const submit=pdfCodeForm.querySelector('[type=submit]');submit.disabled=true;pdfMessage('Connexion…');
+  const viewer=beginPdfViewer();
+  pdfBusy=true;const submit=pdfCodeForm.querySelector('[type=submit]');submit.disabled=true;
+  pdfMessage('Connexion…');
   try{
-    const r=await fetch('https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',{method:'POST',cache:'no-store',headers:{'content-type':'application/json'},body:JSON.stringify({action:'login',code,client_id:placesClientId()})});
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.session_token)throw new Error(d.error||'Code incorrect ou accès indisponible.');
-    if(!await proSessionValid(d.session_token))throw new Error('Ce code ne donne pas accès au PDF professionnel.');
-    localStorage.setItem(STORE,d.session_token);goPdf('pro');
-  }catch(err){pdfMessage(err.message||'Connexion impossible.',true)}
-  finally{pdfBusy=false;submit.disabled=false;pdfCode.value=''}
+    const response=await fetch('https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',{
+      method:'POST',cache:'no-store',headers:{'content-type':'application/json'},
+      body:JSON.stringify({action:'login',code,client_id:placesClientId()})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||!data.session_token)throw new Error(data.error||'Code incorrect ou accès indisponible.');
+    if(!await proSessionValid(data.session_token))throw new Error('Ce code ne donne pas accès au PDF professionnel.');
+    localStorage.setItem(STORE,data.session_token);
+    await generateChosenPdf('pro',viewer,data.session_token);
+  }catch(error){
+    if(viewer&&!viewer.closed)viewer.close();
+    pdfMessage(error.message||'Connexion impossible.',true);
+  }finally{pdfBusy=false;submit.disabled=false;pdfCode.value=''}
 });
+// Legacy links from earlier revisions still open one of the same two PDFs directly,
+// never the obsolete multi-step export wizard.
+const oldPdfAudience=new URLSearchParams(location.search).get('pdf');
+if(oldPdfAudience==='visitor'||oldPdfAudience==='pro'){
+  const current=new URL(location.href);current.searchParams.delete('pdf');
+  history.replaceState(history.state,'',current.pathname+current.search+current.hash);
+  requestAnimationFrame(()=>{
+    if(!pdfDialog.open)pdfDialog.showModal();
+    if(oldPdfAudience==='visitor')chooseVisitorPdf();
+    else document.getElementById('placesPdfPro').click();
+  });
+}
 
 const input=document.getElementById('placeSearch'),clear=document.getElementById('placeSearchClear'),results=document.getElementById('placeSearchResults'),home=document.getElementById('homeView'),detail=document.getElementById('detailView'),pageBack=document.getElementById('pageBack');
 const typeLabels={hospital:'Hôpital',building:'Bâtiment',level:'Étage',service:'Service',unit:'Unité',exam:'Examen',entrance:'Entrée',elevator:'Ascenseur',elevator_group:'Ascenseurs',walkway:'Liaison',landmark:'Repère',room:'Salle',virtual_room:'Chambre',block:'Bloc',parking:'Parking',staff_area:'Zone équipe',hall:'Hall',helipad:'Hélistation'};
