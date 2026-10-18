@@ -31,7 +31,7 @@ assert.match(css,/button\.ghe-premium-now-group/);
 assert.match(css,/\.ghe-premium-now-group\.shift-chief/);
 assert.match(css,/\.ghe-premium-now-groups\{[\s\S]*?overflow:visible!important/);
 assert.match(css,/dialog\.ghe-premium-now-dialog::backdrop/);
-assert.match(css,/transform:translateX\(-clamp\(30px,10vw,65px\)\)!important/,"Live shortcut moves left");
+assert.match(css,/transform:translateX\(-clamp\(52px,17vw,88px\)\)!important/,"Live shortcut moves left");
 assert.match(css,/\.ghe-premium-now-modal-content\{[\s\S]*?overflow-y:auto/);
 const mockRow=(code,id)=>({code,agents:{source_key:id,prenom:id,nom:"Test"}});
 const onlyActive=[mockRow("J","J1"),mockRow("J","J2"),mockRow("S","S1")];
@@ -218,5 +218,5 @@ assert.match(appointmentsFace,/data-agenda360-proposals/);
 assert.match(agenda360,/const hasOpen=feedback\.length>0;/);
 assert.match(home,/const available=feedback;/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
-assert.match(css,/transform:translateX\(-clamp\(30px,10vw,65px\)\)!important;/,
+assert.match(css,/transform:translateX\(-clamp\(52px,17vw,88px\)\)!important;/,
   "The top red En direct launcher must shift left without moving the bell or menu");
