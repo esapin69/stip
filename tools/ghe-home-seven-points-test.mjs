@@ -216,5 +216,5 @@ assert.match(appointmentsFace,/data-agenda360-proposals/);
 assert.match(agenda360,/const hasOpen=feedback\.length>0;/);
 assert.match(home,/const available=feedback;/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
-assert.match(css,/transform:translateX\(-clamp\(14px,6vw,45px\)\)!important;/,
+assert.match(css,/transform:translateX\(-clamp\(30px,10vw,65px\)\)!important;/,
   "The top red En direct launcher must shift left without moving the bell or menu");
