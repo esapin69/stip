@@ -367,7 +367,10 @@
       .filter((x) => x.due <= now)
       .sort(
         (a, b) =>
-          b.due.localeCompare(a.due) ||
+          // Priorité à la date visible dans « À clôturer » (plus récent d'abord).
+          // À date égale, garder le retour à l'heure la plus récente en tête.
+          String(b.endDate || b.date || "").localeCompare(String(a.endDate || a.date || "")) ||
+          String(b.due || "").localeCompare(String(a.due || "")) ||
           String(a.title).localeCompare(String(b.title), "fr"),
       );
   }
