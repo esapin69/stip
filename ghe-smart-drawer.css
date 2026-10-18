@@ -573,3 +573,10 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 @media(max-width:360px){
  :is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator{gap:5px;padding-inline:2px;font-size:10px}
 }
+
+/* Navigation à plat après la maison : recherche, ajout/dates, messages/apps, réserve, réglages. */
+#gheSmartRail .ghe-smart-date-group,#gheSmartRail .ghe-smart-date-button{display:block}
+#gheSmartRail .ghe-smart-date-button{display:flex;align-items:center;width:100%;min-height:54px;padding:5px 0;border:0;border-radius:12px;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
+#gheSmartRail .ghe-smart-date-button:hover{background:#eef8fb}
+#gheSmartRail .ghe-smart-navigation nav>.ghe-smart-link{min-height:54px}
+#gheSmartRail .ghe-smart-reserved-slot{min-height:28px}
