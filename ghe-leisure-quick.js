@@ -1,22 +1,8 @@
 (() => {
   "use strict";
   const BUTTON = "ghe-leisure-quick";
-  function install() {
-    document.querySelectorAll("#homeView .ghe-home-topbar").forEach(bar => {
-      if (bar.querySelector("[data-ghe-leisure-quick]")) return;
-      const anchor = bar.querySelector("[data-wheelchair-popup], [data-notification-settings], [data-bell-open]");
-      if (!anchor) return;
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = BUTTON;
-      button.dataset.gheLeisureQuick = "";
-      button.setAttribute("aria-label", "Proposer une sortie entre collègues");
-      button.setAttribute("aria-haspopup", "dialog");
-      button.setAttribute("aria-controls", "gheLeisureQuickDialog");
-      button.textContent = "💬";
-      anchor.before(button);
-    });
-  }
+  // Bouton supprimé de l’en-tête ; le dialogue reste accessible depuis ➕.
+  function install() {document.querySelectorAll("[data-ghe-leisure-quick]").forEach(button=>button.remove());}
   function show() {
     if (!document.querySelector("#homeView .ghe-home-topbar") || !localStorage.getItem("stip_session_v1")) return;
     const existing = document.getElementById("gheLeisureQuickDialog");
@@ -53,6 +39,7 @@
   document.addEventListener("click", event => {
     if (event.target.closest("[data-ghe-leisure-quick]")) show();
   });
+  window.GHELeisureQuick={show};
   window.addEventListener("stip:home-rendered", install);
   window.addEventListener("pageshow", install);
   window.addEventListener("stip:session-ended", () => document.getElementById("gheLeisureQuickDialog")?.close());

@@ -3127,11 +3127,6 @@
       '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
         'aria-haspopup="dialog" aria-controls="hcPersonalDrawer" aria-label="Ouvrir mon espace">'+
         '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
-      '<span class="ghe-top-aux-actions">'+
-      (has("messages")?'<button type="button" class="ghe-top-wheelchair" data-wheelchair-popup aria-haspopup="dialog" aria-controls="gheTopWheelchairDialog" aria-label="Ouvrir le chat fauteuils">'+
-        '<img src="images/icone_app/home-access-wheelchairs.webp" alt="" aria-hidden="true"></button>':"")+
-      (has("messages")?'<button type="button" class="ghe-top-settings" data-notification-settings aria-haspopup="dialog" aria-controls="gheTopNotificationDialog" aria-label="Régler mes notifications">⚙</button>':"")+
-      '</span>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
         (count?'<b>'+count+'</b>':'')+'</button></div>';

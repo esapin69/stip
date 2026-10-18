@@ -144,3 +144,18 @@ assert.match(read("ghe-smart-choices.js"),/data-ghe-choice-item/,"unified hub of
 const choice=read("ghe-choice-master.js");
 assert.match(choice,/el\.matches\("#gheSmartRail \[data-smart-home\]"\)/,"global choice popup exclusion for direct home");
 assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details continue to the requested destination");
+
+
+// Contrat d'interface : maison, recherche, créer+calendrier, chat+apps, réserve, réglages.
+const compact=rail.slice(rail.indexOf('const markup=\'<header class="ghe-smart-head"'),rail.indexOf(' // Keep the search input'));
+assert(compact.length>0,"markup du rail présent");
+const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","data-smart-rdv-open","data-smart-chat-open","data-smart-apps-open","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
+let previous=-1;
+for(const token of order){const index=compact.indexOf(token);assert(index>previous,"ordre du tiroir : "+token);previous=index;}
+assert.doesNotMatch(compact,/calendarDayGroup\(|apps\.join\(/,"les listes sont regroupées dans les fenêtres");
+assert.match(rail,/function openNavDialog\(kind\)/,"recherche, applications et réglages disponibles");
+assert.match(rail,/function appEntries\(\)/,"applications et permissions conservées");
+assert.match(rail,/function openDeferredSettings\(\)/,"réglages accessibles depuis les pages annexes");
+assert.doesNotMatch(shell.slice(shell.indexOf("function homeModeNav(part"),shell.indexOf("function shortcutsPopup()")),/ghe-top-aux-actions/,"les icônes redondantes du haut disparaissent");
+assert.match(read("ghe-leisure-quick.js"),/window\.GHELeisureQuick=\{show\}/,"création rapide préservée via ➕");
+assert.match(read("ghe-smart-choices.js"),/leisureQuick/,"la création rapide est accessible depuis le menu Ajouter");

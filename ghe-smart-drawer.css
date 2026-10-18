@@ -504,3 +504,37 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 #gheSmartChoiceDialog footer{padding:12px 17px;border-top:1px solid #e1ebef}
 #gheSmartChoiceDialog footer button{min-height:44px;padding:7px 16px;background:#eff7fb;border:1px solid #c9e1eb;border-radius:12px;color:#1c536c;font-weight:750;cursor:pointer}
 #gheSmartChoiceDialog .ghe-choice-hub-empty{padding:18px;text-align:center;color:#668291}
+
+/* Nouvelle navigation : maison | recherche | ajout + agenda | chat + apps | réserve | réglages. */
+#gheSmartRail .ghe-smart-navigation{padding:7px 5px 12px;overflow-y:auto;overscroll-behavior:contain}
+#gheSmartRail .ghe-smart-nav-separator{box-sizing:border-box;min-height:1px;height:1px;border-top:1px solid #dbe7ed;margin:10px 6px}
+#gheSmartRail .ghe-smart-reserved-slot{min-height:22px}
+#gheSmartRail .ghe-smart-settings-dock{flex:none;background:#fff;border-top:1px solid #dbe7ed;padding:6px 5px max(9px,env(safe-area-inset-bottom))}
+#gheSmartRail .ghe-smart-primary-action{min-height:52px;position:relative}
+#gheSmartRail .ghe-smart-primary-action .ghe-smart-icon{font-size:27px}
+#gheSmartRail .ghe-smart-primary-action .ghe-smart-badge{font-size:9px}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-nav-separator{margin:9px 7px}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-navigation .ghe-smart-primary-action{min-height:52px}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-reserved-slot{min-height:22px}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-settings-dock .ghe-smart-link{min-height:54px;justify-content:center;padding:4px 0}
+#gheSmartRail .ghe-smart-admin-tools{margin-top:12px}
+#gheSmartNavDialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(520px,calc(100vw - 26px));max-height:calc(100dvh - 40px);overflow:hidden;padding:0;border:1px solid #cedfe8;border-radius:21px;background:#fff;color:#1c4558;box-shadow:0 20px 60px #102e4660;font:inherit}
+#gheSmartNavDialog::backdrop{background:#102f426e;backdrop-filter:blur(4px)}
+#gheSmartNavDialog .ghe-smart-nav-frame{display:flex;flex-direction:column;min-height:0;max-height:calc(100dvh - 40px)}
+#gheSmartNavDialog header{display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;border-bottom:1px solid #dce9ed;background:#f6fbfd}
+#gheSmartNavDialog header small{color:#61818e;font-size:11px;letter-spacing:.09em;font-weight:800}
+#gheSmartNavDialog header h2{font-size:21px;margin:5px 0 0}
+#gheSmartNavDialog [data-smart-nav-close]{flex:none;width:42px;height:42px;background:#fff;border:1px solid #d2e3eb;border-radius:12px;color:#224c62;font-size:26px;cursor:pointer}
+#gheSmartNavDialog .ghe-smart-nav-search{padding:11px 13px;border-bottom:1px solid #e0eaee}
+#gheSmartNavDialog [data-smart-nav-query]{box-sizing:border-box;width:100%;min-height:45px;border:1px solid #cadde7;border-radius:12px;background:#fff;font:inherit;font-size:15px;padding:9px 12px}
+#gheSmartNavDialog .ghe-smart-nav-items{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px}
+#gheSmartNavDialog .ghe-smart-nav-result{box-sizing:border-box;width:100%;min-height:62px;display:flex;align-items:center;gap:11px;padding:10px 8px;background:#fff;border:0;border-bottom:1px solid #e8f0f3;color:inherit;text-align:left;font:inherit;cursor:pointer}
+#gheSmartNavDialog .ghe-smart-nav-result[hidden]{display:none!important}
+#gheSmartNavDialog .ghe-smart-nav-result:focus-visible{outline:2px solid #4c9fbb;outline-offset:-2px}
+#gheSmartNavDialog .ghe-smart-nav-result-icon{width:43px;height:43px;display:grid;place-items:center;flex:0 0 43px;font-size:27px;border-radius:11px;background:#eff7fa}
+#gheSmartNavDialog .ghe-smart-nav-result-icon img{max-width:34px;max-height:34px;object-fit:contain}
+#gheSmartNavDialog .ghe-smart-nav-result-copy{flex:1;min-width:0}
+#gheSmartNavDialog .ghe-smart-nav-result-copy strong{display:block;font-size:14px;line-height:1.25}
+#gheSmartNavDialog .ghe-smart-nav-result-copy small{display:block;color:#627e8a;font-size:12px;line-height:1.35;margin-top:4px}
+#gheSmartNavDialog .ghe-smart-nav-result>span:last-child{color:#7c97a4;font-size:23px}
+#gheSmartNavDialog [data-smart-nav-empty]{padding:17px;color:#66818c;text-align:center}
