@@ -137,7 +137,7 @@ assert.match(smartDrawer,/ghe-smart-expand-slot/);
 assert.match(smartCss,/\.ghe-smart-calendar-cap/);
 assert.match(smartCss,/#gheSmartRail \.ghe-smart-expand-slot/);
 assert.match(smartCss,/dialog#gheChoiceMasterDialog::backdrop/);
-assert.match(index,/ghe-choice-master\.js\?v=20261018-choice-master1/);
+assert.match(index,/ghe-choice-master\.js\?v=20261018-day-calendar1/);
 assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.js?v="));
 
 
