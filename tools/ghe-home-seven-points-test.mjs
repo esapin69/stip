@@ -145,7 +145,7 @@ assert(index.indexOf("ghe-choice-master.js?v=")<index.indexOf("ghe-smart-drawer.
 const smartDates=file("ghe-smart-drawer.js"),smartDatesCss=file("ghe-smart-drawer.css"),choiceDates=file("ghe-choice-master.js");
 
 /* The home agenda 360 has one vertical scroll owner: the document itself. */
-assert.match(smartDatesCss, /#homeView \.ghe-agenda360\{[^}]*overflow:clip;[\s\S]*?touch-action:pan-y\}/,
+assert.match(smartDatesCss, /#homeView \.ghe-agenda360\{[^}]*overflow:clip;[\s\S]*?touch-action:pan-y pinch-zoom\}/,
  "the 360 card must never consume a nested touch scroll");
 assert.match(smartDatesCss, /#homeView \.ghe-agenda360 \.hc-feedback-list\{[^}]*max-height:none;[^}]*overflow:visible;[^}]*overscroll-behavior:auto;/,
  "all pending feedback items are laid out fully and the page owns scroll");
