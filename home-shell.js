@@ -1655,13 +1655,10 @@
       timing=working && day.time
         ? `<strong class="ghe-weekflip-preview-time">${esc(day.time)}</strong>`
         : `<small class="ghe-weekflip-preview-time-note">${esc(waiting?"Planning en cours de chargement":working?"Horaire non communiqué":def?.label||canonical)}</small>`,
-      title=day.d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
-    return `<button type="button" class="ghe-weekflip-monday-preview stip-week-day code-${esc(kind)}" data-home-day="${esc(day.iso)}" aria-label="${esc("Consulter le "+title+" · "+(def?.label||canonical)+(working&&day.time?" · "+day.time:""))}"${waiting?' disabled aria-disabled="true"':""}>
-      <span class="ghe-weekflip-monday-preview-copy">
-        <small class="ghe-weekflip-next-tag">SEMAINE PROCHAINE · LUNDI SEULEMENT</small>
-        <strong>${esc(title)}</strong>
-        <span class="ghe-weekflip-next-action">Voir ce lundi <b aria-hidden="true">↗</b></span>
-      </span>
+      fullTitle=day.d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}),
+      title=day.d.toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+    return `<button type="button" class="ghe-weekflip-monday-preview stip-week-day code-${esc(kind)}" data-home-day="${esc(day.iso)}" aria-label="${esc("Consulter le "+fullTitle+" · "+(def?.label||canonical)+(working&&day.time?" · "+day.time:""))}"${waiting?' disabled aria-disabled="true"':""}>
+      <span class="ghe-weekflip-monday-preview-copy"><strong>${esc(title)}</strong></span>
       <span class="ghe-weekflip-monday-preview-schedule"><span class="ghe-weekflip-shift">${shift}</span>${timing}</span>
     </button>`;
   }
@@ -1675,7 +1672,7 @@
       <small>${range(current)}</small></header>
       <div class="ghe-weekflip-workdays" aria-label="Du lundi au vendredi">${weekdays.map(day => weekFlipDay(day)).join("")}</div>
       <div class="ghe-weekflip-weekend" aria-label="Samedi et dimanche">${weekend.map(day => weekFlipDay(day)).join("")}</div>
-      <div class="ghe-weekflip-next-divider" aria-hidden="true"><span>APRÈS CETTE SEMAINE</span><i>↘</i></div>
+      <div class="ghe-weekflip-next-divider" aria-hidden="true"><span>SEMAINE PROCHAINE</span></div>
       ${weekFlipNextMonday()}`;
   }
   function weekFlipCard() {
