@@ -151,6 +151,10 @@
   function shiftToken(row,compact=false){
     const i=shiftInfo(row?.code||row?.source_value||"");
     if(!row)return compact?"":"—";
+    if(compact){
+      const restBadge=window.STIPMonthTable?.nonWorkCodeBadgeHtml?.(row.code||row.source_value||"")||"";
+      if(restBadge)return restBadge;
+    }
     if(i.family==="rh")return compact?'<span class="stip-month-icon">🏝️</span>':"🏝️";
     if(i.family==="off"||i.family==="other")return compact?`<span class="stip-month-icon">${esc(i.icon)}</span>`:i.icon;
     return compact?`<span class="aav-dot aav-${i.family} stip-month-dot"></span>`:`<span class="aav-dot aav-${i.family}"></span><b>${esc(i.base)}</b>`;
