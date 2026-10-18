@@ -4096,7 +4096,6 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(summaryEl&&summaryEl.textContent!==summary)summaryEl.textContent=summary;
       const totalEl=stage.querySelector('[data-agenda360-action-count]');
       if(totalEl&&totalEl.textContent!==String(feedbackCount+proposalsCount))totalEl.textContent=String(feedbackCount+proposalsCount);
-      for(const button of stage.querySelectorAll('[data-agenda360-turn]'))button.setAttribute('aria-pressed',String(stage.dataset.side===button.dataset.agenda360Turn));
       for(const side of ["front","back"]){
         const face=stage.querySelector('[data-agenda360-face="'+side+'"]');
         face?.toggleAttribute("inert",stage.dataset.side!==side);
