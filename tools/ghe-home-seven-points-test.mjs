@@ -175,3 +175,26 @@ const drawerAssetVersions=["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-cho
  assert(match,"Cache version missing for "+name);return match[1];
 });
 assert.equal(new Set(drawerAssetVersions).size,1,"Choice popup and drawer must share one cache version");
+
+
+/* Home "À clôturer": newest visible event day first, same day newest time first. */
+const feedbackOrderSource=file("event-feedback.js");
+const feedbackOrderStart=feedbackOrderSource.indexOf("  function passedEvents() {");
+const feedbackOrderEnd=feedbackOrderSource.indexOf("  function pendingEvents() {", feedbackOrderStart);
+assert(feedbackOrderStart>=0&&feedbackOrderEnd>feedbackOrderStart,
+  "the canonical feedback date comparator must remain testable");
+const feedbackOrderRows=[
+  {eventKey:"old",date:"2026-10-03",endDate:"2026-10-03",due:"2026-10-29T10:00",title:"Ancien"},
+  {eventKey:"recent-early",date:"2026-10-17",endDate:"2026-10-17",due:"2026-10-17T12:00",title:"Recent matin"},
+  {eventKey:"recent-late",date:"2026-10-17",endDate:"2026-10-17",due:"2026-10-17T19:00",title:"Recent soir"},
+  {eventKey:"middle",date:"2026-10-12",endDate:"2026-10-12",due:"2026-10-12T18:00",title:"Intermediaire"}
+];
+const feedbackOrdered=vm.runInNewContext(
+  feedbackOrderSource.slice(feedbackOrderStart,feedbackOrderEnd)+"\\npassedEvents();",
+  {normalizeEvents:()=>feedbackOrderRows,parisStamp:()=>"2026-10-30T12:00"}
+);
+assert.deepEqual(Array.from(feedbackOrdered,item=>item.eventKey),
+  ["recent-late","recent-early","middle","old"],
+  "À clôturer must begin with newest visible date, regardless of internal due timestamp");
+assert.match(feedbackOrderSource,/const datedCards=pending\\.map\\(/,
+  "date separators must inherit the same most-recent-first pending order");
