@@ -230,11 +230,20 @@
     const scene = host.closest?.(".thf-weather-sky");
     if (scene) {
       scene.dataset.sky = values.sky;
-        if(scene.classList?.contains?.("thf-weather-stage")){
-          const card=scene.closest(".thf-day-card");
-          if(card)card.dataset.sky=values.sky;
-        }
       scene.dataset.thermal = values.thermal;
+      // A high rain probability is a forecast, not a claim that rain is falling now.
+      const wet = values.risk !== null && values.risk >= 60;
+      const raining = ["drizzle","rain","heavy-rain","storm"].includes(values.sky);
+      scene.dataset.wet = wet ? "true" : "false";
+      scene.dataset.raining = raining ? "true" : "false";
+      if(scene.classList?.contains?.("thf-weather-stage")){
+        const card=scene.closest(".thf-day-card");
+        if(card){
+          card.dataset.sky=values.sky;
+          card.dataset.wet=scene.dataset.wet;
+          card.dataset.raining=scene.dataset.raining;
+        }
+      }
       scene.setAttribute("aria-label",
         shift.startText + " : " + values.startTemp + " degrés, " +
         shift.endText + " : " + values.endTemp + " degrés. " +
@@ -349,12 +358,16 @@
       const scene = host.closest(".thf-weather-sky");
       if (scene) {
         scene.dataset.sky = values.sky;
-        if(scene.classList?.contains?.("thf-weather-stage")){
-          const card=scene.closest(".thf-day-card");
-          if(card)card.dataset.sky=values.sky;
-        }
         scene.dataset.raining = values.rainingScene ? "true" : "false";
         scene.dataset.wet = values.wetScene ? "true" : "false";
+        if(scene.classList?.contains?.("thf-weather-stage")){
+          const card=scene.closest(".thf-day-card");
+          if(card){
+            card.dataset.sky=values.sky;
+            card.dataset.raining=scene.dataset.raining;
+            card.dataset.wet=scene.dataset.wet;
+          }
+        }
       }
       host.innerHTML = "";
       const range = document.createElement("span");

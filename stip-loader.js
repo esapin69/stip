@@ -2,7 +2,7 @@
   "use strict";
   const loaded = new Map(),
     loadedStyles = new Map(),
-    V = "20261018-month-rest-codes1";
+    V = "20261018-unified-day-weather1";
   function load(src) {
     const url = new URL(String(src || ""), document.baseURI);
     url.searchParams.set("v", V);
@@ -279,12 +279,12 @@
     }
   }
   const personalCore = [
-    "planning-home.js?v=20261018-month-rest-codes1",
+    "planning-home.js?v=20261018-unified-day-weather1",
     "planning-month-hero.js",
     "planning-print-reference.js?v=20260930-official-pdf1",
   ];
   const personalExtras = [
-    "agent-agenda-view.js?v=20261018-month-rest-codes1",
+    "agent-agenda-view.js?v=20261018-unified-day-weather1",
     "calendar-subscriptions.js",
     "calendar-responsable-gate.js",
     "agent-week-view.js",
@@ -294,8 +294,8 @@
     "day-workflow-home-bridge.js",
   ];
   const teamCore = [
-    "agent-agenda-view.js?v=20261018-month-rest-codes1",
-    "planning-home.js?v=20261018-month-rest-codes1",
+    "agent-agenda-view.js?v=20261018-unified-day-weather1",
+    "planning-home.js?v=20261018-unified-day-weather1",
     "planning-hub-enhance.js?v=20260925-calendar-clean2",
   ];
   const teamExtras = [
@@ -303,7 +303,7 @@
     "calendar-responsable-gate.js",
   ];
   const changeCore = [
-    "planning-home.js?v=20261018-month-rest-codes1",
+    "planning-home.js?v=20261018-unified-day-weather1",
     "change-workflow.js?v=20260930-mail-approval",
     "change-permission-gate.js",
     "staffing-guidance.js",
@@ -372,7 +372,7 @@
     if (!r) return;
     if (r.startsWith("contacts")) {
       window.STIPReadCache?.requestContacts?.();
-      await seq(["agent-agenda-view.js?v=20261018-month-rest-codes1", "section-hubs.js?v=20261014-ghe-export-live-v3"]);
+      await seq(["agent-agenda-view.js?v=20261018-unified-day-weather1", "section-hubs.js?v=20261014-ghe-export-live-v3"]);
       window.STIPHubs?.contactsRoute?.(r);
       return;
     }
@@ -482,7 +482,7 @@
       if (k === "communication") communication().catch(() => {});
       if (k === "contacts") {
         window.STIPReadCache?.requestContacts?.();
-        seq(["agent-agenda-view.js?v=20261018-month-rest-codes1", "section-hubs.js?v=20261014-ghe-export-live-v3"]).catch(() => {});
+        seq(["agent-agenda-view.js?v=20261018-unified-day-weather1", "section-hubs.js?v=20261014-ghe-export-live-v3"]).catch(() => {});
       }
       if (k === "personal") seq(personalCore).catch(() => {});
       if (k === "team") seq(teamCore).catch(() => {});

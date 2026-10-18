@@ -71,14 +71,16 @@ const shift = home.indexOf("thf-day-post", start);
 const actions = home.indexOf('class="thf-shift-actions"', shift);
 const colleagues = home.indexOf("thf-shift-colleagues", actions);
 const chief = home.indexOf("thf-shift-chiefs", colleagues);
-const body = home.indexOf('class="thf-day-more"', chief);
+const cardEnd = home.indexOf("'</article>'", chief);
 assert(start >= 0 && shift > start && actions > shift &&
-  colleagues > actions && chief > colleagues && body > chief,
+  colleagues > actions && chief > colleagues && cardEnd > chief,
   "Colleagues and chiefs must share the shift action row");
 assert(home.slice(actions, chief).includes('data-thf-open="people"'));
-assert(home.slice(chief, body).includes('data-thf-open="chiefs"'));
-assert(!home.slice(body, home.indexOf("'</article>'", body)).includes("thf-day-chief-launch"),
+assert(home.slice(chief, cardEnd).includes('data-thf-open="chiefs"'));
+assert(!home.slice(chief,cardEnd).includes("thf-day-chief-launch"),
   "The day card must not show a second chiefs button");
+assert(!home.slice(shift,cardEnd).includes("thf-day-more"),
+  "Whole-card day tap must replace the redundant details footer");
 assert(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"),
   "Two responsive shift buttons are required");
 assert(css.includes("bottom:7%;z-index:0"),
@@ -114,6 +116,22 @@ assert(home.includes("is-rest-visual") && home.includes("data-thf-day-weather"),
   "Non-working rest cards must share the daily weather engine");
 assert(weather.includes("mountDay") && weather.includes("dayValues"),
   "Rest and paid leave must reuse the existing Open-Meteo engine");
+assert(home.includes("nonWorkCodeBadgeHtml") && dayCard.includes("shiftSymbol"),
+  "Rest displays the authentic planning status as a square badge");
+assert(!dayCard.includes("thf-rest-illustration") &&
+  dayCard.includes("staticWeatherArt('card-'"),
+  "Rest and work cards must share the same weather illustration, never a sofa");
+assert(dayCard.includes("thf-rest-weather") && dayCard.includes("thf-inline-weather"),
+  "Both day types retain real weather readings");
+assert(home.includes("#hcTomorrowFusion .thf-day-card") &&
+  home.includes("if(dayHost?._thfSummary)openDay(dayHost)"),
+  "Tapping either whole card must open the existing day popup");
+assert(css.includes('.thf-day-card.thf-weather-sky[data-wet="true"]::before') &&
+  css.includes('.thf-day-card.thf-weather-sky[data-wet="true"]::after'),
+  "Rain and wet-ground scenery must cover the full work/rest card");
+assert(weather.includes("card.dataset.wet=scene.dataset.wet") &&
+  weather.includes("card.dataset.raining=scene.dataset.raining"),
+  "Both daily weather engines must forward weather state to the whole card");
 assert(css.includes('data-raining="true"') && css.includes('data-wet="true"'),
   "Rain and wet-ground visuals must be independently driven by the forecast");
 assert.match(home, /data-thf-open="chiefs"/, "Chef entries must open a dedicated popup");

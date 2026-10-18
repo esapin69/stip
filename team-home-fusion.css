@@ -1689,3 +1689,123 @@
     radial-gradient(ellipse 100% 19% at 95% 38%,#eaf3f9d9 30%,transparent 74%),
     radial-gradient(ellipse 90% 15% at 10% 76%,#7f9eb64d 30%,transparent 76%);
 }
+
+
+/* GHE: a single day-card layout for a scheduled shift and a day off.
+   The existing Open-Meteo values drive the entire card, not just its header.
+   No animated artwork and no invented weather condition. */
+.hc-days-grid .thf-day-card.thf-weather-sky,
+.hc-days-grid .thf-day-card.thf-weather-sky.is-rest-visual{
+  position:relative;isolation:isolate;cursor:pointer;
+  background:radial-gradient(ellipse 135% 76% at 61% 6%,var(--thf-sky-aura),transparent 78%),
+             var(--thf-sky-bg)!important;
+  border:1px solid #c9dfe9!important;border-radius:20px!important;
+  box-shadow:0 8px 24px #244a601b,inset 0 1px #ffffffa6!important;
+}
+.hc-days-grid .thf-day-card.thf-weather-sky:focus-within{
+  box-shadow:0 0 0 2px #2a91b1,0 8px 24px #244a601b!important;
+}
+.hc-days-grid .thf-day-card .thf-weather-stage,
+.hc-days-grid .thf-day-card.is-rest-visual .thf-weather-stage[data-rest="true"]{
+  flex:1 1 auto!important;min-height:224px!important;
+  background:transparent!important;border:0!important;
+}
+.hc-days-grid .thf-day-card .thf-day-trigger,
+.hc-days-grid .thf-day-card.is-rest-visual .thf-day-trigger{
+  box-sizing:border-box;width:100%!important;height:auto!important;
+  min-height:214px!important;padding:15px 10px 12px!important;
+  display:flex!important;flex-direction:column!important;justify-content:space-between!important;
+  align-items:stretch!important;text-align:center!important;gap:13px!important;
+  background:transparent!important;border:0!important;
+}
+.hc-days-grid .thf-day-card .thf-day-trigger .thf-day-heading,
+.hc-days-grid .thf-day-card.is-rest-visual .thf-day-heading{
+  display:grid!important;grid-template-columns:auto auto!important;
+  justify-content:center!important;align-items:baseline!important;
+  align-content:center!important;column-gap:6px!important;row-gap:1px!important;
+  position:relative!important;z-index:3!important;
+  width:100%!important;max-width:100%!important;margin:0!important;
+  text-align:center!important;line-height:1.1;
+}
+.hc-days-grid .thf-day-card .thf-day-heading>span:first-child{
+  grid-column:1/-1;font-size:clamp(.77rem,2.7vw,.96rem)!important;
+}
+.hc-days-grid .thf-day-card .thf-day-heading>span:last-child{
+  align-self:end;padding-bottom:2px;
+}
+.hc-days-grid .thf-day-card .thf-weather-caption,
+.hc-days-grid .thf-day-card.is-rest-visual .thf-weather-caption{
+  display:flex!important;position:relative;z-index:3;
+  width:100%;min-height:74px;align-items:flex-end;justify-content:center;
+  margin:0!important;
+}
+.hc-days-grid .thf-day-card.is-rest-visual .thf-rest-weather{
+  position:relative!important;inset:auto!important;
+  width:100%!important;margin:0!important;flex:0 0 auto!important;
+  min-height:64px;padding:9px 6px 7px!important;
+  box-sizing:border-box;
+}
+.hc-days-grid .thf-day-card .thf-day-post,
+.hc-days-grid .thf-day-card.is-rest-visual .thf-day-post{
+  position:relative;z-index:3;flex:0 0 auto;
+  margin:8px 8px 10px!important;padding:10px 8px!important;
+  background:#ffffffdb!important;border:1px solid #d1e3eb!important;
+  border-radius:15px!important;box-shadow:0 5px 14px #284b601b!important;
+}
+.hc-days-grid .thf-day-card.is-rest-visual .thf-day-post .thf-shift-content{
+  display:flex!important;flex-direction:column!important;align-items:center!important;
+  justify-content:center!important;gap:5px!important;
+  width:100%!important;min-height:58px!important;
+}
+.hc-days-grid .thf-shift-symbol .stip-month-nonwork-badge,
+.hc-days-grid .thf-shift-symbol .thf-rest-code-badge{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  box-sizing:border-box;min-width:56px!important;max-width:100%;height:43px!important;
+  padding:0 8px!important;border:1px solid #7793a4!important;border-radius:13px!important;
+  background:#5d7c90!important;color:#fff!important;
+  font-size:clamp(.88rem,3.7vw,1.13rem)!important;font-weight:950!important;
+  line-height:1!important;white-space:nowrap;
+}
+.hc-days-grid .thf-shift-symbol .stip-month-nonwork-badge.kind-leave{
+  border-color:#3a9bac!important;background:#258ea5!important;
+}
+.hc-days-grid .thf-day-card.is-rest-visual .thf-day-post .thf-shift-absence-label{
+  font-size:clamp(.71rem,2.6vw,.85rem);font-weight:950;color:#35586e!important;
+}
+.hc-days-grid .thf-day-card .thf-weather-art{
+  bottom:10%;opacity:.77;
+}
+/* A rain forecast (risk >= 60%) changes the full scene, including its
+   lower portion; [data-raining] separately reflects rainy weather codes. */
+.hc-days-grid .thf-day-card.thf-weather-sky[data-wet="true"]{
+  --thf-sky-bg:linear-gradient(161deg,#779eb8 0%,#aecbdb 52%,#d6e8f0 100%);
+  --thf-sky-aura:#d8ebf582;
+}
+.hc-days-grid .thf-day-card.thf-weather-sky[data-wet="true"]::before{
+  content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+  background:
+    repeating-linear-gradient(105deg,transparent 0 14px,#f5fcff9f 15px 17px,transparent 18px 32px),
+    linear-gradient(180deg,#284f7124 0%,#98cbe228 48%,#4e98be35 100%);
+  opacity:.82;
+}
+.hc-days-grid .thf-day-card.thf-weather-sky[data-wet="true"]::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:45%;z-index:1;
+  pointer-events:none;opacity:.86;
+  background:
+    radial-gradient(ellipse 75% 12% at 15% 76%,#ffffff87,transparent 84%),
+    radial-gradient(ellipse 84% 17% at 93% 96%,#e9faff9c,transparent 88%),
+    linear-gradient(0deg,#3b86ac4d,transparent 82%);
+}
+.hc-days-grid .thf-day-card.thf-weather-sky[data-raining="true"]::before{opacity:1}
+.hc-days-grid .thf-day-card.thf-weather-sky[data-raining="true"]::after{opacity:1}
+.hc-days-grid .thf-day-card.is-rest-visual .thf-weather-stage[data-raining="true"]::after{
+  opacity:0; /* The shared full-card rain layer replaces this old header-only effect. */
+}
+@media(max-width:390px){
+  .hc-days-grid .thf-day-card .thf-day-trigger,
+  .hc-days-grid .thf-day-card.is-rest-visual .thf-day-trigger{
+    min-height:204px!important;padding:12px 6px 10px!important;gap:10px!important;
+  }
+  .hc-days-grid .thf-day-card .thf-weather-caption{min-height:70px}
+  .hc-days-grid .thf-day-card .thf-day-post{margin:7px 5px 9px!important;padding:8px 5px!important}
+}
