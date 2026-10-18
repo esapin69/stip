@@ -18,7 +18,8 @@ const route=(name)=>{
    communication:"index.html?quick=communication&tab=dm#/communication/dm",
    wheelchairs:"index.html?quick=communication&tab=fauteuils#/communication/fauteuils",
    notifications:"index.html?quick=notifications#/home",applications:"index.html#/apps",
-   colleagues:"agent-directory.html",places:"places.html",planning:"index.html?quick=personal#/home",
+   colleagues:"agent-directory.html",places:"places-app.html?mode=pro",planning:"index.html?quick=personal#/home",
+   contacts:"index.html#/contacts/directory",dates:"agent-dates.html",compare:"planning-compare-app.html?from=home",weather:"meteo/index.html",
    access:"access-manage.html",inventory:"control.html",dudy:"le-nouveau.html",app:"application-mobile.html"};
  return routes[name]||routes.home;
 };
@@ -287,7 +288,7 @@ function link(entry){
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
   (["event","professional","cancelled"].includes(entry.kind)?' data-smart-open-details="true" data-smart-entry-type="'+escapeHtml(entry.kind)+'" aria-haspopup="dialog"':'');
  const realDay=/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?String(Number(entry.date.slice(-2))):"";
- const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
+ const symbol=entry.iconSrc?'<img src="'+escapeHtml(entry.iconSrc)+'" alt="">':isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
   (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':
   ((icon==="📅"||icon==="📆")?'<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+escapeHtml(realDay||"··")+'</b></span>':escapeHtml(icon)));
  const facts=' data-smart-active-key="'+escapeHtml(activeId)+'" data-choice-kind="'+escapeHtml(entry.kind)+'"'+
@@ -400,12 +401,20 @@ function render(){
   '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
+ // Les cinq apps existantes gardent leurs propres pages et permissions métier.
+ const allowed=key=>isAdmin()||p[key]===true;
+ const apps=[
+  ...(allowed("contacts")?[{iconSrc:"images/icone_app/ghe-contacts-v2.svg",title:"Contacts",sub:"Annuaire et numéros utiles",href:route("contacts")}]:[]),
+  ...(allowed("places")?[{iconSrc:"images/icone_app/visiter-les-lieux.webp",title:"Visite des lieux",sub:"Bâtiments, étages et services",href:route("places")}]:[]),
+  ...(allowed("agent_dates")?[{iconSrc:"images/icone_app/date-des-agents.svg",title:"Dates des agents",sub:"Dates importantes de l’équipe",href:route("dates")}]:[]),
+  ...(isAdmin()||(p.planning_personal===true&&p.planning_team===true)?[{iconSrc:"images/icone_app/ghe-compare-v2.svg",title:"Comparer les plannings",sub:"Comparer les horaires des agents",href:route("compare")}]:[]),
+  {iconSrc:"images/icone_app/illustration-meteo.svg",title:"Météo",sub:"Prévisions et tendances",href:route("weather")}
+ ].map(entry=>link({kind:"shortcut",icon:"",...entry}));
  // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
  const shortcuts=[];
  // Outils de gestion repliés par défaut et exclusivement réservés à l'admin.
  const admin=isAdmin()?[
   ["👥","Collègues","Annuaire des agents","colleagues"],
-  ["🧭","Visite des lieux","Services et étages","places"],
   ["📱","Application GHE","Installation","app"],
   ["🔐","Gérer les accès","Rôles et raccourcis","access"],
   ["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]
@@ -425,7 +434,7 @@ function render(){
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  homeLink+
  '<div class="ghe-smart-top-divider" role="separator"></div>'+
- '<div class="ghe-smart-scroll"><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
+ '<div class="ghe-smart-scroll"><div class="ghe-smart-divider ghe-smart-apps-divider"><span>Applications</span></div><nav aria-label="Applications GHE">'+apps.join("")+'</nav><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
  '<div class="ghe-smart-divider ghe-smart-actions-divider" role="separator"><span>ÉCHANGES ET PROPOSITIONS</span></div>'+
  '<nav class="ghe-smart-actions" aria-label="Créer et communiquer">'+
  '<button type="button" class="ghe-smart-link" data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"><span class="ghe-smart-icon" aria-hidden="true">➕</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Proposer</strong><small class="ghe-smart-sub">Événement, activité ou covoiturage</small></span></button>'+
