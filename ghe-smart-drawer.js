@@ -224,8 +224,6 @@ function link(entry){
  const icon=entry.icon||"📅";
  const title=/^muscu$/i.test(entry.title||"")?"Séance de musculation":entry.title;
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
- const dateBadge=entry.showDateMarker&&/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?
-  '<span class="ghe-smart-event-date" aria-hidden="true">'+Number(entry.date.slice(-2))+'</span>':"";
  const tag=isPending?"button":"a";
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
@@ -241,7 +239,7 @@ function link(entry){
  return '<'+tag+' class="ghe-smart-link'+(isPending?' ghe-smart-pending-trigger':'')+'" '+attrs+
  facts+' title="'+escapeHtml(title+" — "+entry.sub)+
  '" aria-label="'+escapeHtml(title+" : "+entry.sub)+'"><span class="ghe-smart-icon" aria-hidden="true">'+
- symbol+dateBadge+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
+ symbol+b+'</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(title)+
  '</strong><small class="ghe-smart-sub">'+escapeHtml(entry.sub)+'</small></span></'+tag+'>';
 }
 
@@ -317,6 +315,9 @@ function applySearch(){
   el.hidden=!!q&&!hay.includes(q);
   if(!el.hidden)matches++;
  }
+ for(const group of rail.querySelectorAll(".ghe-smart-date-group")){
+  group.hidden=!!q&&![...group.querySelectorAll(".ghe-smart-date-details .ghe-smart-link")].some(a=>!a.hidden);
+ }
  const status=rail.querySelector("[data-smart-search-status]");
  if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
 }
@@ -327,12 +328,7 @@ function render(){
  // Actions séparées des rendez-vous, sans modifier les destinations.
  const entries=groupedEntries();
  const pending=entries.filter(entry=>entry.kind==="pending").map(link).join("");
- const datedEntries=entries.filter(entry=>entry.kind!=="pending");
- const iconCounts=new Map();
- for(const entry of datedEntries.filter(item=>item.kind==="event")){
-  iconCounts.set(entry.icon,(iconCounts.get(entry.icon)||0)+1);
- }
- const appointments=datedEntries.map(entry=>link({...entry,showDateMarker:entry.kind==="event"&&(iconCounts.get(entry.icon)||0)>1})).join("");
+ const appointments=appointmentDays(entries).map(calendarDayGroup).join("");
  const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
  const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  // Accueil épinglé au-dessus de la liste et visible en mode compact.
@@ -410,6 +406,8 @@ async function refresh(force=false){
  return running;
 }
 document.addEventListener("click",event=>{
+ const dateButton=event.target.closest?.("#gheSmartRail [data-smart-date-open]");
+ if(dateButton){event.preventDefault();openAppointmentDay(dateButton.dataset.smartDateOpen);return;}
  const reopen=event.target.closest?.("#gheSmartReopen");
  if(reopen){event.preventDefault();setMode("compact");return;}
  const expand=event.target.closest?.("#gheSmartExpand");
