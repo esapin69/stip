@@ -404,20 +404,20 @@
     if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "/ghe-smart-drawer.css?v=20261018-agenda360-hub1&rev=pagescroll1";
+      style.href = "/ghe-smart-drawer.css?v=20261018-rail-organized1&rev=pagescroll1";
       document.head.appendChild(style);
     }
     // Standalone pages share the same choice popups as the home page.
     if(!window.GHESmartChoices && !document.querySelector('script[src*="ghe-smart-choices.js"]')){
       const chooser=document.createElement("script");
-      chooser.src="/ghe-smart-choices.js?v=20261018-agenda360-hub1";
+      chooser.src="/ghe-smart-choices.js?v=20261018-rail-organized1";
       chooser.async=true;
       document.head.appendChild(chooser);
     }
     if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "/ghe-smart-drawer.js?v=20261018-agenda360-hub1";
+    script.src = "/ghe-smart-drawer.js?v=20261018-rail-organized1";
     script.async = true;
     document.head.appendChild(script);
   };

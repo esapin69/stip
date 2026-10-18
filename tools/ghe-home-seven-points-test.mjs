@@ -62,7 +62,9 @@ const noChief=markupFor(onlyActive);
 assert.doesNotMatch(noChief,/data-premium-roster="chiefs"/,"Chief line hidden if none active");
 assert.equal((noChief.match(/data-premium-roster="/g)||[]).length,3);
 assert.doesNotMatch(noChief,/<details/,"No expanding content within the fixed card");
-assert.match(home,/ghe-top-aux-actions/);
+assert.doesNotMatch(home,/ghe-top-aux-actions/,"Header shortcuts moved into the rail");
+assert.match(file("ghe-smart-drawer.js"),/data-smart-chat-open/,"Messages stay available from the rail");
+assert.match(file("ghe-smart-drawer.js"),/data-smart-settings-open/,"Notification settings stay available from the rail");
 assert.match(iconCss,/\.ghe-home-bell\{[\s\S]*?margin-left:clamp/);
 assert.match(home,/requestAnimationFrame\(\(\)=>\{/);
 assert.match(home,/data-ghe-drawer-action/);
@@ -167,7 +169,7 @@ const grouped=vm.runInNewContext(smartDates.slice(dateStart,dateEnd)+"\nappointm
 assert.deepEqual(JSON.parse(JSON.stringify(grouped.map(d=>[d.date,d.items.length]))),[
  ["2026-10-19",2],["2026-10-24",2],["2026-10-25",1]
 ]);
-for(const phrase of ["appointmentDays(entries).map(calendarDayGroup)","group.items.map(link).join","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick"])assert(smartDates.includes(phrase),phrase);
+for(const phrase of ["appointmentDays(entries)","function openRdvDialog()","group.items.map(link).join","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick","data-smart-rdv-open"])assert(smartDates.includes(phrase),phrase);
 for(const phrase of [".ghe-smart-date-details{display:none!important",".ghe-smart-date-button{display:none!important","dialog#gheSmartDayDialog::backdrop"])assert(smartDatesCss.includes(phrase),phrase);
 assert(choiceDates.includes('class="ghe-choice-icon"'),"Preserve event icon in detail popup");
 const drawerAssetVersions=["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-choice-master.js"].map(name=>{

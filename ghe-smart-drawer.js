@@ -381,70 +381,159 @@ function applySearch(){
  const status=rail.querySelector("[data-smart-search-status]");
  if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
 }
-function render(){
- if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();document.querySelectorAll(".ghe-smart-rdv-quick").forEach(b=>b.remove());return;}
- document.body.classList.add("ghe-smart-active");
- if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
- // Actions séparées des rendez-vous, sans modifier les destinations.
- const entries=groupedEntries();
- const inbox=entries.find(x=>x.kind==="pending");
- const pending='<button type="button" class="ghe-smart-link ghe-smart-pending-trigger ghe-smart-hub" data-smart-hub-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog" aria-label="À traiter et mes activités">'+
-  '<span class="ghe-smart-icon" aria-hidden="true"><img src="images/icone_app/ghe-action-inbox.svg" alt="">'+
-  (inbox?.count?'<span class="ghe-smart-badge">'+Math.min(inbox.count,99)+'</span>':"")+'</span>'+
-  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">À traiter</strong><small class="ghe-smart-sub">'+
-  (inbox?.count?inbox.count+" actions en attente":"Demandes et activités")+'</small></span></button>';
- const appointments=appointmentDays(entries).map(calendarDayGroup).join("");
- const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
- const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
- // Accueil épinglé au-dessus de la liste et visible en mode compact.
- const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-smart-home data-smart-active-key="home" data-choice-kind="shortcut" aria-label="Accueil — retour direct, fermer le tiroir">'+
-  '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
-  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
- const p=permissions();
- // Les cinq apps existantes gardent leurs propres pages et permissions métier.
- const allowed=key=>isAdmin()||p[key]===true;
- const apps=[
+
+/* Navigation compacte : les collections sont conservées dans des fenêtres indépendantes. */
+function appEntries(){
+ const p=permissions(),allowed=key=>isAdmin()||p[key]===true;
+ return [
   ...(allowed("contacts")?[{iconSrc:"images/icone_app/ghe-contacts-v2.svg",title:"Contacts",sub:"Annuaire et numéros utiles",href:route("contacts")}]:[]),
   ...(allowed("places")?[{iconSrc:"images/icone_app/visiter-les-lieux.webp",title:"Visite des lieux",sub:"Bâtiments, étages et services",href:route("places")}]:[]),
   ...(allowed("agent_dates")?[{iconSrc:"images/icone_app/date-des-agents.svg",title:"Dates des agents",sub:"Dates importantes de l’équipe",href:route("dates")}]:[]),
   ...(isAdmin()||(p.planning_personal===true&&p.planning_team===true)?[{iconSrc:"images/icone_app/ghe-compare-v2.svg",title:"Comparer les plannings",sub:"Comparer les horaires des agents",href:route("compare")}]:[]),
   {iconSrc:"images/icone_app/illustration-meteo.svg",title:"Météo",sub:"Prévisions et tendances",href:route("weather")}
- ].map(entry=>link({kind:"shortcut",icon:"",...entry}));
- // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
- const shortcuts=[];
- // Outils de gestion repliés par défaut et exclusivement réservés à l'admin.
- const admin=isAdmin()?[
+ ];
+}
+function adminEntries(){
+ if(!isAdmin())return [];
+ const p=permissions(),admin=[
   ["👥","Collègues","Annuaire des agents","colleagues"],
   ["📱","Application GHE","Installation","app"],
   ["🔐","Gérer les accès","Rôles et raccourcis","access"],
   ["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]
- ]:[];
- if(isAdmin()){
-  const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
-  for(const entry of extras.filter(x=>{
-   if(["admin","t-door"].includes(x.action))return true;
-   if(x.action==="planning")return p.planning_personal===true;
-   if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
-   return ["apps","dudy"].includes(x.action);
-  }))admin.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
+ ];
+ const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
+ for(const entry of extras.filter(x=>{
+  if(["admin","t-door"].includes(x.action))return true;
+  if(x.action==="planning")return p.planning_personal===true;
+  if(x.action==="assistant")return p.dialog===true||p.assistant_enabled===true;
+  return ["apps","dudy"].includes(x.action);
+ }))admin.push([entry.icon,entry.title,entry.subtitle,"home",entry.action]);
+ return admin.map(([icon,title,sub,key,action])=>({icon,title,sub,href:action?"index.html?drawer_action="+encodeURIComponent(action)+"#/home":route(key)}));
+}
+function navDialogItems(kind){
+ const apps=appEntries(),admin=adminEntries();
+ if(kind==="apps")return [...apps,...admin];
+ if(kind==="settings")return [
+  {icon:"🔔",title:"Notifications",sub:"Mes alertes et leurs règles",action:"notification-settings"},
+  {icon:"👤",title:"Mon compte",sub:"Profil et préférences",href:"mon-compte.html"}
+ ];
+ return [
+  {icon:"📋",title:"À traiter",sub:"Actions et propositions en attente",action:"pending"},
+  {icon:"📆",title:"Calendrier et rendez-vous",sub:"Toutes mes dates",action:"rdv"},
+  {icon:"➕",title:"Créer une proposition",sub:"Activité, événement ou covoiturage",action:"create"},
+  {icon:"💬",title:"Messages",sub:"Collègues, événements et fauteuils",action:"chat"},
+  ...apps,...admin,
+  ...groupedEntries().filter(x=>x.kind!=="pending").map(x=>({
+   icon:x.icon||"📅",title:x.title,sub:x.sub||dlabel(x.date),
+   href:x.href,entryKind:x.entryKind,id:x.id
+  }))
+ ];
+}
+function openNavDialog(kind){
+ let dialog=document.getElementById("gheSmartNavDialog");
+ if(!dialog){
+  dialog=document.createElement("dialog");dialog.id="gheSmartNavDialog";
+  dialog.setAttribute("aria-labelledby","gheSmartNavTitle");document.body.appendChild(dialog);
+  dialog.addEventListener("click",event=>{
+   if(event.target===dialog||event.target.closest?.("[data-smart-nav-close]")){dialog.close();return;}
+   const button=event.target.closest?.("[data-smart-nav-choice]");
+   if(!button)return;
+   const entry=dialog._entries?.[Number(button.dataset.smartNavChoice)];
+   if(!entry)return;
+   dialog.close();
+   if(entry.action==="rdv"){openRdvDialog();return;}
+   if(entry.action==="pending"){openPendingDialog();return;}
+   if(entry.action==="chat"||entry.action==="create"){
+    if(window.GHESmartChoices?.show)window.GHESmartChoices.show(entry.action);
+    else location.assign(new URL(entry.action==="chat"?route("communication"):route("leisure"),location.href).href);
+    return;
+   }
+   if(entry.action==="notification-settings"){
+    if(window.GHENotificationControls?.openSettings)window.GHENotificationControls.openSettings();
+    else location.assign(new URL("index.html?drawer_action=notification-settings#/home",location.href).href);
+    return;
+   }
+   if(entry.entryKind&&window.STIPDrawerOpenEntry?.(entry.entryKind,entry.id))return;
+   if(entry.href){
+    setMode("compact");
+    if(window.STIPNav?.go)window.STIPNav.go(entry.href);
+    else location.assign(new URL(entry.href,location.href).href);
+   }
+  });
+  dialog.addEventListener("input",event=>{
+   if(!event.target.matches("[data-smart-nav-query]"))return;
+   const q=event.target.value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+   let visible=0;
+   dialog.querySelectorAll("[data-smart-nav-choice]").forEach(row=>{
+    const label=(row.getAttribute("aria-label")||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+    row.hidden=!!q&&!label.includes(q);if(!row.hidden)visible++;
+   });
+   const empty=dialog.querySelector("[data-smart-nav-empty]");
+   if(empty)empty.hidden=visible>0;
+  });
+  dialog.addEventListener("close",()=>{if(["search","apps","settings"].includes(activeKey))selectIcon("");});
  }
+ const items=navDialogItems(kind);dialog._entries=items;
+ const heading={search:"Rechercher",apps:"Applications GHE",settings:"Réglages"}[kind]||"Navigation";
+ dialog.innerHTML='<section class="ghe-smart-nav-frame"><header><div><small>MON ESPACE GHE</small><h2 id="gheSmartNavTitle">'+escapeHtml(heading)+'</h2></div>'+
+  '<button type="button" data-smart-nav-close aria-label="Fermer">×</button></header>'+
+  (kind==="search"?'<div class="ghe-smart-nav-search"><input type="search" data-smart-nav-query aria-label="Chercher dans GHE" placeholder="Chercher une application, un rendez-vous…" autocomplete="off"></div>':"")+
+  '<nav class="ghe-smart-nav-items" aria-label="'+escapeHtml(heading)+'">'+
+  items.map((item,index)=>'<button type="button" class="ghe-smart-nav-result" data-smart-nav-choice="'+index+'" aria-label="'+escapeHtml(item.title+" "+(item.sub||""))+'">'+
+  '<span class="ghe-smart-nav-result-icon" aria-hidden="true">'+(item.iconSrc?'<img src="'+escapeHtml(item.iconSrc)+'" alt="">':escapeHtml(item.icon||"📱"))+'</span>'+
+  '<span class="ghe-smart-nav-result-copy"><strong>'+escapeHtml(item.title)+'</strong><small>'+escapeHtml(item.sub||"")+'</small></span>'+
+  '<span aria-hidden="true">›</span></button>').join("")+
+  '<p data-smart-nav-empty'+(items.length?" hidden":"")+'>Aucun résultat.</p></nav></section>';
+ if(!dialog.open)dialog.showModal();
+ if(kind==="search")dialog.querySelector("[data-smart-nav-query]")?.focus({preventScroll:true});
+}
+function openDeferredSettings(){
+ const url=new URL(location.href);
+ if(url.searchParams.get("drawer_action")!=="notification-settings"||!permitted()||!window.GHENotificationControls?.openSettings)return;
+ url.searchParams.delete("drawer_action");
+ history.replaceState(history.state,"",url.pathname+url.search+url.hash);
+ window.GHENotificationControls.openSettings();
+}
+function render(){
+ if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();document.querySelectorAll(".ghe-smart-rdv-quick").forEach(b=>b.remove());return;}
+ document.body.classList.add("ghe-smart-active");
+ if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
+ // La maison reste isolée au sommet de la navigation.
+ const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-smart-home data-smart-active-key="home" data-choice-kind="shortcut" aria-label="Accueil — retour direct, fermer le tiroir">'+
+  '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
+  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
+ const divider='<div class="ghe-smart-divider ghe-smart-nav-separator" role="separator"></div>';
+ const navLink=(icon,title,sub,attribute)=>
+  '<button type="button" class="ghe-smart-link ghe-smart-primary-action" '+attribute+' aria-label="'+escapeHtml(title)+'">'+
+  '<span class="ghe-smart-icon" aria-hidden="true">'+icon+'</span><span class="ghe-smart-labels">'+
+  '<strong class="ghe-smart-name">'+escapeHtml(title)+'</strong><small class="ghe-smart-sub">'+escapeHtml(sub)+'</small></span></button>';
+ const entries=groupedEntries(),inbox=entries.find(x=>x.kind==="pending");
+ const count=inbox?.count||0;
  const markup='<header class="ghe-smart-head">'+
- '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
- '<button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button>'+
- '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
- homeLink+
- '<div class="ghe-smart-top-divider" role="separator"></div>'+
- '<div class="ghe-smart-scroll"><div class="ghe-smart-divider ghe-smart-apps-divider"><span>Applications</span></div><nav aria-label="Applications GHE">'+apps.join("")+'</nav><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
- '<div class="ghe-smart-divider ghe-smart-actions-divider" role="separator"><span>ÉCHANGES ET PROPOSITIONS</span></div>'+
- '<nav class="ghe-smart-actions" aria-label="Créer et communiquer">'+
- '<button type="button" class="ghe-smart-link" data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"><span class="ghe-smart-icon" aria-hidden="true">➕</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Proposer</strong><small class="ghe-smart-sub">Événement, activité ou covoiturage</small></span></button>'+
- '<button type="button" class="ghe-smart-link" data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"><span class="ghe-smart-icon" aria-hidden="true">💬</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Messages</strong><small class="ghe-smart-sub">Choisir une discussion</small></span></button></nav>'+
- (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
- '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
+  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
+  '<button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button>'+
+  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
+  homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
+  '<div class="ghe-smart-scroll ghe-smart-navigation">'+
+  navLink('🔍','Rechercher','Applications, dates et actions','data-smart-active-key="search" data-smart-search-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  divider+
+  '<nav aria-label="Créer et organiser">'+
+  navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
+  navLink('📆'+(count?'<span class="ghe-smart-badge">'+Math.min(count,99)+'</span>':""),'Calendrier','Rendez-vous et actions','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"')+
+  '</nav>'+divider+
+  '<nav aria-label="Communications et applications">'+
+  navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
+  navLink('<img src="images/icone_app/home-apps.webp" alt="">','Applications','Outils et applications GHE','data-smart-active-key="apps" data-smart-apps-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  '</nav>'+divider+
+  '<div class="ghe-smart-reserved-slot" role="presentation" aria-hidden="true"></div>'+divider+
+  (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(x=>link({kind:"shortcut",...x})).join("")+'</nav></details>':"")+
+  '</div><footer class="ghe-smart-settings-dock">'+
+  navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
+  '</footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
- if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
- else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-top-divider")||!rail.querySelector(".ghe-smart-actions"))rail.innerHTML=markup;
+ if(!rail.querySelector(".ghe-smart-navigation"))rail.innerHTML=markup;
+ else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-top-divider")||!rail.querySelector(".ghe-smart-settings-dock"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;
@@ -487,6 +576,8 @@ async function refresh(force=false){
 document.addEventListener("click",event=>{
  const home=event.target.closest?.("#gheSmartRail [data-smart-home]");
  if(home){event.preventDefault();event.stopImmediatePropagation();goHomeDirect();return;}
+ const nav=event.target.closest?.("#gheSmartRail [data-smart-search-open],#gheSmartRail [data-smart-apps-open],#gheSmartRail [data-smart-settings-open]");
+ if(nav){event.preventDefault();const kind=nav.hasAttribute("data-smart-search-open")?"search":nav.hasAttribute("data-smart-apps-open")?"apps":"settings";selectIcon(kind);openNavDialog(kind);return;}
  const rdv=event.target.closest?.("[data-smart-rdv-open]");
  if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();openRdvDialog();return;}
  const rdvPending=event.target.closest?.("#gheSmartRdvDialog [data-smart-pending-open]");
@@ -566,13 +657,14 @@ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&mode==="exp
 for(const name of ["stip:leisure-updated","stip:home-rendered","stip:event-feedback-synced","stip:event-feedback-completed","stip:permissions-live","stip:session-snapshot"]){
  window.addEventListener(name,()=>{if(permitted())render()});
 }
-window.addEventListener("stip:session-ready",()=>{render();refresh(true)});
+window.addEventListener("stip:session-ready",()=>{render();refresh(true);openDeferredSettings()});
+window.addEventListener("stip:home-rendered",openDeferredSettings);
 window.addEventListener("stip:session-ended",()=>{events=[];ready=false;owner="";updated=0;requestSeq++;running=null;document.getElementById("gheSmartPendingDialog")?.close();render()});
 window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
 window.addEventListener("storage",event=>{if(event.key===STORE){events=[];ready=false;render();refresh(true)}});
 window.addEventListener("ghe:agenda-change",()=>refresh(true));
 window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,mode:()=>mode,setMode};
-const start=()=>{render();refresh();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
+const start=()=>{render();refresh();openDeferredSettings();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();
