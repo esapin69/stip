@@ -425,7 +425,8 @@ body.ghe-smart-active:not([data-smart-drawer="closed"]) #homeView .ghe-smart-rdv
 /* Agenda 360 : two real, equal-area faces. The hidden side still determines height. */
 #homeView .ghe-agenda360{display:block;box-sizing:border-box;width:100%;max-width:100%;
  margin:7px 0 15px;border:1px solid #d9e7ed;border-radius:19px;
- background:#fff;box-shadow:0 8px 22px #113d5212;overflow:hidden}
+ background:#fff;box-shadow:0 8px 22px #113d5212;overflow:clip;
+ touch-action:pan-y pinch-zoom}
 #homeView .ghe-agenda360-track{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;min-height:215px}
 #homeView .ghe-agenda360-face{grid-area:1/1;box-sizing:border-box;min-width:0;min-height:215px;padding:12px 12px 7px;
  display:flex;flex-direction:column;gap:6px;background:#fff}
@@ -434,7 +435,11 @@ body.ghe-smart-active:not([data-smart-drawer="closed"]) #homeView .ghe-smart-rdv
 #homeView .ghe-agenda360 .hc-feedback-wrap{margin:0!important;width:100%;max-width:100%}
 #homeView .ghe-agenda360 .hc-feedback-outer-separator{margin:0 0 8px!important}
 #homeView .ghe-agenda360 .hc-feedback-pending{width:100%;max-width:100%;box-shadow:none}
-#homeView .ghe-agenda360 .hc-feedback-list{max-height:435px;overflow-y:auto;overscroll-behavior:contain}
+/* Aucune zone de défilement à l'intérieur des deux faces : tout reste visible.
+   Le geste vertical, même démarré sur une carte, appartient à la page. */
+#homeView .ghe-agenda360 .hc-feedback-list{
+ max-height:none;height:auto;overflow:visible;overscroll-behavior:auto;
+}
 #homeView .ghe-agenda360-proposals{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;
  min-height:70px;margin-top:7px;padding:13px 11px;background:#edf8fc;border:1px solid #c5e2ed;border-radius:13px;
  text-align:left;font:inherit;color:#204d61;cursor:pointer}
