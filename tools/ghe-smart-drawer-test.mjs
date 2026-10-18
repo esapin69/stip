@@ -86,7 +86,7 @@ assert.match(rail,/ghe-smart-admin-tools/,"nonessential shortcuts are behind Adm
 assert.match(rail,/const destination=event.target.closest/,"destination collapses to icons");
 const style=read("ghe-smart-drawer.css");
 assert.match(style,/\.ghe-smart-expand-tab/,"one exterior arrow style");
-assert.match(style,/not\(\[data-mode="expanded"\]\) \.ghe-smart-head\{[\s\S]*?display:flex!important/,"compact rail retains its close cross");
+assert.match(style,/#gheSmartRail:not\(\[data-mode="expanded"\]\) \.ghe-smart-close\{display:none!important/,"compact rail hides the close cross and uses one chevron");
 assert.match(style,/\.ghe-smart-rail[^\n]*background:#fff/,"solid white drawer surface");
 assert.match(style,/data-smart-drawer="closed"\] #homeView \[data-shortcuts-open\]/,"hamburger visible only when closed");
 assert.match(read("ensemble-v3.js"),/deepLinked=true;openEvent\(id,\{inline:true\}\)/,"direct activity links render a single inline detail page");
@@ -130,14 +130,15 @@ assert.match(rail,/data-smart-home data-smart-active-key="home"/,"house is expli
 assert.match(rail,/if\(home\)\{event\.preventDefault\(\);event\.stopImmediatePropagation\(\);goHomeDirect\(\);return;\}/,"home click must stop popup delegation");
 assert.match(rail,/function goHomeDirect\(\)\{[\s\S]*?setMode\("closed"\)/,"house closes rail, including persisted mode");
 assert.match(rail,/location\.assign\(target\.href\)/,"house routes to the actual home document");
-assert.match(rail,/function ensureRdvQuick\(\)/,"home menu has an adjacent RDV control");
+assert.match(rail,/function ensureRdvQuick\(\)/,"legacy RDV button is removed without removing its destination");
 assert.match(rail,/function openRdvDialog\(\)/,"RDV opens one centered dialog");
-assert.match(rail,/data-smart-rdv-open/,"RDV button remains visible in the compact rail");
+assert.doesNotMatch(rail,/<div class="ghe-smart-rdv-dock"><button/,"RDV is removed from the rail");
+assert.match(shell,/function agenda360Markup\(\)/,"RDV belongs to the home flip card");
 assert.match(rail,/appointmentDays\(entries\)/,"RDV uses canonical grouped data");
 assert.match(rail,/data-smart-date-open/,"one date = one calendar icon remains intact");
 assert.match(style,/ghe-smart-active-zoom/,"active destination gets visible zoom");
 assert.match(style,/prefers-reduced-motion:reduce/,"animations honor OS accessibility settings");
-assert.match(style,/ghe-smart-rdv-icon/,"RDV icon has a shared frame");
+assert.match(read("ghe-smart-choices.js"),/data-ghe-choice-item/,"unified hub offers grouped choices");
 
 // The global choice popup must not intercept the house before the rail click handler.
 const choice=read("ghe-choice-master.js");

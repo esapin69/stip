@@ -506,9 +506,25 @@
       count.textContent = String(pending.length);
       count.setAttribute("aria-label", pending.length + " retour(s) en attente");
     }
+    // Chaque journée en attente possède son séparateur daté, avec la même icône calendrier.
+    let lastDay="";
+    const datedCards=pending.map(item=>{
+      const iso=String(item.endDate||item.date||"").slice(0,10);
+      let separator="";
+      if(/^\d{4}-\d{2}-\d{2}$/.test(iso)&&iso!==lastDay){
+        const d=new Date(iso+"T12:00:00");
+        separator='<div class="hc-feedback-date-separator" role="separator"><span>'+
+          esc(d.toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
+          '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+
+          Number(iso.slice(-2))+'</b></span><span>'+
+          esc(d.toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span></div>';
+        lastDay=iso;
+      }
+      return separator+cardMarkup(item);
+    }).join("");
     host.innerHTML =
       '<header class="hc-feedback-intro"><strong>Rendez-vous passés</strong><span>Votre retour attendu</span></header><div class="hc-feedback-list">' +
-      pending.map(cardMarkup).join("") +
+      datedCards +
       "</div>";
     host.querySelectorAll("[data-event-feedback]").forEach((button) => {
       button.onclick = () => {

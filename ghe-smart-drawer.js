@@ -51,16 +51,12 @@ function markActive(){
 }
 function selectIcon(key=""){activeKey=key;markActive();}
 function ensureRdvQuick(){
- const menu=document.querySelector("#homeView .ghe-home-topbar [data-shortcuts-open]");
- if(!menu||menu.closest(".ghe-top-menu-with-rdv"))return;
- const parent=menu.parentNode;if(!parent)return;
- const wrapper=document.createElement("span");wrapper.className="ghe-top-menu-with-rdv";
- parent.insertBefore(wrapper,menu);wrapper.appendChild(menu);
- const button=document.createElement("button");button.type="button";button.className="ghe-smart-rdv-quick";
- button.setAttribute("data-smart-rdv-open","");button.setAttribute("aria-label","Mes rendez-vous");
- button.setAttribute("aria-haspopup","dialog");button.setAttribute("aria-controls","gheSmartRdvDialog");
- button.innerHTML='<span class="ghe-smart-rdv-mini-calendar" aria-hidden="true">RDV</span>';
- wrapper.appendChild(button);
+ document.querySelectorAll(".ghe-smart-rdv-quick").forEach(x=>x.remove());
+ document.querySelectorAll(".ghe-top-menu-with-rdv").forEach(wrapper=>{
+  const menu=wrapper.querySelector("[data-shortcuts-open]");
+  if(menu)wrapper.before(menu);
+  wrapper.remove();
+ });
 }
 function openRdvDialog(){
  const entries=groupedEntries(),pending=entries.find(e=>e.kind==="pending"),days=appointmentDays(entries);
@@ -234,8 +230,11 @@ function calendarDayGroup(group){
   '<span class="ghe-smart-icon ghe-smart-date-icon">'+calendarIcon(group.date)+
   (count>1?'<span class="ghe-smart-date-count">×'+count+'</span>':"")+'</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(label)+'</strong><small class="ghe-smart-sub">'+count+' rendez-vous</small></span></button>'+
-  '<div class="ghe-smart-date-details"><div class="ghe-smart-date-heading">'+calendarIcon(group.date)+
-  '<span>'+escapeHtml(label)+'</span>'+(count>1?'<small>×'+count+'</small>':"")+'</div>'+
+  '<div class="ghe-smart-date-details"><div class="ghe-smart-date-heading ghe-smart-date-separator" role="separator">'+
+  '<span>'+escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
+  calendarIcon(group.date)+
+  '<span>'+escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span>'+
+  (count>1?'<small>×'+count+'</small>':"")+'</div>'+
   group.items.map(link).join("")+'</div></section>';
 }
 function openAppointmentDay(date){
@@ -387,7 +386,12 @@ function render(){
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
  // Actions séparées des rendez-vous, sans modifier les destinations.
  const entries=groupedEntries();
- const pending=entries.filter(entry=>entry.kind==="pending").map(link).join("");
+ const inbox=entries.find(x=>x.kind==="pending");
+ const pending='<button type="button" class="ghe-smart-link ghe-smart-pending-trigger ghe-smart-hub" data-smart-hub-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog" aria-label="À traiter et mes activités">'+
+  '<span class="ghe-smart-icon" aria-hidden="true"><img src="images/icone_app/ghe-action-inbox.svg" alt="">'+
+  (inbox?.count?'<span class="ghe-smart-badge">'+Math.min(inbox.count,99)+'</span>':"")+'</span>'+
+  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">À traiter</strong><small class="ghe-smart-sub">'+
+  (inbox?.count?inbox.count+" actions en attente":"Demandes et activités")+'</small></span></button>';
  const appointments=appointmentDays(entries).map(calendarDayGroup).join("");
  const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
  const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
@@ -397,7 +401,7 @@ function render(){
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
  // Une seule destination publique non répétée dans les trois icônes de l'en-tête.
- const shortcuts=[["🎉","Sorties et activités","Proposer une activité · voir les invitations","leisure"]];
+ const shortcuts=[];
  // Outils de gestion repliés par défaut et exclusivement réservés à l'admin.
  const admin=isAdmin()?[
   ["👥","Collègues","Annuaire des agents","colleagues"],
@@ -417,18 +421,21 @@ function render(){
  }
  const markup='<header class="ghe-smart-head">'+
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
+ '<button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  homeLink+
- '<div class="ghe-smart-rdv-dock"><button type="button" class="ghe-smart-link ghe-smart-rdv-trigger" data-smart-rdv-open data-smart-active-key="rdv" aria-haspopup="dialog" aria-controls="gheSmartRdvDialog" aria-label="Mes rendez-vous"><span class="ghe-smart-icon ghe-smart-rdv-icon" aria-hidden="true"><b>RDV</b></span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Mes RDV</strong><small class="ghe-smart-sub">Tous les rendez-vous</small></span></button></div>'+
- '<div class="ghe-smart-expand-slot"><button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button></div>'+
+ '<div class="ghe-smart-top-divider" role="separator"></div>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
- (shortcuts.length?'<div class="ghe-smart-divider"><span>Loisirs entre collègues</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
+ '<div class="ghe-smart-divider ghe-smart-actions-divider" role="separator"><span>ÉCHANGES ET PROPOSITIONS</span></div>'+
+ '<nav class="ghe-smart-actions" aria-label="Créer et communiquer">'+
+ '<button type="button" class="ghe-smart-link" data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"><span class="ghe-smart-icon" aria-hidden="true">➕</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Proposer</strong><small class="ghe-smart-sub">Événement, activité ou covoiturage</small></span></button>'+
+ '<button type="button" class="ghe-smart-link" data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"><span class="ghe-smart-icon" aria-hidden="true">💬</span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Messages</strong><small class="ghe-smart-sub">Choisir une discussion</small></span></button></nav>'+
  (admin.length?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+admin.map(x=>staticLink(...x)).join("")+'</nav></details>':"")+
  '</div><footer class="ghe-smart-foot"><input type="search" class="ghe-smart-search" aria-label="Chercher un raccourci ou un rendez-vous" placeholder="Rechercher dans le tiroir…"><p class="ghe-smart-hint" data-smart-search-status role="status" hidden></p></footer>';
  // Keep the search input in place while background data refreshes.
  // Only the chronological lists change; focus and the native keyboard survive.
  if(!rail.querySelector(".ghe-smart-search"))rail.innerHTML=markup;
- else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-expand-slot"))rail.innerHTML=markup;
+ else if(!rail.querySelector(".ghe-smart-home-dock")||!rail.querySelector(".ghe-smart-top-divider")||!rail.querySelector(".ghe-smart-actions"))rail.innerHTML=markup;
  else{
   const scroll=rail.querySelector(".ghe-smart-scroll"),previous=scroll.scrollTop,adminOpen=!!scroll.querySelector(".ghe-smart-admin-tools")?.open;
   const template=document.createElement("template");template.innerHTML=markup;

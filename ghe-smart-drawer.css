@@ -363,3 +363,139 @@ body.ghe-smart-active:not([data-smart-drawer="closed"]) #homeView .ghe-smart-rdv
 #gheSmartRdvDialog .ghe-smart-link:focus-visible,
 #homeView .ghe-smart-rdv-quick:focus-visible{outline:3px solid #228cb5;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){#gheSmartRail .ghe-smart-link.is-selected .ghe-smart-icon,#gheSmartRail .ghe-smart-date-button.is-selected .ghe-smart-icon,#homeView .ghe-smart-rdv-quick.is-selected{animation:none;transform:scale(1.12)}}
+
+
+/* Octobre 2026 : une seule commande de tiroir, à l'emplacement de ☰. */
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-head{
+ display:flex!important;justify-content:center!important;align-items:center!important;
+ min-height:61px!important;padding:7px 5px!important;border-bottom:1px solid #d9e8ed!important;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-close{display:none!important}
+#gheSmartRail .ghe-smart-head #gheSmartExpand{
+ position:relative!important;inset:auto!important;top:auto!important;left:auto!important;
+ transform:none!important;box-sizing:border-box;display:grid;place-items:center;
+ width:44px!important;min-width:44px;height:45px!important;margin:0!important;
+ padding:0;border:1px solid #d0e0e8;border-radius:13px;background:#f7fbfd;
+ color:#1e4b64;box-shadow:none;font:750 28px/1 system-ui;cursor:pointer;
+}
+#gheSmartRail[data-mode="expanded"] .ghe-smart-head #gheSmartExpand{display:none!important}
+#gheSmartRail .ghe-smart-top-divider{height:1px;min-height:1px;flex:none;margin:0 5px;background:#d9e8ee}
+#gheSmartRail .ghe-smart-home-dock{border-bottom:0!important}
+#gheSmartRail .ghe-smart-actions-divider{margin-top:18px}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-actions-divider{margin:13px 6px 6px;min-height:4px}
+#gheSmartRail .ghe-smart-actions .ghe-smart-link{font:inherit;cursor:pointer;background:transparent;color:inherit;border:0}
+#gheSmartRail .ghe-smart-hub{font:inherit;color:inherit;cursor:pointer;border:1px solid #eee0b7;background:#fffdf4}
+#gheSmartRail .ghe-smart-hub:hover{background:#fff8e7}
+#gheSmartRail .ghe-smart-rdv-dock,#homeView .ghe-smart-rdv-quick{display:none!important}
+#gheSmartRail .ghe-smart-date-separator{justify-content:center;gap:9px;position:relative;
+ margin:5px 0 10px;padding:12px 4px;border-top:1px solid #dce7ed;border-bottom:0;text-align:center}
+#gheSmartRail .ghe-smart-date-separator>span:not(.ghe-smart-calendar-glyph){
+ font-size:11px;letter-spacing:.055em;white-space:nowrap;min-width:0}
+#gheSmartRail .ghe-smart-date-separator .ghe-smart-calendar-glyph{flex:none;width:32px;height:34px}
+#gheSmartRail .ghe-smart-date-separator small{position:absolute;right:0;top:0;font-size:10px}
+@media(max-width:370px){#gheSmartRail .ghe-smart-date-separator{gap:5px}#gheSmartRail .ghe-smart-date-separator>span:not(.ghe-smart-calendar-glyph){font-size:10px}}
+
+/* Same real calendar style in the home date and outstanding feedback groups. */
+#homeView .hc-home-today-label .ghe-home-calendar-glyph{
+ display:inline-flex!important;flex-direction:column;vertical-align:middle;
+ width:46px!important;height:49px!important;min-width:46px;box-sizing:border-box;
+ padding:0!important;overflow:hidden;border:2px solid #6b8c9a!important;
+ border-radius:10px!important;background:#fff!important;color:#165373!important;
+ font:850 18px/1 system-ui!important;box-shadow:0 3px 10px #092e4417!important
+}
+#homeView .hc-home-today-label .ghe-home-calendar-glyph .ghe-smart-calendar-cap{
+ flex:none;width:100%;height:10px;background:#da7467;border-bottom:1px solid #b7594d
+}
+#homeView .hc-home-today-label .ghe-home-calendar-glyph b{display:grid;place-items:center;flex:1;font:850 23px/1 system-ui}
+#homeView .hc-home-today-label{align-items:center;gap:8px}
+#homeView .hc-home-today-label>span:not(.ghe-home-calendar-glyph){white-space:nowrap}
+#homeView .hc-feedback-date-separator{
+ display:flex;align-items:center;justify-content:center;gap:9px;margin:13px 6px 7px;
+ padding:5px 0;border-top:1px solid #e3e2d5;color:#587780;
+ text-align:center;font:850 11px/1.2 system-ui;letter-spacing:.045em
+}
+#homeView .hc-feedback-date-separator .ghe-smart-calendar-glyph{
+ flex:none;display:flex;flex-direction:column;width:31px;height:34px;overflow:hidden;
+ border:2px solid #718d98;border-radius:6px;background:#fff;color:#165373;font:850 15px/1 system-ui
+}
+#homeView .hc-feedback-date-separator .ghe-smart-calendar-cap{height:8px;flex:none;background:#da7467}
+#homeView .hc-feedback-date-separator .ghe-smart-calendar-glyph b{display:grid;place-items:center;flex:1}
+@media(max-width:360px){#homeView .hc-feedback-date-separator{gap:5px;font-size:10px}}
+
+/* Agenda 360 : two real, equal-area faces. The hidden side still determines height. */
+#homeView .ghe-agenda360{display:block;box-sizing:border-box;width:100%;max-width:100%;
+ margin:7px 0 15px;border:1px solid #d9e7ed;border-radius:19px;
+ background:#fff;box-shadow:0 8px 22px #113d5212;overflow:hidden}
+#homeView .ghe-agenda360-track{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;min-height:215px}
+#homeView .ghe-agenda360-face{grid-area:1/1;box-sizing:border-box;min-width:0;min-height:215px;padding:12px 12px 7px;
+ display:flex;flex-direction:column;gap:6px;background:#fff}
+#homeView .ghe-agenda360[data-side="front"] .ghe-agenda360-back,
+#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-front{visibility:hidden;pointer-events:none}
+#homeView .ghe-agenda360 .hc-feedback-wrap{margin:0!important;width:100%;max-width:100%}
+#homeView .ghe-agenda360 .hc-feedback-outer-separator{margin:0 0 8px!important}
+#homeView .ghe-agenda360 .hc-feedback-pending{width:100%;max-width:100%;box-shadow:none}
+#homeView .ghe-agenda360 .hc-feedback-list{max-height:435px;overflow-y:auto;overscroll-behavior:contain}
+#homeView .ghe-agenda360-proposals{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;
+ min-height:70px;margin-top:7px;padding:13px 11px;background:#edf8fc;border:1px solid #c5e2ed;border-radius:13px;
+ text-align:left;font:inherit;color:#204d61;cursor:pointer}
+#homeView .ghe-agenda360-proposals>span:nth-child(1){font-size:27px}
+#homeView .ghe-agenda360-proposals>span:nth-child(2){flex:1;min-width:0}
+#homeView .ghe-agenda360-proposals strong,#homeView .ghe-agenda360-proposals small{display:block}
+#homeView .ghe-agenda360-proposals strong{font-size:14px}
+#homeView .ghe-agenda360-proposals small{color:#5a7c8a;font-size:11px;margin-top:3px}
+#homeView .ghe-agenda360-proposals b{background:#fff;border-radius:16px;padding:4px 8px}
+#homeView .ghe-agenda360-rdv-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 6px;
+ padding:10px 12px;border-radius:12px;background:#f1f8fc}
+#homeView .ghe-agenda360-rdv-title strong{font-size:18px;color:#20506a}
+#homeView .ghe-agenda360-rdv-title small{color:#5e7b89;font-size:12px}
+#homeView .ghe-agenda360-date-group{padding:5px 0 11px;border-bottom:1px solid #e4ecf0}
+#homeView .ghe-agenda360-date{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 9px;
+ text-align:center;color:#537684;font:800 11px/1.2 system-ui}
+#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph{display:flex;flex-direction:column;flex:none;width:31px;height:34px;
+ background:#fff;border:2px solid #6d8998;border-radius:7px;overflow:hidden;color:#174e69;font:850 15px/1 system-ui}
+#homeView .ghe-agenda360-date .ghe-smart-calendar-cap{height:8px;flex:none;background:#da7467}
+#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph b{display:grid;place-items:center;flex:1;font:850 15px/1 system-ui}
+#homeView .ghe-agenda360-appointment{box-sizing:border-box;width:100%;min-height:65px;display:flex;align-items:center;
+ gap:10px;padding:9px 7px;border:0;border-radius:10px;background:#fff;color:#214859;text-align:left;font:inherit;cursor:pointer}
+#homeView .ghe-agenda360-appointment:hover{background:#f2f9fc}
+#homeView .ghe-agenda360-appointment>span:nth-child(2){flex:1;min-width:0}
+#homeView .ghe-agenda360-appointment strong{display:block;font-size:14px;line-height:1.35}
+#homeView .ghe-agenda360-appointment small{display:block;margin-top:4px;color:#5e7b89;font-size:11px;line-height:1.4}
+#homeView .ghe-agenda360-event-icon{flex:none;display:grid;place-items:center;width:40px;height:40px;background:#eff8fb;border-radius:10px;font-size:25px}
+#homeView .ghe-agenda360-empty{margin:auto;text-align:center;color:#617b8b}
+#homeView .ghe-agenda360-actions{display:flex;align-items:center;justify-content:center;padding:11px;background:#fafcfd;border-top:1px solid #e1ebf0}
+#homeView .ghe-agenda360-turn{min-height:45px;padding:9px 25px;border:1px solid #c6dfea;border-radius:22px;
+ background:#dbeffa;color:#195b78;font:850 15px/1 system-ui;cursor:pointer}
+#homeView .ghe-agenda360-turn span{font-size:19px;margin-left:10px}
+#homeView .ghe-agenda360[data-side="front"] .ghe-agenda360-show-feedback,
+#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-show-rdv,
+#homeView .ghe-agenda360[data-has-front="false"] .ghe-agenda360-actions{display:none!important}
+#homeView .ghe-agenda360 button:focus-visible{outline:3px solid #238cb7;outline-offset:2px}
+
+/* Unified category dialogs for drawer choices. */
+dialog#gheSmartChoiceDialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(510px,calc(100vw - 28px));
+ max-height:calc(100dvh - 40px);padding:0;overflow:hidden;border:1px solid #d2e4eb;border-radius:21px;
+ background:#fff;color:#1d485d;box-shadow:0 20px 62px #0e2d4560;font-family:inherit}
+dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+#gheSmartChoiceDialog .ghe-choice-hub-frame{display:flex;flex-direction:column;max-height:calc(100dvh - 40px);min-height:0}
+#gheSmartChoiceDialog header{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
+ padding:17px;background:#f2f9fc;border-bottom:1px solid #d8e8ef}
+#gheSmartChoiceDialog header small{display:block;color:#64818f;font-weight:850;letter-spacing:.08em;font-size:11px}
+#gheSmartChoiceDialog header h2{font-size:20px;margin:5px 0 0}
+#gheSmartChoiceDialog [data-ghe-choice-close]{width:40px;height:40px;flex:none;border:1px solid #d4e3ea;
+ border-radius:12px;background:white;color:#244d65;font-size:25px;cursor:pointer}
+#gheSmartChoiceDialog .ghe-choice-hub-list{padding:12px;overflow-y:auto;min-height:0;overscroll-behavior:contain}
+#gheSmartChoiceDialog .ghe-choice-hub-item{box-sizing:border-box;display:flex;align-items:center;gap:10px;
+ width:100%;min-height:68px;padding:10px;margin-bottom:9px;border:1px solid #dce9ef;border-radius:13px;
+ background:#fff;text-align:left;color:#1a465c;font:inherit;cursor:pointer}
+#gheSmartChoiceDialog .ghe-choice-hub-item:hover{background:#f0f9fc}
+#gheSmartChoiceDialog .ghe-choice-hub-icon{flex:none;display:grid;place-items:center;width:43px;height:43px;
+ border-radius:10px;background:#eef7fa;font-size:25px}
+#gheSmartChoiceDialog .ghe-choice-hub-copy{flex:1;min-width:0}
+#gheSmartChoiceDialog .ghe-choice-hub-copy strong{font-size:14px;display:block}
+#gheSmartChoiceDialog .ghe-choice-hub-copy small{display:block;font-size:12px;color:#61808d;margin-top:4px}
+#gheSmartChoiceDialog .ghe-choice-hub-count{border-radius:15px;background:#e4f1f6;padding:3px 7px;font-size:12px;font-weight:850}
+#gheSmartChoiceDialog .ghe-choice-hub-next{font-size:24px;color:#688798}
+#gheSmartChoiceDialog footer{padding:12px 17px;border-top:1px solid #e1ebef}
+#gheSmartChoiceDialog footer button{min-height:44px;padding:7px 16px;background:#eff7fb;border:1px solid #c9e1eb;border-radius:12px;color:#1c536c;font-weight:750;cursor:pointer}
+#gheSmartChoiceDialog .ghe-choice-hub-empty{padding:18px;text-align:center;color:#668291}
