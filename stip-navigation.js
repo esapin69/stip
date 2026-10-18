@@ -404,7 +404,7 @@
     if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "/ghe-smart-drawer.css?v=20261018-rail-organized1&rev=pagescroll1";
+      style.href = "/ghe-smart-drawer.css?v=20261018-rail-organized1&rev=pagescroll1&ui=premium360v1";
       document.head.appendChild(style);
     }
     // Standalone pages share the same choice popups as the home page.

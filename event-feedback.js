@@ -526,7 +526,7 @@
       return separator+cardMarkup(item);
     }).join("");
     host.innerHTML =
-      '<header class="hc-feedback-intro"><strong>Rendez-vous passés</strong><span>Votre retour attendu</span></header><div class="hc-feedback-list">' +
+      '<header class="hc-feedback-intro"><strong>Mes retours</strong><span>'+pending.length+' à compléter</span></header><div class="hc-feedback-list">' +
       datedCards +
       "</div>";
     host.querySelectorAll("[data-event-feedback]").forEach((button) => {

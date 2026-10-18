@@ -200,3 +200,28 @@ assert.deepEqual(Array.from(feedbackOrdered,item=>item.eventKey),
   "À clôturer must begin with newest visible date, regardless of internal due timestamp");
 assert.match(feedbackOrderSource,/const datedCards=pending\.map\(/,
   "date separators must inherit the same most-recent-first pending order");
+
+/* À clôturer / RDV : même finition premium que les trois autres cartes 360°. */
+const agendaCss=file("ghe-smart-drawer.css");
+const sharedFlipCss=file("ghe-flip-actions.css");
+const feedbackUi=file("event-feedback.js");
+assert(home.includes('ghe-agenda360-show-rdv ghe-flip-cta"'),"forward action uses canonical 360 CTA");
+assert(home.includes('ghe-agenda360-show-feedback ghe-flip-cta"'),"return action uses canonical 360 CTA");
+assert(home.includes('ghe-flip-cta-label">Mes rendez-vous'),"forward button names its destination");
+assert(home.includes('ghe-flip-cta-label">À clôturer'),"return button names its destination");
+assert(sharedFlipCss.includes('#homeView .ghe-agenda360 .ghe-agenda360-turn.ghe-flip-cta{'),
+ "agenda CTA uses the shared premium 360 button geometry");
+assert(sharedFlipCss.includes('#homeView .ghe-agenda360 .ghe-agenda360-show-feedback{'),
+ "back CTA uses the shared black return state");
+assert(agendaCss.includes('#homeView .ghe-agenda360 .hc-feedback-wrap>.hc-feedback-pending{'),
+ "front removes redundant nested frame without hiding any event");
+assert(feedbackUi.includes('<strong>Mes retours</strong><span>'),
+ "front title matches the back title hierarchy");
+assert(agendaCss.includes('max-height:none;height:auto;overflow:visible;overscroll-behavior:auto;'),
+ "360 card still has no nested feedback scroll");
+assert(agendaCss.includes('touch-action:pan-y pinch-zoom'),
+ "360 card still allows page scroll and pinch zoom");
+assert(!agendaCss.includes('.ghe-agenda360-turn span{font-size:19px;margin-left:10px}'),
+ "old pill CSS cannot override the shared CTA layout");
+assert(index.includes('ghe-flip-actions.css?v=20261018-month-rest-codes1&ui=premium360v1'),
+ "shared premium button stylesheet cache must be refreshed");
