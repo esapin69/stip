@@ -138,3 +138,8 @@ assert.match(rail,/data-smart-date-open/,"one date = one calendar icon remains i
 assert.match(style,/ghe-smart-active-zoom/,"active destination gets visible zoom");
 assert.match(style,/prefers-reduced-motion:reduce/,"animations honor OS accessibility settings");
 assert.match(style,/ghe-smart-rdv-icon/,"RDV icon has a shared frame");
+
+// The global choice popup must not intercept the house before the rail click handler.
+const choice=read("ghe-choice-master.js");
+assert.match(choice,/el\.matches\("#gheSmartRail \[data-smart-home\]"\)/,"global choice popup exclusion for direct home");
+assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details continue to the requested destination");
