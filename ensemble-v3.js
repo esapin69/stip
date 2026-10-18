@@ -15,6 +15,8 @@ const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.ca
 const entryParams=new URLSearchParams(location.search);
 const entryTab=entryParams.get("tab");
 const entrySchedule=entryParams.get("schedule")==="fixed"?"fixed":"afterwork";
+const entryCarpoolChoice=["driver","passenger"].includes(entryParams.get("choice"))?entryParams.get("choice"):"";
+let carpoolChoiceHandled=false;
 const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
@@ -102,7 +104,7 @@ function tripCard(t){
  '<p>📍 '+escapeHTML(t.sector||"")+' · '+escapeHTML(t.organizer_name||"")+'</p>'+
  (t.note?'<p>'+escapeHTML(t.note)+'</p>':"")+
  '<div class="ev3-inline">'+
- (!t.is_mine&&!t.my_status&&t.status==="active"?'<button type="button" data-ev3-trip-act="carpool_apply" data-trip="'+escapeHTML(t.id)+'">Demander une place</button>':"")+
+ (!t.is_mine&&!t.my_status&&t.kind==="offer"&&t.status==="active"?'<button type="button" data-ev3-trip-act="carpool_apply" data-trip="'+escapeHTML(t.id)+'">Demander une place</button>':"")+
  (!t.is_mine&&["pending","accepted"].includes(t.my_status)?'<button type="button" data-ev3-trip-act="carpool_withdraw" data-trip="'+escapeHTML(t.id)+'">Me retirer</button>':"")+
  (t.is_mine&&t.status==="active"?'<button type="button" data-ev3-trip-act="carpool_cancel" data-trip="'+escapeHTML(t.id)+'">Annuler</button>':"")+'</div>'+
  (t.is_mine&&t.applicants?.some(a=>a.status==="pending")?'<div class="ev3-requests">'+t.applicants.filter(a=>a.status==="pending").map(a=>'<p>'+escapeHTML(a.name)+' <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="accepted">Accepter</button> <button type="button" data-ev3-trip-act="carpool_review" data-trip="'+escapeHTML(t.id)+'" data-peer="'+escapeHTML(a.agent_id)+'" data-decision="declined">Refuser</button></p>').join("")+'</div>':"")+'</article>';
@@ -144,10 +146,12 @@ function tripsHTML(){
  if(!state.tripLoaded)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+loadingHTML("Recherche des trajets…");
  if(state.tripError)return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div><div class="ev3-quiet-empty is-error"><strong>Trajets momentanément indisponibles.</strong><span>'+escapeHTML(state.tripError)+'</span><button type="button" data-ev3-refresh>Réessayer</button></div>';
  const p=state.pref||{opted_in:false,sector:"",has_car:false};
+ const visibleTrips=entryCarpoolChoice==="passenger"?state.trips.filter(t=>t.kind==="offer"||t.is_mine):state.trips;
  return '<div class="ev3-section-title"><h2>Trajets entre collègues</h2></div>'+
-  (!p.opted_in?'<section class="ev3-panel ev3-panel-compact"><p class="ev3-intro">Partage uniquement ton secteur, jamais ton adresse personnelle.</p><form id="ev3Prefs"><label>Mon secteur<input name="sector" required maxlength="80" placeholder="Lyon 8e, Bron…"></label><label class="ev3-inline"><input name="has_car" type="checkbox"> Je peux conduire</label><button type="submit" class="ev3-primary">Activer le covoiturage</button></form></section>':
+  (entryCarpoolChoice==="driver"&&p.opted_in&&!p.has_car?'<section class="ev3-panel ev3-panel-compact"><p>Pour proposer des places, active d’abord le mode conducteur.</p><button type="button" class="ev3-primary" data-ev3-driver-enable>Je conduis · proposer un trajet</button></section>':"")+
+  (!p.opted_in?'<section class="ev3-panel ev3-panel-compact"><p class="ev3-intro">Partage uniquement ton secteur, jamais ton adresse personnelle.</p><form id="ev3Prefs"><label>Mon secteur<input name="sector" required maxlength="80" placeholder="Lyon 8e, Bron…"></label><label class="ev3-inline"><input name="has_car" type="checkbox" '+(entryCarpoolChoice==="driver"?"checked":"")+'> Je peux conduire</label><button type="submit" class="ev3-primary">Activer le covoiturage</button></form></section>':
   '<section class="ev3-trip-toolbar"><span>📍 '+escapeHTML(p.sector||"Secteur à définir")+'</span><button type="button" data-ev3-mode="carpool">＋ Proposer un trajet</button></section>'+
-  (state.trips.length?'<div class="ev3-stack">'+state.trips.map(tripCard).join("")+'</div>':'<div class="ev3-quiet-empty"><strong>Aucun trajet proposé.</strong><span>Tu peux proposer le premier, ou revenir plus tard.</span></div>'));
+  (visibleTrips.length?'<div class="ev3-stack">'+visibleTrips.map(tripCard).join("")+'</div>':'<div class="ev3-quiet-empty"><strong>'+(entryCarpoolChoice==="passenger"?"Aucune place proposée.":"Aucun trajet proposé.")+'</strong><span>Tu peux revenir plus tard ou proposer un trajet.</span></div>'));
 }
 function calendarHTML(){
  const first=state.month,year=first.getFullYear(),month=first.getMonth();
@@ -237,7 +241,9 @@ function bind(){
  const search=byId("ev3PeopleSearch");if(search)search.oninput=()=>{byId("ev3PeopleList").innerHTML=peopleOptions(search.value);bindPeople()};
  bindPeople();
  const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>state.visibility=f.elements.public.checked?"team":"invite";f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
- const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
+ const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});if(entryCarpoolChoice==="driver"&&j.preference?.has_car){state.tab="create";state.formKind="carpool"}message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
+ const enableDriver=byId("ensembleV3")?.querySelector("[data-ev3-driver-enable]");
+ if(enableDriver)enableDriver.onclick=async()=>{enableDriver.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:state.pref?.sector||"",has_car:true});state.pref=j.preference||{...state.pref,has_car:true};state.trips=j.trips||state.trips;state.tab="create";state.formKind="carpool";render()}catch(err){message(err.message,true);enableDriver.disabled=false}};
  const cf=byId("ev3CarForm");if(cf)cf.onsubmit=submitTrip;
  byId("ensembleV3")?.querySelectorAll("[data-ev3-trip-act]").forEach(b=>b.onclick=async()=>{if(b.dataset.ev3TripAct==="carpool_cancel"&&!confirm("Annuler ce trajet ?"))return;b.disabled=true;try{const j=await call(b.dataset.ev3TripAct,{trip_id:b.dataset.trip,target_agent_id:b.dataset.peer,decision:b.dataset.decision});state.trips=j.trips||[];message("Trajet mis à jour.");render()}catch(err){message(err.message,true);b.disabled=false}});
 }
@@ -523,7 +529,9 @@ async function refresh(){
   }),
   call("carpool_home").then(j=>{
    if(!current())return;
-   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;renderCurrent();
+   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;
+   if(!carpoolChoiceHandled&&entryCarpoolChoice==="driver"){carpoolChoiceHandled=true;if(state.pref?.opted_in&&state.pref?.has_car){state.tab="create";state.formKind="carpool"}}
+   renderCurrent();
   }).catch(()=>{
    if(!current())return;
    state.tripLoaded=true;state.tripError="Impossible de charger les trajets. Actualise la page.";renderCurrent();

@@ -504,3 +504,38 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 #gheSmartChoiceDialog footer{padding:12px 17px;border-top:1px solid #e1ebef}
 #gheSmartChoiceDialog footer button{min-height:44px;padding:7px 16px;background:#eff7fb;border:1px solid #c9e1eb;border-radius:12px;color:#1c536c;font-weight:750;cursor:pointer}
 #gheSmartChoiceDialog .ghe-choice-hub-empty{padding:18px;text-align:center;color:#668291}
+
+/* GHE MASTER — même séparateur de date (jour complet / numéro réel / mois complet). */
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator{
+ box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+ align-items:center;justify-content:center;gap:9px;position:relative;
+ margin:8px 0 12px;padding:11px 8px 7px;min-height:47px;
+ border-top:1px solid #dce8ef;border-bottom:0;background:transparent;
+ color:#557887;text-align:center;font:850 11px/1.25 system-ui,sans-serif;letter-spacing:.035em;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator .ghe-date-separator-weekday{
+ justify-self:end;min-width:0;white-space:nowrap;text-align:right;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator .ghe-date-separator-month{
+ justify-self:start;min-width:0;white-space:nowrap;text-align:left;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator .ghe-smart-calendar-glyph{
+ flex:none;box-sizing:border-box;display:flex;flex-direction:column;
+ width:32px;height:35px;overflow:hidden;border:2px solid #6b8c9a;
+ border-radius:7px;background:#fff;color:#164760;font:850 15px/1 system-ui,sans-serif;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator .ghe-smart-calendar-cap{
+ display:block;flex:none;width:100%;height:8px;background:#db7467;border-bottom:1px solid #b45b50;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator .ghe-smart-calendar-glyph b{
+ display:grid;flex:1;place-items:center;font:850 15px/1 system-ui,sans-serif;
+}
+:is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator-count{
+ position:absolute;right:2px;top:2px;border-radius:10px;
+ padding:2px 6px;background:#e4f1f6;color:#25607a;font:850 10px/1.2 system-ui;
+}
+#gheSmartChoiceDialog .ghe-date-separator:first-child{margin-top:0;border-top:0}
+#gheSmartChoiceDialog .ghe-date-separator:not(:first-child){margin-top:10px}
+@media(max-width:360px){
+ :is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator{gap:5px;padding-inline:2px;font-size:10px}
+}

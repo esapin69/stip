@@ -4,6 +4,7 @@
   const API = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly";
   const STORE = "stip_session_v1";
   const root = document.getElementById("agentDirectoryApp");
+  const createEventIntent = new URLSearchParams(location.search).get("intent") === "add-event";
   let directory = null;
 
   const esc = (value) =>
@@ -40,7 +41,7 @@
       window.STIPNav.back("index.html#/apps");
       return;
     }
-    location.assign("index.html#/apps");
+    location.assign(createEventIntent ? "index.html#/home" : "index.html#/apps");
   }
 
   function header() {
@@ -48,8 +49,8 @@
       <button type="button" class="ad-back" data-ad-home aria-label="Retour">‹</button>
       <div>
         <small>APPLICATION STIP</small>
-        <h1>Équipe</h1>
-        <p>Qui est présent aujourd’hui, où le trouver et comment le joindre.</p>
+        <h1>${createEventIntent ? "Créer un événement" : "Équipe"}</h1>
+        <p>${createEventIntent ? "Choisir un collègue pour ouvrir son agenda et ajouter un événement, selon vos droits." : "Qui est présent aujourd’hui, où le trouver et comment le joindre."}</p>
       </div>
     </header>`;
   }
@@ -67,6 +68,10 @@
   }
 
   function openAgentActions(agent) {
+    if (createEventIntent && window.STIPAgentAgenda?.openPlanning) {
+      void window.STIPAgentAgenda.openPlanning(agent.source_key, agent, { intent: "add-event" });
+      return;
+    }
     if (!window.STIPPersonActions?.openForAgent) {
       openAgent(agent);
       return;
@@ -100,9 +105,9 @@
       date: directory?.date,
       privacy: "team",
       showPhone: false,
-      kicker: "ÉQUIPE DU JOUR",
-      title: "Présents et absents",
-      description:
+      kicker: createEventIntent ? "CHOISIR UN COLLÈGUE" : "ÉQUIPE DU JOUR",
+      title: createEventIntent ? "À qui ajouter un événement ?" : "Présents et absents",
+      description: createEventIntent ? "La création reste soumise aux droits de gestion du planning." :
         "Tri par GHE. Les horaires particuliers sont expliqués sans exposer les motifs sensibles.",
       onSelect: openAgentActions,
     });
@@ -131,7 +136,7 @@
             .map((value) => String(value || "").trim())
             .includes(requested),
         );
-        if (agent) requestAnimationFrame(() => openAgent(agent));
+        if (agent) requestAnimationFrame(() => createEventIntent ? openAgentActions(agent) : openAgent(agent));
       }
     } catch (error) {
       if (error?.status === 401 || error?.status === 403) {

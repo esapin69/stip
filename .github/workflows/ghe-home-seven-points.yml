@@ -3,6 +3,14 @@ on:
   pull_request:
     paths:
       - ghe-smart-drawer.js
+      - ghe-smart-choices.js
+      - ghe-date-separator.js
+      - tools/ghe-date-separator-test.mjs
+      - ensemble-v3.js
+      - communication-hub.js
+      - agent-directory.js
+      - agent-agenda-view.js
+      - tools/ghe-choices-routing-test.mjs
       - ghe-smart-drawer.css
       - ghe-invitations.js
       - supabase/functions/stip-assistant/index.ts
@@ -26,6 +34,14 @@ on:
     branches: [main]
     paths:
       - ghe-smart-drawer.js
+      - ghe-smart-choices.js
+      - ghe-date-separator.js
+      - tools/ghe-date-separator-test.mjs
+      - ensemble-v3.js
+      - communication-hub.js
+      - agent-directory.js
+      - agent-agenda-view.js
+      - tools/ghe-choices-routing-test.mjs
       - ghe-smart-drawer.css
       - ghe-invitations.js
       - supabase/functions/stip-assistant/index.ts
@@ -55,12 +71,20 @@ jobs:
         with:
           node-version: "24"
       - run: |
+          node --check ghe-date-separator.js
+          node --check ghe-smart-choices.js
+          node --check ensemble-v3.js
+          node --check communication-hub.js
+          node --check agent-directory.js
+          node --check agent-agenda-view.js
           node --check home-shell.js
           node --check team-home-fusion.js
           node --check shift-weather-mini.js
           node --check ghe-notification-controls.js
           node --check stip-loader.js
           node --check stip-sw.js
+      - run: node tools/ghe-date-separator-test.mjs
+      - run: node tools/ghe-choices-routing-test.mjs
       - run: node tools/ghe-audit-navigation-test.mjs
       - run: node tools/ghe-home-seven-points-test.mjs
       - run: node tools/ghe-places-two-pdfs-test.mjs
