@@ -4039,12 +4039,7 @@ function personalDrawerRow(icon,label,action,meta="") {
       byDate.get(iso).push(entry);
     }
     const section=[...byDate].sort(([a],[b])=>a.localeCompare(b)).map(([date,items])=>{
-      const day=date?new Date(date+"T12:00:00"):new Date();
-      const dateHeading='<div class="ghe-agenda360-date" role="separator"><span>'+
-        esc(day.toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
-        '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+
-        (date?Number(date.slice(-2)):"·")+'</b></span><span>'+
-        esc(day.toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span></div>';
+      const dateHeading=window.GHEDateSeparator.separator(date,{className:"ghe-agenda360-date"});
       return '<div class="ghe-agenda360-date-group">'+dateHeading+items.map(entry=>{
         const index=upcoming.indexOf(entry),icon=entry.kind==="future"?eventIconHtml(entry.event,"hc-event-svg"):esc(entry.icon);
         return '<button type="button" class="ghe-agenda360-appointment" data-agenda360-entry="'+index+'">'+
