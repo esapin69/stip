@@ -153,7 +153,8 @@ assert(homeJs.includes("STIPMonthTable?.shiftBadgeHtml?.(x.code)") &&
 assert(flipCss.includes("grid-template-columns:repeat(5,minmax(0,1fr))") &&
        flipCss.includes("grid-template-columns:repeat(2,minmax(0,1fr))") &&
        flipCss.includes(".ghe-weekflip-next-divider") &&
-       flipCss.includes(".ghe-weekflip-next-action"),
+       flipCss.includes(".ghe-weekflip-monday-preview-schedule") &&
+       !flipCss.includes(".ghe-weekflip-next-action"),
   "le verso doit utiliser deux rangs : 5 jours puis 2 jours");
 assert(flipCss.includes("background:#f1f5f6!important") &&
        flipCss.includes("background:#fff!important") &&
