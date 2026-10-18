@@ -1,5 +1,4 @@
 import fs from "node:fs";
-import vm from "node:vm";
 
 const read = (p) => fs.readFileSync(p, "utf8");
 const fail = (msg) => { console.error("STIP calendar contract:", msg); process.exitCode = 1; };
@@ -75,7 +74,7 @@ const mainBuild = mainIndex.match(/name="stip-ui-build" content="([^"]+)"/)?.[1]
 assert(mainBuild && mainIndex.includes("stip-month-table.css?v=" + mainBuild) &&
   mainIndex.includes("stip-month-table.js?v=" + mainBuild),
   "main app does not load the shared monthly table");
-assert(metiersIndex.includes("stip-month-table.css?v=20261018-month-rest-codes1") && metiersIndex.includes("stip-month-table.js?v=20261018-month-rest-codes1"),
+assert(metiersIndex.includes("stip-month-table.css?v=20261018-month-icons-restored1") && metiersIndex.includes("stip-month-table.js?v=20261018-month-icons-restored1"),
   "métiers does not load the shared monthly table");
 assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
   "shared monthly table no longer accepts all active date sources");
@@ -287,39 +286,18 @@ for (const [name, source] of [
 assert(!homeCss.includes(".hc-calendar-driven-planning .hc-days-landscape .hc-week-event-chip"),
   "legacy home week marker sizing layer still exists");
 
-// Behavioral check against the actual shared monthly renderer.
-const monthlyWindow = { STIPShiftRegistry: {
-  resolve(code) {
-    return {
-      R: { kind: "rest", family: "off", label: "Repos", is_working: false },
-      RH: { kind: "leave", family: "rh", label: "Congé", is_working: false },
-      RTT: { kind: "rest", family: "off", label: "RTT", is_working: false },
-      CP: { kind: "leave", family: "rh", label: "Congé payé", is_working: false },
-      J4: { kind: "work", family: "j4", label: "J4", is_working: true },
-    }[code] || null;
-  },
-  baseCode(code) { return String(code).trim().toUpperCase().replace(/\*+$/, ""); },
-} };
-vm.runInNewContext(monthTableJs, {
-  window: monthlyWindow,
-  document: { readyState: "loading", addEventListener() {} },
-  MutationObserver: class {},
-});
-const nonWork = monthlyWindow.STIPMonthTable?.nonWorkCodeBadgeHtml;
-assert(typeof nonWork === "function", "monthly nonworking-code renderer missing");
-if (typeof nonWork === "function") {
-  for (const code of ["R", "RH", "RTT", "CP", "CA", "OFF"]) {
-    const badge = nonWork(code);
-    assert(badge.includes(`>${code}</span>`) && badge.includes("stip-month-nonwork-badge"),
-      `monthly nonworking code ${code} was not rendered as letters`);
-  }
-  assert(nonWork("J4") === "", "working shift must never use the nonworking code badge");
-  assert(nonWork("") === "", "missing planning code must remain empty");
-  assert(nonWork("UNKNOWN") === "", "unknown codes must not be silently classified as rest");
-}
-assert(homeJs.includes("nonWorkCodeBadgeHtml?.(shift.raw || shift.code)"), "home month not using rest code badge");
-assert(planning.includes("nonWorkCodeBadgeHtml?.(rawDisplay)"), "personal month not using rest code badge");
-assert(metiersJs.includes("nonWorkCodeBadgeHtml?.(code)") && metiersJs.includes("shiftVisual(item, true)"), "métiers month not using rest code badge");
-assert(agentJs.includes("nonWorkCodeBadgeHtml?.(row.code||row.source_value||\"\")"), "agent month not using rest code badge");
-assert(monthTableCss.includes(".stip-month-nonwork-badge.kind-rest") && monthTableCss.includes(".stip-month-nonwork-badge.kind-leave"), "month rest/leave badge styling missing");
+// Monthly rest/leave keeps the original pictograms; only worked shifts are text badges.
+assert(!monthTableJs.includes("nonWorkCodeBadgeHtml"), "monthly rest-code badge renderer must stay removed");
+assert(!monthTableCss.includes(".stip-month-nonwork-badge"), "monthly rest-code badge styling must stay removed");
+assert(!homeJs.includes("nonWorkCodeBadgeHtml") && homeJs.includes('class="hc-date-jump-icon stip-month-icon"'),
+  "home month must show original pictograms for non-working days");
+assert(!planning.includes("nonWorkCodeBadgeHtml") && planning.includes("if (icon)") && planning.includes("if (url)"),
+  "personal month must display registry icons or stored illustrations");
+assert(!metiersJs.includes("nonWorkCodeBadgeHtml") && metiersJs.includes("shiftVisual(item)") && metiersJs.includes("if (icon)"),
+  "métiers month must display registered icon for non-working days");
+assert(!agentJs.includes("nonWorkCodeBadgeHtml") && agentJs.includes('class="stip-month-icon">🏝️</span>'),
+  "agent calendar must display leave pictogram");
+assert(monthTableJs.includes("shiftBadgeHtml"), "worked shift badges must remain unchanged");
+assert(calendarRules.includes("repos et congés affichent leurs pictogrammes"),
+  "documented month visual contract must preserve pictograms");
 if (!process.exitCode) console.log("STIP calendar raw/common contract OK");

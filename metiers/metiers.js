@@ -132,15 +132,13 @@
     return !["R", "RH", "RC", "CP", "CA", "RTT", "OFF", "REPOS"].includes(code);
   }
 
-  function shiftVisual(item, inMonth = false) {
+  function shiftVisual(item) {
     if (!item) return '<span class="metiers-shift-empty">—</span>';
     const code = String(item.code || item.source_value || "").trim().toUpperCase();
     const def = shiftDef(code);
     const icon = window.STIPShiftRegistry?.icon?.(code) || def?.icon || "";
     const badge = window.STIPMonthTable?.shiftBadgeHtml?.(code) || "";
-    const restBadge = inMonth ? (window.STIPMonthTable?.nonWorkCodeBadgeHtml?.(code) || "") : "";
     if (badge && isWorking(item)) return badge;
-    if (restBadge) return restBadge;
     if (icon) return `<span class="metiers-shift-icon" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     return `<span class="metiers-shift-fallback">${esc(shiftCode(item))}</span>`;
   }
@@ -352,7 +350,7 @@
       const weekend = dow === 0 || dow === 6;
       cells += `<button type="button" class="stip-month-day metiers-month-day${weekend ? " is-weekend" : ""}${dateKey === currentDay ? " is-today" : ""}${events.length ? " has-event" : ""}" data-stip-date="${dateKey}" data-open-day="${dateKey}">
         <b class="stip-month-day-number">${day}</b>
-        <div class="stip-month-primary">${shiftVisual(item, true)}</div>
+        <div class="stip-month-primary">${shiftVisual(item)}</div>
         <div class="stip-month-events metiers-month-event-dots" aria-label="${events.length} événement(s)">${events.slice(0, 3).map((event) => `<i>${esc(event.icon || "•")}</i>`).join("")}</div>
       </button>`;
     }
