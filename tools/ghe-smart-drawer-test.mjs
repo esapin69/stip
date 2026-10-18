@@ -123,3 +123,23 @@ for(const path of authenticatedPages){
 }
 
 console.log("GHE smart drawer contract passed.");
+
+
+// RDV / home accessibility and active-icon regression (2026-10-18).
+assert.match(rail,/data-smart-home data-smart-active-key="home"/,"house is explicitly routed outside popup choice handlers");
+assert.match(rail,/if\(home\)\{event\.preventDefault\(\);event\.stopImmediatePropagation\(\);goHomeDirect\(\);return;\}/,"home click must stop popup delegation");
+assert.match(rail,/function goHomeDirect\(\)\{[\s\S]*?setMode\("closed"\)/,"house closes rail, including persisted mode");
+assert.match(rail,/location\.assign\(target\.href\)/,"house routes to the actual home document");
+assert.match(rail,/function ensureRdvQuick\(\)/,"home menu has an adjacent RDV control");
+assert.match(rail,/function openRdvDialog\(\)/,"RDV opens one centered dialog");
+assert.match(rail,/data-smart-rdv-open/,"RDV button remains visible in the compact rail");
+assert.match(rail,/appointmentDays\(entries\)/,"RDV uses canonical grouped data");
+assert.match(rail,/data-smart-date-open/,"one date = one calendar icon remains intact");
+assert.match(style,/ghe-smart-active-zoom/,"active destination gets visible zoom");
+assert.match(style,/prefers-reduced-motion:reduce/,"animations honor OS accessibility settings");
+assert.match(style,/ghe-smart-rdv-icon/,"RDV icon has a shared frame");
+
+// The global choice popup must not intercept the house before the rail click handler.
+const choice=read("ghe-choice-master.js");
+assert.match(choice,/el\.matches\("#gheSmartRail \[data-smart-home\]"\)/,"global choice popup exclusion for direct home");
+assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details continue to the requested destination");
