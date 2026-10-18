@@ -525,11 +525,12 @@ function render(){
   '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
   homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
   '<div class="ghe-smart-scroll ghe-smart-navigation">'+
-  navLink('🔍','Rechercher','Tout le site GHE','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
+  pending+
   divider+'<nav aria-label="Créer et rendez-vous">'+
   navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
   (appointments||navLink('📆','Calendrier','Mes rendez-vous','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"'))+
-  pending+'</nav>'+divider+
+  navLink('🔍','Rechercher','Tout le site GHE','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
+  '</nav>'+divider+
   '<nav aria-label="Messages et applications">'+
   navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
   apps+'</nav>'+divider+
