@@ -133,10 +133,18 @@ const FIXED_TEMPLATE_BUCKET='ghe-media'
 const FIXED_TEMPLATE_PATH='exports/visite-des-lieux/master.pdf'
 const FIXED_TEMPLATE_PAGE_INDEX={overview:0,HLP:1,PW:4,HFME:9,annexes:13} as const
 const FIXED_TEMPLATE_EXPECTED_PAGE_COUNT=16
-async function loadFixedTemplatePdf(){
+// Only these five MASTER pages have been visually audited as public signage.
+// Refuse new source bytes until a new public-safety audit confirms their content.
+const PUBLIC_MASTER_SHA256='7462b0cbe78d0b3f069d62968ce140eaf6acc6dc0e212fe9c7e37a2d6ff3366d'
+const PUBLIC_MASTER_PAGES=new Set([0,1,4,9,13])
+async function loadFixedTemplatePdf(publicOnly=false){
   const {data,error}=await db.storage.from(FIXED_TEMPLATE_BUCKET).download(FIXED_TEMPLATE_PATH)
   if(error||!data)throw new Error('Template PDF fixe indisponible.')
   const bytes=await data.arrayBuffer()
+  if(publicOnly){
+    const digest=hex(await crypto.subtle.digest('SHA-256',bytes))
+    if(digest!==PUBLIC_MASTER_SHA256)throw new Error('Version visiteur indisponible : pages fixes modifiées et non vérifiées.')
+  }
   const source=await PDFDocument.load(bytes)
   const count=source.getPageCount()
   if(count!==FIXED_TEMPLATE_EXPECTED_PAGE_COUNT)throw new Error('Template PDF fixe incompatible : '+count+' pages au lieu de '+FIXED_TEMPLATE_EXPECTED_PAGE_COUNT+'.')
@@ -292,6 +300,19 @@ function exportFactValue(v:any){
   if(/(a completer|a confirmer|a preciser|a valider|revalider|reconfirmer|provisoire|non valide|non confirme|sans preuve)/.test(n))return''
   return value
 }
+// Public PDFs must exclude contact details even when a source row is marked public.
+// Keep nearby description, floor and signage data instead of dropping entire rows.
+function publicPdfFactValue(v:any){
+  const value=exportFactValue(v)
+  if(!value)return''
+  const contact=/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|(?:\+33|0[1-9])(?:[ .-]?\d{2}){4}\b|\b(?:\d{2}[ .-]){2,4}\d{2}\b|\b(?:poste|contact|tel(?:ephone)?|fax|courriel|e-mail)\s*[:#-]?\s*\d{3,}\b/i
+  return value
+    .split(/(?<=\.)\s+(?=[A-ZÀ-Ö])|\s*[·;]\s*/g)
+    .map((part:string)=>part.trim())
+    .filter((part:string)=>part&&!contact.test(part))
+    .join(' · ')
+}
+
 function pdfSafe(v:any){
   return String(v??'')
     .replace(/Œ/g,'OE').replace(/œ/g,'oe')
@@ -347,18 +368,18 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
   const W=595.28,H=841.89,M=42,CONTENT=W-M*2
   const navy=rgb(0.035,0.30,0.42),ink=rgb(0.08,0.20,0.24),muted=rgb(0.38,0.49,0.52),soft=rgb(0.91,0.97,0.98),line=rgb(0.76,0.87,0.89)
-  const cfg:any=publicOnly?{fixed_pages:{},publication:{exclude_evidence_status:['to_confirm']},layout:{},covers:{}}:await pdfTemplateConfig()
+  const cfg:any=await pdfTemplateConfig()
   const fixedPages:any=cfg.fixed_pages
   const excluded=new Set<string>((cfg.publication.exclude_evidence_status||['to_confirm']).map((x:any)=>String(x)))
-  const fixedTemplate=publicOnly?null:await loadFixedTemplatePdf()
+  const fixedTemplate=await loadFixedTemplatePdf(publicOnly)
   let page:any=null,y=0
   const appendFixedPage=async(index:number)=>{
-    if(!fixedTemplate)throw new Error('Pages fixes réservées à l’export professionnel.')
+    if(publicOnly&&!PUBLIC_MASTER_PAGES.has(index))throw new Error('Page fixe non autorisée pour le visiteur.')
     const [fixed]=await pdf.copyPages(fixedTemplate,[index])
     pdf.addPage(fixed);page=null;y=0
   }
   const appendHfmeCover=async()=>{
-    if(!fixedTemplate)throw new Error('Couverture fixe réservée à l’export professionnel.')
+    if(publicOnly&&(!PUBLIC_MASTER_PAGES.has(Number(fixedPages.HFME||9))||!PUBLIC_MASTER_PAGES.has(Number(fixedPages.overview||0))))throw new Error('Couverture HFME non autorisée pour le visiteur.')
     const s=fixedTemplate.getPage(Number(fixedPages.HFME||9)),o=fixedTemplate.getPage(Number(fixedPages.overview||0))
     const z=s.getSize(),p=pdf.addPage([z.width,z.height])
     const head=await pdf.embedPage(s,{left:0,bottom:z.height-108,right:z.width,top:z.height})
@@ -413,12 +434,18 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     page=null;y=0
   }
 
+  // Compact two-column dictionaries, matching the approved MASTER architecture.
+  // Both audiences use exactly the same pagination and typography.
+  let twoCols=false,column=0,currentDictionaryTitle='',currentDictionarySubtitle=''
+  const currentWidth=()=>twoCols?(CONTENT-20)/2:CONTENT
+  const currentX=()=>M+(twoCols&&column===1?currentWidth()+20:0)
   const footer=(p:any,label='')=>{
     p.drawLine({start:{x:M,y:28},end:{x:W-M,y:28},thickness:.6,color:line})
     p.drawText(pdfSafe('STIP · GHE · Visiter les lieux'+(label?' · '+label:'')),{x:M,y:15,size:7,font:regular,color:muted})
   }
   const freshPage=(title:string,subtitle='')=>{
-    page=pdf.addPage([W,H]);y=H-50
+    if(twoCols){currentDictionaryTitle=title||currentDictionaryTitle;currentDictionarySubtitle=subtitle||currentDictionarySubtitle}
+    page=pdf.addPage([W,H]);column=0;y=H-50
     page.drawText(pdfSafe(title),{x:M,y,size:20,font:bold,color:navy,maxWidth:CONTENT});y-=26
     if(subtitle){for(const l of wrapPdf(regular,subtitle,9,CONTENT)){page.drawText(l,{x:M,y,size:9,font:regular,color:muted});y-=12}}
     page.drawLine({start:{x:M,y:y-2},end:{x:W-M,y:y-2},thickness:1,color:line});y-=19
@@ -426,19 +453,26 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     return page
   }
   const ensure=(need:number,title='Suite')=>{
-    if(!page||y<45+need){freshPage(title)}
+    if(!page){freshPage(twoCols?currentDictionaryTitle:title,twoCols?currentDictionarySubtitle:'');return}
+    if(y>=45+need)return
+    if(twoCols&&column===0){column=1;y=H-117;return}
+    freshPage(twoCols?currentDictionaryTitle:title,twoCols?currentDictionarySubtitle:'')
   }
   const textBlock=(text:string,size=8.5,font=regular,color=ink,indent=0,gap=2)=>{
-    const lines=wrapPdf(font,text,size,CONTENT-indent)
-    const need=lines.length*(size+3)+gap
-    ensure(need+8)
-    for(const l of lines){page.drawText(l,{x:M+indent,y,size,font,color});y-=size+3}
+    const lines=wrapPdf(font,text,size,currentWidth()-indent)
+    if(twoCols){
+      for(const l of lines){ensure(size+3);page.drawText(l,{x:currentX()+indent,y,size,font,color});y-=size+3}
+    }else{
+      const need=lines.length*(size+3)+gap
+      ensure(need+8)
+      for(const l of lines){page.drawText(l,{x:M+indent,y,size,font,color});y-=size+3}
+    }
     y-=gap
   }
   const heading=(text:string)=>{
     ensure(30)
-    page.drawRectangle({x:M,y:y-15,width:CONTENT,height:20,color:soft})
-    page.drawText(pdfSafe(text),{x:M+8,y:y-9,size:10,font:bold,color:navy,maxWidth:CONTENT-16})
+    page.drawRectangle({x:currentX(),y:y-15,width:currentWidth(),height:20,color:soft})
+    page.drawText(pdfSafe(text),{x:currentX()+8,y:y-9,size:10,font:bold,color:navy,maxWidth:currentWidth()-16})
     y-=29
   }
   const divider=(title:string,subtitle:string,detail:string)=>{
@@ -461,10 +495,11 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
 
   const aliasesBy=new Map<string,string[]>()
   for(const a of snapshot.aliases||[]){const arr=aliasesBy.get(String(a.place_id))||[];arr.push(String(a.alias||''));aliasesBy.set(String(a.place_id),arr)}
+  const visibleFact=(v:any)=>publicOnly?publicPdfFactValue(v):exportFactValue(v)
   const tagsBy=new Map<string,string[]>()
   for(const t of snapshot.tags||[]){const arr=tagsBy.get(String(t.place_id))||[];arr.push(String(t.tag||''));tagsBy.set(String(t.place_id),arr)}
 
-  if(scope?.mode==='all'&&!publicOnly){
+  if(scope?.mode==='all'){
     await appendFixedPage(Number(fixedPages.overview||0))
   }else{
     freshPage('VISITER LES LIEUX - '+scopeLabel,(publicOnly?'Version visiteur · informations publiques uniquement · ':'Pages fixes validées + dictionnaire Supabase · ')+exportDate())
@@ -475,36 +510,40 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const renderBuilding=async(code:string,label:string,subtitle:string)=>{
     const rows=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!['hospital','building','building_or_zone'].includes(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
     if(!rows.length)return
-    if(!publicOnly){
+    {
       if(cfg.layout.use_generic_divider)divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
       const fixedIndex=Number(fixedPages[code])
       if(code==='HFME'&&cfg.covers.HFME==='rebuild_with_overview_photo')await appendHfmeCover();else await appendFixedPage(fixedIndex)
       if(code==='HLP'&&cfg.layout.room_showcase!==false)roomShowcase()
     }
+    twoCols=true
     freshPage(label+' · '+subtitle+' · DICTIONNAIRE',(publicOnly?'Version visiteur · informations publiques au ':'Données issues du référentiel Supabase au ')+exportDate())
-    const levels=[...new Set(rows.map((p:any)=>String(p.level||'')))].sort((a,b)=>levelRank(a)-levelRank(b)||a.localeCompare(b,'fr'))
-    for(const lvl of levels){
-      heading(levelLabel(lvl))
-      const items=rows.filter((p:any)=>String(p.level||'')===lvl).sort((a:any,b:any)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))
-      for(const p of items){
-        ensure(52,label+' · '+subtitle)
-        textBlock((p.display_name||p.official_name||p.id)+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),9,bold,ink,0,1)
-        const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-        const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,8)
-        if(als.length)facts.push('Alias : '+als.join(' · '))
-        const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
-        if(usefulTags.length)facts.push(...usefulTags)
-        for(const fact of facts)textBlock(fact,7.6,regular,muted,10,1)
-        y-=4
-      }
+    const items=[...rows].sort((a:any,b:any)=>String(a.display_name||a.official_name||a.id).localeCompare(String(b.display_name||b.official_name||b.id),'fr'))
+    let currentLetter=''
+    for(const p of items){
+      const name=String(p.display_name||p.official_name||p.id)
+      const letter=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,1).toUpperCase()||'#'
+      if(letter!==currentLetter){heading(letter);currentLetter=letter}
+      ensure(48)
+      textBlock(name+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),8.5,bold,ink,0,1)
+      if(p.level)textBlock(levelLabel(p.level),7.3,bold,navy,3,1)
+      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,8)
+      if(als.length)facts.push('Alias : '+als.join(' · '))
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
+      if(usefulTags.length)facts.push(...usefulTags)
+      for(const fact of facts)textBlock(fact,7.2,regular,muted,8,1)
+      y-=5
     }
+    twoCols=false;page=null;y=0
   }
 
   for(const b of MAIN_BUILDINGS)await renderBuilding(b.code,b.label,b.subtitle)
 
   const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
   if(hasAnnex){
-    if(!publicOnly)await appendFixedPage(Number(fixedPages.annexes||13))
+    await appendFixedPage(Number(fixedPages.annexes||13))
+    twoCols=true
     freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
   }
   for(const code of ANNEX_CODES){
@@ -514,10 +553,10 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
       const prefix=p.level?levelLabel(p.level)+' · ':''
       textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
-      const facts=[p.summary,p.details].map(exportFactValue).filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).map(exportFactValue).filter(Boolean).slice(0,6)
+      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
+      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,6)
       if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>exportFactValue(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
+      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
       if(usefulTags.length)facts.push(...usefulTags)
       for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
       y-=3
@@ -528,90 +567,7 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   return new Response(bytes,{status:200,headers:{
     ...CORS,
     'Content-Type':'application/pdf',
-    'Content-Disposition':'attachment; filename="Visite-des-lieux-'+(publicOnly?'Visiteur-':'')+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
-    'Cache-Control':'no-store'
-  }})
-}
-
-async function visualPdfResponse(snapshot:any,scopeLabel='GHE complet'){
-  const pdf=await PDFDocument.create()
-  const regular=await pdf.embedFont(StandardFonts.Helvetica)
-  const bold=await pdf.embedFont(StandardFonts.HelveticaBold)
-  const W=595.28,H=841.89,M=36,GAP=14,COL=(W-M*2-GAP)/2
-  const navy=rgb(.06,.24,.31),teal=rgb(.04,.54,.61),light=rgb(.93,.97,.98)
-  const muted=rgb(.32,.46,.50),border=rgb(.79,.87,.89),white=rgb(1,1,1)
-  const kinds=new Set(['service','unit','exam','block'])
-  const groups=new Map<string,Map<string,any[]>>()
-  for(const place of snapshot.places||[]){
-    if(!kinds.has(String(place.place_type||'')))continue
-    const building=String(place.building_code||'').trim().toUpperCase()||'?'
-    const floor=String(place.level||'').trim().toUpperCase()||'?'
-    if(!groups.has(building))groups.set(building,new Map())
-    const levels=groups.get(building)!
-    if(!levels.has(floor))levels.set(floor,[])
-    levels.get(floor)!.push(place)
-  }
-  if(!groups.size)throw new Error('Aucune destination à présenter.')
-  const titles:Record<string,string>={HFME:'Hôpital Femme Mère Enfant',HLP:'Cardio - Louis Pradel',PW:'Neuro - Pierre Wertheimer'}
-  const priority=(code:string)=>code==='HFME'?0:code==='HLP'?1:code==='PW'?2:3
-  const order=(f:string)=>f==='RDJ'?-10:f==='-1'?-5:f==='RDC'?0:f==='TM'?.5:f==='?'?999:Number(f)||100
-  const floorLabel=(f:string)=>f==='RDJ'?'REZ-DE-JARDIN':f==='RDC'?'REZ-DE-CHAUSSEE':f==='TM'?'PLATEAU TECHNIQUE':f==='?'?'ETAGE A PRECISER':f==='1'?'1ER ETAGE':/^\d+$/.test(f)?f+'E ETAGE':'NIVEAU '+f
-  const printable=(v:any)=>pdfSafe(v)||'Sans nom'
-  let page:any=null,top=[0,0],pageCount=0,buildingCurrent=''
-  const newPage=(building:string,continued=false)=>{
-    buildingCurrent=building
-    page=pdf.addPage([W,H]);pageCount++
-    page.drawRectangle({x:0,y:H-8,width:W,height:8,color:navy})
-    page.drawText('GHE  /  VISITER LES LIEUX',{x:M,y:H-33,size:9,font:bold,color:teal})
-    const label=printable(titles[building]||('Bâtiment '+(building==='?'?'à préciser':building)))
-    page.drawText(label+(continued?' - suite':''),{x:M,y:H-85,size:21,font:bold,color:navy,maxWidth:W-M*2})
-    page.drawText('SERVICES / UNITES / EXAMENS - '+printable(scopeLabel),{x:M,y:H-105,size:9,font:regular,color:muted,maxWidth:W-M*2})
-    page.drawLine({start:{x:M,y:42},end:{x:W-M,y:42},thickness:.8,color:border})
-    page.drawText(snapshot.access_level==='visitor'?'GHE - informations publiques uniquement':'GHE - référentiel professionnel autorisé',{x:M,y:26,size:7,font:regular,color:muted})
-    page.drawText('Page '+pageCount,{x:W-M-38,y:26,size:7,font:regular,color:muted})
-    top=[H-127,H-127]
-  }
-  const itemLines=(p:any)=>wrapPdf(regular,printable(p.display_name||p.official_name||p.id),8.7,COL-40)
-  const itemHeight=(p:any)=>Math.max(16,itemLines(p).length*11+4)
-  const cardHeight=(items:any[])=>52+items.reduce((n,p)=>n+itemHeight(p),0)
-  const drawCard=(column:number,floor:string,items:any[],part:string)=>{
-    const height=cardHeight(items),x=M+column*(COL+GAP),y=top[column]-height
-    page.drawRectangle({x,y,width:COL,height,borderWidth:.8,borderColor:border,color:white})
-    page.drawRectangle({x,y:y+height-39,width:COL,height:39,color:teal})
-    const heading=floorLabel(floor)+(part?' - '+part:'')
-    page.drawText(printable(heading),{x:x+11,y:y+height-24,size:9,font:bold,color:white,maxWidth:COL-42})
-    page.drawText(String(items.length),{x:x+COL-20,y:y+height-24,size:9,font:bold,color:white})
-    let yy=y+height-53
-    for(const p of items){
-      const lines=itemLines(p)
-      const itemColor=p.place_type==='exam'?rgb(.81,.52,.18):p.place_type==='block'?rgb(.58,.39,.69):teal
-      page.drawCircle({x:x+13,y:yy+3,size:2.5,color:itemColor})
-      for(const l of lines){page.drawText(l,{x:x+23,y:yy,size:8.7,font:regular,color:navy});yy-=11}
-      yy-=Math.max(5,itemHeight(p)-11*lines.length)
-    }
-    top[column]=y-13
-  }
-  const buildings=[...groups.keys()].sort((a,b)=>priority(a)-priority(b)||a.localeCompare(b,'fr'))
-  for(const building of buildings){
-    newPage(building)
-    const floors=groups.get(building)!
-    for(const floor of [...floors.keys()].sort((a,b)=>order(a)-order(b)||a.localeCompare(b,'fr'))){
-      const items=floors.get(floor)!.sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||printable(a.display_name).localeCompare(printable(b.display_name),'fr'))
-      const size=9,parts=Math.ceil(items.length/size)
-      for(let i=0;i<items.length;i+=size){
-        const chunk=items.slice(i,i+size),needed=cardHeight(chunk)
-        const available=[0,1].filter(col=>top[col]-needed>57)
-        if(!available.length){newPage(building,true);available.push(0,1)}
-        const column=available.sort((a,b)=>top[b]-top[a])[0]
-        drawCard(column,floor,chunk,parts>1?String(i/size+1)+'/'+parts:'')
-      }
-    }
-  }
-  const bytes=await pdf.save()
-  return new Response(bytes,{status:200,headers:{
-    ...CORS,
-    'Content-Type':'application/pdf',
-    'Content-Disposition':'attachment; filename="Visite-des-lieux-Visuel-'+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
+    'Content-Disposition':'attachment; filename="Visite-des-lieux-'+(publicOnly?'Visiteur-':'Professionnel-')+scopeFilePart(scopeLabel)+'-'+exportDate()+'.pdf"',
     'Cache-Control':'no-store'
   }})
 }
@@ -625,12 +581,11 @@ Deno.serve(async req=>{
     const action=String(body.action||'bootstrap')
     if(action==='bootstrap_public')return json(await bootstrap(['public'],'public_share','visitor'))
     if(action==='export_public_pdf'||action==='export_public_visual_pdf'){
-      // Public PDF always derives from server-filtered public data, independent of the caller session.
+      // Old visual PDF endpoint now generates the same canonical visitor PDF.
+      // Always filter server-side public data, regardless of session headers.
       const publicSnapshot=await bootstrap(['public'],'public_share','visitor')
       const scoped=scopedSnapshot(publicSnapshot,body.scope)
-      return action==='export_public_visual_pdf'
-        ?await visualPdfResponse(scoped.snapshot,scoped.label)
-        :await pdfResponse(scoped.snapshot,scoped.scope,scoped.label,true)
+      return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label,true)
     }
     const session=await sessionFrom(req)
     if(!session)return json({error:'Session STIP expirée.'},401)
@@ -640,7 +595,7 @@ Deno.serve(async req=>{
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
       const scoped=scopedSnapshot(fullSnapshot,body.scope)
-      return await visualPdfResponse(scoped.snapshot,scoped.label)
+      return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label)
     }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
