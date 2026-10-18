@@ -4029,7 +4029,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     const upcoming=groups.find(g=>g.key==="upcoming")?.items||[];
     const proposals=groups.find(g=>g.key==="proposals")?.items||[];
     const feedback=groups.find(g=>g.key==="feedback")?.items||[];
-    const hasOpen=feedback.length>0;
+    const hasOpen=feedback.length>0||proposals.length>0;
     const byDate=new Map();
     for(const entry of upcoming){
       const iso=/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?entry.date:"";
@@ -4048,20 +4048,24 @@ function personalDrawerRow(icon,label,action,meta="") {
       }).join("")+'</div>';
     }).join("");
     return '<section class="ghe-agenda360" data-agenda360 data-side="'+(hasOpen?"front":"back")+
-      '" data-has-front="'+String(hasOpen)+'" aria-label="À clôturer et mes rendez-vous">'+
+      '" data-has-front="'+String(hasOpen)+'" data-proposal-count="'+proposals.length+'" aria-label="Actions à traiter et rendez-vous à venir">'+
       '<div class="ghe-agenda360-track">'+
       '<div class="ghe-agenda360-face ghe-agenda360-front" data-agenda360-face="front">'+
+      '<header class="ghe-agenda360-action-title"><strong>À traiter</strong><small data-agenda360-summary>'+
+      [feedback.length?feedback.length+' retour'+(feedback.length>1?'s':''):'',proposals.length?proposals.length+' proposition'+(proposals.length>1?'s':''):''].filter(Boolean).join(' · ')+
+      '</small></header>'+ 
       '<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>'+
-      '</div><div class="ghe-agenda360-face ghe-agenda360-back" data-agenda360-face="back">'+
-      '<div class="ghe-agenda360-rdv-title"><strong>Mes rendez-vous</strong><small>'+upcoming.length+' date'+
-       (upcoming.length>1?"s":"")+' à venir</small></div>'+
-      (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
-      (proposals.length?'<button type="button" class="ghe-agenda360-proposals" data-agenda360-proposals>'+
+            (proposals.length?'<button type="button" class="ghe-agenda360-proposals" data-agenda360-proposals>'+
         '<span aria-hidden="true">📩</span><span><strong>Propositions des collègues</strong>'+
         '<small>'+proposals.length+' à consulter · regroupées dans une fenêtre</small></span><b>'+proposals.length+'</b></button>':"")+
+'</div><div class="ghe-agenda360-face ghe-agenda360-back" data-agenda360-face="back">'+
+      '<div class="ghe-agenda360-rdv-title"><strong>À venir</strong><small>'+upcoming.length+' date'+
+       (upcoming.length>1?"s":"")+' à venir</small></div>'+
+      (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
       '</div></div><footer class="ghe-agenda360-actions">'+
-      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv" aria-label="Afficher Mes RDV">RDV <span aria-hidden="true">↻</span></button>'+
-      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback" aria-label="Afficher À clôturer">À clôturer <span aria-hidden="true">↶</span></button>'+
+      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback" aria-label="Afficher les actions à traiter"><span>À traiter</span><b data-agenda360-action-count>'+(feedback.length+proposals.length)+'</b></button>'+
+      '<span class="ghe-agenda360-swap" aria-hidden="true">↻</span>'+
+      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv" aria-label="Afficher les rendez-vous à venir"><span>À venir</span><b>'+upcoming.length+'</b></button>'+
       '</footer></section>';
   }
   function bindAgenda360(root) {
@@ -4070,11 +4074,18 @@ function personalDrawerRow(icon,label,action,meta="") {
     const front=stage.querySelector(".ghe-agenda360-front");
     let touched=false;
     const sync=()=>{
-      const feedback=!!front.querySelector("#hcEventFeedbackWrap .hc-feedback-card");
-      const available=feedback;
+      const feedbackCount=front.querySelectorAll("#hcEventFeedbackHost .hc-feedback-card").length;
+      const proposalsCount=Number(stage.dataset.proposalCount)||0;
+      const available=feedbackCount>0||proposalsCount>0;
       stage.dataset.hasFront=String(available);
       if(!touched)stage.dataset.side=available?"front":"back";
       else if(!available)stage.dataset.side="back";
+      const summary=[feedbackCount?feedbackCount+' retour'+(feedbackCount>1?'s':''):'',proposalsCount?proposalsCount+' proposition'+(proposalsCount>1?'s':''):''].filter(Boolean).join(' · ')||'Aucune action';
+      const summaryEl=front.querySelector('[data-agenda360-summary]');
+      if(summaryEl&&summaryEl.textContent!==summary)summaryEl.textContent=summary;
+      const totalEl=stage.querySelector('[data-agenda360-action-count]');
+      if(totalEl&&totalEl.textContent!==String(feedbackCount+proposalsCount))totalEl.textContent=String(feedbackCount+proposalsCount);
+      for(const button of stage.querySelectorAll('[data-agenda360-turn]'))button.setAttribute('aria-pressed',String(stage.dataset.side===button.dataset.agenda360Turn));
       for(const side of ["front","back"]){
         const face=stage.querySelector('[data-agenda360-face="'+side+'"]');
         face?.toggleAttribute("inert",stage.dataset.side!==side);
