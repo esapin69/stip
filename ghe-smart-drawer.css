@@ -505,7 +505,7 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 #gheSmartChoiceDialog footer button{min-height:44px;padding:7px 16px;background:#eff7fb;border:1px solid #c9e1eb;border-radius:12px;color:#1c536c;font-weight:750;cursor:pointer}
 #gheSmartChoiceDialog .ghe-choice-hub-empty{padding:18px;text-align:center;color:#668291}
 
-/* Nouvelle navigation : maison | recherche | ajout + agenda | chat + apps | réserve | réglages. */
+/* Nouvelle navigation : maison | à traiter | ajout + agenda | messages/apps | recherche | réglages. */
 #gheSmartRail .ghe-smart-navigation{padding:7px 5px 12px;overflow-y:auto;overscroll-behavior:contain}
 #gheSmartRail .ghe-smart-nav-separator{box-sizing:border-box;min-height:1px;height:1px;border-top:1px solid #dbe7ed;margin:10px 6px}
 #gheSmartRail .ghe-smart-reserved-slot{min-height:22px}
@@ -629,4 +629,22 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
  display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:1;
  overflow:hidden;text-overflow:ellipsis;margin-top:2px;
  font-size:10.5px!important;line-height:1.24!important;
+}
+
+/* Recherche secondaire, fixe immédiatement au-dessus de Réglages, dans les trois états du tiroir. */
+#gheSmartRail .ghe-smart-search-dock{
+ flex:none;background:#fff;border-top:1px solid #e5edf1;
+ padding:4px 5px 2px;
+}
+#gheSmartRail .ghe-smart-search-dock .ghe-smart-link{
+ width:100%;min-height:46px;opacity:.89;border-radius:10px;
+}
+#gheSmartRail .ghe-smart-search-dock .ghe-smart-icon{
+ font-size:24px!important;
+}
+#gheSmartRail:not([data-mode="expanded"]) .ghe-smart-search-dock .ghe-smart-link{
+ min-height:47px;justify-content:center;padding:3px 0;
+}
+#gheSmartRail .ghe-smart-search-dock .ghe-global-search-panel.is-expanded{
+ max-height:min(32dvh,240px);margin:3px 0;padding:9px;
 }
