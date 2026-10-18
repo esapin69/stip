@@ -362,6 +362,51 @@ function wrapPdf(font:any,text:string,size:number,maxWidth:number){
   if(current)lines.push(current)
   return lines
 }
+// Certified 2026-10-18 presentation: the visitor receives these exact four bytes-on-disk pages.
+// The professional version starts with those same four pages, then adds ONLY the
+// existing, privately stored MASTER dictionary and annex pages after a PRO session check.
+// Never publish the professional master or its derived dictionary on GitHub Pages.
+const APPROVED_VISITOR_PDF_URL='https://ghe.esapin.com/pdf/ghe-visiter-les-lieux-4-pages-validees.pdf'
+const APPROVED_VISITOR_PDF_SHA256='eea73e5d75593bdeda77adac4a3ab2926c39a066ac60f9b077e9dc72cce743a9'
+const APPROVED_MASTER_PDF_SHA256='7462b0cbe78d0b3f069d62968ce140eaf6acc6dc0e212fe9c7e37a2d6ff3366d'
+// In the validated 16-page MASTER (zero-based): HFME dictionary 11-13,
+// Cardio dictionary 3-4, Neuro dictionary 6-9, Annex dictionaries 15-16.
+const APPROVED_PRO_DICTIONARY_PAGES=[10,11,12,2,3,5,6,7,8,14,15]
+async function exactValidatedPdfResponse(pro=false){
+  const response=await fetch(APPROVED_VISITOR_PDF_URL,{headers:{'Accept':'application/pdf'},cache:'no-store'})
+  if(!response.ok)throw new Error('Présentation GHE validée indisponible : HTTP '+response.status)
+  if(!String(response.headers.get('content-type')||'').toLowerCase().includes('application/pdf')){
+    throw new Error('Présentation GHE indisponible : fichier non PDF.')
+  }
+  const approvedBytes=await response.arrayBuffer()
+  const publicDigest=hex(await crypto.subtle.digest('SHA-256',approvedBytes))
+  if(publicDigest!==APPROVED_VISITOR_PDF_SHA256)throw new Error('Présentation GHE différente des quatre pages validées.')
+  const approved=await PDFDocument.load(approvedBytes)
+  if(approved.getPageCount()!==4)throw new Error('La présentation GHE doit comporter exactement 4 pages.')
+  let bytes:Uint8Array|ArrayBuffer=approvedBytes
+  if(pro){
+    const {data,error}=await db.storage.from(FIXED_TEMPLATE_BUCKET).download(FIXED_TEMPLATE_PATH)
+    if(error||!data)throw new Error('Dictionnaires professionnels indisponibles.')
+    const masterBytes=await data.arrayBuffer()
+    const digest=hex(await crypto.subtle.digest('SHA-256',masterBytes))
+    if(digest!==APPROVED_MASTER_PDF_SHA256)throw new Error('Dictionnaires modifiés : vérification nécessaire avant impression.')
+    const master=await PDFDocument.load(masterBytes)
+    if(master.getPageCount()!==16)throw new Error('Dictionnaires professionnels incomplets.')
+    const combined=await PDFDocument.create()
+    const firstPages=await combined.copyPages(approved,[0,1,2,3])
+    for(const page of firstPages)combined.addPage(page)
+    const dictionaryPages=await combined.copyPages(master,APPROVED_PRO_DICTIONARY_PAGES)
+    for(const page of dictionaryPages)combined.addPage(page)
+    if(combined.getPageCount()!==15)throw new Error('Le PDF professionnel doit comporter 15 pages.')
+    bytes=await combined.save()
+  }
+  return new Response(bytes,{status:200,headers:{
+    ...CORS,'Content-Type':'application/pdf',
+    'Content-Disposition':'attachment; filename="'+(pro?'GHE-Professionnel-4-pages-dictionnaires-annexes.pdf':'GHE-Visiteur-4-pages-validees.pdf')+'"',
+    'Cache-Control':'no-store'
+  }})
+}
+
 async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publicOnly=false){
   const pdf=await PDFDocument.create()
   const regular=await pdf.embedFont(StandardFonts.Helvetica)
@@ -583,6 +628,7 @@ Deno.serve(async req=>{
     if(action==='export_public_pdf'||action==='export_public_visual_pdf'){
       // Old visual PDF endpoint now generates the same canonical visitor PDF.
       // Always filter server-side public data, regardless of session headers.
+      if(cleanScope(body.scope).mode==='all')return await exactValidatedPdfResponse(false)
       const publicSnapshot=await bootstrap(['public'],'public_share','visitor')
       const scoped=scopedSnapshot(publicSnapshot,body.scope)
       return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label,true)
@@ -593,12 +639,14 @@ Deno.serve(async req=>{
     if(action==='bootstrap')return json(await bootstrap(allowedVisibilities(session),session.role_key,session.app_level))
     if(action==='export_visual_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      if(cleanScope(body.scope).mode==='all')return await exactValidatedPdfResponse(true)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
       const scoped=scopedSnapshot(fullSnapshot,body.scope)
       return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label)
     }
     if(action==='export_pdf'){
       if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)
+      if(cleanScope(body.scope).mode==='all')return await exactValidatedPdfResponse(true)
       const fullSnapshot=await bootstrap(allowedVisibilities(session),session.role_key,session.app_level)
       const scoped=scopedSnapshot(fullSnapshot,body.scope)
       return await pdfResponse(scoped.snapshot,scoped.scope,scoped.label)

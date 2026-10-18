@@ -1,0 +1,23 @@
+name: GHE approved PDFs
+
+on:
+  pull_request:
+    paths:
+      - 'pdf/ghe-visiter-les-lieux-4-pages-validees.pdf'
+      - 'supabase/functions/stip-places/index.ts'
+      - 'places.html'
+      - 'tools/ghe-places-two-pdfs-test.mjs'
+      - '.github/workflows/ghe-approved-pdfs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  approved-pdf-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Verify both PDF versions and role gate
+        run: node tools/ghe-places-two-pdfs-test.mjs
