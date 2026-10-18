@@ -149,7 +149,7 @@ assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details contin
 // Contrat d'interface : maison, recherche, créer+calendrier, chat+apps, réserve, réglages.
 const compact=rail.slice(rail.indexOf('const markup=\'<header class="ghe-smart-head"'),rail.indexOf(' // Keep the search input'));
 assert(compact.length>0,"markup du rail présent");
-const order=["homeLink+","pending+divider+","data-smart-create-open","(appointments||navLink","data-smart-search-open","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
+const order=["homeLink+","pending+divider+","data-smart-create-open","(appointments||navLink","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-search-dock","data-smart-search-open","ghe-smart-settings-dock","data-smart-settings-open"];
 let previous=-1;
 for(const token of order){const index=compact.indexOf(token);assert(index>previous,"ordre du tiroir : "+token);previous=index;}
 assert.match(rail,/appointmentDays\(entries\)\.map\(calendarDayGroup\)/,"les dates doivent rester visibles directement");
@@ -185,3 +185,7 @@ assert.match(choiceAction,/#gheSmartPendingDialog/,"pending entries get the same
 assert.match(choiceAction,/GHE\w*Drawer\?\.openDestination\?\.\(el\)/,"the choice button opens its real destination, without a replayed click");
 assert.match(style,/#gheSmartRail\[data-mode="expanded"\] \.ghe-smart-date-details \.ghe-smart-link\{/,"expanded RDV rows are compact");
 assert.match(read("ghe-smart-choices.js"),/feedback_key=/,"feedback popup has a direct fallback");
+
+assert.match(style,/#gheSmartRail \.ghe-smart-search-dock\{/,"loupe isolated in its dedicated bottom dock");
+assert.match(rail,/ghe-smart-search-dock/, "global search stays in a fixed dock above settings");
+assert.doesNotMatch(compact.slice(compact.indexOf("'ghe-smart-scroll ghe-smart-navigation"),compact.indexOf("ghe-smart-search-dock")),/data-smart-search-open/,"search is no longer mixed into the appointment navigation");
