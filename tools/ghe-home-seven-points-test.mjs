@@ -7,7 +7,7 @@ const card=file("team-home-fusion.js"),weatherCss=file("team-home-fusion.css");
 const icon=file("ghe-notification-controls.js"),iconCss=file("ghe-notification-controls.css");
 const wx=file("shift-weather-mini.js"),index=file("index.html");
 const loader=file("stip-loader.js"),worker=file("stip-sw.js");
-assert(css.includes("transform:translateX(-clamp(52px,17vw,88px))!important;"),"En direct launcher must move further left");
+assert(css.includes("transform:translateX(-clamp(92px,28vw,132px))!important;"),"En direct launcher must move further left");
 assert(index.includes("ghe-premium-safe-flip.css?v=20261018-rest-pictograms1&rev=live-modal1-left-launch3"),"Refresh the left-shifted live button CSS cache");
 // En direct : seuls les shifts occupés à l'instant sont rendus.
 // Une ligne Chef n'existe que pour un chef effectivement planifié maintenant.
@@ -31,7 +31,7 @@ assert.match(css,/button\.ghe-premium-now-group/);
 assert.match(css,/\.ghe-premium-now-group\.shift-chief/);
 assert.match(css,/\.ghe-premium-now-groups\{[\s\S]*?overflow:visible!important/);
 assert.match(css,/dialog\.ghe-premium-now-dialog::backdrop/);
-assert.match(css,/transform:translateX\(-clamp\(52px,17vw,88px\)\)!important/,"Live shortcut moves left");
+assert.match(css,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important/,"Live shortcut moves left");
 assert.match(css,/\.ghe-premium-now-modal-content\{[\s\S]*?overflow-y:auto/);
 const mockRow=(code,id)=>({code,agents:{source_key:id,prenom:id,nom:"Test"}});
 const onlyActive=[mockRow("J","J1"),mockRow("J","J2"),mockRow("S","S1")];
@@ -218,5 +218,5 @@ assert.match(appointmentsFace,/data-agenda360-proposals/);
 assert.match(agenda360,/const hasOpen=feedback\.length>0;/);
 assert.match(home,/const available=feedback;/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
-assert.match(css,/transform:translateX\(-clamp\(52px,17vw,88px\)\)!important;/,
+assert.match(css,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important;/,
   "The top red En direct launcher must shift left without moving the bell or menu");
