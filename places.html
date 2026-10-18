@@ -208,7 +208,7 @@ async function generateChosenPdf(audience,viewer,token=''){
   if(viewer&&!viewer.closed)viewer.location.replace(url);
   else location.assign(url);
   // The browser PDF reader provides Print, Download and Share; no extra buttons here.
-  setTimeout(()=>URL.revokeObjectURL(url),300000);
+  setTimeout(()=>URL.revokeObjectURL(url),3600000);
 }
 async function chooseVisitorPdf(){
   if(pdfBusy)return;
@@ -236,7 +236,7 @@ document.getElementById('placesPdfReveal').addEventListener('click',()=>{
 });
 document.getElementById('placesPdfPro').addEventListener('click',async()=>{
   if(pdfBusy)return;
-  const viewer=beginPdfViewer();
+  const viewer=localStorage.getItem(STORE)?beginPdfViewer():null;
   pdfBusy=true;pdfMessage('Vérification de ta session…');
   const button=document.getElementById('placesPdfPro');button.disabled=true;
   try{
@@ -275,13 +275,13 @@ pdfCodeForm.addEventListener('submit',async ev=>{
 // Legacy links from earlier revisions still open one of the same two PDFs directly,
 // never the obsolete multi-step export wizard.
 const oldPdfAudience=new URLSearchParams(location.search).get('pdf');
-if(oldPdfAudience==='visitor'||oldPdfAudience==='pro'){
+if(['visitor','pro','choose'].includes(oldPdfAudience)){
   const current=new URL(location.href);current.searchParams.delete('pdf');
   history.replaceState(history.state,'',current.pathname+current.search+current.hash);
   requestAnimationFrame(()=>{
     if(!pdfDialog.open)pdfDialog.showModal();
     if(oldPdfAudience==='visitor')chooseVisitorPdf();
-    else document.getElementById('placesPdfPro').click();
+    else if(oldPdfAudience==='pro')document.getElementById('placesPdfPro').click();
   });
 }
 
