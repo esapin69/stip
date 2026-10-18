@@ -461,7 +461,9 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
   const textBlock=(text:string,size=8.5,font=regular,color=ink,indent=0,gap=2)=>{
     const lines=wrapPdf(font,text,size,currentWidth()-indent)
     if(twoCols){
-      for(const l of lines){ensure(size+3);page.drawText(l,{x:currentX()+indent,y,size,font,color});y-=size+3}
+      // An entry must not be split between columns: one location = one readable block.
+      ensure(lines.length*(size+3)+gap+3)
+      for(const l of lines){page.drawText(l,{x:currentX()+indent,y,size,font,color});y-=size+3}
     }else{
       const need=lines.length*(size+3)+gap
       ensure(need+8)
@@ -514,26 +516,36 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
       if(cfg.layout.use_generic_divider)divider(label,subtitle,INTERCALARY_DETAIL[code]||'Synthèse · dictionnaire · repères terrain')
       const fixedIndex=Number(fixedPages[code])
       if(code==='HFME'&&cfg.covers.HFME==='rebuild_with_overview_photo')await appendHfmeCover();else await appendFixedPage(fixedIndex)
-      if(code==='HLP'&&cfg.layout.room_showcase!==false)roomShowcase()
+      // The former Cardio showroom added a separate, non-directory sheet to printouts.
+      // Keep its interactive counterpart on the site, not in the compact paper directory.
     }
     twoCols=true
     freshPage(label+' · '+subtitle+' · DICTIONNAIRE',(publicOnly?'Version visiteur · informations publiques au ':'Données issues du référentiel Supabase au ')+exportDate())
-    const items=[...rows].sort((a:any,b:any)=>String(a.display_name||a.official_name||a.id).localeCompare(String(b.display_name||b.official_name||b.id),'fr'))
-    let currentLetter=''
+    // Paper index = building > FLOOR > service. Never alphabet-only and never raw DB metadata.
+    const items=[...rows].sort((a:any,b:any)=>
+      levelRank(a.level)-levelRank(b.level)||
+      String(a.display_name||a.official_name||a.id).localeCompare(String(b.display_name||b.official_name||b.id),'fr'))
+    const quickFact=(v:any)=>{
+      const value=visibleFact(v).replace(/\b(?:nav|gps|icon|nav_quality):[^ ·;]+/gi,'').trim()
+      if(!value||!/(entrée|ascenseur|couloir|niveau|bâtiment|secteur|étage|accès|accueil|repère|galerie|passerelle|parking|porte|direction)/i.test(value))return''
+      return value.length>135?value.slice(0,132).replace(/\s+\S*$/,'')+'...':value
+    }
+    let currentLevel=''
     for(const p of items){
       const name=String(p.display_name||p.official_name||p.id)
-      const letter=name.normalize('NFD').replace(/[\u0300-\u036f]/g,'').slice(0,1).toUpperCase()||'#'
-      if(letter!==currentLetter){heading(letter);currentLetter=letter}
-      ensure(48)
-      textBlock(name+(p.official_name&&p.official_name!==p.display_name?' · '+p.official_name:''),8.5,bold,ink,0,1)
-      if(p.level)textBlock(levelLabel(p.level),7.3,bold,navy,3,1)
-      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,8)
-      if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,10)
-      if(usefulTags.length)facts.push(...usefulTags)
-      for(const fact of facts)textBlock(fact,7.2,regular,muted,8,1)
-      y-=5
+      const level=levelLabel(p.level)
+      if(level!==currentLevel){heading('NIVEAU '+level);currentLevel=level}
+      // Only the existing validated display name: don't concatenate a second unofficial title.
+      textBlock(name,8.4,bold,ink,2,1)
+      const note=quickFact(p.summary)||quickFact(p.details)
+      if(note)textBlock(note,7.1,regular,muted,8,1)
+      if(!publicOnly){
+        // Professional contact facts remain behind the server-side PRO session gate.
+        const contacts=(tagsBy.get(String(p.id))||[]).filter((v:string)=>
+          /^(?:contact|phone|tel|telephone|e-mail|email|fax|poste):/i.test(v))
+        for(const contact of contacts)textBlock(contact,7.2,regular,navy,8,1)
+      }
+      y-=2
     }
     twoCols=false;page=null;y=0
   }
@@ -542,23 +554,27 @@ async function pdfResponse(snapshot:any,scope:any,scopeLabel='GHE complet',publi
 
   const hasAnnex=(snapshot.places||[]).some((p:any)=>ANNEX_CODES.includes(String(p.building_code||'').toUpperCase())&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
   if(hasAnnex){
-    await appendFixedPage(Number(fixedPages.annexes||13))
-    twoCols=true
-    freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel dynamique par bâtiment · '+exportDate())
+    if(publicOnly){
+      // Never copy a private static annex page into the visitor PDF.
+      // The original separator is mostly empty: omit it to save an A4 sheet.
+      twoCols=true
+      freshPage('BÂTIMENTS ANNEXES · DICTIONNAIRE','Référentiel public · '+exportDate())
+    }else{
+      // Restore the two professionally validated MASTER annex lists instead
+      // of duplicating them with a long, metadata-heavy generated list.
+      await appendFixedPage(14)
+      await appendFixedPage(15)
+    }
   }
-  for(const code of ANNEX_CODES){
+  if(hasAnnex&&publicOnly)for(const code of ANNEX_CODES){
     const items=(snapshot.places||[]).filter((p:any)=>String(p.building_code||'').toUpperCase()===code&&EXPORT_PLACE_TYPES.has(p.place_type)&&!excluded.has(String(p.evidence_status||'')))
     if(!items.length)continue
     heading(code)
     for(const p of items.sort((a:any,b:any)=>levelRank(a.level)-levelRank(b.level)||(Number(a.sort_order)||0)-(Number(b.sort_order)||0)||String(a.display_name).localeCompare(String(b.display_name),'fr'))){
       const prefix=p.level?levelLabel(p.level)+' · ':''
       textBlock(prefix+(p.display_name||p.official_name||p.id),8.7,bold,ink)
-      const facts=[p.summary,p.details].map(visibleFact).filter(Boolean)
-      const als=(aliasesBy.get(String(p.id))||[]).map(visibleFact).filter(Boolean).slice(0,6)
-      if(als.length)facts.push('Alias : '+als.join(' · '))
-      const usefulTags=(tagsBy.get(String(p.id))||[]).map((x:string)=>visibleFact(x.replace(/^(internal|purpose|contact|phone|tel|telephone|shortcut|warning):/i,'').trim())).filter(Boolean).slice(0,8)
-      if(usefulTags.length)facts.push(...usefulTags)
-      for(const fact of facts)textBlock(fact,7.5,regular,muted,10,1)
+      // Visitor: a concise public location listing, without raw nav/gps/icon
+      // fields, contact tags, internal notes, repeated aliases or blank dividers.
       y-=3
     }
   }
