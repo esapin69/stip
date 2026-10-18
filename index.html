@@ -6,6 +6,28 @@
       name="viewport"
       content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
     />
+    <!-- En mode portrait, une tablette tactile reprend le viewport du téléphone.
+         Le navigateur agrandit toute l'interface, y compris les cartes et le tiroir.
+         Le mode paysage et les ordinateurs gardent leur viewport normal. -->
+    <script id="ghe-tablet-portrait-viewport">
+      (() => {
+        const viewport = document.querySelector('meta[name="viewport"]');
+        const standard = 'width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content';
+        const phonePortrait = 'width=412,viewport-fit=cover,interactive-widget=resizes-content';
+        const sync = () => {
+          const tablet = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) >= 600;
+          const portrait = screen.orientation && typeof screen.orientation.type === 'string'
+            ? screen.orientation.type.startsWith('portrait')
+            : matchMedia('(orientation: portrait)').matches;
+          const target = tablet && portrait ? phonePortrait : standard;
+          if (viewport.getAttribute('content') !== target) viewport.setAttribute('content', target);
+        };
+        sync();
+        window.addEventListener('orientationchange', sync);
+        window.addEventListener('resize', sync);
+        window.addEventListener('pageshow', sync);
+      })();
+    </script>
     <meta name="theme-color" content="#f3f6f8" />
     <meta name="color-scheme" content="light only" />
     <meta name="robots" content="index,follow,max-image-preview:large" />

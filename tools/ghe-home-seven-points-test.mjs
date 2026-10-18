@@ -222,3 +222,45 @@ assert.match(home,/aria-pressed/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
 assert.match(css,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important;/,
   "The top red En direct launcher must shift left without moving the bell or menu");
+
+
+/* Tablette verticale = composition téléphone, agrandie par le viewport.
+   Pas de changement de layout pour téléphone, tablette paysage ou ordinateur. */
+const tabletViewportScript = index.match(/<script id="ghe-tablet-portrait-viewport">([\s\S]*?)<\/script>/)?.[1];
+assert.ok(tabletViewportScript, "Le réglage tablette doit démarrer dans <head> avant les feuilles CSS");
+function testTabletViewport(width, height, touches, orientation, hasScreenOrientation=true) {
+  const events = new Map();
+  const original = "width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content";
+  const viewport = {
+    content: original,
+    getAttribute(name) {assert.equal(name,"content");return this.content;},
+    setAttribute(name, value) {assert.equal(name,"content");this.content=value;},
+  };
+  const screen = {width,height,...(hasScreenOrientation?{orientation:{type:orientation}}:{})};
+  vm.runInNewContext(tabletViewportScript, {
+    document:{querySelector:selector=>selector==='meta[name="viewport"]'?viewport:null},
+    navigator:{maxTouchPoints:touches},
+    screen,
+    matchMedia:()=>({matches:orientation.startsWith("portrait")}),
+    window:{addEventListener:(name,fn)=>events.set(name,fn)},
+  });
+  return {viewport,screen,events,original};
+}
+const tabletPortrait = testTabletViewport(800,1280,5,"portrait-primary");
+assert.equal(tabletPortrait.viewport.content,"width=412,viewport-fit=cover,interactive-widget=resizes-content");
+assert.equal(testTabletViewport(412,915,5,"portrait-primary").viewport.content,tabletPortrait.original);
+assert.equal(testTabletViewport(1280,800,5,"landscape-primary").viewport.content,tabletPortrait.original);
+assert.equal(testTabletViewport(1366,768,0,"landscape-primary").viewport.content,tabletPortrait.original);
+assert.equal(testTabletViewport(810,1080,5,"portrait-primary",false).viewport.content,
+  "width=412,viewport-fit=cover,interactive-widget=resizes-content","iPad Safari sans screen.orientation");
+tabletPortrait.screen.orientation.type="landscape-primary";
+tabletPortrait.screen.width=1280;
+tabletPortrait.screen.height=800;
+tabletPortrait.events.get("orientationchange")();
+assert.equal(tabletPortrait.viewport.content,tabletPortrait.original,"Retour en mode tablette paysage");
+tabletPortrait.screen.orientation.type="portrait-primary";
+tabletPortrait.screen.width=800;
+tabletPortrait.screen.height=1280;
+tabletPortrait.events.get("resize")();
+assert.equal(tabletPortrait.viewport.content,"width=412,viewport-fit=cover,interactive-widget=resizes-content",
+  "Retour automatique au layout du téléphone");
