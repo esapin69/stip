@@ -222,7 +222,8 @@ function appointmentDays(entries){
  return [...dates].sort(([a],[b])=>a.localeCompare(b)).map(([date,items])=>({date,items}));
 }
 function calendarIcon(date){
- return '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+Number(date.slice(-2))+'</b></span>';
+ return window.GHEDateSeparator?.calendar(date) ||
+  '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+Number(date.slice(-2))+'</b></span>';
 }
 function calendarDayGroup(group){
  const count=group.items.length,label=dlabel(group.date);
@@ -231,11 +232,12 @@ function calendarDayGroup(group){
   '<span class="ghe-smart-icon ghe-smart-date-icon">'+calendarIcon(group.date)+
   (count>1?'<span class="ghe-smart-date-count">×'+count+'</span>':"")+'</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(label)+'</strong><small class="ghe-smart-sub">'+count+' rendez-vous</small></span></button>'+
-  '<div class="ghe-smart-date-details"><div class="ghe-smart-date-heading ghe-smart-date-separator" role="separator">'+
-  '<span>'+escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
-  calendarIcon(group.date)+
-  '<span>'+escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span>'+
-  (count>1?'<small>×'+count+'</small>':"")+'</div>'+
+  '<div class="ghe-smart-date-details">'+
+  (window.GHEDateSeparator?.separator(group.date,{className:"ghe-smart-date-heading ghe-smart-date-separator",count}) ||
+   '<div class="ghe-smart-date-heading ghe-smart-date-separator" role="separator"><span>'+
+   escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
+   calendarIcon(group.date)+
+   '<span>'+escapeHtml(new Date(group.date+"T12:00:00").toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span></div>')+
   group.items.map(link).join("")+'</div></section>';
 }
 function openAppointmentDay(date){
