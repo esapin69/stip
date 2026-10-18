@@ -1,10 +1,25 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {readFileSync} from "node:fs";
 import vm from "node:vm";
 
 const places=readFileSync("places.html","utf8");
 const legacy=readFileSync("places-export.html","utf8");
 const backend=readFileSync("supabase/functions/stip-places/index.ts","utf8");
+
+// Approved PDF is exactly the same binary the visitor is allowed to receive.
+const approved=readFileSync("pdf/ghe-visiter-les-lieux-4-pages-validees.pdf");
+assert.equal(approved.subarray(0,5).toString("ascii"),"%PDF-");
+assert.equal(createHash("sha256").update(approved).digest("hex"),
+ "eea73e5d75593bdeda77adac4a3ab2926c39a066ac60f9b077e9dc72cce743a9");
+assert.match(backend,/APPROVED_VISITOR_PDF_SHA256='eea73e5d75593bdeda77adac4a3ab2926c39a066ac60f9b077e9dc72cce743a9'/);
+assert.match(backend,/APPROVED_MASTER_PDF_SHA256='7462b0cbe78d0b3f069d62968ce140eaf6acc6dc0e212fe9c7e37a2d6ff3366d'/);
+assert(backend.includes("APPROVED_PRO_DICTIONARY_PAGES=[10,11,12,2,3,5,6,7,8,14,15]"));
+assert(backend.includes("if(cleanScope(body.scope).mode==='all')return await exactValidatedPdfResponse(false)"));
+assert(backend.includes("if(cleanScope(body.scope).mode==='all')return await exactValidatedPdfResponse(true)"));
+assert(backend.includes("if(session.app_level!=='pro')return json({error:'Export réservé à l’accès professionnel.'},403)"));
+assert(backend.includes("for(const page of dictionaryPages)combined.addPage(page)"));
+assert(backend.includes("combined.getPageCount()!==15"));
 
 // Exactly two audience choices; selection happens on Visiter les lieux itself.
 assert.match(places,/id="placesPdfVisitor"/);
