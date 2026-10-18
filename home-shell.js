@@ -2116,7 +2116,7 @@
       weekday = String(parts.weekday || "").toUpperCase(),
       day = String(parts.day || ""),
       month = String(parts.month || "").toUpperCase();
-    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><b class="hc-home-today-day">${esc(day)}</b><span>${esc(month)}</span></button></div>`;
+    return `<div class="hc-planning-period-separator stip-section-separator hc-home-today-separator" aria-label="${esc(raw)}"><button type="button" class="hc-home-today-label" data-header-date-search aria-label="Rechercher une date"><span>${esc(weekday)}</span><span class="hc-home-today-day ghe-smart-calendar-glyph ghe-home-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>${esc(day)}</b></span><span>${esc(month)}</span></button></div>`;
   }
   function renderFutureHub(active = "all", focusId = "") {
     const body = $("#hsPanelBody");
@@ -4025,6 +4025,92 @@ function personalDrawerRow(icon,label,action,meta="") {
       '<div class="hc-week-event-key-list">' + top + extra + '</div></section>';
   }
 
+  // Le même module métier alimente les deux faces, sans dupliquer ses données.
+  function agenda360Markup() {
+    const groups=drawerAppointmentsState().groups;
+    const upcoming=groups.find(g=>g.key==="upcoming")?.items||[];
+    const proposals=groups.find(g=>g.key==="proposals")?.items||[];
+    const feedback=groups.find(g=>g.key==="feedback")?.items||[];
+    const hasOpen=feedback.length+proposals.length>0;
+    const byDate=new Map();
+    for(const entry of upcoming){
+      const iso=/^\d{4}-\d{2}-\d{2}$/.test(entry.date||"")?entry.date:"";
+      if(!byDate.has(iso))byDate.set(iso,[]);
+      byDate.get(iso).push(entry);
+    }
+    const section=[...byDate].sort(([a],[b])=>a.localeCompare(b)).map(([date,items])=>{
+      const day=date?new Date(date+"T12:00:00"):new Date();
+      const dateHeading='<div class="ghe-agenda360-date" role="separator"><span>'+
+        esc(day.toLocaleDateString("fr-FR",{weekday:"long"}).toUpperCase())+'</span>'+
+        '<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+
+        (date?Number(date.slice(-2)):"·")+'</b></span><span>'+
+        esc(day.toLocaleDateString("fr-FR",{month:"long"}).toUpperCase())+'</span></div>';
+      return '<div class="ghe-agenda360-date-group">'+dateHeading+items.map(entry=>{
+        const index=upcoming.indexOf(entry),icon=entry.kind==="future"?eventIconHtml(entry.event,"hc-event-svg"):esc(entry.icon);
+        return '<button type="button" class="ghe-agenda360-appointment" data-agenda360-entry="'+index+'">'+
+        '<span class="ghe-agenda360-event-icon" aria-hidden="true">'+icon+'</span>'+
+        '<span><strong>'+esc(entry.title)+'</strong><small>'+
+        esc([entry.time,entry.place,entry.stateLabel].filter(Boolean).join(" · "))+
+        '</small></span><span aria-hidden="true">›</span></button>';
+      }).join("")+'</div>';
+    }).join("");
+    return '<section class="ghe-agenda360" data-agenda360 data-side="'+(hasOpen?"front":"back")+
+      '" data-has-front="'+String(hasOpen)+'" aria-label="À clôturer et mes rendez-vous">'+
+      '<div class="ghe-agenda360-track">'+
+      '<div class="ghe-agenda360-face ghe-agenda360-front" data-agenda360-face="front">'+
+      '<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>'+
+      (proposals.length?'<button type="button" class="ghe-agenda360-proposals" data-agenda360-proposals>'+
+        '<span aria-hidden="true">📩</span><span><strong>Propositions des collègues</strong>'+
+        '<small>'+proposals.length+' à consulter · regroupées dans une fenêtre</small></span><b>'+proposals.length+'</b></button>':"")+
+      '</div><div class="ghe-agenda360-face ghe-agenda360-back" data-agenda360-face="back">'+
+      '<div class="ghe-agenda360-rdv-title"><strong>Mes rendez-vous</strong><small>'+upcoming.length+' date'+
+       (upcoming.length>1?"s":"")+' à venir</small></div>'+
+      (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
+      '</div></div><footer class="ghe-agenda360-actions">'+
+      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv" aria-label="Afficher Mes RDV">RDV <span aria-hidden="true">↻</span></button>'+
+      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback" aria-label="Afficher À clôturer">À clôturer <span aria-hidden="true">↶</span></button>'+
+      '</footer></section>';
+  }
+  function bindAgenda360(root) {
+    const stage=root.querySelector("[data-agenda360]");
+    if(!stage)return;
+    const front=stage.querySelector(".ghe-agenda360-front");
+    let touched=false;
+    const sync=()=>{
+      const feedback=!!front.querySelector("#hcEventFeedbackWrap .hc-feedback-card");
+      const proposals=!!front.querySelector("[data-agenda360-proposals]");
+      const available=feedback||proposals;
+      stage.dataset.hasFront=String(available);
+      if(!touched)stage.dataset.side=available?"front":"back";
+      else if(!available)stage.dataset.side="back";
+      for(const side of ["front","back"]){
+        const face=stage.querySelector('[data-agenda360-face="'+side+'"]');
+        face?.toggleAttribute("inert",stage.dataset.side!==side);
+        face?.setAttribute("aria-hidden",String(stage.dataset.side!==side));
+      }
+    };
+    sync();
+    const observer=new MutationObserver(sync);
+    observer.observe(front,{childList:true,subtree:true});
+    stage.addEventListener("click",event=>{
+      const flip=event.target.closest("[data-agenda360-turn]");
+      if(flip){if(stage.dataset.hasFront!=="true")return;touched=true;stage.dataset.side=flip.dataset.agenda360Turn;sync();return;}
+      if(event.target.closest("[data-agenda360-proposals]")){
+        window.GHESmartChoices?.show?.("proposals");
+        return;
+      }
+      const button=event.target.closest("[data-agenda360-entry]");
+      if(!button)return;
+      const upcoming=drawerAppointmentsState().groups.find(x=>x.key==="upcoming")?.items||[];
+      const item=upcoming[Number(button.dataset.agenda360Entry)];
+      if(!item)return;
+      if(item.kind==="future")window.STIPDrawerOpenEntry?.("future",item.id);
+      else if(item.kind==="leisure"){
+        try{if(window.STIPLeisure?.openPreview?.(item.id))return;}catch{}
+        location.assign("sorties-loisirs.html?tab=agenda");
+      }
+    });
+  }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -4032,7 +4118,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>${homeModeNav("identity")}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}${agenda360Markup()}${homeModeNav("identity")}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -4088,6 +4174,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     preparePremiumLayout(root);
     prepareWeekFlip(root);
     keepHomeFeedbackPriority(root);
+    bindAgenda360(root);
     const sharedTeamOptions = {
       personal: state.boot?.personal || [],
       permissions: perms(),
