@@ -149,7 +149,7 @@ assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details contin
 // Contrat d'interface : maison, recherche, créer+calendrier, chat+apps, réserve, réglages.
 const compact=rail.slice(rail.indexOf('const markup=\'<header class="ghe-smart-head"'),rail.indexOf(' // Keep the search input'));
 assert(compact.length>0,"markup du rail présent");
-const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","(appointments||navLink","pending+","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
+const order=["homeLink+","pending+divider+","data-smart-create-open","(appointments||navLink","data-smart-search-open","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
 let previous=-1;
 for(const token of order){const index=compact.indexOf(token);assert(index>previous,"ordre du tiroir : "+token);previous=index;}
 assert.match(rail,/appointmentDays\(entries\)\.map\(calendarDayGroup\)/,"les dates doivent rester visibles directement");
@@ -172,3 +172,16 @@ assert.match(shell.slice(shell.indexOf("function bindAgenda360("),shell.indexOf(
 assert.match(shell,/GHESmartChoices\?\.show\?\.\("proposals"\)/,"proposal button must still open its existing popup");
 const topBarCss=read("ghe-premium-safe-flip.css");
 assert.match(topBarCss,/transform:translateX\(-clamp\(30px,10vw,65px\)\)!important;/,"En direct should be moved left responsively");
+
+
+// En direct sur le rail : classement compact et un seul chemin d'action au clic.
+assert.match(rail,/group\.items\.map\(item=>\{/,"dated groups use a compact detail rather than repeat the date");
+assert.match(rail,/function showDrawerChoice\(destination\)/,"all drawer items use the same choice dialog");
+assert.match(rail,/event\.stopImmediatePropagation\(\);\s*selectIcon\(detailLink/,"expanded event cards are not also handled by the global click listener");
+assert.match(rail,/const pendingDialog=destination\.closest\("#gheSmartPendingDialog"\)/,"pending popup remains actionable");
+assert.match(rail,/openDestination:navigateDrawerDestination/,"one canonical destination dispatcher is exposed");
+const choiceAction=read("ghe-choice-master.js");
+assert.match(choiceAction,/#gheSmartPendingDialog/,"pending entries get the same continuation behavior");
+assert.match(choiceAction,/GHE\w*Drawer\?\.openDestination\?\.\(el\)/,"the choice button opens its real destination, without a replayed click");
+assert.match(style,/#gheSmartRail\[data-mode="expanded"\] \.ghe-smart-date-details \.ghe-smart-link\{/,"expanded RDV rows are compact");
+assert.match(read("ghe-smart-choices.js"),/feedback_key=/,"feedback popup has a direct fallback");

@@ -175,7 +175,7 @@ const grouped=vm.runInNewContext(smartDates.slice(dateStart,dateEnd)+"\nappointm
 assert.deepEqual(JSON.parse(JSON.stringify(grouped.map(d=>[d.date,d.items.length]))),[
  ["2026-10-19",2],["2026-10-24",2],["2026-10-25",1]
 ]);
-for(const phrase of ["appointmentDays(entries)","function openRdvDialog()","group.items.map(link).join","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick","data-smart-rdv-open"])assert(smartDates.includes(phrase),phrase);
+for(const phrase of ["appointmentDays(entries)","function openRdvDialog()","group.items.map(item=>{","function openAppointmentDay(date)","if(links.length===1)","ghe-smart-date-count","data-smart-day-pick","data-smart-rdv-open"])assert(smartDates.includes(phrase),phrase);
 for(const phrase of [".ghe-smart-date-details{display:none!important",".ghe-smart-date-button{display:none!important","dialog#gheSmartDayDialog::backdrop"])assert(smartDatesCss.includes(phrase),phrase);
 assert(choiceDates.includes('class="ghe-choice-icon"'),"Preserve event icon in detail popup");
 const drawerAssetVersions=["ghe-smart-drawer.css","ghe-smart-drawer.js","ghe-choice-master.js"].map(name=>{
