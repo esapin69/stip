@@ -637,7 +637,7 @@ dialog.ghe-home-live-modal::backdrop{background:#152c4180;backdrop-filter:blur(7
 }
 .hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{
  grid-column:2!important;grid-row:1!important;justify-self:center!important;
- transform:translateX(-clamp(52px,17vw,88px))!important;
+ transform:translateX(-clamp(92px,28vw,132px))!important;
 }
 .hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
  grid-column:3!important;grid-row:1!important;justify-self:end!important;

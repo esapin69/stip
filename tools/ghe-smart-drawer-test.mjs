@@ -171,7 +171,7 @@ assert.match(agendaMarkup,/const hasOpen=feedback\.length>0;/,"proposals alone m
 assert.match(shell.slice(shell.indexOf("function bindAgenda360("),shell.indexOf("function homeModeBody()")),/const available=feedback;/,"live face sync only counts feedback");
 assert.match(shell,/GHESmartChoices\?\.show\?\.\("proposals"\)/,"proposal button must still open its existing popup");
 const topBarCss=read("ghe-premium-safe-flip.css");
-assert.match(topBarCss,/transform:translateX\(-clamp\(52px,17vw,88px\)\)!important;/,"En direct should be moved left responsively");
+assert.match(topBarCss,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important;/,"En direct should be moved left responsively");
 
 
 // En direct sur le rail : classement compact et un seul chemin d'action au clic.
