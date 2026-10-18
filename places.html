@@ -178,7 +178,7 @@ function beginPdfViewer(){
     viewer=window.open('about:blank','_blank');
     if(viewer){
       viewer.document.title='Visiter les lieux · Préparation du PDF';
-      viewer.document.body.innerHTML='<p style="font:600 16px system-ui;padding:24px;color:#23546a">Préparation du PDF complet du GHE…</p>';
+      viewer.document.body.textContent='Préparation du PDF complet du GHE…';
     }
   }catch{viewer=null}
   return viewer;
