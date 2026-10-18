@@ -25,11 +25,11 @@ function choose(item){
  }
  if(item.key==="business-action"){navigate(item.href);return;}
  const routes={
-  createPerson:"agent-directory.html",activity:"sorties-loisirs.html?tab=create",
+  createPerson:"agent-directory.html?intent=add-event",activity:"sorties-loisirs.html?tab=create",
   driver:"sorties-loisirs.html?tab=trips&choice=driver",
   passenger:"sorties-loisirs.html?tab=trips&choice=passenger",
-  messages:"index.html?quick=communication&tab=dm#/communication/dm",
-  eventChats:"sorties-loisirs.html?tab=agenda",
+  messages:"index.html?quick=communication&tab=dm&filter=colleagues#/communication/dm",
+  eventChats:"index.html?quick=communication&tab=dm&filter=events#/communication/dm",
   wheelchairs:"index.html?quick=communication&tab=fauteuils#/communication/fauteuils"
  };
  navigate(routes[item.key]||item.href||"");
@@ -58,11 +58,23 @@ function entriesFor(key){
   row("🎉","Discussions des événements","Chats liés aux activités","eventChats"),
   row("♿","Fauteuils","Messages et alertes fauteuils","wheelchairs")
  ];
- if(key==="past")return feedback.map(x=>({...row(x.icon||"📋",x.title,[dlabel(x.date),x.time,x.place].filter(Boolean).join(" · "),"feedback"),id:String(x.id||"")}));
- if(key==="proposals")return proposals.map(x=>({...row(x.icon||"🎉",x.title,[dlabel(x.date),x.time,x.place].filter(Boolean).join(" · "),"leisure"),id:String(x.id||"")}));
- if(key==="activities")return activities.map(x=>({...row(x.icon||"🎉",x.title,x.sub||dlabel(x.date),"business-action"),href:x.href}));
- if(key==="pending")return (pending?.items||[]).map(x=>({...row(x.icon||"📋",x.title,[dlabel(x.date),x.sub].filter(Boolean).join(" · "),"business-action"),href:x.href}));
+ if(key==="past")return feedback.map(x=>({...row(x.icon||"📋",x.title,[dlabel(x.date),x.time,x.place].filter(Boolean).join(" · "),"feedback"),id:String(x.id||""),date:x.date||x.endDate||""}));
+ if(key==="proposals")return proposals.map(x=>({...row(x.icon||"🎉",x.title,[dlabel(x.date),x.time,x.place].filter(Boolean).join(" · "),"leisure"),id:String(x.id||""),date:x.date||""}));
+ if(key==="activities")return activities.map(x=>({...row(x.icon||"🎉",x.title,x.sub||dlabel(x.date),"business-action"),href:x.href,date:x.date||""}));
+ if(key==="pending")return (pending?.items||[]).map(x=>({...row(x.icon||"📋",x.title,[dlabel(x.date),x.sub].filter(Boolean).join(" · "),"business-action"),href:x.href,date:x.date||""}));
  return [];
+}
+// Shared, automatic date groups: identical headings in every dated choice menu.
+function cardsForView(key,entries) {
+ if(!["pending","past","proposals","activities"].includes(key))return entries.map(card).join("");
+ let previous="";
+ return entries.map((item,index)=>{
+   const iso=String(item.date||"").slice(0,10);
+   const valid=window.GHEDateSeparator.parts(iso);
+   const heading=valid&&iso!==previous?window.GHEDateSeparator.separator(iso):"";
+   previous=valid?iso:"";
+   return heading+card(item,index);
+ }).join("");
 }
 function ensure(){
  if(modal?.isConnected)return modal;
@@ -87,7 +99,7 @@ function show(key="hub"){
  const d=ensure();
  d.innerHTML='<section class="ghe-choice-hub-frame"><header><div><small>GHE · MES CHOIX</small><h2 id="gheSmartChoiceTitle">'+esc(labels[key]||"Mes choix")+'</h2></div>'+
   '<button type="button" data-ghe-choice-close aria-label="Fermer">×</button></header>'+
-  '<div class="ghe-choice-hub-list">'+(items.length?items.map(card).join(""):'<p class="ghe-choice-hub-empty">Aucun élément pour le moment.</p>')+'</div>'+
+  '<div class="ghe-choice-hub-list">'+(items.length?cardsForView(key,items):'<p class="ghe-choice-hub-empty">Aucun élément pour le moment.</p>')+'</div>'+
   (["pending","past","proposals","activities","carpool"].includes(key)?'<footer><button type="button" data-ghe-choice-back>‹ Tous les choix</button></footer>':"")+'</section>';
  d.setAttribute("aria-labelledby","gheSmartChoiceTitle");
  if(!d.open)d.showModal();
