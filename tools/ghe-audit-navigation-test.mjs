@@ -83,3 +83,7 @@ const navigatePending=vm.runInNewContext('(event,destination,window,requestAnima
 navigatePending(event,destination,windowMock,callback=>callback(),()=>{}, {},key=>sequence.push('select-icon:'+key));
 assert.deepEqual(sequence,['prevent-default','stop-duplicate-handlers','select-icon:','close-history'],'pending click waits for overlay history and blocks double processing');
 afterClose();assert.equal(sequence.at(-1),'show-choice:'+href,'after closing history show one actionable choice before following destination');
+
+assert.doesNotMatch(global,/\.\.\.livePage\(\)/,"search does not return the entire open page as a misleading hit");
+assert.match(global,/ranked\.sort\(/,"search prioritizes meaningful names over raw page contents");
+assert.match(global,/box\.hidden=!opened/,"expanded drawer does not automatically expose search");
