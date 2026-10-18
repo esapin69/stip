@@ -218,6 +218,25 @@ assert.doesNotMatch(appointmentsFace,/data-agenda360-proposals/);
 assert.match(agenda360,/const hasOpen=feedback\.length>0\|\|proposals\.length>0;/);
 assert.match(home,/const available=feedbackCount>0\|\|proposalsCount>0;/);
 assert.match(home,/data-agenda360-action-count/);
+/* Garantie : l'agenda utilise le vrai 360° commun, pas une double navigation. */
+assert.match(agenda360,/ghe-agenda360-front[\s\S]*?data-agenda360-turn="back"/);
+assert.match(agenda360,/ghe-agenda360-back[\s\S]*?data-agenda360-turn="front"/);
+assert.equal((feedbackFace.match(/data-agenda360-turn=/g)||[]).length,1,
+  "Une commande 360 unique au recto");
+assert.equal((appointmentsFace.match(/data-agenda360-turn=/g)||[]).length,1,
+  "Une commande 360 unique au verso");
+assert.doesNotMatch(agenda360,/ghe-agenda360-actions|ghe-agenda360-swap/,
+  "La barre à deux boutons doit disparaître");
+assert.match(smartDatesCss,/#homeView \.ghe-agenda360\[data-side="back"\] \.ghe-agenda360-track\{transform:rotateY\(180deg\)\}/,
+  "Le conteneur se retourne réellement");
+assert.match(smartDatesCss,/backface-visibility:hidden/,
+  "Les faces masquent leur verso au retournement");
+const flipShared=file("ghe-flip-actions.css");
+assert.match(flipShared,/#homeView \.ghe-agenda360-face>\.ghe-flip-cta/,
+  "L'agenda réutilise le même bouton que Semaine et Mois");
+assert.match(smartDatesCss,/#homeView \.ghe-agenda360 \.hc-feedback-outer-separator\{display:none!important\}/,
+  "Ne pas empiler deux en-têtes À clôturer");
+
 assert.match(home,/aria-pressed/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
 assert.match(css,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important;/,
