@@ -10,6 +10,8 @@
  };
  function eligible(el){
   if(!el||el.disabled||el.closest("[inert],[aria-disabled='true'],#gheChoiceMasterDialog"))return false;
+  // La maison est une exception explicite : aucun popup avant retour à l’accueil.
+  if(el.matches("#gheSmartRail [data-smart-home]"))return false;
   if(el.closest("dialog:not(#gheSmartPendingDialog),[role='dialog'][aria-modal='true']"))return false;
   if(el.matches("#homeView button[data-app],#homeView button[data-home-mode]"))return true;
   if(!el.matches("a[href]")||el.hasAttribute("download")||el.target==="_blank")return false;
@@ -57,7 +59,7 @@
   const el=source;if(!el)return;
   modal?.close();
   // Drawer entries already have their own preliminary modal; do not show two.
-  if(el.closest("#gheSmartRail")&&el.matches("a[data-smart-open-details]")){
+  if(el.closest("#gheSmartRail,#gheSmartRdvDialog")&&el.matches("a[data-smart-open-details]")){
    window.GHESmartDrawer?.setMode?.("compact");
    const kind=el.dataset.smartEntryKind,id=el.dataset.smartEntryId,action=el.dataset.smartAction;
    const opened=kind?window.STIPDrawerOpenEntry?.(kind,id):action?window.STIPDrawerOpenAction?.(action):false;
