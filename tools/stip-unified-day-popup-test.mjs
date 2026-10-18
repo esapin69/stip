@@ -26,11 +26,17 @@ test("month and current-week days use one shared popup, not legacy shift overlay
 test("only next Monday is previewed without navigating to the following week", () => {
   const preview = home.split("function weekFlipNextMonday()")[1].split("function weekFlipBack()")[0];
   assert.match(preview, /weekOffset: 1/);
-  assert.match(preview, /SEMAINE PROCHAINE · LUNDI SEULEMENT/);
-  assert.match(preview, /Voir ce lundi/);
+  assert.match(preview, /weekday:"short",day:"numeric",month:"short"/);
+  assert.match(preview, /ghe-weekflip-monday-preview-copy/);
+  assert.match(preview, /ghe-weekflip-monday-preview-schedule/);
+  assert.match(preview, /data-home-day=/);
+  assert.match(preview, /Consulter le/);
+  assert.doesNotMatch(preview, /Voir ce lundi|LUNDI SEULEMENT|ghe-weekflip-next-action/);
   assert.match(home, /!b\.classList\.contains\("ghe-weekflip-monday-preview"\)/);
+  assert.match(home, /SEMAINE PROCHAINE/);
   assert.match(weekCss, /\.ghe-weekflip-next-divider/);
-  assert.match(weekCss, /\.ghe-weekflip-next-action/);
+  assert.match(weekCss, /min-height:51px!important/);
+  assert.doesNotMatch(weekCss, /ghe-weekflip-next-action|ghe-weekflip-next-tag/);
 });
 
 test("shared popup opens before network responses settle and refreshes in place", async () => {
