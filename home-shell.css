@@ -5828,3 +5828,6 @@ dialog#hcDrawerAgendaDialog:modal,dialog#hcDrawerAgendaDialog[open]{
 .ghe-premium-agent-search>span:nth-child(2){flex:1;font-weight:750}
 .ghe-premium-agent-search small{display:block;font-size:.75rem;font-weight:500;margin-top:2px}
 .ghe-premium-agent-search:focus-visible{outline:3px solid #168ca9;outline-offset:2px}
+
+/* Trois outils déplacés dans le rail ; la cloche de notifications reste en haut. */
+#homeView .ghe-top-aux-actions,#homeView .ghe-home-topbar .ghe-top-wheelchair,#homeView .ghe-home-topbar .ghe-top-settings,#homeView .ghe-home-topbar .ghe-leisure-quick{display:none!important}
