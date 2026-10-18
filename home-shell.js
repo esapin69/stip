@@ -4023,7 +4023,8 @@ function personalDrawerRow(icon,label,action,meta="") {
       '<div class="hc-week-event-key-list">' + top + extra + '</div></section>';
   }
 
-  // Le même module métier alimente les deux faces, sans dupliquer ses données.
+  // Agenda 360 : le bouton en pied de chaque face réutilise le contrat unique
+  // Semaine / Mois / Profil. Une seule commande est visible à la fois.
   function agenda360Markup() {
     const groups=drawerAppointmentsState().groups;
     const upcoming=groups.find(g=>g.key==="upcoming")?.items||[];
@@ -4040,33 +4041,43 @@ function personalDrawerRow(icon,label,action,meta="") {
       const dateHeading=window.GHEDateSeparator.separator(date,{className:"ghe-agenda360-date"});
       return '<div class="ghe-agenda360-date-group">'+dateHeading+items.map(entry=>{
         const index=upcoming.indexOf(entry),icon=entry.kind==="future"?eventIconHtml(entry.event,"hc-event-svg"):esc(entry.icon);
+        const details=[entry.time,entry.place,entry.stateLabel==="Prévu"?"":entry.stateLabel].filter(Boolean);
         return '<button type="button" class="ghe-agenda360-appointment" data-agenda360-entry="'+index+'">'+
-        '<span class="ghe-agenda360-event-icon" aria-hidden="true">'+icon+'</span>'+
-        '<span><strong>'+esc(entry.title)+'</strong><small>'+
-        esc([entry.time,entry.place,entry.stateLabel].filter(Boolean).join(" · "))+
-        '</small></span><span aria-hidden="true">›</span></button>';
+          '<span class="ghe-agenda360-event-icon" aria-hidden="true">'+icon+'</span>'+
+          '<span class="ghe-agenda360-event-copy"><strong>'+esc(entry.title)+'</strong><small>'+
+          esc(details.join(" · "))+'</small></span><span class="ghe-agenda360-chevron" aria-hidden="true">›</span></button>';
       }).join("")+'</div>';
     }).join("");
+    const actionSummary=[feedback.length?feedback.length+' retour'+(feedback.length>1?'s':''):'',
+      proposals.length?proposals.length+' proposition'+(proposals.length>1?'s':''):''].filter(Boolean).join(' · ')||'Aucune action';
     return '<section class="ghe-agenda360" data-agenda360 data-side="'+(hasOpen?"front":"back")+
-      '" data-has-front="'+String(hasOpen)+'" data-proposal-count="'+proposals.length+'" aria-label="Actions à traiter et rendez-vous à venir">'+
+      '" data-has-front="'+String(hasOpen)+'" data-proposal-count="'+proposals.length+'" aria-label="Actions et rendez-vous, bloc recto verso">'+
       '<div class="ghe-agenda360-track">'+
-      '<div class="ghe-agenda360-face ghe-agenda360-front" data-agenda360-face="front">'+
-      '<header class="ghe-agenda360-action-title"><strong>À traiter</strong><small data-agenda360-summary>'+
-      [feedback.length?feedback.length+' retour'+(feedback.length>1?'s':''):'',proposals.length?proposals.length+' proposition'+(proposals.length>1?'s':''):''].filter(Boolean).join(' · ')+
-      '</small></header>'+ 
-      '<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>'+
-            (proposals.length?'<button type="button" class="ghe-agenda360-proposals" data-agenda360-proposals>'+
-        '<span aria-hidden="true">📩</span><span><strong>Propositions des collègues</strong>'+
-        '<small>'+proposals.length+' à consulter · regroupées dans une fenêtre</small></span><b>'+proposals.length+'</b></button>':"")+
-'</div><div class="ghe-agenda360-face ghe-agenda360-back" data-agenda360-face="back">'+
-      '<div class="ghe-agenda360-rdv-title"><strong>À venir</strong><small>'+upcoming.length+' date'+
-       (upcoming.length>1?"s":"")+' à venir</small></div>'+
-      (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
-      '</div></div><footer class="ghe-agenda360-actions">'+
-      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback" aria-label="Afficher les actions à traiter"><span>À traiter</span><b data-agenda360-action-count>'+(feedback.length+proposals.length)+'</b></button>'+
-      '<span class="ghe-agenda360-swap" aria-hidden="true">↻</span>'+
-      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv" aria-label="Afficher les rendez-vous à venir"><span>À venir</span><b>'+upcoming.length+'</b></button>'+
-      '</footer></section>';
+        '<div class="ghe-agenda360-face ghe-agenda360-front" data-agenda360-face="front">'+
+          '<header class="ghe-agenda360-action-title"><strong>À traiter</strong><small data-agenda360-summary>'+actionSummary+'</small>'+
+          '<b data-agenda360-action-count>'+ (feedback.length+proposals.length) +'</b></header>'+
+          '<span id="hcTopPriorityAnchor" hidden aria-hidden="true"></span>'+
+          (proposals.length?'<button type="button" class="ghe-agenda360-proposals" data-agenda360-proposals>'+
+            '<span class="ghe-agenda360-proposals-icon" aria-hidden="true">📩</span>'+
+            '<span class="ghe-agenda360-proposals-copy"><strong>Propositions des collègues</strong>'+
+            '<small>'+proposals.length+' à examiner</small></span><b>'+proposals.length+'</b>'+
+            '<span class="ghe-agenda360-chevron" aria-hidden="true">›</span></button>':"")+
+          '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv ghe-flip-cta" aria-label="Retourner vers mes rendez-vous">'+
+            '<span class="ghe-flip-cta-icon" aria-hidden="true">↻</span>'+
+            '<span class="ghe-flip-cta-label">Mes rendez-vous</span>'+
+            '<b class="ghe-flip-cta-arrow" aria-hidden="true">›</b></button>'+
+        '</div>'+
+        '<div class="ghe-agenda360-face ghe-agenda360-back" data-agenda360-face="back">'+
+          '<header class="ghe-agenda360-rdv-title"><strong>Mes rendez-vous</strong><small>'+upcoming.length+' date'+(upcoming.length>1?'s':'')+' à venir</small></header>'+
+          '<div class="ghe-agenda360-upcoming-list">'+
+            (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
+          '</div>'+
+          (hasOpen?'<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback ghe-flip-cta" aria-label="Retourner vers les actions à traiter">'+
+            '<span class="ghe-flip-cta-icon" aria-hidden="true">↶</span>'+
+            '<span class="ghe-flip-cta-label">À traiter</span>'+
+            '<b class="ghe-flip-cta-arrow" aria-hidden="true">‹</b></button>':"")+
+        '</div>'+
+      '</div></section>';
   }
   function bindAgenda360(root) {
     const stage=root.querySelector("[data-agenda360]");
@@ -4085,7 +4096,6 @@ function personalDrawerRow(icon,label,action,meta="") {
       if(summaryEl&&summaryEl.textContent!==summary)summaryEl.textContent=summary;
       const totalEl=stage.querySelector('[data-agenda360-action-count]');
       if(totalEl&&totalEl.textContent!==String(feedbackCount+proposalsCount))totalEl.textContent=String(feedbackCount+proposalsCount);
-      for(const button of stage.querySelectorAll('[data-agenda360-turn]'))button.setAttribute('aria-pressed',String(stage.dataset.side===button.dataset.agenda360Turn));
       for(const side of ["front","back"]){
         const face=stage.querySelector('[data-agenda360-face="'+side+'"]');
         face?.toggleAttribute("inert",stage.dataset.side!==side);
