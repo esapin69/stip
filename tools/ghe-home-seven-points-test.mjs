@@ -29,6 +29,7 @@ assert.match(css,/button\.ghe-premium-now-group/);
 assert.match(css,/\.ghe-premium-now-group\.shift-chief/);
 assert.match(css,/\.ghe-premium-now-groups\{[\s\S]*?overflow:visible!important/);
 assert.match(css,/dialog\.ghe-premium-now-dialog::backdrop/);
+assert.match(css,/transform:translateX\(-clamp\(30px,10vw,65px\)\)!important/,"Live shortcut moves left");
 assert.match(css,/\.ghe-premium-now-modal-content\{[\s\S]*?overflow-y:auto/);
 const mockRow=(code,id)=>({code,agents:{source_key:id,prenom:id,nom:"Test"}});
 const onlyActive=[mockRow("J","J1"),mockRow("J","J2"),mockRow("S","S1")];
@@ -55,6 +56,8 @@ assert.match(withChief,/data-premium-roster="all"/,"Total headcount opens all ag
 assert.match(withChief,/data-premium-roster="J"/);
 assert.match(withChief,/data-premium-roster="S"/);
 assert.match(withChief,/data-premium-roster="chiefs"/);
+assert.doesNotMatch(withChief,/Rechercher un agent|data-premium-agent-search/,"No search action in En direct");
+assert.match(withChief,/Selon le planning · présence réelle non confirmée/,"Source caveat remains explicit");
 assert.doesNotMatch(withChief,/data-premium-roster="N"/,"Night not shown before its real start");
 assert.doesNotMatch(withChief,/data-premium-roster="M"/,"Finished mornings not shown");
 assert.match(withChief,/strong>4<\/strong>/,"The total includes the three agents and one chief");
