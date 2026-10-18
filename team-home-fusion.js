@@ -430,7 +430,7 @@
           '<span class="thf-event-chevron" aria-hidden="true">›</span></button>').join("")+
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
-      '</div>'+
+      '</div></div>'+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
