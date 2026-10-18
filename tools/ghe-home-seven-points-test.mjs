@@ -209,14 +209,16 @@ assert.deepEqual(Array.from(feedbackOrdered,item=>item.eventKey),
 assert.match(feedbackOrderSource,/const datedCards=pending\.map\(/,
   "date separators must inherit the same oldest-first pending order");
 
-/* Propositions des collègues are appointment-side; only feedback activates À clôturer. */
+/* Propositions des collègues belong to the actions face; confirmed dates alone belong to À venir. */
 const agenda360=home.slice(home.indexOf("function agenda360Markup()"),home.indexOf("function bindAgenda360("));
 const feedbackFace=agenda360.slice(agenda360.indexOf('data-agenda360-face="front"'),agenda360.indexOf('data-agenda360-face="back"'));
 const appointmentsFace=agenda360.slice(agenda360.indexOf('data-agenda360-face="back"'));
-assert.doesNotMatch(feedbackFace,/data-agenda360-proposals/);
-assert.match(appointmentsFace,/data-agenda360-proposals/);
-assert.match(agenda360,/const hasOpen=feedback\.length>0;/);
-assert.match(home,/const available=feedback;/);
+assert.match(feedbackFace,/data-agenda360-proposals/);
+assert.doesNotMatch(appointmentsFace,/data-agenda360-proposals/);
+assert.match(agenda360,/const hasOpen=feedback\.length>0\|\|proposals\.length>0;/);
+assert.match(home,/const available=feedbackCount>0\|\|proposalsCount>0;/);
+assert.match(home,/data-agenda360-action-count/);
+assert.match(home,/aria-pressed/);
 assert.match(home,/GHESmartChoices\?\.show\?\.\("proposals"\)/);
 assert.match(css,/transform:translateX\(-clamp\(92px,28vw,132px\)\)!important;/,
   "The top red En direct launcher must shift left without moving the bell or menu");
