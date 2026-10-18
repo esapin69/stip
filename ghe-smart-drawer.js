@@ -609,7 +609,7 @@ document.addEventListener("click",event=>{
  const createChat=event.target.closest?.("#gheSmartRail [data-smart-create-open],#gheSmartRail [data-smart-chat-open]");
  if(createChat){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open(createChat.hasAttribute("data-smart-create-open")?"create":"chat",createChat);return;}
  const rdv=event.target.closest?.("[data-smart-rdv-open]");
- if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open("rdv",rdv);return;}
+ if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();if(rdv.closest("#gheSmartRail"))window.GHEDrawerPanels?.open("rdv",rdv);else openRdvDialog();return;}
  const rdvPending=event.target.closest?.("#gheSmartRdvDialog [data-smart-pending-open]");
  if(rdvPending){event.preventDefault();document.getElementById("gheSmartRdvDialog")?.close();requestAnimationFrame(openPendingDialog);return;}
  const rdvEntry=event.target.closest?.("#gheSmartRdvDialog a[data-smart-open-details]");
