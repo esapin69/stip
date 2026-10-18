@@ -312,11 +312,12 @@
       '</span><span class="thf-shift-to">–</span><span>'+esc(formatShiftHour(shiftHours[1]))+
       '</span></span>':'';
     const absenceName=shiftLabel(myCode||"");
-    const absenceIcon=String(definition(myCode)?.icon||(/cong/i.test(absenceName)?"🏖️":/repos/i.test(absenceName)?"🛋️":/rtt/i.test(absenceName)?"🌿":"🗓️"));
+    // The same code-badge family as the month: never show M on a rest day.
     const shiftSymbol=working?
       (window.STIPMonthTable?.shiftBadgeHtml?.(myCode)||
         '<span class="thf-shift-symbol-fallback">'+esc(base(myCode))+'</span>'):
-      '<span class="thf-shift-status-icon" aria-label="'+esc(absenceName)+'">'+esc(absenceIcon)+'</span>';
+      (window.STIPMonthTable?.nonWorkCodeBadgeHtml?.(myCode)||
+        '<span class="thf-rest-code-badge" aria-label="'+esc(absenceName)+'">'+esc(base(myCode)||"—")+'</span>');
     const shiftName=working?"":'<span class="thf-shift-absence-label">'+esc(absenceName||"Sans poste")+'</span>';
     const myBase=base(myCode),myInterval=range(myTime),perm=opts.permissions||{};
     const team=perm.planning_team?cached(weeks,start):null;
@@ -390,15 +391,16 @@
     host.innerHTML=
       '<article class="thf-day-card thf-weather-sky '+(working?shiftClass(myCode):restMode?"shift-absence is-rest-visual":"shift-absence")+'" data-sky="unknown">'+
       '<div class="thf-weather-stage thf-weather-sky" data-rest="'+(working?"false":"true")+'" data-sky="unknown" data-season="'+seasonForDay(day)+'">'+
-      (working?staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,'')):
-        '<div class="thf-rest-illustration" aria-hidden="true"><span>'+esc(absenceIcon)+'</span></div>')+
+      staticWeatherArt('card-'+String(day).replace(/[^0-9]/g,''))+
       '<button type="button" class="thf-day-trigger" data-thf-open="day" '+
       'aria-label="Détails du '+esc(longDate)+'">'+
       '<span class="thf-day-heading" aria-label="'+esc(longDate)+'"><span>'+esc(dateWeek)+'</span>'+
       '<strong>'+esc(dateNum)+'</strong><span>'+esc(dateMonth)+'</span></span>'+
-      (working?'<span class="thf-weather-caption"><span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span></span>':
-       '<span class="thf-rest-caption">'+esc(absenceName||"Journée sans service")+'</span>'+(restMode?'<span class="thf-rest-weather" data-thf-day-weather hidden></span>':''))+
-      (!restMode?'<span class="thf-trigger-chevron" aria-hidden="true">›</span>':'')+'</button>'+
+      '<span class="thf-weather-caption">'+
+      (working?'<span class="thf-inline-weather hc-shift-weather" data-thf-weather hidden></span>':
+        restMode?'<span class="thf-rest-weather" data-thf-day-weather hidden></span>':
+        '<span class="thf-weather-no-shift">Aucune prévision de service</span>')+
+      '</span></button>'+
       '<div class="thf-weather-body">'+
       (leisureEvents.length?'<section class="thf-day-events" aria-label="Activités du jour">'+
         '<div class="thf-section-label">📅 APRÈS LE SERVICE</div>'+
@@ -414,17 +416,17 @@
         (leisureEvents.length>2?'<button type="button" class="thf-extra-link" data-thf-open="day">+'+
           (leisureEvents.length-2)+' autres activités ›</button>':"")+'</section>':"")+
       '</div></div>'+
-      (!restMode?'<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
+      '<div class="thf-day-post '+(working?shiftClass(myCode):"shift-absence")+'"><div class="thf-shift-stack">'+
        '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
-       '<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
-       (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
-         'aria-label="Voir les '+(loaded?(restMode?restPeers.length:exact.length):"…")+' collègues '+(restMode?'en repos':'sur mon horaire')+' '+esc(label)+'" title="Collègues">'+
-         '<span aria-hidden="true">👥</span><b>'+(loaded?(restMode?restPeers.length:exact.length):"…")+'</b></button>':"")+
-       '<button type="button" class="thf-shift-chiefs" data-thf-open="chiefs" '+
-         'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
-         '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
-       '</div></div></div>':'')+
-       (!restMode?'<button type="button" class="thf-day-more" data-thf-open="day">Voir les détails <span aria-hidden="true">›</span></button>':'')+
+       (working?'<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
+         (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
+           'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'" title="Collègues">'+
+           '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
+         '<button type="button" class="thf-shift-chiefs" data-thf-open="chiefs" '+
+           'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
+           '<span aria-hidden="true">🎨</span><b>'+(loaded||chiefs.length?chiefs.length:"…")+'</b></button>'+
+         '</div>':"")+
+       '</div></div>'+
       '</article>';
     const weather=host.querySelector?.("[data-thf-weather]");
     if(weather&&window.STIPShiftWeather?.mount){
@@ -640,11 +642,11 @@
   document.addEventListener("click",async(event)=>{
     const el=event.target.closest?.("[data-thf-agent],[data-thf-chief-call],[data-thf-note],[data-thf-refresh],[data-thf-team-subscribe],[data-thf-open],[data-thf-people-tab]");
     if(!el){
-      const card=event.target.closest?.("#hcTeamFusion .thf-day-card.is-rest-visual,#hcTomorrowFusion .thf-day-card.is-rest-visual");
-      // Ne pas détourner le clic sur une activité, un lien ou une action du jour.
-      if(card && !event.target.closest?.("button, a, [role=button], [data-ev3-preview]")){
-        const restHost=card.closest("#hcTeamFusion,#hcTomorrowFusion");
-        if(restHost?._thfSummary)openDay(restHost);
+      const card=event.target.closest?.("#hcTeamFusion .thf-day-card,#hcTomorrowFusion .thf-day-card");
+      // Whole card opens its day, but nested activities, colleagues and chiefs keep their own actions.
+      if(card && !event.target.closest?.("button, a, input, select, textarea, [role=button], [data-ev3-preview]")){
+        const dayHost=card.closest("#hcTeamFusion,#hcTomorrowFusion");
+        if(dayHost?._thfSummary)openDay(dayHost);
       }
       return;
     }
