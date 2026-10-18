@@ -573,3 +573,26 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 @media(max-width:360px){
  :is(#gheSmartRail,#homeView,#gheSmartChoiceDialog) .ghe-date-separator{gap:5px;padding-inline:2px;font-size:10px}
 }
+
+/* Navigation à plat après la maison : recherche, ajout/dates, messages/apps, réserve, réglages. */
+#gheSmartRail .ghe-smart-date-group,#gheSmartRail .ghe-smart-date-button{display:block}
+#gheSmartRail .ghe-smart-date-button{display:flex;align-items:center;width:100%;min-height:54px;padding:5px 0;border:0;border-radius:12px;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
+#gheSmartRail .ghe-smart-date-button:hover{background:#eef8fb}
+#gheSmartRail .ghe-smart-navigation nav>.ghe-smart-link{min-height:54px}
+#gheSmartRail .ghe-smart-reserved-slot{min-height:28px}
+
+/* Recherche globale à droite en colonne compacte, intégrée dans le tiroir déployé. */
+.ghe-global-search-panel{position:fixed;z-index:7106;box-sizing:border-box;left:56px;width:min(370px,calc(100vw - 66px));max-height:min(66dvh,560px);overflow:auto;padding:12px;border:1px solid #c7dfe9;border-radius:0 16px 16px 0;background:#fff;color:#1b4659;box-shadow:6px 12px 30px #133c5440;font-family:inherit}
+.ghe-global-search-panel[hidden]{display:none!important}
+.ghe-global-search-panel.is-expanded{position:relative;top:auto!important;left:auto;z-index:1;width:100%;max-height:300px;margin:4px 0 11px;padding:9px;border:1px solid #d6e5ec;border-radius:12px;box-shadow:none}
+.ghe-global-search-panel label{display:block;margin:0 0 8px;font-weight:850;font-size:12px}
+.ghe-global-field{display:flex;align-items:center;gap:4px}
+.ghe-global-field input{box-sizing:border-box;min-width:0;min-height:43px;width:100%;flex:1;border:1px solid #c9dde7;border-radius:11px;background:#fafdfd;color:#184658;padding:8px 10px;font:inherit;font-size:14px}
+.ghe-global-field button{flex:none;width:37px;height:42px;border:0;border-radius:10px;background:#eef7fa;color:#265670;font-size:22px;cursor:pointer}
+.ghe-global-results{max-height:355px;overflow:auto;margin-top:7px;overscroll-behavior:contain}
+.ghe-global-search-panel.is-expanded .ghe-global-results{max-height:145px}
+.ghe-global-result{position:relative;display:block;padding:10px 22px 10px 4px;border-bottom:1px solid #e4eff2;color:#1b4558;text-decoration:none;overflow-wrap:anywhere}
+.ghe-global-result strong{display:block;font-size:13px}
+.ghe-global-result small{display:block;color:#617e8c;font-size:11px;line-height:1.4;margin-top:4px}
+.ghe-global-result b{position:absolute;right:4px;top:14px;font-size:19px}
+.ghe-global-help{color:#617b87;font-size:12px;line-height:1.45;padding:10px 4px}

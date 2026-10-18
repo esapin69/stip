@@ -3096,11 +3096,37 @@
     }
   }
   function updateLiveCard(){
-    const target=document.querySelector("#homeView .ghe-premium-back-body");
+    const target=document.querySelector("#gheHomeLiveDialog .ghe-premium-back-body");
     if(target?.isConnected&&state.ready){
       target.innerHTML=premiumBackMarkup();
-      syncPremiumStageHeight(target.closest("[data-premium-flip]"));
+      // Popup indépendante de la carte profil : aucun retournement.
     }
+  }
+  /* Le contenu de l'ancien verso est désormais dans une fenêtre centrale. */
+  function openHomeLiveDialog(){
+    let dialog=document.getElementById("gheHomeLiveDialog");
+    if(!dialog){
+      dialog=document.createElement("dialog");
+      dialog.id="gheHomeLiveDialog";dialog.className="ghe-home-live-modal";
+      dialog.setAttribute("aria-labelledby","gheHomeLiveTitle");
+      document.body.appendChild(dialog);
+      dialog.addEventListener("click",event=>{
+        if(event.target===dialog||event.target.closest("[data-home-live-close]")){dialog.close();return;}
+        if(event.target.closest("[data-premium-agent-search]")){
+          dialog.close();openHeaderDirectorySearch("first");return;
+        }
+        const rosterButton=event.target.closest("[data-premium-roster]");
+        if(rosterButton){openPremiumRoster(rosterButton.dataset.premiumRoster);return;}
+      });
+      dialog.addEventListener("close",()=>{
+        document.querySelector("[data-home-live-open]")?.focus({preventScroll:true});
+      });
+    }
+    dialog.innerHTML='<section class="ghe-home-live-sheet hc-home-top-nav" data-header-compact>'+
+      '<header class="ghe-home-live-head"><div><small>GHE · ÉQUIPE</small><h2 id="gheHomeLiveTitle"><i aria-hidden="true"></i> En direct</h2></div>'+
+      '<button type="button" data-home-live-close aria-label="Fermer En direct">×</button></header>'+
+      '<div class="ghe-home-live-content ghe-premium-back-body">'+premiumBackMarkup()+'</div></section>';
+    if(!dialog.open)dialog.showModal();
   }
   function openLiveAgent(key){
     if(!key)return;
@@ -3127,32 +3153,18 @@
       '<button type="button" class="ghe-shortcuts-hamburger" data-shortcuts-open '+
         'aria-haspopup="dialog" aria-controls="hcPersonalDrawer" aria-label="Ouvrir mon espace">'+
         '<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span></button>'+
+      '<button type="button" class="ghe-home-live-launch" data-home-live-open aria-haspopup="dialog" aria-controls="gheHomeLiveDialog" aria-label="En direct du service"><span aria-hidden="true" class="ghe-home-live-dot"></span> En direct</button>'+
       '<button type="button" class="hc-profile-bell ghe-home-bell" data-bell-open aria-haspopup="dialog" aria-controls="hcBellDialog" aria-label="Ouvrir les notifications'+
         (count?' : '+count+' à consulter':'')+'"><span aria-hidden="true">🔔</span>'+
         (count?'<b>'+count+'</b>':'')+'</button></div>';
-    const face=state.premiumFlipped?'back':'front';
+
     const identity='<div class="hc-home-meta-date hc-calendar-driven-planning hc-home-standalone-date">'+
       todayFullDateSeparator()+'</div>'+
-      '<div class="stip-section-separator ghe-home-global-separator ghe-home-flip-separator ghe-home-premium-separator" data-premium-separator data-side="'+face+'" role="separator" aria-label="'+(face==='back'?'EN DIRECT':'MON PROFIL')+'"><span data-premium-separator-label>'+(face==='back'?'EN DIRECT':'MON PROFIL')+'</span></div>'+ 
-      '<div class="ghe-premium-stage" data-premium-flip data-side="'+face+'">'+
+      '<div class="stip-section-separator ghe-home-global-separator ghe-home-premium-separator" data-premium-separator role="separator" aria-label="MON PROFIL"><span data-premium-separator-label>MON PROFIL</span></div>'+
+      '<div class="ghe-premium-stage ghe-profile-static" data-premium-static>'+
         '<div class="ghe-premium-track">'+
-          '<section class="ghe-premium-face ghe-premium-front ghe-home-header-stack" aria-label="Carte professionnelle"'+
-            (state.premiumFlipped?' inert':'')+'>'+
+          '<section class="ghe-premium-face ghe-premium-front ghe-home-header-stack" aria-label="Carte professionnelle">'+
             '<div class="hc-home-identity">'+profile()+'</div>'+
-            '<footer class="ghe-premium-front-footer">'+
-              '<button type="button" class="ghe-premium-turn ghe-flip-cta" data-premium-turn-open'+
-                ' aria-label="Retourner la carte pour afficher En direct" aria-expanded="'+state.premiumFlipped+'">'+
-                '<span class="ghe-flip-cta-icon ghe-flip-cta-dot" aria-hidden="true"></span>'+
-                '<strong class="ghe-flip-cta-label">Voir en direct</strong><b class="ghe-flip-cta-arrow" aria-hidden="true">↻</b></button></footer>'+
-          '</section>'+
-          '<section class="ghe-premium-face ghe-premium-back" aria-label="En direct du service"'+
-            (!state.premiumFlipped?' inert':'')+'>'+
-            '<div class="ghe-premium-back-body">'+premiumBackMarkup()+'</div>'+
-            '<footer class="ghe-premium-back-footer">'+
-              '<button type="button" class="ghe-premium-turn ghe-flip-cta" data-premium-turn-close aria-label="Revenir à mon profil">'+
-                '<span class="ghe-flip-cta-icon" aria-hidden="true">↶</span>'+
-                '<strong class="ghe-flip-cta-label">Retour à mon profil</strong>'+
-                '<b class="ghe-flip-cta-arrow" aria-hidden="true">‹</b></button></footer>'+
           '</section>'+
         '</div>'+
       '</div>';
@@ -4266,33 +4278,8 @@ function personalDrawerRow(icon,label,action,meta="") {
       monthFlip.querySelector("[data-month-turn-open]")?.setAttribute("aria-expanded", String(state.monthFlipped));
       monthFlip.querySelector(state.monthFlipped ? "[data-month-turn-close]" : "[data-month-turn-open]")?.focus({preventScroll:true});
     });
-    const premium=root.querySelector("[data-premium-flip]");
-    premium?.addEventListener("click",event=>{
-      const open=event.target.closest("[data-premium-turn-open]");
-      const close=event.target.closest("[data-premium-turn-close]");
-      if(open||close){
-        state.premiumFlipped=Boolean(open);
-        premium.dataset.side=state.premiumFlipped?"back":"front";
-        const premiumHeading=state.premiumFlipped?"EN DIRECT":"MON PROFIL";
-        const premiumSeparator=root.querySelector("[data-premium-separator]");
-        if(premiumSeparator){
-          premiumSeparator.dataset.side=state.premiumFlipped?"back":"front";
-          premiumSeparator.setAttribute("aria-label",premiumHeading);
-          const text=premiumSeparator.querySelector("[data-premium-separator-label]");
-          if(text)text.textContent=premiumHeading;
-        }
-        premium.querySelector(".ghe-premium-front")?.toggleAttribute("inert",state.premiumFlipped);
-        premium.querySelector(".ghe-premium-back")?.toggleAttribute("inert",!state.premiumFlipped);
-        premium.querySelector("[data-premium-turn-open]")?.setAttribute("aria-expanded",String(state.premiumFlipped));
-        syncPremiumStageHeight(premium);
-        const target=premium.querySelector(state.premiumFlipped?"[data-premium-turn-close]":"[data-premium-turn-open]");
-        target?.focus({preventScroll:true});
-        return;
-      }
-      if(event.target.closest("[data-premium-agent-search]")){openHeaderDirectorySearch("first");return;}
-      const rosterButton=event.target.closest("[data-premium-roster]");
-      if(rosterButton){openPremiumRoster(rosterButton.dataset.premiumRoster);return;}
-    });
+
+    root.querySelector("[data-home-live-open]")?.addEventListener("click",openHomeLiveDialog);
 
     root.querySelectorAll("details[data-pilotage-role]").forEach(details =>
       details.addEventListener("toggle", () => {

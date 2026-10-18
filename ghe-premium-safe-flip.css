@@ -607,3 +607,45 @@ dialog.ghe-premium-now-dialog::backdrop{background:#0f263766;backdrop-filter:blu
 }
 
 .ghe-premium-now-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}
+
+/* Le profil reste une simple carte ; aucun bouton ni seconde face 360. */
+.hc-home-top-nav[data-header-compact] .ghe-profile-static .ghe-premium-track{box-sizing:border-box!important;position:relative!important;display:block!important;height:auto!important;min-height:0!important;transform:none!important;transition:none!important;transform-style:flat!important}
+.hc-home-top-nav[data-header-compact] .ghe-profile-static .ghe-premium-front{box-sizing:border-box!important;display:block!important;position:relative!important;left:auto!important;top:auto!important;grid-row:auto!important;grid-column:auto!important;height:auto!important;min-height:165px!important;overflow:visible!important;transform:none!important;backface-visibility:visible!important;padding:13px!important}
+.hc-home-top-nav[data-header-compact] .ghe-profile-static{perspective:none!important;margin-bottom:13px}
+.hc-home-top-nav[data-header-compact] .ghe-profile-static .ghe-premium-front-footer,.hc-home-top-nav[data-header-compact] .ghe-profile-static .ghe-premium-back{display:none!important}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{box-sizing:border-box!important;grid-column:1;grid-row:1;justify-self:center;align-self:center;display:inline-flex!important;align-items:center;gap:9px;min-height:43px;padding:10px 17px;border:1px solid #ce153e;border-radius:999px;background:linear-gradient(130deg,#ed254f,#bd123b);color:#fff;font:900 15px/1 system-ui,sans-serif;box-shadow:0 6px 17px #c81f483f;cursor:pointer;white-space:nowrap;touch-action:manipulation}
+.hc-home-top-nav[data-header-compact] .ghe-home-live-dot{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#fff;box-shadow:0 0 0 4px #ffffff4f}
+@media(max-width:365px){.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{padding:9px 12px;font-size:13px}}
+dialog.ghe-home-live-modal{position:fixed;inset:0;box-sizing:border-box;width:min(520px,calc(100vw - 24px));max-height:min(87dvh,870px);margin:auto;padding:0;border:1px solid #e5b8c5;border-radius:23px;background:#fff;color:#1b4053;box-shadow:0 23px 65px #102b3f66;overflow:hidden}
+dialog.ghe-home-live-modal::backdrop{background:#152c4180;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+.ghe-home-live-modal .ghe-home-live-sheet{box-sizing:border-box;display:flex;flex-direction:column;width:100%;max-width:100%;max-height:min(87dvh,870px);margin:0;padding:0}
+.ghe-home-live-modal .ghe-home-live-head{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;background:#fff8fa;border-bottom:1px solid #f0dbe1}
+.ghe-home-live-modal .ghe-home-live-head small{font-size:11px;font-weight:800;letter-spacing:.08em;color:#956676}
+.ghe-home-live-modal .ghe-home-live-head h2{display:flex;align-items:center;gap:9px;font-size:22px;color:#ba1741;margin:5px 0 0}
+.ghe-home-live-modal .ghe-home-live-head h2 i{width:10px;height:10px;border-radius:50%;background:#ef244e;box-shadow:0 0 0 4px #ffd5df}
+.ghe-home-live-modal [data-home-live-close]{flex:none;width:42px;height:42px;border:1px solid #ebcdd7;border-radius:13px;background:#fff;font-size:25px;color:#9b2e4d;cursor:pointer}
+.ghe-home-live-modal .ghe-home-live-content{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:14px 16px 18px}
+.ghe-home-live-modal .ghe-premium-now{box-sizing:border-box;width:100%;max-width:100%;gap:12px}
+.ghe-home-live-modal .ghe-premium-now-groups{overflow:visible!important;max-height:none!important}
+
+/* Trois emplacements explicites : ☰ à gauche, En direct au centre, cloche à droite. */
+.hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+ grid-template-columns:minmax(0,48px) minmax(0,1fr) minmax(0,60px)!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-shortcuts-hamburger{
+ grid-column:1!important;grid-row:1!important;justify-self:start!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{
+ grid-column:2!important;grid-row:1!important;justify-self:center!important;
+}
+.hc-home-top-nav[data-header-compact] .ghe-home-topbar .hc-profile-bell.ghe-home-bell{
+ grid-column:3!important;grid-row:1!important;justify-self:end!important;
+}
+@media(max-width:370px){
+ .hc-home-top-nav[data-header-compact] .hc-home-top-tools.ghe-home-topbar{
+  grid-template-columns:minmax(0,44px) minmax(0,1fr) minmax(0,53px)!important;
+ }
+ .hc-home-top-nav[data-header-compact] .ghe-home-topbar .ghe-home-live-launch{
+  min-height:41px!important;padding:9px 10px!important;font-size:12px!important;
+ }
+}

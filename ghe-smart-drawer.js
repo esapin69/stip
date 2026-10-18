@@ -97,6 +97,7 @@ function setMode(value){
  });
  const reopen=document.getElementById("gheSmartReopen");
  if(reopen)reopen.setAttribute("aria-label","Ouvrir le tiroir en icônes");
+ window.GHEGlobalSearch?.sync();
 }
 function homeDrawerSnapshot(){
  // Consume the existing home cache; no second list of professional records.
@@ -500,7 +501,8 @@ function render(){
  if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();document.querySelectorAll(".ghe-smart-rdv-quick").forEach(b=>b.remove());return;}
  document.body.classList.add("ghe-smart-active");
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
- // La maison reste isolée au sommet de la navigation.
+
+ // Affichage direct : ni rendez-vous ni applications cachés derrière un menu.
  const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-smart-home data-smart-active-key="home" data-choice-kind="shortcut" aria-label="Accueil — retour direct, fermer le tiroir">'+
   '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
@@ -510,25 +512,29 @@ function render(){
   '<span class="ghe-smart-icon" aria-hidden="true">'+icon+'</span><span class="ghe-smart-labels">'+
   '<strong class="ghe-smart-name">'+escapeHtml(title)+'</strong><small class="ghe-smart-sub">'+escapeHtml(sub)+'</small></span></button>';
  const entries=groupedEntries(),inbox=entries.find(x=>x.kind==="pending");
- const count=inbox?.count||0;
+ const appointments=appointmentDays(entries).map(calendarDayGroup).join("");
+ const apps=appEntries().map(item=>link({kind:"shortcut",icon:"",...item})).join("");
+ const pending='<button type="button" class="ghe-smart-link ghe-smart-pending-trigger" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog" aria-label="À traiter et demandes">'+
+  '<span class="ghe-smart-icon" aria-hidden="true"><img src="images/icone_app/ghe-action-inbox.svg" alt="">'+
+  (inbox?.count?'<span class="ghe-smart-badge">'+Math.min(inbox.count,99)+'</span>':"")+'</span>'+
+  '<span class="ghe-smart-labels"><strong class="ghe-smart-name">À traiter</strong><small class="ghe-smart-sub">'+
+  (inbox?.count?inbox.count+" demandes en attente":"Demandes et activités")+'</small></span></button>';
  const markup='<header class="ghe-smart-head">'+
   '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
   '<button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button>'+
   '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
   homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
   '<div class="ghe-smart-scroll ghe-smart-navigation">'+
-  navLink('🔍','Rechercher','Applications, dates et actions','data-smart-active-key="search" data-smart-search-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
-  divider+
-  '<nav aria-label="Créer et organiser">'+
+  navLink('🔍','Rechercher','Tout le site GHE','data-smart-active-key="search" data-smart-search-open aria-expanded="false" aria-controls="gheSmartGlobalSearch"')+
+  divider+'<nav aria-label="Créer et rendez-vous">'+
   navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-create-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
-  navLink('📆'+(count?'<span class="ghe-smart-badge">'+Math.min(count,99)+'</span>':""),'Calendrier','Rendez-vous et actions','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"')+
-  '</nav>'+divider+
-  '<nav aria-label="Communications et applications">'+
+  (appointments||navLink('📆','Calendrier','Mes rendez-vous','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"'))+
+  pending+'</nav>'+divider+
+  '<nav aria-label="Messages et applications">'+
   navLink('💬','Messages','Collègues, événements, fauteuils','data-smart-chat-open aria-haspopup="dialog" aria-controls="gheSmartChoiceDialog"')+
-  navLink('<img src="images/icone_app/home-apps.webp" alt="">','Applications','Outils et applications GHE','data-smart-active-key="apps" data-smart-apps-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
-  '</nav>'+divider+
+  apps+'</nav>'+divider+
   '<div class="ghe-smart-reserved-slot" role="presentation" aria-hidden="true"></div>'+divider+
-  (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(x=>link({kind:"shortcut",...x})).join("")+'</nav></details>':"")+
+  (isAdmin()?'<details class="ghe-smart-admin-tools"><summary>Administration</summary><nav aria-label="Administration">'+adminEntries().map(item=>link({kind:"shortcut",...item})).join("")+'</nav></details>':"")+
   '</div><footer class="ghe-smart-settings-dock">'+
   navLink('⚙️','Réglages','Notifications et compte','data-smart-active-key="settings" data-smart-settings-open aria-haspopup="dialog" aria-controls="gheSmartNavDialog"')+
   '</footer>';
@@ -541,12 +547,13 @@ function render(){
   const template=document.createElement("template");template.innerHTML=markup;
   const next=template.content.querySelector(".ghe-smart-scroll").innerHTML;
   if(scroll.innerHTML!==next){
+   window.GHEGlobalSearch?.preserveBeforeRender();
    scroll.innerHTML=next;
    if(adminOpen)scroll.querySelector(".ghe-smart-admin-tools")?.setAttribute("open","");
   }
   scroll.scrollTop=previous;
  }
- applySearch();
+ window.GHEGlobalSearch?.sync();
  ensureRdvQuick();
  let reopen=document.getElementById("gheSmartReopen");
  if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.innerHTML='<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span>';document.body.appendChild(reopen);}
@@ -579,7 +586,7 @@ document.addEventListener("click",event=>{
  const home=event.target.closest?.("#gheSmartRail [data-smart-home]");
  if(home){event.preventDefault();event.stopImmediatePropagation();goHomeDirect();return;}
  const nav=event.target.closest?.("#gheSmartRail [data-smart-search-open],#gheSmartRail [data-smart-apps-open],#gheSmartRail [data-smart-settings-open]");
- if(nav){event.preventDefault();const kind=nav.hasAttribute("data-smart-search-open")?"search":nav.hasAttribute("data-smart-apps-open")?"apps":"settings";selectIcon(kind);openNavDialog(kind);return;}
+ if(nav){event.preventDefault();if(nav.hasAttribute("data-smart-search-open")){window.GHEGlobalSearch?.toggle();return;}selectIcon("settings");openNavDialog("settings");return;}
  const rdv=event.target.closest?.("[data-smart-rdv-open]");
  if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();openRdvDialog();return;}
  const rdvPending=event.target.closest?.("#gheSmartRdvDialog [data-smart-pending-open]");
@@ -666,7 +673,7 @@ window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
 window.addEventListener("storage",event=>{if(event.key===STORE){events=[];ready=false;render();refresh(true)}});
 window.addEventListener("ghe:agenda-change",()=>refresh(true));
-window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,mode:()=>mode,setMode};
+window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,applications:appEntries,mode:()=>mode,setMode};
 const start=()=>{render();refresh();openDeferredSettings();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();
