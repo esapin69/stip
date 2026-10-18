@@ -20,7 +20,7 @@ function choose(item){
  if(modal?.open)modal.close();
  if(item.key==="feedback"){if(!window.STIPDrawerOpenEntry?.("feedback",item.id))navigate("index.html#/home");return;}
  if(item.key==="leisure"){
-  try{if(window.STIPLeisure?.openPreview?.(item.id))return;}catch{}
+  try{if(typeof window.STIPLeisure?.openPreview==='function'){window.STIPLeisure.openPreview(item.id);return;}}catch{}
   navigate("sorties-loisirs.html?tab=invitations");return;
  }
  if(item.key==="business-action"){navigate(item.href);return;}
