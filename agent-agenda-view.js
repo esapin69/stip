@@ -398,7 +398,7 @@
     });
   }
   function close(){closeCallChoice();overlay?.remove();overlay=null;state=null;document.body.classList.remove("aav-open")}
-  async function open(sourceKey,fallback={}){
+  async function open(sourceKey,fallback={},options={}){
     sourceKey=String(sourceKey||fallback?.source_key||"").trim();
     if(!sourceKey)return;
     await css();
@@ -413,6 +413,12 @@
       state={sourceKey,data,events:events(data),selected:today(),month:monthKey(today()),bounds:monthBounds(data)};
       setWeekFromDate(today(),true);
       render();
+      if(options.intent==="add-event"){
+        const addButton=overlay.querySelector("[data-aav-add]");
+        if(addButton)addButton.click();
+        else overlay.querySelector(".aav-body")?.insertAdjacentHTML("afterbegin",
+          '<div class="aav-error" role="status">Ajout indisponible : vous ne disposez pas des droits requis sur cet agenda.</div>');
+      }
     }catch(err){
       overlay.querySelector(".aav-body").innerHTML=`<div class="aav-error"><strong>Planning indisponible</strong><span>${esc(err.message||"Erreur")}</span></div>`;
     }
