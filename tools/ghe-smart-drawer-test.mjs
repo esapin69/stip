@@ -168,6 +168,9 @@ const backFace=agendaMarkup.slice(agendaMarkup.indexOf('data-agenda360-face="bac
 assert.match(frontFace,/data-agenda360-proposals/,"colleague proposals must appear in the action face");
 assert.doesNotMatch(backFace,/data-agenda360-proposals/,"unconfirmed proposals must not be presented as scheduled");
 assert.match(agendaMarkup,/const hasOpen=feedback\.length>0\|\|proposals\.length>0;/,"proposals alone activate the action face");
+assert.equal((frontFace.match(/data-agenda360-turn=/g)||[]).length,1,"un seul bouton tournant côté actions");
+assert.equal((backFace.match(/data-agenda360-turn=/g)||[]).length,1,"un seul bouton tournant côté rendez-vous");
+assert.doesNotMatch(agendaMarkup,/ghe-agenda360-actions|ghe-agenda360-swap/,"supprime les deux onglets non conformes");
 assert.match(shell.slice(shell.indexOf("function bindAgenda360("),shell.indexOf("function homeModeBody()")) ,/const available=feedbackCount>0\|\|proposalsCount>0;/,"the action side remains available while any action exists");
 assert.match(shell,/GHESmartChoices\?\.show\?\.\("proposals"\)/,"proposal button must still open its existing popup");
 const topBarCss=read("ghe-premium-safe-flip.css");

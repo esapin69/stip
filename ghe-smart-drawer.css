@@ -422,61 +422,37 @@ body.ghe-smart-active:not([data-smart-drawer="closed"]) #homeView .ghe-smart-rdv
 #homeView .hc-feedback-date-separator .ghe-smart-calendar-glyph b{display:grid;place-items:center;flex:1}
 @media(max-width:360px){#homeView .hc-feedback-date-separator{gap:5px;font-size:10px}}
 
-/* Agenda 360 : two real, equal-area faces. The hidden side still determines height. */
-#homeView .ghe-agenda360{display:block;box-sizing:border-box;width:100%;max-width:100%;
- margin:7px 0 15px;border:1px solid #d9e7ed;border-radius:19px;
- background:#fff;box-shadow:0 8px 22px #113d5212;overflow:clip;
+/* Agenda 360 : rotation physique comme Semaine et Mois, jamais deux onglets.
+   Les faces restent de dimension identique ; la page conserve le scroll. */
+#homeView .ghe-agenda360{
+ display:block;box-sizing:border-box;position:relative;isolation:isolate;perspective:1400px;
+ width:100%;max-width:100%;margin:7px 0 15px;
+ border:1px solid #d9e7ed;border-radius:20px;
+ background:#fff;box-shadow:0 9px 24px #113d5217;overflow:clip;
  touch-action:pan-y pinch-zoom}
-#homeView .ghe-agenda360-track{display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;min-height:215px}
-#homeView .ghe-agenda360-face{grid-area:1/1;box-sizing:border-box;min-width:0;min-height:215px;padding:12px 12px 7px;
- display:flex;flex-direction:column;gap:6px;background:#fff}
-#homeView .ghe-agenda360[data-side="front"] .ghe-agenda360-back,
-#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-front{visibility:hidden;pointer-events:none}
-#homeView .ghe-agenda360 .hc-feedback-wrap{margin:0!important;width:100%;max-width:100%}
-#homeView .ghe-agenda360 .hc-feedback-outer-separator{margin:0 0 8px!important}
-#homeView .ghe-agenda360 .hc-feedback-pending{width:100%;max-width:100%;box-shadow:none}
-/* Aucune zone de défilement à l'intérieur des deux faces : tout reste visible.
-   Le geste vertical, même démarré sur une carte, appartient à la page. */
+#homeView .ghe-agenda360-track{
+ display:grid;grid-template-columns:minmax(0,1fr);align-items:stretch;
+ min-height:180px;transform-style:preserve-3d;
+ transition:transform .58s cubic-bezier(.22,.74,.2,1)}
+#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-track{transform:rotateY(180deg)}
+#homeView .ghe-agenda360-face{
+ grid-area:1/1;box-sizing:border-box;width:100%;min-width:0;min-height:180px;
+ padding:12px 13px 11px;display:flex;flex-direction:column;gap:5px;
+ backface-visibility:hidden;-webkit-backface-visibility:hidden;
+ transform-style:preserve-3d;background:linear-gradient(160deg,#fff,#f9fcfd)}
+#homeView .ghe-agenda360-front{transform:rotateY(0deg)}
+#homeView .ghe-agenda360-back{transform:rotateY(180deg)}
+#homeView .ghe-agenda360 .hc-feedback-wrap{width:100%;max-width:100%;margin:0!important;gap:0}
+#homeView .ghe-agenda360 .hc-feedback-outer-separator{display:none!important}
+#homeView .ghe-agenda360 .hc-feedback-pending{width:100%;max-width:100%;box-shadow:none!important}
+/* Aucun sous-défilement sur les deux faces : la page entière défile. */
 #homeView .ghe-agenda360 .hc-feedback-list{
  max-height:none;height:auto;overflow:visible;overscroll-behavior:auto;
 }
-#homeView .ghe-agenda360-proposals{box-sizing:border-box;display:flex;align-items:center;gap:11px;width:100%;
- min-height:70px;margin-top:7px;padding:13px 11px;background:#edf8fc;border:1px solid #c5e2ed;border-radius:13px;
- text-align:left;font:inherit;color:#204d61;cursor:pointer}
-#homeView .ghe-agenda360-proposals>span:nth-child(1){font-size:27px}
-#homeView .ghe-agenda360-proposals>span:nth-child(2){flex:1;min-width:0}
-#homeView .ghe-agenda360-proposals strong,#homeView .ghe-agenda360-proposals small{display:block}
-#homeView .ghe-agenda360-proposals strong{font-size:14px}
-#homeView .ghe-agenda360-proposals small{color:#5a7c8a;font-size:11px;margin-top:3px}
-#homeView .ghe-agenda360-proposals b{background:#fff;border-radius:16px;padding:4px 8px}
-#homeView .ghe-agenda360-rdv-title{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:0 0 6px;
- padding:10px 12px;border-radius:12px;background:#f1f8fc}
-#homeView .ghe-agenda360-rdv-title strong{font-size:18px;color:#20506a}
-#homeView .ghe-agenda360-rdv-title small{color:#5e7b89;font-size:12px}
-#homeView .ghe-agenda360-date-group{padding:5px 0 11px;border-bottom:1px solid #e4ecf0}
-#homeView .ghe-agenda360-date{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 0 9px;
- text-align:center;color:#537684;font:800 11px/1.2 system-ui}
-#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph{display:flex;flex-direction:column;flex:none;width:31px;height:34px;
- background:#fff;border:2px solid #6d8998;border-radius:7px;overflow:hidden;color:#174e69;font:850 15px/1 system-ui}
-#homeView .ghe-agenda360-date .ghe-smart-calendar-cap{height:8px;flex:none;background:#da7467}
-#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph b{display:grid;place-items:center;flex:1;font:850 15px/1 system-ui}
-#homeView .ghe-agenda360-appointment{box-sizing:border-box;width:100%;min-height:65px;display:flex;align-items:center;
- gap:10px;padding:9px 7px;border:0;border-radius:10px;background:#fff;color:#214859;text-align:left;font:inherit;cursor:pointer}
-#homeView .ghe-agenda360-appointment:hover{background:#f2f9fc}
-#homeView .ghe-agenda360-appointment>span:nth-child(2){flex:1;min-width:0}
-#homeView .ghe-agenda360-appointment strong{display:block;font-size:14px;line-height:1.35}
-#homeView .ghe-agenda360-appointment small{display:block;margin-top:4px;color:#5e7b89;font-size:11px;line-height:1.4}
-#homeView .ghe-agenda360-event-icon{flex:none;display:grid;place-items:center;width:40px;height:40px;background:#eff8fb;border-radius:10px;font-size:25px}
-#homeView .ghe-agenda360-empty{margin:auto;text-align:center;color:#617b8b}
-#homeView .ghe-agenda360-actions{display:flex;align-items:center;justify-content:center;padding:11px;background:#fafcfd;border-top:1px solid #e1ebf0}
-#homeView .ghe-agenda360-turn{min-height:45px;padding:9px 25px;border:1px solid #c6dfea;border-radius:22px;
- background:#dbeffa;color:#195b78;font:850 15px/1 system-ui;cursor:pointer}
-#homeView .ghe-agenda360-turn span{font-size:19px;margin-left:10px}
-#homeView .ghe-agenda360[data-side="front"] .ghe-agenda360-show-feedback,
-#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-show-rdv,
-#homeView .ghe-agenda360[data-has-front="false"] .ghe-agenda360-actions{display:none!important}
-#homeView .ghe-agenda360 button:focus-visible{outline:3px solid #238cb7;outline-offset:2px}
-
+#homeView .ghe-agenda360 button:focus-visible{
+ outline:3px solid #238cb7;outline-offset:3px}
+@media(prefers-reduced-motion:reduce){
+ #homeView .ghe-agenda360-track{transition:none!important}}
 /* Unified category dialogs for drawer choices. */
 dialog#gheSmartChoiceDialog{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(510px,calc(100vw - 28px));
  max-height:calc(100dvh - 40px);padding:0;overflow:hidden;border:1px solid #d2e4eb;border-radius:21px;
@@ -671,59 +647,99 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
 .ghe-smart-side-back{border:0;border-top:1px solid #e2edf1;background:#f7fbfd;color:#1b526a;width:100%;padding:12px;text-align:left;font:750 12px system-ui,sans-serif;cursor:pointer}
 @media(max-width:380px){.ghe-smart-side-panel{width:calc(100vw - 62px);left:56px}}
 
-/* Accueil — agenda 360 : séparation nette entre actions et événements confirmés.
-   Conserve deux faces de hauteur identique et le défilement vertical de la page. */
-#homeView .ghe-agenda360-face{padding:11px 11px 8px;gap:4px}
+
+/* Deux faces : une même hiérarchie, sans cadres imbriqués ni dates répétées. */
 #homeView .ghe-agenda360 .ghe-agenda360-action-title,
 #homeView .ghe-agenda360 .ghe-agenda360-rdv-title{
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;
-  gap:6px 12px;margin:0 0 5px;padding:11px 13px;border:1px solid #dcebf1;
-  border-radius:12px;background:#f1f8fb}
+ box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+ flex-wrap:wrap;gap:4px 8px;width:100%;min-width:0;
+ margin:0 0 2px;padding:10px 11px;
+ border:1px solid #dce9ef;border-radius:12px;background:#f0f7fa}
 #homeView .ghe-agenda360 .ghe-agenda360-action-title{
-  border-color:#efe3bd;background:#fcf8ed}
+ background:#fff8e8;border-color:#f1e5c5}
 #homeView .ghe-agenda360 .ghe-agenda360-action-title strong,
 #homeView .ghe-agenda360 .ghe-agenda360-rdv-title strong{
-  font:850 18px/1.25 system-ui;color:#245369}
+ font:850 17px/1.22 system-ui;color:#244b5b}
 #homeView .ghe-agenda360 .ghe-agenda360-action-title small,
 #homeView .ghe-agenda360 .ghe-agenda360-rdv-title small{
-  font:700 12px/1.35 system-ui;color:#587584}
-#homeView .ghe-agenda360 .hc-feedback-outer-separator{
-  margin:3px 2px 6px!important}
-#homeView .ghe-agenda360 .hc-feedback-wrap{gap:5px}
+ flex:1;text-align:right;font:750 11px/1.25 system-ui;color:#69808b}
+#homeView .ghe-agenda360 .ghe-agenda360-action-title [data-agenda360-action-count]{
+ box-sizing:border-box;display:grid;place-items:center;flex:none;
+ min-width:27px;height:27px;padding:0 6px;border-radius:999px;
+ background:#edce72;color:#65470a;font:850 13px/1 system-ui}
 #homeView .ghe-agenda360 .hc-feedback-wrap>.hc-feedback-pending{
-  padding:7px 8px 9px!important;border-radius:14px!important}
-#homeView .ghe-agenda360 .hc-feedback-intro{display:none}
-#homeView .ghe-agenda360 .hc-feedback-date-separator{
-  margin:7px 4px 3px;padding:4px 0}
-#homeView .ghe-agenda360-date-group{padding:2px 0 6px}
-#homeView .ghe-agenda360-date{margin:4px 0 5px}
-#homeView .ghe-agenda360-appointment{min-height:57px;padding:7px 6px}
+ margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important}
+#homeView .ghe-agenda360 .hc-feedback-intro{display:none!important}
+#homeView .ghe-agenda360 .hc-feedback-list{display:flex;flex-direction:column;gap:0;margin:0!important}
+#homeView .ghe-agenda360 .hc-feedback-date-separator,
+#homeView .ghe-agenda360-date{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+ gap:8px;min-height:25px;margin:5px 0 2px!important;padding:2px 0!important;
+ border:0!important;color:#64818f;letter-spacing:.01em;
+ text-align:center;font:850 10px/1.1 system-ui}
+#homeView .ghe-agenda360 .hc-feedback-date-separator .ghe-smart-calendar-glyph,
+#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph{
+ box-sizing:border-box;display:flex;flex-direction:column;flex:none;
+ width:27px;height:29px;overflow:hidden;
+ border:1.5px solid #7094a2;border-radius:6px;background:#fff;
+ color:#205d76;font:850 13px/1 system-ui}
+#homeView .ghe-agenda360 .hc-feedback-date-separator .ghe-smart-calendar-cap,
+#homeView .ghe-agenda360-date .ghe-smart-calendar-cap{
+ height:6px;flex:none;background:#d77768}
+#homeView .ghe-agenda360 .hc-feedback-date-separator .ghe-smart-calendar-glyph b,
+#homeView .ghe-agenda360-date .ghe-smart-calendar-glyph b{
+ display:grid;place-items:center;flex:1;font:850 13px/1 system-ui}
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card{
+ min-height:55px!important;padding:6px 7px!important;
+ border:1px solid #ebebdf!important;border-radius:10px!important;
+ background:#fffcf5!important;box-shadow:none!important}
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card .hc-week-event-copy{
+ gap:2px!important}
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card .hc-week-event-copy>strong{
+ font-size:clamp(.82rem,3.2vw,.94rem)!important;line-height:1.2!important}
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card .hc-week-event-when>span:first-child{
+ display:none!important} /* La date figure déjà dans le calendrier juste au-dessus. */
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card .hc-week-event-key-icon{
+ width:36px!important;min-width:36px!important;height:36px!important;min-height:36px!important}
+#homeView .ghe-agenda360 .hc-feedback-pending .hc-feedback-card{
+ grid-template-columns:36px minmax(0,1fr) 14px!important;gap:7px!important}
 #homeView .ghe-agenda360-proposals{
-  margin:8px 0 2px;min-height:60px;padding:10px 11px;
-  background:#f0f8fb;border-color:#c9e0e9}
-#homeView .ghe-agenda360-proposals>span:nth-child(1){font-size:25px}
-#homeView .ghe-agenda360-proposals strong{font-size:14px}
-#homeView .ghe-agenda360-actions{
-  gap:9px;justify-content:center;min-height:65px;padding:10px;
-  background:#f9fcfd}
-#homeView .ghe-agenda360-turn,
-#homeView .ghe-agenda360[data-side="front"] .ghe-agenda360-show-feedback,
-#homeView .ghe-agenda360[data-side="back"] .ghe-agenda360-show-rdv{
-  box-sizing:border-box;display:flex!important;align-items:center;justify-content:center;
-  gap:7px;flex:1;max-width:175px;min-width:0;min-height:44px;
-  padding:8px 10px;border:1px solid #d0e2e9;border-radius:22px;
-  background:#f2f8fb;color:#315c72;font:800 13px/1.2 system-ui}
-#homeView .ghe-agenda360-turn b{
-  display:grid;place-items:center;min-width:24px;height:24px;padding:0 4px;
-  border-radius:15px;background:#e0ecf1;color:#315c72;font-size:12px}
-#homeView .ghe-agenda360-turn[aria-pressed="true"]{
-  color:#fff;border-color:#255c76;background:#255c76;box-shadow:0 3px 9px #1a587228}
-#homeView .ghe-agenda360-turn[aria-pressed="true"] b{
-  background:#fff;color:#255c76}
-#homeView .ghe-agenda360-swap{
-  flex:none;color:#648292;font:800 20px/1 system-ui}
+ box-sizing:border-box;display:flex;align-items:center;gap:9px;width:100%;
+ min-height:54px;margin:9px 0 0;padding:9px 10px;
+ border:1px solid #d6e6ec;border-radius:11px;background:#eff8fb;
+ text-align:left;font:inherit;color:#234e61;cursor:pointer}
+#homeView .ghe-agenda360-proposals-icon{font-size:24px;line-height:1}
+#homeView .ghe-agenda360-proposals-copy{flex:1;min-width:0}
+#homeView .ghe-agenda360-proposals strong{
+ display:block;font:850 13px/1.25 system-ui}
+#homeView .ghe-agenda360-proposals small{
+ display:block;margin-top:2px;font:650 11px/1.2 system-ui;color:#607f8b}
+#homeView .ghe-agenda360-proposals>b{
+ padding:3px 7px;border-radius:20px;background:#fff;color:#2a5c72;font:850 12px/1 system-ui}
+#homeView .ghe-agenda360-chevron{flex:none;color:#63818e;font:900 21px/1 system-ui}
+#homeView .ghe-agenda360-upcoming-list{display:flex;flex-direction:column;gap:0}
+#homeView .ghe-agenda360-date-group{padding:2px 0 3px;border:0!important}
+#homeView .ghe-agenda360-appointment{
+ box-sizing:border-box;display:flex;align-items:center;gap:8px;width:100%;
+ min-height:55px;margin:0;padding:7px 9px;border:1px solid #e4edf1;
+ border-radius:10px;background:#fff;color:#25495b;text-align:left;font:inherit;cursor:pointer}
+#homeView .ghe-agenda360-appointment:hover{background:#f4f9fb}
+#homeView .ghe-agenda360-event-icon{
+ display:grid;place-items:center;flex:none;width:36px;height:36px;
+ border-radius:9px;background:#edf6fa;font-size:22px}
+#homeView .ghe-agenda360-event-copy{flex:1;min-width:0}
+#homeView .ghe-agenda360-event-copy strong{
+ display:block;font:850 clamp(.82rem,3.2vw,.94rem)/1.2 system-ui;overflow-wrap:anywhere}
+#homeView .ghe-agenda360-event-copy small{
+ display:block;margin-top:3px;font:650 11px/1.3 system-ui;color:#67818d}
+#homeView .ghe-agenda360-empty{
+ margin:auto;text-align:center;color:#718994;font-size:13px}
+#homeView .ghe-agenda360-face>.ghe-flip-cta{margin-top:auto!important}
+#homeView .ghe-agenda360-face>.ghe-flip-cta:active{transform:translateY(1px) scale(.99)}
+#homeView .ghe-agenda360[data-has-front="false"] .ghe-agenda360-show-feedback{display:none!important}
 @media(max-width:360px){
-  #homeView .ghe-agenda360-turn{font-size:12px!important}
-  #homeView .ghe-agenda360-action-title,
-  #homeView .ghe-agenda360-rdv-title{padding:9px}
+ #homeView .ghe-agenda360-face{padding:9px}
+ #homeView .ghe-agenda360 .ghe-agenda360-action-title,
+ #homeView .ghe-agenda360 .ghe-agenda360-rdv-title{padding:9px}
 }

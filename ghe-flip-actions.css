@@ -1,8 +1,12 @@
-/* Accueil GHE : commande premium unique des TROIS blocs 360°, sur chaque face.
+/* Accueil GHE : commande premium commune aux blocs 360°, sur chaque face.
    Les styles sont volontairement limités aux cartes concernées. */
 .ghe-weekflip-stage{
   --ghe-flip-start:#116fc9;--ghe-flip-mid:#226bd6;--ghe-flip-end:#546bd0;
   --ghe-flip-border:#80adeb;--ghe-flip-shadow:#2059a62f;--ghe-flip-focus:#2054b2;
+}
+#homeView .ghe-agenda360{
+  --ghe-flip-start:#12778b;--ghe-flip-mid:#168a9b;--ghe-flip-end:#269ba7;
+  --ghe-flip-border:#86b9c1;--ghe-flip-shadow:#1962732e;--ghe-flip-focus:#117f92;
 }
 .ghe-monthflip-stage{
   --ghe-flip-start:#0e6e81;--ghe-flip-mid:#168798;--ghe-flip-end:#2895a5;
@@ -16,6 +20,7 @@
    trois cartes. Les couleurs bleu / turquoise / rouge des rectos restent intactes. */
 .ghe-weekflip-back>.ghe-flip-cta,
 .ghe-monthflip-back>.ghe-flip-cta,
+#homeView .ghe-agenda360-back>.ghe-flip-cta,
 .hc-home-top-nav[data-header-compact] .ghe-premium-back .ghe-flip-cta{
   --ghe-flip-start:#222329;
   --ghe-flip-mid:#111216;
@@ -26,6 +31,7 @@
 }
 .ghe-weekflip-face>.ghe-flip-cta,
 .ghe-monthflip-face>.ghe-flip-cta,
+#homeView .ghe-agenda360-face>.ghe-flip-cta,
 .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{
   box-sizing:border-box!important;position:relative!important;isolation:isolate;
   display:flex!important;align-items:center!important;justify-content:flex-start!important;
@@ -44,6 +50,7 @@
 }
 .ghe-weekflip-face>.ghe-flip-cta::before,
 .ghe-monthflip-face>.ghe-flip-cta::before,
+#homeView .ghe-agenda360-face>.ghe-flip-cta::before,
 .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta::before{
   content:"";position:absolute;inset:0 0 57% 0;z-index:-1;
   background:linear-gradient(180deg,#ffffff28,transparent);pointer-events:none;
@@ -74,23 +81,27 @@
 }
 .ghe-weekflip-face>.ghe-flip-cta:active,
 .ghe-monthflip-face>.ghe-flip-cta:active,
+#homeView .ghe-agenda360-face>.ghe-flip-cta:active,
 .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta:active{
   transform:translateY(1px) scale(.99);
   box-shadow:0 3px 7px var(--ghe-flip-shadow),inset 0 1px 0 #ffffff86!important;
 }
 .ghe-weekflip-face>.ghe-flip-cta:focus-visible,
 .ghe-monthflip-face>.ghe-flip-cta:focus-visible,
+#homeView .ghe-agenda360-face>.ghe-flip-cta:focus-visible,
 .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta:focus-visible{
   outline:3px solid var(--ghe-flip-focus)!important;outline-offset:4px!important;
 }
 @media(max-width:375px){
   .ghe-weekflip-face>.ghe-flip-cta,.ghe-monthflip-face>.ghe-flip-cta,
+#homeView .ghe-agenda360-face>.ghe-flip-cta,
   .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{
     padding:11px!important;gap:8px!important;font-size:.94rem!important;
   }
 }
 @media(prefers-reduced-motion:reduce){
   .ghe-weekflip-face>.ghe-flip-cta,.ghe-monthflip-face>.ghe-flip-cta,
+#homeView .ghe-agenda360-face>.ghe-flip-cta,
   .hc-home-top-nav[data-header-compact] .ghe-premium-face .ghe-flip-cta{transition:none!important}
 }
 
