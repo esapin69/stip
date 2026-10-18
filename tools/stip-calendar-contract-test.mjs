@@ -71,7 +71,9 @@ assert(calendarRules.includes("stip-week-engine.js") && calendarRules.includes("
 
 assert(calendarRules.includes("stip-month-table.css") && calendarRules.includes("stip-month-table.js"),
   "human-readable calendar contract does not protect the shared monthly table");
-assert(mainIndex.includes("stip-month-table.css?v=20261018-month-rest-codes1") && mainIndex.includes("stip-month-table.js?v=20261018-month-rest-codes1"),
+const mainBuild = mainIndex.match(/name="stip-ui-build" content="([^"]+)"/)?.[1];
+assert(mainBuild && mainIndex.includes("stip-month-table.css?v=" + mainBuild) &&
+  mainIndex.includes("stip-month-table.js?v=" + mainBuild),
   "main app does not load the shared monthly table");
 assert(metiersIndex.includes("stip-month-table.css?v=20261018-month-rest-codes1") && metiersIndex.includes("stip-month-table.js?v=20261018-month-rest-codes1"),
   "métiers does not load the shared monthly table");
