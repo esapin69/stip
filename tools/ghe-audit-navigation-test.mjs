@@ -41,7 +41,10 @@ search.value='medicale';applySearch();assert.equal(nodes[0].hidden,false);assert
 search.value='';applySearch();assert(nodes.every(node=>!node.hidden));assert.equal(status.hidden,true);
 assert.match(css,/\.ghe-smart-link\[hidden\]\s*\{display:none!important/,'search hiding beats the link display rule');
 assert.match(rail,/if\(!rail\.querySelector\("\.ghe-smart-navigation"\)\)rail\.innerHTML=markup/,'do not replace a live compact navigation');
-assert.match(rail,/data-smart-nav-query/,'search input remains available in its dedicated dialog');
+assert.match(rail,/window\.GHEGlobalSearch\?\.toggle\(\)/,'search opens laterally rather than filtering the drawer');
+const global=read('ghe-global-search.js');
+assert.match(global,/async function indexPages\(\)/,'site-wide search indexes accessible pages');
+assert.match(global,/function sync\(focus=false\)/,'search is automatically visible in expanded mode');
 for(const event of ['stip:home-rendered','stip:event-feedback-synced','stip:event-feedback-completed','stip:permissions-live'])assert(rail.includes(event),'drawer updates from '+event);
 assert.match(rail,/agent-dates\.html\?focus=/,'future date preserves its canonical identifier');
 assert.match(rail,/feedback_key=/,'feedback preserves its canonical identifier');
