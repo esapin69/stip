@@ -9,7 +9,7 @@ const dlabel=d=>{if(!/^\d{4}-\d{2}-\d{2}$/.test(d||""))return "";return new Date
 const permitted=()=>Boolean(localStorage.getItem(STORE))&&(!document.getElementById("homeView")||(!document.getElementById("homeView").closest("[hidden],.hidden")&&getComputedStyle(document.getElementById("homeView")).display!=="none"));
 const permissions=()=>({...window.STIPContinuity?.read?.()?.permissions,...window.STIPBootCache?.permissions,...window.STIPSession?.permissions});
 const isAdmin=()=>permissions().admin===true;
-let events=[],running=null,updated=0,ready=false,mode="closed",rail=null,requestSeq=0,owner="";
+let events=[],running=null,updated=0,ready=false,mode="closed",rail=null,requestSeq=0,owner="",activeKey="";
 try{const saved=localStorage.getItem(STATE);if(saved==="compact")mode="compact";}catch{}
 const store=()=>localStorage.getItem(STORE)||"";
 const urlForEvent=e=>"sorties-loisirs.html?tab=agenda&event="+encodeURIComponent(e.id);
@@ -22,6 +22,64 @@ const route=(name)=>{
    access:"access-manage.html",inventory:"control.html",dudy:"le-nouveau.html",app:"application-mobile.html"};
  return routes[name]||routes.home;
 };
+
+function isHomeRoute(){
+ const path=location.pathname.split("/").pop().toLowerCase();
+ return (!path||path==="index.html")&&(!location.hash||location.hash==="#/home"||location.hash==="#/")&&!new URLSearchParams(location.search).has("quick");
+}
+function goHomeDirect(){
+ setMode("closed");activeKey="";
+ const target=new URL(route("home"),location.href);
+ if(location.pathname===target.pathname&&location.search===target.search&&(location.hash===target.hash||!location.hash)){
+  if(location.hash!==target.hash)location.hash=target.hash;return;
+ }
+ location.assign(target.href);
+}
+function markActive(){
+ if(!rail)return;
+ for(const node of rail.querySelectorAll(".ghe-smart-home,.ghe-smart-rdv-trigger,.ghe-smart-date-button,.ghe-smart-link")){
+  const key=node.dataset.smartActiveKey||"";
+  let selected=activeKey?key===activeKey:key==="home"&&isHomeRoute();
+  if(!selected&&!activeKey&&node.tagName==="A"&&key!=="home"){
+   try{const u=new URL(node.href,location.href);selected=u.pathname===location.pathname&&u.search===location.search&&u.hash===location.hash;}catch{}
+  }
+  node.classList.toggle("is-selected",selected);
+  if(node.tagName==="A"){if(selected)node.setAttribute("aria-current","page");else node.removeAttribute("aria-current");}
+  if(node.tagName==="BUTTON"&&key)node.setAttribute("aria-pressed",String(selected));
+ }
+ document.querySelectorAll(".ghe-smart-rdv-quick").forEach(b=>{b.classList.toggle("is-selected",activeKey==="rdv");b.setAttribute("aria-pressed",String(activeKey==="rdv"));});
+}
+function selectIcon(key=""){activeKey=key;markActive();}
+function ensureRdvQuick(){
+ const menu=document.querySelector("#homeView .ghe-home-topbar [data-shortcuts-open]");
+ if(!menu||menu.closest(".ghe-top-menu-with-rdv"))return;
+ const parent=menu.parentNode;if(!parent)return;
+ const wrapper=document.createElement("span");wrapper.className="ghe-top-menu-with-rdv";
+ parent.insertBefore(wrapper,menu);wrapper.appendChild(menu);
+ const button=document.createElement("button");button.type="button";button.className="ghe-smart-rdv-quick";
+ button.setAttribute("data-smart-rdv-open","");button.setAttribute("aria-label","Mes rendez-vous");
+ button.setAttribute("aria-haspopup","dialog");button.setAttribute("aria-controls","gheSmartRdvDialog");
+ button.innerHTML='<span class="ghe-smart-rdv-mini-calendar" aria-hidden="true">RDV</span>';
+ wrapper.appendChild(button);
+}
+function openRdvDialog(){
+ const entries=groupedEntries(),pending=entries.find(e=>e.kind==="pending"),days=appointmentDays(entries);
+ let dialog=document.getElementById("gheSmartRdvDialog");
+ if(!dialog){
+  dialog=document.createElement("dialog");dialog.id="gheSmartRdvDialog";dialog.setAttribute("aria-labelledby","gheSmartRdvTitle");
+  document.body.appendChild(dialog);
+  dialog.addEventListener("click",event=>{if(event.target===dialog||event.target.closest?.("[data-smart-rdv-close]"))dialog.close();});
+  dialog.addEventListener("close",()=>{if(activeKey==="rdv")selectIcon("");});
+ }
+ const count=days.reduce((n,d)=>n+d.items.length,0);
+ const rows=(pending?'<section class="ghe-smart-rdv-section"><h3>À traiter</h3>'+link(pending)+'</section>':"")+
+  (days.length?days.map(day=>'<section class="ghe-smart-rdv-section"><h3>'+escapeHtml(dlabel(day.date))+
+    (day.items.length>1?' <span>×'+day.items.length+'</span>':"")+'</h3>'+day.items.map(link).join("")+'</section>').join(""):
+   '<p class="ghe-smart-rdv-empty">Aucun rendez-vous à afficher.</p>');
+ dialog.innerHTML='<div class="ghe-smart-rdv-frame"><header><div><small>GHE · RENDEZ-VOUS</small><h2 id="gheSmartRdvTitle">Mes RDV <span>'+count+'</span></h2></div>'+
+   '<button type="button" data-smart-rdv-close aria-label="Fermer les rendez-vous">×</button></header><div class="ghe-smart-rdv-list">'+rows+'</div></div>';
+ selectIcon("rdv");if(!dialog.open)dialog.showModal();
+}
 function setMode(value){
  mode=["closed","compact","expanded"].includes(value)?value:"compact";
  try{localStorage.setItem(STATE,mode)}catch{}
@@ -172,7 +230,7 @@ function calendarIcon(date){
 function calendarDayGroup(group){
  const count=group.items.length,label=dlabel(group.date);
  return '<section class="ghe-smart-date-group" data-smart-date-group="'+escapeHtml(group.date)+'">'+
-  '<button type="button" class="ghe-smart-date-button" data-smart-date-open="'+escapeHtml(group.date)+'" aria-haspopup="dialog" aria-label="'+escapeHtml(label+" : "+count+" rendez-vous")+'">'+
+  '<button type="button" class="ghe-smart-date-button" data-smart-active-key="date:'+escapeHtml(group.date)+'" data-smart-date-open="'+escapeHtml(group.date)+'" aria-haspopup="dialog" aria-label="'+escapeHtml(label+" : "+count+" rendez-vous")+'">'+
   '<span class="ghe-smart-icon ghe-smart-date-icon">'+calendarIcon(group.date)+
   (count>1?'<span class="ghe-smart-date-count">×'+count+'</span>':"")+'</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">'+escapeHtml(label)+'</strong><small class="ghe-smart-sub">'+count+' rendez-vous</small></span></button>'+
@@ -225,6 +283,7 @@ function link(entry){
  const title=/^muscu$/i.test(entry.title||"")?"Séance de musculation":entry.title;
  const b=entry.count?'<span class="ghe-smart-badge">'+Math.min(entry.count,99)+'</span>':"";
  const tag=isPending?"button":"a";
+ const activeId=entry.kind+"|"+String(entry.id||entry.event?.id||entry.title)+"|"+String(entry.date||"");
  const attrs=isPending?'type="button" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog"':
   'href="'+escapeHtml(entry.href)+'"'+(entry.entryKind?' data-smart-entry-kind="'+escapeHtml(entry.entryKind)+'" data-smart-entry-id="'+escapeHtml(entry.id)+'"':'')+(entry.action?' data-smart-action="'+escapeHtml(entry.action)+'"':'')+
   (["event","professional","cancelled"].includes(entry.kind)?' data-smart-open-details="true" data-smart-entry-type="'+escapeHtml(entry.kind)+'" aria-haspopup="dialog"':'');
@@ -232,7 +291,7 @@ function link(entry){
  const symbol=isPending?'<img src="images/icone_app/ghe-action-inbox.svg" alt="">':
   (entry.title==="Fauteuils"?'<img src="images/icone_app/home-access-wheelchairs.webp" alt="">':
   ((icon==="📅"||icon==="📆")?'<span class="ghe-smart-calendar-glyph" aria-hidden="true"><span class="ghe-smart-calendar-cap"></span><b>'+escapeHtml(realDay||"··")+'</b></span>':escapeHtml(icon)));
- const facts=' data-choice-kind="'+escapeHtml(entry.kind)+'"'+
+ const facts=' data-smart-active-key="'+escapeHtml(activeId)+'" data-choice-kind="'+escapeHtml(entry.kind)+'"'+
   (entry.date?' data-choice-date="'+escapeHtml(entry.date)+'"':'')+
   (entry.time||entry.event?.time_label?' data-choice-time="'+escapeHtml(entry.time||entry.event.time_label)+'"':'')+
   (entry.place||entry.event?.location?' data-choice-place="'+escapeHtml(entry.place||entry.event.location)+'"':'');
@@ -323,7 +382,7 @@ function applySearch(){
  if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
 }
 function render(){
- if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();return;}
+ if(!permitted()){document.body.classList.remove("ghe-smart-active");rail?.remove();rail=null;document.getElementById("gheSmartReopen")?.remove();document.getElementById("gheSmartExpand")?.remove();document.querySelectorAll(".ghe-smart-rdv-quick").forEach(b=>b.remove());return;}
  document.body.classList.add("ghe-smart-active");
  if(!rail){rail=document.createElement("aside");rail.id="gheSmartRail";rail.className="ghe-smart-rail";rail.setAttribute("aria-label","Tiroir de navigation GHE");document.body.appendChild(rail);}
  // Actions séparées des rendez-vous, sans modifier les destinations.
@@ -333,7 +392,7 @@ function render(){
  const divider=appointments?'<div class="ghe-smart-divider ghe-smart-section-divider" role="separator" aria-label="Rendez-vous et événements"><span>Rendez-vous et événements</span></div>':"";
  const start=pending+divider+appointments||'<p class="ghe-smart-hint">Aucun rendez-vous à venir</p>';
  // Accueil épinglé au-dessus de la liste et visible en mode compact.
- const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-choice-kind="shortcut" aria-label="Accueil — page principale">'+
+ const homeLink='<div class="ghe-smart-home-dock"><a class="ghe-smart-link ghe-smart-home" href="'+escapeHtml(route("home"))+'" data-smart-home data-smart-active-key="home" data-choice-kind="shortcut" aria-label="Accueil — retour direct, fermer le tiroir">'+
   '<span class="ghe-smart-icon ghe-smart-home-icon" aria-hidden="true">🏠</span>'+
   '<span class="ghe-smart-labels"><strong class="ghe-smart-name">Accueil</strong><small class="ghe-smart-sub">Page principale</small></span></a></div>';
  const p=permissions();
@@ -360,6 +419,7 @@ function render(){
  '<span class="ghe-smart-expanded-label">Mon espace GHE</span>'+
  '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
  homeLink+
+ '<div class="ghe-smart-rdv-dock"><button type="button" class="ghe-smart-link ghe-smart-rdv-trigger" data-smart-rdv-open data-smart-active-key="rdv" aria-haspopup="dialog" aria-controls="gheSmartRdvDialog" aria-label="Mes rendez-vous"><span class="ghe-smart-icon ghe-smart-rdv-icon" aria-hidden="true"><b>RDV</b></span><span class="ghe-smart-labels"><strong class="ghe-smart-name">Mes RDV</strong><small class="ghe-smart-sub">Tous les rendez-vous</small></span></button></div>'+
  '<div class="ghe-smart-expand-slot"><button type="button" id="gheSmartExpand" class="ghe-smart-expand-tab" aria-label="Déployer le tiroir">›</button></div>'+
  '<div class="ghe-smart-scroll"><nav aria-label="Actions et rendez-vous GHE">'+start+'</nav>'+
  (shortcuts.length?'<div class="ghe-smart-divider"><span>Loisirs entre collègues</span></div><nav aria-label="Raccourcis GHE">'+shortcuts.map(x=>staticLink(...x)).join("")+'</nav>':"")+
@@ -380,12 +440,14 @@ function render(){
   scroll.scrollTop=previous;
  }
  applySearch();
+ ensureRdvQuick();
  let reopen=document.getElementById("gheSmartReopen");
  if(!reopen){reopen=document.createElement("button");reopen.id="gheSmartReopen";reopen.type="button";reopen.className="ghe-smart-reopen";reopen.innerHTML='<span class="ghe-shortcuts-lines" aria-hidden="true"><i></i><i></i><i></i></span>';document.body.appendChild(reopen);}
  document.body.classList.toggle("ghe-smart-has-native-menu",!!document.querySelector("#homeView [data-shortcuts-open]"));
  // Expand control is inside the rail: no handle overlaps the page.
  document.querySelectorAll("body > #gheSmartExpand").forEach(b=>b.remove());
  setMode(mode);
+ markActive();
 }
 async function refresh(force=false){
  if(!permitted())return;
@@ -407,8 +469,20 @@ async function refresh(force=false){
  return running;
 }
 document.addEventListener("click",event=>{
+ const home=event.target.closest?.("#gheSmartRail [data-smart-home]");
+ if(home){event.preventDefault();event.stopImmediatePropagation();goHomeDirect();return;}
+ const rdv=event.target.closest?.("[data-smart-rdv-open]");
+ if(rdv&&permitted()){event.preventDefault();event.stopImmediatePropagation();openRdvDialog();return;}
+ const rdvPending=event.target.closest?.("#gheSmartRdvDialog [data-smart-pending-open]");
+ if(rdvPending){event.preventDefault();document.getElementById("gheSmartRdvDialog")?.close();requestAnimationFrame(openPendingDialog);return;}
+ const rdvEntry=event.target.closest?.("#gheSmartRdvDialog a[data-smart-open-details]");
+ if(rdvEntry){
+  event.preventDefault();const key=rdvEntry.dataset.smartActiveKey;
+  document.getElementById("gheSmartRdvDialog")?.close();selectIcon(key);
+  requestAnimationFrame(()=>window.GHEChoiceMaster?.open?window.GHEChoiceMaster.open(rdvEntry):openEntryDialog(rdvEntry));return;
+ }
  const dateButton=event.target.closest?.("#gheSmartRail [data-smart-date-open]");
- if(dateButton){event.preventDefault();openAppointmentDay(dateButton.dataset.smartDateOpen);return;}
+ if(dateButton){event.preventDefault();selectIcon("date:"+dateButton.dataset.smartDateOpen);openAppointmentDay(dateButton.dataset.smartDateOpen);return;}
  const reopen=event.target.closest?.("#gheSmartReopen");
  if(reopen){event.preventDefault();setMode("compact");return;}
  const expand=event.target.closest?.("#gheSmartExpand");
@@ -422,10 +496,11 @@ document.addEventListener("click",event=>{
   setMode("compact");requestAnimationFrame(()=>navigateDrawerDestination(dest));return;
  }
  const detailLink=event.target.closest?.("#gheSmartRail a[data-smart-open-details]");
- if(detailLink){event.preventDefault();openEntryDialog(detailLink);return;}
+ if(detailLink){event.preventDefault();selectIcon(detailLink.dataset.smartActiveKey||"");openEntryDialog(detailLink);return;}
  // Tout changement de destination conserve uniquement la colonne d'icônes.
  const destination=event.target.closest?.("#gheSmartRail a.ghe-smart-link, #gheSmartPendingDialog a.ghe-smart-pending-item");
  if(destination){
+  selectIcon(destination.dataset.smartActiveKey||"");
   setMode("compact");
   const kind=destination.dataset.smartEntryKind,id=destination.dataset.smartEntryId;
   const action=destination.dataset.smartAction;
@@ -453,7 +528,7 @@ document.addEventListener("click",event=>{
   event.preventDefault();event.stopImmediatePropagation();setMode(mode==="closed"?"compact":"closed");return;
  }
  if(event.target.closest?.("#gheSmartRail [data-smart-pending-open]")){
-  event.preventDefault();openPendingDialog();return;
+  event.preventDefault();selectIcon(event.target.closest("[data-smart-pending-open]").dataset.smartActiveKey||"");openPendingDialog();return;
  }
  const button=event.target.closest?.("#gheSmartRail [data-ctrl]");
  if(!button){
@@ -465,7 +540,7 @@ document.addEventListener("click",event=>{
  }
  const ctrl=button.dataset.ctrl;
  if(ctrl==="close")setMode("closed");
- if(ctrl==="home")location.href=route("home");
+ if(ctrl==="home")goHomeDirect();
 },true);
 document.addEventListener("input",event=>{
  if(!event.target.matches?.("#gheSmartRail .ghe-smart-search"))return;
