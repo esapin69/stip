@@ -15,6 +15,9 @@ on:
       - ghe-notification-controls.js
       - ghe-notification-controls.css
       - index.html
+      - places.html
+      - places-export.html
+      - tools/ghe-places-two-pdfs-test.mjs
       - stip-loader.js
       - stip-sw.js
       - tools/ghe-home-seven-points-test.mjs
@@ -35,6 +38,9 @@ on:
       - ghe-notification-controls.js
       - ghe-notification-controls.css
       - index.html
+      - places.html
+      - places-export.html
+      - tools/ghe-places-two-pdfs-test.mjs
       - stip-loader.js
       - stip-sw.js
       - tools/ghe-home-seven-points-test.mjs
@@ -57,4 +63,5 @@ jobs:
           node --check stip-sw.js
       - run: node tools/ghe-audit-navigation-test.mjs
       - run: node tools/ghe-home-seven-points-test.mjs
+      - run: node tools/ghe-places-two-pdfs-test.mjs
       - run: node --test tools/stip-unified-day-popup-test.mjs tools/stip-popup-no-jump-test.mjs
