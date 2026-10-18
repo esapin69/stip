@@ -404,7 +404,7 @@
     if (!document.querySelector('link[href*="ghe-smart-drawer.css"]')) {
       const style = document.createElement("link");
       style.rel = "stylesheet";
-      style.href = "/ghe-smart-drawer.css?v=20261018-rail-organized1&rev=pagescroll1";
+      style.href = "/ghe-smart-drawer.css?v=20261018-global-search-live1&rev=pagescroll1";
       document.head.appendChild(style);
     }
     // Standalone pages share the same choice popups as the home page.
@@ -417,9 +417,15 @@
     if (window.GHESmartDrawer || document.querySelector('script[src*="ghe-smart-drawer.js"]'))
       return;
     const script = document.createElement("script");
-    script.src = "/ghe-smart-drawer.js?v=20261018-rail-organized1";
+    script.src = "/ghe-smart-drawer.js?v=20261018-global-search-live1";
     script.async = true;
     document.head.appendChild(script);
+    if(!window.GHEGlobalSearch&&!document.querySelector('script[src*="ghe-global-search.js"]')){
+      const globalSearch=document.createElement("script");
+      globalSearch.src="/ghe-global-search.js?v=20261018-global-search-live1";
+      globalSearch.async=true;
+      document.head.appendChild(globalSearch);
+    }
   };
   if (document.readyState === "loading")
     document.addEventListener("DOMContentLoaded", ensureSmartDrawer, { once: true });
