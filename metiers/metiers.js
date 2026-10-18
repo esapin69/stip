@@ -138,9 +138,9 @@
     const def = shiftDef(code);
     const icon = window.STIPShiftRegistry?.icon?.(code) || def?.icon || "";
     const badge = window.STIPMonthTable?.shiftBadgeHtml?.(code) || "";
-    const restBadge = inMonth ? (window.STIPMonthTable?.nonWorkCodeBadgeHtml?.(code) || "") : "";
+    const restOrLeave = inMonth && window.STIPMonthTable?.isRestOrLeaveCode?.(code);
     if (badge && isWorking(item)) return badge;
-    if (restBadge) return restBadge;
+    if (restOrLeave) return "";
     if (icon) return `<span class="metiers-shift-icon" title="${esc(def?.label || code)}">${esc(icon)}</span>`;
     return `<span class="metiers-shift-fallback">${esc(shiftCode(item))}</span>`;
   }

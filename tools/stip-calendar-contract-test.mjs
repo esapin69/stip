@@ -75,7 +75,7 @@ const mainBuild = mainIndex.match(/name="stip-ui-build" content="([^"]+)"/)?.[1]
 assert(mainBuild && mainIndex.includes("stip-month-table.css?v=" + mainBuild) &&
   mainIndex.includes("stip-month-table.js?v=" + mainBuild),
   "main app does not load the shared monthly table");
-assert(metiersIndex.includes("stip-month-table.css?v=20261018-month-rest-codes1") && metiersIndex.includes("stip-month-table.js?v=20261018-month-rest-codes1"),
+assert(metiersIndex.includes("stip-month-table.css?v=20261018-month-blank-rest1") && metiersIndex.includes("stip-month-table.js?v=20261018-month-blank-rest1"),
   "métiers does not load the shared monthly table");
 assert(monthTableJs.includes("dataset?.calDay") && monthTableJs.includes("dataset?.phDate") && monthTableJs.includes("dataset?.stipDate"),
   "shared monthly table no longer accepts all active date sources");
@@ -304,21 +304,19 @@ vm.runInNewContext(monthTableJs, {
   document: { readyState: "loading", addEventListener() {} },
   MutationObserver: class {},
 });
-const nonWork = monthlyWindow.STIPMonthTable?.nonWorkCodeBadgeHtml;
-assert(typeof nonWork === "function", "monthly nonworking-code renderer missing");
-if (typeof nonWork === "function") {
-  for (const code of ["R", "RH", "RTT", "CP", "CA", "OFF"]) {
-    const badge = nonWork(code);
-    assert(badge.includes(`>${code}</span>`) && badge.includes("stip-month-nonwork-badge"),
-      `monthly nonworking code ${code} was not rendered as letters`);
-  }
-  assert(nonWork("J4") === "", "working shift must never use the nonworking code badge");
-  assert(nonWork("") === "", "missing planning code must remain empty");
-  assert(nonWork("UNKNOWN") === "", "unknown codes must not be silently classified as rest");
+const isRestOrLeave = monthlyWindow.STIPMonthTable?.isRestOrLeaveCode;
+assert(typeof isRestOrLeave === "function", "Shared monthly rest classifier missing");
+if (typeof isRestOrLeave === "function") {
+  for (const code of ["R", "RH", "RTT", "CP", "CA", "OFF"])
+    assert(isRestOrLeave(code) === true, `Rest/leave ${code} should have an empty calendar slot`);
+  assert(isRestOrLeave("J4") === false, "Worked J4 must remain visible");
+  assert(isRestOrLeave("") === false, "Missing planning must not become rest");
+  assert(isRestOrLeave("UNKNOWN") === false, "Unknown codes must remain distinct");
 }
-assert(homeJs.includes("nonWorkCodeBadgeHtml?.(shift.raw || shift.code)"), "home month not using rest code badge");
-assert(planning.includes("nonWorkCodeBadgeHtml?.(rawDisplay)"), "personal month not using rest code badge");
-assert(metiersJs.includes("nonWorkCodeBadgeHtml?.(code)") && metiersJs.includes("shiftVisual(item, true)"), "métiers month not using rest code badge");
-assert(agentJs.includes("nonWorkCodeBadgeHtml?.(row.code||row.source_value||\"\")"), "agent month not using rest code badge");
-assert(monthTableCss.includes(".stip-month-nonwork-badge.kind-rest") && monthTableCss.includes(".stip-month-nonwork-badge.kind-leave"), "month rest/leave badge styling missing");
+assert(homeJs.includes("isRestOrLeaveCode?.(shift.raw || shift.code)"), "home monthly rest must be empty");
+assert(planning.includes("isRestOrLeaveCode?.(rawDisplay)"), "planning monthly rest must be empty");
+assert(metiersJs.includes("isRestOrLeaveCode?.(code)") && metiersJs.includes("shiftVisual(item, true)"), "metiers monthly rest must be empty");
+assert(agentJs.includes('isRestOrLeaveCode?.(row.code||row.source_value||"")'), "agent monthly rest must be empty");
+assert(!monthTableCss.includes(".stip-month-nonwork-badge"), "obsolete monthly rest badge CSS");
+assert(calendarRules.includes("aucun badge ni pictogramme principal"), "monthly rest contract not updated");
 if (!process.exitCode) console.log("STIP calendar raw/common contract OK");
