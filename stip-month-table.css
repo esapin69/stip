@@ -210,12 +210,16 @@
 }
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-shift-badge.code-n{--stip-month-shift-bg:var(--stip-shift-n)}
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-nonwork-badge.kind-rest{
-  --stip-month-shift-bg:#dce8ed;
-  --stip-month-shift-ink:#254e5b;
+  background:#dce8ed!important;
+  color:#254e5b!important;
+  border-color:#b4cbd2!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 9px rgba(32,86,106,.1)!important;
 }
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-nonwork-badge.kind-leave{
-  --stip-month-shift-bg:#d7f0e7;
-  --stip-month-shift-ink:#1d6956;
+  background:#d7f0e7!important;
+  color:#1d6956!important;
+  border-color:#b6dacc!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 9px rgba(21,115,81,.09)!important;
 }
 .stip-month-calendar[data-stip-month-table="1"] .stip-month-nonwork-badge.is-long{
   font-size:.58rem!important;
