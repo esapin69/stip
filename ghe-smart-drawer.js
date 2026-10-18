@@ -316,7 +316,8 @@ function applySearch(){
   if(!el.hidden)matches++;
  }
  for(const group of rail.querySelectorAll(".ghe-smart-date-group")){
-  group.hidden=!!q&&![...group.querySelectorAll(".ghe-smart-date-details .ghe-smart-link")].some(a=>!a.hidden);
+  const children=group.querySelectorAll?.(".ghe-smart-date-details .ghe-smart-link");
+  if(children)group.hidden=!!q&&![...children].some(a=>!a.hidden);
  }
  const status=rail.querySelector("[data-smart-search-status]");
  if(status){status.hidden=!q||matches>0;status.textContent="Aucun raccourci ou rendez-vous trouvé.";}
