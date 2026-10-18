@@ -54,11 +54,13 @@ const weekCard = home.slice(home.indexOf("function weekFlipCard()"),home.indexOf
 const liveBack = home.slice(home.indexOf("function premiumBackMarkup()"),home.indexOf("function syncPremiumStageHeight("));
 const monthCard = home.slice(home.indexOf("function monthFlipCard("),home.indexOf("function weekWidget()"));
 assert((weekCard.match(/ghe-weekflip-turn[^"]*ghe-flip-cta/g)||[]).length === 2,"La semaine doit avoir deux CTA premium");
-assert((nav.match(/ghe-premium-turn ghe-flip-cta/g)||[]).length === 2,"Le profil doit avoir deux CTA premium");
+assert(!nav.includes("data-premium-turn-open") && !nav.includes("data-premium-turn-close") && nav.includes("ghe-profile-static"),"Le profil est une carte fixe sans rotation");
+assert(nav.includes("data-home-live-open") && home.includes("function openHomeLiveDialog()"),"Le direct a son bouton dans l’en-tête et sa propre modale");
 assert((monthCard.match(/ghe-monthflip-turn[^"]*ghe-flip-cta/g)||[]).length === 2,"Le mois doit avoir deux CTA premium");
 assert(!liveBack.includes("data-premium-turn-close") &&
-       nav.includes('ghe-premium-back-footer') && nav.includes('data-premium-turn-close'),
-       "Le retour En direct doit rester en bas de la face");
+       !nav.includes('ghe-premium-back-footer') &&
+       home.includes('gheHomeLiveDialog') && home.includes('premiumBackMarkup()'),
+       "Les informations En direct sont conservées dans une fenêtre centrale, sans verso 360");
 assert(flipCss.includes("--ghe-flip-start:#e51d49") &&
        flipCss.includes(".ghe-flip-cta-dot") &&
        flipCss.includes("--ghe-flip-start:#116fc9") &&
