@@ -40,7 +40,8 @@ applySearch();assert(nodes.every(node=>node.hidden));assert.equal(status.hidden,
 search.value='medicale';applySearch();assert.equal(nodes[0].hidden,false);assert.equal(nodes[1].hidden,true);
 search.value='';applySearch();assert(nodes.every(node=>!node.hidden));assert.equal(status.hidden,true);
 assert.match(css,/\.ghe-smart-link\[hidden\]\s*\{display:none!important/,'search hiding beats the link display rule');
-assert.match(rail,/if\(!rail\.querySelector\("\.ghe-smart-search"\)\)rail\.innerHTML=markup/,'do not replace a live search input');
+assert.match(rail,/if\(!rail\.querySelector\("\.ghe-smart-navigation"\)\)rail\.innerHTML=markup/,'do not replace a live compact navigation');
+assert.match(rail,/data-smart-nav-query/,'search input remains available in its dedicated dialog');
 for(const event of ['stip:home-rendered','stip:event-feedback-synced','stip:event-feedback-completed','stip:permissions-live'])assert(rail.includes(event),'drawer updates from '+event);
 assert.match(rail,/agent-dates\.html\?focus=/,'future date preserves its canonical identifier');
 assert.match(rail,/feedback_key=/,'feedback preserves its canonical identifier');
