@@ -4062,8 +4062,10 @@ function personalDrawerRow(icon,label,action,meta="") {
        (upcoming.length>1?"s":"")+' à venir</small></div>'+
       (section||'<p class="ghe-agenda360-empty">Aucun rendez-vous à venir.</p>')+
       '</div></div><footer class="ghe-agenda360-actions">'+
-      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv" aria-label="Afficher Mes RDV">RDV <span aria-hidden="true">↻</span></button>'+
-      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback" aria-label="Afficher À clôturer">À clôturer <span aria-hidden="true">↶</span></button>'+
+      '<button type="button" data-agenda360-turn="back" class="ghe-agenda360-turn ghe-agenda360-show-rdv ghe-flip-cta" aria-label="Afficher mes rendez-vous">'+
+      '<span class="ghe-flip-cta-icon" aria-hidden="true">▦</span><span class="ghe-flip-cta-label">Mes rendez-vous</span><b class="ghe-flip-cta-arrow" aria-hidden="true">↻</b></button>'+
+      '<button type="button" data-agenda360-turn="front" class="ghe-agenda360-turn ghe-agenda360-show-feedback ghe-flip-cta" aria-label="Revenir à À clôturer">'+
+      '<span class="ghe-flip-cta-icon" aria-hidden="true">↶</span><span class="ghe-flip-cta-label">À clôturer</span><b class="ghe-flip-cta-arrow" aria-hidden="true">‹</b></button>'+
       '</footer></section>';
   }
   function bindAgenda360(root) {
