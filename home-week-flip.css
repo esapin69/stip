@@ -209,27 +209,28 @@
 .ghe-weekflip-day.today.work .ghe-weekflip-day-head{
   background:color-mix(in srgb,var(--weekflip-marker) 23%,white)!important;
 }
-/* Un seul aperçu, pas une seconde semaine ni des flèches concurrentes. */
+/* Lundi suivant : une ligne premium, discrète, sans appel à l'action redondant.
+   Le badge garde sa teinte de service et toute la ligne reste cliquable. */
 .ghe-weekflip-monday-preview.stip-week-day{
   --weekflip-marker:#a6b9c2;
   box-sizing:border-box!important;
   display:grid!important;
-  grid-template-columns:minmax(0,1fr) minmax(100px,auto)!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
   align-items:center!important;
-  column-gap:12px!important;row-gap:8px!important;
-  flex:1 1 auto!important;
-  min-height:108px!important;
-  width:100%!important;
-  padding:16px 18px!important;
-  margin:6px 0 0!important;
-  border:1px solid color-mix(in srgb,var(--weekflip-marker) 46%,#d3e2e7)!important;
-  border-left:4px solid var(--weekflip-marker)!important;
-  border-radius:17px!important;
-  background:linear-gradient(135deg,color-mix(in srgb,var(--weekflip-marker) 11%,white),#fff 85%)!important;
-  box-shadow:0 5px 12px rgba(22,70,85,.07)!important;
+  column-gap:9px!important;row-gap:0!important;
+  flex:0 0 auto!important;
+  width:100%!important;min-width:0!important;
+  min-height:51px!important;height:auto!important;
+  margin:0!important;padding:7px 12px!important;
+  border:1px solid color-mix(in srgb,var(--weekflip-marker) 29%,#cddfe5)!important;
+  border-left:2px solid color-mix(in srgb,var(--weekflip-marker) 60%,#cddfe5)!important;
+  border-radius:12px!important;
+  background:linear-gradient(95deg,color-mix(in srgb,var(--weekflip-marker) 6%,white),#ffffff 76%)!important;
+  box-shadow:0 2px 8px #22485e0b!important;
   color:#254958!important;
-  cursor:pointer!important;
   text-align:left!important;
+  cursor:pointer!important;
+  touch-action:manipulation;
   transform:none!important;
 }
 .ghe-weekflip-monday-preview.code-m{--weekflip-marker:var(--stip-shift-m,#1784ec)}
@@ -238,48 +239,45 @@
 .ghe-weekflip-monday-preview.code-s{--weekflip-marker:var(--stip-shift-s,#f4cb00)}
 .ghe-weekflip-monday-preview.code-n{--weekflip-marker:var(--stip-shift-n,#202830)}
 .ghe-weekflip-monday-preview-copy{
-  box-sizing:border-box!important;
-  display:flex!important;flex-direction:column!important;
-  align-items:flex-start!important;justify-content:center!important;
-  gap:7px!important;min-width:0!important;
-}
-.ghe-weekflip-monday-preview-copy small{
-  color:color-mix(in srgb,var(--weekflip-marker) 70%,#365565)!important;
-  font:900 .66rem/1.1 system-ui,sans-serif!important;
-  letter-spacing:.06em!important;
+  min-width:0!important;
+  display:flex!important;align-items:center!important;justify-content:flex-start!important;
+  gap:0!important;
 }
 .ghe-weekflip-monday-preview-copy strong{
-  color:#244b5a!important;
-  font:950 clamp(.94rem,3.6vw,1.13rem)/1.17 system-ui,sans-serif!important;
+  min-width:0;white-space:nowrap;
+  color:#25485a!important;
+  font:850 clamp(.79rem,2.8vw,.94rem)/1.15 system-ui,sans-serif!important;
+  letter-spacing:-.025em!important;
   text-transform:capitalize!important;
 }
 .ghe-weekflip-monday-preview-schedule{
-  display:flex!important;flex-direction:column!important;
-  align-items:center!important;justify-content:center!important;
-  gap:6px!important;
-  min-width:0!important;
+  display:inline-flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:8px!important;min-width:0!important;
 }
 .ghe-weekflip-monday-preview-schedule .ghe-weekflip-shift{
-  width:auto!important;min-height:27px!important;flex:0 0 auto!important;
+  width:auto!important;min-width:30px!important;
+  min-height:30px!important;flex:0 0 auto!important;
+}
+.ghe-weekflip-monday-preview-schedule .ghe-weekflip-shift .stip-month-shift-badge{
+  height:30px!important;min-width:30px!important;
+  border-radius:9px!important;
+  font-size:.76rem!important;
 }
 .ghe-weekflip-preview-time{
-  font:900 .8rem/1.15 system-ui,sans-serif!important;
-  color:#234f65!important;white-space:nowrap!important;
+  font:850 clamp(.69rem,2.35vw,.82rem)/1.15 system-ui,sans-serif!important;
+  letter-spacing:-.018em;color:#305970!important;
+  white-space:nowrap!important;
 }
 .ghe-weekflip-preview-time-note{
-  font:800 .71rem/1.2 system-ui,sans-serif!important;
-  color:#647b85!important;
-  text-align:center!important;
+  max-width:128px;
+  font:750 clamp(.65rem,2.1vw,.74rem)/1.2 system-ui,sans-serif!important;
+  color:#627f8c!important;text-align:right!important;
 }
-@media(max-width:390px){
-  .ghe-weekflip-monday-preview.stip-week-day{
-    grid-template-columns:minmax(0,1fr) minmax(80px,auto)!important;
-    padding:12px 10px!important;gap:7px!important;
-  }
-  .ghe-weekflip-monday-preview-copy strong{font-size:.93rem!important}
-  .ghe-weekflip-preview-time{font-size:.7rem!important}
-}
-
+.ghe-weekflip-monday-preview:disabled{opacity:.7;cursor:default!important}
 
 /* CTA principal validé : plus explicite, visible, relief maîtrisé.
    Exclusivement sur la face Aujourd'hui / Demain. */
@@ -318,45 +316,31 @@
 }
 @media(prefers-reduced-motion:reduce){.ghe-weekflip-front>.ghe-weekflip-turn{transition:none}}
 
-/* Transition lisible vers un seul jour de la semaine suivante. */
+/* Repère léger : la ligne du lundi suffit à elle-même. */
 .ghe-weekflip-next-divider{
-  display:flex;align-items:center;gap:9px;
-  margin:13px 2px 7px;
-  color:#66818f;font-size:.62rem;font-weight:900;
-  letter-spacing:.105em;line-height:1.3;
+  display:flex;align-items:center;gap:10px;
+  margin:11px 2px 4px;
+  color:#78909a;font-size:.6rem;font-weight:800;
+  letter-spacing:.09em;line-height:1.15;
 }
-.ghe-weekflip-next-divider::before{content:"";width:14px;height:1px;background:#b5c9d0;flex:0 0 14px}
-.ghe-weekflip-next-divider::after{content:"";height:1px;background:#d5e2e7;flex:1}
-.ghe-weekflip-next-divider i{font-style:normal;font-size:.78rem;color:#5c8897}
-.ghe-weekflip-monday-preview.stip-week-day{
-  min-height:94px!important;
-  padding:13px 15px!important;
-  margin:0!important;
-  border-left-width:3px!important;
-  box-shadow:0 3px 12px rgba(20,65,80,.045)!important;
+.ghe-weekflip-next-divider::before,
+.ghe-weekflip-next-divider::after{
+  content:"";height:1px;flex:1;
+  background:linear-gradient(90deg,transparent,#cbdde4);
 }
-.ghe-weekflip-monday-preview-copy{gap:4px!important}
-.ghe-weekflip-next-tag{
-  display:inline-flex!important;align-items:center;
-  max-width:100%;white-space:normal;
-  color:#486d7c!important;
-  font-size:.59rem!important;font-weight:900!important;
-  letter-spacing:.055em!important;line-height:1.25!important;
+.ghe-weekflip-next-divider::after{
+  background:linear-gradient(90deg,#cbdde4,transparent);
 }
-.ghe-weekflip-next-action{
-  display:inline-flex;align-items:center;gap:6px;
-  padding-top:3px;color:#08748b;
-  font-size:.7rem;font-weight:900;line-height:1.1;
-}
-.ghe-weekflip-next-action b{font-size:.95rem;line-height:1}
 .ghe-weekflip-monday-preview.stip-week-day:focus-visible{
-  outline:3px solid #0a7890!important;outline-offset:3px!important;
+  outline:2px solid #0a7890!important;outline-offset:3px!important;
 }
 @media(max-width:390px){
   .ghe-weekflip-monday-preview.stip-week-day{
-    grid-template-columns:minmax(0,1fr) minmax(75px,auto)!important;
-    column-gap:9px!important;padding:12px 10px!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    min-height:49px!important;padding:7px 9px!important;
+    column-gap:5px!important;
   }
-  .ghe-weekflip-next-tag{font-size:.55rem!important;letter-spacing:.025em!important}
-  .ghe-weekflip-next-divider{font-size:.56rem}
+  .ghe-weekflip-monday-preview-copy strong{font-size:.78rem!important}
+  .ghe-weekflip-monday-preview-schedule{gap:5px!important}
+  .ghe-weekflip-preview-time{font-size:.69rem!important}
 }
