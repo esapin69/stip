@@ -456,7 +456,10 @@
     const weather=host.querySelector?.("[data-thf-weather]");
     const weatherText=weather&&!weather.hidden?String(weather.textContent||"").replace(/\s+/g," ").trim():"Prévision indisponible pour les horaires du service";
     const same=(host._thfSets?.exact||[]).length;
-    const onDuty=(host._thfSets?.onDuty||[]).length;
+    const colleagues=s.restMode?(host._thfSets?.rest||[]).length:same;
+    const maySeeTeam=Boolean(host._thfOptions?.permissions?.planning_team);
+    const colleagueNumber=maySeeTeam?(s.loaded?String(colleagues):"…"):"—";
+    const chefNumber=s.loaded||chiefs.length?String(chiefs.length):"…";
     const info=(host._thfNotes||[]).length;
     const sky=host.querySelector?.(".thf-weather-sky")?.dataset?.sky||"unknown";
     showDialog('<header class="thf-popup-hero thf-weather-sky" data-sky="'+esc(sky)+'">'+
@@ -469,7 +472,16 @@
       '</div></header>'+
       '<section class="thf-day-popup-shift '+(s.working?shiftClass(s.myCode):"shift-absence")+'"><strong>'+esc(s.ownPost)+'</strong>'+
       '<span>'+esc(s.myTime||"Aucun horaire de poste")+'</span></section>'+
-      '<button type="button" class="thf-day-chief-launch is-dialog" data-thf-open="chiefs">🎨 Voir les chefs d’équipe <b>›</b></button>'+
+      '<div class="thf-day-team-access" role="group" aria-label="Effectif et encadrement du jour">'+
+      '<button type="button" class="thf-day-team-button is-colleagues" data-thf-open="people" '+
+      'aria-label="Voir les '+esc(s.restMode?"collègues en repos":"collègues du même horaire")+' : '+esc(colleagueNumber)+'"'+
+      (maySeeTeam?'':' disabled title="Planning d’équipe non accessible avec cet accès"')+'>'+
+      '<span class="thf-day-team-icon" aria-hidden="true">👥</span><strong>'+esc(colleagueNumber)+'</strong>'+
+      '<small>'+esc(s.restMode?"En repos":"Collègues")+'</small></button>'+
+      '<button type="button" class="thf-day-team-button is-chiefs" data-thf-open="chiefs" '+
+      'aria-label="Voir les chefs d’équipe : '+esc(chefNumber)+'">'+
+      '<span class="thf-day-team-icon" aria-hidden="true">🎨</span><strong>'+esc(chefNumber)+'</strong>'+
+      '<small>Chefs d’équipe</small></button></div>'+
       (info?'<section class="thf-day-popup-group thf-day-popup-notices" aria-label="Repères du jour">'+
         '<h3>Repères du jour</h3>'+
         '<div class="thf-day-notices-list">'+noteButtons(host._thfNotes||[])+'</div></section>':"")+
@@ -478,7 +490,6 @@
           '<span aria-hidden="true">'+esc(item.icon)+'</span><strong>'+esc(item.title)+'</strong><small>'+esc(item.time)+'</small><b>›</b></button>').join("")+
         '</section>':"")+
       '<div class="thf-day-popup-actions">'+
-      '<button type="button" data-thf-open="people">👥 '+(s.restMode?'Collègues en repos · '+(host._thfSets?.rest||[]).length:'Collègues · '+same+' même horaire, '+onDuty+' en service')+' ›</button>'+
       '<button type="button" data-thf-open="staff">'+esc(s.badge)+' Effectifs HCL · '+esc(s.hcl)+' ›</button>'+
       '</div>',refresh);
     const dayPopup=document.getElementById("thfPopup");
@@ -487,7 +498,9 @@
       dayPopup.dataset.thfDay=s.day;
       if(!refresh){
         dayPopup.dataset.thfUserInteracted="0";
-        dayPopup.addEventListener("pointerdown",()=>{dayPopup.dataset.thfUserInteracted="1";},{once:true});
+        const markInteracted=()=>{dayPopup.dataset.thfUserInteracted="1";};
+        dayPopup.addEventListener("pointerdown",markInteracted,{once:true});
+        dayPopup.addEventListener("keydown",markInteracted,{once:true});
       }
     }
     const popupWeather=document.querySelector("#thfPopup [data-thf-weather]");
@@ -501,12 +514,16 @@
       document.querySelector("#thfPopup [data-thf-day-weather]"),{date:s.day}
     ).catch?.(()=>{});
   }
+  function dayBackButton(host){
+    return '<button type="button" class="thf-popup-day-back" data-thf-open="day" '+
+      'aria-label="Retour à la journée">‹ <span>Journée du '+esc(host?._thfSummary?.longDate||"jour sélectionné")+'</span></button>';
+  }
   function openChiefs(host){
     activeHost=host;
     const s=host._thfSummary||{}, chiefRows=host._thfChiefs||[];
     const html=chiefRows.length?chiefRows.map(item=>chiefContactHtml(item,s.day)).join(""):
       '<p class="thf-empty">Aucun chef prévu ou renseigné pour ce jour.</p>';
-    showDialog('<small>CHEFS D’ÉQUIPE · '+esc(s.longDate||"")+'</small>'+
+    showDialog(dayBackButton(host)+'<small>CHEFS D’ÉQUIPE · '+esc(s.longDate||"")+'</small>'+
       '<h2>Présences et relève</h2><div class="thf-popup-scroll thf-chief-popup-list">'+html+'</div>');
   }
   function peoplePanel(host,kind){
@@ -527,7 +544,7 @@
     if(host._thfSummary?.restMode){
       const rest=host._thfSets?.rest||[],current=restInfo(host._thfSummary?.myCode)?.key;
       const groups=peopleGroups(rest).sort((a,b)=>Number(b.key===current)-Number(a.key===current));
-      showDialog('<small>PLANNING ÉQUIPE · REPOS</small><h2>Collègues en repos · '+rest.length+'</h2>'+
+      showDialog(dayBackButton(host)+'<small>PLANNING ÉQUIPE · REPOS</small><h2>Collègues en repos · '+rest.length+'</h2>'+
         '<p class="thf-popup-intro">Regroupés par type de repos. Les maladies et formations ne sont pas comptées.</p>'+
         '<div class="thf-popup-scroll thf-rest-groups">'+
         (groups.length?groups.map(peopleGroupHtml).join(""):
@@ -540,7 +557,7 @@
       exact:(sets.exact||[]).length,onDuty:(sets.onDuty||[]).length,
       elsewhere:(sets.elsewhere||[]).length
     };
-    showDialog('<small>PLANNING ÉQUIPE</small><h2>Collègues du jour</h2>'+
+    showDialog(dayBackButton(host)+'<small>PLANNING ÉQUIPE</small><h2>Collègues du jour</h2>'+
       '<div class="thf-people-tabs" role="group" aria-label="Filtrer les collègues">'+
       '<button type="button" data-thf-people-tab="exact" aria-pressed="true">Même horaire <b>'+numbers.exact+'</b></button>'+
       '<button type="button" data-thf-people-tab="onDuty" aria-pressed="false">En service <b>'+numbers.onDuty+'</b></button>'+
@@ -554,7 +571,7 @@
   }
   function openStaff(host) {
     activeHost=host;
-    showDialog('<small>EFFECTIFS · HCL</small><h2>Effectifs par horaire</h2>'+
+    showDialog(dayBackButton(host)+'<small>EFFECTIFS · HCL</small><h2>Effectifs par horaire</h2>'+
       '<p class="thf-popup-intro">Appuie sur un horaire pour voir les agents et l’écart HCL.</p>'+
       '<div class="thf-popup-scroll">'+
       (host._thfShifts||'<p class="thf-empty">Aucune information disponible.</p>')+'</div>');
