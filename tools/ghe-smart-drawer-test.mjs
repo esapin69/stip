@@ -149,7 +149,7 @@ assert.match(choice,/#gheSmartRail,#gheSmartRdvDialog/,"RDV event details contin
 // Contrat d'interface : maison, recherche, créer+calendrier, chat+apps, réserve, réglages.
 const compact=rail.slice(rail.indexOf('const markup=\'<header class="ghe-smart-head"'),rail.indexOf(' // Keep the search input'));
 assert(compact.length>0,"markup du rail présent");
-const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","(appointments||navLink","data-smart-pending-open","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
+const order=["homeLink+","data-smart-search-open","divider+","data-smart-create-open","(appointments||navLink","pending+","data-smart-chat-open","apps+","ghe-smart-reserved-slot","ghe-smart-settings-dock","data-smart-settings-open"];
 let previous=-1;
 for(const token of order){const index=compact.indexOf(token);assert(index>previous,"ordre du tiroir : "+token);previous=index;}
 assert.match(rail,/appointmentDays\(entries\)\.map\(calendarDayGroup\)/,"les dates doivent rester visibles directement");
