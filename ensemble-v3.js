@@ -4,6 +4,26 @@ if (window.STIPEnsembleV3) return;
 const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-leisure";
 const escapeHTML=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const choices=[["⚽","Football"],["🥊","Boxe"],["🏋️","Musculation"],["🍽️","Restaurant"],["🎳","Bowling"],["🎬","Cinéma"],["🚶","Promenade"],["🎉","Sortie"]];
+const iconCatalog=[
+ ...choices.map(([icon,label])=>({icon,label,group:icon==="🍽️"?"repas":icon==="🎉"?"sorties":icon==="🎬"?"loisirs":"sport"})),
+ ...[
+ ["🏀","Basket","sport"],["🏐","Volley","sport"],["🏸","Badminton","sport"],["🏓","Ping-pong","sport"],
+ ["🎾","Tennis","sport"],["🚴","Vélo","sport"],["🏊","Natation","sport"],["🏃","Course","sport"],
+ ["🧘","Yoga","sport"],["🥾","Randonnée","sport"],["🥋","Arts martiaux","sport"],["💃","Danse","sport"],
+ ["☕","Café","repas"],["🍕","Pizza","repas"],["🍔","Burger","repas"],["🍣","Sushi","repas"],
+ ["🍰","Dessert","repas"],["🧺","Pique-nique","repas"],["🥐","Petit-déjeuner","repas"],["🥗","Repas","repas"],
+ ["🏖️","Plage","sorties"],["🌳","Parc","sorties"],["🌇","Coucher de soleil","sorties"],
+ ["🚗","Balade","sorties"],["🛍️","Shopping","sorties"],["🚌","Excursion","sorties"],
+ ["🎤","Karaoké","loisirs"],["🎵","Musique","loisirs"],["🎮","Jeux vidéo","loisirs"],
+ ["🎲","Jeux de société","loisirs"],["🎯","Fléchettes","loisirs"],["🎨","Création","loisirs"],
+ ["📷","Photo","loisirs"],["🎭","Spectacle","loisirs"],["🎸","Concert","loisirs"],
+ ["🎁","Surprise","autres"],["🎂","Anniversaire","autres"],["❤️","Entraide","autres"],
+ ["🐶","Animaux","autres"],["🌟","Projet","autres"],["🤝","Rencontre","autres"]
+ ].map(([icon,label,group])=>({icon,label,group}))
+];
+const iconGroups=[["all","Toutes"],["sport","Sport"],["repas","Repas"],["sorties","Sorties"],["loisirs","Loisirs"],["autres","Autres"]];
+const isCatalogIcon=icon=>iconCatalog.some(item=>item.icon===icon);
+const iconLabel=icon=>iconCatalog.find(item=>item.icon===icon)?.label||"";
 const dateISO=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 const today=dateISO(new Date());
 const validClock=v=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||""));
@@ -19,7 +39,7 @@ const entryGuestId=String(entryParams.get("with")||"").trim();
 const entryCarpoolChoice=entryParams.get("choice");
 let guestEntryResolved=false;
 let carpoolEntryResolved=false;
-const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",iconPickerOpen:false,iconCategory:"all",iconQuery:"",time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
 let pendingVisualRefresh=false;
