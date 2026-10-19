@@ -4,6 +4,7 @@
   const API = "https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-agent-readonly";
   const STORE = "stip_session_v1";
   const root = document.getElementById("agentDirectoryApp");
+  const eventMode = new URLSearchParams(location.search).get("mode") === "event";
   let directory = null;
 
   const esc = (value) =>
@@ -48,8 +49,8 @@
       <button type="button" class="ad-back" data-ad-home aria-label="Retour">‹</button>
       <div>
         <small>APPLICATION STIP</small>
-        <h1>Équipe</h1>
-        <p>Qui est présent aujourd’hui, où le trouver et comment le joindre.</p>
+        <h1>${eventMode ? "Choisir une personne" : "Équipe"}</h1>
+        <p>${eventMode ? "Choisis le collègue à inviter à ton événement." : "Qui est présent aujourd’hui, où le trouver et comment le joindre."}</p>
       </div>
     </header>`;
   }
@@ -67,6 +68,12 @@
   }
 
   function openAgentActions(agent) {
+    if (eventMode) {
+      const id = String(agent?.id || agent?.source_key || "").trim();
+      const target = "sorties-loisirs.html?tab=create" + (id ? "&with=" + encodeURIComponent(id) : "");
+      location.assign(new URL(target, location.href).href);
+      return;
+    }
     if (!window.STIPPersonActions?.openForAgent) {
       openAgent(agent);
       return;

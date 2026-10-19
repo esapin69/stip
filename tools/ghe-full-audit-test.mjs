@@ -81,8 +81,25 @@ const homeContext = {
   monthFlipCard:()=>'',planningCalendarOverview:()=>'',esc:String,
   window:{STIPMeeting:{pendingHTML:()=>'<section>Pending meeting</section>'}},
 };
-const body = vm.runInNewContext(extract(home,'  function homeModeBody()', '\n  // Le moteur des retours') + ';homeModeBody;',homeContext);
+// Evaluate the actual planning options helper along with its consumer.
+// It was moved above homeModeBody when planning options returned to the home page;
+// calling the extracted body without that helper gives a false ReferenceError.
+const {homeModeBody:body,planningCalendarPocket:pocket} = vm.runInNewContext(
+  extract(home,'  function planningCalendarPocket()', '\n  function planningCompareShortcut()') +
+  '\n' + extract(home,'  function homeModeBody()', '\n  // Le moteur des retours') +
+  ';({homeModeBody,planningCalendarPocket});', homeContext);
 const markup = body();
+assert(!markup.includes('Options du planning'), 'Sans droits calendrier, aucune option ne fuite');
+homeContext.has = key => ['calendar_subscribe','planning_personal'].includes(key);
+const withPersonalOptions = body();
+assert.match(withPersonalOptions, /Options du planning/);
+assert.match(withPersonalOptions, /data-home-calendar-subscribe/);
+assert(!withPersonalOptions.includes('data-thf-team-subscribe'));
+assert(withPersonalOptions.indexOf('Options du planning') < withPersonalOptions.indexOf('LÉGENDE') || !withPersonalOptions.includes('LÉGENDE'));
+homeContext.has = key => ['calendar_subscribe','planning_team'].includes(key);
+assert.match(pocket(), /data-thf-team-subscribe/);
+assert(!pocket().includes('data-home-calendar-subscribe'));
+homeContext.has = key => key === 'meeting_notes';
 assert(markup.indexOf('[tools]') < markup.indexOf('[identity]'), 'La date et le profil suivent la cloche');
 assert(markup.indexOf('[identity]') < markup.indexOf('[agenda360]'), 'La date et le profil précèdent À clôturer / RDV');
 assert(markup.indexOf('Pending meeting')>markup.indexOf('[identity]'));
