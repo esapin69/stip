@@ -71,7 +71,7 @@ async function call(action,data={}){
  }
  return json;
 }
-function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}}
+function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}const hint=byId("ev3ComposeFeedback");if(hint){hint.textContent=t;hint.classList.toggle("is-error",error)}}
 function activeDates(e){return (e.visible_dates||e.dates||[]).filter(d=>d>=today)}
 function concerned(e){return e.is_organizer||!!e.invitation_status||!!e.response}
 function displayDates(e){const compatible=activeDates(e);return compatible.length?compatible:(e.invitation_status?(e.dates||[]).filter(d=>d>=today):[])}
@@ -186,7 +186,7 @@ function calendarHTML(){
   body+='<button type="button" '+(disabled?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'" title="'+escapeHTML(ineligible?"Pas de fin de service vérifiée pour ce jour":meta?.label||"Date libre")+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
  }
  return (state.calendarError?'<p class="ev3-inline-status is-error">'+escapeHTML(state.calendarError)+'</p>':!state.calendarLoaded?'<p class="ev3-inline-status">Vérification de tes disponibilités…</p>':"")+'<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
- '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
+ '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small id="ev3SelectedDateCount">'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
@@ -328,16 +328,59 @@ function bind(){
  byId("ensembleV3")?.querySelectorAll("[data-ev3-refresh]").forEach(b=>b.addEventListener("click",refresh));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{persistTitle();state.icon=b.dataset.ev3Icon;state.customOpen=false;render()});
- byId("ensembleV3")?.querySelector("[data-ev3-custom]")?.addEventListener("click",()=>{persistTitle();state.customOpen=!state.customOpen;render();byId("ev3OtherIcon")?.focus()});
- const other=byId("ev3OtherIcon");if(other)other.oninput=()=>{state.icon=other.value.trim().slice(0,16)};
- byId("ensembleV3")?.querySelectorAll("[data-ev3-schedule]").forEach(b=>b.onclick=()=>{persistTitle();state.mode=b.dataset.ev3Schedule;if(state.mode==="afterwork"){const days=new Map(state.calendar.map(x=>[x.date,x]));for(const date of state.dates){const meta=days.get(date);if(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false)state.dates.delete(date)}}render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-month]").forEach(b=>b.onclick=()=>{persistTitle();state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.ev3Month),1);render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-all]").forEach(b=>b.onclick=()=>{persistTitle();const select=b.dataset.ev3All==="1";const y=state.month.getFullYear(),m=state.month.getMonth();for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const d=dateISO(new Date(y,m,i));if(d<today)continue;const meta=state.calendar.find(x=>x.date===d);if(select&&state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false))continue;if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d)}render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-day]").forEach(b=>b.onclick=()=>{persistTitle();const d=b.dataset.ev3Day;if(state.dates.has(d))state.dates.delete(d);else if(state.dates.size<62)state.dates.add(d);else return message("62 dates maximum.",true);render()});
+ // One delegated handler: choosing icons and dates never rebuilds the whole page
+ // (which used to move the viewport and close the Android keyboard).
+ const creator=byId("ev3Compose");
+ if(creator){
+  creator.addEventListener("click",event=>{
+   const icon=event.target.closest("[data-ev3-icon]");
+   if(icon){
+    const selected=icon.dataset.ev3Icon;
+    if(!isCatalogIcon(selected))return;
+    state.icon=selected;showIconPicker(false);refreshIconSelection();return;
+   }
+   if(event.target.closest("[data-ev3-custom]")){
+    showIconPicker(!state.iconPickerOpen);return;
+   }
+   if(event.target.closest("[data-ev3-picker-close]")){showIconPicker(false);return;}
+   const group=event.target.closest("[data-ev3-icon-group]");
+   if(group){state.iconCategory=group.dataset.ev3IconGroup;updateIconResults();return;}
+   const schedule=event.target.closest("[data-ev3-schedule]");
+   if(schedule){setActivitySchedule(schedule.dataset.ev3Schedule);return;}
+   const month=event.target.closest("[data-ev3-month]");
+   if(month){state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(month.dataset.ev3Month),1);refreshDatePicker();return;}
+   const all=event.target.closest("[data-ev3-all]");
+   if(all){
+    const select=all.dataset.ev3All==="1",y=state.month.getFullYear(),m=state.month.getMonth();
+    for(let day=1;day<=new Date(y,m+1,0).getDate();day++){
+     const d=dateISO(new Date(y,m,day));if(d<today)continue;
+     const meta=state.calendar.find(x=>x.date===d);
+     if(select&&state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false))continue;
+     if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d);
+    }
+    refreshDatePicker();return;
+   }
+   const day=event.target.closest("[data-ev3-day]");
+   if(day){
+    const date=day.dataset.ev3Day;
+    if(state.dates.has(date))state.dates.delete(date);
+    else if(state.dates.size<62)state.dates.add(date);
+    else {message("62 dates maximum.",true);return;}
+    const selected=state.dates.has(date);
+    day.classList.toggle("is-selected",selected);
+    day.setAttribute("aria-pressed",String(selected));
+    const count=byId("ev3SelectedDateCount");
+    if(count)count.textContent=state.dates.size+" jour"+(state.dates.size>1?"s":"");
+    updateComposerProgress();
+   }
+  });
+  const iconSearch=byId("ev3IconSearch");
+  if(iconSearch)iconSearch.oninput=()=>{state.iconQuery=iconSearch.value;updateIconResults();};
+ }
+ updateComposerProgress();
  const search=byId("ev3PeopleSearch");if(search)search.oninput=()=>{byId("ev3PeopleList").innerHTML=peopleOptions(search.value);bindPeople()};
  bindPeople();
- const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>state.visibility=f.elements.public.checked?"team":"invite";f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
+ const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>{state.visibility=f.elements.public.checked?"team":"invite";updateComposerProgress();};f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
  const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
  const cf=byId("ev3CarForm");if(cf)cf.onsubmit=submitTrip;
  byId("ensembleV3")?.querySelectorAll("[data-ev3-trip-act]").forEach(b=>b.onclick=async()=>{if(b.dataset.ev3TripAct==="carpool_cancel"&&!confirm("Annuler ce trajet ?"))return;b.disabled=true;try{const j=await call(b.dataset.ev3TripAct,{trip_id:b.dataset.trip,target_agent_id:b.dataset.peer,decision:b.dataset.decision});state.trips=j.trips||[];message("Trajet mis à jour.");render()}catch(err){message(err.message,true);b.disabled=false}});
@@ -383,15 +426,14 @@ function persistTitle(){const f=byId("ev3Compose");if(!f)return;state.title=f.el
 function bindPeople(){
  byId("ev3PeopleList")?.querySelectorAll("[data-ev3-person]").forEach(input=>input.onchange=()=>{
   if(input.checked)state.guests.add(input.dataset.ev3Person);else state.guests.delete(input.dataset.ev3Person);
-  const counter=byId("ev3PeopleCount");if(counter)counter.textContent=state.guests.size+" sélectionné(s)";
+  const counter=byId("ev3PeopleCount");if(counter)counter.textContent=state.guests.size+" sélectionné(s)";updateComposerProgress();
  });
 }
 async function submitActivity(ev){
  ev.preventDefault();const f=ev.currentTarget;
- if(!state.icon)return message("Choisis obligatoirement une icône.",true);
+ if(!isCatalogIcon(state.icon))return message("Choisis une icône dans la liste.",true);
  if(!state.dates.size)return message("Sélectionne au moins une date.",true);
  if(!state.guests.size&&state.visibility!=="team")return message("Sélectionne au moins un collègue.",true);
- const iconInfo=choices.find(v=>v[0]===state.icon);
  const title=String(f.elements.title.value||"").trim();
  if(!title){f.elements.title.focus();return message("Donne un titre à cette activité pour identifier clairement sa discussion.",true)}
  const submit=f.querySelector('[type="submit"]');submit.disabled=true;
@@ -400,7 +442,7 @@ async function submitActivity(ev){
    time_label:state.mode==="afterwork"?"À la fin du service":f.elements.time?.value||"Horaire à définir",visibility:state.visibility,
    location:f.elements.location.value,description:f.elements.description.value,agent_ids:[...state.guests]});
   state.events=result.events||[];
-  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.time="";state.place="";state.details="";state.customOpen=false;state.tab="agenda";
+  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.time="";state.place="";state.details="";state.iconPickerOpen=false;state.iconCategory="all";state.iconQuery="";state.tab="agenda";
   message("Proposition créée et invitations envoyées.");render();
  }catch(err){message(err.message,true);submit.disabled=false}
 }
