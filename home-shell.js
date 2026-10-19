@@ -4131,7 +4131,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}${homeModeNav("identity")}${agenda360Markup()}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}${homeModeNav("identity")}${agenda360Markup()}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${planningCalendarPocket()}${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -4440,6 +4440,15 @@ function personalDrawerRow(icon,label,action,meta="") {
           if(!window.STIPCalendars?.quick)
             await window.STIPLoad?.script?.("calendar-subscriptions.js");
           window.STIPCalendars?.quick?.("personal");
+        } catch {}
+      });
+    root
+      .querySelector("[data-thf-team-subscribe]")
+      ?.addEventListener("click", async () => {
+        try {
+          if (!window.STIPCalendars?.quick)
+            await window.STIPLoad?.script?.("calendar-subscriptions.js");
+          window.STIPCalendars?.quick?.("team");
         } catch {}
       });
     root
