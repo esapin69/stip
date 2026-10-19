@@ -5887,8 +5887,10 @@
 
 /* Fauteuils: compact dock with exactly three actions. */
 .tb-page.is-wheelchair-mode .tb-composer-grip[hidden]{display:none!important}
-.tb-composer-grip{width:52px;height:18px;margin:-2px auto 4px;padding:0;border:0;background:transparent;display:grid;place-items:center}
+.tb-composer-grip{width:100%;min-height:44px;margin:-2px auto 2px;padding:4px 8px;border:0;background:transparent;color:#47696e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;touch-action:manipulation;cursor:pointer;font:inherit}
 .tb-composer-grip span{width:34px;height:5px;border-radius:999px;overflow:hidden;background:#b8c9cc;color:transparent}
+.tb-composer-grip strong{font-size:.68rem;line-height:1.1;font-weight:850}
+.tb-composer-grip:focus-visible{outline:2px solid #168ea5;outline-offset:-2px;border-radius:12px}
 .tb-shortcuts-compact{display:none}
 .tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-search-shortcuts{padding:8px 10px max(9px,env(safe-area-inset-bottom))!important}
 .tb-page.is-wheelchair-mode.is-wheelchair-composer-collapsed .tb-shortcuts-full{display:none!important}
@@ -5907,6 +5909,27 @@
 .tb-page.is-wheelchair-mode.is-wheelchair-composer-expanded .tb-shortcuts-compact{display:none!important}
 .tb-page.is-wheelchair-mode.is-wheelchair-composer-expanded .tb-shortcuts-full{display:block!important}
 .tb-page.is-wheelchair-mode.is-wheelchair-composer-expanded.is-composing .tb-shortcuts-full{display:none!important}
+/* On a phone the wheelchair composer is a true bottom drawer, not a floating card. */
+@media(max-width:759px){
+  .tb-page.is-wheelchair-mode .tb-input-dock{
+    bottom:0!important;
+    border-bottom:0!important;
+    border-radius:22px 22px 0 0!important;
+    max-height:min(74dvh,640px);
+    display:flex;
+    flex-direction:column;
+  }
+  .tb-page.is-wheelchair-mode .tb-search-shortcuts{
+    min-height:0;
+    flex:1 1 auto;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .tb-page.is-wheelchair-mode.is-composing .tb-input-dock{
+    bottom:var(--tb-keyboard-inset,0px)!important;
+    border-radius:20px 20px 0 0!important;
+  }
+}
 @media(max-width:390px){
  .tb-compact-three{gap:5px}
  .tb-compact-three>button{min-height:50px;padding:5px 3px;gap:4px}
