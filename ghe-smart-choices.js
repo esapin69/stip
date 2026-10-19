@@ -27,9 +27,9 @@ function choose(item){
   navigate("sorties-loisirs.html?tab=invitations");return;
  }
  if(item.key==="business-action"){navigate(item.href);return;}
- if(item.key==="leisureQuick"){if(window.GHELeisureQuick?.show)window.GHELeisureQuick.show();else navigate("sorties-loisirs.html?tab=create");return;}
+ if(item.key==="leisureQuick"){navigate("sorties-loisirs.html?tab=create&schedule=afterwork");return;}
  const routes={
-  createPerson:"agent-directory.html",activity:"sorties-loisirs.html?tab=create",
+  createPerson:"agent-directory.html?mode=event",activity:"sorties-loisirs.html?tab=create",
   driver:"sorties-loisirs.html?tab=trips&choice=driver",
   passenger:"sorties-loisirs.html?tab=trips&choice=passenger",
   messages:"index.html?quick=communication&tab=dm#/communication/dm",
