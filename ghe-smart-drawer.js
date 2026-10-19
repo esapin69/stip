@@ -420,6 +420,7 @@ function adminEntries(){
   ["👥","Collègues","Annuaire des agents","colleagues"],
   ["📱","Application GHE","Installation","app"],
   ["🔐","Gérer les accès","Rôles et raccourcis","access"],
+  ["📞","Contacts et numéros","Annuaire et numéros utiles","contacts"],
   ["🧹","Contrôle du système","Inventaire et nettoyage","inventory"]
  ];
  const extras=window.STIPDrawerEntries?.()||homeDrawerSnapshot()?.entries||[];
@@ -532,6 +533,7 @@ function render(){
  const entries=groupedEntries(),inbox=entries.find(x=>x.kind==="pending");
  const appointments=appointmentDays(entries).map(calendarDayGroup).join("");
  const apps=appEntries().map(item=>link({kind:"shortcut",icon:"",...item})).join("");
+ const adminQuick=isAdmin()?navLink('🔐','Administration','Accès, contacts et outils','data-smart-active-key="admin" data-smart-admin-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"'):"";
  const pending='<button type="button" class="ghe-smart-link ghe-smart-pending-trigger" data-smart-pending-open aria-haspopup="dialog" aria-controls="gheSmartPendingDialog" aria-label="À traiter et demandes">'+
   '<span class="ghe-smart-icon" aria-hidden="true"><img src="images/icone_app/ghe-action-inbox.svg" alt="">'+
   (inbox?.count?'<span class="ghe-smart-badge">'+Math.min(inbox.count,99)+'</span>':"")+'</span>'+
@@ -543,7 +545,7 @@ function render(){
   '<button type="button" class="ghe-smart-toggle ghe-smart-close" data-ctrl="close" aria-label="Fermer complètement le tiroir">×</button></header>'+
   homeLink+'<div class="ghe-smart-top-divider" role="separator"></div>'+
   '<div class="ghe-smart-scroll ghe-smart-navigation">'+
-  pending+divider+'<nav aria-label="Créer et rendez-vous">'+
+  pending+adminQuick+divider+'<nav aria-label="Créer et rendez-vous">'+
   navLink('➕','Proposer','Créer un événement ou un trajet','data-smart-active-key="create" data-smart-create-open aria-expanded="false" aria-controls="gheSmartDrawerPanel"')+
   (appointments||navLink('📆','Calendrier','Mes rendez-vous','data-smart-rdv-open aria-haspopup="dialog" aria-controls="gheSmartRdvDialog"'))+
   '</nav>'+divider+
@@ -604,8 +606,8 @@ async function refresh(force=false){
 document.addEventListener("click",event=>{
  const home=event.target.closest?.("#gheSmartRail [data-smart-home]");
  if(home){event.preventDefault();event.stopImmediatePropagation();goHomeDirect();return;}
- const nav=event.target.closest?.("#gheSmartRail [data-smart-search-open],#gheSmartRail [data-smart-apps-open],#gheSmartRail [data-smart-settings-open]");
- if(nav){event.preventDefault();event.stopImmediatePropagation();if(nav.hasAttribute("data-smart-search-open")){selectIcon("search");window.GHEGlobalSearch?.toggle();return;}window.GHEDrawerPanels?.open(nav.hasAttribute("data-smart-settings-open")?"settings":"apps",nav);return;}
+ const nav=event.target.closest?.("#gheSmartRail [data-smart-search-open],#gheSmartRail [data-smart-apps-open],#gheSmartRail [data-smart-settings-open],#gheSmartRail [data-smart-admin-open]");
+ if(nav){event.preventDefault();event.stopImmediatePropagation();if(nav.hasAttribute("data-smart-search-open")){selectIcon("search");window.GHEGlobalSearch?.toggle();return;}window.GHEDrawerPanels?.open(nav.hasAttribute("data-smart-admin-open")?"admin":nav.hasAttribute("data-smart-settings-open")?"settings":"apps",nav);return;}
  const createChat=event.target.closest?.("#gheSmartRail [data-smart-create-open],#gheSmartRail [data-smart-chat-open]");
  if(createChat){event.preventDefault();event.stopImmediatePropagation();window.GHEDrawerPanels?.open(createChat.hasAttribute("data-smart-create-open")?"create":"chat",createChat);return;}
  const rdv=event.target.closest?.("[data-smart-rdv-open]");
@@ -690,7 +692,7 @@ window.addEventListener("stip:boot-updated",()=>{render();refresh()});
 window.addEventListener("pageshow",()=>{render();refresh()});
 window.addEventListener("storage",event=>{if(event.key===STORE){events=[];ready=false;render();refresh(true)}});
 window.addEventListener("ghe:agenda-change",()=>refresh(true));
-window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,applications:appEntries,mode:()=>mode,setMode,selectIcon,openDestination:navigateDrawerDestination};
+window.GHESmartDrawer={refresh,events:()=>events,entries:groupedEntries,applications:appEntries,administration:adminEntries,mode:()=>mode,setMode,selectIcon,openDestination:navigateDrawerDestination};
 const start=()=>{render();refresh();openDeferredSettings();window.STIPNav?.session?.().then(()=>render()).catch(()=>{});setInterval(()=>{if(document.visibilityState==="visible")refresh()},90000)};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start,{once:true});else start();
 })();
