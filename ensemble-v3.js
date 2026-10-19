@@ -4,6 +4,26 @@ if (window.STIPEnsembleV3) return;
 const API="https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-leisure";
 const escapeHTML=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const choices=[["⚽","Football"],["🥊","Boxe"],["🏋️","Musculation"],["🍽️","Restaurant"],["🎳","Bowling"],["🎬","Cinéma"],["🚶","Promenade"],["🎉","Sortie"]];
+const iconCatalog=[
+ ...choices.map(([icon,label])=>({icon,label,group:icon==="🍽️"?"repas":icon==="🎉"?"sorties":icon==="🎬"?"loisirs":"sport"})),
+ ...[
+ ["🏀","Basket","sport"],["🏐","Volley","sport"],["🏸","Badminton","sport"],["🏓","Ping-pong","sport"],
+ ["🎾","Tennis","sport"],["🚴","Vélo","sport"],["🏊","Natation","sport"],["🏃","Course","sport"],
+ ["🧘","Yoga","sport"],["🥾","Randonnée","sport"],["🥋","Arts martiaux","sport"],["💃","Danse","sport"],
+ ["☕","Café","repas"],["🍕","Pizza","repas"],["🍔","Burger","repas"],["🍣","Sushi","repas"],
+ ["🍰","Dessert","repas"],["🧺","Pique-nique","repas"],["🥐","Petit-déjeuner","repas"],["🥗","Repas","repas"],
+ ["🏖️","Plage","sorties"],["🌳","Parc","sorties"],["🌇","Coucher de soleil","sorties"],
+ ["🚗","Balade","sorties"],["🛍️","Shopping","sorties"],["🚌","Excursion","sorties"],
+ ["🎤","Karaoké","loisirs"],["🎵","Musique","loisirs"],["🎮","Jeux vidéo","loisirs"],
+ ["🎲","Jeux de société","loisirs"],["🎯","Fléchettes","loisirs"],["🎨","Création","loisirs"],
+ ["📷","Photo","loisirs"],["🎭","Spectacle","loisirs"],["🎸","Concert","loisirs"],
+ ["🎁","Surprise","autres"],["🎂","Anniversaire","autres"],["❤️","Entraide","autres"],
+ ["🐶","Animaux","autres"],["🌟","Projet","autres"],["🤝","Rencontre","autres"]
+ ].map(([icon,label,group])=>({icon,label,group}))
+];
+const iconGroups=[["all","Toutes"],["sport","Sport"],["repas","Repas"],["sorties","Sorties"],["loisirs","Loisirs"],["autres","Autres"]];
+const isCatalogIcon=icon=>iconCatalog.some(item=>item.icon===icon);
+const iconLabel=icon=>iconCatalog.find(item=>item.icon===icon)?.label||"";
 const dateISO=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
 const today=dateISO(new Date());
 const validClock=v=>/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v||""));
@@ -19,12 +39,35 @@ const entryGuestId=String(entryParams.get("with")||"").trim();
 const entryCarpoolChoice=entryParams.get("choice");
 let guestEntryResolved=false;
 let carpoolEntryResolved=false;
-const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
+const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",iconPickerOpen:false,iconCategory:"all",iconQuery:"",time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
 let pendingVisualRefresh=false;
 function renderWhenIdle(){
  if(byId("ev3Dialog")?.open){pendingVisualRefresh=true;return}
+ // Live data revalidation must never replace the form, its scroll position
+ // or the native Android/iOS keyboard while someone is making a proposal.
+ const composer=byId("ev3Compose");
+ if(state.tab==="create"&&composer){
+  const dates=byId("ev3DatePicker");
+  if(dates){
+   const next=calendarHTML();
+   if(dates.innerHTML!==next)dates.innerHTML=next;
+  }
+  const people=byId("ev3PeopleList"),search=byId("ev3PeopleSearch");
+  if(people){
+   const next=state.peopleLoaded?peopleOptions(search?.value||""):
+     '<p class="ev3-inline-status">Chargement de la liste des collègues…</p>';
+   if(people.innerHTML!==next){people.innerHTML=next;bindPeople();}
+  }
+  if(search)search.disabled=!state.peopleLoaded;
+  const total=byId("ev3PeopleAvailableCount");
+  if(total)total.textContent=state.peopleLoaded?
+   state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…";
+  const submit=composer.querySelector('[type="submit"]');
+  if(submit)submit.disabled=!state.calendarLoaded||!state.peopleLoaded;
+  updateComposerProgress();pendingVisualRefresh=false;return;
+ }
  const active=document.activeElement;
  // Keep the original mobile input and keyboard in place while data arrive.
  if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit, .ev3-availability-picker") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
@@ -51,7 +94,7 @@ async function call(action,data={}){
  }
  return json;
 }
-function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}}
+function message(t,error=false){state.status=t;state.error=error?t:"";const el=byId("ev3Feedback");if(el){el.textContent=t;el.classList.toggle("is-error",error)}const hint=byId("ev3ComposeFeedback");if(hint){hint.textContent=t;hint.classList.toggle("is-error",error)}}
 function activeDates(e){return (e.visible_dates||e.dates||[]).filter(d=>d>=today)}
 function concerned(e){return e.is_organizer||!!e.invitation_status||!!e.response}
 function displayDates(e){const compatible=activeDates(e);return compatible.length?compatible:(e.invitation_status?(e.dates||[]).filter(d=>d>=today):[])}
@@ -166,12 +209,12 @@ function calendarHTML(){
   body+='<button type="button" '+(disabled?"disabled ":"")+'class="ev3-day'+(selected?" is-selected":"")+(meta?.is_working?" is-working":"")+'" data-ev3-day="'+d+'" aria-pressed="'+selected+'" title="'+escapeHTML(ineligible?"Pas de fin de service vérifiée pour ce jour":meta?.label||"Date libre")+'"><b>'+i+'</b><small>'+escapeHTML(meta?.icon||"")+'</small></button>';
  }
  return (state.calendarError?'<p class="ev3-inline-status is-error">'+escapeHTML(state.calendarError)+'</p>':!state.calendarLoaded?'<p class="ev3-inline-status">Vérification de tes disponibilités…</p>':"")+'<div class="ev3-month-nav"><button type="button" data-ev3-month="-1" aria-label="Mois précédent">‹</button><strong>'+escapeHTML(monthName(first))+'</strong><button type="button" data-ev3-month="1" aria-label="Mois suivant">›</button></div>'+
- '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small>'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
+ '<div class="ev3-month-quick"><button type="button" data-ev3-all="1" '+(state.mode==="afterwork"&&(!state.calendarLoaded||state.calendarError)?'disabled':'')+'>✓ Tout le mois</button><button type="button" data-ev3-all="0">Tout décocher</button><small id="ev3SelectedDateCount">'+state.dates.size+' jour'+(state.dates.size>1?"s":"")+'</small></div>'+
  '<div class="ev3-calendar">'+body+'</div>';
 }
 function peopleHTML(){
  const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
- return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
+ return '<label class="ev3-search-label">Inviter des collègues <small id="ev3PeopleAvailableCount">'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+(state.peopleLoaded?peopleOptions(""):'<p class="ev3-inline-status">Chargement de la liste des collègues…</p>')+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
  (unactivated?'<p class="ev3-directory-hint">Tu peux inviter ces collègues même si leur compte GHE n’est pas encore activé. Leur invitation est conservée et sera disponible après connexion.</p>':"");
@@ -183,6 +226,80 @@ function peopleOptions(query){
   '<label class="ev3-person'+(p.can_invite===false?' is-restricted':'')+'"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+' '+(p.can_invite===false?'disabled aria-label="Invitation indisponible"':'')+'>'+personMarkup(p)+'</label>').join("")||
  (state.peopleError?'<p>Annuaire indisponible : actualise la page.</p>':'<p>Aucun collègue correspondant à cette recherche.</p>');
 }
+function iconResultsHTML(){
+ const group=state.iconCategory,query=normalizedName(state.iconQuery);
+ const found=iconCatalog.filter(x=>(group==="all"||x.group===group)&&normalizedName(x.label).includes(query));
+ return found.length?found.map(x=>'<button type="button" class="ev3-emoji ev3-picker-emoji'+(x.icon===state.icon?' is-selected':'')+'" data-ev3-icon="'+escapeHTML(x.icon)+'" aria-label="'+escapeHTML(x.label)+'" title="'+escapeHTML(x.label)+'" aria-pressed="'+(x.icon===state.icon)+'">'+x.icon+'<small>'+escapeHTML(x.label)+'</small></button>').join(""):'<p class="ev3-icon-empty">Aucune icône correspondante. Essaie un autre mot.</p>';
+}
+function iconPickerHTML(){
+ return '<section class="ev3-icon-picker" id="ev3IconPicker" '+(!state.iconPickerOpen?'hidden ':'')+'aria-label="Choisir une icône">'+
+ '<div class="ev3-picker-heading"><strong>Choisir une icône</strong><button type="button" data-ev3-picker-close aria-label="Fermer les icônes">×</button></div>'+
+ '<div class="ev3-picker-categories" role="group" aria-label="Catégories">'+iconGroups.map(([key,name])=>'<button type="button" class="'+(state.iconCategory===key?'is-active':'')+'" data-ev3-icon-group="'+key+'" aria-pressed="'+(state.iconCategory===key)+'">'+name+'</button>').join("")+'</div>'+
+ '<label class="ev3-icon-search">Rechercher dans les icônes<input id="ev3IconSearch" type="search" autocomplete="off" placeholder="Ex. danse, café, vélo…" value="'+escapeHTML(state.iconQuery)+'"></label>'+
+ '<div class="ev3-icon-results" id="ev3IconResults">'+iconResultsHTML()+'</div></section>';
+}
+function scheduleDetailsHTML(){
+ return state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':
+ '<p class="ev3-hint">Les dates disponibles suivent les fins de service de ton planning.</p>';
+}
+function composerProgressHTML(){
+ return '<div class="ev3-composer-progress" id="ev3ComposerProgress" aria-live="polite"></div>'+
+ '<p class="ev3-compose-feedback" id="ev3ComposeFeedback" aria-live="polite" role="status"></p>';
+}
+function updateComposerProgress(){
+ const node=byId("ev3ComposerProgress");if(!node)return;
+ const ico=state.icon?escapeHTML(state.icon)+' '+escapeHTML(iconLabel(state.icon)):'Icône à choisir';
+ node.innerHTML='<span>'+ico+'</span><span>'+state.dates.size+' date'+(state.dates.size>1?'s':'')+'</span>'+
+ '<span>'+((state.visibility==="team")?'Toute l’équipe':state.guests.size+' invité'+(state.guests.size>1?'s':''))+'</span>';
+}
+function refreshIconSelection(){
+ const selected=byId("ev3ChosenIcon");
+ if(selected){selected.hidden=!state.icon;selected.textContent=state.icon?'Icône retenue : '+state.icon+' '+iconLabel(state.icon):'';}
+ document.querySelectorAll('#ev3Compose [data-ev3-icon]').forEach(button=>{
+  const active=button.dataset.ev3Icon===state.icon;
+  button.classList.toggle("is-selected",active);button.setAttribute("aria-pressed",String(active));
+ });
+ updateComposerProgress();
+}
+function showIconPicker(open){
+ state.iconPickerOpen=Boolean(open);
+ const picker=byId("ev3IconPicker");
+ if(picker)picker.hidden=!state.iconPickerOpen;
+ const trigger=byId("ev3IconPickerToggle");
+ trigger?.setAttribute("aria-expanded",String(state.iconPickerOpen));
+}
+function updateIconResults(){
+ const results=byId("ev3IconResults");
+ if(results)results.innerHTML=iconResultsHTML();
+ document.querySelectorAll('#ev3IconPicker [data-ev3-icon-group]').forEach(button=>{
+  const active=button.dataset.ev3IconGroup===state.iconCategory;
+  button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
+ });
+}
+function refreshDatePicker(){
+ const el=byId("ev3DatePicker");
+ if(el)el.innerHTML=calendarHTML();
+ updateComposerProgress();
+}
+function setActivitySchedule(next){
+ if(next!=="fixed"&&next!=="afterwork")return;
+ const f=byId("ev3Compose");
+ state.time=f?.elements.time?.value||state.time;
+ state.mode=next;
+ if(next==="afterwork"){
+  const days=new Map(state.calendar.map(x=>[x.date,x]));
+  for(const date of state.dates){const meta=days.get(date);if(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false)state.dates.delete(date);}
+ }
+ document.querySelectorAll('#ev3Compose [data-ev3-schedule]').forEach(button=>{
+  const active=button.dataset.ev3Schedule===next;
+  button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
+ });
+ const details=byId("ev3ScheduleDetails");
+ if(details)details.innerHTML=scheduleDetailsHTML();
+ const time=details?.querySelector('[name="time"]');
+ if(time)time.addEventListener("input",()=>state.time=time.value);
+ refreshDatePicker();
+}
 function formHTML(){
  if(state.formKind==="carpool"){
   const p=state.pref||{};
@@ -191,22 +308,25 @@ function formHTML(){
   '<div class="ev3-two"><label>Date<input name="date" type="date" required min="'+today+'"></label><label>Heure<input name="time" type="time" required></label></div><label>Places<select name="seats">'+[1,2,3,4,5,6].map(n=>'<option value="'+n+'">'+n+'</option>').join("")+'</select></label>'+
   '<label>Point de rendez-vous<input name="meeting_point" maxlength="200"></label><label>Précisions<textarea name="note" rows="2" maxlength="400"></textarea></label><button type="submit" class="ev3-primary">Proposer le trajet</button></form></section>';
  }
- const iconButtons=choices.map(([ic,title])=>'<button type="button" class="ev3-emoji '+(state.icon===ic?"is-selected":"")+'" data-ev3-icon="'+escapeHTML(ic)+'" aria-pressed="'+(state.icon===ic)+'" title="'+escapeHTML(title)+'">'+ic+'</button>').join("");
- return '<section class="ev3-panel"><div class="ev3-section-title"><h2>Proposer une activité</h2></div>'+
+ const iconButtons=choices.map(([ic,title])=>'<button type="button" class="ev3-emoji '+(state.icon===ic?"is-selected":"")+'" data-ev3-icon="'+escapeHTML(ic)+'" aria-label="'+escapeHTML(title)+'" aria-pressed="'+(state.icon===ic)+'" title="'+escapeHTML(title)+'">'+ic+'</button>').join("");
+ return '<section class="ev3-panel ev3-activity-create"><div class="ev3-section-title"><h2>Proposer une activité</h2><small>Quelques choix, et c’est prêt.</small></div>'+
  '<form id="ev3Compose">'+
- '<label class="ev3-form-title">1. Ton activité <small>Choisis une icône</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
- (state.customOpen?'<label>Autre icône <input id="ev3OtherIcon" type="text" maxlength="16" autocomplete="off" placeholder="Choisir un emoji" value="'+escapeHTML(state.icon)+'"></label>':"")+
- '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label>'+
- '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
- '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
- '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
- (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Les collègues pourront choisir leurs dates compatibles après le service.</p>')+
- '<label class="ev3-form-title">3. Les dates</label>'+calendarHTML()+
- '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
- '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label>'+
- '<label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
- '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label>'+
- '<button type="submit" class="ev3-primary" '+(!state.calendarLoaded||!state.peopleLoaded?'disabled aria-label="Chargement des disponibilités et des collègues"':'')+'>Envoyer la proposition</button></form></section>';
+ '<div class="ev3-form-step"><label class="ev3-form-title">1. Ton activité <small>Un pictogramme pour reconnaître la proposition</small></label>'+
+ '<div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" id="ev3IconPickerToggle" data-ev3-custom aria-label="Voir toutes les icônes" aria-expanded="'+state.iconPickerOpen+'" aria-controls="ev3IconPicker">＋</button></div>'+
+ '<p class="ev3-icon-chosen" id="ev3ChosenIcon" '+(!state.icon?'hidden':'')+'>'+ (state.icon?'Icône retenue : '+escapeHTML(state.icon)+' '+escapeHTML(iconLabel(state.icon)):'')+'</p>'+
+ iconPickerHTML()+
+ '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
+ '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork" aria-pressed="'+(state.mode==="afterwork")+'">🕔 À la fin du service</button>'+
+ '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed" aria-pressed="'+(state.mode==="fixed")+'">🕒 Heure précise</button></div>'+
+ '<div id="ev3ScheduleDetails">'+scheduleDetailsHTML()+'</div></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">3. Les dates</label><div id="ev3DatePicker">'+calendarHTML()+'</div></div>'+
+ '<div class="ev3-form-step ev3-form-optional"><label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
+ '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
+ '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label></div>'+
+ '<div class="ev3-compose-footer">'+composerProgressHTML()+
+ '<button type="submit" class="ev3-primary" '+(!state.calendarLoaded||!state.peopleLoaded?'disabled aria-label="Chargement des disponibilités et des collègues"':'')+'>Envoyer la proposition →</button></div></form></section>';
 }
 function loadingHTML(label="Chargement des rendez-vous…"){
  return '<section class="ev3-loading" role="status" aria-live="polite"><span class="ev3-loading-caption">'+escapeHTML(label)+'</span>'+
@@ -231,16 +351,59 @@ function bind(){
  byId("ensembleV3")?.querySelectorAll("[data-ev3-refresh]").forEach(b=>b.addEventListener("click",refresh));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-open]").forEach(b=>b.onclick=()=>openEvent(b.dataset.ev3Open));
  byId("ensembleV3")?.querySelectorAll("[data-ev3-mode]").forEach(b=>b.onclick=()=>{if(b.dataset.ev3Mode==="carpool"&&!state.pref?.opted_in){state.tab="trips";message("Active le covoiturage en indiquant ton secteur.");render();return}state.formKind=b.dataset.ev3Mode;state.tab="create";render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-icon]").forEach(b=>b.onclick=()=>{persistTitle();state.icon=b.dataset.ev3Icon;state.customOpen=false;render()});
- byId("ensembleV3")?.querySelector("[data-ev3-custom]")?.addEventListener("click",()=>{persistTitle();state.customOpen=!state.customOpen;render();byId("ev3OtherIcon")?.focus()});
- const other=byId("ev3OtherIcon");if(other)other.oninput=()=>{state.icon=other.value.trim().slice(0,16)};
- byId("ensembleV3")?.querySelectorAll("[data-ev3-schedule]").forEach(b=>b.onclick=()=>{persistTitle();state.mode=b.dataset.ev3Schedule;if(state.mode==="afterwork"){const days=new Map(state.calendar.map(x=>[x.date,x]));for(const date of state.dates){const meta=days.get(date);if(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false)state.dates.delete(date)}}render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-month]").forEach(b=>b.onclick=()=>{persistTitle();state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(b.dataset.ev3Month),1);render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-all]").forEach(b=>b.onclick=()=>{persistTitle();const select=b.dataset.ev3All==="1";const y=state.month.getFullYear(),m=state.month.getMonth();for(let i=1;i<=new Date(y,m+1,0).getDate();i++){const d=dateISO(new Date(y,m,i));if(d<today)continue;const meta=state.calendar.find(x=>x.date===d);if(select&&state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false))continue;if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d)}render()});
- byId("ensembleV3")?.querySelectorAll("[data-ev3-day]").forEach(b=>b.onclick=()=>{persistTitle();const d=b.dataset.ev3Day;if(state.dates.has(d))state.dates.delete(d);else if(state.dates.size<62)state.dates.add(d);else return message("62 dates maximum.",true);render()});
+ // One delegated handler: choosing icons and dates never rebuilds the whole page
+ // (which used to move the viewport and close the Android keyboard).
+ const creator=byId("ev3Compose");
+ if(creator){
+  creator.addEventListener("click",event=>{
+   const icon=event.target.closest("[data-ev3-icon]");
+   if(icon){
+    const selected=icon.dataset.ev3Icon;
+    if(!isCatalogIcon(selected))return;
+    state.icon=selected;showIconPicker(false);refreshIconSelection();return;
+   }
+   if(event.target.closest("[data-ev3-custom]")){
+    showIconPicker(!state.iconPickerOpen);return;
+   }
+   if(event.target.closest("[data-ev3-picker-close]")){showIconPicker(false);return;}
+   const group=event.target.closest("[data-ev3-icon-group]");
+   if(group){state.iconCategory=group.dataset.ev3IconGroup;updateIconResults();return;}
+   const schedule=event.target.closest("[data-ev3-schedule]");
+   if(schedule){setActivitySchedule(schedule.dataset.ev3Schedule);return;}
+   const month=event.target.closest("[data-ev3-month]");
+   if(month){state.month=new Date(state.month.getFullYear(),state.month.getMonth()+Number(month.dataset.ev3Month),1);refreshDatePicker();return;}
+   const all=event.target.closest("[data-ev3-all]");
+   if(all){
+    const select=all.dataset.ev3All==="1",y=state.month.getFullYear(),m=state.month.getMonth();
+    for(let day=1;day<=new Date(y,m+1,0).getDate();day++){
+     const d=dateISO(new Date(y,m,day));if(d<today)continue;
+     const meta=state.calendar.find(x=>x.date===d);
+     if(select&&state.mode==="afterwork"&&(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false))continue;
+     if(select){if(state.dates.size<62)state.dates.add(d)}else state.dates.delete(d);
+    }
+    refreshDatePicker();return;
+   }
+   const day=event.target.closest("[data-ev3-day]");
+   if(day){
+    const date=day.dataset.ev3Day;
+    if(state.dates.has(date))state.dates.delete(date);
+    else if(state.dates.size<62)state.dates.add(date);
+    else {message("62 dates maximum.",true);return;}
+    const selected=state.dates.has(date);
+    day.classList.toggle("is-selected",selected);
+    day.setAttribute("aria-pressed",String(selected));
+    const count=byId("ev3SelectedDateCount");
+    if(count)count.textContent=state.dates.size+" jour"+(state.dates.size>1?"s":"");
+    updateComposerProgress();
+   }
+  });
+  const iconSearch=byId("ev3IconSearch");
+  if(iconSearch)iconSearch.oninput=()=>{state.iconQuery=iconSearch.value;updateIconResults();};
+ }
+ updateComposerProgress();
  const search=byId("ev3PeopleSearch");if(search)search.oninput=()=>{byId("ev3PeopleList").innerHTML=peopleOptions(search.value);bindPeople()};
  bindPeople();
- const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>state.visibility=f.elements.public.checked?"team":"invite";f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
+ const f=byId("ev3Compose");if(f){f.elements.public.onchange=()=>{state.visibility=f.elements.public.checked?"team":"invite";updateComposerProgress();};f.elements.title.oninput=()=>state.title=f.elements.title.value;if(f.elements.location)f.elements.location.oninput=()=>state.place=f.elements.location.value;if(f.elements.description)f.elements.description.oninput=()=>state.details=f.elements.description.value;if(f.elements.time)f.elements.time.oninput=()=>state.time=f.elements.time.value;f.onsubmit=submitActivity;}
  const pf=byId("ev3Prefs");if(pf)pf.onsubmit=async e=>{e.preventDefault();const b=pf.querySelector("button[type=submit]");b.disabled=true;try{const j=await call("carpool_preferences",{opted_in:true,sector:pf.elements.sector.value.trim(),has_car:pf.elements.has_car.checked});Object.assign(state,{pref:j.preference,trips:j.trips});message("Covoiturage activé.");render()}catch(err){message(err.message,true);b.disabled=false}};
  const cf=byId("ev3CarForm");if(cf)cf.onsubmit=submitTrip;
  byId("ensembleV3")?.querySelectorAll("[data-ev3-trip-act]").forEach(b=>b.onclick=async()=>{if(b.dataset.ev3TripAct==="carpool_cancel"&&!confirm("Annuler ce trajet ?"))return;b.disabled=true;try{const j=await call(b.dataset.ev3TripAct,{trip_id:b.dataset.trip,target_agent_id:b.dataset.peer,decision:b.dataset.decision});state.trips=j.trips||[];message("Trajet mis à jour.");render()}catch(err){message(err.message,true);b.disabled=false}});
@@ -286,15 +449,14 @@ function persistTitle(){const f=byId("ev3Compose");if(!f)return;state.title=f.el
 function bindPeople(){
  byId("ev3PeopleList")?.querySelectorAll("[data-ev3-person]").forEach(input=>input.onchange=()=>{
   if(input.checked)state.guests.add(input.dataset.ev3Person);else state.guests.delete(input.dataset.ev3Person);
-  const counter=byId("ev3PeopleCount");if(counter)counter.textContent=state.guests.size+" sélectionné(s)";
+  const counter=byId("ev3PeopleCount");if(counter)counter.textContent=state.guests.size+" sélectionné(s)";updateComposerProgress();
  });
 }
 async function submitActivity(ev){
  ev.preventDefault();const f=ev.currentTarget;
- if(!state.icon)return message("Choisis obligatoirement une icône.",true);
+ if(!isCatalogIcon(state.icon))return message("Choisis une icône dans la liste.",true);
  if(!state.dates.size)return message("Sélectionne au moins une date.",true);
  if(!state.guests.size&&state.visibility!=="team")return message("Sélectionne au moins un collègue.",true);
- const iconInfo=choices.find(v=>v[0]===state.icon);
  const title=String(f.elements.title.value||"").trim();
  if(!title){f.elements.title.focus();return message("Donne un titre à cette activité pour identifier clairement sa discussion.",true)}
  const submit=f.querySelector('[type="submit"]');submit.disabled=true;
@@ -303,7 +465,7 @@ async function submitActivity(ev){
    time_label:state.mode==="afterwork"?"À la fin du service":f.elements.time?.value||"Horaire à définir",visibility:state.visibility,
    location:f.elements.location.value,description:f.elements.description.value,agent_ids:[...state.guests]});
   state.events=result.events||[];
-  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.time="";state.place="";state.details="";state.customOpen=false;state.tab="agenda";
+  state.dates.clear();state.guests.clear();state.title="";state.icon="";state.time="";state.place="";state.details="";state.iconPickerOpen=false;state.iconCategory="all";state.iconQuery="";state.tab="agenda";
   message("Proposition créée et invitations envoyées.");render();
  }catch(err){message(err.message,true);submit.disabled=false}
 }

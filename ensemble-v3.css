@@ -297,3 +297,42 @@ html[data-t-est="1"] .t-native-leisure .ev3-header-actions{display:none}
 }
 .ev3-inline-detail .ev3-modal-head{background:var(--stip-surface-soft,#f8fbfa);border-radius:20px 20px 0 0;}
 @media(max-width:480px){.ev3-inline-detail{width:calc(100% - 20px);margin:10px auto 14px;}}
+
+/* GHE leisure creation: calm, tap-first icon chooser and stable native inputs. */
+.ev3-activity-create .ev3-section-title{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.ev3-activity-create .ev3-section-title small{font-size:.76rem;font-weight:600;color:#67848c}
+.ev3-activity-create form{gap:0}
+.ev3-form-step{display:grid;gap:11px;padding:17px 0;border-bottom:1px solid #e8f0f1;min-width:0}
+.ev3-form-step:first-child{padding-top:8px}
+.ev3-form-step .ev3-form-title{font-size:.94rem;margin:0}
+.ev3-form-step .ev3-form-title small{display:block;margin-top:4px;line-height:1.35}
+.ev3-form-optional{grid-template-columns:1fr;gap:13px}
+.ev3-icon-chosen{margin:0;display:inline-flex;justify-self:start;gap:5px;align-items:center;max-width:100%;color:#15645a;background:#edf9f4;border:1px solid #d5eae4;padding:6px 10px;border-radius:10px;font-size:.77rem;font-weight:750}
+.ev3-icon-picker{border:1px solid #c8e1e1;background:#f8fbfa;border-radius:16px;padding:13px;display:grid;gap:11px;min-width:0;box-shadow:0 8px 24px #174e5510}
+.ev3-picker-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#194b56;font-size:.94rem}
+.ev3-picker-heading button{border:1px solid #d7e6e7;background:#fff;border-radius:10px;width:34px;height:34px;color:#345f68;font-size:1.35rem}
+.ev3-picker-categories{display:flex;gap:6px;flex-wrap:wrap}
+.ev3-picker-categories button{font-size:.75rem;font-weight:750;border:1px solid #d6e8e7;border-radius:999px;padding:8px 11px;background:#fff;color:#416875;min-height:35px}
+.ev3-picker-categories button.is-active{background:#d6efe8;color:#135f57;border-color:#389b8b}
+.ev3-icon-search{font-size:.78rem!important;gap:5px!important}
+.ev3-icon-search input{background:#fff!important;min-height:43px!important}
+.ev3-icon-results{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;min-width:0}
+.ev3-picker-emoji{height:66px;min-height:66px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:5px 2px;overflow:hidden}
+.ev3-picker-emoji small{font:650 .62rem/1.1 system-ui,sans-serif;color:#476771;overflow:hidden;text-overflow:ellipsis;max-width:100%;white-space:nowrap}
+.ev3-icon-empty{grid-column:1/-1;font-size:.8rem;color:#52737b;margin:4px 0 2px}
+.ev3-switch button{transition:background-color .12s,border-color .12s;min-height:52px}
+.ev3-composer-progress{display:flex;flex-wrap:wrap;gap:6px}
+.ev3-composer-progress span{background:#eef7f5;border:1px solid #d5e9e6;color:#205d62;font-size:.73rem;font-weight:750;padding:7px 9px;border-radius:9px}
+.ev3-compose-footer{display:grid;gap:10px;padding-top:17px}
+.ev3-compose-feedback{margin:0;color:#316973;font-size:.78rem;line-height:1.3}
+.ev3-compose-feedback:empty{display:none}
+.ev3-compose-feedback.is-error{color:#b63e35}
+.ev3-activity-create .ev3-primary{min-height:54px;font-size:.94rem}
+@media(max-width:460px){
+ .ev3-form-step{padding:15px 0;gap:10px}
+ .ev3-icon-picker{padding:10px;gap:10px}
+ .ev3-icon-results{grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+ .ev3-picker-emoji{height:62px;min-height:62px}
+ .ev3-picker-categories button{font-size:.7rem;padding:7px 9px;min-height:34px}
+ .ev3-activity-create .ev3-icon-search input{font-size:16px}
+}
