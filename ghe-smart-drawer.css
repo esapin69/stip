@@ -743,3 +743,11 @@ dialog#gheSmartChoiceDialog::backdrop{background:#132d406b;backdrop-filter:blur(
  #homeView .ghe-agenda360 .ghe-agenda360-action-title,
  #homeView .ghe-agenda360 .ghe-agenda360-rdv-title{padding:9px}
 }
+
+/* Mobile rail: keep the last icons clear of browser chrome and preserve a visible scroll track. */
+#gheSmartRail {height:100dvh;max-height:100dvh;}
+#gheSmartRail .ghe-smart-navigation {min-height:0;overflow-y:auto;scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#91aebb transparent;}
+#gheSmartRail .ghe-smart-navigation::-webkit-scrollbar {width:4px;}
+#gheSmartRail .ghe-smart-navigation::-webkit-scrollbar-thumb {background:#91aebb;border-radius:6px;}
+#gheSmartRail .ghe-smart-reserved-slot {min-height:10px;}
+#gheSmartRail .ghe-smart-settings-dock {padding-bottom:calc(29px + env(safe-area-inset-bottom));}
