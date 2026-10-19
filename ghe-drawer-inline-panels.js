@@ -7,15 +7,17 @@ const mode=()=>window.GHESmartDrawer?.mode?.()||"closed";
 const entries=()=>window.GHESmartDrawer?.entries?.()||[];
 const dateLabel=d=>/^\d{4}-\d{2}-\d{2}$/.test(d||"")?new Date(d+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"}):"";
 const headings={pending:"À traiter",date:"Rendez-vous du jour",rdv:"Mes rendez-vous",create:"Créer ou proposer",
- chat:"Messages",settings:"Réglages",apps:"Applications",carpool:"Covoiturage",hub:"À traiter et activités",
+ chat:"Messages",settings:"Réglages",apps:"Applications",admin:"Administration",carpool:"Covoiturage",hub:"À traiter et activités",
  past:"Rendez-vous passés",proposals:"Propositions des collègues",activities:"Sorties et activités",detail:"Détails"};
 let panel=null,key="",anchor=null,context=null,items=[],back="";
 function datasetItems(){
  if(key==="pending")return (entries().find(x=>x.kind==="pending")?.items||[]).map(x=>({...x}));
  if(key==="date"||key==="rdv")return entries().filter(x=>x.kind!=="pending"&&(key!=="date"||x.date===context?.date));
+ if(key==="admin")return window.GHESmartDrawer?.administration?.()||[];
  if(key==="settings")return [
   {icon:"🔔",title:"Notifications",sub:"Mes alertes et leurs règles",action:"notification-settings"},
-  {icon:"👤",title:"Mon compte",sub:"Profil et préférences",href:"mon-compte.html"}
+  {icon:"👤",title:"Mon compte",sub:"Profil et préférences",href:"mon-compte.html"},
+  ...(window.GHESmartDrawer?.administration?.()||[]).filter(item=>["Gérer les accès","Contacts et numéros","Administration"].includes(item.title))
  ];
  if(key==="apps")return window.GHESmartDrawer?.applications?.()||[];
  if(key==="detail"){
@@ -120,7 +122,9 @@ function sync(focus=false){
  panel.classList.toggle("is-expanded",expanded);panel.hidden=false;
  if(!expanded){
   const r=target.getBoundingClientRect();
-  panel.style.top=Math.max(8,Math.min(innerHeight-155,r.top))+"px";
+  // Fit the whole panel above the viewport bottom (mobile browser toolbar included).
+  const maxTop=Math.max(8,window.innerHeight-panel.offsetHeight-12);
+  panel.style.top=Math.max(8,Math.min(maxTop,r.top))+"px";
  }else panel.style.top="";
  const search=document.getElementById("gheSmartGlobalSearch");
  if(search)search.hidden=true;
