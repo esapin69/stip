@@ -686,7 +686,7 @@
     page.classList.toggle("is-wheelchair-composer-collapsed", wheelchair && !expanded);
     page.classList.toggle("is-wheelchair-composer-writing", wheelchair && !expanded && state.composerWriting);
     const grip = root.querySelector("[data-composer-toggle]");
-    if (grip) grip.hidden = !expanded;
+    if (grip) grip.hidden = !wheelchair;
     root.querySelectorAll("[data-composer-toggle]").forEach((button) => {
       button.setAttribute("aria-expanded", expanded ? "true" : "false");
       button.setAttribute(
@@ -857,6 +857,11 @@
       lastFeedScrollTop = next;
       collapseWheelchairComposerFromScroll(delta);
     }, { passive: true });
+    // Touching the conversation closes the open drawer without intercepting its actions.
+    feed?.addEventListener("click", () => {
+      if (state.surfaceMode === "wheelchair" && state.composerExpanded &&
+          !document.querySelector(".tb-modal-wrap")) setWheelchairComposerExpanded(false);
+    });
 
     const textarea = root.querySelector("textarea");
     textarea?.addEventListener("input", () => {
@@ -1606,7 +1611,9 @@
         (state.composerExpanded ? "true" : "false") +
         '" aria-label="' +
         (state.composerExpanded ? "Réduire les actions fauteuils" : "Déployer les actions fauteuils") +
-        '"><span aria-hidden="true">—</span></button>' +
+        '"><span aria-hidden="true"></span><strong>' +
+          (state.composerExpanded ? "Réduire" : "Ouvrir") +
+         '</strong></button>' +
       '<div class="tb-shortcuts-compact">' +
         '<div class="tb-compact-three" role="group" aria-label="Actions fauteuils">' +
           '<button type="button" data-compact-mode="spot"><span aria-hidden="true">👀</span><strong>J’ai vu</strong></button>' +
