@@ -15,6 +15,10 @@ const personMarkup=p=>'<span class="ev3-person-label">'+escapeHTML(p.name)+(p.ca
 const entryParams=new URLSearchParams(location.search);
 const entryTab=entryParams.get("tab");
 const entrySchedule=entryParams.get("schedule")==="fixed"?"fixed":"afterwork";
+const entryGuestId=String(entryParams.get("with")||"").trim();
+const entryCarpoolChoice=entryParams.get("choice");
+let guestEntryResolved=false;
+let carpoolEntryResolved=false;
 const state={tab:entryTab==="create"?"create":entryTab==="trajets"||entryTab==="trips"?"trips":entryTab==="dispos"||entryTab==="availability"?"availability":entryTab==="invitations"||entryTab==="invites"?"invitations":"agenda",availabilitySelected:new Set(),availabilityMatches:new Map(),availabilityQuery:"",availabilityBusy:false,availabilityError:"",availabilityResultsReady:false,events:[],people:[],peopleError:"",calendar:[],trips:[],pref:null,icon:"",title:"",dates:new Set(),guests:new Set(),mode:entrySchedule,visibility:"invite",month:new Date(new Date().getFullYear(),new Date().getMonth(),1),formKind:"activity",customOpen:false,time:"",place:"",details:"",loaded:false,calendarLoaded:false,peopleLoaded:false,tripLoaded:false,tripError:"",calendarError:"",eventsError:"",previewEnds:new Map(),error:"",status:"",busy:false,details:null,editing:false,form:{time:"",location:"",description:""},calendarPreviewReady:false,deepLinkOpened:false,agendaFilter:"all"};
 let deepLinked=false;
 let refreshSequence=0;
@@ -516,14 +520,27 @@ async function refresh(){
   }),
   call("colleagues").then(j=>{
    if(!current())return;
-   state.people=j.colleagues||[];state.peopleLoaded=true;state.peopleError="";renderCurrent();
+   state.people=j.colleagues||[];state.peopleLoaded=true;state.peopleError="";
+   if(entryGuestId&&!guestEntryResolved){
+    guestEntryResolved=true;
+    const guest=state.people.find(p=>String(p.id)===entryGuestId&&p.can_invite!==false);
+    if(guest)state.guests.add(guest.id);
+    else state.status="Choisis le collègue à inviter dans la liste.";
+   }
+   renderCurrent();
   }).catch(()=>{
    if(!current())return;
    state.peopleLoaded=false;state.peopleError="Annuaire indisponible. Actualise pour inviter des collègues.";renderCurrent();
   }),
   call("carpool_home").then(j=>{
    if(!current())return;
-   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;renderCurrent();
+   state.trips=j.trips||[];state.pref=j.preference||null;state.tripError="";state.tripLoaded=true;
+   if(entryCarpoolChoice==="driver"&&!carpoolEntryResolved){
+    carpoolEntryResolved=true;
+    if(state.pref?.opted_in){state.formKind="carpool";state.tab="create";}
+    else {state.tab="trips";state.status="Active le covoiturage pour proposer un trajet."}
+   }
+   renderCurrent();
   }).catch(()=>{
    if(!current())return;
    state.tripLoaded=true;state.tripError="Impossible de charger les trajets. Actualise la page.";renderCurrent();
