@@ -69,6 +69,19 @@ assert.match(trips.host.innerHTML, /Proposer un trajet/, "Trips view must provid
 
 const create = createPage("?tab=create");
 assert.match(create.host.innerHTML, /Proposer une activité/, "Proposal form must paint before API data");
+assert.match(create.host.innerHTML, /id="ev3IconPicker"/, "Additional icons open a real palette");
+assert.match(create.host.innerHTML, /data-ev3-custom/, "The plus button opens the catalog, not a free-text field");
+assert.match(create.host.innerHTML, /id="ev3IconSearch"/, "Typing only filters the emoji catalog");
+assert.match(create.host.innerHTML, /data-ev3-icon-group="sport"/, "Icon picker includes category filters");
+assert.match(create.host.innerHTML, /data-ev3-icon-group="repas"/, "The palette contains meals as well as sports");
+assert.doesNotMatch(create.host.innerHTML, /id="ev3OtherIcon"/, "No raw text may be saved as an icon");
+assert.doesNotMatch(source, /state\.icon\s*=\s*other\.value/, "Icon selection cannot accept arbitrary input");
+assert.match(source, /if\(!isCatalogIcon\(state\.icon\)\)/, "Submission validates the icon against the fixed catalog");
+assert.match(source, /creator\.addEventListener\("click"/, "Date and icon choices use stable delegated events");
+assert.match(source, /day\.classList\.toggle\("is-selected"/, "Date choices update in place, without remounting the form");
+assert.match(create.host.innerHTML, /id="ev3ComposeFeedback"/, "Validation remains visible next to submission");
+assert.match(styles, /\.ev3-icon-results/, "Picker has a responsive icon grid");
+
 assert.match(create.host.innerHTML, /Vérification de tes disponibilités/, "Date selection must show pending state");
 assert.match(create.host.innerHTML, /Chargement des disponibilités et des collègues/, "Proposal must not submit before required data");
 finish(create, "calendar", { days: [{ date: "2099-10-15", is_working: true }] });
