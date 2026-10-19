@@ -203,6 +203,80 @@ function peopleOptions(query){
   '<label class="ev3-person'+(p.can_invite===false?' is-restricted':'')+'"><input type="checkbox" data-ev3-person="'+escapeHTML(p.id)+'" '+(state.guests.has(p.id)?"checked":"")+' '+(p.can_invite===false?'disabled aria-label="Invitation indisponible"':'')+'>'+personMarkup(p)+'</label>').join("")||
  (state.peopleError?'<p>Annuaire indisponible : actualise la page.</p>':'<p>Aucun collègue correspondant à cette recherche.</p>');
 }
+function iconResultsHTML(){
+ const group=state.iconCategory,query=normalizedName(state.iconQuery);
+ const found=iconCatalog.filter(x=>(group==="all"||x.group===group)&&normalizedName(x.label).includes(query));
+ return found.length?found.map(x=>'<button type="button" class="ev3-emoji ev3-picker-emoji'+(x.icon===state.icon?' is-selected':'')+'" data-ev3-icon="'+escapeHTML(x.icon)+'" aria-label="'+escapeHTML(x.label)+'" title="'+escapeHTML(x.label)+'" aria-pressed="'+(x.icon===state.icon)+'">'+x.icon+'<small>'+escapeHTML(x.label)+'</small></button>').join(""):'<p class="ev3-icon-empty">Aucune icône correspondante. Essaie un autre mot.</p>';
+}
+function iconPickerHTML(){
+ return '<section class="ev3-icon-picker" id="ev3IconPicker" '+(!state.iconPickerOpen?'hidden ':'')+'aria-label="Choisir une icône">'+
+ '<div class="ev3-picker-heading"><strong>Choisir une icône</strong><button type="button" data-ev3-picker-close aria-label="Fermer les icônes">×</button></div>'+
+ '<div class="ev3-picker-categories" role="group" aria-label="Catégories">'+iconGroups.map(([key,name])=>'<button type="button" class="'+(state.iconCategory===key?'is-active':'')+'" data-ev3-icon-group="'+key+'" aria-pressed="'+(state.iconCategory===key)+'">'+name+'</button>').join("")+'</div>'+
+ '<label class="ev3-icon-search">Rechercher dans les icônes<input id="ev3IconSearch" type="search" autocomplete="off" placeholder="Ex. danse, café, vélo…" value="'+escapeHTML(state.iconQuery)+'"></label>'+
+ '<div class="ev3-icon-results" id="ev3IconResults">'+iconResultsHTML()+'</div></section>';
+}
+function scheduleDetailsHTML(){
+ return state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':
+ '<p class="ev3-hint">Les dates disponibles suivent les fins de service de ton planning.</p>';
+}
+function composerProgressHTML(){
+ return '<div class="ev3-composer-progress" id="ev3ComposerProgress" aria-live="polite"></div>'+
+ '<p class="ev3-compose-feedback" id="ev3ComposeFeedback" aria-live="polite" role="status"></p>';
+}
+function updateComposerProgress(){
+ const node=byId("ev3ComposerProgress");if(!node)return;
+ const ico=state.icon?escapeHTML(state.icon)+' '+escapeHTML(iconLabel(state.icon)):'Icône à choisir';
+ node.innerHTML='<span>'+ico+'</span><span>'+state.dates.size+' date'+(state.dates.size>1?'s':'')+'</span>'+
+ '<span>'+((state.visibility==="team")?'Toute l’équipe':state.guests.size+' invité'+(state.guests.size>1?'s':''))+'</span>';
+}
+function refreshIconSelection(){
+ const selected=byId("ev3ChosenIcon");
+ if(selected){selected.hidden=!state.icon;selected.textContent=state.icon?'Icône retenue : '+state.icon+' '+iconLabel(state.icon):'';}
+ document.querySelectorAll('#ev3Compose [data-ev3-icon]').forEach(button=>{
+  const active=button.dataset.ev3Icon===state.icon;
+  button.classList.toggle("is-selected",active);button.setAttribute("aria-pressed",String(active));
+ });
+ updateComposerProgress();
+}
+function showIconPicker(open){
+ state.iconPickerOpen=Boolean(open);
+ const picker=byId("ev3IconPicker");
+ if(picker)picker.hidden=!state.iconPickerOpen;
+ const trigger=byId("ev3IconPickerToggle");
+ trigger?.setAttribute("aria-expanded",String(state.iconPickerOpen));
+}
+function updateIconResults(){
+ const results=byId("ev3IconResults");
+ if(results)results.innerHTML=iconResultsHTML();
+ document.querySelectorAll('#ev3IconPicker [data-ev3-icon-group]').forEach(button=>{
+  const active=button.dataset.ev3IconGroup===state.iconCategory;
+  button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
+ });
+}
+function refreshDatePicker(){
+ const el=byId("ev3DatePicker");
+ if(el)el.innerHTML=calendarHTML();
+ updateComposerProgress();
+}
+function setActivitySchedule(next){
+ if(next!=="fixed"&&next!=="afterwork")return;
+ const f=byId("ev3Compose");
+ state.time=f?.elements.time?.value||state.time;
+ state.mode=next;
+ if(next==="afterwork"){
+  const days=new Map(state.calendar.map(x=>[x.date,x]));
+  for(const date of state.dates){const meta=days.get(date);if(state.calendarPreviewReady?!validClock(meta?.end):meta?.is_working===false)state.dates.delete(date);}
+ }
+ document.querySelectorAll('#ev3Compose [data-ev3-schedule]').forEach(button=>{
+  const active=button.dataset.ev3Schedule===next;
+  button.classList.toggle("is-active",active);button.setAttribute("aria-pressed",String(active));
+ });
+ const details=byId("ev3ScheduleDetails");
+ if(details)details.innerHTML=scheduleDetailsHTML();
+ const time=details?.querySelector('[name="time"]');
+ if(time)time.addEventListener("input",()=>state.time=time.value);
+ refreshDatePicker();
+}
 function formHTML(){
  if(state.formKind==="carpool"){
   const p=state.pref||{};
@@ -211,22 +285,25 @@ function formHTML(){
   '<div class="ev3-two"><label>Date<input name="date" type="date" required min="'+today+'"></label><label>Heure<input name="time" type="time" required></label></div><label>Places<select name="seats">'+[1,2,3,4,5,6].map(n=>'<option value="'+n+'">'+n+'</option>').join("")+'</select></label>'+
   '<label>Point de rendez-vous<input name="meeting_point" maxlength="200"></label><label>Précisions<textarea name="note" rows="2" maxlength="400"></textarea></label><button type="submit" class="ev3-primary">Proposer le trajet</button></form></section>';
  }
- const iconButtons=choices.map(([ic,title])=>'<button type="button" class="ev3-emoji '+(state.icon===ic?"is-selected":"")+'" data-ev3-icon="'+escapeHTML(ic)+'" aria-pressed="'+(state.icon===ic)+'" title="'+escapeHTML(title)+'">'+ic+'</button>').join("");
- return '<section class="ev3-panel"><div class="ev3-section-title"><h2>Proposer une activité</h2></div>'+
+ const iconButtons=choices.map(([ic,title])=>'<button type="button" class="ev3-emoji '+(state.icon===ic?"is-selected":"")+'" data-ev3-icon="'+escapeHTML(ic)+'" aria-label="'+escapeHTML(title)+'" aria-pressed="'+(state.icon===ic)+'" title="'+escapeHTML(title)+'">'+ic+'</button>').join("");
+ return '<section class="ev3-panel ev3-activity-create"><div class="ev3-section-title"><h2>Proposer une activité</h2><small>Quelques choix, et c’est prêt.</small></div>'+
  '<form id="ev3Compose">'+
- '<label class="ev3-form-title">1. Ton activité <small>Choisis une icône</small></label><div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" data-ev3-custom aria-label="Autre icône">＋</button></div>'+
- (state.customOpen?'<label>Autre icône <input id="ev3OtherIcon" type="text" maxlength="16" autocomplete="off" placeholder="Choisir un emoji" value="'+escapeHTML(state.icon)+'"></label>':"")+
- '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label>'+
- '<label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
- '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork">🕔 À la fin du service</button>'+
- '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed">🕒 Choisir une heure</button></div>'+
- (state.mode==="fixed"?'<label>Heure du rendez-vous<input name="time" type="time" required value="'+escapeHTML(state.time)+'"></label>':'<p class="ev3-hint">Les collègues pourront choisir leurs dates compatibles après le service.</p>')+
- '<label class="ev3-form-title">3. Les dates</label>'+calendarHTML()+
- '<label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
- '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label>'+
- '<label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
- '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label>'+
- '<button type="submit" class="ev3-primary" '+(!state.calendarLoaded||!state.peopleLoaded?'disabled aria-label="Chargement des disponibilités et des collègues"':'')+'>Envoyer la proposition</button></form></section>';
+ '<div class="ev3-form-step"><label class="ev3-form-title">1. Ton activité <small>Un pictogramme pour reconnaître la proposition</small></label>'+
+ '<div class="ev3-icons">'+iconButtons+'<button type="button" class="ev3-emoji ev3-custom" id="ev3IconPickerToggle" data-ev3-custom aria-label="Voir toutes les icônes" aria-expanded="'+state.iconPickerOpen+'" aria-controls="ev3IconPicker">＋</button></div>'+
+ '<p class="ev3-icon-chosen" id="ev3ChosenIcon" '+(!state.icon?'hidden':'')+'>'+ (state.icon?'Icône retenue : '+escapeHTML(state.icon)+' '+escapeHTML(iconLabel(state.icon)):'')+'</p>'+
+ iconPickerHTML()+
+ '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
+ '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork" aria-pressed="'+(state.mode==="afterwork")+'">🕔 Après le service</button>'+
+ '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed" aria-pressed="'+(state.mode==="fixed")+'">🕒 Heure précise</button></div>'+
+ '<div id="ev3ScheduleDetails">'+scheduleDetailsHTML()+'</div></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">3. Les dates</label><div id="ev3DatePicker">'+calendarHTML()+'</div></div>'+
+ '<div class="ev3-form-step ev3-form-optional"><label>Lieu <small>(facultatif)</small><input name="location" maxlength="240" placeholder="À définir ensemble" value="'+escapeHTML(state.place)+'"></label>'+
+ '<label>Quelques précisions <small>(facultatif)</small><textarea name="description" maxlength="2000" rows="2">'+escapeHTML(state.details)+'</textarea></label></div>'+
+ '<div class="ev3-form-step"><label class="ev3-form-title">4. Avec qui ?</label>'+peopleHTML()+
+ '<label class="ev3-inline ev3-open-team"><input type="checkbox" name="public" '+(state.visibility==="team"?"checked":"")+'> Ouvert à toute l’équipe</label></div>'+
+ '<div class="ev3-compose-footer">'+composerProgressHTML()+
+ '<button type="submit" class="ev3-primary" '+(!state.calendarLoaded||!state.peopleLoaded?'disabled aria-label="Chargement des disponibilités et des collègues"':'')+'>Envoyer la proposition →</button></div></form></section>';
 }
 function loadingHTML(label="Chargement des rendez-vous…"){
  return '<section class="ev3-loading" role="status" aria-live="polite"><span class="ev3-loading-caption">'+escapeHTML(label)+'</span>'+
