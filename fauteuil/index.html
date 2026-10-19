@@ -14,8 +14,10 @@
   <!-- Canonical wheelchair engine and styling: do not fork or duplicate GHE business logic. -->
   <link rel="stylesheet" href="https://ghe.esapin.com/stip-theme.css?v=20261019-fauteuil-standalone1">
   <link rel="stylesheet" href="https://ghe.esapin.com/team-chat.css?v=20261019-fauteuil-standalone1">
+  <link rel="stylesheet" href="https://ghe.esapin.com/t-est/regles-communes/global.css?v=20261014-native-inputs1">
   <link rel="stylesheet" href="./fauteuil.css">
   <script defer src="https://ghe.esapin.com/team-chat.js?v=20261019-fauteuil-standalone1"></script>
+  <script defer src="https://ghe.esapin.com/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
   <script defer src="./fauteuil-app.js"></script>
 </head>
 <body>
@@ -32,7 +34,7 @@
       <p class="fw-eyebrow">ACCÈS PROFESSIONNEL</p>
       <h1>Un fauteuil. Un signalement. Une solution.</h1>
       <p class="fw-subtitle">Retrouve ici les fauteuils signalés par ton équipe. Utilise ton code GHE habituel.</p>
-      <form id="fw-login-form" class="fw-login-form">
+      <form id="fw-login-form" class="fw-login-form" data-stip-form-mode="standard">
         <label for="fw-pin">Ton code GHE à 6 chiffres</label>
         <div class="fw-login-row">
           <input id="fw-pin" name="code" type="password" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off" minlength="6" maxlength="6" required placeholder="••••••" aria-describedby="fw-login-status">
@@ -45,7 +47,7 @@
     <section class="fw-trainee" id="fw-trainee" hidden>
       <h2>Choisis ton profil stagiaire</h2>
       <p>Cette étape est nécessaire avant d'accéder aux fauteuils.</p>
-      <form id="fw-trainee-form">
+      <form id="fw-trainee-form" data-stip-form-mode="standard">
         <label for="fw-trainee-select">Profil</label>
         <select id="fw-trainee-select" required></select>
         <button type="submit">Continuer</button>
