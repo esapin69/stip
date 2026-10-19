@@ -2,6 +2,7 @@
 :root { --ghe-smart-width: 0px; }
 body.ghe-smart-active { --ghe-smart-width: 56px; padding-left: var(--ghe-smart-width) !important; box-sizing: border-box; transition: padding-left .18s ease; }
 body.ghe-smart-active[data-smart-drawer="closed"] { --ghe-smart-width: 0px; }
+body.ghe-smart-active[data-smart-drawer="expanded"] { --ghe-smart-width: min(340px,calc(100vw - 28px)); }
 /* Pages secondaires : réserver la place du rail comme sur l'accueil.
    Contraindre les conteneurs au viewport restant plutôt que décaler chaque page. */
 body.ghe-smart-active { width: 100%; max-width: 100%; }
@@ -11,6 +12,17 @@ body.ghe-smart-active :is(main, .app-shell, #appView, #homeView, .view) {
   max-width: 100%;
 }
 body.ghe-smart-active #hcPersonalDrawer { display:none !important; }
+/* The fixed wheelchair input dock must obey the *same* available width as the page.
+   On mobile it otherwise overlaps the fixed left rail despite body padding. */
+@media (max-width:899px) {
+  body.ghe-smart-active .ca-body .tb-input-dock {
+    left:calc(var(--ghe-smart-width) + 8px)!important;
+    right:8px!important;
+    width:auto!important;
+    max-width:calc(100vw - var(--ghe-smart-width) - 16px)!important;
+    box-sizing:border-box;
+  }
+}
 .ghe-smart-rail {position:fixed;inset:0 auto 0 0;z-index:7100;width:56px;max-width:min(350px,calc(100vw - 28px));display:flex;flex-direction:column;overflow:hidden;border-right:1px solid #dce5ea;background:#fff;color:#1b3546;box-shadow:2px 0 14px #0c344011;transition:width .18s ease,transform .18s ease;font-family:inherit;isolation:isolate}
 .ghe-smart-rail[data-mode="closed"] {transform:translateX(-100%);}
 .ghe-smart-rail[data-mode="expanded"] {width:min(340px,calc(100vw - 28px));box-shadow:6px 0 26px #122f4250;background:#fff;}
@@ -39,7 +51,7 @@ body.ghe-smart-active #hcPersonalDrawer { display:none !important; }
 .ghe-smart-search {width:100%;border:1px solid #cbdce5;background:#f6fafc;padding:11px;border-radius:12px;font-size:14px;}
 .ghe-smart-reopen {position:fixed;left:6px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:7099;border:1px solid #cddde5;border-radius:12px;background:#fff;box-shadow:0 3px 12px #0002;padding:11px;font-size:21px;}
 body.ghe-smart-active:not([data-smart-drawer="closed"]) .ghe-smart-reopen {display:none;}
-body.ghe-smart-active[data-smart-drawer="expanded"]::before {content:"";position:fixed;inset:0;z-index:7098;background:#172f422b;}
+/* The page now occupies the space beside the rail, without a dark overlay. */
 body.ghe-smart-active .app-shell,body.ghe-smart-active #homeView,body.ghe-smart-active .ev3-page {max-width:100%;min-width:0;box-sizing:border-box;}
 /* Le ☰ de l'en-tête est l'unique accès lorsque le tiroir est fermé. */
 .ghe-smart-hint {padding:12px;color:#587281;font-size:12px;text-align:center}
