@@ -45,6 +45,29 @@ let refreshSequence=0;
 let pendingVisualRefresh=false;
 function renderWhenIdle(){
  if(byId("ev3Dialog")?.open){pendingVisualRefresh=true;return}
+ // Live data revalidation must never replace the form, its scroll position
+ // or the native Android/iOS keyboard while someone is making a proposal.
+ const composer=byId("ev3Compose");
+ if(state.tab==="create"&&composer){
+  const dates=byId("ev3DatePicker");
+  if(dates){
+   const next=calendarHTML();
+   if(dates.innerHTML!==next)dates.innerHTML=next;
+  }
+  const people=byId("ev3PeopleList"),search=byId("ev3PeopleSearch");
+  if(people){
+   const next=state.peopleLoaded?peopleOptions(search?.value||""):
+     '<p class="ev3-inline-status">Chargement de la liste des collègues…</p>';
+   if(people.innerHTML!==next){people.innerHTML=next;bindPeople();}
+  }
+  if(search)search.disabled=!state.peopleLoaded;
+  const total=byId("ev3PeopleAvailableCount");
+  if(total)total.textContent=state.peopleLoaded?
+   state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…";
+  const submit=composer.querySelector('[type="submit"]');
+  if(submit)submit.disabled=!state.calendarLoaded||!state.peopleLoaded;
+  updateComposerProgress();pendingVisualRefresh=false;return;
+ }
  const active=document.activeElement;
  // Keep the original mobile input and keyboard in place while data arrive.
  if(active?.closest?.("#ev3Compose, #ev3CarForm, #ev3Prefs, #ev3Edit, .ev3-availability-picker") && /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName)){
@@ -191,7 +214,7 @@ function calendarHTML(){
 }
 function peopleHTML(){
  const unactivated=state.people.filter(p=>p.can_invite!==false&&p.access_ready===false).length;
- return '<label class="ev3-search-label">Inviter des collègues <small>'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
+ return '<label class="ev3-search-label">Inviter des collègues <small id="ev3PeopleAvailableCount">'+(state.peopleLoaded?state.people.filter(p=>p.can_invite!==false).length+" disponibles":"Chargement…")+'</small><input id="ev3PeopleSearch" type="search" placeholder="Nom ou prénom…" autocomplete="off" '+(!state.peopleLoaded?'disabled':'')+'></label>'+
  (state.peopleError?'<p class="ev3-error">'+escapeHTML(state.peopleError)+'</p>':"")+
  '<div class="ev3-person-list" id="ev3PeopleList">'+(state.peopleLoaded?peopleOptions(""):'<p class="ev3-inline-status">Chargement de la liste des collègues…</p>')+'</div><small id="ev3PeopleCount">'+state.guests.size+' sélectionné(s)</small>'+
  (unactivated?'<p class="ev3-directory-hint">Tu peux inviter ces collègues même si leur compte GHE n’est pas encore activé. Leur invitation est conservée et sera disponible après connexion.</p>':"");
