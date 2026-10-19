@@ -68,6 +68,12 @@
   }
 
   function openAgentActions(agent) {
+    if (eventMode) {
+      const id = String(agent?.id || agent?.source_key || "").trim();
+      const target = "sorties-loisirs.html?tab=create" + (id ? "&with=" + encodeURIComponent(id) : "");
+      location.assign(new URL(target, location.href).href);
+      return;
+    }
     if (!window.STIPPersonActions?.openForAgent) {
       openAgent(agent);
       return;
@@ -80,13 +86,6 @@
         href:"sorties-loisirs.html?with="+encodeURIComponent(agent.id||"")
       }]
     });
-  }
-
-  function selectAgent(agent) {
-    if (!eventMode) return openAgentActions(agent);
-    const id = String(agent?.id || agent?.source_key || "").trim();
-    const target = "sorties-loisirs.html?tab=create" + (id ? "&with=" + encodeURIComponent(id) : "");
-    location.assign(new URL(target, location.href).href);
   }
 
   function renderDirectory() {
@@ -112,7 +111,7 @@
       title: "Présents et absents",
       description:
         "Tri par GHE. Les horaires particuliers sont expliqués sans exposer les motifs sensibles.",
-      onSelect: selectAgent,
+      onSelect: openAgentActions,
     });
   }
 
