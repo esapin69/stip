@@ -45,9 +45,9 @@ if(!/^[a-f0-9]{64}$/.test(challenge)){status.textContent='Lien invalide : demand
 if(!token){status.textContent='Aucune session GHE trouvée dans ce navigateur. Connecte-toi à GHE ici, puis redemande un lien à Chef.';return;}
 (async()=>{
  try{
-  const r=await fetch('https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-data',{
+  const r=await fetch('https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-access',{
    method:'POST',headers:{'content-type':'application/json','x-stip-session':token},
-   body:JSON.stringify({action:'bootstrap'}),cache:'no-store'});
+   body:JSON.stringify({action:'me'}),cache:'no-store'});
   const data=await r.json();
   if(!r.ok||data.error||!data.agent?.id||!data.permissions?.planning_personal||!data.permissions?.planning_team)
    throw Error('Accès au planning GHE non autorisé pour ce compte.');
