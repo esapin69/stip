@@ -294,7 +294,7 @@ function formHTML(){
  iconPickerHTML()+
  '<label>Nom de l’activité <small>(obligatoire)</small><input name="title" required maxlength="120" placeholder="Ex. Foot à 5, muscu après le travail…" value="'+escapeHTML(state.title)+'"></label></div>'+
  '<div class="ev3-form-step"><label class="ev3-form-title">2. Quand ?</label><div class="ev3-switch" role="group" aria-label="Choix de l’horaire">'+
- '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork" aria-pressed="'+(state.mode==="afterwork")+'">🕔 Après le service</button>'+
+ '<button type="button" class="'+(state.mode==="afterwork"?"is-active":"")+'" data-ev3-schedule="afterwork" aria-pressed="'+(state.mode==="afterwork")+'">🕔 À la fin du service</button>'+
  '<button type="button" class="'+(state.mode==="fixed"?"is-active":"")+'" data-ev3-schedule="fixed" aria-pressed="'+(state.mode==="fixed")+'">🕒 Heure précise</button></div>'+
  '<div id="ev3ScheduleDetails">'+scheduleDetailsHTML()+'</div></div>'+
  '<div class="ev3-form-step"><label class="ev3-form-title">3. Les dates</label><div id="ev3DatePicker">'+calendarHTML()+'</div></div>'+
