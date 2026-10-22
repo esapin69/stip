@@ -46,9 +46,12 @@ async function allRows(conversationId: string) {
 
 function isActiveWheelchairRow(row: any) {
   const wheelchair = row?.payload?.wheelchair;
+  const createdAt = Date.parse(String(row?.created_at || ""));
   return !!wheelchair &&
     wheelchair.type === "spot" &&
-    wheelchair.status === "active";
+    wheelchair.status === "active" &&
+    Number.isFinite(createdAt) &&
+    createdAt > Date.now() - 48 * 60 * 60 * 1000;
 }
 
 function isCurrentTableauKey(value: any) {
