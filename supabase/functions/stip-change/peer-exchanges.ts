@@ -74,13 +74,26 @@ async function create(db:Db,c:Ctx,b:any){
   const theirs=mode==='same'?mine:dates(b.their_dates,from,to);
   if(mine.length!==theirs.length)throw Error('MEME_NOMBRE_DE_JOURS_REQUIS');
   if(mode==='cross'&&mine.some((d:string)=>theirs.includes(d)))throw Error('JOURS_CROISES_DOIVENT_ETRE_DISTINCTS');
+  const rawMapping=Array.isArray(b.mapping)?b.mapping:null;
+  let pairedDates=theirs;
+  if(mode==='cross'&&rawMapping){
+    if(rawMapping.length!==mine.length)throw Error('CORRESPONDANCE_JOURS_INCOMPLETE');
+    const mapping=new Map<string,string>();
+    for(const item of rawMapping){
+      const m=String(item?.my_date||''),t=String(item?.their_date||'');
+      if(!mine.includes(m)||!theirs.includes(t)||mapping.has(m))throw Error('CORRESPONDANCE_JOURS_INVALIDE');
+      mapping.set(m,t);
+    }
+    pairedDates=mine.map(m=>mapping.get(m)!);
+    if(new Set(pairedDates).size!==theirs.length)throw Error('CORRESPONDANCE_JOURS_DUPLIQUEE');
+  }
   const all=[...new Set([...mine,...theirs])].sort();
   const rows=await readDays(db,c,target.id,all[0],all[all.length-1]);
   const map=new Map(rows.map((r:any)=>[r.agent_id+'|'+r.date,norm(r.code)]));
   const pairs=[];
   let changed=0;
   for(let i=0;i<mine.length;i++){
-    const m=mine[i],t=theirs[i];
+    const m=mine[i],t=pairedDates[i];
     const am=map.get(c.agent.id+'|'+m),bt=map.get(target.id+'|'+t),
       ax=map.get(c.agent.id+'|'+t),bm=map.get(target.id+'|'+m);
     if(!am||!bt||!ax||!bm)throw Error('PLANNING_DATE_MANQUANTE');
