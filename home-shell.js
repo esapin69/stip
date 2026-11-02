@@ -4127,7 +4127,7 @@ function personalDrawerRow(icon,label,action,meta="") {
   // Canonical planning entry point for recorded, peer-confirmed swaps.
   function peerExchangeShortcut() {
     const p = perms();
-    if (!p.planning || p.day_exchange === false) return "";
+    if (!p.planning_personal || /chef|cadre|responsable/i.test([state.session?.agent?.role,state.session?.agent?.type_planning,state.session?.agent?.equipe].join(" "))) return "";
     return `<section class="ghe-peer-home-action" aria-label="Échanges entre collègues"><button type="button" data-peer-exchange-open><span class="ghe-peer-home-symbol" aria-hidden="true">⇄</span><span><strong>J’ai déjà échangé des jours</strong><small>Mettre nos deux plannings à jour avec l’accord du collègue</small></span><b aria-hidden="true">›</b></button></section>`;
   }
   function homeModeBody() {
