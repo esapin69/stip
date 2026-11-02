@@ -116,13 +116,15 @@ function chiefsAt(date:string,time:string,chiefData:any,dir:any){const out:any[]
 
 async function personal(a:any,shared=false){
   const start=ymd(-60),end=ymd(370),specials=await specialSchedules();
-  const [{data:plan,error:pe},{data:manual,error:me},{data:frows,error:fe},{data:srows,error:se}]=await Promise.all([
+  const [{data:plan,error:pe},{data:manual,error:me},{data:frows,error:fe},{data:srows,error:se},{data:history,error:he}]=await Promise.all([
     db.from('planning').select('date,code,observation,imported_at').eq('agent_id',a.id).gte('date',start).lte('date',end).order('date'),
     db.from('stip_agent_agenda_items').select('*').eq('agent_id',a.id).eq('status','active').gte('event_date',start).lte('event_date',end).order('event_date').order('start_time'),
     db.from('formations').select('id,source_key,agent_source_key,intitule,date_debut,date_fin,lieu,statut,updated_at,last_seen_at,horaire').gte('date_fin',start+'T00:00:00Z').lte('date_debut',end+'T23:59:59Z').order('date_debut'),
-    db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at,last_seen_at').gte('date_fin',start).lte('date_debut',end).order('date_debut')
+    db.from('stagiaires').select('id,nom,prenom,date_debut,date_fin,horaires,referent,updated_at,last_seen_at').gte('date_fin',start).lte('date_debut',end),
+    db.from('stip_planning_change_history').select('change_date,applied_at').eq('agent_id',a.id).eq('effective',true).gte('change_date',start).lte('change_date',end).order('date_debut')
   ]);
-  if(pe)throw pe;if(me)throw me;if(fe)throw fe;if(se)throw se;
+  if(pe)throw pe;if(me)throw me;if(fe)throw fe;if(se)throw se;if(he)throw he;
+  const manualStamps=new Map((history||[]).map((x:any)=>[x.change_date,x.applied_at]));
   const l=head(shared?sharedCalendarName(a):personalCalendarName(a));
   let events=0;
 
@@ -134,8 +136,11 @@ async function personal(a:any,shared=false){
     if(!q)continue;
     const summary=q.special?`${q.personal||q.dot} ${q.code} · ${q.flexible?'Horaire libre':'Horaire fixe'}`:`${q.dot} ${q.label} · ${q.text}`,
       desc=[q.special?q.text:'',!shared&&r.observation?String(r.observation).trim():''].filter(Boolean).join('\n');
-    if(q.special&&q.flexible)ev(l,`stip-work-${a.id}-${r.date}@esapin.com`,r.date,summary,desc,r.imported_at);
-    else evTimed(l,`stip-work-${a.id}-${r.date}@esapin.com`,r.date,q.start,q.end,summary,desc,r.imported_at,false);
+    const editedAt=manualStamps.get(r.date);
+    const changedAt=editedAt && Date.parse(String(editedAt))>Date.parse(String(r.imported_at))
+      ?editedAt:r.imported_at;
+    if(q.special&&q.flexible)ev(l,`stip-work-${a.id}-${r.date}@esapin.com`,r.date,summary,desc,changedAt);
+    else evTimed(l,`stip-work-${a.id}-${r.date}@esapin.com`,r.date,q.start,q.end,summary,desc,changedAt,false);
     events++;
   }
 
