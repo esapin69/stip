@@ -12,8 +12,7 @@ const name=(a:any)=>[a?.prenom,a?.nom].filter(Boolean).join(' ').trim();
 const team=(a:any)=>String(a?.type_planning||a?.equipe||'jour').toLowerCase()==='nuit'?'nuit':'jour';
 const chief=(a:any)=>/chef|cadre|responsable/i.test([a?.role,a?.type_planning,a?.equipe].join(' '));
 const norm=(a:any)=>String(a??'').trim().toUpperCase();
-const access=(c:Ctx)=>c.profile?.permissions?.day_exchange===true ||
-  (c.profile?.permissions?.day_exchange===undefined && c.profile?.permissions?.planning===true);
+const access=(c:Ctx)=>c.profile?.permissions?.planning_personal===true && !chief(c.agent);
 function id(v:any){const x=String(v||'');if(!UUID.test(x))throw Error('AGENT_INVALIDE');return x}
 function dates(raw:any,from:string,to:string){
   if(!Array.isArray(raw)||!raw.length||raw.length>93)throw Error('CHOISIR_1_A_93_JOURS');
