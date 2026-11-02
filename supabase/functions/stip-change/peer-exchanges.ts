@@ -22,9 +22,9 @@ function dates(raw:any,from:string,to:string){
   return a.sort();
 }
 async function directory(db:Db,c:Ctx){
-  const {data:ps,error:pe}=await db.from('stip_access_profiles').select('agent_id,active').eq('active',true);
+  const {data:ps,error:pe}=await db.from('stip_access_profiles').select('agent_id,active,permissions').eq('active',true);
   if(pe)throw pe;
-  const ids=[...new Set((ps||[]).map((p:any)=>p.agent_id).filter(Boolean))];
+  const ids=[...new Set((ps||[]).filter((p:any)=>p.permissions?.planning_personal===true).map((p:any)=>p.agent_id).filter(Boolean))];
   if(!ids.length)return [];
   const {data,error}=await db.from('agents').select('id,nom,prenom,actif,equipe,type_planning,ghe,role').in('id',ids);
   if(error)throw error;
