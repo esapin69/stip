@@ -11,7 +11,7 @@
   const dateNow=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
   let people=[],mine=new Map(),theirs=new Map(),items=[],targetId="",mode="same",myDates=new Set(),theirDates=new Set();
   let month=new Date((dateNow()||new Date().toISOString().slice(0,10)).slice(0,7)+"-01T12:00:00Z");
-  let side="mine",view="create",activeId="",message="",error=false,busy=false,noticeSeen="";
+  let side="mine",view="create",activeId="",message="",error=false,busy=false,noticeSeen="",pairAssignments=new Map();
   const canUse=()=>!window.STIPPreview?.active && Boolean(window.STIPSession?.agent?.id || window.STIPSession?.agent?.source_key);
   async function call(action,body={}){
     const token=localStorage.getItem(STORE)||"";
@@ -91,7 +91,14 @@
   function currentPairs(){
     const a=sort(myDates),b=mode==="same"?a:sort(theirDates);
     if(a.length!==b.length)return [];
-    return a.map((d,i)=>({my_date:d,their_date:b[i],my_code:mine.get(d),their_code:theirs.get(b[i]),my_other_code:mine.get(b[i]),their_other_code:theirs.get(d)}));
+    const pairs=new Map(),used=new Set();
+    for(const d of a){
+      const t=pairAssignments.get(d);
+      if(mode==="cross"&&t&&b.includes(t)&&!used.has(t)){pairs.set(d,t);used.add(t);}
+    }
+    const available=b.filter(t=>!used.has(t));
+    for(const d of a)if(!pairs.has(d))pairs.set(d,mode==="same"?d:available.shift());
+    return a.map(d=>{const t=pairs.get(d);return {my_date:d,their_date:t,my_code:mine.get(d),their_code:theirs.get(t),my_other_code:mine.get(t),their_other_code:theirs.get(d)};});
   }
   function reviewMarkup(){
     const p=currentPairs();
@@ -116,6 +123,7 @@
       '<div class="ghe-peer-chips"><strong>Jours choisis :</strong> '+(sort(myDates).map(d=>'<button type="button" data-peer-remove="'+d+'" data-side="mine">'+esc(format(d))+' ×</button>').join("")||'Aucun')+'</div>'+
       (mode==="cross"?'<div class="ghe-peer-chips"><strong>Chez le collègue :</strong> '+(sort(theirDates).map(d=>'<button type="button" data-peer-remove="'+d+'" data-side="theirs">'+esc(format(d))+' ×</button>').join("")||'Aucun')+'</div>':'')+
       '</section><section class="ghe-peer-step"><h3><b>4</b> Vérifie l’échange</h3>'+reviewMarkup()+
+      (mode==="cross"&&currentPairs().length?'<div class="ghe-peer-mapping"><strong>Associe les jours entre eux</strong>'+currentPairs().map(p=>'<label>'+esc(format(p.my_date))+' <span>avec</span><select data-peer-map-for="'+p.my_date+'">'+sort(theirDates).map(d=>'<option value="'+d+'" '+(p.their_date===d?'selected':'')+'>'+esc(format(d))+'</option>').join("")+'</select></label>').join("")+'</div>':'')+
       '<p class="ghe-peer-notice">Cette déclaration ne remplace pas une autorisation officielle. Le planning STIP ne changera qu’après confirmation du collègue.</p>'+
       '<button type="button" class="ghe-peer-submit" data-peer-create '+(valid?'':'disabled')+'>'+(busy?'Enregistrement…':'Envoyer au collègue pour confirmation')+'</button></section>':'') ;
   }
@@ -162,7 +170,7 @@
     if(busy||!targetId)return;
     busy=true;
     try{
-      const b={target_agent_id:targetId,mode,my_dates:sort(myDates),their_dates:mode==="cross"?sort(theirDates):[]};
+      const b={target_agent_id:targetId,mode,my_dates:sort(myDates),their_dates:mode==="cross"?sort(theirDates):[],mapping:mode==="cross"?currentPairs().map(p=>({my_date:p.my_date,their_date:p.their_date})):null};
       const r=await call("peer_create",b);
       await syncList();view="inbox";
       showMessage("Proposition enregistrée. Ton collègue verra une fenêtre de confirmation en ouvrant GHE.");
@@ -188,7 +196,7 @@
     if(!b)return;
     if(b.hasAttribute("data-peer-close")){dialog().close();return;}
     if(b.dataset.peerView){view=b.dataset.peerView;message="";render();return;}
-    if(b.dataset.peerMode){mode=b.dataset.peerMode;myDates.clear();theirDates.clear();side="mine";message="";render();return;}
+    if(b.dataset.peerMode){mode=b.dataset.peerMode;myDates.clear();theirDates.clear();pairAssignments.clear();side="mine";message="";render();return;}
     if(b.dataset.peerSide){side=b.dataset.peerSide;render();return;}
     if(b.dataset.peerMonth){
       month.setUTCMonth(month.getUTCMonth()+Number(b.dataset.peerMonth));
@@ -212,7 +220,17 @@
       catch(e){showMessage(friendly(e),true);}finally{busy=false;}
     }
   }
-  function onChange(e){if(e.target.id==="ghePeerTarget")chooseTarget(e.target.value);}
+  function onChange(e){
+    if(e.target.id==="ghePeerTarget"){pairAssignments.clear();chooseTarget(e.target.value);return;}
+    if(e.target.matches?.("[data-peer-map-for]")){
+      const mineDate=e.target.dataset.peerMapFor,targetDate=e.target.value;
+      const previous=currentPairs(),oldTarget=previous.find(x=>x.my_date===mineDate)?.their_date;
+      const other=previous.find(x=>x.their_date===targetDate&&x.my_date!==mineDate);
+      if(other&&oldTarget)pairAssignments.set(other.my_date,oldTarget);
+      pairAssignments.set(mineDate,targetDate);
+      render();
+    }
+  }
   document.addEventListener("click",e=>{
     if(e.target.closest?.("[data-peer-exchange-open]")){e.preventDefault();open("create");}
   });
