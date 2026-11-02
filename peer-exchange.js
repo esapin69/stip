@@ -8,7 +8,7 @@
   const rest=new Set(["R","RH"]);
   const format=d=>new Date(d+"T12:00:00Z").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
   const sort=a=>[...a].sort();
-  const dateNow=()=>new Date().toLocaleDateString("en-CA",{timeZone:"Europe/Paris"});
+  const dateNow=()=>new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Paris",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
   let people=[],mine=new Map(),theirs=new Map(),items=[],targetId="",mode="same",myDates=new Set(),theirDates=new Set();
   let month=new Date((dateNow()||new Date().toISOString().slice(0,10)).slice(0,7)+"-01T12:00:00Z");
   let side="mine",view="create",activeId="",message="",error=false,busy=false,noticeSeen="";
