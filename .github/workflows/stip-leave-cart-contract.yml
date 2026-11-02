@@ -1,5 +1,9 @@
 name: STIP GHE leave cart contract
 on:
+  pull_request:
+    paths:
+      - 'supabase/functions/stip-change/**'
+      - '.github/workflows/stip-leave-cart-contract.yml'
   push:
     branches: [main]
     paths:
@@ -10,7 +14,7 @@ on:
       - 'responsable-day-workflow.js'
       - 'stip-loader.js'
       - 'index.html'
-      - 'supabase/functions/stip-change/index.ts'
+      - 'supabase/functions/stip-change/**'
       - 'tools/stip-leave-cart-contract-test.mjs'
       - '.github/workflows/stip-leave-cart-contract.yml'
   workflow_dispatch:
