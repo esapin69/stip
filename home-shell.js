@@ -4124,6 +4124,12 @@ function personalDrawerRow(icon,label,action,meta="") {
       }
     });
   }
+  // Canonical planning entry point for recorded, peer-confirmed swaps.
+  function peerExchangeShortcut() {
+    const p = perms();
+    if (!p.planning_personal || /chef|cadre|responsable/i.test([state.session?.agent?.role,state.session?.agent?.type_planning,state.session?.agent?.equipe].join(" "))) return "";
+    return `<section class="ghe-peer-home-action" aria-label="Échanges entre collègues"><button type="button" data-peer-exchange-open><span class="ghe-peer-home-symbol" aria-hidden="true">⇄</span><span><strong>J’ai déjà échangé des jours</strong><small>Mettre nos deux plannings à jour avec l’accord du collègue</small></span><b aria-hidden="true">›</b></button></section>`;
+  }
   function homeModeBody() {
     if (state.homeMode === "notifications") return notificationsPane();
     if (state.homeMode === "apps")
@@ -4131,7 +4137,7 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (state.homeMode === "communication" && has("messages"))
       return `<section class="hc-home-pane hc-home-pane-communication"><section id="hcCommunicationAppHost"></section></section>`;
     const legend = fixedShiftLegend();
-    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}${homeModeNav("identity")}${agenda360Markup()}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${planningCalendarPocket()}${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
+    return `<main class="hc-widget-zone hc-home-pane hc-home-pane-planning hc-home-timeline">${homeModeNav("tools")}${homeModeNav("identity")}${peerExchangeShortcut()}${agenda360Markup()}${has("meeting_notes") ? window.STIPMeeting?.pendingHTML?.() || "" : ""}${weekFlipCard()}<section class="hc-planning-group hc-planning-landscape hc-calendar-driven-planning"><section class="stip-context-master hc-month-context-master" data-stip-context-master="month"><div class="hc-planning-period-separator hc-planning-month-separator stip-section-separator" data-month-separator role="separator" aria-label="${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}"><span data-month-separator-label>${state.monthFlipped ? "STATISTIQUES DU MOIS" : "AU MOIS"}</span></div><section class="hc-planning-subblock hc-planning-month-subblock">${monthFlipCard(`${planningCalendarOverview()}`)}</section>${planningCalendarPocket()}${legend ? `<div class="stip-section-separator hc-planning-legend-separator" aria-hidden="true"><span>LÉGENDE</span></div><section class="hc-planning-subblock hc-planning-legend-subblock">${legend}</section>` : ""}</section></section></main>`;
   }
   // Le moteur des retours charge ses données après l'accueil. Ramener ses cartes
   // sous la barre Cloche/T/Fauteuils, même si un ancien module les déplace.
@@ -5091,6 +5097,9 @@ function personalDrawerRow(icon,label,action,meta="") {
     if (!state.ready) return;
     state.renderSig = "";
     render();
+  });
+  window.addEventListener("stip:peer-exchange-applied", () => {
+    if (!window.STIPPreview?.active && state.ready) refresh(true).catch(() => {});
   });
   window.addEventListener("stip:session-ready", ready);
   window.addEventListener("stip:session-ended", () => document.getElementById("hcBellDialog")?.close?.());
