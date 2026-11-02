@@ -1,7 +1,7 @@
 // Peer-confirmed, already-completed shift exchanges. Never routes through the cadre email workflow.
 // All writes use the privileged STIP edge session; the browser cannot address the table directly.
 type Db = any;
-type Ctx = {agent: any; profile: {permissions: Record<string, boolean>}};
+type Ctx = {agent: any; profile: {active:boolean;permissions: Record<string, boolean>}};
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const DATE=/^\d{4}-\d{2}-\d{2}$/;
 const WORK=new Set(['M','J','J4','S','N']);
@@ -88,7 +88,7 @@ async function create(db:Db,c:Ctx,b:any){
   }
   const all=[...new Set([...mine,...theirs])].sort();
   const rows=await readDays(db,c,target.id,all[0],all[all.length-1]);
-  const map=new Map(rows.map((r:any)=>[r.agent_id+'|'+r.date,norm(r.code)]));
+  const map=new Map<string,string>(rows.map((r:any)=>[String(r.agent_id)+'|'+r.date,norm(r.code)] as [string,string]));
   const pairs=[];
   let changed=0;
   for(let i=0;i<mine.length;i++){
