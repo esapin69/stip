@@ -76,7 +76,7 @@ assert.match(read('team-chat.css'),/left:var\(--tb-dock-left\)!important/);
 // A loaded invitation/follow-up from the existing meeting runtime must have a consumer.
 const home = read('home-shell.js');
 const homeContext = {
-  state:{homeMode:'planning'},has:key=>key==='meeting_notes',fixedShiftLegend:()=>'',
+  state:{homeMode:'planning',session:{agent:{role:'brancardier'}}},has:key=>key==='meeting_notes',perms:()=>({planning_personal:false}),fixedShiftLegend:()=>'',
   homeModeNav:part=>'['+part+']',agenda360Markup:()=> '[agenda360]',weekFlipCard:()=> '[week]',
   monthFlipCard:()=>'',planningCalendarOverview:()=>'',esc:String,
   window:{STIPMeeting:{pendingHTML:()=>'<section>Pending meeting</section>'}},
@@ -85,6 +85,7 @@ const homeContext = {
 // It was moved above homeModeBody when planning options returned to the home page;
 // calling the extracted body without that helper gives a false ReferenceError.
 const {homeModeBody:body,planningCalendarPocket:pocket} = vm.runInNewContext(
+  extract(home,'  // Canonical planning entry point for recorded, peer-confirmed swaps.', '\n  function homeModeBody()') + '\n' +
   extract(home,'  function planningCalendarPocket()', '\n  function planningCompareShortcut()') +
   '\n' + extract(home,'  function homeModeBody()', '\n  // Le moteur des retours') +
   ';({homeModeBody,planningCalendarPocket});', homeContext);
