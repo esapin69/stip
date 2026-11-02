@@ -3,6 +3,13 @@ on:
   pull_request:
     paths:
       - 'index.html'
+      - 'home-shell.js'
+      - 'peer-exchange.js'
+      - 'peer-exchange.css'
+      - 'supabase/functions/stip-change/**'
+      - 'supabase/functions/stip-calendar/**'
+      - 'supabase/migrations/20261102170000_peer_confirmed_exchange.sql'
+      - 'tools/stip-peer-exchange-contract-test.mjs'
       - 'tools/ghe-startup-guard-test.mjs'
       - 'esprit-equipe.js'
       - 'stip-agent-selector.js'
@@ -18,6 +25,13 @@ on:
     branches: [main]
     paths:
       - 'index.html'
+      - 'home-shell.js'
+      - 'peer-exchange.js'
+      - 'peer-exchange.css'
+      - 'supabase/functions/stip-change/**'
+      - 'supabase/functions/stip-calendar/**'
+      - 'supabase/migrations/20261102170000_peer_confirmed_exchange.sql'
+      - 'tools/stip-peer-exchange-contract-test.mjs'
       - 'tools/ghe-startup-guard-test.mjs'
       - 'esprit-equipe.js'
       - 'stip-agent-selector.js'
@@ -42,6 +56,7 @@ jobs:
           node-version: '24'
       - run: node tools/ghe-startup-guard-test.mjs
       - run: node tools/ghe-full-audit-test.mjs
+      - run: node --test tools/stip-peer-exchange-contract-test.mjs
       - run: node --test tools/stip-planning-import-semantics-test.mjs
       - run: node tools/stip-wheelchair-behavior-test.mjs
       - run: node tools/ghe-audit-navigation-test.mjs
