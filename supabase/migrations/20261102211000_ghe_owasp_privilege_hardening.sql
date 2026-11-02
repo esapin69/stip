@@ -59,7 +59,6 @@ FROM PUBLIC, anon, authenticated;
 -- 3. Transactional postcondition checks. An unsafe partial migration must fail.
 DO $owasp_guard$
 DECLARE
-  rpc regprocedure;
   protected_rpc regprocedure;
   protected_rpcs text[] := ARRAY[
     'public.on_agent_avatar_identity_change()',
@@ -93,9 +92,10 @@ BEGIN
     RAISE EXCEPTION 'GHE security guard: service_role lost staffing view access';
   END IF;
 
-  FOREACH protected_rpc IN ARRAY (
-    SELECT array_agg(x::regprocedure) FROM unnest(protected_rpcs) AS x
-  ) LOOP
+  FOR protected_rpc IN
+    SELECT signature::regprocedure
+      FROM unnest(protected_rpcs) AS rpc_list(signature)
+  LOOP
     IF has_function_privilege('anon',protected_rpc,'EXECUTE')
       OR has_function_privilege('authenticated',protected_rpc,'EXECUTE') THEN
       RAISE EXCEPTION 'GHE security guard: unintended public RPC access to %',protected_rpc;
