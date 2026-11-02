@@ -82,5 +82,6 @@ test('existing peer swap guarantees remain in place', () => {
   assert.match(peer, /stip_peer_exchange_decide/);
   assert.match(migration, /enable row level security/i);
   assert.match(migration, /FOR UPDATE/i);
-  assert.match(migration, /revoke execute/i);
+  assert.match(migration, /revoke\s+all\s+on\s+function\s+public\.stip_peer_exchange_decide/i);
+  assert.match(migration, /grant\s+execute\s+on\s+function\s+public\.stip_peer_exchange_decide\([^)]*\)\s+to\s+service_role/i);
 });
