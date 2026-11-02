@@ -74,8 +74,8 @@ async function create(db:Db,c:Ctx,b:any){
   const theirs=mode==='same'?mine:dates(b.their_dates,from,to);
   if(mine.length!==theirs.length)throw Error('MEME_NOMBRE_DE_JOURS_REQUIS');
   if(mode==='cross'&&mine.some((d:string)=>theirs.includes(d)))throw Error('JOURS_CROISES_DOIVENT_ETRE_DISTINCTS');
-  const all=[...new Set([...mine,...theirs])];
-  const rows=await readDays(db,c,target.id,all[0]<all.at(-1)!?all[0]:all.at(-1)!,all.at(-1)!);
+  const all=[...new Set([...mine,...theirs])].sort();
+  const rows=await readDays(db,c,target.id,all[0],all[all.length-1]);
   const map=new Map(rows.map((r:any)=>[r.agent_id+'|'+r.date,norm(r.code)]));
   const pairs=[];
   let changed=0;
