@@ -60,8 +60,8 @@
   function pairSummary(x){
     const pairs=x.pairs||[];
     return pairs.slice(0,5).map(p=>{
-      if(p.my_date===p.their_date)return '<div class="ghe-peer-pair"><b>'+esc(format(p.my_date))+'</b><span>'+esc(p.my_code)+' ↔ '+esc(p.their_code)+'</span></div>';
-      return '<div class="ghe-peer-pair"><b>'+esc(format(p.my_date))+' ↔ '+esc(format(p.their_date))+'</b><span>'+esc(p.my_code)+' / '+esc(p.their_code)+'</span></div>';
+      if(p.my_date===p.their_date)return '<div class="ghe-peer-pair"><b>'+esc(format(p.my_date))+'</b><span>Collègue : '+esc(p.my_code)+' → '+esc(p.their_code)+' · Toi : '+esc(p.their_code)+' → '+esc(p.my_code)+'</span></div>';
+      return '<div class="ghe-peer-pair"><b>'+esc(format(p.my_date))+'</b><span>Tu prends '+esc(p.my_code)+' à la place de ton repos</span><b>'+esc(format(p.their_date))+'</b><span>Tu cèdes '+esc(p.their_code)+' et passes en repos</span></div>';
     }).join("")+(pairs.length>5?'<small>Et '+(pairs.length-5)+' autre(s) paire(s)…</small>':"");
   }
   function inboxMarkup(){
@@ -131,7 +131,7 @@
       theirs=new Map((d.theirs||[]).map(x=>[x.date,String(x.code||"").toUpperCase()]));
       month=new Date(dateNow().slice(0,7)+"-01T12:00:00Z");
       render();
-    }catch(e){showMessage(friendly(e),true);}finally{busy=false;}
+    }catch(e){showMessage(friendly(e),true);}finally{busy=false;render();}
   }
   async function open(to="create"){
     if(!canUse())return;
@@ -156,7 +156,7 @@
         window.dispatchEvent(new CustomEvent("stip:peer-exchange-applied"));
         showMessage("Échange appliqué aux deux plannings GHE. Les calendriers abonnés se synchroniseront lors de leur prochain rafraîchissement.");
       }else showMessage("Échange refusé. Aucun planning n’a été modifié.");
-    }catch(e){showMessage(friendly(e),true);}finally{busy=false;}
+    }catch(e){showMessage(friendly(e),true);}finally{busy=false;render();}
   }
   async function save(){
     if(busy||!targetId)return;
@@ -167,7 +167,7 @@
       await syncList();view="inbox";
       showMessage("Proposition enregistrée. Ton collègue verra une fenêtre de confirmation en ouvrant GHE.");
       activeId=r.item?.id||"";
-    }catch(e){showMessage(friendly(e),true);}finally{busy=false;}
+    }catch(e){showMessage(friendly(e),true);}finally{busy=false;render();}
   }
   function range(){
     const a=$("#ghePeerFrom")?.value,b=$("#ghePeerTo")?.value;
@@ -180,7 +180,7 @@
       const iso=d.toISOString().slice(0,10),x=mine.get(iso),y=theirs.get(iso);
       if(x&&y&&(mode==="same"?x!==y:side==="mine"?work.has(x)&&rest.has(y):work.has(y)&&rest.has(x)))selected.add(iso);
     }
-    if(selected.size>93){showMessage("Maximum : 93 jours. Retire certaines dates.",true);return;}
+    if(selected.size>93){selected.clear();showMessage("Maximum : 93 jours. Retire certaines dates.",true);return;}
     message="";render();
   }
   async function onClick(e){
