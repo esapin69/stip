@@ -686,9 +686,13 @@ async function listTableauRows(conversationId:string){
   }
   return rows
 }
+function isWheelchairWithin48Hours(row:any){
+  const createdAt=Date.parse(String(row?.created_at||""));
+  return Number.isFinite(createdAt)&&createdAt>Date.now()-48*60*60*1000
+}
 function isActiveWheelchairRow(row:any){
   const wheelchair=row?.payload?.wheelchair;
-  return !!wheelchair&&wheelchair.type==="spot"&&wheelchair.status==="active"
+  return !!wheelchair&&wheelchair.type==="spot"&&wheelchair.status==="active"&&isWheelchairWithin48Hours(row)
 }
 async function removeTableauStorageTree(conversationId:string){
   const root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
@@ -852,6 +856,7 @@ async function teamThread(ctx:any){
   ]);
   if(error)throw error;
   const messages=[...carryover,...(currentMessages||[])]
+    .filter((m:any)=>!m?.payload?.wheelchair||isWheelchairWithin48Hours(m))
     .sort((a:any,b:any)=>String(a.created_at||"").localeCompare(String(b.created_at||"")));
   const senderIds=[...new Set(messages.map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
   const{data:profiles}=senderIds.length
@@ -894,6 +899,8 @@ async function teamMessageTarget(ctx:any,messageId:string){
     .maybeSingle();
   if(error)throw error;
   if(!row)throw Error("Ce message n’est plus disponible.");
+  if(row?.payload?.wheelchair&&!isWheelchairWithin48Hours(row))
+    throw Error("Ce signalement a expiré après 48 heures.");
   const{data:conversation,error:conversationError}=await db.from("stip_conversations")
     .select("id,kind,communication_family")
     .eq("id",row.conversation_id)

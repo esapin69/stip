@@ -7,6 +7,7 @@
   const TEAM_THREAD_CACHE_MS = 45 * 1000;
   const TEAM_PROBE_CACHE_MS = 15 * 1000;
   const POLL_ACTIVE_MS = 60 * 1000;
+  const WHEELCHAIR_MAX_AGE_MS = 48 * 60 * 60 * 1000;
   const POLL_PASSIVE_MS = 5 * 60 * 1000;
   const TEAM_THREAD_MUTATIONS = new Set([
     "direct",
@@ -645,7 +646,10 @@
           unmountFull();
           return;
         }
-        if (state.surfaceMode === "wheelchair") updateWheelchairFreshnessIndicators();
+        if (state.surfaceMode === "wheelchair") {
+          updateWheelchairFreshnessIndicators();
+          expireWheelchairMessagesInView();
+        }
         if (!document.hidden) pollFull();
       }, POLL_ACTIVE_MS);
     }
@@ -3169,7 +3173,7 @@
     const visibleRootMessages = rootMessages.filter((message) =>
       state.surfaceMode === "chat"
         ? !message?.payload?.wheelchair
-        : !!message?.payload?.wheelchair,
+        : isFreshWheelchairMessage(message),
     );
     const page = state.root?.querySelector(".tb-page");
     page?.classList.toggle("is-feed-empty", !visibleRootMessages.length);
@@ -3713,9 +3717,28 @@
 
 
 
+  function isFreshWheelchairMessage(message, now = Date.now()) {
+    if (!message?.payload?.wheelchair) return false;
+    const createdAt = Date.parse(String(message.created_at || ""));
+    return Number.isFinite(createdAt) && createdAt > now - WHEELCHAIR_MAX_AGE_MS;
+  }
+
+  function expireWheelchairMessagesInView() {
+    const messages = state.data?.messages || [];
+    const remaining = messages.filter((message) =>
+      !message?.payload?.wheelchair || isFreshWheelchairMessage(message),
+    );
+    if (remaining.length === messages.length) return;
+    state.data = { ...state.data, messages: remaining };
+    homeState.data = state.data;
+    renderMessages();
+    renderHomeStatus();
+  }
+
   function activeWheelchairs(data) {
     return (data?.messages || []).filter(
-      (message) => message?.payload?.wheelchair?.status === "active",
+      (message) => message?.payload?.wheelchair?.status === "active" &&
+        isFreshWheelchairMessage(message),
     ).length;
   }
 
