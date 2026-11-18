@@ -44,11 +44,20 @@ async function allRows(conversationId: string) {
   return rows;
 }
 
+const WHEELCHAIR_MAX_AGE_MS = 48 * 60 * 60 * 1000;
+function isExpiredWheelchairRow(row: any, nowMs = Date.now()) {
+  const wheelchair = row?.payload?.wheelchair;
+  if (!wheelchair || wheelchair.type !== "spot" || wheelchair.status !== "active")
+    return false;
+  const createdAt = Date.parse(String(row?.created_at || ""));
+  return !Number.isFinite(createdAt) || createdAt <= nowMs - WHEELCHAIR_MAX_AGE_MS;
+}
 function isActiveWheelchairRow(row: any) {
   const wheelchair = row?.payload?.wheelchair;
   return !!wheelchair &&
     wheelchair.type === "spot" &&
-    wheelchair.status === "active";
+    wheelchair.status === "active" &&
+    !isExpiredWheelchairRow(row);
 }
 
 function isCurrentTableauKey(value: any) {
