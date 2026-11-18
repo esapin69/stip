@@ -1,0 +1,26 @@
+name: Fauteuils autonome — vérifications ciblées
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'standalone-fauteuils/**'
+      - '.github/workflows/fauteuils-standalone-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout read-only
+        uses: actions/checkout@v4
+      - name: Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Syntaxe du JavaScript
+        run: node --check standalone-fauteuils/fauteuil-app.js
+      - name: Tests du paquet autonome (sans connexion réelle)
+        run: node --test standalone-fauteuils/contract-test.mjs standalone-fauteuils/session.test.mjs
