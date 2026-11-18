@@ -72,15 +72,23 @@
     return String(agent.nickname || full || session?.role_label || "Agent");
   }
 
+  function dropLocalSession() {
+    window.STIPTableau?.stop?.();
+    currentSession = null;
+    window.STIPSession = null;
+    window.STIPAccess = { has: () => false };
+    clearToken();
+    ids("user").textContent = "";
+  }
+
   async function displaySession(session) {
-    currentSession = session;
     if (!session || !allowed(session)) {
-      window.STIPTableau?.unmountFull?.();
-      ids("user").textContent = "";
+      dropLocalSession();
       show("auth");
       status("Ce profil n’a pas accès au module Fauteuils. Demande l’autorisation à un administrateur GHE.");
       return;
     }
+    currentSession = session;
 
     window.STIPSession = session;
     window.STIPAccess = { has: (key) => session?.permissions?.[key] === true };
@@ -94,8 +102,10 @@
       return;
     }
     if (!window.STIPTableau?.mount) {
+      currentSession = null;
       show("auth");
       status("Le moteur Fauteuils n'a pas pu charger. Vérifie ta connexion puis réessaie.");
+      ids("retry").hidden = false;
       return;
     }
     show("board");
@@ -163,38 +173,43 @@
     working = true;
     window.STIPTableau?.stop?.();
     try { await request("logout"); } catch {}
-    clearToken();
-    currentSession = null;
-    window.STIPSession = null;
+    dropLocalSession();
     ids("pin").value = "";
     show("auth");
     status("Session fermée.");
     working = false;
   });
 
-  document.addEventListener("visibilitychange", async () => {
-    if (document.hidden || !currentSession || !token()) return;
+  async function revalidate() {
+    if (!currentSession || !token()) return;
     try {
       const session = await request("me");
-      if (!allowed(session)) await displaySession(session);
+      if (!allowed(session)) return displaySession(session);
+      currentSession = session;
+      window.STIPSession = session;
+      window.STIPAccess = { has: (key) => session?.permissions?.[key] === true };
+      ids("user").textContent = displayAgent(session);
+      status("", ids("connection-status"));
     } catch (error) {
       if (error?.httpStatus === 401 || error?.httpStatus === 403) {
-        window.STIPTableau?.stop?.();
-        clearToken();
-        currentSession = null;
+        dropLocalSession();
         show("auth");
         status("Ta session a expiré. Reconnecte-toi.");
       } else {
-        // Ne pas déconnecter sur une panne réseau ou erreur serveur.
+        // Un problème réseau/serveur ne doit pas expirer une session valide.
         status("Connexion temporairement indisponible. Tes messages restent affichés.", ids("connection-status"));
       }
     }
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) void revalidate();
   });
 
   async function boot() {
     show("auth");
     if (!token()) return;
-    status("Reconnexion à GHE…");
+    status("Reconnexion à Fauteuils…");
     try {
       const session = await request("me");
       await displaySession(session);
@@ -212,7 +227,9 @@
 
   ids("retry").addEventListener("click", boot);
   window.addEventListener("online", () => {
-    if (token() && !currentSession) boot();
+    if (!token()) return;
+    if (currentSession) void revalidate();
+    else void boot();
   });
   boot();
 })();
