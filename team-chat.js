@@ -3080,7 +3080,7 @@
         '</div>' +
         '<details class="tb-freshness-exact"><summary>Historique · repère indicatif</summary>' +
           exactFacts +
-          '<em>Repère indicatif · aucune expiration automatique</em>' +
+          '<em>Visible 48 h après signalement · supprimé au prochain nettoyage</em>' +
         '</details>' +
       '</div>'
     );
