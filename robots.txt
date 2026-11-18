@@ -1,4 +1,2 @@
 User-agent: *
-Allow: /
-
-Sitemap: https://ghe.esapin.com/sitemap.xml
+Disallow: /

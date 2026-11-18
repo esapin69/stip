@@ -1,554 +1,76 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
-    />
-    <!-- En mode portrait, une tablette tactile reprend le viewport du téléphone.
-         Le navigateur agrandit toute l'interface, y compris les cartes et le tiroir.
-         Le mode paysage et les ordinateurs gardent leur viewport normal. -->
-    <script id="ghe-tablet-portrait-viewport">
-      (() => {
-        const viewport = document.querySelector('meta[name="viewport"]');
-        const standard = 'width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content';
-        const phonePortrait = 'width=412,viewport-fit=cover,interactive-widget=resizes-content';
-        const sync = () => {
-          const tablet = navigator.maxTouchPoints > 0 && Math.min(screen.width, screen.height) >= 600;
-          const portrait = screen.orientation && typeof screen.orientation.type === 'string'
-            ? screen.orientation.type.startsWith('portrait')
-            : matchMedia('(orientation: portrait)').matches;
-          const target = tablet && portrait ? phonePortrait : standard;
-          if (viewport.getAttribute('content') !== target) viewport.setAttribute('content', target);
-        };
-        sync();
-        window.addEventListener('orientationchange', sync);
-        window.addEventListener('resize', sync);
-        window.addEventListener('pageshow', sync);
-      })();
-    </script>
-    <meta name="theme-color" content="#f3f6f8" />
-    <meta name="color-scheme" content="light only" />
-    <meta name="robots" content="index,follow,max-image-preview:large" />
-    <meta name="stip-ui-build" content="20261018-rest-pictograms1" />
-    <script id="stip-session-resume-flag">
-      try {
-        if (localStorage.getItem("stip_session_v1")) {
-          document.documentElement.classList.add("stip-session-resume", "stip-ui-version-check");
-        }
-      } catch {}
-    </script>
-    <style id="stip-session-resume-style">
-      html.stip-session-resume #loginView { visibility: hidden !important; }
-      html.stip-ui-version-check #homeView .hs-home { visibility: hidden !important; }
-      html.stip-session-resume::after,
-      html.stip-ui-version-check::after {
-        content: "Ouverture de GHE…";position:fixed;left:50%;top:48%;
-        transform:translate(-50%,-50%);z-index:1000;
-        padding:12px 16px;border-radius:14px;background:#f1f8fb;
-        color:#20566d;font-size:.85rem;font-weight:800;
-      }
-    </style>
-    <script id="stip-session-resume-watchdog">
-      (() => {
-        // Never leave the site on a permanent white screen if session restoration
-        // or a cached runtime fails before it can clear stip-session-resume.
-        const release = () => document.documentElement.classList.remove("stip-session-resume", "stip-ui-version-check");
-        // Start before external scripts: a stalled parser may never reach DOMContentLoaded.
-        setTimeout(release, 3500);
-        addEventListener("pageshow", (event) => {
-          if (event.persisted) setTimeout(release, 500);
-        });
-      })();
-    </script>
-    <script id="stip-asset-self-heal">
-      (() => {
-        let probeTimer = 0;
-        const isEditing = () => {
-          const el = document.activeElement;
-          return !!(
-            el &&
-            (el.matches?.("input, textarea, [contenteditable='true']") ||
-              document.body?.classList.contains("hc-feedback-modal-open") ||
-              window.STIPAuthPending === true)
-          );
-        };
-        const heal = async () => {
-          let navigating = false;
-          try {
-            const response = await fetch("/index.html?__stip_probe=" + Date.now(), {
-              cache: "no-store",
-              headers: { "cache-control": "no-cache" }
-            });
-            if (!response.ok) return;
-            const source = await response.text();
-            const latest =
-              source.match(/<meta\s+name="stip-ui-build"\s+content="([^"]+)"/i)?.[1] || "";
-            const current =
-              document.querySelector('meta[name="stip-ui-build"]')?.content || "";
-            if (!latest || !current || latest === current) return;
-            if (isEditing()) {
-              clearTimeout(probeTimer);
-              probeTimer = setTimeout(heal, 15000);
-              return;
-            }
-            const key = "stip_asset_heal_" + latest;
-            if (sessionStorage.getItem(key)) return;
-            try { window.STIPRouter?.saveScroll?.(); } catch {}
-            sessionStorage.setItem(key, "1");
-            const url = new URL(location.href);
-            url.searchParams.set("__stip_build", latest);
-            navigating = true;
-            location.replace(url.pathname + url.search + url.hash);
-          } catch {} finally {
-            if (!navigating) document.documentElement.classList.remove("stip-ui-version-check");
-          }
-        };
-        const scheduleHeal = (delay = 120) => {
-          clearTimeout(probeTimer);
-          probeTimer = setTimeout(heal, delay);
-        };
-        scheduleHeal(0);
-        addEventListener("pageshow", event => { if (event.persisted) scheduleHeal(0); });
-        setInterval(() => {
-          if (!document.hidden) heal();
-        }, 300000);
-      })();
-    </script>
-    <title>GHE · eSapin — Planning & outils d’équipe</title>
-    <meta name="description" content="GHE sur eSapin : planning, informations pratiques et outils d’équipe. Accédez à votre espace ou effectuez une demande d’accès." />
-    <link rel="canonical" href="https://ghe.esapin.com/" />
-    <meta property="og:type" content="website" />
-    <meta property="og:locale" content="fr_FR" />
-    <meta property="og:site_name" content="GHE · eSapin" />
-    <meta property="og:title" content="GHE · eSapin — Planning & outils d’équipe" />
-    <meta property="og:description" content="GHE sur eSapin : planning, informations pratiques et outils d’équipe. Accédez à votre espace ou effectuez une demande d’accès." />
-    <meta property="og:url" content="https://ghe.esapin.com/" />
-    <meta property="og:image" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <meta property="og:image:secure_url" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:image:alt" content="Logo eSapin du portail GHE" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="GHE · eSapin — Planning & outils d’équipe" />
-    <meta name="twitter:description" content="GHE sur eSapin : planning, informations pratiques et outils d’équipe." />
-    <meta name="twitter:image" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <meta name="twitter:image:alt" content="Logo eSapin du portail GHE" />
-    <link rel="image_src" href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "GHE",
-        "alternateName": "GHE eSapin",
-        "url": "https://ghe.esapin.com/",
-        "inLanguage": "fr-FR",
-        "image": {
-          "@type": "ImageObject",
-          "url": "https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png",
-          "width": 512,
-          "height": 512
-        }
-      }
-    </script>
-    <meta name="application-name" content="STIP" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="STIP" />
-    <link
-      rel="preconnect"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co"
-      crossorigin
-    />
-    <link rel="dns-prefetch" href="https://yzsrmuxghlengnkyphxj.supabase.co" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260826-role1" />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="64x64"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-64.png"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="192x192"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-192.png"
-    />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-180.png"
-    />
-    <meta name="msapplication-TileImage" content="https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png" />
-    <link rel="stylesheet" href="styles.css?v=20261017-native-scroll-reconciled1" />
-    <link rel="stylesheet" href="public-home-priority.css?v=20261016-image-frames1" />
-    <link rel="stylesheet" href="home-shell.css?v=20261018-rail-organized1" />
-    <link rel="stylesheet" href="peer-exchange.css?v=20261102-peer-swap1" />
-    <link rel="stylesheet" href="shift-weather-mini.css?v=20261014-shift-weather-static1" />
-    <link rel="stylesheet" href="stip-agent-selector.css?v=20260926-team-cards1" />
-    <link rel="stylesheet" href="stip-person-actions.css?v=20261002-header-identity-fix1" />
-    <link rel="stylesheet" href="tomorrow-network.css?v=20260920-final2" />
-    <link rel="stylesheet" href="communication-hub.css?v=20261014-communication-audience2" />
-    <link rel="stylesheet" href="stip-theme.css?v=20260928-card-signature1" />
-    <link rel="stylesheet" href="stip-shell.css?v=20260922-identity-flat1" />
-    <link rel="stylesheet" href="stip-loading.css?v=20260920-final1" />
-    <link rel="stylesheet" href="app-icon-guard.css?v=20260921-team1" />
-    <link rel="stylesheet" href="quick-access.css?v=20261016-image-frames1" />
-    <link rel="stylesheet" href="/t-est/regles-communes/global.css?v=20261014-native-inputs1" />
-    <script defer src="/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
-    <link rel="stylesheet" href="/stip-month-table.css?v=20261018-rest-pictograms1" />
-    <script defer src="/stip-month-table.js?v=20261018-rest-pictograms1"></script>    <link rel="stylesheet" href="stip-home-header.css?v=20261016-image-frames1" />
-    <link rel="stylesheet" href="team-home-fusion.css?v=20261018-rest-pictograms1&rev=live-people-reconciled1-day-dual-access1" />
-    <link rel="stylesheet" href="meeting-runtime.css?v=20261001-meeting-board2" />
-    <link rel="stylesheet" href="ensemble-home.css?v=20261014-rsvp3" />
-    <link rel="stylesheet" href="ghe-live-strip.css?v=20261014-live-strip2" />
-    <link rel="stylesheet" href="ghe-premium-safe-flip.css?v=20261018-rest-pictograms1&rev=live-modal1-left-launch4" />
-    <link rel="stylesheet" href="stip-popup-continuity.css?v=20261014-popup-scroll1" />
-    <link rel="stylesheet" href="home-rolling-week.css?v=20261015-home-week-refresh5" />
-    <link rel="stylesheet" href="home-week-flip.css?v=20261018-rest-pictograms1&rev=monday-slim1" />
-    <link rel="stylesheet" href="home-month-flip.css?v=20261016-month-smart-rhythm-2" />
-    <link rel="stylesheet" href="ghe-flip-actions.css?v=20261018-rest-pictograms1&rev=20261018-true-flip1" />
-    <link rel="stylesheet" href="ghe-notification-controls.css?v=20261018-rest-pictograms1" />
-    <link rel="stylesheet" href="ghe-leisure-quick.css?v=20261016-leisure-quick1" />
-    <link rel="stylesheet" href="ghe-smart-drawer.css?v=20261018-rail-organized1&rev=20261019-admin-rail-safe1" />
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#f0f5f6">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <title>Fauteuils · Signalements & entraide</title>
+  <meta name="description" content="L'espace fauteuils réservé aux brancardiers : signaler, retrouver et récupérer un fauteuil.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230c5965'/%3E%3Ctext x='32' y='45' font-size='39' text-anchor='middle'%3E♿%3C/text%3E%3C/svg%3E">
+  <!-- Canonical wheelchair engine and styling: do not fork or duplicate GHE business logic. -->
+  <link rel="stylesheet" href="https://ghe.esapin.com/stip-theme.css?v=20261118-standalone">
+  <link rel="stylesheet" href="https://ghe.esapin.com/team-chat.css?v=20261118-standalone">
+  <link rel="stylesheet" href="https://ghe.esapin.com/t-est/regles-communes/global.css?v=20261014-native-inputs1">
+  <link rel="stylesheet" href="./fauteuil.css">
+  <script defer src="https://ghe.esapin.com/team-chat.js?v=20261118-standalone"></script>
+  <script defer src="https://ghe.esapin.com/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
+  <script defer src="./fauteuil-app.js"></script>
 </head>
-  <body>
-    <main class="app-shell">
-      <section id="loginView" class="login-screen t-entry-screen" data-stip-keyboard-scope>
-        <div class="t-entry-shell" data-stip-keyboard-surface>
-          <section class="t-primary-access" aria-label="Accès personnel" data-stip-keyboard-scope>
-            <div id="accessRequestStatusHost"></div>
-            <button
-              id="accessIntent"
-              class="t-access-intent"
-              type="button"
-              aria-expanded="false"
-              aria-controls="accessEntryFields"
-              data-stip-intent-reveal="#accessEntryFields"
-              data-stip-intent-collapse="1"
-            >
-              <span>
-                <small>ESPACE PERSONNEL</small>
-                <strong>Accéder à mon espace</strong>
-              </span>
-              <b aria-hidden="true">→</b>
-            </button>
-
-            <section
-              id="accessEntryFields"
-              class="t-auth-stage"
-              aria-label="Code d’accès"
-              data-stip-intent-target
-              hidden
-            >
-              <div class="t-auth-focus">
-                <form id="loginForm" class="code-form t-code-form" data-stip-form-mode="native" data-stip-keyboard-keep data-stip-keyboard-native>
-                  <div class="stip-code-wrap">
-                    <input
-                      id="accessCode"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]{6}"
-                      maxlength="6"
-                      autocomplete="off"
-                      data-stip-pin-field="1"
-                      enterkeyhint="done"
-                      aria-label="Code personnel à 6 chiffres"
-                      placeholder="••••••"
-                      data-stip-keyboard-focus
-                      data-stip-autofocus
-                      required
-                    /><span id="accessCodeMask" class="stip-code-mask" data-stip-keyboard-accessory aria-hidden="true"></span><button
-                      id="toggleAccessCode"
-                      class="stip-code-toggle"
-                      type="button"
-                      data-stip-keyboard-accessory
-                      data-stip-keyboard-keep
-                    >Voir</button>
-                  </div>
-                  <button class="t-login-submit" type="submit">
-                    <span>Continuer</span><b aria-hidden="true">→</b>
-                  </button>
-                  <button
-                    class="t-request-inline"
-                    type="button"
-                    data-open-access-request
-                    data-stip-keyboard-accessory
-                    data-stip-keyboard-keep
-                  >
-                    <span>Pas de code ?</span>
-                    <strong>Demander un accès</strong>
-                  </button>
-                </form>
-                <p id="loginMessage" class="message" aria-live="polite"></p>
-              </div>
-
-            </section>
-          </section>
-
-          <section class="t-public-access" data-stip-keyboard-hide aria-labelledby="publicAccessTitle">
-            <div class="t-public-heading">
-              <strong id="publicAccessTitle">Accès sans compte</strong>
-            </div>
-            <nav class="t-app-title" aria-label="Applications accessibles sans compte">
-              <a class="t-app-link" href="places.html?v=20260925-canonical-export1&mode=visitor">
-                <span class="t-app-icon"><img src="images/icone_app/illustration-lieux.svg?v=20261014-illustrated1" alt="" /></span>
-                <strong>Visiter les lieux</strong>
-              </a>
-              <a class="t-app-link t-app-link-muted" href="nouvel-arrivant-pro.html" aria-label="Nouvel arrivant Pro">
-                <span class="t-app-icon"><img src="images/icone_app/ghe-newagent-v2.svg?v=20261014-app-artwork2" alt="" /></span>
-                <strong>Nouvel arrivant Pro</strong>
-              </a>
-              <a class="t-app-link t-app-link-muted" href="#demande-acces" aria-label="Demander un accès" data-open-access-request>
-                <span class="t-app-icon"><img src="images/icone_app/rejoindre-equipe.webp?v=20260831-icons3" alt="" /></span>
-                <strong>Demander un accès</strong>
-              </a>
-            </nav>
-            <a class="t-request-inline t-mobile-app-shortcut" href="application-mobile.html" aria-label="Ouvrir la page de l’application GHE">
-              <span>Sur téléphone ?</span>
-              <strong>Application GHE</strong>
-            </a>
-          </section>
-
-        </div>
-
-        <dialog id="accessRequestDialog" class="access-request-dialog">
-          <form
-            id="accessRequestForm"
-            class="access-request-form access-request-form-v2"
-            autocomplete="on"
-            data-stip-form-mode="standard"
-          >
-            <header>
-              <div>
-                <small>MON ACCÈS</small>
-                <h2>Demander un accès</h2>
-                <p>STIP adapte la demande à votre situation et ne demande que les informations nécessaires.</p>
-              </div>
-              <button id="requestAccessClose" type="button" aria-label="Fermer" autofocus data-stip-overview-focus>×</button>
-            </header>
-            <div class="request-form-body">
-              <div class="request-step">
-                <span>1</span>
-                <div>
-                  <strong>Quelle est votre situation ?</strong>
-                  <small>Choisissez simplement le parcours qui vous correspond.</small>
-                </div>
-              </div>
-              <div class="request-profile-grid" role="radiogroup" aria-label="Votre situation">
-                <label class="request-profile-choice">
-                  <input type="radio" name="request_profile" value="stip" required>
-                  <span><strong>Je suis brancardier</strong></span>
-                </label>
-                <label class="request-profile-choice">
-                  <input type="radio" name="request_profile" value="external">
-                  <span><strong>Je suis quelqu’un d’autre</strong></span>
-                </label>
-              </div>
-
-              <div id="requestSharedFields" hidden>
-                <div class="request-step">
-                  <span>2</span>
-                  <div>
-                    <strong>Qui êtes-vous ?</strong>
-                    <small>La demande est vérifiée avant activation.</small>
-                  </div>
-                </div>
-                <div class="request-name-grid">
-                  <label class="request-family-name">Nom<input
-                    id="accessRequestLastName"
-                    name="last_name"
-                    type="text"
-                    autocomplete="section-accessrequest family-name"
-                    autocapitalize="words"
-                    data-stip-keyboard-focus
-                    required></label>
-                  <label class="request-given-name">Prénom<input
-                    id="accessRequestFirstName"
-                    name="first_name"
-                    type="text"
-                    autocomplete="section-accessrequest given-name"
-                    autocapitalize="words"
-                    data-stip-keyboard-focus
-                    required></label>
-                </div>
-
-                <div id="requestExternalFields" class="request-external-fields" hidden>
-                  <div class="request-step">
-                    <span>3</span>
-                    <div>
-                      <strong>Votre activité</strong>
-                      <small>Pour interpréter correctement les codes et horaires de votre planning.</small>
-                    </div>
-                  </div>
-                  <label id="requestRoleWrap" class="request-role">Métier / poste<input
-                    id="accessRequestRole"
-                    name="professional_role"
-                    type="text"
-                    maxlength="120"
-                    placeholder="Ex. aide-soignant, agent, technicien…"
-                    data-stip-keyboard-focus></label>
-                  <label class="request-role">Établissement / entreprise<input
-                    id="accessRequestWorkplace"
-                    name="workplace"
-                    type="text"
-                    maxlength="160"
-                    placeholder="Où travaillez-vous ?"
-                    data-stip-keyboard-focus></label>
-
-                  <div class="request-step">
-                    <span>4</span>
-                    <div>
-                      <strong>Votre planning</strong>
-                      <small>Photo, capture d’écran ou PDF · 15 Mo maximum.</small>
-                    </div>
-                  </div>
-                  <div class="request-upload-actions" aria-label="Ajouter votre planning">
-                    <label class="request-upload-choice">
-                      <input id="accessRequestPlanningCamera" data-planning-input data-planning-source="Photo prise" type="file" accept="image/*" capture="environment">
-                      <span class="request-upload-choice-icon" aria-hidden="true">📷</span>
-                      <strong>Prendre une photo</strong>
-                    </label>
-                    <label class="request-upload-choice">
-                      <input id="accessRequestPlanningPhotos" data-planning-input data-planning-source="Photo choisie" type="file" accept="image/*">
-                      <span class="request-upload-choice-icon" aria-hidden="true">🖼️</span>
-                      <strong>Choisir une photo</strong>
-                    </label>
-                    <label class="request-upload-choice request-upload-choice-wide">
-                      <input id="accessRequestPlanningFile" data-planning-input data-planning-source="Fichier choisi" type="file" accept=".pdf,application/pdf">
-                      <span class="request-upload-choice-icon" aria-hidden="true">📄</span>
-                      <strong>Choisir un PDF / fichier</strong>
-                    </label>
-                  </div>
-                  <div id="accessRequestPlanningName" class="request-upload-name" aria-live="polite"></div>
-                  <label class="request-role">Commentaire <small>(facultatif)</small><textarea
-                    name="comment"
-                    maxlength="800"
-                    rows="3"
-                    placeholder="Une précision utile sur votre planning ou votre organisation."
-                    data-stip-keyboard-focus></textarea></label>
-                </div>
-
-                <div class="request-step">
-                  <span id="requestCodeStepNumber">3</span>
-                  <div>
-                    <strong>Choisissez votre code</strong>
-                    <small>6 chiffres personnels. Ils restent masqués.</small>
-                  </div>
-                </div>
-                <label class="request-code-card">
-                  <span>Code souhaité</span>
-                  <div>
-                    <input
-                      id="requestedAccessCode"
-                      name="requested_code"
-                      type="text"
-                      inputmode="numeric"
-                      pattern="[0-9]{6}"
-                      maxlength="6"
-                      autocomplete="off"
-                      data-stip-pin-field="1"
-                      data-stip-keyboard-focus
-                      placeholder="••••••"
-                      required><b>6 chiffres</b>
-                  </div>
-                </label>
-                <p id="accessRequestMessage" class="message"></p>
-              </div>
-            </div>
-            <button class="request-submit" type="submit" hidden>
-              <span>Demander un accès</span><b>→</b>
-            </button>
-          </form>
-        </dialog>
-      </section>
-      <section id="appView" class="hidden">
-        <header class="topbar">
-          <button class="brand-button" id="homeBtn" type="button">
-            <span class="brand-mark">STIP</span><span>Portail équipe</span>
-          </button>
-          <div class="user-chip">
-            <span id="welcomeText">Connecté</span
-            ><button id="logoutBtn" type="button">Déconnexion</button>
-          </div>
-        </header>
-        <section id="homeView" class="view">
-          <div class="hs-home"></div>
-        </section>
-        <section id="planningView" class="view hidden"></section>
-        <section id="genericView" class="view hidden"></section>
-      </section>
-    </main>
-    <section class="hs-panel" id="hsPanel" aria-hidden="true">
-      <header class="hs-panel-head">
-        <button id="hsPanelBack" type="button">‹</button>
-        <h2 id="hsPanelTitle">Notifications</h2>
-        <span></span>
-      </header>
-      <div class="hs-panel-body" id="hsPanelBody">
-        <div id="hsNotifList"></div>
+<body>
+  <div class="fw-shell">
+    <header class="fw-header">
+      <div class="fw-brand"><span class="fw-logo" aria-hidden="true">♿</span><span><strong>FAUTEUIL</strong><small>Entraide terrain</small></span></div>
+      <div class="fw-account" id="fw-account" hidden>
+        <span class="fw-user" id="fw-user"></span>
+        <button class="fw-logout" id="fw-logout" type="button">Déconnexion</button>
       </div>
+    </header>
+    <section class="fw-auth" id="fw-auth">
+      <div class="fw-auth-art" aria-hidden="true">♿</div>
+      <p class="fw-eyebrow">ACCÈS PROFESSIONNEL</p>
+      <h1>Un fauteuil. Un signalement. Une solution.</h1>
+      <p class="fw-subtitle">Retrouve ici les fauteuils signalés par ton équipe. Utilise ton code professionnel habituel.</p>
+      <form id="fw-login-form" class="fw-login-form" data-stip-form-mode="standard">
+        <label for="fw-pin">Ton code professionnel à 6 chiffres</label>
+        <div class="fw-login-row">
+          <input id="fw-pin" name="code" type="password" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off" minlength="6" maxlength="6" required placeholder="••••••" aria-describedby="fw-login-status">
+          <button id="fw-login-button" type="submit">Entrer <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+      <p class="fw-error" id="fw-login-status" role="alert" aria-live="polite"></p>
+      <button id="fw-retry" type="button" hidden>Réessayer la connexion</button>
+      <p class="fw-disclaimer">Réservé aux agents autorisés du brancardage. Ne renseigne aucune donnée patient.</p>
     </section>
-    <script src="system-bar-theme.js?v=20261018-adaptive1"></script>
-    <script src="stip-edge-relay.js?v=20260926-network-budget1"></script>
-    <script src="stip-loading.js?v=20261014-persistent-read1"></script>
-    <script src="name-format.js?v=20260823-retain4"></script>
-
-    <script src="shift-registry.js?v=20260928-planning-fast5"></script>
-    <script src="stip-entry-router.js?v=20260927-authflow2"></script>
-    <script src="stip-workspace.js?v=20260925-workspace3"></script>
-    <script src="stip-agent-selector.js?v=20261017-startup-guard1"></script>
-    <script src="stip-person-actions.js?v=20261015-ghe-staff-actions-merge1"></script>
-    <script src="stip-session-continuity.js?v=20261014-persistent-read1"></script>
-    <script src="app.js?v=20261017-native-scroll-reconciled1"></script>
-    <script src="stip-popup-continuity.js?v=20261017-native-scroll-reconciled1"></script>
-    <script src="section-hubs.js?v=20261014-ghe-export-live-v3"></script>
-    <script src="quick-access.js?v=20261017-startup-guard1"></script>
-    <script src="public-access-request.js?v=20261014-native-inputs1"></script>
-    <script src="stip-legend.js?v=20260924-legend3"></script>
-    <script src="stip-week-engine.js?v=20261015-seven-days1"></script>
-    <script src="stip-touch-core.js?v=20260926-iframe-scroll2"></script>
-    <script src="stip-loader.js?v=20261018-rest-pictograms1&rev=agenda360-hub1-date-master1"></script>
-    <link rel="stylesheet" href="leave-cart.css?v=20261001-leave-shift1">
-    <script src="person-card-template.js?v=20261016-image-frames1"></script>
-    <script src="leave-cart.js?v=20261002-leave-datefix1"></script>
-    <script src="shift-weather-mini.js?v=20261018-rest-pictograms1"></script>
-    <script src="team-home-fusion.js?v=20261018-rest-pictograms1&rev=day-dual-access1"></script>
-    <script src="ghe-date-separator.js?v=20261018-date-master1"></script>
-    <script src="home-shell.js?v=20261018-rest-pictograms1&rev=20261018-true-flip1"></script>
-    <script src="peer-exchange.js?v=20261102-peer-swap1"></script>
-    <script src="home-duty-chief.js?v=20261018-rest-pictograms1"></script>
-    <script src="meeting-runtime.js?v=20261001-meeting-board2"></script>
-    <script src="ensemble-home.js?v=20261017-startup-guard1"></script>
-    <script src="stip-home-scroll.js?v=20260930-compact-header1"></script>
-    <script src="stip-field-intelligence.js?v=20261014-shift-hcl1"></script>
-    <script src="tomorrow-core.js?v=20260921-field3"></script>
-    <script src="tomorrow-ui.js?v=20260926-touch-core1"></script>
-    <script src="tomorrow-network.js?v=20260922-opportunity1"></script>
-    <script src="activity-runtime.js?v=20260924-history2"></script>
-    <script src="access-runtime.js?v=20261014-app-artwork3"></script>
-    <script src="communication-hub.js?v=20261014-communication-audience2"></script>
-    <script src="ghe-notification-controls.js?v=20261018-rest-pictograms1"></script>
-    <script src="ghe-leisure-quick.js?v=20261018-rail-organized1"></script>
-    <script src="ghe-choice-master.js?v=20261018-rail-organized1&rev=drawer-side1"></script>
-    <script src="ghe-smart-drawer.js?v=20261018-rail-organized1&rev=20261019-admin-rail-safe1"></script>
-    <script src="ghe-smart-choices.js?v=20261019-create-actions1"></script>
-    <script src="ghe-global-search.js?v=20261018-bottom-precise-search1-side1"></script>
-    <script src="ghe-drawer-inline-panels.js?v=20261019-admin-rail-safe1"></script>
-    <script src="profile-photo.js?v=20261002-header-identity-fix1"></script>
-    <script id="stip-sw-register">
-      if ("serviceWorker" in navigator) {
-        addEventListener("load", () => {
-          navigator.serviceWorker
-            .register("/stip-sw.js?v=20261018-rest-pictograms1", { updateViaCache: "none" })
-            .then((registration) => registration.update())
-            .catch(() => {});
-        }, { once: true });
-      }
-    </script>
-  </body>
+    <section class="fw-trainee" id="fw-trainee" hidden>
+      <h2>Choisis ton profil stagiaire</h2>
+      <p>Cette étape est nécessaire avant d'accéder aux fauteuils.</p>
+      <form id="fw-trainee-form" data-stip-form-mode="standard">
+        <label for="fw-trainee-select">Profil</label>
+        <select id="fw-trainee-select" required></select>
+        <button type="submit">Continuer</button>
+      </form>
+      <p class="fw-error" id="fw-trainee-error" role="alert"></p>
+    </section>
+    <section class="fw-board" id="fw-board" hidden>
+      <div class="fw-intro">
+        <div>
+          <p class="fw-eyebrow">DISCUSSION FAUTEUILS</p>
+          <h1>Sur le terrain, ensemble.</h1>
+          <p>Signale un fauteuil, cherche où en trouver ou confirme sa récupération.</p>
+        </div>
+        <button id="fw-refresh" class="fw-refresh" type="button" aria-label="Actualiser les fauteuils">↻ <span>Actualiser</span></button>
+      </div>
+      <div class="fw-app ca-app is-wheelchair-tab" data-communication-app>
+        <div class="ca-body"><div id="fw-chat" aria-label="Discussion Fauteuils"><p class="fw-loading">Chargement des fauteuils…</p></div></div>
+      </div>
+      <p class="fw-error" id="fw-connection-status" role="status" aria-live="polite"></p>
+      <p class="fw-privacy">Usage interne uniquement · Ne partagez jamais de données nominatives de patients.</p>
+    </section>
+    <footer class="fw-footer"><span>FAUTEUILS</span><span>Services mis à jour depuis le référentiel unique.</span></footer>
+  </div>
+</body>
 </html>
-
-

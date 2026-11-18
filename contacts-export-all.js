@@ -1,6 +1,0 @@
-(() => {
-'use strict';
-const SHARE_URL='https://yzsrmuxghlengnkyphxj.supabase.co/functions/v1/stip-contacts-vcf';
-async function run(button){const strong=button.querySelector('strong'),original='Partager tous les contacts';try{button.disabled=true;if(strong)strong.textContent='Ouverture du partage…';const data={title:'Annuaire GHE',text:`Annuaire complet GHE — touche le lien pour importer tous les contacts :\n${SHARE_URL}`,url:SHARE_URL};if(navigator.share){await navigator.share(data);if(strong)strong.textContent='Partage ouvert';return}location.href=`sms:?body=${encodeURIComponent(data.text)}`}catch(e){if(e?.name!=='AbortError'){location.href=`sms:?body=${encodeURIComponent('Annuaire complet GHE — importe tous les contacts : '+SHARE_URL)}`}}finally{button.disabled=false;setTimeout(()=>{if(strong)strong.textContent=original},2500)}}
-document.addEventListener('click',e=>{const b=e.target.closest('#shareAllContacts');if(!b)return;e.preventDefault();e.stopImmediatePropagation();run(b)},true);
-})();

@@ -1,26 +1,12 @@
 {
-  "name": "STIP — Équipe de brancardage",
-  "short_name": "STIP",
-  "description": "Portail de l’équipe de brancardage du GHE",
-  "lang": "fr",
-  "start_url": "/",
-  "scope": "/",
+  "name": "Fauteuils — Entraide terrain",
+  "short_name": "Fauteuils",
+  "id": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#f7fbfc",
-  "theme_color": "#f3f6f8",
-  "icons": [
-    {
-      "src": "https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://yzsrmuxghlengnkyphxj.supabase.co/storage/v1/object/public/stip-public-assets/branding/native/stip-icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ]
+  "background_color": "#f0f5f6",
+  "theme_color": "#0a6172",
+  "lang": "fr",
+  "description": "Recherche et signalement de fauteuils — accès professionnel"
 }
