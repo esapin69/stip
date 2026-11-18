@@ -22,3 +22,5 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Chrome réel, moteur GHE distant, données fictives
         run: node browser-smoke.mjs
+      - name: Contrôler la vraie URL en lecture seule et le refus anonyme
+        run: node live-smoke.mjs
