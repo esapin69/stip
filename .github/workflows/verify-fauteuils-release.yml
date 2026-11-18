@@ -24,3 +24,7 @@ jobs:
         run: node browser-smoke.mjs
       - name: Contrôler la vraie URL en lecture seule et le refus anonyme
         run: node live-smoke.mjs
+      - name: Chrome réel sur l'URL Render, réponses Supabase simulées
+        env:
+          TEST_URL: https://fauteuils-entraide-ghe.onrender.com/
+        run: node browser-smoke.mjs
