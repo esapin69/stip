@@ -10,10 +10,12 @@ function retention(source) {
   const matched=source.match(/const WHEELCHAIR_MAX_AGE_MS\s*=\s*48\s*\*\s*60\s*\*\s*60\s*\*\s*1000;?[\s\S]*?function isActiveWheelchairRow\(row(?::\s*any)?\)\s*\{[\s\S]*?\n\}/);
   assert.ok(matched,"Fonctions de conservation introuvables");
   const js=matched[0].replace(/row:\s*any/g,"row");
-  return new Function(js+"\nreturn {isExpiredWheelchairRow,isActiveWheelchairRow};")();
+  class FixedDate extends Date {}
+  FixedDate.now=()=>now;
+  return new Function("Date",js+"\nreturn {isExpiredWheelchairRow,isActiveWheelchairRow};")(FixedDate);
 }
-const backend=retention(api),scheduler=retention(purge);
 const now=Date.parse("2026-11-19T12:00:00Z");
+const backend=retention(api),scheduler=retention(purge);
 const hour=60*60*1000;
 const wheelchair=(ageInHours,type="spot",status="active")=>({
   created_at:new Date(now-ageInHours*hour).toISOString(),
