@@ -24,3 +24,7 @@ jobs:
         run: node --check standalone-fauteuils/fauteuil-app.js
       - name: Tests du paquet autonome (sans connexion réelle)
         run: node --test standalone-fauteuils/contract-test.mjs standalone-fauteuils/session.test.mjs
+      - name: Installer le moteur de test navigateur (version figée)
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Tester l'interface Fauteuils sous Chrome sans utiliser de données réelles
+        run: node standalone-fauteuils/browser-smoke.mjs
