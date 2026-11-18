@@ -29,3 +29,17 @@ test("Le paquet n'impose pas de CNAME du site GHE", () => {
   assert.equal(manifest.id, "/");
   assert.equal(manifest.scope, "./");
 });
+
+test("Le backend GHE limite le catalogue et les messages aux sessions autorisées", () => {
+  const backend = readFileSync(new URL("../supabase/functions/stip-messages/index.ts", root), "utf8");
+  const engine = readFileSync(new URL("../team-chat.js", root), "utf8");
+  assert.match(backend, /if\(!t\)throw Error\("Session STIP requise\."\)/);
+  assert.match(backend, /if\(!p\?\.active\)throw Error\("Accès désactivé\."\)/);
+  assert.match(backend, /if\(!p\.permissions\?\.messages\)throw Error\("Messages non autorisés\."\)/);
+  assert.match(backend, /if\(a==="wheelchair_catalog"\)\{requireWheelchairAccess\(c\)/);
+  assert.match(backend, /const wheelchair=body\.wheelchair.*\n\s*if\(wheelchair\)requireWheelchairAccess\(ctx\)/);
+  assert.match(backend, /async function wheelchairCatalog\(\)\{[\s\S]*?\.from\("stip_places"\)/);
+  assert.match(backend, /function requireWheelchairAccess\(ctx:any\)/);
+  assert.match(engine, /api\("wheelchair_catalog"\)/);
+  assert.match(engine, /functions\/v1\/stip-messages/);
+});
