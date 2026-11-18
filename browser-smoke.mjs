@@ -64,7 +64,7 @@ try {
   });
   const page = await context.newPage();
   page.on("pageerror",error=>clientErrors.push(error.message));
-  await page.goto("http://127.0.0.1:"+port+"/",{waitUntil:"domcontentloaded"});
+  await page.goto(process.env.TEST_URL || "http://127.0.0.1:"+port+"/",{waitUntil:"domcontentloaded"});
   assert.equal(await page.locator("#fw-board").isVisible(),false,"non connecté : chat masqué");
   assert.equal(requestActions.length,0,"aucune requête de donnée hors connexion");
   await page.locator("#fw-pin").fill("123456");
