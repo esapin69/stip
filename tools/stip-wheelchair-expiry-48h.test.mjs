@@ -70,3 +70,13 @@ test("L'interface n'annonce plus une conservation illimitée",()=>{
   assert.doesNotMatch(front,/Repère indicatif · aucune expiration automatique/);
   assert.match(front,/Visible 48 h après signalement/);
 });
+
+test("La purge refuse les appels non authentifiés avant toute suppression",()=>{
+  assert.match(purge,/req\.headers\.get\("x-stip-cron-token"\)/);
+  assert.match(purge,/\^\[a-f0-9\]\{64\}\$/i);
+  assert.match(purge,/db\.rpc\([\s\S]*?"stip_authorize_tableau_purge"/);
+  assert.match(purge,/authorized !== true/);
+  assert.match(purge,/body\?\.action === "verify_auth"/);
+  assert.ok(purge.indexOf('db.rpc(') < purge.indexOf('const result = await purgePreviousDays()'));
+  assert.doesNotMatch(purge,/console\.log\(providedToken\)/);
+});
