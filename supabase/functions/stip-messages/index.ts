@@ -686,9 +686,16 @@ async function listTableauRows(conversationId:string){
   }
   return rows
 }
+const WHEELCHAIR_MAX_AGE_MS=48*60*60*1000;
+function isExpiredWheelchairRow(row:any,nowMs=Date.now()){
+  const wheelchair=row?.payload?.wheelchair;
+  if(!wheelchair||wheelchair.type!=="spot"||wheelchair.status!=="active")return false;
+  const createdAt=Date.parse(String(row?.created_at||""));
+  return !Number.isFinite(createdAt)||createdAt<=nowMs-WHEELCHAIR_MAX_AGE_MS
+}
 function isActiveWheelchairRow(row:any){
   const wheelchair=row?.payload?.wheelchair;
-  return !!wheelchair&&wheelchair.type==="spot"&&wheelchair.status==="active"
+  return !!wheelchair&&wheelchair.type==="spot"&&wheelchair.status==="active"&&!isExpiredWheelchairRow(row)
 }
 async function removeTableauStorageTree(conversationId:string){
   const root=await db.storage.from(TEAM_BUCKET).list(conversationId,{limit:1000,offset:0});
@@ -851,7 +858,9 @@ async function teamThread(ctx:any){
     teamCarryoverMessages(ctx,String(conv.id))
   ]);
   if(error)throw error;
-  const messages=[...carryover,...(currentMessages||[])]
+  // Les fauteuils expirés ne sont pas exposés en attendant le nettoyage nocturne.
+  // Les messages de l'équipe sans signalement fauteuil restent inchangés.
+  const messages=[...carryover,...(currentMessages||[]).filter((row:any)=>!isExpiredWheelchairRow(row))]
     .sort((a:any,b:any)=>String(a.created_at||"").localeCompare(String(b.created_at||"")));
   const senderIds=[...new Set(messages.map((m:any)=>String(m.sender_agent_id)).filter(Boolean))];
   const{data:profiles}=senderIds.length
@@ -874,16 +883,24 @@ async function teamThread(ctx:any){
     access_mode:accessMode,
     can_write:accessMode!=="read",
     admin:accessMode==="admin",
-    version:await teamFamilyVersion(ctx),
+    version:await teamFeedVersion(ctx),
     messages:signed
   }
 }
 
+// Forcer la relecture du fil toutes les cinq minutes pour l'expiration 48 h,
+// même en l'absence de nouveau message (version identique dans thread/probe).
+async function teamFeedVersion(ctx:any){
+  const v=await teamFamilyVersion(ctx);
+  return communicationFamily(ctx)==="brancardage"
+    ? v+"|w48:"+Math.floor(Date.now()/(5*60*1000))
+    : v
+}
 async function teamProbe(ctx:any){
   const conv=await teamConversation(ctx);
   return{
     conversation_id:String(conv.id),
-    version:await teamFamilyVersion(ctx)
+    version:await teamFeedVersion(ctx)
   }
 }
 async function teamMessageTarget(ctx:any,messageId:string){

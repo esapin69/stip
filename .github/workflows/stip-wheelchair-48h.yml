@@ -1,0 +1,23 @@
+name: Fauteuils — conservation 48 h
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "supabase/functions/stip-messages/index.ts"
+      - "supabase/functions/stip-team-chat-purge/index.ts"
+      - "team-chat.js"
+      - "tools/stip-wheelchair-expiry-48h.test.mjs"
+      - ".github/workflows/stip-wheelchair-48h.yml"
+permissions:
+  contents: read
+jobs:
+  retention:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --check team-chat.js
+      - run: node --test tools/stip-wheelchair-expiry-48h.test.mjs
