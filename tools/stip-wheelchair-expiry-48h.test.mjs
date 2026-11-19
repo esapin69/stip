@@ -80,3 +80,18 @@ test("La purge refuse les appels non authentifiés avant toute suppression",()=>
   assert.ok(purge.indexOf('db.rpc(') < purge.indexOf('const result = await purgePreviousDays()'));
   assert.doesNotMatch(purge,/console\.log\(providedToken\)/);
 });
+
+test("La migration du cron sécurise le jeton sans créer de nouveau service",()=>{
+  const sql=read("docs/fauteuils-48h-secure-cron.sql");
+  assert.match(sql,/vault\.create_secret\(/);
+  assert.match(sql,/extensions\.gen_random_bytes\(32\)/);
+  assert.match(sql,/SECURITY DEFINER/);
+  assert.match(sql,/REVOKE ALL ON FUNCTION public\.stip_authorize_tableau_purge\(text\)/);
+  assert.match(sql,/FROM PUBLIC, anon, authenticated/);
+  assert.match(sql,/GRANT EXECUTE ON FUNCTION public\.stip_authorize_tableau_purge\(text\)/);
+  assert.match(sql,/TO service_role/);
+  assert.match(sql,/cron\.alter_job\(/);
+  assert.match(sql,/x-stip-cron-token/);
+  assert.doesNotMatch(sql,/cron\.schedule\(/);
+  assert.doesNotMatch(sql,/sb_secret_[A-Za-z0-9]/);
+});
