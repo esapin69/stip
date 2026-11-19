@@ -293,6 +293,36 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // This endpoint deletes shared chat history. Require a private cron token
+    // checked server-side against a random value stored ONLY in Supabase Vault.
+    // The service-role client can call this restricted RPC, never browsers.
+    const providedToken = req.headers.get("x-stip-cron-token") || "";
+    if (!/^[a-f0-9]{64}$/i.test(providedToken)) {
+      return new Response(JSON.stringify({ error: "Accès non autorisé." }), {
+        status: 401, headers: HEADERS,
+      });
+    }
+    const { data: authorized, error: authError } = await db.rpc(
+      "stip_authorize_tableau_purge",
+      { p_token: providedToken },
+    );
+    if (authError) throw authError;
+    if (authorized !== true) {
+      return new Response(JSON.stringify({ error: "Accès non autorisé." }), {
+        status: 403, headers: HEADERS,
+      });
+    }
+    const body = await req.json().catch(() => ({}));
+    if (body?.action === "verify_auth") {
+      return new Response(JSON.stringify({ ok: true, authorized: true }), {
+        status: 200, headers: HEADERS,
+      });
+    }
+    if (body?.action && body.action !== "purge") {
+      return new Response(JSON.stringify({ error: "Action inconnue." }), {
+        status: 400, headers: HEADERS,
+      });
+    }
     const result = await purgePreviousDays();
     return new Response(JSON.stringify({ ok: true, ...result }), {
       status: 200,
