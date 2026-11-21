@@ -4,18 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="theme-color" content="#f0f5f6">
+  <meta name="theme-color" content="#f7faf9">
   <meta name="color-scheme" content="light">
   <meta http-equiv="Referrer-Policy" content="no-referrer">
-  <title>Fauteuils · Signalements & entraide</title>
-  <meta name="description" content="L'espace fauteuils réservé aux brancardiers : signaler, retrouver et récupérer un fauteuil.">
+  <title>Fauteuils Pro · Espace professionnel</title>
+  <meta name="description" content="Fauteuils Pro : un espace professionnel pour les signalements et l’entraide autour des fauteuils. Accès sécurisé réservé aux agents autorisés.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%230c5965'/%3E%3Ctext x='32' y='45' font-size='39' text-anchor='middle'%3E♿%3C/text%3E%3C/svg%3E">
   <!-- Canonical wheelchair engine and styling: do not fork or duplicate GHE business logic. -->
   <link rel="stylesheet" href="https://ghe.esapin.com/stip-theme.css?v=20261118-standalone">
   <link rel="stylesheet" href="https://ghe.esapin.com/team-chat.css?v=20261118-standalone">
   <link rel="stylesheet" href="https://ghe.esapin.com/t-est/regles-communes/global.css?v=20261014-native-inputs1">
-  <link rel="stylesheet" href="./fauteuil.css">
+  <link rel="stylesheet" href="./fauteuil.css?v=premium-20261121">
   <script defer src="https://ghe.esapin.com/team-chat.js?v=20261118-standalone"></script>
   <script defer src="https://ghe.esapin.com/t-est/regles-communes/global.js?v=20261014-native-inputs1"></script>
   <script defer src="./fauteuil-app.js"></script>
@@ -23,27 +23,43 @@
 <body>
   <div class="fw-shell">
     <header class="fw-header">
-      <div class="fw-brand"><span class="fw-logo" aria-hidden="true">♿</span><span><strong>FAUTEUIL</strong><small>Entraide terrain</small></span></div>
+      <a class="fw-brand" href="./index.html" aria-label="Fauteuils Pro, espace professionnel"><span class="fw-logo" aria-hidden="true">✳</span><span><strong>fauteuils<span class="fw-brand-dot">.</span></strong><small>PRO · COORDINATION TERRAIN</small></span></a><a class="fw-header-demo" href="./presentation.html">Découvrir le produit <span aria-hidden="true">↗</span></a>
       <div class="fw-account" id="fw-account" hidden>
         <span class="fw-user" id="fw-user"></span>
         <button class="fw-logout" id="fw-logout" type="button">Déconnexion</button>
       </div>
     </header>
     <section class="fw-auth" id="fw-auth">
-      <div class="fw-auth-art" aria-hidden="true">♿</div>
-      <p class="fw-eyebrow">ACCÈS PROFESSIONNEL</p>
-      <h1>Un fauteuil. Un signalement. Une solution.</h1>
-      <p class="fw-subtitle">Retrouve ici les fauteuils signalés par ton équipe. Utilise ton code professionnel habituel.</p>
-      <form id="fw-login-form" class="fw-login-form" data-stip-form-mode="standard">
-        <label for="fw-pin">Ton code professionnel à 6 chiffres</label>
-        <div class="fw-login-row">
-          <input id="fw-pin" name="code" type="password" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off" minlength="6" maxlength="6" required placeholder="••••••" aria-describedby="fw-login-status">
-          <button id="fw-login-button" type="submit">Entrer <span aria-hidden="true">→</span></button>
+      <div class="fw-auth-layout">
+        <div class="fw-auth-main">
+          <div class="fw-auth-pill"><span class="fw-auth-dot"></span> ESPACE SÉCURISÉ</div>
+          <p class="fw-eyebrow">LA COORDINATION, SIMPLIFIÉE</p>
+          <h1>Le terrain avance.<br><em>L'information suit.</em></h1>
+          <p class="fw-subtitle">Signalez, retrouvez et récupérez les fauteuils au sein de votre équipe. Connectez-vous avec votre code professionnel habituel.</p>
+          <form id="fw-login-form" class="fw-login-form" data-stip-form-mode="standard">
+            <label for="fw-pin">Code professionnel à 6 chiffres</label>
+            <div class="fw-login-row">
+              <input id="fw-pin" name="code" type="password" pattern="[0-9]{6}" inputmode="numeric" autocomplete="off" minlength="6" maxlength="6" required placeholder="••••••" aria-describedby="fw-login-status">
+              <button id="fw-login-button" type="submit">Accéder <span aria-hidden="true">↗</span></button>
+            </div>
+          </form>
+          <p class="fw-error" id="fw-login-status" role="alert" aria-live="polite"></p>
+          <button id="fw-retry" type="button" hidden>Réessayer la connexion</button>
+          <p class="fw-disclaimer"><span aria-hidden="true">▣</span> Accès réservé aux professionnels autorisés. N'ajoutez aucune information concernant l'identité d'un patient.</p>
         </div>
-      </form>
-      <p class="fw-error" id="fw-login-status" role="alert" aria-live="polite"></p>
-      <button id="fw-retry" type="button" hidden>Réessayer la connexion</button>
-      <p class="fw-disclaimer">Réservé aux agents autorisés du brancardage. Ne renseigne aucune donnée patient.</p>
+        <aside class="fw-auth-aside" aria-label="Illustration fictive du tableau">
+          <div class="fw-auth-glow"></div>
+          <div class="fw-aside-label"><span>✳</span> L'ENTRAIDE SUR LE TERRAIN</div>
+          <h2>Une information claire.<br>Un geste de moins.</h2>
+          <div class="fw-aside-card">
+            <div class="fw-aside-top"><span>APERÇU DU TABLEAU</span><small>EXEMPLE FICTIF</small></div>
+            <div class="fw-aside-row"><span class="fw-aside-icon">♿</span><div><strong>Fauteuil disponible</strong><small>Bâtiment A · Niveau 2</small></div><b>Visible</b></div>
+            <div class="fw-aside-row"><span class="fw-aside-icon fw-aside-search">⌕</span><div><strong>Fauteuil recherché</strong><small>Accueil · Rez-de-chaussée</small></div><b class="fw-aside-blue">Recherche</b></div>
+            <div class="fw-aside-footer"><span>+</span> Un signalement. Toute l'équipe informée.</div>
+          </div>
+          <p class="fw-aside-disclaimer">Illustration non connectée aux données professionnelles.</p>
+        </aside>
+      </div>
     </section>
     <section class="fw-trainee" id="fw-trainee" hidden>
       <h2>Choisis ton profil stagiaire</h2>
@@ -58,9 +74,9 @@
     <section class="fw-board" id="fw-board" hidden>
       <div class="fw-intro">
         <div>
-          <p class="fw-eyebrow">DISCUSSION FAUTEUILS</p>
-          <h1>Sur le terrain, ensemble.</h1>
-          <p>Signale un fauteuil, cherche où en trouver ou confirme sa récupération.</p>
+          <p class="fw-eyebrow">VOTRE ESPACE TERRAIN</p>
+          <h1>Les fauteuils. Au bon endroit.</h1>
+          <p>Signalez une disponibilité, lancez une recherche ou confirmez une récupération.</p>
         </div>
         <button id="fw-refresh" class="fw-refresh" type="button" aria-label="Actualiser les fauteuils">↻ <span>Actualiser</span></button>
       </div>
@@ -68,9 +84,9 @@
         <div class="ca-body"><div id="fw-chat" aria-label="Discussion Fauteuils"><p class="fw-loading">Chargement des fauteuils…</p></div></div>
       </div>
       <p class="fw-error" id="fw-connection-status" role="status" aria-live="polite"></p>
-      <p class="fw-privacy">Usage interne uniquement · Ne partagez jamais de données nominatives de patients.</p>
+      <p class="fw-privacy"><span aria-hidden="true">▣</span> Usage professionnel · Les signalements de disponibilité expirent après 48 h · Ne partagez aucune donnée patient.</p>
     </section>
-    <footer class="fw-footer"><span>FAUTEUILS</span><span>Services mis à jour depuis le référentiel unique.</span></footer>
+    <footer class="fw-footer"><span>fauteuils. <b>PRO</b></span><span>Entraide terrain · Référentiel de lieux partagé avec le système existant</span><a href="./presentation.html">Découvrir Fauteuils Pro ↗</a></footer>
   </div>
 </body>
 </html>
