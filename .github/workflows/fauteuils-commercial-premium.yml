@@ -28,3 +28,5 @@ jobs:
         run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Tester les pages mobile et bureau avec Chrome
         run: node commercial-browser.mjs
+      - name: Tester l'accès professionnel existant avec données fictives
+        run: node browser-smoke.mjs
