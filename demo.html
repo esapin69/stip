@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f7f9f8">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="description" content="Démonstration interactive Fauteuils Pro, sans compte et sans aucune donnée réelle.">
+  <meta http-equiv="Referrer-Policy" content="no-referrer">
+  <title>Démonstration interactive — Fauteuils Pro</title>
+  <link rel="stylesheet" href="./premium.css">
+  <script defer src="./demo.js"></script>
+</head>
+<body class="pr-page pr-demo-page">
+  <a class="pr-skip" href="#demo-main">Aller à la démonstration</a>
+  <header class="pr-header"><div class="pr-container pr-header-inner">
+    <a class="pr-brand" href="./presentation.html" aria-label="Retour à Fauteuils Pro"><span class="pr-logo" aria-hidden="true">✳</span><span>fauteuils<span class="pr-brand-dot">.</span><small>PRO</small></span></a>
+    <a class="pr-button pr-button-quiet pr-header-cta" href="./presentation.html">Retour à la présentation <span aria-hidden="true">↖</span></a>
+  </div></header>
+  <main id="demo-main" class="pr-container">
+    <section class="pr-demo-intro" aria-labelledby="demo-heading">
+      <div><span class="pr-demo-label"><span class="pr-live-dot"></span> ENVIRONNEMENT DE DÉMONSTRATION</span><h1 id="demo-heading">Testez Fauteuils Pro.</h1><p>Explorez les signalements, simulez une recherche ou ajoutez un fauteuil. Tout se passe dans votre navigateur, avec des informations inventées.</p></div>
+      <div class="pr-demo-summary">Aucun compte requis <span aria-hidden="true">·</span> Aucune donnée réelle</div>
+    </section>
+    <div class="pr-demo-shell">
+      <aside class="pr-demo-sidebar" aria-label="Navigation de la démonstration">
+        <div class="pr-sidebar-brand"><span class="pr-logo" aria-hidden="true">✳</span> Espace terrain</div>
+        <div class="pr-sidebar-caption">NAVIGATION</div>
+        <nav class="pr-sidebar-list" aria-label="Sections de la démo">
+          <button type="button" class="pr-sidebar-item" id="demo-nav-list" data-view="list" aria-current="page"><span aria-hidden="true">▦</span> Signalements</button>
+          <button type="button" class="pr-sidebar-item" id="demo-nav-new" data-view="new"><span aria-hidden="true">⊕</span> Nouveau signalement</button>
+          <button type="button" class="pr-sidebar-item" id="demo-nav-info" data-view="info"><span aria-hidden="true">ⓘ</span> À propos</button>
+        </nav>
+        <div class="pr-sidebar-bottom"><strong>Une démo, pas une base réelle</strong><p>Aucune connexion à un hôpital. Toutes les données disparaissent à la fermeture de la page.</p></div>
+      </aside>
+      <section class="pr-demo-main" aria-label="Interface de démonstration">
+        <div class="pr-demo-top"><div class="pr-demo-breadcrumb">Démonstration <span aria-hidden="true">/</span> <strong id="demo-crumb">Signalements</strong></div><div class="pr-demo-avatar" aria-label="Profil fictif">DE</div></div>
+        <div id="demo-panel-list">
+          <div class="pr-demo-top-title"><div><h2>Vue d'ensemble</h2><p>Informations fictives — site « Hôpital Démo »</p></div><button class="pr-button pr-button-primary" type="button" id="demo-add-top">+ Signaler</button></div>
+          <div class="pr-demo-stats" aria-label="Statistiques de la démonstration">
+            <div class="pr-demo-stat"><small>Signalements</small><strong id="demo-stat-all">0</strong><span>en cours</span></div>
+            <div class="pr-demo-stat"><small>Disponibles</small><strong id="demo-stat-spot">0</strong><span>fauteuils</span></div>
+            <div class="pr-demo-stat"><small>Recherches</small><strong id="demo-stat-search">0</strong><span>en cours</span></div>
+          </div>
+          <div class="pr-demo-toolbar">
+            <label class="pr-demo-search"><span aria-hidden="true">⌕</span><input type="search" id="demo-search" placeholder="Rechercher un bâtiment, un lieu…" aria-label="Rechercher dans les signalements"></label>
+            <label><span class="pr-sr-only">Filtrer par type</span><select class="pr-demo-select" id="demo-filter"><option value="all">Tous les signalements</option><option value="spot">Fauteuils disponibles</option><option value="search">Recherches</option></select></label>
+            <button type="button" class="pr-demo-small-button" id="demo-reset">Réinitialiser</button>
+          </div>
+          <div class="pr-demo-list" id="demo-list" aria-live="polite"></div>
+          <p class="pr-demo-notice">Démo fictive : les actions ci-dessus ne sont transmises à aucun serveur.</p>
+        </div>
+        <div id="demo-panel-new" hidden>
+          <div class="pr-demo-top-title"><div><h2>Nouveau signalement</h2><p>Simulez le parcours de l'équipe, sans envoi réel.</p></div></div>
+          <form id="demo-create-form" class="pr-demo-form">
+            <h3>Que souhaitez-vous signaler ?</h3>
+            <div class="pr-demo-fields">
+              <label for="demo-type">Type de signalement<select id="demo-type" name="type" required><option value="spot">J'ai vu un fauteuil</option><option value="search">Je cherche un fauteuil</option></select></label>
+              <label for="demo-building">Bâtiment<select id="demo-building" name="building" required><option value="Bâtiment A">Bâtiment A</option><option value="Bâtiment B">Bâtiment B</option><option value="Accueil central">Accueil central</option></select></label>
+              <label for="demo-floor">Niveau<select id="demo-floor" name="floor" required><option value="RDC">Rez-de-chaussée</option><option value="Niveau 1">Niveau 1</option><option value="Niveau 2">Niveau 2</option><option value="Niveau 3">Niveau 3</option></select></label>
+              <label for="demo-location">Repère précis<input type="text" id="demo-location" name="location" maxlength="80" required placeholder="Ex. près de l'ascenseur" autocomplete="off"></label>
+            </div>
+            <button class="pr-button pr-button-primary" type="submit">Ajouter à la simulation <span aria-hidden="true">↗</span></button>
+            <p class="pr-demo-form-note">Les informations restent en mémoire pendant cette visite seulement.</p>
+          </form>
+        </div>
+        <div id="demo-panel-info" hidden>
+          <div class="pr-demo-top-title"><div><h2>Ce que montre cette démo</h2><p>Un aperçu de l'expérience utilisateur, pas une installation métier.</p></div></div>
+          <div class="pr-demo-form">
+            <h3>Fonctions illustrées</h3>
+            <p>Consultation des signalements, recherche, filtres, création d'un signalement fictif et simulation de récupération.</p>
+            <h3>Ce qui nécessite un déploiement dédié</h3>
+            <p>Comptes professionnels, référentiel des bâtiments, sécurité des données, gestion des organisations, hébergement et support. Aucun accès aux données de GHE n'est fourni dans cette démo.</p>
+            <button class="pr-button pr-button-primary" type="button" id="demo-go-list">Voir les signalements <span aria-hidden="true">↗</span></button>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="pr-demo-footer"><span>Prototype commercial — données inventées — aucun patient ni établissement réel</span><a href="./presentation.html">Retour à la présentation ↗</a></div>
+  </main>
+  <div id="demo-toast" class="pr-demo-toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
