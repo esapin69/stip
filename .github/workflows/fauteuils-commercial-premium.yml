@@ -1,0 +1,30 @@
+name: Fauteuils Pro - tests vitrine et demo
+on:
+  push:
+    branches:
+      - fauteuils-premium-commercial-20261121
+  pull_request:
+    branches:
+      - fauteuils-site-release-20261118
+permissions:
+  contents: read
+jobs:
+  commercial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Syntaxe JavaScript
+        run: |
+          node --check demo.js
+          node --check fauteuil-app.js
+          node --check commercial-browser.mjs
+      - name: Contrats de securite et confinement
+        run: node --test commercial-quality.test.mjs
+      - name: Installer navigateur de test
+        run: npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Tester les pages mobile et bureau avec Chrome
+        run: node commercial-browser.mjs
