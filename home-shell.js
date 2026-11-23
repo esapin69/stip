@@ -623,14 +623,17 @@
     else dialog.setAttribute("open", "");
   }
   function perms() {
-    // Le cache du tableau de bord ne doit jamais remplacer les droits
-    // de la session active, notamment pour l’accès à Communication.
-    return {
+    // Le code personnel ne doit pas accorder implicitement l'accès au collectif.
+    const values={
       ...(state.boot?.permissions || {}),
       ...(window.STIPBootCache?.permissions || {}),
       ...(state.session?.permissions || {}),
       ...(window.STIPSession?.permissions || {}),
     };
+    const role=String(state.session?.role_key||window.STIPSession?.role_key||"");
+    if(!values.admin&&!values.responsable&&role!=="cadre")
+      values.planning_team=false;
+    return values;
   }
   function has(k) {
     return !!perms()[k];

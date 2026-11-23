@@ -26,10 +26,11 @@
     messages: () => explicit("messages"),
     communication: () => explicit("messages"),
     leisure: () => !Object.prototype.hasOwnProperty.call(p(), "leisure") || p().leisure !== false ? (explicit("messages") || explicit("planning_team") || explicit("admin")) : false,
-    team: () =>
-      explicit("planning_team") || explicit("activity") || explicit("assistant_enabled"),
+    team: () => explicit("planning_team") &&
+      (explicit("responsable") || explicit("admin") || window.STIPSession?.role_key === "cadre"),
     agents: () => explicit("agent_directory"),
-    compare: () => explicit("planning_team"),
+    compare: () => explicit("planning_team") &&
+      (explicit("responsable") || explicit("admin") || window.STIPSession?.role_key === "cadre"),
     change: () => explicit("change_app"),
     calendar: () => explicit("calendar_subscribe"),
     dates: () => explicit("agent_dates"),

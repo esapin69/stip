@@ -24,6 +24,7 @@ on:
       - stip-loader.js
       - stip-sw.js
       - tools/ghe-home-seven-points-test.mjs
+      - tools/stip-private-schedule-contract-test.mjs
       - .github/workflows/ghe-home-seven-points.yml
   push:
     branches: [main]
@@ -50,6 +51,7 @@ on:
       - stip-loader.js
       - stip-sw.js
       - tools/ghe-home-seven-points-test.mjs
+      - tools/stip-private-schedule-contract-test.mjs
       - .github/workflows/ghe-home-seven-points.yml
 jobs:
   verify:
@@ -76,3 +78,4 @@ jobs:
       - run: node tools/ghe-home-seven-points-test.mjs
       - run: node tools/ghe-places-two-pdfs-test.mjs
       - run: node --test tools/stip-unified-day-popup-test.mjs tools/stip-popup-no-jump-test.mjs
+      - run: node --test tools/stip-private-schedule-contract-test.mjs

@@ -297,6 +297,18 @@
     }).sort((a,b)=>String(shiftTime(a.code,{...a,agents:{...a.agents,role:"chef",type_planning:"chefs"}}))
        .localeCompare(String(shiftTime(b.code,{...b,agents:{...b.agents,role:"chef",type_planning:"chefs"}}))));
   }
+  // Même connecté, un agent est compté parmi les personnes en service.
+  function visibleWorkersForDay(rows){
+    const seen=new Set();
+    return rows.filter(item=>{
+      if(isChef(item))return false;
+      const agent=item?.agents||{};
+      const identity=String(agent.source_key||agent.id||agent.ghe||name(agent)).trim().toLowerCase();
+      if(seen.has(identity))return false;
+      seen.add(identity);
+      return true;
+    });
+  }
   function paint(host,opts){
     if(!host?.isConnected)return;
     const day=String(opts.day||"").slice(0,10),start=monday(day);
@@ -327,9 +339,17 @@
     const activity=perm.activity?cached(activities,day):null;
     const loaded=Array.isArray(team?.planning);
     const agents=loaded?team.planning.filter(x=>String(x.date||"").slice(0,10)===day):[];
-    const visible=agents.filter(x=>!isChef(x)&&
-      (!opts.sourceKey||String(x.agents?.source_key||"")!==String(opts.sourceKey))&&
-      (!opts.ghe||String(x.agents?.ghe||"").replace(/^GHE\s*/i,"")!==String(opts.ghe).replace(/^GHE\s*/i,"")));
+    const selfAgent=opts.boot?.agent||window.STIPSession?.agent||null;
+    const selfKey=String(opts.sourceKey||selfAgent?.source_key||"").trim();
+    const selfAlreadyIncluded=agents.some(x=>
+      (selfAgent?.id&&String(x.agents?.id||"")===String(selfAgent.id))||
+      (selfKey&&String(x.agents?.source_key||"")===selfKey));
+    // Compléter depuis le planning personnel si la vue collective manque cet agent.
+    if(loaded&&working&&selfAgent?.id&&!selfAlreadyIncluded){
+      agents.push({date:day,code:myCode,source_value:myCode,
+        equipe:selfAgent.equipe||"jour",agents:selfAgent});
+    }
+    const visible=visibleWorkersForDay(agents);
     // Tous les shifts travaillés sont visibles, y compris la famille de l'utilisateur.
     const onDuty=visible.filter(x=>Boolean(definition(x.code)?.is_working));
     // "Même horaire" compare les heures effectives, pas seulement M/J/J4/S/N.
@@ -409,7 +429,7 @@
        '<span class="thf-shift-content"><span class="thf-shift-symbol">'+shiftSymbol+'</span>'+shiftName+shiftTimeColumns+'</span>'+
        (working?'<div class="thf-shift-actions" role="group" aria-label="Collègues et chefs d’équipe du '+esc(label)+'">'+
          (perm.planning_team?'<button type="button" class="thf-shift-colleagues" data-thf-open="people" '+
-           'aria-label="Voir les '+(loaded?exact.length:"…")+' collègues sur mon horaire '+esc(label)+'" title="Collègues">'+
+           'aria-label="Voir les '+(loaded?exact.length:"…")+' personnes (moi compris) sur cet horaire '+esc(label)+'" title="Personnes en service">'+
            '<span aria-hidden="true">👥</span><b>'+(loaded?exact.length:"…")+'</b></button>':"")+
          '<button type="button" class="thf-shift-chiefs" data-thf-open="chiefs" '+
            'aria-label="Voir les chefs d’équipe '+esc(label)+' : '+esc(chiefSummary)+'" title="Chefs d’équipe">'+
